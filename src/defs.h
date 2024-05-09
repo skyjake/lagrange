@@ -332,6 +332,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define LAGRANGE_MENUBAR
 #endif
 
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
+#   define LAGRANGE_MULTIPLE_WINDOWS
+#endif
+
 /* UI labels that depend on the platform */
 
 #if defined (iPlatformMobile)

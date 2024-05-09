@@ -415,6 +415,64 @@ static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
     return isFolder_Bookmark(bm);
 }
 
+static size_t visibleSize_String(const iString *d) {
+    size_t n = 0;
+    iConstForEach(String, i, d) {
+        if (i.value == '\v') {
+            next_StringConstIterator(&i); /* skip escape */
+            continue;
+        }
+        n += width_Char(i.value);
+    }
+    return n;
+}
+
+static void formatShortcut_(iString *d, int maxLen, const char *label, int key, int mods) {
+    iString str;
+    init_String(&str);
+    iString keyStr;
+    init_String(&keyStr);
+    toString_Sym(key, mods, &keyStr);
+    if (!isEmpty_String(d)) {
+        appendCStr_String(&str, "   ");
+    }
+    appendFormat_String(&str,
+                  "%s%s%s %s",
+                  escape_Color(uiTextShortcut_ColorId),
+                  cstr_String(&keyStr),
+                  uiText_ColorEscape,
+                  label);
+    if (visibleSize_String(d) + visibleSize_String(&str) <= maxLen) {
+        append_String(d, &str);
+    }
+    deinit_String(&keyStr);
+    deinit_String(&str);
+}
+
+static void updateTerminalStatus_(iLabelWidget *term) {
+    const iBinding *bind;
+    iString *str = new_String();
+    const int maxLen = width_Widget(root_Widget(as_Widget(term))) - 2;
+    formatShortcut_(str, maxLen, "${term.url}", SDLK_RETURN, 0);
+    bind = findCommand_Keys("document.linkkeys arg:1");
+    formatShortcut_(str, maxLen, "${term.linkkeys}", bind->key, bind->mods);
+    bind = findCommand_Keys("contextkey");
+    formatShortcut_(str, maxLen, "${term.menu}", bind->key, bind->mods);
+    bind = findCommand_Keys("menubar.focus");
+    formatShortcut_(str, maxLen, "${term.menubar}", bind->key, bind->mods);
+    formatShortcut_(str, maxLen, "${cancel}", 'g', KMOD_CTRL);
+    formatShortcut_(str, maxLen, "${term.focus}", SDLK_TAB, 0);
+    formatShortcut_(str, maxLen, "${term.sidebar}", leftSidebar_KeyShortcut);
+    bind = findCommand_Keys("tabs.new append:1");
+    formatShortcut_(str, maxLen, "${term.tab.new}", bind->key, bind->mods);
+    bind = findCommand_Keys("tabs.close");
+    formatShortcut_(str, maxLen, "${term.tab.close}", bind->key, bind->mods);
+    bind = findCommand_Keys("document.linkkeys arg:1 hover:1");
+    formatShortcut_(str, maxLen, "${term.hover}", bind->key, bind->mods);
+    updateText_LabelWidget(term, str);
+    delete_String(str);
+}
+
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     iUnused(root);
     if (equal_Command(cmd, "menu.open")) {
@@ -527,8 +585,25 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         if (menubar) {
             setFocus_Widget(child_Widget(menubar, prefs_App()->recentMenuBarIndex));
             postCommand_Widget(focus_Widget(), "trigger");
+            if (isTerminal_Platform()) {
+                setFlags_Widget(findChild_Widget(root, "termstatus"), hidden_WidgetFlag, iTrue);
+            }
         }
         return iTrue;
+    }
+    else if (isTerminal_Platform() && equal_Command(cmd, "focus.gained")) {
+        if (!cmp_String(id_Widget(parent_Widget(focus_Widget())), "menubar")) {
+            setFlags_Widget(findChild_Widget(root, "termstatus"), hidden_WidgetFlag, iTrue);
+        }
+        return iFalse;
+    }
+    else if (isTerminal_Platform() && equal_Command(cmd, "menu.closed")) {
+        if (!focus_Widget()) {
+            iLabelWidget *status = findChild_Widget(root, "termstatus");
+            setFlags_Widget(as_Widget(status), hidden_WidgetFlag, iFalse);
+            updateTerminalStatus_(status);
+        }
+        return iFalse;
     }
     else if (equal_Command(cmd, "input.resized")) {
         /* No parent handled this, so do a full rearrangement. */
@@ -591,6 +666,9 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.resized")) {
+        if (isTerminal_Platform()) {
+            updateTerminalStatus_(findWidget_Root("termstatus"));
+        }
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
         if (deviceType_App() != phone_AppDeviceType) {
@@ -889,7 +967,7 @@ static void updateUrlInputContentPadding_(iWidget *navBar) {
     const int indicatorsWidth = width_Widget(findChild_Widget(navBar, "url.rightembed"));
     /* The indicators widget has a padding that covers the urlButtons area. */
     setContentPadding_InputWidget(url,
-                                  lockWidth - 2 * gap_UI, // * 0.75f,
+                                  isTerminal_Platform() ? lockWidth : (lockWidth - 2 * gap_UI),
                                   indicatorsWidth);
 }
 
@@ -1490,6 +1568,8 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(appIcon, init_I2(appIconSize_Root(), appMin->rect.size.y));
     }
     iWidget      *navBar     = findChild_Widget(d->widget, "navbar");
+    iWidget      *menuBar    = findChild_Widget(d->widget, "menubar");
+    iWidget      *termStatus = findChild_Widget(d->widget, "termstatus");
     iWidget      *url        = findChild_Widget(d->widget, "url");
     iWidget      *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     iWidget      *embedPad   = findChild_Widget(navBar, "url.embedpad");
@@ -1504,6 +1584,9 @@ void updateMetrics_Root(iRoot *d) {
     arrange_Widget(d->widget);
     if (navBar) {
         updateUrlInputContentPadding_(navBar);
+    }
+    if (termStatus) {
+        setFixedSize_Widget(menuBar, menuBar->rect.size);
     }
     if (idName) {
         setFixedSize_Widget(as_Widget(idName),
@@ -1534,8 +1617,9 @@ static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
         /* Remove the old dynamic window list items first. See `windowMenuItems_` in window.c
            for the fixed list. */
         iWidget *menu = findChild_Widget(menuBarItem, "menu");
-        while (childCount_Widget(menu) > 9) {
-            destroy_Widget(removeChild_Widget(menu, child_Widget(menu, 9)));
+        const size_t numFixedItems = numWindowMenuItems_Window() + 1;
+        while (childCount_Widget(menu) > numFixedItems) {
+            destroy_Widget(removeChild_Widget(menu, child_Widget(menu, numFixedItems)));
         }
         iArray winItems;
         init_Array(&winItems, sizeof(iMenuItem));
@@ -1736,16 +1820,19 @@ void createUserInterface_Root(iRoot *d) {
         /* TODO: Use Widget's `updateMenuItems` callback. */
         setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);
         setId_Widget(menuBar, "menubar");
-#  if 0
-        addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);
-        /* It's nice to use this space for something, but it should be more valuable than
-           just the app version... */
-        iLabelWidget *ver = addChildFlags_Widget(menuBar, iClob(new_LabelWidget(LAGRANGE_APP_VERSION, NULL)),
-                                                 frameless_WidgetFlag);
-        setTextColor_LabelWidget(ver, uiAnnotation_ColorId);
-#  endif
     }
 #endif
+    /* Terminal status/help indicator. */
+    if (isTerminal_Platform()) {
+        iWidget *termStatus =
+            addChildFlags_Widget(div,
+                                 iClob(new_LabelWidget("", NULL)),
+                                 fixedPosition_WidgetFlag | fixedHeight_WidgetFlag |
+                                 resizeToParentWidth_WidgetFlag);
+        setBackgroundColor_Widget(termStatus, uiBackground_ColorId);
+        updateTerminalStatus_((iLabelWidget *) termStatus);
+        setId_Widget(termStatus, "termstatus");
+    }
     iWidget *navBar;
     /* Navigation bar. */ {
         navBar = new_Widget();

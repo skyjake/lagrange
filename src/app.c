@@ -2784,7 +2784,7 @@ iBool moveFocusInsideMenu_App(const void *sdlEvent) {
             }
             return iTrue;
         }
-        else {
+        else if (menu) {
             setCurrent_Window(window_Widget(focus_Widget()));
             postCommand_Widget(focus_Widget(), "cancel");
         }

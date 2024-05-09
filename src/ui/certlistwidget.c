@@ -120,7 +120,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
             insert_Array(items, insertPos++, &(iMenuItem){ "---", 0, 0, NULL });
         }
         iBool usedOnCurrentPage = iFalse;
-        iConstForEach(StringSet, i, ident->useUrls) {            
+        iConstForEach(StringSet, i, ident->useUrls) {
             const iString *url = i.value;
             usedOnCurrentPage |= startsWithCase_String(docUrl, cstr_String(url));
             iRangecc urlStr = range_String(url);
@@ -141,8 +141,8 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
             remove_Array(items, firstIndex);
         }
     }
-    destroy_Widget(d->menu);    
-    d->menu = makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));    
+    destroy_Widget(d->menu);
+    d->menu = makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));
 }
 
 static void itemClicked_CertListWidget_(iCertListWidget *d, iCertItem *item, size_t itemIndex) {
@@ -180,7 +180,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
-            iGmIdentity *ident = menuIdentity_CertListWidget_(d);            
+            iGmIdentity *ident = menuIdentity_CertListWidget_(d);
             const iString *tabUrl = urlQueryStripped_String(url_DocumentWidget(document_App()));
             if (ident) {
                 if (argLabel_Command(cmd, "clear")) {
@@ -217,7 +217,16 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             if (ident) {
                 const iString *fps = collect_String(
                     hexEncode_Block(collect_Block(fingerprint_TlsCertificate(ident->cert))));
-                SDL_SetClipboardText(cstr_String(fps));
+                if (isTerminal_Platform()) {
+                    makeMessage_Widget(
+                        "${ident.fingerprint}",
+                        cstr_String(fps),
+                        (iMenuItem[]){ { "${dlg.message.ok}", SDLK_RETURN, 0, "message.ok" } },
+                        1);
+                }
+                else {
+                    SDL_SetClipboardText(cstr_String(fps));
+                }
             }
             return iTrue;
         }
@@ -303,7 +312,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                 invalidateItem_ListWidget(&d->list, d->contextIndex);
             }
             d->contextIndex = hoverItemIndex_ListWidget(&d->list);
-            updateContextMenu_CertListWidget_(d);                
+            updateContextMenu_CertListWidget_(d);
             /* TODO: Some callback-based mechanism would be nice for updating menus right
                before they open? At least move these to `updateContextMenu_ */
             const iGmIdentity *ident  = constHoverIdentity_CertListWidget(d);
@@ -365,7 +374,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
         bg = uiBackgroundUnfocusedSelection_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
-//    iInt2 pos = itemRect.pos; 
+//    iInt2 pos = itemRect.pos;
     const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                            : uiTextStrong_ColorId;
     const iBool isUsedOnDomain = (d->indent != 0);

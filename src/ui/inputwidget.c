@@ -396,7 +396,7 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     iRect          bounds = adjusted_Rect(bounds_Widget(w),
                                  addX_I2(padding_(), d->leftPadding),
                                  neg_I2(addX_I2(padding_(), d->rightPadding)));
-    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
+    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2) * aspect_UI, 0));
     bounds.pos.y += padding_().y / 2;
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         if (d->sysCtrl && !cmp_String(id_Widget(w), "url")) {

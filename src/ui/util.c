@@ -2783,10 +2783,14 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "theme.changed") ||
           equal_Command(cmd, "focus.lost") ||
           equal_Command(cmd, "focus.gained") ||
+          equal_Command(cmd, "menu.open") ||
+          equal_Command(cmd, "menu.opened") ||
           equal_Command(cmd, "menu.closed") ||
+          startsWith_CStr(cmd, "cancel menu:") ||
           startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
-        //printf("message dismissed by: %s\n", cmd); fflush(stdout);
+        // printf("message dismissed by: %s\n", cmd); fflush(stdout);
+        // SDL_Delay(5000);
         setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget(msg));
         destroy_Widget(msg);
     }
@@ -3994,6 +3998,9 @@ const iArray *makeBookmarkFolderActions_MenuItem(const char *command, iBool with
 }
 
 void enableResizing_Widget(iWidget *d, int minWidth, const char *resizeId) {
+    if (isTerminal_Platform()) {
+        return; /* cannot grab edges */
+    }
     if (deviceType_App() == desktop_AppDeviceType) {
         iChangeFlags(d->flags, arrangeWidth_WidgetFlag, iFalse);
         d->flags2 |= horizontallyResizable_WidgetFlag2;
@@ -4138,7 +4145,7 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
             addDialogToggle_(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
         }
         arrange_Widget(dlg);
-        const int inputWidth = 100 * gap_UI - headings->rect.size.x;
+        const int inputWidth = iMin(100 * gap_UI, width_Rect(rect_Root(dlg->root))) - headings->rect.size.x;
         for (int i = 0; i < 4; ++i) {
             if (inputs[i]) {
                 as_Widget(inputs[i])->rect.size.x = inputWidth;

@@ -3154,7 +3154,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "server.copycert") && document_App() == d) {
         const iString *fp = collect_String(
             hexEncode_Block(arg_Command(cmd) ? d->certFullFingerprint : d->certFingerprint));
-        SDL_SetClipboardText(cstr_String(fp));
+        if (isTerminal_Platform()) {
+            makeMessage_Widget(
+                arg_Command(cmd) ? "${dlg.cert.fingerprint.full}"
+                                 : "${dlg.cert.fingerprint.pubkey}",
+                cstr_String(fp),
+                (iMenuItem[]){ { "${dlg.message.ok}", SDLK_RETURN, 0, "message.ok" } },
+                1);
+        }
+        else {
+            SDL_SetClipboardText(cstr_String(fp));
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
