@@ -1828,7 +1828,7 @@ void createUserInterface_Root(iRoot *d) {
             addChildFlags_Widget(div,
                                  iClob(new_LabelWidget("", NULL)),
                                  fixedPosition_WidgetFlag | fixedHeight_WidgetFlag |
-                                 resizeToParentWidth_WidgetFlag);
+                                 resizeToParentWidth_WidgetFlag | frameless_WidgetFlag);
         setBackgroundColor_Widget(termStatus, uiBackground_ColorId);
         updateTerminalStatus_((iLabelWidget *) termStatus);
         setId_Widget(termStatus, "termstatus");

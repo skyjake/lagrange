@@ -128,7 +128,7 @@ void appendIdentities_MenuItem(iArray *menuItems, const char *command) {
     iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), NULL, NULL)) {
         const iGmIdentity *id = i.ptr;
         iString *str = collect_String(copy_String(name_GmIdentity(id)));
-        prependCStr_String(str, "\x1b[1m");
+        prependCStr_String(str, isTerminal_Platform() ? uiTextStrong_ColorEscape : "\x1b[1m");
         if (!isEmpty_String(&id->notes)) {
             appendFormat_String(
                 str, "\x1b[0m\n%s%s", escape_Color(uiTextDim_ColorId), cstr_String(&id->notes));
@@ -176,7 +176,9 @@ iLabelWidget *makeIdentityDropdown_LabelWidget(iWidget *headings, iWidget *value
     const iMenuItem *items    = constData_Array(identItems);
     const size_t     numItems = size_Array(identItems);
     iLabelWidget    *ident    = makeMenuButton_LabelWidget(label, items, numItems);
-    setFixedSize_Widget(as_Widget(ident), init_I2(-1, lineHeight_Text(uiLabel_FontId) + 2 * gap_UI));
+    setFixedSize_Widget(
+        as_Widget(ident),
+        init_I2(-1, lineHeight_Text(uiLabel_FontId) + (isTerminal_Platform() ? 0 : 2) * gap_UI));
     setTextCStr_LabelWidget(ident, items[findWidestLabel_MenuItem(items, numItems)].label);
     setTruncateToFit_LabelWidget(ident, iTrue);
     iWidget *identHeading = addChild_Widget(headings, iClob(makeHeading_Widget(label)));
@@ -192,8 +194,7 @@ static void updateFieldWidths_UploadWidget(iUploadWidget *d) {
                                                          left_Rect(parent_Widget(d->mime)->rect), -1));
         setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(d->tabs) -
                                                          left_Rect(parent_Widget(d->token)->rect), -1));
-        setFixedSize_Widget(as_Widget(d->ident), init_I2(width_Widget(d->token),
-                                                         lineHeight_Text(uiLabel_FontId) + 2 * gap_UI));
+        setFixedSize_Widget(as_Widget(d->ident), init_I2(width_Widget(d->token), -1));
         setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
     }
     else {
