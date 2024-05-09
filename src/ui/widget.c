@@ -2695,7 +2695,7 @@ static int mid_Rangei(const iRangei d) {
 }
 
 static float offAxisRangeDistance_(iRangei src, iRangei dst) {
-    if (equal_Rangei(src, dst)) {
+    if (src.start == dst.start || src.end == dst.end) {
         return 0; /* Ideal match. */
     }
     if (isOverlapping_Rangei(src, dst)) {
