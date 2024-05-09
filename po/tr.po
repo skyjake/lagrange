@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-04-25 23:55+0000\n"
+"PO-Revision-Date: 2024-05-10 12:09+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -456,7 +456,7 @@ msgid "heading.ident.notes"
 msgstr "Kimlik notlar"
 
 msgid "ident.fingerprint"
-msgstr "Parmak izini kopyala"
+msgstr "SHA-256 parmak izini kopyala"
 
 msgid "ident.delete"
 msgstr "Kimliği sil…"
@@ -517,7 +517,7 @@ msgid "dlg.cert.trust"
 msgstr "Güven"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Parmak izini kopyala"
+msgstr "Parmak izleri"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -2743,3 +2743,45 @@ msgstr "Adres"
 
 msgid "prefs.doctheme.name.vibrantlight"
 msgstr "Canlı ışık"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Bağlam menüsü"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Kenar çubuğu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Yeni sekme"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Bağı odakla"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "URL gir"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Bağlantı aç"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Menü çubuğu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Sekmeyi kapat"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Odakla"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Genel anahtarın SHA-256’sını kopyala"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Sertifikanın SHA-256’sını kopyala"
