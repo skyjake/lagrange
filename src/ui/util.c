@@ -4457,7 +4457,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         addDialogToggle_(headings, values, "${sitespec.tlscache}", "sitespec.tlscache");
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
-        as_Widget(palSeed)->rect.size.x = 60 * gap_UI;
+        as_Widget(palSeed)->rect.size.x = aspect_UI * 60 * gap_UI;
         arrange_Widget(dlg);
     }
     /* Initialize. */ {

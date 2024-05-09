@@ -189,8 +189,9 @@ void init_CertImportWidget(iCertImportWidget *d) {
         }
         addChild_Widget(w, iClob(page));
         arrange_Widget(w);
-        setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
-        setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+        const int boxHeight = isTerminal_Platform() ? 5 : 12;
+        setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * boxHeight));
+        setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * boxHeight));
         /* Buttons. */
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
         iWidget *buttons = makeDialogButtons_Widget(actions, iElemCount(actions));
