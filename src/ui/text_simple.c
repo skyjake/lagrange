@@ -286,7 +286,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             iAssert(wrap);
             const char *wrapPos = currentPos;
             int advance = x1 - orig.x;
-            if (lastWordEnd && wrap->mode == word_WrapTextMode) {
+            if (lastWordEnd && lastWordEnd > args->text.start && wrap->mode == word_WrapTextMode) {
                 wrapPos = skipSpace_CStr(lastWordEnd); /* go back */
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;

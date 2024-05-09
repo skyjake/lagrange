@@ -499,6 +499,9 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
         const int width = d->mode == word_WrapTextMode
                               ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
                               : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
+        if (endPos == text.start) {
+            break; /* too tight for even a single character */
+        }
         notify_WrapText(d, endPos, (iTextAttrib){ .fgColorId = color }, 0, width);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
         text.start = endPos;
