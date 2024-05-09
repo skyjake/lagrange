@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_video.h>
 
 extern const iMenuItem topLevelMenus_Window[7];
+size_t numWindowMenuItems_Window(void); /* number of items in an empty window menu */
 
 enum iWindowType {
     main_WindowType,

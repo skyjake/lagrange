@@ -73,8 +73,14 @@ iDefineTypeConstructionArgs(Window,
                             type, rect, flags)
 iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 
+#if defined (iPlatformPcDesktop) || defined (iPlatformTerminal)
+#   define LAGRANGE_PC_MENUS
+#endif
+
 static const iMenuItem fileMenuItems_[] = {
+#if defined (LAGRANGE_MULTIPLE_WINDOWS)
     { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
+#endif
     { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
@@ -85,12 +91,12 @@ static const iMenuItem fileMenuItems_[] = {
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---" },
     { "${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
-//    { "${menu.downloads}", 0, 0, "downloads.open" },
-//    { "${menu.export}", 0, 0, "export" },
-#if defined (iPlatformPcDesktop)
+#if defined (LAGRANGE_PC_MENUS)
     { "---" },
     { "${menu.preferences}", preferences_KeyShortcut, "preferences" },
+#if !defined (iPlatformTerminal)
     { "${menu.fonts}", 0, 0, "open newtab:1 switch:1 url:about:fonts" },
+#endif
 #if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
 #endif
@@ -160,16 +166,18 @@ static const iMenuItem windowMenuItems_[] = {
     { "${menu.tab.next}", 0, 0, "tabs.next" },
     { "${menu.tab.prev}", 0, 0, "tabs.prev" },
     { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
+#if !defined (iPlatformTerminal)
     { "---" },
     { "${menu.window.min}", 0, 0, "window.minimize" },
     { "${menu.window.max}", 0, 0, "window.maximize" },
     { "${menu.window.full}", 0, 0, "window.fullscreen" },
+#endif
     { "---" },
     { NULL }
 };
 
 static const iMenuItem helpMenuItems_[] = {
-#if defined (iPlatformPcDesktop)
+#if defined (LAGRANGE_PC_MENUS)
     { "${menu.help}", SDLK_F1, 0, "!open newtab:1 switch:1 url:about:help" },
 #else
     { "${menu.help}", 0, 0, "!open newtab:1 switch:1 url:about:help" },
@@ -178,7 +186,7 @@ static const iMenuItem helpMenuItems_[] = {
     { "---" },
     { "${menu.aboutpages}", 0, 0, "!open newtab:1 switch:1 url:about:about" },
     { "${menu.debug}", 0, 0, "!open newtab:1 switch:1 url:about:debug" },
-#if defined (iPlatformPcDesktop)
+#if defined (LAGRANGE_PC_MENUS)
     { "---" },
     { "${menu.aboutapp}", 0, 0, "!open newtab:1 switch:1 url:about:lagrange" },
 #endif
@@ -194,6 +202,10 @@ const iMenuItem topLevelMenus_Window[7] = {
     { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
     { "${menu.title.help}", 0, 0, (const void *) helpMenuItems_ },
 };
+
+size_t numWindowMenuItems_Window(void) {
+    return iElemCount(windowMenuItems_) - 1; /* don't count the terminal */
+}
 
 #if defined (LAGRANGE_MAC_MENUBAR)
 
