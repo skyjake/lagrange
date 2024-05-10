@@ -5269,7 +5269,7 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
 #endif
     iProcess *proc = new_Process();
     setArguments_Process(proc, iClob(newStringsCStr_StringList(
-#if defined (iPlatformAppleDesktop)
+#if defined (iPlatformAppleDesktop) || (defined (iPlatformTerminal) && defined (iPlatformApple))
         "/usr/bin/env",
         "open",
         cstr_String(url),
