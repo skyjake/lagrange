@@ -2812,7 +2812,7 @@ iBool moveFocusWithArrows_App(const void *sdlEvent) {
         setFocus_Widget(nextFocus);
         return iTrue;
     }
-    return iFalse;
+    return focusRoot_Widget(focus_Widget()) != get_Root()->widget;
 }
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
