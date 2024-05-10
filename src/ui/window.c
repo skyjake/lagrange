@@ -1372,7 +1372,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             /* If there is a priority handler for key events, offer the event to it first.
                This is similar to mouse grabbing, but the handler can refuse the event. */
             if (d->keyPriority && (event.type == SDL_KEYDOWN || event.type == SDL_KEYDOWN)) {
-                wasUsed = dispatchEvent_Widget(d->keyPriority, &event);
+                /* The event is processed directly by the widget only, not dispatched to
+                   the widget subtree. When dispatching, children still get priority. */
+                wasUsed = class_Widget(d->keyPriority)->processEvent(d->keyPriority, &event);
             }
             /* Dispatch the event to the tree of widgets. */
             if (!wasUsed) {

@@ -1378,6 +1378,7 @@ void begin_InputWidget(iInputWidget *d) {
     }
     updateTextInputRect_InputWidget_(d);
     updateVisible_InputWidget_(d);
+    window_Widget(w)->keyPriority = w;
 #endif
 }
 
@@ -1411,6 +1412,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     d->inFlags &= ~isMarking_InputWidgetFlag;
     deactivateInputMode_InputWidget_(d);
     startOrStopCursorTimer_InputWidget_(d, iFalse);
+    window_Widget(w)->keyPriority = NULL;
 #endif
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag | touchDrag_WidgetFlag, iFalse);
