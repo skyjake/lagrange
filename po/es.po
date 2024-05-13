@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2023-10-24 20:14+0000\n"
+"PO-Revision-Date: 2024-05-14 19:09+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -518,7 +518,7 @@ msgid "heading.ident.notes"
 msgstr "Notas Sobre Identidades"
 
 msgid "ident.fingerprint"
-msgstr "Copiar Huella Digital"
+msgstr "Copiar Huella Digital SHA-256"
 
 msgid "ident.delete"
 msgstr "Borrar Identidad…"
@@ -581,7 +581,7 @@ msgid "dlg.cert.trust"
 msgstr "Confianza"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Copiar Huella Digital"
+msgstr "Huellas Digitales"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -2736,3 +2736,45 @@ msgstr "Editar Fragmento"
 
 msgid "prefs.doctheme.name.vibrantlight"
 msgstr "Claro Vibrante"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Abrir Enlace"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Barra de Menú"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Barra Lateral"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Nueva Pestaña"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Cerrar Pestaña"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Enfocar Enlace"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Poner URL"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Menú Contextual"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Enfocar"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Copiar Clave Pública SHA-256"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Copiar Certificado SHA-256"
