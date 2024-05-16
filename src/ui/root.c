@@ -2000,7 +2000,7 @@ void createUserInterface_Root(iRoot *d) {
                 updateSize_LabelWidget(pageMenuButton);
             }
             /* Bookmark indicator. */ {
-                iLabelWidget *pin = new_LabelWidget(bookmark_Icon, "bookmark.add");
+                iLabelWidget *pin = new_LabelWidget(book_Icon, "bookmark.add");
                 setId_Widget(as_Widget(pin), "document.bookmarked");
                 setTextColor_LabelWidget(pin, uiTextAction_ColorId);
                 setBackgroundColor_Widget(as_Widget(pin), uiInputBackground_ColorId);
