@@ -60,6 +60,7 @@ void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /
 void    setLineLimits_InputWidget       (iInputWidget *, int minLines, int maxLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
 void    setHighlighter_InputWidget      (iInputWidget *, iInputWidgetHighlighterFunc highlighter, void *context);
+void    setArrowFocusNavigable_InputWidget(iInputWidget *, iBool arrowFocusNavigable);
 void    setLineBreaksEnabled_InputWidget(iInputWidget *, iBool lineBreaksEnabled);
 void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
 void    setOmitDefaultSchemeIfNarrow_InputWidget(iInputWidget *, iBool omitDefaultSchemeIfNarrow);

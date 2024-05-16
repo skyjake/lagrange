@@ -2431,6 +2431,10 @@ iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
 }
 
 void setFocus_Widget(iWidget *d) {
+    setFocusWithMethod_Widget(d, none_FocusMethod);
+}
+
+void setFocusWithMethod_Widget(iWidget *d, enum iFocusMethod method) {
     iWindow *win = d ? window_Widget(d) : get_Window();
     iAssert(win);
     if (win->focus != d) {
@@ -2445,7 +2449,12 @@ void setFocus_Widget(iWidget *d) {
         win->focus = d;
         if (d) {
             setKeyRoot_Window(get_Window(), d->root);
-            postCommand_Widget(d, "focus.gained");
+            if (method) {
+                postCommand_Widget(d, "focus.gained arg:%d", method);
+            }
+            else {
+                postCommand_Widget(d, "focus.gained");
+            }
         }
     }
 }

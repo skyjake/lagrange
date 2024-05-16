@@ -358,8 +358,14 @@ void        drawScrollIndicator_Widget  (const iWidget *, const iWidgetScrollInf
 
 int         backgroundFadeColor_Widget  (void);
 
+enum iFocusMethod {
+    none_FocusMethod,
+    arrowKeys_FocusMethod,
+};
+
 const iWidget *focusRoot_Widget     (const iWidget *);
 void        setFocus_Widget         (iWidget *); /* widget must be flagged `focusable` */
+void        setFocusWithMethod_Widget(iWidget *, enum iFocusMethod method);
 iWidget *   focus_Widget            (void);
 iBool       setHover_Widget         (iWidget *);
 iWidget *   hover_Widget            (void);

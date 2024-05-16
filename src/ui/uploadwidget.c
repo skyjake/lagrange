@@ -393,6 +393,9 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
             d->input = new_InputWidget(0);
             setId_Widget(as_Widget(d->input), "upload.text");
+            /* It would be annoying for focus to exit the widget accidentally when typing text.
+               One needs to use TAB to move focus. */
+            setArrowFocusNavigable_InputWidget(d->input, iFalse);
             setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI * aspectRatio, -1));
             if (prefs_App()->editorSyntaxHighlighting) {
                 setHighlighter_InputWidget(d->input, gemtextHighlighter_UploadWidget_, d);

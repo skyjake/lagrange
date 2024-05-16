@@ -2232,7 +2232,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (isFolder_Bookmark(bm)) {
                     contextMenu = d->folderMenu;
                 }
-                else if (!isVisible_Widget(d->menu)) {                    
+                else if (!isVisible_Widget(d->menu)) {
                     const iBool        isRemote        = (bm->flags & remote_BookmarkFlag) != 0;
                     static const char *localOnlyCmds[] = { "bookmark.edit",
                                                            "bookmark.delete",
@@ -2429,8 +2429,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         iString str;
         init_String(&str);
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
-        const int leftIndent = d->indent * gap_UI * 4;
-        const iRect iconArea = { addX_I2(pos, gap_UI + leftIndent),
+        const int leftIndent = d->indent * gap_UI * 4 * aspect_UI;
+        const iRect iconArea = { addX_I2(pos, aspect_UI * gap_UI + leftIndent),
                                  init_I2(!isTerminal_Platform() ? 1.75f * lineHeight_Text(font) : 5, itemHeight) };
         drawCentered_Text(font,
                           iconArea,
@@ -2444,7 +2444,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));
         const int metaFont = uiLabel_FontId;
-        const int metaIconWidth = 4.5f * gap_UI;
+        const int metaIconWidth = 4.5f * gap_UI * aspect_UI;
         if (isEditing) {
             iRect dragRect = {
                 addX_I2(topRight_Rect(itemRect), -itemHeight * 3 / 2),

@@ -2809,7 +2809,7 @@ iBool moveFocusWithArrows_App(const void *sdlEvent) {
                                                                           : none_Direction);
     if (nextFocus) {
         setCurrent_Window(window_Widget(focus_Widget()));
-        setFocus_Widget(nextFocus);
+        setFocusWithMethod_Widget(nextFocus, arrowKeys_FocusMethod);
         return iTrue;
     }
     return focusRoot_Widget(focus_Widget()) != get_Root()->widget;
