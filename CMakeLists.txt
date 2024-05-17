@@ -25,8 +25,8 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2024)
 if (IOS)
     set (PROJECT_VERSION 1.17)
-    set (IOS_BUNDLE_VERSION 9)
-    set (IOS_BUILD_DATE "2024-04-20")
+    set (IOS_BUNDLE_VERSION 10)
+    set (IOS_BUILD_DATE "2024-05-17")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.17)
@@ -341,10 +341,12 @@ if (IOS)
         src/ios.h
         app/Images.xcassets
         res/LaunchScreen.storyboard
+        res/PrivacyInfo.xcprivacy
     )
     set_source_files_properties(
         app/Images.xcassets
         res/LaunchScreen.storyboard
+        res/PrivacyInfo.xcprivacy
     PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
