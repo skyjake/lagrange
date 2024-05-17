@@ -2144,27 +2144,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
 #endif /* LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION */
                 iBool wasUsed = iFalse;
-                /* Focus navigation events take priority. */
-                if (!wasUsed) {
-                    /* Keyboard focus navigation with arrow keys. */
-                    if (ev.type == SDL_KEYDOWN && keyMods_Sym(ev.key.keysym.mod) == 0 && focus_Widget()) {
-                        if (moveFocusInsideMenu_App(&ev)) {
-                            wasUsed = iTrue;
-                        }
-                        else {
-                            const int key = ev.key.keysym.sym;
-                            if ((key == SDLK_DOWN || key == SDLK_UP || key == SDLK_LEFT ||
-                                 key == SDLK_RIGHT) &&
-                                /* some widgets handle arrow keys themselves: */
-                                !isInstance_Object(focus_Widget(), &Class_DocumentWidget) &&
-                                !isInstance_Object(focus_Widget(), &Class_ListWidget) &&
-                                !isInstance_Object(focus_Widget(), &Class_InputWidget) &&
-                                !isInstance_Object(focus_Widget(), &Class_LookupWidget)) {
-                                wasUsed = moveFocusWithArrows_App(&ev);
-                            }
-                        }
-                    }
-                }
                 /* Per-window processing. */
                 if (!wasUsed && (!isEmpty_PtrArray(&d->mainWindows) ||
                                  !isEmpty_PtrArray(&d->extraWindows))) {
@@ -2172,6 +2151,29 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     iConstForEach(PtrArray, iter, &windows) {
                         iWindow *window = iter.ptr;
                         setCurrent_Window(window);
+                        /* Focus navigation events take priority over regular processing. */
+                        /* Keyboard focus navigation with arrow keys. */
+                        if (focus_Widget() && ev.type == SDL_KEYDOWN &&
+                            keyMods_Sym(ev.key.keysym.mod) == 0) {
+                            if (moveFocusInsideMenu_App(&ev)) {
+                                wasUsed = iTrue;
+                            }
+                            else {
+                                const int key = ev.key.keysym.sym;
+                                if ((key == SDLK_DOWN || key == SDLK_UP || key == SDLK_LEFT ||
+                                     key == SDLK_RIGHT) &&
+                                    /* Some widgets handle arrow keys themselves: */
+                                    !isInstance_Object(focus_Widget(), &Class_DocumentWidget) &&
+                                    !isInstance_Object(focus_Widget(), &Class_ListWidget) &&
+                                    !isInstance_Object(focus_Widget(), &Class_InputWidget) &&
+                                    !isInstance_Object(focus_Widget(), &Class_LookupWidget)) {
+                                    wasUsed = moveFocusWithArrows_App(&ev);
+                                }
+                            }
+                        }
+                        if (wasUsed) {
+                            break;
+                        }
                         window->lastHover = window->hover;
                         wasUsed = processEvent_Window(window, &ev);
                         if (wasUsed) {
@@ -2184,13 +2186,16 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             }
                             break;
                         }
+                        if (!wasUsed && window == d->window) {
+                            /* Keybindings are handled after the frontmost window's widgets. */
+                            wasUsed = processEvent_Keys(&ev);
+                            if (wasUsed) {
+                                break;
+                            }
+                        }
                     }
                 }
                 setCurrent_Window(d->window);
-                if (!wasUsed) {
-                    /* There may be a key binding for this. */
-                    wasUsed = processEvent_Keys(&ev);
-                }
                 if (!wasUsed) {
                     /* Focus cycling. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB && current_Root()) {
