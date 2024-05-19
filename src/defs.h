@@ -223,7 +223,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define backArrow_Icon      "\U0001f870"
 #define forwardArrow_Icon   "\U0001f872"
 #define upArrow_Icon        "\U0001f871"
-#define upArrowBar_Icon     "\u2b71"
+#define upArrowBar_Icon     "\u2912"
 #define keyUpArrow_Icon     "\u2191"
 #define downArrow_Icon      "\U0001f873"
 #define downArrowBar_Icon   "\u2913"
