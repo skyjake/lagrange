@@ -548,7 +548,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 case SDLK_SPACE:
                     if (d->cursorItem != iInvalidPos) {
                         postCommand_Widget(w,
-                                           "list.clicked arg:%zu item:%p button:%d",
+                                           "list.clicked arg:%zu item:%p button:%d keyboard:1",
                                            d->cursorItem,
                                            constCursorItem_ListWidget(d),
                                            SDL_BUTTON_LEFT);
@@ -808,6 +808,9 @@ static void draw_ListWidget_(const iListWidget *d) {
     }
     unsetClip_Paint(&p);
     drawBorders_Widget(w); /* background overdraws the normal borders */
+    if (isEmpty_ListWidget(d) && isFocused_Widget(d)) {
+        drawRectThickness_Paint(&p, bounds, gap_UI / 4, uiTextAction_ColorId);
+    }
     drawChildren_Widget(w);
 }
 

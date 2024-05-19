@@ -157,7 +157,7 @@ static void itemClicked_CertListWidget_(iCertListWidget *d, iCertItem *item, siz
         updateContextMenu_CertListWidget_(d);
         arrange_Widget(d->menu);
         openMenuFlags_Widget(d->menu,
-                             bounds_Widget(w).pos.x < mid_Rect(rect_Root(w->root)).x
+                             bounds_Widget(w).pos.x < mid_Rect(rect_Root(w->root)).x /* on left side? */
                                  ? topRight_Rect(itemRect_ListWidget(&d->list, itemIndex))
                                  : addX_I2(topLeft_Rect(itemRect_ListWidget(&d->list, itemIndex)),
                                            -width_Widget(d->menu)),
