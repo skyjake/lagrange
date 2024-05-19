@@ -837,7 +837,7 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
                          isPinned_DocumentWidget_(d));
     const iBool isBookmarked = findBookmarkId_DocumentWidget(d) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
-    //setOutline_LabelWidget(bmPin, !isBookmarked);
+    setOutline_LabelWidget(bmPin, !isBookmarked);
     setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiTextDim_ColorId);
 }
 
