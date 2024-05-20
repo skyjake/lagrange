@@ -17,7 +17,7 @@ Changes and enhancements:
 * Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
 * Menubar: When opened via keyboard, reopen the most recently opened menu instead of "File".
 * The Return key is now a (hardcoded) keyboard shortcut for focusing the navbar URL field.
-* Page Information: clarified meaning of "fingerprint". The type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
+* Page Information: Clarified meaning of "fingerprint". The type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
 * Updated UI symbols for "Go to Root", remote bookmarks, and the navbar bookmark indicator/button.
 * Noto Emoji font updated to support Unicode 15.1.
 * TUI: Often needed keyboard shortcuts are shown in place of menubar when the menubar is inactive, to make the UI more approachable.
