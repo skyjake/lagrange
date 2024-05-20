@@ -12,11 +12,27 @@ New features:
 * Opus audio playback using libopusfile. (Contributed by Martin Chang.)
 
 Changes and enhancements:
-* Clarified meaning of "fingerprint" in Page Information: the type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
+* The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
+* Improved UI focus navigation: arrow keys move focus to an adjacent widget.
+* Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
+* Menubar: When opened via keyboard, reopen the most recently opened menu instead of "File".
+* The Return key is now a (hardcoded) keyboard shortcut for focusing the navbar URL field.
+* Page Information: clarified meaning of "fingerprint". The type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
+* Updated UI symbols for "Go to Root", remote bookmarks, and the navbar bookmark indicator/button.
+* Noto Emoji font updated to support Unicode 15.1.
+* TUI: Often needed keyboard shortcuts are shown in place of menubar when the menubar is inactive, to make the UI more approachable.
+* TUI: Improved UI layout, targeting a minimum resolution of 80x25.
+* TUI: Improved text-mode rendering of various widgets.
 
 Fixes:
+* Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
+* Incorrect event handling order with multiple windows when there is a focused widget.
 * macOS: Navigating with trackpad on a non-focused window would cause the navigation to occur in another window, if the other window had focus.
+* Missing focus indication in empty lists and the Snippets list.
 * Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
+* TUI: Color escapes were not applied when rendering.
+* TUI: Submenu chevron symbols were missing.
+* TUI: Potential hang when wrapping text.
 
 ## 1.17.6
 * Fixed memory leak: fetched pages were not always released from memory (reference miscount).
