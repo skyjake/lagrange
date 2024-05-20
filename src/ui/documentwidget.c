@@ -57,6 +57,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "visbuf.h"
 #include "visited.h"
+#include "window.h"
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
@@ -2668,6 +2669,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     return iTrue;
                 }
             }
+            SDL_RaiseWindow(window_Widget(w)->win); /* ensure events handled by the right window */
             d->flags |= swipeBegun_DocumentWidgetFlag;
             postCommand_Widget(d, side == 1 ? "navigate.back swipe:1" : "navigate.forward swipe:1");
         }

@@ -15,6 +15,7 @@ Changes and enhancements:
 * Clarified meaning of "fingerprint" in Page Information: the type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
 
 Fixes:
+* macOS: Navigating with trackpad on a non-focused window would cause the navigation to occur in another window, if the other window had focus.
 * Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
 
 ## 1.17.6
