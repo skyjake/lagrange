@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.17 (10)
+* Added the now-required app privacy manifest.
+
 ## 1.17 (9)
 * Fixed selection markers jumping around when trying to drag them.
 * Fixed scrolling speed when dragging selection markers. Sometimes the view jumped to the top/bottom of the page.
