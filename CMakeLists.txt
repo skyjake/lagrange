@@ -50,6 +50,7 @@ endif ()
 # Build configuration.
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_GUI              "Build the GUI application" ON)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ${DEFAULT_IDLE_SLEEP})
 option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
@@ -382,14 +383,6 @@ else ()
     endif ()
 endif ()
 
-# Target.
-if (NOT ANDROID)
-    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
-else ()
-    # The whole app becomes one shared library, based on this static one.
-    add_library (app SHARED ${SOURCES})
-endif ()
-
 macro (set_common_app_properties target)
     set_property (TARGET ${target} PROPERTY C_STANDARD 11)
     if (TARGET ext-deps)
@@ -433,15 +426,151 @@ macro (set_common_app_properties target)
     endif ()
 endmacro ()
 
-set_common_app_properties (app)
-set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
-target_compile_options (app PUBLIC
-    -DLAGRANGE_ENABLE_AUDIO=1
-    -DSTB_VORBIS_NO_STDIO=1
-    -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
-)
-if (APPLE AND NOT MOBILE)
-    target_compile_definitions (app PUBLIC -DiPlatformAppleDesktop=1)
+if (ENABLE_GUI)
+    if (NOT ANDROID)
+        add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
+    else ()
+        # The whole app becomes one shared library, based on this static one.
+        add_library (app SHARED ${SOURCES})
+    endif ()
+
+    set_common_app_properties (app)
+    set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
+    target_compile_options (app PUBLIC
+        -DLAGRANGE_ENABLE_AUDIO=1
+        -DSTB_VORBIS_NO_STDIO=1
+        -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
+    )
+    if (APPLE AND NOT MOBILE)
+        target_compile_definitions (app PUBLIC -DiPlatformAppleDesktop=1)
+    endif ()
+    if (ENABLE_CUSTOM_FRAME AND MSYS)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
+    endif ()
+    if (ENABLE_KERNING)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
+    endif ()
+    if (ENABLE_MAC_MENUS)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MAC_MENUS=1)
+    endif ()
+    if (ENABLE_POPUP_MENUS)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_POPUP_MENUS=1)
+    endif ()
+    if (ENABLE_RESIZE_DRAW)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_RESIZE_DRAW=1)
+    endif ()
+    if (ENABLE_STB_TRUETYPE)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_STB_TRUETYPE=1)
+    endif ()
+    if (ENABLE_MPG123 AND MPG123_FOUND)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MPG123=1)
+        target_link_libraries (app PUBLIC PkgConfig::MPG123)
+    endif ()
+    if (ENABLE_OPUS AND OPUSFILE_FOUND)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_OPUS=1)
+        target_link_libraries (app PUBLIC PkgConfig::OPUSFILE)
+    endif ()
+    if (ENABLE_WEBP AND WEBP_FOUND)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WEBP=1)
+        if (TARGET PkgConfig::WEBP)
+            target_link_libraries (app PUBLIC PkgConfig::WEBP)
+        else ()
+            target_link_libraries (app PUBLIC ${WEBP_LIBRARIES})
+            target_include_directories (app PUBLIC ${WEBP_INCLUDE_DIRS})
+        endif ()
+    endif ()
+    if (ENABLE_WINDOWPOS_FIX)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
+    endif ()
+    if (TARGET x11-lib)
+        target_link_libraries (app PUBLIC x11-lib)
+    endif ()
+    if (ENABLE_X11_SWRENDER)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
+    endif ()
+    target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
+    target_compile_options (app PUBLIC ${SDL2_CFLAGS})
+    target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+    if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
+        if (TARGET harfbuzz-lib)
+            target_link_libraries (app PUBLIC harfbuzz-lib)
+        else ()
+            target_link_libraries (app PUBLIC ${HARFBUZZ_LIBRARIES})
+            target_include_directories (app PUBLIC ${HARFBUZZ_INCLUDE_DIRS})
+        endif ()
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_HARFBUZZ=1)
+    endif ()
+    if (ENABLE_FRIBIDI AND FRIBIDI_FOUND)
+        if (TARGET fribidi-lib)
+            target_link_libraries (app PUBLIC fribidi-lib)
+        else ()
+            target_link_libraries (app PUBLIC ${FRIBIDI_LIBRARIES})
+            target_include_directories (app PUBLIC ${FRIBIDI_INCLUDE_DIRS})
+        endif ()
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)
+    endif ()
+    if (APPLE)
+        if (IOS)
+            target_link_libraries (app PUBLIC "-framework UIKit")
+        else ()
+            target_link_libraries (app PUBLIC "-framework AppKit")
+        endif ()
+        if (ENABLE_SPARKLE)
+            target_link_libraries (app PUBLIC sparkle)
+        endif ()
+        if (SDL2_LIBRARY_DIRS)
+            set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
+        endif ()
+        set_target_properties (app PROPERTIES
+            OUTPUT_NAME "Lagrange"
+            MACOSX_BUNDLE YES
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
+            MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"
+            MACOSX_BUNDLE_INFO_STRING "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_ICON_FILE "Lagrange.icns"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.lagrange"
+            MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
+        )
+        if (IOS)
+            target_compile_definitions (app PUBLIC
+                LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
+                LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
+            )
+            set_target_properties (app PROPERTIES
+                MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
+                MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"
+                XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+                XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
+                XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+                XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)" # fix missing dSYM issue
+                MACOSX_BUNDLE_ICON_FILE "AppIcon"
+            )
+        endif ()
+        if (XCODE_DEVELOPMENT_TEAM)
+            set_property (TARGET app PROPERTY
+                XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
+            )
+        endif ()
+    endif ()
+    if (ANDROID)
+        if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+            target_compile_options (app PUBLIC -mfpu=neon-vfpv4) # 32-bit stb_image_resize2
+        endif ()
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
+            LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
+        )
+    endif ()
+    if (MSYS)
+        target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
+        if (ENABLE_WINSPARKLE)
+            target_link_libraries (app PUBLIC winsparkle)
+        endif ()
+    endif ()
 endif ()
 
 if (ENABLE_TUI)
@@ -454,173 +583,44 @@ if (ENABLE_TUI)
     elseif (TARGET sealcurses)
         target_link_libraries (tuiapp PUBLIC sealcurses)
     else ()
-        target_include_directories (app PUBLIC ${SEALCURSES_INCLUDE_DIRS})
-        target_compile_options (app PUBLIC ${SEALCURSES_CFLAGS})
-        target_link_libraries (app PUBLIC ${SEALCURSES_LDFLAGS})
+        target_include_directories (tuiapp PUBLIC ${SEALCURSES_INCLUDE_DIRS})
+        target_compile_options (tuiapp PUBLIC ${SEALCURSES_CFLAGS})
+        target_link_libraries (tuiapp PUBLIC ${SEALCURSES_LDFLAGS})
     endif ()
     set_common_app_properties (tuiapp)
 endif ()
 
-if (ENABLE_CUSTOM_FRAME AND MSYS)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
-endif ()
-if (ENABLE_KERNING)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
-endif ()
-if (ENABLE_MAC_MENUS)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MAC_MENUS=1)
-endif ()
-if (ENABLE_POPUP_MENUS)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_POPUP_MENUS=1)
-endif ()
-if (ENABLE_RESIZE_DRAW)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_RESIZE_DRAW=1)
-endif ()
-if (ENABLE_STB_TRUETYPE)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_STB_TRUETYPE=1)
-endif ()
-if (ENABLE_MPG123 AND MPG123_FOUND)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MPG123=1)
-    target_link_libraries (app PUBLIC PkgConfig::MPG123)
-endif ()
-if (ENABLE_OPUS AND OPUSFILE_FOUND)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_OPUS=1)
-    target_link_libraries (app PUBLIC PkgConfig::OPUSFILE)
-endif ()
-if (ENABLE_WEBP AND WEBP_FOUND)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WEBP=1)
-    if (TARGET PkgConfig::WEBP)
-        target_link_libraries (app PUBLIC PkgConfig::WEBP)
-    else ()
-        target_link_libraries (app PUBLIC ${WEBP_LIBRARIES})
-        target_include_directories (app PUBLIC ${WEBP_INCLUDE_DIRS})
-    endif ()
-endif ()
-if (ENABLE_WINDOWPOS_FIX)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
-endif ()
-if (TARGET x11-lib)
-    target_link_libraries (app PUBLIC x11-lib)
-endif ()
-if (ENABLE_X11_SWRENDER)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
-endif ()
-target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
-target_compile_options (app PUBLIC ${SDL2_CFLAGS})
-target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
-if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
-    if (TARGET harfbuzz-lib)
-        target_link_libraries (app PUBLIC harfbuzz-lib)
-    else ()
-        target_link_libraries (app PUBLIC ${HARFBUZZ_LIBRARIES})
-        target_include_directories (app PUBLIC ${HARFBUZZ_INCLUDE_DIRS})
-    endif ()
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_HARFBUZZ=1)
-endif ()
-if (ENABLE_FRIBIDI AND FRIBIDI_FOUND)
-    if (TARGET fribidi-lib)
-        target_link_libraries (app PUBLIC fribidi-lib)
-    else ()
-        target_link_libraries (app PUBLIC ${FRIBIDI_LIBRARIES})
-        target_include_directories (app PUBLIC ${FRIBIDI_INCLUDE_DIRS})
-    endif ()
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)
-endif ()
-if (APPLE)
-    if (IOS)
-        target_link_libraries (app PUBLIC "-framework UIKit")
-    else ()
-        target_link_libraries (app PUBLIC "-framework AppKit")
-    endif ()
-    if (ENABLE_SPARKLE)
-        target_link_libraries (app PUBLIC sparkle)
-    endif ()
-    if (SDL2_LIBRARY_DIRS)
-        set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
-    endif ()
-    set_target_properties (app PROPERTIES
-        OUTPUT_NAME "Lagrange"
-        MACOSX_BUNDLE YES
-        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
-        MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"
-        MACOSX_BUNDLE_INFO_STRING "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_ICON_FILE "Lagrange.icns"
-        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.lagrange"
-        MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
-        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
-    )
-    if (IOS)
-        target_compile_definitions (app PUBLIC
-            LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
-            LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
-        )
-        set_target_properties (app PROPERTIES
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
-            MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"
-            XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
-            XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
-            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
-            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-            XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)" # fix missing dSYM issue
-            MACOSX_BUNDLE_ICON_FILE "AppIcon"
-        )
-    endif ()
-    if (XCODE_DEVELOPMENT_TEAM)
-        set_property (TARGET app PROPERTY
-            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
-        )
-    endif ()
-endif ()
-if (ANDROID)
-    if (CMAKE_SIZEOF_VOID_P EQUAL 4)
-        target_compile_options (app PUBLIC -mfpu=neon-vfpv4) # 32-bit stb_image_resize2
-    endif ()
-    target_compile_definitions (app PUBLIC
-        LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
-        LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
-    )
-endif ()
-if (MSYS)
-    target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
-    if (ENABLE_WINSPARKLE)
-        target_link_libraries (app PUBLIC winsparkle)
-    endif ()
-endif ()
-#if (UNIX)
-#    target_link_libraries (app PUBLIC m)
-#endif ()
-
 # Deployment.
 if (MSYS)
-    install (TARGETS app DESTINATION .)
+    if (TARGET app)
+        install (TARGETS app DESTINATION .)
+        install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
+    endif ()
     if (TARGET PkgConfig::MPG123)
         install (PROGRAMS ${MPG123_LIBDIR}/../bin/msys-mpg123-0.dll DESTINATION .)
     endif ()
     install (FILES ${EMB_BIN} DESTINATION .)
-    install (PROGRAMS
-        ${SDL2_LIBDIR}/SDL2.dll
-        res/urlopen.bat
-        DESTINATION .
-    )
+    install (PROGRAMS res/urlopen.bat DESTINATION .)
     if (INSTALL_THE_FOUNDATION)
         install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
     endif ()
 elseif (HAIKU)
-    install (TARGETS app DESTINATION .)
-    target_compile_definitions (app PUBLIC
-        LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
+    if (TARGET app)
+        install (TARGETS app DESTINATION .)
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
+    endif ()
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
     file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
-    set_target_properties (app PROPERTIES
-        INSTALL_RPATH_USE_LINK_PATH YES
-    )
-    set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
-    file (WRITE ${desktop} "[Desktop Entry]
+    if (TARGET app)
+        set_target_properties (app PROPERTIES
+            INSTALL_RPATH_USE_LINK_PATH YES
+        )
+        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
+        file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 GenericName=Gemini Client
 Comment=${PROJECT_DESCRIPTION}
@@ -632,20 +632,21 @@ StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
 ")
-    install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
-    install (FILES res/lagrange-256.png
-         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
-         RENAME fi.skyjake.Lagrange.png
-    )
-    install (FILES res/fi.skyjake.Lagrange.appdata.xml
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
-    )
-    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-    if (NOT ENABLE_RELATIVE_EMBED)
-        target_compile_definitions (app PUBLIC
-                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
+        install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
+        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+        install (FILES res/lagrange-256.png
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+            RENAME fi.skyjake.Lagrange.png
+        )
+        install (FILES res/fi.skyjake.Lagrange.appdata.xml
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
+        )
+        if (NOT ENABLE_RELATIVE_EMBED)
+            target_compile_definitions (app PUBLIC
+                    LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
+        endif ()
     endif ()
+    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
     install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
 endif ()
 
