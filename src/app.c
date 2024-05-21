@@ -109,9 +109,8 @@ static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
-#endif
 
-#if defined (iPlatformAndroidMobile)
+#elif defined (iPlatformAndroidMobile)
 #define EMB_BIN "resources.lgr" /* loaded from assets with SDL_rwops */
 static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
 
@@ -722,11 +721,12 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
     }
     /* The default window rectangle. */
     iRect rect = init_Rect(-1, -1, 900, 560);
-#if defined (iPlatformMsys)
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformMsys)
     /* Must scale by UI scaling factor. */
     mulfv_I2(&rect.size, desktopDPI_Win32());
-#endif
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
+#   endif
+#   if defined (iPlatformLinux) && !defined (iPlatformAndroid)
     /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
@@ -734,6 +734,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
         const float factor = vdpi / 96.0f;
         mulfv_I2(&rect.size, iMax(factor, 1.0f));
     }
+#   endif
 #endif
     return rect;
 }
@@ -2256,18 +2257,20 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
-#if defined (iPlatformAppleDesktop)
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
-#endif
-#if defined (iPlatformAndroidMobile)
+#   endif
+#   if defined (iPlatformAndroidMobile)
                     handleCommand_Android(command_UserEvent(&ev));
-#endif
-#if defined (iPlatformMsys)
+#   endif
+#   if defined (iPlatformMsys)
                     handleCommand_Win32(command_UserEvent(&ev));
-#endif
-#if defined (LAGRANGE_ENABLE_X11_XLIB)
+#   endif
+#   if defined (LAGRANGE_ENABLE_X11_XLIB)
                     handleCommand_X11(command_UserEvent(&ev));
-#endif
+#   endif
+#endif /* !defined (iPlatformTerminal )*/
                     if (isMetricsChange_UserEvent(&ev)) {
                         listWindows_App_(d, &windows);
                         iConstForEach(PtrArray, iter, &windows) {

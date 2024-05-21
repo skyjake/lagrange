@@ -22,6 +22,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+
+#include <the_Foundation/path.h>
+#include <the_Foundation/sortedarray.h>
+
+#if !defined (iPlatformTerminal)
+
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <d2d1.h>
@@ -32,8 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "prefs.h"
 #include "app.h"
 
-#include <the_Foundation/path.h>
-#include <the_Foundation/sortedarray.h>
 #include <SDL_syswm.h>
 
 static HWND windowHandle_(SDL_Window *win) {
@@ -244,27 +248,6 @@ float desktopDPI_Win32(void) {
     return ratio;
 }
 
-iString *windowsDirectory_Win32(void) {
-    WCHAR winDir[MAX_PATH];
-    GetWindowsDirectoryW(winDir, MAX_PATH);
-    return newUtf16_String(winDir);
-}
-
-iString *tempDirectory_Win32(void) {
-    /* Calling GetTempPathW would just return C:\WINDOWS? A local config issue? */
-    WCHAR buf[32768];
-    if (GetEnvironmentVariableW(L"TMP", buf, sizeof(buf))) {
-        return newUtf16_String(buf);
-    }
-    if (GetEnvironmentVariableW(L"TEMP", buf, sizeof(buf))) {
-        return newUtf16_String(buf);
-    }
-    if (GetEnvironmentVariableW(L"USERPROFILE", buf, sizeof(buf))) {
-        return concatCStr_Path(collect_String(newUtf16_String(buf)), "AppData\\Local\\Temp");
-    }
-    return concatCStr_Path(collect_String(windowsDirectory_Win32()), "Temp");
-}
-
 void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     HINSTANCE handle = GetModuleHandle(NULL);
     HICON icon = LoadIcon(handle, "IDI_ICON1");
@@ -434,3 +417,26 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
     }
 }
 #endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
+
+#endif /* !defined (iPlatformTerminal) */
+
+iString *windowsDirectory_Win32(void) {
+    WCHAR winDir[MAX_PATH];
+    GetWindowsDirectoryW(winDir, MAX_PATH);
+    return newUtf16_String(winDir);
+}
+
+iString *tempDirectory_Win32(void) {
+    /* Calling GetTempPathW would just return C:\WINDOWS? A local config issue? */
+    WCHAR buf[32768];
+    if (GetEnvironmentVariableW(L"TMP", buf, sizeof(buf))) {
+        return newUtf16_String(buf);
+    }
+    if (GetEnvironmentVariableW(L"TEMP", buf, sizeof(buf))) {
+        return newUtf16_String(buf);
+    }
+    if (GetEnvironmentVariableW(L"USERPROFILE", buf, sizeof(buf))) {
+        return concatCStr_Path(collect_String(newUtf16_String(buf)), "AppData\\Local\\Temp");
+    }
+    return concatCStr_Path(collect_String(windowsDirectory_Win32()), "Temp");
+}

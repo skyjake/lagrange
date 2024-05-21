@@ -45,13 +45,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
-#if defined (iPlatformAppleDesktop)
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformAppleDesktop)
     enableMomentumScroll_MacOS();
     registerURLHandler_MacOS();
-#endif
-#if defined (iPlatformMsys)
+#   endif
+#   if defined (iPlatformMsys)
     init_Win32(); /* DPI awareness, dark mode */
     SDL_SetMainReady(); /* MSYS runtime takes care of WinMain. */
+#   endif
 #endif
     /* Initialize libraries. */
 #if defined (LAGRANGE_ENABLE_MPG123)
