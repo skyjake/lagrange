@@ -1440,7 +1440,10 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
                     iString *query = collectNewRange_String((iRangecc){ snip.end, constEnd_String(text) });
                     trim_String(query);
                     set_String(query, collect_String(urlEncode_String(query)));
-                    prependCStr_String(query, "?");
+                    if (!contains_String(content, '?')) {
+                        /* substition may already have the beginning of a query */
+                        prependCStr_String(query, "?");
+                    }
                     prepend_String(query, content);
                     setText_InputWidget(d, query);
                 }

@@ -25,6 +25,7 @@ Changes and enhancements:
 * TUI: Improved text-mode rendering of various widgets.
 
 Fixes:
+* Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
 * Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
 * Incorrect event handling order with multiple windows when there is a focused widget.
 * macOS: Navigating with trackpad on a non-focused window would cause the navigation to occur in another window, if the other window had focus.
