@@ -1756,7 +1756,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.button,
                            ev->button.x,
                            ev->button.y);
-        return iFalse;
+        return isMobile_Platform(); /* on mobile, consume missed taps to prevent accidental input */
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) &&
         contains_Rect(rect_Root(d->root), mouseCoord_SDLEvent(ev))) {
