@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.17 (11)
+* Page zoom pinch gesture has a short trigger delay to avoid accidental zooming.
+* Fixed a link being opened inadvertently after the link's context menu is dismissed (by tapping outside the menu or by selecting "Cancel").
+
 ## 1.17 (10)
 * Added the now-required app privacy manifest.
 
