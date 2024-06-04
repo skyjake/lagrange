@@ -8,6 +8,7 @@
 
 ## 1.17 (11)
 * Page zoom pinch gesture has a short trigger delay to avoid accidental zooming.
+* Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
 * Fixed a link being opened inadvertently after the link's context menu is dismissed (by tapping outside the menu or by selecting "Cancel").
 
 ## 1.17 (10)
