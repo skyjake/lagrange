@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2023-10-24 20:14+0000\n"
+"PO-Revision-Date: 2024-06-19 15:05+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -263,7 +263,7 @@ msgid "dlg.ident.notes"
 msgstr "Забелешке о %s:"
 
 msgid "ident.fingerprint"
-msgstr "Копирај отисак"
+msgstr "Копирај SHA-256 отисак"
 
 msgid "ident.delete"
 msgstr "Обриши идентитет…"
@@ -315,7 +315,7 @@ msgid "dlg.cert.trust"
 msgstr "Укажи поверење"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Копирај отисак"
+msgstr "Отисци"
 
 msgid "dlg.input.send"
 msgstr "Пошаљи"
@@ -2741,3 +2741,45 @@ msgstr "Уређивање исечка"
 
 msgid "prefs.doctheme.name.vibrantlight"
 msgstr "Јарка светла"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Контексни мени"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Нова картица"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Фокусирање везе"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Унесите УРЛ"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Отварање везе"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Мени"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Панел"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Затвори картицу"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Фокус"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Копирај SHA-256 јавног кључа"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Копирај SHA-256 сертификата"
