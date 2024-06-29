@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2024-05-10 12:09+0000\n"
+"PO-Revision-Date: 2024-06-30 21:08+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -57,7 +57,7 @@ msgid "bookmark.delete"
 msgstr "Remover li marca-págine"
 
 msgid "ident.fingerprint"
-msgstr "Copiar li fingre-print"
+msgstr "Copiar li fingre-print SHA-256"
 
 msgid "pageinfo.cert.notexpired"
 msgstr "Ne expirat"
@@ -526,7 +526,7 @@ msgid "dlg.cert.trust"
 msgstr "Fide"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Copiar li fingre-print"
+msgstr "Fingre-printes"
 
 msgid "dlg.input.send"
 msgstr "Inviar"
@@ -2737,3 +2737,7 @@ msgstr "Copiar li SHA-256 del public clave"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Copiar li SHA-256 del certificate"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "A ligament"
