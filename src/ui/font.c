@@ -429,7 +429,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
     }
 #if 0
     const int *logToVis = constData_Array(&d->logicalToVisual);
-    printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
+    printf("[AttributedText] fnt:%d %zu runs:\n", fontId_Text(d->baseFont), size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
         printf("  %zu %s fnt:%d(%c:%s) log:%d...%d vis:%d...%d {%s}\n",
