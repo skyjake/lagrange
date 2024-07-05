@@ -2229,6 +2229,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     return iTrue;
                 }
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), hoverItem->id);
+                if (!bm) {
+                    return iTrue;
+                }
                 if (isFolder_Bookmark(bm)) {
                     contextMenu = d->folderMenu;
                 }
