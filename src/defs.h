@@ -265,12 +265,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define circleWhite_Icon    "\u25cb"
 #define gear_Icon           "\u2699"
 #define explosion_Icon      "\U0001f4a5"
-#define leftAngle_Icon      "\U0001fba4"
-#if defined (iPlatformTerminal)
-#   define rightAngle_Icon  "\u27e9"
-#else
-#   define rightAngle_Icon  "\U0001fba5"
-#endif
+#define leftAngle_Icon      "\u27e8"
+#define rightAngle_Icon     "\u27e9"
 #define planet_Icon         "\U0001fa90"
 #define info_Icon           "\u2139"
 #define bug_Icon            "\U0001f41e"
