@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-01-16 08:37+0000\n"
+"PO-Revision-Date: 2024-07-05 22:03+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -364,7 +364,7 @@ msgid "dlg.ident.notes"
 msgstr "%s(r)i buruzko oharrak:"
 
 msgid "ident.fingerprint"
-msgstr "Kopiatu hatzmarka"
+msgstr "Kopiatu SHA-256 hatzmarka"
 
 msgid "heading.ident.delete"
 msgstr "Ezabatu identitatea"
@@ -639,9 +639,8 @@ msgstr "Zerrendatu laster-markak sorrera-dataren arabera"
 msgid "macos.menu.bookmarks.bytime"
 msgstr "Zerrendatu sorrera-dataren arabera"
 
-#, fuzzy
 msgid "menu.feeds.entrylist"
-msgstr "Erakutsi jarioaren sarrerak"
+msgstr "Erakutsi jarioen sarrerak"
 
 msgid "menu.update"
 msgstr "Bilatu eguneraketak…"
@@ -772,7 +771,7 @@ msgid "feeds.entry.markbelowread"
 msgstr "Markatu beheragokoak irakurrita gisa"
 
 msgid "feeds.entry.openfeed"
-msgstr "Ireki jarioaren orria"
+msgstr "Ireki jarioen orria"
 
 msgid "feeds.markallread"
 msgstr "Markatu guztia irakurri gisa"
@@ -842,7 +841,7 @@ msgid "pageinfo.cert.expired"
 msgstr "Iraungia"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Kopiatu hatzmarka"
+msgstr "Hatzmarkak"
 
 msgid "sitespec.tlscache"
 msgstr "Berrekin TLS saioari:"
@@ -1409,7 +1408,7 @@ msgid "dlg.newident.date.past"
 msgstr "Iraungitze data etorkizunekoa izan behar da."
 
 msgid "heading.feedcfg"
-msgstr "Jarioaren ezarpenak"
+msgstr "Jarioen ezarpenak"
 
 msgid "dlg.feed.entrytype"
 msgstr "Sarrera mota:"
@@ -1545,7 +1544,7 @@ msgid "keys.upload.edit"
 msgstr "Editatu orria Titanekin"
 
 msgid "keys.feeds.showall"
-msgstr "Alboko barra: Erakutsi jarioko sarrera guztiak"
+msgstr "Alboko barra: Erakutsi jarioaren sarrera guztiak"
 
 msgid "error.badstatus"
 msgstr "Egoera-kode ezezaguna"
@@ -1599,9 +1598,8 @@ msgid "numbertype.integer"
 msgstr "osoa"
 
 # Used in about:feeds.
-#, fuzzy
 msgid "feeds.list.title"
-msgstr "Jarioaren sarrerak"
+msgstr "Jarioen sarrerak"
 
 #, c-format
 msgid "feeds.list.refreshtime"
@@ -1648,7 +1646,7 @@ msgid "toolbar.outline"
 msgstr "Orriaren egitura"
 
 msgid "status.query"
-msgstr "Bilaketa kontsulta"
+msgstr "Bilaketa-kontsulta"
 
 #, c-format
 msgid "ident.usedonurls"
@@ -1838,7 +1836,7 @@ msgid "prefs.downloads"
 msgstr "Deskargen karpeta:"
 
 msgid "prefs.searchurl"
-msgstr "Bilaketa URLa:"
+msgstr "Bilaketaren URLa:"
 
 msgid "prefs.imageloadscroll"
 msgstr "Kargatu irudiak korritu ahala:"
@@ -1985,7 +1983,7 @@ msgid "keys.upload"
 msgstr "Igo Titanekin"
 
 msgid "keys.feeds.showunread"
-msgstr "Alboko barra: Erakutsi jarioko irakurri gabeko sarrerak"
+msgstr "Alboko barra: Erakutsi jarioaren irakurri gabeko sarrerak"
 
 msgid "error.badresource.msg"
 msgstr "Baliabidea ez dago."
@@ -2211,8 +2209,8 @@ msgstr "Falta diren glifoak"
 
 msgid "error.glyphs.msg"
 msgstr ""
-"Orria ez da bere osotasunean erakusten karaktere batzuk falta direlako. "
-"Letra-tipo gehigarriak instala ditzakezu arazoa konpontzeko."
+"Ezin izan da orria bere osotasunean erakutsi karaktere batzuk falta "
+"direlako. Letra-tipo gehigarriak instala ditzakezu arazoa konpontzeko."
 
 msgid "gempub.meta.author"
 msgstr "Egilea"
@@ -2507,9 +2505,8 @@ msgstr "Ireki esteka aldatzaile tekla baten bidez"
 msgid "keys.split.item"
 msgstr "Ikuspegia banatzeko menua:"
 
-#, fuzzy
 msgid "error.schemeredirect"
-msgstr "Eskema aldaketaren birbideraketa"
+msgstr "Eskema aldatu duen birbideraketa"
 
 msgid "error.schemeredirect.msg"
 msgstr ""
@@ -2536,9 +2533,8 @@ msgstr "Ziur \"%s\" letra-tipo paketea behin-betiko ezabatu nahi duzula?"
 msgid "dlg.fontpack.delete"
 msgstr "Ezabatu letra-tipo paketea"
 
-#, fuzzy
 msgid "prefs.redirect.allowscheme"
-msgstr "Eskema aldatzen duen birbideraketak:"
+msgstr "Eskema aldatzen duten birbideraketak:"
 
 msgid "keys.link.homerow"
 msgstr "Ireki esteka erdiko errenkadako teklak erabiliz"
@@ -2653,7 +2649,7 @@ msgid "prefs.accent.system"
 msgstr "Sistemak darabilena"
 
 msgid "prefs.feedinterval"
-msgstr "Jarioaren freskatze-tartea:"
+msgstr "Jarioen freskatze-tartea:"
 
 msgid "prefs.feedinterval.manual"
 msgstr "Eskuz"
@@ -2757,3 +2753,45 @@ msgstr "Erdiko errenkadako teklen esteken hurrengo multzoa"
 
 msgid "keys.split.menu"
 msgstr "Ezarri ikuspegia banatzeko modua"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Ireki esteka"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Menu-barra"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Albo-barra"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Fitxa berria"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Itxi fitxa"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Fokatu esteka"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Sartu URLa"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Fokatu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Testuinguru-menua"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Kopiatu gako publikoaren SHA-256a"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Kopiatu ziurtagiriaren SHA-256a"
