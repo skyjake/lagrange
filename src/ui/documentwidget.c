@@ -2455,7 +2455,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                               body_GmRequest(req->req),
                               allowHide_MediaFlag);
                 redoLayout_GmDocument(d->view->doc);
-                iZap(d->view->visibleRuns); /* pointers invalidated */
+                documentRunsInvalidated_DocumentWidget(d);
                 updateVisible_DocumentView(d->view);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));

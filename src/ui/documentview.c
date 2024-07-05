@@ -373,6 +373,14 @@ void updateHoverLinkInfo_DocumentView(iDocumentView *d) {
     updateHoverLinkInfo_DocumentWidget(d->owner, d->hoverLink ? d->hoverLink->linkId : 0);
 }
 
+static void unhover_DocumentView_(iDocumentView *d) {
+    if (d->hoverLink) {
+        invalidateLink_DocumentView(d, d->hoverLink->linkId);
+        d->hoverLink = NULL;
+        updateHoverLinkInfo_DocumentView(d);
+    }
+}
+
 void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d->owner);
     const iRect    docBounds    = documentBounds_DocumentView(d);
@@ -487,6 +495,7 @@ int updateScrollMax_DocumentView(iDocumentView *d) {
 void updateVisible_DocumentView(iDocumentView *d) {
     const int scrollMax = updateScrollMax_DocumentView(d);
     aboutToScrollView_DocumentWidget(d->owner, scrollMax); /* TODO: A widget may have many views. */
+    unhover_DocumentView_(d);
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
     clear_PtrArray(&d->visiblePre);
