@@ -31,6 +31,7 @@ Fixes:
 * macOS: Navigating with trackpad on a non-focused window would cause the navigation to occur in another window, if the other window had focus.
 * Missing focus indication in empty lists and the Snippets list.
 * Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
+* Incorrect glyph spacing in a mixed-font preformatted block (fallback glyphs from different fonts).
 * TUI: Color escapes were not applied when rendering.
 * TUI: Submenu chevron symbols were missing.
 * TUI: Potential hang when wrapping text.
