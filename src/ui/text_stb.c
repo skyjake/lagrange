@@ -278,6 +278,7 @@ struct Impl_StbText {
     iText          base;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
     int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */
+    iFontSpec      iosevkaFallback; /* copy of Iosevka as a low-priority spec */
     iArray         fontPriorityOrder;
     SDL_Texture *  cache;
     iInt2          cacheSize;
@@ -346,6 +347,16 @@ static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback)
     return spec ? spec : findSpec_Fonts(fallback);
 }
 
+static const iFont *findFontVariant_StbText_(const iStbText *d, const iFontSpec *spec) {
+    for (size_t i = 0; i < size_Array(&d->fonts); i += maxVariants_Fonts) {
+        const iFont *font = constAt_Array(&d->fonts, i);
+        if (font->font.spec == spec) {
+            return font;
+        }
+    }
+    return NULL;
+}
+
 static void initFonts_StbText_(iStbText *d) {
     /* The `fonts` array has precomputed scaling factors and other parameters in all sizes
        and styles for each available font. Indices to `fonts` act as font runtime IDs. */
@@ -366,6 +377,17 @@ static void initFonts_StbText_(iStbText *d) {
             const int fontId = size_Array(&d->fonts);
             resize_Array(&d->fonts, fontId + maxVariants_Fonts);
             setupFontVariants_StbText_(d, spec, fontId);
+        }
+    }
+    /* If Iosevka is not the monospace font, add it as a fallback variant because it has a good
+       coverage of symbols. */ {
+        const iFontSpec *iosevka = findSpec_Fonts("iosevka"); /* this is expected to be built-in */
+        if (iosevka && !findFontVariant_StbText_(d, iosevka)) {
+            d->iosevkaFallback = *iosevka;
+            d->iosevkaFallback.priority = 50; /* make it pretty important */
+            const int fontId = size_Array(&d->fonts);
+            resize_Array(&d->fonts, fontId + maxVariants_Fonts);
+            setupFontVariants_StbText_(d, &d->iosevkaFallback, fontId);
         }
     }
     sort_Array(&d->fontPriorityOrder, cmp_PrioMapItem_);
@@ -619,12 +641,12 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
 #if 0
             printf("using '%s' (pr:%d) for %lc (%x) => %d  [missing in '%s']\n",
-                   cstr_String(&font->fontSpec->id),
-                   font->fontSpec->priority,
+                   cstr_String(&font->font.spec->id),
+                   font->font.spec->priority,
                    (int) ch,
                    ch,
                    glyphIndex_Font_(font, ch),
-                   cstr_String(&d->fontSpec->id));
+                   cstr_String(&d->font.spec->id));
 #endif
                 return font;
             }
