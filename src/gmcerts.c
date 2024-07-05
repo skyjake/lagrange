@@ -147,6 +147,7 @@ iBool isUsed_GmIdentity(const iGmIdentity *d) {
 }
 
 iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
+    if (!d || !url) return iFalse;
 #if 0
     size_t pos = iInvalidPos;
     locate_StringSet(d->useUrls, url, &pos);
