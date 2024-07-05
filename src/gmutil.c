@@ -259,9 +259,9 @@ iRangecc urlUser_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
     iRegExpMatch m;
-    init_RegExpMatch(&m);
     iRangecc found = iNullRange;
     iForIndices(i, userPats_) {
+        init_RegExpMatch(&m);
         if (matchRange_RegExp(userPats_[i], url.path, &m)) {
             found = capturedRange_RegExpMatch(&m, 1);
         }
