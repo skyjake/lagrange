@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2024-01-18 05:14+0000\n"
+"PO-Revision-Date: 2024-06-06 04:42+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -627,7 +627,7 @@ msgid "heading.ident.notes"
 msgstr "Notas da identidade"
 
 msgid "ident.fingerprint"
-msgstr "Copiar impresión dixital"
+msgstr "Copiar impresión dixital SHA-256"
 
 msgid "ident.delete"
 msgstr "Eliiminar identidade…"
@@ -697,7 +697,7 @@ msgid "dlg.cert.trust"
 msgstr "Confiar"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Copiar impresión dixital"
+msgstr "Impresións dixitais"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -2733,3 +2733,37 @@ msgstr "Editar Atallo"
 
 msgid "prefs.doctheme.name.vibrantlight"
 msgstr "Claro Vibrante"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Abrir ligazón"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Menú"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Menú lateral"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Pechar pestana"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Copiar a SHA-256 da Chave Pública"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Escribe URL"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Menú contextual"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Nova pestana"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Copiar a SHA-256 do Certificado"

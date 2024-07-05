@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2023-10-24 20:14+0000\n"
-"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"PO-Revision-Date: 2024-06-30 21:08+0000\n"
+"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -404,7 +404,7 @@ msgid "dlg.ident.notes"
 msgstr "Заметки о %s:"
 
 msgid "ident.fingerprint"
-msgstr "Скопировать отпечаток"
+msgstr "Скопировать отпечаток SHA-256"
 
 msgid "ident.delete"
 msgstr "Удалить клиентский сертификат…"
@@ -479,7 +479,7 @@ msgid "dlg.cert.trust"
 msgstr "Доверять"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Скопировать отпечаток"
+msgstr "Отпечатки"
 
 msgid "dlg.input.prompt"
 msgstr "Введите данные для %s:"
@@ -1892,7 +1892,7 @@ msgstr "Моноширинный шрифт:"
 msgid "error.glyphs.msg"
 msgstr ""
 "Эта страница отображена не полностью, так как некоторые символы отсутствуют. "
-"Установите дополнительные шрифты, чтобы исправить эту проблему."
+"Можно установить дополнительные шрифты, чтобы это исправить."
 
 msgid "truetype.help"
 msgstr ""
@@ -2715,3 +2715,45 @@ msgstr "Адрес"
 
 msgid "error.showutf8"
 msgstr "Автоматически определен UTF-8"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Открыть"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Меню"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Гл. меню"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Бок. панель"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "+ Вкладка"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Фокус"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Копировать SHA-256 открытого ключа"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Копировать SHA-256 сертификата"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Адрес"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Закрыть"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "На ссылку"
