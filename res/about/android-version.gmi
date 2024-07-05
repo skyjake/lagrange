@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.17 (Beta 29)
+* Fixed various potential (rare) crashes.
+* Fixed selection of monospaced fallback glyphs.
+* Fixed spacing on mixed-font monospaced text lines.
+* Updated UI translations.
+
 ## 1.17 (Beta 28)
 * Page zoom pinch gesture has a short trigger delay to avoid accidental zooming.
 * Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
