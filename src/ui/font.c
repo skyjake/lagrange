@@ -432,10 +432,12 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
     printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
-        printf("  %zu %s fnt:%d log:%d...%d vis:%d...%d {%s}\n",
+        printf("  %zu %s fnt:%d(%c:%s) log:%d...%d vis:%d...%d {%s}\n",
                index_ArrayConstIterator(&i),
                run->attrib.isRTL ? "<-" : "->",
-               fontId_Text_(run->font),
+               fontId_Text(run->font),
+               isMonospaced_Font(run->font) ? 'M' : 'v',
+               cstr_String(&run->font->spec->name),
                run->logical.start, run->logical.end - 1,
                logToVis[run->logical.start], logToVis[run->logical.end - 1],
                cstr_Rangecc(sourceRange_AttributedText_(d, run->logical)));

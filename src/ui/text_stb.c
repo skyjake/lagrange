@@ -588,8 +588,11 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if (isVariationSelector_Char(ch)) {
         return d;
     }
-    const enum iFontStyle styleId = styleId_Text_(d);
-    const enum iFontSize  sizeId  = sizeId_Text_(d);
+
+    const enum iFontStyle styleId      = styleId_Text_(d);
+    const enum iFontSize  sizeId       = sizeId_Text_(d);
+    const iBool           isMonospaced = isMonospaced_Font(d);
+
     iFont *overrideFont = NULL;
     if (ch != 0x20 && current_StbText_()->overrideFontId >= 0) {
         /* Override font is checked first. */
@@ -602,14 +605,18 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
-    /* As a fallback, check all other available fonts of this size in priority order. */
-    iConstForEach(Array, i, &current_StbText_()->fontPriorityOrder) {
-        iFont *font = font_Text_(FONT_ID(((const iPrioMapItem *) i.value)->fontIndex,
-                                         styleId, sizeId));
-        if (font == d || font == overrideFont) {
-            continue; /* already checked this one */
-        }
-        if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
+    for (int preferMonospaced = isMonospaced ? 1 : 0; preferMonospaced >= 0; preferMonospaced--) {
+        /* As a fallback, check all other available fonts of this size in priority order. */
+        iConstForEach(Array, i, &current_StbText_()->fontPriorityOrder) {
+            iFont *font = font_Text_(FONT_ID(((const iPrioMapItem *) i.value)->fontIndex,
+                                             styleId, sizeId));
+            if (font == d || font == overrideFont) {
+                continue; /* already checked this one */
+            }
+            if (preferMonospaced && !isMonospaced_Font(font)) {
+                continue;
+            }
+            if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
 #if 0
             printf("using '%s' (pr:%d) for %lc (%x) => %d  [missing in '%s']\n",
                    cstr_String(&font->fontSpec->id),
@@ -619,7 +626,8 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
                    glyphIndex_Font_(font, ch),
                    cstr_String(&d->fontSpec->id));
 #endif
-            return font;
+                return font;
+            }
         }
     }
     if (!*glyphIndex) {
