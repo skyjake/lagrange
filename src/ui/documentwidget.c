@@ -689,6 +689,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         /* Not part of the UI at the moment. */
         return;
     }
+    setTranslation_LabelWidget(tabButton, iFalse); /* using content from page */
     if (d->flags & waitForIdle_DocumentWidgetFlag) {
         updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
         return;

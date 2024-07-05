@@ -59,6 +59,7 @@ struct Impl_LabelWidget {
         uint16_t truncateToFit       : 1;
         uint16_t menuCanceling       : 1;
         uint16_t noLabel             : 1;
+        uint16_t untranslated        : 1;
     } flags;
 };
 
@@ -696,7 +697,9 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 }
 
 static void replaceVariables_LabelWidget_(iLabelWidget *d) {
-    translate_Lang(&d->label);
+    if (!d->flags.untranslated) {
+        translate_Lang(&d->label);
+    }
     if (d->flags.allCaps) {
         set_String(&d->label, collect_String(upperLang_String(&d->label, code_Lang())));
     }
@@ -807,6 +810,10 @@ void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
     d->flags.wrap = wrap;
+}
+
+void setTranslation_LabelWidget(iLabelWidget *d, iBool translation) {
+    d->flags.untranslated = !translation;
 }
 
 void setTruncateToFit_LabelWidget (iLabelWidget *d, iBool truncateToFit) {
