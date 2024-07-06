@@ -384,7 +384,7 @@ static void initFonts_StbText_(iStbText *d) {
         const iFontSpec *iosevka = findSpec_Fonts("iosevka"); /* this is expected to be built-in */
         if (iosevka && !findFontVariant_StbText_(d, iosevka)) {
             d->iosevkaFallback = *iosevka;
-            d->iosevkaFallback.priority = 50; /* make it pretty important */
+            d->iosevkaFallback.priority = 20; /* make it pretty important */
             const int fontId = size_Array(&d->fonts);
             resize_Array(&d->fonts, fontId + maxVariants_Fonts);
             setupFontVariants_StbText_(d, &d->iosevkaFallback, fontId);
@@ -993,7 +993,8 @@ static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont)
         const hb_glyph_info_t *info = d->glyphInfo + i;
         if (d->glyphPos[i].x_advance > 0 && d->font != baseFont) {
             const iChar ch = d->logicalText[info->cluster];
-            if (ch == 0x20 || isPictograph_Char(ch) || isEmoji_Char(ch)) {
+            if (ch == 0x20 || isPictograph_Char(ch) || isEmoji_Char(ch) ||
+                (ch >= 0x1fb00 && ch <= 0x1fbff /* legacy computing */)) {
                 const float dw = d->font->xScale * d->glyphPos[i].x_advance - (isEmoji_Char(ch) ? 2 : 1) * monoAdvance;
                 d->glyphPos[i].x_offset  -= dw / 2 / d->font->xScale - 1;
                 d->glyphPos[i].x_advance -= dw     / d->font->xScale - 1;
