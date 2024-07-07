@@ -1,5 +1,5 @@
 # Lagrange - A Beautiful Gemini Client
-# Copyright: 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright: 2020-2024 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # Notes:
 # - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
@@ -30,8 +30,8 @@ if (IOS)
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.17)
-    set (ANDROID_BUILD_VERSION b29)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2024-07-05")
+    set (ANDROID_BUILD_VERSION b30)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2024-07-07")
 endif ()
 
 # Load modules from the source tree
