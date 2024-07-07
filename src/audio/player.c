@@ -364,7 +364,7 @@ static int readOpus_(void *stream, unsigned char *ptr, int nbytes) {
     return n;
 }
 
-static int seekOpus_(void *stream, ogg_int64_t offset, int whence) {
+static int seekOpus_(void *stream, opus_int64 offset, int whence) {
     iDecoder     *d     = stream;
     const iBlock *input = &d->input->data;
     const size_t  avail = size_Block(input);
