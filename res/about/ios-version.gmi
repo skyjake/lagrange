@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.17 (13)
+* Fixed looking up glyphs from the bundled Iosevka font when another monospace font is configured as the default.
+* Fixed spacing of Legacy Computing symbols on mixed-font monospace lines.
+
 ## 1.17 (12)
 * Fixed various potential (rare) crashes.
 * Fixed selection of monospaced fallback glyphs.
