@@ -9,7 +9,7 @@
 ## 1.18
 
 New features:
-* Opus audio playback using libopusfile. (Contributed by Martin Chang.)
+* Opus audio playback using libopusfile (optional dependency). Contributed by Martin Chang.
 
 Changes and enhancements:
 * The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
