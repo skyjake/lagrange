@@ -659,6 +659,21 @@ if (TARGET tuiapp)
             include (GNUInstallDirs)
         endif ()
         install (TARGETS tuiapp DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.clagrange.desktop)
+        file (WRITE ${desktop} "[Desktop Entry]
+Name=clagrange
+GenericName=Gemini Client
+Comment=${PROJECT_DESCRIPTION}
+Categories=Network;
+Exec=${CMAKE_INSTALL_PREFIX}/bin/clagrange %U
+Terminal=true
+Type=Application
+StartupWMClass=clagrange
+Icon=fi.skyjake.Lagrange
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
+")
+        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
     endif ()
     if (RESOURCES_LGR_PATH)
         target_compile_definitions (tuiapp PUBLIC
