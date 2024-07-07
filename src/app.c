@@ -115,8 +115,9 @@ static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange"
 static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
 
 #elif defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
-#define EMB_BIN  "../../share/lagrange/resources.lgr"
+#define EMB_BIN   "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"
+#define EMB_BIN3  "../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 
@@ -1184,6 +1185,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (EMB_BIN2) /* alternative location */
             concatPath_CStr(execPath, EMB_BIN2),
+#endif
+#if defined (EMB_BIN3) /* another alternative location */
+            concatPath_CStr(execPath, EMB_BIN3),
 #endif
             concatPath_CStr(execPath, EMB_BIN),
             "resources.lgr" /* cwd */
