@@ -670,10 +670,14 @@ Exec=${CMAKE_INSTALL_PREFIX}/bin/clagrange %U
 Terminal=true
 Type=Application
 StartupWMClass=clagrange
-Icon=fi.skyjake.Lagrange
+Icon=fi.skyjake.clagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
 ")
         install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+        install (FILES res/lagrange-256.png
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+            RENAME fi.skyjake.clagrange.png
+        )
     endif ()
     if (RESOURCES_LGR_PATH)
         target_compile_definitions (tuiapp PUBLIC
