@@ -66,6 +66,7 @@ option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround f
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 option (ENABLE_X11_XLIB         "Use Xlib directly, if available (X11)" ON)
 set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
+set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check when searching 'resources.lgr'")
 
 # Optional dependencies.
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
@@ -659,7 +660,10 @@ if (TARGET tuiapp)
         endif ()
         install (TARGETS tuiapp DESTINATION ${CMAKE_INSTALL_BINDIR})
     endif ()
-    if (NOT ENABLE_RELATIVE_EMBED)
+    if (RESOURCES_LGR_PATH)
+        target_compile_definitions (tuiapp PUBLIC
+                LAGRANGE_EMB_BIN="${RESOURCES_LGR_PATH}/resources.lgr")
+    elseif (NOT ENABLE_RELATIVE_EMBED)
         target_compile_definitions (tuiapp PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
     endif ()

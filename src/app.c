@@ -1177,7 +1177,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Load the resources from a file. Check the executable directory first, then a
        system-wide location, and as a final fallback, the current working directory. */ {
         const char *execPath = cstr_String(execPath_App());
-        printf("Executable path: %s\n", execPath);
         const char *paths[] = {
             concatPath_CStr(execPath, EMB_BIN_EXEC), /* first the executable's directory */
 #if defined (LAGRANGE_EMB_BIN) /* specified in build config (absolute path) */
