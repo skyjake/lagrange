@@ -2199,6 +2199,7 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
     setBackupFileName_InputWidget(input, "inputbackup");
     setSelectAllOnFocus_InputWidget(input, iTrue);
     setSensitiveContent_InputWidget(input, isSensitive);
+    setArrowFocusNavigable_InputWidget(input, iFalse);
     return dlg;
 }
 
