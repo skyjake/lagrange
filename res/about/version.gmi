@@ -25,6 +25,9 @@ Changes and enhancements:
 * TUI: Improved text-mode rendering of various widgets.
 
 Fixes:
+* Titan URLs were incorrectly opening the upload dialog when navigating through history.
+* Titan request in an open tab was resubmitted with empty content when launching the app.
+* Gopher: Allow port number to be blank on `i` lines.
 * Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
 * Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
 * Incorrect event handling order with multiple windows when there is a focused widget.
@@ -32,6 +35,7 @@ Fixes:
 * Missing focus indication in empty lists and the Snippets list.
 * Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
 * Incorrect glyph spacing in a mixed-font preformatted block (fallback glyphs from different fonts).
+* Lede paragraph highlighting was misbehaving with monospace body font; now gets disabled.
 * TUI: Color escapes were not applied when rendering.
 * TUI: Submenu chevron symbols were missing.
 * TUI: Potential hang when wrapping text.
