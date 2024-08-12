@@ -104,7 +104,7 @@ static void setPre_Gopher_(iGopher *d, iBool pre) {
 static iBool convertSource_Gopher_(iGopher *d) {
     iBool    converted = iFalse;
     iRangecc body      = range_Block(&d->source);
-    iRegExp *pattern   = new_RegExp("(.)([^\t]*)\t([^\t]*)\t([^\t]*)\t([0-9]+)", 0);
+    iRegExp *pattern   = new_RegExp("(.)([^\t]*)\t([^\t]*)\t([^\t]*)\t([0-9]+)?", 0);
     for (;;) {
         /* Find the end of the line. */
         iRangecc line = { body.start, body.start };
@@ -149,7 +149,7 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     format_String(buf,
                                   "=> gopher://%s:%s/%c%s %s\n",
                                   cstr_Rangecc(domain),
-                                  cstr_Rangecc(port),
+                                  isEmpty_Range(&port) ? "70" : cstr_Rangecc(port),
                                   lineType,
                                   cstrCollect_String(
                                       urlEncodeExclude_String(collectNewRange_String(path), "/%")),
