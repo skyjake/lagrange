@@ -5450,18 +5450,18 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     }
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
-    if (isTitanUrl_String(url)) {
-        if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
+    if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
+        if (isTitanUrl_String(url)) {
             /* Just a blank page for Titan requests. Normally the content returned via Titan
                is passed to DocumentWidget via `takeRequest_DocumentWidget`. */
             setUrlAndSource_DocumentWidget(
                 d, url, collectNewCStr_String("text/gemini"), collect_Block(newCStr_Block("")), 0);
         }
-    }
-    else if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
-        fetch_DocumentWidget_(d);
-        if (setIdent) {
-            setIdentity_History(d->mod.history, setIdent);
+        else {
+            fetch_DocumentWidget_(d);
+            if (setIdent) {
+                setIdentity_History(d->mod.history, setIdent);
+            }
         }
     }
 }
