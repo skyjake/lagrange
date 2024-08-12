@@ -514,6 +514,10 @@ iBool isLikelyUrl_String(const iString *d) {
     return likelyUrl;
 }
 
+iBool isTitanUrl_String(const iString *d) {
+    return equalCase_Rangecc(urlScheme_String(d), "titan");
+}
+
 static iBool equalPuny_(const iString *d, iRangecc orig) {
     if (!endsWith_String(d, "-")) {
         return iFalse; /* This is a sufficient condition? */

@@ -4330,8 +4330,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
                           urlArg);
         return iTrue;
     }
-    iString    *url     = collectNewCStr_String(urlArg);
-    const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
+    iString    *url       = collectNewCStr_String(urlArg);
+    const iBool noProxy   = argLabel_Command(cmd, "noproxy") != 0;
+    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     iUrl parts;
     init_Url(&parts, url);
     if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
@@ -4347,16 +4348,18 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     if (equalCase_Rangecc(parts.scheme, "titan")) {
-        iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
-        setUrl_UploadWidget(upload, url);
-        setResponseViewer_UploadWidget(upload, document_App());
-        addChild_Widget(get_Root()->widget, iClob(upload));
-        setupSheetTransition_Mobile(as_Widget(upload), iTrue);
-        /* User can resize the upload dialog. */
-        setResizeId_Widget(as_Widget(upload), "upload");
-        restoreWidth_Widget(as_Widget(upload));
-        postRefresh_Window(get_Window());
-        return iTrue;
+        if (!isHistory) {
+            iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
+            setUrl_UploadWidget(upload, url);
+            setResponseViewer_UploadWidget(upload, document_App());
+            addChild_Widget(get_Root()->widget, iClob(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+            /* User can resize the upload dialog. */
+            setResizeId_Widget(as_Widget(upload), "upload");
+            restoreWidth_Widget(as_Widget(upload));
+            postRefresh_Window(get_Window());
+            return iTrue;
+        }
     }
     if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
         ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
@@ -4395,7 +4398,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setCurrent_Root(root); /* need to change for widget creation */
         doc = document_Command(cmd); /* may be different */
     }
-    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     /* If not opening in a new tab, we must not domains/roots accidentally. */
     if (!isHistory &&
         isIdentityPinned_DocumentWidget(doc) &&

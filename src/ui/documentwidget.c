@@ -1622,6 +1622,9 @@ static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
+    if (isTitanUrl_String(d->mod.url)) {
+        return iFalse; /* don't fetch Titan URLs from here, only through UploadWidget */
+    }
     postCommandf_Root(as_Widget(d)->root,
                       "document.request.started doc:%p url:%s",
                       d,
@@ -1835,6 +1838,15 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
             /* We now have a cached document. */
             setCachedDocument_History(d->mod.history, d->view->doc);
         }
+        return iTrue;
+    }
+    else if (isTitanUrl_String(d->mod.url)) {
+        /* We must not refetch Titan URLs because that would cause an empty upload. */
+        setUrlAndSource_DocumentWidget(d,
+                                       d->mod.url,
+                                       collectNewCStr_String("text/gemini"),
+                                       collect_Block(newCStr_Block("")),
+                                       0);
         return iTrue;
     }
     else if (!isEmpty_String(d->mod.url)) {
@@ -5438,7 +5450,15 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     }
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
-    if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
+    if (isTitanUrl_String(url)) {
+        if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
+            /* Just a blank page for Titan requests. Normally the content returned via Titan
+               is passed to DocumentWidget via `takeRequest_DocumentWidget`. */
+            setUrlAndSource_DocumentWidget(
+                d, url, collectNewCStr_String("text/gemini"), collect_Block(newCStr_Block("")), 0);
+        }
+    }
+    else if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
         fetch_DocumentWidget_(d);
         if (setIdent) {
             setIdentity_History(d->mod.history, setIdent);

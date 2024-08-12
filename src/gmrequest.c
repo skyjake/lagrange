@@ -747,7 +747,7 @@ void setIdentity_GmRequest(iGmRequest *d, const iGmIdentity *id) {
 }
 
 static iBool isTitan_GmRequest_(const iGmRequest *d) {
-    return equalCase_Rangecc(urlScheme_String(&d->url), "titan");
+    return isTitanUrl_String(&d->url);
 }
 
 void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
