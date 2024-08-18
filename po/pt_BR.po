@@ -1,3 +1,20 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2024-08-19 14:09+0000\n"
+"PO-Revision-Date: 2024-08-19 14:09+0000\n"
+"Last-Translator: Gabriel de Oliveira Ferreira Machado <goliv04053@tutanota."
+"com>\n"
+"Language-Team: Portuguese (Brazil) <http://weblate.skyjake.fi/projects/"
+"lagrange/ui/pt_BR/>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "cancel"
 msgstr "Cancelar"
 
@@ -46,3 +63,6 @@ msgstr "Deletar favorito"
 
 msgid "dlg.translate.unavail"
 msgstr "Serviço indisponível"
+
+msgid "media.untitled.image"
+msgstr "Imagem"
