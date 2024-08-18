@@ -13,6 +13,7 @@ New features:
 
 Changes and enhancements:
 * The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
+* The file path can be entered manually in the upload dialog. Previously only drag-and-drop was supported.
 * Improved UI focus navigation: arrow keys move focus to an adjacent widget.
 * Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
 * Menubar: When opened via keyboard, reopen the most recently opened menu instead of "File".
@@ -27,6 +28,7 @@ Changes and enhancements:
 Fixes:
 * Titan URLs were incorrectly opening the upload dialog when navigating through history.
 * Titan request in an open tab was resubmitted with empty content when launching the app.
+* Upload dialog was missing a couple of UI strings for drag-and-drop errors.
 * Gopher: Allow port number to be blank on `i` lines.
 * Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
 * Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
