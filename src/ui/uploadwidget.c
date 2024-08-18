@@ -70,6 +70,7 @@ struct Impl_UploadWidget {
     iLabelWidget *   ident;
     iInputWidget *   input;
     iLabelWidget *   filePathLabel;
+    iInputWidget *   filePathInput;
     iLabelWidget *   fileSizeLabel;
     iLabelWidget *   counter;
     iString          filePath;
@@ -78,6 +79,8 @@ struct Impl_UploadWidget {
     iBlock           idFingerprint;
     iAtomicInt       isRequestUpdated;
 };
+
+static void filePathValidator_UploadWidget_(iInputWidget *, void *);
 
 static void releaseFile_UploadWidget_(iUploadWidget *d) {
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
@@ -189,9 +192,11 @@ iLabelWidget *makeIdentityDropdown_LabelWidget(iWidget *headings, iWidget *value
 
 static void updateFieldWidths_UploadWidget(iUploadWidget *d) {
     if (d->protocol == titan_UploadProtocol) {
+        const int width =
+            width_Widget(d->tabs) - 3 * gap_UI - left_Rect(parent_Widget(d->mime)->rect);
         setFixedSize_Widget(as_Widget(d->path),  init_I2(width_Widget(d->tabs) - width_Widget(d->info), -1));
-        setFixedSize_Widget(as_Widget(d->mime),  init_I2(width_Widget(d->tabs) - 3 * gap_UI -
-                                                         left_Rect(parent_Widget(d->mime)->rect), -1));
+        setFixedSize_Widget(as_Widget(d->filePathInput), init_I2(width, -1));
+        setFixedSize_Widget(as_Widget(d->mime), init_I2(width, -1));
         setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(d->tabs) -
                                                          left_Rect(parent_Widget(d->token)->rect), -1));
         setFixedSize_Widget(as_Widget(d->ident), init_I2(width_Widget(d->token), -1));
@@ -249,6 +254,8 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     d->request = NULL;
     init_String(&d->filePath);
     d->fileSize = 0;
+    d->filePathLabel = NULL;
+    d->filePathInput = NULL;
     d->idMode = defaultForSite_UploadIdentity;
     init_Block(&d->idFingerprint, 0);
     const iMenuItem actions[] = {
@@ -406,8 +413,12 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         /* File content. */ {
             iWidget *page = appendTwoColumnTabPage_Widget(d->tabs, "${heading.upload.file}", none_ColorId, '2', &headings, &values);
             setBackgroundColor_Widget(page, uiBackgroundSidebar_ColorId);
-            addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)), frameless_WidgetFlag);
-            d->filePathLabel = addChildFlags_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)), frameless_WidgetFlag);
+            iWidget *heading;
+            addChildFlags_Widget(headings, heading = iClob(new_LabelWidget("${upload.file.path}", NULL)), frameless_WidgetFlag | alignLeft_WidgetFlag);
+            d->filePathInput = addChildFlags_Widget(values, iClob(new_InputWidget(0)), 0);
+            heading->sizeRef = as_Widget(d->filePathInput);
+            setHint_InputWidget(d->filePathInput, "${upload.file.drophere}");
+            setValidator_InputWidget(d->filePathInput, filePathValidator_UploadWidget_, d);
             addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
             d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
             if (d->protocol == titan_UploadProtocol) {
@@ -608,6 +619,10 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
         d->fileSize = 0;
         return;
     }
+    if (!exists_FileInfo(info)) {
+        setTextCStr_LabelWidget(d->filePathLabel, "");
+        return;
+    }
     d->fileSize = size_FileInfo(info);
     if (isMobile_Platform()) {
         setTextCStr_LabelWidget(d->filePathLabel, cstr_Rangecc(baseName_Path(&d->filePath)));
@@ -617,6 +632,20 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
     }
     setTextCStr_LabelWidget(d->fileSizeLabel, formatCStrs_Lang("num.bytes.n", d->fileSize));
     setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
+}
+
+static void filePathValidator_UploadWidget_(iInputWidget *input, void *context) {
+    iUploadWidget *d = context;
+    iFileInfo *info = new_FileInfo(text_InputWidget(input));
+    if (exists_FileInfo(info) && !isDirectory_FileInfo(info)) {
+        set_String(&d->filePath, text_InputWidget(input));
+        updateFileInfo_UploadWidget_(d);
+    }
+    else {
+        clear_String(&d->filePath);
+        setTextCStr_LabelWidget(d->fileSizeLabel, "");
+    }
+    iRelease(info);
 }
 
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
@@ -734,6 +763,9 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
             isText = (currentPanelIndex_Mobile(w) == 0);
+        }
+        if (!isText && !fileExists_FileInfo(&d->filePath)) {
+            return iTrue;
         }
         /* Make a GmRequest and send the data. */
         iAssert(d->request == NULL);
@@ -874,8 +906,11 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         iWidget *tabs = findChild_Widget(w, "upload.tabs");
         showTabPage_Widget(tabs, tabPage_Widget(tabs, 1));
         releaseFile_UploadWidget_(d);
+        if (d->filePathInput) {
+            setTextCStr_InputWidget(d->filePathInput, ev->drop.file);
+        }
         setCStr_String(&d->filePath, ev->drop.file);
-        updateFileInfo_UploadWidget_(d);
+        filePathValidator_UploadWidget_(d->filePathInput, d);
         return iTrue;
     }
     return processEvent_Widget(w, ev);
