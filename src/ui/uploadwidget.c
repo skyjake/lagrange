@@ -621,7 +621,7 @@ static void editContentProgress_UploadWidget_(void *obj, iGmRequest *req) {
 
 static void editContentFetched_UploadWidget_(void *obj, iGmRequest *req) {
     postCommand_Widget(obj, "upload.fetch.progressed arg:%u", bodySize_GmRequest(req));
-    sleep_Thread(0.250); /* short delay to see the final update */
+    sleep_Thread(0.100); /* short delay to see the final update */
     postCommand_Widget(obj, "upload.fetched reqid:%u", id_GmRequest(req));
 }
 
@@ -716,6 +716,9 @@ static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t 
             icon  = error->icon;
             title = error->title;
             msg   = error->info;
+            if (category_GmStatusCode(status_GmRequest(req)) >= categoryTemporaryFailure_GmStatusCode) {
+                title = cstr_String(meta_GmRequest(req));
+            }
         }
         setWrap_LabelWidget(d->editLabel, iTrue);
         updateText_LabelWidget(d->editLabel,
