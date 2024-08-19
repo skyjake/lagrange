@@ -2036,26 +2036,30 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.next") || equal_Command(cmd, "tabs.prev")) {
         unfocusFocusInsideTabPage_(currentTabPage_Widget(tabs));
-        iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-        int tabIndex = 0;
+        iWidget *pages    = findChild_Widget(tabs, "tabs.pages");
+        iWidget *buttons  = findChild_Widget(tabs, "tabs.buttons");
+        int      tabIndex = 0;
         iConstForEach(ObjectList, i, pages->children) {
             const iWidget *child = constAs_Widget(i.object);
             if (isVisible_Widget(child)) break;
             tabIndex++;
         }
         const int dir = (equal_Command(cmd, "tabs.next") ? +1 : -1);
-        /* If out of tabs, rotate to the next set of tabs if one is available. */
+        /* If out of tabs, rotate to the next set of tabs if one is available.
+           However, don't do this if the tabs are inside a sheet or dialog. */
         if ((tabIndex == 0 && dir < 0) || (tabIndex == childCount_Widget(pages) - 1 && dir > 0)) {
-            iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
-                                                 "doctabs");
-            iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
-            if (nextPages) {
-                tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
-                showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
-                postCommand_App("keyroot.next");
+            if (focusRoot_Widget(tabs) == root_Widget(tabs)) {
+                iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
+                                                     "doctabs");
+                iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
+                if (nextPages) {
+                    tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
+                    showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
+                    postCommand_App("keyroot.next");
+                }
             }
         }
-        else {
+        else if (isVisible_Widget(child_Widget(buttons, tabIndex + dir))) {
             showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
         }
         if (argLabel_Command(cmd, "keydown")) {
