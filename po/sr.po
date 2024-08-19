@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2024-06-20 15:08+0000\n"
-"Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
+"PO-Revision-Date: 2024-08-19 14:09+0000\n"
+"Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -1697,7 +1697,7 @@ msgid "heading.upload.file"
 msgstr "Датотека"
 
 msgid "upload.file.drophere"
-msgstr "(превуците и пустите датотеку на прозор)"
+msgstr "унесите путању или превуците и пустите датотеку на прозор"
 
 msgid "upload.file.size"
 msgstr "Величина датотеке:"
@@ -2783,3 +2783,12 @@ msgstr "Копирај SHA-256 јавног кључа"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Копирај SHA-256 сертификата"
+
+msgid "heading.upload.error.file"
+msgstr "Неисправна датотека"
+
+msgid "upload.error.directory"
+msgstr "Могу се слати само појединачне датотеке, а не директоријуми."
+
+msgid "upload.file.path"
+msgstr "Путања датотеке:"
