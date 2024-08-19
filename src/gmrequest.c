@@ -1116,6 +1116,9 @@ void submit_GmRequest(iGmRequest *d) {
             appendCStr_Block(&content, "\r\n");
             append_Block(&content, &d->upload->data);
         }
+        else if (endsWithCase_String(&d->url, ";edit")) {
+            printf_Block(&content, "%s\r\n", cstr_String(&d->url));
+        }
         else {
             /* Empty data. */
             printf_Block(

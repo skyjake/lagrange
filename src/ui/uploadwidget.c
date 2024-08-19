@@ -46,6 +46,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/thread.h>
+#include <SDL_timer.h>
 
 iDefineObjectConstructionArgs(UploadWidget, (enum iUploadProtocol protocol), protocol)
 
@@ -62,6 +64,8 @@ struct Impl_UploadWidget {
     iString          url;
     iDocumentWidget *viewer;
     iGmRequest *     request;
+    iGmRequest *     editRequest; /* when editing, fetch the existing contents first */
+    int              editRedirectCount;
     iWidget *        tabs;
     iLabelWidget *   info;
     iInputWidget *   path;
@@ -72,6 +76,7 @@ struct Impl_UploadWidget {
     iLabelWidget *   filePathLabel;
     iInputWidget *   filePathInput;
     iLabelWidget *   fileSizeLabel;
+    iLabelWidget *   editLabel;
     iLabelWidget *   counter;
     iString          filePath;
     size_t           fileSize;
@@ -252,10 +257,13 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     d->ident = NULL;
     d->mime = NULL;
     d->request = NULL;
+    d->editRequest = NULL;
+    d->editRedirectCount = 0;
     init_String(&d->filePath);
     d->fileSize = 0;
     d->filePathLabel = NULL;
     d->filePathInput = NULL;
+    d->editLabel = NULL;
     d->idMode = defaultForSite_UploadIdentity;
     init_Block(&d->idFingerprint, 0);
     const iMenuItem actions[] = {
@@ -364,7 +372,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         addDialogTitle_Widget(w,
                               d->protocol == titan_UploadProtocol ? "${heading.upload}"
                                                                   : "${heading.upload.spartan}",
-                              NULL);
+                              "upload.title");
         iWidget *headings, *values;
         /* URL path. */ {
             if (d->protocol == titan_UploadProtocol) {
@@ -428,6 +436,26 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                     headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
             }
         }
+        /* Progress reporting for the Titan edit sequence. */ {
+            d->editLabel = new_LabelWidget("", "");
+            setBackgroundColor_Widget((iWidget *) d->editLabel, uiBackgroundSidebar_ColorId);
+            setFlags_Widget(as_Widget(d->editLabel),
+                            resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag,
+                            iTrue);
+            appendFramelessTabPage_Widget(d->tabs, iClob(d->editLabel), "", none_ColorId, 0, 0);
+
+            iLabelWidget *tabButton = tabPageButton_Widget(d->tabs, d->editLabel);
+            // setBackgroundColor_Widget((iWidget *) tabButton, none_ColorId);
+            setFlags_Widget(as_Widget(tabButton),
+                            collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag,
+                            iTrue);
+            setFlags_Widget(as_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0))),
+                            collapse_WidgetFlag,
+                            iTrue);
+            setFlags_Widget(as_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 1))),
+                            collapse_WidgetFlag,
+                            iTrue);
+        }
         /* Identity and Token. */
         if (d->protocol == titan_UploadProtocol) {
             addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
@@ -474,6 +502,10 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
+    if (d->editRequest) {
+        cancel_GmRequest(d->editRequest);
+        iReleasePtr(&d->editRequest);
+    }
     releaseFile_UploadWidget_(d);
     deinit_Block(&d->idFingerprint);
     deinit_String(&d->filePath);
@@ -551,7 +583,178 @@ static void updateUrlPanelButton_UploadWidget_(iUploadWidget *d) {
     }
 }
 
+static void showOrHideProgressTab_UploadWidget_(iUploadWidget *d, iBool show) {
+    if (deviceType_App() != desktop_AppDeviceType) {
+        return;
+    }
+    iWidget *buttons[3];
+    for (size_t i = 0; i < 3; i++) {
+        buttons[i] = as_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, i)));
+        showCollapsed_Widget(buttons[i], show ^ (i != 2));
+    }
+    if (show) {
+        showTabPage_Widget(d->tabs, d->editLabel);
+        updateText_LabelWidget((iLabelWidget *) buttons[2], &d->originalUrl);
+        setFlags_Widget(buttons[2], selected_WidgetFlag, iFalse);
+        setWrap_LabelWidget(d->editLabel, iFalse);
+        updateTextCStr_LabelWidget(d->editLabel, "");
+    }
+    else {
+        showTabPage_Widget(d->tabs, tabPage_Widget(d->tabs, 0));
+    }
+}
+
+static iWidget *acceptButton_UploadWidget_(iUploadWidget *d) {
+    return lastChild_Widget(findChild_Widget(as_Widget(d), "dialogbuttons"));
+}
+
+static void editContentProgress_UploadWidget_(void *obj, iGmRequest *req) {
+    static uint32_t    lastTime_ = 0;
+    const uint32_t     now       = SDL_GetTicks();
+    const iGmResponse *resp      = lockResponse_GmRequest(req);
+    if (now - lastTime_ > 100) {
+        postCommand_Widget(obj, "upload.fetch.progressed arg:%u", size_Block(&resp->body));
+        lastTime_ = now;
+    }
+    unlockResponse_GmRequest(req);
+}
+
+static void editContentFetched_UploadWidget_(void *obj, iGmRequest *req) {
+    postCommand_Widget(obj, "upload.fetch.progressed arg:%u", bodySize_GmRequest(req));
+    sleep_Thread(0.250); /* short delay to see the final update */
+    postCommand_Widget(obj, "upload.fetched reqid:%u", id_GmRequest(req));
+}
+
+static void setupRequest_UploadWidget_(const iUploadWidget *d, const iString *url, iGmRequest *req) {
+    if (url) {
+        setUrl_GmRequest(req, url);
+    }
+    else {
+        url = url_GmRequest(req);
+    }
+    const iString *site = collectNewRange_String(urlRoot_String(url));
+    switch (d->idMode) {
+        case none_UploadIdentity:
+            /* Ensure no identity will be used for this specific URL. */
+            signOut_GmCerts(certs_App(), url);
+            setValueString_SiteSpec(site, titanIdentity_SiteSpecKey, collectNew_String());
+            break;
+        case dropdown_UploadIdentity: {
+            /* Update the site-specific preference to the chosen identity. */
+            iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
+            if (ident) {
+                setValueString_SiteSpec(site,
+                                        titanIdentity_SiteSpecKey,
+                                        collect_String(hexEncode_Block(&ident->fingerprint)));
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    if (d->idMode != none_UploadIdentity) {
+        const iGmIdentity *ident = titanIdentityForUrl_(url); /* site-specific preference */
+        if (!ident) {
+            /* Fall back to the global choice, perhaps switching to equivalent Gemini URL. */
+            ident = identityForUrl_GmCerts(certs_App(), url);
+        }
+        setIdentity_GmRequest(req, ident);
+    }
+}
+
+static void fetchEditableResource_UploadWidget_(iUploadWidget *d, const iString *url) {
+    showOrHideProgressTab_UploadWidget_(d, iTrue);
+    iAssert(d->editRequest == NULL);
+    d->editRequest = new_GmRequest(certs_App());
+    iAssert(endsWith_String(&d->originalUrl, ";edit")); /* was checked earlier */
+    iConnect(GmRequest, d->editRequest, updated,  d, editContentProgress_UploadWidget_);
+    iConnect(GmRequest, d->editRequest, finished, d, editContentFetched_UploadWidget_);
+    iString *editUrl = copy_String(url);
+    if (isTitanUrl_String(url) && !endsWithCase_String(editUrl, ";edit")) {
+        appendCStr_String(editUrl, ";edit");
+    }
+    setupRequest_UploadWidget_(d, editUrl, d->editRequest);
+    delete_String(editUrl);
+    updateText_LabelWidget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 2)),
+                           url_GmRequest(d->editRequest));
+    submit_GmRequest(d->editRequest);
+}
+
+static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t reqId) {
+    if (id_GmRequest(d->editRequest) != reqId) {
+        return iFalse;
+    }
+    iGmRequest *req = d->editRequest;
+    const enum iGmStatusCode status = status_GmRequest(req);
+    const char *errorFormat = uiTextCaution_ColorEscape "%lc \x1b[1m%s\x1b[0m \u2014 %s";
+    if (category_GmStatusCode(status) == categoryRedirect_GmStatusCode) {
+        const iString *newUrl = collect_String(copy_String(meta_GmRequest(d->editRequest)));
+        if (++d->editRedirectCount == 5) {
+            const iGmError *error = get_GmError(tooManyRedirects_GmStatusCode);
+            setWrap_LabelWidget(d->editLabel, iTrue);
+            updateText_LabelWidget(
+                d->editLabel,
+                collectNewFormat_String(errorFormat,
+                                        error->icon,
+                                        error->title,
+                                        format_CStr("%s\n\n%s", error->info, cstr_String(newUrl))));
+            iReleasePtr(&d->editRequest);
+            d->editRedirectCount = 0;
+            return iTrue;
+        }
+        /* Resubmit with the new URL. */
+        iReleasePtr(&d->editRequest);
+        fetchEditableResource_UploadWidget_(d, newUrl);
+        return iTrue;
+    }
+    if (!isSuccess_GmStatusCode(status_GmRequest(req))) {
+        iChar icon = 0x26a0;
+        const char *title = "${heading.upload.edit.error}";
+        const char *msg = "${dlg.upload.edit.error}";
+        const iGmError *error = get_GmError(status);
+        if (isDefined_GmError(status)) {
+            icon  = error->icon;
+            title = error->title;
+            msg   = error->info;
+        }
+        setWrap_LabelWidget(d->editLabel, iTrue);
+        updateText_LabelWidget(d->editLabel,
+                               collectNewFormat_String(errorFormat, icon, title, msg));
+        iReleasePtr(&d->editRequest);
+        return iTrue;
+    }
+    iGmResponse *resp = lockResponse_GmRequest(req);
+    setText_InputWidget(d->mime, &resp->meta);
+    if (startsWithCase_String(&resp->meta, "text/")) {
+        setText_InputWidget(d->input, collect_String(newBlock_String(&resp->body)));
+        deselect_InputWidget(d->input);
+        moveCursorHome_InputWidget(d->input);
+        showOrHideProgressTab_UploadWidget_(d, iFalse);
+    }
+    else {
+        /* Report that non-text content cannot be edited in the app. */
+        setWrap_LabelWidget(d->editLabel, iTrue);
+        updateText_LabelWidget(d->editLabel,
+                               collectNewFormat_String(errorFormat,
+                                                       0x26a0,
+                                                       "${heading.upload.edit.error}",
+                                                       "${dlg.upload.edit.incompatible}"));
+        iReleasePtr(&d->editRequest);
+        return iTrue;
+    }
+    unlockResponse_GmRequest(req);
+    setFlags_Widget(as_Widget(d->path), disabled_WidgetFlag, iTrue); /* don't change path while editing */
+    iReleasePtr(&d->editRequest);
+    return iTrue;
+}
+
 static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint16_t overridePort) {
+    /* Any ongoing edit request must be first cancelled. */
+    if (d->editRequest) {
+        cancel_GmRequest(d->editRequest);
+        iReleasePtr(&d->editRequest);
+    }
+    showOrHideProgressTab_UploadWidget_(d, iFalse);
     set_String(&d->originalUrl, url);
     iUrl parts;
     init_Url(&parts, url);
@@ -563,7 +766,11 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
         setCStr_String(&d->url, "titan");
         appendRange_String(&d->url, (iRangecc){ parts.scheme.end, parts.host.end });
         appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
-        appendRange_String(&d->url, (iRangecc){ parts.path.start, constEnd_String(url) });
+        const char *paramStart = strchr(parts.path.start, ';');
+        const iBool isEdit = paramStart && !iCmpStr(paramStart, ";edit");
+        appendRange_String(&d->url, (iRangecc){ parts.path.start,
+                                                /* strip any pre-existing params */
+                                                paramStart ? paramStart : constEnd_String(url) });
         const iRangecc siteRoot = urlRoot_String(&d->url);
         iUrl parts;
         init_Url(&parts, &d->url);
@@ -575,15 +782,20 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
             siteRoot.end == parts.path.start /* not a user root */) {
             setTextCStr_InputWidget(d->path, ""); /* might as well show the hint */
         }
+        if (isEdit) {
+            setTextCStr_LabelWidget(findChild_Widget(&d->widget, "upload.title"),
+                                    "${heading.upload.edit}");
+            setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
+                                    "${dlg.upload.edit}");
+            fetchEditableResource_UploadWidget_(d, requestUrl_UploadWidget_(d));
+        }
     }
     if (isUsingPanelLayout_Mobile()) {
         updateUrlPanelButton_UploadWidget_(d);
     }
     else {
         setFixedSize_Widget(as_Widget(d->path),
-                            init_I2(width_Widget(findChild_Widget(as_Widget(d), "upload.tabs")) -
-                                        width_Widget(d->info),
-                                    -1));
+                            init_I2(width_Widget(d->tabs) - width_Widget(d->info), -1));
     }
 }
 
@@ -598,11 +810,9 @@ void setResponseViewer_UploadWidget(iUploadWidget *d, iDocumentWidget *doc) {
 }
 
 void setText_UploadWidget(iUploadWidget *d, const iString *text) {
-    setText_InputWidget(findChild_Widget(as_Widget(d), "upload.text"), text);
-}
-
-static iWidget *acceptButton_UploadWidget_(iUploadWidget *d) {
-    return lastChild_Widget(findChild_Widget(as_Widget(d), "dialogbuttons"));
+    setText_InputWidget(d->input, text);
+    deselect_InputWidget(d->input);
+    moveCursorHome_InputWidget(d->input);
 }
 
 static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
@@ -708,18 +918,6 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         updateIdentityDropdown_UploadWidget_(d);
         return iTrue;
     }
-//    if (isCommand_Widget(w, ev, "upload.editmenu.open")) {
-//        setFocus_Widget(NULL);
-//        refresh_Widget(as_Widget(d->input));
-//        iWidget *editMenu = makeMenuFlags_Widget(root_Widget(w), (iMenuItem[]){
-//            { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
-//            { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
-//            { "---" },
-//            { delete_Icon " " uiTextAction_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
-//        }, 4, iTrue);
-//        openMenu_Widget(editMenu, topLeft_Rect(bounds_Widget(as_Widget(d->input))));
-//        return iTrue;
-//    }
     if (isCommand_UserEvent(ev, "upload.text.export")) {
 #if defined (iPlatformAppleMobile)
         openTextActivityView_iOS(text_InputWidget(d->input));
@@ -752,10 +950,18 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     if (isCommand_Widget(w, ev, "upload.accept")) {
         iBool isText;
-        iWidget *tabs = findChild_Widget(w, "upload.tabs");
-        if (tabs) {
-            const size_t tabIndex = tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs));
+        if (d->editRequest) {
+            return iTrue; /* ongoing edit request */
+        }
+        if (d->tabs) {
+            const size_t tabIndex = tabPageIndex_Widget(d->tabs, currentTabPage_Widget(d->tabs));
             isText = (tabIndex == 0);
+            if (tabIndex == 2) {
+                /* Edit request failed, but we can retry. */
+                iAssert(endsWithCase_String(&d->originalUrl, ";edit"));
+                fetchEditableResource_UploadWidget_(d, requestUrl_UploadWidget_(d));
+                return iTrue;
+            }
         }
         else {
             const size_t panelIndex = currentPanelIndex_Mobile(w);
@@ -775,28 +981,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         setUserData_Object(d->request, d);
         setUrl_GmRequest(d->request, requestUrl_UploadWidget_(d));
         if (d->protocol == titan_UploadProtocol) {
-            const iString *site = collectNewRange_String(urlRoot_String(&d->url));
-            switch (d->idMode) {
-                case none_UploadIdentity:
-                    /* Ensure no identity will be used for this specific URL. */
-                    signOut_GmCerts(certs_App(), url_GmRequest(d->request));
-                    setValueString_SiteSpec(site, titanIdentity_SiteSpecKey, collectNew_String());
-                    break;
-                case dropdown_UploadIdentity: {
-                    iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
-                    if (ident) {
-                        setValueString_SiteSpec(site,
-                                                titanIdentity_SiteSpecKey,
-                                                collect_String(hexEncode_Block(&ident->fingerprint)));
-                    }
-                    break;
-                }
-                default:
-                    break;
-            }
-            if (d->idMode != none_UploadIdentity) {
-                setIdentity_GmRequest(d->request, titanIdentityForUrl_(&d->url));
-            }
+            setupRequest_UploadWidget_(d, NULL, d->request);
         }
         if (isText) {
             /* Uploading text. */
@@ -821,12 +1006,11 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
                                     text_InputWidget(d->token));
             close_File(f);
         }
-//        iConnect(GmRequest, d->request, updated,  d, requestUpdated_UploadWidget_);
         iConnect(GmRequest, d->request, finished, d, requestFinished_UploadWidget_);
         submit_GmRequest(d->request);
         /* The dialog will remain open until the request finishes, showing upload progress. */
         setFocus_Widget(NULL);
-        setFlags_Widget(tabs, disabled_WidgetFlag, iTrue);
+        setFlags_Widget(d->tabs, disabled_WidgetFlag, iTrue);
         setFlags_Widget(as_Widget(d->token), disabled_WidgetFlag, iTrue);
         setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iTrue);
         return iTrue;
@@ -850,11 +1034,19 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         destroy_Widget(w);
         return iTrue;
     }
+    else if (isCommand_Widget(w, ev, "upload.fetch.progressed")) {
+        updateTextCStr_LabelWidget(
+            d->editLabel, formatCStrs_Lang("num.bytes.n", argU32Label_Command(cmd, "arg")));
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "upload.fetched")) {
+        return handleEditContentResponse_UploadWidget_(d, argU32Label_Command(cmd, "reqid"));
+    }
     else if (isCommand_Widget(w, ev, "input.resized")) {
         updateInputMaxHeight_UploadWidget_(d);
         if (!isUsingPanelLayout_Mobile()/* && !(w->flags2 & (leftEdgeResizing_WidgetFlag2 |
                                                            rightEdgeResizing_WidgetFlag2))*/) {
-            resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
+            resizeToLargestPage_Widget(d->tabs);
             arrange_Widget(w);
             refresh_Widget(w);
             return iTrue;
@@ -903,8 +1095,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     if (ev->type == SDL_DROPFILE) {
         /* Switch to File tab. */
-        iWidget *tabs = findChild_Widget(w, "upload.tabs");
-        showTabPage_Widget(tabs, tabPage_Widget(tabs, 1));
+        showTabPage_Widget(d->tabs, tabPage_Widget(d->tabs, 1));
         releaseFile_UploadWidget_(d);
         if (d->filePathInput) {
             setTextCStr_InputWidget(d->filePathInput, ev->drop.file);
@@ -924,9 +1115,8 @@ void sizeChanged_UploadWidget_(iUploadWidget *d) {
         setFixedSize_Widget(as_Widget(d->input), init_I2(newWidth, -1));
         updateFieldWidths_UploadWidget(d);
         updateInputMaxHeight_UploadWidget_(d);
-        iWidget *tabs = findChild_Widget(w, "upload.tabs");
-        resizeToLargestPage_Widget(tabs);
-        arrange_Widget(tabs);
+        resizeToLargestPage_Widget(d->tabs);
+        arrange_Widget(d->tabs);
         refresh_Widget(d);
     }
 }

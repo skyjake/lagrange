@@ -1528,7 +1528,7 @@ iLocalDef iBool isMarking_(void) {
     return (modState_Keys() & KMOD_SHIFT) != 0;
 }
 
-void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
+static void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
     iAssert(!isEmpty_Array(&d->lines));
     pos.x = iClamp(pos.x, 0, endX_InputWidget_(d, pos.y));
     d->cursor = pos;
@@ -1547,6 +1547,10 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
         iZap(d->mark);
     }
     showCursor_InputWidget_(d);
+}
+
+void moveCursorHome_InputWidget(iInputWidget *d) {
+    setCursor_InputWidget(d, zero_I2());
 }
 
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {

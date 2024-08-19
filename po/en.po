@@ -1274,11 +1274,23 @@ msgstr "Open Editor…"
 msgid "heading.upload"
 msgstr "Upload with Titan"
 
+msgid "heading.upload.edit"
+msgstr "Edit with Titan"
+
 msgid "heading.upload.spartan"
 msgstr "Upload with Spartan"
 
 msgid "heading.upload.error.file"
 msgstr "Invalid File"
+
+msgid "dlg.upload.edit.error"
+msgstr "Failed to download contents of the editable resource."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "This type of resource cannot be edited in the application."
+
+msgid "heading.upload.edit.error"
+msgstr "Editing Failed"
 
 msgid "upload.error.directory"
 msgstr "Only individual files can be uploaded, not directories."
@@ -1353,6 +1365,9 @@ msgstr "token — see server's instructions"
 
 msgid "dlg.upload.send"
 msgstr "Upload"
+
+msgid "dlg.upload.edit"
+msgstr "Edit"
 
 msgid "upload.port"
 msgstr "Port…"
