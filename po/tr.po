@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-05-10 12:09+0000\n"
+"PO-Revision-Date: 2024-08-19 14:09+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1753,7 +1753,7 @@ msgid "hint.upload.text"
 msgstr "karşıya yüklenecek metni girin"
 
 msgid "upload.file.drophere"
-msgstr "(pencereye bir dosyayı sürükleyip bırakın)"
+msgstr "dosya yolu girin veya pencereye bir dosyayı sürükleyip bırakın"
 
 msgid "hint.upload.token"
 msgstr "sunucunun yönergelerine bakın"
@@ -2785,3 +2785,12 @@ msgstr "Genel anahtarın SHA-256’sını kopyala"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Sertifikanın SHA-256’sını kopyala"
+
+msgid "upload.error.directory"
+msgstr "Yalnızca dosyalar yüklenebilir, dizinler değil."
+
+msgid "heading.upload.error.file"
+msgstr "Geçersiz dosya"
+
+msgid "upload.file.path"
+msgstr "Dosya yolu:"
