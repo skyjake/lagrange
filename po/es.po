@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2024-05-14 19:09+0000\n"
+"PO-Revision-Date: 2024-08-19 14:09+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1669,7 +1669,7 @@ msgid "upload.file.name"
 msgstr "Nombre de archivo:"
 
 msgid "upload.file.drophere"
-msgstr "(arrastre y suelte un archivo en esta ventana)"
+msgstr "escriba la ruta o arrastre y suelte un archivo en esta ventana"
 
 msgid "upload.file.size"
 msgstr "Tamaño de archivo:"
@@ -2778,3 +2778,12 @@ msgstr "Copiar Clave Pública SHA-256"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Copiar Certificado SHA-256"
+
+msgid "heading.upload.error.file"
+msgstr "Archivo no Válido"
+
+msgid "upload.error.directory"
+msgstr "Solo se puede cargar archivos individuales, no directorios."
+
+msgid "upload.file.path"
+msgstr "Ruta del archivo:"
