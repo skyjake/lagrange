@@ -126,10 +126,15 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
 }
 
 static const iGmIdentity *titanIdentityForUrl_(const iString *url) {
-    return findIdentity_GmCerts(
+    const iGmIdentity *ident = findIdentity_GmCerts(
         certs_App(),
         collect_Block(hexDecode_Rangecc(range_String(valueString_SiteSpec(
             collectNewRange_String(urlRoot_String(url)), titanIdentity_SiteSpecKey)))));
+    if (!ident) {
+        /* Fall back to the global choice, perhaps switching to equivalent Gemini URL. */
+        ident = identityForUrl_GmCerts(certs_App(), url);
+    }    
+    return ident;
 }
 
 void appendIdentities_MenuItem(iArray *menuItems, const char *command) {
@@ -401,7 +406,8 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             setFlags_Widget(tabPages, resizeHeightOfChildren_WidgetFlag, iFalse);
             setFlags_Widget(tabPages, arrangeHeight_WidgetFlag, iTrue);
         }
-        setBackgroundColor_Widget(findChild_Widget(d->tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
+        setBackgroundColor_Widget(findChild_Widget(d->tabs, "tabs.buttons"),
+                                  uiBackgroundSidebar_ColorId);
         setId_Widget(d->tabs, "upload.tabs");
         /* Text input. */ {
             iWidget *page = new_Widget();
@@ -416,19 +422,26 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                 setHighlighter_InputWidget(d->input, gemtextHighlighter_UploadWidget_, d);
             }
             addChild_Widget(page, iClob(d->input));
-            appendFramelessTabPage_Widget(d->tabs, iClob(page), "${heading.upload.text}", none_ColorId, '1', 0);
+            appendFramelessTabPage_Widget(
+                d->tabs, iClob(page), "${heading.upload.text}", none_ColorId, '1', 0);
         }
         /* File content. */ {
-            iWidget *page = appendTwoColumnTabPage_Widget(d->tabs, "${heading.upload.file}", none_ColorId, '2', &headings, &values);
+            iWidget *page = appendTwoColumnTabPage_Widget(
+                d->tabs, "${heading.upload.file}", none_ColorId, '2', &headings, &values);
             setBackgroundColor_Widget(page, uiBackgroundSidebar_ColorId);
             iWidget *heading;
-            addChildFlags_Widget(headings, heading = iClob(new_LabelWidget("${upload.file.path}", NULL)), frameless_WidgetFlag | alignLeft_WidgetFlag);
+            addChildFlags_Widget(headings,
+                                 heading = iClob(new_LabelWidget("${upload.file.path}", NULL)),
+                                 frameless_WidgetFlag | alignLeft_WidgetFlag);
             d->filePathInput = addChildFlags_Widget(values, iClob(new_InputWidget(0)), 0);
             heading->sizeRef = as_Widget(d->filePathInput);
             setHint_InputWidget(d->filePathInput, "${upload.file.drophere}");
             setValidator_InputWidget(d->filePathInput, filePathValidator_UploadWidget_, d);
-            addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
-            d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
+            addChildFlags_Widget(headings,
+                                 iClob(new_LabelWidget("${upload.file.size}", NULL)),
+                                 frameless_WidgetFlag);
+            d->fileSizeLabel = addChildFlags_Widget(
+                values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
             if (d->protocol == titan_UploadProtocol) {
                 d->mime = new_InputWidget(0);
                 setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI * aspectRatio, -1));
@@ -655,10 +668,6 @@ static void setupRequest_UploadWidget_(const iUploadWidget *d, const iString *ur
     }
     if (d->idMode != none_UploadIdentity) {
         const iGmIdentity *ident = titanIdentityForUrl_(url); /* site-specific preference */
-        if (!ident) {
-            /* Fall back to the global choice, perhaps switching to equivalent Gemini URL. */
-            ident = identityForUrl_GmCerts(certs_App(), url);
-        }
         setIdentity_GmRequest(req, ident);
     }
 }
@@ -908,7 +917,8 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     if (d->protocol == titan_UploadProtocol && isCommand_Widget(w, ev, "upload.setid")) {
         if (hasLabel_Command(cmd, "fp")) {
-            set_Block(&d->idFingerprint, collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
+            set_Block(&d->idFingerprint,
+                      collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
             d->idMode = dropdown_UploadIdentity;
         }
         else if (arg_Command(cmd)) {
