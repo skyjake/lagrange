@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-08-19 14:09+0000\n"
+"PO-Revision-Date: 2024-08-20 10:34+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2794,3 +2794,18 @@ msgstr "Geçersiz dosya"
 
 msgid "upload.file.path"
 msgstr "Dosya yolu:"
+
+msgid "heading.upload.edit"
+msgstr "Titan ile düzenle"
+
+msgid "dlg.upload.edit.error"
+msgstr "Düzenlenebilir özkaynağın içeriği indirilemedi."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Bu türden özkaynak uygulamada düzenlenemiyor."
+
+msgid "heading.upload.edit.error"
+msgstr "Düzenleme başarısız"
+
+msgid "dlg.upload.edit"
+msgstr "Düzenle"
