@@ -649,6 +649,11 @@ const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url)
     if (isEmpty_String(url)) {
         return NULL;
     }
+    /* Get rid of the default port for consistent formatting. */ {
+        iString *clean = copy_String(url);
+        stripDefaultUrlPort_String(clean);
+        url = collect_String(clean);        
+    }
     lock_Mutex(d->mtx);
     const iGmIdentity *found = NULL;
     iConstForEach(PtrArray, i, &d->idents) {
