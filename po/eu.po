@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-07-05 22:03+0000\n"
+"PO-Revision-Date: 2024-08-21 13:21+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -2795,3 +2795,28 @@ msgstr "Kopiatu gako publikoaren SHA-256a"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Kopiatu ziurtagiriaren SHA-256a"
+
+msgid "heading.upload.edit"
+msgstr "Editatu Titan-ekin"
+
+msgid "dlg.upload.edit.error"
+msgstr "Ezin dira baliabide editagarriaren edukiak deskargatu."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Ezin da baliabide mota hau aplikazio honetan editatu."
+
+msgid "heading.upload.edit.error"
+msgstr "Editatzeak huts egin du"
+
+msgid "dlg.upload.edit"
+msgstr "Editatu"
+
+msgid "heading.upload.error.file"
+msgstr "Fitxategi baliogabea"
+
+#, fuzzy
+msgid "upload.error.directory"
+msgstr "Fitxategi bakunak igo daitezke; ez direktorioak."
+
+msgid "upload.file.path"
+msgstr "Fitxategiaren bidea:"
