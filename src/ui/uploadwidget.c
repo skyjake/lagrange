@@ -439,9 +439,10 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         /* Progress reporting for the Titan edit sequence. */ {
             d->editLabel = new_LabelWidget("", "");
             setBackgroundColor_Widget((iWidget *) d->editLabel, uiBackgroundSidebar_ColorId);
-            setFlags_Widget(as_Widget(d->editLabel),
-                            resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag,
-                            iTrue);
+            setFlags_Widget(as_Widget(d->editLabel), resizeToParentWidth_WidgetFlag, iTrue);
+            /* Ensure the height of the progress pane matches the text editor, as the latter
+               determines the height of the whole dialog. */
+            as_Widget(d->editLabel)->sizeRef = (iWidget *) d->input;
             appendFramelessTabPage_Widget(d->tabs, iClob(d->editLabel), "", none_ColorId, 0, 0);
 
             iLabelWidget *tabButton = tabPageButton_Widget(d->tabs, d->editLabel);
