@@ -133,7 +133,7 @@ static const iGmIdentity *titanIdentityForUrl_(const iString *url) {
     if (!ident) {
         /* Fall back to the global choice, perhaps switching to equivalent Gemini URL. */
         ident = identityForUrl_GmCerts(certs_App(), url);
-    }    
+    }
     return ident;
 }
 
@@ -435,7 +435,9 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                                  frameless_WidgetFlag | alignLeft_WidgetFlag);
             d->filePathInput = addChildFlags_Widget(values, iClob(new_InputWidget(0)), 0);
             heading->sizeRef = as_Widget(d->filePathInput);
-            setHint_InputWidget(d->filePathInput, "${upload.file.drophere}");
+            if (!isTerminal_Platform()) {
+                setHint_InputWidget(d->filePathInput, "${upload.file.drophere}");
+            }
             setValidator_InputWidget(d->filePathInput, filePathValidator_UploadWidget_, d);
             addChildFlags_Widget(headings,
                                  iClob(new_LabelWidget("${upload.file.size}", NULL)),
@@ -859,9 +861,11 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
 
 static void filePathValidator_UploadWidget_(iInputWidget *input, void *context) {
     iUploadWidget *d = context;
-    iFileInfo *info = new_FileInfo(text_InputWidget(input));
+    iString *path = collect_String(copy_String(text_InputWidget(input)));
+    clean_Path(path);
+    iFileInfo *info = new_FileInfo(path);
     if (exists_FileInfo(info) && !isDirectory_FileInfo(info)) {
-        set_String(&d->filePath, text_InputWidget(input));
+        set_String(&d->filePath, path);
         updateFileInfo_UploadWidget_(d);
     }
     else {
