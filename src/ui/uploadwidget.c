@@ -57,6 +57,12 @@ enum iUploadIdentity {
     dropdown_UploadIdentity,
 };
 
+enum iMisfinStage {
+    none_MisfinStage,
+    carbonCopyToSelf_MisfinStage,
+    sendToRecipient_MisfinStage,
+};
+
 struct Impl_UploadWidget {
     iWidget          widget;
     enum iUploadProtocol protocol;
@@ -66,6 +72,7 @@ struct Impl_UploadWidget {
     iGmRequest *     request;
     iGmRequest *     editRequest; /* when editing, fetch the existing contents first */
     int              editRedirectCount;
+    enum iMisfinStage misfinStage;
     iWidget *        tabs;
     iLabelWidget *   info;
     iInputWidget *   path;
@@ -285,10 +292,29 @@ static void misfinAddressValidator_UploadWidget_(iInputWidget *input, void *cont
     append_String(&d->url, str);
 }
 
+static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText);
+
 static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
+    const char *title = cstr_String(meta_GmRequest(d->request));
+    if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+        if (status_GmRequest(d->request) == 20) {
+            /* Continue by sending the actual message. */
+            iReleasePtr(&d->request);
+            d->misfinStage = sendToRecipient_MisfinStage;
+            if (createRequest_UploadWidget_(d, iTrue)) {
+                submit_GmRequest(d->request);
+                return;
+            }
+        }
+        else {
+            title = format_CStr("${misfin.cc}: %s", title);
+        }
+    }
+    else {
+        d->misfinStage = none_MisfinStage;
+    }
     const char *msg;
     const int status = status_GmRequest(d->request);
-    const char *title = cstr_String(meta_GmRequest(d->request));
     switch (status) {
         case 20:
             title = envelope_Icon " ${heading.misfin.ok}";
@@ -358,6 +384,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     d->request = NULL;
     d->editRequest = NULL;
     d->editRedirectCount = 0;
+    d->misfinStage = none_MisfinStage;
     init_String(&d->filePath);
     d->fileSize = 0;
     d->filePathLabel = NULL;
@@ -696,14 +723,24 @@ static uint16_t titanPortForUrl_(const iString *url) {
 
 static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
     if (d->protocol == spartan_UploadProtocol) {
+        iAssert(!isEmpty_String(&d->url));
         return &d->url;
     }
     if (d->protocol == misfin_UploadProtocol) {
         iString *reqUrl = collectNewCStr_String("misfin://");
-        append_String(reqUrl, text_InputWidget(d->path)); /* recipient address */
+        if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+            iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
+            if (ident) {
+                append_String(reqUrl, collect_String(misfinIdentity_GmIdentity(ident, NULL)));
+            }
+        }
+        else {
+            append_String(reqUrl, text_InputWidget(d->path)); /* recipient address */
+        }
         return reqUrl;
     }
     /* Compose Titan URL with the configured path. */
+    iAssert(!isEmpty_String(&d->url));
     const iRangecc siteRoot = urlRoot_String(&d->url);
     iString *reqUrl = collectNew_String();
     setRange_String(reqUrl, (iRangecc){ constBegin_String(&d->url), siteRoot.end });
@@ -1012,6 +1049,54 @@ static void filePathValidator_UploadWidget_(iInputWidget *input, void *context) 
     iRelease(info);
 }
 
+static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText) {
+    iAssert(d->request == NULL);
+    d->request = new_GmRequest(certs_App());
+    setSendProgressFunc_GmRequest(d->request, updateProgress_UploadWidget_);
+    setUserData_Object(d->request, d);
+    setUrl_GmRequest(d->request, requestUrl_UploadWidget_(d));
+    if (d->protocol == titan_UploadProtocol) {
+        setupRequest_UploadWidget_(d, NULL, d->request);
+    }
+    else if (d->protocol == misfin_UploadProtocol) {
+        iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
+        if (ident) {
+            setIdentity_GmRequest(d->request, ident);
+        }
+    }
+    /* Attach the data to upload. */
+    if (isText) {
+        /* Uploading text. */
+        const iString *text = text_InputWidget(d->input);
+        if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+            text = collectNewFormat_String(": %s\n\n%s", cstr_String(text_InputWidget(d->path)),
+                                           cstr_String(text));
+        }
+        setUploadData_GmRequest(d->request,
+                                collectNewCStr_String("text/plain"),
+                                utf8_String(text),
+                                text_InputWidget(d->token));
+    }
+    else {
+        /* Uploading a file. */
+        iFile *f = iClob(new_File(&d->filePath));
+        if (!open_File(f, readOnly_FileMode)) {
+            makeMessage_Widget("${heading.upload.error.file}",
+                               "${upload.error.msg}",
+                               (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
+            iReleasePtr(&d->request);
+            return iFalse;
+        }
+        setUploadData_GmRequest(d->request,
+                                text_InputWidget(d->mime),
+                                collect_Block(readAll_File(f)),
+                                text_InputWidget(d->token));
+        close_File(f);
+    }
+    iConnect(GmRequest, d->request, finished, d, requestFinished_UploadWidget_);
+    return iTrue;
+}
+
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
@@ -1129,47 +1214,12 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         if (!isText && !fileExists_FileInfo(&d->filePath)) {
             return iTrue;
         }
-        /* Make a GmRequest and send the data. */
-        iAssert(d->request == NULL);
-        iAssert(!isEmpty_String(&d->url));
-        d->request = new_GmRequest(certs_App());
-        setSendProgressFunc_GmRequest(d->request, updateProgress_UploadWidget_);
-        setUserData_Object(d->request, d);
-        setUrl_GmRequest(d->request, requestUrl_UploadWidget_(d));
-        if (d->protocol == titan_UploadProtocol) {
-            setupRequest_UploadWidget_(d, NULL, d->request);
+        if (d->protocol == misfin_UploadProtocol) {
+            d->misfinStage = carbonCopyToSelf_MisfinStage;
         }
-        else if (d->protocol == misfin_UploadProtocol) {
-            setUrl_GmRequest(d->request, requestUrl_UploadWidget_(d));
-            iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
-            if (ident) {
-                setIdentity_GmRequest(d->request, ident);
-            }
+        if (!createRequest_UploadWidget_(d, isText)) {
+            return iTrue;
         }
-        if (isText) {
-            /* Uploading text. */
-            setUploadData_GmRequest(d->request,
-                                    collectNewCStr_String("text/plain"),
-                                    utf8_String(text_InputWidget(d->input)),
-                                    text_InputWidget(d->token));
-        }
-        else {
-            /* Uploading a file. */
-            iFile *f = iClob(new_File(&d->filePath));
-            if (!open_File(f, readOnly_FileMode)) {
-                makeMessage_Widget("${heading.upload.error.file}",
-                                   "${upload.error.msg}",
-                                   (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
-                iReleasePtr(&d->request);
-                return iTrue;
-            }
-            setUploadData_GmRequest(d->request,
-                                    text_InputWidget(d->mime),
-                                    collect_Block(readAll_File(f)),
-                                    text_InputWidget(d->token));
-            close_File(f);
-        }
-        iConnect(GmRequest, d->request, finished, d, requestFinished_UploadWidget_);
         submit_GmRequest(d->request);
         /* The dialog will remain open until the request finishes, showing upload progress. */
         setFocus_Widget(NULL);
