@@ -48,6 +48,8 @@ struct Impl_GmIdentity {
 iBool   isUsed_GmIdentity           (const iGmIdentity *);
 iBool   isUsedOn_GmIdentity         (const iGmIdentity *, const iString *url);
 iBool   isUsedOnDomain_GmIdentity   (const iGmIdentity *, const iRangecc domain);
+iBool   isMisfin_GmIdentity         (const iGmIdentity *);
+iString *misfinIdentity_GmIdentity  (const iGmIdentity *, iString *blurb_out);
 
 void    setUse_GmIdentity           (iGmIdentity *, const iString *url, iBool use);
 void    clearUse_GmIdentity         (iGmIdentity *);
@@ -101,6 +103,7 @@ const iGmIdentity * constIdentity_GmCerts   (const iGmCerts *, unsigned int id);
 const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
 const iPtrArray *   identities_GmCerts      (const iGmCerts *);
 const iPtrArray *   listIdentities_GmCerts  (const iGmCerts *, iGmCertsIdentityFilterFunc filter, void *context);
+size_t              numMisfin_GmCerts       (const iGmCerts *);
 
 void                signIn_GmCerts          (iGmCerts *, iGmIdentity *identity, const iString *url);
 void                signOut_GmCerts         (iGmCerts *, const iString *url);

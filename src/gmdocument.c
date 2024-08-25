@@ -434,6 +434,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (equalCase_Rangecc(parts.scheme, "mailto")) {
                 setScheme_GmLink_(link, mailto_GmLinkScheme);
             }
+            else if (equalCase_Rangecc(parts.scheme, "misfin")) {
+                setScheme_GmLink_(link, misfin_GmLinkScheme);
+            }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
                 iString *path = newRange_String(parts.path);
@@ -486,13 +489,15 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
                 scheme == about_GmLinkScheme || scheme == file_GmLinkScheme ||
-                scheme == mailto_GmLinkScheme || scheme == 0 /* unsupported */) {
+                scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme ||
+                scheme == 0 /* unsupported */) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
-                    if (//desc.start + len < desc.end &&
-                        ((scheme != mailto_GmLinkScheme && isAllowedLinkIcon_Char_(icon)) ||
-                         (scheme == mailto_GmLinkScheme && icon == 0x1f4e7 /* envelope */))) {
+                    if (((scheme != mailto_GmLinkScheme && scheme != misfin_GmLinkScheme &&
+                          isAllowedLinkIcon_Char_(icon)) ||
+                         ((scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme) &&
+                          icon == 0x1f4e7 /* envelope */))) {
                         if (isRegionalIndicatorLetter_Char_(icon)) {
                             iChar combo;
                             int len2 = decodeBytes_MultibyteChar(desc.start + len, desc.end, &combo);
@@ -1050,9 +1055,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == nex_GmLinkScheme      ? nex_Icon
-                                             : (scheme == spartan_GmLinkScheme && !d->flags.isSpartan)
-                                                                               ? spartan_Icon
-                                             : scheme == mailto_GmLinkScheme   ? envelope
+                                             : (scheme == spartan_GmLinkScheme &&
+                                                !d->flags.isSpartan)           ? spartan_Icon
+                                             : (scheme == mailto_GmLinkScheme ||
+                                                scheme == misfin_GmLinkScheme) ? envelope
                                              : scheme == data_GmLinkScheme     ? paperclip_Icon
                                              : link->flags & remote_GmLinkFlag ? globe
                                              : link->flags & imageFileExtension_GmLinkFlag ? image

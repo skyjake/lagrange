@@ -4361,6 +4361,12 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
             return iTrue;
         }
     }
+    if (equalCase_Rangecc(parts.scheme, "misfin")) {
+        if (!isHistory) {
+            openMisfinMessageComposer_App(url, NULL);
+            return iTrue;
+        }
+    }
     if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
         ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
          (equalCase_Rangecc(parts.scheme, "http") ||
@@ -5354,6 +5360,31 @@ void revealPath_App(const iString *path) {
 #else
     iAssert(0 /* File revealing not implemented on this platform */);
 #endif
+}
+
+void openMisfinMessageComposer_App(const iString *url, const iGmIdentity *sender) {
+    iApp *d = &app_;
+    if (numMisfin_GmCerts(certs_App()) == 0) {
+        makeSimpleMessage_Widget("${heading.upload.misfin.noident}",
+                                 "${dlg.upload.misfin.noident}");
+        return;
+    }
+    iUploadWidget *upload = new_UploadWidget(misfin_UploadProtocol);
+    if (url) {
+        setUrl_UploadWidget(upload, url);
+    }
+    if (sender) {
+        setIdentity_UploadWidget(upload, sender);
+    }
+    if (!url) {
+        postCommand_Widget(upload, "focus.set id:upload.path");
+    }
+    addChild_Widget(get_Root()->widget, iClob(upload));
+    setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+    /* User can resize the upload dialog. */
+    setResizeId_Widget(as_Widget(upload), "upload");
+    restoreWidth_Widget(as_Widget(upload));
+    postRefresh_Window(get_Window());
 }
 
 iObjectList *listDocuments_App(const iRoot *rootOrNull) {

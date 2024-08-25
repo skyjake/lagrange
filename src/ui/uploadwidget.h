@@ -27,13 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 enum iUploadProtocol {
     titan_UploadProtocol,
     spartan_UploadProtocol,
+    misfin_UploadProtocol,
 };
 
-iDeclareWidgetClass(UploadWidget)
-iDeclareObjectConstructionArgs(UploadWidget, enum iUploadProtocol)
-    
-iDeclareType(DocumentWidget)
-    
+iDeclareWidgetClass(UploadWidget);
+iDeclareObjectConstructionArgs(UploadWidget, enum iUploadProtocol);
+
+iDeclareType(DocumentWidget);
+iDeclareType(GmIdentity);
+
 void    setUrl_UploadWidget             (iUploadWidget *, const iString *url);
+void    setIdentity_UploadWidget        (iUploadWidget *, const iGmIdentity *ident);
 void    setResponseViewer_UploadWidget  (iUploadWidget *, iDocumentWidget *doc);
 void    setText_UploadWidget            (iUploadWidget *, const iString *text);

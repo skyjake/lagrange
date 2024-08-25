@@ -104,10 +104,12 @@ iRegExp *       newGemtextLink_RegExp   (void);
 
 #define GEMINI_DEFAULT_PORT         ((uint16_t) 1965)
 #define GEMINI_DEFAULT_PORT_CSTR    "1965"
+#define MISFIN_DEFAULT_PORT         ((uint16_t) 1958)
 #define URL_RESERVED_CHARS          ":/?#[]@!$&'()*+,;=" /* RFC 3986 */
 
 struct Impl_Url {
     iRangecc scheme;
+    iRangecc user;
     iRangecc host;
     iRangecc port;
     iRangecc path;

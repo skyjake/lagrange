@@ -750,14 +750,22 @@ static iBool isTitan_GmRequest_(const iGmRequest *d) {
     return isTitanUrl_String(&d->url);
 }
 
+static iBool isMisfin_GmRequest_(const iGmRequest *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "misfin");
+}
+
 void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
                              const iString *token) {
     if (!d->upload) {
         d->upload = new_UploadData();
     }
     set_Block(&d->upload->data, payload);
-    set_String(&d->upload->mime, mime);
-    set_String(&d->upload->token, token);
+    if (mime) {
+        set_String(&d->upload->mime, mime);
+    }
+    if (token) {
+        set_String(&d->upload->token, token);
+    }
 }
 
 void setSendProgressFunc_GmRequest(iGmRequest *d, iGmRequestProgressFunc func) {
@@ -794,6 +802,45 @@ static const iString *directoryIndexPage_Archive_(const iArchive *d, const iStri
         delete_String(path);
     }
     return NULL;
+}
+
+static void composeTitanRequest_GmRequest_(iGmRequest *d) {
+    iBlock content;
+    init_Block(&content, 0);
+    if (d->upload) {
+        printf_Block(&content,
+                     "%s;mime=%s;size=%zu",
+                     cstr_String(&d->url),
+                     cstr_String(&d->upload->mime),
+                     size_Block(&d->upload->data));
+        if (!isEmpty_String(&d->upload->token)) {
+            appendCStr_Block(&content, ";token=");
+            append_Block(&content,
+                         utf8_String(collect_String(urlEncode_String(&d->upload->token))));
+        }
+        appendCStr_Block(&content, "\r\n");
+        append_Block(&content, &d->upload->data);
+    }
+    else if (endsWithCase_String(&d->url, ";edit")) {
+        printf_Block(&content, "%s\r\n", cstr_String(&d->url));
+    }
+    else {
+        /* Empty data. */
+        printf_Block(
+            &content, "%s;mime=application/octet-stream;size=0\r\n", cstr_String(&d->url));
+    }
+    setContent_TlsRequest(d->req, &content);
+    deinit_Block(&content);
+}
+
+static void composeMisfinRequest_GmRequest_(iGmRequest *d) {
+    /* We will use Misfin(B) for best compatibility with servers. */
+    iBlock content;
+    init_Block(&content, 0);
+    printf_Block(&content, "%s %s\r\n", cstr_String(&d->url),
+                 d->upload ? cstr_Block(&d->upload->data) : "");
+    setContent_TlsRequest(d->req, &content);
+    deinit_Block(&content);
 }
 
 void submit_GmRequest(iGmRequest *d) {
@@ -1072,7 +1119,8 @@ void submit_GmRequest(iGmRequest *d) {
         return;
     }
     else if (!equalCase_Rangecc(url.scheme, "gemini") &&
-             !equalCase_Rangecc(url.scheme, "titan")) {
+             !equalCase_Rangecc(url.scheme, "titan") &&
+             !equalCase_Rangecc(url.scheme, "misfin")) {
         resp->statusCode = unsupportedProtocol_GmStatusCode;
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
@@ -1095,40 +1143,18 @@ void submit_GmRequest(iGmRequest *d) {
     iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
     if (port == 0) {
-        port = GEMINI_DEFAULT_PORT; /* default Gemini port */
+        port = isMisfin_GmRequest_(d) ? MISFIN_DEFAULT_PORT : GEMINI_DEFAULT_PORT;
     }
     setHost_TlsRequest(d->req, host, port);
     /* Titan requests can have an arbitrary payload. */
     if (isTitan_GmRequest_(d)) {
-        iBlock content;
-        init_Block(&content, 0);
-        if (d->upload) {
-            printf_Block(&content,
-                         "%s;mime=%s;size=%zu",
-                         cstr_String(&d->url),
-                         cstr_String(&d->upload->mime),
-                         size_Block(&d->upload->data));
-            if (!isEmpty_String(&d->upload->token)) {
-                appendCStr_Block(&content, ";token=");
-                append_Block(&content,
-                             utf8_String(collect_String(urlEncode_String(&d->upload->token))));
-            }
-            appendCStr_Block(&content, "\r\n");
-            append_Block(&content, &d->upload->data);
-        }
-        else if (endsWithCase_String(&d->url, ";edit")) {
-            printf_Block(&content, "%s\r\n", cstr_String(&d->url));
-        }
-        else {
-            /* Empty data. */
-            printf_Block(
-                &content, "%s;mime=application/octet-stream;size=0\r\n", cstr_String(&d->url));
-        }
-        setContent_TlsRequest(d->req, &content);
-        deinit_Block(&content);
+        composeTitanRequest_GmRequest_(d);
+    }
+    else if (isMisfin_GmRequest_(d)) {
+        composeMisfinRequest_GmRequest_(d);
     }
     else {
-        /* Gemini request. */
+        /* Normal Gemini request. */
         setContent_TlsRequest(d->req,
                               utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     }

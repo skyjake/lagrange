@@ -757,6 +757,9 @@ msgstr "Temporary"
 msgid "ident.expiry"
 msgstr "Expires %b %d, %Y"
 
+msgid "ident.sendmsg"
+msgstr "Send Message As…"
+
 msgid "ident.use"
 msgstr "Use on This Page"
 
@@ -1277,6 +1280,9 @@ msgstr "Upload with Titan"
 msgid "heading.upload.edit"
 msgstr "Edit with Titan"
 
+msgid "heading.upload.misfin"
+msgstr "Send Misfin Message"
+
 msgid "heading.upload.spartan"
 msgstr "Upload with Spartan"
 
@@ -1292,11 +1298,50 @@ msgstr "This type of resource cannot be edited in the application."
 msgid "heading.upload.edit.error"
 msgstr "Editing Failed"
 
+msgid "heading.upload.misfin.noident"
+msgstr "No Misfin Identities"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "You must first import a Misfin certificate to send messages."
+
+msgid "heading.misfin.ok"
+msgstr "Message Sent"
+
+msgid "misfin.success"
+msgstr "You message was sent successfully."
+
+msgid "misfin.redirect"
+msgstr "The recipient requests sending the message to a different address."
+
+msgid "misfin.failure"
+msgstr "An error occurred while sending the message."
+
+msgid "misfin.needcert"
+msgstr "You must identify yourself by providing a Misfin certificate."
+
+msgid "misfin.unauth"
+msgstr "You are not authorized to send messages to this recipient."
+
+msgid "misfin.badcert"
+msgstr "Your Misfin certificate is invalid."
+
+msgid "misfin.changed"
+msgstr "Your Misfin certificate does not match the one expected by the recipient."
+
+msgid "misfin.unknown"
+msgstr "The server responded with unknown status code."
+
 msgid "upload.error.directory"
 msgstr "Only individual files can be uploaded, not directories."
 
 msgid "upload.id"
 msgstr "Identity:"
+
+msgid "upload.from"
+msgstr "From:"
+
+msgid "upload.to"
+msgstr "To:"
 
 msgid "heading.upload.id"
 msgstr "Authorization"
@@ -1324,6 +1369,9 @@ msgstr "Really Delete All (No Undo)"
 
 msgid "hint.upload.text"
 msgstr "enter text to upload"
+
+msgid "hint.upload.misfin"
+msgstr "enter message"
 
 msgid "heading.upload.file"
 msgstr "File"
@@ -1365,6 +1413,9 @@ msgstr "token — see server's instructions"
 
 msgid "dlg.upload.send"
 msgstr "Upload"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Send Message"
 
 msgid "dlg.upload.edit"
 msgstr "Edit"

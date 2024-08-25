@@ -181,6 +181,45 @@ iBool isUsedOnDomain_GmIdentity(const iGmIdentity *d, const iRangecc domain) {
     return iFalse;
 }
 
+iBool isMisfin_GmIdentity(const iGmIdentity *d) {
+    iString *ident = misfinIdentity_GmIdentity(d, NULL);
+    delete_String(ident);
+    return ident != NULL;
+}
+
+iString *misfinIdentity_GmIdentity(const iGmIdentity *d, iString *blurb_out) {
+    /* To quality as a Misfin identity, the certificate must have a mailbox UID and a
+       subject alt name specifying the hostname. */
+    iString *addr = NULL;
+    iStringList *alt = subjectAltNames_TlsCertificate(d->cert);
+    iConstForEach(StringList, i, alt) {
+        if (startsWith_String(i.value, "DNS:")) {
+            iString *subject = subject_TlsCertificate(d->cert);
+            const size_t uidPos = indexOfCStr_String(subject, ", UID = ");
+            if (uidPos != iInvalidSize) {
+                const size_t endPos = indexOfCStrFrom_String(subject, ", ", uidPos + 1);
+                iString *uid = mid_String(subject, uidPos + 8, uidPos + 8 - endPos);
+                addr = new_String();
+                set_String(addr, uid);
+                appendCStr_String(addr, "@");
+                appendCStr_String(addr, cstr_String(i.value) + 4);
+                if (blurb_out) {
+                    iString *blurb = mid_String(subject, 5, uidPos - 5);
+                    set_String(blurb_out, blurb);
+                    delete_String(blurb);
+                }
+                delete_String(uid);
+            }
+            delete_String(subject);
+            if (addr) {
+                break;
+            }
+        }
+    }
+    iRelease(alt);
+    return addr;
+}
+
 void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
     if (use && isUsedOn_GmIdentity(d, url)) {
         return; /* Redudant. */
@@ -208,7 +247,7 @@ void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
                 deinit_String(used);
                 remove_ArrayIterator(&i);
             }
-        }        
+        }
     }
 }
 
@@ -227,11 +266,27 @@ const iString *findUse_GmIdentity(const iGmIdentity *d, const iString *url) {
 }
 
 const iString *name_GmIdentity(const iGmIdentity *d) {
-    iString *name = collect_String(subject_TlsCertificate(d->cert));
-    if (startsWith_String(name, "CN = ")) {
-        remove_Block(&name->chars, 0, 5);
+    if (!d) {
+        return collectNew_String();
     }
-    return name;
+    if (isMisfin_GmIdentity(d)) {
+        iString *blurb = new_String();
+        iString *addr = misfinIdentity_GmIdentity(d, blurb);
+        if (!isEmpty_String(blurb)) {
+            appendCStr_String(blurb, " ");
+        }
+        appendFormat_String(blurb, "<%s>", cstr_String(addr));
+        delete_String(addr);
+        return collect_String(blurb);
+    }
+    else {
+        iString *name = collect_String(subject_TlsCertificate(d->cert));
+        if (startsWith_String(name, "CN = ")) {
+            remove_Block(&name->chars, 0, 5);
+        }
+        return name;
+    }
+    return collectNew_String();
 }
 
 iDefineTypeConstruction(GmIdentity)
@@ -263,7 +318,7 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
                           cstrCollect_String(hexEncode_Block(&trust->fingerprint)));
             write_Stream(trusted, &line.chars);
         }
-        deinit_String(&line);        
+        deinit_String(&line);
     }
     if (identsMeta) {
         writeData_Stream(identsMeta, magicIdMeta_GmCerts_, 4);
@@ -274,7 +329,7 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
                 writeData_Stream(identsMeta, magicIdentity_GmCerts_, 4);
                 serialize_GmIdentity(ident, identsMeta);
             }
-        }        
+        }
     }
 }
 
@@ -294,7 +349,7 @@ static void save_GmCerts_(const iGmCerts *d) {
     iBeginCollect();
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, trustedFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        serialize_GmCerts(d, stream_File(f), NULL);        
+        serialize_GmCerts(d, stream_File(f), NULL);
     }
     iRelease(f);
     iEndCollect();
@@ -342,7 +397,7 @@ static void loadIdentityCertsAndDiscardInvalid_GmCerts_(iGmCerts *d) {
             delete_GmIdentity(ident);
             remove_PtrArrayIterator(&j);
         }
-    }    
+    }
 }
 
 iBool deserializeIdentities_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod method) {
@@ -389,7 +444,7 @@ static void loadIdentities_GmCerts_(iGmCerts *d) {
     }
     else {
         /* In any case, load any .crt/.key files that may be present in the "idents" dir. */
-        loadIdentityCertsAndDiscardInvalid_GmCerts_(d);        
+        loadIdentityCertsAndDiscardInvalid_GmCerts_(d);
     }
 }
 
@@ -428,7 +483,7 @@ iGmIdentity *findIdentityFuzzy_GmCerts(iGmCerts *d, const iString *fuzzy) {
         if (found) {
             break;
         }
-    }    
+    }
     return found;
 }
 
@@ -546,7 +601,7 @@ iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
 
 static void makeTrustKey_(iRangecc domain, uint16_t port, iString *key_out) {
     punyEncodeDomain_Rangecc(domain, key_out);
-    appendFormat_String(key_out, ";%u", port ? port : GEMINI_DEFAULT_PORT);    
+    appendFormat_String(key_out, ";%u", port ? port : GEMINI_DEFAULT_PORT);
 }
 
 iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTlsCertificate *cert) {
@@ -652,7 +707,7 @@ const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url)
     /* Get rid of the default port for consistent formatting. */ {
         iString *clean = copy_String(url);
         stripDefaultUrlPort_String(clean);
-        url = collect_String(clean);        
+        url = collect_String(clean);
     }
     lock_Mutex(d->mtx);
     const iGmIdentity *found = NULL;
@@ -786,4 +841,13 @@ const iPtrArray *listIdentities_GmCerts(const iGmCerts *d, iGmCertsIdentityFilte
     }
     unlock_Mutex(d->mtx);
     return list;
+}
+
+static iBool onlyMisfin_(void *context, const iGmIdentity *d) {
+    iUnused(context);
+    return isMisfin_GmIdentity(d);
+}
+
+size_t numMisfin_GmCerts(const iGmCerts *d) {
+    return size_PtrArray(listIdentities_GmCerts(d, onlyMisfin_, NULL));
 }

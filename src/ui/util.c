@@ -2790,6 +2790,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "menu.open") ||
           equal_Command(cmd, "menu.opened") ||
           equal_Command(cmd, "menu.closed") ||
+          equal_Command(cmd, "input.backup") ||
           startsWith_CStr(cmd, "cancel menu:") ||
           startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
@@ -3578,9 +3579,18 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" star_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
             { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
             { "padding" },
-            { "button text:" globe_Icon " " uiTextAction_ColorEscape "${menu.website}", 0, 0, "!open url:https://gmi.skyjake.fi/lagrange" },
-            { "button text:" person_Icon " " uiTextAction_ColorEscape "@jk@skyjake.fi", 0, 0, "!open default:1 url:https://skyjake.fi/@jk" },
-            { "button text:" envelope_Icon " " uiTextAction_ColorEscape "${menu.email}", 0, 0, "!open default:1 url:mailto:jaakko.keranen@iki.fi" },
+            { "button text:" globe_Icon " " uiTextAction_ColorEscape "${menu.website}",
+              0,
+              0,
+              "!open url:https://gmi.skyjake.fi/lagrange" },
+            { "button text:" person_Icon " " uiTextAction_ColorEscape "@jk@skyjake.fi",
+              0,
+              0,
+              "!open default:1 url:https://skyjake.fi/@jk" },
+            { "button text:" envelope_Icon " " uiTextAction_ColorEscape "${menu.email}",
+              0,
+              0,
+              "!open default:1 url:mailto:jaakko.keranen@iki.fi" },
             { "padding" },
             { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "!open url:about:about" },
             { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
@@ -4057,7 +4067,7 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
     iArray *identItems = collectNew_Array(sizeof(iMenuItem)); {
         pushBack_Array(identItems, &(iMenuItem){ "\u2014", 0, 0, "bmed.setident fp:" });
         pushBack_Array(identItems, &(iMenuItem){ "---" });
-        appendIdentities_MenuItem(identItems, "bmed.setident");
+        appendIdentities_MenuItem(identItems, "bmed.setident", NULL);
         pushBack_Array(identItems, &(iMenuItem){ NULL });
     }
     iWidget *dlg = NULL;

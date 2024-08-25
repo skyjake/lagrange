@@ -81,6 +81,7 @@ enum iGmLinkScheme {
     mailto_GmLinkScheme,
     spartan_GmLinkScheme,
     nex_GmLinkScheme,
+    misfin_GmLinkScheme,
 };
 
 enum iGmLinkFlag {
