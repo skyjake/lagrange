@@ -37,6 +37,7 @@ enum iPrefsString {
     uiLanguage_PrefsString,
     downloadDir_PrefsString,
     searchUrl_PrefsString,
+    recentMisfinId_PrefsString,
 
     /* Network */
     caFile_PrefsString,

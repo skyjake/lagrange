@@ -29,8 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "gmrequest.h"
 #include "sitespec.h"
+#include "misfin.h"
 #include "window.h"
 #include "gmcerts.h"
+#include "periodic.h"
 #include "app.h"
 
 #if defined (iPlatformAppleMobile)
@@ -59,6 +61,7 @@ enum iUploadIdentity {
 
 enum iMisfinStage {
     none_MisfinStage,
+    verifyRecipient_MisfinStage, /* check if the recipient is valid, query fingerprint */
     carbonCopyToSelf_MisfinStage,
     sendToRecipient_MisfinStage,
 };
@@ -286,17 +289,33 @@ static iInputWidgetHighlight gemtextHighlighter_UploadWidget_(const iInputWidget
 
 static void misfinAddressValidator_UploadWidget_(iInputWidget *input, void *context) {
     iUploadWidget *d = context;
-    iString *str = collect_String(copy_String(text_InputWidget(input)));
-    trim_String(str);
+    iString *address = collect_String(copy_String(text_InputWidget(input)));
+    trim_String(address);
     setCStr_String(&d->url, "misfin://");
-    append_String(&d->url, str);
+    append_String(&d->url, address);
+    /* Update the indicator to show whether this address is trusted. */
+    add_Periodic(periodic_App(), d, "upload.trusted.check");
 }
 
 static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText);
 
 static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
     const char *title = cstr_String(meta_GmRequest(d->request));
-    if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+    if (d->misfinStage == verifyRecipient_MisfinStage) {
+        if (status_GmRequest(d->request) == 20) {
+            trust_Misfin(text_InputWidget(d->path), meta_GmRequest(d->request));
+            iReleasePtr(&d->request);
+            d->misfinStage = carbonCopyToSelf_MisfinStage;
+            if (createRequest_UploadWidget_(d, iTrue)) {
+                submit_GmRequest(d->request);
+                return;
+            }
+        }
+        else {
+            title = format_CStr("${misfin.verify}:\n%s", title);
+        }
+    }
+    else if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
         if (status_GmRequest(d->request) == 20) {
             /* Continue by sending the actual message. */
             iReleasePtr(&d->request);
@@ -307,7 +326,7 @@ static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
             }
         }
         else {
-            title = format_CStr("${misfin.cc}: %s", title);
+            title = format_CStr("${misfin.cc}:\n%s", title);
         }
     }
     else {
@@ -513,6 +532,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                     iClob(d->path));
                 d->info = (iLabelWidget *) lastChild_Widget(headings);
                 if (d->protocol == misfin_UploadProtocol) {
+                    setValidator_InputWidget(d->path, misfinAddressValidator_UploadWidget_, d);
                     /* Sender identity. */
                     const iArray *idItems = makeIdentityItems_UploadWidget_(d);
                     iAssert(!isEmpty_Array(idItems));
@@ -521,6 +541,17 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                     iLabelWidget *label = (iLabelWidget *) lastChild_Widget(headings);
                     setFont_LabelWidget(label, uiContent_FontId);
                     setTextColor_LabelWidget(label, uiInputTextFocused_ColorId);
+                    /* Add a trust indicator into the path field. */ {
+                        iLabelWidget *trustedRecipient = new_LabelWidget(check_Icon, 0);
+                        setId_Widget(as_Widget(trustedRecipient), "upload.trusted");
+                        setTextColor_LabelWidget(trustedRecipient, green_ColorId);
+                        addChildFlags_Widget(as_Widget(d->path),
+                                             iClob(trustedRecipient),
+                                             hidden_WidgetFlag | frameless_WidgetFlag |
+                                                 moveToParentRightEdge_WidgetFlag |
+                                                 resizeToParentHeight_WidgetFlag);
+                        setContentPadding_InputWidget(d->path, -1, width_Widget(trustedRecipient));
+                    }
                     /* Initialize the currently chosen identity. */
                     const iRangecc fp = range_Command(
                         ((const iMenuItem *) constAt_Array(idItems, 0))->command, "fp");
@@ -654,6 +685,8 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     else if (d->protocol == misfin_UploadProtocol) {
         setBackupFileName_InputWidget(d->input, "misfinbackup");
         setHint_InputWidget(d->input, "${hint.upload.misfin}");
+        setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
+                                "${dlg.upload.sendmsg}");
     }
     else {
         setBackupFileName_InputWidget(d->input, "spartanbackup");
@@ -668,6 +701,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
+    remove_Periodic(periodic_App(), d);
     if (d->editRequest) {
         cancel_GmRequest(d->editRequest);
         iReleasePtr(&d->editRequest);
@@ -969,8 +1003,7 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
     else if (d->protocol == misfin_UploadProtocol) {
         set_String(&d->url, &d->originalUrl);
         setText_InputWidget(d->path, collect_String(mid_String(&d->url, 9, iInvalidSize)));
-        setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
-                                "${dlg.upload.sendmsg}");
+        misfinAddressValidator_UploadWidget_(d->path, d);
     }
     /* Layout updatae. */
     if (isUsingPanelLayout_Mobile()) {
@@ -989,9 +1022,11 @@ void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {
 }
 
 void setIdentity_UploadWidget(iUploadWidget *d, const iGmIdentity *ident) {
-    postCommand_Widget(as_Widget(d),
-                       "upload.setid fp:%s",
-                       cstrCollect_String(hexEncode_Block(&ident->fingerprint)));
+    if (ident) {
+        postCommand_Widget(as_Widget(d),
+                           "upload.setid fp:%s",
+                           cstrCollect_String(hexEncode_Block(&ident->fingerprint)));
+    }
 }
 
 void setResponseViewer_UploadWidget(iUploadWidget *d, iDocumentWidget *doc) {
@@ -1068,7 +1103,11 @@ static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText) {
     if (isText) {
         /* Uploading text. */
         const iString *text = text_InputWidget(d->input);
-        if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+        if (d->misfinStage == verifyRecipient_MisfinStage) {
+            text = collectNew_String(); /* blank message */
+        }
+        else if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+            /* Include metadata line showing the actual recipient. */
             text = collectNewFormat_String(": %s\n\n%s", cstr_String(text_InputWidget(d->path)),
                                            cstr_String(text));
         }
@@ -1147,6 +1186,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             set_Block(&d->idFingerprint,
                       collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
             d->idMode = dropdown_UploadIdentity;
+            /* Remember the most recently selected Misfin identity. */
+            if (d->protocol == misfin_UploadProtocol) {
+                setRecentMisfinId_App(findIdentity_GmCerts(certs_App(), &d->idFingerprint));
+            }
         }
         else if (arg_Command(cmd)) {
             clear_Block(&d->idFingerprint);
@@ -1157,6 +1200,16 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             d->idMode = none_UploadIdentity;
         }
         updateIdentityDropdown_UploadWidget_(d);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "upload.trusted.check")) {
+        if (d->protocol == misfin_UploadProtocol) {
+            setFlags_Widget(findChild_Widget(w, "upload.trusted"),
+                            hidden_WidgetFlag,
+                            checkTrust_Misfin(text_InputWidget(d->path), NULL, NULL) !=
+                                trusted_MisfinResult);
+            remove_Periodic(periodic_App(), d);
+        }
         return iTrue;
     }
     if (isCommand_UserEvent(ev, "upload.text.export")) {
@@ -1215,7 +1268,13 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
         if (d->protocol == misfin_UploadProtocol) {
-            d->misfinStage = carbonCopyToSelf_MisfinStage;
+            if (!checkTrust_Misfin(text_InputWidget(d->path), NULL, NULL)) {
+                /* First check if the recipient actually exists. */
+                d->misfinStage = verifyRecipient_MisfinStage;
+            }
+            else {
+                d->misfinStage = carbonCopyToSelf_MisfinStage;
+            }
         }
         if (!createRequest_UploadWidget_(d, isText)) {
             return iTrue;

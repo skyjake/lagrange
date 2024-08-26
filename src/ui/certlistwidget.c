@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "listwidget.h"
 #include "uploadwidget.h"
+#include "misfin.h"
 #include "../gmcerts.h"
 #include "../app.h"
 
@@ -270,7 +271,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
         else if (isCommand_Widget(w, ev, "ident.sendmsg")) {
             const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
             if (ident && isMisfin_GmIdentity(ident)) {
-                openMisfinMessageComposer_App(NULL, ident);
+                openMessageComposer_Misfin(NULL, ident);
             }
             return iTrue;
         }

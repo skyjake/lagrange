@@ -141,6 +141,7 @@ void                setTextInputActive_App      (iBool);
 const iStringArray *recentlySubmittedInput_App  (void);
 void                saveSubmittedInput_App      (const iString *queryInput);
 void                clearSubmittedInput_App     (void);
+void                setRecentMisfinId_App       (const iGmIdentity *ident);
 iBool               checkSavedWidth_App         (const iString *resizeId, float *gaps_out);
 
 typedef void (*iTickerFunc)(iAny *);
@@ -192,7 +193,6 @@ iBool       moveFocusInsideMenu_App     (const void *sdlEvent);
 void        commitFile_App              (const char *path, const char *tempPathWithNewContents); /* latter will be removed */
 void        openInDefaultBrowser_App    (const iString *url, const iString *mime);
 void        revealPath_App              (const iString *path);
-void        openMisfinMessageComposer_App(const iString *url, const iGmIdentity *sender);
 void        updateCACertificates_App    (void);
 void        resetFonts_App              (void);
 void        availableFontsChanged_App   (void);

@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "ipc.h"
 #include "mimehooks.h"
+#include "misfin.h"
 #include "periodic.h"
 #include "resources.h"
 #include "sitespec.h"
@@ -408,6 +409,7 @@ static iString *serializePrefs_App_(const iApp *d) {
 #endif
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.strings[searchUrl_PrefsString]));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
+    appendFormat_String(str, "misfin.recent fp:%s\n", cstr_String(&d->prefs.strings[recentMisfinId_PrefsString]));
     iConstForEach(StringHash, sw, d->savedWidths) {
         const iString     *resizeId = key_StringHashConstIterator(&sw);
         const iSavedWidth *saved    = sw.value->object;
@@ -606,6 +608,9 @@ static void loadPrefs_App_(iApp *d) {
                    handled via the event loop. */
                 handleCommand_App(cmd);
                 haveCA = iTrue;
+            }
+            else if (equal_Command(cmd, "misfin.recent")) {
+                setRange_String(&d->prefs.strings[recentMisfinId_PrefsString], range_Command(cmd, "fp"));
             }
             else if (equal_Command(cmd, "customframe")) {
                 d->prefs.customFrame = arg_Command(cmd);
@@ -1317,6 +1322,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
     init_SiteSpec(dataDir_App_());
     init_Snippets(dataDir_App_());
+    init_Misfin(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
@@ -1517,6 +1523,7 @@ static void deinit_App(iApp *d) {
     deinit_Keys();
     deinit_Fonts();
     save_Snippets(dataDir_App_());
+    deinit_Misfin();
     deinit_Snippets();
     deinit_SiteSpec();
     deinit_Prefs(&d->prefs);
@@ -2554,6 +2561,16 @@ void setEditorZoomLevel_App(int level) {
 
 void setRecentMenuBarIndex_App(int index) {
     app_.prefs.recentMenuBarIndex = index;
+}
+
+void setRecentMisfinId_App(const iGmIdentity *ident) {
+    iString *str = &app_.prefs.strings[recentMisfinId_PrefsString];
+    if (ident) {
+        set_String(str, collect_String(hexEncode_Block(&ident->fingerprint)));
+    }
+    else {
+        clear_String(str);
+    }
 }
 
 enum iColorTheme colorTheme_App(void) {
@@ -4363,7 +4380,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     }
     if (equalCase_Rangecc(parts.scheme, "misfin")) {
         if (!isHistory) {
-            openMisfinMessageComposer_App(url, NULL);
+            openMessageComposer_Misfin(url, NULL);
             return iTrue;
         }
     }
@@ -5360,31 +5377,6 @@ void revealPath_App(const iString *path) {
 #else
     iAssert(0 /* File revealing not implemented on this platform */);
 #endif
-}
-
-void openMisfinMessageComposer_App(const iString *url, const iGmIdentity *sender) {
-    iApp *d = &app_;
-    if (numMisfin_GmCerts(certs_App()) == 0) {
-        makeSimpleMessage_Widget("${heading.upload.misfin.noident}",
-                                 "${dlg.upload.misfin.noident}");
-        return;
-    }
-    iUploadWidget *upload = new_UploadWidget(misfin_UploadProtocol);
-    if (url) {
-        setUrl_UploadWidget(upload, url);
-    }
-    if (sender) {
-        setIdentity_UploadWidget(upload, sender);
-    }
-    if (!url) {
-        postCommand_Widget(upload, "focus.set id:upload.path");
-    }
-    addChild_Widget(get_Root()->widget, iClob(upload));
-    setupSheetTransition_Mobile(as_Widget(upload), iTrue);
-    /* User can resize the upload dialog. */
-    setResizeId_Widget(as_Widget(upload), "upload");
-    restoreWidth_Widget(as_Widget(upload));
-    postRefresh_Window(get_Window());
 }
 
 iObjectList *listDocuments_App(const iRoot *rootOrNull) {

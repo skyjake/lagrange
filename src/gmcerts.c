@@ -195,6 +195,7 @@ iString *misfinIdentity_GmIdentity(const iGmIdentity *d, iString *blurb_out) {
     iConstForEach(StringList, i, alt) {
         if (startsWith_String(i.value, "DNS:")) {
             iString *subject = subject_TlsCertificate(d->cert);
+            /* TODO: Would be nice to have a better way to query the UID. */
             const size_t uidPos = indexOfCStr_String(subject, ", UID = ");
             if (uidPos != iInvalidSize) {
                 const size_t endPos = indexOfCStrFrom_String(subject, ", ", uidPos + 1);
@@ -841,13 +842,4 @@ const iPtrArray *listIdentities_GmCerts(const iGmCerts *d, iGmCertsIdentityFilte
     }
     unlock_Mutex(d->mtx);
     return list;
-}
-
-static iBool onlyMisfin_(void *context, const iGmIdentity *d) {
-    iUnused(context);
-    return isMisfin_GmIdentity(d);
-}
-
-size_t numMisfin_GmCerts(const iGmCerts *d) {
-    return size_PtrArray(listIdentities_GmCerts(d, onlyMisfin_, NULL));
 }

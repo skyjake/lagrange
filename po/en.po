@@ -1307,6 +1307,14 @@ msgstr "You must first import a Misfin certificate to send messages."
 msgid "heading.misfin.ok"
 msgstr "Message Sent"
 
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Sending Myself a Copy"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Verifying Recipient"
+
 msgid "misfin.success"
 msgstr "You message was sent successfully."
 
@@ -1329,7 +1337,7 @@ msgid "misfin.changed"
 msgstr "Your Misfin certificate does not match the one expected by the recipient."
 
 msgid "misfin.unknown"
-msgstr "The server responded with unknown status code."
+msgstr "Failed to communicate with the server."
 
 msgid "upload.error.directory"
 msgstr "Only individual files can be uploaded, not directories."

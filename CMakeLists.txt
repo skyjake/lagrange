@@ -203,6 +203,8 @@ set (SOURCES
     src/media.h
     src/mimehooks.c
     src/mimehooks.h
+    src/misfin.c
+    src/misfin.h
     src/periodic.c
     src/periodic.h
     src/prefs.c
