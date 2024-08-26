@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-08-20 10:34+0000\n"
+"PO-Revision-Date: 2024-08-28 12:03+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2809,3 +2809,63 @@ msgstr "Düzenleme başarısız"
 
 msgid "dlg.upload.edit"
 msgstr "Düzenle"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Kendime bir kopya gönderiliyor"
+
+msgid "misfin.changed"
+msgstr "Misfin sertifikanız, alıcı tarafından beklenenle eşleşmiyor."
+
+msgid "ident.sendmsg"
+msgstr "İletiyi farklı gönder…"
+
+msgid "heading.upload.misfin"
+msgstr "Misfin iletisi gönder"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Misfin kimliği yok"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"İleti gönderebilmek için önce bir Misfin sertifikası içe aktarmalısınız."
+
+msgid "heading.misfin.ok"
+msgstr "İleti gönderildi"
+
+msgid "misfin.success"
+msgstr "İletiniz başarıyla gönderildi."
+
+msgid "misfin.redirect"
+msgstr "Alıcı, iletiyi başka bir adrese göndermek istiyor."
+
+msgid "misfin.failure"
+msgstr "İleti gönderilirken bir hata oluştu."
+
+msgid "misfin.needcert"
+msgstr "Bir Misfin sertifikası sağlayarak kendinizi tanıtmalısınız."
+
+msgid "misfin.unauth"
+msgstr "Bu alıcıya ileti göndermeye yetkiniz yok."
+
+msgid "misfin.badcert"
+msgstr "Misfin sertifikanız geçersiz."
+
+msgid "upload.from"
+msgstr "Kimden:"
+
+msgid "upload.to"
+msgstr "Kime:"
+
+msgid "hint.upload.misfin"
+msgstr "ileti girin"
+
+msgid "dlg.upload.sendmsg"
+msgstr "İletiyi gönder"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Alıcı doğrulanıyor"
+
+msgid "misfin.unknown"
+msgstr "Sunucuyla iletişim kurulamadı."
