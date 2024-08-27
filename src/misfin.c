@@ -125,7 +125,7 @@ void trust_Misfin(const iString *address, const iString *fingerprint) {
         iRelease(lines);
     }
     /* At the end, append the newly trusted fingerprint. */
-    append_String(updated, fingerprint);
+    append_String(updated, collect_String(lower_String(fingerprint)));
     appendCStr_String(updated, " ");
     append_String(updated, address);
     appendCStr_String(updated, "\n");

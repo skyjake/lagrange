@@ -301,9 +301,11 @@ static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText);
 
 static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
     const char *title = cstr_String(meta_GmRequest(d->request));
+    const iString *address = collect_String(trimmed_String(text_InputWidget(d->path)));
     if (d->misfinStage == verifyRecipient_MisfinStage) {
         if (status_GmRequest(d->request) == 20) {
-            trust_Misfin(text_InputWidget(d->path), meta_GmRequest(d->request));
+            const iString *fingerprint = meta_GmRequest(d->request);
+            trust_Misfin(address, fingerprint);
             iReleasePtr(&d->request);
             d->misfinStage = carbonCopyToSelf_MisfinStage;
             if (createRequest_UploadWidget_(d, iTrue)) {
@@ -379,13 +381,21 @@ static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
             msg = "${misfin.unknown}";
             break;
     }
+    if (status == 20) {
+        /* Update the trusted fingzerprint after successful delivery of message.
+           Since we don't receive any messages in the app, we can automatically
+           update to new certificates. (Currently the fingerprints aren't really
+           needed?) */
+        /* TODO: Does this make sense? */
+        trust_Misfin(address, meta_GmRequest(d->request));
+    }
     makeMessage_Widget(
         title,
         msg,
         (iMenuItem[]){ { "${dlg.message.ok}", 0, 0, status == 20 ? "!upload.cancel" : "cancel" } },
         1);
-    setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iFalse);
     iReleasePtr(&d->request);
+    setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iFalse);
 }
 
 void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
@@ -678,26 +688,30 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");
-    if (d->protocol == titan_UploadProtocol) {
-        setBackupFileName_InputWidget(d->input, "uploadbackup");
-        setBackupFileName_InputWidget(d->token, "uploadtoken"); /* TODO: site-specific config? */
-    }
-    else if (d->protocol == misfin_UploadProtocol) {
-        setBackupFileName_InputWidget(d->input, "misfinbackup");
-        setHint_InputWidget(d->input, "${hint.upload.misfin}");
-        setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
-                                "${dlg.upload.sendmsg}");
-    }
-    else {
-        setBackupFileName_InputWidget(d->input, "spartanbackup");
+    switch (d->protocol) {
+        case titan_UploadProtocol: {
+            setBackupFileName_InputWidget(d->input, "uploadbackup");
+            setBackupFileName_InputWidget(d->token, "uploadtoken"); /* TODO: site-specific config? */
+            break;
+        }
+        case misfin_UploadProtocol: {
+            setBackupFileName_InputWidget(d->input, "misfinbackup");
+            setHint_InputWidget(d->input, "${hint.upload.misfin}");
+            setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
+                                    "${dlg.upload.sendmsg}");
+            iLabelWidget *fileTabButton = tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0));
+            setFlags_Widget((iWidget *) fileTabButton, disabled_WidgetFlag, iTrue);
+            break;
+        }
+        case spartan_UploadProtocol: {
+            setBackupFileName_InputWidget(d->input, "spartanbackup");
+            break;
+        }
+        default:
+            break;
     }
     updateInputMaxHeight_UploadWidget_(d);
     enableResizing_Widget(as_Widget(d), width_Widget(d), NULL);
-
-    if (d->protocol == misfin_UploadProtocol) {
-        iLabelWidget *fileTabButton = tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0));
-        setFlags_Widget((iWidget *) fileTabButton, disabled_WidgetFlag, iTrue);
-    }
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
