@@ -837,8 +837,22 @@ static void composeMisfinRequest_GmRequest_(iGmRequest *d) {
     /* We will use Misfin(B) for best compatibility with servers. */
     iBlock content;
     init_Block(&content, 0);
-    printf_Block(&content, "%s %s\r\n", cstr_String(&d->url),
-                 d->upload ? cstr_Block(&d->upload->data) : "");
+    const size_t misfinBMaxLength_ = 2048;
+    const size_t misfinCMaxContentLength_ = 16384;
+    if (size_String(&d->url) + 1 + size_Block(&d->upload->data) + 2 <= misfinBMaxLength_) {
+        printf_Block(&content, "%s %s\r\n", cstr_String(&d->url),
+                     d->upload ? cstr_Block(&d->upload->data) : "");
+    }
+    else {
+        /* Use the Misfin(C) format, then. */
+        /* Force the data to fit the maximum size. */
+        truncate_Block(&d->upload->data, misfinCMaxContentLength_);
+        printf_Block(&content,
+                     "%s\t%u\r\n%s",
+                     cstr_String(&d->url),
+                     size_Block(&d->upload->data),
+                     cstr_Block(&d->upload->data));
+    }
     setContent_TlsRequest(d->req, &content);
     deinit_Block(&content);
 }
