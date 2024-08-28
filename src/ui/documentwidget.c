@@ -1718,10 +1718,10 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
         return;
     }
     /* Warnings related to certificates and trust. */
-    const int certFlags = d->certFlags;
     const int req = timeVerified_GmCertFlag | domainVerified_GmCertFlag | trusted_GmCertFlag;
-    if (certFlags & available_GmCertFlag && (certFlags & req) != req &&
-        numItems_Banner(d->banner) == 0) {
+    int certFlags = d->certFlags;
+    if (prefs_App()->warnTlsSecurity && certFlags & available_GmCertFlag &&
+        (certFlags & req) != req && numItems_Banner(d->banner) == 0) {
         iString *title = collectNewCStr_String(cstr_Lang("dlg.certwarn.title"));
         iString *str   = collectNew_String();
         if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
@@ -2266,7 +2266,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
-            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+            prefs_App()->warnTlsSecurity) {
             statusCode = tlsServerCertificateNotVerified_GmStatusCode;
         }
         init_Anim(&d->view->sideOpacity, 0);
@@ -3093,7 +3094,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
             pushBack_Array(items,
-                           &(iMenuItem){ uiTextAction_ColorEscape "${dlg.cert.trust}",
+                           &(iMenuItem){ uiTextAction_ColorEscape "\x1b[1m${dlg.cert.trust}",
                                          SDLK_u,
                                          KMOD_PRIMARY | KMOD_SHIFT,
                                          "server.trustcert" });
@@ -3120,7 +3121,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (haveFingerprint) {
                 iLabelWidget *fpMenu = makeMenuButton_LabelWidget(
                     "${dlg.cert.fingerprint}", fingerprintItems, iElemCount(fingerprintItems));
-                addChildPos_Widget(buttons, iClob(fpMenu), front_WidgetAddPos);
+                if (!canTrust) {
+                    addChildPos_Widget(buttons, iClob(fpMenu), front_WidgetAddPos);
+                }
+                else {
+                    insertChildAfter_Widget(buttons, iClob(fpMenu), 0);
+                }
             }
         }
         delete_Array(items);

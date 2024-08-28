@@ -383,6 +383,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.swipe.page", &d->prefs.pageSwipe },
         { "prefs.time.24h", &d->prefs.time24h },
         { "prefs.tui.simple", &d->prefs.simpleChars },
+        { "prefs.warn.security", &d->prefs.warnTlsSecurity },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
@@ -3925,6 +3926,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.warn.security.changed")) {
+        d->prefs.warnTlsSecurity = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "imageloadscroll")) {
         d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
         return iTrue;
@@ -4969,6 +4974,7 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
+        setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);

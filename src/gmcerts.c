@@ -536,6 +536,9 @@ iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int dep
         /* We only check the primary certificate. */
         return iTrue;
     }
+    if (!prefs_App()->warnTlsSecurity) {
+        return iTrue; /* User wants to disregard security concerns. */
+    }
     const iAddress *address = address_TlsRequest(request);
     iRangecc        domain  = range_String(hostName_Address(address));
     uint16_t        port    = port_Address(address);

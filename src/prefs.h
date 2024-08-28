@@ -98,6 +98,7 @@ enum iPrefsBool {
     capsLockKeyModifier_PrefsBool,
 
     /* Network */
+    warnCertSecurity_PrefsBool,
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
 
@@ -177,6 +178,7 @@ struct Impl_Prefs {
             iBool capsLockKeyModifier;
 
             /* Network */
+            iBool warnTlsSecurity;
             iBool decodeUserVisibleURLs;
             iBool allowSchemeChangingRedirect;
 

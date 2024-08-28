@@ -2102,7 +2102,7 @@ msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
 msgid "prefs.tui.simple"
-msgstr "Simple characters:"
+msgstr "Force ASCII character set:"
 
 msgid "prefs.font.ui"
 msgstr "UI font:"
@@ -2204,6 +2204,9 @@ msgstr "Justify:"
 
 msgid "prefs.plaintext.wrap"
 msgstr "Wrap long plaintext lines:"
+
+msgid "prefs.warn.security"
+msgstr "TLS security warnings:"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Scheme-changing redirects:"

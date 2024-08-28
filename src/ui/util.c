@@ -2978,11 +2978,13 @@ static void addDialogPadding_(iWidget *headings, iWidget *values) {
 }
 
 static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
-    if (isTerminal_Platform()) {
-        addDialogPadding_(headings, values);
-    }
-    else {
-        addDialogPaddingSize_(headings, values, 2 * gap_UI);
+    if (childCount_Widget(headings)) {
+        if (isTerminal_Platform()) {
+            addDialogPadding_(headings, values);
+        }
+        else {
+            addDialogPaddingSize_(headings, values, 2 * gap_UI);
+        }
     }
     setFont_LabelWidget(addChildFlags_Widget(headings,
                                              iClob(makeHeading_Widget(
@@ -3527,6 +3529,7 @@ iWidget *makePreferences_Widget(void) {
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
             { "padding" },
+            { "toggle id:prefs.warn.security" },
             { "toggle id:prefs.decodeurls" },
             { "input id:prefs.urlsize maxlen:7 selectall:1" },
             { "padding" },
@@ -3675,6 +3678,10 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, palette_Icon " ${heading.prefs.appearance}", red_ColorId, '2', &headings, &values),
                      "prefs.page.appearance");
 //        makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
+        if (isTerminal_Platform()) {
+            /* Display character set. */
+            addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
+        }
 #if (defined (iPlatformApple) || defined (iPlatformMSys)) && !defined (iPlatformTerminal)
         addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
 #endif
@@ -3742,6 +3749,7 @@ iWidget *makePreferences_Widget(void) {
                                                    &headings,
                                                    &values),
                      "prefs.page.style");
+        makeTwoColumnHeading_("${heading.prefs.colors}", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
@@ -3788,10 +3796,6 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
             addFontButtons_(values, "monodoc");
         }
-        else {
-            /* Terminal font settings. */
-            addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
-        }
         addDialogPadding_(headings, values);
         addDialogToggleGroup_(headings,
                               values,
@@ -3830,6 +3834,8 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
 #endif
         addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
         addDialogPadding_(headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
         iWidget *quote = new_Widget(); {
@@ -3837,9 +3843,7 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
-        addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
+        //addDialogPadding_(headings, values);
         addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
         addDialogDropMenu_(headings, values, "${prefs.collapsepre}", collapseItems, iInvalidSize,
                            "prefs.collapsepre");
@@ -3952,6 +3956,7 @@ iWidget *makePreferences_Widget(void) {
                                                    &headings,
                                                    &values),
                      "prefs.page.network");
+        addDialogToggle_(headings, values, "${prefs.warn.security}", "prefs.warn.security");
         addDialogToggle_(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
         addDialogToggle_(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
         addPrefsInputWithHeading_(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
