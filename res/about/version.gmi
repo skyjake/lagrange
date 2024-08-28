@@ -9,7 +9,10 @@
 ## 1.18
 
 New features:
+* Support for sending Misfin messages. "misfin://" links are opened in the upload dialog. You must import a Misfin identity before you can send a message.
+* Misfin: Identity sidebar indicates which identities are for Misfin.
 * Titan: Support for the "edit" parameter in opened Titan links. The target's contents are downloaded and displayed in the upload dialog's text editor. After editing the contents are uploaded back to the server.
+* Option to disable all TLS security warnings.
 * Opus audio playback using libopusfile (optional dependency). Contributed by Martin Chang.
 
 Changes and enhancements:
@@ -29,6 +32,7 @@ Changes and enhancements:
 Fixes:
 * Titan URLs were incorrectly opening the upload dialog when navigating through history.
 * Titan request in an open tab was resubmitted with empty content when launching the app.
+* Default Titan upload identity was sometimes chosen incorrectly; should match the active Gemini identity.
 * Upload dialog was missing a couple of UI strings for drag-and-drop errors.
 * Gopher: Allow port number to be blank on `i` lines.
 * Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
