@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
 #include <SDL_timer.h>
+#include <SDL_version.h>
 
 iBool isCommand_SDLEvent(const SDL_Event *d) {
     return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode;
@@ -106,6 +107,9 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     iWindow *win = get_Window(); /* may not be the focus window */
 #if !defined (iPlatformTerminal)
     if (isDesktop_Platform()) {
+# if SDL_VERSION_ATLEAST(2, 26, 0) && !defined(iPlatformApple)
+        return coord_Window(win, ev->mouseX, ev->mouseY);
+# else
         /* We need to figure out where the mouse is in relation to the currently active window.
            It may be outside the actual focus window. */
         iInt2 mousePos, winPos;
@@ -113,6 +117,7 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
         SDL_GetWindowPosition(win->win, &winPos.x, &winPos.y);
         subv_I2(&mousePos, winPos);
         return coord_Window(win, mousePos.x, mousePos.y);
+# endif
     }
 #endif
     return mouseCoord_Window(win, ev->which);

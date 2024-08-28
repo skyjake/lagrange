@@ -92,6 +92,7 @@ void                refresh_App                 (void);
 
 iBool               isFinishedLaunching_App     (void);
 iBool               isRunningUnderWindowSystem_App(void);
+iBool               isRunningUnderWayland_App   (void);
 iBool               isRefreshPending_App        (void);
 iBool               isLandscape_App             (void);
 iLocalDef iBool     isPortrait_App              (void) { return !isLandscape_App(); }

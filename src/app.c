@@ -169,6 +169,7 @@ struct Impl_App {
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
+    iBool        isRunningUnderWayland;
     iBool        isTextInputActive;
     iBool        isDarkSystemTheme;
     iBool        isSuspended;
@@ -1153,9 +1154,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     migrateInternalUserDirToExternalStorage_App_(d);
 #endif
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
-    d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
-                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+    d->isRunningUnderWayland      = !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+    d->isRunningUnderWindowSystem = d->isRunningUnderWayland ||
+                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "x11");
 #else
+    d->isRunningUnderWayland      = iFalse;
     d->isRunningUnderWindowSystem = iTrue;
 #endif
     d->isTextInputActive = iFalse;
@@ -3009,6 +3012,10 @@ enum iAppDeviceType deviceType_App(void) {
 
 iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
+}
+
+iBool isRunningUnderWayland_App(void) {
+    return app_.isRunningUnderWayland;
 }
 
 void setTextInputActive_App(iBool active) {
