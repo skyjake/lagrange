@@ -1390,7 +1390,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         trim_String(&d->title);
     }
     deinit_String(&firstContentLine);
-#if  1
+#if  0
     printf("[GmDocument] layout size: %zu runs (%zu bytes), layout width: %d, content width: %d\n",
            size_Array(&d->layout),
            size_Array(&d->layout) * sizeof(iGmRun),
