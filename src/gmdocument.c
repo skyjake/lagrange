@@ -163,6 +163,7 @@ struct Impl_GmDocument {
     iString   url;        /* for resolving relative links */
     iString   localHost;
     iInt2     size;
+    int       contentWidth; /* some runs may extend past the requested width */
     int       outsideMargin;
     iArray    layout; /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on the page but is not part of the source */
@@ -634,6 +635,12 @@ static void clear_RunTypesetter_(iRunTypesetter *d) {
 
 static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
     const size_t n = size_Array(&d->layout);
+    /* Update the actual content width of the document. This may exceed the page width
+       if there are unwrappable lines. */
+    for (size_t i = 0; i < size_Array(&d->layout); i++) {
+        doc->contentWidth = iMax(value_Array(&d->layout, i, iGmRun).visBounds.size.x,
+                                 doc->contentWidth);
+    }
     pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
     clear_RunTypesetter_(d);
     return n;
@@ -740,6 +747,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     if (isGopher) {
         indents[preformatted_GmLineType] = indents[text_GmLineType];
     }
+    if (d->viewFormat == plainText_SourceFormat) {
+        iForIndices(i, indents) {
+            indents[i] = 0;
+        }
+    }
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
@@ -763,6 +775,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta)); /* remember fold states */
     clear_Array(&d->preMeta);
     clear_String(&d->title);
+    d->contentWidth = 0;
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
@@ -1377,8 +1390,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         trim_String(&d->title);
     }
     deinit_String(&firstContentLine);
-//    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
-//           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));
+#if  1
+    printf("[GmDocument] layout size: %zu runs (%zu bytes), layout width: %d, content width: %d\n",
+           size_Array(&d->layout),
+           size_Array(&d->layout) * sizeof(iGmRun),
+           d->size.x,
+           d->contentWidth);
+#endif
 }
 
 void init_GmDocument(iGmDocument *d) {
@@ -2117,6 +2135,10 @@ iBool setViewFormat_GmDocument(iGmDocument *d, enum iSourceFormat viewFormat) {
     return iFalse;
 }
 
+enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
+    return d->viewFormat;
+}
+
 void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
     d->size.x        = width;
     d->outsideMargin = iMax(0, (canvasWidth - width) / 2); /* distance to edge of the canvas */
@@ -2129,6 +2151,10 @@ iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
         return iTrue;
     }
     return iFalse;
+}
+
+int contentWidth_GmDocument(const iGmDocument *d) {
+    return d->contentWidth;
 }
 
 void redoLayout_GmDocument(iGmDocument *d) {

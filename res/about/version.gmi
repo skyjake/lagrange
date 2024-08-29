@@ -17,6 +17,7 @@ New features:
 
 Changes and enhancements:
 * The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
+* Line width expands dynamically (up to window size) to account for wide content like preformatted blocks and plain text lines.
 * The file path can be entered manually in the upload dialog. Previously only drag-and-drop was supported.
 * Improved UI focus navigation: arrow keys move focus to an adjacent widget.
 * Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
@@ -43,6 +44,7 @@ Fixes:
 * Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
 * Incorrect glyph spacing in a mixed-font preformatted block (fallback glyphs from different fonts).
 * Lede paragraph highlighting was misbehaving with monospace body font; now gets disabled.
+* Glyphs were sometimes partially cut off due to excessive background clearing on adjacent lines.
 * TUI: Color escapes were not applied when rendering.
 * TUI: Submenu chevron symbols were missing.
 * TUI: Potential hang when wrapping text.
