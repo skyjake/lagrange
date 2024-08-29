@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-08-28 12:03+0000\n"
+"PO-Revision-Date: 2024-08-30 10:38+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1218,14 +1218,14 @@ msgstr "Desteklenmeyen İçerik Türü"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Alınan üstbilgi Gemin protokol belirtimine uymuyor. Sunucu hata veriyor "
+"Alınan üstbilgi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
 "olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "error.badredirect"
 msgstr "Geçersiz Yeniden Yönlendirme"
 
 msgid "error.schemeredirect"
-msgstr "Şema Değiştiren Yeniden Yönlendirme"
+msgstr "Şema değiştiren yeniden yönlendirme"
 
 msgid "error.manyredirects"
 msgstr "Pek Çok Yeniden Yönlendirme"
@@ -2182,7 +2182,7 @@ msgid "menu.newwindow"
 msgstr "Yeni pencere"
 
 msgid "heading.sitespec"
-msgstr "Siteye Özel Ayarlar"
+msgstr "Siteye özel ayarlar"
 
 msgid "keys.sitespec"
 msgstr "Siteye özel ayarları göster"
@@ -2405,7 +2405,7 @@ msgstr ""
 "veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "prefs.tui.simple"
-msgstr "Yalın karakterler:"
+msgstr "ASCII karakter kümesini zorla:"
 
 msgid "prefs.evensplit"
 msgstr "Sekmeleri eşitçe böl:"
@@ -2869,3 +2869,6 @@ msgstr "Alıcı doğrulanıyor"
 
 msgid "misfin.unknown"
 msgstr "Sunucuyla iletişim kurulamadı."
+
+msgid "prefs.warn.security"
+msgstr "TLS güvenlik uyarıları:"
