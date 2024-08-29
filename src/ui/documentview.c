@@ -991,8 +991,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                bounds (e.g., box drawing). Ensure that the edges of the preformatted block
                remain clean. (GmDocument leaves empty padding around blocks.) */
             adjustEdges_Rect(&wideRect,
-                             run->flags & startOfLine_GmRunFlag ? -gap_UI / 2 : 0, 0,
-                             run->flags & endOfLine_GmRunFlag ? gap_UI / 2 : 0, 0);
+                             run->flags & startOfLine_GmRunFlag ? -1 : 0, 0,
+                             run->flags & endOfLine_GmRunFlag ? 1 : 0, 0);
             fillRect_Paint(&d->paint, wideRect, tmBackground_ColorId);
         }
         else {
