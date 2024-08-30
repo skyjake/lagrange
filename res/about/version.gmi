@@ -35,6 +35,7 @@ Fixes:
 * Titan request in an open tab was resubmitted with empty content when launching the app.
 * Default Titan upload identity was sometimes chosen incorrectly; should match the active Gemini identity.
 * Upload dialog was missing a couple of UI strings for drag-and-drop errors.
+* Gopher: Gemtext formatting (headings, quotes, etc.) found on Gopher menu pages is now escaped so it doesn't unintentionally affect the visual presentation.
 * Gopher: Allow port number to be blank on `i` lines.
 * Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
 * Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
