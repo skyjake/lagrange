@@ -1049,7 +1049,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     const char *circle = "\u25ef"; /* Large Circle */
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                    init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
+                                     init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
                     if (isTerminal_Platform()) {
                         nbArea.pos.x += 1;
                     }

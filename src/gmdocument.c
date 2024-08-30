@@ -1078,6 +1078,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : link->flags & fontpackFileExtension_GmLinkFlag ? fontpack_Icon
                                              : scheme == file_GmLinkScheme     ? folder
                                                                                : arrow);
+            /* Check actual height to align with the paragraph text. The icon glyph
+               may come from a different font. */ {
+                const int glyphHeight = measureRange_Text(icon.font, icon.text).bounds.size.y;
+                if (glyphHeight > icon.visBounds.size.y) {
+                    const int delta = glyphHeight - icon.visBounds.size.y;
+                    icon.visBounds.size.y += delta;
+                    icon.visBounds.pos.y -= delta / 2;
+                }
+            }
             /* Custom link icon is shown on local Gemini links only. */
             if (!isEmpty_Range(&link->labelIcon)) {
                 icon.text = link->labelIcon;
