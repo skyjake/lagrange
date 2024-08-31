@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-08-21 13:21+0000\n"
+"PO-Revision-Date: 2024-09-02 20:49+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -2820,3 +2820,67 @@ msgstr "Fitxategi bakunak igo daitezke; ez direktorioak."
 
 msgid "upload.file.path"
 msgstr "Fitxategiaren bidea:"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"Lehenik eta behin Misfin ziurtagiri bat inportatu behar duzu mezuak "
+"bidaltzeko."
+
+msgid "misfin.unauth"
+msgstr "Ez zaude hartzaile honi mezuak bidaltzeko baimenduta."
+
+msgid "prefs.warn.security"
+msgstr "TLS segurtasun-oharrak:"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Nire buruari kopia bat bidaltzen"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Hartzailea egiaztatzen"
+
+msgid "hint.upload.misfin"
+msgstr "sartu mezua"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Bidali mezua"
+
+msgid "ident.sendmsg"
+msgstr "Bidali mezua honela…"
+
+msgid "heading.upload.misfin"
+msgstr "Bidali Misfin mezua"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Ez dago Misfin identitaterik"
+
+msgid "heading.misfin.ok"
+msgstr "Mezua bidali da"
+
+msgid "misfin.success"
+msgstr "Zure mezua ondo bidali da."
+
+msgid "misfin.redirect"
+msgstr "Hartzaileak mezua bester helbide batera bidaltzea eskatu du."
+
+msgid "misfin.failure"
+msgstr "Errorea gertatu da mezua bidaltzerakoan."
+
+msgid "misfin.needcert"
+msgstr "Misfin ziurtagiri baten bidez identifikatu behar zara."
+
+msgid "misfin.badcert"
+msgstr "Zure Misfin ziurtagiria ez da baliozkoa."
+
+msgid "misfin.changed"
+msgstr "Zure Misfin ziurtagiria ez dator bat hartzaileak espero duenarekin."
+
+msgid "misfin.unknown"
+msgstr "Ezin izan da zerbitzariarekin komunikatu."
+
+msgid "upload.from"
+msgstr "Igorlea:"
+
+msgid "upload.to"
+msgstr "Hartzailea:"
