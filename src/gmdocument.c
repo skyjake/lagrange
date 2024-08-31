@@ -184,6 +184,7 @@ struct Impl_GmDocument {
         iBool isNex : 1;
         iBool isLayoutInvalidated : 1;
         iBool isPaletteValid : 1;
+        iBool isGopherMenu : 1;
     } flags;
 };
 
@@ -1144,9 +1145,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             init_RunTypesetter_(&rts);
             rts.run           = run;
             rts.pos           = pos;
-            rts.isWordWrapped = (d->flags.isNex                        ? iFalse
-                                 : d->format == plainText_SourceFormat ? prefs->plainTextWrap
-                                                                       : !isPreformat);
+            rts.isWordWrapped = (d->flags.isNex ? iFalse
+                                 : (d->format == plainText_SourceFormat || d->flags.isGopherMenu)
+                                     ? prefs->plainTextWrap
+                                     : !isPreformat);
             rts.isPreformat   = isPreformat;
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
@@ -1365,6 +1367,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         followsBlank = iFalse;
     }
     d->size.y = pos.y;
+    d->contentWidth += indents[text_GmLineType] * gap_Text; /* indent not included in run widths */
     if (checkMissing_Text()) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
     }
@@ -2329,7 +2332,9 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     }
     d->flags.isSpartan = equalCase_Rangecc(parts.scheme, "spartan");
     d->flags.isNex     = equalCase_Rangecc(parts.scheme, "nex") &&
-                     (isEmpty_Range(&parts.path) || endsWith_Rangecc(parts.path, "/"));
+                         (isEmpty_Range(&parts.path) || endsWith_Rangecc(parts.path, "/"));
+    d->flags.isGopherMenu = equalCase_Rangecc(parts.scheme, "gopher") &&
+                            startsWith_Rangecc(parts.path, "/1");
 }
 
 iDeclareType(PendingLink)
