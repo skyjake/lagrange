@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2024-06-30 21:08+0000\n"
+"PO-Revision-Date: 2024-09-02 20:49+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -1639,7 +1639,7 @@ msgid "upload.file.name"
 msgstr "Имя файла:"
 
 msgid "upload.file.drophere"
-msgstr "(перетащите файл в окно)"
+msgstr "введите путь или перетащите файл в окно"
 
 msgid "upload.file.size"
 msgstr "Размер:"
@@ -2379,7 +2379,7 @@ msgid "error.incompleteheader"
 msgstr "Неполный заголовок"
 
 msgid "prefs.tui.simple"
-msgstr "Простые символы:"
+msgstr "Использовать простые символы:"
 
 msgid "prefs.evensplit"
 msgstr "Разделять окно равномерно:"
@@ -2757,3 +2757,89 @@ msgstr "Закрыть"
 # Keyboard shortcut for the terminal. Should be very short or abbreviated.
 msgid "term.hover"
 msgstr "На ссылку"
+
+msgid "heading.upload.edit"
+msgstr "Отредактировать (Titan)"
+
+msgid "heading.upload.misfin"
+msgstr "Отправить сообщение Misfin"
+
+msgid "dlg.upload.edit.error"
+msgstr "Не удалось загрузить содержимое редактируемого ресурса."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Ресурсы данного типа нельзя редактировать в этом приложении."
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Для отправки сообщений нужен сертификат Misfin."
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Отправка копии самому себе"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Проверка получателя"
+
+msgid "misfin.redirect"
+msgstr "Получатель требует использовать другой адрес."
+
+msgid "misfin.failure"
+msgstr "Возникла ошибка при отправке сообщения."
+
+msgid "misfin.needcert"
+msgstr "Нужно добавить сертификат Misfin для идентификации отправителя."
+
+msgid "misfin.changed"
+msgstr "Ваш сертификат Misfin не соответствует ожидаемому получателем."
+
+msgid "misfin.unknown"
+msgstr "Не удалось связаться с сервером."
+
+msgid "upload.from"
+msgstr "От:"
+
+msgid "hint.upload.misfin"
+msgstr "введите сообщение"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Отправить"
+
+msgid "prefs.warn.security"
+msgstr "Предупреждения TLS:"
+
+msgid "ident.sendmsg"
+msgstr "Отправить как…"
+
+msgid "heading.upload.edit.error"
+msgstr "Редактирование не удалось"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Нет профилей Misfin"
+
+msgid "heading.misfin.ok"
+msgstr "Сообщение отправлено"
+
+msgid "misfin.success"
+msgstr "Сообщение успешно отправлено."
+
+msgid "misfin.unauth"
+msgstr "Вам не разрешено отправлять сообщения данному получателю."
+
+msgid "misfin.badcert"
+msgstr "Ваш сертификат Misfin неверен."
+
+msgid "upload.to"
+msgstr "Кому:"
+
+msgid "dlg.upload.edit"
+msgstr "Редактировать"
+
+msgid "heading.upload.error.file"
+msgstr "Неверный файл"
+
+msgid "upload.error.directory"
+msgstr "Можно загружать только отдельные файлы."
+
+msgid "upload.file.path"
+msgstr "Путь к файлу:"
