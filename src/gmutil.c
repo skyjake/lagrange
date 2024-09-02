@@ -287,6 +287,12 @@ iRangecc urlRoot_String(const iString *d) {
     return (iRangecc){ constBegin_String(d), rootEnd };
 }
 
+iRangecc urlPath_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return url.path;
+}
+
 const iBlock *urlThemeSeed_String(const iString *url) {
     if (equalCase_Rangecc(urlScheme_String(url), "file")) {
         return collect_Block(new_Block(0));
@@ -371,6 +377,28 @@ void urlEncodePath_String(iString *d) {
     appendRange_String(encoded, (iRangecc){ url.path.end, constEnd_String(d) });
     set_String(d, encoded);
     delete_String(encoded);
+}
+
+iString *withUrlParameters_String(const iString *d, ...) {
+    iUrl url;
+    init_Url(&url, d);
+    iString *updated = new_String();
+    appendRange_String(updated, (iRangecc){ constBegin_String(d), url.path.end });
+    va_list args;
+    for (va_start(args, d);;) {
+        const char *key = va_arg(args, const char *);
+        if (!key) break;
+        const char *value = va_arg(args, const char *);
+        appendCStr_String(updated, ";");
+        appendCStr_String(updated, key);
+        if (value) {
+            appendCStr_String(updated, "=");
+            appendCStr_String(updated, value);
+        }
+    }
+    appendRange_String(updated, (iRangecc){ url.path.end, constEnd_String(d) });
+    va_end(args);
+    return updated;
 }
 
 void urlEncodeQuery_String(iString *d) {

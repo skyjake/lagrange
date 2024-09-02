@@ -851,26 +851,29 @@ static void composeTitanRequest_GmRequest_(iGmRequest *d) {
     init_Block(&content, 0);
     /* Titan requests can have an arbitrary payload. */
     if (d->upload) {
-        printf_Block(&content,
-                     "%s;mime=%s;size=%zu",
-                     cstr_String(&d->url),
-                     cstr_String(&d->upload->mime),
-                     size_Block(&d->upload->data));
-        if (!isEmpty_String(&d->upload->token)) {
-            appendCStr_Block(&content, ";token=");
-            append_Block(&content,
-                         utf8_String(collect_String(urlEncode_String(&d->upload->token))));
-        }
-        appendCStr_Block(&content, "\r\n");
+        const iBool hasToken = !isEmpty_String(&d->upload->token);
+        iString *titanUrl = withUrlParameters_String(
+            &d->url,
+            "mime",
+            cstr_String(&d->upload->mime),
+            "size",
+            format_CStr("%zu", size_Block(&d->upload->data)),
+            hasToken ? "token" : NULL,
+            hasToken ? cstrCollect_String(urlEncode_String(&d->upload->token)) : NULL,
+            NULL);
+        printf_Block(&content, "%s\r\n", cstr_String(titanUrl));
+        delete_String(titanUrl);
         append_Block(&content, &d->upload->data);
     }
-    else if (endsWithCase_String(&d->url, ";edit")) {
+    else if (endsWithCase_Rangecc(urlPath_String(&d->url), ";edit")) {
         printf_Block(&content, "%s\r\n", cstr_String(&d->url));
     }
     else {
         /* Empty data. */
-        printf_Block(
-            &content, "%s;mime=application/octet-stream;size=0\r\n", cstr_String(&d->url));
+        printf_Block(&content,
+                     "%s\r\n",
+                     cstrCollect_String(withUrlParameters_String(
+                         &d->url, "mime", "application/octet-stream", "size", "0", NULL)));
     }
     setContent_TlsRequest(d->req, &content);
     deinit_Block(&content);

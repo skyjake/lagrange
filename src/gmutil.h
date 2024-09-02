@@ -126,6 +126,7 @@ iRangecc        urlDirectory_String     (const iString *); /* without a file nam
 uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
+iRangecc        urlPath_String          (const iString *);
 const iBlock *  urlThemeSeed_String     (const iString *);
 const iBlock *  urlPaletteSeed_String   (const iString *);
 
@@ -142,6 +143,7 @@ const iString * urlFragmentStripped_String(const iString *);
 const iString * urlQueryStripped_String (const iString *);
 void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
+iString *       withUrlParameters_String(const iString *d, ... /* key, value */); /* NULL key terminates; value can be NULL */
 void            urlEncodeQuery_String   (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);

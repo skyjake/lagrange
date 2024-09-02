@@ -788,6 +788,7 @@ static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
         return reqUrl;
     }
     /* Compose Titan URL with the configured path. */
+    iAssert(d->protocol == titan_UploadProtocol);
     iAssert(!isEmpty_String(&d->url));
     const iRangecc siteRoot = urlRoot_String(&d->url);
     iString *reqUrl = collectNew_String();
@@ -798,6 +799,11 @@ static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
             appendCStr_String(reqUrl, "/");
         }
         append_String(reqUrl, path);
+    }
+    iUrl parts;
+    init_Url(&parts, &d->originalUrl);
+    if (!isEmpty_Range(&parts.query)) {
+        appendRange_String(reqUrl, parts.query);
     }
     return reqUrl;
 }
@@ -887,12 +893,12 @@ static void fetchEditableResource_UploadWidget_(iUploadWidget *d, const iString 
     showOrHideProgressTab_UploadWidget_(d, iTrue);
     iAssert(d->editRequest == NULL);
     d->editRequest = new_GmRequest(certs_App());
-    iAssert(endsWith_String(&d->originalUrl, ";edit")); /* was checked earlier */
+    iAssert(endsWith_Rangecc(urlPath_String(&d->originalUrl), ";edit")); /* was checked earlier */
     iConnect(GmRequest, d->editRequest, updated,  d, editContentProgress_UploadWidget_);
     iConnect(GmRequest, d->editRequest, finished, d, editContentFetched_UploadWidget_);
     iString *editUrl = copy_String(url);
-    if (isTitanUrl_String(url) && !endsWithCase_String(editUrl, ";edit")) {
-        appendCStr_String(editUrl, ";edit");
+    if (isTitanUrl_String(url) && !endsWithCase_Rangecc(urlPath_String(editUrl), ";edit")) {
+        set_String(editUrl, collect_String(withUrlParameters_String(editUrl, "edit", NULL, NULL)));
     }
     setupRequest_UploadWidget_(d, editUrl, d->editRequest);
     delete_String(editUrl);
@@ -992,9 +998,13 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
         appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
         const char *paramStart = strchr(parts.path.start, ';');
         const iBool isEdit = paramStart && !iCmpStr(paramStart, ";edit");
-        appendRange_String(&d->url, (iRangecc){ parts.path.start,
-                                                /* strip any pre-existing params */
-                                                paramStart ? paramStart : constEnd_String(url) });
+        appendRange_String(&d->url,
+                           (iRangecc){ parts.path.start,
+                                       /* strip any pre-existing params */
+                                       paramStart ? paramStart
+                                       : size_Range(&parts.query)
+                                           ? parts.query.start /* query is excluded here */
+                                           : constEnd_String(url) });
         const iRangecc siteRoot = urlRoot_String(&d->url);
         iUrl parts;
         init_Url(&parts, &d->url);
@@ -1266,7 +1276,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             isText = (tabIndex == 0);
             if (tabIndex == 2) {
                 /* Edit request failed, but we can retry. */
-                iAssert(endsWithCase_String(&d->originalUrl, ";edit"));
+                iAssert(endsWithCase_Rangecc(urlPath_String(&d->originalUrl), ";edit"));
                 fetchEditableResource_UploadWidget_(d, requestUrl_UploadWidget_(d));
                 return iTrue;
             }
