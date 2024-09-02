@@ -195,22 +195,30 @@ iString *misfinIdentity_GmIdentity(const iGmIdentity *d, iString *blurb_out) {
     iConstForEach(StringList, i, alt) {
         if (startsWith_String(i.value, "DNS:")) {
             iString *subject = subject_TlsCertificate(d->cert);
-            /* TODO: Would be nice to have a better way to query the UID. */
-            const size_t uidPos = indexOfCStr_String(subject, ", UID = ");
-            if (uidPos != iInvalidSize) {
-                const size_t endPos = indexOfCStrFrom_String(subject, ", ", uidPos + 1);
-                iString *uid = mid_String(subject, uidPos + 8, uidPos + 8 - endPos);
+            iString uid;
+            iString cn;
+            init_String(&uid);
+            init_String(&cn);
+            iRangecc part = iNullRange;
+            while (nextSplit_Rangecc(range_String(subject), ", ", &part)) {
+                if (startsWith_Rangecc(part, "UID = ")) {
+                    setRange_String(&uid, (iRangecc){ part.start + 6, part.end });
+                }
+                else if (startsWith_Rangecc(part, "CN = ")) {
+                    setRange_String(&cn, (iRangecc){ part.start + 5, part.end });
+                }
+            }
+            if (!isEmpty_String(&uid)) {
                 addr = new_String();
-                set_String(addr, uid);
+                set_String(addr, &uid);
                 appendCStr_String(addr, "@");
                 appendCStr_String(addr, cstr_String(i.value) + 4);
                 if (blurb_out) {
-                    iString *blurb = mid_String(subject, 5, uidPos - 5);
-                    set_String(blurb_out, blurb);
-                    delete_String(blurb);
+                    set_String(blurb_out, &cn);
                 }
-                delete_String(uid);
             }
+            deinit_String(&cn);
+            deinit_String(&uid);
             delete_String(subject);
             if (addr) {
                 break;
