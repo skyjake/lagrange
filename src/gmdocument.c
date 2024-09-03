@@ -862,18 +862,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
+                /*
                 int overrun = meta.pixelRect.size.x - d->size.x;
                 if (prevNonBlankType == undefined_GmLineType && overrun > 0) {
                     meta.initialOffset = iMin(overrun / 2, d->outsideMargin - 5 * gap_UI);
                 }
-//                const float oversizeRatio =
-//                    meta.pixelRect.size.x /
-//                    (float) (d->size.x -
-//                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
-//                if (oversizeRatio > 1.0f) {
-//                    preFont--; /* one notch smaller in the font size */
-//                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
-//                }
+                */
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
                 /* Reuse previous state. */
