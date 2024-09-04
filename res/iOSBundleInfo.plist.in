@@ -159,7 +159,7 @@
 				<key>UTTypeIdentifier</key>
 				<string>fi.skyjake.lagrange.gemini</string>
 				<key>UTTypeReferenceURL</key>
-				<string>https://gemini.circumlunar.space/docs/specification.gmi</string>
+				<string>https://geminiprotocol.net/docs/specification.gmi</string>
 				<key>UTTypeDescription</key>
 				<string>Gemini Text Document</string>
 				<key>UTTypeConformsTo</key>
