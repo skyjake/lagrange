@@ -353,6 +353,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         const char * id;
         const iBool *value;
     } boolPrefs[] = {
+        { "misfin.self.copy", &d->prefs.misfinSelfCopy },
         { "prefs.animate", &d->prefs.uiAnimations },
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
@@ -3688,6 +3689,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         SDL_SetHint(SDL_HINT_VIDEO_CURSES_SIMPLE_CHARACTERS, d->prefs.simpleChars ? "1" : "0");
         invalidate_Window(d->window);
 #endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "misfin.self.copy.changed")) {
+        d->prefs.misfinSelfCopy = arg_Command(cmd) != 0;
         return iTrue;
     }
     else if (equal_Command(cmd, "parentnavskipindex")) {

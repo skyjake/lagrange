@@ -96,6 +96,7 @@ enum iPrefsBool {
     edgeSwipe_PrefsBool,
     pageSwipe_PrefsBool,
     capsLockKeyModifier_PrefsBool,
+    misfinSelfCopy_PrefsBool,
 
     /* Network */
     warnCertSecurity_PrefsBool,
@@ -176,6 +177,7 @@ struct Impl_Prefs {
             iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
             iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
             iBool capsLockKeyModifier;
+            iBool misfinSelfCopy;
 
             /* Network */
             iBool warnTlsSecurity;

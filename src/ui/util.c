@@ -2617,6 +2617,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         int         key       = actions[i].key;
         int         kmods     = actions[i].kmods;
         const iBool isDefault = (i == numActions - 1);
+        iBool       isToggle  = iFalse;
         if (*label == '*' || *label == '&') {
             continue; /* Special value selection items for a Question dialog. */
         }
@@ -2630,6 +2631,10 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             /* Separator.*/
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
             continue;
+        }
+        if (*label == '!') {
+            isToggle = iTrue;
+            label++;
         }
         if (!iCmpStr(label, "${cancel}") && !cmd) {
             cmd = "cancel";
@@ -2646,7 +2651,9 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             }
         }
         iLabelWidget *button =
-            addChild_Widget(div, iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
+            addChild_Widget(div,
+                            isToggle ? iClob(makeToggle_Widget(label))
+                                     : iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
         if (isDefault) {
             setId_Widget(as_Widget(button), "default");
         }
@@ -3129,8 +3136,8 @@ static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
     addDialogInputWithHeading_(headings, values, format_CStr("${%s}", id), id, input);
 }
 
-static iWidget *addDialogToggle_(iWidget *headings, iWidget *values,
-                             const char *heading, const char *toggleId) {
+iWidget *addDialogToggle_Widget(iWidget *headings, iWidget *values,
+                                const char *heading, const char *toggleId) {
     iWidget *toggle;
     addChild_Widget(headings, iClob(makeHeading_Widget(heading)));
     addChild_Widget(values, toggle = iClob(makeToggle_Widget(toggleId)));
@@ -3651,7 +3658,7 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(searchUrl = new_InputWidget(0)));
         setUrlContent_InputWidget(searchUrl, iTrue);
         addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.retaintabs}", "prefs.retaintabs");
+        addDialogToggle_Widget(headings, values, "${prefs.retaintabs}", "prefs.retaintabs");
         if (deviceType_App() != phone_AppDeviceType) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
             iWidget *pinSplit = new_Widget();
@@ -3685,10 +3692,10 @@ iWidget *makePreferences_Widget(void) {
 //        makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
         if (isTerminal_Platform()) {
             /* Display character set. */
-            addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
+            addDialogToggle_Widget(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
         }
 #if (defined (iPlatformApple) || defined (iPlatformMSys)) && !defined (iPlatformTerminal)
-        addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
+        addDialogToggle_Widget(headings, values, "${prefs.ostheme}", "prefs.ostheme");
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
         iWidget *themes = new_Widget();
@@ -3718,7 +3725,7 @@ iWidget *makePreferences_Widget(void) {
         }
         addDialogPadding_(headings, values);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
+        addDialogToggle_Widget(headings, values, "${prefs.customframe}", "prefs.customframe");
 #endif
         addDialogToggleGroup_(
             headings,
@@ -3732,18 +3739,18 @@ iWidget *makePreferences_Widget(void) {
 #endif
             },
             iInvalidSize);
-        addDialogToggle_(headings, values, "${prefs.evensplit}", "prefs.evensplit");
+        addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         if (!isTerminal_Platform()) {
             addDialogPadding_(headings, values);
 //            makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
             addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
-            addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
+            addDialogToggle_Widget(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             addFontButtons_(values, "ui");
-            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
+            addDialogToggle_Widget(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
             addDialogPadding_(headings, values);
-            addDialogToggle_(headings, values, "${prefs.editor.highlight}", "prefs.editor.highlight");
+            addDialogToggle_Widget(headings, values, "${prefs.editor.highlight}", "prefs.editor.highlight");
         }
     }
     /* Page style. */ {
@@ -3836,11 +3843,11 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
         addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
-        addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
+        addDialogToggle_Widget(headings, values, "${prefs.justify}", "prefs.justify");
 #endif
-        addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
-        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
-        addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
+        addDialogToggle_Widget(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addDialogToggle_Widget(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogToggle_Widget(headings, values, "${prefs.centershort}", "prefs.centershort");
         addDialogPadding_(headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
         iWidget *quote = new_Widget(); {
@@ -3849,7 +3856,7 @@ iWidget *makePreferences_Widget(void) {
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         //addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
+        addDialogToggle_Widget(headings, values, "${prefs.sideicon}", "prefs.sideicon");
         addDialogDropMenu_(headings, values, "${prefs.collapsepre}", collapseItems, iInvalidSize,
                            "prefs.collapsepre");
     }
@@ -3887,19 +3894,19 @@ iWidget *makePreferences_Widget(void) {
                                                 "prefs.gemtext.ansi.bg",
                                                 "prefs.gemtext.ansi.fontstyle" },
                               3);
-        addDialogToggle_(headings, values, "${prefs.gopher.gemstyle}", "prefs.gopher.gemstyle");
-        addDialogToggle_(headings, values, "${prefs.markdown.viewsource}", "prefs.markdown.viewsource");
+        addDialogToggle_Widget(headings, values, "${prefs.gopher.gemstyle}", "prefs.gopher.gemstyle");
+        addDialogToggle_Widget(headings, values, "${prefs.markdown.viewsource}", "prefs.markdown.viewsource");
         addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
-        addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
+        addDialogToggle_Widget(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
+        addDialogToggle_Widget(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
         addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
+        addDialogToggle_Widget(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
     }
     /* User Interface. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", cyan_ColorId, '6', &headings, &values),
                      "prefs.page.ui");
-        addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
-        addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
+        addDialogToggle_Widget(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
+        addDialogToggle_Widget(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
         /* Return key behaviors. */
         addDialogDropMenu_(headings,
                            values,
@@ -3908,16 +3915,16 @@ iWidget *makePreferences_Widget(void) {
                            iInvalidSize,
                            "prefs.returnkey");
         if (!isTerminal_Platform()) {
-            addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
+            addDialogToggle_Widget(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
         }
-        addDialogToggle_(headings, values, "${prefs.time.24h}", "prefs.time.24h");
+        addDialogToggle_Widget(headings, values, "${prefs.time.24h}", "prefs.time.24h");
         addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
+        addDialogToggle_Widget(headings, values, "${prefs.animate}", "prefs.animate");
         if (!isTerminal_Platform()) {
-            addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
+            addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
         }
 //        makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
-        addDialogToggle_(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
+        addDialogToggle_Widget(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
         /* Scroll speeds. */ {
             for (int type = 0; type < max_ScrollType; type++) {
                 const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
@@ -3961,9 +3968,9 @@ iWidget *makePreferences_Widget(void) {
                                                    &headings,
                                                    &values),
                      "prefs.page.network");
-        addDialogToggle_(headings, values, "${prefs.warn.security}", "prefs.warn.security");
-        addDialogToggle_(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
-        addDialogToggle_(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
+        addDialogToggle_Widget(headings, values, "${prefs.warn.security}", "prefs.warn.security");
+        addDialogToggle_Widget(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
+        addDialogToggle_Widget(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
         addPrefsInputWithHeading_(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
         makeTwoColumnHeading_("${heading.prefs.proxies}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
@@ -4164,9 +4171,9 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
             setFlags_Widget(special, collapse_WidgetFlag, iTrue);
             setId_Widget(special, "bmed.special");
             makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
-            addDialogToggle_(headings, values, "${LC:bookmark.tag.home}:", "bmed.tag.home");
-            addDialogToggle_(headings, values, "${LC:bookmark.tag.remote}:", "bmed.tag.remote");
-            addDialogToggle_(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
+            addDialogToggle_Widget(headings, values, "${LC:bookmark.tag.home}:", "bmed.tag.home");
+            addDialogToggle_Widget(headings, values, "${LC:bookmark.tag.remote}:", "bmed.tag.remote");
+            addDialogToggle_Widget(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
         }
         arrange_Widget(dlg);
         const int inputWidth = iMin(100 * gap_UI, width_Rect(rect_Root(dlg->root))) - headings->rect.size.x;
@@ -4477,8 +4484,8 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         iInputWidget *palSeed = new_InputWidget(0);
         setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
         addPrefsInputWithHeading_(headings, values, "sitespec.palette", iClob(palSeed));
-        addDialogToggle_(headings, values, "${sitespec.ansi}", "sitespec.ansi");
-        addDialogToggle_(headings, values, "${sitespec.tlscache}", "sitespec.tlscache");
+        addDialogToggle_Widget(headings, values, "${sitespec.ansi}", "sitespec.ansi");
+        addDialogToggle_Widget(headings, values, "${sitespec.tlscache}", "sitespec.tlscache");
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
         as_Widget(palSeed)->rect.size.x = aspect_UI * 60 * gap_UI;
@@ -4641,7 +4648,7 @@ iWidget *makeLinkImporter_Widget(size_t count) {
                            constData_Array(folders),
                            iInvalidSize,
                            "dlg.import.intofolder");
-        addDialogToggle_(headings, values, "${dlg.import.headings}", "dlg.import.headings");
+        addDialogToggle_Widget(headings, values, "${dlg.import.headings}", "dlg.import.headings");
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
@@ -4908,7 +4915,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         /* Options. */ {
             //addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
             addDialogPadding_(headings, values);
-            addDialogToggle_(headings, values, "${dlg.translate.pre}", "xlt.preskip");
+            addDialogToggle_Widget(headings, values, "${dlg.translate.pre}", "xlt.preskip");
         }
         addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
@@ -5075,8 +5082,8 @@ iWidget *makeUserDataImporter_Widget(const iString *archivePath) {
         addDialogTitle_(dlg, "${heading.import.userdata}", NULL);
         iWidget *headings, *values;
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-        addDialogToggle_(headings, values, "${import.userdata.history}", "importer.history");
-        addDialogToggle_(headings, values, "${import.userdata.idents}", "importer.idents");
+        addDialogToggle_Widget(headings, values, "${import.userdata.history}", "importer.history");
+        addDialogToggle_Widget(headings, values, "${import.userdata.idents}", "importer.idents");
         /* Bookmarks. */
         addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.bookmarks}")));
         iWidget *radio = new_Widget(); {

@@ -1342,6 +1342,9 @@ msgstr "Failed to communicate with the server."
 msgid "upload.error.directory"
 msgstr "Only individual files can be uploaded, not directories."
 
+msgid "misfin.self.copy"
+msgstr "Send me a copy"
+
 msgid "upload.id"
 msgstr "Identity:"
 

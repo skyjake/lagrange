@@ -62,8 +62,8 @@ enum iUploadIdentity {
 enum iMisfinStage {
     none_MisfinStage,
     verifyRecipient_MisfinStage, /* check if the recipient is valid, query fingerprint */
-    carbonCopyToSelf_MisfinStage,
     sendToRecipient_MisfinStage,
+    carbonCopyToSelf_MisfinStage,
 };
 
 struct Impl_UploadWidget {
@@ -302,7 +302,7 @@ static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText);
 static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
     const char *title = cstr_String(meta_GmRequest(d->request));
     const iString *address = collect_String(trimmed_String(text_InputWidget(d->path)));
-    if (d->misfinStage == verifyRecipient_MisfinStage) {
+    /*if (d->misfinStage == verifyRecipient_MisfinStage) {
         if (status_GmRequest(d->request) == 20) {
             const iString *fingerprint = meta_GmRequest(d->request);
             trust_Misfin(address, fingerprint);
@@ -317,22 +317,24 @@ static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
             title = format_CStr("${misfin.verify}:\n%s", title);
         }
     }
-    else if (d->misfinStage == carbonCopyToSelf_MisfinStage) {
+    else */
+    if (d->misfinStage == sendToRecipient_MisfinStage) {
         if (status_GmRequest(d->request) == 20) {
+            /* Update the trusted fingzerprint after successful delivery of message.
+               Since we don't receive any messages in the app, we can automatically
+               update to new certificates. (Currently the fingerprints aren't really
+               needed?) */
+            trust_Misfin(address, meta_GmRequest(d->request)); /* TODO: Does this make sense? */
             /* Continue by sending the actual message. */
-            iReleasePtr(&d->request);
-            d->misfinStage = sendToRecipient_MisfinStage;
-            if (createRequest_UploadWidget_(d, iTrue)) {
-                submit_GmRequest(d->request);
-                return;
+            if (prefs_App()->misfinSelfCopy) {
+                iReleasePtr(&d->request);
+                d->misfinStage = carbonCopyToSelf_MisfinStage;
+                if (createRequest_UploadWidget_(d, iTrue)) {
+                    submit_GmRequest(d->request);
+                    return;
+                }
             }
         }
-        else {
-            title = format_CStr("${misfin.cc}:\n%s", title);
-        }
-    }
-    else {
-        d->misfinStage = none_MisfinStage;
     }
     const char *msg;
     const int status = status_GmRequest(d->request);
@@ -381,14 +383,6 @@ static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
             msg = "${misfin.unknown}";
             break;
     }
-    if (status == 20) {
-        /* Update the trusted fingzerprint after successful delivery of message.
-           Since we don't receive any messages in the app, we can automatically
-           update to new certificates. (Currently the fingerprints aren't really
-           needed?) */
-        /* TODO: Does this make sense? */
-        trust_Misfin(address, meta_GmRequest(d->request));
-    }
     makeMessage_Widget(
         title,
         msg,
@@ -396,6 +390,8 @@ static void handleMisfinRequestFinished_UploadWidget_(iUploadWidget *d) {
         1);
     iReleasePtr(&d->request);
     setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iFalse);
+    setFlags_Widget(d->tabs, disabled_WidgetFlag, iFalse);
+    d->misfinStage = none_MisfinStage;
 }
 
 void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
@@ -421,13 +417,31 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     d->editLabel = NULL;
     d->idMode = defaultForSite_UploadIdentity;
     init_Block(&d->idFingerprint, 0);
-    const iMenuItem actions[] = {
+    /* Dialog actions. */
+    const iMenuItem titanActions[] = {
         { "${upload.port}", 0, 0, "upload.setport" },
         { "---" },
         { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
         { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_ACCEPT, "upload.accept" }
     };
-    const size_t actionOffset = (d->protocol == titan_UploadProtocol ? 0 : 2);
+    const iMenuItem misfinActions[] = {
+        { "${misfin.self.copy}" },
+        { "!misfin.self.copy" }, /* toggle */
+        { "---" },
+        { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
+        { uiTextAction_ColorEscape "${dlg.upload.sendmsg}", SDLK_RETURN, KMOD_ACCEPT, "upload.accept" }
+    };
+    const iMenuItem otherActions[] = {
+        { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
+        { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_ACCEPT, "upload.accept" }
+    };
+    const iMenuItem *actionItems = (d->protocol == titan_UploadProtocol    ? titanActions
+                                    : d->protocol == misfin_UploadProtocol ? misfinActions
+                                                                           : otherActions);
+    const size_t numActionItems =
+        (d->protocol == titan_UploadProtocol    ? iElemCount(titanActions)
+         : d->protocol == misfin_UploadProtocol ? iElemCount(misfinActions)
+                                                : iElemCount(otherActions));
     if (isUsingPanelLayout_Mobile()) {
         const int infoFont = (deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId
                                                                       : uiLabelMedium_FontId);
@@ -502,8 +516,8 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         initPanels_Mobile(w,
                           NULL,
                           d->protocol == titan_UploadProtocol ? titanItems : spartanItems,
-                          actions + actionOffset,
-                          iElemCount(actions) - actionOffset - 1 /* no Accept button on main panel */);
+                          actionItems,
+                          numActionItems - 1 /* no Accept button on main panel */);
         d->info          = findChild_Widget(w, "upload.info");
         d->path          = findChild_Widget(w, "upload.path");
         d->input         = findChild_Widget(w, "upload.text");
@@ -670,8 +684,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         }
         /* Buttons. */ {
             addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-            iWidget *buttons = makeDialogButtons_Widget(actions + actionOffset,
-                                                        iElemCount(actions) - actionOffset);
+            iWidget *buttons = makeDialogButtons_Widget(actionItems, numActionItems);
             setId_Widget(insertChildAfterFlags_Widget(buttons,
                                                       iClob(d->counter = new_LabelWidget("", NULL)),
                                                       0,
@@ -697,10 +710,10 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         case misfin_UploadProtocol: {
             setBackupFileName_InputWidget(d->input, "misfinbackup");
             setHint_InputWidget(d->input, "${hint.upload.misfin}");
-            setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
-                                    "${dlg.upload.sendmsg}");
+            setFlags_Widget(findChild_Widget(w, "misfin.send.copy"), fixedWidth_WidgetFlag, iTrue);
             iLabelWidget *fileTabButton = tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0));
             setFlags_Widget((iWidget *) fileTabButton, disabled_WidgetFlag, iTrue);
+            setToggle_Widget(findChild_Widget(w, "misfin.self.copy"), prefs_App()->misfinSelfCopy);
             break;
         }
         case spartan_UploadProtocol: {
@@ -1292,13 +1305,13 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
         if (d->protocol == misfin_UploadProtocol) {
-            if (!checkTrust_Misfin(text_InputWidget(d->path), NULL, NULL)) {
+            // if (!checkTrust_Misfin(text_InputWidget(d->path), NULL, NULL)) {
                 /* First check if the recipient actually exists. */
-                d->misfinStage = verifyRecipient_MisfinStage;
-            }
-            else {
-                d->misfinStage = carbonCopyToSelf_MisfinStage;
-            }
+                // d->misfinStage = verifyRecipient_MisfinStage;
+            // }
+            // else {
+            d->misfinStage = sendToRecipient_MisfinStage;
+            // }
         }
         if (!createRequest_UploadWidget_(d, isText)) {
             return iTrue;
