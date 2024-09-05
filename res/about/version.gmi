@@ -25,6 +25,7 @@ Changes and enhancements:
 * The Return key is now a (hardcoded) keyboard shortcut for focusing the navbar URL field.
 * Page Information: Clarified meaning of "fingerprint". The type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
 * Updated UI symbols for "Go to Root", remote bookmarks, and the navbar bookmark indicator/button.
+* Gopher: Proper parsing of Telnet line types `8` and `T`.
 * Noto Emoji font updated to support Unicode 15.1.
 * TUI: Often needed keyboard shortcuts are shown in place of menubar when the menubar is inactive, to make the UI more approachable.
 * TUI: Improved UI layout, targeting a minimum resolution of 80x25.

@@ -168,6 +168,22 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     iEndCollect();
                     break;
                 }
+                case '8':
+                case 'T': {
+                    iBeginCollect();
+                    setPre_Gopher_(d, iFalse);
+                    format_String(buf,
+                                  "=> %s://%s%s%s:%s %s\n",
+                                  lineType == '8' ? "telnet" : "tn3270",
+                                  cstr_Rangecc(path),
+                                  !isEmpty_Range(&path) ? "@" : "",
+                                  cstr_Rangecc(domain),
+                                  cstr_Rangecc(port),
+                                  cstr_Rangecc(text));
+                    appendData_Block(d->output, constBegin_String(buf), size_String(buf));
+                    iEndCollect();
+                    break;
+                }
                 case 'h': {
                     iBeginCollect();
                     setPre_Gopher_(d, iFalse);
