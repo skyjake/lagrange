@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-09-02 20:49+0000\n"
+"PO-Revision-Date: 2024-09-08 03:33+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -2884,3 +2884,6 @@ msgstr "Igorlea:"
 
 msgid "upload.to"
 msgstr "Hartzailea:"
+
+msgid "misfin.self.copy"
+msgstr "Bidali kopia bat nire buruari"
