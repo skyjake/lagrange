@@ -687,7 +687,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             iWidget *buttons = makeDialogButtons_Widget(actionItems, numActionItems);
             setId_Widget(insertChildAfterFlags_Widget(buttons,
                                                       iClob(d->counter = new_LabelWidget("", NULL)),
-                                                      0,
+                                                      d->protocol == misfin_UploadProtocol ? 2 : 0,
                                                       frameless_WidgetFlag),
                          "upload.counter");
             addChild_Widget(w, iClob(buttons));
