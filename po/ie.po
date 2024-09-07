@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2024-09-02 20:49+0000\n"
+"PO-Revision-Date: 2024-09-08 03:33+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1676,7 +1676,7 @@ msgid "upload.file.name"
 msgstr "Nómine de file:"
 
 msgid "upload.file.drophere"
-msgstr "(fa cader un file in li fenestre)"
+msgstr "provide un nómine o fa cader un file in li fenestre"
 
 msgid "upload.file.size"
 msgstr "Grandore de file:"
@@ -2306,7 +2306,7 @@ msgid "prefs.markdown.viewsource"
 msgstr "Viser Markdown quam li fonte:"
 
 msgid "prefs.tui.simple"
-msgstr "Simplic caracteres:"
+msgstr "Obligat simplic caracteres:"
 
 msgid "feeds.entry.markbelowread"
 msgstr "Marcar elementes ad-infra quam leet"
@@ -2825,3 +2825,9 @@ msgstr "Ne successat communicar con li servitor."
 
 msgid "dlg.upload.edit"
 msgstr "Redacter"
+
+msgid "ident.sendmsg"
+msgstr "Inviar quam…"
+
+msgid "misfin.self.copy"
+msgstr "Inviar un copie a me"
