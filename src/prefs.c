@@ -116,7 +116,7 @@ void init_Prefs(iPrefs *d) {
     d->fontSmoothing     = iTrue;
     d->gemtextAnsiEscapes = allowFg_AnsiFlag;
     d->monospaceGemini   = iFalse;
-    d->monospaceGopher   = iFalse;
+    d->monospaceGopher   = iTrue;
     d->boldLinkVisited   = iFalse;
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;
