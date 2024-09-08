@@ -3411,8 +3411,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iGmLinkId      linkId = argLabel_Command(cmd, "link");
         const iMediaRequest *media  = findMediaRequest_DocumentWidget(d, linkId);
         if (media) {
-            saveToDownloads_(url_GmRequest(media->req), meta_GmRequest(media->req),
-                             body_GmRequest(media->req), iTrue);
+            const iString *savePath;
+            if (!isEmpty_String(savePath = saveToDownloads_(url_GmRequest(media->req),
+                                                            meta_GmRequest(media->req),
+                                                            body_GmRequest(media->req),
+                                                            iTrue))) {
+                if (isDesktop_Platform()) {
+                    makeSimpleMessage_Widget("${heading.save}", cstr_String(savePath));
+                }
+            }
         }
     }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
@@ -3440,9 +3447,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 const iBool    doOpen   = argLabel_Command(cmd, "open");
                 const iString *savePath = saveToDownloads_(d->mod.url, &d->sourceMime,
                                                            &d->sourceContent, !doOpen);
-                if (!isEmpty_String(savePath) && doOpen) {
-                    postCommandf_Root(
-                        w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+                if (!isEmpty_String(savePath)) {
+                    if (doOpen) {
+                        postCommandf_Root(
+                            w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+                    }
+                    else if (isDesktop_Platform()) {
+                        makeSimpleMessage_Widget("${heading.save}", cstr_String(savePath));
+                    }
                 }
             }
         }
@@ -4228,20 +4240,21 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
     return iFalse;
 }
 
-static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iGmRun *link) {
-    iWidget *w = as_Widget(d);
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
-    /* Construct the link context menu, depending on what kind of link was clicked. */
-    const int spartanQuery = isSpartanQueryLink_DocumentWidget_(d, link->linkId);
-    interactingWithLink_DocumentWidget_(d, link->linkId); /* perhaps will be triggered */
-    const iString *linkUrl  = linkUrl_GmDocument(d->view->doc, link->linkId);
-    const iRangecc scheme   = urlScheme_String(linkUrl);
-    const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
-    iBool          isNative = iFalse;
-    if (deviceType_App() != desktop_AppDeviceType) {
+static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidget *d,
+                                                                  const iString   *linkUrl,
+                                                                  const iString   *linkLabel,
+                                                                  iGmLinkId        linkId,
+                                                                  enum iMediaType  linkMediaType) {
+    iWidget       *w            = as_Widget(d);
+    iArray        *items        = collectNew_Array(sizeof(iMenuItem));
+    const iBool    spartanQuery = isSpartanQueryLink_DocumentWidget_(d, linkId);
+    const iRangecc scheme       = urlScheme_String(linkUrl);
+    const iBool    isGemini     = equalCase_Rangecc(scheme, "gemini");
+    iBool          isNative     = iFalse;
+    if (deviceType_App() != desktop_AppDeviceType && linkId) {
         /* Show the link as the first, non-interactive item. */
         iString *infoText = collectNew_String();
-        infoText_LinkInfo(d, link->linkId, infoText);
+        infoText_LinkInfo(d, linkId, infoText);
         pushBack_Array(items,
                        &(iMenuItem){ format_CStr("```%s", cstr_String(infoText)), 0, 0, NULL });
     }
@@ -4345,15 +4358,15 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                                          cstr_String(linkUrl)) } },
             2);
     }
-    iString *linkLabel = collectNewRange_String(linkLabel_GmDocument(d->view->doc, link->linkId));
-    urlEncodeSpaces_String(linkLabel);
+    iString *encLabel = copy_String(linkLabel);
+    urlEncodeSpaces_String(encLabel);
     pushBackN_Array(
         items,
         (iMenuItem[]){
             { "---" },
             { "${link.copy}", 0, 0, "document.copylink" },
             { bookmark_Icon " ${link.bookmark}", 0, 0,
-              format_CStr("!bookmark.add title:%s url:%s", cstr_String(linkLabel), cstr_String(linkUrl)) },
+              format_CStr("!bookmark.add title:%s url:%s", cstr_String(encLabel), cstr_String(linkUrl)) },
             { clipboard_Icon " ${link.snippet}", 0, 0,
               format_CStr("!snippet.add content:%s", cstr_String(linkUrl)) },
             { "---" },
@@ -4361,7 +4374,9 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
               format_CStr("!searchurl address:%s", cstr_String(linkUrl)) },
         },
         6);
-    if (isNative && link->mediaType != download_MediaType && !equalCase_Rangecc(scheme, "file")) {
+    delete_String(encLabel);
+    if (isNative && linkId && linkMediaType != download_MediaType &&
+        !equalCase_Rangecc(scheme, "file")) {
         pushBackN_Array(items,
                         (iMenuItem[]){
                             { "---" },
@@ -4370,15 +4385,15 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                         2);
     }
     iMediaRequest *mediaReq;
-    if ((mediaReq = findMediaRequest_DocumentWidget(d, link->linkId)) != NULL &&
-        d->contextLink->mediaType != download_MediaType) {
+    if ((mediaReq = findMediaRequest_DocumentWidget(d, linkId)) != NULL &&
+        linkMediaType != download_MediaType) {
         if (isFinished_GmRequest(mediaReq->req)) {
             pushBack_Array(
                 items,
                 &(iMenuItem){ download_Icon " " saveToDownloads_Label,
                               0,
                               0,
-                              format_CStr("document.media.save link:%u", link->linkId) });
+                              format_CStr("document.media.save link:%u", linkId) });
         }
     }
     if (equalCase_Rangecc(scheme, "file")) {
@@ -4393,6 +4408,17 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                                       cstrCollect_String(localFilePathFromUrl_String(linkUrl))) });
     }
     return makeMenu_Widget(w, data_Array(items), size_Array(items));
+}
+
+static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iGmRun *link) {
+    /* Construct the link context menu, depending on what kind of link was clicked. */
+    interactingWithLink_DocumentWidget_(d, link->linkId); /* perhaps will be triggered */
+    return makeLinkContextMenuWithParameters_DocumentWidget_(
+        d,
+        linkUrl_GmDocument(d->view->doc, link->linkId),
+        collectNewRange_String(linkLabel_GmDocument(d->view->doc, link->linkId)),
+        link->linkId,
+        link->mediaType);
 }
 
 static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
@@ -4599,9 +4625,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
             contains_DocumentWidget_(d, init_I2(ev->button.x, ev->button.y))) {
+            const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
             if (!isVisible_Widget(d->menu)) {
                 d->contextLink = view->hoverLink;
-                d->contextPos = init_I2(ev->button.x, ev->button.y);
+                d->contextPos = mousePos;
                 if (d->menu) {
                     destroy_Widget(d->menu);
                     d->menu = NULL;
@@ -4611,6 +4638,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     d->menu = makeLinkContextMenu_DocumentWidget_(d, d->contextLink);
+                }
+                else if (contains_Banner(d->banner, mousePos)) {
+                    const iString *urlRoot = collectNewRange_String(urlRoot_String(d->mod.url));
+                    d->menu = makeLinkContextMenuWithParameters_DocumentWidget_(
+                        d, urlRoot, urlRoot, 0, none_MediaType);
                 }
                 else {
                     if (deviceType_App() == desktop_AppDeviceType) {
