@@ -11,6 +11,7 @@
 New features:
 * Support for sending Misfin messages. "misfin://" links are opened in the upload dialog. You must import a Misfin identity before you can send a message.
 * Misfin: Identity sidebar indicates which identities are for Misfin.
+* Support for the Guppy protocol. Contributed by Dima Krasner.
 * Titan: Support for the "edit" parameter in opened Titan links. The target's contents are downloaded and displayed in the upload dialog's text editor. After editing the contents are uploaded back to the server.
 * Option to disable all TLS security warnings.
 * Opus audio playback using libopusfile (optional dependency). Contributed by Martin Chang.
