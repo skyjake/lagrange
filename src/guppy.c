@@ -57,7 +57,7 @@ void init_Guppy(iGuppy *d) {
     d->mtx = NULL;
     d->url = NULL;
     d->address = NULL;
-    d->datagram = NULL;
+    d->datagram = new_Datagram();
     d->body = NULL;
     d->timer = 0;
     d->firstSent = 0;
@@ -70,6 +70,7 @@ void init_Guppy(iGuppy *d) {
     d->lastSeq = 0;
     d->currentSeq = 0;
     d->timeout = NULL;
+    d->error = NULL;
 }
 
 void deinit_Guppy(iGuppy *d) {
@@ -135,9 +136,12 @@ static void addressLookupFinished_Guppy_(iGuppy *d, iAddress *address) {
 }
 
 void open_Guppy(iGuppy *d, const iString *host, uint16_t port) {
-    iReleasePtr(&d->datagram);
     iReleasePtr(&d->address);
-    d->datagram = new_Datagram();
+    if (!openRandom_Datagram(d->datagram)) {
+        d->state = error_GuppyState;
+        iNotifyAudience(d, error, GuppyError);
+        return;
+    }
     d->address = new_Address();
     iConnect(Address, d->address, lookupFinished, d, addressLookupFinished_Guppy_);
     lookupCStr_Address(d->address, cstr_String(host), port, udp_SocketType);

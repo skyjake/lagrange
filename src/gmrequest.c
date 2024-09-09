@@ -575,7 +575,7 @@ static void guppyTimeout_GmRequest_(iGmRequest *d) {
     lock_Mutex(d->mtx);
     cancel_Guppy(d->guppy);
     d->state = failure_GmRequestState;
-    d->resp->statusCode = unknownStatusCode_GmStatusCode;
+    d->resp->statusCode = temporaryFailure_GmStatusCode;
     setCStr_String(&d->resp->meta, strerror(ETIMEDOUT));
     clear_Block(&d->resp->body);
     unlock_Mutex(d->mtx);
