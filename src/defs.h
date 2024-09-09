@@ -88,6 +88,14 @@ iLocalDef iBool isAndroid_Platform(void) {
 #endif
 }
 
+enum iGmRequestState {
+    initialized_GmRequestState,
+    receivingHeader_GmRequestState,
+    receivingBody_GmRequestState,
+    finished_GmRequestState,
+    failure_GmRequestState,
+};
+
 enum iSourceFormat {
     undefined_SourceFormat = -1,
     gemini_SourceFormat    = 0,

@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2024 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -162,14 +162,6 @@ void deinit_UploadData(iUploadData *d) {
 
 static iAtomicInt idGen_;
 
-enum iGmRequestState {
-    initialized_GmRequestState,
-    receivingHeader_GmRequestState,
-    receivingBody_GmRequestState,
-    finished_GmRequestState,
-    failure_GmRequestState,
-};
-
 struct Impl_GmRequest {
     iObject              object;
     uint32_t             id;
@@ -181,8 +173,8 @@ struct Impl_GmRequest {
     iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
-    iGuppy               guppy;
-    iSocket *            plainSocket; /* Spartan, Nex */
+    iGuppy *             guppy;
+    iSocket *            plainSocket; /* non-TLS socket for Spartan, Nex */
     iGmResponse *        resp;
     iBool                isProxy;
     iBool                isFilterEnabled;
@@ -506,7 +498,7 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     d->gopher.meta   = &resp->meta;
     d->gopher.output = &resp->body;
     d->state         = receivingBody_GmRequestState;
-    d->gopher.socket = new_Socket(cstr_String(host), port, tcp_SocketType);
+    d->gopher.socket = new_Socket(cstr_String(host), port);
     iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
     iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
@@ -535,47 +527,10 @@ static void nexRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     }
 }
 
-static void guppyRead_GmRequest_(iGmRequest *d, iSocket *socket) {
-    iBool notifyUpdate = iFalse;
-    iBool notifyDone   = iTrue;
-    lock_Mutex(d->mtx);
-    switch (processResponse_Guppy(&d->guppy, &notifyUpdate)) {
-        case invalidResponse_GuppyState:
-            d->state = finished_GmRequestState;
-            d->resp->statusCode = invalidHeader_GmStatusCode;
-            break;
-        case inputRequired_GuppyState:
-            d->state = finished_GmRequestState;
-            d->resp->statusCode = input_GmStatusCode;
-            break;
-        case redirect_GuppyState:
-            d->state = finished_GmRequestState;
-            d->resp->statusCode = redirectTemporary_GmStatusCode;
-            break;
-        case error_GuppyState:
-            d->state = finished_GmRequestState;
-            d->resp->statusCode = permanentFailure_GmStatusCode;
-            break;
-        case finished_GuppyState:
-            d->state = finished_GmRequestState;
-            d->resp->statusCode = success_GmStatusCode;
-            break;
-        default:
-            notifyDone = iFalse;
-    }
-    unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
-    }
-    if (notifyDone) {
-        iNotifyAudience(d, finished, GmRequestFinished);
-    }
-}
-
 static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
     d->state = receivingBody_GmRequestState;
     setCStr_String(&d->resp->meta, "text/plain");
-    d->plainSocket = new_Socket(cstr_String(host), port, tcp_SocketType);
+    d->plainSocket = new_Socket(cstr_String(host), port);
     iConnect(Socket, d->plainSocket, readyRead,    d, nexRead_GmRequest_);
     iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
@@ -601,9 +556,24 @@ static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, ui
     deinit_Block(&message);
 }
 
-static void guppyTimeout_(iGmRequest *d) {
+static void guppyRead_GmRequest_(iGmRequest *d, iDatagram *datagram) {
+    iUnused(datagram);
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iTrue;
     lock_Mutex(d->mtx);
-    cancel_Guppy(&d->guppy);
+    processResponse_Guppy(d->guppy, &d->state, &d->resp->statusCode, &notifyUpdate, &notifyDone);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (notifyDone) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void guppyTimeout_GmRequest_(iGmRequest *d) {
+    lock_Mutex(d->mtx);
+    cancel_Guppy(d->guppy);
     d->state = failure_GmRequestState;
     d->resp->statusCode = unknownStatusCode_GmStatusCode;
     setCStr_String(&d->resp->meta, strerror(ETIMEDOUT));
@@ -612,21 +582,25 @@ static void guppyTimeout_(iGmRequest *d) {
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
+static void guppyError_GmRequest_(iGmRequest *d) {
+    plainSocketError_GmRequest_(d, NULL, ECONNABORTED, "Address lookup failed");
+}
+
 static void beginGuppyConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    iAssert(!d->guppy);
+    d->guppy = new_Guppy();
     d->state = receivingHeader_GmRequestState;
     setCStr_String(&d->resp->meta, "text/gemini");
-    d->plainSocket = new_Socket(cstr_String(host), port, udp_SocketType);
-    d->guppy.mtx    = d->mtx;
-    d->guppy.url    = &d->url;
-    d->guppy.socket = d->plainSocket;
-    d->guppy.meta   = &d->resp->meta;
-    d->guppy.body   = &d->resp->body;
-    iConnect(Socket, d->plainSocket, readyRead,    d, guppyRead_GmRequest_);
-    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
-    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
-    iConnect(Guppy,  &d->guppy,      timeout,      d, guppyTimeout_);
-    open_Socket(d->plainSocket);
-    open_Guppy(&d->guppy);
+    d->guppy->mtx  = d->mtx;
+    d->guppy->url  = &d->url;
+    d->guppy->meta = &d->resp->meta;
+    d->guppy->body = &d->resp->body;
+    iConnect(Datagram, d->guppy->datagram, message, d, guppyRead_GmRequest_);
+    iConnect(Datagram, d->guppy->datagram, error,   d, plainSocketError_GmRequest_
+             /* socket not used by error handler, so this is fine */);
+    iConnect(Guppy,    d->guppy,           timeout, d, guppyTimeout_GmRequest_);
+    iConnect(Guppy,    d->guppy,           error,   d, guppyError_GmRequest_);
+    open_Guppy(d->guppy, host, port);
 }
 
 static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
@@ -705,7 +679,7 @@ static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
 
 static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
     d->state = receivingHeader_GmRequestState;
-    d->plainSocket = new_Socket(cstr_String(host), port, tcp_SocketType);
+    d->plainSocket = new_Socket(cstr_String(host), port);
     iConnect(Socket, d->plainSocket, readyRead,    d, spartanRead_GmRequest_);
     iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
@@ -747,7 +721,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
-    init_Guppy(&d->guppy);
+    d->guppy        = NULL;
     d->plainSocket  = NULL;
     d->upload       = NULL;
     d->certs        = certs;
@@ -776,8 +750,10 @@ void deinit_GmRequest(iGmRequest *d) {
     iReleasePtr(&d->req);
     delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
-    iDisconnectObject(Guppy, &d->guppy, timeout, d);
-    deinit_Guppy(&d->guppy);
+    if (d->guppy) {
+        iDisconnectObject(Guppy, d->guppy, timeout, d);
+        iRelease(d->guppy);
+    }
     iRelease(d->plainSocket);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
