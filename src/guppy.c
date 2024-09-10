@@ -81,6 +81,7 @@ void deinit_Guppy(iGuppy *d) {
         deinit_Block(&d->chunks[i].data);
     }
     delete_Audience(d->timeout);
+    delete_Audience(d->error);
     iRelease(d->address);
     iRelease(d->datagram);
 }
@@ -94,6 +95,7 @@ static void ack_Guppy_(iGuppy *d, const int seq) {
 }
 
 static uint32_t retryGuppy_(uint32_t interval, iAny *ptr) {
+    iUnused(interval);
     iGuppy *d = (iGuppy *) ptr;
     lock_Mutex(d->mtx);
     const uint64_t now = SDL_GetTicks64();
@@ -118,7 +120,7 @@ static uint32_t retryGuppy_(uint32_t interval, iAny *ptr) {
 }
 
 static void addressLookupFinished_Guppy_(iGuppy *d, iAddress *address) {
-    if (!isValid_Address(address)) {
+    if (!isHostFound_Address(address)) {
         d->state = error_GuppyState;
         iReleasePtr(&d->address);
         iNotifyAudience(d, error, GuppyError);
@@ -149,6 +151,8 @@ void open_Guppy(iGuppy *d, const iString *host, uint16_t port) {
 }
 
 void cancel_Guppy(iGuppy *d) {
+    iDisconnectObject(Datagram, d->datagram, message, d);
+    iDisconnectObject(Datagram, d->datagram, error, d);
     if (d->address) {
         iDisconnect(Address, d->address, lookupFinished, d, addressLookupFinished_Guppy_);
     }

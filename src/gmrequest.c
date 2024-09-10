@@ -467,6 +467,10 @@ static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
 static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
     iUnused(socket);
     lock_Mutex(d->mtx);
+    if (d->guppy) {
+        cancel_Guppy(d->guppy);
+        iReleasePtr(&d->guppy);
+    }
     d->state = failure_GmRequestState;
     d->resp->statusCode = tlsFailure_GmStatusCode; /* TODO: add a plain socket error message */
     format_String(&d->resp->meta, "%s (errno %d)", msg, error);
