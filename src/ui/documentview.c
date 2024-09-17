@@ -201,20 +201,23 @@ void invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *d) 
     resetWideRuns_DocumentView(d);
 }
 
-int documentWidth_DocumentView(const iDocumentView *d) {
+static int maxDocumentWidth_DocumentView_(const iDocumentView *d) {
     const iWidget *w        = constAs_Widget(d->owner);
     const iRect    bounds   = bounds_Widget(w);
-    const iPrefs * prefs    = prefs_App();
     const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
     const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
-                                -1.0f, 10.0f); /* adapt to width */
-    //printf("%f\n", adjust); fflush(stdout);
+                                     -1.0f, 10.0f); /* adapt to width */
+    return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2);
+}
+
+int documentWidth_DocumentView(const iDocumentView *d) {
+    const iPrefs *prefs = prefs_App();
     int prefsWidth = prefs->lineWidth;
     if (isTerminal_Platform()) {
         prefsWidth /= aspect_UI * 0.8f;
     }
-    return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
-                 fontSize_UI * prefsWidth * prefs->zoomPercent / 100);
+    return iMini(fontSize_UI * prefsWidth * prefs->zoomPercent / 100,
+                 maxDocumentWidth_DocumentView_(d));
 }
 
 int documentTopPad_DocumentView(const iDocumentView *d) {
@@ -237,6 +240,11 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     iRect       rect;
     iBool       wasCentered = iFalse;
     rect.size.x = documentWidth_DocumentView(d);
+    /* Content may not be always wrappable, so let it extend to window width if needed. */
+    if (contentWidth_GmDocument(d->doc) > size_GmDocument(d->doc).x) {
+        rect.size.x = iMini(iMax(rect.size.x, contentWidth_GmDocument(d->doc)),
+                            maxDocumentWidth_DocumentView_(d));
+    }
     rect.pos.x  = mid_Rect(bounds).x - rect.size.x / 2;
     rect.pos.y  = top_Rect(bounds) + margin;
     rect.size.y = height_Rect(bounds) - margin;
@@ -373,6 +381,14 @@ void updateHoverLinkInfo_DocumentView(iDocumentView *d) {
     updateHoverLinkInfo_DocumentWidget(d->owner, d->hoverLink ? d->hoverLink->linkId : 0);
 }
 
+static void unhover_DocumentView_(iDocumentView *d) {
+    if (d->hoverLink) {
+        invalidateLink_DocumentView(d, d->hoverLink->linkId);
+        d->hoverLink = NULL;
+        updateHoverLinkInfo_DocumentView(d);
+    }
+}
+
 void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d->owner);
     const iRect    docBounds    = documentBounds_DocumentView(d);
@@ -487,6 +503,7 @@ int updateScrollMax_DocumentView(iDocumentView *d) {
 void updateVisible_DocumentView(iDocumentView *d) {
     const int scrollMax = updateScrollMax_DocumentView(d);
     aboutToScrollView_DocumentWidget(d->owner, scrollMax); /* TODO: A widget may have many views. */
+    unhover_DocumentView_(d);
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
     clear_PtrArray(&d->visiblePre);
@@ -734,9 +751,11 @@ void allocVisBuffer_DocumentView(const iDocumentView *d) {
 size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId) {
     size_t ord = 0;
     const iRangei visRange = visibleRange_DocumentView(d);
+    /* Don't give an ordinal to partially visible links. */
+    const int ordinalPad = !isTerminal_Platform() ? -lineHeight_Text(paragraph_FontId) / 10 : 0;
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
-        if (top_Rect(run->visBounds) >= visRange.start + gap_UI * d->pageMargin * 4 / 5) {
+        if (top_Rect(run->visBounds) >= visRange.start + ordinalPad) {
             if (run->flags & decoration_GmRunFlag && run->linkId) {
                 if (run->linkId == linkId) return ord;
                 ord++;
@@ -975,13 +994,15 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             iRect wideRect  = visRect;
             wideRect.pos.x  = 0;
             wideRect.size.x = d->widgetFullWidth;
-            /* Due to adaptive scaling of monospace fonts to fit a non-fractional pixel grid,
-               there may be a slight overdraw on the edges if glyphs extend to their maximum
-               bounds (e.g., box drawing). Ensure that the edges of the preformatted block
-               remain clean. (GmDocument leaves empty padding around blocks.) */
-            adjustEdges_Rect(&wideRect,
-                             run->flags & startOfLine_GmRunFlag ? -gap_UI / 2 : 0, 0,
-                             run->flags & endOfLine_GmRunFlag ? gap_UI / 2 : 0, 0);
+            if (!isTerminal_Platform()) {
+                /* Due to adaptive scaling of monospace fonts to fit a non-fractional pixel grid,
+                   there may be a slight overdraw on the edges if glyphs extend to their maximum
+                   bounds (e.g., box drawing). Ensure that the edges of the preformatted block
+                   remain clean. (GmDocument leaves empty padding around blocks.) */
+                adjustEdges_Rect(&wideRect,
+                                 run->flags & startOfLine_GmRunFlag ? -1 : 0, 0,
+                                 run->flags & endOfLine_GmRunFlag ? 1 : 0, 0);
+            }
             fillRect_Paint(&d->paint, wideRect, tmBackground_ColorId);
         }
         else {
@@ -1028,7 +1049,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     const char *circle = "\u25ef"; /* Large Circle */
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                    init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
+                                     init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
                     if (isTerminal_Platform()) {
                         nbArea.pos.x += 1;
                     }
@@ -1423,10 +1444,10 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                             const int newTop = top_Rect(ctx->runsDrawn.start->visBounds);
                             if (newTop != buf->validRange.start) {
                                 didDraw = iTrue;
-                                //                                printf("render: valid:%d->%d run:%p->%p\n",
-                                //                                       buf->validRange.start, newTop,
-                                //                                       meta->runsDrawn.start,
-                                //                                       ctx->runsDrawn.start); fflush(stdout);
+                                // printf("render: valid:%d->%d run:%p->%p\n",
+                                //        buf->validRange.start, newTop,
+                                //        meta->runsDrawn.start,
+                                //        ctx->runsDrawn.start); fflush(stdout);
                                 buf->validRange.start = newTop;
                             }
                             meta->runsDrawn.start = newStart;

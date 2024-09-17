@@ -48,6 +48,8 @@ struct Impl_GmIdentity {
 iBool   isUsed_GmIdentity           (const iGmIdentity *);
 iBool   isUsedOn_GmIdentity         (const iGmIdentity *, const iString *url);
 iBool   isUsedOnDomain_GmIdentity   (const iGmIdentity *, const iRangecc domain);
+iBool   isMisfin_GmIdentity         (const iGmIdentity *);
+iString *misfinIdentity_GmIdentity  (const iGmIdentity *, iString *blurb_out);
 
 void    setUse_GmIdentity           (iGmIdentity *, const iString *url, iBool use);
 void    clearUse_GmIdentity         (iGmIdentity *);

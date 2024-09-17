@@ -45,7 +45,8 @@ struct Impl_GmResponse {
     iString            meta; /* MIME type or other metadata */
     iBlock             body;
     int                certFlags;
-    iBlock             certFingerprint;
+    iBlock             certFingerprint;  /* public SHA-256 hash of public key */
+    iBlock             certFullFingerprint; /* SHA-256 hash of DER certificate */
     iDate              certValidUntil;
     iString            certSubject;
     iTime              when;
@@ -66,7 +67,7 @@ iDeclareNotifyFunc(GmRequest, Updated)
 iDeclareNotifyFunc(GmRequest, Finished)
 iDeclareAudienceGetter(GmRequest, updated)
 iDeclareAudienceGetter(GmRequest, finished)
-    
+
 typedef void (*iGmRequestProgressFunc)(iGmRequest *, size_t current, size_t total);
 
 void                enableFilters_GmRequest     (iGmRequest *, iBool enable);

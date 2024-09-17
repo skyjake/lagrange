@@ -73,8 +73,14 @@ iDefineTypeConstructionArgs(Window,
                             type, rect, flags)
 iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 
+#if defined (iPlatformPcDesktop) || defined (iPlatformTerminal)
+#   define LAGRANGE_PC_MENUS
+#endif
+
 static const iMenuItem fileMenuItems_[] = {
+#if defined (LAGRANGE_MULTIPLE_WINDOWS)
     { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
+#endif
     { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
@@ -85,12 +91,12 @@ static const iMenuItem fileMenuItems_[] = {
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---" },
     { "${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
-//    { "${menu.downloads}", 0, 0, "downloads.open" },
-//    { "${menu.export}", 0, 0, "export" },
-#if defined (iPlatformPcDesktop)
+#if defined (LAGRANGE_PC_MENUS)
     { "---" },
     { "${menu.preferences}", preferences_KeyShortcut, "preferences" },
+#if !defined (iPlatformTerminal)
     { "${menu.fonts}", 0, 0, "open newtab:1 switch:1 url:about:fonts" },
+#endif
 #if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
 #endif
@@ -160,16 +166,18 @@ static const iMenuItem windowMenuItems_[] = {
     { "${menu.tab.next}", 0, 0, "tabs.next" },
     { "${menu.tab.prev}", 0, 0, "tabs.prev" },
     { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
+#if !defined (iPlatformTerminal)
     { "---" },
     { "${menu.window.min}", 0, 0, "window.minimize" },
     { "${menu.window.max}", 0, 0, "window.maximize" },
     { "${menu.window.full}", 0, 0, "window.fullscreen" },
+#endif
     { "---" },
     { NULL }
 };
 
 static const iMenuItem helpMenuItems_[] = {
-#if defined (iPlatformPcDesktop)
+#if defined (LAGRANGE_PC_MENUS)
     { "${menu.help}", SDLK_F1, 0, "!open newtab:1 switch:1 url:about:help" },
 #else
     { "${menu.help}", 0, 0, "!open newtab:1 switch:1 url:about:help" },
@@ -178,7 +186,7 @@ static const iMenuItem helpMenuItems_[] = {
     { "---" },
     { "${menu.aboutpages}", 0, 0, "!open newtab:1 switch:1 url:about:about" },
     { "${menu.debug}", 0, 0, "!open newtab:1 switch:1 url:about:debug" },
-#if defined (iPlatformPcDesktop)
+#if defined (LAGRANGE_PC_MENUS)
     { "---" },
     { "${menu.aboutapp}", 0, 0, "!open newtab:1 switch:1 url:about:lagrange" },
 #endif
@@ -194,6 +202,10 @@ const iMenuItem topLevelMenus_Window[7] = {
     { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
     { "${menu.title.help}", 0, 0, (const void *) helpMenuItems_ },
 };
+
+size_t numWindowMenuItems_Window(void) {
+    return iElemCount(windowMenuItems_) - 1; /* don't count the terminal */
+}
 
 #if defined (LAGRANGE_MAC_MENUBAR)
 
@@ -601,6 +613,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->hover         = NULL;
     d->lastHover     = NULL;
     d->mouseGrab     = NULL;
+    d->keyPriority   = NULL;
     d->focus         = NULL;
     d->pendingCursor = NULL;
     d->isExposed     = (deviceType_App() != desktop_AppDeviceType);
@@ -622,18 +635,18 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     /* Renderer info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
-#if !defined (NDEBUG)
+#   if !defined (NDEBUG)
         printf("[window] renderer: %s%s\n",
                info.name,
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
-#endif
+#   endif
     }
-#endif /* !iPlatformTerminal */
-#if defined (iPlatformMsys)
+#   if defined (iPlatformMsys)
     if (type == extra_WindowType) {
         enableDarkMode_SDLWindow(d->win);
     }
-#endif
+#   endif
+#endif /* !iPlatformTerminal */
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
@@ -678,14 +691,16 @@ void deinit_Window(iWindow *d) {
 }
 
 static void setWindowIcon_Window_(iWindow *d) {
-#if defined (iPlatformMsys)
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformMsys)
     useExecutableIconResource_SDLWindow(d->win);
-#endif
-#if defined (iPlatformLinux) && !defined (iPlatformTerminal)
+#   endif
+#   if defined (iPlatformLinux)
     SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
     SDL_SetWindowIcon(d->win, surf);
     free(surf->pixels);
     SDL_FreeSurface(surf);
+#   endif
 #endif
     iUnused(d); /* other platforms */
 }
@@ -756,16 +771,20 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         }
 #endif
     }
-#if defined (iPlatformMsys)
-    SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformMsys)
+    SDL_SetWindowMinimumSize(
+        d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
     enableDarkMode_SDLWindow(d->base.win);
-#endif
-#if defined (iPlatformLinux) && !defined (iPlatformTerminal)
-    SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
-#endif
-#if defined (iPlatformAppleMobile)
+#   endif
+#   if defined (iPlatformLinux)
+    SDL_SetWindowMinimumSize(
+        d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
+#   endif
+#   if defined (iPlatformAppleMobile)
     setupWindow_iOS(as_Window(d));
-#endif
+#   endif
+#endif /* !defined (iPlatformTerminal) */
     setWindowIcon_Window_(as_Window(d));
     setCurrent_Text(d->base.text);
     SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
@@ -1308,32 +1327,6 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iFalse; /* unfreeze all frozen windows */
             }
-#if 0
-            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
-                /* This command is sent on Android to update the keyboard height. */
-                const char *cmd = command_UserEvent(ev);
-                /*
-                    0
-                    |
-                 top
-                 |  |
-                 | bottom (top of keyboard)   :
-                 |  |                         : keyboardHeight
-                 maxDrawableHeight            :
-                    |
-                   fullheight
-                 */
-                const int top    = argLabel_Command(cmd, "top");
-                const int bottom = argLabel_Command(cmd, "bottom");
-                const int full   = argLabel_Command(cmd, "fullheight");
-                //if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
-                if (bottom == full) {
-                    mw->maxDrawableHeight = bottom - top;
-                }
-                setKeyboardHeight_MainWindow(mw, top + mw->maxDrawableHeight - bottom);
-                return iTrue;
-            }
-#endif
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
@@ -1372,17 +1365,22 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-//            const iWidget *oldHover = d->hover;
             iBool wasUsed = iFalse;
             /* Dispatch first to the mouse-grabbed widget. */
-//            iWidget *widget = d->root.widget;
             if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEWHEEL ||
                 event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
                 if (mouseGrab_Widget()) {
                     iWidget *grabbed = mouseGrab_Widget();
-                    setCurrent_Root(grabbed->root /* findRoot_Window(d, grabbed)*/);
+                    setCurrent_Root(grabbed->root);
                     wasUsed = dispatchEvent_Widget(grabbed, &event);
                 }
+            }
+            /* If there is a priority handler for key events, offer the event to it first.
+               This is similar to mouse grabbing, but the handler can refuse the event. */
+            if (d->keyPriority && (event.type == SDL_KEYDOWN || event.type == SDL_KEYDOWN)) {
+                /* The event is processed directly by the widget only, not dispatched to
+                   the widget subtree. When dispatching, children still get priority. */
+                wasUsed = class_Widget(d->keyPriority)->processEvent(d->keyPriority, &event);
             }
             /* Dispatch the event to the tree of widgets. */
             if (!wasUsed) {
@@ -1449,6 +1447,7 @@ iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
         d->keyRoot = root;
         postCommand_App("keyroot.changed");
         postRefresh_Window(d);
+        d->keyPriority = NULL;
         return iTrue;
     }
     return iFalse;

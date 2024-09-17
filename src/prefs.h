@@ -37,6 +37,7 @@ enum iPrefsString {
     uiLanguage_PrefsString,
     downloadDir_PrefsString,
     searchUrl_PrefsString,
+    recentMisfinId_PrefsString,
 
     /* Network */
     caFile_PrefsString,
@@ -95,8 +96,10 @@ enum iPrefsBool {
     edgeSwipe_PrefsBool,
     pageSwipe_PrefsBool,
     capsLockKeyModifier_PrefsBool,
+    misfinSelfCopy_PrefsBool,
 
     /* Network */
+    warnCertSecurity_PrefsBool,
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
 
@@ -174,8 +177,10 @@ struct Impl_Prefs {
             iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
             iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
             iBool capsLockKeyModifier;
+            iBool misfinSelfCopy;
 
             /* Network */
+            iBool warnTlsSecurity;
             iBool decodeUserVisibleURLs;
             iBool allowSchemeChangingRedirect;
 
@@ -201,6 +206,7 @@ struct Impl_Prefs {
     int              langFrom;
     int              langTo;
     iBool            translationIgnorePre;
+    int              recentMenuBarIndex; /* most recently opened menubar child */
     /* Colors */
     enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;

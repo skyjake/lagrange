@@ -88,6 +88,14 @@ iLocalDef iBool isAndroid_Platform(void) {
 #endif
 }
 
+enum iGmRequestState {
+    initialized_GmRequestState,
+    receivingHeader_GmRequestState,
+    receivingBody_GmRequestState,
+    finished_GmRequestState,
+    failure_GmRequestState,
+};
+
 enum iSourceFormat {
     undefined_SourceFormat = -1,
     gemini_SourceFormat    = 0,
@@ -140,6 +148,14 @@ enum iScrollType {
     keyboard_ScrollType,
     mouse_ScrollType,
     max_ScrollType
+};
+
+enum iDirection {
+    none_Direction,
+    up_Direction,
+    right_Direction,
+    down_Direction,
+    left_Direction,
 };
 
 enum iToolbarAction {
@@ -215,7 +231,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define backArrow_Icon      "\U0001f870"
 #define forwardArrow_Icon   "\U0001f872"
 #define upArrow_Icon        "\U0001f871"
-#define upArrowBar_Icon     "\u2b71"
+#define upArrowBar_Icon     "\u2912"
 #define keyUpArrow_Icon     "\u2191"
 #define downArrow_Icon      "\U0001f873"
 #define downArrowBar_Icon   "\u2913"
@@ -257,8 +273,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define circleWhite_Icon    "\u25cb"
 #define gear_Icon           "\u2699"
 #define explosion_Icon      "\U0001f4a5"
-#define leftAngle_Icon      "\U0001fba4"
-#define rightAngle_Icon     "\U0001fba5"
+#define leftAngle_Icon      "\u27e8"
+#define rightAngle_Icon     "\u27e9"
 #define planet_Icon         "\U0001fa90"
 #define info_Icon           "\u2139"
 #define bug_Icon            "\U0001f41e"
@@ -286,6 +302,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define toggleNo_Icon       bullet_Icon
 #define spartan_Icon        "\U0001f4aa"
 #define nex_Icon            "\U0001f687"
+#define guppy_Icon          "\U0001f41f"
 #define keyboard_Icon       "\u2328"
 #define network_Icon        "\U0001f5a7"
 #define computer_Icon       "\U0001f5b3"
@@ -318,6 +335,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define LAGRANGE_MAC_CONTEXTMENU
 #elif defined (iPlatformDesktop)
 #   define LAGRANGE_MENUBAR
+#endif
+
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
+#   define LAGRANGE_MULTIPLE_WINDOWS
 #endif
 
 /* UI labels that depend on the platform */

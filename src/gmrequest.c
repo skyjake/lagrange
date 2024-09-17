@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2024 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "gmcerts.h"
 #include "gopher.h"
+#include "guppy.h"
 #include "app.h" /* dataDir_App() */
 #include "mimehooks.h"
 #include "feeds.h"
@@ -32,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "resources.h"
 #include "sitespec.h"
 #include "defs.h"
+
+#include <errno.h>
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
@@ -52,6 +55,7 @@ void init_GmResponse(iGmResponse *d) {
     init_Block(&d->body, 0);
     d->certFlags = 0;
     init_Block(&d->certFingerprint, 0);
+    init_Block(&d->certFullFingerprint, 0);
     iZap(d->certValidUntil);
     init_String(&d->certSubject);
     iZap(d->when);
@@ -64,6 +68,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
     initCopy_Block(&d->body, &other->body);
     d->certFlags = other->certFlags;
     initCopy_Block(&d->certFingerprint, &other->certFingerprint);
+    initCopy_Block(&d->certFullFingerprint, &other->certFullFingerprint);
     d->certValidUntil = other->certValidUntil;
     initCopy_String(&d->certSubject, &other->certSubject);
     d->when = other->when;
@@ -73,6 +78,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
 void deinit_GmResponse(iGmResponse *d) {
     deinit_String(&d->certSubject);
     deinit_Block(&d->body);
+    deinit_Block(&d->certFullFingerprint);
     deinit_Block(&d->certFingerprint);
     deinit_String(&d->meta);
     deinit_Block(&d->identityFingerprint);
@@ -84,6 +90,7 @@ void clear_GmResponse(iGmResponse *d) {
     clear_Block(&d->body);
     d->certFlags = 0;
     clear_Block(&d->certFingerprint);
+    clear_Block(&d->certFullFingerprint);
     iZap(d->certValidUntil);
     clear_String(&d->certSubject);
     iZap(d->when);
@@ -100,7 +107,7 @@ void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
     write32_Stream(outs, d->statusCode);
     serialize_String(&d->meta, outs);
     serialize_Block(&d->body, outs);
-    /* TODO: Add certificate fingerprint, but need to bump file version first. */
+    /* TODO: Add certificate fingerprints, but need to bump file version first. */
     write32_Stream(outs, d->certFlags & ~haveFingerprint_GmCertFlag);
     serialize_Date(&d->certValidUntil, outs);
     serialize_String(&d->certSubject, outs);
@@ -117,6 +124,7 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
     deserialize_String(&d->certSubject, ins);
     iZap(d->when);
     clear_Block(&d->certFingerprint);
+    clear_Block(&d->certFullFingerprint);
     if (version_Stream(ins) >= addedResponseTimestamps_FileVersion) {
         d->when.ts.tv_sec = readU64_Stream(ins);
     }
@@ -154,14 +162,6 @@ void deinit_UploadData(iUploadData *d) {
 
 static iAtomicInt idGen_;
 
-enum iGmRequestState {
-    initialized_GmRequestState,
-    receivingHeader_GmRequestState,
-    receivingBody_GmRequestState,
-    finished_GmRequestState,
-    failure_GmRequestState,
-};
-
 struct Impl_GmRequest {
     iObject              object;
     uint32_t             id;
@@ -173,7 +173,8 @@ struct Impl_GmRequest {
     iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
-    iSocket *            plainSocket; /* Spartan, Nex */
+    iGuppy *             guppy;
+    iSocket *            plainSocket; /* non-TLS socket for Spartan, Nex */
     iGmResponse *        resp;
     iBool                isProxy;
     iBool                isFilterEnabled;
@@ -202,6 +203,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         const uint16_t port   = port_Address(address_TlsRequest(d->req));
         resp->certFlags |= available_GmCertFlag;
         set_Block(&resp->certFingerprint, collect_Block(publicKeyFingerprint_TlsCertificate(cert)));
+        set_Block(&resp->certFullFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
         resp->certFlags |= haveFingerprint_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             resp->certFlags |= timeVerified_GmCertFlag;
@@ -465,6 +467,10 @@ static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
 static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
     iUnused(socket);
     lock_Mutex(d->mtx);
+    if (d->guppy) {
+        cancel_Guppy(d->guppy);
+        iReleasePtr(&d->guppy);
+    }
     d->state = failure_GmRequestState;
     d->resp->statusCode = tlsFailure_GmStatusCode; /* TODO: add a plain socket error message */
     format_String(&d->resp->meta, "%s (errno %d)", msg, error);
@@ -552,6 +558,53 @@ static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, ui
                  !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/");
     write_Socket(d->plainSocket, &message);
     deinit_Block(&message);
+}
+
+static void guppyRead_GmRequest_(iGmRequest *d, iDatagram *datagram) {
+    iUnused(datagram);
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iTrue;
+    lock_Mutex(d->mtx);
+    processResponse_Guppy(d->guppy, &d->state, &d->resp->statusCode, &notifyUpdate, &notifyDone);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (notifyDone) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void guppyTimeout_GmRequest_(iGmRequest *d) {
+    lock_Mutex(d->mtx);
+    cancel_Guppy(d->guppy);
+    d->state = failure_GmRequestState;
+    d->resp->statusCode = temporaryFailure_GmStatusCode;
+    setCStr_String(&d->resp->meta, strerror(ETIMEDOUT));
+    clear_Block(&d->resp->body);
+    unlock_Mutex(d->mtx);
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void guppyError_GmRequest_(iGmRequest *d) {
+    plainSocketError_GmRequest_(d, NULL, ECONNABORTED, "Address lookup failed");
+}
+
+static void beginGuppyConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    iAssert(!d->guppy);
+    d->guppy = new_Guppy();
+    d->state = receivingHeader_GmRequestState;
+    setCStr_String(&d->resp->meta, "text/gemini");
+    d->guppy->mtx  = d->mtx;
+    d->guppy->url  = &d->url;
+    d->guppy->meta = &d->resp->meta;
+    d->guppy->body = &d->resp->body;
+    iConnect(Datagram, d->guppy->datagram, message, d, guppyRead_GmRequest_);
+    iConnect(Datagram, d->guppy->datagram, error,   d, plainSocketError_GmRequest_
+             /* socket not used by error handler, so this is fine */);
+    iConnect(Guppy,    d->guppy,           timeout, d, guppyTimeout_GmRequest_);
+    iConnect(Guppy,    d->guppy,           error,   d, guppyError_GmRequest_);
+    open_Guppy(d->guppy, host, port);
 }
 
 static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
@@ -672,6 +725,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
+    d->guppy        = NULL;
     d->plainSocket  = NULL;
     d->upload       = NULL;
     d->certs        = certs;
@@ -700,6 +754,10 @@ void deinit_GmRequest(iGmRequest *d) {
     iReleasePtr(&d->req);
     delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
+    if (d->guppy) {
+        iDisconnectObject(Guppy, d->guppy, timeout, d);
+        iRelease(d->guppy);
+    }
     iRelease(d->plainSocket);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
@@ -741,7 +799,11 @@ void setIdentity_GmRequest(iGmRequest *d, const iGmIdentity *id) {
 }
 
 static iBool isTitan_GmRequest_(const iGmRequest *d) {
-    return equalCase_Rangecc(urlScheme_String(&d->url), "titan");
+    return isTitanUrl_String(&d->url);
+}
+
+static iBool isMisfin_GmRequest_(const iGmRequest *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "misfin");
 }
 
 void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
@@ -750,8 +812,12 @@ void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *p
         d->upload = new_UploadData();
     }
     set_Block(&d->upload->data, payload);
-    set_String(&d->upload->mime, mime);
-    set_String(&d->upload->token, token);
+    if (mime) {
+        set_String(&d->upload->mime, mime);
+    }
+    if (token) {
+        set_String(&d->upload->token, token);
+    }
 }
 
 void setSendProgressFunc_GmRequest(iGmRequest *d, iGmRequestProgressFunc func) {
@@ -764,6 +830,132 @@ static void bytesSent_GmRequest_(iGmRequest *d, iTlsRequest *req, size_t sent, s
         d->sendProgress(d, sent, toSend);
     }
 }
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void aboutRequest_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    iGmResponse *resp = d->resp;
+    const iBlock *src = aboutPageSource_(url.path, url.query);
+    if (src) {
+        resp->statusCode = success_GmStatusCode;
+        setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+        set_Block(&resp->body, replaceVariables_(src));
+        if (equalCase_Rangecc(url.path, "lagrange")) {
+            /* The "Powered by" line needs dynamic updates depending on the build. */
+            /* TODO: Would be cleaner to use a variable for this in the page source. */
+            iString body;
+            initBlock_String(&body, &resp->body);
+            replace_String(&body, "OpenSSL", libraryName_TlsRequest());
+#if defined (iPlatformTerminal)
+            replace_String(&body, "SDL 2", "ncurses");
+#endif
+            set_Block(&resp->body, utf8_String(&body));
+            deinit_String(&body);
+        }
+        d->state = receivingBody_GmRequestState;
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    else {
+        resp->statusCode = invalidLocalResource_GmStatusCode;
+    }
+    d->state = finished_GmRequestState;
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+void dataRequest_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    iGmResponse *resp = d->resp;
+    resp->statusCode = success_GmStatusCode;
+    iString *src = collectNewCStr_String(url.scheme.start + 5);
+    iRangecc header = { constBegin_String(src), constBegin_String(src) };
+    while (header.end < constEnd_String(src) && *header.end != ',') {
+        header.end++;
+    }
+    iBool isBase64 = iFalse;
+    setRange_String(&resp->meta, header);
+    /* Check what's in the header. */ {
+        iRangecc entry = iNullRange;
+        while (nextSplit_Rangecc(header, ";", &entry)) {
+            if (equal_Rangecc(entry, "base64")) {
+                isBase64 = iTrue;
+            }
+        }
+    }
+    remove_Block(&src->chars, 0, size_Range(&header) + 1);
+    if (isBase64) {
+        set_Block(&src->chars, collect_Block(base64Decode_Block(&src->chars)));
+    }
+    else {
+        set_String(src, collect_String(urlDecode_String(src)));
+    }
+    set_Block(&resp->body, &src->chars);
+    d->state = receivingBody_GmRequestState;
+    iNotifyAudience(d, updated, GmRequestUpdated);
+    d->state = finished_GmRequestState;
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void composeTitanRequest_GmRequest_(iGmRequest *d) {
+    iBlock content;
+    init_Block(&content, 0);
+    /* Titan requests can have an arbitrary payload. */
+    if (d->upload) {
+        const iBool hasToken = !isEmpty_String(&d->upload->token);
+        iString *titanUrl = withUrlParameters_String(
+            &d->url,
+            "mime",
+            cstr_String(&d->upload->mime),
+            "size",
+            format_CStr("%zu", size_Block(&d->upload->data)),
+            hasToken ? "token" : NULL,
+            hasToken ? cstrCollect_String(urlEncode_String(&d->upload->token)) : NULL,
+            NULL);
+        printf_Block(&content, "%s\r\n", cstr_String(titanUrl));
+        delete_String(titanUrl);
+        append_Block(&content, &d->upload->data);
+    }
+    else if (endsWithCase_Rangecc(urlPath_String(&d->url), ";edit")) {
+        printf_Block(&content, "%s\r\n", cstr_String(&d->url));
+    }
+    else {
+        /* Empty data. */
+        printf_Block(&content,
+                     "%s\r\n",
+                     cstrCollect_String(withUrlParameters_String(
+                         &d->url, "mime", "application/octet-stream", "size", "0", NULL)));
+    }
+    setContent_TlsRequest(d->req, &content);
+    deinit_Block(&content);
+}
+
+static void composeMisfinRequest_GmRequest_(iGmRequest *d) {
+    /* We will use Misfin(B) for best compatibility with servers. */
+    iBlock content;
+    init_Block(&content, 0);
+    const size_t misfinBMaxLength_ = 2048;
+    const size_t misfinCMaxContentLength_ = 16384;
+    if (size_String(&d->url) + 1 + size_Block(&d->upload->data) + 2 <= misfinBMaxLength_) {
+        printf_Block(&content, "%s %s\r\n", cstr_String(&d->url),
+                     d->upload ? cstr_Block(&d->upload->data) : "");
+    }
+    else {
+        /* Use the Misfin(C) format, then. */
+        /* Force the data to fit the maximum size. */
+        truncate_Block(&d->upload->data, misfinCMaxContentLength_);
+        printf_Block(&content,
+                     "%s\t%u\r\n%s",
+                     cstr_String(&d->url),
+                     size_Block(&d->upload->data),
+                     cstr_Block(&d->upload->data));
+    }
+    setContent_TlsRequest(d->req, &content);
+    deinit_Block(&content);
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 static iBool isDirectory_(const iString *path) {
     /* TODO: move this to the_Foundation */
@@ -790,6 +982,186 @@ static const iString *directoryIndexPage_Archive_(const iArchive *d, const iStri
     return NULL;
 }
 
+static void fileRequest_GmRequest_(iGmRequest *d) {
+    iGmResponse *resp = d->resp;
+    iString *path = collect_String(localFilePathFromUrl_String(&d->url));
+    /* Note: As a local file path, `path` uses the OS directory separators
+       (i.e., \ on Windows). `Archive` accepts both. */
+    iFile *f = new_File(path);
+    if (isDirectory_(path)) {
+        if (endsWith_String(path, iPathSeparator)) {
+            removeEnd_String(path, 1);
+        }
+        resp->statusCode = success_GmStatusCode;
+        setCStr_String(&resp->meta, "text/gemini");
+        iString *page = collectNew_String();
+        iString *parentDir = collectNewRange_String(dirName_Path(path));
+        if (!isMobile_Platform()) {
+            appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
+                                cstrCollect_String(makeFileUrl_String(parentDir)),
+                                cstr_String(parentDir));
+        }
+        appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
+        /* Make a directory index page. */
+        iPtrArray *sortedInfo = collectNew_PtrArray();
+        iForEach(DirFileInfo, entry,
+                 iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
+            /* Ignore some files. */
+            if (isApple_Platform()) {
+                const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+                if (equal_Rangecc(name, ".DS_Store") ||
+                    equal_Rangecc(name, ".localized")) {
+                    continue;
+                }
+            }
+            pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
+        }
+        sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
+        iForEach(PtrArray, s, sortedInfo) {
+            const iFileInfo *entry = s.ptr;
+            appendFormat_String(page, "=> %s %s%s%s\n",
+                                cstrCollect_String(makeFileUrl_String(path_FileInfo(entry))),
+                                isDirectory_FileInfo(entry) ? folder_Icon " " : "",
+                                cstr_Rangecc(baseName_Path(path_FileInfo(entry))),
+                                isDirectory_FileInfo(entry) ? iPathSeparator : "");
+            iRelease(entry);
+        }
+        set_Block(&resp->body, utf8_String(page));
+    }
+    else if (open_File(f, readOnly_FileMode)) {
+        resp->statusCode = success_GmStatusCode;
+        setCStr_String(&resp->meta, mediaType_Path(path));
+        /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
+        set_Block(&resp->body, collect_Block(readAll_File(f)));
+        d->state = receivingBody_GmRequestState;
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    else {
+        /* It could be a path inside an archive. */
+        const iString *container = findContainerArchive_Path(path);
+        if (container) {
+            iArchive *arch = iClob(new_Archive());
+            if (openFile_Archive(arch, container)) {
+                iString *entryPath = collect_String(copy_String(path));
+                remove_Block(&entryPath->chars, 0, size_String(container) + 1); /* last slash, too */
+                iBool isDir = isDirectory_Archive(arch, entryPath);
+                if (isDir && !isEmpty_String(entryPath) &&
+                    !endsWith_String(entryPath, iPathSeparator)) {
+                    /* Must have a slash for directories, otherwise relative navigation
+                       will not work. */
+                    resp->statusCode = redirectPermanent_GmStatusCode;
+                    set_String(&resp->meta, withSpacesEncoded_String(collect_String(makeFileUrl_String(container))));
+                    appendCStr_String(&resp->meta, "/");
+                    append_String(&resp->meta, entryPath);
+                    appendCStr_String(&resp->meta, "/");
+                    goto fileRequestFinished;
+                }
+                /* Check for a Gemini index page. */
+                if (isDir && prefs_App()->openArchiveIndexPages) {
+                    const iString *indexPath = directoryIndexPage_Archive_(arch, entryPath);
+                    if (indexPath) {
+                        set_String(entryPath, indexPath);
+                        isDir = iFalse;
+                    }
+                }
+                /* Show an archive index page if this is a directory. */
+                /* TODO: Use a built-in MIME hook for this? */
+                if (isDir) {
+                    iString *page = new_String();
+                    const iRangecc containerName = baseName_Path(container);
+                    const iString *containerUrl =
+                        withSpacesEncoded_String(collect_String(makeFileUrl_String(container)));
+                    const iBool isRoot = isEmpty_String(entryPath);
+                    if (!isRoot) {
+                        const iRangecc curDir = dirName_Path(entryPath);
+                        const iRangecc parentDir = dirName_Path(collectNewRange_String(curDir));
+                        if (!equal_Rangecc(parentDir, ".")) {
+                            /* A subdirectory. */
+                            appendFormat_String(page,
+                                                "=> ../ " keyUpArrow_Icon " %s" iPathSeparator
+                                                "\n",
+                                                cstr_Rangecc(parentDir));
+                        }
+                        else {
+                            /* Top-level directory. */
+                            appendFormat_String(page,
+                                                "=> %s/ " keyUpArrow_Icon " Root\n",
+                                                cstr_String(containerUrl));
+                        }
+                        appendFormat_String(page, "# %s\n\n", cstr_Rangecc(baseName_Path(collectNewRange_String(curDir))));
+                    }
+                    else {
+                        /* The root directory. */
+                        appendFormat_String(page, "=> %s " close_Icon " ${archive.exit}\n",
+                                            cstr_String(containerUrl));
+                        appendFormat_String(page, "# %s\n\n", cstr_Rangecc(containerName));
+                        appendFormat_String(page,
+                                            cstrCount_Lang("archive.summary.n",
+                                                           (int) numEntries_Archive(arch)),
+                                            numEntries_Archive(arch),
+                                            (double) sourceSize_Archive(arch) / 1.0e6);
+                        appendCStr_String(page, "\n\n");
+                    }
+                    iStringSet *contents = iClob(listDirectory_Archive(arch, entryPath));
+                    if (!isRoot) {
+                        if (isEmpty_StringSet(contents)) {
+                            appendCStr_String(page, "${dir.empty}\n");
+                        }
+                        else if (size_StringSet(contents) > 1) {
+                            appendFormat_String(page, cstrCount_Lang("dir.summary.n",
+                                                                     (int) size_StringSet(contents)),
+                                                size_StringSet(contents));
+                            appendCStr_String(page, "\n\n");
+                        }
+                    }
+                    translate_Lang(page);
+                    iConstForEach(StringSet, e, contents) {
+                        const iString *subPath = e.value;
+                        iRangecc relSub = range_String(subPath);
+                        relSub.start += size_String(entryPath);
+                        appendFormat_String(page, "=> %s/%s %s%s\n",
+                                            cstr_String(&d->url),
+                                            cstr_String(withSpacesEncoded_String(collectNewRange_String(relSub))),
+                                            endsWith_Rangecc(relSub, "/") ? folder_Icon " " : "",
+                                            cstr_Rangecc(relSub));
+                    }
+                    resp->statusCode = success_GmStatusCode;
+                    setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+                    set_Block(&resp->body, utf8_String(page));
+                    delete_String(page);
+                }
+                else {
+                    const iBlock *data = data_Archive(arch, entryPath);
+                    if (data) {
+                        resp->statusCode = success_GmStatusCode;
+                        setCStr_String(&resp->meta, mediaType_Path(entryPath));
+                        set_Block(&resp->body, data);
+                    }
+                    else {
+                        resp->statusCode = failedToOpenFile_GmStatusCode;
+                        setCStr_String(&resp->meta, cstr_String(path));
+                    }
+                }
+            fileRequestFinished:;
+            }
+        }
+        else {
+            resp->statusCode = failedToOpenFile_GmStatusCode;
+            setCStr_String(&resp->meta, cstr_String(path));
+        }
+    }
+    iRelease(f);
+    d->state = finished_GmRequestState;
+    /* MIME hooks may to this content. */
+    if (d->isFilterEnabled && resp->statusCode == success_GmStatusCode) {
+        /* TODO: Use a background thread, the hook may take some time to run. */
+        applyFilter_GmRequest_(d);
+    }
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 void submit_GmRequest(iGmRequest *d) {
     iAssert(d->state == initialized_GmRequestState);
     if (d->state != initialized_GmRequestState) {
@@ -803,245 +1175,19 @@ void submit_GmRequest(iGmRequest *d) {
 #endif
     iUrl url;
     init_Url(&url, &d->url);
-    /* Check for special schemes. */
-    /* TODO: If this were a library, these could be handled via callbacks. */
-    /* TODO: Handle app's configured proxies and these via the same mechanism. */
     const iString *host = collect_String(newRange_String(url.host));
     uint16_t       port = toInt_String(collect_String(newRange_String(url.port)));
+    /* Process the request submission depending on the URI scheme. */
     if (equalCase_Rangecc(url.scheme, "about")) {
-        const iBlock *src = aboutPageSource_(url.path, url.query);
-        if (src) {
-            resp->statusCode = success_GmStatusCode;
-            setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
-            set_Block(&resp->body, replaceVariables_(src));
-            if (equalCase_Rangecc(url.path, "lagrange")) {
-                /* The "Powered by" line needs dynamic updates depending on the build. */
-                iString body;
-                initBlock_String(&body, &resp->body);
-                replace_String(&body, "OpenSSL", libraryName_TlsRequest());
-#if defined (iPlatformTerminal)
-                replace_String(&body, "SDL 2", "ncurses");
-#endif
-                set_Block(&resp->body, utf8_String(&body));
-                deinit_String(&body);
-            }
-            d->state = receivingBody_GmRequestState;
-            iNotifyAudience(d, updated, GmRequestUpdated);
-        }
-        else {
-            resp->statusCode = invalidLocalResource_GmStatusCode;
-        }
-        d->state = finished_GmRequestState;
-        iNotifyAudience(d, finished, GmRequestFinished);
+        aboutRequest_GmRequest_(d);
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "file")) {
-        /* TODO: Move handling of "file://" URLs elsewhere, it's getting complex. */
-        iString *path = collect_String(localFilePathFromUrl_String(&d->url));
-        /* Note: As a local file path, `path` uses the OS directory separators
-           (i.e., \ on Windows). `Archive` accepts both. */
-        iFile *f = new_File(path);
-        if (isDirectory_(path)) {
-            if (endsWith_String(path, iPathSeparator)) {
-                removeEnd_String(path, 1);
-            }
-            resp->statusCode = success_GmStatusCode;
-            setCStr_String(&resp->meta, "text/gemini");
-            iString *page = collectNew_String();
-            iString *parentDir = collectNewRange_String(dirName_Path(path));
-            if (!isMobile_Platform()) {
-                appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
-                                    cstrCollect_String(makeFileUrl_String(parentDir)),
-                                    cstr_String(parentDir));
-            }
-            appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
-            /* Make a directory index page. */
-            iPtrArray *sortedInfo = collectNew_PtrArray();
-            iForEach(DirFileInfo, entry,
-                     iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
-                /* Ignore some files. */
-                if (isApple_Platform()) {
-                    const iRangecc name = baseName_Path(path_FileInfo(entry.value));
-                    if (equal_Rangecc(name, ".DS_Store") ||
-                        equal_Rangecc(name, ".localized")) {
-                        continue;
-                    }
-                }
-                pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
-            }
-            sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
-            iForEach(PtrArray, s, sortedInfo) {
-                const iFileInfo *entry = s.ptr;
-                appendFormat_String(page, "=> %s %s%s%s\n",
-                                    cstrCollect_String(makeFileUrl_String(path_FileInfo(entry))),
-                                    isDirectory_FileInfo(entry) ? folder_Icon " " : "",
-                                    cstr_Rangecc(baseName_Path(path_FileInfo(entry))),
-                                    isDirectory_FileInfo(entry) ? iPathSeparator : "");
-                iRelease(entry);
-            }
-            set_Block(&resp->body, utf8_String(page));
-        }
-        else if (open_File(f, readOnly_FileMode)) {
-            resp->statusCode = success_GmStatusCode;
-            setCStr_String(&resp->meta, mediaType_Path(path));
-            /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
-            set_Block(&resp->body, collect_Block(readAll_File(f)));
-            d->state = receivingBody_GmRequestState;
-            iNotifyAudience(d, updated, GmRequestUpdated);
-        }
-        else {
-            /* It could be a path inside an archive. */
-            const iString *container = findContainerArchive_Path(path);
-            if (container) {
-                iArchive *arch = iClob(new_Archive());
-                if (openFile_Archive(arch, container)) {
-                    iString *entryPath = collect_String(copy_String(path));
-                    remove_Block(&entryPath->chars, 0, size_String(container) + 1); /* last slash, too */
-                    iBool isDir = isDirectory_Archive(arch, entryPath);
-                    if (isDir && !isEmpty_String(entryPath) &&
-                        !endsWith_String(entryPath, iPathSeparator)) {
-                        /* Must have a slash for directories, otherwise relative navigation
-                           will not work. */
-                        resp->statusCode = redirectPermanent_GmStatusCode;
-                        set_String(&resp->meta, withSpacesEncoded_String(collect_String(makeFileUrl_String(container))));
-                        appendCStr_String(&resp->meta, "/");
-                        append_String(&resp->meta, entryPath);
-                        appendCStr_String(&resp->meta, "/");
-                        goto fileRequestFinished;
-                    }
-                    /* Check for a Gemini index page. */
-                    if (isDir && prefs_App()->openArchiveIndexPages) {
-                        const iString *indexPath = directoryIndexPage_Archive_(arch, entryPath);
-                        if (indexPath) {
-                            set_String(entryPath, indexPath);
-                            isDir = iFalse;
-                        }
-                    }
-                    /* Show an archive index page if this is a directory. */
-                    /* TODO: Use a built-in MIME hook for this? */
-                    if (isDir) {
-                        iString *page = new_String();
-                        const iRangecc containerName = baseName_Path(container);
-                        const iString *containerUrl =
-                            withSpacesEncoded_String(collect_String(makeFileUrl_String(container)));
-                        const iBool isRoot = isEmpty_String(entryPath);
-                        if (!isRoot) {
-                            const iRangecc curDir = dirName_Path(entryPath);
-                            const iRangecc parentDir = dirName_Path(collectNewRange_String(curDir));
-                            if (!equal_Rangecc(parentDir, ".")) {
-                                /* A subdirectory. */
-                                appendFormat_String(page,
-                                                    "=> ../ " keyUpArrow_Icon " %s" iPathSeparator
-                                                    "\n",
-                                                    cstr_Rangecc(parentDir));
-                            }
-                            else {
-                                /* Top-level directory. */
-                                appendFormat_String(page,
-                                                    "=> %s/ " keyUpArrow_Icon " Root\n",
-                                                    cstr_String(containerUrl));
-                            }
-                            appendFormat_String(page, "# %s\n\n", cstr_Rangecc(baseName_Path(collectNewRange_String(curDir))));
-                        }
-                        else {
-                            /* The root directory. */
-                            appendFormat_String(page, "=> %s " close_Icon " ${archive.exit}\n",
-                                                cstr_String(containerUrl));
-                            appendFormat_String(page, "# %s\n\n", cstr_Rangecc(containerName));
-                            appendFormat_String(page,
-                                                cstrCount_Lang("archive.summary.n",
-                                                               (int) numEntries_Archive(arch)),
-                                                numEntries_Archive(arch),
-                                                (double) sourceSize_Archive(arch) / 1.0e6);
-                            appendCStr_String(page, "\n\n");
-                        }
-                        iStringSet *contents = iClob(listDirectory_Archive(arch, entryPath));
-                        if (!isRoot) {
-                            if (isEmpty_StringSet(contents)) {
-                                appendCStr_String(page, "${dir.empty}\n");
-                            }
-                            else if (size_StringSet(contents) > 1) {
-                                appendFormat_String(page, cstrCount_Lang("dir.summary.n",
-                                                                         (int) size_StringSet(contents)),
-                                                    size_StringSet(contents));
-                                appendCStr_String(page, "\n\n");
-                            }
-                        }
-                        translate_Lang(page);
-                        iConstForEach(StringSet, e, contents) {
-                            const iString *subPath = e.value;
-                            iRangecc relSub = range_String(subPath);
-                            relSub.start += size_String(entryPath);
-                            appendFormat_String(page, "=> %s/%s %s%s\n",
-                                                cstr_String(&d->url),
-                                                cstr_String(withSpacesEncoded_String(collectNewRange_String(relSub))),
-                                                endsWith_Rangecc(relSub, "/") ? folder_Icon " " : "",
-                                                cstr_Rangecc(relSub));
-                        }
-                        resp->statusCode = success_GmStatusCode;
-                        setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
-                        set_Block(&resp->body, utf8_String(page));
-                        delete_String(page);
-                    }
-                    else {
-                        const iBlock *data = data_Archive(arch, entryPath);
-                        if (data) {
-                            resp->statusCode = success_GmStatusCode;
-                            setCStr_String(&resp->meta, mediaType_Path(entryPath));
-                            set_Block(&resp->body, data);
-                        }
-                        else {
-                            resp->statusCode = failedToOpenFile_GmStatusCode;
-                            setCStr_String(&resp->meta, cstr_String(path));
-                        }
-                    }
-                fileRequestFinished:;
-                }
-            }
-            else {
-                resp->statusCode = failedToOpenFile_GmStatusCode;
-                setCStr_String(&resp->meta, cstr_String(path));
-            }
-        }
-        iRelease(f);
-        d->state = finished_GmRequestState;
-        /* MIME hooks may to this content. */
-        if (d->isFilterEnabled && resp->statusCode == success_GmStatusCode) {
-            /* TODO: Use a background thread, the hook may take some time to run. */
-            applyFilter_GmRequest_(d);
-        }
-        iNotifyAudience(d, finished, GmRequestFinished);
+        fileRequest_GmRequest_(d);
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "data")) {
-        resp->statusCode = success_GmStatusCode;
-        iString *src = collectNewCStr_String(url.scheme.start + 5);
-        iRangecc header = { constBegin_String(src), constBegin_String(src) };
-        while (header.end < constEnd_String(src) && *header.end != ',') {
-            header.end++;
-        }
-        iBool isBase64 = iFalse;
-        setRange_String(&resp->meta, header);
-        /* Check what's in the header. */ {
-            iRangecc entry = iNullRange;
-            while (nextSplit_Rangecc(header, ";", &entry)) {
-                if (equal_Rangecc(entry, "base64")) {
-                    isBase64 = iTrue;
-                }
-            }
-        }
-        remove_Block(&src->chars, 0, size_Range(&header) + 1);
-        if (isBase64) {
-            set_Block(&src->chars, collect_Block(base64Decode_Block(&src->chars)));
-        }
-        else {
-            set_String(src, collect_String(urlDecode_String(src)));
-        }
-        set_Block(&resp->body, &src->chars);
-        d->state = receivingBody_GmRequestState;
-        iNotifyAudience(d, updated, GmRequestUpdated);
-        d->state = finished_GmRequestState;
-        iNotifyAudience(d, finished, GmRequestFinished);
+        dataRequest_GmRequest_(d);
         return;
     }
     else if (schemeProxy_App(url.scheme)) {
@@ -1065,13 +1211,20 @@ void submit_GmRequest(iGmRequest *d) {
         beginNexConnection_GmRequest_(d, host, port ? port : 1900);
         return;
     }
+    else if (equalCase_Rangecc(url.scheme, "guppy")) {
+        beginGuppyConnection_GmRequest_(d, host, port ? port : 6775);
+        return;
+    }
     else if (!equalCase_Rangecc(url.scheme, "gemini") &&
-             !equalCase_Rangecc(url.scheme, "titan")) {
+             !equalCase_Rangecc(url.scheme, "titan") &&
+             !equalCase_Rangecc(url.scheme, "misfin")) {
+        /* This scheme is unrecognized so cannot submit the request. */
         resp->statusCode = unsupportedProtocol_GmStatusCode;
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
+    /* Submitting a Gemini-compatible request. */
     d->state = receivingHeader_GmRequestState;
     d->req = new_TlsRequest();
     if (d->identity) {
@@ -1089,37 +1242,17 @@ void submit_GmRequest(iGmRequest *d) {
     iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
     if (port == 0) {
-        port = GEMINI_DEFAULT_PORT; /* default Gemini port */
+        port = isMisfin_GmRequest_(d) ? MISFIN_DEFAULT_PORT : GEMINI_DEFAULT_PORT;
     }
     setHost_TlsRequest(d->req, host, port);
-    /* Titan requests can have an arbitrary payload. */
     if (isTitan_GmRequest_(d)) {
-        iBlock content;
-        init_Block(&content, 0);
-        if (d->upload) {
-            printf_Block(&content,
-                         "%s;mime=%s;size=%zu",
-                         cstr_String(&d->url),
-                         cstr_String(&d->upload->mime),
-                         size_Block(&d->upload->data));
-            if (!isEmpty_String(&d->upload->token)) {
-                appendCStr_Block(&content, ";token=");
-                append_Block(&content,
-                             utf8_String(collect_String(urlEncode_String(&d->upload->token))));
-            }
-            appendCStr_Block(&content, "\r\n");
-            append_Block(&content, &d->upload->data);
-        }
-        else {
-            /* Empty data. */
-            printf_Block(
-                &content, "%s;mime=application/octet-stream;size=0\r\n", cstr_String(&d->url));
-        }
-        setContent_TlsRequest(d->req, &content);
-        deinit_Block(&content);
+        composeTitanRequest_GmRequest_(d);
+    }
+    else if (isMisfin_GmRequest_(d)) {
+        composeMisfinRequest_GmRequest_(d);
     }
     else {
-        /* Gemini request. */
+        /* Normal Gemini request. */
         setContent_TlsRequest(d->req,
                               utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     }

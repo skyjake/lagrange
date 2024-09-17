@@ -232,6 +232,7 @@ const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
 iAny *  findParent_Widget               (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
+iAny *  findAdjacentFocusable_Widget    (const iWidget *, enum iDirection direction);
 iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
@@ -357,9 +358,14 @@ void        drawScrollIndicator_Widget  (const iWidget *, const iWidgetScrollInf
 
 int         backgroundFadeColor_Widget  (void);
 
+enum iFocusMethod {
+    none_FocusMethod,
+    arrowKeys_FocusMethod,
+};
+
 const iWidget *focusRoot_Widget     (const iWidget *);
 void        setFocus_Widget         (iWidget *); /* widget must be flagged `focusable` */
-void        setKeyboardGrab_Widget  (iWidget *); /* sets focus on any widget */
+void        setFocusWithMethod_Widget(iWidget *, enum iFocusMethod method);
 iWidget *   focus_Widget            (void);
 iBool       setHover_Widget         (iWidget *);
 iWidget *   hover_Widget            (void);

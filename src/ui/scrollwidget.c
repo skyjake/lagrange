@@ -31,8 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDefineObjectConstruction(ScrollWidget)
 
 #if defined (iPlatformTerminal)
-const int fadeTime_ScrollWidget_   = 10;
-const int unfadeTime_ScrollWidget_ = 10;
+const int fadeTime_ScrollWidget_   = 1;
+const int unfadeTime_ScrollWidget_ = 1;
 #else
 const int fadeTime_ScrollWidget_   = 200;
 const int unfadeTime_ScrollWidget_ = 66;

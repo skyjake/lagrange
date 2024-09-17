@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "ipc.h"
 #include "mimehooks.h"
+#include "misfin.h"
 #include "periodic.h"
 #include "resources.h"
 #include "sitespec.h"
@@ -42,6 +43,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
+#include "ui/listwidget.h"
+#include "ui/lookupwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
 #include "ui/text.h"
@@ -107,15 +110,15 @@ static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
-#endif
 
-#if defined (iPlatformAndroidMobile)
+#elif defined (iPlatformAndroidMobile)
 #define EMB_BIN "resources.lgr" /* loaded from assets with SDL_rwops */
 static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
 
 #elif defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
-#define EMB_BIN  "../../share/lagrange/resources.lgr"
+#define EMB_BIN   "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"
+#define EMB_BIN3  "../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 
@@ -166,6 +169,7 @@ struct Impl_App {
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
+    iBool        isRunningUnderWayland;
     iBool        isTextInputActive;
     iBool        isDarkSystemTheme;
     iBool        isSuspended;
@@ -349,6 +353,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         const char * id;
         const iBool *value;
     } boolPrefs[] = {
+        { "misfin.self.copy", &d->prefs.misfinSelfCopy },
         { "prefs.animate", &d->prefs.uiAnimations },
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
@@ -380,6 +385,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.swipe.page", &d->prefs.pageSwipe },
         { "prefs.time.24h", &d->prefs.time24h },
         { "prefs.tui.simple", &d->prefs.simpleChars },
+        { "prefs.warn.security", &d->prefs.warnTlsSecurity },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
@@ -406,6 +412,7 @@ static iString *serializePrefs_App_(const iApp *d) {
 #endif
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.strings[searchUrl_PrefsString]));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
+    appendFormat_String(str, "misfin.recent fp:%s\n", cstr_String(&d->prefs.strings[recentMisfinId_PrefsString]));
     iConstForEach(StringHash, sw, d->savedWidths) {
         const iString     *resizeId = key_StringHashConstIterator(&sw);
         const iSavedWidth *saved    = sw.value->object;
@@ -605,6 +612,9 @@ static void loadPrefs_App_(iApp *d) {
                 handleCommand_App(cmd);
                 haveCA = iTrue;
             }
+            else if (equal_Command(cmd, "misfin.recent")) {
+                setRange_String(&d->prefs.strings[recentMisfinId_PrefsString], range_Command(cmd, "fp"));
+            }
             else if (equal_Command(cmd, "customframe")) {
                 d->prefs.customFrame = arg_Command(cmd);
             }
@@ -720,11 +730,12 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
     }
     /* The default window rectangle. */
     iRect rect = init_Rect(-1, -1, 900, 560);
-#if defined (iPlatformMsys)
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformMsys)
     /* Must scale by UI scaling factor. */
     mulfv_I2(&rect.size, desktopDPI_Win32());
-#endif
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
+#   endif
+#   if defined (iPlatformLinux) && !defined (iPlatformAndroid)
     /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
@@ -732,6 +743,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
         const float factor = vdpi / 96.0f;
         mulfv_I2(&rect.size, iMax(factor, 1.0f));
     }
+#   endif
 #endif
     return rect;
 }
@@ -1089,7 +1101,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
     static const char *schemes[] = {
-        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "file:", "data:", "about:"
+        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "guppy:", "file:", "data:", "about:"
     };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
@@ -1143,9 +1155,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     migrateInternalUserDirToExternalStorage_App_(d);
 #endif
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
-    d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
-                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+    d->isRunningUnderWayland      = !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+    d->isRunningUnderWindowSystem = d->isRunningUnderWayland ||
+                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "x11");
 #else
+    d->isRunningUnderWayland      = iFalse;
     d->isRunningUnderWindowSystem = iTrue;
 #endif
     d->isTextInputActive = iFalse;
@@ -1181,6 +1195,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (EMB_BIN2) /* alternative location */
             concatPath_CStr(execPath, EMB_BIN2),
+#endif
+#if defined (EMB_BIN3) /* another alternative location */
+            concatPath_CStr(execPath, EMB_BIN3),
 #endif
             concatPath_CStr(execPath, EMB_BIN),
             "resources.lgr" /* cwd */
@@ -1310,6 +1327,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
     init_SiteSpec(dataDir_App_());
     init_Snippets(dataDir_App_());
+    init_Misfin(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
@@ -1510,6 +1528,7 @@ static void deinit_App(iApp *d) {
     deinit_Keys();
     deinit_Fonts();
     save_Snippets(dataDir_App_());
+    deinit_Misfin();
     deinit_Snippets();
     deinit_SiteSpec();
     deinit_Prefs(&d->prefs);
@@ -2142,47 +2161,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
 #endif /* LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION */
                 iBool wasUsed = iFalse;
-                /* Focus navigation events take prioritity. */
-                if (!wasUsed) {
-                    /* Keyboard focus navigation with arrow keys. */
-                    iWidget *menubar = NULL;
-                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.mod == 0 && focus_Widget() &&
-                        parentMenu_Widget(focus_Widget())) {
-                        setCurrent_Window(window_Widget(focus_Widget()));
-                        const int key = ev.key.keysym.sym;
-                        if (key == SDLK_DOWN || key == SDLK_UP) {
-                            iWidget *nextFocus = findFocusable_Widget(focus_Widget(),
-                                                                      key == SDLK_UP
-                                                                          ? backward_WidgetFocusDir
-                                                                          : forward_WidgetFocusDir);
-                            if (nextFocus && parent_Widget(nextFocus) == parent_Widget(focus_Widget())) {
-                                setFocus_Widget(nextFocus);
-                            }
-                            wasUsed = iTrue;
-                        }
-                        else if ((key == SDLK_LEFT || key == SDLK_RIGHT)) {
-                            if ((menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
-                                iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
-                                size_t index = indexOfChild_Widget(menubar, button);
-                                const size_t curIndex = index;
-                                if (key == SDLK_LEFT && index > 0) {
-                                    index--;
-                                }
-                                else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
-                                    index++;
-                                }
-                                if (curIndex != index) {
-                                    setFocus_Widget(child_Widget(menubar, index));
-                                    postCommand_Widget(child_Widget(menubar, index), "trigger");
-                                }
-                            }
-                            else {
-                                postCommand_Widget(focus_Widget(), "cancel");
-                            }
-                            wasUsed = iTrue;
-                        }
-                    }
-                }
                 /* Per-window processing. */
                 if (!wasUsed && (!isEmpty_PtrArray(&d->mainWindows) ||
                                  !isEmpty_PtrArray(&d->extraWindows))) {
@@ -2190,6 +2168,29 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     iConstForEach(PtrArray, iter, &windows) {
                         iWindow *window = iter.ptr;
                         setCurrent_Window(window);
+                        /* Focus navigation events take priority over regular processing. */
+                        /* Keyboard focus navigation with arrow keys. */
+                        if (focus_Widget() && ev.type == SDL_KEYDOWN &&
+                            keyMods_Sym(ev.key.keysym.mod) == 0) {
+                            if (moveFocusInsideMenu_App(&ev)) {
+                                wasUsed = iTrue;
+                            }
+                            else {
+                                const int key = ev.key.keysym.sym;
+                                if ((key == SDLK_DOWN || key == SDLK_UP || key == SDLK_LEFT ||
+                                     key == SDLK_RIGHT) &&
+                                    /* Some widgets handle arrow keys themselves: */
+                                    !isInstance_Object(focus_Widget(), &Class_DocumentWidget) &&
+                                    !isInstance_Object(focus_Widget(), &Class_ListWidget) &&
+                                    !isInstance_Object(focus_Widget(), &Class_InputWidget) &&
+                                    !isInstance_Object(focus_Widget(), &Class_LookupWidget)) {
+                                    wasUsed = moveFocusWithArrows_App(&ev);
+                                }
+                            }
+                        }
+                        if (wasUsed) {
+                            break;
+                        }
                         window->lastHover = window->hover;
                         wasUsed = processEvent_Window(window, &ev);
                         if (wasUsed) {
@@ -2202,13 +2203,16 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             }
                             break;
                         }
+                        if (!wasUsed && window == d->window) {
+                            /* Keybindings are handled after the frontmost window's widgets. */
+                            wasUsed = processEvent_Keys(&ev);
+                            if (wasUsed) {
+                                break;
+                            }
+                        }
                     }
                 }
                 setCurrent_Window(d->window);
-                if (!wasUsed) {
-                    /* There may be a key binding for this. */
-                    wasUsed = processEvent_Keys(&ev);
-                }
                 if (!wasUsed) {
                     /* Focus cycling. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB && current_Root()) {
@@ -2234,6 +2238,25 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         wasUsed = iTrue;
                     }
                 }
+                if (!wasUsed && ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE &&
+                    current_Root() && focus_Widget() &&
+                    focusRoot_Widget(focus_Widget()) == get_Root()->widget) {
+                    /* Pressing Escape will clear focus. */
+                    setFocus_Widget(NULL);
+                    wasUsed = iTrue;
+                }
+                if (!wasUsed) {
+                    if (!isMobile_Platform() && ev.type == SDL_KEYDOWN &&
+                        ev.key.keysym.sym == SDLK_RETURN &&
+                        focusRoot_Widget(focus_Widget()) == get_Root()->widget &&
+                        !keyMods_Sym(ev.key.keysym.mod)) {
+                        /* The Return key is hardcoded key for focusing the URL field.
+                           Note that you can't bind anything to Return normally, and it is
+                           of course used when entering text. */
+                        postCommand_App("navigate.focus");
+                        wasUsed = iTrue;
+                    }
+                }
                 if (!wasUsed) {
                     /* ^G is an alternative for Escape. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == 'g' &&
@@ -2250,18 +2273,20 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
-#if defined (iPlatformAppleDesktop)
+#if !defined (iPlatformTerminal)
+#   if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
-#endif
-#if defined (iPlatformAndroidMobile)
+#   endif
+#   if defined (iPlatformAndroidMobile)
                     handleCommand_Android(command_UserEvent(&ev));
-#endif
-#if defined (iPlatformMsys)
+#   endif
+#   if defined (iPlatformMsys)
                     handleCommand_Win32(command_UserEvent(&ev));
-#endif
-#if defined (LAGRANGE_ENABLE_X11_XLIB)
+#   endif
+#   if defined (LAGRANGE_ENABLE_X11_XLIB)
                     handleCommand_X11(command_UserEvent(&ev));
-#endif
+#   endif
+#endif /* !defined (iPlatformTerminal )*/
                     if (isMetricsChange_UserEvent(&ev)) {
                         listWindows_App_(d, &windows);
                         iConstForEach(PtrArray, iter, &windows) {
@@ -2539,6 +2564,20 @@ void setEditorZoomLevel_App(int level) {
     app_.prefs.editorZoomLevel = level;
 }
 
+void setRecentMenuBarIndex_App(int index) {
+    app_.prefs.recentMenuBarIndex = index;
+}
+
+void setRecentMisfinId_App(const iGmIdentity *ident) {
+    iString *str = &app_.prefs.strings[recentMisfinId_PrefsString];
+    if (ident) {
+        set_String(str, collect_String(hexEncode_Block(&ident->fingerprint)));
+    }
+    else {
+        clear_String(str);
+    }
+}
+
 enum iColorTheme colorTheme_App(void) {
     return app_.prefs.theme;
 }
@@ -2698,6 +2737,116 @@ iAny *findWidget_App(const char *id) {
         }
     }
     return NULL;
+}
+
+iBool moveFocusInsideMenu_App(const void *sdlEvent) {
+    if (!focus_Widget()) {
+        return iFalse;
+    }
+    const SDL_Event *event = sdlEvent;
+    if (event->type != SDL_KEYDOWN) {
+        return iFalse;
+    }
+    const int key = event->key.keysym.sym;
+    /* The menubar has special behavior for focus changing to navigate between sibling menus. */
+    iWidget *menu = parentMenu_Widget(focus_Widget());
+    if (menu) {
+        const size_t focusIndex = indexOfChild_Widget(menu, focus_Widget());
+        if (key >= 'a' && key <= 'z') {
+            /* See if any menu item starts with a matching letter. */
+            iWidget *firstMatch = NULL;
+            size_t index = 0;
+            iForEach(ObjectList, i, children_Widget(menu)) {
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    iLabelWidget *item = i.object;
+                    char prefix[2] = { key, 0 };
+                    if (startsWithCase_String(text_LabelWidget(item), prefix)) {
+                        if (!firstMatch) {
+                            firstMatch = i.object;
+                        }
+                        if (focus_Widget() != i.object && index > focusIndex) {
+                            setCurrent_Window(window_Widget(focus_Widget()));
+                            setFocus_Widget(i.object);
+                            return iTrue;
+                        }
+                    }
+                }
+                index++;
+            }
+            if (firstMatch) {
+                /* Loop back around. */
+                setCurrent_Window(window_Widget(focus_Widget()));
+                setFocus_Widget(firstMatch);
+                return iTrue;
+            }
+        }
+        else if (key == SDLK_PAGEUP || key == SDLK_PAGEDOWN || key == SDLK_HOME || key == SDLK_END) {
+            /* Move to top/bottom of menu. */
+            enum iDirection dir =
+                (key == SDLK_PAGEUP || key == SDLK_HOME ? up_Direction : down_Direction);
+            iWidget *next = focus_Widget();
+            for (;;) {
+                iWidget *adjacent = findAdjacentFocusable_Widget(next, dir);
+                if (!adjacent || adjacent == next) break;
+                next = adjacent;
+            }
+            setCurrent_Window(window_Widget(focus_Widget()));
+            setFocus_Widget(next);
+            return iTrue;
+        }
+    }
+    if (key == SDLK_LEFT || key == SDLK_RIGHT) {
+        /* Arrow keys in the menubar will switch between top-level menus. */
+        iWidget *menubar = findParent_Widget(focus_Widget(), "menubar");
+        if (menubar) {
+            iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
+            size_t index = indexOfChild_Widget(menubar, button);
+            if (index == iInvalidPos) {
+                return iFalse;
+            }
+            const size_t curIndex = index;
+            if (key == SDLK_LEFT && index > 0) {
+                index--;
+            }
+            else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
+                index++;
+            }
+            if (curIndex != index) {
+                setCurrent_Window(window_Widget(focus_Widget()));
+                setFocus_Widget(child_Widget(menubar, index));
+                postCommand_Widget(child_Widget(menubar, index), "trigger");
+            }
+            return iTrue;
+        }
+        else if (menu) {
+            setCurrent_Window(window_Widget(focus_Widget()));
+            postCommand_Widget(focus_Widget(), "cancel");
+        }
+    }
+    return iFalse;
+}
+
+iBool moveFocusWithArrows_App(const void *sdlEvent) {
+    if (!focus_Widget()) {
+        return iFalse;
+    }
+    const SDL_Event *event = sdlEvent;
+    if (event->type != SDL_KEYDOWN) {
+        return iFalse;
+    }
+    const int key = event->key.keysym.sym;
+    iWidget *nextFocus = findAdjacentFocusable_Widget(focus_Widget(),
+                                                        key == SDLK_UP    ? up_Direction
+                                                      : key == SDLK_DOWN  ? down_Direction
+                                                      : key == SDLK_LEFT  ? left_Direction
+                                                      : key == SDLK_RIGHT ? right_Direction
+                                                                          : none_Direction);
+    if (nextFocus) {
+        setCurrent_Window(window_Widget(focus_Widget()));
+        setFocusWithMethod_Widget(nextFocus, arrowKeys_FocusMethod);
+        return iTrue;
+    }
+    return focusRoot_Widget(focus_Widget()) != root_Widget(focus_Widget());
 }
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
@@ -2866,6 +3015,10 @@ iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
 }
 
+iBool isRunningUnderWayland_App(void) {
+    return app_.isRunningUnderWayland;
+}
+
 void setTextInputActive_App(iBool active) {
     app_.isTextInputActive = active;
     if (active) {
@@ -3015,6 +3168,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.changed")) {
+        if (isTerminal_Platform()) {
+            iWidget *tabs = findChild_Widget(d, "prefs.tabs");
+            setFocus_Widget((iWidget *) tabPageButton_Widget(tabs, currentTabPage_Widget(tabs)));
+        }
         refresh_Widget(d);
         return iFalse;
     }
@@ -3534,6 +3691,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
 #endif
         return iTrue;
     }
+    else if (equal_Command(cmd, "misfin.self.copy.changed")) {
+        d->prefs.misfinSelfCopy = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "parentnavskipindex")) {
         d->prefs.skipIndexPageOnParentNavigation = arg_Command(cmd) != 0;
         return iTrue;
@@ -3775,6 +3936,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "decodeurls")) {
         d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.warn.security.changed")) {
+        d->prefs.warnTlsSecurity = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "imageloadscroll")) {
@@ -4199,8 +4364,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
                           urlArg);
         return iTrue;
     }
-    iString    *url     = collectNewCStr_String(urlArg);
-    const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
+    iString    *url       = collectNewCStr_String(urlArg);
+    const iBool noProxy   = argLabel_Command(cmd, "noproxy") != 0;
+    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     iUrl parts;
     init_Url(&parts, url);
     if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
@@ -4216,16 +4382,24 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     if (equalCase_Rangecc(parts.scheme, "titan")) {
-        iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
-        setUrl_UploadWidget(upload, url);
-        setResponseViewer_UploadWidget(upload, document_App());
-        addChild_Widget(get_Root()->widget, iClob(upload));
-        setupSheetTransition_Mobile(as_Widget(upload), iTrue);
-        /* User can resize the upload dialog. */
-        setResizeId_Widget(as_Widget(upload), "upload");
-        restoreWidth_Widget(as_Widget(upload));
-        postRefresh_Window(get_Window());
-        return iTrue;
+        if (!isHistory) {
+            iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
+            setUrl_UploadWidget(upload, url);
+            setResponseViewer_UploadWidget(upload, document_App());
+            addChild_Widget(get_Root()->widget, iClob(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+            /* User can resize the upload dialog. */
+            setResizeId_Widget(as_Widget(upload), "upload");
+            restoreWidth_Widget(as_Widget(upload));
+            postRefresh_Window(get_Window());
+            return iTrue;
+        }
+    }
+    if (equalCase_Rangecc(parts.scheme, "misfin")) {
+        if (!isHistory) {
+            openMessageComposer_Misfin(url, NULL);
+            return iTrue;
+        }
     }
     if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
         ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
@@ -4264,7 +4438,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setCurrent_Root(root); /* need to change for widget creation */
         doc = document_Command(cmd); /* may be different */
     }
-    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     /* If not opening in a new tab, we must not domains/roots accidentally. */
     if (!isHistory &&
         isIdentityPinned_DocumentWidget(doc) &&
@@ -4813,6 +4986,7 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
+        setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);
@@ -5150,7 +5324,7 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
 #endif
     iProcess *proc = new_Process();
     setArguments_Process(proc, iClob(newStringsCStr_StringList(
-#if defined (iPlatformAppleDesktop)
+#if defined (iPlatformAppleDesktop) || (defined (iPlatformTerminal) && defined (iPlatformApple))
         "/usr/bin/env",
         "open",
         cstr_String(url),

@@ -6,6 +6,38 @@
 ```
 # Release notes
 
+## 1.17 (13)
+* Fixed looking up glyphs from the bundled Iosevka font when another monospace font is configured as the default.
+* Fixed spacing of Legacy Computing symbols on mixed-font monospace lines.
+
+## 1.17 (12)
+* Fixed various potential (rare) crashes.
+* Fixed selection of monospaced fallback glyphs.
+* Fixed spacing on mixed-font monospaced text lines.
+* Updated UI translations.
+
+## 1.17 (11)
+* Page zoom pinch gesture has a short trigger delay to avoid accidental zooming.
+* Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
+* Fixed a link being opened inadvertently after the link's context menu is dismissed (by tapping outside the menu or by selecting "Cancel").
+* Updated UI translations.
+
+## 1.17 (10)
+* Added the now-required app privacy manifest.
+
+## 1.17 (9)
+* Fixed selection markers jumping around when trying to drag them.
+* Fixed scrolling speed when dragging selection markers. Sometimes the view jumped to the top/bottom of the page.
+
+## 1.17 (8)
+* Updated UI translations.
+
+## 1.17 (7)
+* Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
+* Fixed minor memory leak in list widgets.
+* Gopher: Autodetect Gemtext files based on file extension.
+* Updated UI translations.
+
 ## 1.17 (6)
 * Fixed a few small memory leaks.
 * Fixed unnecessary copying of data while waiting for an audio buffer to become playable. This potentially caused the operating system to terminate the app due to excessive memory use.

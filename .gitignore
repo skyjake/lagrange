@@ -8,7 +8,4 @@ build-*/
 *~
 /*.sublime-*
 *.orig
-
-# TODO: Maybe a submodule at some point?
-lib/sealcurses
 /.cache/

@@ -7,3 +7,6 @@
 [submodule "lib/harfbuzz"]
 	path = lib/harfbuzz
 	url = https://github.com/harfbuzz/harfbuzz.git
+[submodule "lib/sealcurses"]
+	path = lib/sealcurses
+	url = https://git.skyjake.fi/skyjake/sealcurses

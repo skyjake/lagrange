@@ -73,6 +73,7 @@ void init_Url(iUrl *d, const iString *text) {
         /* Check if the authority contains a port. */
         init_RegExpMatch(&m);
         if (matchRange_RegExp(authPattern_, d->host, &m)) {
+            d->user = capturedRange_RegExpMatch(&m, 2);
             d->host = capturedRange_RegExpMatch(&m, 3);
             d->port = capturedRange_RegExpMatch(&m, 7);
         }
@@ -109,6 +110,9 @@ uint16_t port_Url(const iUrl *d) {
     }
     else if (equalCase_Rangecc(d->scheme, "spartan")) {
         port = 300;
+    }
+    else if (equalCase_Rangecc(d->scheme, "guppy")) {
+        port = 6775;
     }
     else if (equalCase_Rangecc(d->scheme, "https")) {
         port = 443;
@@ -259,9 +263,9 @@ iRangecc urlUser_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
     iRegExpMatch m;
-    init_RegExpMatch(&m);
     iRangecc found = iNullRange;
     iForIndices(i, userPats_) {
+        init_RegExpMatch(&m);
         if (matchRange_RegExp(userPats_[i], url.path, &m)) {
             found = capturedRange_RegExpMatch(&m, 1);
         }
@@ -284,6 +288,12 @@ iRangecc urlRoot_String(const iString *d) {
         rootEnd = parts.path.start;
     }
     return (iRangecc){ constBegin_String(d), rootEnd };
+}
+
+iRangecc urlPath_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return url.path;
 }
 
 const iBlock *urlThemeSeed_String(const iString *url) {
@@ -372,6 +382,28 @@ void urlEncodePath_String(iString *d) {
     delete_String(encoded);
 }
 
+iString *withUrlParameters_String(const iString *d, ...) {
+    iUrl url;
+    init_Url(&url, d);
+    iString *updated = new_String();
+    appendRange_String(updated, (iRangecc){ constBegin_String(d), url.path.end });
+    va_list args;
+    for (va_start(args, d);;) {
+        const char *key = va_arg(args, const char *);
+        if (!key) break;
+        const char *value = va_arg(args, const char *);
+        appendCStr_String(updated, ";");
+        appendCStr_String(updated, key);
+        if (value) {
+            appendCStr_String(updated, "=");
+            appendCStr_String(updated, value);
+        }
+    }
+    appendRange_String(updated, (iRangecc){ url.path.end, constEnd_String(d) });
+    va_end(args);
+    return updated;
+}
+
 void urlEncodeQuery_String(iString *d) {
     iUrl url;
     init_Url(&url, d);
@@ -426,6 +458,10 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     if (!isEmpty_Range(&rel.scheme) && !isKnownUrlScheme_Rangecc(rel.scheme) &&
         isEmpty_Range(&rel.host)) {
         /* Probably not an URL, so we can't make this absolute. */
+        return urlMaybeRelative;
+    }
+    if (equalCase_Rangecc(rel.scheme, "misfin")) {
+        /* Use as-is. */
         return urlMaybeRelative;
     }
     const iBool isRelative = !isDef_(rel.host);
@@ -512,6 +548,10 @@ iBool isLikelyUrl_String(const iString *d) {
     const iBool likelyUrl = matchString_RegExp(pattern, d, &m);
     iRelease(pattern);
     return likelyUrl;
+}
+
+iBool isTitanUrl_String(const iString *d) {
+    return equalCase_Rangecc(urlScheme_String(d), "titan");
 }
 
 static iBool equalPuny_(const iString *d, iRangecc orig) {

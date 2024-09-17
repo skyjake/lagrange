@@ -38,6 +38,7 @@ void init_Prefs(iPrefs *d) {
     d->langFrom          = 0; /* auto-detect */
     d->langTo            = 8; /* en */
     d->translationIgnorePre = iTrue;
+    d->recentMenuBarIndex = 0;
     d->useSystemTheme    = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;
@@ -89,18 +90,20 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
-    d->openDataUrlImagesOnLoad = iFalse;
-    d->collapsePre             = notByDefault_Collapse;
-    d->openArchiveIndexPages   = iTrue;
-    d->addBookmarksToBottom    = iTrue;
-    d->warnAboutMissingGlyphs  = iTrue;
-    d->markdownAsSource        = iTrue;
+    d->openDataUrlImagesOnLoad     = iFalse;
+    d->collapsePre                 = notByDefault_Collapse;
+    d->openArchiveIndexPages       = iTrue;
+    d->addBookmarksToBottom        = iTrue;
+    d->warnAboutMissingGlyphs      = iTrue;
+    d->markdownAsSource            = iTrue;
     d->skipIndexPageOnParentNavigation = iTrue;
-    d->edgeSwipe = iTrue;
-    d->pageSwipe = iTrue;
+    d->edgeSwipe         = iTrue;
+    d->pageSwipe         = iTrue;
     d->capsLockKeyModifier = iFalse;
+    d->misfinSelfCopy    = iTrue;
     d->allowSchemeChangingRedirect = iFalse; /* must be manually followed */
     d->decodeUserVisibleURLs = iTrue;
+    d->warnTlsSecurity   = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
     d->maxUrlSize        = 8192;
@@ -113,7 +116,7 @@ void init_Prefs(iPrefs *d) {
     d->fontSmoothing     = iTrue;
     d->gemtextAnsiEscapes = allowFg_AnsiFlag;
     d->monospaceGemini   = iFalse;
-    d->monospaceGopher   = iFalse;
+    d->monospaceGopher   = iTrue;
     d->boldLinkVisited   = iFalse;
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;

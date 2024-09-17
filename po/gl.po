@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-12-10 08:14+0000\n"
+"PO-Revision-Date: 2024-09-13 05:07+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -404,7 +404,7 @@ msgid "menu.page.subscribe"
 msgstr "Subscribirse á páxina…"
 
 msgid "menu.aboutpages"
-msgstr "Acerca de Páxinas"
+msgstr "Páxinas About"
 
 msgid "menu.about"
 msgstr "Acerca de"
@@ -627,7 +627,7 @@ msgid "heading.ident.notes"
 msgstr "Notas da identidade"
 
 msgid "ident.fingerprint"
-msgstr "Copiar impresión dixital"
+msgstr "Copiar impresión dixital SHA-256"
 
 msgid "ident.delete"
 msgstr "Eliiminar identidade…"
@@ -697,7 +697,7 @@ msgid "dlg.cert.trust"
 msgstr "Confiar"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Copiar impresión dixital"
+msgstr "Impresións dixitais"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -914,7 +914,7 @@ msgid "upload.file.name"
 msgstr "Nome do ficheiro:"
 
 msgid "upload.file.drophere"
-msgstr "(arrastra e solta un ficheiro na ventá)"
+msgstr "escribe a ruta ao ficheiro ou arrastra e soltao na ventá"
 
 msgid "bookmark.export.title.tag"
 msgstr "Etiquetas do marcador"
@@ -1354,7 +1354,7 @@ msgstr[1] "fai %d horas"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "Arte ASCII: a palabra \"Lagrange\" utilizando letras moi grandes"
+msgstr "Arte ASCII: a palabra \"Lagrange\" en letras moi grandes"
 
 msgid "menu.title.identity"
 msgstr "Identidade"
@@ -2331,7 +2331,7 @@ msgid "dlg.bookmark.parentfolder"
 msgstr "Cartafol Nai:"
 
 msgid "heading.prefs.support"
-msgstr "Soporte"
+msgstr "Axuda"
 
 msgid "prefs.uilayout"
 msgstr "Disposición:"
@@ -2367,7 +2367,7 @@ msgid "prefs.markdown.viewsource"
 msgstr "Ver Markdown como fonte:"
 
 msgid "prefs.tui.simple"
-msgstr "Caracteres simples:"
+msgstr "Forzar conxunto caracteres ASCII:"
 
 msgid "keys.menubar.focus"
 msgstr "Destacar barra de menú"
@@ -2733,3 +2733,126 @@ msgstr "Editar Atallo"
 
 msgid "prefs.doctheme.name.vibrantlight"
 msgstr "Claro Vibrante"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Abrir ligazón"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Menú"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Menú lateral"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Pechar pestana"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Copiar a SHA-256 da Chave Pública"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Escribe URL"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Menú contextual"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Nova pestana"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Copiar a SHA-256 do Certificado"
+
+msgid "heading.upload.edit"
+msgstr "Editar con Titan"
+
+msgid "dlg.upload.edit.error"
+msgstr "Fallo ao descargar os contidos da fonte editable."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Este tipo de recurso non se pode editar na aplicación."
+
+msgid "heading.upload.edit.error"
+msgstr "Fallou a edición"
+
+msgid "dlg.upload.edit"
+msgstr "Editar"
+
+msgid "ident.sendmsg"
+msgstr "Enviar mensaxe como…"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Enviando unha copia a min mesma"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "A verifica a Correspondente"
+
+msgid "misfin.success"
+msgstr "Enviouse correctamente a túa mensaxe."
+
+msgid "misfin.redirect"
+msgstr "A correspondente solicita que envíes a mensaxe a outro enderezo."
+
+msgid "misfin.failure"
+msgstr "Houbo un fallo ao enviar a mensaxe."
+
+msgid "misfin.needcert"
+msgstr "Debes identificarte proporcionando un certificado Misfin."
+
+msgid "misfin.unauth"
+msgstr "Non tes autorización para enviar mensaxes a esta correspondente."
+
+msgid "misfin.badcert"
+msgstr "O teu certificado Misfin non é válido."
+
+msgid "misfin.changed"
+msgstr "O teu certificado Misfin non concorda co que agardaba a correspondente."
+
+msgid "misfin.unknown"
+msgstr "Fallou a comunicación co servidor."
+
+msgid "upload.from"
+msgstr "De:"
+
+msgid "upload.to"
+msgstr "Para:"
+
+msgid "hint.upload.misfin"
+msgstr "escribe a mensaxe"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Enviar Mensaxe"
+
+msgid "heading.upload.error.file"
+msgstr "Ficheiro non válido"
+
+msgid "upload.error.directory"
+msgstr "Só se poden subir ficheiros individuais, non directorios."
+
+msgid "upload.file.path"
+msgstr "Ruta ao ficheiro:"
+
+msgid "heading.upload.misfin"
+msgstr "Enviar mensaxe Misfin"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Sen identidades Misfin"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Antes tes que importar un certificado Misfin para enviar mensaxes."
+
+msgid "heading.misfin.ok"
+msgstr "Mensaxe Enviada"
+
+msgid "prefs.warn.security"
+msgstr "Avisos de seguridade TLS:"
+
+msgid "misfin.self.copy"
+msgstr "Envíame unha copia"

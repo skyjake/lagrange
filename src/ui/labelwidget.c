@@ -59,6 +59,7 @@ struct Impl_LabelWidget {
         uint16_t truncateToFit       : 1;
         uint16_t menuCanceling       : 1;
         uint16_t noLabel             : 1;
+        uint16_t untranslated        : 1;
     } flags;
 };
 
@@ -81,6 +82,9 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
             widgetPad.x += gap_UI * 5;
         }
     }
+    if (isTerminal_Platform()) {
+        return add_I2(widgetPad, init_I2(1 + (d->icon ? 1 : 0), 0));
+    }
     if (isMobile_Platform()) {
         return add_I2(widgetPad,
                       init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
@@ -99,9 +103,25 @@ static iBool checkModifiers_(int have, int req) {
     return keyMods_Sym(req) == keyMods_Sym(have);
 }
 
+static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
+    if (isAndroid_Platform()) {
+        /* On Android, we don't have system menus nor do we want actual submenu popups
+           to appear. The "submenu" command will cause the submenu to open as a normal
+           menu. */
+        return iFalse;
+    }
+    return startsWith_String(&d->command, "submenu id:");
+}
+
 static void trigger_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    postCommand_Widget(w, "%s", cstr_String(&d->command));
+    if (isTerminal_Platform() && isSubmenuItem_LabelWidget_(d)) {
+        postCommand_Widget(w, "submenu.open");
+        return;
+    }
+    else {
+        postCommand_Widget(w, "%s", cstr_String(&d->command));
+    }
     if (flags_Widget(w) & radio_WidgetFlag) {
         iForEach(ObjectList, i, children_Widget(w->parent)) {
             setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
@@ -137,16 +157,6 @@ static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
         setVisualOffset_Widget(w, 0, 0, 0);
         setFlags_Widget(w, dragged_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
     }
-}
-
-static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
-    if (isAndroid_Platform()) {
-        /* On Android, we don't have system menus nor do we want actual submenu popups
-           to appear. The "submenu" command will cause the submenu to open as a normal
-           menu. */
-        return iFalse;
-    }
-    return startsWith_String(&d->command, "submenu id:");
 }
 
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
@@ -608,6 +618,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 offset = -10 * gap_UI;
             }
         }
+        else if (isTerminal_Platform()) {
+            offset = -2;
+        }
         else {
             offset = -6 * gap_UI;
         }
@@ -656,6 +669,9 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
         deinit_String(&str);
     }
     size.x += iconPadding_LabelWidget_(d);
+    if (isTerminal_Platform()) {
+        size.x = iMax(size.x, 3);
+    }
     return size;
 }
 
@@ -681,7 +697,9 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 }
 
 static void replaceVariables_LabelWidget_(iLabelWidget *d) {
-    translate_Lang(&d->label);
+    if (!d->flags.untranslated) {
+        translate_Lang(&d->label);
+    }
     if (d->flags.allCaps) {
         set_String(&d->label, collect_String(upperLang_String(&d->label, code_Lang())));
     }
@@ -792,6 +810,10 @@ void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
     d->flags.wrap = wrap;
+}
+
+void setTranslation_LabelWidget(iLabelWidget *d, iBool translation) {
+    d->flags.untranslated = !translation;
 }
 
 void setTruncateToFit_LabelWidget (iLabelWidget *d, iBool truncateToFit) {

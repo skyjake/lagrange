@@ -57,6 +57,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "visbuf.h"
 #include "visited.h"
+#include "window.h"
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
@@ -278,7 +279,8 @@ struct Impl_DocumentWidget {
     iGmLinkId      requestLinkId; /* ID of the link that initiated the current request */
     uint32_t       lastRequestUpdateAt;
     int            certFlags;
-    iBlock *       certFingerprint;
+    iBlock *       certFingerprint;     /* public key SHA-256 */
+    iBlock *       certFullFingerprint; /* full certificate SHA-256 */
     iDate          certExpiry;
     iString *      certSubject;
     int            redirectCount;
@@ -513,8 +515,7 @@ static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
 #if defined (iPlatformAppleDesktop)
         enableMenuItemsOnHomeRow_MacOS(!set);
 #endif
-        /* Ensure all keyboard events come here first. */
-        setKeyboardGrab_Widget(set ? as_Widget(d) : NULL);
+        window_Widget(d)->keyPriority = set ? as_Widget(d) : NULL;
         if (d->menu) {
             setFlags_Widget(d->menu, disabled_WidgetFlag, set);
         }
@@ -688,6 +689,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         /* Not part of the UI at the moment. */
         return;
     }
+    setTranslation_LabelWidget(tabButton, iFalse); /* using content from page */
     if (d->flags & waitForIdle_DocumentWidgetFlag) {
         updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
         return;
@@ -838,7 +840,7 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     const iBool isBookmarked = findBookmarkId_DocumentWidget(d) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
     setOutline_LabelWidget(bmPin, !isBookmarked);
-    setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
+    setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiTextDim_ColorId);
 }
 
 static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
@@ -1620,6 +1622,9 @@ static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
+    if (isTitanUrl_String(d->mod.url)) {
+        return iFalse; /* don't fetch Titan URLs from here, only through UploadWidget */
+    }
     postCommandf_Root(as_Widget(d)->root,
                       "document.request.started doc:%p url:%s",
                       d,
@@ -1649,6 +1654,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
         d->certFlags  = response->certFlags;
         d->certExpiry = response->certValidUntil;
         set_Block(d->certFingerprint, &response->certFingerprint);
+        set_Block(d->certFullFingerprint, &response->certFullFingerprint);
         set_String(d->certSubject, &response->certSubject);
     }
     iLabelWidget *lock = findChild_Widget(root_Widget(as_Widget(d)), "navbar.lock");
@@ -1712,10 +1718,10 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
         return;
     }
     /* Warnings related to certificates and trust. */
-    const int certFlags = d->certFlags;
     const int req = timeVerified_GmCertFlag | domainVerified_GmCertFlag | trusted_GmCertFlag;
-    if (certFlags & available_GmCertFlag && (certFlags & req) != req &&
-        numItems_Banner(d->banner) == 0) {
+    int certFlags = d->certFlags;
+    if (prefs_App()->warnTlsSecurity && certFlags & available_GmCertFlag &&
+        (certFlags & req) != req && numItems_Banner(d->banner) == 0) {
         iString *title = collectNewCStr_String(cstr_Lang("dlg.certwarn.title"));
         iString *str   = collectNew_String();
         if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
@@ -1832,6 +1838,15 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
             /* We now have a cached document. */
             setCachedDocument_History(d->mod.history, d->view->doc);
         }
+        return iTrue;
+    }
+    else if (isTitanUrl_String(d->mod.url)) {
+        /* We must not refetch Titan URLs because that would cause an empty upload. */
+        setUrlAndSource_DocumentWidget(d,
+                                       d->mod.url,
+                                       collectNewCStr_String("text/gemini"),
+                                       collect_Block(newCStr_Block("")),
+                                       0);
         return iTrue;
     }
     else if (!isEmpty_String(d->mod.url)) {
@@ -2196,6 +2211,7 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
     setBackupFileName_InputWidget(input, "inputbackup");
     setSelectAllOnFocus_InputWidget(input, iTrue);
     setSensitiveContent_InputWidget(input, isSensitive);
+    setArrowFocusNavigable_InputWidget(input, iFalse);
     return dlg;
 }
 
@@ -2250,7 +2266,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
-            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+            prefs_App()->warnTlsSecurity) {
             statusCode = tlsServerCertificateNotVerified_GmStatusCode;
         }
         init_Anim(&d->view->sideOpacity, 0);
@@ -2310,6 +2327,13 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     const iString *dstUrl    = absoluteUrl_String(d->mod.url, &resp->meta);
                     const iRangecc srcScheme = urlScheme_String(d->mod.url);
                     const iRangecc dstScheme = urlScheme_String(dstUrl);
+                    /* Update bookmarks automatically to reflect the permanent redirection. */
+                    if (statusCode == redirectPermanent_GmStatusCode) {
+                        if (updateUrls_Bookmark(bookmarks_App(), d->mod.url, dstUrl)) {
+                            postCommand_App("bookmarks.changed");
+                        }
+                    }
+                    /* We only follow a fixed number of redirects at once, per Gemini spec. */
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
@@ -2343,13 +2367,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryTemporaryFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(
-                        d, temporaryFailure_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentWidget_(d, temporaryFailure_GmStatusCode, &resp->meta);
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryPermanentFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(
-                        d, permanentFailure_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentWidget_(d, permanentFailure_GmStatusCode, &resp->meta);
                 }
                 else {
                     showErrorPage_DocumentWidget_(d, unknownStatusCode_GmStatusCode, &resp->meta);
@@ -2453,7 +2475,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                               body_GmRequest(req->req),
                               allowHide_MediaFlag);
                 redoLayout_GmDocument(d->view->doc);
-                iZap(d->view->visibleRuns); /* pointers invalidated */
+                documentRunsInvalidated_DocumentWidget(d);
                 updateVisible_DocumentView(d->view);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
@@ -2667,6 +2689,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     return iTrue;
                 }
             }
+            SDL_RaiseWindow(window_Widget(w)->win); /* ensure events handled by the right window */
             d->flags |= swipeBegun_DocumentWidgetFlag;
             postCommand_Widget(d, side == 1 ? "navigate.back swipe:1" : "navigate.forward swipe:1");
         }
@@ -2986,6 +3009,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!arg_Command(cmd)) {
             d->selectMark = iNullRange;
             setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+            d->flags &= ~selecting_DocumentWidgetFlag;
             setFadeEnabled_ScrollWidget(d->scroll, iTrue);
         }
         else {
@@ -3066,20 +3090,27 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                                   : "${pageinfo.cert.untrusted}");
         }
         setFocus_Widget(NULL);
+
+        const iMenuItem fingerprintItems[] = {
+            { "${dlg.cert.fingerprint.full}", 0, 0, "server.copycert arg:1" },
+            { "${dlg.cert.fingerprint.pubkey}", 0, 0, "server.copycert" },
+        };
+
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
             pushBack_Array(items,
-                           &(iMenuItem){ uiTextAction_ColorEscape "${dlg.cert.trust}",
+                           &(iMenuItem){ uiTextAction_ColorEscape "\x1b[1m${dlg.cert.trust}",
                                          SDLK_u,
                                          KMOD_PRIMARY | KMOD_SHIFT,
                                          "server.trustcert" });
         }
-        if (haveFingerprint) {
-            pushBack_Array(items, &(iMenuItem){ "${dlg.cert.fingerprint}", 0, 0, "server.copycert" });
-        }
         const iRangecc root = urlRoot_String(d->mod.url);
         if (!isEmpty_Range(&root)) {
             pushBack_Array(items, &(iMenuItem){ "${pageinfo.settings}", 0, 0, "document.sitespec" });
+        }
+        if (haveFingerprint && deviceType_App() != desktop_AppDeviceType) {
+            /* The sheet-based popup does not have buttons. */
+            pushBackN_Array(items, fingerprintItems, iElemCount(fingerprintItems));
         }
         if (!isEmpty_Array(items)) {
             pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
@@ -3089,6 +3120,20 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                            cstr_String(msg),
                                            data_Array(items),
                                            size_Array(items));
+        /* Fingerprint menu. */
+        if (deviceType_App() == desktop_AppDeviceType) {
+            iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
+            if (haveFingerprint) {
+                iLabelWidget *fpMenu = makeMenuButton_LabelWidget(
+                    "${dlg.cert.fingerprint}", fingerprintItems, iElemCount(fingerprintItems));
+                if (!canTrust) {
+                    addChildPos_Widget(buttons, iClob(fpMenu), front_WidgetAddPos);
+                }
+                else {
+                    insertChildAfter_Widget(buttons, iClob(fpMenu), 0);
+                }
+            }
+        }
         delete_Array(items);
         arrange_Widget(dlg);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
@@ -3134,7 +3179,19 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "server.copycert") && document_App() == d) {
-        SDL_SetClipboardText(cstrCollect_String(hexEncode_Block(d->certFingerprint)));
+        const iString *fp = collect_String(
+            hexEncode_Block(arg_Command(cmd) ? d->certFullFingerprint : d->certFingerprint));
+        if (isTerminal_Platform()) {
+            makeMessage_Widget(
+                arg_Command(cmd) ? "${dlg.cert.fingerprint.full}"
+                                 : "${dlg.cert.fingerprint.pubkey}",
+                cstr_String(fp),
+                (iMenuItem[]){ { "${dlg.message.ok}", SDLK_RETURN, 0, "message.ok" } },
+                1);
+        }
+        else {
+            SDL_SetClipboardText(cstr_String(fp));
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
@@ -3359,8 +3416,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iGmLinkId      linkId = argLabel_Command(cmd, "link");
         const iMediaRequest *media  = findMediaRequest_DocumentWidget(d, linkId);
         if (media) {
-            saveToDownloads_(url_GmRequest(media->req), meta_GmRequest(media->req),
-                             body_GmRequest(media->req), iTrue);
+            const iString *savePath;
+            if (!isEmpty_String(savePath = saveToDownloads_(url_GmRequest(media->req),
+                                                            meta_GmRequest(media->req),
+                                                            body_GmRequest(media->req),
+                                                            iTrue))) {
+                if (isDesktop_Platform()) {
+                    makeSimpleMessage_Widget("${heading.save}", cstr_String(savePath));
+                }
+            }
         }
     }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
@@ -3388,9 +3452,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 const iBool    doOpen   = argLabel_Command(cmd, "open");
                 const iString *savePath = saveToDownloads_(d->mod.url, &d->sourceMime,
                                                            &d->sourceContent, !doOpen);
-                if (!isEmpty_String(savePath) && doOpen) {
-                    postCommandf_Root(
-                        w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+                if (!isEmpty_String(savePath)) {
+                    if (doOpen) {
+                        postCommandf_Root(
+                            w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+                    }
+                    else if (isDesktop_Platform()) {
+                        makeSimpleMessage_Widget("${heading.save}", cstr_String(savePath));
+                    }
                 }
             }
         }
@@ -3552,9 +3621,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             return iTrue;
         }
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
+        int height = (isTerminal_Platform() ? height_Rect(bounds_Widget(w)) - 1
+                                            : height_Rect(documentBounds_DocumentView(d->view)));
         smoothScroll_DocumentView(d->view,
-                                  dir * amount *
-                                      height_Rect(documentBounds_DocumentView(d->view)),
+                                  dir * amount * height,
                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
@@ -3594,8 +3664,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             fetchNextUnfetchedImage_DocumentWidget_(d)) {
             return iTrue;
         }
+        const int numLines = (isTerminal_Platform() ? 1 : 3);
         smoothScroll_DocumentView(d->view,
-                                  3 * lineHeight_Text(paragraph_FontId) * dir,
+                                  numLines * lineHeight_Text(paragraph_FontId) * dir,
                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
@@ -4174,20 +4245,21 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
     return iFalse;
 }
 
-static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iGmRun *link) {
-    iWidget *w = as_Widget(d);
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
-    /* Construct the link context menu, depending on what kind of link was clicked. */
-    const int spartanQuery = isSpartanQueryLink_DocumentWidget_(d, link->linkId);
-    interactingWithLink_DocumentWidget_(d, link->linkId); /* perhaps will be triggered */
-    const iString *linkUrl  = linkUrl_GmDocument(d->view->doc, link->linkId);
-    const iRangecc scheme   = urlScheme_String(linkUrl);
-    const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
-    iBool          isNative = iFalse;
-    if (deviceType_App() != desktop_AppDeviceType) {
+static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidget *d,
+                                                                  const iString   *linkUrl,
+                                                                  const iString   *linkLabel,
+                                                                  iGmLinkId        linkId,
+                                                                  enum iMediaType  linkMediaType) {
+    iWidget       *w            = as_Widget(d);
+    iArray        *items        = collectNew_Array(sizeof(iMenuItem));
+    const iBool    spartanQuery = isSpartanQueryLink_DocumentWidget_(d, linkId);
+    const iRangecc scheme       = urlScheme_String(linkUrl);
+    const iBool    isGemini     = equalCase_Rangecc(scheme, "gemini");
+    iBool          isNative     = iFalse;
+    if (deviceType_App() != desktop_AppDeviceType && linkId) {
         /* Show the link as the first, non-interactive item. */
         iString *infoText = collectNew_String();
-        infoText_LinkInfo(d, link->linkId, infoText);
+        infoText_LinkInfo(d, linkId, infoText);
         pushBack_Array(items,
                        &(iMenuItem){ format_CStr("```%s", cstr_String(infoText)), 0, 0, NULL });
     }
@@ -4291,15 +4363,15 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                                          cstr_String(linkUrl)) } },
             2);
     }
-    iString *linkLabel = collectNewRange_String(linkLabel_GmDocument(d->view->doc, link->linkId));
-    urlEncodeSpaces_String(linkLabel);
+    iString *encLabel = copy_String(linkLabel);
+    urlEncodeSpaces_String(encLabel);
     pushBackN_Array(
         items,
         (iMenuItem[]){
             { "---" },
             { "${link.copy}", 0, 0, "document.copylink" },
             { bookmark_Icon " ${link.bookmark}", 0, 0,
-              format_CStr("!bookmark.add title:%s url:%s", cstr_String(linkLabel), cstr_String(linkUrl)) },
+              format_CStr("!bookmark.add title:%s url:%s", cstr_String(encLabel), cstr_String(linkUrl)) },
             { clipboard_Icon " ${link.snippet}", 0, 0,
               format_CStr("!snippet.add content:%s", cstr_String(linkUrl)) },
             { "---" },
@@ -4307,7 +4379,9 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
               format_CStr("!searchurl address:%s", cstr_String(linkUrl)) },
         },
         6);
-    if (isNative && link->mediaType != download_MediaType && !equalCase_Rangecc(scheme, "file")) {
+    delete_String(encLabel);
+    if (isNative && linkId && linkMediaType != download_MediaType &&
+        !equalCase_Rangecc(scheme, "file")) {
         pushBackN_Array(items,
                         (iMenuItem[]){
                             { "---" },
@@ -4316,15 +4390,15 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                         2);
     }
     iMediaRequest *mediaReq;
-    if ((mediaReq = findMediaRequest_DocumentWidget(d, link->linkId)) != NULL &&
-        d->contextLink->mediaType != download_MediaType) {
+    if ((mediaReq = findMediaRequest_DocumentWidget(d, linkId)) != NULL &&
+        linkMediaType != download_MediaType) {
         if (isFinished_GmRequest(mediaReq->req)) {
             pushBack_Array(
                 items,
                 &(iMenuItem){ download_Icon " " saveToDownloads_Label,
                               0,
                               0,
-                              format_CStr("document.media.save link:%u", link->linkId) });
+                              format_CStr("document.media.save link:%u", linkId) });
         }
     }
     if (equalCase_Rangecc(scheme, "file")) {
@@ -4339,6 +4413,17 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                                       cstrCollect_String(localFilePathFromUrl_String(linkUrl))) });
     }
     return makeMenu_Widget(w, data_Array(items), size_Array(items));
+}
+
+static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iGmRun *link) {
+    /* Construct the link context menu, depending on what kind of link was clicked. */
+    interactingWithLink_DocumentWidget_(d, link->linkId); /* perhaps will be triggered */
+    return makeLinkContextMenuWithParameters_DocumentWidget_(
+        d,
+        linkUrl_GmDocument(d->view->doc, link->linkId),
+        collectNewRange_String(linkLabel_GmDocument(d->view->doc, link->linkId)),
+        link->linkId,
+        link->mediaType);
 }
 
 static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
@@ -4545,9 +4630,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
             contains_DocumentWidget_(d, init_I2(ev->button.x, ev->button.y))) {
+            const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
             if (!isVisible_Widget(d->menu)) {
                 d->contextLink = view->hoverLink;
-                d->contextPos = init_I2(ev->button.x, ev->button.y);
+                d->contextPos = mousePos;
                 if (d->menu) {
                     destroy_Widget(d->menu);
                     d->menu = NULL;
@@ -4557,6 +4643,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     d->menu = makeLinkContextMenu_DocumentWidget_(d, d->contextLink);
+                }
+                else if (contains_Banner(d->banner, mousePos)) {
+                    const iString *urlRoot = collectNewRange_String(urlRoot_String(d->mod.url));
+                    d->menu = makeLinkContextMenuWithParameters_DocumentWidget_(
+                        d, urlRoot, urlRoot, 0, none_MediaType);
                 }
                 else {
                     if (deviceType_App() == desktop_AppDeviceType) {
@@ -4574,7 +4665,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     { "---", 0, 0, NULL } },
                                 4);
                     }
-#if defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)
+#if (defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)) || defined (iPlatformTerminal)
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
@@ -4749,8 +4840,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 closeMenu_Widget(d->menu);
             }
             d->flags &= ~(movingSelectMarkStart_DocumentWidgetFlag |
-                          movingSelectMarkEnd_DocumentWidgetFlag |
-                          selecting_DocumentWidgetFlag);
+                          movingSelectMarkEnd_DocumentWidgetFlag);
+            if (!isMobile_Platform()) {
+                d->flags &= ~selecting_DocumentWidgetFlag;
+            }
             if (!isMoved_Click(&d->click)) {
                 setFocus_Widget(NULL);
                 /* Tap in tap selection mode. */
@@ -4892,7 +4985,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setGrabbedPlayer_DocumentWidget_(d, NULL);
                 return iTrue;
             }
-            iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+            if (!isMobile_Platform()) {
+                iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+            }
             stop_Anim(&d->view->scrollY.pos);
             return iTrue;
         default:
@@ -5175,15 +5270,16 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->phoneToolbar = findWidget_App("bottombar");
     d->footerButtons = NULL;
     iZap(d->certExpiry);
-    d->certFingerprint  = new_Block(0);
-    d->certFlags        = 0;
-    d->certSubject      = new_String();
-    d->state            = blank_RequestState;
-    d->titleUser        = new_String();
-    d->request          = NULL;
-    d->requestLinkId    = 0;
-    d->media            = new_ObjectList();
-    d->banner           = new_Banner();
+    d->certFingerprint     = new_Block(0);
+    d->certFullFingerprint = new_Block(0);
+    d->certFlags           = 0;
+    d->certSubject         = new_String();
+    d->state               = blank_RequestState;
+    d->titleUser           = new_String();
+    d->request             = NULL;
+    d->requestLinkId       = 0;
+    d->media               = new_ObjectList();
+    d->banner              = new_Banner();
     setOwner_Banner(d->banner, d);
     d->redirectCount    = 0;
     d->ordinalBase      = 0;
@@ -5262,6 +5358,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     if (d->mediaTimer) {
         SDL_RemoveTimer(d->mediaTimer);
     }
+    delete_Block(d->certFullFingerprint);
     delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
@@ -5397,9 +5494,17 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
     if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
-        fetch_DocumentWidget_(d);
-        if (setIdent) {
-            setIdentity_History(d->mod.history, setIdent);
+        if (isTitanUrl_String(url)) {
+            /* Just a blank page for Titan requests. Normally the content returned via Titan
+               is passed to DocumentWidget via `takeRequest_DocumentWidget`. */
+            setUrlAndSource_DocumentWidget(
+                d, url, collectNewCStr_String("text/gemini"), collect_Block(newCStr_Block("")), 0);
+        }
+        else {
+            fetch_DocumentWidget_(d);
+            if (setIdent) {
+                setIdentity_History(d->mod.history, setIdent);
+            }
         }
     }
 }

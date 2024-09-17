@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "mobile.h"
+#include "gmcerts.h"
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/string.h>
@@ -32,9 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <ctype.h>
 
 iDeclareType(Click)
-iDeclareType(Widget)
+iDeclareType(GmIdentity)
 iDeclareType(LabelWidget)
 iDeclareType(InputWidget)
+iDeclareType(Widget)
 iDeclareType(Window)
 
 iBool           isCommand_SDLEvent  (const SDL_Event *d);
@@ -296,6 +298,7 @@ enum iMenuOpenFlags {
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
 iWidget *       makeMenuFlags_Widget            (iWidget *parent, const iMenuItem *items, size_t n, iBool allowNative);
 void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
+void            addMenuCancelAction_Widget      (iWidget *menu); /* automatically called when menu is created */
 void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
 void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, int flags);
 void            openMenuAnchorFlags_Widget      (iWidget *, iRect windowAnchorRect, int menuOpenFlags);
@@ -308,7 +311,7 @@ size_t          count_MenuItem                  (const iMenuItem *itemsNullTermi
 size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
 size_t          findCommand_MenuItem            (const iMenuItem *items, size_t num, const char *command);
 void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
-void            appendIdentities_MenuItem       (iArray *menuItems, const char *command);
+void            appendIdentities_MenuItem       (iArray *menuItems, const char *command, iGmCertsIdentityFilterFunc);
 const iArray *  makeBookmarkFolderActions_MenuItem(const char *command, iBool withNullTerminator, uint32_t omitFolderId);
 
 iChar           removeIconPrefix_String         (iString *);
@@ -382,6 +385,8 @@ iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
 int           dialogTransitionDir_Widget(const iWidget *);
 iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
+iWidget      *addDialogToggle_Widget    (iWidget *headings, iWidget *values,
+                                         const char *heading, const char *toggleId);
 iLabelWidget *addWrappedLabel_Widget    (iWidget *, const char *text, const char *idOrNull);
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

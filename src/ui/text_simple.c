@@ -248,6 +248,9 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
                     SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
 #endif
+#if defined (SDL_SEAL_CURSES)
+                    SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+#endif
                     if (args->mode & fillBackground_RunMode) {
                         SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
                     }
@@ -283,7 +286,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             iAssert(wrap);
             const char *wrapPos = currentPos;
             int advance = x1 - orig.x;
-            if (lastWordEnd && wrap->mode == word_WrapTextMode) {
+            if (lastWordEnd && lastWordEnd > args->text.start && wrap->mode == word_WrapTextMode) {
                 wrapPos = skipSpace_CStr(lastWordEnd); /* go back */
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;

@@ -429,13 +429,15 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
     }
 #if 0
     const int *logToVis = constData_Array(&d->logicalToVisual);
-    printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
+    printf("[AttributedText] fnt:%d %zu runs:\n", fontId_Text(d->baseFont), size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
-        printf("  %zu %s fnt:%d log:%d...%d vis:%d...%d {%s}\n",
+        printf("  %zu %s fnt:%d(%c:%s) log:%d...%d vis:%d...%d {%s}\n",
                index_ArrayConstIterator(&i),
                run->attrib.isRTL ? "<-" : "->",
-               fontId_Text_(run->font),
+               fontId_Text(run->font),
+               isMonospaced_Font(run->font) ? 'M' : 'v',
+               cstr_String(&run->font->spec->name),
                run->logical.start, run->logical.end - 1,
                logToVis[run->logical.start], logToVis[run->logical.end - 1],
                cstr_Rangecc(sourceRange_AttributedText_(d, run->logical)));
@@ -499,6 +501,9 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
         const int width = d->mode == word_WrapTextMode
                               ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
                               : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
+        if (endPos == text.start) {
+            break; /* too tight for even a single character */
+        }
         notify_WrapText(d, endPos, (iTextAttrib){ .fgColorId = color }, 0, width);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
         text.start = endPos;

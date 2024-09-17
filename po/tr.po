@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2023-10-24 20:14+0000\n"
+"PO-Revision-Date: 2024-09-08 03:33+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -189,7 +189,7 @@ msgid "menu.website"
 msgstr "Proje web sitesi…"
 
 msgid "menu.quit"
-msgstr "Lagrange'den çık"
+msgstr "Lagrange’den çık"
 
 msgid "menu.cut"
 msgstr "Kes"
@@ -245,7 +245,7 @@ msgid "menu.about"
 msgstr "Hakkında"
 
 msgid "menu.aboutpages"
-msgstr "\"about:\" sayfaları"
+msgstr "“about:” sayfaları"
 
 msgid "menu.import.links"
 msgstr "Sayfadaki tüm bağlantıları içe aktar…"
@@ -254,7 +254,7 @@ msgid "menu.page.translate"
 msgstr "Çevir…"
 
 msgid "menu.page.copyurl"
-msgstr "Sayfa URL'sini kopyala"
+msgstr "Sayfa URL’sini kopyala"
 
 msgid "menu.page.copysource"
 msgstr "Sayfa kaynağını kopyala"
@@ -379,7 +379,7 @@ msgid "menu.dup"
 msgstr "Çoğalt…"
 
 msgid "menu.copyurl"
-msgstr "URL'yi kopyala"
+msgstr "URL’yi kopyala"
 
 msgid "history.clear"
 msgstr "Geçmişi temizle…"
@@ -426,8 +426,8 @@ msgstr "Kullanılmıyor"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "%u URL'de kullanılıyor"
-msgstr[1] "%u URL'de kullanılıyor"
+msgstr[0] "%u URL’de kullanılıyor"
+msgstr[1] "%u URL’de kullanılıyor"
 
 msgid "ident.temporary"
 msgstr "Geçici"
@@ -456,7 +456,7 @@ msgid "heading.ident.notes"
 msgstr "Kimlik notlar"
 
 msgid "ident.fingerprint"
-msgstr "Parmak izini kopyala"
+msgstr "SHA-256 parmak izini kopyala"
 
 msgid "ident.delete"
 msgstr "Kimliği sil…"
@@ -467,7 +467,7 @@ msgstr "Kimliği sil"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"%s\"%s\"%s kimliğini, sertifikası ve özel anahtar dosyaları da dahil olmak "
+"%s“%s”%s kimliğini, sertifikası ve özel anahtar dosyaları da dahil olmak "
 "üzere silmek istediğinizden emin misiniz?"
 
 msgid "dlg.ident.delete"
@@ -481,7 +481,7 @@ msgstr "Abonelikten çık"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr "\"%s\" beslemesinin aboneliğinden çıkmak istediğinizden emin misiniz?"
+msgstr "“%s” beslemesinin aboneliğinden çıkmak istediğinizden emin misiniz?"
 
 msgid "dlg.unsub"
 msgstr "Abonelikten çık"
@@ -517,7 +517,7 @@ msgid "dlg.cert.trust"
 msgstr "Güven"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Parmak izini kopyala"
+msgstr "Parmak izleri"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -548,7 +548,7 @@ msgstr[0] "%sYer imi ekle"
 msgstr[1] "%s%d yer imi ekle"
 
 msgid "heading.autoreload"
-msgstr "Otomatik yeniden yükleme"
+msgstr "Kendiliğinden yeniden yükle"
 
 msgid "reload.never"
 msgstr "Hiçbir zaman"
@@ -664,7 +664,7 @@ msgstr[1] "%d yer iminiz var."
 
 msgid "bookmark.export.format.sub"
 msgstr ""
-"Bu sayfa \"Subscribing to Gemini pages\" eşlik belirtimine göre "
+"Bu sayfa “Subscribing to Gemini pages” eşlik belirtimine göre "
 "biçimlendirilmiştir."
 
 msgid "bookmark.export.format.linklines"
@@ -833,7 +833,7 @@ msgid "heading.newident.missing"
 msgstr "Bilgi eksik"
 
 msgid "dlg.newindent.missing.commonname"
-msgstr "Bir \"Ortak ad\" belirtilmelidir."
+msgstr "Bir “Ortak ad” belirtilmelidir."
 
 msgid "heading.newident.date.bad"
 msgstr "Geçersiz tarih"
@@ -948,7 +948,7 @@ msgid "prefs.downloads"
 msgstr "İndirilenler klasörü:"
 
 msgid "prefs.searchurl"
-msgstr "Arama URL'si:"
+msgstr "Arama URL’si:"
 
 msgid "prefs.centershort"
 msgstr "Dikey ortalama:"
@@ -1218,22 +1218,22 @@ msgstr "Desteklenmeyen İçerik Türü"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Alınan üstbilgi Gemin protokol belirtimine uymuyor. Sunucu hata veriyor "
+"Alınan üstbilgi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
 "olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "error.badredirect"
 msgstr "Geçersiz Yeniden Yönlendirme"
 
 msgid "error.schemeredirect"
-msgstr "Şema Değiştiren Yeniden Yönlendirme"
+msgstr "Şema değiştiren yeniden yönlendirme"
 
 msgid "error.manyredirects"
 msgstr "Pek Çok Yeniden Yönlendirme"
 
 msgid "error.manyredirects.msg"
 msgstr ""
-"Bir yeniden yönlendirme döngüsünde takılı kalmış olabilirsiniz. El ile "
-"sürdürmek isterseniz bir sonraki yeniden yönlendirilmiş URL'yi aşağıda "
+"Bir yeniden yönlendirme döngüsünde takılı kalmış olabilirsiniz. Elle "
+"sürdürmek isterseniz bir sonraki yeniden yönlendirilmiş URL’yi aşağıda "
 "bulabilirsiniz."
 
 msgid "error.tls"
@@ -1373,36 +1373,36 @@ msgid "fontpack.meta.version"
 msgstr "Sürüm %d"
 
 msgid "fontpack.meta.installed"
-msgstr "Yüklü"
+msgstr "Kurulu"
 
 msgid "fontpack.meta.notinstalled"
-msgstr "Yüklü değil"
+msgstr "Kurulu değil"
 
 msgid "fontpack.meta.disabled"
 msgstr ", devre dışı"
 
 #, c-format
 msgid "fontpack.enable"
-msgstr "Etkinleştir: \"%s\""
+msgstr "Etkinleştir: “%s”"
 
 #, c-format
 msgid "fontpack.disable"
-msgstr "Devre dışı bırak: \"%s\""
+msgstr "Devre dışı bırak: “%s”"
 
 msgid "fontpack.export"
 msgstr "fontpack.ini şablonunu görüntüle"
 
 #, c-format
 msgid "fontpack.install"
-msgstr "Yükle: \"%s\""
+msgstr "Kur: “%s”"
 
 #, c-format
 msgid "fontpack.upgrade"
-msgstr "\"%s\" ögesini %d sürümüne yükselt"
+msgstr "“%s” ögesini %d sürümüne yükselt"
 
 #, c-format
 msgid "fontpack.delete"
-msgstr "\"%s\" ögesini kalıcı olarak sil"
+msgstr "“%s” ögesini kalıcı olarak sil"
 
 msgid "heading.fontpack.delete"
 msgstr "Yazıtipi paketini sil"
@@ -1411,13 +1411,13 @@ msgid "dlg.fontpack.delete"
 msgstr "Yazıtipi paketini sil"
 
 msgid "fontpack.install.ttf"
-msgstr "TrueType yazıtipi yükle"
+msgstr "TrueType yazıtipi kur"
 
 msgid "fontpack.open.fontsdir"
 msgstr "Kullanıcı yazıtipleri dizinini aç"
 
 msgid "fontpack.open.aboutfonts"
-msgstr "Yüklü yazıtiplerini göster"
+msgstr "Kurulu yazıtiplerini göster"
 
 msgid "truetype.help"
 msgstr ""
@@ -1425,7 +1425,7 @@ msgstr ""
 "dosyalarını yüklemeyi dener."
 
 msgid "truetype.help.installed"
-msgstr "Bu yazıtipi, kullanıcı yazıtipleri dizinine yüklenmiş."
+msgstr "Bu yazıtipi, kullanıcı yazıtipleri dizinine kurulmuş."
 
 msgid "heading.dismiss.warning"
 msgstr "Uyarı atlansın mı?"
@@ -1474,7 +1474,7 @@ msgstr "En son yenileme: %s."
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "ASCII sanatı: Büyükçe bir yazıtipi kullanarak \"Lagrange\" sözcüğü"
+msgstr "ASCII sanatı: Büyükçe bir yazıtipi kullanarak “Lagrange” sözcüğü"
 
 msgid "about.powered"
 msgstr "SDL 2, OpenSSL ve ☕️ yardımıyla yazılmıştır"
@@ -1601,7 +1601,7 @@ msgstr ""
 "beslemesine çevrildi."
 
 msgid "menu.forgeturl"
-msgstr "URL'yi unut"
+msgstr "URL’yi unut"
 
 msgid "dlg.confirm.history.clear"
 msgstr ""
@@ -1641,7 +1641,7 @@ msgstr ""
 msgid "error.unsupported.suggestsave"
 msgstr ""
 "İndirilenler klasörünüze bir dosya olarak kaydedin: %s düğmelerine basın "
-"veya menüden \"%s\" ögesini seçin."
+"veya menüden “%s” ögesini seçin."
 
 msgid "error.server.msg"
 msgstr "Sunucu şu iletiyle yanıtladı:"
@@ -1671,7 +1671,7 @@ msgid "dlg.import.notnew"
 msgstr "Bu sayfadaki bağlantıların hepsi halihazırda yer imlerine eklenmiş."
 
 msgid "dlg.autoreload"
-msgstr "Bu sekme için otomatik yeniden yükleme aralığını seçin."
+msgstr "Bu sekme için kendiliğinden yeniden yükleme aralığını seçin."
 
 msgid "reload.onceperday"
 msgstr "Günde bir kez"
@@ -1753,7 +1753,7 @@ msgid "hint.upload.text"
 msgstr "karşıya yüklenecek metni girin"
 
 msgid "upload.file.drophere"
-msgstr "(pencereye bir dosyayı sürükleyip bırakın)"
+msgstr "dosya yolu girin veya pencereye bir dosyayı sürükleyip bırakın"
 
 msgid "hint.upload.token"
 msgstr "sunucunun yönergelerine bakın"
@@ -1805,7 +1805,7 @@ msgstr "Son kullanma tarihi gelecekte olmalıdır."
 
 msgid "dlg.newident.date.example"
 msgstr ""
-"Lütfen \"Şu tarihe kadar geçerli\" bölümünü denetleyin. Örnekler:\n"
+"Lütfen “Şu tarihe kadar geçerli” bölümünü denetleyin. Örnekler:\n"
 "• 2030\n"
 "• 2025-06-30\n"
 "• 2021-12-31 23:59:59"
@@ -1909,7 +1909,7 @@ msgid "prefs.biglede"
 msgstr "Birinci büyük paragraf:"
 
 msgid "prefs.decodeurls"
-msgstr "URL'lerin kodunu çöz:"
+msgstr "URL’lerin kodunu çöz:"
 
 msgid "prefs.ca.path"
 msgstr "CA yolu:"
@@ -1969,7 +1969,7 @@ msgid "keys.split.item"
 msgstr "Bölünmüş görünüm menüsü:"
 
 msgid "keys.hoverurl"
-msgstr "Üzerine geldiğinde URL'yi göster aç/kapat"
+msgstr "Üzerine geldiğinde URL’yi göstermeyi aç/kapat"
 
 msgid "error.badstatus.msg"
 msgstr ""
@@ -1986,8 +1986,8 @@ msgstr ""
 
 msgid "error.schemeredirect.msg"
 msgstr ""
-"Sunucu bizi kaynak URL'nin şemasından farklı olan bir URL'ye yeniden "
-"yönlendirmeye çalıştı. Eğer uygunsa el ile açmanız için bağlantıyı aşağıda "
+"Sunucu bizi kaynak URL’nin şemasından farklı olan bir URL’ye yeniden "
+"yönlendirmeye çalıştı. Eğer uygunsa elle açmanız için bağlantıyı aşağıda "
 "bulabilirsiniz."
 
 msgid "error.certexpired"
@@ -2003,7 +2003,7 @@ msgstr ""
 "çıkarmadığına bakın. Değilse kötü niyetli bir üçüncü kişi erişmeye "
 "çalıştığınız sunucu şeklinde gizleniyor olabilir.\n"
 "\n"
-"Bu sertifika, \"Sayfa bilgisi\" bölümünde güvenilir olarak imlenebilir."
+"Bu sertifika, “Sayfa bilgisi” bölümünde güvenilir olarak imlenebilir."
 
 msgid "error.unavail.msg"
 msgstr ""
@@ -2037,21 +2037,21 @@ msgstr ""
 msgid "error.glyphs.msg"
 msgstr ""
 "Bu sayfa tam olarak görüntülenemiyor; çünkü bazı karakterler eksik. Bu "
-"sorunu çözmek için ek yazıtipleri yükleyebilirsiniz."
+"sorunu çözmek için ek yazıtipleri kurabilirsiniz."
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
-msgstr "\"%s\" yazıtipi paketini kalıcı olarak silmek istiyor musunuz?"
+msgstr "“%s” yazıtipi paketini kalıcı olarak silmek istiyor musunuz?"
 
 msgid "fontpack.help"
 msgstr ""
 "Lagrange yazıtipi paketleri, bir yazıtipi paketini ve ilişkin yapılandırma "
-"parametrelerini içeren ZIP arşivleridir. Yüklendikten sonra yazıtipleri, "
+"parametrelerini içeren ZIP arşivleridir. Kurulduktan sonra yazıtipleri, "
 "belge içeriği ve kullanıcı arabirimi için kullanılabilir. Etkin "
 "yazıtiplerini Tercihler > Yazıtipleri bölümünden seçebilirsiniz."
 
 msgid "prefs.hoverlink"
-msgstr "Üzerine gelince URL'yi göster:"
+msgstr "Üzerine gelince URL’yi göster:"
 
 msgid "menu.update"
 msgstr "Güncellemeleri denetle…"
@@ -2127,7 +2127,7 @@ msgstr "Önceki satırı yapıştır"
 
 # Shows where a local file is using the Finder.
 msgid "menu.reveal.macos"
-msgstr "Finder'da göster"
+msgstr "Finder’da göster"
 
 msgid "menu.share"
 msgstr "Paylaş"
@@ -2182,7 +2182,7 @@ msgid "menu.newwindow"
 msgstr "Yeni pencere"
 
 msgid "heading.sitespec"
-msgstr "Siteye Özel Ayarlar"
+msgstr "Siteye özel ayarlar"
 
 msgid "keys.sitespec"
 msgstr "Siteye özel ayarları göster"
@@ -2193,12 +2193,12 @@ msgstr "Eksik Glifler"
 msgid "dlg.glyphfinder.help"
 msgstr ""
 "Bu karakterler için glifler sağlayan yazıtipleri için skyjake.fi Yazıtipi "
-"Kitaplığı'nı aramayı veya el ile yeni TrueType yazıtipleri yüklemeyi "
+"Kitaplığı’nı aramayı veya el ile yeni TrueType yazıtipleri kurmayı "
 "deneyebilirsiniz."
 
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"
-msgstr "Veri URL'lerindeki görselleri aç:"
+msgstr "Veri URL’lerindeki görselleri aç:"
 
 msgid "prefs.urlsize"
 msgstr "En büyük URL boyutu:"
@@ -2234,7 +2234,7 @@ msgid "dlg.glyphfinder.disable"
 msgstr "Uyarıları Devre Dışı Bırak"
 
 msgid "dlg.glyphfinder.search"
-msgstr "Yazıtipi Kitaplığı'nda Ara"
+msgstr "Yazıtipi Kitaplığı’nda Ara"
 
 msgid "heading.glyphfinder.results"
 msgstr "Arama Sonuçları"
@@ -2405,7 +2405,7 @@ msgstr ""
 "veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "prefs.tui.simple"
-msgstr "Yalın karakterler:"
+msgstr "ASCII karakter kümesini zorla:"
 
 msgid "prefs.evensplit"
 msgstr "Sekmeleri eşitçe böl:"
@@ -2426,7 +2426,7 @@ msgstr ""
 "Bağlantı iptal edildi; çünkü vekil sunucunun TLS sertifikası, bizim "
 "güvendiğimizle eşleşmiyor.\n"
 "\n"
-"Vekil sunucunun sertifikası, \"Sayfa bilgisi\" bölümünde güvenilir olarak "
+"Vekil sunucunun sertifikası, “Sayfa bilgisi” bölümünde güvenilir olarak "
 "imlenebilir."
 
 msgid "hint.dlg.bookmark.tags"
@@ -2515,7 +2515,7 @@ msgstr "Önceden biçimlendirilmişi atla:"
 
 # A language choice in the Translation dialog.
 msgid "lang.auto"
-msgstr "Otomatik algıla"
+msgstr "Kendiliğinden algıla"
 
 # A language choice in the Translation dialog.
 msgid "lang.az"
@@ -2624,10 +2624,10 @@ msgid "menu.bookmark.addtofolder"
 msgstr "Klasöre yer imi ekle:"
 
 msgid "menu.input.setprompt"
-msgstr "Bu URL'nin girdi gerektirdiğini varsay"
+msgstr "Bu URL’nin girdi gerektirdiğini varsay"
 
 msgid "menu.input.unsetprompt"
-msgstr "Bu URL'nin girdi gerektirdiğini varsayma"
+msgstr "Bu URL’nin girdi gerektirdiğini varsayma"
 
 msgid "menu.input.clear"
 msgstr "Geçmişi temizle"
@@ -2645,7 +2645,7 @@ msgid "dlg.import.notfound"
 msgstr "Bu sayfada bağlantı yok."
 
 msgid "link.searchurl"
-msgstr "Arama URL'si olarak kullan"
+msgstr "Arama URL’si olarak kullan"
 
 msgid "link.snippet"
 msgstr "Bağlantıdan kırpıntı…"
@@ -2710,7 +2710,7 @@ msgstr "Sil"
 
 msgid "sniped.help"
 msgstr ""
-"Bir ünlemle başlayan kırpıntılar (örn. \"!w\"), sorgu kısayolu olarak URL "
+"Bir ünlemle başlayan kırpıntılar (örn. “!w”), sorgu kısayolu olarak URL "
 "alanlarında kullanılabilirler."
 
 msgid "menu.snip.prefs"
@@ -2743,3 +2743,135 @@ msgstr "Adres"
 
 msgid "prefs.doctheme.name.vibrantlight"
 msgstr "Canlı ışık"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Bağlam menüsü"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Kenar çubuğu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Yeni sekme"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Bağı odakla"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "URL gir"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Bağlantı aç"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Menü çubuğu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Sekmeyi kapat"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Odakla"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Genel anahtarın SHA-256’sını kopyala"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Sertifikanın SHA-256’sını kopyala"
+
+msgid "upload.error.directory"
+msgstr "Yalnızca dosyalar yüklenebilir, dizinler değil."
+
+msgid "heading.upload.error.file"
+msgstr "Geçersiz dosya"
+
+msgid "upload.file.path"
+msgstr "Dosya yolu:"
+
+msgid "heading.upload.edit"
+msgstr "Titan ile düzenle"
+
+msgid "dlg.upload.edit.error"
+msgstr "Düzenlenebilir özkaynağın içeriği indirilemedi."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Bu türden özkaynak uygulamada düzenlenemiyor."
+
+msgid "heading.upload.edit.error"
+msgstr "Düzenleme başarısız"
+
+msgid "dlg.upload.edit"
+msgstr "Düzenle"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Kendime bir kopya gönderiliyor"
+
+msgid "misfin.changed"
+msgstr "Misfin sertifikanız, alıcı tarafından beklenenle eşleşmiyor."
+
+msgid "ident.sendmsg"
+msgstr "İletiyi farklı gönder…"
+
+msgid "heading.upload.misfin"
+msgstr "Misfin iletisi gönder"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Misfin kimliği yok"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"İleti gönderebilmek için önce bir Misfin sertifikası içe aktarmalısınız."
+
+msgid "heading.misfin.ok"
+msgstr "İleti gönderildi"
+
+msgid "misfin.success"
+msgstr "İletiniz başarıyla gönderildi."
+
+msgid "misfin.redirect"
+msgstr "Alıcı, iletiyi başka bir adrese göndermek istiyor."
+
+msgid "misfin.failure"
+msgstr "İleti gönderilirken bir hata oluştu."
+
+msgid "misfin.needcert"
+msgstr "Bir Misfin sertifikası sağlayarak kendinizi tanıtmalısınız."
+
+msgid "misfin.unauth"
+msgstr "Bu alıcıya ileti göndermeye yetkiniz yok."
+
+msgid "misfin.badcert"
+msgstr "Misfin sertifikanız geçersiz."
+
+msgid "upload.from"
+msgstr "Kimden:"
+
+msgid "upload.to"
+msgstr "Kime:"
+
+msgid "hint.upload.misfin"
+msgstr "ileti girin"
+
+msgid "dlg.upload.sendmsg"
+msgstr "İletiyi gönder"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Alıcı doğrulanıyor"
+
+msgid "misfin.unknown"
+msgstr "Sunucuyla iletişim kurulamadı."
+
+msgid "prefs.warn.security"
+msgstr "TLS güvenlik uyarıları:"
+
+msgid "misfin.self.copy"
+msgstr "Bana bir kopya gönder"

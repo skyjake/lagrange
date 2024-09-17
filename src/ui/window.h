@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_video.h>
 
 extern const iMenuItem topLevelMenus_Window[7];
+size_t numWindowMenuItems_Window(void); /* number of items in an empty window menu */
 
 enum iWindowType {
     main_WindowType,
@@ -99,6 +100,7 @@ struct Impl_Window {
     iWidget *     hover;
     iWidget *     lastHover;    /* cleared if deleted */
     iWidget *     mouseGrab;
+    iWidget *     keyPriority;  /* window dispatches keyboard events to this widget first */
     iWidget *     focus;
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */

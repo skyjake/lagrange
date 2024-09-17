@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2023-10-21 04:38+0000\n"
+"PO-Revision-Date: 2024-09-17 13:52+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -404,7 +404,7 @@ msgid "dlg.ident.notes"
 msgstr "Muistiinpanot liittyen identiteettiin %s:"
 
 msgid "ident.fingerprint"
-msgstr "Kopioi sormenjälki"
+msgstr "Kopioi SHA-256-sormenjälki"
 
 msgid "ident.delete"
 msgstr "Poista identiteetti…"
@@ -476,7 +476,7 @@ msgid "dlg.cert.trust"
 msgstr "Luota"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Kopioi sormenjälki"
+msgstr "Kopioi sormenjäljet"
 
 msgid "dlg.input.prompt"
 msgstr "Anna syöte sivulle \"%s\":"
@@ -1627,7 +1627,7 @@ msgid "upload.file.name"
 msgstr "Nimi:"
 
 msgid "upload.file.drophere"
-msgstr "(pudota tiedosto ikkunaan)"
+msgstr "(kirjoita polku tai pudota tiedosto ikkunaan)"
 
 msgid "upload.file.size"
 msgstr "Koko:"
@@ -2353,7 +2353,7 @@ msgid "error.incompleteheader"
 msgstr "Keskeneräinen otsaketieto"
 
 msgid "prefs.tui.simple"
-msgstr "Yksinkertainen merkistö:"
+msgstr "Pakota ASCII-merkistön käyttö:"
 
 msgid "prefs.evensplit"
 msgstr "Tasaleveä jaettu näkymä:"
@@ -2688,3 +2688,136 @@ msgstr "Uusi katkelma"
 
 msgid "heading.snip.edit"
 msgstr "Muokkaa katkelmaa"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Syötä URL"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Valikko"
+
+msgid "heading.upload.edit"
+msgstr "Muokkaa Titanilla"
+
+msgid "dlg.upload.edit.error"
+msgstr "Muokattavan resurssin sisällön lataaminen epäonnistui."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Tämän tyyppistä resurssia ei pysty muokkaamaan tässä sovelluksessa."
+
+msgid "heading.upload.edit.error"
+msgstr "Muokkaus epäonnistui"
+
+msgid "dlg.upload.edit"
+msgstr "Muokkaa"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Avaa linkki"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Valikkorivi"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Sivupalkki"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Uusi lehti"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Sulje lehti"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Kohdenna linkki"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Kohdenna"
+
+msgid "heading.upload.error.file"
+msgstr "Virheellinen tiedosto"
+
+msgid "upload.error.directory"
+msgstr "Vain yksittäisiä tiedostoja voi lähettää, ei hakemistoja."
+
+msgid "upload.file.path"
+msgstr "Tiedostopolku:"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Kopioi julkisen avaimen SHA-256"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Kopioi sertifikaatin SHA-256"
+
+msgid "prefs.warn.security"
+msgstr "TLS-turvallisuusvaroitukset:"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Viestin lähetys itselle"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Vastaanottajan varmistus"
+
+msgid "misfin.self.copy"
+msgstr "Lähetä minulle kopio"
+
+msgid "ident.sendmsg"
+msgstr "Lähetä viesti…"
+
+msgid "heading.upload.misfin"
+msgstr "Lähetä Misfin-viesti"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Ei Misfin-identiteettejä"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"Sinun pitää ensin tuoda Misfin-sertifikaatti, jotta voit lähettää viestejä."
+
+msgid "heading.misfin.ok"
+msgstr "Viesti lähetetty"
+
+msgid "misfin.success"
+msgstr "Viestisi lähetys onnistui."
+
+msgid "misfin.redirect"
+msgstr "Vastaanottaja pyytää lähettämään viestin eri osoitteeseen."
+
+msgid "misfin.failure"
+msgstr "Viestin lähetyksessä tapahtui virhe."
+
+msgid "misfin.needcert"
+msgstr "Sinun täytyy tunnistautua Misfin-sertifikaatilla."
+
+msgid "misfin.unauth"
+msgstr "Sinulla ei ole lupaa lähettää viestiä tälle vastaanottajalle."
+
+msgid "misfin.badcert"
+msgstr "Misfin-sertifikaattisi on virheellinen."
+
+msgid "misfin.changed"
+msgstr ""
+"Misfin-sertifikaattisi ei vastaa vastaanottajan odottamaa sertifikaattia."
+
+msgid "misfin.unknown"
+msgstr "Kommunikointi palvelimen kanssa epäonnistui."
+
+msgid "upload.from"
+msgstr "Lähettäjä:"
+
+msgid "upload.to"
+msgstr "Vastaanottaja:"
+
+msgid "hint.upload.misfin"
+msgstr "kirjoita viesti"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Lähetä viesti"

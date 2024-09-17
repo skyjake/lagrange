@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
+    init_String(&d->originalUrl);
     init_String(&d->title);
     init_String(&d->tags);
     init_String(&d->notes);
@@ -49,14 +50,15 @@ void deinit_Bookmark(iBookmark *d) {
     deinit_String(&d->notes);
     deinit_String(&d->tags);
     deinit_String(&d->title);
+    deinit_String(&d->originalUrl);
     deinit_String(&d->url);
 }
 
 static struct {
-    uint32_t    bit;
-    const char *tag;
-    iRegExp *   pattern;
-    iRegExp *   oldPattern;
+    const uint32_t bit;
+    const char *   tag;
+    iRegExp *      pattern;
+    iRegExp *      oldPattern;
 }
 specialTags_[] = {
     { homepage_BookmarkFlag, ".homepage" },
@@ -305,6 +307,9 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
         if (!cmp_String(key, "url") && tv->type == string_TomlType) {
             set_String(&bm->url, tv->value.string);
         }
+        else if (!cmp_String(key, "originalurl") && tv->type == string_TomlType) {
+            set_String(&bm->originalUrl, tv->value.string);
+        }
         else if (!cmp_String(key, "title") && tv->type == string_TomlType) {
             set_String(&bm->title, tv->value.string);
             trim_String(&bm->title);
@@ -471,6 +476,10 @@ void serialize_Bookmarks(const iBookmarks *d, iStream *out) {
                       bm->icon,
                       seconds_Time(&bm->when),
                       cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
+        if (!isEmpty_String(&bm->originalUrl)) {
+            appendFormat_String(str, "originalurl = \"%s\"\n",
+                                cstrCollect_String(quote_String(&bm->originalUrl, iFalse)));
+        }
         if (!isEmpty_String(&bm->notes)) {
             appendFormat_String(str, "notes = \"%s\"\n",
                                 cstrCollect_String(quote_String(&bm->notes, iFalse)));
@@ -565,7 +574,7 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     return bm != NULL;
 }
 
-iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon) {
+iBool updateIcons_Bookmarks(iBookmarks *d, const iString *url, iChar icon) {
     iBool changed = iFalse;
     lock_Mutex(d->mtx);
     iForEach(Hash, i, &d->bookmarks) {
@@ -573,6 +582,26 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
         if (~bm->flags & remote_BookmarkFlag && ~bm->flags & userIcon_BookmarkFlag) {
             if (equalCase_String(&bm->url, url) && icon != bm->icon) {
                 bm->icon = icon;
+                changed = iTrue;
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return changed;
+}
+
+iBool updateUrls_Bookmark(iBookmarks *d, const iString *oldUrl, const iString *newUrl) {
+    iBool changed = iFalse;
+    lock_Mutex(d->mtx);
+    iForEach(Hash, i, &d->bookmarks) {
+        iBookmark *bm = (iBookmark *) i.value;
+        if (~bm->flags & remote_BookmarkFlag) {
+            if (equalCase_String(&bm->url, oldUrl)) {
+                if (isEmpty_String(&bm->originalUrl)) {
+                    /* Remember the URL that was originally bookmarked. */
+                    set_String(&bm->originalUrl, &bm->url);
+                }
+                set_String(&bm->url, newUrl);
                 changed = iTrue;
             }
         }

@@ -6,6 +6,32 @@
 ```
 # Release notes
 
+## 1.17 (Beta 30)
+* Fixed looking up glyphs from the bundled Iosevka font when another monospace font is configured as the default.
+* Fixed spacing of Legacy Computing symbols on mixed-font monospace lines.
+
+## 1.17 (Beta 29)
+* Fixed various potential (rare) crashes.
+* Fixed selection of monospaced fallback glyphs.
+* Fixed spacing on mixed-font monospaced text lines.
+* Updated UI translations.
+
+## 1.17 (Beta 28)
+* Page zoom pinch gesture has a short trigger delay to avoid accidental zooming.
+* Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
+* Fixed a link being opened inadvertently after the link's context menu is dismissed (by tapping outside the menu or by selecting "Cancel").
+* Updated UI translations.
+
+## 1.17 (Beta 27)
+* Fixed selection markers jumping around when trying to drag them.
+* Fixed scrolling speed when dragging selection markers. Sometimes the view jumped to the top/bottom of the page.
+
+## 1.17 (Beta 26)
+* Fixed memory leak: fetched pages were not always released from memory (reference miscount).
+* Fixed minor memory leak in list widgets.
+* Gopher: Autodetect Gemtext files based on file extension.
+* Updated UI translations.
+
 ## 1.17 (Beta 25)
 * Fixed a few small memory leaks.
 * Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).

@@ -144,6 +144,14 @@
 					<string>spartan</string>
 				</array>
 			</dict>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>Misfin</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>misfin</string>
+				</array>
+			</dict>
 		</array>
 		<key>UTExportedTypeDeclarations</key>
 		<array>
@@ -151,7 +159,7 @@
 				<key>UTTypeIdentifier</key>
 				<string>fi.skyjake.lagrange.gemini</string>
 				<key>UTTypeReferenceURL</key>
-				<string>https://gemini.circumlunar.space/docs/specification.gmi</string>
+				<string>https://geminiprotocol.net/docs/specification.gmi</string>
 				<key>UTTypeDescription</key>
 				<string>Gemini Text Document</string>
 				<key>UTTypeConformsTo</key>

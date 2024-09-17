@@ -231,6 +231,7 @@ enum iInputWidgetFlag {
     dragMarkerStart_InputWidgetFlag      = iBit(15),
     dragMarkerEnd_InputWidgetFlag        = iBit(16),
     omitDefaultSchemeIfNarrow_InputWidgetFlag = iBit(17),
+    arrowFocusNavigable_InputWidgetFlag  = iBit(18),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -396,7 +397,7 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     iRect          bounds = adjusted_Rect(bounds_Widget(w),
                                  addX_I2(padding_(), d->leftPadding),
                                  neg_I2(addX_I2(padding_(), d->rightPadding)));
-    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
+    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2) * aspect_UI, 0));
     bounds.pos.y += padding_().y / 2;
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         if (d->sysCtrl && !cmp_String(id_Widget(w), "url")) {
@@ -864,12 +865,13 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_String(&d->oldText);
     init_String(&d->srcHint);
     init_String(&d->hint);
-    d->font         = uiInput_FontId | alwaysVariableFlag_FontId;
-    d->leftPadding  = 0;
-    d->rightPadding = 0;
+    d->font            = uiInput_FontId | alwaysVariableFlag_FontId;
+    d->leftPadding     = 0;
+    d->rightPadding    = 0;
     d->lastUpdateWidth = 0;
     d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag |
-                         lineBreaksEnabled_InputWidgetFlag | useReturnKeyBehavior_InputWidgetFlag;
+                         lineBreaksEnabled_InputWidgetFlag | useReturnKeyBehavior_InputWidgetFlag |
+                         arrowFocusNavigable_InputWidgetFlag;
     setMaxLen_InputWidget(d, maxLen);
     d->visWrapLines.start = 0;
     d->visWrapLines.end = 1;
@@ -1078,6 +1080,10 @@ void setHighlighter_InputWidget(iInputWidget *d, iInputWidgetHighlighterFunc hig
 
 void setLineBreaksEnabled_InputWidget(iInputWidget *d, iBool lineBreaksEnabled) {
     iChangeFlags(d->inFlags, lineBreaksEnabled_InputWidgetFlag, lineBreaksEnabled);
+}
+
+void setArrowFocusNavigable_InputWidget(iInputWidget *d, iBool arrowFocusNavigable) {
+    iChangeFlags(d->inFlags, arrowFocusNavigable_InputWidgetFlag, arrowFocusNavigable);
 }
 
 void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
@@ -1312,7 +1318,7 @@ void systemInputChanged_InputWidget_(iSystemTextInput *sysCtrl, void *widget) {
 }
 #endif
 
-void begin_InputWidget(iInputWidget *d) {
+static void begin_InputWidget_(iInputWidget *d, iBool allowSelectAll) {
     iWidget *w = as_Widget(d);
     if (isEditing_InputWidget_(d)) {
         /* Already active. */
@@ -1369,7 +1375,7 @@ void begin_InputWidget(iInputWidget *d) {
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     startOrStopCursorTimer_InputWidget_(d, iTrue);
-    if (d->inFlags & selectAllOnFocus_InputWidgetFlag) {
+    if (allowSelectAll && d->inFlags & selectAllOnFocus_InputWidgetFlag) {
         d->mark = (iRanges){ 0, lastLine_InputWidget_(d)->range.end };
         d->cursor = cursorMax_InputWidget_(d);
     }
@@ -1378,7 +1384,12 @@ void begin_InputWidget(iInputWidget *d) {
     }
     updateTextInputRect_InputWidget_(d);
     updateVisible_InputWidget_(d);
+    window_Widget(w)->keyPriority = w;
 #endif
+}
+
+void begin_InputWidget(iInputWidget *d) {
+    begin_InputWidget_(d, iTrue);
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -1411,6 +1422,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     d->inFlags &= ~isMarking_InputWidgetFlag;
     deactivateInputMode_InputWidget_(d);
     startOrStopCursorTimer_InputWidget_(d, iFalse);
+    window_Widget(w)->keyPriority = NULL;
 #endif
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag | touchDrag_WidgetFlag, iFalse);
@@ -1428,7 +1440,10 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
                     iString *query = collectNewRange_String((iRangecc){ snip.end, constEnd_String(text) });
                     trim_String(query);
                     set_String(query, collect_String(urlEncode_String(query)));
-                    prependCStr_String(query, "?");
+                    if (!contains_String(content, '?')) {
+                        /* substition may already have the beginning of a query */
+                        prependCStr_String(query, "?");
+                    }
                     prepend_String(query, content);
                     setText_InputWidget(d, query);
                 }
@@ -1513,7 +1528,7 @@ iLocalDef iBool isMarking_(void) {
     return (modState_Keys() & KMOD_SHIFT) != 0;
 }
 
-void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
+static void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
     iAssert(!isEmpty_Array(&d->lines));
     pos.x = iClamp(pos.x, 0, endX_InputWidget_(d, pos.y));
     d->cursor = pos;
@@ -1532,6 +1547,10 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
         iZap(d->mark);
     }
     showCursor_InputWidget_(d);
+}
+
+void moveCursorHome_InputWidget(iInputWidget *d) {
+    setCursor_InputWidget(d, zero_I2());
 }
 
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {
@@ -2355,7 +2374,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             setFocus_Widget(NULL);
         }
         else {
-            begin_InputWidget(d);
+            enum iFocusMethod method = arg_Command(command_UserEvent(ev));
+            begin_InputWidget_(d, method != arrowKeys_FocusMethod);
         }
         return iFalse;
     }
@@ -2654,7 +2674,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     (checkAcceptMods_InputWidget_(d, mods) ||
                      (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
-                    setFocus_Widget(NULL);
+                    if (isTerminal_Platform() && cmp_String(id_Widget(w), "url")) {
+                        /* In dialogs, Return moves to the next focusable field rather than
+                           loosing focus entirely. */
+                        setFocus_Widget(findFocusable_Widget(w, forward_WidgetFocusDir));
+                    }
+                    else {
+                        setFocus_Widget(NULL);
+                    }
                     return iTrue;
                 }
                 return iFalse;
@@ -2810,11 +2837,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(d);
                     return iTrue;
                 }
-                if (isArrowUpDownConsumed_InputWidget_(d)) {
+                // if (isArrowUpDownConsumed_InputWidget_(d)) {
+                //     return iTrue;
+                // }
+                /* For moving to lookup from url entry. */
+                if (processEvent_Widget(as_Widget(d), ev)) {
                     return iTrue;
                 }
-                /* For moving to lookup from url entry. */
-                return processEvent_Widget(as_Widget(d), ev);
+                if (d->inFlags & arrowFocusNavigable_InputWidgetFlag) {
+                    return moveFocusWithArrows_App(ev);
+                }
+                return iTrue;
             case SDLK_PAGEUP:
             case SDLK_PAGEDOWN:
                 for (int count = 0; count < 5; count++) {

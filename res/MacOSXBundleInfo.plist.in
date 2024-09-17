@@ -111,10 +111,18 @@
                                 <string>spartan</string>
                         </array>
                 </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>Misfin</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>misfin</string>
+                        </array>
+                </dict>
         </array>
-		<key>SUFeedURL</key>
-		<string>https://etc.skyjake.fi/lagrange/appcast-${SPARKLE_ARCH}.xml</string>
-		<key>SUPublicEDKey</key>
-		<string>NK3VR3l8lypjm05VS4+Ry8A95rhmRzX+ftgQpzqYAy4=</string>
+                <key>SUFeedURL</key>
+                <string>https://etc.skyjake.fi/lagrange/appcast-${SPARKLE_ARCH}.xml</string>
+                <key>SUPublicEDKey</key>
+                <string>NK3VR3l8lypjm05VS4+Ry8A95rhmRzX+ftgQpzqYAy4=</string>
 </dict>
 </plist>

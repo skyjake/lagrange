@@ -158,8 +158,12 @@ static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev)
     else if (isCommand_Widget(w, ev, "list.clicked")) {
         const char *cmd = command_UserEvent(ev);
         d->contextPos = arg_Command(cmd);
-        openMenu_Widget(d->menu, mouseCoord_Window(get_Window(),
-                                                   argU32Label_Command(cmd, "device")));
+        openMenuFlags_Widget(
+            d->menu,
+            argLabel_Command(cmd, "keyboard")
+                ? bottomLeft_Rect(itemRect_ListWidget(d->list, d->contextPos))
+                : mouseCoord_Window(get_Window(), argU32Label_Command(cmd, "device")),
+            postCommands_MenuOpenFlags | setFocus_MenuOpenFlags);
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "sniped.edit")) {
@@ -209,6 +213,7 @@ static void draw_SnippetWidget_(const iSnippetWidget *d) {
 static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
     const iSnippetWidget *parent = (const iSnippetWidget *) parent_Widget(list);
+    const iBool isListFocus = isFocused_Widget(list);
     const int   font       = parent->itemFonts[0];
     const int   itemHeight = height_Rect(itemRect);
     const int   line       = lineHeight_Text(font);
@@ -216,6 +221,7 @@ static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
     const iBool isHover    = (!isMenuOpen &&
                               isHover_Widget(constAs_Widget(list)) &&
                               constHoverItem_ListWidget(list) == d) ||
+                             (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
                              (isMenuOpen &&
                               d == constItem_ListWidget(list, parent->contextPos));
     int         fg         = uiTextStrong_ColorId;
@@ -233,6 +239,10 @@ static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
     drawRange_Text(parent->itemFonts[1], pos, fg, range_String(&d->label));
     pos.y += line;
     drawRange_Text(font, pos, fg2, range_String(&d->content));
+    if (isListFocus && isHover && constCursorItem_ListWidget(list) == d && !isTerminal_Platform()) {
+        /* Visualize the keyboard cursor. */
+        drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), uiTextAction_ColorId);
+    }
 }
 
 iBeginDefineSubclass(SnippetWidget, Widget)
