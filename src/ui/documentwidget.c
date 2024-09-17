@@ -2327,6 +2327,13 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     const iString *dstUrl    = absoluteUrl_String(d->mod.url, &resp->meta);
                     const iRangecc srcScheme = urlScheme_String(d->mod.url);
                     const iRangecc dstScheme = urlScheme_String(dstUrl);
+                    /* Update bookmarks automatically to reflect the permanent redirection. */
+                    if (statusCode == redirectPermanent_GmStatusCode) {
+                        if (updateUrls_Bookmark(bookmarks_App(), d->mod.url, dstUrl)) {
+                            postCommand_App("bookmarks.changed");
+                        }
+                    }
+                    /* We only follow a fixed number of redirects at once, per Gemini spec. */
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
@@ -2360,13 +2367,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryTemporaryFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(
-                        d, temporaryFailure_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentWidget_(d, temporaryFailure_GmStatusCode, &resp->meta);
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryPermanentFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(
-                        d, permanentFailure_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentWidget_(d, permanentFailure_GmStatusCode, &resp->meta);
                 }
                 else {
                     showErrorPage_DocumentWidget_(d, unknownStatusCode_GmStatusCode, &resp->meta);

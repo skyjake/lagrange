@@ -18,6 +18,7 @@ New features:
 
 Changes and enhancements:
 * The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
+* Bookmarked URLs are automatically updated after permanent redirection. (The original URL is still saved in bookmarks.ini.)
 * Line width expands dynamically (up to window size) to account for wide content like preformatted blocks and plain text lines.
 * The file path can be entered manually in the upload dialog. Previously only drag-and-drop was supported.
 * Right-clicking on the site banner shows a link context menu. (Linking to the capsule's root URL.)

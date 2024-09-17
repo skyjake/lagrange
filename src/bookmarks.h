@@ -49,6 +49,7 @@ enum iBookmarkFlags {
 struct Impl_Bookmark {
     iHashNode node;
     iString   url;
+    iString   originalUrl; /* prior to updating via permanent redirect */
     iString   title;
     iString   tags;
     iString   notes;    /* free-form comments */
@@ -64,8 +65,8 @@ struct Impl_Bookmark {
 iLocalDef uint32_t  id_Bookmark         (const iBookmark *d) { return d->node.key; }
 iLocalDef iBool     isFolder_Bookmark   (const iBookmark *d) { return isEmpty_String(&d->url); }
 
-iBool   hasParent_Bookmark  (const iBookmark *, uint32_t parentId);
-int     depth_Bookmark      (const iBookmark *);
+iBool   hasParent_Bookmark              (const iBookmark *, uint32_t parentId);
+int     depth_Bookmark                  (const iBookmark *);
 
 int     cmpTitleAscending_Bookmark      (const iBookmark **, const iBookmark **);
 int     cmpTree_Bookmark                (const iBookmark **, const iBookmark **);
@@ -93,9 +94,11 @@ uint32_t    addToFolder_Bookmarks       (iBookmarks *, const iString *url, const
 iBool       remove_Bookmarks            (iBookmarks *, uint32_t id);
 iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
 void        reorder_Bookmarks           (iBookmarks *, uint32_t id, int newOrder);
-iBool       updateBookmarkIcon_Bookmarks(iBookmarks *, const iString *url, iChar icon);
+iBool       updateIcons_Bookmarks       (iBookmarks *, const iString *url, iChar icon);
+iBool       updateUrls_Bookmark         (iBookmarks *, const iString *oldUrl, const iString *newUrl);
 void        setRecentFolder_Bookmarks   (iBookmarks *, uint32_t folderId);
 void        sort_Bookmarks              (iBookmarks *, uint32_t parentId, iBookmarksCompareFunc cmp);
+
 void        fetchRemote_Bookmarks       (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
@@ -104,7 +107,6 @@ uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url)
 uint32_t    findUrlIdent_Bookmarks      (const iBookmarks *, const iString *url, const iString *identFp); /* O(n) */
 uint32_t    recentFolder_Bookmarks      (const iBookmarks *);
 
-//iBool   filterTagsRegExp_Bookmarks      (void *regExp, const iBookmark *);
 iBool       filterHomepage_Bookmark     (void *, const iBookmark *);
 
 /**

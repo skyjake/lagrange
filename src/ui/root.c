@@ -1286,8 +1286,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 }
                 /* Icon updates should be limited to automatically chosen icons if the user
                    is allowed to pick their own in the future. */
-                if (updateBookmarkIcon_Bookmarks(bookmarks_App(), urlStr,
-                                                 siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
+                if (updateIcons_Bookmarks(
+                        bookmarks_App(),
+                        urlStr,
+                        siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
                     postCommand_App("bookmarks.changed");
                 }
                 return iFalse;
