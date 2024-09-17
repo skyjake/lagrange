@@ -86,7 +86,7 @@ void init_Prefs(iPrefs *d) {
     d->returnKey         = default_ReturnKeyBehavior;
     d->retainTabs        = iTrue;
     d->hoverLink         = iTrue;
-    d->smoothScrolling   = iTrue;
+    d->smoothScrolling   = !isTerminal_Platform();
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
