@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2024-08-21 13:21+0000\n"
+"PO-Revision-Date: 2024-09-17 13:52+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2353,7 +2353,7 @@ msgid "error.incompleteheader"
 msgstr "Keskeneräinen otsaketieto"
 
 msgid "prefs.tui.simple"
-msgstr "Yksinkertainen merkistö:"
+msgstr "Pakota ASCII-merkistön käyttö:"
 
 msgid "prefs.evensplit"
 msgstr "Tasaleveä jaettu näkymä:"
@@ -2754,3 +2754,70 @@ msgstr "Kopioi julkisen avaimen SHA-256"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Kopioi sertifikaatin SHA-256"
+
+msgid "prefs.warn.security"
+msgstr "TLS-turvallisuusvaroitukset:"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Viestin lähetys itselle"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Vastaanottajan varmistus"
+
+msgid "misfin.self.copy"
+msgstr "Lähetä minulle kopio"
+
+msgid "ident.sendmsg"
+msgstr "Lähetä viesti…"
+
+msgid "heading.upload.misfin"
+msgstr "Lähetä Misfin-viesti"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Ei Misfin-identiteettejä"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"Sinun pitää ensin tuoda Misfin-sertifikaatti, jotta voit lähettää viestejä."
+
+msgid "heading.misfin.ok"
+msgstr "Viesti lähetetty"
+
+msgid "misfin.success"
+msgstr "Viestisi lähetys onnistui."
+
+msgid "misfin.redirect"
+msgstr "Vastaanottaja pyytää lähettämään viestin eri osoitteeseen."
+
+msgid "misfin.failure"
+msgstr "Viestin lähetyksessä tapahtui virhe."
+
+msgid "misfin.needcert"
+msgstr "Sinun täytyy tunnistautua Misfin-sertifikaatilla."
+
+msgid "misfin.unauth"
+msgstr "Sinulla ei ole lupaa lähettää viestiä tälle vastaanottajalle."
+
+msgid "misfin.badcert"
+msgstr "Misfin-sertifikaattisi on virheellinen."
+
+msgid "misfin.changed"
+msgstr ""
+"Misfin-sertifikaattisi ei vastaa vastaanottajan odottamaa sertifikaattia."
+
+msgid "misfin.unknown"
+msgstr "Kommunikointi palvelimen kanssa epäonnistui."
+
+msgid "upload.from"
+msgstr "Lähettäjä:"
+
+msgid "upload.to"
+msgstr "Vastaanottaja:"
+
+msgid "hint.upload.misfin"
+msgstr "kirjoita viesti"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Lähetä viesti"
