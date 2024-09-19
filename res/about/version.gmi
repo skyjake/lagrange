@@ -18,12 +18,12 @@ New features:
 
 Changes and enhancements:
 * The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
+* Improved UI focus navigation: arrow keys move focus to an adjacent widget.
+* Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
 * Bookmarked URLs are automatically updated after permanent redirection. (The original URL is still saved in bookmarks.ini.)
 * Line width expands dynamically (up to window size) to account for wide content like preformatted blocks and plain text lines.
 * The file path can be entered manually in the upload dialog. Previously only drag-and-drop was supported.
 * Right-clicking on the site banner shows a link context menu. (Linking to the capsule's root URL.)
-* Improved UI focus navigation: arrow keys move focus to an adjacent widget.
-* Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
 * Show a confirmation popup when saving something to the downloads folder.
 * Menubar: When opened via keyboard, reopen the most recently opened menu instead of "File".
 * The Return key is now a (hardcoded) keyboard shortcut for focusing the navbar URL field.
