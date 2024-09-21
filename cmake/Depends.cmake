@@ -208,6 +208,7 @@ if (ENABLE_TUI)
     if (EXISTS ${CMAKE_SOURCE_DIR}/lib/sealcurses/CMakeLists.txt)
         # Build a static version of SEALCurses.
         set (SEALCURSES_SUBDIR         YES CACHE BOOL "")
+        set (SEALCURSES_STATIC_NCURSES ${ENABLE_STATIC} CACHE BOOL "")
         set (SEALCURSES_ENABLE_STATIC  YES CACHE BOOL "")
         set (SEALCURSES_ENABLE_SHARED  NO  CACHE BOOL "")
         set (SEALCURSES_ENABLE_INSTALL NO  CACHE BOOL "")
