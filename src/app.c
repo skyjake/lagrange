@@ -88,6 +88,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
+#if defined (iPlatformTerminal)
+#   undef LAGRANGE_ENABLE_IDLE_SLEEP
+#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "x11.h"
 #endif
