@@ -35,6 +35,10 @@ iBool isXSession_X11(void) {
     if (driver && !iCmpStr(driver, "wayland")) {
         return iFalse;
     }
+    const char *dpy = getenv("DISPLAY");
+    if (!dpy || strlen(dpy) == 0) {
+        return iFalse;
+    }
     return iTrue; /* assume yes if this source file is being used */
 }
 
@@ -51,7 +55,7 @@ void setDarkWindowTheme_SDLWindow(SDL_Window *d, iBool setDark) {
         Atom        u8    = XInternAtom(dpy, "UTF8_STRING", False);
         const char *value = setDark ? "dark" : "light";
         XChangeProperty(dpy, wnd, prop, u8, 8, PropModeReplace,
-                        (unsigned char *) value, strlen(value));        
+                        (unsigned char *) value, strlen(value));
     }
 }
 
@@ -59,7 +63,7 @@ void handleCommand_X11(const char *cmd) {
     if (!isXSession_X11()) {
         return;
     }
-    if (equal_Command(cmd, "theme.changed")) {        
+    if (equal_Command(cmd, "theme.changed")) {
         iConstForEach(PtrArray, iter, mainWindows_App()) {
             iMainWindow *mw = iter.ptr;
             setDarkWindowTheme_SDLWindow(
