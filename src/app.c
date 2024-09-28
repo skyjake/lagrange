@@ -1103,9 +1103,8 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
-    static const char *schemes[] = {
-        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "guppy:", "file:", "data:", "about:"
-    };
+    static const char *schemes[] = { "gemini:", "gopher:", "finger:", "spartan:", "nex:",
+                                     "misfin:", "guppy:",  "file:",   "data:",    "about:" };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
             return iTrue;
@@ -2020,6 +2019,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
                         startsWithCase_CStr(ev.drop.file, "spartan:") ||
                         startsWithCase_CStr(ev.drop.file, "nex:") ||
+                        startsWithCase_CStr(ev.drop.file, "misfin:") ||
                         startsWithCase_CStr(ev.drop.file, "file:")) {
                         postCommandf_Root(NULL, "~open newtab:1 url:%s", ev.drop.file);
                     }
