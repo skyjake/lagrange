@@ -1314,7 +1314,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         puts("Lagrange: A Beautiful Gemini Client");
     }
     const iBool isFirstRun =
-        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
+        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), prefsFileName_App_)));
     d->isFinishedLaunching = iFalse;
     d->isLoadingPrefs      = iFalse;
     d->warmupFrames        = 0;
