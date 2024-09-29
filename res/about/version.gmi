@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.18.2
+* TUI: Fixed first-run bookmarks getting re-added on every launch.
+
 ## 1.18.1
 * macOS: Fixed opening Misfin URIs externally via system handlers.
 * Windows: Register Lagrange as a "misfin://" URL handler.
