@@ -74,10 +74,10 @@ option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
 option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
+option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
 option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
-option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
 
 include (BuildType)
 include (Resources)
