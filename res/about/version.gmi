@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.18.1
+* macOS: Fixed opening Misfin URIs externally via system handlers.
+* Windows: Register Lagrange as a "misfin://" URL handler.
+* TUI: Fixed potentially garbled output.
+* TUI: Only link Curses statically when using CMake option `ENABLE_STATIC`.
+* Updated UI translations.
+
 ## 1.18
 
 New features:
