@@ -45,6 +45,18 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.18.1" date="2024-09-29">
+            <description>
+                <ul>
+                    <li>TUI: Fixed potentially garbled output.</li>
+                    <li>TUI: Only link Curses statically when using CMake option `ENABLE_STATIC`.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.18.1</url>
+        </release>
         <release version="1.18" date="2024-09-20">
             <description>
                 <ul>
