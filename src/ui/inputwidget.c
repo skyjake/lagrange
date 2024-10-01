@@ -1829,6 +1829,15 @@ static void lineTextWasChanged_InputWidget_(iInputWidget *d, iInputLine *line) {
     const int y = indexOf_Array(&d->lines, line);
     textOfLinesWasChanged_InputWidget_(d, (iRangei){ y, y + 1 });
 }
+
+#else
+
+void moveCursorHome_InputWidget(iInputWidget *d) {
+    if (d->sysCtrl) {
+        // TODO: Is there a way to move the native cursor to the start?
+    }
+}
+
 #endif
 
 void setSensitiveContent_InputWidget(iInputWidget *d, iBool isSensitive) {
