@@ -1366,6 +1366,9 @@ msgstr "Default Identity"
 msgid "heading.upload.dest"
 msgstr "Address"
 
+msgid "upload.type"
+msgstr "Content"
+
 msgid "heading.upload.text"
 msgstr "Text"
 

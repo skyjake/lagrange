@@ -363,96 +363,6 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     return iFalse;
 }
 
-#if 0
-static iBool isTwoColumnPage_(iWidget *d) {
-    if (cmp_String(id_Widget(d), "dialogbuttons") == 0 ||
-        cmp_String(id_Widget(d), "prefs.tabs") == 0) {
-        return iFalse;
-    }
-    if (class_Widget(d) == &Class_Widget && childCount_Widget(d) == 2) {
-        return class_Widget(child_Widget(d, 0)) == &Class_Widget &&
-               class_Widget(child_Widget(d, 1)) == &Class_Widget;
-    }
-    return iFalse;
-}
-
-static iBool isOmittedPref_(const iString *id) {
-    static const char *omittedPrefs[] = {
-        "prefs.userfont",
-        "prefs.animate",
-        "prefs.smoothscroll",
-        "prefs.imageloadscroll",
-        "prefs.pinsplit",
-        "prefs.retainwindow",
-        "prefs.ca.file",
-        "prefs.ca.path",
-    };
-    iForIndices(i, omittedPrefs) {
-        if (cmp_String(id, omittedPrefs[i]) == 0) {
-            return iTrue;
-        }
-    }
-    return iFalse;
-}
-
-enum iPrefsElement {
-    panelTitle_PrefsElement,
-    heading_PrefsElement,
-    toggle_PrefsElement,
-    dropdown_PrefsElement,
-    radioButton_PrefsElement,
-    textInput_PrefsElement,
-};
-
-static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t flags,
-                                  enum iPrefsElement elementType,
-                                  enum iPrefsElement precedingElementType) {
-    /* Erase redundant/unused headings. */
-    if (precedingElementType == heading_PrefsElement &&
-        (!child || (elementType == heading_PrefsElement || elementType == radioButton_PrefsElement))) {
-        iRelease(removeChild_Widget(panel, lastChild_Widget(panel)));
-        if (!cmp_String(id_Widget(constAs_Widget(lastChild_Widget(panel))), "padding")) {
-            iRelease(removeChild_Widget(panel, lastChild_Widget(panel)));
-        }
-    }
-    if (child) {
-        /* Insert padding between different element types. */
-        if (precedingElementType != panelTitle_PrefsElement) {
-            if (elementType == heading_PrefsElement ||
-                (elementType == toggle_PrefsElement &&
-                 precedingElementType != toggle_PrefsElement &&
-                 precedingElementType != heading_PrefsElement) ||
-                (elementType == dropdown_PrefsElement &&
-                 precedingElementType != dropdown_PrefsElement &&
-                 precedingElementType != heading_PrefsElement) ||
-                (elementType == textInput_PrefsElement &&
-                 precedingElementType != textInput_PrefsElement &&
-                 precedingElementType != heading_PrefsElement)) {
-                addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
-            }
-        }
-        if ((elementType == toggle_PrefsElement && precedingElementType != toggle_PrefsElement) ||
-            (elementType == textInput_PrefsElement && precedingElementType != textInput_PrefsElement) ||
-            (elementType == dropdown_PrefsElement && precedingElementType != dropdown_PrefsElement) ||
-            (elementType == radioButton_PrefsElement && precedingElementType == heading_PrefsElement)) {
-            flags |= borderTop_WidgetFlag;
-        }
-        return addChildFlags_Widget(panel, child, flags);
-    }
-    return NULL;
-}
-
-static void stripTrailingColon_(iLabelWidget *label) {
-    const iString *text = text_LabelWidget(label);
-    if (endsWith_String(text, ":")) {
-        iString *mod = copy_String(text);
-        removeEnd_String(mod, 1);
-        updateText_LabelWidget(label, mod);
-        delete_String(mod);
-    }
-}
-#endif
-
 static iLabelWidget *makePanelButton_(const char *text, const char *command) {
     iLabelWidget *btn = new_LabelWidget(text, command);
     setFlags_Widget(as_Widget(btn),
@@ -992,16 +902,19 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     /* Create panel contents based on provided items. */
     for (size_t i = 0; itemsNullTerminated[i].label; i++) {
         const iMenuItem *item = &itemsNullTerminated[i];
+        /* Subpanels need a special button to go with the detail panel. */
         if (equal_Command(item->label, "panel")) {
             haveDetailPanels = iTrue;
-            const char *id = cstr_Command(item->label, "id");
-            const iString *label = hasLabel_Command(item->label, "text")
-                                       ? collect_String(suffix_Command(item->label, "text"))
-                                       : collectNewFormat_String("${%s}", id);
+            const char    *id       = cstr_Command(item->label, "id");
+            const int      collapse = argLabel_Command(item->label, "collapse");
+            const iString *label    = hasLabel_Command(item->label, "text")
+                                          ? collect_String(suffix_Command(item->label, "text"))
+                                          : collectNewFormat_String("${%s}", id);
             iLabelWidget *button =
                 addChildFlags_Widget(topPanel,
                                      iClob(makePanelButton_(cstr_String(label), "panel.open")),
-                                     borderTop_WidgetFlag);
+                                     borderTop_WidgetFlag | (collapse ? collapse_WidgetFlag : 0));
+            setId_Widget((iWidget *) button, format_CStr("%s.button", id));
             setChevron_LabelWidget(button, iTrue);
             const iChar icon = toInt_String(string_Command(item->label, "icon"));
             if (icon) {
@@ -1045,7 +958,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             setFont_LabelWidget(defaultButton, labelBoldFont_());
             setFlags_Widget(as_Widget(defaultButton),
                             frameless_WidgetFlag | extraPadding_WidgetFlag |
-                                noBackground_WidgetFlag,
+                                noBackground_WidgetFlag | collapse_WidgetFlag,
                             iTrue);
             addChildFlags_Widget(naviActions, iClob(defaultButton), 0);
             updateSize_LabelWidget(defaultButton);
@@ -1278,7 +1191,7 @@ void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
 //        printf("--- menuFocusRoot: ");
 //        identify_Widget(menuFocusRoot);
 //        printf("--- activeFocusRoot: ");
-//        identify_Widget(activeFocusRoot);    
+//        identify_Widget(activeFocusRoot);
         if (!isVisible_Widget(parent) || isDisabled_Widget(parent) ||
             /* other focus root blocks the parent? */
             (menuFocusRoot != activeFocusRoot &&

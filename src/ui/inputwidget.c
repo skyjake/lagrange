@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    too convoluted, with both variants intermingled. */
 
 #include "inputwidget.h"
+
 #include "app.h"
 #include "command.h"
 #include "keys.h"
