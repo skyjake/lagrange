@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 
 iDeclareType(ToolbarActionSpec)
-    
+
 struct Impl_ToolbarActionSpec {
     const char *icon;
     const char *label;
@@ -43,13 +43,14 @@ extern const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction];
 
 iDeclareType(Widget)
 iDeclareType(MenuItem)
-    
+
 iBool       isUsingPanelLayout_Mobile   (void);
+iBool       isSideBySideLayout_Mobile   (void);
 iWidget *   makePanels_Mobile           (const char *id,
                                          const iMenuItem *itemsNullTerminated,
                                          const iMenuItem *actions, size_t numActions);
 iWidget *   makePanelsParent_Mobile     (iWidget *parent,
-                                         const char *id,                                         
+                                         const char *id,
                                          const iMenuItem *itemsNullTerminated,
                                          const iMenuItem *actions, size_t numActions);
 void        initPanels_Mobile           (iWidget *panels, iWidget *parentWidget,

@@ -413,6 +413,17 @@ static void updateButtonExcerpts_UploadWidget_(iUploadWidget *d) {
             setCStr_String(excerpt, "${dlg.upload.text}");
         }
         setText_LabelWidget(panelButton, excerpt);
+        /* Also update the file button. */
+        panelButton = findChild_Widget(as_Widget(d), "dlg.upload.file.button");
+        if (!isEmpty_String(&d->filePath)) {
+            updateTextCStr_LabelWidget(panelButton,
+                                       format_CStr("%s (%s)",
+                                                   formatCStrs_Lang("num.bytes.n", d->fileSize),
+                                                   cstr_String(text_InputWidget(d->mime))));
+        }
+        else {
+            updateTextCStr_LabelWidget(panelButton, "${dlg.upload.file}");
+        }
     }
 }
 
@@ -478,7 +489,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { NULL }
         };
         const iMenuItem textItems[] = {
-            { "navi.menubutton text:" midEllipsis_Icon, 0, 0, (const void *) ellipsisItems },
+            { "navi.menubutton text:\u00a0\u00a0\u00a0" midEllipsis_Icon "\u00a0\u00a0\u00a0\u00a0", 0, 0, (const void *) ellipsisItems },
             // { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.text" },
             { "input id:upload.text noheading:1" },
@@ -512,7 +523,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         const iMenuItem titanItems[] = {
             { "title id:upload.title text:${heading.upload}" },
             { "panel id:dlg.upload.url buttonid:dlg.upload.urllabel icon:0x1f310 text:", 0, 0, (const void *) urlItems },
-            { "label id:upload.progress collapse:1" },
+            { "label id:upload.progress collapse:1 text:" },
             { "radio horizontal:1 id:upload.type collapse:1", 0, 0, (const void *) uploadTypeItems },
             { "panel id:dlg.upload.text collapse:1 icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
             { "panel id:dlg.upload.file collapse:1 icon:0x1f4c1", 0, 0, (const void *) titanFileItems },
@@ -882,7 +893,7 @@ static void showOrHideProgressTab_UploadWidget_(iUploadWidget *d, iBool show) {
     if (isUsingPanelLayout_Mobile()) {
         showCollapsed_Widget(as_Widget(d->editLabel), show);
         showCollapsed_Widget(findChild_Widget(w, "dlg.upload.text.button"), !show);
-        enableUploadPanelButton_UploadWidget_(d, !show);
+        //enableUploadPanelButton_UploadWidget_(d, !show);
         return;
     }
     iWidget *buttons[3];
@@ -1035,6 +1046,11 @@ static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t 
     if (startsWithCase_String(&resp->meta, "text/")) {
         setText_UploadWidget(d, collect_String(newBlock_String(&resp->body)));
         showOrHideProgressTab_UploadWidget_(d, iFalse);
+        if (isUsingPanelLayout_Mobile()) {
+            /* Automatically switch to the text editor. */
+            postCommand_Widget(findChild_Widget(as_Widget(d), "dlg.upload.text.button"),
+                               "panel.open");
+        }
     }
     else {
         /* Report that non-text content cannot be edited in the app. */
@@ -1173,6 +1189,7 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
     }
     setTextCStr_LabelWidget(d->fileSizeLabel, formatCStrs_Lang("num.bytes.n", d->fileSize));
     setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
+    updateButtonExcerpts_UploadWidget_(d);
 }
 
 static void filePathValidator_UploadWidget_(iInputWidget *input, void *context) {
@@ -1257,7 +1274,8 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         else {
             setFocus_Widget(NULL);
         }
-        if (isPortraitPhone_App()) {
+        if (isPortraitPhone_App() && isVisible_Widget(findChild_Widget(w, "upload.type"))) {
+            /* Don't upload from subpages in non-edit mode. */
             enableUploadPanelButton_UploadWidget_(d, panelIndex == iInvalidPos);
         }
         refresh_Widget(d->input);
@@ -1315,10 +1333,22 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     if (isCommand_Widget(w, ev, "upload.settype")) {
         const int type = arg_Command(cmd);
-        showCollapsed_Widget(findChild_Widget(w, "dlg.upload.text.button"), type == 0);
-        showCollapsed_Widget(findChild_Widget(w, "dlg.upload.file.button"), type == 1);
-        /* TODO: When showing detail on the side, immediately change to the right panel. */
-
+        iWidget *buttons[2] = {
+            findChild_Widget(w, "dlg.upload.text.button"),
+            findChild_Widget(w, "dlg.upload.file.button")
+        };
+        iWidget *radio[2] = {
+            findChild_Widget(w, "upload.type.text"),
+            findChild_Widget(w, "upload.type.file")
+        };
+        iForIndices(i, buttons) {
+            setFlags_Widget(radio[i], selected_WidgetFlag, type == i);
+            showCollapsed_Widget(buttons[i], type == i);
+        }
+        /* When showing detail on the side, immediately change to the right panel. */
+        if (isSideBySideLayout_Mobile()) {
+            postCommand_Widget(buttons[type], "panel.open");
+        }
         return iTrue;
     }
     if (equal_Command(cmd, "upload.trusted.check")) {
@@ -1381,10 +1411,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             isText = (tabIndex == 0);
         }
         else {
-            const size_t panelIndex = currentPanelIndex_Mobile(w);
-            if (panelIndex != iInvalidPos) {
-                return iTrue;
-            }
+            // const size_t panelIndex = currentPanelIndex_Mobile(w);
+            // if (panelIndex != iInvalidPos) {
+            //     return iTrue;
+            // }
             isText = isVisible_Widget(findChild_Widget(w, "dlg.upload.text.button"));
         }
         if (!isText && !fileExists_FileInfo(&d->filePath)) {
@@ -1498,13 +1528,21 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             return iFalse;
         }
         /* Switch to File tab. */
-        showTabPage_Widget(d->tabs, tabPage_Widget(d->tabs, 1));
+        if (d->tabs) {
+            showTabPage_Widget(d->tabs, tabPage_Widget(d->tabs, 1));
+        }
+        else {
+            postCommand_Widget(w, "upload.settype arg:1");
+        }
         releaseFile_UploadWidget_(d);
+        setCStr_String(&d->filePath, ev->drop.file);
         if (d->filePathInput) {
             setTextCStr_InputWidget(d->filePathInput, ev->drop.file);
+            filePathValidator_UploadWidget_(d->filePathInput, d);
         }
-        setCStr_String(&d->filePath, ev->drop.file);
-        filePathValidator_UploadWidget_(d->filePathInput, d);
+        else {
+            updateFileInfo_UploadWidget_(d);
+        }
         return iTrue;
     }
     return processEvent_Widget(w, ev);

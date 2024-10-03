@@ -77,6 +77,10 @@ static iBool isSideBySideLayout_(void) {
     return numRoots_Window(get_Window()) == 1;
 }
 
+iBool isSideBySideLayout_Mobile(void) {
+    return isUsingPanelLayout_Mobile() && isSideBySideLayout_();
+}
+
 static enum iFontId labelFont_(void) {
     return deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId : uiLabelMedium_FontId;
 }
@@ -132,6 +136,9 @@ static void unselectAllPanelButtons_(iWidget *topPanel) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
             iLabelWidget *label = i.object;
             if (!cmp_String(command_LabelWidget(label), "panel.open")) {
+                if (isSelected_Widget(i.object)) {
+                    refresh_Widget(i.object);
+                }
                 setFlags_Widget(i.object, selected_WidgetFlag, iFalse);
             }
         }
@@ -286,6 +293,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             updateNaviActionVisibility_(sheet, panel);
         }
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
+        refresh_Widget(button);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
         updateListHeights_(findDetailStack_(topPanel));
         return iTrue;

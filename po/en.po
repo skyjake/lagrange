@@ -1432,7 +1432,7 @@ msgid "dlg.upload.sendmsg"
 msgstr "Send Message"
 
 msgid "dlg.upload.edit"
-msgstr "Edit"
+msgstr "Submit"
 
 msgid "upload.port"
 msgstr "Port…"
