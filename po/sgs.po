@@ -1,3 +1,21 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2024-10-03 14:43+0000\n"
+"PO-Revision-Date: 2024-10-03 14:43+0000\n"
+"Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
+"Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
+"sgs/>\n"
+"Language: sgs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : (n % "
+"10 == 2 && n % 100 != 12) ? 1 : (n % 10 >= 3 && n % 10 <= 9 && (n % 100 < 11 "
+"|| n % 100 > 19)) ? 2 : 3;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "doc.archive.view"
 msgstr "Veizietė arkīva vėdo"
 
@@ -7,7 +25,7 @@ msgstr "Parsiuntėms bėngts."
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
-msgstr "Atlėkies"
+msgstr "Atlikies"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.genre"
@@ -29,10 +47,10 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "ėš vėsa %z īrašos"
-msgstr[1] "ėš vėsa %z īrašo"
-msgstr[2] "ėš vėsa %z īrašā"
-msgstr[3] "ėš vėsa %z īrašu"
+msgstr[0] "ėš vėsa %u īrašos"
+msgstr[1] "ėš vėsa %u īrašo"
+msgstr[2] "ėš vėsa %u īrašā"
+msgstr[3] "ėš vėsa %u īrašu"
 
 #, c-format
 msgid "minutes.ago"
@@ -40,7 +58,7 @@ msgid_plural "minutes.ago.n"
 msgstr[0] "prīš %d mėnotė"
 msgstr[1] "prīš %d mėnotė"
 msgstr[2] "prīš %d mėnotės"
-msgstr[3] "prīš %d mėnoťiu"
+msgstr[3] "prīš %d mėnotiu"
 
 #, c-format
 msgid "hours.ago"
@@ -53,14 +71,14 @@ msgstr[3] "prīš %d adīnu"
 #, c-format
 msgid "days.ago"
 msgid_plural "days.ago.n"
-msgstr[0] "prīš %d dëna"
-msgstr[1] "prīš %d dënė"
-msgstr[2] "prīš %d dënas"
-msgstr[3] "prīš %d dënu"
+msgstr[0] "prīš %d dėina"
+msgstr[1] "prīš %d dėinė"
+msgstr[2] "prīš %d dėinas"
+msgstr[3] "prīš %d dėinū"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "ASCII dailė: žuodis „Lagrange“ stombio šrėfto"
+msgstr "ASCII dailė: žuodis „Lagrange“ stombio šrifto"
 
 msgid "about.tagline"
 msgstr "Dailė Gemini naršīklė"
@@ -72,10 +90,10 @@ msgid "cancel"
 msgstr "Atšauktė"
 
 msgid "close"
-msgstr "Uždarītė"
+msgstr "Oždarītė"
 
 msgid "dlg.message.ok"
-msgstr "Tė̄stė"
+msgstr "Tėnstė"
 
 msgid "dlg.default"
 msgstr " Gerā "
@@ -84,7 +102,7 @@ msgid "menu.title.file"
 msgstr "Fails"
 
 msgid "menu.title.edit"
-msgstr "Redagůtė"
+msgstr "Keistė"
 
 msgid "menu.title.help"
 msgstr "Pagelba"
@@ -96,33 +114,517 @@ msgid "menu.split.vertical"
 msgstr "Statē"
 
 msgid "menu.openlocation"
-msgstr "Atvertė vëta…"
+msgstr "Atvertė vėita…"
 
 msgid "menu.downloads"
 msgstr "Ruodītė atsėsiuntėmus"
 
 msgid "menu.find"
-msgstr "Ëškuotė poslapie"
+msgstr "Ėiškuotė puslapie"
 
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
-msgstr "Ėšsauguotė failė"
+msgstr "Ėšsauguotė i faila"
 
 msgid "menu.save.downloads.open"
-msgstr "Ėšsauguotė atsisiuntėmūs ėr atvertė"
+msgstr "Ėšsauguotė atsėsiuntėmūs ėr atvertė"
 
 msgid "menu.zoom.in"
-msgstr "Padėdintė"
+msgstr "Padidintė"
 
 msgid "menu.zoom.out"
 msgstr "Somažintė"
 
 msgid "menu.zoom.reset"
-msgstr "Atstatītė priartėnėmus"
+msgstr "Atstatītė dīdi"
 
 msgid "macos.menu.find"
-msgstr "Ėškuotė"
+msgstr "Ėiškuotė"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
 msgstr "Ėšsauguotė atsėsiuntėmu papkie"
+
+msgid "userdata.help"
+msgstr ""
+"Arkīvā nauduotuojė doumenū keravuo naršīma istuorėjė, identėtetus, "
+"nūruodas, teksta ėškarpas, alkieriu nustatīmus ė prijimtū serveriu "
+"sertifikatu žīmas. Anėi gal būtė nauduojamė kāp atsargėnė kuopėjė arba pā"
+"rneštė doumenis i kėta aparata."
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Tamīsta esat isėrašė i %u sāraša, katramė ī %%.\n"
+msgstr[1] "Tamīsta esat isėrašė i %u sārašo, katramė ī %%.\n"
+msgstr[2] "Tamīsta esat isėrašė i %u sārašus, katramė ī %%.\n"
+msgstr[3] "Tamīsta esat isėrašė i %u sārašu, katramė ī %%.\n"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Aple Lagrange"
+
+msgid "menu.fonts"
+msgstr "Keravuotė šriftus…"
+
+msgid "menu.page.copysource"
+msgstr "Nukuopėjoutė poslapė kuoda"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Napārskaitīts"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Skaitītė vėskon"
+
+msgid "feeds.today"
+msgstr "Šėndėin"
+
+msgid "menu.root"
+msgstr "Ētė i pradė"
+
+msgid "menu.home"
+msgstr "Nomėi"
+
+msgid "menu.aboutpages"
+msgstr "„Aple“ poslapē"
+
+msgid "menu.pageinfo"
+msgstr "Ruodītė poslapė informacėjė"
+
+msgid "menu.copy"
+msgstr "Nukuopėjoutė"
+
+msgid "menu.paste"
+msgstr "Idietė"
+
+msgid "menu.title.window"
+msgstr "Longs"
+
+msgid "menu.window.min"
+msgstr "Somažintė"
+
+msgid "menu.window.max"
+msgstr "Ėšdidintė"
+
+msgid "menu.window.full"
+msgstr "Parjungtė vėsa ekrana ruodīma"
+
+msgid "menu.split.merge"
+msgstr "Apjungtė"
+
+msgid "menu.sidebar.right"
+msgstr "Pārjungtė dešini šuona"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Ėštrintė"
+
+msgid "menu.autoreload"
+msgstr "Ijungtė automatini pārkruovėma…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Atnaujintė nūtuoluses žīmas"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Nustatītė veiksma:"
+
+msgid "sidebar.action.ident.import"
+msgstr "Impuortoutė…"
+
+msgid "menu.edit"
+msgstr "Keistė…"
+
+msgid "menu.dup"
+msgstr "Doblėkoutė…"
+
+msgid "menu.unexpire"
+msgstr "Naveizietė galiuojėma čiesa ėr ožkrautė"
+
+msgid "menu.preferences"
+msgstr "Nustatīmā…"
+
+msgid "menu.releasenotes"
+msgstr "Ėšleidėma navīnas"
+
+# Used on the mobile Settings page.
+msgid "menu.about"
+msgstr "Aple"
+
+msgid "sidebar.history"
+msgstr "Istuorėjė"
+
+msgid "doc.pre.nocaption"
+msgstr "Napadailinta rašliava ba aprašīma"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Kraunas"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s ī sospausts arkīvs."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Atsėsiuntėms būs nutraukts, jė ėšjungsat taba."
+
+msgid "numbertype.integer"
+msgstr "ciels skaitlios"
+
+msgid "menu.title.view"
+msgstr "Vaizds"
+
+msgid "menu.title.bookmarks"
+msgstr "Žīmas"
+
+msgid "menu.title.identity"
+msgstr "Identėtets"
+
+msgid "menu.newtab"
+msgstr "Naus tabs"
+
+msgid "menu.sidebar.left"
+msgstr "Pārjungtė kairi šuona"
+
+msgid "menu.sidebar"
+msgstr "Pārjungtė šuonu ruodīma"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Ruodītė poslapė soriedīma"
+
+msgid "menu.back"
+msgstr "Grīžtė"
+
+msgid "menu.forward"
+msgstr "Ētė pėrmīn"
+
+msgid "panel.back"
+msgstr "Atgal"
+
+msgid "menu.debug"
+msgstr "Teknėnė infuormacėjė"
+
+msgid "sidebar.outline"
+msgstr "Soriedīms"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Vėsks"
+
+msgid "ident.temporary"
+msgstr "Laikėnā"
+
+msgid "dlg.cert.trust"
+msgstr "Prijimtė"
+
+msgid "menu.update"
+msgstr "Veizietė atnaujėnėmu…"
+
+msgid "pageinfo.cert.expired"
+msgstr "Pasėbėngės čiesos"
+
+msgid "media.untitled.image"
+msgstr "Abruozdielis"
+
+msgid "media.untitled.audio"
+msgstr "Garsa īrašos"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Paskutinis atnaujėnėms bova %s."
+
+msgid "menu.closetab"
+msgstr "Ožvertė taba"
+
+msgid "menu.closetab.other"
+msgstr "Ožvertė kėtus tabus"
+
+msgid "menu.closetab.left"
+msgstr "Ožvertė tabus i kairė"
+
+msgid "menu.closetab.right"
+msgstr "Ožvertė tabus i dešėnė"
+
+msgid "menu.duptab"
+msgstr "Padoblioutė taba"
+
+msgid "menu.paste.go"
+msgstr "Idietė ė paleistė"
+
+msgid "menu.import.links"
+msgstr "Importoutė vėsas nūruodas puslapie…"
+
+msgid "menu.feeds.refresh"
+msgstr "Atnaujintė sārašus"
+
+msgid "menu.identity.new"
+msgstr "Naus identėtets…"
+
+msgid "menu.identity.import"
+msgstr "Imuortoutė…"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "menu.newfolder"
+msgstr "Naujė papkė…"
+
+msgid "menu.sort.alpha"
+msgstr "Palē abiecielė"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Nustatīmā"
+
+msgid "menu.identity.newdomain"
+msgstr "Naus identėtets domenou…"
+
+msgid "heading.archive.userdata"
+msgstr "Arkīvs nauduotuojė doumenū"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Ožvardėjėms"
+
+msgid "numbertype.float"
+msgstr "skaitlios so kablioko"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Sāraša īrašā"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Atnaujėnėms kon tik bova atlėkts."
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+msgstr "Soriedīts ont SDL 2, OpenSSL ė ☕️"
+
+msgid "menu.export"
+msgstr "Ekspuortoutė"
+
+msgid "menu.import"
+msgstr "Impuortoutė…"
+
+msgid "menu.page.translate"
+msgstr "Pargoldītė…"
+
+msgid "menu.page.copyurl"
+msgstr "Nukuopėjoutė poslapė URL"
+
+msgid "sidebar.identities"
+msgstr "Identėtetā"
+
+msgid "menu.website"
+msgstr "Pruojekta alkierios…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Pasėrinktė vėskon"
+
+msgid "menu.tab.next"
+msgstr "Ruodītė sekonti taba"
+
+msgid "menu.tab.prev"
+msgstr "Ruodītė onkstiesni taba"
+
+msgid "menu.movetab.split"
+msgstr "Pārkeltė taba i kėta posė"
+
+msgid "menu.movetab.newwindow"
+msgstr "Pārkeltė taba i nauji longa"
+
+msgid "menu.quit"
+msgstr "Ėšjungtė Lagrange"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Ruodītė žīmas"
+
+msgid "menu.newwindow"
+msgstr "Naus longs"
+
+msgid "menu.view.split"
+msgstr "Padalintė vaizda"
+
+msgid "menu.bookmarks.list"
+msgstr "Sārašos vėsū žīmū"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Sārašos palē sokūrėma"
+
+msgid "menu.feeds.entrylist"
+msgstr "Ruodītė sāraša īrašus"
+
+msgid "menu.help"
+msgstr "Pagelba"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Ruodītė istuorėjė"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Ruodītė identėtetus"
+
+msgid "menu.parent"
+msgstr "Ētė aukštīn"
+
+msgid "menu.page.bookmark"
+msgstr "Pasėžīmietė puslapi…"
+
+msgid "sidebar.bookmarks"
+msgstr "Žīmas"
+
+msgid "sidebar.feeds"
+msgstr "Sārašā"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nauji papkė"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Keistė"
+
+msgid "sidebar.action.ident.new"
+msgstr "Naus…"
+
+msgid "menu.page.subscribe"
+msgstr "Stebietė puslapi…"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Pakavuotė identėtetus"
+
+msgid "menu.identities"
+msgstr "Valdītė identėtetus"
+
+msgid "sidebar.close"
+msgstr "Padarīta"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Napārskaitīts"
+msgstr[1] "Napārskaitīto"
+msgstr[2] "Napārskaitītė"
+msgstr[3] "Napārskaitītu"
+
+msgid "ident.export"
+msgstr "Ekspuortoutė"
+
+msgid "heading.unsub"
+msgstr "Nabstebietė"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Prijimts"
+
+msgid "dlg.unsub"
+msgstr "Nabstebietė"
+
+msgid "feeds.unsubscribe"
+msgstr "Nabstebietė…"
+
+msgid "menu.movetab.left"
+msgstr "Pārkeltė taba i kairė"
+
+msgid "menu.movetab.right"
+msgstr "Pārkeltė taba i dešėnė"
+
+msgid "menu.split.swap"
+msgstr "Apmainītė vėituom"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Vėskuo sārašos"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Sārašos žīmu palē tagus"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Sārašos palē tagus"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Sārašos žīmū palē sokūrėma"
+
+msgid "menu.cut"
+msgstr "Ėškėrptė"
+
+msgid "menu.select.clear"
+msgstr "Nabžīmietė"
+
+msgid "menu.reopentab"
+msgstr "Atvertė paskutini ožverta taba"
+
+msgid "menu.open.external"
+msgstr "Atvertė kėtuo pruogramuo"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Atšauktė"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Ruodītė sārašus"
+
+msgid "menu.viewformat.plain"
+msgstr "Veizietė kāp paprasta teksta"
+
+msgid "menu.viewformat.gemini"
+msgstr "Veizietė kāp Gemtext'a"
+
+msgid "menu.email"
+msgstr "Sosėsėiktė al. laiško"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Nukuopėjoutė poslapė nūruoda"
+
+msgid "menu.identity.notactive"
+msgstr "Nie aktīvė identėteta"
+
+msgid "menu.snippet.add"
+msgstr "Pažīmieta i ėškarpa…"
+
+msgid "menu.reload"
+msgstr "Pārkrautė puslapi"
+
+msgid "menu.tools"
+msgstr "Rakondā"
+
+msgid "menu.page.import"
+msgstr "Impuortoutė vėsas nūruodas kāp žīmas…"
+
+msgid "menu.page.visitlinks"
+msgstr "Pažīmietė vėsas nūruodas lonkītuoms"
+
+msgid "menu.foldall"
+msgstr "Vėskon soskleistė"
+
+msgid "menu.unfoldall"
+msgstr "Vėskon ėšskleistė"
+
+msgid "menu.userdata"
+msgstr "Nauduotuojė doumenis"
+
+msgid "menu.paste.snippet"
+msgstr "Idietė rašliavuos šmuota"
+
+msgid "menu.search"
+msgstr "Ėiškuotė"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Pridietė žīma i papkė:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Pārkeltė žīma i papkė:"
