@@ -1,4 +1,4 @@
-/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021-2024 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -191,11 +191,10 @@ static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     return items;
 }
 
-static void enableUploadButton_UploadWidget_(iUploadWidget *d, iBool enable) {
+static void enableUploadPanelButton_UploadWidget_(iUploadWidget *d, iBool enable) {
     if (isUsingPanelLayout_Mobile()) {
         iWidget *actions = findChild_Widget(as_Widget(d), "navi.actions");
-        setFlags_Widget(lastChild_Widget(actions), hidden_WidgetFlag, !enable);
-        refresh_Widget(actions);
+        showCollapsed_Widget(lastChild_Widget(actions), enable);
     }
     else {
         /* Not on used in the desktop layout. */
@@ -260,7 +259,8 @@ static int font_UploadWidget_(const iUploadWidget *d, enum iFontStyle style) {
 }
 
 static iWidget *acceptButton_UploadWidget_(iUploadWidget *d) {
-    return lastChild_Widget(findChild_Widget(as_Widget(d), "dialogbuttons"));
+    return lastChild_Widget(findChild_Widget(
+        as_Widget(d), isUsingPanelLayout_Mobile() ? "navi.actions" : "dialogbuttons"));
 }
 
 static iInputWidgetHighlight gemtextHighlighter_UploadWidget_(const iInputWidget *input,
@@ -406,7 +406,7 @@ static void updateButtonExcerpts_UploadWidget_(iUploadWidget *d) {
             truncate_String(excerpt, maxLen);
             appendChar_String(excerpt, 0x2026 /* ellipsis */);
         }
-        replace_String(excerpt, "\n", uiTextAction_ColorEscape return_Icon restore_ColorEscape);
+        replace_String(excerpt, "\n", uiTextAction_ColorEscape return_Icon restore_ColorEscape " ");
         trim_String(excerpt);
         if (isEmpty_String(excerpt)) {
             setCStr_String(excerpt, "${dlg.upload.text}");
@@ -508,12 +508,13 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { NULL }
         };
         const iMenuItem titanItems[] = {
-            { "title id:heading.upload" },
+            { "title id:upload.title text:${heading.upload}" },
             { "panel id:dlg.upload.url buttonid:dlg.upload.urllabel icon:0x1f310 text:", 0, 0, (const void *) urlItems },
+            { "label id:upload.progress collapse:1" },
             { "heading text:${heading.upload.id}" },
             { "dropdown id:upload.id noheading:1 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
             { "input id:upload.token hint:hint.upload.token.long noheading:1" },
-            { "radio horizontal:1 id:upload.type", 0, 0, (const void *) uploadTypeItems },
+            { "radio horizontal:1 id:upload.type collapse:1", 0, 0, (const void *) uploadTypeItems },
             { "panel id:dlg.upload.text collapse:1 icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
             { "panel id:dlg.upload.file collapse:1 icon:0x1f4c1", 0, 0, (const void *) titanFileItems },
             { NULL }
@@ -563,15 +564,18 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         d->mime          = findChild_Widget(w, "upload.mime");
         d->token         = findChild_Widget(w, "upload.token");
         d->counter       = findChild_Widget(w, "upload.counter");
+        d->editLabel     = findChild_Widget(w, "upload.progress");
+        showCollapsed_Widget(findChild_Widget(w, "upload.type"), iTrue);
+        setPadding_Widget(as_Widget(d->editLabel), 0, 3 * gap_UI, 0, 0);
         /* Style the Identity dropdown. */ {
             setFlags_Widget(findChild_Widget(w, "upload.id"), alignRight_WidgetFlag, iFalse);
             setFlags_Widget(findChild_Widget(w, "upload.id"), alignLeft_WidgetFlag, iTrue);
         }
         setFlags_Widget(findChild_Widget(w, "upload.type.text"), selected_WidgetFlag, iTrue);
         showCollapsed_Widget(findChild_Widget(w, "dlg.upload.file.button"), iFalse);
-        if (isPortraitPhone_App()) {
-            enableUploadButton_UploadWidget_(d, iFalse);
-        }
+        // if (isPortraitPhone_App()) {
+        // }
+        enableUploadPanelButton_UploadWidget_(d, iTrue);
     }
     else {
         const float aspectRatio = isTerminal_Platform() ? 0.6f : 1.0f;
@@ -872,7 +876,9 @@ static void updateUrlPanelButton_UploadWidget_(iUploadWidget *d) {
 }
 
 static void showOrHideProgressTab_UploadWidget_(iUploadWidget *d, iBool show) {
-    if (deviceType_App() != desktop_AppDeviceType) {
+    if (isUsingPanelLayout_Mobile()) {
+        showCollapsed_Widget(as_Widget(d->editLabel), show);
+        enableUploadPanelButton_UploadWidget_(d, !show);
         return;
     }
     iWidget *buttons[3];
@@ -955,8 +961,10 @@ static void fetchEditableResource_UploadWidget_(iUploadWidget *d, const iString 
     }
     setupRequest_UploadWidget_(d, editUrl, d->editRequest);
     delete_String(editUrl);
-    updateText_LabelWidget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 2)),
-                           url_GmRequest(d->editRequest));
+    if (d->tabs) {
+        updateText_LabelWidget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 2)),
+                               url_GmRequest(d->editRequest));
+    }
     submit_GmRequest(d->editRequest);
 }
 
@@ -1010,9 +1018,6 @@ static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t 
     setText_InputWidget(d->mime, &resp->meta);
     if (startsWithCase_String(&resp->meta, "text/")) {
         setText_UploadWidget(d, collect_String(newBlock_String(&resp->body)));
-        //setText_InputWidget(d->input, collect_String(newBlock_String(&resp->body)));
-        //deselect_InputWidget(d->input);
-        //moveCursorHome_InputWidget(d->input);
         showOrHideProgressTab_UploadWidget_(d, iFalse);
     }
     else {
@@ -1033,6 +1038,7 @@ static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t 
 }
 
 static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint16_t overridePort) {
+    iWidget *w = as_Widget(d);
     /* Any ongoing edit request must be first cancelled. */
     if (d->editRequest) {
         cancel_GmRequest(d->editRequest);
@@ -1071,10 +1077,17 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
             setTextCStr_InputWidget(d->path, ""); /* might as well show the hint */
         }
         if (isEdit) {
-            setTextCStr_LabelWidget(findChild_Widget(&d->widget, "upload.title"),
+            setTextCStr_LabelWidget(findChild_Widget(w, "upload.title"),
                                     "${heading.upload.edit}");
-            setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
-                                    "${dlg.upload.edit}");
+            if (!isUsingPanelLayout_Mobile()) {
+                setTextCStr_LabelWidget((iLabelWidget *) acceptButton_UploadWidget_(d),
+                                        uiTextAction_ColorEscape "${dlg.upload.edit}");
+            }
+            else {
+                showCollapsed_Widget(findChild_Widget(w, "upload.type"), iFalse);
+                setFlags_Widget(findChild_Widget(w, "dlg.upload.urllabel"), disabled_WidgetFlag, iTrue);
+                setChevron_LabelWidget(findChild_Widget(w, "dlg.upload.urllabel"), iFalse);
+            }
             fetchEditableResource_UploadWidget_(d, requestUrl_UploadWidget_(d));
         }
     }
@@ -1230,7 +1243,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             setFocus_Widget(NULL);
         }
         if (isPortraitPhone_App()) {
-            enableUploadButton_UploadWidget_(d, panelIndex == iInvalidPos);
+            enableUploadPanelButton_UploadWidget_(d, panelIndex == iInvalidPos);
         }
         refresh_Widget(d->input);
         return iFalse;
