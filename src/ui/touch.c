@@ -128,13 +128,21 @@ static iTouchState *touchState_(void) {
         d->pinches        = new_Array(sizeof(iPinch));
         d->moms           = new_Array(sizeof(iMomentum));
         d->lastMomTime    = 0.0;
-        d->stepDurationMs = 1000.0 / 60.0; /* TODO: Ask SDL about the display refresh rate. */
 #if defined (iPlatformAppleMobile)
         d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
+#else
+        /* Ask SDL about the display refresh rate. */ {
+            SDL_DisplayMode dispMode;
+            SDL_GetDesktopDisplayMode(0, &dispMode);
+            if (dispMode.refresh_rate == 0) {
+                dispMode.refresh_rate = 60;
+            }
+            d->stepDurationMs = 1000.0 / (double) dispMode.refresh_rate;
+        }
 #endif
         d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
 #if defined (iPlatformAndroidMobile)
-        d->momFrictionPerStep = 10 * gap_UI;
+        d->momFrictionPerStep = 9 * gap_UI;
 #endif
     }
     return d;

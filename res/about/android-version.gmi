@@ -7,12 +7,14 @@
 # Release notes
 
 ## 1.18 (Beta 32)
+* Fixed scrolling momentum when display refresh rate is not 60 Hz.
+* Fixed incorrect input widget being focused in Upload dialog's URL path panel.
 * Fixed installing font files. All fonts were mistakenly thought to be already installed, so no option to install was offered.
 
 ## 1.18 (Beta 31)
 New features:
 * Support for sending Misfin messages. "misfin://" links are opened in the upload dialog. You must import a Misfin identity before you can send a message.
-* Misfin: Identity manager indicates which identities are for Misfin.
+* Misfin: Identity list indicates which identities are for Misfin.
 * Support for the Guppy protocol. Contributed by Dima Krasner.
 * Titan: Support for the "edit" parameter in opened Titan links. The target's contents are downloaded and displayed in the upload dialog's text editor. After editing the contents are uploaded back to the server.
 * Option to disable all TLS security warnings.
