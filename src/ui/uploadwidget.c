@@ -1272,8 +1272,8 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         updateInputMaxHeight_UploadWidget_(d);
     }
     else if (equal_Command(cmd, "panel.changed")) {
-        const size_t panelIndex = currentPanelIndex_Mobile(w);
-        if (panelIndex == 0) {
+        const size_t panelIndex = currentPanelIndex_Mobile(w); /* TODO: Should ask ID/name, not index. */
+        if (panelIndex == (d->protocol == titan_UploadProtocol ? 1 : 0)) {
             setFocus_Widget(as_Widget(d->input));
         }
         else {
@@ -1417,10 +1417,6 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             isText = (tabIndex == 0);
         }
         else {
-            // const size_t panelIndex = currentPanelIndex_Mobile(w);
-            // if (panelIndex != iInvalidPos) {
-            //     return iTrue;
-            // }
             isText = isVisible_Widget(findChild_Widget(w, "dlg.upload.text.button"));
         }
         if (!isText && !fileExists_FileInfo(&d->filePath)) {
