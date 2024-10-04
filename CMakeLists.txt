@@ -29,9 +29,9 @@ if (IOS)
     set (IOS_BUILD_DATE "2024-09-30")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.17)
-    set (ANDROID_BUILD_VERSION b30)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2024-07-07")
+    set (PROJECT_VERSION 1.18)
+    set (ANDROID_BUILD_VERSION b31)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2024-10-04")
 endif ()
 
 # Load modules from the source tree
