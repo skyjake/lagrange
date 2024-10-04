@@ -416,10 +416,13 @@ static void updateButtonExcerpts_UploadWidget_(iUploadWidget *d) {
         /* Also update the file button. */
         panelButton = findChild_Widget(as_Widget(d), "dlg.upload.file.button");
         if (!isEmpty_String(&d->filePath)) {
+            const iString *mime = text_InputWidget(d->mime);
             updateTextCStr_LabelWidget(panelButton,
-                                       format_CStr("%s (%s)",
+                                       format_CStr("%s%s%s%s",
                                                    formatCStrs_Lang("num.bytes.n", d->fileSize),
-                                                   cstr_String(text_InputWidget(d->mime))));
+                                                   !isEmpty_String(mime) ? " (" : "",
+                                                   cstr_String(mime),
+                                                   !isEmpty_String(mime) ? ")" : ""));
         }
         else {
             updateTextCStr_LabelWidget(panelButton, "${dlg.upload.file}");
@@ -490,16 +493,12 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         };
         const iMenuItem textItems[] = {
             { "navi.menubutton text:\u00a0\u00a0\u00a0" midEllipsis_Icon "\u00a0\u00a0\u00a0\u00a0", 0, 0, (const void *) ellipsisItems },
-            // { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.text" },
             { "input id:upload.text noheading:1" },
             { NULL }
         };
         const iMenuItem titanFileItems[] = {
-            // { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.file" },
-            { "padding arg:0.667" },
-            { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },
             { "heading id:upload.file.name" },
             { format_CStr("label id:upload.filepathlabel font:%d text:\u2014", infoFont) },
             { "heading id:upload.file.size" },
@@ -507,6 +506,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { "padding" },
             { "input id:upload.mime" },
             { "label id:upload.counter text:" },
+            { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },
             { NULL }
         };
         const iMenuItem urlItems[] = {
@@ -534,31 +534,28 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         };
         const iMenuItem misfinItems[] = {
             { "title id:heading.upload.misfin" },
-            { "heading text:${upload.from}" },
-            { "dropdown id:upload.id noheading:1 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
-            { "heading text:${upload.to}" },
-            { "input id:upload.path noheading:1" },
+            { "input id:upload.path text:${upload.to}" },
+            { "dropdown id:upload.id text:${upload.from}", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
+            { "padding" },
             { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
             { NULL }
         };
         const iMenuItem spartanFileItems[] = {
-            // { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.file" },
-            { "padding arg:0.667" },
-            { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },
             { "heading id:upload.file.name" },
             { format_CStr("label id:upload.filepathlabel font:%d text:\u2014", infoFont) },
             { "heading id:upload.file.size" },
             { format_CStr("label id:upload.filesizelabel font:%d text:\u2014", infoFont) },
             { "label id:upload.counter text:" },
+            { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },
             { NULL }
         };
         const iMenuItem spartanItems[] = {
             { "title id:heading.upload.spartan" },
-            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
-            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) spartanFileItems },
-            { "heading id:upload.url" },
             { format_CStr("label id:upload.info font:%d", infoFont) },
+            { "radio horizontal:1 id:upload.type collapse:1", 0, 0, (const void *) uploadTypeItems },
+            { "panel id:dlg.upload.text collapse:1 icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.file collapse:1 icon:0x1f4c1", 0, 0, (const void *) spartanFileItems },
             { NULL }
         };
         initPanels_Mobile(w,
@@ -767,8 +764,10 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             setBackupFileName_InputWidget(d->input, "misfinbackup");
             setHint_InputWidget(d->input, "${hint.upload.misfin}");
             setFlags_Widget(findChild_Widget(w, "misfin.send.copy"), fixedWidth_WidgetFlag, iTrue);
-            iLabelWidget *fileTabButton = tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0));
-            setFlags_Widget((iWidget *) fileTabButton, disabled_WidgetFlag, iTrue);
+            if (d->tabs) {
+                iLabelWidget *fileTabButton = tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0));
+                setFlags_Widget((iWidget *) fileTabButton, disabled_WidgetFlag, iTrue);
+            }
             setToggle_Widget(findChild_Widget(w, "misfin.self.copy"), prefs_App()->misfinSelfCopy);
             break;
         }
@@ -879,7 +878,7 @@ static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
 }
 
 static void updateUrlPanelButton_UploadWidget_(iUploadWidget *d) {
-    if (isUsingPanelLayout_Mobile()) {
+    if (isUsingPanelLayout_Mobile() && d->protocol == titan_UploadProtocol) {
         iLabelWidget *urlPanelButton = findChild_Widget(as_Widget(d), "dlg.upload.urllabel");
         setFlags_Widget(as_Widget(urlPanelButton), fixedHeight_WidgetFlag, iTrue);
         setWrap_LabelWidget(urlPanelButton, iTrue);
@@ -965,6 +964,7 @@ static void setupRequest_UploadWidget_(const iUploadWidget *d, const iString *ur
 
 static void fetchEditableResource_UploadWidget_(iUploadWidget *d, const iString *url) {
     showOrHideProgressTab_UploadWidget_(d, iTrue);
+    enableUploadPanelButton_UploadWidget_(d, iFalse);
     iAssert(d->editRequest == NULL);
     d->editRequest = new_GmRequest(certs_App());
     iAssert(endsWith_Rangecc(urlPath_String(&d->originalUrl), ";edit")); /* was checked earlier */
@@ -979,6 +979,9 @@ static void fetchEditableResource_UploadWidget_(iUploadWidget *d, const iString 
     if (d->tabs) {
         updateText_LabelWidget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 2)),
                                url_GmRequest(d->editRequest));
+    }
+    else {
+        updateTextCStr_LabelWidget(d->editLabel, "${doc.fetching}");
     }
     submit_GmRequest(d->editRequest);
 }
@@ -1029,8 +1032,10 @@ static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t 
         setWrap_LabelWidget(d->editLabel, iTrue);
         if (isUsingPanelLayout_Mobile()) {
             setText_LabelWidget(d->editLabel,
-                                   collectNewFormat_String(errorFormat, icon, title, msg));
+                                collectNewFormat_String(errorFormat, icon, title, msg));
             arrange_Widget(as_Widget(d));
+            refresh_Widget(d->editLabel);
+            refresh_Widget(d);
         }
         else {
             updateText_LabelWidget(d->editLabel,
@@ -1274,7 +1279,8 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         else {
             setFocus_Widget(NULL);
         }
-        if (isPortraitPhone_App() && isVisible_Widget(findChild_Widget(w, "upload.type"))) {
+        if (isPortraitPhone_App() && (d->protocol == misfin_UploadProtocol ||
+                                      isVisible_Widget(findChild_Widget(w, "upload.type")))) {
             /* Don't upload from subpages in non-edit mode. */
             enableUploadPanelButton_UploadWidget_(d, panelIndex == iInvalidPos);
         }

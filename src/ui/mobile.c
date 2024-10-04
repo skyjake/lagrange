@@ -989,12 +989,18 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
                 makePanelItem_Mobile(topPanel, &(iMenuItem){ "padding" });
                 needPadding = iFalse;
             }
-            makePanelItem_Mobile(
-                topPanel,
-                &(iMenuItem){ format_CStr("button text:" uiTextAction_ColorEscape "%s", act->label),
-                              0,
-                              0,
-                              act->command });
+            const iBool isToggle = startsWith_CStr(label, "!");
+            if (act->command || isToggle) {
+                makePanelItem_Mobile(
+                    topPanel,
+                    &(iMenuItem){ isToggle
+                                      ? format_CStr("toggle id:%s", act->label + 1)
+                                      : format_CStr("button text:" uiTextAction_ColorEscape "%s",
+                                                    act->label),
+                                  0,
+                                  0,
+                                  isToggle ? act->label + 1 : act->command });
+            }
         }
     }
     /* Finalize the layout. */
