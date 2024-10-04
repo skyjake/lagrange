@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.18 (Beta 32)
+* Fixed installing font files. All fonts were mistakenly thought to be already installed, so no option to install was offered.
+
 ## 1.18 (Beta 31)
 New features:
 * Support for sending Misfin messages. "misfin://" links are opened in the upload dialog. You must import a Misfin identity before you can send a message.

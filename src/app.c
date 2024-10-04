@@ -1570,6 +1570,10 @@ const iString *dataDir_App(void) {
     return collect_String(cleanedCStr_Path(dataDir_App_()));
 }
 
+const iString *fontsDir_App(void) {
+    return collect_String(cleanedCStr_Path(concatPath_CStr(dataDir_App_(), "fonts")));
+}
+
 const iString *downloadDir_App(void) {
     return collect_String(cleaned_Path(&app_.prefs.strings[downloadDir_PrefsString]));
 }

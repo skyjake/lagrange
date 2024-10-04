@@ -1376,7 +1376,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     iRangecc name        = baseNameSep_Path(decUrl, "/");
                     iBool    isInstalled = iFalse;
                     if (startsWith_String(collect_String(localFilePathFromUrl_String(d->mod.url)),
-                                          cstr_String(dataDir_App()))) {
+                                          cstr_String(fontsDir_App()))) {
                         isInstalled = iTrue;
                     }
                     appendCStr_String(&str, "## ");

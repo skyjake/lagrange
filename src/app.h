@@ -119,6 +119,7 @@ const iString *     downloadPathForUrl_App      (const iString *url, const iStri
 
 const iString *     execPath_App                (void);
 const iString *     dataDir_App                 (void);
+const iString *     fontsDir_App                (void);
 const iString *     downloadDir_App             (void);
 const iString *     debugInfo_App               (void);
 const iCommandLine *commandLine_App             (void);
