@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-10-03 04:07+0000\n"
+"PO-Revision-Date: 2024-10-06 10:28+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -737,15 +737,15 @@ msgstr "Kapı ayarla"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Düz metin karşıya yükle"
+msgstr "Karşıya yüklenecek metin gir"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Dosya karşıya yükle"
+msgstr "Seçili dosya yok"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Dosya seç"
+msgstr "Dosya seç…"
 
 msgid "heading.translate"
 msgstr "Sayfayı çevir"
@@ -2136,7 +2136,7 @@ msgid "menu.page.upload.edit"
 msgstr "Sayfayı Titan ile düzenle…"
 
 msgid "heading.upload.id"
-msgstr "Kimlik doğrulama"
+msgstr "Kimlik bilgileri"
 
 msgid "menu.upload.export"
 msgstr "Metni dışa aktar"
@@ -2808,7 +2808,7 @@ msgid "heading.upload.edit.error"
 msgstr "Düzenleme başarısız"
 
 msgid "dlg.upload.edit"
-msgstr "Düzenle"
+msgstr "Gönder"
 
 # Only shown in a message box when CCing self fails.
 msgid "misfin.cc"
