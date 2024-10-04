@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "labelwidget.h"
 #include "listwidget.h"
+#include "uploadwidget.h"
+#include "misfin.h"
 #include "../gmcerts.h"
 #include "../app.h"
 
@@ -39,6 +41,7 @@ struct Impl_CertItem {
     uint32_t  id;
     int       indent;
     iChar     icon;
+    iBool     isMisfin;
     iBool     isBold;
     iString   label;
     iString   meta;
@@ -46,10 +49,11 @@ struct Impl_CertItem {
 
 void init_CertItem(iCertItem *d) {
     init_ListItem(&d->listItem);
-    d->id     = 0;
-    d->indent = 0;
-    d->icon   = 0;
-    d->isBold = iFalse;
+    d->id       = 0;
+    d->indent   = 0;
+    d->icon     = 0;
+    d->isMisfin = iFalse;
+    d->isBold   = iFalse;
     init_String(&d->label);
     init_String(&d->meta);
 }
@@ -87,6 +91,7 @@ static iGmIdentity *menuIdentity_CertListWidget_(const iCertListWidget *d) {
 }
 
 static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
+    iAssert(d->contextItem);
     iArray *items = collectNew_Array(sizeof(iMenuItem));
     const iString *docUrl = url_DocumentWidget(document_App());
     size_t firstIndex = 0;
@@ -94,11 +99,13 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         pushBack_Array(items, &(iMenuItem){ format_CStr("```%s", cstr_String(docUrl)) });
         firstIndex = 1;
     }
+    /* Used URLs. */
+    const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
     const iMenuItem ctxItems[] = {
         { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
         { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
         { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
-        { "---", 0, 0, NULL },
+        { "---" },
         { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
         { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
 #if defined (iPlatformAppleDesktop)
@@ -108,16 +115,14 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         { magnifyingGlass_Icon " ${menu.reveal.filemgr}", 0, 0, "ident.reveal" },
 #endif
         { export_Icon " ${ident.export}", 0, 0, "ident.export" },
-        { "---", 0, 0, NULL },
+        { "---" },
         { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
     };
     pushBackN_Array(items, ctxItems, iElemCount(ctxItems));
-    /* Used URLs. */
-    const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
     if (ident) {
         size_t insertPos = firstIndex + 3;
         if (!isEmpty_StringSet(ident->useUrls)) {
-            insert_Array(items, insertPos++, &(iMenuItem){ "---", 0, 0, NULL });
+            insert_Array(items, insertPos++, &(iMenuItem){ "---" });
         }
         iBool usedOnCurrentPage = iFalse;
         iConstForEach(StringSet, i, ident->useUrls) {
@@ -139,6 +144,16 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         }
         else {
             remove_Array(items, firstIndex);
+        }
+        if (d->contextItem->isMisfin) {
+            if (d->contextItem->isMisfin) {
+                insertN_Array(
+                    items,
+                    0,
+                    (iMenuItem[]){ { envelope_Icon " ${ident.sendmsg}", 0, 0, "ident.sendmsg" },
+                                   { "---" } },
+                    2);
+            }
         }
     }
     destroy_Widget(d->menu);
@@ -253,7 +268,11 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             }
             return iTrue;
         }
-        else if (isCommand_Widget(w, ev, "ident.pickicon")) {
+        else if (isCommand_Widget(w, ev, "ident.sendmsg")) {
+            const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
+            if (ident && isMisfin_GmIdentity(ident)) {
+                openMessageComposer_Misfin(NULL, ident);
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.reveal")) {
@@ -445,6 +464,7 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
         item->id = (uint32_t) index_PtrArrayConstIterator(&i);
         item->icon = 0x1f464; /* person */
         set_String(&item->label, name_GmIdentity(ident));
+        item->isMisfin = isMisfin_GmIdentity(ident);
         iDate until;
         validUntil_TlsCertificate(ident->cert, &until);
         const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
@@ -458,12 +478,27 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
             ident->flags & temporary_GmIdentityFlag
                 ? cstr_Lang("ident.temporary")
                 : cstrCollect_String(format_Date(&until, cstr_Lang("ident.expiry")));
+        if (item->isMisfin) {
+            //iString *addr = misfinIdentity_GmIdentity(ident, &item->meta);
+            //set_String(&item->label, addr);
+            //delete_String(addr);
+            item->icon = 0x1f4e7; /* envelope */
+            clear_String(&item->meta);
+            // set_String(&item->meta, &ident->notes);
+            // appendFormat_String(&item->meta, "\n%s", expiry);
+        }
         if (isEmpty_String(&ident->notes)) {
-            appendFormat_String(&item->meta, "\n%s", expiry);
+            if (!isEmpty_String(&item->meta)) {
+                appendCStr_String(&item->meta, "\n");
+            }
+            appendFormat_String(&item->meta, "%s", expiry);
         }
         else {
+            if (!isEmpty_String(&item->meta)) {
+                appendCStr_String(&item->meta, " \u2014 ");
+            }
             appendFormat_String(&item->meta,
-                                " \u2014 %s\n%s%s",
+                                "%s\n%s%s",
                                 expiry,
                                 escape_Color(uiHeading_ColorId),
                                 cstr_String(&ident->notes));

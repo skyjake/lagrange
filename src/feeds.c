@@ -201,11 +201,18 @@ static iBool isUrlIgnored_FeedJob_(const iFeedJob *d, iRangecc url) {
 }
 
 static iBool parseResult_FeedJob_(iFeedJob *d) {
+    const enum iGmStatusCode statusCode = status_GmRequest(d->request);
     /* Returns true if the job is done and can be released. False means the job continues. */
-    if (category_GmStatusCode(status_GmRequest(d->request)) == categoryRedirect_GmStatusCode) {
+    if (category_GmStatusCode(statusCode) == categoryRedirect_GmStatusCode) {
+        const iString *dstUrl = absoluteUrl_String(&d->url, meta_GmRequest(d->request));
+        if (statusCode == redirectPermanent_GmStatusCode) {
+            if (updateUrls_Bookmark(bookmarks_App(), &d->url, dstUrl)) {
+                postCommand_App("bookmarks.changed");
+            }
+        }
         /* Set up a new request. */
         if (++d->numRedirect < 5) {
-            set_String(&d->url, meta_GmRequest(d->request));
+            set_String(&d->url, dstUrl);
             iRelease(d->request);
             submit_FeedJob_(d);
             return iFalse;
@@ -213,7 +220,7 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
         return iTrue;
     }
     /* TODO: Should tell the user if the request failed. */
-    if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
+    if (isSuccess_GmStatusCode(statusCode)) {
         iBeginCollect();
         iTime now;
         iTime perEntryAdjust;

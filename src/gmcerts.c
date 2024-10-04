@@ -181,6 +181,54 @@ iBool isUsedOnDomain_GmIdentity(const iGmIdentity *d, const iRangecc domain) {
     return iFalse;
 }
 
+iBool isMisfin_GmIdentity(const iGmIdentity *d) {
+    iString *ident = misfinIdentity_GmIdentity(d, NULL);
+    delete_String(ident);
+    return ident != NULL;
+}
+
+iString *misfinIdentity_GmIdentity(const iGmIdentity *d, iString *blurb_out) {
+    /* To quality as a Misfin identity, the certificate must have a mailbox UID and a
+       subject alt name specifying the hostname. */
+    iString *addr = NULL;
+    iStringList *alt = subjectAltNames_TlsCertificate(d->cert);
+    iConstForEach(StringList, i, alt) {
+        if (startsWith_String(i.value, "DNS:")) {
+            iString *subject = subject_TlsCertificate(d->cert);
+            iString uid;
+            iString cn;
+            init_String(&uid);
+            init_String(&cn);
+            iRangecc part = iNullRange;
+            while (nextSplit_Rangecc(range_String(subject), ", ", &part)) {
+                if (startsWith_Rangecc(part, "UID = ")) {
+                    setRange_String(&uid, (iRangecc){ part.start + 6, part.end });
+                }
+                else if (startsWith_Rangecc(part, "CN = ")) {
+                    setRange_String(&cn, (iRangecc){ part.start + 5, part.end });
+                }
+            }
+            if (!isEmpty_String(&uid)) {
+                addr = new_String();
+                set_String(addr, &uid);
+                appendCStr_String(addr, "@");
+                appendCStr_String(addr, cstr_String(i.value) + 4);
+                if (blurb_out) {
+                    set_String(blurb_out, &cn);
+                }
+            }
+            deinit_String(&cn);
+            deinit_String(&uid);
+            delete_String(subject);
+            if (addr) {
+                break;
+            }
+        }
+    }
+    iRelease(alt);
+    return addr;
+}
+
 void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
     if (use && isUsedOn_GmIdentity(d, url)) {
         return; /* Redudant. */
@@ -208,7 +256,7 @@ void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
                 deinit_String(used);
                 remove_ArrayIterator(&i);
             }
-        }        
+        }
     }
 }
 
@@ -227,11 +275,27 @@ const iString *findUse_GmIdentity(const iGmIdentity *d, const iString *url) {
 }
 
 const iString *name_GmIdentity(const iGmIdentity *d) {
-    iString *name = collect_String(subject_TlsCertificate(d->cert));
-    if (startsWith_String(name, "CN = ")) {
-        remove_Block(&name->chars, 0, 5);
+    if (!d) {
+        return collectNew_String();
     }
-    return name;
+    if (isMisfin_GmIdentity(d)) {
+        iString *blurb = new_String();
+        iString *addr = misfinIdentity_GmIdentity(d, blurb);
+        if (!isEmpty_String(blurb)) {
+            appendCStr_String(blurb, " ");
+        }
+        appendFormat_String(blurb, "<%s>", cstr_String(addr));
+        delete_String(addr);
+        return collect_String(blurb);
+    }
+    else {
+        iString *name = collect_String(subject_TlsCertificate(d->cert));
+        if (startsWith_String(name, "CN = ")) {
+            remove_Block(&name->chars, 0, 5);
+        }
+        return name;
+    }
+    return collectNew_String();
 }
 
 iDefineTypeConstruction(GmIdentity)
@@ -263,7 +327,7 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
                           cstrCollect_String(hexEncode_Block(&trust->fingerprint)));
             write_Stream(trusted, &line.chars);
         }
-        deinit_String(&line);        
+        deinit_String(&line);
     }
     if (identsMeta) {
         writeData_Stream(identsMeta, magicIdMeta_GmCerts_, 4);
@@ -274,7 +338,7 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
                 writeData_Stream(identsMeta, magicIdentity_GmCerts_, 4);
                 serialize_GmIdentity(ident, identsMeta);
             }
-        }        
+        }
     }
 }
 
@@ -294,7 +358,7 @@ static void save_GmCerts_(const iGmCerts *d) {
     iBeginCollect();
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, trustedFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        serialize_GmCerts(d, stream_File(f), NULL);        
+        serialize_GmCerts(d, stream_File(f), NULL);
     }
     iRelease(f);
     iEndCollect();
@@ -342,7 +406,7 @@ static void loadIdentityCertsAndDiscardInvalid_GmCerts_(iGmCerts *d) {
             delete_GmIdentity(ident);
             remove_PtrArrayIterator(&j);
         }
-    }    
+    }
 }
 
 iBool deserializeIdentities_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod method) {
@@ -389,7 +453,7 @@ static void loadIdentities_GmCerts_(iGmCerts *d) {
     }
     else {
         /* In any case, load any .crt/.key files that may be present in the "idents" dir. */
-        loadIdentityCertsAndDiscardInvalid_GmCerts_(d);        
+        loadIdentityCertsAndDiscardInvalid_GmCerts_(d);
     }
 }
 
@@ -428,7 +492,7 @@ iGmIdentity *findIdentityFuzzy_GmCerts(iGmCerts *d, const iString *fuzzy) {
         if (found) {
             break;
         }
-    }    
+    }
     return found;
 }
 
@@ -479,6 +543,9 @@ iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int dep
     if (depth != 0) {
         /* We only check the primary certificate. */
         return iTrue;
+    }
+    if (!prefs_App()->warnTlsSecurity) {
+        return iTrue; /* User wants to disregard security concerns. */
     }
     const iAddress *address = address_TlsRequest(request);
     iRangecc        domain  = range_String(hostName_Address(address));
@@ -546,7 +613,7 @@ iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
 
 static void makeTrustKey_(iRangecc domain, uint16_t port, iString *key_out) {
     punyEncodeDomain_Rangecc(domain, key_out);
-    appendFormat_String(key_out, ";%u", port ? port : GEMINI_DEFAULT_PORT);    
+    appendFormat_String(key_out, ";%u", port ? port : GEMINI_DEFAULT_PORT);
 }
 
 iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTlsCertificate *cert) {
@@ -648,6 +715,11 @@ const iGmIdentity *constIdentity_GmCerts(const iGmCerts *d, unsigned int id) {
 const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
     if (isEmpty_String(url)) {
         return NULL;
+    }
+    /* Get rid of the default port for consistent formatting. */ {
+        iString *clean = copy_String(url);
+        stripDefaultUrlPort_String(clean);
+        url = collect_String(clean);
     }
     lock_Mutex(d->mtx);
     const iGmIdentity *found = NULL;

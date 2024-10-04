@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2024-06-30 21:08+0000\n"
+"PO-Revision-Date: 2024-09-08 03:33+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1676,7 +1676,7 @@ msgid "upload.file.name"
 msgstr "Nómine de file:"
 
 msgid "upload.file.drophere"
-msgstr "(fa cader un file in li fenestre)"
+msgstr "provide un nómine o fa cader un file in li fenestre"
 
 msgid "upload.file.size"
 msgstr "Grandore de file:"
@@ -2306,7 +2306,7 @@ msgid "prefs.markdown.viewsource"
 msgstr "Viser Markdown quam li fonte:"
 
 msgid "prefs.tui.simple"
-msgstr "Simplic caracteres:"
+msgstr "Obligat simplic caracteres:"
 
 msgid "feeds.entry.markbelowread"
 msgstr "Marcar elementes ad-infra quam leet"
@@ -2741,3 +2741,93 @@ msgstr "Copiar li SHA-256 del certificate"
 # Keyboard shortcut for the terminal. Should be very short or abbreviated.
 msgid "term.hover"
 msgstr "A ligament"
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "On ne posse redacter ti tip de ressurse in ti application."
+
+msgid "dlg.upload.misfin.noident"
+msgstr "On deve importar un certificate de Misfin ante que inviar missages."
+
+msgid "heading.upload.error.file"
+msgstr "Ínvalid file"
+
+msgid "upload.error.directory"
+msgstr "On posse cargar solmen files e ne fólderes."
+
+msgid "prefs.warn.security"
+msgstr "Avises de securitá de TLS:"
+
+msgid "heading.upload.misfin"
+msgstr "Missage Misfin"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Null identitás de Misfin"
+
+msgid "heading.misfin.ok"
+msgstr "Li missage sta inviat"
+
+msgid "misfin.success"
+msgstr "Li message sta inviat successiosimen."
+
+msgid "misfin.redirect"
+msgstr "Li receptor demanda que li message esset inviat a un altri adresse."
+
+msgid "misfin.failure"
+msgstr "Un errore evenit inviante li missage."
+
+msgid "misfin.needcert"
+msgstr "On deve indentificar se self med un certificate de Misfin."
+
+msgid "misfin.unauth"
+msgstr "Vu ne es permisset a inviar missages a ti receptor."
+
+msgid "misfin.badcert"
+msgstr "Vor certificate de Misfin es ínvalid."
+
+msgid "upload.from"
+msgstr "De:"
+
+msgid "upload.to"
+msgstr "A:"
+
+msgid "hint.upload.misfin"
+msgstr "tippa un missage"
+
+msgid "upload.file.path"
+msgstr "Rute de file:"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Inviar li missage"
+
+msgid "heading.upload.edit"
+msgstr "Redacter med Titan"
+
+msgid "dlg.upload.edit.error"
+msgstr "Ne successat descargar li contenete del redactibil ressurse."
+
+msgid "heading.upload.edit.error"
+msgstr "Redaction ne successat"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Inviante un copie por mi"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Verificante li receptor"
+
+msgid "misfin.changed"
+msgstr ""
+"Vor certificate de Misfin ne corresponde a quel es expectat del receptor."
+
+msgid "misfin.unknown"
+msgstr "Ne successat communicar con li servitor."
+
+msgid "dlg.upload.edit"
+msgstr "Redacter"
+
+msgid "ident.sendmsg"
+msgstr "Inviar quam…"
+
+msgid "misfin.self.copy"
+msgstr "Inviar un copie a me"

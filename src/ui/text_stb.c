@@ -1289,7 +1289,7 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                 subpixel = 1.0f + subpixel;
             }
             const int hoff = enableHalfPixelGlyphs_Text ? (int) (subpixel / offsetStep_Glyph_()) : 0;
-            if (ch == 0x3001 || ch == 0x3002) {
+            if (ch == 0x3001 || ch == 0x3002) { /* Ideographic Comma and Full Stop */
                 /* Vertical misalignment?? */
                 if (yOffset == 0.0f) {
                     /* Move down to baseline. Why doesn't HarfBuzz do this? */

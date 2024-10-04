@@ -104,10 +104,12 @@ iRegExp *       newGemtextLink_RegExp   (void);
 
 #define GEMINI_DEFAULT_PORT         ((uint16_t) 1965)
 #define GEMINI_DEFAULT_PORT_CSTR    "1965"
+#define MISFIN_DEFAULT_PORT         ((uint16_t) 1958)
 #define URL_RESERVED_CHARS          ":/?#[]@!$&'()*+,;=" /* RFC 3986 */
 
 struct Impl_Url {
     iRangecc scheme;
+    iRangecc user;
     iRangecc host;
     iRangecc port;
     iRangecc path;
@@ -124,11 +126,13 @@ iRangecc        urlDirectory_String     (const iString *); /* without a file nam
 uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
+iRangecc        urlPath_String          (const iString *);
 const iBlock *  urlThemeSeed_String     (const iString *);
 const iBlock *  urlPaletteSeed_String   (const iString *);
 
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iBool           isLikelyUrl_String      (const iString *);
+iBool           isTitanUrl_String       (const iString *);
 iBool           isKnownScheme_Rangecc   (iRangecc scheme); /* any URI scheme */
 iBool           isKnownUrlScheme_Rangecc(iRangecc scheme); /* URL schemes only */
 void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
@@ -139,6 +143,7 @@ const iString * urlFragmentStripped_String(const iString *);
 const iString * urlQueryStripped_String (const iString *);
 void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
+iString *       withUrlParameters_String(const iString *d, ... /* key, value */); /* NULL key terminates; value can be NULL */
 void            urlEncodeQuery_String   (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);

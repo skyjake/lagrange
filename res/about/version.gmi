@@ -6,25 +6,52 @@
 ```
 # Release notes
 
+## 1.18.2
+* TUI: Fixed first-run bookmarks getting re-added on every launch.
+
+## 1.18.1
+* macOS: Fixed opening Misfin URIs externally via system handlers.
+* Windows: Register Lagrange as a "misfin://" URL handler.
+* TUI: Fixed potentially garbled output.
+* TUI: Only link Curses statically when using CMake option `ENABLE_STATIC`.
+* Updated UI translations.
+
 ## 1.18
 
 New features:
-* Opus audio playback using libopusfile. (Contributed by Martin Chang.)
+* Support for sending Misfin messages. "misfin://" links are opened in the upload dialog. You must import a Misfin identity before you can send a message.
+* Misfin: Identity sidebar indicates which identities are for Misfin.
+* Support for the Guppy protocol. Contributed by Dima Krasner.
+* Titan: Support for the "edit" parameter in opened Titan links. The target's contents are downloaded and displayed in the upload dialog's text editor. After editing the contents are uploaded back to the server.
+* Option to disable all TLS security warnings.
+* Opus audio playback using libopusfile (optional dependency). Contributed by Martin Chang.
 
 Changes and enhancements:
 * The Curses-based `clagrange` can be built in addition to the GUI, not only separately. Removed the TUI build script.
 * Improved UI focus navigation: arrow keys move focus to an adjacent widget.
 * Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
+* Bookmarked URLs are automatically updated after permanent redirection. (The original URL is still saved in bookmarks.ini.)
+* Line width expands dynamically (up to window size) to account for wide content like preformatted blocks and plain text lines.
+* The file path can be entered manually in the upload dialog. Previously only drag-and-drop was supported.
+* Right-clicking on the site banner shows a link context menu. (Linking to the capsule's root URL.)
+* Show a confirmation popup when saving something to the downloads folder.
 * Menubar: When opened via keyboard, reopen the most recently opened menu instead of "File".
 * The Return key is now a (hardcoded) keyboard shortcut for focusing the navbar URL field.
 * Page Information: Clarified meaning of "fingerprint". The type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
 * Updated UI symbols for "Go to Root", remote bookmarks, and the navbar bookmark indicator/button.
+* Gopher: Proper parsing of Telnet line types `8` and `T`.
 * Noto Emoji font updated to support Unicode 15.1.
 * TUI: Often needed keyboard shortcuts are shown in place of menubar when the menubar is inactive, to make the UI more approachable.
 * TUI: Improved UI layout, targeting a minimum resolution of 80x25.
 * TUI: Improved text-mode rendering of various widgets.
 
 Fixes:
+* Titan URLs were incorrectly opening the upload dialog when navigating through history.
+* Titan request in an open tab was resubmitted with empty content when launching the app.
+* Default Titan upload identity was sometimes chosen incorrectly; should match the active Gemini identity.
+* Upload dialog was missing a couple of UI strings for drag-and-drop errors.
+* Gopher: Gemtext formatting (headings, quotes, etc.) found on Gopher menu pages is now escaped so it doesn't unintentionally affect the visual presentation.
+* Gopher: Allow port number to be blank on `i` lines.
 * Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
 * Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
 * Incorrect event handling order with multiple windows when there is a focused widget.
@@ -32,6 +59,8 @@ Fixes:
 * Missing focus indication in empty lists and the Snippets list.
 * Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
 * Incorrect glyph spacing in a mixed-font preformatted block (fallback glyphs from different fonts).
+* Lede paragraph highlighting was misbehaving with monospace body font; now gets disabled.
+* Glyphs were sometimes partially cut off due to excessive background clearing on adjacent lines.
 * TUI: Color escapes were not applied when rendering.
 * TUI: Submenu chevron symbols were missing.
 * TUI: Potential hang when wrapping text.

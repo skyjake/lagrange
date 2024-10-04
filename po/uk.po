@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 10:53+0000\n"
-"PO-Revision-Date: 2023-10-24 20:14+0000\n"
+"PO-Revision-Date: 2024-08-09 16:06+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -692,7 +692,7 @@ msgid "dlg.ident.notes"
 msgstr "Примітки про %s:"
 
 msgid "ident.fingerprint"
-msgstr "Копіювати цифровий відбиток"
+msgstr "Копіювати SHA-256 відбиток"
 
 msgid "dlg.ident.delete"
 msgstr "Видалити ідентичність та її файли"
@@ -728,7 +728,7 @@ msgid "dlg.cert.trust"
 msgstr "Довіряти"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Копіювати відбиток"
+msgstr "Відбитки"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -2756,3 +2756,45 @@ msgstr "Синтаксичне підсвічування:"
 
 msgid "snip.accept"
 msgstr "Зберегти витяг"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Адр."
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "- Вкладка"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Фокус"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Відкр."
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Конт. меню"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Гол. меню"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Біч. пан."
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "+ Вкладка"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "До посил."
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Копіювати SHA-256 відкритого ключа"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Копіювати SHA-256 сертифіката"

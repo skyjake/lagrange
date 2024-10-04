@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-11-13 20:14+0000\n"
+"PO-Revision-Date: 2024-09-21 22:35+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -370,7 +370,7 @@ msgid "dlg.cert.trust"
 msgstr "Fidati"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Copia Fingerprint"
+msgstr "Fingerprint"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -1096,7 +1096,7 @@ msgid "menu.edit.notes"
 msgstr "Modifica Note…"
 
 msgid "ident.fingerprint"
-msgstr "Copia Firma"
+msgstr "Copia Fingerprint SHA-256"
 
 msgid "ident.delete"
 msgstr "Elimina Identità…"
@@ -2749,3 +2749,72 @@ msgid "error.showutf8.msg"
 msgstr ""
 "Il formato della pagina non è stato riconosciuto ma è testo correttamente "
 "codificato in UTF-8."
+
+msgid "heading.upload.edit"
+msgstr "Modifica con Titan"
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Questo tipo di risorsa non può essere modificata nell'applicazione."
+
+msgid "heading.upload.edit.error"
+msgstr "Modifica Fallita"
+
+msgid "dlg.upload.edit.error"
+msgstr "Fallito lo scaricamento del contenuto della risorsa editabile."
+
+msgid "ident.sendmsg"
+msgstr "Manda messaggio come…"
+
+msgid "heading.upload.misfin"
+msgstr "Invia Messaggio Misfin"
+
+msgid "heading.upload.error.file"
+msgstr "File non valido"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Nessuna Identità Misfin"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"È necessario importare un certificato Misfin per poter inviare messaggi."
+
+msgid "heading.misfin.ok"
+msgstr "Messaggio Inviato"
+
+msgid "misfin.success"
+msgstr "Il tuo messaggio è stato inviato con successo."
+
+msgid "misfin.unauth"
+msgstr "Non sei autorizzato per inviare messaggi a questo destinatario."
+
+msgid "hint.upload.misfin"
+msgstr "scrivi un messaggio"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Mandando una Copia a Me Stesso"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Verificando il Destinatario"
+
+msgid "misfin.unknown"
+msgstr "Fallita la comunicazione con il server."
+
+msgid "upload.from"
+msgstr "Da:"
+
+msgid "upload.to"
+msgstr "A:"
+
+msgid "misfin.self.copy"
+msgstr "Mandami una copia"
+
+msgid "upload.file.path"
+msgstr "Percorso al file:"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Copia Chiave Pubblica SHA-256"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Copia lo SHA-256 del Certificato"

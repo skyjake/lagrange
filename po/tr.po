@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-05-10 12:09+0000\n"
+"PO-Revision-Date: 2024-09-08 03:33+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1218,14 +1218,14 @@ msgstr "Desteklenmeyen İçerik Türü"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Alınan üstbilgi Gemin protokol belirtimine uymuyor. Sunucu hata veriyor "
+"Alınan üstbilgi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
 "olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "error.badredirect"
 msgstr "Geçersiz Yeniden Yönlendirme"
 
 msgid "error.schemeredirect"
-msgstr "Şema Değiştiren Yeniden Yönlendirme"
+msgstr "Şema değiştiren yeniden yönlendirme"
 
 msgid "error.manyredirects"
 msgstr "Pek Çok Yeniden Yönlendirme"
@@ -1753,7 +1753,7 @@ msgid "hint.upload.text"
 msgstr "karşıya yüklenecek metni girin"
 
 msgid "upload.file.drophere"
-msgstr "(pencereye bir dosyayı sürükleyip bırakın)"
+msgstr "dosya yolu girin veya pencereye bir dosyayı sürükleyip bırakın"
 
 msgid "hint.upload.token"
 msgstr "sunucunun yönergelerine bakın"
@@ -2182,7 +2182,7 @@ msgid "menu.newwindow"
 msgstr "Yeni pencere"
 
 msgid "heading.sitespec"
-msgstr "Siteye Özel Ayarlar"
+msgstr "Siteye özel ayarlar"
 
 msgid "keys.sitespec"
 msgstr "Siteye özel ayarları göster"
@@ -2405,7 +2405,7 @@ msgstr ""
 "veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "prefs.tui.simple"
-msgstr "Yalın karakterler:"
+msgstr "ASCII karakter kümesini zorla:"
 
 msgid "prefs.evensplit"
 msgstr "Sekmeleri eşitçe böl:"
@@ -2785,3 +2785,93 @@ msgstr "Genel anahtarın SHA-256’sını kopyala"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Sertifikanın SHA-256’sını kopyala"
+
+msgid "upload.error.directory"
+msgstr "Yalnızca dosyalar yüklenebilir, dizinler değil."
+
+msgid "heading.upload.error.file"
+msgstr "Geçersiz dosya"
+
+msgid "upload.file.path"
+msgstr "Dosya yolu:"
+
+msgid "heading.upload.edit"
+msgstr "Titan ile düzenle"
+
+msgid "dlg.upload.edit.error"
+msgstr "Düzenlenebilir özkaynağın içeriği indirilemedi."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Bu türden özkaynak uygulamada düzenlenemiyor."
+
+msgid "heading.upload.edit.error"
+msgstr "Düzenleme başarısız"
+
+msgid "dlg.upload.edit"
+msgstr "Düzenle"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Kendime bir kopya gönderiliyor"
+
+msgid "misfin.changed"
+msgstr "Misfin sertifikanız, alıcı tarafından beklenenle eşleşmiyor."
+
+msgid "ident.sendmsg"
+msgstr "İletiyi farklı gönder…"
+
+msgid "heading.upload.misfin"
+msgstr "Misfin iletisi gönder"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Misfin kimliği yok"
+
+msgid "dlg.upload.misfin.noident"
+msgstr ""
+"İleti gönderebilmek için önce bir Misfin sertifikası içe aktarmalısınız."
+
+msgid "heading.misfin.ok"
+msgstr "İleti gönderildi"
+
+msgid "misfin.success"
+msgstr "İletiniz başarıyla gönderildi."
+
+msgid "misfin.redirect"
+msgstr "Alıcı, iletiyi başka bir adrese göndermek istiyor."
+
+msgid "misfin.failure"
+msgstr "İleti gönderilirken bir hata oluştu."
+
+msgid "misfin.needcert"
+msgstr "Bir Misfin sertifikası sağlayarak kendinizi tanıtmalısınız."
+
+msgid "misfin.unauth"
+msgstr "Bu alıcıya ileti göndermeye yetkiniz yok."
+
+msgid "misfin.badcert"
+msgstr "Misfin sertifikanız geçersiz."
+
+msgid "upload.from"
+msgstr "Kimden:"
+
+msgid "upload.to"
+msgstr "Kime:"
+
+msgid "hint.upload.misfin"
+msgstr "ileti girin"
+
+msgid "dlg.upload.sendmsg"
+msgstr "İletiyi gönder"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Alıcı doğrulanıyor"
+
+msgid "misfin.unknown"
+msgstr "Sunucuyla iletişim kurulamadı."
+
+msgid "prefs.warn.security"
+msgstr "TLS güvenlik uyarıları:"
+
+msgid "misfin.self.copy"
+msgstr "Bana bir kopya gönder"

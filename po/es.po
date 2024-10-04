@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2024-05-14 19:09+0000\n"
+"PO-Revision-Date: 2024-09-10 03:07+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1669,7 +1669,7 @@ msgid "upload.file.name"
 msgstr "Nombre de archivo:"
 
 msgid "upload.file.drophere"
-msgstr "(arrastre y suelte un archivo en esta ventana)"
+msgstr "escriba la ruta o arrastre y suelte un archivo en esta ventana"
 
 msgid "upload.file.size"
 msgstr "Tamaño de archivo:"
@@ -2398,7 +2398,7 @@ msgstr ""
 "Gemini."
 
 msgid "prefs.tui.simple"
-msgstr "Caracteres simples:"
+msgstr "Forzar conjunto de caracteres ASCII:"
 
 msgid "prefs.evensplit"
 msgstr "Dividir pestañas equitativamente:"
@@ -2778,3 +2778,92 @@ msgstr "Copiar Clave Pública SHA-256"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Copiar Certificado SHA-256"
+
+msgid "heading.upload.error.file"
+msgstr "Archivo no Válido"
+
+msgid "upload.error.directory"
+msgstr "Solo se puede cargar archivos individuales, no directorios."
+
+msgid "upload.file.path"
+msgstr "Ruta del archivo:"
+
+msgid "heading.upload.edit"
+msgstr "Editar con Titan"
+
+msgid "dlg.upload.edit.error"
+msgstr "No se pudo descargar el contenido del recurso editable."
+
+msgid "heading.upload.edit.error"
+msgstr "Falló la Edición"
+
+msgid "dlg.upload.edit"
+msgstr "Editar"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Enviando Una Copia a Mi Mismo"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Verificando Receptor"
+
+msgid "upload.from"
+msgstr "De:"
+
+msgid "upload.to"
+msgstr "Para:"
+
+msgid "hint.upload.misfin"
+msgstr "escribir mensaje"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Enviar Mensaje"
+
+msgid "ident.sendmsg"
+msgstr "Enviar mensaje como…"
+
+msgid "heading.upload.misfin"
+msgstr "Enviar Mensaje Misfin"
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Este tipo de recurso no puede ser editado en la aplicación."
+
+msgid "heading.upload.misfin.noident"
+msgstr "No Hay Identidades Misfin"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Debe importar un certificado Misfin primero para enviar mensajes."
+
+msgid "heading.misfin.ok"
+msgstr "Mensaje Enviado"
+
+msgid "misfin.success"
+msgstr "Tu mensaje fue enviado exitosamente."
+
+msgid "misfin.redirect"
+msgstr "El receptor solicita enviar el mensaje a una dirección diferente."
+
+msgid "misfin.failure"
+msgstr "Un error ocurrió mientras se enviaba el mensaje."
+
+msgid "misfin.needcert"
+msgstr "Debe identificarse proveyendo un certificado Misfin."
+
+msgid "misfin.unauth"
+msgstr "No está autorizado para enviar mensajes a este receptor."
+
+msgid "misfin.badcert"
+msgstr "Tu certificado Misfin no es válido."
+
+msgid "misfin.changed"
+msgstr "Tu certificado Misfin no coincide con el esperado por el receptor."
+
+msgid "misfin.unknown"
+msgstr "Falló la comunicación con el servidor."
+
+msgid "prefs.warn.security"
+msgstr "Advertencias de seguridad TLS:"
+
+msgid "misfin.self.copy"
+msgstr "Enviarme una copia"

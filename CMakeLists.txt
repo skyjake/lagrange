@@ -18,15 +18,15 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.18.0
+    VERSION 1.18.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2024)
 if (IOS)
-    set (PROJECT_VERSION 1.17)
-    set (IOS_BUNDLE_VERSION 13)
-    set (IOS_BUILD_DATE "2024-07-06")
+    set (PROJECT_VERSION 1.18)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2024-09-30")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.17)
@@ -66,6 +66,7 @@ option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround f
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 option (ENABLE_X11_XLIB         "Use Xlib directly, if available (X11)" ON)
 set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
+set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check when searching 'resources.lgr'")
 
 # Optional dependencies.
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
@@ -73,10 +74,10 @@ option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
 option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
+option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
 option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
-option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
 
 include (BuildType)
 include (Resources)
@@ -192,6 +193,8 @@ set (SOURCES
     src/gmutil.h
     src/gopher.c
     src/gopher.h
+    src/guppy.c
+    src/guppy.h
     src/history.c
     src/history.h
     src/lang.c
@@ -202,6 +205,8 @@ set (SOURCES
     src/media.h
     src/mimehooks.c
     src/mimehooks.h
+    src/misfin.c
+    src/misfin.h
     src/periodic.c
     src/periodic.h
     src/prefs.c
@@ -658,8 +663,30 @@ if (TARGET tuiapp)
             include (GNUInstallDirs)
         endif ()
         install (TARGETS tuiapp DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.clagrange.desktop)
+        file (WRITE ${desktop} "[Desktop Entry]
+Name=clagrange
+GenericName=Gemini Client
+Comment=${PROJECT_DESCRIPTION}
+Categories=Network;
+Exec=${CMAKE_INSTALL_PREFIX}/bin/clagrange %U
+Terminal=true
+Type=Application
+StartupWMClass=clagrange
+Icon=fi.skyjake.clagrange
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
+")
+        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+        install (FILES res/lagrange-256.png
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+            RENAME fi.skyjake.clagrange.png
+        )
     endif ()
-    if (NOT ENABLE_RELATIVE_EMBED)
+    if (RESOURCES_LGR_PATH)
+        target_compile_definitions (tuiapp PUBLIC
+                LAGRANGE_EMB_BIN="${RESOURCES_LGR_PATH}/resources.lgr")
+    elseif (NOT ENABLE_RELATIVE_EMBED)
         target_compile_definitions (tuiapp PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
     endif ()

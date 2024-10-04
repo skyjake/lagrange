@@ -757,6 +757,9 @@ msgstr "Temporary"
 msgid "ident.expiry"
 msgstr "Expires %b %d, %Y"
 
+msgid "ident.sendmsg"
+msgstr "Send Message As…"
+
 msgid "ident.use"
 msgstr "Use on This Page"
 
@@ -1274,14 +1277,85 @@ msgstr "Open Editor…"
 msgid "heading.upload"
 msgstr "Upload with Titan"
 
+msgid "heading.upload.edit"
+msgstr "Edit with Titan"
+
+msgid "heading.upload.misfin"
+msgstr "Send Misfin Message"
+
 msgid "heading.upload.spartan"
 msgstr "Upload with Spartan"
+
+msgid "heading.upload.error.file"
+msgstr "Invalid File"
+
+msgid "dlg.upload.edit.error"
+msgstr "Failed to download contents of the editable resource."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "This type of resource cannot be edited in the application."
+
+msgid "heading.upload.edit.error"
+msgstr "Editing Failed"
+
+msgid "heading.upload.misfin.noident"
+msgstr "No Misfin Identities"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "You must first import a Misfin certificate to send messages."
+
+msgid "heading.misfin.ok"
+msgstr "Message Sent"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Sending Myself a Copy"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Verifying Recipient"
+
+msgid "misfin.success"
+msgstr "You message was sent successfully."
+
+msgid "misfin.redirect"
+msgstr "The recipient requests sending the message to a different address."
+
+msgid "misfin.failure"
+msgstr "An error occurred while sending the message."
+
+msgid "misfin.needcert"
+msgstr "You must identify yourself by providing a Misfin certificate."
+
+msgid "misfin.unauth"
+msgstr "You are not authorized to send messages to this recipient."
+
+msgid "misfin.badcert"
+msgstr "Your Misfin certificate is invalid."
+
+msgid "misfin.changed"
+msgstr "Your Misfin certificate does not match the one expected by the recipient."
+
+msgid "misfin.unknown"
+msgstr "Failed to communicate with the server."
+
+msgid "upload.error.directory"
+msgstr "Only individual files can be uploaded, not directories."
+
+msgid "misfin.self.copy"
+msgstr "Send me a copy"
 
 msgid "upload.id"
 msgstr "Identity:"
 
+msgid "upload.from"
+msgstr "From:"
+
+msgid "upload.to"
+msgstr "To:"
+
 msgid "heading.upload.id"
-msgstr "Authorization"
+msgstr "Credentials"
 
 msgid "dlg.upload.id.none"
 msgstr "None"
@@ -1291,6 +1365,9 @@ msgstr "Default Identity"
 
 msgid "heading.upload.dest"
 msgstr "Address"
+
+msgid "upload.type"
+msgstr "Content"
 
 msgid "heading.upload.text"
 msgstr "Text"
@@ -1307,14 +1384,20 @@ msgstr "Really Delete All (No Undo)"
 msgid "hint.upload.text"
 msgstr "enter text to upload"
 
+msgid "hint.upload.misfin"
+msgstr "enter message"
+
 msgid "heading.upload.file"
 msgstr "File"
 
 msgid "upload.file.name"
 msgstr "File name:"
 
+msgid "upload.file.path"
+msgstr "File path:"
+
 msgid "upload.file.drophere"
-msgstr "(drag-and-drop a file on the window)"
+msgstr "enter file path or drag-and-drop a file on the window"
 
 msgid "upload.file.size"
 msgstr "File size:"
@@ -1345,6 +1428,12 @@ msgstr "token — see server's instructions"
 msgid "dlg.upload.send"
 msgstr "Upload"
 
+msgid "dlg.upload.sendmsg"
+msgstr "Send Message"
+
+msgid "dlg.upload.edit"
+msgstr "Submit"
+
 msgid "upload.port"
 msgstr "Port…"
 
@@ -1359,15 +1448,15 @@ msgstr "Set Port"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Upload Plain Text"
+msgstr "Enter text to upload"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Upload a File"
+msgstr "No file selected"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Select File"
+msgstr "Select File…"
 
 msgid "heading.translate"
 msgstr "Translate Page"
@@ -2019,7 +2108,7 @@ msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
 msgid "prefs.tui.simple"
-msgstr "Simple characters:"
+msgstr "Force ASCII character set:"
 
 msgid "prefs.font.ui"
 msgstr "UI font:"
@@ -2121,6 +2210,9 @@ msgstr "Justify:"
 
 msgid "prefs.plaintext.wrap"
 msgstr "Wrap long plaintext lines:"
+
+msgid "prefs.warn.security"
+msgstr "TLS security warnings:"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Scheme-changing redirects:"

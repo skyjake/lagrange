@@ -163,6 +163,7 @@ struct Impl_GmDocument {
     iString   url;        /* for resolving relative links */
     iString   localHost;
     iInt2     size;
+    int       contentWidth; /* some runs may extend past the requested width */
     int       outsideMargin;
     iArray    layout; /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on the page but is not part of the source */
@@ -183,6 +184,7 @@ struct Impl_GmDocument {
         iBool isNex : 1;
         iBool isLayoutInvalidated : 1;
         iBool isPaletteValid : 1;
+        iBool isGopherMenu : 1;
     } flags;
 };
 
@@ -415,6 +417,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (equalCase_Rangecc(parts.scheme, "nex")) {
                 setScheme_GmLink_(link, nex_GmLinkScheme);
             }
+            else if (equalCase_Rangecc(parts.scheme, "guppy")) {
+                setScheme_GmLink_(link, guppy_GmLinkScheme);
+            }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
                 setScheme_GmLink_(link, file_GmLinkScheme);
             }
@@ -433,6 +438,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "mailto")) {
                 setScheme_GmLink_(link, mailto_GmLinkScheme);
+            }
+            else if (equalCase_Rangecc(parts.scheme, "misfin")) {
+                setScheme_GmLink_(link, misfin_GmLinkScheme);
             }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
@@ -486,13 +494,15 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
                 scheme == about_GmLinkScheme || scheme == file_GmLinkScheme ||
-                scheme == mailto_GmLinkScheme || scheme == 0 /* unsupported */) {
+                scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme ||
+                scheme == 0 /* unsupported */) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
-                    if (//desc.start + len < desc.end &&
-                        ((scheme != mailto_GmLinkScheme && isAllowedLinkIcon_Char_(icon)) ||
-                         (scheme == mailto_GmLinkScheme && icon == 0x1f4e7 /* envelope */))) {
+                    if (((scheme != mailto_GmLinkScheme && scheme != misfin_GmLinkScheme &&
+                          isAllowedLinkIcon_Char_(icon)) ||
+                         ((scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme) &&
+                          icon == 0x1f4e7 /* envelope */))) {
                         if (isRegionalIndicatorLetter_Char_(icon)) {
                             iChar combo;
                             int len2 = decodeBytes_MultibyteChar(desc.start + len, desc.end, &combo);
@@ -629,6 +639,12 @@ static void clear_RunTypesetter_(iRunTypesetter *d) {
 
 static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
     const size_t n = size_Array(&d->layout);
+    /* Update the actual content width of the document. This may exceed the page width
+       if there are unwrappable lines. */
+    for (size_t i = 0; i < size_Array(&d->layout); i++) {
+        doc->contentWidth = iMax(value_Array(&d->layout, i, iGmRun).visBounds.size.x,
+                                 doc->contentWidth);
+    }
     pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
     clear_RunTypesetter_(d);
     return n;
@@ -735,6 +751,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     if (isGopher) {
         indents[preformatted_GmLineType] = indents[text_GmLineType];
     }
+    if (d->viewFormat == plainText_SourceFormat) {
+        iForIndices(i, indents) {
+            indents[i] = 0;
+        }
+    }
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
@@ -758,6 +779,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta)); /* remember fold states */
     clear_Array(&d->preMeta);
     clear_String(&d->title);
+    d->contentWidth = 0;
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
@@ -765,7 +787,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iBool            isFirstText   = prefs->bigFirstParagraph && !isTerminal_Platform();
+    iBool            isFirstText   = prefs->bigFirstParagraph && !isMono && !isTerminal_Platform();
     iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
     int              preFont       = preformatted_FontId;
@@ -843,18 +865,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
+                /*
                 int overrun = meta.pixelRect.size.x - d->size.x;
                 if (prevNonBlankType == undefined_GmLineType && overrun > 0) {
                     meta.initialOffset = iMin(overrun / 2, d->outsideMargin - 5 * gap_UI);
                 }
-//                const float oversizeRatio =
-//                    meta.pixelRect.size.x /
-//                    (float) (d->size.x -
-//                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
-//                if (oversizeRatio > 1.0f) {
-//                    preFont--; /* one notch smaller in the font size */
-//                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
-//                }
+                */
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
                 /* Reuse previous state. */
@@ -1050,15 +1066,26 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == nex_GmLinkScheme      ? nex_Icon
-                                             : (scheme == spartan_GmLinkScheme && !d->flags.isSpartan)
-                                                                               ? spartan_Icon
-                                             : scheme == mailto_GmLinkScheme   ? envelope
+                                             : scheme == guppy_GmLinkScheme    ? guppy_Icon
+                                             : (scheme == spartan_GmLinkScheme &&
+                                                !d->flags.isSpartan)           ? spartan_Icon
+                                             : (scheme == mailto_GmLinkScheme ||
+                                                scheme == misfin_GmLinkScheme) ? envelope
                                              : scheme == data_GmLinkScheme     ? paperclip_Icon
                                              : link->flags & remote_GmLinkFlag ? globe
                                              : link->flags & imageFileExtension_GmLinkFlag ? image
                                              : link->flags & fontpackFileExtension_GmLinkFlag ? fontpack_Icon
                                              : scheme == file_GmLinkScheme     ? folder
                                                                                : arrow);
+            /* Check actual height to align with the paragraph text. The icon glyph
+               may come from a different font. */ {
+                const int glyphHeight = measureRange_Text(icon.font, icon.text).bounds.size.y;
+                if (glyphHeight > icon.visBounds.size.y) {
+                    const int delta = glyphHeight - icon.visBounds.size.y;
+                    icon.visBounds.size.y += delta;
+                    icon.visBounds.pos.y -= delta / 2;
+                }
+            }
             /* Custom link icon is shown on local Gemini links only. */
             if (!isEmpty_Range(&link->labelIcon)) {
                 icon.text = link->labelIcon;
@@ -1116,9 +1143,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             init_RunTypesetter_(&rts);
             rts.run           = run;
             rts.pos           = pos;
-            rts.isWordWrapped = (d->flags.isNex                        ? iFalse
-                                 : d->format == plainText_SourceFormat ? prefs->plainTextWrap
-                                                                       : !isPreformat);
+            rts.isWordWrapped = (d->flags.isNex ? iFalse
+                                 : (d->format == plainText_SourceFormat || d->flags.isGopherMenu)
+                                     ? prefs->plainTextWrap
+                                     : !isPreformat);
             rts.isPreformat   = isPreformat;
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
@@ -1337,6 +1365,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         followsBlank = iFalse;
     }
     d->size.y = pos.y;
+    d->contentWidth += indents[text_GmLineType] * gap_Text; /* indent not included in run widths */
     if (checkMissing_Text()) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
     }
@@ -1371,8 +1400,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         trim_String(&d->title);
     }
     deinit_String(&firstContentLine);
-//    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
-//           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));
+#if  0
+    printf("[GmDocument] layout size: %zu runs (%zu bytes), layout width: %d, content width: %d\n",
+           size_Array(&d->layout),
+           size_Array(&d->layout) * sizeof(iGmRun),
+           d->size.x,
+           d->contentWidth);
+#endif
 }
 
 void init_GmDocument(iGmDocument *d) {
@@ -2111,6 +2145,10 @@ iBool setViewFormat_GmDocument(iGmDocument *d, enum iSourceFormat viewFormat) {
     return iFalse;
 }
 
+enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
+    return d->viewFormat;
+}
+
 void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
     d->size.x        = width;
     d->outsideMargin = iMax(0, (canvasWidth - width) / 2); /* distance to edge of the canvas */
@@ -2123,6 +2161,10 @@ iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
         return iTrue;
     }
     return iFalse;
+}
+
+int contentWidth_GmDocument(const iGmDocument *d) {
+    return d->contentWidth;
 }
 
 void redoLayout_GmDocument(iGmDocument *d) {
@@ -2288,7 +2330,9 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     }
     d->flags.isSpartan = equalCase_Rangecc(parts.scheme, "spartan");
     d->flags.isNex     = equalCase_Rangecc(parts.scheme, "nex") &&
-                     (isEmpty_Range(&parts.path) || endsWith_Rangecc(parts.path, "/"));
+                         (isEmpty_Range(&parts.path) || endsWith_Rangecc(parts.path, "/"));
+    d->flags.isGopherMenu = equalCase_Rangecc(parts.scheme, "gopher") &&
+                            startsWith_Rangecc(parts.path, "/1");
 }
 
 iDeclareType(PendingLink)

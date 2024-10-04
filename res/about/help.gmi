@@ -15,7 +15,7 @@ Gemini is a simple protocol for serving content over the internet. It specifies 
 
 ## What is Lagrange
 
-Lagrange is a GUI client for browsing Geminispace. It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
+Lagrange is a cross-platform client for browsing Geminispace. It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
 
 Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a small number of essential libraries. It is written in C and uses SDL for hardware-accelerated graphics. OpenSSL is used for secure communications.
 
@@ -31,6 +31,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Smooth scrolling
 * Scaling page content (50%...200%)
 * Scaling factor for the UI (for arbitrary monitor DPI)
+* Curses-based TUI as an alternative to the graphical interface
 * Sidebars for managing bookmarks, identities and subscribed feeds, and viewing browsing history and the page outline
 * Multiple tabs
 * Split view for browsing two pages at once
@@ -50,8 +51,8 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Use Gemini pages as a source of bookmarks
 * Audio playback: MP3, Ogg Vorbis, WAV
 * Read Gempub books and view ZIP archive contents
-* Built-in support for uploading data using the Titan protocol
-* Built-in support for Gopher, Finger, Spartan, and Nex
+* Built-in support for uploading and editing content using the Titan protocol
+* Built-in support for Gopher, Finger, Spartan, Nex, Misfin, and Guppy
 * Use proxy servers for Gemini, HTTP, and Gopher content
 
 ## Why not just use a web browser
@@ -1000,6 +1001,28 @@ timestamp = 1648809264
 ```
 * `version` (string): Version of the app that generated the archive.
 * `timestamp` (integer): Time of generation as a UNIX timestamp.
+
+# 7 Misfin
+
+Misfin is a messaging protocol that has been in the works since May 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
+
+Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server. 
+
+A Misfin identity certificate is a TLS client certificate where:
+
+* UID field specifies the mailbox name
+* subject alternative name(s) specify the domain name(s)
+* Common Name is the human-readable name
+
+You will need to import one or more of these before sending any messages.
+
+When sending a message, the Upload dialog opens in Misfin mode with "To" and "From" fields. As usual, the text editor in the dialog has basic Gemtext syntax highlighting, but otherwise the editor has nothing Misfin-specific. A toggle is provided if you want to send a copy of the message to yourself. Lagrange does not keep copies of sent messages because it does not maintain a local Misfin mailbox.
+
+When you click on a link with a "misfin://" URI, the dialog opens automatically with the recipient address prefilled.
+
+=> gemini://satch.xyz/misfin/  Misfin specification(s) and resources
+=> gemini://misfin.org/  Original Misfin specification
+=> gemini://bbs.geminispace.org/s/misfin  s/Misfin on BBS
 
 # Open source licenses
 

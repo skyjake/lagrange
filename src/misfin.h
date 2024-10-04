@@ -1,13 +1,13 @@
-/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2024 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -22,21 +22,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include <the_Foundation/string.h>
+#include <the_Foundation/ptrarray.h>
 
-enum iUploadProtocol {
-    titan_UploadProtocol,
-    spartan_UploadProtocol,
-    misfin_UploadProtocol,
-};
-
-iDeclareWidgetClass(UploadWidget);
-iDeclareObjectConstructionArgs(UploadWidget, enum iUploadProtocol);
-
-iDeclareType(DocumentWidget);
 iDeclareType(GmIdentity);
 
-void    setUrl_UploadWidget             (iUploadWidget *, const iString *url);
-void    setIdentity_UploadWidget        (iUploadWidget *, const iGmIdentity *ident);
-void    setResponseViewer_UploadWidget  (iUploadWidget *, iDocumentWidget *doc);
-void    setText_UploadWidget            (iUploadWidget *, const iString *text);
+enum iMisfinResult {
+    unknown_MisfinResult,
+    trusted_MisfinResult,
+    fingerprintMismatch_MisfinResult,
+};
+
+void                init_Misfin             (const char *dir);
+void                deinit_Misfin           (void);
+enum iMisfinResult  checkTrust_Misfin       (const iString *address,
+                                             const iString *expectedFingerprint,
+                                             iString *fingerprint_out);
+void                trust_Misfin            (const iString *address, const iString *fingerprint);
+const iPtrArray *   listIdentities_Misfin   (void);
+size_t              numIdentities_Misfin    (void);
+
+void    openMessageComposer_Misfin  (const iString *url, const iGmIdentity *sender);

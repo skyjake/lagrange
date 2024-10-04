@@ -92,6 +92,7 @@ void                refresh_App                 (void);
 
 iBool               isFinishedLaunching_App     (void);
 iBool               isRunningUnderWindowSystem_App(void);
+iBool               isRunningUnderWayland_App   (void);
 iBool               isRefreshPending_App        (void);
 iBool               isLandscape_App             (void);
 iLocalDef iBool     isPortrait_App              (void) { return !isLandscape_App(); }
@@ -141,6 +142,7 @@ void                setTextInputActive_App      (iBool);
 const iStringArray *recentlySubmittedInput_App  (void);
 void                saveSubmittedInput_App      (const iString *queryInput);
 void                clearSubmittedInput_App     (void);
+void                setRecentMisfinId_App       (const iGmIdentity *ident);
 iBool               checkSavedWidth_App         (const iString *resizeId, float *gaps_out);
 
 typedef void (*iTickerFunc)(iAny *);

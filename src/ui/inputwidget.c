@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    too convoluted, with both variants intermingled. */
 
 #include "inputwidget.h"
+
 #include "app.h"
 #include "command.h"
 #include "keys.h"
@@ -1528,7 +1529,7 @@ iLocalDef iBool isMarking_(void) {
     return (modState_Keys() & KMOD_SHIFT) != 0;
 }
 
-void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
+static void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
     iAssert(!isEmpty_Array(&d->lines));
     pos.x = iClamp(pos.x, 0, endX_InputWidget_(d, pos.y));
     d->cursor = pos;
@@ -1547,6 +1548,10 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
         iZap(d->mark);
     }
     showCursor_InputWidget_(d);
+}
+
+void moveCursorHome_InputWidget(iInputWidget *d) {
+    setCursor_InputWidget(d, zero_I2());
 }
 
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {
@@ -1825,6 +1830,15 @@ static void lineTextWasChanged_InputWidget_(iInputWidget *d, iInputLine *line) {
     const int y = indexOf_Array(&d->lines, line);
     textOfLinesWasChanged_InputWidget_(d, (iRangei){ y, y + 1 });
 }
+
+#else
+
+void moveCursorHome_InputWidget(iInputWidget *d) {
+    if (d->sysCtrl) {
+        // TODO: Is there a way to move the native cursor to the start?
+    }
+}
+
 #endif
 
 void setSensitiveContent_InputWidget(iInputWidget *d, iBool isSensitive) {

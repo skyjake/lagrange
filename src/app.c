@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "ipc.h"
 #include "mimehooks.h"
+#include "misfin.h"
 #include "periodic.h"
 #include "resources.h"
 #include "sitespec.h"
@@ -87,6 +88,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
+#if defined (iPlatformTerminal)
+#   undef LAGRANGE_ENABLE_IDLE_SLEEP
+#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "x11.h"
 #endif
@@ -115,8 +119,9 @@ static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange"
 static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
 
 #elif defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
-#define EMB_BIN  "../../share/lagrange/resources.lgr"
+#define EMB_BIN   "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"
+#define EMB_BIN3  "../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 
@@ -167,6 +172,7 @@ struct Impl_App {
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
+    iBool        isRunningUnderWayland;
     iBool        isTextInputActive;
     iBool        isDarkSystemTheme;
     iBool        isSuspended;
@@ -350,6 +356,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         const char * id;
         const iBool *value;
     } boolPrefs[] = {
+        { "misfin.self.copy", &d->prefs.misfinSelfCopy },
         { "prefs.animate", &d->prefs.uiAnimations },
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
@@ -381,6 +388,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.swipe.page", &d->prefs.pageSwipe },
         { "prefs.time.24h", &d->prefs.time24h },
         { "prefs.tui.simple", &d->prefs.simpleChars },
+        { "prefs.warn.security", &d->prefs.warnTlsSecurity },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
@@ -407,6 +415,7 @@ static iString *serializePrefs_App_(const iApp *d) {
 #endif
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.strings[searchUrl_PrefsString]));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
+    appendFormat_String(str, "misfin.recent fp:%s\n", cstr_String(&d->prefs.strings[recentMisfinId_PrefsString]));
     iConstForEach(StringHash, sw, d->savedWidths) {
         const iString     *resizeId = key_StringHashConstIterator(&sw);
         const iSavedWidth *saved    = sw.value->object;
@@ -605,6 +614,9 @@ static void loadPrefs_App_(iApp *d) {
                    handled via the event loop. */
                 handleCommand_App(cmd);
                 haveCA = iTrue;
+            }
+            else if (equal_Command(cmd, "misfin.recent")) {
+                setRange_String(&d->prefs.strings[recentMisfinId_PrefsString], range_Command(cmd, "fp"));
             }
             else if (equal_Command(cmd, "customframe")) {
                 d->prefs.customFrame = arg_Command(cmd);
@@ -1091,9 +1103,8 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
-    static const char *schemes[] = {
-        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "file:", "data:", "about:"
-    };
+    static const char *schemes[] = { "gemini:", "gopher:", "finger:", "spartan:", "nex:",
+                                     "misfin:", "guppy:",  "file:",   "data:",    "about:" };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
             return iTrue;
@@ -1146,9 +1157,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     migrateInternalUserDirToExternalStorage_App_(d);
 #endif
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
-    d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
-                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+    d->isRunningUnderWayland      = !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+    d->isRunningUnderWindowSystem = d->isRunningUnderWayland ||
+                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "x11");
 #else
+    d->isRunningUnderWayland      = iFalse;
     d->isRunningUnderWindowSystem = iTrue;
 #endif
     d->isTextInputActive = iFalse;
@@ -1184,6 +1197,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (EMB_BIN2) /* alternative location */
             concatPath_CStr(execPath, EMB_BIN2),
+#endif
+#if defined (EMB_BIN3) /* another alternative location */
+            concatPath_CStr(execPath, EMB_BIN3),
 #endif
             concatPath_CStr(execPath, EMB_BIN),
             "resources.lgr" /* cwd */
@@ -1298,7 +1314,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         puts("Lagrange: A Beautiful Gemini Client");
     }
     const iBool isFirstRun =
-        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
+        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), prefsFileName_App_)));
     d->isFinishedLaunching = iFalse;
     d->isLoadingPrefs      = iFalse;
     d->warmupFrames        = 0;
@@ -1313,6 +1329,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
     init_SiteSpec(dataDir_App_());
     init_Snippets(dataDir_App_());
+    init_Misfin(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
@@ -1513,6 +1530,7 @@ static void deinit_App(iApp *d) {
     deinit_Keys();
     deinit_Fonts();
     save_Snippets(dataDir_App_());
+    deinit_Misfin();
     deinit_Snippets();
     deinit_SiteSpec();
     deinit_Prefs(&d->prefs);
@@ -2001,6 +2019,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
                         startsWithCase_CStr(ev.drop.file, "spartan:") ||
                         startsWithCase_CStr(ev.drop.file, "nex:") ||
+                        startsWithCase_CStr(ev.drop.file, "misfin:") ||
                         startsWithCase_CStr(ev.drop.file, "file:")) {
                         postCommandf_Root(NULL, "~open newtab:1 url:%s", ev.drop.file);
                     }
@@ -2552,6 +2571,16 @@ void setRecentMenuBarIndex_App(int index) {
     app_.prefs.recentMenuBarIndex = index;
 }
 
+void setRecentMisfinId_App(const iGmIdentity *ident) {
+    iString *str = &app_.prefs.strings[recentMisfinId_PrefsString];
+    if (ident) {
+        set_String(str, collect_String(hexEncode_Block(&ident->fingerprint)));
+    }
+    else {
+        clear_String(str);
+    }
+}
+
 enum iColorTheme colorTheme_App(void) {
     return app_.prefs.theme;
 }
@@ -2987,6 +3016,10 @@ enum iAppDeviceType deviceType_App(void) {
 
 iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
+}
+
+iBool isRunningUnderWayland_App(void) {
+    return app_.isRunningUnderWayland;
 }
 
 void setTextInputActive_App(iBool active) {
@@ -3661,6 +3694,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
 #endif
         return iTrue;
     }
+    else if (equal_Command(cmd, "misfin.self.copy.changed")) {
+        d->prefs.misfinSelfCopy = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "parentnavskipindex")) {
         d->prefs.skipIndexPageOnParentNavigation = arg_Command(cmd) != 0;
         return iTrue;
@@ -3902,6 +3939,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "decodeurls")) {
         d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.warn.security.changed")) {
+        d->prefs.warnTlsSecurity = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "imageloadscroll")) {
@@ -4326,8 +4367,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
                           urlArg);
         return iTrue;
     }
-    iString    *url     = collectNewCStr_String(urlArg);
-    const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
+    iString    *url       = collectNewCStr_String(urlArg);
+    const iBool noProxy   = argLabel_Command(cmd, "noproxy") != 0;
+    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     iUrl parts;
     init_Url(&parts, url);
     if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
@@ -4343,16 +4385,24 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     if (equalCase_Rangecc(parts.scheme, "titan")) {
-        iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
-        setUrl_UploadWidget(upload, url);
-        setResponseViewer_UploadWidget(upload, document_App());
-        addChild_Widget(get_Root()->widget, iClob(upload));
-        setupSheetTransition_Mobile(as_Widget(upload), iTrue);
-        /* User can resize the upload dialog. */
-        setResizeId_Widget(as_Widget(upload), "upload");
-        restoreWidth_Widget(as_Widget(upload));
-        postRefresh_Window(get_Window());
-        return iTrue;
+        if (!isHistory) {
+            iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
+            setUrl_UploadWidget(upload, url);
+            setResponseViewer_UploadWidget(upload, document_App());
+            addChild_Widget(get_Root()->widget, iClob(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+            /* User can resize the upload dialog. */
+            setResizeId_Widget(as_Widget(upload), "upload");
+            restoreWidth_Widget(as_Widget(upload));
+            postRefresh_Window(get_Window());
+            return iTrue;
+        }
+    }
+    if (equalCase_Rangecc(parts.scheme, "misfin")) {
+        if (!isHistory) {
+            openMessageComposer_Misfin(url, NULL);
+            return iTrue;
+        }
     }
     if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
         ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
@@ -4391,7 +4441,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setCurrent_Root(root); /* need to change for widget creation */
         doc = document_Command(cmd); /* may be different */
     }
-    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     /* If not opening in a new tab, we must not domains/roots accidentally. */
     if (!isHistory &&
         isIdentityPinned_DocumentWidget(doc) &&
@@ -4940,6 +4989,7 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
+        setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);

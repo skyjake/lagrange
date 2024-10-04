@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2024-06-20 15:08+0000\n"
-"Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
+"PO-Revision-Date: 2024-09-08 03:33+0000\n"
+"Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -1697,7 +1697,7 @@ msgid "heading.upload.file"
 msgstr "Датотека"
 
 msgid "upload.file.drophere"
-msgstr "(превуците и пустите датотеку на прозор)"
+msgstr "унесите путању или превуците и пустите датотеку на прозор"
 
 msgid "upload.file.size"
 msgstr "Величина датотеке:"
@@ -1712,7 +1712,7 @@ msgid "hint.upload.token"
 msgstr "погледајте инструкције сервера"
 
 msgid "dlg.upload.send"
-msgstr "Пошаљи"
+msgstr "Пошаљи датотеку"
 
 msgid "error.certexpired"
 msgstr "Сертификат је истекао"
@@ -2406,7 +2406,7 @@ msgstr ""
 "или сте покушали да приступите не-Џемини серверу."
 
 msgid "prefs.tui.simple"
-msgstr "Једноставни знаци:"
+msgstr "Приморај ASCII скуп знакова:"
 
 msgid "prefs.evensplit"
 msgstr "Равномерно раздвајање картице:"
@@ -2783,3 +2783,92 @@ msgstr "Копирај SHA-256 јавног кључа"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Копирај SHA-256 сертификата"
+
+msgid "heading.upload.error.file"
+msgstr "Неисправна датотека"
+
+msgid "upload.error.directory"
+msgstr "Могу се слати само појединачне датотеке, а не директоријуми."
+
+msgid "upload.file.path"
+msgstr "Путања датотеке:"
+
+msgid "prefs.warn.security"
+msgstr "Безбедносна упозорења TLS-а:"
+
+msgid "ident.sendmsg"
+msgstr "Пошаљи поруку као…"
+
+msgid "heading.upload.edit"
+msgstr "Уређивање преко Титана"
+
+msgid "dlg.upload.edit.error"
+msgstr "Не може се преузети садржај измењивог ресурса."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Ова врста ресурса се не може уређивати у апликацији."
+
+msgid "heading.upload.edit.error"
+msgstr "Уређивање неуспешно"
+
+msgid "heading.upload.misfin"
+msgstr "Слање преко Misfin-а"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Нема Misfin идентитета"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Да бисте слали поруке, прво морате увести Misfin сертификат."
+
+msgid "misfin.success"
+msgstr "Ваша порука је успешно послана."
+
+msgid "heading.misfin.ok"
+msgstr "Порука послана"
+
+msgid "misfin.redirect"
+msgstr "Пошиљалац захтева слање поруке на другу адресу."
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Слање копије себи"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Верификовање примаоца"
+
+msgid "misfin.failure"
+msgstr "Дошло је до грешке приликом слања поруке."
+
+msgid "misfin.needcert"
+msgstr "Морате се идентификовати Misfin сертификатом."
+
+msgid "misfin.unauth"
+msgstr "Нисте овлашћени да шаљете поруке овом примаоцу."
+
+msgid "misfin.badcert"
+msgstr "Ваш Misfin сертификат је неисправан."
+
+msgid "misfin.changed"
+msgstr "Ваш Misfin сертификат не одговара оном који очекује прималац."
+
+msgid "misfin.unknown"
+msgstr "Неуспешна комуникација са сервером."
+
+msgid "upload.from"
+msgstr "Од:"
+
+msgid "upload.to"
+msgstr "Коме:"
+
+msgid "hint.upload.misfin"
+msgstr "унесите поруку"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Пошаљи поруку"
+
+msgid "dlg.upload.edit"
+msgstr "Уреди"
+
+msgid "misfin.self.copy"
+msgstr "Пошаљи ми копију"

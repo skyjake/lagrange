@@ -81,6 +81,8 @@ enum iGmLinkScheme {
     mailto_GmLinkScheme,
     spartan_GmLinkScheme,
     nex_GmLinkScheme,
+    misfin_GmLinkScheme,
+    guppy_GmLinkScheme,
 };
 
 enum iGmLinkFlag {
@@ -200,10 +202,12 @@ void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat sourceFormat);
 iBool   setViewFormat_GmDocument(iGmDocument *, enum iSourceFormat viewFormat); /* returns True if changed */
+enum iSourceFormat viewFormat_GmDocument(const iGmDocument *);
 void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth);
 iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
+int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int canvasWidth,
