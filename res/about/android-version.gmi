@@ -8,6 +8,7 @@
 
 ## 1.18 (Beta 33)
 * Fixed crash when uploading data due to uninitialized memory.
+* Fixed perpetual load spinner animation when redirected to a Titan URL.
 
 ## 1.18 (Beta 32)
 * Fixed scrolling momentum when display refresh rate is not 60 Hz.
