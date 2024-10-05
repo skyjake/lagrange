@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.18 (Beta 33)
+* Fixed crash when uploading data due to uninitialized memory.
+
 ## 1.18 (Beta 32)
 * Fixed scrolling momentum when display refresh rate is not 60 Hz.
 * Fixed incorrect input widget being focused in Upload dialog's URL path panel.

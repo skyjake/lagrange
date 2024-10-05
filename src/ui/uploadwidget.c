@@ -438,6 +438,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     init_String(&d->url);
     d->protocol = protocol;
     d->viewer = NULL;
+    d->tabs = NULL;
     d->path = NULL;
     d->token = NULL;
     d->ident = NULL;
