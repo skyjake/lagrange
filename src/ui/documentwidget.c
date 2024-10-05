@@ -2351,7 +2351,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                                           d,
                                           d->redirectCount + 1,
                                           cstr_String(dstUrl));
-                        d->flags |= pendingRedirect_DocumentWidgetFlag;
+                        /* Opening a Titan URL first prompts the user to provide the content,
+                           so nothing is actually being done while we wait on the user.
+                           Otherwise, the request is still essentially ongoing even though we
+                           will now release the current GmRequest; we will soon continue
+                           fetching the destination URL. */
+                        if (!equalCase_Rangecc(dstScheme, "titan")) {
+                            d->flags |= pendingRedirect_DocumentWidgetFlag;
+                        }
                     }
                     else {
                         /* Scheme changes must be manually approved. */
