@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2024-10-03 14:43+0000\n"
-"PO-Revision-Date: 2024-10-04 13:26+0000\n"
+"PO-Revision-Date: 2024-10-06 10:28+0000\n"
 "Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
 "Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "sgs/>\n"
@@ -1410,3 +1410,318 @@ msgstr "Duomens:"
 
 msgid "dlg.feed.title"
 msgstr "Ožvardėjėms:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dabartinis duomens"
+
+msgid "import.userdata.idents"
+msgstr "Identėtetā:"
+
+msgid "heading.feedcfg"
+msgstr "Sāraša nustatīmu"
+
+msgid "heading.certimport"
+msgstr "Impuortoutė identėta"
+
+msgid "upload.port"
+msgstr "Puorts…"
+
+msgid "menu.snip.prefs"
+msgstr "Konfigūroutė…"
+
+msgid "prefs.accent.red"
+msgstr "Rauduona"
+
+msgid "import.userdata.bookmarks"
+msgstr "Žīmas:"
+
+msgid "import.userdata.snippets"
+msgstr "Teksta šmuots:"
+
+msgid "dlg.userdata.no"
+msgstr "Nieks"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "TEKSTA ŠMUOTS"
+
+msgid "heading.upload.id"
+msgstr "Padieka"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danu"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Uolandu"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+msgid "dlg.feed.entrytype"
+msgstr "Īraša tėps:"
+
+msgid "dlg.bookmark.notes"
+msgstr "Raštelē:"
+
+msgid "heading.prefs.snip"
+msgstr "Teksta šmuots"
+
+msgid "collapse.notbydefault"
+msgstr "Ronkinis"
+
+msgid "prefs.accent.green"
+msgstr "Žali"
+
+msgid "snip.content"
+msgstr "Turinīs:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Autuomatėškā"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Čeku"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Suomiu"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "POSLAPĖ TURINĪS"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Turinīs"
+
+msgid "upload.type"
+msgstr "Turinīs"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Vėngru"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Švedu"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turku"
+
+msgid "heading.newident.missing"
+msgstr "Trukst informacėjės"
+
+msgid "prefs.accent.gray"
+msgstr "Pėlka"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Meniu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Šuons"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Fuokusos"
+
+msgid "dlg.newident.userid"
+msgstr "Nauduotuojė ID:"
+
+msgid "heading.bookmark.tags"
+msgstr "Elgesīs"
+
+msgid "heading.prefs.support"
+msgstr "Pagelba"
+
+msgid "dlg.translate.unavail"
+msgstr "Servisos napasėikams"
+
+msgid "dlg.translate.fail"
+msgstr "Kreipėmāsis napavīka"
+
+msgid "heading.certimport.dropped"
+msgstr "Pārmests fails"
+
+msgid "prefs.justify"
+msgstr "Ėšlīgintė:"
+
+msgid "dlg.certimport.nocert"
+msgstr "Nie sertifėkata"
+
+msgid "bookmark.title.blank"
+msgstr "Pūsts puslapis"
+
+msgid "upload.from"
+msgstr "Nu:"
+
+msgid "upload.to"
+msgstr "Kam:"
+
+msgid "prefs.accent.blue"
+msgstr "Mielėna"
+
+msgid "heading.translate"
+msgstr "Pārgoldītė puslapi"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azeru"
+
+msgid "dlg.newident.until"
+msgstr "Galiuo lėg:"
+
+msgid "dlg.newident.commonname"
+msgstr "Bėndros vards:"
+
+msgid "dlg.newident.scope.page"
+msgstr "Dabartinis puslapis"
+
+msgid "prefs.boldlink.visited"
+msgstr "Aplonkīts"
+
+msgid "prefs.uilayout"
+msgstr "Ėšdiestīms:"
+
+msgid "heading.fontpack.meta"
+msgstr "Šriftā"
+
+msgid "fontpack.meta.installed"
+msgstr "Idėigts"
+
+msgid "dlg.upload.edit"
+msgstr "Pateiktė"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebraju"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Kuoriejietiu"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persu"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Lėnku"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Sluovaku"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrainietiu"
+
+msgid "heading.newident.date.bad"
+msgstr "Bluogė doumenis"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Nustatīmā"
+
+msgid "heading.prefs.appearance"
+msgstr "Ėšvaizda"
+
+msgid "heading.prefs.content"
+msgstr "Turinīs"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sisteminis"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Ronkinis"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nieks"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Pėlkoma nustatīms"
+
+msgid "prefs.font.body"
+msgstr "Turinīs:"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Jūras žīdroma"
+
+msgid "import.userdata.history"
+msgstr "Istuorėjė:"
+
+msgid "menu.snip.delete"
+msgstr "Ėštrintė"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Prīšingas barvas"
+
+msgid "prefs.font.heading"
+msgstr "Ožvardėnėmā:"
+
+msgid "snip.name"
+msgstr "Vards:"
+
+msgid "heading.upload.dest"
+msgstr "Adresos"
+
+msgid "menu.snip.edit"
+msgstr "Kaistė…"
+
+msgid "prefs.font.mono"
+msgstr "Nadailints teksts:"
+
+msgid "dlg.bookmark.folder"
+msgstr "Papkė:"
+
+msgid "collapse.never"
+msgstr "Nikumet"
+
+msgid "collapse.always"
+msgstr "Vėsumet"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD nūruodas"
+
+msgid "dlg.feed.type.headings"
+msgstr "Naujė ontraštė"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Kataluonu"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Graiku"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonezietiu"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Airiu"
+
+msgid "heading.newident"
+msgstr "Naus identėtets"
+
+msgid "dlg.newident.scope"
+msgstr "Nauduotė:"
+
+msgid "dlg.newident.scope.none"
+msgstr "Nanauduots"
+
+msgid "dlg.newident.create"
+msgstr "Sokortė identėteta"
