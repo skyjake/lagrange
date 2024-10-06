@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2024-09-08 03:33+0000\n"
+"PO-Revision-Date: 2024-10-06 10:28+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1724,15 +1724,15 @@ msgstr "Garda ti-ci págine por exportar les, o copia les in li Paperiere."
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Cargar textu"
+msgstr "Textu por cargar"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Cargar un file"
+msgstr "Null file selectet"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Selecter un file"
+msgstr "Selecter un file…"
 
 msgid "bookmark.export.format.tags"
 msgstr "Etiquettes es format per rubricas de nivelle 2."
@@ -2058,7 +2058,7 @@ msgid "menu.share"
 msgstr "Partir"
 
 msgid "heading.upload.id"
-msgstr "Autorisation"
+msgstr "Legitimation"
 
 msgid "menu.upload.export"
 msgstr "Exportar li textu"
@@ -2824,10 +2824,13 @@ msgid "misfin.unknown"
 msgstr "Ne successat communicar con li servitor."
 
 msgid "dlg.upload.edit"
-msgstr "Redacter"
+msgstr "Inviar"
 
 msgid "ident.sendmsg"
 msgstr "Inviar quam…"
 
 msgid "misfin.self.copy"
 msgstr "Inviar un copie a me"
+
+msgid "upload.type"
+msgstr "Contenete"
