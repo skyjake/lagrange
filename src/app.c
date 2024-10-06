@@ -2683,14 +2683,6 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
     SDL_PushEvent(&ev);
     iWindow *win = d ? d->window : NULL;
-//#if defined (iPlatformAndroid)
-//    if (!startsWith_CStr(command, "backup.")) {
-//        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
-//                    app_.isLoadingPrefs ? "[Prefs] " : "",
-//                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
-//                    command);
-//    }
-//#else
     if (app_.commandEcho) {
         const int windowIndex =
             win && type_Window(win) == main_WindowType ? windowIndex_App(as_MainWindow(win)) + 1 : 0;
@@ -2704,7 +2696,6 @@ void postCommand_Root(iRoot *d, const char *command) {
                command);
         fflush(stdout);
     }
-//#endif
 }
 
 void postCommandf_Root(iRoot *d, const char *command, ...) {
