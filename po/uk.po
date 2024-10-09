@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 10:53+0000\n"
-"PO-Revision-Date: 2024-08-09 16:06+0000\n"
+"PO-Revision-Date: 2024-10-11 10:28+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1047,7 +1047,7 @@ msgstr "Вказати порт"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Вибрати файл"
+msgstr "Обрати файл…"
 
 msgid "heading.translate"
 msgstr "Переклад сторінки"
@@ -1056,7 +1056,7 @@ msgid "heading.upload.file"
 msgstr "Файл"
 
 msgid "upload.file.drophere"
-msgstr "(перетягніть файл на це вікно)"
+msgstr "вкажіть шлях до файлу або перетягніть його у вікно"
 
 msgid "hint.upload.token"
 msgstr "див. інструкції від сервера"
@@ -1068,11 +1068,11 @@ msgstr ""
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Передати простий текст"
+msgstr "Введіть текст для надсилання"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Передати файл"
+msgstr "Файл не обрано"
 
 msgid "dlg.translate.unavail"
 msgstr "Сервіс недоступний"
@@ -2153,7 +2153,7 @@ msgid "menu.page.upload.edit"
 msgstr "Редагувати сторінку за допомогою Titan…"
 
 msgid "heading.upload.id"
-msgstr "Авторизація"
+msgstr "Облікові дані"
 
 msgid "menu.upload.export"
 msgstr "Експортувати текст"
@@ -2419,7 +2419,7 @@ msgid "error.incompleteheader"
 msgstr "Неповний заголовок"
 
 msgid "prefs.tui.simple"
-msgstr "Прості символи:"
+msgstr "Примусово викор. ASCII:"
 
 msgid "prefs.evensplit"
 msgstr "Розділяти вкладки рівномірно:"
@@ -2798,3 +2798,95 @@ msgstr "Копіювати SHA-256 відкритого ключа"
 
 msgid "dlg.cert.fingerprint.full"
 msgstr "Копіювати SHA-256 сертифіката"
+
+msgid "heading.upload.misfin"
+msgstr "Надіслати повідомлення Misfin"
+
+msgid "misfin.needcert"
+msgstr "Ідентифікуйтеся, надавши сертифікат Misfin."
+
+msgid "prefs.warn.security"
+msgstr "Попередження TLS:"
+
+msgid "ident.sendmsg"
+msgstr "Надіслати, як…"
+
+msgid "upload.type"
+msgstr "Вміст"
+
+msgid "dlg.upload.edit"
+msgstr "Надіслати"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Ідентичності Misfin відсутні"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Надсилання повідомлень потребує сертифікату Misfin."
+
+msgid "heading.misfin.ok"
+msgstr "Повідомлення надіслано"
+
+msgid "misfin.success"
+msgstr "Повідомлення вдало надіслано."
+
+msgid "misfin.redirect"
+msgstr "Одержувач просить надсилати повідомлення на іншу адресу."
+
+msgid "misfin.failure"
+msgstr "Повідомлення спіткала помилка при надсиланні."
+
+msgid "misfin.unauth"
+msgstr "Вам не дозволено надсилати повідомлення цьому одержувачу."
+
+msgid "misfin.badcert"
+msgstr "Ваш сертифікат Misfin недійсний."
+
+msgid "misfin.changed"
+msgstr "Ваш сертифікат Misfin не збігається з тим, якого очікує одержувач."
+
+msgid "misfin.unknown"
+msgstr "Не вдалося зв'язатися з сервером."
+
+msgid "upload.from"
+msgstr "Від:"
+
+msgid "upload.to"
+msgstr "Кому:"
+
+msgid "hint.upload.misfin"
+msgstr "Введіть повідомлення"
+
+msgid "upload.file.path"
+msgstr "Шлях до файлу:"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Надіслати повідомлення"
+
+msgid "heading.upload.edit"
+msgstr "Редагувати (Titan)"
+
+msgid "dlg.upload.edit.error"
+msgstr "Не вдалося завантажити вміст редагуємого ресурсу."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Цей тип ресурсу неможливо відредагувати у додатку."
+
+msgid "heading.upload.edit.error"
+msgstr "Редагування невдале"
+
+msgid "heading.upload.error.file"
+msgstr "Недійсний файл"
+
+msgid "upload.error.directory"
+msgstr "Можна завантажувати тільки окремі файли."
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Перевірка одержувача"
+
+msgid "misfin.self.copy"
+msgstr "Надіслати собі копію"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Надсилання собі копії"
