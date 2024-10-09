@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.18 (3)
+* Fixed perpetual load spinner animation when redirected to a Titan URL.
+* Fixed potential crash when uploading data due to uninitialized memory.
+* Potential workaround for a crash during feed refresh.
+* Increased number of concurrent feed subscription requests (now 10, was 4).
+
 ## 1.18 (2)
 * Fixed incorrect input widget being focused in Upload dialog's URL path panel.
 
