@@ -1130,8 +1130,17 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
     }
     else if (d->protocol == misfin_UploadProtocol) {
         set_String(&d->url, &d->originalUrl);
-        setText_InputWidget(d->path, collect_String(mid_String(&d->url, 9, iInvalidSize)));
+        setText_InputWidget(d->path, collectNewRange_String(parts.path));
         misfinAddressValidator_UploadWidget_(d->path, d);
+        if (size_Range(&parts.query) > 1) {
+            /* A message body is included. */
+            parts.query.start++; /* skip the `?` */
+            if (isEmpty_String(text_InputWidget(d->input))) {
+                setText_InputWidget(
+                    d->input,
+                    collect_String(urlDecode_String(collectNewRange_String(parts.query))));
+            }
+        }
     }
     /* Layout updatae. */
     if (isUsingPanelLayout_Mobile()) {
