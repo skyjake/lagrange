@@ -4379,8 +4379,10 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         postCommandString_Root(NULL, query);
         return iTrue;
     }
+    iDocumentWidget *doc = document_Command(cmd);
     if (equalCase_Rangecc(parts.scheme, "titan")) {
         if (!isHistory) {
+            setRedirectCount_DocumentWidget(doc, 0);
             iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
@@ -4406,7 +4408,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         openInDefaultBrowser_App(url, string_Command(cmd, "mime"));
         return iTrue;
     }
-    iDocumentWidget *doc = document_Command(cmd);
     iAssert(doc);
     iDocumentWidget *origin = doc;
     if (hasLabel_Command(cmd, "origin")) {
