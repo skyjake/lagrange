@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2024-09-17 13:52+0000\n"
+"PO-Revision-Date: 2024-10-12 17:27+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1718,7 +1718,7 @@ msgstr[1] "Sinulla on %d kirjanmerkkiä."
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Lähetä tekstiä"
+msgstr "Syötä lähetettävä teksti"
 
 # used on mobile
 msgid "heading.settings"
@@ -1774,11 +1774,12 @@ msgstr "Oletusidentiteetti"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Lähetä tiedosto"
+msgstr "Ei valittua tiedostoa"
 
 # used on mobile
+#, fuzzy
 msgid "dlg.upload.pickfile"
-msgstr "Valitse tiedosto"
+msgstr "Valitse tiedosto…"
 
 msgid "heading.bookmark.tags"
 msgstr "Ominaisuudet"
@@ -2710,7 +2711,7 @@ msgid "heading.upload.edit.error"
 msgstr "Muokkaus epäonnistui"
 
 msgid "dlg.upload.edit"
-msgstr "Muokkaa"
+msgstr "Hyväksy muutokset"
 
 # Keyboard shortcut for the terminal. Should be very short or abbreviated.
 msgid "term.linkkeys"
@@ -2821,3 +2822,6 @@ msgstr "kirjoita viesti"
 
 msgid "dlg.upload.sendmsg"
 msgstr "Lähetä viesti"
+
+msgid "upload.type"
+msgstr "Sisältö"
