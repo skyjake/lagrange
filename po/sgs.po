@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2024-10-03 14:43+0000\n"
-"PO-Revision-Date: 2024-10-06 10:28+0000\n"
+"PO-Revision-Date: 2024-10-11 10:28+0000\n"
 "Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
 "Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "sgs/>\n"
@@ -1725,3 +1725,432 @@ msgstr "Nanauduots"
 
 msgid "dlg.newident.create"
 msgstr "Sokortė identėteta"
+
+msgid "dlg.certwarn.different"
+msgstr "Gautāsis sertifėkats ī galiuojontis, ale skėras nu mūsa prijimta."
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Ont švėisė"
+
+msgid "keys.scroll.up"
+msgstr "Slinktė aukštīn"
+
+msgid "keys.zoom.out"
+msgstr "Pamažintė"
+
+msgid "keys.tab.close"
+msgstr "Oždarītė taba"
+
+msgid "keys.tab.next"
+msgstr "Sekontis tabs"
+
+msgid "prefs.linewidth"
+msgstr "Eilotės pluotis:"
+
+msgid "error.certverify"
+msgstr "Naprijimts serveris"
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Šėtam sārašė kuožna ontraštė paruoda žīmies taga. Vėn ožtagintas žīmas ī "
+"ruoduomas. Žīmas so kelēs tagās ī kartuojamas kīkvėinam tagou."
+
+msgid "prefs.downloads"
+msgstr "Atsėsiuntėmu papkė:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Ikuona"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Pasėžīmiejėmā ė citatas ī rezervoutas papėlduomā informacėjē aple "
+"mėnavuojama žīma. Tekstėnės eilotės ė dailints teksts būs laikuomė ož "
+"komentara ė būs ignuorounamė."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Tuoks resursa tips nagal būtė keitams pruogramuo."
+
+msgid "dlg.userdata.all"
+msgstr "Vėskon (ožrašītė ont vėršaus)"
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Gautāsis sertifėkats ī kėtam duomenou (%s). Tas gal būtė serverė konfėgū"
+"ravėma kliauza."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Sertifėkats/rakts nabova rasts tamė puslapie."
+
+msgid "upload.file.name"
+msgstr "Faila ožvardėnėms:"
+
+msgid "upload.mime"
+msgstr "MIME tips:"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Didelis kontrasts"
+
+msgid "prefs.font"
+msgstr "Torėnė šrifts:"
+
+msgid "error.unavail"
+msgstr "Serveris napasėikams"
+
+msgid "error.cgi"
+msgstr "CGI kliauza"
+
+msgid "error.slowdown"
+msgstr "Soletiejėms"
+
+msgid "error.cert.invalid"
+msgstr "Natinkams sertifėkats"
+
+msgid "gempub.meta.revdate"
+msgstr "Revizėjės data"
+
+msgid "error.unsupported.protocol"
+msgstr "Napalaikuoms pruotuokuols"
+
+msgid "import.userdata.sitespec"
+msgstr "Alkierė nustatīmā:"
+
+msgid "dlg.userdata.missing"
+msgstr "Jė nie"
+
+msgid "bookmark.export.saving"
+msgstr "Ėšsauguotė puslapi ekspuortavėmou arba nukuopėjoutė anus i atmintė."
+
+msgid "heading.upload.spartan"
+msgstr "Ikeltė par Spartan'a"
+
+msgid "heading.prefs.pagecontent"
+msgstr "Poslapė barvas"
+
+msgid "keys.tab.close.other"
+msgstr "Ožvertė kėtus tabus"
+
+msgid "keys.tab.prev"
+msgstr "Onkstiesnis tabs"
+
+msgid "menu.page.upload.edit"
+msgstr "Keistė puslapi par Titan'a…"
+
+msgid "bookmark.export.format.folders"
+msgstr "Papkės soriedīms ėšreikšts 2/3 ontraštės līgė."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Gautāsis sertifėkats bėngė galiuotė %s."
+
+msgid "import.userdata.trusted"
+msgstr "Prijimtė sertifėkatā:"
+
+msgid "menu.page.upload"
+msgstr "Ikeltė so Titan'o…"
+
+msgid "prefs.doctheme.dark"
+msgstr "Tomsiuoji tema:"
+
+msgid "heading.prefs.widelayout"
+msgstr "Platos ėšdiestīms"
+
+msgid "prefs.pinsplit.left"
+msgstr "Kairīs tabs"
+
+msgid "prefs.pinsplit.right"
+msgstr "Dešinīs tabs"
+
+msgid "prefs.theme"
+msgstr "Nauduotuojė interfeisa tema:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Eilotės pabonga"
+
+msgid "keys.scroll.down"
+msgstr "Slinktė žemīn"
+
+msgid "keys.forward"
+msgstr "I prīki"
+
+msgid "keys.bookmark.add"
+msgstr "Pridietė žīma"
+
+msgid "keys.zoom.reset"
+msgstr "Numatītāsis dėdoms"
+
+msgid "error.schemeredirect"
+msgstr "Nukreipėms keitont schema"
+
+msgid "error.cert.needed"
+msgstr "Reikalings sertifėkats"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Iklėjouket PEM-ožkuodouta sertifėkata arba/ėr asablīva rakta, arba imesket ."
+"crt/.key ont longa."
+
+msgid "dlg.certimport.paste"
+msgstr "Iklėjoutė ėš atmintėis"
+
+msgid "dlg.userdata.alldup"
+msgstr "Vėskon (palėktė dublikatus)"
+
+msgid "import.userdata"
+msgstr "Impuortoutė pasėrinktus doumenis"
+
+msgid "import.userdata.dupfolder"
+msgstr "Impuortoutė dublikatā"
+
+msgid "gempub.cover.untitled"
+msgstr "Naožvardinta kninga"
+
+msgid "gempub.cover.image"
+msgstr "Vėršielis"
+
+msgid "gempub.meta.pubdate"
+msgstr "Ėšleidėma data"
+
+msgid "heading.import.userdata.error"
+msgstr "Impuortavėms napavīka"
+
+msgid "spartan.input"
+msgstr "Ivestė siuntama teksta:"
+
+msgid "dlg.spartan.upload"
+msgstr "Atvertė redaktuorio…"
+
+msgid "dlg.certimport.notfound"
+msgstr "Sertifėkats arba asablīvs raks narasts."
+
+msgid "heading.certimport.pasted"
+msgstr "Iklėjouts ėš ėškarpėnės"
+
+msgid "error.temporary"
+msgstr "Laikėna kliauza"
+
+msgid "error.notfound"
+msgstr "Narasts"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Impuortoutė sertifėkata/rakta faila"
+
+msgid "dlg.certimport.nokey"
+msgstr "Nie asablīva rakta"
+
+msgid "heading.import.userdata"
+msgstr "Impuortoutė nauduotuojė doumenis"
+
+msgid "import.userdata.error"
+msgstr "%s nie teisings Lagrange ėšekspuortouts arkīvs."
+
+msgid "bookmark.export.title.tag"
+msgstr "Žīmas tagā"
+
+msgid "bookmark.export.title.time"
+msgstr "Sokortas žīmas"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Torat %s žīma."
+msgstr[1] "Torat %s žīmė."
+msgstr[2] "Torat %s žīmas."
+msgstr[3] "Torat %s žīmu."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Šėts puslapis ī sofarmatouts palē specifėkacėjė „Gemini puslapiu sekėms“."
+
+msgid "bookmark.export.format.tags"
+msgstr "Tagā ėšreikštė 2 līgė ontraštė."
+
+msgid "heading.upload"
+msgstr "Ikeltė par Titan'a"
+
+msgid "heading.upload.edit"
+msgstr "Keistė so Titan'o"
+
+msgid "heading.upload.misfin"
+msgstr "Siunstė Misfin pranešėma"
+
+msgid "dlg.upload.edit.error"
+msgstr "Napavīka atsiunstė torėnė keitama resursa."
+
+msgid "heading.upload.misfin.noident"
+msgstr "Nie Misfin identėteta"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Pu pėrmo rēk impuortoutė Misfin sertifėkata, ka siunstė pranešėmus."
+
+msgid "heading.misfin.ok"
+msgstr "Pranešėms ėšsiunsts"
+
+msgid "misfin.success"
+msgstr "Jūsa pranešėms bova ėšsiunsts siekmingā."
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Poslapė stilios"
+
+msgid "prefs.smoothscroll"
+msgstr "Tuolīgos slinkėms:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Klavētūras greitis:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Ont tomsė"
+
+msgid "prefs.memorysize"
+msgstr "Atmintėis dėdoms:"
+
+msgid "prefs.centershort"
+msgstr "Statos ėšcentravėms:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher proksi serveris:"
+
+msgid "upload.file.size"
+msgstr "Faila dėdoms:"
+
+msgid "heading.upload.edit.error"
+msgstr "Keitėms napavīka"
+
+msgid "prefs.searchurl"
+msgstr "Paėiškuos URL:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Pelies greitis:"
+
+msgid "prefs.accent"
+msgstr "Akcenta barva:"
+
+msgid "prefs.retaintabs"
+msgstr "Atstatītė tabus paleidėma čieso:"
+
+msgid "prefs.doctheme.light"
+msgstr "Švėisiuoji tema:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Tomsiuojė vėsū barvu"
+
+msgid "prefs.boldlink"
+msgstr "Parīškintas nūruodas:"
+
+msgid "prefs.quoteicon"
+msgstr "Citatas žimou:"
+
+msgid "prefs.linespacing"
+msgstr "Eilutiu tarps:"
+
+msgid "prefs.decodeurls"
+msgstr "Atkuodoutė URL'us:"
+
+msgid "prefs.evensplit"
+msgstr "Atskėrtė tabus pu līgē:"
+
+msgid "prefs.ca.file"
+msgstr "CA fails:"
+
+msgid "prefs.ca.path"
+msgstr "CA kels:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP proksi serveris:"
+
+msgid "keys.reload"
+msgstr "Pārkrautė puslapi"
+
+msgid "keys.zoom.in"
+msgstr "Padidintė"
+
+msgid "keys.tab.new"
+msgstr "Naus tabs"
+
+msgid "error.badheader"
+msgstr "Natinkama ontraštė"
+
+msgid "error.badredirect"
+msgstr "Natinkams nukreipėms"
+
+msgid "error.tls"
+msgstr "Tinkla/TLS kliauza"
+
+msgid "error.proxy"
+msgstr "Proksi serverė kliauza"
+
+msgid "error.permanent"
+msgstr "Pastuovi kliauza"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Gautuojė sertifėkata bėngies galiuojėms ĖR ons skėrts kėtam duomenou."
+
+msgid "error.badrequest"
+msgstr "Bluogs kreipėmāsis"
+
+msgid "bookmark.export.format.linklines"
+msgstr "Kuožna nūruoda ruoda žīma."
+
+msgid "prefs.bottomtabbar"
+msgstr "Tabā apatiuo"
+
+msgid "error.badresource"
+msgstr "Natinkams resursos"
+
+msgid "heading.upload.error.file"
+msgstr "Natinkams fails"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu vėinuos dėinuos."
+msgstr[1] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu %d dėinū."
+msgstr[2] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu %d dėinū."
+msgstr[3] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu %d dėinū."
+
+msgid "dlg.bookmark.save"
+msgstr "Ėšsauguotė žīma"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Nauduotuojė interfeisos"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Švėisiuoji vėsū barvu"
+
+msgid "prefs.mono"
+msgstr "Vėinatūris teksts:"
+
+msgid "prefs.cachesize"
+msgstr "Kešavėma dėdoms:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini proksi serveris:"
+
+msgid "heading.prefs.uitheme"
+msgstr "Nauduotuojė interfeisa barvas"
+
+msgid "keys.back"
+msgstr "Atgal"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Siunstė savėi kuopėjė"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Tėkrėnams gavies"

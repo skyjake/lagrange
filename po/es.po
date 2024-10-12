@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2024-09-10 03:07+0000\n"
+"PO-Revision-Date: 2024-10-10 08:49+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1831,15 +1831,15 @@ msgstr "Identidad por Defecto"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Cargar Texto Plano"
+msgstr "Escribir texto a cargar"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Cargar un Archivo"
+msgstr "No hay un archivo seleccionado"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Escoger Archivo"
+msgstr "Escoger Archivo…"
 
 msgid "heading.addfolder"
 msgstr "Agregar Carpeta"
@@ -2112,7 +2112,7 @@ msgid "menu.page.upload.edit"
 msgstr "Editar Página con Titan…"
 
 msgid "heading.upload.id"
-msgstr "Autorización"
+msgstr "Credenciales"
 
 msgid "menu.upload.export"
 msgstr "Exportar Texto"
@@ -2798,7 +2798,7 @@ msgid "heading.upload.edit.error"
 msgstr "Falló la Edición"
 
 msgid "dlg.upload.edit"
-msgstr "Editar"
+msgstr "Enviar"
 
 # Only shown in a message box when CCing self fails.
 msgid "misfin.cc"
@@ -2867,3 +2867,6 @@ msgstr "Advertencias de seguridad TLS:"
 
 msgid "misfin.self.copy"
 msgstr "Enviarme una copia"
+
+msgid "upload.type"
+msgstr "Contenido"
