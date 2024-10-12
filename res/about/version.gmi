@@ -7,10 +7,12 @@
 # Release notes
 
 ## 1.18.2
-* TUI: Fixed first-run bookmarks getting re-added on every launch.
+* Misfin: URI format has changed to "misfin:address?message" instead of the previously used "misfin://address". The optional query string ("message") is used as the initial message contents if the upload dialog's text editor is empty.
 * Increased number of concurrent feed subscription requests (now 10, was 4).
 * Potential workaround for a crash during feed refresh.
+* Fixed redirection counting (and related warnings) when requesting Titan URIs.
 * Fixed perpetual load spinner animation when redirected to a Titan URL.
+* TUI: Fixed first-run bookmarks getting re-added on every launch.
 * Updated UI translations.
 
 ## 1.18.1
