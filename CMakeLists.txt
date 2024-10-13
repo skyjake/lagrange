@@ -596,7 +596,7 @@ if (ENABLE_TUI)
     if (NOT ENABLE_IDLE_SLEEP)
         # SEALCurses does not have a waiting event getter, so ease the CPU load by sleeping
         # when nothing is happening.
-        target_compile_definitions (tuiapp LAGRANGE_ENABLE_IDLE_SLEEP=1)
+        target_compile_definitions (tuiapp PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
     endif ()
 endif ()
 
