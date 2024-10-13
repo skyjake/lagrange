@@ -1498,6 +1498,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
+    if (d->tempFilesPendingDeletion == NULL) {
+        return; /* already deinitialized */
+    }
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     delete_Root(d->submenuRoot);
 #endif
@@ -1560,6 +1563,7 @@ static void deinit_App(iApp *d) {
     iRelease(d->recentlySubmittedInput);
     iRelease(d->recentlyClosedTabUrls);
     iRelease(d->tempFilesPendingDeletion);
+    d->tempFilesPendingDeletion = NULL;
 }
 
 const iString *execPath_App(void) {
@@ -1961,6 +1965,21 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     processEvents_App(postedEventsOnly_AppEventMode);
                 }
                 goto backToMainLoop;
+            case SDL_APP_TERMINATING: {
+                iForEach(PtrArray, i, &d->mainWindows) {
+                    setFreezeDraw_MainWindow(*i.value, iTrue);
+                }
+#if defined (iPlatformAppleMobile)
+                /* SDL docs warn that we may not get any execution time after this event,
+                   so deinitialize everything immediately. */
+                deinit_App(d);
+                goto backToMainLoop; /* no further processing of events */
+#else
+                savePrefs_App_(d);
+                saveState_App_(d, iTrue);
+#endif
+                break;
+            }
             case SDL_APP_LOWMEMORY:
                 clearCache_App_();
                 break;
@@ -1998,14 +2017,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (d->isTextInputActive) {
                     SDL_StopTextInput();
                 }
-                break;
-            }
-            case SDL_APP_TERMINATING: {
-                iForEach(PtrArray, i, &d->mainWindows) {
-                    setFreezeDraw_MainWindow(*i.value, iTrue);
-                }
-                savePrefs_App_(d);
-                saveState_App_(d, iTrue);
                 break;
             }
             case SDL_DROPFILE: {
@@ -2334,7 +2345,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
         memcpy(&ev, &pendingMotion_, sizeof(pendingMotion_));
         SDL_PushEvent(&ev);
     }
-    deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
         /* This is where we spend most of our time when idle. The sleep delay depends on the
@@ -2344,6 +2354,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
     }
 #endif
 backToMainLoop:;
+    deinit_PtrArray(&windows);
     setCurrent_Root(oldCurrentRoot);
 }
 
