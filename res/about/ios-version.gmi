@@ -8,6 +8,7 @@
 
 ## 1.18 (4)
 * Fixed accidental navigation when editing text with the keyboard.
+* Fixed handling of the Return key in text fields.
 * Misfin: URI format has changed to "misfin:address?message" instead of the previously used "misfin://address". The optional query string ("message") is used as the initial message contents if the upload dialog's text editor is empty.
 * Fixed redirection counting (and related warnings) when requesting Titan URIs.
 * Updated UI translations.
