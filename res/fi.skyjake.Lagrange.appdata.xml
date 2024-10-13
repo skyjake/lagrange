@@ -45,6 +45,21 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.18.2" date="2024-10-13">
+            <description>
+                <ul>
+                    <li>Misfin: URI format has changed to "misfin:address?message" instead of the previously used "misfin://address". The optional query string ("message") is used as the initial message contents if the upload dialog's text editor is empty.</li>
+                    <li>Increased number of concurrent feed subscription requests (now 10, was 4).</li>
+                    <li>Potential workaround for a crash during feed refresh.</li>
+                    <li>Fixed redirection counting (and related warnings) when requesting Titan URIs.</li>
+                    <li>Fixed perpetual load spinner animation when redirected to a Titan URL.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.18.2</url>
+        </release>
         <release version="1.18.1" date="2024-09-29">
             <description>
                 <ul>
