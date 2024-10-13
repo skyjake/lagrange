@@ -12,6 +12,9 @@
 * Potential workaround for a crash during feed refresh.
 * Fixed redirection counting (and related warnings) when requesting Titan URIs.
 * Fixed perpetual load spinner animation when redirected to a Titan URL.
+* TUI: Fixed screen not being refreshed when a key is held down.
+* TUI: Fixed black cursor on empty regions of the screen, regardless of text color.
+* TUI: Fixed keyboard shortcut for trusting the server certificate.
 * TUI: Fixed first-run bookmarks getting re-added on every launch.
 * Updated UI translations.
 
