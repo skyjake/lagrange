@@ -1045,9 +1045,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             (iMenuItem[]){
                 { person_Icon " ${menu.identity.newdomain}", SDLK_n, 0, "ident.new scope:1" },
                 { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-                { leftHalf_Icon " ${menu.show.identities}",
-                  '4',
-                  KMOD_PRIMARY,
+                { leftHalf_Icon " ${menu.show.identities}", showIdentities_KeyShortcut,
                   deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
                                                             : "preferences idents:1" } },
             3);

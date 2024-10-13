@@ -4764,7 +4764,7 @@ iWidget *makeIdentityCreation_Widget(void) {
         addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
         arrange_Widget(dlg);
         for (size_t i = 0; i < iElemCount(inputs); ++i) {
-            as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+            as_Widget(inputs[i])->rect.size.x = 100 * gap_UI * aspect_UI - headings->rect.size.x;
         }
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));

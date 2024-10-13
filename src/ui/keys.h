@@ -111,6 +111,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define rightSidebarTab_KeyModifier  KMOD_SHIFT | KMOD_CTRL
 #endif
 
+#define showIdentities_KeyShortcut      SDLK_4,             leftSidebarTab_KeyModifier
+
 #define builtIn_BindingId   1000    /* not user-configurable */
 
 iDeclareType(Binding)
