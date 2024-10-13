@@ -1902,6 +1902,9 @@ static iBool checkLineBreakMods_InputWidget_(const iInputWidget *d, int mods) {
 }
 
 static iBool checkAcceptMods_InputWidget_(const iInputWidget *d, int mods) {
+    if (isMobile_Platform()) {
+        return iFalse; /* Return key behavior is not configurable. */
+    }
     if (d->inFlags & useReturnKeyBehavior_InputWidgetFlag) {
         return mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey);
     }
@@ -2679,6 +2682,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         return iTrue;
                     }
                 }
+#endif
                 if (d->inFlags & enterKeyEnabled_InputWidgetFlag &&
                     (checkAcceptMods_InputWidget_(d, mods) ||
                      (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
@@ -2693,6 +2697,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     }
                     return iTrue;
                 }
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
                 return iFalse;
 #else
                 /* Native input handles Return key. */
