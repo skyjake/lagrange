@@ -88,9 +88,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
-#if defined (iPlatformTerminal)
-#   undef LAGRANGE_ENABLE_IDLE_SLEEP
-#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "x11.h"
 #endif
@@ -1463,6 +1460,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         d->isIdling      = iFalse;
         d->lastEventTime = 0;
         d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+#if defined (iPlatformTerminal)
+        d->idleSleepDelayMs = 1000 / 60;
+#else
         SDL_DisplayMode dispMode;
         SDL_GetWindowDisplayMode(d->window->win, &dispMode);
         if (dispMode.refresh_rate) {
@@ -1471,6 +1471,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         else {
             d->idleSleepDelayMs = 1000 / 60;
         }
+#endif
         d->idleSleepDelayMs *= 0.9f;
     }
 #endif
@@ -1927,7 +1928,7 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return
        events posted immediately beforehand. Waiting with a very short timeout
        seems to work better. */
-#if defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
+#if !defined (iPlatformTerminal) && defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
     return SDL_WaitEventTimeout(event, 1);
 #else
     return SDL_PollEvent(event);

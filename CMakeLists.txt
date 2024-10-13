@@ -593,6 +593,11 @@ if (ENABLE_TUI)
         target_link_libraries (tuiapp PUBLIC ${SEALCURSES_LDFLAGS})
     endif ()
     set_common_app_properties (tuiapp)
+    if (NOT ENABLE_IDLE_SLEEP)
+        # SEALCurses does not have a waiting event getter, so ease the CPU load by sleeping
+        # when nothing is happening.
+        target_compile_definitions (tuiapp LAGRANGE_ENABLE_IDLE_SLEEP=1)
+    endif ()
 endif ()
 
 # Deployment.
