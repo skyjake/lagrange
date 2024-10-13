@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SHIFT
 #   define menuBar_KeyShortcut          '?',                0
 #   define bang_KeyShortcut             '!',                0
+#   define trustServerCertificate_KeyShortcut   SDLK_u,     KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   0
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           KMOD_ALT
@@ -77,6 +78,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SECONDARY
 #   define menuBar_KeyShortcut          SDLK_F10,           0
 #   define bang_KeyShortcut             SDLK_1,             KMOD_SHIFT
+#   define trustServerCertificate_KeyShortcut   SDLK_u,     KMOD_PRIMARY | KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_ALT
 #   define byLine_KeyModifier           KMOD_PRIMARY
@@ -102,6 +104,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SECONDARY
 #   define menuBar_KeyShortcut          SDLK_F10,           0
 #   define bang_KeyShortcut             SDLK_1,             KMOD_SHIFT
+#   define trustServerCertificate_KeyShortcut   SDLK_u,     KMOD_PRIMARY | KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           0

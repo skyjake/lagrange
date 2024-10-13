@@ -3107,8 +3107,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (canTrust) {
             pushBack_Array(items,
                            &(iMenuItem){ uiTextAction_ColorEscape "\x1b[1m${dlg.cert.trust}",
-                                         SDLK_u,
-                                         KMOD_PRIMARY | KMOD_SHIFT,
+                                         trustServerCertificate_KeyShortcut,
                                          "server.trustcert" });
         }
         const iRangecc root = urlRoot_String(d->mod.url);
