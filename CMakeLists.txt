@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.18.1
+    VERSION 1.18.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2024)
 if (IOS)
-    set (PROJECT_VERSION 1.17)
-    set (IOS_BUNDLE_VERSION 13)
-    set (IOS_BUILD_DATE "2024-07-06")
+    set (PROJECT_VERSION 1.18)
+    set (IOS_BUNDLE_VERSION 4)
+    set (IOS_BUILD_DATE "2024-10-13")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.17)
-    set (ANDROID_BUILD_VERSION b30)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2024-07-07")
+    set (PROJECT_VERSION 1.18)
+    set (ANDROID_BUILD_VERSION b33)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2024-10-06")
 endif ()
 
 # Load modules from the source tree
@@ -593,6 +593,11 @@ if (ENABLE_TUI)
         target_link_libraries (tuiapp PUBLIC ${SEALCURSES_LDFLAGS})
     endif ()
     set_common_app_properties (tuiapp)
+    if (NOT ENABLE_IDLE_SLEEP)
+        # SEALCurses does not have a waiting event getter, so ease the CPU load by sleeping
+        # when nothing is happening.
+        target_compile_definitions (tuiapp PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
+    endif ()
 endif ()
 
 # Deployment.

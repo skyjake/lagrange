@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "../ios.h"
 #endif
 
+#if !defined (iPlatformTerminal)
+
 iDeclareType(Momentum)
 iDeclareType(Pinch)
 iDeclareType(Touch)
@@ -128,13 +130,21 @@ static iTouchState *touchState_(void) {
         d->pinches        = new_Array(sizeof(iPinch));
         d->moms           = new_Array(sizeof(iMomentum));
         d->lastMomTime    = 0.0;
-        d->stepDurationMs = 1000.0 / 60.0; /* TODO: Ask SDL about the display refresh rate. */
 #if defined (iPlatformAppleMobile)
         d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
+#else
+        /* Ask SDL about the display refresh rate. */ {
+            SDL_DisplayMode dispMode;
+            SDL_GetDesktopDisplayMode(0, &dispMode);
+            if (dispMode.refresh_rate == 0) {
+                dispMode.refresh_rate = 60;
+            }
+            d->stepDurationMs = 1000.0 / (double) dispMode.refresh_rate;
+        }
 #endif
         d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
 #if defined (iPlatformAndroidMobile)
-        d->momFrictionPerStep = 10 * gap_UI;
+        d->momFrictionPerStep = 9 * gap_UI;
 #endif
     }
     return d;
@@ -595,7 +605,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         return iFalse;
     }
     iTouchState *d = touchState_();
-    iWindow *window = get_Window();    
+    iWindow *window = get_Window();
     const iInt2 rootSize = size_Window(window);
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
     const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0); /* pixels */
@@ -1034,3 +1044,57 @@ iBool isHovering_Touch(void) {
 size_t numFingers_Touch(void) {
     return size_Array(touchState_()->touches);
 }
+
+#else /* iPlatformTerminal */
+
+/* Terminal just needs stubs for the functions called from elsewhere. */
+
+iBool processEvent_Touch(const SDL_Event *ev) {
+    iUnused(ev);
+    return iFalse;
+}
+
+void update_Touch(void) {}
+
+void clear_Touch(void) {}
+
+float stopWidgetMomentum_Touch(const iWidget *widget) {
+    iUnused(widget);
+    return 0;
+}
+
+enum iWidgetTouchMode widgetMode_Touch(const iWidget *widget) {
+    iUnused(widget);
+    return none_WidgetTouchMode;
+}
+
+void widgetDestroyed_Touch(iWidget *widget) {
+    iUnused(widget);
+}
+
+void transferAffinity_Touch(iWidget *src, iWidget *dst) {
+    iUnused(src, dst);
+}
+
+iBool hasAffinity_Touch(const iWidget *widget) {
+    iUnused(widget);
+    return iFalse;
+}
+
+iInt2 latestPosition_Touch(void) {
+    return init1_I2(-1);
+}
+
+iInt2 latestTapPosition_Touch(void) {
+    return init1_I2(-1);
+}
+
+iBool isHovering_Touch(void) {
+    return iFalse;
+}
+
+size_t numFingers_Touch(void) {
+    return 0;
+}
+
+#endif

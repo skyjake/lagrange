@@ -10,4 +10,5 @@ cmake ../lagrange \
     -Dthe_Foundation_DIR=$IOS_DIR/lib/cmake/the_Foundation \
     -DXCODE_DEVELOPMENT_TEAM=XXXXXXXXXX \
     -DENABLE_BINCAT_SH=YES \
-    -DENABLE_DOWNLOAD_EDIT=NO
+    -DENABLE_DOWNLOAD_EDIT=NO \
+    -DENABLE_IPC=NO

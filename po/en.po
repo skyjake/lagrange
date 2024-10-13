@@ -1355,7 +1355,7 @@ msgid "upload.to"
 msgstr "To:"
 
 msgid "heading.upload.id"
-msgstr "Authorization"
+msgstr "Credentials"
 
 msgid "dlg.upload.id.none"
 msgstr "None"
@@ -1365,6 +1365,9 @@ msgstr "Default Identity"
 
 msgid "heading.upload.dest"
 msgstr "Address"
+
+msgid "upload.type"
+msgstr "Content"
 
 msgid "heading.upload.text"
 msgstr "Text"
@@ -1429,7 +1432,7 @@ msgid "dlg.upload.sendmsg"
 msgstr "Send Message"
 
 msgid "dlg.upload.edit"
-msgstr "Edit"
+msgstr "Submit"
 
 msgid "upload.port"
 msgstr "Port…"
@@ -1445,15 +1448,15 @@ msgstr "Set Port"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Upload Plain Text"
+msgstr "Enter text to upload"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Upload a File"
+msgstr "No file selected"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Select File"
+msgstr "Select File…"
 
 msgid "heading.translate"
 msgstr "Translate Page"

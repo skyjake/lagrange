@@ -1,3 +1,21 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2024-10-03 14:43+0000\n"
+"PO-Revision-Date: 2024-10-11 10:28+0000\n"
+"Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
+"Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
+"sgs/>\n"
+"Language: sgs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : (n % "
+"10 == 2 && n % 100 != 12) ? 1 : (n % 10 >= 3 && n % 10 <= 9 && (n % 100 < 11 "
+"|| n % 100 > 19)) ? 2 : 3;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "doc.archive.view"
 msgstr "Veizietė arkīva vėdo"
 
@@ -7,7 +25,7 @@ msgstr "Parsiuntėms bėngts."
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
-msgstr "Atlėkies"
+msgstr "Atlikies"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.genre"
@@ -29,10 +47,10 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "ėš vėsa %z īrašos"
-msgstr[1] "ėš vėsa %z īrašo"
-msgstr[2] "ėš vėsa %z īrašā"
-msgstr[3] "ėš vėsa %z īrašu"
+msgstr[0] "ėš vėsa %u īrašos"
+msgstr[1] "ėš vėsa %u īrašo"
+msgstr[2] "ėš vėsa %u īrašā"
+msgstr[3] "ėš vėsa %u īrašu"
 
 #, c-format
 msgid "minutes.ago"
@@ -40,7 +58,7 @@ msgid_plural "minutes.ago.n"
 msgstr[0] "prīš %d mėnotė"
 msgstr[1] "prīš %d mėnotė"
 msgstr[2] "prīš %d mėnotės"
-msgstr[3] "prīš %d mėnoťiu"
+msgstr[3] "prīš %d mėnotiu"
 
 #, c-format
 msgid "hours.ago"
@@ -53,14 +71,14 @@ msgstr[3] "prīš %d adīnu"
 #, c-format
 msgid "days.ago"
 msgid_plural "days.ago.n"
-msgstr[0] "prīš %d dëna"
-msgstr[1] "prīš %d dënė"
-msgstr[2] "prīš %d dënas"
-msgstr[3] "prīš %d dënu"
+msgstr[0] "prīš %d dėina"
+msgstr[1] "prīš %d dėinė"
+msgstr[2] "prīš %d dėinas"
+msgstr[3] "prīš %d dėinū"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "ASCII dailė: žuodis „Lagrange“ stombio šrėfto"
+msgstr "ASCII dailė: žuodis „Lagrange“ stombio šrifto"
 
 msgid "about.tagline"
 msgstr "Dailė Gemini naršīklė"
@@ -72,10 +90,10 @@ msgid "cancel"
 msgstr "Atšauktė"
 
 msgid "close"
-msgstr "Uždarītė"
+msgstr "Oždarītė"
 
 msgid "dlg.message.ok"
-msgstr "Tė̄stė"
+msgstr "Tėnstė"
 
 msgid "dlg.default"
 msgstr " Gerā "
@@ -84,7 +102,7 @@ msgid "menu.title.file"
 msgstr "Fails"
 
 msgid "menu.title.edit"
-msgstr "Redagůtė"
+msgstr "Keistė"
 
 msgid "menu.title.help"
 msgstr "Pagelba"
@@ -96,33 +114,2043 @@ msgid "menu.split.vertical"
 msgstr "Statē"
 
 msgid "menu.openlocation"
-msgstr "Atvertė vëta…"
+msgstr "Atvertė vėita…"
 
 msgid "menu.downloads"
 msgstr "Ruodītė atsėsiuntėmus"
 
 msgid "menu.find"
-msgstr "Ëškuotė poslapie"
+msgstr "Ėiškuotė puslapie"
 
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
-msgstr "Ėšsauguotė failė"
+msgstr "Ėšsauguotė i faila"
 
 msgid "menu.save.downloads.open"
-msgstr "Ėšsauguotė atsisiuntėmūs ėr atvertė"
+msgstr "Ėšsauguotė atsėsiuntėmūs ėr atvertė"
 
 msgid "menu.zoom.in"
-msgstr "Padėdintė"
+msgstr "Padidintė"
 
 msgid "menu.zoom.out"
 msgstr "Somažintė"
 
 msgid "menu.zoom.reset"
-msgstr "Atstatītė priartėnėmus"
+msgstr "Atstatītė dīdi"
 
 msgid "macos.menu.find"
-msgstr "Ėškuotė"
+msgstr "Ėiškuotė"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
 msgstr "Ėšsauguotė atsėsiuntėmu papkie"
+
+msgid "userdata.help"
+msgstr ""
+"Arkīvā nauduotuojė doumenū keravuo naršīma istuorėjė, identėtetus, "
+"nūruodas, teksta ėškarpas, alkieriu nustatīmus ė prijimtū serveriu "
+"sertifikatu žīmas. Anėi gal būtė nauduojamė kāp atsargėnė kuopėjė arba pā"
+"rneštė doumenis i kėta aparata."
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Tamīsta esat isėrašė i %u sāraša, katramė ī %%.\n"
+msgstr[1] "Tamīsta esat isėrašė i %u sārašo, katramė ī %%.\n"
+msgstr[2] "Tamīsta esat isėrašė i %u sārašus, katramė ī %%.\n"
+msgstr[3] "Tamīsta esat isėrašė i %u sārašu, katramė ī %%.\n"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Aple Lagrange"
+
+msgid "menu.fonts"
+msgstr "Keravuotė šriftus…"
+
+msgid "menu.page.copysource"
+msgstr "Nukuopėjoutė poslapė kuoda"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Napārskaitīts"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Skaitītė vėskon"
+
+msgid "feeds.today"
+msgstr "Šėndėin"
+
+msgid "menu.root"
+msgstr "Ētė i pradė"
+
+msgid "menu.home"
+msgstr "Nomėi"
+
+msgid "menu.aboutpages"
+msgstr "„Aple“ poslapē"
+
+msgid "menu.pageinfo"
+msgstr "Ruodītė poslapė informacėjė"
+
+msgid "menu.copy"
+msgstr "Nukuopėjoutė"
+
+msgid "menu.paste"
+msgstr "Idietė"
+
+msgid "menu.title.window"
+msgstr "Longs"
+
+msgid "menu.window.min"
+msgstr "Somažintė"
+
+msgid "menu.window.max"
+msgstr "Ėšdidintė"
+
+msgid "menu.window.full"
+msgstr "Parjungtė vėsa ekrana ruodīma"
+
+msgid "menu.split.merge"
+msgstr "Apjungtė"
+
+msgid "menu.sidebar.right"
+msgstr "Pārjungtė dešini šuona"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Ėštrintė"
+
+msgid "menu.autoreload"
+msgstr "Ijungtė automatini pārkruovėma…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Atnaujintė nūtuoluses žīmas"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Nustatītė veiksma:"
+
+msgid "sidebar.action.ident.import"
+msgstr "Impuortoutė…"
+
+msgid "menu.edit"
+msgstr "Keistė…"
+
+msgid "menu.dup"
+msgstr "Doblėkoutė…"
+
+msgid "menu.unexpire"
+msgstr "Naveizietė galiuojėma čiesa ėr ožkrautė"
+
+msgid "menu.preferences"
+msgstr "Nustatīmā…"
+
+msgid "menu.releasenotes"
+msgstr "Ėšleidėma navīnas"
+
+# Used on the mobile Settings page.
+msgid "menu.about"
+msgstr "Aple"
+
+msgid "sidebar.history"
+msgstr "Istuorėjė"
+
+msgid "doc.pre.nocaption"
+msgstr "Napadailinta rašliava ba aprašīma"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Kraunas"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s ī sospausts arkīvs."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Atsėsiuntėms būs nutraukts, jė ėšjungsat taba."
+
+msgid "numbertype.integer"
+msgstr "ciels skaitlios"
+
+msgid "menu.title.view"
+msgstr "Vaizds"
+
+msgid "menu.title.bookmarks"
+msgstr "Žīmas"
+
+msgid "menu.title.identity"
+msgstr "Identėtets"
+
+msgid "menu.newtab"
+msgstr "Naus tabs"
+
+msgid "menu.sidebar.left"
+msgstr "Pārjungtė kairi šuona"
+
+msgid "menu.sidebar"
+msgstr "Pārjungtė šuonu ruodīma"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Ruodītė poslapė soriedīma"
+
+msgid "menu.back"
+msgstr "Grīžtė"
+
+msgid "menu.forward"
+msgstr "Ētė pėrmīn"
+
+msgid "panel.back"
+msgstr "Atgal"
+
+msgid "menu.debug"
+msgstr "Teknėnė infuormacėjė"
+
+msgid "sidebar.outline"
+msgstr "Soriedīms"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Vėsks"
+
+msgid "ident.temporary"
+msgstr "Laikėnā"
+
+msgid "dlg.cert.trust"
+msgstr "Prijimtė"
+
+msgid "menu.update"
+msgstr "Veizietė atnaujėnėmu…"
+
+msgid "pageinfo.cert.expired"
+msgstr "Pasėbėngės čiesos"
+
+msgid "media.untitled.image"
+msgstr "Abruozdielis"
+
+msgid "media.untitled.audio"
+msgstr "Garsa īrašos"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Paskutinis atnaujėnėms bova %s."
+
+msgid "menu.closetab"
+msgstr "Ožvertė taba"
+
+msgid "menu.closetab.other"
+msgstr "Ožvertė kėtus tabus"
+
+msgid "menu.closetab.left"
+msgstr "Ožvertė tabus i kairė"
+
+msgid "menu.closetab.right"
+msgstr "Ožvertė tabus i dešėnė"
+
+msgid "menu.duptab"
+msgstr "Padoblioutė taba"
+
+msgid "menu.paste.go"
+msgstr "Idietė ė paleistė"
+
+msgid "menu.import.links"
+msgstr "Importoutė vėsas nūruodas puslapie…"
+
+msgid "menu.feeds.refresh"
+msgstr "Atnaujintė sārašus"
+
+msgid "menu.identity.new"
+msgstr "Naus identėtets…"
+
+msgid "menu.identity.import"
+msgstr "Imuortoutė…"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "menu.newfolder"
+msgstr "Naujė papkė…"
+
+msgid "menu.sort.alpha"
+msgstr "Palē abiecielė"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Nustatīmā"
+
+msgid "menu.identity.newdomain"
+msgstr "Naus identėtets domenou…"
+
+msgid "heading.archive.userdata"
+msgstr "Arkīvs nauduotuojė doumenū"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Ožvardėjėms"
+
+msgid "numbertype.float"
+msgstr "skaitlios so kablioko"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Sāraša īrašā"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Atnaujėnėms kon tik bova atlėkts."
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+msgstr "Soriedīts ont SDL 2, OpenSSL ė ☕️"
+
+msgid "menu.export"
+msgstr "Ekspuortoutė"
+
+msgid "menu.import"
+msgstr "Impuortoutė…"
+
+msgid "menu.page.translate"
+msgstr "Pargoldītė…"
+
+msgid "menu.page.copyurl"
+msgstr "Nukuopėjoutė poslapė URL"
+
+msgid "sidebar.identities"
+msgstr "Identėtetā"
+
+msgid "menu.website"
+msgstr "Pruojekta alkierios…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Pasėrinktė vėskon"
+
+msgid "menu.tab.next"
+msgstr "Ruodītė sekonti taba"
+
+msgid "menu.tab.prev"
+msgstr "Ruodītė onkstiesni taba"
+
+msgid "menu.movetab.split"
+msgstr "Pārkeltė taba i kėta posė"
+
+msgid "menu.movetab.newwindow"
+msgstr "Pārkeltė taba i nauji longa"
+
+msgid "menu.quit"
+msgstr "Ėšjungtė Lagrange"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Ruodītė žīmas"
+
+msgid "menu.newwindow"
+msgstr "Naus longs"
+
+msgid "menu.view.split"
+msgstr "Padalintė vaizda"
+
+msgid "menu.bookmarks.list"
+msgstr "Sārašos vėsū žīmū"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Sārašos palē sokūrėma"
+
+msgid "menu.feeds.entrylist"
+msgstr "Ruodītė sāraša īrašus"
+
+msgid "menu.help"
+msgstr "Pagelba"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Ruodītė istuorėjė"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Ruodītė identėtetus"
+
+msgid "menu.parent"
+msgstr "Ētė aukštīn"
+
+msgid "menu.page.bookmark"
+msgstr "Pasėžīmietė puslapi…"
+
+msgid "sidebar.bookmarks"
+msgstr "Žīmas"
+
+msgid "sidebar.feeds"
+msgstr "Sārašā"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nauji papkė"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Keistė"
+
+msgid "sidebar.action.ident.new"
+msgstr "Naus…"
+
+msgid "menu.page.subscribe"
+msgstr "Stebietė puslapi…"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Pakavuotė identėtetus"
+
+msgid "menu.identities"
+msgstr "Valdītė identėtetus"
+
+msgid "sidebar.close"
+msgstr "Padarīta"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Napārskaitīts"
+msgstr[1] "Napārskaitīto"
+msgstr[2] "Napārskaitītė"
+msgstr[3] "Napārskaitītu"
+
+msgid "ident.export"
+msgstr "Ekspuortoutė"
+
+msgid "heading.unsub"
+msgstr "Nabstebietė"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Prijimts"
+
+msgid "dlg.unsub"
+msgstr "Nabstebietė"
+
+msgid "feeds.unsubscribe"
+msgstr "Nabstebietė…"
+
+msgid "menu.movetab.left"
+msgstr "Pārkeltė taba i kairė"
+
+msgid "menu.movetab.right"
+msgstr "Pārkeltė taba i dešėnė"
+
+msgid "menu.split.swap"
+msgstr "Apmainītė vėituom"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Vėskuo sārašos"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Sārašos žīmu palē tagus"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Sārašos palē tagus"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Sārašos žīmū palē sokūrėma"
+
+msgid "menu.cut"
+msgstr "Ėškėrptė"
+
+msgid "menu.select.clear"
+msgstr "Nabžīmietė"
+
+msgid "menu.reopentab"
+msgstr "Atvertė paskutini ožverta taba"
+
+msgid "menu.open.external"
+msgstr "Atvertė kėtuo pruogramuo"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Atšauktė"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Ruodītė sārašus"
+
+msgid "menu.viewformat.plain"
+msgstr "Veizietė kāp paprasta teksta"
+
+msgid "menu.viewformat.gemini"
+msgstr "Veizietė kāp Gemtext'a"
+
+msgid "menu.email"
+msgstr "Sosėsėiktė al. laiško"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Nukuopėjoutė poslapė nūruoda"
+
+msgid "menu.identity.notactive"
+msgstr "Nie aktīvė identėteta"
+
+msgid "menu.snippet.add"
+msgstr "Pažīmieta i ėškarpa…"
+
+msgid "menu.reload"
+msgstr "Pārkrautė puslapi"
+
+msgid "menu.tools"
+msgstr "Rakondā"
+
+msgid "menu.page.import"
+msgstr "Impuortoutė vėsas nūruodas kāp žīmas…"
+
+msgid "menu.page.visitlinks"
+msgstr "Pažīmietė vėsas nūruodas lonkītuoms"
+
+msgid "menu.foldall"
+msgstr "Vėskon soskleistė"
+
+msgid "menu.unfoldall"
+msgstr "Vėskon ėšskleistė"
+
+msgid "menu.userdata"
+msgstr "Nauduotuojė doumenis"
+
+msgid "menu.paste.snippet"
+msgstr "Idietė rašliavuos šmuota"
+
+msgid "menu.search"
+msgstr "Ėiškuotė"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Pridietė žīma i papkė:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Pārkeltė žīma i papkė:"
+
+msgid "menu.openwindow"
+msgstr "Atvertė naujam longė"
+
+msgid "menu.forgeturl"
+msgstr "Pamėrštė URL"
+
+msgid "ident.unset"
+msgstr "Atkabintė"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Napatėkėms"
+
+msgid "pageinfo.domain.match"
+msgstr "Duomena ožvardėnėms skėras"
+
+msgid "bookmark.tag.remote"
+msgstr "Nauduotė kāp žīmū šaltini"
+
+msgid "heading.import.bookmarks"
+msgstr "Impuortoutė žīmas"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Paruodītė failu valdīklie"
+
+msgid "bookmark.untag.sub"
+msgstr "Nabstebietė sāraša"
+
+msgid "dlg.certimport.notes"
+msgstr "Raštelē:"
+
+msgid "link.hint.image"
+msgstr "Abruozdielis"
+
+msgid "feeds.refresh"
+msgstr "Atnaujintė sārašus"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Ivestė doumenis diel %s:"
+
+msgid "dlg.translate"
+msgstr "Pārgoldītė"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Tinklos"
+
+msgid "prefs.uilang"
+msgstr "Kalba:"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Šėts Atom XML duokomėnts bova autuomatėškā konvertouts i Gemini sāraša, ka "
+"imeigtom stebietė anon."
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Ėštrintė žīmas"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "A tėkrā nuorat ėštrintė %u žīma papkie?"
+msgstr[1] "A tėkrā nuorat ėštrintė %u žīmė papkie?"
+msgstr[2] "A tėkrā nuorat ėštrintė %u žīmas papkie?"
+msgstr[3] "A tėkrā nuorat ėštrintė %u žīmu papkie?"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"A tėkrā nuorat ėštrintė identėteta %s\"%s\"%s, katramė ī sertifėkats ė "
+"asablīvė raktu failā?"
+
+msgid "sidebar.empty.idents"
+msgstr "Nie identėtetu"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Tamīsta galat ėšsauguotė kāp faila jūsa Atsėsiuntėma papkie: mīket %s "
+"arba pasėrinket „%s“ ėš meniu."
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Patvėrtints CA"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Duomena ožvardėnėms skėras"
+
+msgid "keys.contextmenu"
+msgstr "Atvertė konteksta meniu"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Rasta %d nauji nūruoda tamė puslapie."
+msgstr[1] "Rastas %d naujė nūruodė tamė puslapie."
+msgstr[2] "Rastas %d naujas nūruoda tamė puslapie."
+msgstr[3] "Rastas %d naujū nūruodu tamė puslapie."
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Kėnu"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Puortugalu"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Ispanu"
+
+msgid "menu.openfile"
+msgstr "Atvertė faila…"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Nauduojams %u URL'ė"
+msgstr[1] "Nauduojams %u URL'ūs"
+msgstr[2] "Nauduojams %u URL'ūs"
+msgstr[3] "Nauduojams %u URL'u"
+
+msgid "reload.onceperday"
+msgstr "Vėina karta par dėina"
+
+msgid "link.newtab"
+msgstr "Atvertė nūruoda naujamė tabė"
+
+msgid "link.newtab.background"
+msgstr "Atvertė nūruoda fuonėniam tabė"
+
+msgid "link.browser"
+msgstr "Atvertė nūruoda numatītuo naršīklie"
+
+msgid "link.noproxy"
+msgstr "Atvertė ba proxy serverė"
+
+msgid "link.copy"
+msgstr "Nukuopėjoutė nūruoda"
+
+msgid "link.bookmark"
+msgstr "Ėšsauguotė nūruoda kāp žīma…"
+
+msgid "link.download"
+msgstr "Parsiunstė faila nūruoduo"
+
+msgid "dlg.bookmark.icon"
+msgstr "Ikuona:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "menu.opentab.background"
+msgstr "Atvertė fuonini taba"
+
+msgid "bookmark.tag.sub"
+msgstr "Stebietė sāraša"
+
+msgid "bookmarks.reload"
+msgstr "Atnaujintė nutuolini šaltini"
+
+msgid "ident.using"
+msgstr "Nauduojams tamė puslapie"
+
+msgid "menu.edit.notes"
+msgstr "Keistė raštieli…"
+
+msgid "heading.ident.notes"
+msgstr "Identėteta raštielis"
+
+msgid "ident.fingerprint"
+msgstr "Nukuopėjoutė SHA-256 ontspauda"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Veizieket %sPagelba%s sosėžėnuotė daugiau aple TLS klijenta sertifėkatus."
+
+msgid "pageinfo.settings"
+msgstr "Nustatīmā"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "SĀRAŠĀ"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%b %d"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%b %d, %Y"
+
+msgid "feeds.entry.markread"
+msgstr "Pažīmietė skaitīto"
+
+msgid "feeds.entry.markunread"
+msgstr "Pažīmietė naskaitīto"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Pridietė žīma…"
+
+msgid "menu.opentab"
+msgstr "Atvertė naujam tabė"
+
+msgid "bookmark.untag.remote"
+msgstr "Ėštrintė žīmū šaltini"
+
+msgid "toolbar.outline"
+msgstr "Poslapė soriedīms"
+
+msgid "heading.pageinfo"
+msgstr "Poslapė informacėjė"
+
+msgid "pageinfo.header.cached"
+msgstr "(kešouts turinīs)"
+
+msgid "pageinfo.cert.status"
+msgstr "Sertifėkata statusos:"
+
+msgid "dlg.save.incomplete"
+msgstr "Poslapė turinīs dā ī parsiuntams."
+
+msgid "dlg.save.opendownload"
+msgstr "Atvertė parsiunsta faila"
+
+msgid "heading.save.error"
+msgstr "Kliauza saugont faila"
+
+msgid "dlg.autoreload"
+msgstr "Pasėrinktė auto-pārkruovėma tonkoma šėtam tabou."
+
+msgid "link.file.delete"
+msgstr "Ėštrintė faila"
+
+msgid "heading.upload.text"
+msgstr "Teksts"
+
+msgid "heading.upload.file"
+msgstr "Fails"
+
+msgid "dlg.translate.to"
+msgstr "Kam:"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Atvertė nūruoda šuonė"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Bėngas čiesos %b %d, %Y"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Ontspaudā"
+
+msgid "dlg.input.linebreak"
+msgstr "Nauji eilotė"
+
+msgid "upload.id"
+msgstr "Identėtets:"
+
+msgid "dlg.upload.send"
+msgstr "Ikeltė"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u fails"
+msgstr[1] "%u failo"
+msgstr[2] "%u failā"
+msgstr[3] "%u failu"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Atvertė nūruoda numatītuo naršīklie?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Atvertė nūruoda"
+
+msgid "link.hint.audio"
+msgstr "Garsa fails"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u šrifts"
+msgstr[1] "%u šrifto"
+msgstr[2] "%u šriftā"
+msgstr[3] "%u šriftu"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sPridietė žīma"
+msgstr[1] "%sPridietė %d žīmė"
+msgstr[2] "%sPridietė %d žīmas"
+msgstr[3] "%sPridietė %d žīmu"
+
+msgid "error.gone"
+msgstr "Dinga"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u baits"
+msgstr[1] "%u baito"
+msgstr[2] "%u baitā"
+msgstr[3] "%u baitu"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Ėštrintė %u žīma"
+msgstr[1] "Ėštrintė %u žīmė"
+msgstr[2] "Ėštrintė %u žīmas"
+msgstr[3] "Ėštrintė %u žīmu"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Nukuopėjoutė SHA-256 vėšouji rakta"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Nukuopėjoutė SHA-256 serifėkata"
+
+msgid "sitespec.tlscache"
+msgstr "Pratėnstė TLS sesėjė:"
+
+msgid "keys.pageinfo"
+msgstr "Paruodītė poslapė infuormacėjė"
+
+msgid "keys.menubar.focus"
+msgstr "Sofokusoutė ont meniu skīda"
+
+msgid "keys.identmenu"
+msgstr "Atvertė identėtetu meniu"
+
+msgid "menu.input.setprompt"
+msgstr "Prijimtė, ka tas URL praša ivedėma"
+
+msgid "menu.input.unsetprompt"
+msgstr "Naprijimtė, ka tas URL praša ivedėma"
+
+msgid "menu.input.clear"
+msgstr "Ėštrintė istuorėjė"
+
+msgid "dlg.import.intofolder"
+msgstr "Idietė i papkė:"
+
+msgid "dlg.import.headings"
+msgstr "Puopapkės ėš ontraštiu:"
+
+msgid "dlg.import.notfound"
+msgstr "Tamė puslapie nie nūruodu."
+
+msgid "link.side"
+msgstr "Atvertė nūruoda šalėpās"
+
+msgid "link.searchurl"
+msgstr "Panauduotė kāp paėiškuos URL"
+
+msgid "link.snippet"
+msgstr "Teksta šmuots ėš nūruodas…"
+
+msgid "menu.share"
+msgstr "Dalintėis"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "Indu"
+
+msgid "dlg.bookmark.tags"
+msgstr "Tagā:"
+
+msgid "heading.prefs.certs"
+msgstr "Sertifėkatā"
+
+msgid "prefs.theme.black"
+msgstr "Jouda"
+
+msgid "prefs.accent.orange"
+msgstr "Muorkavs"
+
+msgid "heading.openlink"
+msgstr "Atvertė nūruoda"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Alīvėnė"
+
+msgid "dlg.history.clear"
+msgstr "Ėšvalītė istuorėjė"
+
+msgid "bookmark.tag.home"
+msgstr "Nauduotė kāp numini puslapi"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Nauduotė %s"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Napatvėrtints CA"
+
+msgid "sitespec.ansi"
+msgstr "Pārspiejėms ANSI simbuolēs:"
+
+msgid "keys.input.precedingline"
+msgstr "Ivedėms: Iklėjoutė onkstesnė eilotė"
+
+msgid "heading.autoreload"
+msgstr "Auto-pārkruovėms"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"Gauts %Y-%m-%d\n"
+"%H:%M"
+
+msgid "feeds.entry.bookmark"
+msgstr "Pridietė žīma…"
+
+msgid "heading.history.clear"
+msgstr "Ėšvalītė istuorėjė"
+
+msgid "dlg.confirm.history.clear"
+msgstr "A tėkrā nuorat ėšvalītė istuorėjė lonkītu puslapiu?"
+
+msgid "bookmark.delete"
+msgstr "Ėštrintė žīma"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Raštelē aple %s:"
+
+msgid "sidebar.action.show"
+msgstr "Ruodītė:"
+
+msgid "status.feeds"
+msgstr "Atnaujėnamė sārašā"
+
+msgid "dlg.newident.org"
+msgstr "Organėzacėjė:"
+
+msgid "dlg.newident.country"
+msgstr "Valstībė:"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Mīgtokā"
+
+msgid "heading.prefs.sizing"
+msgstr "Dėdoms"
+
+msgid "prefs.saturation"
+msgstr "Suodroms:"
+
+msgid "gempub.meta.pub"
+msgstr "Pavėišinta"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Pažīmietė žemiau skaitītās"
+
+msgid "feeds.edit"
+msgstr "Keistė sāraša…"
+
+msgid "dlg.ident.delete"
+msgstr "Ėštrintė identėteta ė failus"
+
+msgid "sidebar.empty.unread"
+msgstr "Nie naparskaitītu īrašu"
+
+msgid "dlg.file.delete.confirm"
+msgstr "A tėkrā nuorat ėštrintė ton faila?"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ISTUORĖJĖ"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Proncūzu"
+
+msgid "dlg.feed.sub"
+msgstr "Stabietė"
+
+msgid "gempub.meta.license"
+msgstr "Licenzėjė"
+
+msgid "heading.prefs"
+msgstr "Nustatīmā"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Barvas"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Bėndrėnē"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Ėšvaizda"
+
+msgid "hint.findtext"
+msgstr "Rastė teksta puslapie"
+
+msgid "status.query"
+msgstr "Paėiškuos ožklausa"
+
+msgid "status.query.tight"
+msgstr "Ėiškuotė"
+
+msgid "history.clear"
+msgstr "Ėšvalītė istuorėjė…"
+
+msgid "ident.use"
+msgstr "Nauduotė tamė puslapie"
+
+msgid "heading.sitespec"
+msgstr "Poslapė specėfėnē nustatīmā"
+
+msgid "sitespec.palette"
+msgstr "Temas paletės šaltinis:"
+
+msgid "sitespec.accept"
+msgstr "Ėšsauguotė nustatīmus"
+
+msgid "dlg.file.delete"
+msgstr "Ėštrintė"
+
+msgid "dlg.certimport.import"
+msgstr "Imuortoutė"
+
+msgid "dlg.translate.from"
+msgstr "Nu:"
+
+msgid "dlg.newident.temp"
+msgstr "Laikėns:"
+
+msgid "sidebar.action.history.clear"
+msgstr "Ėšvalītė"
+
+msgid "hint.certimport.description"
+msgstr "aprašīms"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTĖTETĀ"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "KĖTKOS"
+
+msgid "prefs.animate"
+msgstr "Animacėjė:"
+
+msgid "ident.sendmsg"
+msgstr "Siunstė pranešėma kāp…"
+
+msgid "heading.ident.use"
+msgstr "Identėteta nauduojėms"
+
+msgid "ident.delete"
+msgstr "Ėštrintė identėteta…"
+
+msgid "heading.ident.delete"
+msgstr "Ėštrintė identėteta"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "A tėkrā nabstebietė \"%s\" sāraša?"
+
+msgid "error.server.msg"
+msgstr "Atsakīms ėš serverė:"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Napasėbėngės galiuojėma čiesos"
+
+msgid "reload.never"
+msgstr "Nikumet"
+
+msgid "link.side.newtab"
+msgstr "Atvertė nūruoda naujamė tabė šalėpās"
+
+msgid "link.newwindow"
+msgstr "Atvertė nūruoda naujamė longė"
+
+msgid "bookmark.export.title.folder"
+msgstr "Žīmas"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ŽĪMAS"
+
+msgid "menu.folder.opentab"
+msgstr "Atvertė naujūs tabūs"
+
+msgid "menu.copyurl"
+msgstr "Nukuopėjoutė URL"
+
+msgid "bookmark.untag.home"
+msgstr "Ėštrintė numini puslapi"
+
+msgid "bookmark.folder.delete"
+msgstr "Ėštrintė žīmū papkė"
+
+msgid "ident.notused"
+msgstr "Nanauduojams"
+
+msgid "ident.stopuse"
+msgstr "Nustuotė nauduotė tamė puslapie"
+
+msgid "dlg.upload.id.none"
+msgstr "Nieks"
+
+msgid "keys.sitespec"
+msgstr "Paruodītė specifinius poslapė nustatīmus"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabu"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Vuokītiū"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Onglu"
+
+msgid "hint.newident.optional"
+msgstr "naprivaluoms"
+
+msgid "heading.prefs.proxies"
+msgstr "Proxy serverē"
+
+msgid "heading.prefs.scrolling"
+msgstr "Slinkėms"
+
+msgid "dlg.input.send"
+msgstr "Siunstė"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Iklėjoutė onkstesnė eilotė"
+
+msgid "heading.save"
+msgstr "Fails ėšsauguots"
+
+msgid "heading.save.incomplete"
+msgstr "Puslapis naožkrauts dā"
+
+msgid "dlg.save.size"
+msgstr "Didoms:"
+
+msgid "dlg.import.notnew"
+msgstr "Vėsas nūruodas tamė puslapie jau pridietas pri žīmū."
+
+msgid "prefs.theme.dark"
+msgstr "Tomsi"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Pėlka"
+
+msgid "prefs.linewidth.fill"
+msgstr "Ožpėldītė"
+
+msgid "gempub.meta.version"
+msgstr "Versėjė"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d mėnotė"
+msgstr[1] "%d mėnotė"
+msgstr[2] "%d mėnotės"
+msgstr[3] "%d minutiu"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d adīna"
+msgstr[1] "%d adīnė"
+msgstr[2] "%d adīnas"
+msgstr[3] "%d adīnu"
+
+msgid "dlg.newident.email"
+msgstr "Al. pašts:"
+
+msgid "dlg.newident.more"
+msgstr "Daugiau…"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "heading.prefs.fonts"
+msgstr "Šriftā"
+
+msgid "heading.prefs.paragraph"
+msgstr "Paragrafos"
+
+msgid "prefs.pinsplit.none"
+msgstr "Nieks"
+
+msgid "prefs.theme.light"
+msgstr "Švėisi"
+
+msgid "prefs.theme.white"
+msgstr "Balta"
+
+msgid "prefs.returnkey.accept"
+msgstr "Prijimtė"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Jouda"
+
+msgid "prefs.quoteicon.line"
+msgstr "Lėnėjė"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Paruodītė Finder'ie"
+
+msgid "heading.file.delete"
+msgstr "Ėštrintė faila"
+
+msgid "dlg.certwarn.title"
+msgstr "Saugoma pavuojos"
+
+msgid "gempub.meta.lang"
+msgstr "Kalba"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italu"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Balta"
+
+msgid "gempub.meta.author"
+msgstr "Autuorios"
+
+#, fuzzy
+msgid "prefs.accent.teal"
+msgstr "Tiurkė"
+
+msgid "feeds.entry.openfeed"
+msgstr "Atvertė sāraša puslapi"
+
+msgid "feeds.markallread"
+msgstr "Pažīmietė vėskon skaitīto"
+
+msgid "ident.stopuse.all"
+msgstr "Nustuotė nauduotė vėsor"
+
+msgid "menu.input.restore"
+msgstr "Atstatītė onkstiesni:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Īprasta"
+
+msgid "menu.binding.clear"
+msgstr "Ėštrintė"
+
+msgid "dlg.bookmark.title"
+msgstr "Ožvardėjėms:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japuonu"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Rosu"
+
+msgid "dlg.newident.domain"
+msgstr "Duomens:"
+
+msgid "dlg.feed.title"
+msgstr "Ožvardėjėms:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dabartinis duomens"
+
+msgid "import.userdata.idents"
+msgstr "Identėtetā:"
+
+msgid "heading.feedcfg"
+msgstr "Sāraša nustatīmu"
+
+msgid "heading.certimport"
+msgstr "Impuortoutė identėta"
+
+msgid "upload.port"
+msgstr "Puorts…"
+
+msgid "menu.snip.prefs"
+msgstr "Konfigūroutė…"
+
+msgid "prefs.accent.red"
+msgstr "Rauduona"
+
+msgid "import.userdata.bookmarks"
+msgstr "Žīmas:"
+
+msgid "import.userdata.snippets"
+msgstr "Teksta šmuots:"
+
+msgid "dlg.userdata.no"
+msgstr "Nieks"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "TEKSTA ŠMUOTS"
+
+msgid "heading.upload.id"
+msgstr "Padieka"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danu"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Uolandu"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+msgid "dlg.feed.entrytype"
+msgstr "Īraša tėps:"
+
+msgid "dlg.bookmark.notes"
+msgstr "Raštelē:"
+
+msgid "heading.prefs.snip"
+msgstr "Teksta šmuots"
+
+msgid "collapse.notbydefault"
+msgstr "Ronkinis"
+
+msgid "prefs.accent.green"
+msgstr "Žali"
+
+msgid "snip.content"
+msgstr "Turinīs:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Autuomatėškā"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Čeku"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Suomiu"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "POSLAPĖ TURINĪS"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Turinīs"
+
+msgid "upload.type"
+msgstr "Turinīs"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Vėngru"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Švedu"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turku"
+
+msgid "heading.newident.missing"
+msgstr "Trukst informacėjės"
+
+msgid "prefs.accent.gray"
+msgstr "Pėlka"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Meniu"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Šuons"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Fuokusos"
+
+msgid "dlg.newident.userid"
+msgstr "Nauduotuojė ID:"
+
+msgid "heading.bookmark.tags"
+msgstr "Elgesīs"
+
+msgid "heading.prefs.support"
+msgstr "Pagelba"
+
+msgid "dlg.translate.unavail"
+msgstr "Servisos napasėikams"
+
+msgid "dlg.translate.fail"
+msgstr "Kreipėmāsis napavīka"
+
+msgid "heading.certimport.dropped"
+msgstr "Pārmests fails"
+
+msgid "prefs.justify"
+msgstr "Ėšlīgintė:"
+
+msgid "dlg.certimport.nocert"
+msgstr "Nie sertifėkata"
+
+msgid "bookmark.title.blank"
+msgstr "Pūsts puslapis"
+
+msgid "upload.from"
+msgstr "Nu:"
+
+msgid "upload.to"
+msgstr "Kam:"
+
+msgid "prefs.accent.blue"
+msgstr "Mielėna"
+
+msgid "heading.translate"
+msgstr "Pārgoldītė puslapi"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azeru"
+
+msgid "dlg.newident.until"
+msgstr "Galiuo lėg:"
+
+msgid "dlg.newident.commonname"
+msgstr "Bėndros vards:"
+
+msgid "dlg.newident.scope.page"
+msgstr "Dabartinis puslapis"
+
+msgid "prefs.boldlink.visited"
+msgstr "Aplonkīts"
+
+msgid "prefs.uilayout"
+msgstr "Ėšdiestīms:"
+
+msgid "heading.fontpack.meta"
+msgstr "Šriftā"
+
+msgid "fontpack.meta.installed"
+msgstr "Idėigts"
+
+msgid "dlg.upload.edit"
+msgstr "Pateiktė"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebraju"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Kuoriejietiu"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persu"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Lėnku"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Sluovaku"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrainietiu"
+
+msgid "heading.newident.date.bad"
+msgstr "Bluogė doumenis"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Nustatīmā"
+
+msgid "heading.prefs.appearance"
+msgstr "Ėšvaizda"
+
+msgid "heading.prefs.content"
+msgstr "Turinīs"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sisteminis"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Ronkinis"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nieks"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Pėlkoma nustatīms"
+
+msgid "prefs.font.body"
+msgstr "Turinīs:"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Jūras žīdroma"
+
+msgid "import.userdata.history"
+msgstr "Istuorėjė:"
+
+msgid "menu.snip.delete"
+msgstr "Ėštrintė"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Prīšingas barvas"
+
+msgid "prefs.font.heading"
+msgstr "Ožvardėnėmā:"
+
+msgid "snip.name"
+msgstr "Vards:"
+
+msgid "heading.upload.dest"
+msgstr "Adresos"
+
+msgid "menu.snip.edit"
+msgstr "Kaistė…"
+
+msgid "prefs.font.mono"
+msgstr "Nadailints teksts:"
+
+msgid "dlg.bookmark.folder"
+msgstr "Papkė:"
+
+msgid "collapse.never"
+msgstr "Nikumet"
+
+msgid "collapse.always"
+msgstr "Vėsumet"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD nūruodas"
+
+msgid "dlg.feed.type.headings"
+msgstr "Naujė ontraštė"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Kataluonu"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Graiku"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonezietiu"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Airiu"
+
+msgid "heading.newident"
+msgstr "Naus identėtets"
+
+msgid "dlg.newident.scope"
+msgstr "Nauduotė:"
+
+msgid "dlg.newident.scope.none"
+msgstr "Nanauduots"
+
+msgid "dlg.newident.create"
+msgstr "Sokortė identėteta"
+
+msgid "dlg.certwarn.different"
+msgstr "Gautāsis sertifėkats ī galiuojontis, ale skėras nu mūsa prijimta."
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Ont švėisė"
+
+msgid "keys.scroll.up"
+msgstr "Slinktė aukštīn"
+
+msgid "keys.zoom.out"
+msgstr "Pamažintė"
+
+msgid "keys.tab.close"
+msgstr "Oždarītė taba"
+
+msgid "keys.tab.next"
+msgstr "Sekontis tabs"
+
+msgid "prefs.linewidth"
+msgstr "Eilotės pluotis:"
+
+msgid "error.certverify"
+msgstr "Naprijimts serveris"
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Šėtam sārašė kuožna ontraštė paruoda žīmies taga. Vėn ožtagintas žīmas ī "
+"ruoduomas. Žīmas so kelēs tagās ī kartuojamas kīkvėinam tagou."
+
+msgid "prefs.downloads"
+msgstr "Atsėsiuntėmu papkė:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Ikuona"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Pasėžīmiejėmā ė citatas ī rezervoutas papėlduomā informacėjē aple "
+"mėnavuojama žīma. Tekstėnės eilotės ė dailints teksts būs laikuomė ož "
+"komentara ė būs ignuorounamė."
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "Tuoks resursa tips nagal būtė keitams pruogramuo."
+
+msgid "dlg.userdata.all"
+msgstr "Vėskon (ožrašītė ont vėršaus)"
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Gautāsis sertifėkats ī kėtam duomenou (%s). Tas gal būtė serverė konfėgū"
+"ravėma kliauza."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Sertifėkats/rakts nabova rasts tamė puslapie."
+
+msgid "upload.file.name"
+msgstr "Faila ožvardėnėms:"
+
+msgid "upload.mime"
+msgstr "MIME tips:"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Didelis kontrasts"
+
+msgid "prefs.font"
+msgstr "Torėnė šrifts:"
+
+msgid "error.unavail"
+msgstr "Serveris napasėikams"
+
+msgid "error.cgi"
+msgstr "CGI kliauza"
+
+msgid "error.slowdown"
+msgstr "Soletiejėms"
+
+msgid "error.cert.invalid"
+msgstr "Natinkams sertifėkats"
+
+msgid "gempub.meta.revdate"
+msgstr "Revizėjės data"
+
+msgid "error.unsupported.protocol"
+msgstr "Napalaikuoms pruotuokuols"
+
+msgid "import.userdata.sitespec"
+msgstr "Alkierė nustatīmā:"
+
+msgid "dlg.userdata.missing"
+msgstr "Jė nie"
+
+msgid "bookmark.export.saving"
+msgstr "Ėšsauguotė puslapi ekspuortavėmou arba nukuopėjoutė anus i atmintė."
+
+msgid "heading.upload.spartan"
+msgstr "Ikeltė par Spartan'a"
+
+msgid "heading.prefs.pagecontent"
+msgstr "Poslapė barvas"
+
+msgid "keys.tab.close.other"
+msgstr "Ožvertė kėtus tabus"
+
+msgid "keys.tab.prev"
+msgstr "Onkstiesnis tabs"
+
+msgid "menu.page.upload.edit"
+msgstr "Keistė puslapi par Titan'a…"
+
+msgid "bookmark.export.format.folders"
+msgstr "Papkės soriedīms ėšreikšts 2/3 ontraštės līgė."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Gautāsis sertifėkats bėngė galiuotė %s."
+
+msgid "import.userdata.trusted"
+msgstr "Prijimtė sertifėkatā:"
+
+msgid "menu.page.upload"
+msgstr "Ikeltė so Titan'o…"
+
+msgid "prefs.doctheme.dark"
+msgstr "Tomsiuoji tema:"
+
+msgid "heading.prefs.widelayout"
+msgstr "Platos ėšdiestīms"
+
+msgid "prefs.pinsplit.left"
+msgstr "Kairīs tabs"
+
+msgid "prefs.pinsplit.right"
+msgstr "Dešinīs tabs"
+
+msgid "prefs.theme"
+msgstr "Nauduotuojė interfeisa tema:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Eilotės pabonga"
+
+msgid "keys.scroll.down"
+msgstr "Slinktė žemīn"
+
+msgid "keys.forward"
+msgstr "I prīki"
+
+msgid "keys.bookmark.add"
+msgstr "Pridietė žīma"
+
+msgid "keys.zoom.reset"
+msgstr "Numatītāsis dėdoms"
+
+msgid "error.schemeredirect"
+msgstr "Nukreipėms keitont schema"
+
+msgid "error.cert.needed"
+msgstr "Reikalings sertifėkats"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Iklėjouket PEM-ožkuodouta sertifėkata arba/ėr asablīva rakta, arba imesket ."
+"crt/.key ont longa."
+
+msgid "dlg.certimport.paste"
+msgstr "Iklėjoutė ėš atmintėis"
+
+msgid "dlg.userdata.alldup"
+msgstr "Vėskon (palėktė dublikatus)"
+
+msgid "import.userdata"
+msgstr "Impuortoutė pasėrinktus doumenis"
+
+msgid "import.userdata.dupfolder"
+msgstr "Impuortoutė dublikatā"
+
+msgid "gempub.cover.untitled"
+msgstr "Naožvardinta kninga"
+
+msgid "gempub.cover.image"
+msgstr "Vėršielis"
+
+msgid "gempub.meta.pubdate"
+msgstr "Ėšleidėma data"
+
+msgid "heading.import.userdata.error"
+msgstr "Impuortavėms napavīka"
+
+msgid "spartan.input"
+msgstr "Ivestė siuntama teksta:"
+
+msgid "dlg.spartan.upload"
+msgstr "Atvertė redaktuorio…"
+
+msgid "dlg.certimport.notfound"
+msgstr "Sertifėkats arba asablīvs raks narasts."
+
+msgid "heading.certimport.pasted"
+msgstr "Iklėjouts ėš ėškarpėnės"
+
+msgid "error.temporary"
+msgstr "Laikėna kliauza"
+
+msgid "error.notfound"
+msgstr "Narasts"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Impuortoutė sertifėkata/rakta faila"
+
+msgid "dlg.certimport.nokey"
+msgstr "Nie asablīva rakta"
+
+msgid "heading.import.userdata"
+msgstr "Impuortoutė nauduotuojė doumenis"
+
+msgid "import.userdata.error"
+msgstr "%s nie teisings Lagrange ėšekspuortouts arkīvs."
+
+msgid "bookmark.export.title.tag"
+msgstr "Žīmas tagā"
+
+msgid "bookmark.export.title.time"
+msgstr "Sokortas žīmas"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Torat %s žīma."
+msgstr[1] "Torat %s žīmė."
+msgstr[2] "Torat %s žīmas."
+msgstr[3] "Torat %s žīmu."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Šėts puslapis ī sofarmatouts palē specifėkacėjė „Gemini puslapiu sekėms“."
+
+msgid "bookmark.export.format.tags"
+msgstr "Tagā ėšreikštė 2 līgė ontraštė."
+
+msgid "heading.upload"
+msgstr "Ikeltė par Titan'a"
+
+msgid "heading.upload.edit"
+msgstr "Keistė so Titan'o"
+
+msgid "heading.upload.misfin"
+msgstr "Siunstė Misfin pranešėma"
+
+msgid "dlg.upload.edit.error"
+msgstr "Napavīka atsiunstė torėnė keitama resursa."
+
+msgid "heading.upload.misfin.noident"
+msgstr "Nie Misfin identėteta"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "Pu pėrmo rēk impuortoutė Misfin sertifėkata, ka siunstė pranešėmus."
+
+msgid "heading.misfin.ok"
+msgstr "Pranešėms ėšsiunsts"
+
+msgid "misfin.success"
+msgstr "Jūsa pranešėms bova ėšsiunsts siekmingā."
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Poslapė stilios"
+
+msgid "prefs.smoothscroll"
+msgstr "Tuolīgos slinkėms:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Klavētūras greitis:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Ont tomsė"
+
+msgid "prefs.memorysize"
+msgstr "Atmintėis dėdoms:"
+
+msgid "prefs.centershort"
+msgstr "Statos ėšcentravėms:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher proksi serveris:"
+
+msgid "upload.file.size"
+msgstr "Faila dėdoms:"
+
+msgid "heading.upload.edit.error"
+msgstr "Keitėms napavīka"
+
+msgid "prefs.searchurl"
+msgstr "Paėiškuos URL:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Pelies greitis:"
+
+msgid "prefs.accent"
+msgstr "Akcenta barva:"
+
+msgid "prefs.retaintabs"
+msgstr "Atstatītė tabus paleidėma čieso:"
+
+msgid "prefs.doctheme.light"
+msgstr "Švėisiuoji tema:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Tomsiuojė vėsū barvu"
+
+msgid "prefs.boldlink"
+msgstr "Parīškintas nūruodas:"
+
+msgid "prefs.quoteicon"
+msgstr "Citatas žimou:"
+
+msgid "prefs.linespacing"
+msgstr "Eilutiu tarps:"
+
+msgid "prefs.decodeurls"
+msgstr "Atkuodoutė URL'us:"
+
+msgid "prefs.evensplit"
+msgstr "Atskėrtė tabus pu līgē:"
+
+msgid "prefs.ca.file"
+msgstr "CA fails:"
+
+msgid "prefs.ca.path"
+msgstr "CA kels:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP proksi serveris:"
+
+msgid "keys.reload"
+msgstr "Pārkrautė puslapi"
+
+msgid "keys.zoom.in"
+msgstr "Padidintė"
+
+msgid "keys.tab.new"
+msgstr "Naus tabs"
+
+msgid "error.badheader"
+msgstr "Natinkama ontraštė"
+
+msgid "error.badredirect"
+msgstr "Natinkams nukreipėms"
+
+msgid "error.tls"
+msgstr "Tinkla/TLS kliauza"
+
+msgid "error.proxy"
+msgstr "Proksi serverė kliauza"
+
+msgid "error.permanent"
+msgstr "Pastuovi kliauza"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Gautuojė sertifėkata bėngies galiuojėms ĖR ons skėrts kėtam duomenou."
+
+msgid "error.badrequest"
+msgstr "Bluogs kreipėmāsis"
+
+msgid "bookmark.export.format.linklines"
+msgstr "Kuožna nūruoda ruoda žīma."
+
+msgid "prefs.bottomtabbar"
+msgstr "Tabā apatiuo"
+
+msgid "error.badresource"
+msgstr "Natinkams resursos"
+
+msgid "heading.upload.error.file"
+msgstr "Natinkams fails"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu vėinuos dėinuos."
+msgstr[1] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu %d dėinū."
+msgstr[2] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu %d dėinū."
+msgstr[3] ""
+"Gautāsis sertifėkats rasintās bova kon tik atnaujints – ons ī teisingam "
+"duomenou ė nie pasėbėngės galiuojėma čiesos. Dabā prijimts sertifėkats "
+"nustuos galiuotė %s, pu %d dėinū."
+
+msgid "dlg.bookmark.save"
+msgstr "Ėšsauguotė žīma"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Nauduotuojė interfeisos"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Švėisiuoji vėsū barvu"
+
+msgid "prefs.mono"
+msgstr "Vėinatūris teksts:"
+
+msgid "prefs.cachesize"
+msgstr "Kešavėma dėdoms:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini proksi serveris:"
+
+msgid "heading.prefs.uitheme"
+msgstr "Nauduotuojė interfeisa barvas"
+
+msgid "keys.back"
+msgstr "Atgal"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "Siunstė savėi kuopėjė"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "Tėkrėnams gavies"

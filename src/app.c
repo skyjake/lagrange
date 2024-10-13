@@ -88,9 +88,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
-#if defined (iPlatformTerminal)
-#   undef LAGRANGE_ENABLE_IDLE_SLEEP
-#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "x11.h"
 #endif
@@ -1314,7 +1311,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         puts("Lagrange: A Beautiful Gemini Client");
     }
     const iBool isFirstRun =
-        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
+        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), prefsFileName_App_)));
     d->isFinishedLaunching = iFalse;
     d->isLoadingPrefs      = iFalse;
     d->warmupFrames        = 0;
@@ -1463,6 +1460,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         d->isIdling      = iFalse;
         d->lastEventTime = 0;
         d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+#if defined (iPlatformTerminal)
+        d->idleSleepDelayMs = 1000 / 60;
+#else
         SDL_DisplayMode dispMode;
         SDL_GetWindowDisplayMode(d->window->win, &dispMode);
         if (dispMode.refresh_rate) {
@@ -1471,6 +1471,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         else {
             d->idleSleepDelayMs = 1000 / 60;
         }
+#endif
         d->idleSleepDelayMs *= 0.9f;
     }
 #endif
@@ -1498,6 +1499,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
+    if (d->tempFilesPendingDeletion == NULL) {
+        return; /* already deinitialized */
+    }
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     delete_Root(d->submenuRoot);
 #endif
@@ -1560,6 +1564,7 @@ static void deinit_App(iApp *d) {
     iRelease(d->recentlySubmittedInput);
     iRelease(d->recentlyClosedTabUrls);
     iRelease(d->tempFilesPendingDeletion);
+    d->tempFilesPendingDeletion = NULL;
 }
 
 const iString *execPath_App(void) {
@@ -1568,6 +1573,10 @@ const iString *execPath_App(void) {
 
 const iString *dataDir_App(void) {
     return collect_String(cleanedCStr_Path(dataDir_App_()));
+}
+
+const iString *fontsDir_App(void) {
+    return collect_String(cleanedCStr_Path(concatPath_CStr(dataDir_App_(), "fonts")));
 }
 
 const iString *downloadDir_App(void) {
@@ -1919,7 +1928,7 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return
        events posted immediately beforehand. Waiting with a very short timeout
        seems to work better. */
-#if defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
+#if !defined (iPlatformTerminal) && defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
     return SDL_WaitEventTimeout(event, 1);
 #else
     return SDL_PollEvent(event);
@@ -1957,6 +1966,21 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     processEvents_App(postedEventsOnly_AppEventMode);
                 }
                 goto backToMainLoop;
+            case SDL_APP_TERMINATING: {
+                iForEach(PtrArray, i, &d->mainWindows) {
+                    setFreezeDraw_MainWindow(*i.value, iTrue);
+                }
+#if defined (iPlatformAppleMobile)
+                /* SDL docs warn that we may not get any execution time after this event,
+                   so deinitialize everything immediately. */
+                deinit_App(d);
+                goto backToMainLoop; /* no further processing of events */
+#else
+                savePrefs_App_(d);
+                saveState_App_(d, iTrue);
+#endif
+                break;
+            }
             case SDL_APP_LOWMEMORY:
                 clearCache_App_();
                 break;
@@ -1994,14 +2018,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (d->isTextInputActive) {
                     SDL_StopTextInput();
                 }
-                break;
-            }
-            case SDL_APP_TERMINATING: {
-                iForEach(PtrArray, i, &d->mainWindows) {
-                    setFreezeDraw_MainWindow(*i.value, iTrue);
-                }
-                savePrefs_App_(d);
-                saveState_App_(d, iTrue);
                 break;
             }
             case SDL_DROPFILE: {
@@ -2330,7 +2346,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
         memcpy(&ev, &pendingMotion_, sizeof(pendingMotion_));
         SDL_PushEvent(&ev);
     }
-    deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
         /* This is where we spend most of our time when idle. The sleep delay depends on the
@@ -2340,6 +2355,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
     }
 #endif
 backToMainLoop:;
+    deinit_PtrArray(&windows);
     setCurrent_Root(oldCurrentRoot);
 }
 
@@ -2679,14 +2695,6 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
     SDL_PushEvent(&ev);
     iWindow *win = d ? d->window : NULL;
-//#if defined (iPlatformAndroid)
-//    if (!startsWith_CStr(command, "backup.")) {
-//        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
-//                    app_.isLoadingPrefs ? "[Prefs] " : "",
-//                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
-//                    command);
-//    }
-//#else
     if (app_.commandEcho) {
         const int windowIndex =
             win && type_Window(win) == main_WindowType ? windowIndex_App(as_MainWindow(win)) + 1 : 0;
@@ -2700,7 +2708,6 @@ void postCommand_Root(iRoot *d, const char *command) {
                command);
         fflush(stdout);
     }
-//#endif
 }
 
 void postCommandf_Root(iRoot *d, const char *command, ...) {
@@ -4384,8 +4391,10 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         postCommandString_Root(NULL, query);
         return iTrue;
     }
+    iDocumentWidget *doc = document_Command(cmd);
     if (equalCase_Rangecc(parts.scheme, "titan")) {
         if (!isHistory) {
+            setRedirectCount_DocumentWidget(doc, 0);
             iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
@@ -4411,7 +4420,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         openInDefaultBrowser_App(url, string_Command(cmd, "mime"));
         return iTrue;
     }
-    iDocumentWidget *doc = document_Command(cmd);
     iAssert(doc);
     iDocumentWidget *origin = doc;
     if (hasLabel_Command(cmd, "origin")) {

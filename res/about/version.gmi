@@ -6,6 +6,20 @@
 ```
 # Release notes
 
+## 1.18.2
+* Misfin: URI format has changed to "misfin:address?message" instead of the previously used "misfin://address". The optional query string ("message") is used as the initial message contents if the upload dialog's text editor is empty.
+* Increased number of concurrent feed subscription requests (now 10, was 4).
+* Potential workaround for a crash during feed refresh.
+* Fixed redirection counting (and related warnings) when requesting Titan URIs.
+* Fixed perpetual load spinner animation when redirected to a Titan URL.
+* TUI: Fixed Identities sidebar not responding to the context menu action.
+* TUI: Fixed screen not being refreshed when a key is held down.
+* TUI: Fixed black cursor on empty regions of the screen, regardless of text color.
+* TUI: Fixed footer button shortcut keys for trusting the server certificate and showing Identities sidebar.
+* TUI: Fixed dimensions of the New Identity dialog.
+* TUI: Fixed first-run bookmarks getting re-added on every launch.
+* Updated UI translations.
+
 ## 1.18.1
 * macOS: Fixed opening Misfin URIs externally via system handlers.
 * Windows: Register Lagrange as a "misfin://" URL handler.

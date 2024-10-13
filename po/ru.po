@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2024-09-06 05:00+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2024-10-06 10:28+0000\n"
+"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -1837,15 +1837,15 @@ msgstr "Клиентский сертификат по умолчанию"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Загрузить простой текст"
+msgstr "Введите загружаемый текст"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Загрузить файл"
+msgstr "Файл не выбран"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Выбрать файл"
+msgstr "Выбрать файл…"
 
 msgid "upload.id"
 msgstr "Клиентский сертификат:"
@@ -2106,7 +2106,7 @@ msgid "menu.share"
 msgstr "Поделиться"
 
 msgid "heading.upload.id"
-msgstr "Авторизация"
+msgstr "Учетные данные"
 
 msgid "menu.upload.delete"
 msgstr "Удалить всё"
@@ -2833,7 +2833,7 @@ msgid "upload.to"
 msgstr "Кому:"
 
 msgid "dlg.upload.edit"
-msgstr "Редактировать"
+msgstr "Отправить"
 
 msgid "heading.upload.error.file"
 msgstr "Неверный файл"
@@ -2846,3 +2846,6 @@ msgstr "Путь к файлу:"
 
 msgid "misfin.self.copy"
 msgstr "Отправить мне копию"
+
+msgid "upload.type"
+msgstr "Содержимое"

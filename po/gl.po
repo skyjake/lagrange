@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2024-09-13 05:07+0000\n"
+"PO-Revision-Date: 2024-10-06 10:28+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -1832,15 +1832,15 @@ msgstr "Identidade por defecto"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Subir texto plano"
+msgstr "Escribe o texto a subir"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Subir un ficheiro"
+msgstr "Sen ficheiro seleccionado"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Elexir ficheiro"
+msgstr "Escoller Ficheiro…"
 
 msgid "heading.addfolder"
 msgstr "Engadir Cartafol"
@@ -2111,7 +2111,7 @@ msgid "menu.page.upload.edit"
 msgstr "Editar páxina con Titan…"
 
 msgid "heading.upload.id"
-msgstr "Autorización"
+msgstr "Credenciais"
 
 msgid "menu.upload.export"
 msgstr "Exportar texto"
@@ -2781,7 +2781,7 @@ msgid "heading.upload.edit.error"
 msgstr "Fallou a edición"
 
 msgid "dlg.upload.edit"
-msgstr "Editar"
+msgstr "Enviar"
 
 msgid "ident.sendmsg"
 msgstr "Enviar mensaxe como…"
@@ -2856,3 +2856,6 @@ msgstr "Avisos de seguridade TLS:"
 
 msgid "misfin.self.copy"
 msgstr "Envíame unha copia"
+
+msgid "upload.type"
+msgstr "Contido"

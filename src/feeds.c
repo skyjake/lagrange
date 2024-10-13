@@ -139,7 +139,7 @@ struct Impl_Feeds {
 
 static iFeeds feeds_;
 
-#define maxConcurrentRequests_Feeds 4
+#define maxConcurrentRequests_Feeds 10
 
 static iBool isInitialized_Feeds_(const iFeeds *d) {
     return d->mtx != NULL;

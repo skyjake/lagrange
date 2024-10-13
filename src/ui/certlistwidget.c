@@ -260,6 +260,13 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             }
             return iTrue;
         }
+        else if (isCommand_UserEvent(ev, "contextkey") && isFocused_Widget(w)) {
+            const size_t cursor = d->list.cursorItem;
+            if (cursor != iInvalidPos) {
+                itemClicked_CertListWidget_(d, item_ListWidget(&d->list, cursor), cursor);
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "ident.setnotes")) {
             iGmIdentity *ident = pointerLabel_Command(cmd, "ident");
             if (ident) {

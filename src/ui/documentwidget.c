@@ -1045,9 +1045,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             (iMenuItem[]){
                 { person_Icon " ${menu.identity.newdomain}", SDLK_n, 0, "ident.new scope:1" },
                 { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-                { leftHalf_Icon " ${menu.show.identities}",
-                  '4',
-                  KMOD_PRIMARY,
+                { leftHalf_Icon " ${menu.show.identities}", showIdentities_KeyShortcut,
                   deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
                                                             : "preferences idents:1" } },
             3);
@@ -1376,7 +1374,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     iRangecc name        = baseNameSep_Path(decUrl, "/");
                     iBool    isInstalled = iFalse;
                     if (startsWith_String(collect_String(localFilePathFromUrl_String(d->mod.url)),
-                                          cstr_String(dataDir_App()))) {
+                                          cstr_String(fontsDir_App()))) {
                         isInstalled = iTrue;
                     }
                     appendCStr_String(&str, "## ");
@@ -2351,7 +2349,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                                           d,
                                           d->redirectCount + 1,
                                           cstr_String(dstUrl));
-                        d->flags |= pendingRedirect_DocumentWidgetFlag;
+                        /* Opening a Titan URL first prompts the user to provide the content,
+                           so nothing is actually being done while we wait on the user.
+                           Otherwise, the request is still essentially ongoing even though we
+                           will now release the current GmRequest; we will soon continue
+                           fetching the destination URL. */
+                        if (!equalCase_Rangecc(dstScheme, "titan")) {
+                            d->flags |= pendingRedirect_DocumentWidgetFlag;
+                        }
                     }
                     else {
                         /* Scheme changes must be manually approved. */
@@ -3100,8 +3105,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (canTrust) {
             pushBack_Array(items,
                            &(iMenuItem){ uiTextAction_ColorEscape "\x1b[1m${dlg.cert.trust}",
-                                         SDLK_u,
-                                         KMOD_PRIMARY | KMOD_SHIFT,
+                                         trustServerCertificate_KeyShortcut,
                                          "server.trustcert" });
         }
         const iRangecc root = urlRoot_String(d->mod.url);

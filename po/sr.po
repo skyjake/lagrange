@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2024-09-08 03:33+0000\n"
+"PO-Revision-Date: 2024-10-11 10:28+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1799,7 +1799,7 @@ msgstr "Увези сертификат/датотеку са кључем"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Пошаљи датотеку"
+msgstr "Датотека није изабрана"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Унесите назив нове фасцикле:"
@@ -1848,11 +1848,11 @@ msgstr "Подразумевани"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Пошаљи чист текст"
+msgstr "Унесите текст за слање"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Изабери датотеку"
+msgstr "Изабери датотеку…"
 
 msgid "heading.bookmark.tags"
 msgstr "Понашање"
@@ -2134,7 +2134,7 @@ msgid "menu.page.upload.edit"
 msgstr "Уреди страницу преко Титана…"
 
 msgid "heading.upload.id"
-msgstr "Ауторизација"
+msgstr "Акредитиви"
 
 msgid "menu.upload.export"
 msgstr "Извези текст"
@@ -2868,7 +2868,10 @@ msgid "dlg.upload.sendmsg"
 msgstr "Пошаљи поруку"
 
 msgid "dlg.upload.edit"
-msgstr "Уреди"
+msgstr "Пошаљи"
 
 msgid "misfin.self.copy"
 msgstr "Пошаљи ми копију"
+
+msgid "upload.type"
+msgstr "Садржај"

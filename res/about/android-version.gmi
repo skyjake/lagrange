@@ -6,7 +6,53 @@
 ```
 # Release notes
 
-## 1.17 (Beta 30)
+## 1.18 (Beta 33)
+* Fixed crash when uploading data due to uninitialized memory.
+* Fixed perpetual load spinner animation when redirected to a Titan URL.
+* Potential workaround for a crash during feed refresh.
+* Increased number of concurrent feed subscription requests (now 10, was 4).
+
+## 1.18 (Beta 32)
+* Fixed scrolling momentum when display refresh rate is not 60 Hz.
+* Fixed incorrect input widget being focused in Upload dialog's URL path panel.
+* Fixed installing font files. All fonts were mistakenly thought to be already installed, so no option to install was offered.
+
+## 1.18 (Beta 31)
+New features:
+* Support for sending Misfin messages. "misfin://" links are opened in the upload dialog. You must import a Misfin identity before you can send a message.
+* Misfin: Identity list indicates which identities are for Misfin.
+* Support for the Guppy protocol. Contributed by Dima Krasner.
+* Titan: Support for the "edit" parameter in opened Titan links. The target's contents are downloaded and displayed in the upload dialog's text editor. After editing the contents are uploaded back to the server.
+* Option to disable all TLS security warnings.
+
+Changes and enhancements:
+* Improved UI focus navigation: arrow keys move focus to an adjacent widget.
+* Context menus are keyboard-navigable with arrow keys, and the first letter of labels acts as a shortcut key to move focus on the item.
+* Bookmarked URLs are automatically updated after permanent redirection. (The original URL is still saved in bookmarks.ini.)
+* Line width expands dynamically (up to window size) to account for wide content like preformatted blocks and plain text lines.
+* Long-pressing the site banner shows a link context menu. (Linking to the capsule's root URL.)
+* Page Information: Clarified meaning of "fingerprint". The type of hash (SHA-256) and what it was calculated from are specified (full certificate or just the public key).
+* Updated UI symbols for "Go to Root", remote bookmarks, and the navbar bookmark indicator/button.
+* Gopher: Proper parsing of Telnet line types `8` and `T`.
+* Noto Emoji font updated to support Unicode 15.1.
+
+Fixes:
+* Titan URLs were incorrectly opening the upload dialog when navigating through history.
+* Titan request in an open tab was resubmitted with empty content when launching the app.
+* Default Titan upload identity was sometimes chosen incorrectly; should match the active Gemini identity.
+* Upload dialog was missing a couple of UI strings for drag-and-drop errors.
+* Gopher: Gemtext formatting (headings, quotes, etc.) found on Gopher menu pages is now escaped so it doesn't unintentionally affect the visual presentation.
+* Gopher: Allow port number to be blank on `i` lines.
+* Query shortcuts (bang snippets) that already contain a `?` character were prefixed by a redundant `?`.
+* Link ordinals/letters (when navigating with Alt/Option or home row keys) now start at the actual top of the view.
+* Missing focus indication in empty lists and the Snippets list.
+* Holding down Alt/Option (link number modifier key) while opening a query link would prevent the prompt dialog from having input focus.
+* Incorrect glyph spacing in a mixed-font preformatted block (fallback glyphs from different fonts).
+* Lede paragraph highlighting was misbehaving with monospace body font; now gets disabled.
+* Glyphs were sometimes partially cut off due to excessive background clearing on adjacent lines.
+
+## 1.17 (Beta 30]9
+
 * Fixed looking up glyphs from the bundled Iosevka font when another monospace font is configured as the default.
 * Fixed spacing of Legacy Computing symbols on mixed-font monospace lines.
 
