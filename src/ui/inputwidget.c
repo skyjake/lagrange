@@ -2679,7 +2679,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         return iTrue;
                     }
                 }
-#endif
                 if (d->inFlags & enterKeyEnabled_InputWidgetFlag &&
                     (checkAcceptMods_InputWidget_(d, mods) ||
                      (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
@@ -2695,6 +2694,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
                 }
                 return iFalse;
+#else
+                /* Native input handles Return key. */
+                return iTrue;
+#endif
             case SDLK_ESCAPE:
                 end_InputWidget(d, iTrue);
                 setFocus_Widget(NULL);
@@ -2865,7 +2868,18 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 }
                 refresh_Widget(d);
                 return iTrue;
-#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
+#else /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
+            /* The native input handles cursor movements. */
+            case SDLK_HOME:
+            case SDLK_END:
+            case SDLK_LEFT:
+            case SDLK_RIGHT:
+            case SDLK_UP:
+            case SDLK_DOWN:
+            case SDLK_PAGEUP:
+            case SDLK_PAGEDOWN:
+                return iTrue;
+#endif
         }
         if (mods & (KMOD_GUI | KMOD_CTRL)) {
             return iFalse;
