@@ -755,6 +755,15 @@ void openFileActivityView_iOS(const iString *path) {
     openActivityView_(@[url]);
 }
 
+iBool openUri_iOS(const iString *uri) {
+    NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:cstr_String(uri)]];
+    if ([[UIApplication sharedApplication] canOpenURL:url]) {
+        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+        return iTrue;
+    }
+    return iFalse;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 enum iAVFAudioPlayerState {

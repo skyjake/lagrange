@@ -5318,6 +5318,15 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
         replace_String(copy, "\\", "%5C");
         url = collect_String(copy);
     }
+#if defined (iPlatformAppleMobile)
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        revealPath_App(collect_String(localFilePathFromUrl_String(url)));
+    }
+    else {
+        openUri_iOS(url);
+    }
+    return;
+#endif
 #if SDL_VERSION_ATLEAST(2, 0, 14)
     if (SDL_OpenURL(cstr_String(url)) == 0) {
         return;
@@ -5325,12 +5334,6 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
 #endif
 #if defined (iPlatformAndroid)
     javaCommand_Android("file.view mime:%s url:%s", cstr_String(mime), cstr_String(url));
-    return;
-#endif
-#if defined (iPlatformAppleMobile)
-    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
-        revealPath_App(collect_String(localFilePathFromUrl_String(url)));
-    }
     return;
 #endif
     iProcess *proc = new_Process();
