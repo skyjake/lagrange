@@ -1903,7 +1903,7 @@ static iBool checkLineBreakMods_InputWidget_(const iInputWidget *d, int mods) {
 
 static iBool checkAcceptMods_InputWidget_(const iInputWidget *d, int mods) {
     if (isMobile_Platform()) {
-        return iFalse; /* Return key behavior is not configurable. */
+        return mods == KMOD_PRIMARY; /* non-configurable */
     }
     if (d->inFlags & useReturnKeyBehavior_InputWidgetFlag) {
         return mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey);

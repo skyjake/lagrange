@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "audio/player.h"
 #include "ui/command.h"
+#include "ui/keys.h"
 #include "ui/window.h"
 #include "ui/touch.h"
 
@@ -343,10 +344,11 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     setKeyboardHeight_MainWindow(get_MainWindow(), 0);
 }
 
-static void sendReturnKeyPress_(void) {
+static void sendReturnKeyPress_(int kmods) {
     SDL_Event ev = { .type = SDL_KEYDOWN };
     ev.key.timestamp = SDL_GetTicks();
     ev.key.keysym.sym = SDLK_RETURN;
+    ev.key.keysym.mod = kmods;
     ev.key.state = SDL_PRESSED;
     SDL_PushEvent(&ev);
     ev.type = SDL_KEYUP;
@@ -355,7 +357,7 @@ static void sendReturnKeyPress_(void) {
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    sendReturnKeyPress_();
+    sendReturnKeyPress_(0);
     return NO;
 }
 
@@ -387,8 +389,10 @@ replacementString:(NSString *)string {
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range
  replacementText:(NSString *)text {
     if ([text isEqualToString:@"\n"]) {
-        if (!isNewlineAllowed_SystemTextInput_([appState_ systemTextInput])) {
-            sendReturnKeyPress_();
+        const iBool isCommandKeyDown = (modState_Keys() & KMOD_PRIMARY) != 0;
+        if (isCommandKeyDown ||
+            !isNewlineAllowed_SystemTextInput_([appState_ systemTextInput])) {
+            sendReturnKeyPress_(isCommandKeyDown ? KMOD_PRIMARY : 0);
             return NO;
         }
     }
