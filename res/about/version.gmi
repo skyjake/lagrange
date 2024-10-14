@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.18.3
+* TUI: Fixed background colors in reduced color modes (less than 256 colors).
 
 ## 1.18.2
 * Misfin: URI format has changed to "misfin:address?message" instead of the previously used "misfin://address". The optional query string ("message") is used as the initial message contents if the upload dialog's text editor is empty.

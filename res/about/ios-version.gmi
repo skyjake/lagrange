@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.18 (6)
+* ⌘Return can be used to submit input prompts. Return inserts a newline.
+
 ## 1.18 (5)
 * Fixed accidental navigation when editing text with the keyboard.
 * Fixed handling of the Return key in text fields.
