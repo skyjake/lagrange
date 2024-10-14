@@ -45,6 +45,16 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.18.3" date="2024-10-14">
+            <description>
+                <ul>
+                    <li>TUI: Fixed background colors in reduced color modes (less than 256 colors).</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.18.3</url>
+        </release>
         <release version="1.18.2" date="2024-10-13">
             <description>
                 <ul>
