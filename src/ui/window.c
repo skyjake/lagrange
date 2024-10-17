@@ -1506,10 +1506,11 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
                     continue;
                 }
             }
-            if (ev->type == SDL_MOUSEWHEEL && !contains_Rect(rect_Root(root),
-                                                             coord_MouseWheelEvent(&ev->wheel))) {
-                continue; /* Only process the event in the relevant split. */
-            }
+            // Commenting this out appears to resolve issue #612
+            //if (ev->type == SDL_MOUSEWHEEL && !contains_Rect(rect_Root(root),
+            //                                                 coord_MouseWheelEvent(&ev->wheel))) {
+            //    continue; /* Only process the event in the relevant split. */
+            //}
             if (!root->widget) {
                 continue;
             }
