@@ -8,22 +8,22 @@
     <summary>A Beautiful Gemini Client</summary>
     <description>
         <p>
-            Lagrange is a desktop GUI client for browsing Geminispace. 
-            It offers modern conveniences familiar from web browsers, 
-            such as smooth scrolling, inline image viewing, multiple 
+            Lagrange is a desktop GUI client for browsing Geminispace.
+            It offers modern conveniences familiar from web browsers,
+            such as smooth scrolling, inline image viewing, multiple
             tabs, visual themes, Unicode fonts, bookmarks, history, and
             page outlines.
         </p>
         <p>
             Like the Gemini protocol, Lagrange has been designed with
             minimalism in mind. It depends on a small number of essential
-            libraries. It is written in C and uses SDL for 
+            libraries. It is written in C and uses SDL for
             hardware-accelerated graphics. OpenSSL is used for secure
             communications.
         </p>
     </description>
     <content_rating type="oars-1.1" />
-    
+
     <launchable type="desktop-id">fi.skyjake.Lagrange.desktop</launchable>
 
     <screenshots>
@@ -45,6 +45,23 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.18.4" date="2024-12-10">
+            <description>
+                <ul>
+                    <li>Added option to disable page width expansion to fit long lines.</li>
+                    <li>Limited page width expansion to 33% so room is left for the current title in the margin.</li>
+                    <li>Audio player UI shows number of downloaded bytes if length of audio is still unknown.</li>
+                    <li>Strip CR characters in content pasted to input fields. Line breaks are expected to be just LFs.</li>
+                    <li>Fixed use of non-Gemini search URLs. (Do not force-prepend "gemini://".)</li>
+                    <li>Fixed handling of the reserved `:` character in URL paths.</li>
+                    <li>TUI: Fixed possible crash at launch.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.18.4</url>
+        </release>
         <release version="1.18.3" date="2024-10-14">
             <description>
                 <ul>
@@ -1111,7 +1128,7 @@
                         of obsolete resources.</li>
                     <li>Fixed layout issues related to footer action buttons. Sometimes the
                         buttons would overlap page content.</li>
-                    <li>Fixed handling duplicate feed entries: if multiple entries in 
+                    <li>Fixed handling duplicate feed entries: if multiple entries in
                         a feed have the same URL, only use the first one.</li>
                 </ul>
                 <p>The full release notes can be viewed inside the app by opening
@@ -1146,7 +1163,7 @@
                     close buttons that appear on mouse hover.</p>
                 <p>Changes in v1.8.2:</p>
                 <ul>
-                    <li>Fixed encoding of `+` characters in URLs as per 
+                    <li>Fixed encoding of `+` characters in URLs as per
                         RFC 3986.</li>
                     <li>Fixed crash when fontpack.ini specifies a file that cannot
                         be found.</li>
@@ -1163,7 +1180,7 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.8.2</url>
-        </release>                
+        </release>
         <release version="1.8.1" date="2021-11-06">
             <description>
                 <p>Version 1.8 adds a customizable font library and improves warning
@@ -1187,7 +1204,7 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.8.1</url>
-        </release>                
+        </release>
         <release version="1.8" date="2021-10-30">
             <description>
                 <p>Version 1.8 adds a customizable font library and improves warning
@@ -1213,7 +1230,7 @@
                     <li>Fixed a memory leak in the text renderer.</li>
                     <li>Added option to place new bookmarks to the top of the
                         bookmarks list.</li>
-                    <li>Updated UI translations.</li>                    
+                    <li>Updated UI translations.</li>
                 </ul>
                 <p>The full release notes can be viewed inside the app by opening
                     the "about:version" page.</p>
@@ -1230,8 +1247,8 @@
                     style.</p>
                 <p>Fixes in v1.7.2:</p>
                 <ul>
-                    <li>Regressions in text selection, for example when marking 
-                        text leftwards from the start position or when starting from 
+                    <li>Regressions in text selection, for example when marking
+                        text leftwards from the start position or when starting from
                         outside any text run.</li>
                     <li>Crash when clicking on Outline sidebar items before a
                         page has finished loading.</li>
@@ -1303,13 +1320,13 @@
                 <ul>
                     <li>Audio init errors are no longer fatal. SDL's error message
                         will still be printed.</li>
-                    <li>Fixed appearance of tab buttons (should have 
+                    <li>Fixed appearance of tab buttons (should have
                         no top frame).</li>
                     <li>Fixed a cursor position regression in input fields related
                         to handling of variation selectors (codepoint clusters).
                         Moving the cursor to the start of a wrapped line segment put
                         the cursor in the wrong place.</li>
-                    <li>Fixed right-clicking on sidebar tab buttons. 
+                    <li>Fixed right-clicking on sidebar tab buttons.
                         It was showing the wrong context menu when the list had been
                         scrolled down.</li>
                     <li>Fixed crash when using the SDL2 KMSDRM video driver.</li>
@@ -1378,13 +1395,13 @@
                         text field.</li>
                     <li>Fixed a potential hang when closing a socket before the
                         connection is fully opened.</li>
-                    <li>Updated translations.</li>                    
+                    <li>Updated translations.</li>
                 </ul>
                 <p>The full release notes can be viewed inside the app by opening
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.3</url>
-        </release>        
+        </release>
         <release version="1.6.2" date="2021-08-03">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,
@@ -1417,7 +1434,7 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.2</url>
-        </release>        
+        </release>
         <release version="1.6.1" date="2021-07-30">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,
@@ -1434,7 +1451,7 @@
                     <li>Copying text in input fields (the wrong region was copied).</li>
                     <li>URL input field contents not being selected after opening
                         a new tab.</li>
-                    <li>Upload dialog not showing when reloading a Titan URL.</li>                    
+                    <li>Upload dialog not showing when reloading a Titan URL.</li>
                 </ul>
                 <p>The full release notes can be viewed inside the app by opening
                     the "about:version" page.</p>
@@ -1459,7 +1476,7 @@
             <description>
                 <p>Bug fixes and tweaks:</p>
                 <ul>
-                    <li>Fixed pasting a PEM-formatted certificate and/or 
+                    <li>Fixed pasting a PEM-formatted certificate and/or
                         private key via clipboard in Import Identity.</li>
                     <li>Possible workaround for a visual glitch in the URL
                         field.</li>
@@ -1528,12 +1545,12 @@
                     <li>Removing the left side split by closing all its tabs. The URL
                         input field got confused about which tab was currently open, and
                         the wrong theme was active.</li>
-                    <li>Tab merging when unsplitting the window: keep the currently 
+                    <li>Tab merging when unsplitting the window: keep the currently
                         active tab open.</li>
                     <li>Sidebars sometimes become unresponsive.</li>
                     <li>Incorrect font was used for visited monospace Gopher links.</li>
                     <li>Incorrectly shown/hidden tab pinning indicator.</li>
-                    <li>Scrollbar in Preferences &gt; Keys was hidden until the list 
+                    <li>Scrollbar in Preferences &gt; Keys was hidden until the list
                         was scrolled.</li>
                 </ul>
             </description>
@@ -1582,16 +1599,16 @@
             <description>
                 <p>New features/changes:</p>
                 <ul>
-                    <li>Added UI languages: French, German. (Note that neither is 
+                    <li>Added UI languages: French, German. (Note that neither is
                         100% finished yet.)</li>
                     <li>Added environment variable LAGRANGE_OVERRIDE_DPI.</li>
-                    <li>Back/forward navigation buttons are disabled if they have 
+                    <li>Back/forward navigation buttons are disabled if they have
                         no more pages to switch to.</li>
                     <li>Minor UI color tuning.</li>
                 </ul>
                 <p>Bug fixes:</p>
                 <ul>
-                    <li>Disabled IPC in Flatpak builds for compatibility reasons. 
+                    <li>Disabled IPC in Flatpak builds for compatibility reasons.
                         Beware of multiple instances overwriting each other's data.</li>
                     <li>Possible crash when closing a tab.</li>
                     <li>Possible crash when restoring application state at launch.</li>
@@ -1630,10 +1647,10 @@
                     the highlights:
                 </p>
                 <ul>
-                    <li>New UI language setting: English, Chinese, Finnish, 
+                    <li>New UI language setting: English, Chinese, Finnish,
                         Interlingue, Russian, Serbian, and Spanish available in this
-                        release.</li> 
-                    <li>LibreTranslate integration for translating page 
+                        release.</li>
+                    <li>LibreTranslate integration for translating page
                         content.</li>
                     <li>Viewing alt text of preformatted blocks.</li>
                     <li>Improvements to color themes and page appearance.</li>
@@ -1672,8 +1689,8 @@
                 </p>
                 <ul>
                     <li>New UI language setting: English, Chinese, Finnish,
-                        Russian, and Spanish available in this release.</li> 
-                    <li>LibreTranslate integration for translating page 
+                        Russian, and Spanish available in this release.</li>
+                    <li>LibreTranslate integration for translating page
                         content.</li>
                     <li>Viewing alt text of preformatted blocks.</li>
                     <li>Improvements to color themes and page appearance.</li>
@@ -1693,9 +1710,9 @@
                 <p>Bug fixes:</p>
                 <ul>
                     <li>Fixed XML parser hanging on numeric character entities.</li>
-                    <li>Fixed "Monospace Body" option causing Gemtext line 
+                    <li>Fixed "Monospace Body" option causing Gemtext line
                         markup to be visible.</li>
-                    <li>Fixed bookmarking a wrapped link. Now the entire label 
+                    <li>Fixed bookmarking a wrapped link. Now the entire label
                         text gets used instead of just the clicked segment.</li>
                     <li>Fixed handling of non-advancing monospace glyphs.</li>
                 </ul>
@@ -1714,7 +1731,7 @@
         </release>
         <release version="1.2.1" date="2021-02-27">
             <description>
-                <p> This is a major feature update that also has a number of user 
+                <p> This is a major feature update that also has a number of user
                     interface design changes.
                 </p>
                 <p> New features include viewing and subscribing to Atom feeds,
@@ -1735,7 +1752,7 @@
         </release>
         <release version="1.2" date="2021-02-27">
             <description>
-                <p> This is a major feature update that also has a number of user 
+                <p> This is a major feature update that also has a number of user
                     interface design changes.
                 </p>
                 <p> New features include viewing and subscribing to Atom feeds,
@@ -1751,7 +1768,7 @@
                     the "about:version" page.
                 </p>
             </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.0</url>          
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.0</url>
         </release>
         <release version="1.1.4" date="2021-02-22">
             <description>
@@ -1759,7 +1776,7 @@
                 <ul>
                     <li>Broken Gopher menu links.</li>
                     <li>Incorrect feed entry highlight/read status in the sidebar.</li>
-                    <li>Vertical alignment of short pages: top banner is excluded 
+                    <li>Vertical alignment of short pages: top banner is excluded
                         because it is not part of the content.</li>
                 </ul>
             </description>
@@ -1769,7 +1786,7 @@
             <description>
                 <p>Bug fixes:</p>
                 <ul>
-                    <li>Crash when deleting a bookmark that was being used as 
+                    <li>Crash when deleting a bookmark that was being used as
                         a remote bookmark source.</li>
                     <li>Potential crash at shutdown.</li>
                     <li>URL path decoding not respecting reserved characters.</li>
