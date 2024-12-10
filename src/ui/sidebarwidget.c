@@ -674,9 +674,10 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     invalidate_ListWidget(list_SidebarWidget_(d));
     /* Content for a blank tab. */
     if (isEmpty) {
+        const int rightPad = (isTerminal_Platform() ? 5 : (3 * gap_UI));
         if (d->mode == feeds_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             if (d->feedsMode == all_FeedsMode) {
                 addChild_Widget(div, iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
@@ -695,7 +696,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         }
         else if (d->mode == identities_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             iLabelWidget *msg = new_LabelWidget("${sidebar.empty.idents}", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);

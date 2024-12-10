@@ -2181,6 +2181,9 @@ msgstr "Syntax highlighting:"
 msgid "prefs.linewidth"
 msgstr "Line width:"
 
+msgid "prefs.expandline"
+msgstr "Expand to long lines:"
+
 msgid "prefs.linewidth.normal"
 msgstr "Normal"
 

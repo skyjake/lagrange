@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 1.18 (7)
+* Added dark mode and tinted app icons.
+* Added option to disable page width expansion to fit long lines.
+* Limited page width expansion to 33% so room is left for the current title in the margin.
+* Audio player UI shows number of downloaded bytes if length of audio is still unknown.
+* Strip CR characters in content pasted to input fields. Line breaks are expected to be just LFs.
+* Fixed opening web links in the native browser.
+* Fixed use of non-Gemini search URLs. (Do not force-prepend "gemini://".)
+* Fixed handling of the reserved `:` character in URL paths.
+* Updated UI translations.
+
 ## 1.18 (6)
 * ⌘Return can be used to submit input prompts. Return inserts a newline.
 
@@ -86,7 +97,7 @@ Fixes:
 * Updated UI translations.
 
 ## 1.17 (7)
-* Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
+* Fixed memory leak: fetched pages were not always released from memory (reference miscount).
 * Fixed minor memory leak in list widgets.
 * Gopher: Autodetect Gemtext files based on file extension.
 * Updated UI translations.
@@ -116,7 +127,7 @@ Fixes:
 * Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
 * Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).
 * Fixed potential crash after (un)folding a preformatted block.
-* Fixed links being non-clickable after searching text on a page has scrolled the view. 
+* Fixed links being non-clickable after searching text on a page has scrolled the view.
 * Fixed scroll position being reset when reloading the page.
 * Fixed missing page context menu items.
 * Fixed "View as Plain Text" context menu item after reloading a page.

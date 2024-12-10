@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2024-10-03 14:43+0000\n"
-"PO-Revision-Date: 2024-10-11 10:28+0000\n"
+"PO-Revision-Date: 2024-12-06 06:38+0000\n"
 "Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
 "Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "sgs/>\n"
@@ -1372,7 +1372,6 @@ msgstr "Balta"
 msgid "gempub.meta.author"
 msgstr "Autuorios"
 
-#, fuzzy
 msgid "prefs.accent.teal"
 msgstr "Tiurkė"
 
@@ -2154,3 +2153,200 @@ msgstr "Siunstė savėi kuopėjė"
 # Only shown in a message box when verifying the recipient fails.
 msgid "misfin.verify"
 msgstr "Tėkrėnams gavies"
+
+msgid "hint.upload.text"
+msgstr "ivesket teksta ikeltė"
+
+msgid "heading.uploadport"
+msgstr "Puorts ikelėmou par Titana"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Tėkrā ėštrintė vėskon (nagrīžtamā)"
+
+msgid "hint.upload.token.long"
+msgstr "tokens - veizietė serverė instrucėjė"
+
+msgid "hint.upload.path"
+msgstr "URL kels"
+
+msgid "hint.upload.token"
+msgstr "veizietė serverė instrukcėjės"
+
+msgid "upload.file.drophere"
+msgstr "ivesket faila kieli arba ožtėmpket faila ont longa"
+
+msgid "misfin.redirect"
+msgstr "Gavies praša siunstė žėnotė i kėta adresa."
+
+msgid "misfin.failure"
+msgstr "Siuntont žėnotė atsėrada kliauza."
+
+msgid "misfin.needcert"
+msgstr "Torat identifėkoutėis doudami Misfin sertifėkata."
+
+msgid "misfin.unauth"
+msgstr "Nesat autorizavisis, ka siunstė gaviejou žėnotės."
+
+msgid "misfin.badcert"
+msgstr "Jūsa Misfin setifėkats ī natinkams."
+
+msgid "misfin.changed"
+msgstr "Jūsa Misfin sertifėkats nie tas pats, katruo tikiejuos gavies."
+
+msgid "misfin.unknown"
+msgstr "Napavīka ruoda so serverio."
+
+msgid "hint.upload.misfin"
+msgstr "ivesket žėnotė"
+
+msgid "upload.file.path"
+msgstr "Faila kels:"
+
+msgid "dlg.upload.sendmsg"
+msgstr "Siunstė žėnotė"
+
+msgid "dlg.upload.id.default"
+msgstr "Numatītāsis identėtets"
+
+msgid "upload.token"
+msgstr "Tokens:"
+
+msgid "upload.error.directory"
+msgstr "Vėn atskėrė failā gal būtė ikeltė, ale na cielas papkės."
+
+msgid "menu.upload.export"
+msgstr "Ekspuortoutė teksta"
+
+msgid "menu.upload.delete"
+msgstr "Ėštrintė vėskon"
+
+msgid "misfin.self.copy"
+msgstr "Atsiunsk munėi kuopėjė"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Nuruodītė Titan serverė puorta doutajam adresou. Puorts keravuojams slkierė "
+"specifinie konfigūracėjuo."
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Galat papruobītė ėiškuotė skyjake.fi šriftu bazė tinkonti šrifta, katras "
+"atvaizdoutom simbuolius, arba ronkuoms instaliouket TrueType šriftus."
+
+msgid "heading.glyphfinder"
+msgstr "Trūkst ruodbalsiu žėnklū"
+
+msgid "dlg.uploadport.set"
+msgstr "Nustatītė puorta"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Parinktė faila…"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Tuolīmiesni simbuoli naimeigt atvaizdoutė:"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Prašuom pārkrautė puslapi patikrintė trūkstamus ruodbalsiu žėnklus."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Ėšjungtė pārspiejėmus"
+
+msgid "dlg.translate.pre"
+msgstr "Navīkdītė prīšformatavėma:"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Ėiškuotė šriftu bazie"
+
+msgid "heading.glyphfinder.results"
+msgstr "Paėiškuos rezoltatā"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Ivesket teksta ikelėmou"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Nie parinkts fails"
+
+msgid "hint.newident.date"
+msgstr "YYYY arba YYYY-MM-DD"
+
+msgid "heading.bookmark.add"
+msgstr "Pridietė žīma"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "tagā atskėrtė tarpās"
+
+msgid "heading.bookmark.editfolder"
+msgstr "Keistė papkė"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Korams patėis pasėrašīta 2048 bitu RSA sertifėkata."
+
+msgid "heading.subscribe"
+msgstr "Stebietė poslapi"
+
+msgid "heading.prefs.user"
+msgstr "Nauduotuojė doumenis"
+
+msgid "dlg.feed.save"
+msgstr "Ėšsauguotė nustatīmus"
+
+msgid "heading.addfolder"
+msgstr "Pridietė papkė"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Ivesket ožvardėjėma naujē papkē:"
+
+msgid "dlg.addfolder"
+msgstr "Pridietė papkė"
+
+msgid "dlg.newident.notsaved"
+msgstr "naėšsauguota i diska"
+
+msgid "heading.prefs.layout"
+msgstr "Poslapė ėšdiestīms"
+
+msgid "glyphfinder.results.empty"
+msgstr "Atleisket, tinkons šriftu pakets nabova rasts."
+
+msgid "glyphfinder.results"
+msgstr "Šėts šriftu pakets teik vėina arba daugiau trūkstamu žėnklū:"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Bėndros vards tor būtė nuruodīts."
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignuoroutė HTTP(S) nūruodas:"
+
+msgid "heading.bookmark.edit"
+msgstr "Keistė žīma"
+
+msgid "dlg.bookmark.identity"
+msgstr "Prīsegts identėtets:"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Naujė papkė"
+
+msgid "prefs.hoverlink"
+msgstr "Ožvedos ruodītė URL:"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Dabartėnė papkė"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Tievini papkė:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "pasėžīmiejėmā savėi"
+
+msgid "dlg.newident.date.past"
+msgstr "Galiuojėma data tor būtė ateitie."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Patėkrinket data „Galiuo lėg“. Pavīzdē:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"

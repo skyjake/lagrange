@@ -6,6 +6,15 @@
 ```
 # Release notes
 
+## 1.18 (Beta 35)
+* Added option to disable page width expansion to fit long lines.
+* Limited page width expansion to 33% so room is left for the current title in the margin.
+* Audio player UI shows number of downloaded bytes if length of audio is still unknown.
+* Strip CR characters in content pasted to input fields. Line breaks are expected to be just LFs.
+* Fixed use of non-Gemini search URLs. (Do not force-prepend "gemini://".)
+* Fixed handling of the reserved `:` character in URL paths.
+* Updated UI translations.
+
 ## 1.18 (Beta 34)
 * Fixed accidental navigation when editing text with the keyboard.
 * Fixed handling of the Return key in text fields.

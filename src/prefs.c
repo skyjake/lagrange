@@ -23,116 +23,117 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "prefs.h"
 #include "app.h"
 
-#include <the_Foundation/fileinfo.h>
 #include <assert.h>
+#include <the_Foundation/fileinfo.h>
 
 _Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
-               offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
+                   offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
 
 void init_Prefs(iPrefs *d) {
     iForIndices(i, d->strings) {
         init_String(&d->strings[i]);
     }
-    d->dialogTab         = 0;
-    d->langFrom          = 0; /* auto-detect */
-    d->langTo            = 8; /* en */
-    d->translationIgnorePre = iTrue;
-    d->recentMenuBarIndex = 0;
-    d->useSystemTheme    = iTrue;
+    d->dialogTab                    = 0;
+    d->langFrom                     = 0; /* auto-detect */
+    d->langTo                       = 8; /* en */
+    d->translationIgnorePre         = iTrue;
+    d->recentMenuBarIndex           = 0;
+    d->useSystemTheme               = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
-    d->theme             = dark_ColorTheme;
-    d->accent            = isAppleDesktop_Platform() ? system_ColorAccent : cyan_ColorAccent;
-    d->customFrame       = iFalse; /* needs some more work to be default */
-    d->retainWindowSize  = iTrue;
-    d->uiAnimations      = iTrue;
-    d->uiScale           = 1.0f; /* default set elsewhere */
-    d->inputZoomLevel    = 0;
-    d->editorZoomLevel   = 0;
+    d->theme                                                          = dark_ColorTheme;
+    d->accent                   = isAppleDesktop_Platform() ? system_ColorAccent : cyan_ColorAccent;
+    d->customFrame              = iFalse; /* needs some more work to be default */
+    d->retainWindowSize         = iTrue;
+    d->uiAnimations             = iTrue;
+    d->uiScale                  = 1.0f; /* default set elsewhere */
+    d->inputZoomLevel           = 0;
+    d->editorZoomLevel          = 0;
     d->editorSyntaxHighlighting = iTrue;
-    d->zoomPercent       = 100;
-    d->navbarActions[0]  = back_ToolbarAction;
-    d->navbarActions[1]  = forward_ToolbarAction;
-    d->navbarActions[2]  = leftSidebar_ToolbarAction;
-    d->navbarActions[3]  = home_ToolbarAction;
-#if defined (iPlatformAndroidMobile)
+    d->zoomPercent              = 100;
+    d->navbarActions[0]         = back_ToolbarAction;
+    d->navbarActions[1]         = forward_ToolbarAction;
+    d->navbarActions[2]         = leftSidebar_ToolbarAction;
+    d->navbarActions[3]         = home_ToolbarAction;
+#if defined(iPlatformAndroidMobile)
     /* Android has a system-wide back button so no need to have a duplicate. */
     d->toolbarActions[0] = closeTab_ToolbarAction;
 #else
     d->toolbarActions[0] = back_ToolbarAction;
 #endif
-    d->toolbarActions[1] = forward_ToolbarAction;
-    d->sideIcon          = iTrue;
+    d->toolbarActions[1]   = forward_ToolbarAction;
+    d->sideIcon            = iTrue;
     d->hideToolbarOnScroll = iTrue;
-    d->blinkingCursor    = iTrue;
+    d->blinkingCursor      = iTrue;
     if (deviceType_App() == phone_AppDeviceType) {
-        d->bottomNavBar  = iTrue;
-        d->bottomTabBar  = iTrue;
+        d->bottomNavBar = iTrue;
+        d->bottomTabBar = iTrue;
     }
     else {
-        d->bottomNavBar  = iFalse;
-        d->bottomTabBar  = iFalse;
+        d->bottomNavBar = iFalse;
+        d->bottomTabBar = iFalse;
     }
     if (isTerminal_Platform()) {
-        d->bottomNavBar  = iTrue;
+        d->bottomNavBar = iTrue;
     }
-    d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
-    d->simpleChars       = iTrue; /* only in terminal */
-    d->evenSplit         = iFalse; /* split mode tabs have even width */
-    d->detachedPrefs     = iTrue;
-    d->pinSplit          = 1;
-    d->feedInterval      = fourHours_FeedInterval;
-    d->time24h           = iTrue;
-    d->returnKey         = default_ReturnKeyBehavior;
-    d->retainTabs        = iTrue;
-    d->hoverLink         = iTrue;
-    d->smoothScrolling   = !isTerminal_Platform();
+    d->menuBar                                = (deviceType_App() == desktop_AppDeviceType);
+    d->simpleChars                            = iTrue;  /* only in terminal */
+    d->evenSplit                              = iFalse; /* split mode tabs have even width */
+    d->detachedPrefs                          = iTrue;
+    d->pinSplit                               = 1;
+    d->feedInterval                           = fourHours_FeedInterval;
+    d->time24h                                = iTrue;
+    d->returnKey                              = default_ReturnKeyBehavior;
+    d->retainTabs                             = iTrue;
+    d->hoverLink                              = iTrue;
+    d->smoothScrolling                        = !isTerminal_Platform();
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
-    d->loadImageInsteadOfScrolling = iFalse;
-    d->openDataUrlImagesOnLoad     = iFalse;
-    d->collapsePre                 = notByDefault_Collapse;
-    d->openArchiveIndexPages       = iTrue;
-    d->addBookmarksToBottom        = iTrue;
-    d->warnAboutMissingGlyphs      = iTrue;
-    d->markdownAsSource            = iTrue;
-    d->skipIndexPageOnParentNavigation = iTrue;
-    d->edgeSwipe         = iTrue;
-    d->pageSwipe         = iTrue;
-    d->capsLockKeyModifier = iFalse;
-    d->misfinSelfCopy    = iTrue;
-    d->allowSchemeChangingRedirect = iFalse; /* must be manually followed */
-    d->decodeUserVisibleURLs = iTrue;
-    d->warnTlsSecurity   = iTrue;
-    d->maxCacheSize      = 10;
-    d->maxMemorySize     = 200;
-    d->maxUrlSize        = 8192;
+    d->loadImageInsteadOfScrolling            = iFalse;
+    d->openDataUrlImagesOnLoad                = iFalse;
+    d->collapsePre                            = notByDefault_Collapse;
+    d->openArchiveIndexPages                  = iTrue;
+    d->addBookmarksToBottom                   = iTrue;
+    d->warnAboutMissingGlyphs                 = iTrue;
+    d->markdownAsSource                       = iTrue;
+    d->skipIndexPageOnParentNavigation        = iTrue;
+    d->edgeSwipe                              = !isAndroid_Platform(); /* conflict with system */
+    d->pageSwipe                              = iTrue;
+    d->capsLockKeyModifier                    = iFalse;
+    d->misfinSelfCopy                         = iTrue;
+    d->allowSchemeChangingRedirect            = iFalse; /* must be manually followed */
+    d->decodeUserVisibleURLs                  = iTrue;
+    d->warnTlsSecurity                        = iTrue;
+    d->maxCacheSize                           = 10;
+    d->maxMemorySize                          = 200;
+    d->maxUrlSize                             = 8192;
     setCStr_String(&d->strings[uiFont_PrefsString], "default");
     setCStr_String(&d->strings[headingFont_PrefsString], "default");
     setCStr_String(&d->strings[bodyFont_PrefsString], "default");
     setCStr_String(&d->strings[monospaceFont_PrefsString], "iosevka");
     setCStr_String(&d->strings[monospaceDocumentFont_PrefsString], "iosevka-body");
-    d->disabledFontPacks = new_StringSet();
-    d->fontSmoothing     = iTrue;
+    d->disabledFontPacks  = new_StringSet();
+    d->fontSmoothing      = iTrue;
     d->gemtextAnsiEscapes = allowFg_AnsiFlag;
-    d->monospaceGemini   = iFalse;
-    d->monospaceGopher   = iTrue;
-    d->boldLinkVisited   = iFalse;
-    d->boldLinkDark      = iTrue;
-    d->boldLinkLight     = iTrue;
-    d->lineWidth         = 38;
-    d->lineSpacing       = 1.0f;
-    d->tabWidth          = 8;
-    d->bigFirstParagraph = iTrue;
-    d->justifyParagraph  = iFalse;
-    d->quoteIcon         = iTrue;
-    d->centerShortDocs   = iTrue;
-    d->plainTextWrap     = iTrue;
+    d->monospaceGemini    = iFalse;
+    d->monospaceGopher    = iTrue;
+    d->boldLinkVisited    = iFalse;
+    d->boldLinkDark       = iTrue;
+    d->boldLinkLight      = iTrue;
+    d->lineWidth          = deviceType_App() == phone_AppDeviceType ? 1000 /* fill */ : 38;
+    d->lineSpacing        = 1.0f;
+    d->tabWidth           = 8;
+    d->bigFirstParagraph  = iTrue;
+    d->justifyParagraph   = iFalse;
+    d->quoteIcon          = iTrue;
+    d->centerShortDocs    = iTrue;
+    d->plainTextWrap      = iTrue;
+    d->expandToLongLines  = iTrue;
     d->geminiStyledGopher = iTrue;
-    d->imageStyle        = original_ImageStyle;
-    d->docThemeDark      = colorfulDark_GmDocumentTheme;
-    d->docThemeLight     = white_GmDocumentTheme;
-    d->saturation        = 1.0f;
+    d->imageStyle         = original_ImageStyle;
+    d->docThemeDark       = colorfulDark_GmDocumentTheme;
+    d->docThemeLight      = white_GmDocumentTheme;
+    d->saturation         = 1.0f;
     setCStr_String(&d->strings[uiLanguage_PrefsString], "en");
     /* TODO: Add some platform-specific common locations? */
     if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */

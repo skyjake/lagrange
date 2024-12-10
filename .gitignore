@@ -9,3 +9,4 @@ build-*/
 /*.sublime-*
 *.orig
 /.cache/
+/.jked/

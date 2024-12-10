@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /* User preferences */
 
-iDeclareType(Prefs)
+iDeclareType(Prefs);
 
 enum iPrefsString {
     /* General */
@@ -117,6 +117,7 @@ enum iPrefsBool {
     centerShortDocs_PrefsBool,
 
     plainTextWrap_PrefsBool,
+    expandToLongLines_PrefsBool,
     geminiStyledGopher_PrefsBool,
 
     /* Meta */
@@ -130,7 +131,7 @@ enum iCollapse {
     always_Collapse,
 };
 
-#define maxNavbarActions_Prefs  4
+#define maxNavbarActions_Prefs 4
 
 /* TODO: Use a systematic command naming convention for notifications. */
 
@@ -198,51 +199,60 @@ struct Impl_Prefs {
             iBool centerShortDocs;
 
             iBool plainTextWrap;
+            iBool expandToLongLines;
             iBool geminiStyledGopher;
         };
     };
+
     /* UI state (belongs to state.lgr...) */
-    int              dialogTab;
-    int              langFrom;
-    int              langTo;
-    iBool            translationIgnorePre;
-    int              recentMenuBarIndex; /* most recently opened menubar child */
+    int   dialogTab;
+    int   langFrom;
+    int   langTo;
+    iBool translationIgnorePre;
+    int   recentMenuBarIndex; /* most recently opened menubar child */
+
     /* Colors */
-    enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
-    enum iColorTheme theme;
+    enum iColorTheme  systemPreferredColorTheme[2]; /* dark, light */
+    enum iColorTheme  theme;
     enum iColorAccent accent;
+
     /* Window and User Interface */
-    float            uiScale;
+    float               uiScale;
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
-    int              inputZoomLevel;
-    int              editorZoomLevel;
+    int                 inputZoomLevel;
+    int                 editorZoomLevel;
+
     /* Document presentation */
-    int              zoomPercent;
+    int zoomPercent;
+
     /* Behavior */
-    int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
+    int                pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     enum iFeedInterval feedInterval;
-    int              returnKey;
-    int              smoothScrollSpeed[max_ScrollType];
-    enum iCollapse   collapsePre;
+    int                returnKey;
+    int                smoothScrollSpeed[max_ScrollType];
+    enum iCollapse     collapsePre;
+
     /* Network */
-    int              maxCacheSize; /* MB */
-    int              maxMemorySize; /* MB */
-    int              maxUrlSize; /* bytes; longer ones will be disregarded */
+    int maxCacheSize;  /* MB */
+    int maxMemorySize; /* MB */
+    int maxUrlSize;    /* bytes; longer ones will be disregarded */
+
     /* Style */
-    iStringSet *     disabledFontPacks;
+    iStringSet      *disabledFontPacks;
     int              gemtextAnsiEscapes;
     int              lineWidth;
     float            lineSpacing;
     int              tabWidth;
     enum iImageStyle imageStyle;
+
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;
     float                 saturation;
 };
 
-iDeclareTypeConstruction(Prefs)
+iDeclareTypeConstruction(Prefs);
 
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);

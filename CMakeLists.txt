@@ -15,23 +15,23 @@
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
 
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.18.3
+    VERSION 1.18.4
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2024)
 if (IOS)
     set (PROJECT_VERSION 1.18)
-    set (IOS_BUNDLE_VERSION 6)
-    set (IOS_BUILD_DATE "2024-10-14")
+    set (IOS_BUNDLE_VERSION 7)
+    set (IOS_BUILD_DATE "2024-12-10")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.18)
-    set (ANDROID_BUILD_VERSION b34)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2024-10-13")
+    set (ANDROID_BUILD_VERSION b35)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2024-12-10")
 endif ()
 
 # Load modules from the source tree

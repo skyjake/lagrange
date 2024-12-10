@@ -848,9 +848,9 @@ static void aboutRequest_GmRequest_(iGmRequest *d) {
             iString body;
             initBlock_String(&body, &resp->body);
             replace_String(&body, "OpenSSL", libraryName_TlsRequest());
-#if defined (iPlatformTerminal)
-            replace_String(&body, "SDL 2", "ncurses");
-#endif
+            if (isTerminal_Platform()) {
+                replace_String(&body, "SDL 2", "ncurses");
+            }
             set_Block(&resp->body, utf8_String(&body));
             deinit_String(&body);
         }

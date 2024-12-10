@@ -809,7 +809,11 @@ static void draw_ListWidget_(const iListWidget *d) {
     unsetClip_Paint(&p);
     drawBorders_Widget(w); /* background overdraws the normal borders */
     if (isEmpty_ListWidget(d) && isFocused_Widget(d)) {
-        drawRectThickness_Paint(&p, bounds, gap_UI / 4, uiTextAction_ColorId);
+        drawRectThickness_Paint(
+            &p,
+            adjusted_Rect(bounds, zero_I2(), init_I2(isTerminal_Platform() ? -2 : -gap_UI, 0)),
+            gap_UI / 4,
+            uiTextAction_ColorId);
     }
     drawChildren_Widget(w);
 }

@@ -1789,6 +1789,7 @@ static void paste_InputWidget_(iInputWidget *d) {
         deleteMarked_InputWidget_(d);
         char *   text  = SDL_GetClipboardText();
         iString *paste = collect_String(newCStr_String(text));
+        replace_String(paste, "\r", ""); // we expect line breaks to be just LF, no CRs
         /* Url decoding. */
         if (d->inFlags & isUrl_InputWidgetFlag) {
             trim_String(paste);

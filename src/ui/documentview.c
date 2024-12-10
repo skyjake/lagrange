@@ -241,7 +241,9 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     iBool       wasCentered = iFalse;
     rect.size.x = documentWidth_DocumentView(d);
     /* Content may not be always wrappable, so let it extend to window width if needed. */
-    if (contentWidth_GmDocument(d->doc) > size_GmDocument(d->doc).x) {
+    if (prefs_App()->expandToLongLines &&
+        contentWidth_GmDocument(d->doc) > size_GmDocument(d->doc).x &&
+        contentWidth_GmDocument(d->doc) < size_GmDocument(d->doc).x * 1.333f) { /* < ⅓ increase */
         rect.size.x = iMini(iMax(rect.size.x, contentWidth_GmDocument(d->doc)),
                             maxDocumentWidth_DocumentView_(d));
     }
@@ -809,18 +811,18 @@ iDeclareType(DrawContext)
 
 struct Impl_DrawContext {
     const iDocumentView *view;
-    iRect widgetBounds;
-    int widgetFullWidth; /* including area behind scrollbar */
-    iRect docBounds;
-    iRangei vis;
-    iInt2 viewPos; /* document area origin */
-    iPaint paint;
-    iBool inSelectMark;
-    iBool inFoundMark;
-    iBool showLinkNumbers;
-    iRect firstMarkRect;
-    iRect lastMarkRect;
-    int drawDir; /* -1 for progressive reverse direction */
+    iRect       widgetBounds;
+    int         widgetFullWidth; /* including area behind scrollbar */
+    iRect       docBounds;
+    iRangei     vis;
+    iInt2       viewPos; /* document area origin */
+    iPaint      paint;
+    iBool       inSelectMark;
+    iBool       inFoundMark;
+    iBool       showLinkNumbers;
+    iRect       firstMarkRect;
+    iRect       lastMarkRect;
+    int         drawDir; /* -1 for progressive reverse direction */
     iGmRunRange runsDrawn;
 };
 

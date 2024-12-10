@@ -843,6 +843,14 @@ iBool isStarted_Player(const iPlayer *d) {
     return d->device != 0;
 }
 
+iBool isComplete_Player(const iPlayer *d) {
+    iInputBuf *input = d->data;
+    lock_Mutex(&input->mtx);
+    const iBool isComplete = input->isComplete;
+    unlock_Mutex(&input->mtx);
+    return isComplete;
+}
+
 iBool isPaused_Player(const iPlayer *d) {
 #if defined (iPlatformAppleMobile)
     if (d->avfPlayer) {

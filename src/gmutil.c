@@ -352,7 +352,7 @@ void urlDecodePath_String(iString *d) {
     iString *decoded = new_String();
     appendRange_String(decoded, (iRangecc){ constBegin_String(d), url.path.start });
     iString *path    = newRange_String(url.path);
-    iString *decPath = urlDecodeExclude_String(path, "%?/#"); /* don't decode reserved path chars */
+    iString *decPath = urlDecodeExclude_String(path, ":%?/#"); /* don't decode reserved path chars */
     append_String(decoded, decPath);
     delete_String(decPath);
     delete_String(path);

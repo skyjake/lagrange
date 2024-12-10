@@ -3516,6 +3516,7 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.justify" },
             { "toggle id:prefs.biglede" },
             { "toggle id:prefs.plaintext.wrap" },
+            { "toggle id:prefs.expandline" },
             { "toggle id:prefs.gopher.gemstyle" },
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
@@ -3847,6 +3848,8 @@ iWidget *makePreferences_Widget(void) {
 #endif
         addDialogToggle_Widget(headings, values, "${prefs.biglede}", "prefs.biglede");
         addDialogToggle_Widget(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogPadding_(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.expandline}", "prefs.expandline");
         addDialogToggle_Widget(headings, values, "${prefs.centershort}", "prefs.centershort");
         addDialogPadding_(headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));

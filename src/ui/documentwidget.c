@@ -757,10 +757,10 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             prependChar_String(text, siteIcon);
             prependCStr_String(text, escape_Color(uiIcon_ColorId));
         }
-        const int width = measureRange_Text(font, range_String(text)).advance.x;
+        const int width         = measureRange_Text(font, range_String(text)).advance.x;
         const int ellipsisWidth = measure_Text(font, "...").advance.x;
         setTextColor_LabelWidget(tabButton, none_ColorId);
-        iWidget *tabCloseButton = child_Widget(as_Widget(tabButton), 0);
+        iWidget    *tabCloseButton  = child_Widget(as_Widget(tabButton), 0);
         const iBool tabCloseVisible = avail > width_Widget(tabCloseButton);
         if (deviceType_App() == tablet_AppDeviceType) {
             iChangeFlags(as_Widget(tabCloseButton)->flags2, visibleOnParentSelected_WidgetFlag2,

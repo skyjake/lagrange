@@ -185,6 +185,7 @@ struct Impl_GmDocument {
         iBool isLayoutInvalidated : 1;
         iBool isPaletteValid : 1;
         iBool isGopherMenu : 1;
+        iBool isConvertedMarkdown : 1;
     } flags;
 };
 
@@ -195,6 +196,9 @@ static void import_GmDocument_(iGmDocument *);
 static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (d->flags.isNex) {
         return iTrue;
+    }
+    if (d->flags.isConvertedMarkdown) {
+        return iFalse;
     }
     const iRangecc scheme = urlScheme_String(&d->url);
     if (equalCase_Rangecc(scheme, "gemini")) {
@@ -1436,6 +1440,7 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isNex = iFalse;
     d->flags.isLayoutInvalidated = iFalse;
     d->flags.isPaletteValid = iFalse;
+    d->flags.isConvertedMarkdown = iFalse;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -2445,6 +2450,10 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
             if (startsWith_Rangecc(line, "    ")) {
                 line.start += 4;
                 if (!isPre) {
+                    while (!isEmpty_String(&result) &&
+                           (last_String(&result) == ' ' || last_String(&result) == '\t')) {
+                        removeEnd_String(&result, 1);
+                    }
                     appendCStr_String(&result, "```\n");
                     isPre = iTrue;
                 }
@@ -2487,12 +2496,13 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
     }
     /* Replace Markdown syntax with equivalent Gemtext, where possible. */
     replaceRegExp_String(&d->source, iClob(new_RegExp("(\\s*\n){2,}", 0)), "\n\n", NULL, NULL); /* normalize paragraph breaks */
-//    printf("Converted:\n%s", cstr_String(&d->source));
+    // printf("Converted:\n%s", cstr_String(&d->source));
     d->format = gemini_SourceFormat;
 }
 
 static void import_GmDocument_(iGmDocument *d) {
     d->format = d->origFormat;
+    d->flags.isConvertedMarkdown = iFalse;
     set_String(&d->source, &d->origSource);
     replace_String(&d->source, "\r\n", "\n");
     /* Remove any null characters. */ {
@@ -2525,6 +2535,7 @@ static void import_GmDocument_(iGmDocument *d) {
     }
     else if (d->format == markdown_SourceFormat) {
         convertMarkdownToGemtext_GmDocument_(d);
+        d->flags.isConvertedMarkdown = iTrue;
         d->theme.ansiEscapes = allowAll_AnsiFlag; /* escapes are used for styling */
     }
     else {
@@ -2645,31 +2656,6 @@ enum iSourceFormat format_GmDocument(const iGmDocument *d) {
 iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
 }
-
-#if 0
-enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *d) {
-    return d->bannerType;
-}
-
-iBool hasSiteBanner_GmDocument(const iGmDocument *d) {
-    return siteBanner_GmDocument(d) != NULL;
-}
-
-const iGmRun *siteBanner_GmDocument(const iGmDocument *d) {
-    if (isEmpty_Array(&d->layout)) {
-        return iFalse;
-    }
-    const iGmRun *first = constFront_Array(&d->layout);
-    if (first->flags & siteBanner_GmRunFlag) {
-        return first;
-    }
-    return NULL;
-}
-
-const iString *bannerText_GmDocument(const iGmDocument *d) {
-    return &d->bannerText;
-}
-#endif
 
 const iArray *headings_GmDocument(const iGmDocument *d) {
     return &d->headings;
