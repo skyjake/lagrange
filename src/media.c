@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "media.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
+#include "the_Foundation/block.h"
 #include "ui/window.h"
 #include "ui/paint.h" /* size_SDLTexture */
 #include "audio/player.h"
@@ -164,6 +165,7 @@ struct Impl_StatefulJxlDecoder {
     size_t      bufferSize;
     void       *opaqueRunner;
     size_t      nSeenBytes;
+    iBlock     *blockHandle;
 };
 
 iDeclareTypeConstructionArgs(StatefulJxlDecoder, iGmLinkId linkId, int wantedEvents);
@@ -173,8 +175,9 @@ iDefineTypeConstructionArgs(StatefulJxlDecoder, (iGmLinkId linkId, int wantedEve
 void init_StatefulJxlDecoder(iStatefulJxlDecoder *d, iGmLinkId linkId, int wantedEvents) {
     memset(d, 0, sizeof(iStatefulJxlDecoder));
 
-    d->node.key = linkId;
-    d->decoder  = JxlDecoderCreate(NULL);
+    d->node.key    = linkId;
+    d->decoder     = JxlDecoderCreate(NULL);
+    d->blockHandle = new_Block(0);
 
     if (!(d->opaqueRunner = JxlResizableParallelRunnerCreate(NULL)))
         fprintf(stderr, "[media] JxlResizableParallelRunnerCreate failed\n");
@@ -191,6 +194,8 @@ void init_StatefulJxlDecoder(iStatefulJxlDecoder *d, iGmLinkId linkId, int wante
 void deinit_StatefulJxlDecoder(iStatefulJxlDecoder *d) {
     JxlDecoderDestroy(d->decoder);
     JxlResizableParallelRunnerDestroy(d->opaqueRunner);
+    if (d->blockHandle)
+        clear_Block(d->blockHandle);
     free(d->buffer);
 }
 
@@ -209,8 +214,9 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
         .num_channels = 4, .data_type = JXL_TYPE_UINT8, .endianness = JXL_NATIVE_ENDIAN, .align = 0
     };
 
-    if (blockSize == 0)
+    if (blockSize == 0) {
         return NULL;
+    }
 
     if (!media->jxlDecoderMap) {
         media->jxlDecoderMap = new_Map(compare_MapNode_);
@@ -225,6 +231,9 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
         d = new_StatefulJxlDecoder(linkId, JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE);
         if (isPartial) insert_Map(media->jxlDecoderMap, &d->node);
     }
+
+    // add refcount s.t. data is not freed until decoder is done
+    set_Block(d->blockHandle, data);
 
     JxlDecoderSetInput(
         d->decoder, constData_Block(data) + d->nSeenBytes, blockSize - d->nSeenBytes);
@@ -262,6 +271,7 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
                 }
             case JXL_DEC_FULL_IMAGE:
                 d->nSeenBytes = blockSize - JxlDecoderReleaseInput(d->decoder);
+                clear_Block(d->blockHandle);
 
                 if (status != JXL_DEC_NEED_MORE_INPUT ||
                     JXL_DEC_SUCCESS == JxlDecoderFlushImage(d->decoder)) {
