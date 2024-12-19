@@ -194,6 +194,10 @@ void deinit_StatefulJxlDecoder(iStatefulJxlDecoder *d) {
     free(d->buffer);
 }
 
+static int compare_MapNode_(iMapKey a, iMapKey b) {
+    return (a > b) - (a < b);
+}
+
 static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iBool isPartial, iMedia *media) {
     iStatefulJxlDecoder *d;
     JxlBasicInfo         info;
@@ -205,7 +209,12 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
         .num_channels = 4, .data_type = JXL_TYPE_UINT8, .endianness = JXL_NATIVE_ENDIAN, .align = 0
     };
 
+    if (!media->jxlDecoderMap) {
+        media->jxlDecoderMap = new_Map(compare_MapNode_);
+    }
+    
     iAssert(media->jxlDecoderMap);
+
     if (contains_Map(media->jxlDecoderMap, linkId)) {
         d = (iStatefulJxlDecoder *) value_Map(media->jxlDecoderMap, linkId);
     }
@@ -456,18 +465,12 @@ iDefineTypeConstruction(GmDownload)
 
 /*----------------------------------------------------------------------------------------------*/
 
-#if defined (LAGRANGE_ENABLE_JXL)
-static int compare_MapNode_(iMapKey a, iMapKey b) {
-    return (a > b) - (a < b);
-}
-#endif
-
 void init_Media(iMedia *d) {
     iForIndices(i, d->items) {
         init_PtrArray(&d->items[i]);
     }
 #if defined (LAGRANGE_ENABLE_JXL)
-    d->jxlDecoderMap = new_Map(compare_MapNode_);
+    d->jxlDecoderMap = NULL;
 #endif
 }
 
@@ -495,17 +498,19 @@ void clear_Media(iMedia *d) {
         clear_PtrArray(&d->items[type]);
     }
 #if defined (LAGRANGE_ENABLE_JXL)
-    iMapIterator jxlDecoderMapIterator;
-    iStatefulJxlDecoder *decoder;
+    if (d->jxlDecoderMap) {
+        iMapIterator jxlDecoderMapIterator;
+        iStatefulJxlDecoder *decoder;
 
-    init_MapIterator(&jxlDecoderMapIterator, d->jxlDecoderMap);
+        init_MapIterator(&jxlDecoderMapIterator, d->jxlDecoderMap);
 
-    while ((decoder = (iStatefulJxlDecoder *)remove_MapIterator(&jxlDecoderMapIterator))) {
-        collect_StatefulJxlDecoder(decoder);
-        next_MapIterator(&jxlDecoderMapIterator);
+        while ((decoder = (iStatefulJxlDecoder *)remove_MapIterator(&jxlDecoderMapIterator))) {
+            collect_StatefulJxlDecoder(decoder);
+            next_MapIterator(&jxlDecoderMapIterator);
+        }
+
+        clear_Map(d->jxlDecoderMap);
     }
-
-    clear_Map(d->jxlDecoderMap);
 #endif
 }
 
