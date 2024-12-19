@@ -209,6 +209,9 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
         .num_channels = 4, .data_type = JXL_TYPE_UINT8, .endianness = JXL_NATIVE_ENDIAN, .align = 0
     };
 
+    if (blockSize == 0)
+        return NULL;
+
     if (!media->jxlDecoderMap) {
         media->jxlDecoderMap = new_Map(compare_MapNode_);
     }
