@@ -208,13 +208,12 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
     JxlBasicInfo         info;
     JxlDecoderStatus     status;
     uint8_t             *imgData   = NULL;
-    const size_t         blockSize = size_Block(data);
 
     const JxlPixelFormat format = {
         .num_channels = 4, .data_type = JXL_TYPE_UINT8, .endianness = JXL_NATIVE_ENDIAN, .align = 0
     };
 
-    if (blockSize == 0) {
+    if (size_Block(data) == 0) {
         return NULL;
     }
 
@@ -235,8 +234,10 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
     // add refcount s.t. data is not freed until decoder is done
     set_Block(d->blockHandle, data);
 
-    JxlDecoderSetInput(
-        d->decoder, constData_Block(data) + d->nSeenBytes, blockSize - d->nSeenBytes);
+    JxlDecoderSetInput(d->decoder,
+                       constData_Block(d->blockHandle) + d->nSeenBytes,
+                       size_Block(d->blockHandle) - d->nSeenBytes);
+
     if (!isPartial) JxlDecoderCloseInput(d->decoder);
 
     while (true) {
@@ -270,7 +271,7 @@ static uint8_t *loadJxl_(const iBlock *data, iInt2 *imSize, iGmLinkId linkId, iB
                     goto err;
                 }
             case JXL_DEC_FULL_IMAGE:
-                d->nSeenBytes = blockSize - JxlDecoderReleaseInput(d->decoder);
+                d->nSeenBytes = size_Block(d->blockHandle) - JxlDecoderReleaseInput(d->decoder);
                 clear_Block(d->blockHandle);
 
                 if (status != JXL_DEC_NEED_MORE_INPUT ||
