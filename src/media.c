@@ -499,18 +499,6 @@ void deinit_Media(iMedia *d) {
 }
 
 void clear_Media(iMedia *d) {
-    iForEach(PtrArray, i, &d->items[image_MediaType]) {
-        deinit_GmImage(i.ptr);
-    }
-    iForEach(PtrArray, a, &d->items[audio_MediaType]) {
-        deinit_GmAudio(a.ptr);
-    }
-    iForEach(PtrArray, n, &d->items[download_MediaType]) {
-        deinit_GmDownload(n.ptr);
-    }
-    iForIndices(type, d->items) {
-        clear_PtrArray(&d->items[type]);
-    }
 #if defined (LAGRANGE_ENABLE_JXL)
     if (d->jxlDecoderMap) {
         iMapIterator jxlDecoderMapIterator;
@@ -526,6 +514,18 @@ void clear_Media(iMedia *d) {
         clear_Map(d->jxlDecoderMap);
     }
 #endif
+    iForEach(PtrArray, i, &d->items[image_MediaType]) {
+        deinit_GmImage(i.ptr);
+    }
+    iForEach(PtrArray, a, &d->items[audio_MediaType]) {
+        deinit_GmAudio(a.ptr);
+    }
+    iForEach(PtrArray, n, &d->items[download_MediaType]) {
+        deinit_GmDownload(n.ptr);
+    }
+    iForIndices(type, d->items) {
+        clear_PtrArray(&d->items[type]);
+    }
 }
 
 size_t memorySize_Media(const iMedia *d) {
@@ -590,6 +590,12 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
         iGmImage *img;
         if (isDeleting) {
             take_PtrArray(&d->items[image_MediaType], existingIndex, (void **) &img);
+#if defined (LAGRANGE_ENABLE_JXL)
+            // abort possible in-progress decoding
+            iStatefulJxlDecoder *jxlDecoder = (iStatefulJxlDecoder *) remove_Map(d->jxlDecoderMap, linkId);
+            if (jxlDecoder)
+                delete_StatefulJxlDecoder(jxlDecoder);
+#endif
             delete_GmImage(img);
         }
         else {
