@@ -1315,7 +1315,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     }
                     pushBack_Array(&d->layout, &run);
                     pos.y += run.bounds.size.y + margin / 2;
-                    /* Image metadata caption. */ {
+                    /* Image metadata caption */ 
+                    if (!isEqual_I2(imgSize, zero_I2())) {
                         run.font = FONT_ID(documentBody_FontId, semiBold_FontStyle, contentSmall_FontSize);
                         run.color = tmQuoteIcon_ColorId;
                         run.flags = decoration_GmRunFlag | caption_GmRunFlag;

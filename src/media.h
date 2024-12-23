@@ -98,7 +98,7 @@ iLocalDef iBool downloadInfo_Media(const iMedia *d, uint16_t mediaId, iGmMediaIn
 }
 
 iInt2           imageSize_Media         (const iMedia *, iMediaId imageId);
-SDL_Texture *   imageTexture_Media      (const iMedia *, iMediaId imageId);
+SDL_Texture *   imageTexture_Media      (const iMedia *, iMediaId imageId, iBool *incomplete);
 
 size_t          numAudio_Media          (const iMedia *);
 iPlayer *       audioPlayer_Media       (const iMedia *, iMediaId audioId);

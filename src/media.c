@@ -719,11 +719,13 @@ iInt2 imageSize_Media(const iMedia *d, iMediaId imageId) {
     return zero_I2();
 }
 
-SDL_Texture *imageTexture_Media(const iMedia *d, iMediaId imageId) {
+SDL_Texture *imageTexture_Media(const iMedia *d, iMediaId imageId, iBool *incomplete) {
     iAssert(imageId.type == image_MediaType);
     const size_t index = index_MediaId(imageId);
+    *incomplete = iFalse;
     if (index < size_PtrArray(&d->items[image_MediaType])) {
         const iGmImage *img = constAt_PtrArray(&d->items[image_MediaType], index);
+        *incomplete = img->texture == NULL;
         return img->texture;
     }
     return NULL;
