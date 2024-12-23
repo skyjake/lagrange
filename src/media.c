@@ -592,9 +592,11 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             take_PtrArray(&d->items[image_MediaType], existingIndex, (void **) &img);
 #if defined (LAGRANGE_ENABLE_JXL)
             // abort possible in-progress decoding
-            iStatefulJxlDecoder *jxlDecoder = (iStatefulJxlDecoder *) remove_Map(d->jxlDecoderMap, linkId);
-            if (jxlDecoder)
-                delete_StatefulJxlDecoder(jxlDecoder);
+            if (d->jxlDecoderMap) {
+                iStatefulJxlDecoder *jxlDecoder = (iStatefulJxlDecoder *) remove_Map(d->jxlDecoderMap, linkId);
+                if (jxlDecoder)
+                    delete_StatefulJxlDecoder(jxlDecoder);
+            }
 #endif
             delete_GmImage(img);
         }
