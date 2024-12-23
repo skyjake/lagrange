@@ -4931,9 +4931,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 return iTrue;
                             }
                             else {
-                                /* Show the existing content again if we have it. */
+                                /* Show the existing content again if we have it */
                                 iMediaRequest *req = findMediaRequest_DocumentWidget(d, linkId);
-                                if (req) {
+                                if (req && isFinished_GmRequest(req->req)) {
                                     setData_Media(media_GmDocument(view->doc),
                                                   linkId,
                                                   meta_GmRequest(req->req),
