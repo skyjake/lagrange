@@ -946,14 +946,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                  runOffset_DocumentView_(d->view, run));
     const iRect visRect = { visPos, run->visBounds.size };
     /* Fill the background. */ {
-#if 0
-        iBool isInlineImageCaption = run->linkId && linkFlags & content_GmLinkFlag &&
-                                     ~linkFlags & permanent_GmLinkFlag;
-        if (run->flags & decoration_GmRunFlag && ~run->flags & startOfLine_GmRunFlag) {
-            /* This is the metadata. */
-            isInlineImageCaption = iFalse;
-        }
-#endif
         iBool isMobileHover = deviceType_App() != desktop_AppDeviceType &&
                               (isPartOfHover || contains_PtrSet(d->view->invalidRuns, run)) &&
                               (~run->flags & decoration_GmRunFlag || run->flags & startOfLine_GmRunFlag
@@ -1008,11 +1000,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             fillRect_Paint(&d->paint, wideRect, tmBackground_ColorId);
         }
         else {
-            /* Normal background for other runs. There are cases when runs get drawn multiple times,
-               e.g., at the buffer boundary, and there are slightly overlapping characters in
-               monospace blocks. Clearing the background here ensures a cleaner visual appearance
-               since only one glyph is visible at any given point. */
-            fillRect_Paint(&d->paint, visRect, tmBackground_ColorId);
+            /* Normal background for other runs. There are cases when runs get drawn multiple
+               times, e.g., at the buffer boundary, and there are slightly overlapping characters
+               in monospace blocks. Clearing the background here ensures a cleaner visual
+               appearance since only one glyph is visible at any given point.
+
+               Link icons with custom symbols may have unexpected width, so clear the background
+               a bit more to the left to erase any leftovers from link numbering circles. */
+            const iBool isLinkIcon =
+                (run->linkId && run->flags & decoration_GmRunFlag &&
+                 run->flags & startOfLine_GmRunFlag && ~run->flags & caption_GmRunFlag);
+            fillRect_Paint(
+                &d->paint,
+                adjusted_Rect(visRect, init_I2(isLinkIcon ? -2 * gap_Text : 0, 0), zero_I2()),
+                tmBackground_ColorId);
         }
     }
     if (run->linkId) {

@@ -746,7 +746,7 @@ struct Impl_RasterGlyph {
 static void cacheGlyphs_Font_(iFont *d, const uint32_t *glyphIndices, size_t numGlyphIndices) {
     /* TODO: Make this an object so it can be used sequentially without reallocating buffers. */
     SDL_Surface *buf     = NULL;
-    const iInt2  bufSize = init_I2(iMin(512, d->font.height * iMin(2 * numGlyphIndices, 20)),
+    const iInt2  bufSize = init_I2(iMin(1024, d->font.height * iMin(5 * numGlyphIndices, 20)),
                                    d->font.height * 4 / 3);
     int          bufX    = 0;
     iArray *     rasters = NULL;
@@ -792,8 +792,9 @@ static void cacheGlyphs_Font_(iFont *d, const uint32_t *glyphIndices, size_t num
                 iBool outOfSpace = iFalse;
                 iForIndices(i, surfaces) {
                     if (surfaces[i]) {
-                        const int w = surfaces[i]->w;
+                        const int w = iMin(surfaces[i]->w, bufSize.x);
                         const int h = surfaces[i]->h;
+                        iAssert(w <= bufSize.x);
                         if (bufX + w <= bufSize.x) {
                             SDL_BlitSurface(surfaces[i],
                                             NULL,

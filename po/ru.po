@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2024-10-06 10:28+0000\n"
+"PO-Revision-Date: 2024-12-24 02:17+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -889,19 +889,19 @@ msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
 msgid "prefs.linewidth"
-msgstr "Ширина линии:"
+msgstr "Длина строки:"
 
 msgid "prefs.linewidth.normal"
 msgstr "Нормальная"
 
 msgid "prefs.linewidth.fill"
-msgstr "Заливка"
+msgstr "По ширине окна"
 
 msgid "prefs.quoteicon"
 msgstr "Индикатор цитаты:"
 
 msgid "prefs.quoteicon.icon"
-msgstr "\" Иконка"
+msgstr "Символ “"
 
 msgid "prefs.quoteicon.line"
 msgstr "Линия"
@@ -2849,3 +2849,6 @@ msgstr "Отправить мне копию"
 
 msgid "upload.type"
 msgstr "Содержимое"
+
+msgid "prefs.expandline"
+msgstr "Подгонять под длинные строки:"

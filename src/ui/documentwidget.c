@@ -878,7 +878,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     refresh_Widget(as_Widget(d));
     /* Check for special bookmark tags. */
     d->flags &= ~otherRootByDefault_DocumentWidgetFlag;
-    const uint16_t bmid = findBookmarkId_DocumentWidget(d);
+    const uint32_t bmid = findBookmarkId_DocumentWidget(d);
     if (bmid) {
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
         if (bm->flags & linkSplit_BookmarkFlag) {

@@ -6,6 +6,20 @@
 ```
 # Release notes
 
+## 1.19
+New features:
+
+Changes and enhancements:
+
+Fixes:
+
+## 1.18.5
+* Fixed a potential crash when browsing to a bookmarked page due to inadvertent ID number overflow. (Courtesy of @cthulhu.)
+* Erase possible link icon leftovers after toggling link numbering.
+* Fixed hang when encountering the U+FDFD character.
+* Fixed layout issue with empty list widgets (focus border only partially visible).
+* Updated UI translations.
+
 ## 1.18.4
 * Added option to disable page width expansion to fit long lines.
 * Limited page width expansion to 33% so room is left for the current title in the margin.

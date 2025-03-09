@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2024-10-03 14:43+0000\n"
-"PO-Revision-Date: 2024-12-06 06:38+0000\n"
+"PO-Revision-Date: 2025-01-09 00:02+0000\n"
 "Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
 "Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "sgs/>\n"
@@ -2350,3 +2350,53 @@ msgstr ""
 "• 2030\n"
 "• 2025-06-30\n"
 "• 2021-12-31 23:59:59"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Rakondu joustas veiksmā"
+
+msgid "collapse.bydefault"
+msgstr "Ožkraunont puslapi"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Atvertė abruozdelius ėš Data URL:"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Pārveizietė Markdown kāp kuoda:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Atvertė index.gmi ZIP arkīvūs:"
+
+msgid "prefs.pinsplit"
+msgstr "Atvertė šalėpās:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Ožkrautė sekonti abruozdieli slenkont:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Navigacėnė jousta apatiuo"
+
+msgid "prefs.menubar"
+msgstr "Meniū jousta"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Slenkont pakavuotė rakondu jousta:"
+
+msgid "prefs.toolbaraction1"
+msgstr "Mīgtoks 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Mīgtoks 2"
+
+msgid "prefs.swipe.edge"
+msgstr "Brauktė nu krašta:"
+
+msgid "prefs.swipe.page"
+msgstr "Brauktė ont poslapė:"
+
+msgid "prefs.ostheme"
+msgstr "Nauduotė sistemas tema:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Pridietė žīmas apatiuo:"
