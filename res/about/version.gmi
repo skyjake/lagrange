@@ -6,13 +6,6 @@
 ```
 # Release notes
 
-## 1.19
-New features:
-
-Changes and enhancements:
-
-Fixes:
-
 ## 1.18.5
 * Fixed a potential crash when browsing to a bookmarked page due to inadvertent ID number overflow. (Courtesy of @cthulhu.)
 * Erase possible link icon leftovers after toggling link numbering.
