@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "app.h"
 
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "win32.h"
 #endif
 
@@ -632,7 +632,7 @@ void init_Fonts(const char *userDir) {
         setReadOnly_FontPack(pack, iTrue);
         loadArchive_FontPack(pack, archive_Resources()); /* should never fail if we've made it this far */
         pushBack_PtrArray(&d->packs, pack);
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
         /* The system UI font is used as the default font. */
         iString *winPath = collect_String(windowsDirectory_Win32());
         iString *segoePath = collect_String(concatCStr_Path(winPath, "Fonts\\segoeui.ttf"));

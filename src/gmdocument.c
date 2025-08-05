@@ -2779,6 +2779,14 @@ const iGmRun *findRunAtLoc_GmDocument(const iGmDocument *d, const char *textCStr
     return NULL;
 }
 
+const iGmRun *precedingRun_GmDocument(const iGmDocument *d, const iGmRun *run) {
+    run--;
+    if (indexOf_Array(&d->layout, run) == iInvalidPos) {
+        return NULL;
+    }
+    return run;
+}
+
 static const iGmLink *link_GmDocument_(const iGmDocument *d, iGmLinkId id) {
     if (id > 0 && id <= size_PtrArray(&d->links)) {
         return constAt_PtrArray(&d->links, id - 1);

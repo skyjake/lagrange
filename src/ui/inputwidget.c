@@ -1928,6 +1928,7 @@ static void markWordAtCursor_InputWidget_(iInputWidget *d) {
 
 static void showClipMenu_InputWidget_(const iInputWidget *d, iInt2 coord) {
     iWidget *clipMenu = findChild_Widget(root_Widget(constAs_Widget(d)), "clipmenu");
+    if (!clipMenu) return; /* all main/extra windows have a clipmenu, but popups do not */
     if (isVisible_Widget(clipMenu)) {
         closeMenu_Widget(clipMenu);
     }

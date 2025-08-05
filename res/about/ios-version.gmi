@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.18 (10)
+* Added Samogitian UI language.
+* Updated UI translations.
+
 ## 1.18 (9)
 * Added "Copy Page URL" to the toolbar menu.
 * Fixed a potential crash when browsing to a bookmarked page due to inadvertent ID number overflow. (Courtesy of @cthulhu.)

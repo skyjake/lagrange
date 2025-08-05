@@ -1,0 +1,534 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2025-07-07 06:44+0000\n"
+"Last-Translator: Sava Alexandru Stefan <savaalexandrustefan@gmail.com>\n"
+"Language-Team: Romanian <http://weblate.skyjake.fi/projects/lagrange/ui/ro/>"
+"\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s este o arhivă."
+
+msgid "heading.archive.userdata"
+msgstr "Arhiva de date a utilizatorului"
+
+msgid "doc.archive.view"
+msgstr "Vezi conținut arhivă"
+
+msgid "media.untitled.image"
+msgstr "Imagine"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titlu"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artist"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Gen"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-biți"
+
+msgid "numbertype.integer"
+msgstr "întreg"
+
+msgid "numbertype.float"
+msgstr "virgulă mobilă"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Ultima reîmprospătare a avut loc acum câteva momente."
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un total de %u intrare"
+msgstr[1] "un total de %u intrări"
+msgstr[2] "un total de %u intrări"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Ultima reîmprospătare a avut loc acum %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minut"
+msgstr[1] "%d minute"
+msgstr[2] "%d minute"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d zi"
+msgstr[1] "%d zile"
+msgstr[2] "%d zile"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "Artă ASCII: cuvântul \"LaGrange\" folosing un font mare"
+
+msgid "about.tagline"
+msgstr "Un client Gemini frumls"
+
+msgid "cancel"
+msgstr "Anulează"
+
+msgid "close"
+msgstr "Închide"
+
+msgid "dlg.default"
+msgstr " Ok "
+
+msgid "menu.title.edit"
+msgstr "Editează"
+
+msgid "menu.title.view"
+msgstr "Vezi"
+
+msgid "menu.title.file"
+msgstr "Fișier"
+
+msgid "menu.title.bookmarks"
+msgstr "Site-uri salvate"
+
+msgid "menu.title.window"
+msgstr "Fereastră"
+
+msgid "menu.title.help"
+msgstr "Ajutor"
+
+msgid "menu.newtab"
+msgstr "Tab nou"
+
+msgid "menu.closetab"
+msgstr "Închide tab"
+
+msgid "menu.closetab.other"
+msgstr "Închide celelalte taburi"
+
+msgid "menu.closetab.left"
+msgstr "Închide taburile la stânga"
+
+msgid "menu.closetab.right"
+msgstr "Închide taburile la dreapta"
+
+msgid "menu.duptab"
+msgstr "Tab nou identic"
+
+msgid "menu.movetab.left"
+msgstr "Muta tab la stânga"
+
+msgid "menu.movetab.right"
+msgstr "Mută tab la dreapta"
+
+msgid "menu.movetab.split"
+msgstr "Mută tab în partea cealaltă"
+
+msgid "menu.movetab.newwindow"
+msgstr "Mută tab în fereastră nouă"
+
+msgid "menu.window.min"
+msgstr "Minimizează"
+
+msgid "menu.window.max"
+msgstr "Maximizează"
+
+msgid "menu.split.vertical"
+msgstr "Vertical"
+
+msgid "menu.openlocation"
+msgstr "Deschide locația…"
+
+msgid "menu.export"
+msgstr "Exportă"
+
+msgid "menu.import"
+msgstr "Importă…"
+
+msgid "menu.pageinfo"
+msgstr "Arată informații pagină"
+
+msgid "menu.unexpire"
+msgstr "Ignoră expirarea și continuă încărcarea"
+
+msgid "macos.menu.find"
+msgstr "Caută"
+
+msgid "menu.open.external"
+msgstr "Deschide în altă aplicație"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Salvează în Downloaduri"
+
+msgid "menu.sidebar"
+msgstr "Comută bara laterală"
+
+msgid "menu.sidebar.left"
+msgstr "Comută bara din stânga"
+
+msgid "menu.sidebar.right"
+msgstr "Comută bara din dreapta"
+
+msgid "menu.zoom.in"
+msgstr "Mărește"
+
+msgid "menu.zoom.out"
+msgstr "Micșorează"
+
+msgid "menu.zoom.reset"
+msgstr "Resetează mărirea"
+
+msgid "menu.newfolder"
+msgstr "Folder nou…"
+
+msgid "menu.sort.alpha"
+msgstr "Sortează alfabetic"
+
+msgid "truetype.help.installed"
+msgstr "Acest font este instalat în fonturile utilizatorului."
+
+msgid "heading.dismiss.warning"
+msgstr "Închide acest avertisment?"
+
+msgid "menu.snip.edit"
+msgstr "Editează…"
+
+msgid "dlg.dismiss.warning"
+msgstr "Închide avertizarea"
+
+msgid "menu.snip.prefs"
+msgstr "Configurează…"
+
+msgid "heading.snip.new"
+msgstr "Fragment nou"
+
+msgid "heading.snip.edit"
+msgstr "Editează fragment"
+
+msgid "snip.name"
+msgstr "Nume:"
+
+msgid "snip.content"
+msgstr "Conținut:"
+
+msgid "snip.accept"
+msgstr "Salvează fragment"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "Deschide link"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "Meniu contextual"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "Bară meniuri"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "Tab nou"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "Închide tab"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Link în focalizare"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Focalizare"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Subscribții"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d oră"
+msgstr[1] "%d ore"
+msgstr[2] "%d ore"
+
+msgid "about.version"
+msgstr "Versiunea"
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+msgstr "Realizat cu SDL2, OpenSSL și ☕️"
+
+msgid "dlg.message.ok"
+msgstr "Continuă"
+
+msgid "menu.title.identity"
+msgstr "Identitate"
+
+msgid "menu.newwindow"
+msgstr "Fereastră nouă"
+
+msgid "menu.reopentab"
+msgstr "Redeschide ultimul tab închis"
+
+msgid "userdata.help"
+msgstr ""
+"Arhivele cu datele utilizatorului conțin istoricul de navigare exportat, "
+"identități, marcaje (bookmarks), fragmente de text, setări specifice site-"
+"urilor și amprente digitale ale certificatelor de server de încredere. "
+"Acestea pot fi stocate ca copii de rezervă și folosite pentru transferul "
+"datelor între dispozitive."
+
+msgid "menu.snip.delete"
+msgstr "Șterge"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "Introduceți adresa URL"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "Panou lateral"
+
+msgid "menu.split.horizontal"
+msgstr "Orizontal"
+
+msgid "menu.downloads"
+msgstr "Arată downloaduri"
+
+msgid "menu.find"
+msgstr "Caută în pagină"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Salvează în fișiere"
+
+msgid "menu.save.downloads.open"
+msgstr "Salvează în Downloaduri și deschide fișierul"
+
+msgid "menu.view.split"
+msgstr "Ecran împărțit"
+
+msgid "doc.pre.nocaption"
+msgstr "Text preformatat fără legendă"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Se încarcă"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Download-ul va fi anulat dacă închideți acest tab."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Download complet."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Dată"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Ești deja abonat la %u subscribție ce conține %%s.\n"
+msgstr[1] "Ești deja abonat la %u subscribții ce contin %%s.\n"
+msgstr[2] "Ești deja abonat la %u subscribții ce contin %%s.\n"
+
+msgid "menu.snip.clipboard"
+msgstr "Copiază în Clipboard"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Arată Fonturi Instalate"
+
+msgid "truetype.help"
+msgstr ""
+"LaGrange va încerca să încarce toate fonturile TrueType ce sunt copiate în "
+"fonturile utilizatorului."
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Nu mai arăta avertismentele despre emulare terminal pe %s?"
+
+msgid "menu.tab.next"
+msgstr "Arată următorul tab"
+
+msgid "menu.tab.prev"
+msgstr "Arată tabul precedent"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Marcaje după etichetă"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Selectează tot"
+
+msgid "menu.window.full"
+msgstr "Comută ecran complet"
+
+msgid "menu.split.merge"
+msgstr "Reunește"
+
+msgid "menu.split.swap"
+msgstr "Inversează părțile"
+
+msgid "menu.foldall"
+msgstr "Ascunde tot"
+
+msgid "menu.unfoldall"
+msgstr "Arată tot"
+
+msgid "menu.bookmarks.list"
+msgstr "Listează toate marcajele"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Listează tot"
+
+msgid "menu.userdata"
+msgstr "Datele utilizatorului"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Listează după etichetă"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Listează marcajele după data creării"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Listează după data creării"
+
+msgid "menu.feeds.entrylist"
+msgstr "Intrări din flux"
+
+msgid "menu.preferences"
+msgstr "Preferințe…"
+
+msgid "menu.update"
+msgstr "Cauta update-uri…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Setări"
+
+msgid "menu.help"
+msgstr "Ajutor"
+
+msgid "menu.releasenotes"
+msgstr "Notele versiunii"
+
+msgid "menu.website"
+msgstr "Website-ul proiectului…"
+
+msgid "menu.email"
+msgstr "Contact prin email"
+
+msgid "menu.quit"
+msgstr "Închide LaGrange"
+
+msgid "menu.cut"
+msgstr "Taie"
+
+msgid "menu.copy"
+msgstr "Copiază"
+
+msgid "menu.paste"
+msgstr "Lipește"
+
+msgid "menu.paste.go"
+msgstr "Lipește și accesează"
+
+msgid "menu.paste.snippet"
+msgstr "Lipește fragment"
+
+msgid "menu.search"
+msgstr "Caută"
+
+msgid "menu.snippet.add"
+msgstr "Fragment din selecție…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Șterge"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Anulează"
+
+msgid "menu.select.clear"
+msgstr "Șterge selecția"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Copiază link-ul paginii"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Arată Marcajele"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Arată fluxuri"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Arată Istoric"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Arată Identități"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Ascunde Identități"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Arată Conturul Paginii"
+
+msgid "menu.back"
+msgstr "Înapoi"
+
+msgid "menu.forward"
+msgstr "Înainte"
+
+msgid "menu.parent"
+msgstr "Către Pagina Părinte"
+
+msgid "menu.root"
+msgstr "Către Prima Pagină"
+
+msgid "menu.home"
+msgstr "Acasă"
+
+msgid "menu.reload"
+msgstr "Reîncarcă Pagina"
+
+msgid "menu.autoreload"
+msgstr "Setează Reîncărcarea Automată…"
+
+msgid "menu.page.bookmark"
+msgstr "Marchează Pagina…"

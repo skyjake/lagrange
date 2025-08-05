@@ -54,7 +54,9 @@ void init_Ipc(const char *runDir) {
     iIpc *d = &ipc_;
     initCStr_String(&d->dir, runDir);
     d->isListening = iFalse;
+#if !defined (iPlatformWindows)
     signal(SIGUSR1, SIG_IGN);
+#endif
 }
 
 static void doStopListening_Ipc_(iIpc *d) {
@@ -98,7 +100,7 @@ static void postCommands_Ipc_(const iBlock *cmds) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
-#if !defined (iPlatformMsys)
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
 
 void deinit_Ipc(void) {
     iIpc *d = &ipc_;
@@ -224,7 +226,7 @@ void signal_Ipc(iProcessId pid) {
 
 #endif
 /*----------------------------------------------------------------------------------------------*/
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
 /* Windows doesn't have user signals, so we'll use one of the simpler native
    Win32 IPC APIs: mailslots. */
 

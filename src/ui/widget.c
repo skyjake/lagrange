@@ -2573,7 +2573,8 @@ void setMouseGrab_Widget(iWidget *d) {
 }
 
 iWidget *mouseGrab_Widget(void) {
-    return get_Window()->mouseGrab;
+    const iWindow *win = get_Window();    
+    return win ? win->mouseGrab : NULL;
 }
 
 void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {

@@ -88,6 +88,14 @@ iLocalDef iBool isAndroid_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isWindows_Platform(void) {
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 enum iGmRequestState {
     initialized_GmRequestState,
     receivingHeader_GmRequestState,

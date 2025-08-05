@@ -50,6 +50,7 @@ enum iPluralType {
     slavic_PluralType,
     oneTwoMany_PluralType,
     oneFewMany_PluralType,
+    samogitian_PluralType,
 };
 
 struct Impl_Lang {
@@ -76,6 +77,11 @@ static size_t pluralIndex_Lang_(const iLang *d, int n) {
             return n % 10 == 1 && n % 100 != 11                                    ? 0
                    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1
                                                                                    : 2;
+        case samogitian_PluralType:
+            return (n % 10 == 1 && n % 100 != 11)                                   ? 0
+                   : (n % 10 == 2 && n % 100 != 12)                                 ? 1
+                   : (n % 10 >= 3 && n % 10 <= 9 && (n % 100 < 11 || n % 100 > 19)) ? 2
+                                                                                    : 3;
         default:
             return 0;
     }
@@ -107,6 +113,7 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "it")      ? &blobIt_Resources
                        : equal_CStr(id, "nl")      ? &blobNl_Resources
                        : equal_CStr(id, "pl")      ? &blobPl_Resources
+                       : equal_CStr(id, "sgs")     ? &blobSgs_Resources
                        : equal_CStr(id, "sk")      ? &blobSk_Resources
                        : equal_CStr(id, "sr")      ? &blobSr_Resources
                        : equal_CStr(id, "tok")     ? &blobTok_Resources
@@ -117,6 +124,9 @@ static void load_Lang_(iLang *d, const char *id) {
                                                    : &blobEn_Resources;
     if (data == &blobRu_Resources || data == &blobSr_Resources || data == &blobUk_Resources) {
         d->pluralType = slavic_PluralType;
+    }
+    else if (data == &blobSgs_Resources) {
+        d->pluralType = samogitian_PluralType;
     }
     else if (data == &blobIsv_Resources) {
         d->pluralType = oneTwoMany_PluralType;

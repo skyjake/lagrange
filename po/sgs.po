@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2024-10-03 14:43+0000\n"
-"PO-Revision-Date: 2025-01-09 00:02+0000\n"
+"PO-Revision-Date: 2025-03-29 10:22+0000\n"
 "Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
 "Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "sgs/>\n"
@@ -2400,3 +2400,155 @@ msgstr "Nauduotė sistemas tema:"
 
 msgid "prefs.bookmarks.addbottom"
 msgstr "Pridietė žīmas apatiuo:"
+
+msgid "prefs.collapsepre"
+msgstr "Soskleistė napadailinta teksta:"
+
+msgid "prefs.retainwindow"
+msgstr "Ėšsauguotė longū ėšdiestīma:"
+
+msgid "prefs.sideicon"
+msgstr "Kapsolės ikuona kairie pusie:"
+
+msgid "prefs.feedinterval"
+msgstr "Sāraša atnaujėnėma intervals:"
+
+msgid "prefs.customframe"
+msgstr "Patė pritaikīts longa riems:"
+
+msgid "prefs.blink"
+msgstr "Blūkčiuojontis kursuorios:"
+
+msgid "prefs.returnkey"
+msgstr "Enter mīgtoka veiksmos:"
+
+msgid "prefs.imagestyle.text"
+msgstr "Teksta barva"
+
+msgid "prefs.imagestyle"
+msgstr "Pasuodrintė paveiksliokus barvuoms:"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Nadailinta teksta barva"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Autuomatėškā aptėktė Gopher maniu stilius:"
+
+msgid "prefs.tui.simple"
+msgstr "Nauduotė ASCII simbuolius:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Pagrinda barva"
+
+msgid "prefs.time.24h"
+msgstr "24 adīnas laika fuormats:"
+
+msgid "prefs.font.ui"
+msgstr "UI šrifts:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Vėinuoda pluotė šrifts:"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Teksta barva"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Šrifta stilios"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Skaistē švėisi"
+
+msgid "archive.exit"
+msgstr "Ėšētė ėš arkīva"
+
+msgid "keys.top"
+msgstr "Šuoktė i vėršo"
+
+msgid "keys.scroll.page.down"
+msgstr "Slinktė žemtīn puslapi"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Slinktė aukštīn posė poslapė"
+
+msgid "keys.root"
+msgstr "Ētė i kapsolės pradė"
+
+msgid "prefs.expandline"
+msgstr "Ešpliestė lėg ėlgū eilutiu:"
+
+msgid "prefs.warn.security"
+msgstr "TLS saugoma ispiejėms:"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Arkīvs tor %u elemėnta ėr ons sospausts i %.1f MB."
+msgstr[1] "Arkīvs tor %u elemėnto ėr ons sospausts i %.1f MB."
+msgstr[2] "Arkīvs tor %u elemėntā ėr ons sospausts i %.1f MB."
+msgstr[3] "Arkīvs tor %u elemėntu ėr ons sospausts i %.1f MB."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Papkie ī %u elemėnts."
+msgstr[1] "Papkie ī %u elemėnto."
+msgstr[2] "Papkie ī %u elemėntā."
+msgstr[3] "Papkie ī %u elemėntu."
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Ivestė ožklausas fragmėnta trumpini"
+
+msgid "keys.link.homerow"
+msgstr "Atvertė nūruoda par nomū eilies maigiokus"
+
+msgid "dir.empty"
+msgstr "Toštė papkė."
+
+msgid "menu.binding.reset"
+msgstr "Gronžintė numatītūsius pariedėmus"
+
+msgid "prefs.font.smooth"
+msgstr "Šrifta aptakoms:"
+
+msgid "keys.bottom"
+msgstr "Šuoktė i apatė"
+
+msgid "keys.parent"
+msgstr "Ētė i aukštiesnė papkė"
+
+msgid "keys.link.modkey"
+msgstr "Atvertė nūruoda par keitėma maigioka"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Slinktė žemīn posė poslapė"
+
+msgid "prefs.urlsize"
+msgstr "Dėdliausis URL ėlgis:"
+
+msgid "prefs.editor.highlight"
+msgstr "Sintaksės parīškėnėms:"
+
+msgid "prefs.uiscale"
+msgstr "Nauduotuojė fasada dīdė keitėms:"
+
+msgid "prefs.font.warnmissing"
+msgstr "Šrifta ruodbalsės žėnkla ispiejėms:"
+
+msgid "prefs.tabwidth"
+msgstr "Taba pluotis:"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "Skema keitons nukreipėms:"
+
+msgid "prefs.biglede"
+msgstr "Dīdelis pėrmāsis paragraps:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Soskaldītė ėlgas grīna teksta eilotes:"
+
+msgid "keys.scroll.page.up"
+msgstr "Slinktė aukštīn puslapi"

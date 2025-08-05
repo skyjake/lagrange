@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Parses all the .po files and generates binary language strings to be loaded 
+# Parses all the .po files and generates binary language strings to be loaded
 # at runtime via embedded data.
 
 import os, sys
@@ -23,6 +23,7 @@ BUILD_LANGS = [ 'en', # base strings
     'nl',
     'pl',
     'ru',
+    'sgs',
     'sk',
     'sr',
     'tok',
@@ -64,9 +65,9 @@ def unquote(string):
             is_escape = True
         else:
             out += c
-    return out        
-    
-    
+    return out
+
+
 def parse_po(src):
     messages = []
     is_multi = False  # string is multiple lines
@@ -87,7 +88,7 @@ def parse_po(src):
         elif line.startswith('msgid'):
             msg_id = unquote(line[6:])
             is_plural = False
-        elif line.startswith('msgstr'):            
+        elif line.startswith('msgstr'):
             if line[6] == '[':
                 msg_index = int(line[7])
                 line = line[9:]
@@ -111,15 +112,15 @@ def parse_po(src):
         pluralized.append((msg_id, msg_str))
         #print(msg_id, '=>', msg_str)
     return pluralized
-    
-    
+
+
 def compile_string(msg_id, msg_str):
     return msg_id.encode('utf-8') + bytes([0]) + \
            msg_str.encode('utf-8') + bytes([0])
-    
+
 
 os.chdir(os.path.dirname(__file__))
-    
+
 if MODE == 'compile':
     BASE_STRINGS = {}
     PLURALS = set()
@@ -156,4 +157,4 @@ elif MODE == 'new':
     for msg_id, _ in messages:
         print(f'\nmsgid "{msg_id}"\nmsgstr ""\n', file=f)
 
-    
+

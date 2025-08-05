@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-10-06 10:28+0000\n"
+"PO-Revision-Date: 2025-06-26 16:44+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -2890,3 +2890,7 @@ msgstr "Bidali kopia bat nire buruari"
 
 msgid "upload.type"
 msgstr "Edukia"
+
+#, fuzzy
+msgid "prefs.expandline"
+msgstr "Hedatu lerro luzeetara:"

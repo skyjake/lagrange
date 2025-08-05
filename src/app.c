@@ -85,7 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "android.h"
 #   include <SDL_log.h>
 #endif
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "win32.h"
 #endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
@@ -107,7 +107,7 @@ static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyja
 static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #endif
 
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
 #define EMB_BIN "../resources.lgr"
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 
@@ -443,7 +443,7 @@ static const char *dataDir_App_(void) {
         return concatPath_CStr(configHome, "lagrange");
     }
 #endif
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
     /* Check for a portable userdata directory. */
     const char *userDir = concatPath_CStr(cstr_String(d->execPath), "..\\userdata");
     if (fileExistsCStr_FileInfo(userDir)) {
@@ -732,7 +732,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
     /* The default window rectangle. */
     iRect rect = init_Rect(-1, -1, 900, 560);
 #if !defined (iPlatformTerminal)
-#   if defined (iPlatformMsys)
+#   if defined (iPlatformMsys) || defined (iPlatformWindows)
     /* Must scale by UI scaling factor. */
     mulfv_I2(&rect.size, desktopDPI_Win32());
 #   endif
@@ -1650,7 +1650,7 @@ const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
 
 const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) {
     iApp *d = &app_;
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
     iString *      tmpPath = collectNew_String();
     const iRangecc tmpDir  = range_String(collect_String(tempDirectory_Win32()));
 #elif defined (iPlatformAppleMobile)
@@ -1679,12 +1679,18 @@ const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) 
 }
 
 const iString *debugInfo_App(void) {
+#if !defined (iPlatformWindows)
     extern char **environ; /* The environment variables. */
+#endif
     iApp *d = &app_;
     iString *msg = collectNew_String();
     iObjectList *docs = iClob(listDocuments_App(NULL));
     format_String(msg, "# Debug information\n");
-    appendFormat_String(msg, "## Memory usage\n"); {
+    if (isDesktop_Platform()) {
+        appendFormat_String(msg, "Executable path: %s\n", cstr_String(execPath_App()));
+        appendFormat_String(msg, "User directory: %s\n", cstr_String(dataDir_App()));
+    }
+    appendFormat_String(msg, "\n## Memory usage\n"); {
         iMemInfo total = { 0, 0 };
         iForEach(ObjectList, i, docs) {
             iDocumentWidget *doc = i.object;
@@ -1695,7 +1701,7 @@ const iString *debugInfo_App(void) {
         appendFormat_String(msg, "Total cache: %.3f MB\n", total.cacheSize / 1.0e6f);
         appendFormat_String(msg, "Total memory: %.3f MB\n", total.memorySize / 1.0e6f);
     }
-    appendFormat_String(msg, "## Documents\n");
+    appendFormat_String(msg, "\n## Documents\n");
     iForEach(ObjectList, k, docs) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %d.%zu: %s\n",
@@ -2115,7 +2121,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     continue;
                 }
 #endif /* iPlatformAndroidMobile */
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
                 /* Scroll events may be per-pixel or mouse wheel steps. */
                 if (ev.type == SDL_MOUSEWHEEL) {
                     ev.wheel.x = -ev.wheel.x;
@@ -2212,13 +2218,23 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             break;
                         }
                         window->lastHover = window->hover;
+                        /* When clicking a mouse button, we need to be able to close previously 
+                           existing popup windows. However, after the event has been processed,
+                           a new popup menu may have just opened, so we first take a copy
+                           of the existing list of popups. */
+                        const iPtrArray *lastPopupWindows = ev.type == SDL_MOUSEBUTTONDOWN ?
+                            collect_PtrArray(copy_PtrArray(&d->popupWindows)) : NULL;
                         wasUsed = processEvent_Window(window, &ev);
                         if (wasUsed) {
-                            if (!isEmpty_Array(&d->popupWindows) && window->type != popup_WindowType) {
+                            if (ev.type == SDL_MOUSEBUTTONDOWN && window->type != popup_WindowType &&
+                                !isEmpty_Array(lastPopupWindows)) {
                                 /* Clicking outside the open popups is supposed to close all of them. */
-                                if (ev.type == SDL_MOUSEBUTTONDOWN) {
-                                    postCommand_App("menu.cancel");
-                                    break;
+                                iConstForEach(PtrArray, i, lastPopupWindows) {
+                                    iWindow *pop = i.ptr;
+                                    iRoot *popRoot = pop->roots[0];
+                                    if (popRoot && !isRecentlyDeleted_Widget(popRoot->widget)) {
+                                        postCommandf_Root(popRoot, "menu.cancel");
+                                    }                                    
                                 }
                             }
                             break;
@@ -2300,7 +2316,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #   if defined (iPlatformAndroidMobile)
                     handleCommand_Android(command_UserEvent(&ev));
 #   endif
-#   if defined (iPlatformMsys)
+#   if defined (iPlatformMsys) || defined (iPlatformWindows)
                     handleCommand_Win32(command_UserEvent(&ev));
 #   endif
 #   if defined (LAGRANGE_ENABLE_X11_XLIB)
@@ -2405,7 +2421,7 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     iApp *d = user;
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
         /* TODO: Investigate if this is still necessary. */
         setCurrent_Window(d->window);
         resetFontCache_Text(text_Window(d->window)); {
@@ -5355,7 +5371,7 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
         "/usr/bin/env",
         "xdg-open",
         cstr_String(url),
-#elif defined (iPlatformMsys)
+#elif defined (iPlatformMsys) || defined (iPlatformWindows)
         concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
         cstr_String(url),
         /* TODO: The prompt window is shown momentarily... */

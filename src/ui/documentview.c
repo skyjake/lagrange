@@ -411,8 +411,16 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
         }
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
+            const iGmRun *precedingRun = precedingRun_GmDocument(d->doc, run);
+            iRect linkBounds = run->bounds;
+            /* Include the link icon in the interactable region. */
+            if (precedingRun && precedingRun->flags & decoration_GmRunFlag &&
+                precedingRun->flags & startOfLine_GmRunFlag &&
+                precedingRun->linkId == run->linkId) {
+                linkBounds = union_Rect(linkBounds, precedingRun->visBounds);
+            }
             /* Click targets are slightly expanded so there are no gaps between links. */
-            if (contains_Rect(expanded_Rect(run->bounds, init1_I2(gap_Text / 2)), hoverPos)) {
+            if (contains_Rect(expanded_Rect(linkBounds, init1_I2(gap_Text / 2)), hoverPos)) {
                 d->hoverLink = run;
                 break;
             }

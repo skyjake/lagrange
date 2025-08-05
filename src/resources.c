@@ -59,6 +59,7 @@ iBlock blobJa_Resources;
 iBlock blobNl_Resources;
 iBlock blobPl_Resources;
 iBlock blobRu_Resources;
+iBlock blobSgs_Resources;
 iBlock blobSk_Resources;
 iBlock blobSr_Resources;
 iBlock blobTok_Resources;
@@ -112,6 +113,7 @@ static struct {
     { &blobNl_Resources, "lang/nl.bin" },
     { &blobPl_Resources, "lang/pl.bin" },
     { &blobRu_Resources, "lang/ru.bin" },
+    { &blobSgs_Resources, "lang/sgs.bin" },
     { &blobSk_Resources, "lang/sk.bin" },
     { &blobSr_Resources, "lang/sr.bin" },
     { &blobTok_Resources, "lang/tok.bin" },

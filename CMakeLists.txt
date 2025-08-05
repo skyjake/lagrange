@@ -18,15 +18,15 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.18.5
+    VERSION 1.18.6
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2025)
 if (IOS)
     set (PROJECT_VERSION 1.18)
-    set (IOS_BUNDLE_VERSION 9)
-    set (IOS_BUILD_DATE "2025-03-09")
+    set (IOS_BUNDLE_VERSION 10)
+    set (IOS_BUILD_DATE "2025-06-04")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.18)
@@ -111,6 +111,7 @@ set (RESOURCES
     res/lang/nl.bin
     res/lang/pl.bin
     res/lang/ru.bin
+    res/lang/sgs.bin
     res/lang/sk.bin
     res/lang/sr.bin
     res/lang/tok.bin
@@ -149,7 +150,7 @@ else ()
         res/arg-help.txt
     )
 endif ()
-if ((UNIX AND NOT APPLE) OR MSYS)
+if ((UNIX AND NOT APPLE) OR MSYS OR MINGW)
     list (APPEND RESOURCES res/lagrange-64.png)
 endif ()
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
@@ -362,14 +363,14 @@ elseif (APPLE)
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif ()
-if (MSYS)
+if (MSYS OR MINGW)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
     set (WINRC_PRODUCT_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},0,0)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
     list (APPEND TUI_SOURCES src/win32.c src/win32.h)
 endif ()
-if (MSYS OR (UNIX AND NOT MOBILE AND NOT APPLE))
+if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
@@ -449,7 +450,7 @@ if (ENABLE_GUI)
     if (APPLE AND NOT MOBILE)
         target_compile_definitions (app PUBLIC -DiPlatformAppleDesktop=1)
     endif ()
-    if (ENABLE_CUSTOM_FRAME AND MSYS)
+    if (ENABLE_CUSTOM_FRAME AND (MSYS OR MINGW))
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
     endif ()
     if (ENABLE_KERNING)
@@ -570,7 +571,7 @@ if (ENABLE_GUI)
             LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
         )
     endif ()
-    if (MSYS)
+    if (MSYS OR MINGW)
         target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
         if (ENABLE_WINSPARKLE)
             target_link_libraries (app PUBLIC winsparkle)
@@ -608,6 +609,16 @@ if (MSYS)
     endif ()
     if (TARGET PkgConfig::MPG123)
         install (PROGRAMS ${MPG123_LIBDIR}/../bin/msys-mpg123-0.dll DESTINATION .)
+    endif ()
+    install (FILES ${EMB_BIN} DESTINATION .)
+    install (PROGRAMS res/urlopen.bat DESTINATION .)
+    if (INSTALL_THE_FOUNDATION)
+        install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
+    endif ()
+elseif (MINGW)
+    if (TARGET app)
+        install (TARGETS app DESTINATION .)
+        install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
     endif ()
     install (FILES ${EMB_BIN} DESTINATION .)
     install (PROGRAMS res/urlopen.bat DESTINATION .)

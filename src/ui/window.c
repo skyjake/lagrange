@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "touch.h"
 #include "util.h"
 
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "../win32.h"
 #endif
 #if defined (iPlatformAppleDesktop)
@@ -408,6 +408,15 @@ static float pixelRatio_Window_(const iWindow *d) {
 float displayDensity_Android(void);
 #endif
 
+#if defined (iPlatformWindows)
+static void setenv(const char *name, const char *value, int overwrite) {
+    iUnused(overwrite);    
+    SetEnvironmentVariableW(
+        data_Block(collect_Block(toUtf16_String(collectNewCStr_String(name)))), 
+        data_Block(collect_Block(toUtf16_String(collectNewCStr_String(value)))));
+}
+#endif
+
 static float displayScale_Window_(const iWindow *d) {
 #if !defined (iPlatformTerminal)
     /* The environment variable LAGRANGE_OVERRIDE_DPI can be used to override the automatic
@@ -433,7 +442,7 @@ static float displayScale_Window_(const iWindow *d) {
     /* Apple UI sizes are fixed and only scaled by pixel ratio. */
     /* TODO: iOS text size setting? */
     return 1.0f;
-#elif defined (iPlatformMsys)
+#elif defined (iPlatformMsys) || defined (iPlatformWindows)
     iUnused(d);
     return desktopDPI_Win32();
 #elif defined (iPlatformAndroidMobile)
@@ -641,7 +650,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
 #   endif
     }
-#   if defined (iPlatformMsys)
+#   if defined (iPlatformMsys) || defined (iPlatformWindows)
     if (type == extra_WindowType) {
         enableDarkMode_SDLWindow(d->win);
     }
@@ -692,7 +701,7 @@ void deinit_Window(iWindow *d) {
 
 static void setWindowIcon_Window_(iWindow *d) {
 #if !defined (iPlatformTerminal)
-#   if defined (iPlatformMsys)
+#   if defined (iPlatformMsys) || defined (iPlatformWindows)
     useExecutableIconResource_SDLWindow(d->win);
 #   endif
 #   if defined (iPlatformLinux)
@@ -735,7 +744,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
     init_Window(&d->base, main_WindowType, rect, flags);
     d->isDrawFrozen           = iTrue;
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
     /* It is less glitchy to allow drawing as early as possible, to avoid white
        flashes when windows are created. */
     d->isDrawFrozen           = iFalse;
@@ -772,7 +781,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #endif
     }
 #if !defined (iPlatformTerminal)
-#   if defined (iPlatformMsys)
+#   if defined (iPlatformMsys) || defined (iPlatformWindows)
     SDL_SetWindowMinimumSize(
         d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
     enableDarkMode_SDLWindow(d->base.win);
@@ -1692,23 +1701,18 @@ void draw_MainWindow(iMainWindow *d) {
        when the custom frame is being used. */ {
         setCurrent_Root(w->roots[0]);
         iColor back;
-        if (isMobile_Platform()) {
-            back = get_Color(uiBackground_ColorId);
-            if (deviceType_App() == phone_AppDeviceType) {
-                /* Page background extends to safe area, so fill it completely. */
-                back = get_Color(tmBackground_ColorId);
-            }
-        }
-        else {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-            back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
-                                     ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
-                                 ? uiAnnotation_ColorId
-                                 : uiSeparator_ColorId);
+        back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
+                                    ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                ? uiAnnotation_ColorId
+                                : uiSeparator_ColorId);
 #else
-            back = get_Color(uiBackground_ColorId);
+        back = get_Color(uiBackground_ColorId);
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Page background extends to safe area, so fill it completely. */
+            back = get_Color(tmBackground_ColorId);
+        }        
 #endif
-        }
         unsetClip_Paint(&p); /* update clip to full window */
         SDL_SetRenderDrawColor(w->render, back.r, back.g, back.b, 255);
         SDL_RenderClear(w->render);
@@ -2234,7 +2238,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     setForceSoftwareRender_App(iTrue);
 #endif
     SDL_Rect usableRect;
-    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(get_MainWindow()->base.win),
+    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(get_Window()->win),
                                &usableRect);
     const float pixelRatio = get_Window()->pixelRatio;
     iRect winRect = (iRect){ screenPos,

@@ -352,7 +352,7 @@ void urlDecodePath_String(iString *d) {
     iString *decoded = new_String();
     appendRange_String(decoded, (iRangecc){ constBegin_String(d), url.path.start });
     iString *path    = newRange_String(url.path);
-    iString *decPath = urlDecodeExclude_String(path, ":%?/#"); /* don't decode reserved path chars */
+    iString *decPath = urlDecodeExclude_String(path, ":;%?/#"); /* don't decode reserved path chars */
     append_String(decoded, decPath);
     delete_String(decPath);
     delete_String(path);
@@ -606,7 +606,7 @@ iString *makeFileUrl_String(const iString *localFilePath) {
     iString *url = makeAbsolute_Path(collect_String(cleaned_Path(localFilePath)));
     replace_Block(&url->chars, '\\', '/'); /* in case it's a Windows path */
     set_String(url, collect_String(urlEncodeExclude_String(url, "/:")));
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
     prependChar_String(url, '/'); /* three slashes */
 #endif
     prependCStr_String(url, "file://");
@@ -624,7 +624,7 @@ iString *localFilePathFromUrl_String(const iString *d) {
         return NULL;
     }
     iString *path = urlDecode_String(collect_String(newRange_String(url.path)));
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
     /* Remove the extra slash from the beginning. */
     if (startsWith_String(path, "/")) {
         remove_Block(&path->chars, 0, 1);

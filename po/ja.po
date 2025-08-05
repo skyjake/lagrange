@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
-"PO-Revision-Date: 2023-01-21 09:45+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2025-07-04 07:49+0000\n"
+"Last-Translator: BALLOON | FU-SEN <balloonakafusen+weblate@gmail.com>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -49,7 +49,7 @@ msgstr "フィード一覧を表示"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "アスキーアート: 大きいフォントを用いた「Lagrange」の単語"
+msgstr "アスキーアート: 大きいフォントを用いた \"Lagrange\" の言葉"
 
 msgid "cancel"
 msgstr "キャンセル"
@@ -72,17 +72,17 @@ msgstr "縮小"
 #, c-format
 msgid "minutes.ago"
 msgid_plural "minutes.ago.n"
-msgstr[0] "%d分前"
+msgstr[0] "%d 分前"
 
 #, c-format
 msgid "hours.ago"
 msgid_plural "hours.ago.n"
-msgstr[0] "%d時間前"
+msgstr[0] "%d 時間前"
 
 #, c-format
 msgid "days.ago"
 msgid_plural "days.ago.n"
-msgstr[0] "%d日前"
+msgstr[0] "%d 日前"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.history"
@@ -92,7 +92,7 @@ msgid "menu.reload"
 msgstr "ページを更新"
 
 msgid "menu.autoreload"
-msgstr "自動更新を設定"
+msgstr "自動更新を設定…"
 
 msgid "about.tagline"
 msgstr "美しいGeminiクライアント"
@@ -106,7 +106,7 @@ msgstr "タブを閉じるとダウンロードは中止されます。"
 
 # Inline download status message.
 msgid "media.download.complete"
-msgstr "ダウンロード完了"
+msgstr "ダウンロード完了。"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.title"
@@ -127,7 +127,7 @@ msgstr "日付"
 # used as adjective, n is 8, 16, 24, 32, or 64
 #, c-format
 msgid "n.bit"
-msgstr "%dビット"
+msgstr "%d ビット"
 
 msgid "numbertype.integer"
 msgstr "整数"
@@ -155,17 +155,17 @@ msgid "macos.menu.find"
 msgstr "検索"
 
 msgid "menu.preferences"
-msgstr "設定"
+msgstr "設定…"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.bookmarks"
 msgstr "ブックマークを表示"
 
 msgid "menu.page.bookmark"
-msgstr "ページをブックマーク"
+msgstr "ページをブックマーク…"
 
 msgid "menu.page.subscribe"
-msgstr "ページを購読"
+msgstr "ページを購読…"
 
 msgid "panel.back"
 msgstr "戻る"
@@ -174,7 +174,7 @@ msgstr "戻る"
 msgid "page.timestamp"
 msgstr ""
 "%Y/%m/%d\n"
-"%I:%M %pに取得"
+"%I:%M %p に取得"
 
 msgid "menu.sidebar"
 msgstr "サイドバーを切り替え"
@@ -183,10 +183,10 @@ msgid "menu.zoom.in"
 msgstr "拡大"
 
 msgid "menu.zoom.reset"
-msgstr "ズームをリセット"
+msgstr "拡大・縮小のリセット"
 
 msgid "macos.menu.bookmarks.list"
-msgstr "全てのリスト"
+msgstr "すべてのリスト"
 
 msgid "menu.bookmarks.bytag"
 msgstr "タグ別のブックマーク"
@@ -201,7 +201,7 @@ msgid "menu.releasenotes"
 msgstr "リリースノート"
 
 msgid "menu.quit"
-msgstr "Lagrangeを終了"
+msgstr "Lagrange を終了"
 
 msgid "menu.cut"
 msgstr "切り取り"
@@ -214,7 +214,7 @@ msgid "menu.show.feeds"
 msgstr "フィードを表示"
 
 msgid "menu.import.links"
-msgstr "全てのリンクをインポート"
+msgstr "すべてのリンクをインポート…"
 
 msgid "menu.newtab"
 msgstr "新しいタブ"
@@ -244,7 +244,7 @@ msgid "menu.paste"
 msgstr "貼り付け"
 
 msgid "menu.bookmarks.list"
-msgstr "全てのブックマーク"
+msgstr "すべてのブックマーク"
 
 msgid "menu.back"
 msgstr "戻る"
@@ -258,7 +258,7 @@ msgstr "ページのリンクをコピー"
 
 #, c-format
 msgid "doc.archive"
-msgstr "%sは圧縮されたアーカイブです。"
+msgstr "%s は圧縮されたアーカイブです。"
 
 msgid "doc.archive.view"
 msgstr "アーカイブの内容を表示"
@@ -284,16 +284,16 @@ msgstr "英語"
 
 # A language choice in the Translation dialog.
 msgid "lang.fr"
-msgstr "仏語"
+msgstr "フランス語"
 
 msgid "dlg.translate"
 msgstr "翻訳する"
 
 msgid "dlg.translate.from"
-msgstr "翻訳元："
+msgstr "翻訳元:"
 
 msgid "dlg.translate.to"
-msgstr "翻訳対象："
+msgstr "翻訳対象:"
 
 # A language choice in the Translation dialog.
 msgid "lang.ar"
@@ -308,7 +308,7 @@ msgid "doc.fetching"
 msgstr "読み込み中"
 
 msgid "error.gone.msg"
-msgstr "要求されたリソースはもう利用できません"
+msgstr "要求されたリソースはもう利用できません。"
 
 # A language choice in the Translation dialog.
 msgid "lang.pt"
@@ -326,17 +326,17 @@ msgstr "音声"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "プレーンテキストのアップロード"
+msgstr "アップロードするテキストを入力"
 
 # A language choice in the Translation dialog.
 msgid "lang.es"
 msgstr "スペイン語"
 
 msgid "error.cert.needed.msg"
-msgstr "このリソースにアクセスするには、本人確認（TLSクライアント証明書による）が必要です。"
+msgstr "このリソースにアクセスするには SSL クライアント証明書による本人確認が必要です。"
 
 msgid "error.glyphs.msg"
-msgstr "一部の文字が欠落しているため、このページを正しく表示することができませんでした。修正するには、追加のフォントをインストールすることができます。"
+msgstr "一部の文字が欠落しているため、このページを正しく表示することができませんでした。追加のフォントをインストールしてこれを修正できます。"
 
 # A language choice in the Translation dialog.
 msgid "lang.ja"
@@ -352,3 +352,2446 @@ msgstr "ダウンロードに保存"
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
 msgstr "ファイルに保存"
+
+msgid "dlg.newident.country"
+msgstr "国:"
+
+msgid "keys.parent"
+msgstr "親ディレクトリへ"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "合計 %u エントリ"
+
+msgid "keys.reload"
+msgstr "ページの更新"
+
+msgid "keys.zoom.in"
+msgstr "拡大"
+
+msgid "prefs.markdown.viewsource"
+msgstr "ソースを Markdown で表示:"
+
+msgid "keys.tab.prev"
+msgstr "前のタブ"
+
+msgid "error.notfound"
+msgstr "見つかりません"
+
+msgid "fontpack.meta.installed"
+msgstr "インストール済"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "未インストール"
+
+msgid "dlg.default"
+msgstr " OK "
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+msgstr "Powered by SDL 2, OpenSSL, and ☕️"
+
+msgid "dlg.fontpack.delete"
+msgstr "フォントパックを削除"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+msgstr "メニューバー"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "色"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "フォーカス"
+
+msgid "menu.openlocation"
+msgstr "場所を開く…"
+
+msgid "prefs.pinsplit.left"
+msgstr "左のタブ"
+
+msgid "menu.tab.next"
+msgstr "次のタブを表示"
+
+msgid "menu.tab.prev"
+msgstr "前のタブを表示"
+
+msgid "menu.movetab.newwindow"
+msgstr "タブを新しいウインドウへ移動"
+
+msgid "menu.movetab.split"
+msgstr "タブをもう片方へ移動"
+
+msgid "menu.split.horizontal"
+msgstr "横に並べて表示"
+
+msgid "error.cgi"
+msgstr "CGI エラー"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "キーボードの速度:"
+
+msgid "error.unsupported.protocol"
+msgstr "サポートしていないプロトコルです"
+
+msgid "heading.autoreload"
+msgstr "自動更新"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d 時間"
+
+msgid "menu.home"
+msgstr "ホームへ移動"
+
+msgid "sidebar.bookmarks"
+msgstr "ブックマーク"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "ファイルマネージャーを開く"
+
+msgid "dlg.openlink"
+msgstr "リンクを開く"
+
+msgid "hint.findtext"
+msgstr "ページのテキストを検索"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "その他"
+
+msgid "heading.upload.dest"
+msgstr "アドレス"
+
+msgid "hint.upload.text"
+msgstr "アップロードするテキストを入力"
+
+msgid "heading.translate"
+msgstr "ページを翻訳"
+
+msgid "hint.newident.optional"
+msgstr "オプション"
+
+msgid "heading.feedcfg"
+msgstr "フィードの設定"
+
+msgid "dlg.feed.title"
+msgstr "タイトル:"
+
+msgid "bookmark.title.blank"
+msgstr "空白ページ"
+
+msgid "dlg.bookmark.save"
+msgstr "ブックマークの保存"
+
+msgid "heading.prefs"
+msgstr "設定"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "設定"
+
+msgid "menu.page.upload.edit"
+msgstr "Titan でページを編集…"
+
+msgid "spartan.input"
+msgstr "送信テキストを入力:"
+
+msgid "heading.prefs.content"
+msgstr "内容:"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "キー"
+
+msgid "upload.port"
+msgstr "ポート…"
+
+msgid "prefs.editor.highlight"
+msgstr "Syntax highlight:"
+
+msgid "keys.back"
+msgstr "戻る"
+
+msgid "keys.bookmark.addfolder"
+msgstr "ブックマークフォルダの追加"
+
+msgid "keys.tab.close.other"
+msgstr "他のタブを閉じる"
+
+msgid "menu.split.merge"
+msgstr "分割表示の解除"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "インストール済フォントを表示"
+
+msgid "menu.snip.prefs"
+msgstr "設定…"
+
+msgid "prefs.ca.file"
+msgstr "CA ファイル:"
+
+msgid "feeds.edit"
+msgstr "フィードの編集…"
+
+msgid "feeds.refresh"
+msgstr "フィードの更新"
+
+msgid "link.browser"
+msgstr "デフォルトブラウザでリンクを開く"
+
+msgid "prefs.theme.dark"
+msgstr "ダーク"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ブックマーク"
+
+msgid "heading.addfolder"
+msgstr "フォルダの追加"
+
+msgid "prefs.toolbaraction1"
+msgstr "ボタン 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "ボタン 2"
+
+msgid "prefs.blink"
+msgstr "カーソルの点滅:"
+
+msgid "prefs.boldlink"
+msgstr "リンクを強調:"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "半ページ上へスクロール"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "%u フィードに %%s を含めて購読します。\n"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "最新の更新はほんの少し前に発生しました。"
+
+msgid "fontpack.meta.disabled"
+msgstr ", 無効"
+
+msgid "heading.archive.userdata"
+msgstr "ユーザーデータアーカイブ"
+
+msgid "menu.export"
+msgstr "エクスポート"
+
+msgid "menu.import"
+msgstr "インポート…"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "ヘブライ語"
+
+msgid "doc.pre.nocaption"
+msgstr "キャプションのない書式設定済みのテキスト"
+
+msgid "sidebar.action.ident.import"
+msgstr "インポート…"
+
+msgid "heading.glyphfinder.results"
+msgstr "検索結果"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u フォント"
+
+msgid "keys.findtext"
+msgstr "ページのテキスト検索"
+
+msgid "history.clear"
+msgstr "履歴のクリア…"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "ブックマークの削除"
+
+msgid "bookmark.tag.home"
+msgstr "ホームページに使用"
+
+msgid "dlg.upload.id.none"
+msgstr "なし"
+
+msgid "menu.upload.export"
+msgstr "テキストのエクスポート"
+
+msgid "keys.scroll.page.down"
+msgstr "1ページ下へスクロール"
+
+msgid "dlg.newident.domain"
+msgstr "ドメイン:"
+
+msgid "dlg.save.size"
+msgstr "サイズ:"
+
+msgid "dlg.bookmark.tags"
+msgstr "タグ:"
+
+msgid "dlg.spartan.upload"
+msgstr "エディタを開く…"
+
+msgid "heading.upload"
+msgstr "Titan でアップロード"
+
+msgid "heading.upload.spartan"
+msgstr "Spartan でアップロード"
+
+msgid "heading.prefs.pagecontent"
+msgstr "ページの色"
+
+msgid "prefs.searchurl"
+msgstr "検索 URL:"
+
+msgid "dlg.file.delete.confirm"
+msgstr "このファイルを削除してよろしいですか？"
+
+msgid "heading.openlink"
+msgstr "リンクを開く"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "マウスの速度:"
+
+msgid "prefs.uilayout"
+msgstr "レイアウト:"
+
+msgid "import.userdata.history"
+msgstr "履歴:"
+
+msgid "prefs.theme.white"
+msgstr "白"
+
+msgid "prefs.accent"
+msgstr "アクセントカラー:"
+
+msgid "import.userdata"
+msgstr "選択したデータのインポート"
+
+msgid "bookmark.export.title.time"
+msgstr "ブックマークを作成しました"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "等幅フォント:"
+
+msgid "menu.page.upload"
+msgstr "Titan でアップロード…"
+
+msgid "prefs.font.smooth"
+msgstr "フォントスムージンズ:"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "親フォルダ:"
+
+msgid "keys.top"
+msgstr "一番上へ移動"
+
+msgid "keys.scroll.page.up"
+msgstr "1ページ上へスクロール"
+
+msgid "keys.forward"
+msgstr "進む"
+
+msgid "dlg.addfolder"
+msgstr "フォルダを追加"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "フィード一覧"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "最新の更新は %s 発生しました。"
+
+msgid "prefs.theme.black"
+msgstr "黒"
+
+msgid "menu.dup"
+msgstr "複製…"
+
+msgid "menu.copyurl"
+msgstr "URL をコピー"
+
+msgid "prefs.accent.blue"
+msgstr "青"
+
+msgid "prefs.doctheme.dark"
+msgstr "ダークテーマ:"
+
+msgid "prefs.doctheme.light"
+msgstr "ライトテーマ:"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "グレー"
+
+msgid "prefs.imagestyle.original"
+msgstr "なし"
+
+msgid "gempub.meta.version"
+msgstr "バージョン"
+
+msgid "prefs.cachesize"
+msgstr "キャッシュサイズ:"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "ファイルを表示"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "バージョン %d"
+
+msgid "heading.fontpack.delete"
+msgstr "フォントパックの削除"
+
+msgid "prefs.tabwidth"
+msgstr "タブ幅:"
+
+msgid "snip.name"
+msgstr "名前:"
+
+msgid "error.cert.needed"
+msgstr "証明書が必要です"
+
+msgid "ident.export"
+msgstr "エクスポート"
+
+msgid "link.hint.image"
+msgstr "画像"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "\"%s\" をインストール"
+
+msgid "dlg.bookmark.icon"
+msgstr "アイコン:"
+
+msgid "keys.zoom.reset"
+msgstr "拡大・縮小のリセット"
+
+msgid "dlg.feed.save"
+msgstr "設定の保存"
+
+msgid "menu.split.vertical"
+msgstr "縦に並べて表示"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "新しいフォルダ"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "menu.openwindow"
+msgstr "新しいウインドウで開く"
+
+msgid "bookmarks.reload"
+msgstr "リモートソースの更新"
+
+msgid "sitespec.accept"
+msgstr "設定を保存"
+
+msgid "keys.pageinfo"
+msgstr "ページ情報を表示"
+
+msgid "menu.upload.delete"
+msgstr "すべて削除"
+
+msgid "dlg.uploadport.set"
+msgstr "ポートの設定"
+
+msgid "menu.movetab.left"
+msgstr "タブを左へ移動"
+
+msgid "menu.movetab.right"
+msgstr "タブを右へ移動"
+
+msgid "menu.unexpire"
+msgstr "有効期限を無視して読み込みを続行"
+
+msgid "menu.pageinfo"
+msgstr "ページ情報を表示"
+
+msgid "menu.save.downloads.open"
+msgstr "ダウンロードに保存しファイルを開く"
+
+msgid "dlg.bookmark.folder"
+msgstr "フォルダ:"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "削除"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "元に戻す"
+
+msgid "heading.prefs.fonts"
+msgstr "フォント"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "UI"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "ユーザーインタフェイス"
+
+msgid "sidebar.feeds"
+msgstr "フィード"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "編集"
+
+msgid "sidebar.action.history.clear"
+msgstr "クリア"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%m-%d"
+
+msgid "sidebar.entry.bookmark"
+msgstr "ブックマークに追加…"
+
+msgid "feeds.entry.bookmark"
+msgstr "ブックマークに追加…"
+
+msgid "prefs.bottomtabbar"
+msgstr "タブを下に"
+
+msgid "menu.folder.opentab"
+msgstr "新しいタブで開く"
+
+msgid "menu.openfile"
+msgstr "ファイルを開く…"
+
+msgid "menu.edit"
+msgstr "編集…"
+
+msgid "prefs.accent.teal"
+msgstr "青緑"
+
+msgid "heading.history.clear"
+msgstr "履歴のクリア"
+
+msgid "dlg.history.clear"
+msgstr "履歴をクリア"
+
+msgid "menu.binding.reset"
+msgstr "デフォルトへリセット"
+
+msgid "menu.binding.clear"
+msgstr "削除"
+
+msgid "pageinfo.settings"
+msgstr "設定"
+
+msgid "keys.contextmenu"
+msgstr "コンテキストメニューを開く"
+
+msgid "dlg.input.send"
+msgstr "送信"
+
+msgid "heading.save"
+msgstr "ファイルを保存しました"
+
+msgid "error.ansi"
+msgstr "ターミナルエミュレート"
+
+msgid "heading.import.bookmarks"
+msgstr "ブックマークのインポート"
+
+msgid "link.bookmark"
+msgstr "ブックマークリンク…"
+
+msgid "heading.file.delete"
+msgstr "ファイルの削除"
+
+msgid "heading.import.userdata"
+msgstr "ユーザーデータのインポート"
+
+msgid "import.userdata.sitespec"
+msgstr "サイト設定:"
+
+msgid "dlg.userdata.no"
+msgstr "なし"
+
+msgid "bookmark.export.title.folder"
+msgstr "ブックマーク"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "履歴"
+
+msgid "heading.upload.text"
+msgstr "テキスト"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "hint.upload.path"
+msgstr "URLパス"
+
+msgid "dlg.upload.send"
+msgstr "アップロード"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "インドネシア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "ポーランド語"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "スロバキア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "ウクライナ語"
+
+msgid "dlg.newident.scope.dir"
+msgstr "現在のディレクトリ"
+
+msgid "dlg.newident.scope.page"
+msgstr "現在のページ"
+
+msgid "dlg.newident.org"
+msgstr "組織:"
+
+msgid "heading.bookmark.edit"
+msgstr "ブックマークの編集"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.notes"
+msgstr "ノート:"
+
+msgid "heading.prefs.support"
+msgstr "サポート"
+
+msgid "heading.prefs.layout"
+msgstr "ページレイアウト"
+
+msgid "heading.prefs.scrolling"
+msgstr "スクロール"
+
+msgid "prefs.smoothscroll"
+msgstr "スムーズスクロール:"
+
+msgid "prefs.theme"
+msgstr "UI のテーマ:"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "システム"
+
+msgid "prefs.accent.red"
+msgstr "赤"
+
+msgid "prefs.accent.green"
+msgstr "緑"
+
+msgid "prefs.accent.gray"
+msgstr "グレー"
+
+msgid "prefs.feedinterval.manual"
+msgstr "手動"
+
+msgid "prefs.uilang"
+msgstr "言語:"
+
+msgid "bookmark.export.title.tag"
+msgstr "ブックマークタグ"
+
+msgid "prefs.animate"
+msgstr "アニメーション:"
+
+msgid "prefs.doctheme.name.white"
+msgstr "白"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "ハイコントラスト"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "グレースケール"
+
+msgid "prefs.imagestyle.text"
+msgstr "文字色"
+
+msgid "prefs.font.ui"
+msgstr "UI のフォント:"
+
+msgid "prefs.font.heading"
+msgstr "見出し:"
+
+msgid "prefs.font.body"
+msgstr "本文:"
+
+msgid "prefs.mono"
+msgstr "等幅フォントの本文:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Gemtext ANSI Esc コード:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "背景色"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "フォントスタイル:"
+
+msgid "prefs.quoteicon.line"
+msgstr "線"
+
+msgid "prefs.urlsize"
+msgstr "最大 URL サイズ:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gppher プロキシ:"
+
+msgid "dir.empty"
+msgstr "このディレクトリは空です。"
+
+msgid "keys.fullscreen"
+msgstr "全画面表示の切り替え"
+
+msgid "keys.tab.close"
+msgstr "タブを閉じる"
+
+msgid "keys.tab.next"
+msgstr "次のタブ"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+msgstr "サイドバー"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "設定"
+
+msgid "heading.prefs.sizing"
+msgstr "サイズ"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "すべて選択"
+
+msgid "prefs.menubar"
+msgstr "メニューバー"
+
+msgid "heading.fontpack.meta"
+msgstr "フォント"
+
+msgid "prefs.font"
+msgstr "本文のフォント:"
+
+msgid "menu.website"
+msgstr "プロジェクトの Web サイト…"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "ファイル選択なし"
+
+msgid "menu.tools"
+msgstr "ツール"
+
+msgid "menu.page.translate"
+msgstr "翻訳…"
+
+msgid "menu.page.copyurl"
+msgstr "ページ URL をコピー"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u bytes"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%Y-%m-%d"
+
+msgid "feeds.today"
+msgstr "今日"
+
+msgid "gempub.meta.pubdate"
+msgstr "公開日"
+
+msgid "link.newtab"
+msgstr "新しいタブでリンクを開く"
+
+msgid "link.searchurl"
+msgstr "検索 URL を使用"
+
+msgid "link.file.delete"
+msgstr "ファイルの削除"
+
+msgid "dlg.certimport.import"
+msgstr "インポート"
+
+msgid "upload.file.name"
+msgstr "ファイル名:"
+
+msgid "prefs.decodeurls"
+msgstr "デコード URL:"
+
+msgid "keys.scroll.down"
+msgstr "下へスクロール"
+
+msgid "keys.root"
+msgstr "Capsule ルートへ"
+
+msgid "keys.bookmark.add"
+msgstr "ブックマークの追加"
+
+msgid "keys.zoom.out"
+msgstr "縮小"
+
+msgid "keys.upload"
+msgstr "Titan でアップロード"
+
+msgid "keys.upload.edit"
+msgstr "Titan でページを編集"
+
+msgid "menu.title.window"
+msgstr "ウインドウ"
+
+msgid "menu.window.min"
+msgstr "最小化"
+
+msgid "menu.window.max"
+msgstr "最大化"
+
+msgid "menu.feeds.refresh"
+msgstr "フィードの更新"
+
+msgid "menu.window.full"
+msgstr "全画面表示の切り替え"
+
+msgid "menu.reopentab"
+msgstr "最後に閉じたタブを開く"
+
+msgid "menu.update"
+msgstr "更新を確認…"
+
+msgid "menu.viewformat.plain"
+msgstr "プレーンテキストを表示"
+
+msgid "error.proxy"
+msgstr "プロキシエラー"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "フォントパック有効"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "フォントパック無効"
+
+msgid "fontpack.open.fontsdir"
+msgstr "ユーザーフォントディレクトリを開く"
+
+msgid "menu.snip.edit"
+msgstr "編集…"
+
+msgid "menu.snip.clipboard"
+msgstr "クリップボードへコピー"
+
+msgid "menu.snip.delete"
+msgstr "削除"
+
+msgid "snip.content"
+msgstr "内容:"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+msgstr "URL を入力:"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+msgstr "リンクを開く"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+msgstr "新しいタブ"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+msgstr "タブを閉じる"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "アゼルバイジャン語"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "カタロニア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "デンマーク語"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "オランダ語"
+
+msgid "menu.email"
+msgstr "メールでお問い合わせ"
+
+msgid "menu.viewformat.gemini"
+msgstr "Gemtext を表示"
+
+msgid "menu.identity.import"
+msgstr "インポート…"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "ギリシャ語"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "アイルランド語"
+
+msgid "hint.newident.date"
+msgstr "YYYY または YYYY-MM-DD"
+
+msgid "menu.newwindow"
+msgstr "新しいウインドウ"
+
+msgid "menu.open.external"
+msgstr "他のアプリで開く"
+
+msgid "menu.newfolder"
+msgstr "新しいフォルダ…"
+
+msgid "menu.paste.go"
+msgstr "貼り付けて移動"
+
+msgid "menu.foldall"
+msgstr "すべてのフォルダ"
+
+msgid "menu.unfoldall"
+msgstr "すべてのフォルダを解除"
+
+msgid "menu.userdata"
+msgstr "ユーザーデータ"
+
+msgid "menu.search"
+msgstr "検索"
+
+msgid "userdata.help"
+msgstr ""
+"ユーザーデータアーカイブには、エクスポートされた閲覧履歴、アイデンティティ、ブックマーク、テキストスニペット、サイト固有の設定、信頼できるサーバー証明書の"
+"指紋が含まれています。バックアップとして保存し、デバイス間でデータを転送するために使用できます。"
+
+msgid "menu.aboutpages"
+msgstr "ページについて"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Lagrange について"
+
+msgid "menu.fonts"
+msgstr "フォントの管理…"
+
+msgid "menu.page.copysource"
+msgstr "ページソースをコピー"
+
+msgid "menu.bookmarks.refresh"
+msgstr "リモートブックマークを更新"
+
+msgid "sidebar.close"
+msgstr "完了"
+
+msgid "sidebar.history"
+msgstr "履歴"
+
+msgid "status.query.tight"
+msgstr "検索"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u ファイル"
+
+msgid "feeds.entry.openfeed"
+msgstr "フィードページを開く"
+
+msgid "menu.opentab"
+msgstr "新しいタブを開く"
+
+msgid "bookmark.untag.home"
+msgstr "ホームページの削除"
+
+msgid "bookmark.delete"
+msgstr "ブックマークの削除"
+
+msgid "bookmark.folder.delete"
+msgstr "ブックマークフォルダの削除"
+
+msgid "heading.pageinfo"
+msgstr "ページ情報"
+
+msgid "menu.input.clear"
+msgstr "履歴のクリア"
+
+msgid "dlg.save.opendownload"
+msgstr "ダウンロードしたファイルを開く"
+
+msgid "heading.save.error"
+msgstr "ファイル保存エラー"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d 分"
+
+msgid "link.newwindow"
+msgstr "新しいウインドウでリンクを開く"
+
+msgid "link.copy"
+msgstr "リンクをコピー"
+
+msgid "menu.share"
+msgstr "シェア"
+
+msgid "dlg.file.delete"
+msgstr "削除"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"デフォルトブラウザでこのリンクを開きますか？\n"
+"%s%s"
+
+msgid "import.userdata.bookmarks"
+msgstr "ブックマーク:"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "ページコンテンツ"
+
+msgid "heading.upload.edit"
+msgstr "Titan で編集"
+
+msgid "upload.type"
+msgstr "内容"
+
+msgid "upload.file.size"
+msgstr "ファイルサイズ:"
+
+msgid "upload.mime"
+msgstr "MIME type:"
+
+msgid "upload.token"
+msgstr "トークン:"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "内容"
+
+msgid "dlg.upload.sendmsg"
+msgstr "メッセージを送信"
+
+msgid "dlg.upload.edit"
+msgstr "送信"
+
+msgid "heading.uploadport"
+msgstr "Titan アップロードポート"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "ファイルを選択…"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "チェコ語"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "ハンガリー語"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "韓国語"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "ペルシャ語"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "\"%s\" をバージョン %d へ更新"
+
+msgid "truetype.help.installed"
+msgstr "このフォントはユーザーフォントディレクトリにインストールされています。"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "スウェーデン語"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "トルコ語"
+
+msgid "dlg.glyphfinder.search"
+msgstr "フォントライブラリを検索"
+
+msgid "heading.upload.file"
+msgstr "ファイル"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "エスペラント語"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "フィンランド語"
+
+msgid "dlg.newident.scope.domain"
+msgstr "現在のドメイン"
+
+msgid "hint.upload.misfin"
+msgstr "メッセージを入力"
+
+msgid "upload.file.path"
+msgstr "ファイルパス:"
+
+msgid "dlg.newident.email"
+msgstr "メール:"
+
+msgid "dlg.newident.userid"
+msgstr "ユーザー ID:"
+
+msgid "heading.bookmark.add"
+msgstr "ブックマークを追加"
+
+msgid "heading.bookmark.editfolder"
+msgstr "フォルダの編集"
+
+msgid "fontpack.install.ttf"
+msgstr "TrueType フォントのインストール"
+
+msgid "dlg.bookmark.title"
+msgstr "タイトル:"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "新しいフォルダ"
+
+msgid "heading.prefs.user"
+msgstr "ユーザーデータ"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "ネットワーク"
+
+msgid "heading.prefs.uitheme"
+msgstr "UI の色"
+
+msgid "heading.prefs.proxies"
+msgstr "プロキシ"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "ページスタイル"
+
+msgid "prefs.downloads"
+msgstr "ダウンロードフォルダ:"
+
+msgid "collapse.never"
+msgstr "なし"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "ZIP アーカイブの index.gmi を開く:"
+
+msgid "prefs.pinsplit.none"
+msgstr "なし"
+
+msgid "prefs.pinsplit.right"
+msgstr "右のタブ"
+
+msgid "prefs.ostheme"
+msgstr "システムテーマを使用:"
+
+msgid "prefs.theme.light"
+msgstr "ライト"
+
+msgid "prefs.accent.orange"
+msgstr "オレンジ"
+
+msgid "prefs.doctheme.name.black"
+msgstr "黒"
+
+msgid "prefs.tui.simple"
+msgstr "ASCII キャラクターセットの強制:"
+
+msgid "prefs.font.mono"
+msgstr "フォーマット済み:"
+
+msgid "prefs.boldlink.visited"
+msgstr "訪問"
+
+msgid "prefs.linewidth"
+msgstr "行の幅:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" アイコン"
+
+msgid "prefs.biglede"
+msgstr "先頭の段落を大きく表示:"
+
+msgid "prefs.memorysize"
+msgstr "メモリのサイズ:"
+
+msgid "prefs.ca.path"
+msgstr "CA パス:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini プロキシ:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP プロキシ:"
+
+msgid "keys.scroll.up"
+msgstr "上へスクロール"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "半ページ下へスクロール"
+
+msgid "close"
+msgstr "閉じる"
+
+msgid "collapse.notbydefault"
+msgstr "手動"
+
+msgid "collapse.always"
+msgstr "常に"
+
+msgid "prefs.centershort"
+msgstr "垂直中央寄せ:"
+
+msgid "link.side.newtab"
+msgstr "もう片方の新しいタブでリンクを開く"
+
+msgid "menu.title.identity"
+msgstr "身分証明"
+
+msgid "sidebar.identities"
+msgstr "身分証明"
+
+msgid "toolbar.outline"
+msgstr "ページの目次"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "ライト"
+
+msgid "prefs.feedinterval"
+msgstr "フィード更新間隔:"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr "証明書や秘密鍵ファイルを含む身分証明 %s\"%s\"%s を削除してよろしいですか？"
+
+msgid "heading.certimport.pasted"
+msgstr "クリップボードから貼り付け"
+
+msgid "dlg.certimport.nocert"
+msgstr "証明書なし"
+
+msgid "dlg.userdata.missing"
+msgstr "欠落時"
+
+msgid "error.badrequest"
+msgstr "要求の形式が正しくありません"
+
+msgid "ident.unset"
+msgstr "ピンを外す"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "フィード"
+
+msgid "pageinfo.cert.expired"
+msgstr "期限切れ"
+
+msgid "sitespec.tlscache"
+msgstr "SSL セッションの再開:"
+
+msgid "ident.sendmsg"
+msgstr "メッセージの送信…"
+
+msgid "pageinfo.cert.trusted"
+msgstr "信頼済"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "未信頼"
+
+msgid "pageinfo.domain.match"
+msgstr "ドメイン名一致"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "ドメイン名不一致"
+
+msgid "menu.page.import"
+msgstr "リンクをブックマークとしてインポート…"
+
+msgid "sidebar.outline"
+msgstr "目次"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "すべて"
+
+msgid "feeds.entry.markbelowread"
+msgstr "以下を既読とマーク"
+
+msgid "bookmark.tag.remote"
+msgstr "ブックマークソースとして使用"
+
+msgid "dlg.unsub"
+msgstr "登録解除"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "CA 未検証"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "期限有効"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "身分証明の非表示"
+
+msgid "link.side"
+msgstr "もう片方でリンクを開く"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "ページの目次を表示"
+
+msgid "dlg.autoreload"
+msgstr "このタブの自動更新間隔を選択します。"
+
+msgid "menu.identity.notactive"
+msgstr "有効な身分証明はありません"
+
+msgid "link.noproxy"
+msgstr "プロキシなしで開く"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "受け取った証明書は %s で期限切れになりました。"
+
+msgid "import.userdata.snippets"
+msgstr "スニペット:"
+
+msgid "heading.upload.misfin"
+msgstr "Misfin メッセージの送信"
+
+msgid "heading.upload.misfin.noident"
+msgstr "Misfin 身分証明なし"
+
+msgid "dlg.upload.misfin.noident"
+msgstr "メッセージを送信するにはまず Misfin 証明書をインポートする必要があります。"
+
+msgid "heading.misfin.ok"
+msgstr "送信済みメッセージ"
+
+msgid "misfin.success"
+msgstr "メッセージは正常に送信されました。"
+
+msgid "heading.ident.delete"
+msgstr "身分証明の削除"
+
+msgid "menu.upload.delete.confirm"
+msgstr "本当にすべてを削除します (元に戻せません)"
+
+msgid "heading.glyphfinder"
+msgstr "文字種の欠落"
+
+msgid "dlg.certwarn.title"
+msgstr "セキュリティ問題"
+
+msgid "heading.certimport"
+msgstr "身分証明のインポート"
+
+msgid "dlg.newident.commonname"
+msgstr "コモンネーム:"
+
+msgid "dlg.newident.temp"
+msgstr "一時的:"
+
+msgid "dlg.feed.entrytype"
+msgstr "エントリーの種類:"
+
+msgid "dlg.feed.type.headings"
+msgstr "新しい見出し"
+
+msgid "heading.import.userdata.error"
+msgstr "インポートに失敗しました"
+
+msgid "bookmark.export.format.tags"
+msgstr "タグはレベル2の見出しで定義されます。"
+
+msgid "dlg.bookmark.identity"
+msgstr "次の身分証明をピン留めしました:"
+
+msgid "heading.prefs.appearance"
+msgstr "外観"
+
+msgid "prefs.swipe.edge"
+msgstr "エッジからスワイプ:"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "フォーマット済カラー"
+
+msgid "prefs.linewidth.normal"
+msgstr "通常"
+
+#, fuzzy
+msgid "prefs.linewidth.fill"
+msgstr "埋める"
+
+msgid "error.openfile.msg"
+msgstr "要求されたファイルは存在しないかアクセスできません。ファイルパスを確認してください。"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "フォントパック \"%s\" を削除してよろしいですか？"
+
+msgid "bookmark.untag.remote"
+msgstr "ブックマークソースから削除"
+
+msgid "feeds.unsubscribe"
+msgstr "購読解除…"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "警告を無効にする"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "%u URL 使用"
+
+msgid "ident.stopuse.all"
+msgstr "常時使用の停止"
+
+msgid "heading.ident.use"
+msgstr "身分証明の使用"
+
+msgid "menu.edit.notes"
+msgstr "メモの編集…"
+
+msgid "heading.ident.notes"
+msgstr "身分証明のメモ"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Fingerprint"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "ページに %d ヶ所新しいリンクが見つかりました。"
+
+msgid "dlg.upload.id.default"
+msgstr "デフォルトの身分証明"
+
+msgid "dlg.newident.scope.none"
+msgstr "未使用"
+
+msgid "prefs.customframe"
+msgstr "カスタムウィンドウフレーム:"
+
+msgid "keys.link.homerow.hover"
+msgstr "ホーム・矢印キーでリンクをホバーする"
+
+# Used on the mobile Settings page.
+#, fuzzy
+msgid "menu.about"
+msgstr "About"
+
+msgid "dlg.newident.scope"
+msgstr "使用:"
+
+msgid "error.manyredirects"
+msgstr "リダイレクトが多すぎます"
+
+msgid "dlg.upload.edit.error"
+msgstr "編集可能なリソースのコンテンツをダウンロードできませんでした。"
+
+msgid "dlg.upload.edit.incompatible"
+msgstr "このタイプのリソースは、アプリケーションで編集することはできません。"
+
+msgid "heading.upload.edit.error"
+msgstr "編集に失敗しました"
+
+msgid "ident.temporary"
+msgstr "一時的"
+
+msgid "dlg.certimport.notfound"
+msgstr "証明書や秘密鍵は見つかりませんでした。"
+
+msgid "ident.delete"
+msgstr "身分証明の削除…"
+
+msgid "dlg.cert.trust"
+msgstr "信頼"
+
+msgid "glyphfinder.results.empty"
+msgstr "申し訳ありませんが、一致するフォントパックは見つかりませんでした。"
+
+msgid "prefs.warn.security"
+msgstr "SSL セキュリティ警告:"
+
+msgid "keys.sitespec"
+msgstr "サイト固有の設定を表示"
+
+msgid "dlg.newident.notsaved"
+msgstr "ディスクへ保存してません"
+
+msgid "dlg.newident.more"
+msgstr "詳細…"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "空間分離用語"
+
+msgid "keys.split.menu"
+msgstr "表示分割モードの設定"
+
+msgid "keys.split.next"
+msgstr "フォーカスを次の分割に切り替え"
+
+msgid "link.newtab.background"
+msgstr "バックグラウンドタブでリンクを開く"
+
+msgid "dlg.certwarn.different"
+msgstr "受け取った証明書は有効ですが、信頼できる証明書とは異なります。"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "受け取った証明書は有効期限が切れ、誤ったドメインです。"
+
+msgid "dlg.certimport.help"
+msgstr "PEM エンコードされた証明書および・または秘密鍵を貼り付けるか、ウィンドウに .crt・.key ファイルをドロップしてください。"
+
+msgid "prefs.bottomnavbar"
+msgstr "Nav バーを下に"
+
+msgid "error.proxyverify"
+msgstr "プロキシは信頼できません"
+
+msgid "import.userdata.idents"
+msgstr "身分証明:"
+
+msgid "import.userdata.trusted"
+msgstr "信頼済み証明書:"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "\"%s\" を無効にする"
+
+msgid "dlg.userdata.all"
+msgstr "すべて (上書き)"
+
+msgid "dlg.userdata.alldup"
+msgstr "すべて (重複は維持)"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "背景から前景"
+
+msgid "dlg.dismiss.warning"
+msgstr "警告を無視する"
+
+msgid "import.userdata.error"
+msgstr "%S は有効な Lagrange でエクスポートしたアーカイブではありません。"
+
+msgid "prefs.quoteicon"
+msgstr "引用符:"
+
+#, fuzzy
+msgid "prefs.justify"
+msgstr "要素の配置:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "長いプレーンテキスト行の折り返し:"
+
+msgid "error.badredirect"
+msgstr "リダイレクトが無効です"
+
+msgid "ident.use"
+msgstr "このページを使用"
+
+msgid "ident.notused"
+msgstr "使用なし"
+
+msgid "sitespec.ansi"
+msgstr "ANSI エスケープの警告:"
+
+msgid "error.unavail"
+msgstr "サーバーは利用できません"
+
+msgid "error.notfound.msg"
+msgstr "現時点で要求されたリソースは見つかりませんでした。"
+
+msgid "error.cert.auth"
+msgstr "証明書が許可されていません"
+
+msgid "error.badstatus"
+msgstr "不明なステータスコード"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "身分証明の表示"
+
+msgid "dlg.certimport.nokey"
+msgstr "秘密鍵なし"
+
+msgid "link.hint.audio"
+msgstr "音声"
+
+msgid "menu.identity.newdomain"
+msgstr "ドメインの新しい身分証明…"
+
+msgid "dlg.newident.create"
+msgstr "身分証明の作成"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "すべて既読にする"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "未読"
+
+msgid "heading.bookmark.tags"
+msgstr "行動"
+
+msgid "feeds.atom.translated"
+msgstr "この Atom XMLドキュメントは、Gemini フィードに自動的に翻訳されており、購読を許可します。"
+
+msgid "dlg.confirm.history.clear"
+msgstr "訪問した全ページの履歴を削除してよろしいですか？"
+
+msgid "heading.prefs.widelayout"
+msgstr "ワイドレイアウト"
+
+msgid "menu.identity.new"
+msgstr "新たな身分証明…"
+
+msgid "ident.using"
+msgstr "このページを使用"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "期限 %Y-%m-%d"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Finder で表示"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "このフォルダー内すべての %u ブックマークを削除してよろしいですか？"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "%u ブックマークを削除"
+
+msgid "bookmark.tag.sub"
+msgstr "フィードを購読"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "証明書・鍵ファイルのインポート"
+
+msgid "hint.certimport.description"
+msgstr "説明"
+
+msgid "ident.stopuse"
+msgstr "このページの使用を停止"
+
+msgid "ident.fingerprint"
+msgstr "SHA-256 Fingerprint のコピー"
+
+msgid "sidebar.empty.unread"
+msgstr "未読エントリなし"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "SSL クライアント証明書の詳細については、%sヘルプ%s を参照してください。"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "フィード \"%s\" からの登録を解除してよろしいですか？"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "次の HTTP(S) リンクを無視:"
+
+msgid "error.server.msg"
+msgstr "サーバーはメッセージ応答しました:"
+
+msgid "dlg.addfolder.prompt"
+msgstr "新しいフォルダ名を入力:"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr "ダウンロードフォルダへのファイルとして保存できます: %s を押すか、メニューから \"%s\"を選択します。"
+
+msgid "pageinfo.header.cached"
+msgstr "(キャッシュされたコンテンツ)"
+
+msgid "sidebar.action.show"
+msgstr "表示:"
+
+msgid "menu.input.setprompt"
+msgstr "この URL では入力が必要だと仮定されます"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "未読"
+
+msgid "menu.opentab.background"
+msgstr "バックグラウンドタブで開く"
+
+msgid "prefs.swipe.page"
+msgstr "ページのスワイプ:"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "前行の貼り付け"
+
+msgid "dlg.ident.delete"
+msgstr "身分証明とファイルを削除"
+
+msgid "heading.unsub"
+msgstr "購読解除"
+
+msgid "pageinfo.cert.status"
+msgstr "証明書の状態:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "CA によって検証済"
+
+msgid "sitespec.palette"
+msgstr "テーマパレットシード:"
+
+msgid "keys.menubar.focus"
+msgstr "メニューバーのフォーカス"
+
+msgid "keys.identmenu"
+msgstr "身分証明メニューを開く"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "%s の入力:"
+
+msgid "dlg.input.linebreak"
+msgstr "改行"
+
+msgid "keys.input.precedingline"
+msgstr "入力プロンプト: 前行の貼り付け"
+
+msgid "dlg.save.incomplete"
+msgstr "ページの内容はまだダウンロード中です。"
+
+#, fuzzy
+msgid "error.gone"
+msgstr "閉鎖"
+
+#, c-format, fuzzy
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "ブックマーク %s へ %d ヶ所追加"
+
+msgid "reload.never"
+msgstr "なし"
+
+msgid "heading.certimport.dropped"
+msgstr "ファイル削除済"
+
+msgid "dlg.certimport.notes"
+msgstr "メモ:"
+
+msgid "menu.forgeturl"
+msgstr "URL を削除"
+
+msgid "bookmark.export.format.sub"
+msgstr "このページは \"Gemini Pages への購読\" コンパニオン仕様に従ってフォーマットされています。"
+
+msgid "bookmark.export.format.linklines"
+msgstr "各リンクはブックマークを表します。"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "身分証明"
+
+msgid "upload.id"
+msgstr "身分証明:"
+
+msgid "heading.upload.id"
+msgstr "資格"
+
+msgid "hint.upload.token.long"
+msgstr "トークン — サーバーの指示を参照してください"
+
+msgid "heading.newident.date.bad"
+msgstr "日付が無効です"
+
+msgid "dlg.newident.date.past"
+msgstr "有効期限は将来でなければなりません。"
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"\"有効な\" 日付を確認してください。例:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "heading.subscribe"
+msgstr "ページを購読"
+
+#, fuzzy
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD リンク"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "フリーフォームプライベートメモ"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "一般"
+
+msgid "heading.prefs.paragraph"
+msgstr "段落"
+
+msgid "heading.prefs.snip"
+msgstr "スニペット"
+
+msgid "prefs.hoverlink"
+msgstr "ホバーで URL を表示:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "ブックマークの下へ追加:"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "データ URL で画像を開く:"
+
+msgid "prefs.imageloadscroll"
+msgstr "スクロールキーで次の画像読込："
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "カラフルダーク"
+
+msgid "prefs.evensplit"
+msgstr "タブを均等に分割:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "スクロール時ツールバー非表示:"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "ツールバーアクション"
+
+msgid "prefs.retaintabs"
+msgstr "起動時にタブを復元:"
+
+msgid "prefs.uiscale"
+msgstr "UI スケールファクター:"
+
+msgid "prefs.returnkey.accept"
+msgstr "承認"
+
+msgid "prefs.retainwindow"
+msgstr "ウィンドウ位置の保存:"
+
+msgid "prefs.sideicon"
+msgstr "左端 Capsule アイコン:"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "カラフルライト"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "セピア"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "海洋"
+
+msgid "prefs.saturation"
+msgstr "彩度:"
+
+msgid "prefs.imagestyle"
+msgstr "画像の色付け:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "自動検出した Gopher のメニュースタイル:"
+
+msgid "prefs.linespacing"
+msgstr "行間隔:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "ダーク"
+
+msgid "prefs.font.warnmissing"
+msgstr "フォント文字種の警告:"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "このアーカイブには %u アイテム含まれ、圧縮サイズは %.1f MB です。"
+
+msgid "keys.link.homerow"
+msgstr "ホーム・矢印キーを介してリンクを開く"
+
+msgid "keys.subscribe"
+msgstr "ページの購読"
+
+msgid "keys.hoverurl"
+msgstr "ホバーで URL 表示の切り替え"
+
+msgid "keys.feeds.showall"
+msgstr "サイドバー: すべてのフィードエントリーを表示"
+
+msgid "heading.newident"
+msgstr "新しい身分証明"
+
+msgid "error.badresource.msg"
+msgstr "要求されたリソースは存在しません。"
+
+msgid "error.unsupported.media"
+msgstr "サポートされていないコンテンツタイプ"
+
+msgid "error.certexpired"
+msgstr "証明書の期限が切れています"
+
+msgid "error.slowdown"
+msgstr "減速ダウン"
+
+msgid "gempub.meta.author"
+msgstr "著者"
+
+msgid "keys.link.homerow.newtab"
+msgstr "ホーム・矢印キーを用いて新しいタブでリンクを開く"
+
+msgid "heading.save.incomplete"
+msgstr "ページ不完全"
+
+msgid "menu.sort.alpha"
+msgstr "AからZ順にソート"
+
+msgid "dlg.feed.sub"
+msgstr "購読"
+
+msgid "dlg.import.notnew"
+msgstr "このページの全リンクはすでにブックマークされています。"
+
+msgid "heading.prefs.certs"
+msgstr "証明書"
+
+msgid "menu.paste.snippet"
+msgstr "スニペットの貼り付け"
+
+msgid "menu.snippet.add"
+msgstr "Selection からのスニペット…"
+
+msgid "error.badresource"
+msgstr "リソースが無効です"
+
+msgid "prefs.pinsplit"
+msgstr "分割表示のピン留め:"
+
+msgid "status.feeds"
+msgstr "フィードの更新"
+
+msgid "dlg.import.notfound"
+msgstr "このページにリンクはありません。"
+
+msgid "menu.page.visitlinks"
+msgstr "訪問されたすべてのリンクをマーク"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "鮮やかなライト"
+
+msgid "error.badheader"
+msgstr "見出しが無効です"
+
+msgid "menu.identities"
+msgstr "身分証明の管理"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "フォルダにブックマークを追加:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "ブックマークを次のフォルダへ移動:"
+
+msgid "sidebar.action.ident.new"
+msgstr "新規…"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "アクションの設定:"
+
+msgid "feeds.entry.markread"
+msgstr "既読とマーク"
+
+msgid "feeds.entry.markunread"
+msgstr "未読とマーク"
+
+msgid "feeds.markallread"
+msgstr "すべて既読とマーク"
+
+msgid "bookmark.tag.linksplit"
+msgstr "サイドでリンクを開く"
+
+msgid "link.snippet"
+msgstr "リンクからのスニペット…"
+
+msgid "bookmark.untag.sub"
+msgstr "フィードから購読解除"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "%s 使用"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s に関するメモ:"
+
+msgid "sidebar.empty.idents"
+msgstr "身分証明なし"
+
+msgid "heading.sitespec"
+msgstr "サイト固有の設定"
+
+msgid "menu.input.unsetprompt"
+msgstr "この URL は入力が必要だと仮定されません"
+
+msgid "menu.input.restore"
+msgstr "以前の復元:"
+
+msgid "dlg.import.intofolder"
+msgstr "次のフォルダへ追加:"
+
+msgid "dlg.import.headings"
+msgstr "次の見出しからのサブフォルダ："
+
+msgid "reload.onceperday"
+msgstr "1 日 1 回"
+
+msgid "link.download"
+msgstr "リンクされたファイルをダウンロード"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "現在のページに証明書・鍵は見つかりません。"
+
+msgid "dlg.certimport.paste"
+msgstr "クリップボードから貼り付け"
+
+msgid "bookmark.export.format.folders"
+msgstr "フォルダー構造は、レベル2・3の見出しで定義されます。"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "スニペット"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"受け取った証明書は最近更新された可能性があります。これは正しいドメイン用であり、期限切れになっていません。現在信頼されている証明書は %s で %d "
+"日に期限切れとなります。"
+
+msgid "dlg.certwarn.domain"
+msgstr "受け取った証明書は、間違ったドメイン (%d) 用です。これは、サーバー構成の問題かもしれません。"
+
+msgid "bookmark.export.saving"
+msgstr "このページを保存してエクスポートするか、クリップボードにコピーできます。"
+
+msgid "error.incompleteheader"
+msgstr "見出しが不完全です"
+
+msgid "error.certexpired.msg"
+msgstr "SSL 証明書が期限切れになったため、サーバーへの接続がキャンセルされました。"
+
+msgid "gempub.cover.aboutbook"
+msgstr "この本について"
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"このリストでは、各見出しはブックマークタグを表します。タグ付きブックマークのみがリストされています。複数のタグを持つブックマークは、各タグの下で繰り返され"
+"ます。"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"中点と引用は前のブックマークに関する追加情報のために予約されています。テキスト行と事前に書かれたテキストはコメントと見なされ、無視する必要があります。"
+
+msgid "heading.upload.error.file"
+msgstr "ファイルが無効です"
+
+msgid "upload.error.directory"
+msgstr "ディレクトリではなく個々のファイルのみをアップロードできます。"
+
+msgid "hint.upload.token"
+msgstr "サーバーの指示を参照してください"
+
+msgid "dlg.uploadport.msg"
+msgstr "この URL に使用するように Titan サーバーポートを設定します。ポートはサイト固有の構成に保存されます。"
+
+msgid "dlg.translate.pre"
+msgstr "フォーマット済みをスキップ:"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "ページを更新して、不足している文字種をもう一度確認してください。"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "自己署名された 2048 ビット RSA 証明書を作成します。"
+
+msgid "heading.newident.missing"
+msgstr "情報がありません"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "\"コモンネーム\" を指定する必要があります。"
+
+msgid "prefs.collapsepre"
+msgstr "フォーマット済の崩れ:"
+
+msgid "collapse.bydefault"
+msgstr "ページ読込時"
+
+msgid "prefs.time.24h"
+msgstr "時間 (24 時間表記):"
+
+msgid "prefs.returnkey"
+msgstr "Return キーの動作:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "改行"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "前景色"
+
+msgid "archive.exit"
+msgstr "アーカイブの終了"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "スニペットクエリを入力"
+
+msgid "prefs.expandline"
+msgstr "長い行の拡張:"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "スキームを変更するリダイレクト:"
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "このディレクトリには %u 項目存在します。"
+
+msgid "keys.bottom"
+msgstr "一番下へ移動"
+
+msgid "keys.link.modkey"
+msgstr "変更キーを介してリンクを開く"
+
+msgid "keys.split.item"
+msgstr "分割表示メニュー:"
+
+msgid "keys.feeds.showunread"
+msgstr "サイドバー: 未読フィードエントリーの表示"
+
+msgid "error.tls.msg"
+msgstr "サーバーとの通信に失敗しました。"
+
+msgid "error.badstatus.msg"
+msgstr "サーバーは Gemini プロトコル仕様にないステータスコードで応答しました。おそらくサーバーは誤動作しています。"
+
+msgid "error.proxyexpired.msg"
+msgstr "プロキシサーバーの SSL 証明書が期限切れになったため、接続がキャンセルされました。"
+
+msgid "error.certverify"
+msgstr "サーバーが信頼されていません"
+
+msgid "error.openfile"
+msgstr "ファイルを開くことができませんでした"
+
+msgid "error.unsupported.media.msg"
+msgstr "受信したコンテンツはこのアプリケーションでは表示できません。"
+
+msgid "error.proxy.msg"
+msgstr ""
+"サーバーがリモートホストとのトランザクションを正常に完了できなかったため、プロキシリクエストは失敗しました。おそらくネットワーク接続に問題があります。"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "要求されたプロトコルはこのアプリケーションによってサポートされていません。"
+
+msgid "error.permanent.msg"
+msgstr "要求は失敗しました。将来も失敗を繰り返します。"
+
+msgid "error.badrequest.msg"
+msgstr "サーバーは要求を理解していません。"
+
+msgid "error.cert.invalid.msg"
+msgstr "提供されたクライアント証明書は期限切れまたは無効です。"
+
+msgid "gempub.cover.viewlocal"
+msgstr "この Gempub の本は、ローカルで保存された後に見ることができます。"
+
+msgid "gempub.cover.untitled"
+msgstr "タイトルなしの本"
+
+msgid "gempub.cover.image"
+msgstr "カバー画像"
+
+msgid "gempub.meta.pub"
+msgstr "公開日"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "\"%s\" を有効にする"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "\"%s\" を永続的に削除"
+
+msgid "error.badheader.msg"
+msgstr ""
+"受信されたヘッダーは Gemini プロトコル仕様に準拠していません。おそらくサーバーが誤動作しているか Gemini "
+"ではないサーバーに連絡しようとしました。"
+
+msgid "truetype.help"
+msgstr "Lagrange はユーザーフォントディレクトリにコピーされたすべての個々の TrueType ファイルをロードしようとします。"
+
+msgid "heading.dismiss.warning"
+msgstr "警告を無視しますか？"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "端子エミュレーション %s についての警告を永久に無視しますか？"
+
+msgid "sniped.help"
+msgstr "名前が ! から始まるスニペット (例: \"!w\" ) は URL フィールドでクエリショートカットとして使用できます。"
+
+msgid "heading.snip.new"
+msgstr "新しいスニペット"
+
+msgid "heading.snip.edit"
+msgstr "スニペットの編集"
+
+msgid "snip.accept"
+msgstr "スニペットの保存"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+msgstr "コンテキストメニュー"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "リンクのフォーカス"
+
+msgid "dlg.translate.unavail"
+msgstr "サービスは利用できません"
+
+msgid "dlg.translate.fail"
+msgstr "リクエストが失敗しました"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "自動検出"
+
+msgid "error.incompleteheader.msg"
+msgstr "サーバーの応答には完全な見出しが含まれていませんでした。おそらくサーバーが誤動作しているかGeminiではなくサーバーに連絡しようとしました。"
+
+msgid "error.badredirect.msg"
+msgstr "サーバーはリダイレクトで応答しましたが有効な宛先URLを提供しませんでした。おそらくサーバーは誤動作しています。"
+
+msgid "status.query"
+msgstr "クエリを検索"
+
+msgid "error.schemeredirect"
+msgstr "スキームを変えるリダイレクト"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "次の文字を表示できませんでした。"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"サーバーは発信 URL のスキームとは異なるスキームの URL "
+"にリダイレクトしようとしました。ここにリンクがありますので必要に応じて手動で開くことができます。"
+
+msgid "glyphfinder.results"
+msgstr "次のフォントパックは、欠落している文字種の1つ以上を提供します:"
+
+msgid "dlg.newident.until"
+msgstr "有効期限:"
+
+msgid "error.manyredirects.msg"
+msgstr "リダイレクトループの可能性があります。次のリダイレクトされたURLは手動で続行する事ができます。"
+
+msgid "error.tls"
+msgstr "ネットワーク・SSL 障害"
+
+msgid "error.proxyexpired"
+msgstr "プロキシ証明書の期限が切れています"
+
+msgid "error.certverify.msg"
+msgstr ""
+"SSL 証明書が信頼できるものと一致しないため、サーバーへの接続がキャンセルされました。サーバーが証明書の変更を発表したかどうかを確認してください。"
+"そうでない場合は悪意のあるサードパーティが到達しようとしたサーバーを装っている可能性があります\n"
+"\n"
+"証明書はページ情報に信頼されているとマークできます。"
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"プロキシサーバーの SSL 証明書が信頼するものと一致しないため、接続がキャンセルされました\n"
+"\n"
+"プロキシサーバーの証明書は、ページ情報に信頼されているとマークできます。"
+
+msgid "error.temporary"
+msgstr "一時的に失敗しています"
+
+msgid "error.temporary.msg"
+msgstr "リクエストは失敗しましたが、後ほど再試行で成功する可能性があります。"
+
+msgid "error.unavail.msg"
+msgstr "サーバーは過負荷またはメンテナンスのために利用できません。後でもう一度確認してください。"
+
+msgid "error.cgi.msg"
+msgstr "サーバー上の動的なコンテンツ生成中の障害。これはサーバーサイドソフトウェアの誤動作による可能性があります。"
+
+msgid "error.permanent"
+msgstr "永続的な障害"
+
+msgid "error.proxyrefusal"
+msgstr "プロキシリクエストは拒否されました"
+
+msgid "error.proxyrefusal.msg"
+msgstr "リクエストはサーバーが提供していないドメインのリソースに対するものであり、サーバーはプロキシリクエストを受け入れません。"
+
+msgid "error.cert.auth.msg"
+msgstr "提供されたクライアント証明書は有効ですが、要求されたリソースへのアクセスを許可されていません。"
+
+msgid "error.cert.invalid"
+msgstr "証明書が無効です"
+
+msgid "error.ansi.msg"
+msgstr ""
+"このページは正しく表示されない場合があります。 ANSI エスケープシーケンスを使用してテキストをスタイルします。テキストは部分的にのみサポートされていま"
+"す。ターミナルエミュレーターを使用して表示することができます。"
+
+msgid "error.glyphs"
+msgstr "文字種の不足"
+
+msgid "error.showutf8"
+msgstr "UTF-8 の自動検出"
+
+msgid "error.showutf8.msg"
+msgstr "このページのメディアタイプは認識されませんでしたが、UTF-8 エンコードテキストとして有効です。"
+
+msgid "gempub.cover.view"
+msgstr "Gempub コンテンツの表示"
+
+msgid "gempub.meta.revdate"
+msgstr "改訂日"
+
+msgid "fontpack.export"
+msgstr "テンプレートのフォントパックを表示"
+
+msgid "fontpack.help"
+msgstr ""
+"Lagrange フォントパックは一連のフォントファイルと関連する構成パラメーターを含む zip アーカイブです。"
+"インストールするとフォントはドキュメントコンテンツと UI に使用できます。有効なフォントは 設定 -フォント で選択できます。"
+
+msgid "sniped.new"
+msgstr "新しいスニペット"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"これらのキャラクターに文字種を提供するフォントの Skyjake.fi フォントライブラリを検索したり、新しい TrueType "
+"フォントを手動でインストールしたりすることができます。"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+msgstr "自分にコピーを送信"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+msgstr "受信者の検証"
+
+msgid "misfin.redirect"
+msgstr "受信者はメッセージを別のアドレスに送信することを要求します。"
+
+msgid "misfin.failure"
+msgstr "メッセージの送信中にエラーが発生しました。"
+
+msgid "misfin.needcert"
+msgstr "Misfin 証明書を提供して、自分自身の身分証明をする必要があります。"
+
+msgid "misfin.unauth"
+msgstr "この受信者にメッセージを送信することは許可されていません。"
+
+msgid "misfin.badcert"
+msgstr "Misfin 証明書は無効です。"
+
+msgid "misfin.changed"
+msgstr "Misfin 証明書は受信者が期待する証明書と一致しません。"
+
+msgid "misfin.unknown"
+msgstr "サーバとの通信に失敗しました。"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "SHA-256 公開鍵のコピー"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "SHA-256 証明書のコピー"
+
+msgid "import.userdata.dupfolder"
+msgstr "重複を無視"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "%d ブックマークあります。"
+
+msgid "misfin.self.copy"
+msgstr "自分へコピーを送信"
+
+msgid "upload.from"
+msgstr "送信元:"
+
+msgid "upload.to"
+msgstr "送信先:"
+
+msgid "upload.file.drophere"
+msgstr "ファイルパスを入力するかウィンドウにファイルをドラッグアンドドロップします"
+
+msgid "keys.link.homerow.next"
+msgstr "ホーム・矢印キーリンクの次のセット"
