@@ -45,6 +45,20 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.18.6" date="2025-08-05">
+            <description>
+                <ul>
+                    <li>Added Samogitian (sgs) UI translation.</li>
+                    <li>Link icons are now included in the clickable part of a line.</li>
+                    <li>Fixed handling of percent-encoded semicolons in the URI path component.</li>
+                    <li>Fixed crash when opening context menu in some input fields.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.18.6</url>
+        </release>
         <release version="1.18.5" date="2025-03-09">
             <description>
                 <ul>
