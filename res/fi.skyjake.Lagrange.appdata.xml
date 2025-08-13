@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.18.7" date="2025-08-13">
+            <description>
+                <ul>
+                    <li>Revised handling of reserved URI characters according to RFC 3986. The previous behavior did not fully conform to the standard.</li>
+                    <li>Fixed opening some WebP images. There was a problem checking for the "image/webp" media type.</li>
+                    <li>Fixed removal of unexpected NUL characters from the source text.</li>
+                    <li>Fixed redundant mouse events when receiving touch events on the desktop.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.18.7</url>
+        </release>
         <release version="1.18.6" date="2025-08-05">
             <description>
                 <ul>
