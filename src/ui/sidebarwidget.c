@@ -596,10 +596,10 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 set_String(&item->url, &visit->url);
                 set_String(&item->label, &visit->url);
                 if (prefs_App()->decodeUserVisibleURLs) {
-                    urlDecodePath_String(&item->label);
+                    set_String(&item->label, collect_String(urlDecodeExclude_String(&item->label, URL_DECODE_EXCLUDE_CHARS)));
                 }
                 else {
-                    urlEncodePath_String(&item->label);
+                    set_String(&item->label, collect_String(urlEncodeExclude_String(&item->label, URL_ENCODE_EXCLUDE_CHARS)));
                 }
                 iDate date;
                 init_Date(&date, &visit->when);

@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.18.6
+    VERSION 1.18.7
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2025)
 if (IOS)
     set (PROJECT_VERSION 1.18)
-    set (IOS_BUNDLE_VERSION 10)
-    set (IOS_BUILD_DATE "2025-06-04")
+    set (IOS_BUNDLE_VERSION 11)
+    set (IOS_BUILD_DATE "2025-08-07")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.18)
-    set (ANDROID_BUILD_VERSION b35)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2024-12-10")
+    set (ANDROID_BUILD_VERSION b37)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2025-08-07")
 endif ()
 
 # Load modules from the source tree
@@ -501,7 +501,7 @@ if (ENABLE_GUI)
         if (TARGET harfbuzz-lib)
             target_link_libraries (app PUBLIC harfbuzz-lib)
         else ()
-            target_link_libraries (app PUBLIC ${HARFBUZZ_LIBRARIES})
+            target_link_libraries (app PUBLIC ${HARFBUZZ_LDFLAGS})
             target_include_directories (app PUBLIC ${HARFBUZZ_INCLUDE_DIRS})
         endif ()
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_HARFBUZZ=1)
@@ -510,7 +510,7 @@ if (ENABLE_GUI)
         if (TARGET fribidi-lib)
             target_link_libraries (app PUBLIC fribidi-lib)
         else ()
-            target_link_libraries (app PUBLIC ${FRIBIDI_LIBRARIES})
+            target_link_libraries (app PUBLIC ${FRIBIDI_LDFLAGS})
             target_include_directories (app PUBLIC ${FRIBIDI_INCLUDE_DIRS})
         endif ()
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)

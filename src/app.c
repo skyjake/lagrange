@@ -1687,8 +1687,8 @@ const iString *debugInfo_App(void) {
     iObjectList *docs = iClob(listDocuments_App(NULL));
     format_String(msg, "# Debug information\n");
     if (isDesktop_Platform()) {
-        appendFormat_String(msg, "Executable path: %s\n", cstr_String(execPath_App()));
-        appendFormat_String(msg, "User directory: %s\n", cstr_String(dataDir_App()));
+        appendFormat_String(msg, "\n## User directory\n%s\n", cstr_String(dataDir_App()));
+        appendFormat_String(msg, "\n## Executable path\n%s\n", cstr_String(execPath_App()));
     }
     appendFormat_String(msg, "\n## Memory usage\n"); {
         iMemInfo total = { 0, 0 };
@@ -2218,7 +2218,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             break;
                         }
                         window->lastHover = window->hover;
-                        /* When clicking a mouse button, we need to be able to close previously 
+                        /* When clicking a mouse button, we need to be able to close previously
                            existing popup windows. However, after the event has been processed,
                            a new popup menu may have just opened, so we first take a copy
                            of the existing list of popups. */
@@ -2234,7 +2234,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                                     iRoot *popRoot = pop->roots[0];
                                     if (popRoot && !isRecentlyDeleted_Widget(popRoot->widget)) {
                                         postCommandf_Root(popRoot, "menu.cancel");
-                                    }                                    
+                                    }
                                 }
                             }
                             break;

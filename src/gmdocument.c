@@ -2511,7 +2511,7 @@ static void import_GmDocument_(iGmDocument *d) {
             if (*ch == 0) {
                 remove_Block(&d->source.chars, pos, 1);
                 pos--;
-                ch--;
+                ch = constBegin_String(&d->source) + pos;
             }
         }
     }

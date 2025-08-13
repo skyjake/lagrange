@@ -70,7 +70,7 @@ Optimization notes:
 #endif
 
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
-#   include <fribidi/fribidi.h>
+#   include <fribidi.h>
 #endif
 
 #if SDL_VERSION_ATLEAST(2, 0, 10)

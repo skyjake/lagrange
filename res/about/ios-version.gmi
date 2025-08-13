@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.18 (11)
+* Link icons are now included in the clickable part of a line.
+* Revised handling of reserved URI characters according to RFC 3986. The previous behavior did not fully conform to the standard.
+* Updated UI translations.
+
 ## 1.18 (10)
 * Added Samogitian UI language.
 * Updated UI translations.

@@ -779,7 +779,7 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
        characters? Could be a server-side issue, e.g., if they're using a URL parser meant for
        the web. */
     /* Encode everything except already-percent encoded characters. */
-    iString *enc = urlEncodeExclude_String(&d->url, "%" URL_RESERVED_CHARS);
+    iString *enc = urlEncodeExclude_String(&d->url, URL_ENCODE_EXCLUDE_CHARS);
     /* Normalize empty paths to /. */ {
         iUrl parts;
         init_Url(&parts, enc);
@@ -1253,8 +1253,12 @@ void submit_GmRequest(iGmRequest *d) {
     }
     else {
         /* Normal Gemini request. */
-        setContent_TlsRequest(d->req,
-                              utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
+        iString content;
+        init_String(&content);
+        format_String(&content, "%s\r\n", cstr_String(&d->url));
+        truncate_Block(&content.chars, 1024 /* maximum permitted URI length */ + 2 /* \r\n */);
+        setContent_TlsRequest(d->req, utf8_String(&content));
+        deinit_String(&content);
     }
     submit_TlsRequest(d->req);
 }

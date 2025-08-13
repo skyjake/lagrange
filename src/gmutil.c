@@ -343,45 +343,6 @@ static iString *punyDecodeHost_(iRangecc host) {
     return result;
 }
 
-void urlDecodePath_String(iString *d) {
-    iUrl url;
-    init_Url(&url, d);
-    if (isEmpty_Range(&url.path)) {
-        return;
-    }
-    iString *decoded = new_String();
-    appendRange_String(decoded, (iRangecc){ constBegin_String(d), url.path.start });
-    iString *path    = newRange_String(url.path);
-    iString *decPath = urlDecodeExclude_String(path, ":;%?/#"); /* don't decode reserved path chars */
-    append_String(decoded, decPath);
-    delete_String(decPath);
-    delete_String(path);
-    appendRange_String(decoded, (iRangecc){ url.path.end, constEnd_String(d) });
-    set_String(d, decoded);
-    delete_String(decoded);
-}
-
-void urlEncodePath_String(iString *d) {
-    iUrl url;
-    init_Url(&url, d);
-    if (equalCase_Rangecc(url.scheme, "data")) {
-        return;
-    }
-    if (isEmpty_Range(&url.path)) {
-        return;
-    }
-    iString *encoded = new_String();
-    appendRange_String(encoded, (iRangecc){ constBegin_String(d), url.path.start });
-    iString *path    = newRange_String(url.path);
-    iString *encPath = urlEncodeExclude_String(path, "%/= ");
-    append_String(encoded, encPath);
-    delete_String(encPath);
-    delete_String(path);
-    appendRange_String(encoded, (iRangecc){ url.path.end, constEnd_String(d) });
-    set_String(d, encoded);
-    delete_String(encoded);
-}
-
 iString *withUrlParameters_String(const iString *d, ...) {
     iUrl url;
     init_Url(&url, d);
@@ -745,12 +706,13 @@ const iString *canonicalUrl_String(const iString *d) {
     iString *canon = NULL;
     iUrl parts;
     init_Url(&parts, d);
+#if 0
     /* Colons (0x3a) are in decoded form in the URL path. */
     if (iStrStrN(parts.path.start, "%3A", size_Range(&parts.path)) ||
         iStrStrN(parts.path.start, "%3a", size_Range(&parts.path))) {
         /* This is done separately to avoid the copy if %3A is not present; it's rare. */
         canon = copy_String(d);
-        urlDecodePath_String(canon);
+        /*urlDecodePath_String(canon);*/
         iString *dec = maybeUrlDecodeExclude_String(canon, "% " URL_RESERVED_CHARS); /* decode everything else in all parts */
         if (dec) {
             set_String(canon, dec);
@@ -758,8 +720,9 @@ const iString *canonicalUrl_String(const iString *d) {
         }
     }
     else {
-        canon = maybeUrlDecodeExclude_String(d, "% " URL_RESERVED_CHARS);
-    }
+#endif
+        canon = maybeUrlDecodeExclude_String(d, " " URL_DECODE_EXCLUDE_CHARS);
+//    }
     /* `canon` may now be NULL if nothing was decoded. */
     if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
         indexOfCStr_String(canon ? canon : d, "\n") != iInvalidPos) {

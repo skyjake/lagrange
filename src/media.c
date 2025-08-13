@@ -137,7 +137,8 @@ void makeTexture_GmImage(iGmImage *d) {
     iBlock *data     = &d->partialData;
     d->numBytes      = size_Block(data);
     uint8_t *imgData = NULL;
-    if (cmp_String(&d->props.mime, "image/webp") == 0) {
+    if (cmp_String(&d->props.mime, "image/webp") == 0 ||
+        startsWith_String(&d->props.mime, "image/webp;")) {
 #if defined (LAGRANGE_ENABLE_WEBP)
         imgData = WebPDecodeRGBA(constData_Block(data), size_Block(data), &d->size.x, &d->size.y);
 #endif

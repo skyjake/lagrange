@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 #if 0
     SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1"); /* debugging! */
 #endif
-#if defined (iPlatformAppleMobile)
+#if !defined (iPlatformTerminal)
     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 #endif
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {

@@ -393,7 +393,7 @@ iWidget *root_Widget(const iWidget *d) {
 }
 
 iWindow *window_Widget(const iAnyObject *d) {
-    return constAs_Widget(d)->root->window;
+    return d ? constAs_Widget(d)->root->window : NULL;
 }
 
 void showCollapsed_Widget(iWidget *d, iBool show) {

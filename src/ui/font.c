@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
-#   include <fribidi/fribidi.h>
+#   include <fribidi.h>
 #endif
 
 iColor fgColor_AttributedRun(const iAttributedRun *d) {
