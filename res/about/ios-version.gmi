@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.18 (12)
+* Fixed opening some WebP images. There was a problem checking for the "image/webp" media type.
+* Fixed removal of unexpected NUL characters from the source text.
+
 ## 1.18 (11)
 * Link icons are now included in the clickable part of a line.
 * Revised handling of reserved URI characters according to RFC 3986. The previous behavior did not fully conform to the standard.
