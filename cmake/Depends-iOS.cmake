@@ -3,7 +3,7 @@ message (STATUS "iOS dependency directory: ${IOS_DIR}")
 find_package (the_Foundation REQUIRED)
 
 set (SDL2_INCLUDE_DIRS ${IOS_DIR}/include/SDL2)
-set (SDL2_LDFLAGS 
+set (SDL2_LDFLAGS
     ${IOS_DIR}/lib/libSDL2.a
     "-framework AudioToolbox"
     "-framework AVFoundation"
@@ -25,8 +25,9 @@ set (SDL2_LDFLAGS
 pkg_check_modules (WEBP IMPORTED_TARGET libwebpdecoder)
 
 set (FRIBIDI_FOUND YES)
-set (FRIBIDI_LIBRARIES ${IOS_DIR}/lib/libfribidi.a)
+set (FRIBIDI_LDFLAGS ${IOS_DIR}/lib/libfribidi.a)
+set (FRIBIDI_INCLUDE_DIRS ${IOS_DIR}/include/fribidi)
 
 set (HARFBUZZ_FOUND YES)
-set (HARFBUZZ_LIBRARIES ${IOS_DIR}/lib/libharfbuzz.a)
+set (HARFBUZZ_LDFLAGS ${IOS_DIR}/lib/libharfbuzz.a)
 set (HARFBUZZ_INCLUDE_DIRS ${IOS_DIR}/include/harfbuzz)
