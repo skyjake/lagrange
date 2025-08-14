@@ -934,7 +934,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             else if (type == quote_GmLineType && !prefs->quoteIcon) {
                 /* For quote indicators we still need to produce a run. */
                 run.visBounds.pos  = addX_I2(pos, indents[type] * gap_Text);
-                run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.font));
+                run.visBounds.size = init_I2(lineHeight_Text(run.font), lineHeight_Text(run.font));
                 run.bounds         = zero_Rect(); /* just visual */
                 run.text           = iNullRange;
                 run.flags          = ruler_GmRunFlag | decoration_GmRunFlag;
