@@ -1079,8 +1079,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
         if (run->flags & ruler_GmRunFlag) {
-            if (height_Rect(run->visBounds) > 0 &&
-                height_Rect(run->visBounds) <= width_Rect(run->visBounds)) {
+            if (height_Rect(run->visBounds) > 0) {
                 /* This is used for block quotes. */
                 drawVLine_Paint(&d->paint,
                                 addX_I2(visPos,
