@@ -88,7 +88,7 @@ void init_ScrollWidget(iScrollWidget *d) {
     init_Anim(&d->opacity, minOpacity_());
     d->willCheckFade = iFalse;
     d->fadeEnabled = iTrue;
-    d->thumbColor = uiBackgroundPressed_ColorId;
+    d->thumbColor = uiTextAction_ColorId;
 }
 
 void deinit_ScrollWidget(iScrollWidget *d) {
@@ -269,7 +269,7 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
             }
             const iRect thumbRect = shrunk_Rect(
                 thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
-            fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : d->thumbColor);
+            fillRect_Paint(&p, thumbRect, isPressed ? uiTextStrong_ColorId : d->thumbColor);
             if (p.alpha < 255) {
                 SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
             }

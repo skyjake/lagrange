@@ -7,7 +7,8 @@
 # Release notes
 
 ## 1.18.8
-
+* Scrollbars had poor contrast in light mode.
+* Quote line indicator was misplaced on empty quote lines.
 
 ## 1.18.7
 * Revised handling of reserved URI characters according to RFC 3986. The previous behavior did not fully conform to the standard.
