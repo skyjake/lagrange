@@ -237,8 +237,8 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
                           size_String(&resp->meta) - endPos - 2);
             remove_Block(&resp->meta.chars, endPos, iInvalidSize);
             /* Parse and remove the code. */
-            iRegExp *metaPattern = new_RegExp("^([0-9][0-9])(( )(.*))?", 0);
-            /* TODO: Empty <META> means no <SPACE>? Not according to the spec? */
+            iRegExp *metaPattern = new_RegExp("^([0-9][0-9])(( )(.*))?$", 0);
+            /* Empty <META> means no <SPACE>. */
             iRegExpMatch m;
             init_RegExpMatch(&m);
             int code = 0;
