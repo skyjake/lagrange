@@ -73,6 +73,9 @@ if (ENABLE_HARFBUZZ)
             if (ENABLE_LIBCPP_HARDENING_MODE) # libc++ v20+
                 set (_extraCppOpts "-Dcpp_args=-U_LIBCPP_ENABLE_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST"
                 )
+                if (CMAKE_OSX_DEPLOYMENT_TARGET)
+                    set (_extraCppOpts "${_extraCppOpts} -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+                endif ()
             else ()
                 set (_extraCppOpts)
             endif ()
@@ -87,8 +90,8 @@ if (ENABLE_HARFBUZZ)
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         -Ddocs=disabled
-                                        ${_extraCppOpts}
                                         ${_dependMacOpts}
+                                        ${_extraCppOpts}
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
                 INSTALL_COMMAND     ""
