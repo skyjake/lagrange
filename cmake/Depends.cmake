@@ -70,6 +70,14 @@ if (ENABLE_HARFBUZZ)
         # Build HarfBuzz with minimal dependencies.
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
+            if (ENABLE_LIBCPP_HARDENING_MODE) # libc++ v20+
+                set (_extraCppOpts
+                    -Dcpp_args=-U_LIBCPP_ENABLE_ASSERTIONS
+                    -Dcpp_args+=-D_LIBCPP_HARDENING_MODE=1
+                )
+            else ()
+                set (_extraCppOpts)
+            endif ()
             ExternalProject_Add (harfbuzz-ext
                 PREFIX              ${CMAKE_BINARY_DIR}/harfbuzz-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/harfbuzz
@@ -81,6 +89,7 @@ if (ENABLE_HARFBUZZ)
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         -Ddocs=disabled
+                                        ${_extraCppOpts}
                                         ${_dependMacOpts}
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
