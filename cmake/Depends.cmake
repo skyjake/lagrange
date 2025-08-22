@@ -71,9 +71,7 @@ if (ENABLE_HARFBUZZ)
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
             if (ENABLE_LIBCPP_HARDENING_MODE) # libc++ v20+
-                set (_extraCppOpts
-                    -Dcpp_args=-U_LIBCPP_ENABLE_ASSERTIONS
-                    -Dcpp_args+=-D_LIBCPP_HARDENING_MODE=1
+                set (_extraCppOpts "-Dcpp_args=-U_LIBCPP_ENABLE_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST"
                 )
             else ()
                 set (_extraCppOpts)
