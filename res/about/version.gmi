@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.18.8
+
+
 ## 1.18.7
 * Revised handling of reserved URI characters according to RFC 3986. The previous behavior did not fully conform to the standard.
 * Fixed opening some WebP images. There was a problem checking for the "image/webp" media type.
