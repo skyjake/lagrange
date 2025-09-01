@@ -173,7 +173,7 @@ static const iMenuItem windowMenuItems_[] = {
     { "${menu.tab.prev}", 0, 0, "tabs.prev" },
     { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
 #if !defined (iPlatformTerminal)
-    { "${menu.movetab.newwindow", 0, 0, "tabs.swap newwindow:1" },
+    { "${menu.movetab.newwindow}", 0, 0, "tabs.swap newwindow:1" },
     { "---" },
     { "${menu.window.min}", 0, 0, "window.minimize" },
     { "${menu.window.max}", 0, 0, "window.maximize" },
