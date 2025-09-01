@@ -591,8 +591,8 @@ static iBool shouldPostEdgeMove_Touch_(const iTouch *d) {
         if (x_F3(delta) != 0 && iAbs(y_F3(delta) / x_F3(delta)) > 0.6f) {
             return iFalse;
         }
-        if ((d->edge == left_TouchEdge && x_F3(delta) > 3 * pixelRatio) ||
-            (d->edge == right_TouchEdge && x_F3(delta) < -3 * pixelRatio)) {
+        if ((d->edge == left_TouchEdge && x_F3(delta) > 5 * pixelRatio) ||
+            (d->edge == right_TouchEdge && x_F3(delta) < -5 * pixelRatio)) {
             return iTrue;
         }
     }

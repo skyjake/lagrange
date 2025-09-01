@@ -1096,13 +1096,15 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
         appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
         const char *paramStart = strchr(parts.path.start, ';');
         const iBool isEdit = paramStart && !iCmpStr(paramStart, ";edit");
-        appendRange_String(&d->url,
-                           (iRangecc){ parts.path.start,
-                                       /* strip any pre-existing params */
-                                       paramStart ? paramStart
-                                       : size_Range(&parts.query)
-                                           ? parts.query.start /* query is excluded here */
-                                           : constEnd_String(url) });
+        if (!isEmpty_Range(&parts.path)) {
+            appendRange_String(&d->url,
+                               (iRangecc){ parts.path.start,
+                /* strip any pre-existing params */
+                paramStart ? paramStart
+                : size_Range(&parts.query)
+                ? parts.query.start /* query is excluded here */
+                : constEnd_String(url) });
+        }
         const iRangecc siteRoot = urlRoot_String(&d->url);
         iUrl parts;
         init_Url(&parts, &d->url);

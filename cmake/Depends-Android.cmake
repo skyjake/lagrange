@@ -32,11 +32,11 @@ if (NOT ZLIB_FOUND)
 endif ()
 
 set (FRIBIDI_FOUND YES)
-set (FRIBIDI_LIBRARIES ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/lib/libfribidi.a)
-set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include)
+set (FRIBIDI_LDFLAGS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/lib/libfribidi.a)
+set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include/fribidi)
 
 set (HARFBUZZ_FOUND YES)
-set (HARFBUZZ_LIBRARIES ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz.a)
+set (HARFBUZZ_LDFLAGS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz.a)
 set (HARFBUZZ_INCLUDE_DIRS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/include/harfbuzz)
 
 set (WEBP_FOUND YES)

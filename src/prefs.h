@@ -66,17 +66,19 @@ enum iPrefsBool {
     uiAnimations_PrefsBool,
     hideToolbarOnScroll_PrefsBool,
 
+    hideTabBar_PrefsBool,
     blinkingCursor_PrefsBool,
     bottomNavBar_PrefsBool,
     bottomTabBar_PrefsBool,
     menuBar_PrefsBool,
+    
     simpleChars_PrefsBool,
-
     evenSplit_PrefsBool,
     detachedPrefs_PrefsBool,
     editorSyntaxHighlighting_PrefsBool,
 
     /* Document presentation */
+    italicQuote_PrefsBool,
     sideIcon_PrefsBool,
     time24h_PrefsBool,
 
@@ -131,7 +133,8 @@ enum iCollapse {
     always_Collapse,
 };
 
-#define maxNavbarActions_Prefs 4
+#define maxNavbarActions_Prefs  4
+#define maxSidebarModes_Prefs   8
 
 /* TODO: Use a systematic command naming convention for notifications. */
 
@@ -147,18 +150,20 @@ struct Impl_Prefs {
             iBool retainWindowSize;
             iBool uiAnimations;
             iBool hideToolbarOnScroll;
-
+            
+            iBool hideTabBar;
             iBool blinkingCursor;
             iBool bottomNavBar;
             iBool bottomTabBar;
             iBool menuBar;
+            
             iBool simpleChars;
-
             iBool evenSplit;
             iBool detachedPrefs;
             iBool editorSyntaxHighlighting;
 
             /* Document presentation */
+            iBool italicQuote;
             iBool sideIcon;
             iBool time24h;
 
@@ -220,6 +225,7 @@ struct Impl_Prefs {
     float               uiScale;
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
+    iBool               sidebarModeEnabled[2][maxSidebarModes_Prefs];
     int                 inputZoomLevel;
     int                 editorZoomLevel;
 

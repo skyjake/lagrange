@@ -124,6 +124,7 @@ uint16_t        port_Url                (const iUrl *);
 
 iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
+iRangecc        urlHostWithPort_String  (const iString *);
 iRangecc        urlDirectory_String     (const iString *); /* without a file name; ends with slash */
 uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
@@ -141,6 +142,7 @@ void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
 void            punyEncodeUrlHost_String(iString *absoluteUrl);
 void            stripUrlPort_String     (iString *);
 void            stripDefaultUrlPort_String(iString *);
+const iString * urlDefaultPortStripped_String(const iString *);
 const iString * urlFragmentStripped_String(const iString *);
 const iString * urlQueryStripped_String (const iString *);
 iString *       withUrlParameters_String(const iString *d, ... /* key, value */); /* NULL key terminates; value can be NULL */
@@ -157,6 +159,7 @@ const iString * prettyDataUrl_String    (const iString *, int contentColor);
 const char *    mediaType_Path                      (const iString *path);
 const char *    mediaTypeFromFileExtension_String   (const iString *);
 iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);
+iBool           equalMediaType_String               (const iString *, const char *mediaType);
 
 const iString * findContainerArchive_Path           (const iString *path);
 

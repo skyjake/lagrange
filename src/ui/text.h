@@ -82,6 +82,7 @@ SDL_Texture *glyphCache_Text    (void);
 /*----------------------------------------------------------------------------------------------*/
 
 int     lineHeight_Text         (int fontId);
+int     ascent_Text             (int fontId);
 iRect   visualBounds_Text       (int fontId, iRangecc text);
 int     fontWithSize_Text       (int fontId, enum iFontSize sizeId);
 int     fontWithStyle_Text      (int fontId, enum iFontStyle styleId);
@@ -123,7 +124,7 @@ int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color,
 
 iDeclareType(TextBuf)
 iDeclareTypeConstructionArgs(TextBuf, iWrapText *wrap, int fontId, int color)
-    
+
 struct Impl_TextBuf {
     SDL_Texture *texture;
     iInt2        size;

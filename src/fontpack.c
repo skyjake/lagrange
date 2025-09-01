@@ -54,7 +54,7 @@ float scale_FontSize(enum iFontSize size) {
         1.333,
         1.666,
         2.000,
-        0.684, 
+        0.684,
         0.855, /* calibration: fits the Lagrange title screen with Normal line width */
     };
     if (size < 0 || size >= max_FontSize) {
@@ -104,7 +104,7 @@ static void load_FontFile_(iFontFile *d, const iBlock *data) {
     stbtt_GetFontVMetrics(&d->stbInfo, &d->ascent, &d->descent, NULL);
     stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &d->emAdvance, NULL);
 #endif
-#if defined(LAGRANGE_ENABLE_HARFBUZZ)
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
     /* HarfBuzz will read the font data. */
     d->hbBlob = hb_blob_create(constData_Block(data), size_Block(&d->sourceData),
                                HB_MEMORY_MODE_READONLY, NULL, NULL);
@@ -126,7 +126,7 @@ static iBool detectMonospace_FontFile_(const iFontFile *d) {
 }
 
 static void unload_FontFile_(iFontFile *d) {
-#if defined(LAGRANGE_ENABLE_HARFBUZZ)
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
     /* HarfBuzz objects. */
     hb_font_destroy(d->hbFont);
     hb_face_destroy(d->hbFace);
@@ -153,7 +153,7 @@ float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
     return stbtt_ScaleForPixelHeight(&d->stbInfo, pixelHeight);
 #else
     return 1.0f;
-#endif    
+#endif
 }
 
 uint8_t *rasterizeGlyph_FontFile(const iFontFile *d, float xScale, float yScale, float xShift,
@@ -188,7 +188,7 @@ int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstruction(FontSpec)
-    
+
 void init_FontSpec(iFontSpec *d) {
     init_String(&d->id);
     init_String(&d->name);
@@ -228,7 +228,7 @@ struct Impl_Fonts {
 static iFonts fonts_;
 
 static void unloadFiles_Fonts_(iFonts *d) {
-    /* TODO: Mark all files in font packs as not resident. */    
+    /* TODO: Mark all files in font packs as not resident. */
     clear_ObjectList(d->files);
 }
 
@@ -338,7 +338,7 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
         }
         pushBack_PtrArray(&d->fonts, d->loadSpec);
         d->loadSpec = NULL;
-    }   
+    }
 }
 
 static iBlock *readFile_FontPack_(const iFontPack *d, const iString *path) {
@@ -374,10 +374,10 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
     }
     iUnused(table);
     if (!cmp_String(key, "name") && value->type == string_TomlType) {
-        set_String(&d->loadSpec->name, value->value.string);        
+        set_String(&d->loadSpec->name, value->value.string);
     }
     else if (!cmp_String(key, "priority") && value->type == int64_TomlType) {
-        d->loadSpec->priority = (int) value->value.int64;        
+        d->loadSpec->priority = (int) value->value.int64;
     }
     else if (!cmp_String(key, "height")) {
         d->loadSpec->heightScale[0] = d->loadSpec->heightScale[1] =
@@ -391,7 +391,7 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
             (float) number_TomlValue(value);
     }
     else if (startsWith_String(key, "ui.") || startsWith_String(key, "doc.")) {
-        const int scope = startsWith_String(key, "ui.") ? 0 : 1;        
+        const int scope = startsWith_String(key, "ui.") ? 0 : 1;
         if (endsWith_String(key, ".height")) {
             d->loadSpec->heightScale[scope] = iMin(2.0f, (float) number_TomlValue(value));
         }
@@ -435,7 +435,7 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
                 }
                 iString *fontFileId = concat_Path(d->loadPath, cleanPath);
                 iAssert(!isEmpty_String(fontFileId));
-                /* FontFiles share source data blocks. The entire FontFiles can be reused, too, 
+                /* FontFiles share source data blocks. The entire FontFiles can be reused, too,
                    if have the same collection index is in use. */
                 iBlock *data = NULL;
                 ff = findFile_Fonts_(&fonts_, fontFileId);
@@ -607,7 +607,7 @@ static void disambiguateSpecs_Fonts_(iFonts *d) {
                 appendFormat_String(&spec2->name, " [%s]", cstr_String(&spec2->id));
             }
         }
-    }    
+    }
 }
 
 static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
@@ -619,7 +619,7 @@ void init_Fonts(const char *userDir) {
     if (isTerminal_Platform()) {
         return; /* fonts not needed */
     }
-    d->indexPattern = new_RegExp(":([0-9]+)$", 0);    
+    d->indexPattern = new_RegExp(":([0-9]+)$", 0);
     initCStr_String(&d->userDir, userDir);
     const iString *userFontsDir = userFontsDirectory_Fonts_(d);
     makeDirs_Path(userFontsDir);
@@ -645,7 +645,7 @@ void init_Fonts(const char *userDir) {
                 }
             }
             iString *ini = collectNew_String();
-            format_String(ini, 
+            format_String(ini,
                 "[default]\n"
                 "name    = \"Segoe UI\"\n"
                 "regular = \"segoeui.ttf\"\n"
@@ -656,7 +656,7 @@ void init_Fonts(const char *userDir) {
             iFontPack *sys = new_FontPack();
             sys->loadPath = concatCStr_Path(winPath, "Fonts");
             setCStr_String(&sys->id, "windows-system-fonts");
-            setReadOnly_FontPack(sys, iTrue);            
+            setReadOnly_FontPack(sys, iTrue);
             if (load_FontPack_(sys, ini)) {
                 pushBack_PtrArray(&d->packs, sys);
             }
@@ -738,7 +738,7 @@ void init_Fonts(const char *userDir) {
                 delete_FontPack(pack);
                 fprintf(stderr,
                         "[fonts] errors detected in fonts.ini: %s\n",
-                        cstr_String(userIni));                
+                        cstr_String(userIni));
             }
         }
         iRelease(f);
@@ -764,14 +764,14 @@ void init_Fonts(const char *userDir) {
                     continue;
                 }
                 iFontPack *pack = new_FontPack();
-                setStandalone_FontPack(pack, iTrue);                
+                setStandalone_FontPack(pack, iTrue);
                 iFontSpec *spec = new_FontSpec();
                 spec->flags |= user_FontSpecFlag;
                 if (detectMonospace_FontFile_(font)) {
                     spec->flags |= monospace_FontSpecFlag;
                 }
                 setRange_String(&spec->id, baseName_Path(collect_String(lower_String(&font->id))));
-                setRange_String(&spec->id, withoutExtension_Path(&spec->id));                
+                setRange_String(&spec->id, withoutExtension_Path(&spec->id));
                 replace_String(&spec->id, " ", "-");
                 setRange_String(&spec->name, baseName_Path(&font->id));
                 setRange_String(&spec->name, withoutExtension_Path(&spec->name));
@@ -1192,7 +1192,7 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
                     uint32_t first = strtoul(pos, &endp, 10);
                     uint32_t last  = first;
                     if (*endp == '-') {
-                        last = strtoul(endp + 1, &endp, 10);        
+                        last = strtoul(endp + 1, &endp, 10);
                     }
                     if (maxChar < first) {
                         break; /* The rest are even higher. */

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2024-12-04 15:38+0000\n"
+"PO-Revision-Date: 2025-08-31 13:23+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -176,7 +176,7 @@ msgid "macos.menu.bookmarks.bytag"
 msgstr "Etikete göre listele"
 
 msgid "menu.feeds.entrylist"
-msgstr "Besleme girdilerini göster"
+msgstr "Besleme girdilerini listele"
 
 msgid "menu.preferences"
 msgstr "Tercihler…"
@@ -214,7 +214,7 @@ msgstr "Sayfa bağlantısını kopyala"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
-msgstr "Beslemeleri göster"
+msgstr "Besleme girdilerini göster"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
@@ -275,7 +275,7 @@ msgid "sidebar.bookmarks"
 msgstr "Yer imleri"
 
 msgid "sidebar.feeds"
-msgstr "Beslemeler"
+msgstr "Besleme girdileri"
 
 msgid "sidebar.history"
 msgstr "Geçmiş"
@@ -911,7 +911,7 @@ msgstr "Genel"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Arayüz"
+msgstr "Davranış"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1219,7 +1219,7 @@ msgstr "Desteklenmeyen İçerik Türü"
 msgid "error.badheader.msg"
 msgstr ""
 "Alınan üstbilgi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
-"olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
+"veya bu protokolü desteklemiyor olabilir."
 
 msgid "error.badredirect"
 msgstr "Geçersiz Yeniden Yönlendirme"
@@ -2881,3 +2881,86 @@ msgstr "İçerik"
 
 msgid "prefs.expandline"
 msgstr "Uzun satırlara genişlet:"
+
+msgid "menu.closetab.above"
+msgstr "Yukarıdaki sekmeleri kapat"
+
+msgid "menu.closetab.below"
+msgstr "Aşağıdaki sekmeleri kapat"
+
+msgid "sidebar.structure"
+msgstr "Yapı"
+
+msgid "sidebar.documents"
+msgstr "Sekmeler"
+
+msgid "sidebar.subscriptions"
+msgstr "Abonelikler"
+
+msgid "sidebar.sub.empty"
+msgstr "Boş besleme"
+
+msgid "menu.sub.edit"
+msgstr "Yer imini düzenle…"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u girdi"
+msgstr[1] "%u girdi"
+
+msgid "hint.filter.bookmark"
+msgstr "yer imlerini süz"
+
+msgid "heading.prefs.theme"
+msgstr "Tema"
+
+msgid "prefs.quote.italic"
+msgstr "Eğik alıntı metni:"
+
+msgid "feeds.reset"
+msgstr "Bilinen girdileri sıfırla"
+
+msgid "menu.show.structure"
+msgstr "Site yapısını göster"
+
+msgid "menu.show.subscriptions"
+msgstr "Abonelikleri göster"
+
+msgid "menu.show.opendocs"
+msgstr "Sekmeleri göster"
+
+msgid "menu.fold"
+msgstr "Katla"
+
+msgid "heading.prefs.ui"
+msgstr "Kullanıcı arayüzü"
+
+msgid "prefs.hidetabs"
+msgstr "Sekme çubuğunu gizle:"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Araç çubuğu sekmeleri"
+
+msgid "menu.feed.edit"
+msgstr "Besleme ayarları…"
+
+msgid "menu.sidebar.configure"
+msgstr "Yapılandır…"
+
+msgid "heading.prefs.sidebars"
+msgstr "Kenar çubukları"
+
+msgid "prefs.sidebar.left"
+msgstr "Sol"
+
+msgid "prefs.sidebar.right"
+msgstr "Sağ"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "Sol araç çubuğu sekmeleri"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "Sağ araç çubuğu sekmeleri"
+
+msgid "link.copy.label"
+msgstr "Bağlantı etiketini kopyala"

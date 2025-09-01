@@ -224,7 +224,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 55, { "${keys.subscribe}",            subscribeToPage_KeyShortcut,    "feeds.subscribe"                   }, 0 },
     { 56, { "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
     { 57, { "${keys.feeds.showunread}",     SDLK_u, 0,                      "feeds.mode arg:1"                  }, 0 },
-    { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input"           }, 0 },
+    { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input id2:filter.bookmark.input"           }, 0 },
     { 65, { "${LC:menu.viewformat.plain}",  SDLK_y, KMOD_PRIMARY,           "document.viewformat"               }, 0 },
     { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_ZOOM,         "zoom.delta arg:10"                 }, 0 },
     { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_ZOOM,          "zoom.delta arg:-10"                }, 0 },
@@ -240,6 +240,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
     { 85, { "${LC:menu.movetab.right}",     moveTabRight_KeyShortcut,       "tabs.move arg:1"                   }, 0 },
+    { 86, { "${LC:menu.movetab.newwindow}", SDLK_t, KMOD_PRIMARY | KMOD_ALT, "tabs.swap newwindow:1"            }, 0 },
     { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
     { 91, { "${keys.split.next}",           SDLK_TAB, KMOD_CTRL,            "keyroot.next",                     }, 0 },
     { 92, { "${keys.split.item} ${menu.split.merge}",           '1', 0,     "ui.split arg:0",                   }, noDirectTrigger_BindFlag },
@@ -261,6 +262,15 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },
     { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
     { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
+    { 250,{ "${LC:menu.show.bookmarks}",    '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1" }, 0 },
+    { 251,{ "${LC:menu.show.feeds}",        '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1" }, 0 },
+    { 252,{ "${LC:menu.show.subscriptions}", '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1" }, 0 },
+    { 253,{ "${LC:menu.show.identities}",   '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1" }, 0 },
+    { 254,{ "${LC:menu.show.outline}",      '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1" }, 0 },
+    { 255,{ "${LC:menu.show.structure}",    '6', leftSidebarTab_KeyModifier, "sidebar.mode arg:5 toggle:1" }, 0 },
+    { 256,{ "${LC:menu.show.opendocs}",     '7', leftSidebarTab_KeyModifier, "sidebar.mode arg:6 toggle:1" }, 0 },
+    { 257,{ "${LC:menu.show.history}",      '8', leftSidebarTab_KeyModifier, "sidebar.mode arg:7 toggle:1" }, 0 },
+
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
     { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
@@ -269,7 +279,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #endif
     { 1004, { NULL, SDLK_F5, 0,                         "document.reload"               }, 0 },
     /* Media keys. */
-    { 1005, { NULL, SDLK_AC_SEARCH, 0,                  "focus.set id:find.input"       }, 0 },
+    { 1005, { NULL, SDLK_AC_SEARCH, 0,                  "focus.set id:find.input id2:filter.bookmark.input"       }, 0 },
     { 1006, { NULL, SDLK_AC_HOME, 0,                    "navigate.home"                 }, 0 },
     { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back"                 }, 0 },
     { 1008, { NULL, SDLK_AC_FORWARD, 0,                 "navigate.forward"              }, 0 },

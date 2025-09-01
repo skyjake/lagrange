@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2025-01-05 12:17+0000\n"
+"PO-Revision-Date: 2025-08-27 16:23+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -75,7 +75,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Прикажи по времену настанка"
 
 msgid "menu.feeds.entrylist"
-msgstr "Прикажи ставке фида"
+msgstr "Излистај ставке фидова"
 
 msgid "menu.preferences"
 msgstr "Подешавања…"
@@ -99,7 +99,7 @@ msgid "menu.show.bookmarks"
 msgstr "Прикажи обележиваче"
 
 msgid "menu.show.feeds"
-msgstr "Прикажи фидове"
+msgstr "Прикажи ставке фида"
 
 msgid "menu.show.history"
 msgstr "Прикажи историју"
@@ -556,7 +556,7 @@ msgstr "Опште"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Интерфејс"
+msgstr "Понашање"
 
 # tab button
 msgid "heading.prefs.network"
@@ -1026,7 +1026,7 @@ msgid "heading.bookmark.edit"
 msgstr "Уређивање обележивача"
 
 msgid "sidebar.feeds"
-msgstr "Фидови"
+msgstr "Ставке фидова"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -2878,3 +2878,81 @@ msgstr "Садржај"
 
 msgid "prefs.expandline"
 msgstr "Проширивање у дугачке редове:"
+
+msgid "heading.prefs.theme"
+msgstr "Тема"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Прикажи претплате"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Прикажи структуру сајта"
+
+msgid "feeds.reset"
+msgstr "Ресетуј познате ставке"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Картице алата"
+
+msgid "menu.sidebar.configure"
+msgstr "Подеси…"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Прикажи картице"
+
+msgid "sidebar.structure"
+msgstr "Структура"
+
+msgid "sidebar.documents"
+msgstr "Картице"
+
+msgid "sidebar.subscriptions"
+msgstr "Претплате"
+
+msgid "hint.filter.bookmark"
+msgstr "филтрирање обележивача"
+
+msgid "heading.prefs.sidebars"
+msgstr "Панели"
+
+msgid "prefs.sidebar.left"
+msgstr "Лево"
+
+msgid "prefs.sidebar.right"
+msgstr "Десно"
+
+msgid "menu.feed.edit"
+msgstr "Подешавања фида…"
+
+msgid "heading.prefs.ui"
+msgstr "Интерфејс"
+
+msgid "prefs.hidetabs"
+msgstr "Сакр. траке картица:"
+
+msgid "menu.fold"
+msgstr "Скупи"
+
+msgid "sidebar.sub.empty"
+msgstr "Празан фид"
+
+msgid "menu.sub.edit"
+msgstr "Уреди обележивач…"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u ставка"
+msgstr[1] "%u ставке"
+msgstr[2] "%u ставки"
+
+msgid "menu.closetab.above"
+msgstr "Затвори горње картице"
+
+msgid "menu.closetab.below"
+msgstr "Затвори доње картице"
+
+msgid "prefs.quote.italic"
+msgstr "Цитати курзивом:"

@@ -213,7 +213,6 @@ void setThemePalette_Color(enum iColorTheme theme) {
             set_Color(uiInputBackgroundFocused_ColorId,
                       mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.82f));
             copy_(uiInputText_ColorId, gray75_ColorId);
-            //copy_(uiInputTextFocused_ColorId, white_ColorId);
             set_Color(uiInputTextFocused_ColorId, mix_Color(get_Color(white_ColorId),
                                                             get_Color(accentHi), 0.15f));
             copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
@@ -225,7 +224,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiAnnotation_ColorId, accentHi);
             copy_(uiIcon_ColorId, accentHi);
             copy_(uiIconHover_ColorId, accentHi);
-            copy_(uiSeparator_ColorId, black_ColorId);
+            copy_(uiSeparator_ColorId, gray50_ColorId);
             copy_(uiMarked_ColorId, accentLo);
             copy_(uiMatching_ColorId, accentLo);
             break;
@@ -266,8 +265,6 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputBackgroundFocused_ColorId, white_ColorId);
             copy_(uiInputText_ColorId, gray25_ColorId);
             copy_(uiInputTextFocused_ColorId, black_ColorId);
-//            set_Color(uiInputFrame_ColorId,
-//                      mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.5f));
             copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
             copy_(uiInputFrameHover_ColorId, accentLo);
             copy_(uiInputFrameFocused_ColorId, uiInputBackgroundFocused_ColorId);
@@ -286,7 +283,6 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackground_ColorId, white_ColorId);
             copy_(uiBackgroundHover_ColorId, gray75_ColorId);
             copy_(uiBackgroundSelected_ColorId, accentHi);
-            //copy_(uiBackgroundPressed_ColorId, accentHi);
             set_Color(uiBackgroundPressed_ColorId,
                       mix_Color(get_Color(accentHi), get_Color(white_ColorId), 0.5f));
             copy_(uiBackgroundFramelessHover_ColorId, accentHi);
@@ -347,8 +343,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
     set_Color(uiBackgroundFramelessHover_ColorId,
               mix_Color(get_Color(uiBackground_ColorId),
                         get_Color(uiBackgroundSelected_ColorId),
-                        isDark_ColorTheme(theme) ? 0.66f : 0.5f)); /*
-                        theme == pureBlack_ColorTheme ? 0.5f : isDark_ColorTheme(theme) ? 0.25f : 0.66f));*/
+                        isDark_ColorTheme(theme) ? 0.66f : 0.375f));
     setHsl_Color(uiBackgroundFolder_ColorId,
                  addSatLum_HSLColor(get_HSLColor(uiBackgroundSidebar_ColorId),
                                     0,
@@ -366,6 +361,10 @@ void setThemePalette_Color(enum iColorTheme theme) {
         copy_(uiInputFrame_ColorId, uiBackgroundSidebar_ColorId);
         copy_(uiInputFrameFocused_ColorId, uiBackgroundSidebar_ColorId);
         copy_(uiInputBackgroundFocused_ColorId, uiBackgroundSidebar_ColorId);
+        if (theme == dark_ColorTheme || theme == light_ColorTheme) {
+            set_Color(uiSeparator_ColorId, mix_Color(get_Color(uiSeparator_ColorId),
+                                                     get_Color(uiBackgroundSidebar_ColorId), 0.5f));
+        }
     }
 }
 

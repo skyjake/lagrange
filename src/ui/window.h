@@ -70,6 +70,7 @@ struct Impl_WindowPlacement {
     iInt2 lastNotifiedSize; /* keep track of horizontal/vertical notifications */
     int   snap;             /* LAGRANGE_ENABLE_CUSTOM_FRAME */
     int   lastHit;
+    int   desktop;          /* remember the workspace */
 };
 
 enum iWindowSplit {

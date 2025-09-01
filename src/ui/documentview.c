@@ -920,22 +920,24 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
     }
     if (run->mediaType == image_MediaType) {
-        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->view->doc), mediaId_GmRun(run));
-        const iRect dst = moved_Rect(run->visBounds, origin);
+        iMedia      *media = media_GmDocument(d->view->doc);
+        SDL_Texture *tex   = imageTexture_Media(media, mediaId_GmRun(run));
+        const iRect  dst   = moved_Rect(run->visBounds, origin);
         if (tex) {
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
             SDL_RenderCopy(d->paint.dst->render, tex, NULL,
-                           &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+                        &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+            return;
         }
-        else {
+        else if (imageFailed_Media(media, mediaId_GmRun(run))) {
             drawRect_Paint(&d->paint, dst, tmQuoteIcon_ColorId);
             drawCentered_Text(uiLabel_FontId,
-                              dst,
-                              iFalse,
-                              tmQuote_ColorId,
-                              explosion_Icon "  Error Loading Image");
+                                dst,
+                                iFalse,
+                                tmQuote_ColorId,
+                                explosion_Icon "  Error Loading Image");
+            return;
         }
-        return;
     }
     else if (isMedia_GmRun(run)) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
@@ -1193,7 +1195,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
             deinit_String(&text);
         }
-        else if (run->flags & endOfLine_GmRunFlag &&
+        else if ((run->flags & endOfLine_GmRunFlag ||
+                  run->mediaType == image_MediaType) && // show download progress for images that are incomplete
                  (mr = findMediaRequest_DocumentWidget(d->view->owner, run->linkId)) != NULL) {
             if (!isFinished_GmRequest(mr->req)) {
                 fillRect_Paint(&d->paint,

@@ -197,7 +197,6 @@ iDefineTypeConstruction(GlyphTable)
 
 struct Impl_Font {
     iBaseFont    font;
-    int          baseline;
     int          vertOffset; /* offset due to glyph scaling */
     float        xScale, yScale;
     float        emAdvance;
@@ -221,8 +220,8 @@ static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *font
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->emAdvance  = fontFile->emAdvance * d->xScale;
-    d->baseline   = fontFile->ascent * d->yScale;
+    d->emAdvance     = fontFile->emAdvance * d->xScale;
+    d->font.baseline = fontFile->ascent * d->yScale;
     d->vertOffset = d->font.height * (1.0f - glyphScale) / 2 * fontSpec->vertOffsetScale[scaleType];
     d->table = NULL;
 }
@@ -417,7 +416,7 @@ static void initCache_StbText_(iStbText *d) {
                               : get_Window()->pixelRatio < 2.5f ? 3
                                                                 : 2;
     rasterizedAll_GlyphFlag_ = makeRasterizedAll_GlyphFlag_(numOffsetSteps_Glyph_);
-#if !defined(NDEBUG)
+#if !defined (NDEBUG)
     printf("[Text] subpixel offsets: %d\n", numOffsetSteps_Glyph_);
 #endif
     const iInt2 cacheDims = init_I2(8 * numOffsetSteps_Glyph_, 40);
@@ -1299,15 +1298,16 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             }
             /* Output position for the glyph. */
             SDL_Rect dst = { d->orig.x + d->xCursor + xOffset + glyph->d[hoff].x,
-                             d->orig.y + d->yCursor - yOffset + glyph->font->baseline + glyph->d[hoff].y,
+                             d->orig.y + d->yCursor - yOffset + glyph->font->font.baseline +
+                                 glyph->d[hoff].y,
                              glyph->rect[hoff].size.x,
                              glyph->rect[hoff].size.y };
             /* Align baselines of different fonts. */
             if (run->font != attrText->baseFont &&
                 ~run->font->spec->flags & auxiliary_FontSpecFlag) {
-                const int bl1 = ((iFont *) attrText->baseFont)->baseline +
+                const int bl1 = ((iFont *) attrText->baseFont)->font.baseline +
                                 ((iFont *) attrText->baseFont)->vertOffset;
-                const int bl2 = runFont->baseline + runFont->vertOffset;
+                const int bl2 = runFont->font.baseline + runFont->vertOffset;
                 dst.y += bl1 - bl2;
             }
             /* Update the bounding box. */

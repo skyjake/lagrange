@@ -32,7 +32,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Scaling page content (50%...200%)
 * Scaling factor for the UI (for arbitrary monitor DPI)
 * Curses-based TUI as an alternative to the graphical interface
-* Sidebars for managing bookmarks, identities and subscribed feeds, and viewing browsing history and the page outline
+* Sidebars for managing bookmarks, identities and subscribed feeds, and viewing browsing history, open tabs, page outline, and site structure
 * Multiple tabs
 * Split view for browsing two pages at once
 * Persistent app state — tabs and history are restored on next run
@@ -163,17 +163,50 @@ A tab can be set to auto-reload at given intervals. The setting is remembered un
 
 The feature can be found in the page context menu: right-click and select "Tools > Set Auto-Reload...".
 
+### 1.2.3 Managing tabs
+
+You can open as many tabs as you want, but it becomes challenging to switch between them and locate them because the tab bar will only show a series of tiny buttons. Right-clicking on the tab bar opens a context menu that lets you close multiple tabs at once. You can also open the Tabs sidebar (see the next section) to list all the open tabs and access them conveniently.
+
 ## 1.3 Sidebars
 
-The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHIFT+}${CTRL+}P (for the left/right sidebar, respectively). Both sidebars have five tabs:
+The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHIFT+}${CTRL+}P (for the left/right sidebar, respectively). Both sidebars can have up to eight tabs:
 
 * Bookmarks: List of bookmarks that you've created, organized into folders. Bookmarks appear first in search results for quick and easy access.
-* Feeds: Entries found on subscribed pages.
-* History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
+* Feeds: Combined list of all entries found on subscribed pages.
+* Subscriptions: List of the subscribed pages, how many entries they have, and when was the latest entry posted.
 * Identities: TLS client certificates.
 * Outline: List of the headings in the currently open tab. Useful when reading longer documents.
+* Structure: Directory tree compiled from known URIs related to the current site, for quick navigation.
+* Tabs: List of all open tabs. You can close and reorder tabs using this list.
+* History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 
-${CTRL+}1 through ${CTRL+}5 switch between the left sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss sidebars.
+The visible tabs are configurable. You can go to "Preferences > Sidebars" to enable or disable each one individually. The disabled ones can still be accessed via the [⋯] button in the sidebar header.
+
+${CTRL+}1 through ${CTRL+}8 switch between the sidebar tabs, or hide the sidebar if the currently open tab's key is pressed. You can also press Escape to dismiss sidebars.
+
+### 1.3.1 Vertical tabs
+
+The Tabs sidebar shows all the open tabs as a list. Each item in the list indicates status information about the tab:
+
+* The item is shown in bold text if you haven't viewed it yet, for example if it was opened in the background.
+* There is a reload icon 🔃 next to the tab title if a page contents are currently being fetched.
+* There is an audio playback indicator 🔊 if the tab is playing audio.
+
+The items in the list are draggable so you can reorder the tabs as needed.
+
+The list's context menu lets you close multiple tabs and move individual tabs to split view or into a new window, just like the context menu of the horizontal tab bar.
+
+You can hide the default horizontal tab bar and manage tabs solely using the sidebar. The setting for this is "Preferences > Appearance > Hide tab bar". It helps to enable the "Tabs" tab in either the left or right sidebar to have easier access to it.
+
+### 1.3.2 Structure navigator
+
+The Structure sidebar is a tool for quickly navigating inside a capsule and viewing its structure as a tree. Gemini has no way of providing any structural metadata along with the pages you visit, so a meaningful hierarchy is only available if the site's URI paths provide one. Fortunately, many Gemini capsules are manually constructed and human authors tend to set up proper directory structures, so the resulting hierarchy is often useful. At the very least, it is convenient to discover and navigate sibling entries.
+
+While you are browsing pages on a site, the tree is populated using link URIs you come across — do not expect to see a fully populated tree when arriving at a site for the first time. Navigation history, bookmarks, and feed entries are used for populating the initial tree, but any links discovered on loaded pages are not preloaded or persistently remembered.
+
+Directories in the tree are foldable. You can identify a folded directory by the 〉symbol and the number that shows how many items are inside. Directories unfold automatically to highlight the current page. You can manually unfold a directory by clicking on it, and it stays unfolded henceforth. Clicking on an unfolded directory will open the corresponding directory URI. In other words, to navigate to a directory that is currently folded, you will need to click on the item twice. The tree's context menu can be used to re-fold unfolded directories, although they will only actually fold if they are unrelated to the currently open page.
+
+The Structure sidebar is not Gemini-specific. It does work best with natural path hierarchies, though. For example, Gopher selectors may or may not refer to a directory hierarchy, and furthermore, Gopher URI paths start with an item type character. This effectively breaks the tree into multiple branches, making the organization more difficult to understand. Another challenging case is dynamically generated sites that use hashes or sequence numbers to identify resources.
 
 ## 1.4 Bookmarks
 
@@ -230,6 +263,12 @@ Bookmarks may use a number of special tags that control their behavior. In pract
 * The ".remote" tag is used for remote bookmarks. These bookmarks cannot be edited or tagged, but you can make a local duplicate to turn it into a regular bookmark.
 * The ".usericon" tag prevents a random icon to be selected for the bookmark. This tag is automatically applied when an icon character is entered in the bookmark editor.
 * The ".linksplit" tag causes all links on the bookmarked page to open to the side, automatically enabling split view mode.
+
+### 1.4.5 Filtering
+
+At the bottom of the sidebar is an input field for filtering the contents of the view. It matches the entered text against bookmark titles, URIs, and tags. Compared to finding bookmarks via quick lookup in the URL field, a filtered bookmarks list is fully interactive so you can manipulate them via the context menu.
+
+The special behavioral tags listed in the previous section can also be used for finding special-purpose bookmarks more easily. It is not needed to type the full tag; a partial match from the beginning is sufficient (for example, ".su" for subscriptions).
 
 ## 1.5 Subscribing to feeds
 
@@ -419,11 +458,11 @@ On Windows, an option is provided to use a custom window frame. This provides a 
 
 ## 2.3 Page style and layout
 
-The "Page Style" and "Page Layout" tabs of the Preferences dialog let you customize the appearance and arrangement of page contents.
+The "Theme", "Fonts", and "Page Layout" tabs of the Preferences dialog let you customize the appearance and arrangement of page contents.
 
 ### 2.3.1 Color themes
 
-Page content color themes are selected on the "Page Style" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode.
+Page content color themes are selected on the "Theme" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode.
 
 * Colorful Dark: All elements of the page are colored; the background is dark and text is light. This mode provides the best visual distinction between different domains because more color combinations are available.
 * Colorful Light: A single, bright background color with black text. This is the most colorful light theme. Note that colored backgrounds may reduce readability.
@@ -473,9 +512,9 @@ Other layout options:
 
 This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5).
 
-The "Page Style" tab of the Preferences dialog contains options that affect the appearance of text in page content. The user interface font can be changed in the "Appearance" tab, along with other text renderer settings.
+The "Fonts" tab of the Preferences dialog contains options that affect the appearance of text in page content. The user interface font can also be changed on this tab.
 
-To be precise, on the "Page Style" tab you can select which _typefaces_ to use for certain elements of the page; picking a particular font (including its size, weight, style, etc.) for specific elements is not possible. Lagrange controls the size and styling of text by choosing fonts according to your theme and typeface preferences. The term "font" is often used to mean "typeface" in this document and in the app UI.
+To be precise, on the "Fonts" tab you can select which _typefaces_ to use for certain elements of the page; picking a particular font (including its size, weight, style, etc.) for specific elements is not possible. Lagrange controls the size and styling of text by choosing fonts according to your theme and typeface preferences. The term "font" is used to mean "typeface" in this document and in the app UI.
 
 There are three built-in fonts available:
 
@@ -1006,7 +1045,7 @@ timestamp = 1648809264
 
 Misfin is a messaging protocol that has been in the works since May 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
 
-Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server. 
+Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server.
 
 A Misfin identity certificate is a TLS client certificate where:
 

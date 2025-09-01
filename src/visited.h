@@ -61,4 +61,5 @@ void    removeUrl_Visited       (iVisited *, const iString *url);
 iBool   containsUrl_Visited     (const iVisited *, const iString *url);
 
 const iPtrArray *   list_Visited        (const iVisited *, size_t count); /* returns collected */
+const iPtrArray *   listMatching_Visited(const iVisited *, const char *prefix);
 const iPtrArray *   listKept_Visited    (const iVisited *);

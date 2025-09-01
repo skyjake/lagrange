@@ -2966,7 +2966,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
-    if (!isTerminal_Platform()) {
+    if (!isTerminal_Platform() && ~w->flags & frameless_WidgetFlag) {
         drawRectThickness_Paint(&p,
                                 adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
                                 isFocused ? gap_UI / 4 : 1,

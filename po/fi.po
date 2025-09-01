@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2025-01-15 06:43+0000\n"
+"PO-Revision-Date: 2025-08-30 17:06+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -122,7 +122,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Luettele luontijärjestyksessä"
 
 msgid "menu.feeds.entrylist"
-msgstr "Näytä syötteiden artikkelit"
+msgstr "Luettele syötteiden artikkelit"
 
 msgid "menu.preferences"
 msgstr "Asetukset…"
@@ -236,7 +236,7 @@ msgid "sidebar.bookmarks"
 msgstr "Kirjanmerkit"
 
 msgid "sidebar.feeds"
-msgstr "Syötteet"
+msgstr "Artikkelit"
 
 msgid "sidebar.history"
 msgstr "Historia"
@@ -745,7 +745,7 @@ msgid "heading.prefs.general"
 msgstr "Yleiset"
 
 msgid "heading.prefs.interface"
-msgstr "UI"
+msgstr "Toiminta"
 
 msgid "heading.prefs.keys"
 msgstr "Näppäimet"
@@ -1185,9 +1185,9 @@ msgstr "Vastaanotettua sisältöä ei voi toistaa tällä sovelluksella."
 
 msgid "error.badheader.msg"
 msgstr ""
-"Vastaanotettu otsaketieto ei ole Gemini-protokollan spesifikaation mukainen. "
-"Ehkä palvelin on epäkunnossa, tai yritit ottaa yhteyttä palvelimeen, joka ei "
-"tue Gemini-protokollaa."
+"Vastaanotettu otsaketieto ei ole protokollan spesifikaation mukainen. Ehkä "
+"palvelin on epäkunnossa, tai yritit ottaa yhteyttä palvelimeen, joka ei tue "
+"tätä protokollaa."
 
 msgid "error.badredirect.msg"
 msgstr ""
@@ -2827,3 +2827,89 @@ msgstr "Sisältö"
 
 msgid "prefs.expandline"
 msgstr "Laajenna pitkien rivien mukaan:"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u artikkeli"
+msgstr[1] "%u artikkelia"
+
+msgid "heading.prefs.theme"
+msgstr "Teema"
+
+msgid "menu.feed.edit"
+msgstr "Syötteen asetukset…"
+
+msgid "heading.prefs.ui"
+msgstr "Käyttöliittymä"
+
+msgid "prefs.hidetabs"
+msgstr "Piilota välisivupalkki:"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Sivupaneelin välilehdet"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Näytä tilaukset"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Näytä välilehdet"
+
+msgid "feeds.reset"
+msgstr "Nollaa löydetyt artikkelit"
+
+msgid "hint.filter.bookmark"
+msgstr "suodata kirjanmerkit"
+
+msgid "prefs.sidebar.left"
+msgstr "Vasen"
+
+msgid "prefs.sidebar.right"
+msgstr "Oikea"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Näytä hakemistorakenne"
+
+msgid "link.copy.label"
+msgstr "Kopioi linkin teksti"
+
+msgid "heading.prefs.sidebars"
+msgstr "Sivupaneelit"
+
+msgid "menu.sidebar.configure"
+msgstr "Asetukset…"
+
+msgid "sidebar.structure"
+msgstr "Rakenne"
+
+msgid "sidebar.documents"
+msgstr "Välilehdet"
+
+msgid "sidebar.subscriptions"
+msgstr "Tilaukset"
+
+msgid "sidebar.sub.empty"
+msgstr "Tyhjä syöte"
+
+msgid "menu.sub.edit"
+msgstr "Muokkaa kirjanmerkkiä…"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "Vasemman paneelin välilehdet"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "Oikean paneelin välilehdet"
+
+msgid "prefs.quote.italic"
+msgstr "Lainausteksti kursiivilla:"
+
+msgid "menu.fold"
+msgstr "Tiivistä"
+
+msgid "menu.closetab.below"
+msgstr "Sulje välilehdet alhaalla"
+
+msgid "menu.closetab.above"
+msgstr "Sulje välilehdet ylhäällä"

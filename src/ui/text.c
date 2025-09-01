@@ -97,6 +97,10 @@ int lineHeight_Text(int fontId) {
     return font_Text(fontId)->height;
 }
 
+int ascent_Text(int fontId) {
+    return font_Text(fontId)->baseline;
+}
+
 iTextMetrics measureRange_Text(int fontId, iRangecc text) {
     if (isEmpty_Range(&text)) {
         return (iTextMetrics){ init_Rect(0, 0, 0, lineHeight_Text(fontId)), zero_I2() };

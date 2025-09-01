@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Token)
 
 #define maxLen_Token 64
-    
+
 struct Impl_Token {
     char buf[64];
     size_t size;
@@ -53,6 +53,12 @@ static iRangecc find_Token(const iToken *d, const char *cmd) {
         range.end = range.start + d->size;
     }
     return range;
+}
+
+iRangecc name_Command(const char *command) {
+    const char *firstSpace = strchr(command, ' ');
+    if (!firstSpace) return range_CStr(command);
+    return (iRangecc){ command, firstSpace };
 }
 
 iBool equal_Command(const char *cmdWithArgs, const char *cmd) {
@@ -85,7 +91,7 @@ int arg_Command(const char *cmd) {
 uint32_t argU32Label_Command(const char *cmd, const char *label) {
     iToken tok;
     init_Token(&tok, label);
-    const iRangecc ptr = find_Token(&tok, cmd);    
+    const iRangecc ptr = find_Token(&tok, cmd);
     if (ptr.start) {
         return (uint32_t) strtoul(ptr.end, NULL, 10);
     }
@@ -95,7 +101,7 @@ uint32_t argU32Label_Command(const char *cmd, const char *label) {
 float argfLabel_Command(const char *cmd, const char *label) {
     iToken tok;
     init_Token(&tok, label);
-    const iRangecc ptr = find_Token(&tok, cmd);    
+    const iRangecc ptr = find_Token(&tok, cmd);
     if (ptr.start) {
         return strtof(ptr.end, NULL);
     }
@@ -113,7 +119,7 @@ float argf_Command(const char *cmd) {
 void *pointerLabel_Command(const char *cmd, const char *label) {
     iToken tok;
     init_Token(&tok, label);
-    const iRangecc ptr = find_Token(&tok, cmd);        
+    const iRangecc ptr = find_Token(&tok, cmd);
     if (ptr.start) {
         void *val = NULL;
         sscanf(ptr.end, "%p", &val);
@@ -134,7 +140,7 @@ void *pointer_Command(const char *cmd) {
 const char *suffixPtr_Command(const char *cmd, const char *label) {
     iToken tok;
     init_Token(&tok, label);
-    const iRangecc ptr = find_Token(&tok, cmd);        
+    const iRangecc ptr = find_Token(&tok, cmd);
     if (ptr.start) {
         return ptr.end;
     }

@@ -182,6 +182,12 @@ msgstr "Close Tabs To Left"
 msgid "menu.closetab.right"
 msgstr "Close Tabs To Right"
 
+msgid "menu.closetab.above"
+msgstr "Close Tabs Above"
+
+msgid "menu.closetab.below"
+msgstr "Close Tabs Below"
+
 msgid "menu.duptab"
 msgstr "Duplicate Tab"
 
@@ -271,6 +277,9 @@ msgstr "Toggle Left Sidebar"
 msgid "menu.sidebar.right"
 msgstr "Toggle Right Sidebar"
 
+msgid "menu.sidebar.configure"
+msgstr "Configure…"
+
 msgid "menu.zoom.in"
 msgstr "Zoom In"
 
@@ -288,6 +297,9 @@ msgstr "New Folder…"
 
 msgid "menu.sort.alpha"
 msgstr "Sort Alphabetically"
+
+msgid "menu.fold"
+msgstr "Fold"
 
 msgid "menu.foldall"
 msgstr "Fold All"
@@ -316,8 +328,9 @@ msgstr "List Bookmarks by Creation Time"
 msgid "macos.menu.bookmarks.bytime"
 msgstr "List by Creation Time"
 
+# This opens "about:feeds" and should have a different label than `menu.show.feeds`.
 msgid "menu.feeds.entrylist"
-msgstr "Show Feed Entries"
+msgstr "List Feed Entries"
 
 msgid "menu.preferences"
 msgstr "Preferences…"
@@ -390,7 +403,7 @@ msgstr "Show Bookmarks"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
-msgstr "Show Feeds"
+msgstr "Show Feed Entries"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.history"
@@ -407,6 +420,18 @@ msgstr "Hide Identities"
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
 msgstr "Show Page Outline"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Show Site Structure"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Show Subscriptions"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Show Tabs"
 
 msgid "menu.back"
 msgstr "Go Back"
@@ -520,7 +545,7 @@ msgid "sidebar.bookmarks"
 msgstr "Bookmarks"
 
 msgid "sidebar.feeds"
-msgstr "Feeds"
+msgstr "Feed Entries"
 
 msgid "sidebar.history"
 msgstr "History"
@@ -530,6 +555,15 @@ msgstr "Identities"
 
 msgid "sidebar.outline"
 msgstr "Outline"
+
+msgid "sidebar.structure"
+msgstr "Structure"
+
+msgid "sidebar.documents"
+msgstr "Tabs"
+
+msgid "sidebar.subscriptions"
+msgstr "Subscriptions"
 
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "New Folder"
@@ -564,6 +598,15 @@ msgid "sidebar.unread"
 msgid_plural "sidebar.unread.n"
 msgstr[0] "Unread"
 msgstr[1] "Unread"
+
+msgid "sidebar.sub.empty"
+msgstr "Empty feed"
+
+msgid "menu.feed.edit"
+msgstr "Feed Settings…"
+
+msgid "menu.sub.edit"
+msgstr "Edit Bookmark…"
 
 msgid "toolbar.outline"
 msgstr "Page Outline"
@@ -605,6 +648,11 @@ msgid "num.fonts"
 msgid_plural "num.fonts.n"
 msgstr[0] "%u font"
 msgstr[1] "%u fonts"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u entry"
+msgstr[1] "%u entries"
 
 # strftime() formatted. Should be split evenly on two lines with a newline character.
 msgid "page.timestamp"
@@ -650,6 +698,9 @@ msgstr "Mark All as Read"
 
 msgid "feeds.refresh"
 msgstr "Refresh Feeds"
+
+msgid "feeds.reset"
+msgstr "Reset Known Entries"
 
 msgid "feeds.atom.translated"
 msgstr "This Atom XML document has been automatically translated to a Gemini feed to allow subscribing to it."
@@ -737,6 +788,9 @@ msgstr "Delete Bookmark Folder"
 
 msgid "bookmarks.reload"
 msgstr "Refresh Remote Sources"
+
+msgid "hint.filter.bookmark"
+msgstr "filter bookmarks"
 
 msgid "ident.using"
 msgstr "Using on this page"
@@ -1037,6 +1091,9 @@ msgstr "Open without Proxy"
 
 msgid "link.copy"
 msgstr "Copy Link"
+
+msgid "link.copy.label"
+msgstr "Copy Link Label"
 
 msgid "link.searchurl"
 msgstr "Use as Search URL"
@@ -1821,7 +1878,22 @@ msgstr "Appearance"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "UI"
+msgstr "Behavior"
+
+msgid "heading.prefs.ui"
+msgstr "User Interface"
+
+msgid "heading.prefs.theme"
+msgstr "Theme"
+
+msgid "heading.prefs.sidebars"
+msgstr "Sidebars"
+
+msgid "prefs.sidebar.left"
+msgstr "Left"
+
+msgid "prefs.sidebar.right"
+msgstr "Right"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1943,6 +2015,9 @@ msgstr "Bottom Nav Bar"
 msgid "prefs.bottomtabbar"
 msgstr "Bottom Tabs"
 
+msgid "prefs.hidetabs"
+msgstr "Hide tab bar:"
+
 msgid "prefs.menubar"
 msgstr "Menu Bar"
 
@@ -1960,6 +2035,15 @@ msgstr "Hide toolbar on scroll:"
 
 msgid "heading.prefs.toolbaractions"
 msgstr "Toolbar Actions"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Toolbar Tabs"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "Left Toolbar Tabs"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "Right Toolbar Tabs"
 
 msgid "prefs.toolbaraction1"
 msgstr "Button 1"
@@ -2205,6 +2289,9 @@ msgstr "\" Icon"
 msgid "prefs.quoteicon.line"
 msgstr "Line"
 
+msgid "prefs.quote.italic"
+msgstr "Quote text in italics:"
+
 msgid "prefs.biglede"
 msgstr "Big 1st paragaph:"
 
@@ -2426,7 +2513,7 @@ msgid "error.badheader"
 msgstr "Invalid Header"
 
 msgid "error.badheader.msg"
-msgstr "The received header does not conform to the Gemini protocol specification. Perhaps the server is malfunctioning, or you tried to contact a non-Gemini server."
+msgstr "The received header does not conform to the protocol specification. Perhaps the server is malfunctioning or does not support this protocol."
 
 msgid "error.incompleteheader"
 msgstr "Incomplete Header"

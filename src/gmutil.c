@@ -70,6 +70,9 @@ void init_Url(iUrl *d, const iString *text) {
         d->path     = capturedRange_RegExpMatch(&m, 5);
         d->query    = capturedRange_RegExpMatch(&m, 6);
         d->fragment = capturedRange_RegExpMatch(&m, 8); /* starts with a hash */
+        if (isEmpty_Range(&d->host)) {
+            d->host = (iRangecc){ d->scheme.end, d->scheme.end };
+        }
         /* Check if the authority contains a port. */
         init_RegExpMatch(&m);
         if (matchRange_RegExp(authPattern_, d->host, &m)) {
@@ -151,11 +154,27 @@ void stripUrlPort_String(iString *d) {
     }
 }
 
+static iBool isDefaultPort_Url_(const iUrl *d) {
+    return (equalCase_Rangecc(d->scheme, "gemini") &&
+            equal_Rangecc(d->port, GEMINI_DEFAULT_PORT_CSTR)) ||
+           (equalCase_Rangecc(d->scheme, "gopher") && equal_Rangecc(d->port, "70"));
+}
+
+const iString *urlDefaultPortStripped_String(const iString *d) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (isDefaultPort_Url_(&parts)) {
+        iString *stripped = copy_String(d);
+        stripDefaultUrlPort_String(stripped);
+        return collect_String(stripped);
+    }
+    return d;
+}
+
 void stripDefaultUrlPort_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
-    if (equalCase_Rangecc(parts.scheme, "gemini") &&
-        equal_Rangecc(parts.port, GEMINI_DEFAULT_PORT_CSTR)) {
+    if (isDefaultPort_Url_(&parts)) {
         /* Always preceded by a colon. */
         remove_Block(&d->chars, parts.port.start - 1 - constBegin_String(d),
                      size_Range(&parts.port) + 1);
@@ -236,6 +255,12 @@ iRangecc urlHost_String(const iString *d) {
     return url.host;
 }
 
+iRangecc urlHostWithPort_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return (iRangecc){ url.host.start, !isEmpty_Range(&url.port) ? url.port.end : url.host.end };
+}
+
 iRangecc urlDirectory_String(const iString *d) {
     iUrl parts;
     init_Url(&parts, d);
@@ -257,8 +282,8 @@ uint16_t urlPort_String(const iString *d) {
 iRangecc urlUser_String(const iString *d) {
     static iRegExp *userPats_[2];
     if (!userPats_[0]) {
-        userPats_[0] = new_RegExp("~([^/?]+)", 0);
-        userPats_[1] = new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption);
+        userPats_[0] = new_RegExp("^/~([^/?]+)", 0);
+        userPats_[1] = new_RegExp("^/users/([^/?]+)", caseInsensitive_RegExpOption);
     }
     iUrl url;
     init_Url(&url, d);
@@ -761,6 +786,10 @@ iRangecc mediaTypeWithoutParameters_Rangecc(iRangecc mime) {
     iRangecc part = iNullRange;
     nextSplit_Rangecc(mime, ";", &part);
     return part;
+}
+
+iBool equalMediaType_String(const iString *d, const char *mediaType) {
+    return equal_Rangecc(mediaTypeWithoutParameters_Rangecc(range_String(d)), mediaType);
 }
 
 const iString *feedEntryOpenCommand_String(const iString *url, int newTab, int newWindow) {

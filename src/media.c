@@ -23,12 +23,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "media.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
+#include "the_Foundation/block.h"
 #include "ui/window.h"
 #include "ui/paint.h" /* size_SDLTexture */
 #include "audio/player.h"
 #include "app.h"
 #include "stb_image.h"
 #include "stb_image_resize2.h"
+#include "jpegxl.h" // LAGRANGE_ENABLE_JXL
 
 #if defined (LAGRANGE_ENABLE_WEBP)
 #   include <webp/decode.h>
@@ -40,6 +42,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_hints.h>
 #include <SDL_render.h>
 #include <SDL_timer.h>
+
+struct Impl_Media {
+    iPtrArray items[max_MediaType];
+    /* TODO: Add a hash to quickly look up a link's media. */
+#if defined (LAGRANGE_ENABLE_JXL)
+    iJpegxl *jxl;
+#endif
+};
+
+iDefineTypeConstruction(Media)
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(GmMediaProps)
 
@@ -71,7 +85,9 @@ struct Impl_GmImage {
     iBlock        partialData; /* cleared when image is converted to texture */
     iInt2         size;
     size_t        numBytes;
-    SDL_Texture * texture;
+    SDL_Texture  *texture;
+    iBool         didFail;
+    iMedia       *media; /* backlink to owner */
 };
 
 void init_GmImage(iGmImage *d, const iBlock *data) {
@@ -80,6 +96,8 @@ void init_GmImage(iGmImage *d, const iBlock *data) {
     d->size     = zero_I2();
     d->numBytes = 0;
     d->texture  = NULL;
+    d->didFail  = iFalse;
+    d->media    = NULL;
 }
 
 void deinit_GmImage(iGmImage *d) {
@@ -133,20 +151,26 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
     }
 }
 
-void makeTexture_GmImage(iGmImage *d) {
+static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial) {
     iBlock *data     = &d->partialData;
     d->numBytes      = size_Block(data);
     uint8_t *imgData = NULL;
-    if (cmp_String(&d->props.mime, "image/webp") == 0 ||
-        startsWith_String(&d->props.mime, "image/webp;")) {
+    iBool isNew      = iFalse;
+    if (!isPartial && equalMediaType_String(&d->props.mime, "image/webp")) {
 #if defined (LAGRANGE_ENABLE_WEBP)
         imgData = WebPDecodeRGBA(constData_Block(data), size_Block(data), &d->size.x, &d->size.y);
 #endif
     }
-    else {
+    else if (equalMediaType_String(&d->props.mime, "image/jxl")) {
+#if defined (LAGRANGE_ENABLE_JXL)
+        imgData = decodeImage_Jpegxl(media->jxl, d->props.linkId, data, isPartial, &d->size);
+#endif
+    }
+    else if (!isPartial) {
         imgData = stbi_load_from_memory(
             constData_Block(data), (int) size_Block(data), &d->size.x, &d->size.y, NULL, 4);
         if (!imgData) {
+            d->didFail = iTrue;
             fprintf(stderr, "[media] image load failed: %s\n", stbi_failure_reason());
         }
     }
@@ -196,8 +220,12 @@ void makeTexture_GmImage(iGmImage *d) {
         d->texture = SDL_CreateTextureFromSurface(renderer_Window(window), surface);
         SDL_FreeSurface(surface);
         free(imgData);
+        isNew = iTrue;
     }
-    clear_Block(data);
+    if (!isPartial) {
+        clear_Block(data);
+    }
+    return isNew;
 }
 
 iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
@@ -296,17 +324,13 @@ iDefineTypeConstruction(GmDownload)
 
 /*----------------------------------------------------------------------------------------------*/
 
-struct Impl_Media {
-    iPtrArray items[max_MediaType];
-    /* TODO: Add a hash to quickly look up a link's media. */
-};
-
-iDefineTypeConstruction(Media)
-
 void init_Media(iMedia *d) {
     iForIndices(i, d->items) {
         init_PtrArray(&d->items[i]);
     }
+#if defined (LAGRANGE_ENABLE_JXL)
+    d->jxl = new_Jpegxl();
+#endif
 }
 
 void deinit_Media(iMedia *d) {
@@ -314,6 +338,9 @@ void deinit_Media(iMedia *d) {
     iForIndices(i, d->items) {
         deinit_PtrArray(&d->items[i]);
     }
+#if defined (LAGRANGE_ENABLE_JXL)
+    delete_Jpegxl(d->jxl);
+#endif
 }
 
 void clear_Media(iMedia *d) {
@@ -329,6 +356,9 @@ void clear_Media(iMedia *d) {
     iForIndices(type, d->items) {
         clear_PtrArray(&d->items[type]);
     }
+#if defined (LAGRANGE_ENABLE_JXL)
+    clear_Jpegxl(d->jxl);
+#endif
 }
 
 size_t memorySize_Media(const iMedia *d) {
@@ -393,15 +423,16 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
         iGmImage *img;
         if (isDeleting) {
             take_PtrArray(&d->items[image_MediaType], existingIndex, (void **) &img);
+#if defined (LAGRANGE_ENABLE_JXL)
+            cancel_Jpegxl(d->jxl, linkId);
+#endif
             delete_GmImage(img);
         }
         else {
             img = at_PtrArray(&d->items[image_MediaType], existingIndex);
             iAssert(equal_String(&img->props.mime, mime)); /* MIME cannot change */
             set_Block(&img->partialData, data);
-            if (!isPartial) {
-                makeTexture_GmImage(img);
-            }
+            isNew = makeImageTexture_Media_(d, img, isPartial);
         }
     }
     else if (existing.type == audio_MediaType) {
@@ -449,14 +480,12 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
         if (startsWith_String(mime, "image/")) {
             /* Copy the image to a texture. */
             iGmImage *img = new_GmImage(data);
+            img->media = d;
             img->props.linkId = linkId; /* TODO: use a hash? */
             img->props.isPermanent = !allowHide;
             set_String(&img->props.mime, mime);
             pushBack_PtrArray(&d->items[image_MediaType], img);
-            if (!isPartial) {
-                makeTexture_GmImage(img);
-            }
-            isNew = iTrue;
+            isNew = makeImageTexture_Media_(d, img, isPartial);
         }
         else if (startsWith_String(mime, "audio/")) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
@@ -519,6 +548,16 @@ iInt2 imageSize_Media(const iMedia *d, iMediaId imageId) {
         return img->size;
     }
     return zero_I2();
+}
+
+iBool imageFailed_Media(const iMedia *d, iMediaId imageId) {
+    iAssert(imageId.type == image_MediaType);
+    const size_t index = index_MediaId(imageId);
+    if (index < size_PtrArray(&d->items[image_MediaType])) {
+        const iGmImage *img = constAt_PtrArray(&d->items[image_MediaType], index);
+        return img->didFail;
+    }
+    return iTrue;
 }
 
 SDL_Texture *imageTexture_Media(const iMedia *d, iMediaId imageId) {
@@ -597,6 +636,19 @@ void pauseAllPlayers_Media(const iMedia *d, iBool setPaused) {
         }
     }
 #endif
+}
+
+size_t numActivePlayers_Media(const iMedia *d) {
+    size_t n = 0;
+#if defined (LAGRANGE_ENABLE_AUDIO)
+    for (size_t i = 0; i < size_PtrArray(&d->items[audio_MediaType]); ++i) {
+        const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], i);
+        if (audio->player && isStarted_Player(audio->player) && !isPaused_Player(audio->player)) {
+            n++;
+        }
+    }
+#endif
+    return n;
 }
 
 void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **path_out,

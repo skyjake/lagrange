@@ -1219,13 +1219,16 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
         if (!superData) {
             [data clearCommands];
         }
-        NSMutableArray<UIMenuElement *> *elems = [[NSMutableArray<UIMenuElement *> alloc] init];
+        NSMutableArray<UIMenuElement *> *elems    = [[NSMutableArray<UIMenuElement *> alloc] init];
         NSMutableArray<UIMenuElement *> *subElems = [[NSMutableArray<UIMenuElement *> alloc] init];
         iBool haveSep = iFalse;
         iString sepTitle;
         init_String(&sepTitle);
         for (size_t i = 0; i < n && items[i].label; i++) {
             const iMenuItem *item = &items[i];
+            if (!checkDevice_MenuItem(item)) {
+                continue;
+            }
             if (startsWith_CStr(item->label, "---")) { /* separator or submenu */
                 if ([subElems count] > 0) {
                     haveSep = iTrue;
@@ -1276,30 +1279,9 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
             /* TODO: Convert to an attributed string. */
             replaceRegExp_String(&label, ansi, "", NULL, NULL); /* remove ANSI stylings */
             UIImage *img = nil;
-            static const struct { iChar c; const char *imgName; } sysIcons[] = {
-                { 0x2699,   "gear" },
-                { 0x2795,   "plus" },
-                { 0x2a2f,   "xmark" },
-                { 0x1f4c1,  "folder" },
-                { 0x1f50d,  "magnifyingglass" },
-                { 0x1f871,  "arrow.up" },
-                { 0x2b71,   "arrow.up.to.line" },
-                { 0x23f2,   "clock.arrow.2.circlepath" },
-                { 0x1f516,  "bookmark" },
-                { 0x2605,   "star" },
-                { 0x2606,   "star.fill" },
-                { 0x1f56e,  "book" },
-                { 0x1f310,  "globe" },
-                { 0x2ba5,   "paperplane" },
-                { 0x2ba7,   "square.and.arrow.down" },
-                { 0x270e,   "pencil" },
-            };
-            iForIndices(i, sysIcons) {
-                if (sysIcons[i].c == icon) {
-                    img = [UIImage systemImageNamed:[NSString
-                                                     stringWithUTF8String:sysIcons[i].imgName]];
-                    break;
-                }
+            const char *imgName = systemImageName_Apple(icon);
+            if (imgName) {
+                img = [UIImage systemImageNamed:[NSString stringWithUTF8String:imgName]];
             }
             /* Create the UI action. */
             UIAction *action = [UIAction actionWithTitle:[NSString stringWithUTF8String:cstr_String(&label)]
@@ -1320,7 +1302,7 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
                 [action setState:UIMenuElementStateOn];
             }
             if (item->command) {
-                [data setCommand:[NSString stringWithUTF8String:item->command] 
+                [data setCommand:[NSString stringWithUTF8String:item->command]
                     forActionIdentifier:action.identifier];
             }
             [subElems addObject:action];
@@ -1347,6 +1329,8 @@ void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
             if (@available(iOS 15.0, *)) {
                 data.menuButton.menu = [UIMenu menuWithChildren:@[
                     [UIDeferredMenuElement elementWithUncachedProvider:^(void (^completion)(NSArray<UIMenuElement *> *)) {
+                    /* We're being called outside the app event loop. */
+                    setCurrent_Root(owner->root);
                     iArray updatedItems;
                     initCopy_Array(&updatedItems, owner->updateMenuItems(owner));
                     completion(makeMenuElements_(owner, NULL,

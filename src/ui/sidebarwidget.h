@@ -30,10 +30,15 @@ iDeclareType(ListWidget)
 
 enum iSidebarMode {
     bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
+    feedEntries_SidebarMode,
+    subscriptions_SidebarMode,
     identities_SidebarMode,
     documentOutline_SidebarMode,
+    siteStructure_SidebarMode,
+    openDocuments_SidebarMode,
+    history_SidebarMode,
+    /*gempubIndex_SidebarMode,*/
+    /*customPage_SidebarMode,*/
     max_SidebarMode
 };
 

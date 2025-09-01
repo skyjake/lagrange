@@ -138,6 +138,7 @@ iDocumentWidget *   newTab_App                  (const iDocumentWidget *duplicat
 void                trimCache_App               (void);
 void                trimMemory_App              (void);
 void                saveStateQuickly_App        (void);
+void                deferVisitedSave_App        (void);
 void                setTextInputActive_App      (iBool);
 
 const iStringArray *recentlySubmittedInput_App  (void);

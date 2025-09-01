@@ -29,11 +29,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Window)
 
-void  init_Win32(void);
-float desktopDPI_Win32(void);
-void  useExecutableIconResource_SDLWindow(SDL_Window *);
-void  enableDarkMode_SDLWindow(SDL_Window *);
-void  handleCommand_Win32(const char *cmd);
+void     init_Win32(void);
+float    desktopDPI_Win32(void);
+void     useExecutableIconResource_SDLWindow(SDL_Window *);
+void     enableDarkMode_SDLWindow(SDL_Window *);
+void     enableConsoleOutput_Win32();
+void     handleCommand_Win32(const char *cmd);
 iString *windowsDirectory_Win32(void);
 iString *tempDirectory_Win32(void);
 

@@ -40,11 +40,13 @@ iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };
 int   fontSize_UI = defaultFontSize_Metrics;
 
 void setScale_Metrics(float scale) {
-    /* iPad needs a bit larger UI elements as the viewing distance is generally longer.*/
-    if (deviceType_App() == tablet_AppDeviceType) {
-        scale *= 1.1f;
+    if (scale > 0.25f) { /* gap would become zero */
+        /* iPad needs a bit larger UI elements as the viewing distance is generally longer.*/
+        if (deviceType_App() == tablet_AppDeviceType) {
+            scale *= 1.1f;
+        }
+        gap_UI      = iRound(defaultGap_Metrics * scale);
+        gap2_UI     = init1_I2(gap_UI);
+        fontSize_UI = iRound(defaultFontSize_Metrics * scale);
     }
-    gap_UI      = iRound(defaultGap_Metrics * scale);
-    gap2_UI     = init1_I2(gap_UI);
-    fontSize_UI = iRound(defaultFontSize_Metrics * scale);
 }

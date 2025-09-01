@@ -38,10 +38,13 @@ iDeclareType(ListItem)
 
 struct Impl_ListItem {
     iObject object;
-    iBool   isSeparator;
-    iBool   isSelected;
-    iBool   isDraggable;
-    iBool   isDropTarget; /* may drag-and-drop another item on this */
+    struct {
+        iBool   isSeparator : 1;
+        iBool   isSelected : 1;
+        iBool   isDraggable : 1;
+        iBool   isDropTarget : 1; /* may drag-and-drop another item on this */
+        iBool   isHidden : 1;
+    } flags;
 };
 
 iDeclareObjectConstruction(ListItem)
@@ -74,6 +77,8 @@ struct Impl_ListWidget {
     iVisBuf       *visBuf;
     enum iScrollMode scrollMode;
     iBool          noHoverWhileScrolling;
+//    iBool          freezeOnDrag; /* freeze drawing when item dragged, to avoid glitching */
+    iBool          hideItemOnDrag;
 };
 
 void    init_ListWidget             (iListWidget *);
@@ -118,5 +123,9 @@ size_t              hoverItemIndex_ListWidget   (const iListWidget *);
 const iAnyObject *  constCursorItem_ListWidget  (const iListWidget *);
 
 iLocalDef iBool isEmpty_ListWidget(const iListWidget *d) { return numItems_ListWidget(d) == 0; }
+
+iLocalDef iAnyObject *backItem_ListWidget       (iListWidget *d) {
+    return item_ListWidget(d, numItems_ListWidget(d) - 1);
+}
 
 iBool   isMouseDown_ListWidget      (const iListWidget *);

@@ -169,6 +169,7 @@ void init_Widget(iWidget *d) {
     init_Anim(&d->overflowScrollOpacity, 0.0f);
     init_String(&d->data);
     iZap(d->padding);
+    iZap(d->borderPad);
     d->updateMenuItems = NULL;
     d->menuClosed = NULL;
 //    d->delayedTimer = 0;
@@ -1878,13 +1879,13 @@ void drawBorders_Widget(const iWidget *d) {
         const int hgt = gap_UI / 4;
         const int borderColor = uiSeparator_ColorId; /* TODO: Add a property to customize? */
         if (d->flags & borderTop_WidgetFlag) {
-            fillRect_Paint(&p, (iRect){ topLeft_Rect(rect),
-                                        init_I2(width_Rect(rect), hgt) },
+            fillRect_Paint(&p, (iRect){ addX_I2(topLeft_Rect(rect), d->borderPad[0]),
+                                        init_I2(width_Rect(rect) - d->borderPad[1] - d->borderPad[0], hgt) },
                             borderColor);
         }
         if (d->flags & borderBottom_WidgetFlag) {
-            fillRect_Paint(&p, (iRect) { addY_I2(bottomLeft_Rect(rect), -hgt),
-                                         init_I2(width_Rect(rect), hgt) },
+            fillRect_Paint(&p, (iRect) { add_I2(bottomLeft_Rect(rect), init_I2(d->borderPad[2], -hgt)),
+                                         init_I2(width_Rect(rect) - d->borderPad[3] - d->borderPad[2], hgt) },
                             borderColor);
         }
     }
@@ -1912,6 +1913,9 @@ void drawBackground_Widget(const iWidget *d) {
                 return;
             }
             fillRect_Paint(&p, rect, d->bgColor);
+            /*printf("drawBackground: '%s' %4d,%4d - %4d,%4d color:%3d\n",
+                   cstr_String(id_Widget(d)), rect.pos.x, rect.pos.y,
+                   rect.size.x, rect.size.y, d->bgColor);*/
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
             drawRectThickness_Paint(&p, adjusted_Rect(rect, zero_I2(), neg_I2(one_I2())),
@@ -2076,7 +2080,7 @@ void draw_Widget(const iWidget *d) {
         iWidgetScrollInfo info;
         overflowScrollInfo_Widget(d, &info);
         const float opacity = value_Anim(&d->overflowScrollOpacity);
-        drawScrollIndicator_Widget(d, &info, uiBackgroundPressed_ColorId, opacity);
+        drawScrollIndicator_Widget(d, &info, uiTextAction_ColorId, opacity);
     }
 }
 
@@ -2573,7 +2577,7 @@ void setMouseGrab_Widget(iWidget *d) {
 }
 
 iWidget *mouseGrab_Widget(void) {
-    const iWindow *win = get_Window();    
+    const iWindow *win = get_Window();
     return win ? win->mouseGrab : NULL;
 }
 

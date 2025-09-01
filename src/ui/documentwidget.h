@@ -70,6 +70,7 @@ iBool               isHoverAllowed_DocumentWidget       (const iDocumentWidget *
 iBool               noHoverWhileScrolling_DocumentWidget(const iDocumentWidget *);
 iBool               isShowingLinkNumbers_DocumentWidget (const iDocumentWidget *);
 iBool               isBlank_DocumentWidget              (const iDocumentWidget *);
+iBool               isUnseen_DocumentWidget             (const iDocumentWidget *);
 iMediaRequest *     findMediaRequest_DocumentWidget     (const iDocumentWidget *, iGmLinkId linkId);
 
 size_t              ordinalBase_DocumentWidget          (const iDocumentWidget *);

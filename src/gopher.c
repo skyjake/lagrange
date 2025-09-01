@@ -162,7 +162,7 @@ static iBool convertSource_Gopher_(iGopher *d) {
                                   isEmpty_Range(&port) ? "70" : cstr_Rangecc(port),
                                   lineType,
                                   cstrCollect_String(
-                                      urlEncodeExclude_String(collectNewRange_String(path), "/%")),
+                                      urlEncodeExclude_String(collectNewRange_String(path), "/")),
                                   cstr_Rangecc(text));
                     appendData_Block(d->output, constBegin_String(buf), size_String(buf));
                     iEndCollect();

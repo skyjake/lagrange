@@ -753,6 +753,15 @@ void deinit_Feeds(void) {
     deinit_SortedArray(&d->entries);
 }
 
+void resetKnownEntries_Feeds(void) {
+    iFeeds *d = &feeds_;
+    iString *saveDir = copy_String(&d->saveDir);
+    deinit_Feeds();
+    remove(cstrCollect_String(concatCStr_Path(saveDir, feedsFilename_Feeds_)));
+    init_Feeds(cstr_String(saveDir));
+    delete_String(saveDir);
+}
+
 void refresh_Feeds(void) {
     startWorker_Feeds_(&feeds_);
 }
@@ -859,6 +868,20 @@ const iPtrArray *listEntries_Feeds(void) {
     iPtrArray *list = collect_PtrArray(copy_Array(&d->entries.values));
     unlock_Mutex(d->mtx);
     sort_Array(list, cmpTimeDescending_FeedEntryPtr_);
+    return list;
+}
+
+const iPtrArray *listMatchingEntries_Feeds(const char *urlPrefix) {
+    iFeeds *d = &feeds_;
+    lock_Mutex(d->mtx);
+    iPtrArray *list = collectNew_PtrArray();
+    iForEach(PtrArray, i, &d->entries.values) {
+        iFeedEntry *entry = i.ptr;
+        if (startsWith_String(&entry->url, urlPrefix)) {
+            pushBack_PtrArray(list, entry);
+        }
+    }
+    unlock_Mutex(d->mtx);
     return list;
 }
 

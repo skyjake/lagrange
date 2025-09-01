@@ -1,4 +1,4 @@
-/* Copyright 2023 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2025 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -21,17 +21,18 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
+#if defined (LAGRANGE_ENABLE_JXL)
 
-#include <the_Foundation/defs.h>
-#include <SDL_video.h>
+#include <the_Foundation/vec2.h>
+iDeclareType(Media);
 
-iBool   isXSession_X11                  (void);
-void    setDarkWindowTheme_SDLWindow    (SDL_Window *, iBool setDark);
-void    handleCommand_X11               (const char *cmd);
+iDeclareType(Jpegxl);
+iDeclareTypeConstruction(Jpegxl);
 
-iBool getWindowDesktop_X11(SDL_Window *win, unsigned long *out);
-void  setWindowDesktop_X11(SDL_Window *win, unsigned long desk);
-void  setWindowDesktopPropOnly_X11(SDL_Window *win, unsigned long desk);
-iBool getCurrentDesktop_X11(SDL_Window *refWin, unsigned long *out);
+void        clear_Jpegxl        (iJpegxl *);
 
+uint8_t *   decodeImage_Jpegxl  (iJpegxl *, uint16_t linkId, const iBlock *data, iBool isPartial,
+                                 iInt2 *imageSize_out);
+void        cancel_Jpegxl       (iJpegxl *, uint16_t linkId);
 
+#endif /* LAGRANGE_ENABLE_JXL */

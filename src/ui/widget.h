@@ -166,6 +166,7 @@ struct Impl_Widget {
     iWidget *    sizeRef;
     iWidget *    offsetRef;
     int          padding[4]; /* left, top, right, bottom */
+    int          borderPad[4]; /* top left, top right, bottom left, bottom right */
     int          overflowTopMargin; /* keep clear of this much space at the top */
     iAnim        visualOffset;
     int          bgColor;
@@ -218,8 +219,9 @@ iWindow *       window_Widget           (const iAnyObject *);
 const iString * id_Widget               (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
-iRect   innerBounds_Widget              (const iWidget *);
 iRect   boundsWithoutVisualOffset_Widget(const iWidget *);
+iRect   innerBounds_Widget              (const iWidget *);
+iRect   innerBoundsWithoutVisualOffset_Widget(const iWidget *);
 iInt2   localToWindow_Widget            (const iWidget *, iInt2 localCoord);
 iInt2   windowToLocal_Widget            (const iWidget *, iInt2 windowCoord);
 iInt2   innerToWindow_Widget            (const iWidget *, iInt2 innerCoord);

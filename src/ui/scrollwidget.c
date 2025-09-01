@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "periodic.h"
+#include "touch.h"
 #include "app.h"
 
 #include <SDL_timer.h>
@@ -64,7 +65,7 @@ struct Impl_ScrollWidget {
 
 static void updateMetrics_ScrollWidget_(iScrollWidget *d) {
     iWidget *w = as_Widget(d);
-    w->rect.size.x = gap_UI * 3;
+    w->rect.size.x = (isMobile_Platform() ? 6 : 3) * gap_UI;
 }
 
 static void animateOpacity_ScrollWidget_(void *ptr) {
@@ -81,8 +82,9 @@ void init_ScrollWidget(iScrollWidget *d) {
     setId_Widget(w, "scroll");
     setFlags_Widget(w,
                     fixedWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
-                        moveToParentRightEdge_WidgetFlag | touchDrag_WidgetFlag,
+                        moveToParentRightEdge_WidgetFlag, //| touchDrag_WidgetFlag,
                     iTrue);
+    /* TODO: Enable touchdrag on long press. */
     updateMetrics_ScrollWidget_(d);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Anim(&d->opacity, minOpacity_());
@@ -208,44 +210,61 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
         }
         return iFalse;
     }
-    switch (processEvent_Click(&d->click, ev)) {
-        case started_ClickResult:
-            setFlags_Widget(w, pressed_WidgetFlag, iTrue);
-            d->startThumb = d->thumb;
-            refresh_Widget(w);
-            return iTrue;
-        case drag_ClickResult: {
-            const iRect bounds = bounds_ScrollWidget_(d);
-            const int offset = delta_Click(&d->click).y;
-            const int total = (int) size_Range(&d->range);
-            int dpos = (float) offset / (float) (height_Rect(bounds) - thumbSize_ScrollWidget_(d)) * total;
-            d->thumb = iClamp(d->startThumb + dpos, d->range.start, d->range.end);
-            postCommand_Widget(w, "scroll.moved arg:%d", d->thumb);
-            refresh_Widget(w);
-            return iTrue;
+    if (isMobile_Platform()) {
+        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+            setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+            return iFalse;
         }
-        case finished_ClickResult:
-        case aborted_ClickResult:
-            if (!isMoved_Click(&d->click)) {
-                /* Page up/down. */
-                const iRect tr = thumbRect_ScrollWidget_(d);
-                const int y = pos_Click(&d->click).y;
-                int pgDir = 0;
-                if (y < top_Rect(tr)) {
-                    pgDir = -1;
-                }
-                else if (y > bottom_Rect(tr)) {
-                    pgDir = +1;
-                }
-                if (pgDir) {
-                    postCommand_Widget(w, "scroll.page arg:%d", pgDir);
-                }
+        else if (w->flags & ~touchDrag_WidgetFlag && ev->type == SDL_MOUSEBUTTONDOWN) {
+            const SDL_MouseButtonEvent *mb = (const SDL_MouseButtonEvent *) ev;
+            /* A long press on the scrollbar activates direct drag mode. */
+            if (contains_Widget(w, mouseCoord_SDLEvent(ev)) && mb->button == SDL_BUTTON_RIGHT) {
+                setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+                transferAffinity_Touch(NULL, w);
+                return iTrue;
             }
-            setFlags_Widget(w, pressed_WidgetFlag, iFalse);
-            refresh_Widget(w);
-            return iTrue;
-        default:
-            break;
+        }
+    }
+    if (isDesktop_Platform() || w->flags & touchDrag_WidgetFlag) {
+        switch (processEvent_Click(&d->click, ev)) {
+            case started_ClickResult:
+                setFlags_Widget(w, pressed_WidgetFlag, iTrue);
+                d->startThumb = d->thumb;
+                refresh_Widget(w);
+                return iTrue;
+            case drag_ClickResult: {
+                const iRect bounds = bounds_ScrollWidget_(d);
+                const int offset = delta_Click(&d->click).y;
+                const int total = (int) size_Range(&d->range);
+                int dpos = (float) offset / (float) (height_Rect(bounds) - thumbSize_ScrollWidget_(d)) * total;
+                d->thumb = iClamp(d->startThumb + dpos, d->range.start, d->range.end);
+                postCommand_Widget(w, "scroll.moved arg:%d", d->thumb);
+                refresh_Widget(w);
+                return iTrue;
+            }
+            case finished_ClickResult:
+            case aborted_ClickResult:
+                if (!isMoved_Click(&d->click)) {
+                    /* Page up/down. */
+                    const iRect tr = thumbRect_ScrollWidget_(d);
+                    const int y = pos_Click(&d->click).y;
+                    int pgDir = 0;
+                    if (y < top_Rect(tr)) {
+                        pgDir = -1;
+                    }
+                    else if (y > bottom_Rect(tr)) {
+                        pgDir = +1;
+                    }
+                    if (pgDir) {
+                        postCommand_Widget(w, "scroll.page arg:%d", pgDir);
+                    }
+                }
+                setFlags_Widget(w, pressed_WidgetFlag | touchDrag_WidgetFlag, iFalse);
+                refresh_Widget(w);
+                return iTrue;
+            default:
+                break;
+        }
     }
     return processEvent_Widget(w, ev);
 }
@@ -267,8 +286,12 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
             if (p.alpha < 255) {
                 SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
             }
+            iRect thumb = thumbRect_ScrollWidget_(d);
+            if (isMobile_Platform()) {
+                adjustEdges_Rect(&thumb, 0, 0, 0, 3 * gap_UI); /* counter the fat finger */
+            }
             const iRect thumbRect = shrunk_Rect(
-                thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
+                thumb, init_I2(isPressed ? gap_UI * 0.75f : (gap_UI * 1.2f), gap_UI / 2));
             fillRect_Paint(&p, thumbRect, isPressed ? uiTextStrong_ColorId : d->thumbColor);
             if (p.alpha < 255) {
                 SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);

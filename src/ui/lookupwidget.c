@@ -107,7 +107,7 @@ static void deinit_LookupItem(iLookupItem *d) {
 static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListWidget *list) {
     const iBool isPressing = isMouseDown_ListWidget(list);
     const iBool isHover    = isHover_Widget(list) && constHoverItem_ListWidget(list) == d;
-    const iBool isCursor   = d->listItem.isSelected;
+    const iBool isCursor   = d->listItem.flags.isSelected;
     if (isHover || isCursor) {
         fillRect_Paint(p,
                        rect,
@@ -120,7 +120,7 @@ static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListW
                  : d->fg;
     const iInt2 size = measureRange_Text(d->font, range_String(&d->text)).bounds.size;
     iInt2       pos  = init_I2(left_Rect(rect) + 3 * gap_UI, mid_Rect(rect).y - size.y / 2);
-    if (d->listItem.isSeparator) {
+    if (d->listItem.flags.isSeparator) {
         pos.y = bottom_Rect(rect) - lineHeight_Text(d->font);
     }
     if (!isEmpty_String(&d->icon)) {
@@ -548,7 +548,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
         if (lastType != res->type) {
             /* Heading separator. */
             iLookupItem *item = new_LookupItem(NULL);
-            item->listItem.isSeparator = iTrue;
+            item->listItem.flags.isSeparator = iTrue;
             item->fg = uiHeading_ColorId;
             item->font = uiLabel_FontId;
             format_String(&item->text, "%s", cstr_Lang(cstr_LookupResultType(res->type)));
@@ -673,7 +673,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
     /* Re-select the item at the cursor. */
     if (d->cursor != iInvalidPos) {
         d->cursor = iMin(d->cursor, numItems_ListWidget(d->list) - 1);
-        ((iListItem *) item_ListWidget(d->list, d->cursor))->isSelected = iTrue;
+        ((iListItem *) item_ListWidget(d->list, d->cursor))->flags.isSelected = iTrue;
     }
     scrollOffset_ListWidget(d->list, 0);
     updateVisible_ListWidget(d->list);
@@ -691,12 +691,12 @@ static void setCursor_LookupWidget_(iLookupWidget *d, size_t index) {
     if (index != d->cursor) {
         iLookupItem *item = item_LookupWidget_(d, d->cursor);
         if (item) {
-            item->listItem.isSelected = iFalse;
+            item->listItem.flags.isSelected = iFalse;
             invalidateItem_ListWidget(d->list, d->cursor);
         }
         d->cursor = index;
         if ((item = item_LookupWidget_(d, d->cursor)) != NULL) {
-            item->listItem.isSelected = iTrue;
+            item->listItem.flags.isSelected = iTrue;
             invalidateItem_ListWidget(d->list, d->cursor);
         }
         scrollToItem_ListWidget(d->list, d->cursor, 0);
@@ -709,7 +709,7 @@ static iBool moveCursor_LookupWidget_(iLookupWidget *d, int delta) {
     size_t    good = cur;
     while (delta && ((dir < 0 && cur > 0) || (dir > 0 && cur < numItems_ListWidget(d->list) - 1))) {
         cur += dir;
-        if (!item_LookupWidget_(d, cur)->listItem.isSeparator) {
+        if (!item_LookupWidget_(d, cur)->listItem.flags.isSeparator) {
             delta -= dir;
             good = cur;
         }

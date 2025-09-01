@@ -43,14 +43,13 @@ struct Impl_Glyph {
 struct Impl_Font {
     iBaseFont font;
     iFontSpec *spec;
-    int baseline;
     iGlyph glyphs[4]; /* Glyphs with advance of 0..3. */
 };
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     int w = SDL_UnicodeWidth(get_Window()->render, ch);
     w = iMin(3, w);
-    return &d->glyphs[w];   
+    return &d->glyphs[w];
 }
 
 static uint32_t index_Glyph_(const iGlyph *d) {
@@ -63,11 +62,11 @@ static iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
 }
 
 static void init_Font(iFont *d, int height) {
-    d->spec = new_FontSpec();    
+    d->spec = new_FontSpec();
     d->font.file = NULL;
     d->font.spec = d->spec;
     d->font.height = height;
-    d->baseline = 0;
+    d->font.baseline = 0;
     for (unsigned i = 0; i < iElemCount(d->glyphs); i++) {
         iGlyph *glyph = &d->glyphs[i];
         glyph->font = d;
@@ -100,7 +99,7 @@ iLocalDef iTuiText *current_TuiText_(void) {
 
 iBaseFont *font_Text(enum iFontId id) {
     const enum iFontStyle style = style_FontId(id);
-    const enum iFontSize  size  = size_FontId(id);    
+    const enum iFontSize  size  = size_FontId(id);
     size_t sizeIndex = (size == contentHuge_FontSize ? 1 : 0);
     size_t index     = (style == bold_FontStyle || style == semiBold_FontStyle ? 1
                         : style == italic_FontStyle                            ? 2
@@ -135,7 +134,7 @@ static void init_TuiText(iTuiText *d, SDL_Renderer *render, float documentFontSi
     iForIndices(s, d->fonts) {
         iForIndices(i, d->fonts[s]) {
             init_Font(d->fonts[s] + i, s == 1 ? 2 : 1);
-        }        
+        }
     }
     gap_Text = gap_UI;
 }

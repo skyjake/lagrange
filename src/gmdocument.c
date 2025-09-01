@@ -232,7 +232,9 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     theme->fonts[text_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize);
     theme->fonts[bullet_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize);
     theme->fonts[preformatted_GmLineType] = preformatted_FontId;
-    theme->fonts[quote_GmLineType] = isMono ? monospaceParagraph_FontId : quote_FontId;
+    theme->fonts[quote_GmLineType] = isMono               ? monospaceParagraph_FontId
+                                     : prefs->italicQuote ? quote_FontId
+                                                          : paragraph_FontId;
     theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
     theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentLarge_FontSize);
     theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentBig_FontSize);
@@ -347,7 +349,8 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
            icon == 0x29bf /* circled bullet */ ||
            icon == 0x2a2f /* close X */ ||
            (icon >= 0x2b00 && icon <= 0x2bff) ||
-           icon == 0x20bf /* bitcoin */;
+           icon == 0x20bf /* bitcoin */ ||
+           (icon >= 0x1f191 && icon <= 0x1f19a) /* enclosed signs */;
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -384,7 +387,8 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             link->flags |= inline_GmLinkFlag;
         }
         /* If invalid, disregard the link. */
-        if ((d->format == gemini_SourceFormat && size_String(&link->url) > prefs_App()->maxUrlSize) ||
+        if ((d->format == gemini_SourceFormat &&
+             size_String(&link->url) > prefs_App()->maxUrlSize) ||
             (startsWithCase_String(&link->url, "about:command")
              /* this is a special internal page that allows submitting UI events */
              && !d->flags.enableCommandLinks)) {
@@ -432,6 +436,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 if (startsWith_Rangecc(parts.path, "image/png") ||
                     startsWith_Rangecc(parts.path, "image/jpg") ||
                     startsWith_Rangecc(parts.path, "image/jpeg") ||
+                    startsWith_Rangecc(parts.path, "image/jxl") ||
                     startsWith_Rangecc(parts.path, "image/webp") ||
                     startsWith_Rangecc(parts.path, "image/gif")) {
                     link->flags |= imageFileExtension_GmLinkFlag;
@@ -452,6 +457,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
                     endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
                     endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
+#if defined (LAGRANGE_ENABLE_JXL)
+                    endsWithCase_String(path, ".jxl") ||
+#endif
 #if defined (LAGRANGE_ENABLE_WEBP)
                     endsWithCase_String(path, ".webp") ||
 #endif
@@ -501,7 +509,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme ||
                 scheme == 0 /* unsupported */) {
                 iChar icon = 0;
-                int len = 0;
+                int   len  = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (((scheme != mailto_GmLinkScheme && scheme != misfin_GmLinkScheme &&
                           isAllowedLinkIcon_Char_(icon)) ||
@@ -509,19 +517,26 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                           icon == 0x1f4e7 /* envelope */))) {
                         if (isRegionalIndicatorLetter_Char_(icon)) {
                             iChar combo;
-                            int len2 = decodeBytes_MultibyteChar(desc.start + len, desc.end, &combo);
+                            int   len2 =
+                                decodeBytes_MultibyteChar(desc.start + len, desc.end, &combo);
                             if (isRegionalIndicatorLetter_Char_(combo)) {
                                 len += len2;
                             }
                         }
-                        link->flags |= iconFromLabel_GmLinkFlag;
                         iRangecc iconRange = (iRangecc){ desc.start, desc.start + len };
                         iRangecc remain    = (iRangecc){ iconRange.end, line.end };
                         trim_Rangecc(&remain);
                         if (!isEmpty_Range(&remain)) {
-                            link->labelIcon = iconRange;
-                            line.start = iconRange.end;
-                            trimStart_Rangecc(&line);
+                            /* Check the next character as well. If there are multiple Emoji,
+                               perhaps the first one wasn't meant to have special significance. */
+                            iChar nextChar;
+                            len = decodeBytes_MultibyteChar(remain.start, remain.end, &nextChar);
+                            if (len > 0 && !isAllowedLinkIcon_Char_(nextChar)) {
+                                link->flags |= iconFromLabel_GmLinkFlag;
+                                link->labelIcon = iconRange;
+                                line.start      = iconRange.end;
+                                trimStart_Rangecc(&line);
+                            }
                         }
 //                        printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
 //                        fflush(stdout);
@@ -1311,7 +1326,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     }
                     pushBack_Array(&d->layout, &run);
                     pos.y += run.bounds.size.y + margin / 2;
-                    /* Image metadata caption. */ {
+                    /* Image metadata caption */
+                    if (!isEqual_I2(imgSize, zero_I2())) {
                         run.font = FONT_ID(documentBody_FontId, semiBold_FontStyle, contentSmall_FontSize);
                         run.color = tmQuoteIcon_ColorId;
                         run.flags = decoration_GmRunFlag | caption_GmRunFlag;

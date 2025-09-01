@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
 
+iRangecc    name_Command            (const char *command);
+
 iBool       equal_Command           (const char *commandWithArgs, const char *command);
 iBool       equalArg_Command        (const char *commandWithArgs, const char *command,
                                      const char *label, const char *value);

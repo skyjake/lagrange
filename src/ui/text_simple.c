@@ -258,7 +258,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                 prevCh = 0;
                 continue;
             }
-            if (isDefaultIgnorable_Char(ch) || isFitzpatrickType_Char(ch)) {
+            if (isControl_Char(ch)) {
                 continue;
             }
         }
@@ -306,7 +306,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
         const int yLineMax = ypos + d->font.height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                         ypos + glyph->font->baseline + glyph->d[hoff].y,
+                         ypos + glyph->font->font.baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
                          glyph->rect[hoff].size.y };
         if (glyph->font != d) {

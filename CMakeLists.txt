@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.18.8
+    VERSION 1.19.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2025)
 if (IOS)
-    set (PROJECT_VERSION 1.18)
-    set (IOS_BUNDLE_VERSION 12)
-    set (IOS_BUILD_DATE "2025-08-13")
+    set (PROJECT_VERSION 1.19)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2025-09-01")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.18)
-    set (ANDROID_BUILD_VERSION b37)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2025-08-07")
+    set (ANDROID_BUILD_VERSION b38)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2025-08-13")
 endif ()
 
 # Load modules from the source tree
@@ -77,6 +77,7 @@ option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
 option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
+option (ENABLE_JXL              "Use libjxl to decode .jxl images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 
 include (BuildType)
@@ -327,6 +328,9 @@ list (APPEND SOURCES
     src/audio/player.h
     src/audio/stb_vorbis.c
 )
+if (ENABLE_JXL AND JXL_FOUND)
+    list (APPEND SOURCES src/jpegxl.c src/jpegxl.h)
+endif ()
 if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
     list (APPEND SOURCES
         src/x11.c
@@ -483,6 +487,15 @@ if (ENABLE_GUI)
         else ()
             target_link_libraries (app PUBLIC ${WEBP_LIBRARIES})
             target_include_directories (app PUBLIC ${WEBP_INCLUDE_DIRS})
+        endif ()
+    endif ()
+    if (ENABLE_JXL AND JXL_FOUND)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_JXL=1)
+        if (TARGET PkgConfig::JXL)
+            target_link_libraries (app PUBLIC PkgConfig::JXL)
+        else ()
+            target_link_libraries (app PUBLIC ${JXL_LIBRARIES})
+            target_include_directories (app PUBLIC ${JXL_INCLUDE_DIRS})
         endif ()
     endif ()
     if (ENABLE_WINDOWPOS_FIX)

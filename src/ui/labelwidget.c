@@ -873,6 +873,9 @@ void updateTextAndResizeWidthCStr_LabelWidget(iLabelWidget *d, const char *text)
 
 void setCommand_LabelWidget(iLabelWidget *d, const iString *command) {
     set_String(&d->command, command);
+    /* Make it clickable. */
+    init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
+    setFlags_Widget(&d->widget, focusable_WidgetFlag | hover_WidgetFlag, d->click.buttons != 0);
 }
 
 void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {

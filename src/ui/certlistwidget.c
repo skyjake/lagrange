@@ -396,7 +396,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
                         : uiBackgroundFramelessHover_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
-    else if (d->listItem.isSelected) {
+    else if (d->listItem.flags.isSelected) {
         bg = uiBackgroundUnfocusedSelection_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
@@ -415,17 +415,17 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
                                                                  : uiTextFramelessHover_ColorId)
                                : uiTextDim_ColorId;
-    if (!d->listItem.isSelected && !isUsedOnDomain) {
+    if (!d->listItem.flags.isSelected && !isUsedOnDomain) {
         drawOutline_Text(font, cPos, metaFg, none_ColorId, range_String(&icon));
     }
     drawRange_Text(font,
                    cPos,
-                   d->listItem.isSelected ? iconColor
+                   d->listItem.flags.isSelected ? iconColor
                    : isUsedOnDomain       ? altIconColor
                                           : uiBackgroundSidebar_ColorId,
                    range_String(&icon));
     deinit_String(&icon);
-    drawRange_Text(d->listItem.isSelected ? certList->itemFonts[1] : font,
+    drawRange_Text(d->listItem.flags.isSelected ? certList->itemFonts[1] : font,
                    add_I2(cPos, init_I2(indent, 0)),
                    fg,
                    range_String(&d->label));
@@ -510,7 +510,7 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
                                 escape_Color(uiHeading_ColorId),
                                 cstr_String(&ident->notes));
         }
-        item->listItem.isSelected = isActive;
+        item->listItem.flags.isSelected = isActive;
         if (!isActive && isUsedOnDomain_GmIdentity(ident, tabHost)) {
             item->indent = 1; /* will be highlighted */
         }

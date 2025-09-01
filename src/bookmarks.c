@@ -71,6 +71,15 @@ specialTags_[] = {
     /* `remote_BookmarkFlag` not included because it's runtime only */
 };
 
+uint32_t fromSpecialTag_BookmarkFlag(const char *tagOrPrefix) {
+    iForIndices(i, specialTags_) {
+        if (startsWith_CStr(specialTags_[i].tag, tagOrPrefix)) {
+            return specialTags_[i].bit;
+        }
+    }
+    return 0;
+}
+
 static void updatePatterns_(size_t index) {
     if (!specialTags_[index].pattern) {
         specialTags_[index].pattern = new_RegExp(format_CStr("(?<!\\w)\\%s\\b(?!\\w)",

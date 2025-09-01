@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.18 (Beta 38)
+* Fixed opening some WebP images. There was a problem checking for the "image/webp" media type.
+* Fixed removal of unexpected NUL characters from the source text.
+
 ## 1.18 (Beta 37)
 * Added Samogitian UI language.
 * Link icons are now included in the clickable part of a line.

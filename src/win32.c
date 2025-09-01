@@ -440,3 +440,11 @@ iString *tempDirectory_Win32(void) {
     }
     return concatCStr_Path(collect_String(windowsDirectory_Win32()), "Temp");
 }
+
+void enableConsoleOutput_Win32() {
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+        /* freopen("CONIN$", "r", stdin); */
+    }
+}

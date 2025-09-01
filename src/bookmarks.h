@@ -46,6 +46,8 @@ enum iBookmarkFlags {
     remote_BookmarkFlag       = iBit(31),
 };
 
+uint32_t fromSpecialTag_BookmarkFlag    (const char *tagOrPrefix);
+
 struct Impl_Bookmark {
     iHashNode node;
     iString   url;

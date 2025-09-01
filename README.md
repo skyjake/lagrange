@@ -103,6 +103,7 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 | `ENABLE_STATIC` | Link dependencies statically. |
 | `ENABLE_TUI` | Build the TUI application (`clagrange`). The SEALCurses library is required (it replaces SDL); check that the `lib/sealcurses` submodule is checked out. |
 | `ENABLE_WEBP` | Use libwebp to decode .webp images, if `pkg-config` can find the library. |
+| `ENABLE_JXL`| Use libjxl to decode .jxl images, if `pkg-config` can find the library. |
 | `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
 | `ENABLE_X11_SWRENDER` | Default to software rendering when running under X11. By default Lagrange attempts to use the GPU for rendering the user interface. You can also use the `--sw` option at launch to force software rendering. |
 | `ENABLE_X11_XLIB` | Use the Xlib API directly under X11. This is used for window decoration color theming, for example. |

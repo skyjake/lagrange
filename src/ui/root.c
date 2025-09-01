@@ -579,7 +579,20 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "focus.set")) {
+        if (hasLabel_Command(cmd, "id2")) {
+            iWidget *override = findWidget_App(cstr_Command(cmd, "id2"));
+            if (isVisible_Widget(override) && !isFocused_Widget(override)) {
+                setFocus_Widget(override);
+                return iTrue;
+            }
+        }
         setFocus_Widget(findWidget_App(cstr_Command(cmd, "id")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "focus.default")) {
+        const iWidget *activeFocusRoot = focusRoot_Widget(NULL);
+        /* Look backward because the last button is the default action. */
+        setFocus_Widget(findFocusable_Widget(activeFocusRoot, backward_WidgetFocusDir));
         return iTrue;
     }
     else if (equal_Command(cmd, "menubar.focus")) {
@@ -746,6 +759,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         /* The phone toolbar is draw-buffered so it needs refreshing. */
         refresh_Widget(findWidget_App("toolbar"));
         return iFalse;
+    }
+    else if (equal_Command(cmd, "visited.save")) {
+        deferVisitedSave_App();
+        return iTrue;
     }
     return iFalse;
 }
@@ -1207,7 +1224,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         setFocus_Widget(NULL);
         return iTrue;
     }
-    else if (equal_Command(cmd, "input.edited")) {
+    else if (equalArg_Command(cmd, "input.edited", "id", "url")) {
         iAnyObject *   url  = findChild_Widget(navBar, "url");
         const iString *text = rawText_InputWidget(url);
         const iBool    show = willPerformSearchQuery_(text);
@@ -1322,6 +1339,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             checkLoadAnimation_Root_(get_Root());
             updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
+            updateNavDirButtons_(navBar);
         }
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
@@ -1652,17 +1670,29 @@ static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
     return handleTopLevelMenuBarCommand_Widget(menuBarItem, cmd);
 }
 
-static iBool updateMobilePageMenuItems_(iWidget *menu, const char *cmd) {
-    if (equalWidget_Command(cmd, menu, "menu.opened")) {
-        /* Update the items. */
-        setMenuItemLabel_Widget(menu,
-                                "document.viewformat",
-                                isSourceTextView_DocumentWidget(document_App())
-                                    ? "${menu.viewformat.gemini}"
-                                    : "${menu.viewformat.plain}",
-                                ' ');
-    }
-    return handleMenuCommand_Widget(menu, cmd);
+static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBackN_Array(items, (iMenuItem[]){
+        { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+        { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
+        { "---" },
+        { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
+        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+        { "---${menu.tools}" },
+        { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+        { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
+        { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+        { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+        { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
+        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+        { "---" },
+        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
+        { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+        { isSourceTextView_DocumentWidget(document_App())
+            ? "${menu.viewformat.gemini}"
+            : "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
+    16);
+    return items;
 }
 
 void createClipMenu_Root(iRoot *d) {
@@ -1887,7 +1917,7 @@ void createUserInterface_Root(iRoot *d) {
                     iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
                     embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
-//                setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
+               // setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
             }
             /* Button for clearing the URL bar contents. */ {
@@ -1896,10 +1926,10 @@ void createUserInterface_Root(iRoot *d) {
                     iClob(newIcon_LabelWidget(delete_Icon, 0, 0, "navbar.clear")),
                     hidden_WidgetFlag | embedFlags | moveToParentLeftEdge_WidgetFlag | tight_WidgetFlag);
                 setId_Widget(as_Widget(clear), "navbar.clear");
-//                setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
+               // setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
                 setFont_LabelWidget(clear, uiLabelSymbols_FontId);
-//                setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
-//                setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
+               // setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
+               // setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
             }
             iWidget *rightEmbed = new_Widget();
             setId_Widget(rightEmbed, "url.rightembed");
@@ -1915,7 +1945,7 @@ void createUserInterface_Root(iRoot *d) {
                 setFont_LabelWidget(queryInd, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
-//                setAlignVisually_LabelWidget(queryInd, iTrue);
+               // setAlignVisually_LabelWidget(queryInd, iTrue);
                 setNoAutoMinHeight_LabelWidget(queryInd, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(queryInd),
@@ -1927,7 +1957,7 @@ void createUserInterface_Root(iRoot *d) {
                 setTextColor_LabelWidget(fprog, uiTextAction_ColorId);
                 setFont_LabelWidget(fprog, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
-//                setAlignVisually_LabelWidget(fprog, iTrue);
+               // setAlignVisually_LabelWidget(fprog, iTrue);
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
                 iWidget *progBar = new_Widget();
                 setBackgroundColor_Widget(progBar, uiTextAction_ColorId);
@@ -1972,29 +2002,10 @@ void createUserInterface_Root(iRoot *d) {
                 as_Widget(navCancel)->sizeRef = as_Widget(url);
                 setFont_LabelWidget(navCancel, uiContentBold_FontId);
                 setId_Widget(as_Widget(navCancel), "navbar.cancel");
-                iLabelWidget *pageMenuButton;
                 /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
-                pageMenuButton = makeMenuButton_LabelWidget(pageMenuCStr_,
-                    (iMenuItem[]){
-                        { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
-                        { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
-                        { "---" },
-                        { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
-                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
-                        { "---${menu.tools}" },
-                        { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
-                        { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
-                        { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
-                        { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
-                        { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
-                        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-                        { "---" },
-                        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
-                        { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                        { "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-                    16);
-                setCommandHandler_Widget(findChild_Widget(as_Widget(pageMenuButton), "menu"),
-                                         updateMobilePageMenuItems_);
+                iLabelWidget *pageMenuButton = makeMenuButton_LabelWidget(pageMenuCStr_, NULL, 0);
+                setMenuUpdateItemsFunc_Widget(findChild_Widget(as_Widget(pageMenuButton), "menu"),
+                                              makeMobilePageMenuItems_);
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);
@@ -2075,8 +2086,10 @@ void createUserInterface_Root(iRoot *d) {
                                                         unhittable_WidgetFlag);
         iWidget *docTabs = makeTabs_Widget(mainStack);
         setId_Widget(docTabs, "doctabs");
-        setBackgroundColor_Widget(docTabs, uiBackground_ColorId);
-//        setTabBarPosition_Widget(docTabs, prefs_App()->bottomTabBar);
+        if (isDesktop_Platform()) {
+            setBackgroundColor_Widget(findChild_Widget(docTabs, "tabs.buttons"),
+                                      uiBackground_ColorId);
+        }
         iDocumentWidget *doc;
         appendTabPage_Widget(docTabs, iClob(doc = new_DocumentWidget()), "Document", 0, 0);
         addTabCloseButton_Widget(docTabs, as_Widget(doc), "tabs.close");
@@ -2207,8 +2220,11 @@ void createUserInterface_Root(iRoot *d) {
         const iMenuItem items[] = {
             { book_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
-            { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:2" },
+            { whiteStar_Icon " ${sidebar.subscriptions}", 0, 0, "toolbar.showview arg:2" },
             { page_Icon " ${toolbar.outline}", 0, 0, "toolbar.showview arg:4" },
+            { hierarchy_Icon " ${sidebar.structure}", 0, 0, "toolbar.showview arg:5" },
+            { openTabBg_Icon " ${sidebar.documents}", 0, 0, "toolbar.showview arg:6" },
+            { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:7" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
@@ -2265,21 +2281,28 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(toolsMenu, "toolsmenu");
     }
     /* Global keyboard shortcuts. */ {
-        addAction_Widget(root, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
+        addAction_Widget(root, 'h', KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
-        addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
+        addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input id2:filter.bookmark.input");
         addAction_Widget(root, '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1");
         addAction_Widget(root, '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1");
         addAction_Widget(root, '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1");
         addAction_Widget(root, '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1");
         addAction_Widget(root, '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1");
+        addAction_Widget(root, '6', leftSidebarTab_KeyModifier, "sidebar.mode arg:5 toggle:1");
+        addAction_Widget(root, '7', leftSidebarTab_KeyModifier, "sidebar.mode arg:6 toggle:1");
+        addAction_Widget(root, '8', leftSidebarTab_KeyModifier, "sidebar.mode arg:7 toggle:1");
         addAction_Widget(root, '1', rightSidebarTab_KeyModifier, "sidebar2.mode arg:0 toggle:1");
         addAction_Widget(root, '2', rightSidebarTab_KeyModifier, "sidebar2.mode arg:1 toggle:1");
         addAction_Widget(root, '3', rightSidebarTab_KeyModifier, "sidebar2.mode arg:2 toggle:1");
         addAction_Widget(root, '4', rightSidebarTab_KeyModifier, "sidebar2.mode arg:3 toggle:1");
         addAction_Widget(root, '5', rightSidebarTab_KeyModifier, "sidebar2.mode arg:4 toggle:1");
-        addAction_Widget(root, SDLK_j, KMOD_PRIMARY, "splitmenu.open");
+        addAction_Widget(root, '6', rightSidebarTab_KeyModifier, "sidebar2.mode arg:5 toggle:1");
+        addAction_Widget(root, '7', rightSidebarTab_KeyModifier, "sidebar2.mode arg:6 toggle:1");
+        addAction_Widget(root, '8', rightSidebarTab_KeyModifier, "sidebar2.mode arg:7 toggle:1");
+        addAction_Widget(root, 'j', KMOD_PRIMARY, "splitmenu.open");
         addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
+        addAction_Widget(root, 't', KMOD_PRIMARY | KMOD_ALT, "tabs.swap newwindow:1");
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);
@@ -2345,6 +2368,7 @@ static void setupMovableElements_Root_(iRoot *d) {
     }
     if (tabBar) {
         iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
+        iChangeFlags(tabBar->flags, drawBackgroundToBottom_WidgetFlag, prefs->bottomTabBar);
         /* Tab button frames. */
         iForEach(ObjectList, i, children_Widget(tabBar)) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
@@ -2359,6 +2383,8 @@ static void setupMovableElements_Root_(iRoot *d) {
         else {
             tabBar->padding[3] = 0;
         }
+        setFlags_Widget(tabBar, hidden_WidgetFlag,
+                        prefs->hideTabBar || tabCount_Widget(docTabs) <= 1);
     }
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
     arrange_Widget(d->widget);
@@ -2417,7 +2443,10 @@ static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
     }
     else {
         /* Close any menus that open via the toolbar. */
-        setVisualOffset_Widget(bottomBar, height - bottomSafe, 200 * animate, easeOut_AnimFlag);
+        setVisualOffset_Widget(bottomBar,
+                       height - (bottomTabBar && tabBar->flags & hidden_WidgetFlag ? 0 : bottomSafe),
+                       200 * animate,
+                       easeOut_AnimFlag);
         if (bottomTabBar) {
             if (isPortraitPhone_App()) {
                 setVisualOffset_Widget(toolBar, bottomSafe, 200 * animate, 0);

@@ -173,7 +173,7 @@ void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
 
 void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, iTime when) {
     if (isEmpty_String(url)) return;
-    url = canonicalUrl_String(url);
+    url = canonicalUrl_String(urlDefaultPortStripped_String(url));
     iVisitedUrl visit;
     init_VisitedUrl(&visit);
     visit.when = when;
@@ -251,21 +251,35 @@ static int cmpWhenDescending_VisitedUrlPtr_(const void *a, const void *b) {
     return -cmp_Time(&s->when, &t->when);
 }
 
-const iPtrArray *list_Visited(const iVisited *d, size_t count) {
+static const iPtrArray *list_Visited_(const iVisited *d, size_t count, const char *prefix,
+                                      int (*sortFunc)(const void *, const void *)) {
     iPtrArray *urls = collectNew_PtrArray();
     iGuardMutex(d->mtx, {
         iConstForEach(Array, i, &d->visited.values) {
             const iVisitedUrl *vis = i.value;
+            if (prefix && !startsWith_String(&vis->url, prefix)) {
+                continue;
+            }
             if (~vis->flags & transient_VisitedUrlFlag) {
                 pushBack_PtrArray(urls, vis);
             }
         }
     });
-    sort_Array(urls, cmpWhenDescending_VisitedUrlPtr_);
+    if (sortFunc) {
+        sort_Array(urls, sortFunc);
+    }
     if (count > 0 && size_Array(urls) > count) {
         resize_Array(urls, count);
     }
     return urls;
+}
+
+const iPtrArray *listMatching_Visited(const iVisited *d, const char *prefix) {
+    return list_Visited_(d, 0, prefix, NULL /* not sorted */);
+}
+
+const iPtrArray *list_Visited(const iVisited *d, size_t count) {
+    return list_Visited_(d, count, NULL, cmpWhenDescending_VisitedUrlPtr_);
 }
 
 const iPtrArray *listKept_Visited(const iVisited *d) {

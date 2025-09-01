@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2025-07-07 06:44+0000\n"
-"Last-Translator: Xosé M. <correoxm@disroot.org>\n"
+"PO-Revision-Date: 2025-08-27 08:54+0000\n"
+"Last-Translator: josé m. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
 "Language: gl\n"
@@ -816,7 +816,7 @@ msgstr "Importar identidade"
 msgid "dlg.certimport.help"
 msgstr ""
 "Pega un certificado e/ou chave privada en formato PEM, ou solta un ficheiro ."
-"crt/.key na ventá."
+"crt/.key na xanela."
 
 msgid "dlg.certimport.notfound"
 msgstr "Non se atopa certificado ou chave privada."
@@ -914,7 +914,7 @@ msgid "upload.file.name"
 msgstr "Nome do ficheiro:"
 
 msgid "upload.file.drophere"
-msgstr "escribe a ruta ao ficheiro ou arrastra e soltao na ventá"
+msgstr "escribe a ruta ao ficheiro ou arrastra e soltao na xanela"
 
 msgid "bookmark.export.title.tag"
 msgstr "Etiquetas do marcador"
@@ -1215,7 +1215,7 @@ msgid "prefs.uiscale"
 msgstr "Factor de escala da IU:"
 
 msgid "prefs.customframe"
-msgstr "Marco de ventá personalizado:"
+msgstr "Marco personalizado da xanela:"
 
 msgid "prefs.returnkey"
 msgstr "Comportamento tecla Return:"
@@ -1480,7 +1480,7 @@ msgid "menu.parent"
 msgstr "Nivel superior"
 
 msgid "prefs.retainwindow"
-msgstr "Gardar posición da ventá:"
+msgstr "Gardar posición da xanela:"
 
 #, c-format
 msgid "archive.summary"
@@ -2181,7 +2181,7 @@ msgid "sitespec.palette"
 msgstr "Semente da paleta do decorado:"
 
 msgid "link.newwindow"
-msgstr "Abrir ligazón en Nova ventá"
+msgstr "Abrir ligazón en Nova xanela"
 
 msgid "heading.glyphfinder"
 msgstr "Glyphs faltantes"
@@ -2223,10 +2223,10 @@ msgid "prefs.urlsize"
 msgstr "Tamaño máx. URL:"
 
 msgid "menu.newwindow"
-msgstr "Nova ventá"
+msgstr "Nova xanela"
 
 msgid "menu.openwindow"
-msgstr "Abrir nunha Nova ventá"
+msgstr "Abrir nunha Nova xanela"
 
 msgid "heading.sitespec"
 msgstr "Axustes específicos dun Sitio"
@@ -2471,7 +2471,7 @@ msgid "prefs.gopher.gemstyle"
 msgstr "Detección Aut. do estilo do menú Gopher:"
 
 msgid "menu.title.window"
-msgstr "Ventá"
+msgstr "Xanela"
 
 msgid "menu.movetab.right"
 msgstr "Mover Lapela á dereita"
@@ -2480,7 +2480,7 @@ msgid "menu.movetab.split"
 msgstr "Mover Lapela ao outro lado"
 
 msgid "menu.movetab.newwindow"
-msgstr "Mover Lapela a unha Nova ventá"
+msgstr "Mover Lapela a unha Nova xanela"
 
 msgid "menu.window.min"
 msgstr "Minimizar"
@@ -2862,3 +2862,61 @@ msgstr "Contido"
 
 msgid "prefs.expandline"
 msgstr "Despregar en liñas longas:"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+msgstr "Foco"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+msgstr "Foco na ligazón"
+
+msgid "menu.fold"
+msgstr "Pregar"
+
+msgid "prefs.quote.italic"
+msgstr "Citar texto en cursiva:"
+
+msgid "sidebar.structure"
+msgstr "Estrutura"
+
+msgid "sidebar.sub.empty"
+msgstr "Canle baleira"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u entrada"
+msgstr[1] "%u entradas"
+
+msgid "feeds.reset"
+msgstr "Restablecer entradas coñecidas"
+
+msgid "hint.filter.bookmark"
+msgstr "filtrar marcadores"
+
+msgid "menu.show.structure"
+msgstr "Mostrar estrutura"
+
+msgid "menu.show.subscriptions"
+msgstr "Mostrar susbscricións"
+
+msgid "menu.show.opendocs"
+msgstr "Mostrar pestanas"
+
+msgid "sidebar.documents"
+msgstr "Pestanas"
+
+msgid "sidebar.subscriptions"
+msgstr "Subscricións"
+
+msgid "menu.sub.edit"
+msgstr "Editar marcador…"
+
+msgid "heading.prefs.theme"
+msgstr "Decorado"
+
+msgid "menu.closetab.above"
+msgstr "Fechar Pestanas de arriba"
+
+msgid "menu.closetab.below"
+msgstr "Fechar Pestanas de abaixo"
