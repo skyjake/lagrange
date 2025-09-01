@@ -45,6 +45,37 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.19" date="2025-09-01">
+            <description>
+                <ul>
+                    <li>Sidebar tab for exploring the directory structure of a capsule. All known URLs (from page links, history, feed entries) are compiled into one navigable hierarchy. This provides an alternative view of capsule contents, for quick access and an overview.</li>
+                    <li>Sidebar tab for listing all open tabs ("vertical tabs"). The list indicates which tabs have not been seen yet. Drag-and-drop can be used to reorder tabs. There are status icons for page loading and audio playback.</li>
+                    <li>Filter text field in the Bookmarks sidebar: filters bookmarks based on titles, URLs, and tags. Built-in tags like ".subscribed" can be used to find bookmarks with special behavior (see Help section 1.4.4).</li>
+                    <li>Sidebar tab for managing feed subscriptions. Unlike the Feeds tab that shows feed entries, the Subscriptions tab shows higher-level information about each subscription, like the latest post date.</li>
+                    <li>Subscriptions sidebar context menu action "Reset Known Entries" for clearing the local cache of known entries. On next refresh, only the entries present in the source(s) are stored. (This is equivalent to manually deleting the "feeds.txt" file.)</li>
+                    <li>Setting for permanently hiding the horizontal tab bar. You can manage open tabs using the sidebar.</li>
+                    <li>Setting for showing quote text without italics.</li>
+                    <li>Link context menu action for copying the label text.</li>
+                    <li>Keyboard shortcuts for sidebar modes and moving current tab to a new window.</li>
+                    <li>Individual sidebar tabs can be shown and hidden. You can configure the tabs separately for the left and right bars.</li>
+                    <li>The left and right sidebars have different tabs by default (previously the same tabs were on both sides).</li>
+                    <li>A dropdown menu in the sidebar header allows switching to any mode.</li>
+                    <li>Reorganized settings: the Fonts tab has returned, and there is now a Theme tab for page theme settings.</li>
+                    <li>Restore window positions in their previous workspaces. (Courtesy of @norayr.)</li>
+                    <li>Moving a tab to a new window or opening a link in a new window sometimes confused which window was the target.</li>
+                    <li>Clearing history did not update sidebars.</li>
+                    <li>Updating navbar back/forward buttons when switching tabs.</li>
+                    <li>Update link numbers/keys after a scroll stops, if numbering was activated during the scroll.</li>
+                    <li>When parsing a username from a URL, require the name appears at the start of the path.</li>
+                    <li>Crash when opening a malformed Titan URI.</li>
+                    <li>Potential crash when minimizing a window.</li>
+                    <li>Gopher: Encode `%` in the selector when forming a link URI.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.0</url>
+        </release>
         <release version="1.18.8" date="2025-08-22">
             <description>
                 <ul>
