@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.19 (2)
+* Improved alignment of the URL field to page contents.
+* Fixed a potential UI event handling glitch with context menus.
+* Fixed popups being dismissed prematurely (by an input notification).
+* Updated UI translations.
+
 ## 1.19 (1)
 * Added new toolbar tabs: Structure, Subscriptions, (Vertical) Tabs.
 * Added setting for hiding the tab bar. You can manage open tabs in the toolbar "Tabs" tab.
