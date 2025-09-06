@@ -45,6 +45,23 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.19.1" date="2025-09-06">
+            <description>
+                <ul>
+                    <li>Improved alignment of the URL field to page contents.</li>
+                    <li>Fixed build errors and runtime crashes when compiling for mobile Linux.</li>
+                    <li>Fixed tab bar context menu placement.</li>
+                    <li>Fixed popups being dismissed prematurely (by an input notification).</li>
+                    <li>Fixed missing mouse hover indication on keyboard-focused buttons.</li>
+                    <li>Fixed text colors in the New Identity dialog's error popups.</li>
+                    <li>Fixed failure to create identity due to timestamp calculation error.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.1</url>
+        </release>
         <release version="1.19" date="2025-09-01">
             <description>
                 <ul>
