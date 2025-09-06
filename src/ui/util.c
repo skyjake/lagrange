@@ -1619,10 +1619,10 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     int         rightExcess  = right_Rect(bounds) - right_Rect(rootRect);
     int         topExcess    = top_Rect(rootRect) + d->overflowTopMargin - top_Rect(bounds);
     int         bottomExcess = bottom_Rect(bounds) - bottom_Rect(rootRect);
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     /* Reserve space for the system status bar. */ {
         float l, t, r, b;
-        safeAreaInsets_iOS(&l, &t, &r, &b);
+        safeAreaInsets_Mobile(&l, &t, &r, &b);
         topExcess    += t;
         bottomExcess += iMax(b, get_MainWindow()->keyboardHeight);
         leftExcess   += l;
@@ -2304,16 +2304,19 @@ void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
             setFlags_Widget(label, selected_WidgetFlag, isSel);
         }
     }
+    iBool wasChanged = iFalse;
     /* Show/hide pages. */ {
         iWidget *pages = findChild_Widget(tabs, "tabs.pages");
         iForEach(ObjectList, i, pages->children) {
-            iWidget *child = as_Widget(i.object);
-            setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != page);
+            iWidget    *child    = as_Widget(i.object);
+            const iBool willHide = (child != page);
+            if (flags_Widget(child) & hidden_WidgetFlag && !willHide) wasChanged |= iTrue;
+            setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, willHide);
         }
         refresh_Widget(tabs);
     }
     /* Notify. */
-    if (!isEmpty_String(id_Widget(page))) {
+    if (wasChanged && !isEmpty_String(id_Widget(page))) {
         postCommandf_Root(constAs_Widget(page)->root,
                           "tabs.changed id:%s",
                           cstr_String(id_Widget(constAs_Widget(page))));
@@ -2352,7 +2355,7 @@ const iWidget *currentTabPage_Widget(const iWidget *tabs) {
 }
 
 size_t tabCount_Widget(const iWidget *tabs) {
-    return childCount_Widget(findChild_Widget(tabs, "tabs.pages"));
+    return tabs ? childCount_Widget(findChild_Widget(tabs, "tabs.pages")) : 0;
 }
 
 /*-----------------------------------------------------------------------------------------------*/
@@ -2815,6 +2818,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "menu.opened") ||
           equal_Command(cmd, "menu.closed") ||
           equal_Command(cmd, "input.backup") ||
+          equal_Command(cmd, "input.ended") ||
           startsWith_CStr(cmd, "visited.") ||
           startsWith_CStr(cmd, "cancel menu:") ||
           startsWith_CStr(cmd, "feeds.update.") ||
@@ -3514,7 +3518,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem colorPanelItems[] = {
             { "title id:heading.prefs.colors" },
             { "padding arg:0.667" },
-#if !defined (iPlatformAndroidMobile)
+#if !defined (iPlatformLinuxMobile)
             { "toggle id:prefs.ostheme" },
 #endif
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },

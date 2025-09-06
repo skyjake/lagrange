@@ -68,6 +68,10 @@ static void clearCachedFiles_(void) {
 static int pfd_[2];
 static pthread_t thr_;
 static const char *tag_ = "fi.skyjake.lagrange";
+static float topInset_;
+static float bottomInset_;
+static float leftInset_;
+static float rightInset_;
 
 static void *loggerThreadFunc_(void *p) {
     ssize_t rdsz;
@@ -119,6 +123,7 @@ void setupApplication_Android(void) {
     }
     clearCachedFiles_(); /* old stuff is not needed any more */
     javaCommand_Android("cache.set path:%s/", cstr_String(cachePath));
+    javaCommand_Android("ostheme.query");
 }
 
 void pickFile_Android(const char *cmd) {
@@ -386,5 +391,19 @@ iBool handleCommand_Android(const char *cmd) {
         delete_Block(decoded);
         return iTrue;
     }
+    else if (equal_Command(cmd, "android.insets")) {
+        topInset_    = (float) argLabel_Command(cmd, "top");
+        bottomInset_ = (float) argLabel_Command(cmd, "bottom");
+        leftInset_   = (float) argLabel_Command(cmd, "left");
+        rightInset_  = (float) argLabel_Command(cmd, "right");
+        postCommand_App("window.resized"); /* force a layout update */
+    }
     return iFalse;
+}
+
+void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom) {
+    if (left) *left = leftInset_;
+    if (top) *top = topInset_;
+    if (right) *right = rightInset_;
+    if (bottom) *bottom = bottomInset_;
 }

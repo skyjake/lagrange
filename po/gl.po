@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2025-08-27 08:54+0000\n"
+"PO-Revision-Date: 2025-09-02 06:26+0000\n"
 "Last-Translator: josé m. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -20,7 +20,7 @@ msgstr "Deixar de usar nesta páxina"
 # %s refers to name of an identity.
 #, c-format
 msgid "dlg.ident.notes"
-msgstr "Notas acerca de %s:"
+msgstr "Notas de %s:"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -31,8 +31,7 @@ msgstr ""
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
 msgid "ident.gotohelp"
-msgstr ""
-"Le a %sAxuda%s para máis información acerca dos certificados cliente TLS."
+msgstr "Le a %sAxuda%s para máis información sobre os certificados cliente TLS."
 
 msgid "dlg.save.incomplete"
 msgstr "Aínda se está a descargar o contido desta páxina."
@@ -93,7 +92,7 @@ msgstr ""
 msgid "bookmark.export.format.otherlines"
 msgstr ""
 "Os elementos de lista e as citas están reservadas para información adicional "
-"acerca do marcador precedente. As liñas de texto e texto sen formato "
+"sobre o marcador precedente. As liñas de texto e texto sen formato "
 "considéranse comentarios e deberían ignorarse."
 
 msgid "upload.file.size"
@@ -199,7 +198,7 @@ msgstr "Hz"
 
 # Used in about:feeds.
 msgid "feeds.list.title"
-msgstr "Artigos das Fontes"
+msgstr "Artigos das canles"
 
 #, c-format
 msgid "feeds.list.entrycount"
@@ -345,7 +344,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Lista por Data de creación"
 
 msgid "menu.feeds.entrylist"
-msgstr "Ver Artigos das Fontes"
+msgstr "Lista de artigos das Canles"
 
 msgid "menu.preferences"
 msgstr "Preferencias…"
@@ -368,7 +367,7 @@ msgstr "Mostrar Marcadores"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
-msgstr "Mostrar Fontes"
+msgstr "Mostrar entradas das canles"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.history"
@@ -404,10 +403,10 @@ msgid "menu.page.subscribe"
 msgstr "Subscribirse á páxina…"
 
 msgid "menu.aboutpages"
-msgstr "Páxinas About"
+msgstr "Páxinas Sobre"
 
 msgid "menu.about"
-msgstr "Acerca de"
+msgstr "Sobre"
 
 msgid "panel.back"
 msgstr "Atrás"
@@ -428,7 +427,7 @@ msgid "menu.bookmarks.refresh"
 msgstr "Actualizar marcadores remotos"
 
 msgid "menu.feeds.refresh"
-msgstr "Actualizar Fontes"
+msgstr "Actualizar Canles"
 
 msgid "menu.identity.new"
 msgstr "Nova identidade…"
@@ -440,7 +439,7 @@ msgid "sidebar.bookmarks"
 msgstr "Marcadores"
 
 msgid "sidebar.feeds"
-msgstr "Fontes"
+msgstr "Artigos das Canles"
 
 msgid "sidebar.history"
 msgstr "Historial"
@@ -476,7 +475,7 @@ msgid "status.query.tight"
 msgstr "Buscar"
 
 msgid "status.feeds"
-msgstr "Actualizando fontes"
+msgstr "Actualizando canles"
 
 # megabytes, used as the unit after a number
 msgid "mb"
@@ -520,10 +519,10 @@ msgid "feeds.entry.bookmark"
 msgstr "Engadir Marcador…"
 
 msgid "feeds.entry.openfeed"
-msgstr "Abrir páxina da fonte"
+msgstr "Abrir páxina da canle"
 
 msgid "feeds.edit"
-msgstr "Editar Fonte…"
+msgstr "Editar Canle…"
 
 msgid "feeds.unsubscribe"
 msgstr "Dar de baixa…"
@@ -532,7 +531,7 @@ msgid "feeds.markallread"
 msgstr "Marcar todo lido"
 
 msgid "feeds.refresh"
-msgstr "Actualizar fontes"
+msgstr "Actualizar Canles"
 
 msgid "menu.opentab"
 msgstr "Abrir en Nova lapela"
@@ -568,7 +567,7 @@ msgid "bookmark.tag.home"
 msgstr "Usar como páxina de inicio"
 
 msgid "bookmark.tag.sub"
-msgstr "Subscribirse a Fonte"
+msgstr "Subscribirse a Canle"
 
 msgid "bookmark.tag.remote"
 msgstr "Usar como Fonte de marcadores"
@@ -580,7 +579,7 @@ msgid "bookmark.untag.home"
 msgstr "Eliminar páxina de inicio"
 
 msgid "bookmark.untag.sub"
-msgstr "Retirar subscrición á Fonte"
+msgstr "Retirar subscrición á Canle"
 
 msgid "bookmark.untag.remote"
 msgstr "Eliminar Fonte de marcadores"
@@ -646,7 +645,7 @@ msgstr "Retirar subscrición"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr "Retirar subscriciónñ á fonte \"%s\"?"
+msgstr "Retirar subscrición á canle \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "Retirar subscrición"
@@ -877,7 +876,7 @@ msgstr "MARCADORES"
 
 # Interpret as "Results from feeds..."
 msgid "heading.lookup.feeds"
-msgstr "FONTES"
+msgstr "CANLES"
 
 # Interpret as "Results from history..."
 msgid "heading.lookup.history"
@@ -1049,7 +1048,7 @@ msgid "dlg.newident.date.past"
 msgstr "A data de caducidade ten que estar no futuro."
 
 msgid "heading.feedcfg"
-msgstr "Axustes da Fonte"
+msgstr "Axustes da canle"
 
 msgid "heading.subscribe"
 msgstr "Subscribirse á Páxina"
@@ -1112,7 +1111,7 @@ msgstr "Xeral"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "IU"
+msgstr "Comportamento"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1343,8 +1342,8 @@ msgstr "Xénero"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Estás subscrita a %u fonte que contén %%s.\n"
-msgstr[1] "Estás subscrita a %u fontes que conteñen %%s.\n"
+msgstr[0] "Tes susbscrición a %u canle que contén %%s.\n"
+msgstr[1] "Tes subscrición a %u canles que conteñen %%s.\n"
 
 #, c-format
 msgid "hours.ago"
@@ -1412,7 +1411,7 @@ msgstr ""
 
 msgid "feeds.atom.translated"
 msgstr ""
-"Este documento Atom XML foi traducido automáticamente a unha fonte Gemini "
+"Este documento Atom XML foi traducido automaticamente a unha canle Gemini "
 "para permitir subscribirse a el."
 
 msgid "dlg.confirm.history.clear"
@@ -1446,9 +1445,8 @@ msgstr "O protocolo solicitado non ten soporte nesta aplicación."
 
 msgid "error.badheader.msg"
 msgstr ""
-"A cabeceira recibida non segue a especificación do protocolo Gemini. Pode "
-"que o servidor non funcione ben, ou que intentes conectar cun servidor non-"
-"Gemini."
+"A cabeceira recibida non segue a especificación do protocolo. Pode que o "
+"servidor non funcione ben, ou que non sexa compatible con este protocolo."
 
 msgid "error.badredirect.msg"
 msgstr ""
@@ -1741,7 +1739,7 @@ msgid "gempub.cover.untitled"
 msgstr "Libro sen título"
 
 msgid "gempub.cover.aboutbook"
-msgstr "Acerca deste libro"
+msgstr "Sobre este libro"
 
 msgid "gempub.cover.view"
 msgstr "Ver contidos Gempub"
@@ -2038,7 +2036,7 @@ msgstr "Desbotar aviso?"
 #, c-format
 msgid "dlg.dismiss.ansi"
 msgstr ""
-"Desbotar permanentemente o aviso acerca da emulación nun terminal para %s?"
+"Desbotar permanentemente o aviso sobre a emulación nun terminal para %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Desbotar aviso"
@@ -2160,7 +2158,7 @@ msgid "menu.toolbar.setaction"
 msgstr "Establece acción:"
 
 msgid "keys.feeds.showall"
-msgstr "Panel lateral: mostra as entradas de tódalas fontes"
+msgstr "Panel lateral: mostra as entradas de todas as canles"
 
 msgid "keys.feeds.showunread"
 msgstr "Panel lateral: mostra entradas non lidas"
@@ -2286,7 +2284,7 @@ msgstr "Importar…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
-msgstr "Acerca de Lagrange"
+msgstr "Sobre Lagrange"
 
 msgid "feeds.entry.markbelowread"
 msgstr "Marcar o inferior como Lido"
@@ -2677,7 +2675,7 @@ msgid "prefs.accent.system"
 msgstr "Sistema"
 
 msgid "prefs.feedinterval"
-msgstr "Intervalo de actualización da fonte:"
+msgstr "Intervalo de actualización da canle:"
 
 msgid "prefs.feedinterval.manual"
 msgstr "Manual"
@@ -2895,7 +2893,7 @@ msgid "hint.filter.bookmark"
 msgstr "filtrar marcadores"
 
 msgid "menu.show.structure"
-msgstr "Mostrar estrutura"
+msgstr "Mostrar estrutura do sitio"
 
 msgid "menu.show.subscriptions"
 msgstr "Mostrar susbscricións"
@@ -2920,3 +2918,36 @@ msgstr "Fechar Pestanas de arriba"
 
 msgid "menu.closetab.below"
 msgstr "Fechar Pestanas de abaixo"
+
+msgid "menu.sidebar.configure"
+msgstr "Configurar…"
+
+msgid "menu.feed.edit"
+msgstr "Axustes da Canle…"
+
+msgid "heading.prefs.ui"
+msgstr "Interface da Usuaria"
+
+msgid "prefs.hidetabs"
+msgstr "Agochar barra de pestana:"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Barra de Pestanas"
+
+msgid "link.copy.label"
+msgstr "Copiar etiqueta da ligazón"
+
+msgid "heading.prefs.sidebars"
+msgstr "Paneis laterais"
+
+msgid "prefs.sidebar.left"
+msgstr "Esquerdo"
+
+msgid "prefs.sidebar.right"
+msgstr "Dereito"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "Barra esqueda de pestanas"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "Barra dereita de pestanas"

@@ -1755,6 +1755,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
+    updateNavBarSize_Root(w->root);
 }
 
 static uint32_t bookmarkEditorId_(const iWidget *editor) {
@@ -1966,6 +1967,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                 }
             }
             setScrollMode_ListWidget(d->list, normal_ScrollMode);
+            updateNavBarSize_Root(w->root);
         }
         else {
             /* Portrait phone sidebar works differently: it slides up from the bottom. */
@@ -2269,6 +2271,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     updateSize_DocumentWidget(document_App());
                     resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
                     refresh_Widget(d->resizer);
+                    updateNavBarSize_Root(w->root);
                 }
             }
             return iTrue;

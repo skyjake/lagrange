@@ -6,6 +6,25 @@
 ```
 # Release notes
 
+## 1.19 (Beta 42)
+* Added "Use system theme" in Settings > Colors. (Android 10 or newer required.)
+* Fixed excessive padding on right edge of list items.
+
+## 1.19 (Beta 41)
+* Fixed UI layout when the virtual keyboard is visible.
+
+## 1.19 (Beta 40)
+* Fixed system window insets having no effect on the UI.
+
+## 1.19 (Beta 39)
+* Added new toolbar tabs: Structure, Subscriptions, (Vertical) Tabs.
+* Added setting for hiding the tab bar. You can manage open tabs in the toolbar "Tabs" tab.
+* Added settings to choose which toolbar tabs are shown.
+* Modernized appearance of UI widgets and layout.
+* Fixed saving history (i.e., feed entry read status) when app goes to background.
+* Fixed updating the page context menu so it reflects the state of the current page.
+* Fixed minor UI glitches.
+
 ## 1.18 (Beta 38)
 * Fixed opening some WebP images. There was a problem checking for the "image/webp" media type.
 * Fixed removal of unexpected NUL characters from the source text.

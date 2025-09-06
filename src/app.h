@@ -31,6 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "prefs.h"
 #include "ui/color.h"
 
+#if defined (iPlatformAppleMobile)
+extern iBool isPhone_iOS(void);
+#endif
+
 iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
 iDeclareType(CommandLine)
@@ -85,6 +89,20 @@ enum iNewTabFlag {
     reuseBlank_NewTabFlag = iBit(3),
 };
 
+iLocalDef enum iAppDeviceType deviceType_App(void) {
+#if defined (iPlatformMobilePhone)
+    return phone_AppDeviceType;
+#elif defined (iPlatformMobileTablet)
+    return tablet_AppDeviceType;
+#elif defined (iPlatformAppleMobile)
+    return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
+#elif defined (iPlatformAndroidMobile)
+    return phone_AppDeviceType; /* TODO: Java side could tell us via cmdline if this is a tablet. */
+#else
+    return desktop_AppDeviceType;
+#endif
+}
+
 int                 run_App                     (int argc, char **argv);
 void                processEvents_App           (enum iAppEventMode mode);
 iBool               handleCommand_App           (const char *cmd);
@@ -96,7 +114,6 @@ iBool               isRunningUnderWayland_App   (void);
 iBool               isRefreshPending_App        (void);
 iBool               isLandscape_App             (void);
 iLocalDef iBool     isPortrait_App              (void) { return !isLandscape_App(); }
-enum iAppDeviceType deviceType_App              (void);
 iLocalDef iBool     isPortraitPhone_App         (void) { return isPortrait_App() && deviceType_App() == phone_AppDeviceType; }
 iLocalDef iBool     isLandscapePhone_App        (void) { return isLandscape_App() && deviceType_App() == phone_AppDeviceType; }
 uint32_t            elapsedSinceLastTicker_App  (void); /* milliseconds */

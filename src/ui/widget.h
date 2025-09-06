@@ -328,6 +328,7 @@ iAny *  addChild_Widget             (iWidget *, iAnyObject *child); /* holds a r
 iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
 iAny *  addChildPosFlags_Widget     (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos, int64_t childFlags);
 iAny *  addChildFlags_Widget        (iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
+iAny *  addChildIdFlags_Widget      (iWidget *, iAnyObject *child, const char *id, int64_t childFlags) /* holds a ref */;
 iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterIndex);
 iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);
 iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a ref */

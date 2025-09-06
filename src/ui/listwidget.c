@@ -740,7 +740,7 @@ static void draw_ListWidget_(const iListWidget *d) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
                                   iMax(0, buf->origin + d->visBuf->texSize.y) / d->itemHeight };
-#if defined (iPlatformApple)
+#if defined (iPlatformApple) || defined (iPlatformAndroid)
             const int blankWidth = 0; /* scrollbars fade away */
 #else
             const int blankWidth = scrollBarWidth_ListWidget(d);

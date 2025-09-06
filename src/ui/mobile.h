@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define keyboardShowSpan_Mobile  200
 #endif
 
+void        safeAreaInsets_Mobile       (float *left, float *top, float *right, float *bottom);
+
 iDeclareType(ToolbarActionSpec)
 
 struct Impl_ToolbarActionSpec {

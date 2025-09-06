@@ -2076,7 +2076,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
         switch (ev.type) {
             case SDL_QUIT:
-                if (!isMobile_Platform()) {
+                if (!isMobile_Platform() || isMobileLinux_Platform()) {
                     d->isRunning = iFalse;
                     if (findWidget_App("prefs")) {
                         /* Make sure changed preferences get saved. */
@@ -3141,20 +3141,6 @@ iBool isLandscape_App(void) {
     return size.x > size.y;
 }
 
-enum iAppDeviceType deviceType_App(void) {
-#if defined (iPlatformMobilePhone)
-    return phone_AppDeviceType;
-#elif defined (iPlatformMobileTablet)
-    return tablet_AppDeviceType;
-#elif defined (iPlatformAppleMobile)
-    return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
-#elif defined (iPlatformAndroidMobile)
-    return phone_AppDeviceType; /* TODO: Java side could tell us via cmdline if this is a tablet. */
-#else
-    return desktop_AppDeviceType;
-#endif
-}
-
 iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
 }
@@ -3584,7 +3570,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             const iString *country      = text_InputWidget (findChild_Widget(dlg, "ident.country"));
             const iBool    isTemp       = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
             if (isEmpty_String(commonName)) {
-                makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.missing}",
+                makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.newident.missing}",
                                          "${dlg.newindent.missing.commonname}");
                 return iTrue;
             }
@@ -3596,10 +3582,10 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 initCurrent_Date(&today);
                 const int n =
                     sscanf(cstr_String(text_InputWidget(findChild_Widget(dlg, "ident.until"))),
-                           "%04u-%u-%u %u:%u:%u",
+                           "%u-%u-%u %u:%u:%u",
                            &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
                 if (n <= 0) {
-                    makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.date.bad}",
+                    makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.newident.date.bad}",
                                              "${dlg.newident.date.example}");
                     return iTrue;
                 }
@@ -3620,8 +3606,9 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                     iTime now, t;
                     initCurrent_Time(&now);
                     init_Time(&t, &until);
-                    if (cmp_Time(&t, &now) <= 0) {
-                        makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.date.bad}",
+                    if (isValid_Time(&t) && cmp_Time(&t, &now) <= 0) {
+                        makeSimpleMessage_Widget(uiHeading_ColorEscape
+                                                 "${heading.newident.date.bad}",
                                                  "${dlg.newident.date.past}");
                         return iTrue;
                     }

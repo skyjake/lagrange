@@ -109,8 +109,8 @@ static void updatePanelSheetMetrics_(iWidget *sheet) {
     int      naviHeight = lineHeight_Text(labelFont_()) + 4 * gap_UI;
     if (isMobile_Platform()) {
         float left = 0.0f, right = 0.0f, top = 0.0f, bottom = 0.0f;
-#if defined (iPlatformAppleMobile)
-        safeAreaInsets_iOS(&left, &top, &right, &bottom);
+#if defined (iPlatformMobile)
+        safeAreaInsets_Mobile(&left, &top, &right, &bottom);
 #endif
         if (isFullSizePanel_(sheet)) {
             setPadding_Widget(sheet, left, 0, right, 0);
@@ -1170,10 +1170,19 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
     }
 }
 
+#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
+void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom) {
+    if (left) *left = 0;
+    if (top) *top = 0;
+    if (right) *right = 0;
+    if (bottom) *bottom = 0;
+}
+#endif
+
 int leftSafeInset_Mobile(void) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     float left;
-    safeAreaInsets_iOS(&left, NULL, NULL, NULL);
+    safeAreaInsets_Mobile(&left, NULL, NULL, NULL);
     return iRound(left);
 #else
     return 0;
@@ -1181,9 +1190,9 @@ int leftSafeInset_Mobile(void) {
 }
 
 int rightSafeInset_Mobile(void) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     float right;
-    safeAreaInsets_iOS(NULL, NULL, &right, NULL);
+    safeAreaInsets_Mobile(NULL, NULL, &right, NULL);
     return iRound(right);
 #else
     return 0;
@@ -1191,9 +1200,9 @@ int rightSafeInset_Mobile(void) {
 }
 
 int topSafeInset_Mobile(void) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     float top;
-    safeAreaInsets_iOS(NULL, &top, NULL, NULL);
+    safeAreaInsets_Mobile(NULL, &top, NULL, NULL);
     return iRound(top);
 #else
     return 0;
@@ -1201,9 +1210,9 @@ int topSafeInset_Mobile(void) {
 }
 
 int bottomSafeInset_Mobile(void) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     float bot;
-    safeAreaInsets_iOS(NULL, NULL, NULL, &bot);
+    safeAreaInsets_Mobile(NULL, NULL, NULL, &bot);
     return iRound(bot);
 #else
     return 0;

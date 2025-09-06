@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.19.1
+* Improved alignment of the URL field to page contents.
+* Fixed build errors and runtime crashes when compiling for mobile Linux.
+* Fixed tab bar context menu placement.
+* Fixed popups being dismissed prematurely (by an input notification).
+* Fixed missing mouse hover indication on keyboard-focused buttons.
+* Fixed text colors in the New Identity dialog's error popups.
+* Fixed failure to create identity due to timestamp calculation error.
+* Updated UI translations.
+
 ## 1.19
 
 New features:

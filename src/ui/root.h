@@ -55,6 +55,7 @@ void        dismissPortraitPhoneSidebars_Root   (iRoot *);
 void        showToolbar_Root                    (iRoot *, iBool show);
 void        enableToolbar_Root                  (iRoot *, iBool enable);
 void        updateToolbarColors_Root            (iRoot *);
+void        updateNavBarSize_Root               (iRoot *);
 void        showOrHideNewTabButton_Root         (iRoot *);
 
 void        notifyVisualOffsetChange_Root       (iRoot *);

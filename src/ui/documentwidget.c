@@ -2849,6 +2849,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             invalidate_DocumentWidget_(d);
             refresh_Widget(d);
         }
+        /* We may need to adjust navba ralignment paddings. */
+        updateNavBarSize_Root(w->root);
         return iFalse;
     }
     if (equal_Command(cmd, "visited.changed")) {

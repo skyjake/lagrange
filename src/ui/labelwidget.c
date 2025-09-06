@@ -493,7 +493,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
-        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, uiTextAction_ColorId /*frame*/);
+        drawRectThickness_Paint(&p,
+                                frameRect,
+                                isHover ? gap_UI / 2 : (gap_UI / 4),
+                                uiTextAction_ColorId /*frame*/);
     }
     else if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));

@@ -891,10 +891,10 @@ static void checkLoadAnimation_Root_(iRoot *d) {
 
 void updatePadding_Root(iRoot *d) {
     if (!d) return;
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     float left, top, right, bottom;
-    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    safeAreaInsets_Mobile(&left, &top, &right, &bottom);
     /* Respect the safe area insets. */ {
         setPadding_Widget(findChild_Widget(d->widget, "navdiv"), left, top, right, 0);
         if (toolBar) {
@@ -1018,7 +1018,7 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 
 iBool isNarrow_Root(const iRoot *d) {
     return width_Rect(safeRect_Root(d)) / gap_UI <
-        (isTerminal_Platform() ? 80 : deviceType_App() == tablet_AppDeviceType ? 160 : 140);
+        (isTerminal_Platform() ? 80 : deviceType_App() == tablet_AppDeviceType ? 160 : 160);
 }
 
 static void updateNavBarSize_(iWidget *navBar) {
@@ -1076,13 +1076,63 @@ static void updateNavBarSize_(iWidget *navBar) {
         }
         updateUrlInputContentPadding_(navBar);
     }
+    /* Sidebar alignment paddings. */
+    if (!isPhone) {
+        const iWidget *docTabs      = findChild_Widget(root_Widget(navBar), "doctabs");
+        const iBool isTabBarVisible = isVisible_Widget(findChild_Widget(docTabs, "tabs.buttons"));
+        const iBool isNavBarNextToTabs = (prefs_App()->bottomTabBar ^ prefs_App()->bottomNavBar) == 0;
+        const iBool    arePaddingsNeeded = !isTabBarVisible || !isNavBarNextToTabs;
+        iWidget       *sbPad1       = findChild_Widget(navBar, "sbpad1");
+        iWidget       *sbPad2       = findChild_Widget(navBar, "sbpad2");
+        const iWidget *sidebar      = findWidget_App("sidebar");
+        const iWidget *sidebar2     = findWidget_App("sidebar2");
+        const int      barWidth     = (isVisible_Widget(sidebar) ? width_Widget(sidebar) : 0);
+        const int      bar2Width    = (isVisible_Widget(sidebar2) ? width_Widget(sidebar2) : 0);
+        const int      action1Width = width_Widget(findChild_Widget(navBar, "navbar.action1"));
+        const int      leftButtons = action1Width +
+                                width_Widget(findChild_Widget(navBar, "navbar.action2")) +
+                                width_Widget(findChild_Widget(navBar, "navbar.action3")) *
+                                    isVisible_Widget(findChild_Widget(navBar, "navbar.action3"));
+        const iWidget *navMenu = findChild_Widget(navBar, "navbar.menu");
+        const int rightButtons = width_Widget(findChild_Widget(navBar, "navbar.action4")) +
+                                 (isVisible_Widget(navMenu) ? width_Widget(navMenu) : 0);
+        const int rightEqualizer = leftButtons - rightButtons;
+        const int rootWidth      = size_Root(navBar->root).x;
+        const int docWidth       = rootWidth - barWidth - bar2Width;
+        // setFrameColor_Widget(sbPad1, red_ColorId);
+        // setFrameColor_Widget(sbPad2, red_ColorId);
+        if (isVisible_Widget(sidebar) && arePaddingsNeeded) {
+            const int maxWidth = iMaxi(0, rootWidth / 2 - bar2Width);
+            setFixedSize_Widget(
+                sbPad1,
+                init_I2(iMini(maxWidth,
+                              iMaxi(0,
+                                    width_Widget(sidebar) - leftButtons +
+                                        (!isVisible_Widget(sidebar2) ? rightButtons : 0))),
+                        0));
+        }
+        else {
+            setFixedSize_Widget(sbPad1, zero_I2());
+        }
+        if (isVisible_Widget(sidebar2) && arePaddingsNeeded) {
+            const int maxWidth = iMaxi(0, rootWidth / 2 - barWidth);
+            setFixedSize_Widget(
+                sbPad2,
+                init_I2(
+                    iMini(maxWidth, iMaxi(rightEqualizer, width_Widget(sidebar2) - rightButtons +
+                        (!isVisible_Widget(sidebar) ? leftButtons : 0))),
+                    0));
+        }
+        else {
+            setFixedSize_Widget(
+                sbPad2, init_I2(barWidth + bar2Width == 0 && !isNarrow ? rightEqualizer : 0, 0));
+        }
+    }
     if (isPhone) {
         static const char *buttons[] = { "navbar.action1", "navbar.action2", "navbar.action3",
                                          "navbar.action4", "navbar.ident",   "navbar.menu",
                                          "document.bookmarked" };
         iWidget *toolBar = findWidget_Root("toolbar");
-//        setVisualOffset_Widget(toolBar, 0, 0, 0);
-//        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
         iForIndices(i, buttons) {
             iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
             setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
@@ -1103,6 +1153,10 @@ static void updateNavBarSize_(iWidget *navBar) {
     updateMetrics_Root(navBar->root); /* tight flags changed; need to resize URL bar contents */
 //    refresh_Widget(navBar);
     postCommand_Widget(navBar, "layout.changed id:navbar");
+}
+
+void updateNavBarSize_Root(iRoot *d) {
+    updateNavBarSize_(findChild_Widget(d->widget, "navbar"));
 }
 
 static void updateNavBarActions_(iWidget *navBar) {
@@ -1344,7 +1398,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
     }
-    else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
+    else if (equal_Command(cmd, "mouse.clicked")) {
         iWidget *widget = pointer_Command(cmd);
         iWidget *menu = findWidget_App("doctabs.menu");
         iAssert(menu->root == navBar->root);
@@ -1353,11 +1407,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iWidget *tabs = findWidget_App("doctabs");
                 iWidget *page = tabPage_Widget(tabs, indexOfChild_Widget(widget->parent, widget));
                 if (argLabel_Command(cmd, "button") == SDL_BUTTON_MIDDLE) {
-                    postCommandf_App("tabs.close id:%s", cstr_String(id_Widget(page)));
-                    return iTrue;
+                    if (!arg_Command(cmd)) {
+                        postCommandf_App("tabs.close id:%s", cstr_String(id_Widget(page)));
+                        return iTrue;
+                    }
                 }
-                showTabPage_Widget(tabs, page);
-                openMenu_Widget(menu, coord_Command(cmd));
+                if (arg_Command(cmd)) { /* switch tabs on button down */
+                    showTabPage_Widget(tabs, page);
+                }
+                else { /* open context menu on button up */
+                    openMenu_Widget(menu, coord_Command(cmd));
+                }
             }
         }
     }
@@ -1526,20 +1586,26 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         if (!bottomBar) {
             return iFalse;
         }
-        iWidget *navBar = findChild_Widget(root_Widget(toolBar), "navbar");
+        const iWidget *navBar = findChild_Widget(bottomBar, "navbar");
 #if defined (iPlatformAppleMobile)
-        const int showSpan = 400;
-        const int hideSpan = 350;
-        const int animFlag = easeOut_AnimFlag | softer_AnimFlag;
+        const int showSpan = 500;
+        const int hideSpan = 250;
+        const int animFlag = easeOut_AnimFlag | muchSofter_AnimFlag;
         int landscapeOffset = 5 * gap_UI; /* TODO: Why this amount? Something's funny here. */
 #else
-        const int showSpan = 80;
+        const int showSpan = 350;
         const int hideSpan = 250;
-        const int animFlag = easeOut_AnimFlag;
+        const int animFlag = easeOut_AnimFlag | softer_AnimFlag;
         int landscapeOffset = 0;
 #endif
         if (focus_Widget() == findChild_Widget(navBar, "url") && height > 0) {
-            int keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : landscapeOffset);
+            int keyboardPad;
+            if (isAppleMobile_Platform()) {
+                keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : landscapeOffset);
+            }
+            else {
+                keyboardPad = height - height_Widget(navBar) + (isLandscape_App() ? 9 * gap_UI : 0);
+            }
             bottomBar->padding[3] = keyboardPad;
             arrange_Widget(bottomBar);
             arrange_Widget(bottomBar);
@@ -1883,17 +1949,17 @@ void createUserInterface_Root(iRoot *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-#if defined (iPlatformApple)
-        addUnsplitButton_(navBar);
-#endif
+        if (isApple_Platform()) {
+            addUnsplitButton_(navBar);
+        }
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.action1");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.action2");
         /* Button for toggling the left sidebar. */
-        setId_Widget(addChildFlags_Widget(
-                         navBar,
-                         iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
-                         collapse_WidgetFlag),
-                     "navbar.action3");
+        addChildIdFlags_Widget(navBar,
+                               iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
+                               "navbar.action3",
+                               collapse_WidgetFlag);
+        addChildIdFlags_Widget(navBar, iClob(new_Widget()), "sbpad1", fixedSize_WidgetFlag);
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
         iInputWidget *url;
         /* URL input field. */ {
@@ -2040,14 +2106,13 @@ void createUserInterface_Root(iRoot *d) {
         /* The active identity menu. */ {
             iLabelWidget *idButton = new_LabelWidget(person_Icon, "identmenu.open");
             setAlignVisually_LabelWidget(idButton, iTrue);
-            setId_Widget(addChildFlags_Widget(navBar, iClob(idButton), collapse_WidgetFlag), "navbar.ident");
+            addChildIdFlags_Widget(navBar, iClob(idButton), "navbar.ident", collapse_WidgetFlag);
         }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
-        setId_Widget(addChildFlags_Widget(navBar,
-                                          iClob(newIcon_LabelWidget(
-                                              home_Icon, 0, 0, "navigate.home")),
-                                          collapse_WidgetFlag),
-                     "navbar.action4");
+        addChildIdFlags_Widget(navBar, iClob(new_Widget()), "sbpad2", fixedSize_WidgetFlag);
+        addChildIdFlags_Widget(navBar,
+                               iClob(newIcon_LabelWidget(home_Icon, 0, 0, "navigate.home")),
+                               "navbar.action4", collapse_WidgetFlag);
         setId_Widget(makeMenu_Widget(root, userDataMenuItems_, iElemCount(userDataMenuItems_)),
                      "userdatamenu");
 #if !defined (LAGRANGE_MAC_MENUBAR)
@@ -2061,13 +2126,13 @@ void createUserInterface_Root(iRoot *d) {
             setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"), uiSeparator_ColorId);
             setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
             setAlignVisually_LabelWidget(navMenu, iTrue);
-            setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
+            addChildIdFlags_Widget(navBar, iClob(navMenu), "navbar.menu", collapse_WidgetFlag);
         }
 #endif
-#if !defined (iPlatformApple)
-        /* On PC platforms, the close buttons are generally on the top right. */
-        addUnsplitButton_(navBar);
-#endif
+        if (!isApple_Platform()) {
+            /* On PC platforms, the close buttons are generally on the top right. */
+            addUnsplitButton_(navBar);
+        }
         if (deviceType_App() == tablet_AppDeviceType) {
             /* Ensure that all navbar buttons match the height of the input field.
                This is required because touch input fields are given extra padding,
@@ -2079,7 +2144,7 @@ void createUserInterface_Root(iRoot *d) {
             }
         }
     }
-    /* Tab bar. */ {
+    /* Tab bar and the document area. */ {
         iWidget *mainStack = new_Widget();
         setId_Widget(mainStack, "stack");
         addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
@@ -2175,9 +2240,9 @@ void createUserInterface_Root(iRoot *d) {
         setDrawBufferEnabled_Widget(toolBar, iTrue);
         setCommandHandler_Widget(toolBar, handleToolBarCommands_);
         setFlags_Widget(toolBar,
-                        //moveToParentBottomEdge_WidgetFlag | parentCannotResizeHeight_WidgetFlag |
-                            resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
-                            arrangeHorizontal_WidgetFlag | commandOnClick_WidgetFlag | collapse_WidgetFlag,
+                        resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag | commandOnClick_WidgetFlag |
+                            collapse_WidgetFlag,
                         iTrue);
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("", "...")),
@@ -2230,7 +2295,7 @@ void createUserInterface_Root(iRoot *d) {
                                         items, iElemCount(items));
         setId_Widget(menu, "toolbar.menu"); /* view menu */
     }
-#endif
+#endif /* iPlatformMobile */
     setupMovableElements_Root_(d);
     updateNavBarActions_(navBar);
     updatePadding_Root(d);
@@ -2415,9 +2480,9 @@ static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
             bottomTabBar = iFalse; /* it's not visible */
         }
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     if (bottomTabBar) {
-        safeAreaInsets_iOS(NULL, NULL, NULL, &bottomSafe);
+        safeAreaInsets_Mobile(NULL, NULL, NULL, &bottomSafe);
         if (bottomSafe >= gap_UI) {
             bottomSafe -= gap_UI; /* kludge: something's leaving a gap between the tabs and the bottombar */
         }
@@ -2517,9 +2582,9 @@ iRect rect_Root(const iRoot *d) {
 
 iRect safeRect_Root(const iRoot *d) {
     iRect rect = rect_Root(d);
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     float left, top, right, bottom;
-    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    safeAreaInsets_Mobile(&left, &top, &right, &bottom);
     adjustEdges_Rect(&rect, top, -right, -bottom, left);
 #endif
     return rect;
@@ -2528,10 +2593,10 @@ iRect safeRect_Root(const iRoot *d) {
 iRect visibleRect_Root(const iRoot *d) {
     iRect visRect = rect_Root(d);
     float bottom = 0.0f;
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     /* TODO: Check this on device... Maybe DisplayUsableBounds would be good here, too? */
     float left, top, right;
-    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    safeAreaInsets_Mobile(&left, &top, &right, &bottom);
     visRect.pos.x = (int) left;
     visRect.size.x -= (int) (left + right);
     visRect.pos.y = (int) top;
@@ -2563,7 +2628,7 @@ iRect visibleRect_Root(const iRoot *d) {
     if (get_MainWindow()) {
         const int keyboardHeight = get_MainWindow()->keyboardHeight;
         if (keyboardHeight > bottom) {
-            adjustEdges_Rect(&visRect, 0, 0, -keyboardHeight + bottom, 0);
+            adjustEdges_Rect(&visRect, 0, 0, -keyboardHeight + (!isAndroid_Platform() ? bottom : 0), 0);
         }
     }
     return visRect;

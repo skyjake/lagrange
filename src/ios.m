@@ -519,7 +519,7 @@ static iBool isDarkMode_(iWindow *window) {
     return iFalse;
 }
 
-void safeAreaInsets_iOS(float *left, float *top, float *right, float *bottom) {
+void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom) {
     iWindow *window = get_Window();
     UIViewController *ctl = viewController_(window);
     if (@available(iOS 11.0, *)) {

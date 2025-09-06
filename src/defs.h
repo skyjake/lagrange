@@ -48,6 +48,14 @@ iLocalDef iBool isMobile_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isMobileLinux_Platform(void) {
+#if defined (iPlatformMobile) && defined (iPlatformLinux)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isApple_Platform(void) {
 #if defined (iPlatformApple)
     return iTrue;

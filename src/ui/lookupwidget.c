@@ -768,7 +768,6 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                 if (isApple_Platform() && deviceType_App() != desktop_AppDeviceType) {
                     int l = leftSafeInset_Mobile();
                     int r = rightSafeInset_Mobile();
-                    //safeAreaInsets_iOS(&l, NULL, &r, NULL);
                     w->rect.size.x = size_Root(root).x - l - r;
                     w->rect.pos.x  = l;
                     /* TODO: Need to use windowToLocal_Widget? */
