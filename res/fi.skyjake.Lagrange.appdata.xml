@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.19.2" date="2025-09-13">
+            <description>
+                <ul>
+                    <li>Indicate automatic reloading in the Tabs list.</li>
+                    <li>Fixed broken timestamp calculation when creating identities.</li>
+                    <li>Fixed parsing Gemini response header when there are excessive whitespace characters present.</li>
+                    <li>Fixed event handling glitch when opening a popup in split view mode.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.2</url>
+        </release>
         <release version="1.19.1" date="2025-09-06">
             <description>
                 <ul>
