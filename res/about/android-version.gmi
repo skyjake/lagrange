@@ -15,6 +15,8 @@
 ## 1.19 (Beta 42)
 * Added "Use system theme" in Settings > Colors. (Android 10 or newer required.)
 * Fixed excessive padding on right edge of list items.
+* Fixed a potential UI event handling glitch with context menus.
+* Updated UI translations.
 
 ## 1.19 (Beta 41)
 * Fixed UI layout when the virtual keyboard is visible.
