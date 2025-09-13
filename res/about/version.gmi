@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.19.2
+* Indicate automatic reloading in the Tabs list.
+* Fixed broken timestamp calculation when creating identities.
+* Fixed parsing Gemini response header when there are excessive whitespace characters present.
+* Fixed event handling glitch when opening a popup in split view mode.
+
 ## 1.19.1
 * Improved alignment of the URL field to page contents.
 * Fixed build errors and runtime crashes when compiling for mobile Linux.

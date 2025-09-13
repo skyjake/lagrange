@@ -2823,7 +2823,9 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           startsWith_CStr(cmd, "cancel menu:") ||
           startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
-        // printf("message dismissed by: %s\n", cmd); fflush(stdout);
+#ifndef NDEBUG
+        printf("message dismissed by: %s\n", cmd); fflush(stdout);
+#endif
         // SDL_Delay(5000);
         setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget(msg));
         destroy_Widget(msg);

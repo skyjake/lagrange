@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.19 (Beta 43)
+* Indicate automatic reloading in the Tabs list.
+* Update Tabs list when reordering tabs.
+* Fixed parsing Gemini response header when there are excessive whitespace characters present.
+* Fixed broken timestamp calculation when creating identities.
+
 ## 1.19 (Beta 42)
 * Added "Use system theme" in Settings > Colors. (Android 10 or newer required.)
 * Fixed excessive padding on right edge of list items.

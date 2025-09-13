@@ -448,6 +448,7 @@ static void updateFilteredBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
                                   5 /* only items related to the individual bookmark */);
 }
 
+#if 0
 int cmpGopherStructureUrl_(const iString *a, const iString *b) {
     /* All of the URLs in the structure tree have the same scheme, host, and port. */
     const size_t start = indexOfCStrFrom_String(a, "/", 9) + 1; /* skip the "gopher://" */
@@ -461,6 +462,7 @@ int cmpGopherStructureUrl_(const iString *a, const iString *b) {
     if (!cmp) return kind1 - kind2;
     return cmp;
 }
+#endif
 
 static iBool isGopherStructure_SidebarWidget_(const iSidebarWidget *d) {
     return equal_Rangecc(urlScheme_String(&d->structureHost), "gopher");
@@ -1133,7 +1135,8 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 item->icon   = siteIcon_GmDocument(document_DocumentWidget(doc));
                 item->isBold = isUnseen_DocumentWidget(doc);
                 item->indent = isVisible_Widget(doc) ? 1 : 0;
-                item->id     = (isRequestOngoing_DocumentWidget(doc) ? 1 : 0);
+                item->id     = (isRequestOngoing_DocumentWidget(doc) ? 1 : 0) |
+                               (isAutoReloading_DocumentWidget(doc) ? 4 : 0);
                 if (numActivePlayers_Media(constMedia_GmDocument(document_DocumentWidget(doc)))) {
                     item->id |= 2;
                 }
@@ -2231,7 +2234,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (d->mode == openDocuments_SidebarMode &&
                  (equal_Command(cmd, "document.request.started") ||
-                  equal_Command(cmd, "document.request.finished"))) {
+                  equal_Command(cmd, "document.request.finished") ||
+                  equal_Command(cmd, "doctabs.order.changed"))) {
             /* TODO: There are no notifications for audio player starting/stopping.
                These would be useful for updating the active-player status icons. */
             updateItemsWithFlags_SidebarWidget_(d, iTrue);
@@ -3406,10 +3410,18 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 p,
                 metaIconRect,
                 d->indent && !isPressing && !isHover ? uiBackgroundUnfocusedSelection_ColorId : bg);
-            draw_Text(font,
-                      metaIconPos,
-                      uiTextAction_ColorId,
-                      d->id & 2 ? "\U0001f50a" /* audio speaker, high volume */ : reload_Icon);
+            if (d->id & 4) {
+                drawOutline_Text(
+                    font, metaIconPos, uiTextAction_ColorId, bg, range_CStr(reload_Icon));
+            }
+            else {
+                drawRange_Text(
+                    font,
+                    metaIconPos,
+                    uiTextAction_ColorId,
+                    range_CStr(
+                        d->id & 2 ? "\U0001f50a" /* audio speaker, high volume */ : reload_Icon));
+            }
         }
     }
     else if (sidebar->mode == subscriptions_SidebarMode) {

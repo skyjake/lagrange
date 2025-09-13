@@ -592,7 +592,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "focus.default")) {
         const iWidget *activeFocusRoot = focusRoot_Widget(NULL);
         /* Look backward because the last button is the default action. */
-        setFocus_Widget(findFocusable_Widget(activeFocusRoot, backward_WidgetFocusDir));
+        iWidget *f = findFocusable_Widget(activeFocusRoot, backward_WidgetFocusDir);
+        if (f && f->root == activeFocusRoot->root) { /* don't switch splits */
+            setFocus_Widget(f);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "menubar.focus")) {
@@ -1080,8 +1083,12 @@ static void updateNavBarSize_(iWidget *navBar) {
     if (!isPhone) {
         const iWidget *docTabs      = findChild_Widget(root_Widget(navBar), "doctabs");
         const iBool isTabBarVisible = isVisible_Widget(findChild_Widget(docTabs, "tabs.buttons"));
-        const iBool isNavBarNextToTabs = (prefs_App()->bottomTabBar ^ prefs_App()->bottomNavBar) == 0;
-        const iBool    arePaddingsNeeded = !isTabBarVisible || !isNavBarNextToTabs;
+        const iBool isNavBarNextToTabs =
+            (prefs_App()->bottomTabBar ^ prefs_App()->bottomNavBar) == 0;
+        const iBool isPortraitTablet =
+            (deviceType_App() == tablet_AppDeviceType && isPortrait_App());
+        const iBool arePaddingsNeeded =
+            (!isTabBarVisible || !isNavBarNextToTabs) && !isPortraitTablet;
         iWidget       *sbPad1       = findChild_Widget(navBar, "sbpad1");
         iWidget       *sbPad2       = findChild_Widget(navBar, "sbpad2");
         const iWidget *sidebar      = findWidget_App("sidebar");
@@ -1089,12 +1096,12 @@ static void updateNavBarSize_(iWidget *navBar) {
         const int      barWidth     = (isVisible_Widget(sidebar) ? width_Widget(sidebar) : 0);
         const int      bar2Width    = (isVisible_Widget(sidebar2) ? width_Widget(sidebar2) : 0);
         const int      action1Width = width_Widget(findChild_Widget(navBar, "navbar.action1"));
-        const int      leftButtons = action1Width +
+        const int      leftButtons  = action1Width +
                                 width_Widget(findChild_Widget(navBar, "navbar.action2")) +
                                 width_Widget(findChild_Widget(navBar, "navbar.action3")) *
                                     isVisible_Widget(findChild_Widget(navBar, "navbar.action3"));
-        const iWidget *navMenu = findChild_Widget(navBar, "navbar.menu");
-        const int rightButtons = width_Widget(findChild_Widget(navBar, "navbar.action4")) +
+        const iWidget *navMenu      = findChild_Widget(navBar, "navbar.menu");
+        const int      rightButtons = width_Widget(findChild_Widget(navBar, "navbar.action4")) +
                                  (isVisible_Widget(navMenu) ? width_Widget(navMenu) : 0);
         const int rightEqualizer = leftButtons - rightButtons;
         const int rootWidth      = size_Root(navBar->root).x;
@@ -1125,7 +1132,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         }
         else {
             setFixedSize_Widget(
-                sbPad2, init_I2(barWidth + bar2Width == 0 && !isNarrow ? rightEqualizer : 0, 0));
+                sbPad2, init_I2(barWidth + bar2Width == 0 && !isNarrow && !isPortraitTablet ?
+                                rightEqualizer : 0, 0));
         }
     }
     if (isPhone) {

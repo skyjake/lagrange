@@ -2954,12 +2954,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if ((!dragged && d == document_App()) ||
             (dragged && /* must be dragging the tab button of this document */
              pointer_Command(cmd) == tabPageButton_Widget(findParent_Widget(w, "doctabs"), d))) {
-            int steps = arg_Command(cmd);
+            const int steps = arg_Command(cmd);
             if (steps) {
                 iWidget *tabs = findWidget_App("doctabs");
                 int tabPos = (int) tabPageIndex_Widget(tabs, d);
                 moveTabPage_Widget(tabs, tabPos, iMaxi(0, tabPos + steps));
                 refresh_Widget(tabs);
+                postCommand_App("doctabs.order.changed");
             }
             return iTrue;
         }

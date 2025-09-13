@@ -244,11 +244,8 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
             int code = 0;
             if (matchString_RegExp(metaPattern, &resp->meta, &m)) {
                 code = atoi(capturedRange_RegExpMatch(&m, 1).start);
-                remove_Block(&resp->meta.chars,
-                             0,
-                             capturedRange_RegExpMatch(&m, 1).end -
-                                 constBegin_String(&resp->meta)); /* leave just the <META> */
-                trimStart_String(&resp->meta);
+                /* Leave just the <META>. */
+                set_String(&resp->meta, collect_String(captured_RegExpMatch(&m, 4)));
             }
             if (code == 0) {
                 clear_String(&resp->meta);

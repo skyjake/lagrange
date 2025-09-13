@@ -3605,8 +3605,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 /* In the past? */ {
                     iTime now, t;
                     initCurrent_Time(&now);
-                    init_Time(&t, &until);
-                    if (isValid_Time(&t) && cmp_Time(&t, &now) <= 0) {
+                    if (!isUndefinedX509_Date(&until) &&
+                            (init_Time(&t, &until), cmp_Time(&t, &now)) <= 0) {
                         makeSimpleMessage_Widget(uiHeading_ColorEscape
                                                  "${heading.newident.date.bad}",
                                                  "${dlg.newident.date.past}");
