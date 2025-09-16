@@ -1,0 +1,3719 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: lagrange dev\n"
+"Language: no-em\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit"
+
+msgid "doc.pre.nocaption"
+#msgstr "Preformatted text without a caption"
+msgstr "Førekroppa skrift uten skildring"
+
+# Link download progress message.
+msgid "doc.fetching"
+#msgstr "Loading"
+msgstr "Drager"
+
+#, c-format
+msgid "doc.archive"
+#msgstr "%s is a compressed archive."
+msgstr "%s er eit arkiv"
+
+msgid "heading.archive.userdata"
+#msgstr "User Data Archive"
+msgstr "Glode Lys Arkiv"
+
+msgid "userdata.help"
+#msgstr "User data archives contain exported browsing history, identities, bookmarks, text snippets, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
+msgstr "Glode lys arkivet inneheld reise, sjelar, nålar, snippar, stemnanes særoppsett og fingeravtrykk. Dei kan bli lagra som kvelv, og brukt for å overføra lys mellom einingar."
+
+msgid "doc.archive.view"
+#msgstr "View archive contents"
+msgstr "Vis arkiv innhald"
+
+msgid "media.untitled.image"
+#msgstr "Image"
+msgstr "Bilete"
+
+msgid "media.untitled.audio"
+#msgstr "Audio"
+msgstr "Lyd"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+#msgstr "Download will be cancelled if this tab is closed."
+msgstr  "Meddragningen vil bli avbrutt viss denne fanen blir lukket."
+
+# Inline download status message.
+msgid "media.download.complete"
+#msgstr "Download completed."
+msgstr "Meddragningen ferdig."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+#msgstr "Title"
+msgstr "Overskrift"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+#msgstr "Artist"
+msgstr "Avlokkar"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+#msgstr "Genre"
+msgstr "Musikkslag"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+#msgstr "Date"
+msgstr "Dato"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+#msgstr "%d-bit"
+msgstr "%d-grann"
+
+msgid "numbertype.integer"
+#msgstr "integer"
+msgstr "heiltal"
+
+msgid "numbertype.float"
+#msgstr "float"
+msgstr "flytetal"
+
+# Hertz, unit for frequency values
+msgid "hz"
+#msgstr "hz"
+msgstr "hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+#msgstr "Feed entries"
+msgstr "Straum innslag"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+#msgstr[0] "You are subscribed to %u feed that contains %%s.\n"
+#msgstr[1] "You are subscribed to %u feeds that contain %%s.\n"
+msgstr[0] "Du fylgjer %u straumen som inneheld %%s.\n"
+msgstr[1] "Du fylgjer %u straumane som inneheld %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+#msgstr[0] "a total of %u entry"
+m#sgstr[1] "a total of %u entries"
+msgstr[0] "til saman %u innslag"
+msgstr[1] "til saman %u innslag"
+
+msgid "feeds.list.refreshtime.now"
+#msgstr "The latest refresh occurred just a moment ago."
+msgstr "Den siste oppfriskningen skjedde berre eit augeblikk sidå."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+#msgstr "The latest refresh occurred %s."
+msgstr "Den siste oppfriskningen skjedde %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+#msgstr[0] "%d minute ago"
+#msgstr[1] "%d minutes ago"
+msgstr[0] "%d minutt sidå"
+msgstr[1] "%d minuttar sidå"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+#msgstr[0] "%d hour ago"
+#msgstr[1] "%d hours ago"
+msgstr[0] "%d time sidå"
+msgstr[1] "%d timar sidå"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+#msgstr[0] "%d day ago"
+#msgstr[1] "%d days ago"
+msgstr[0] "%d dag sidå"
+msgstr[1] "%d dagar sidå"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+#msgstr "ASCII art: the word \"Lagrange\" using a large font"
+msgstr "Skrift-avlokk: ordet \"Lagrange\" med stort skriftslag"
+
+msgid "about.tagline"
+#msgstr "A Beautiful Gemini Client"
+msgstr "Eit Vakkert Vevauge for Tvillingveven"
+
+msgid "about.version"
+#msgstr "Version"
+msgstr "Slag"
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+#msgstr "Powered by SDL 2, OpenSSL, and ☕️"
+msgstr "Grunnlagt på SDL 2, OpenSSL, og ☕️"
+
+msgid "cancel"
+#msgstr "Cancel"
+msgstr "Avbryt"
+
+msgid "close"
+#msgstr "Close"
+msgstr "Lukk"
+
+msgid "dlg.message.ok"
+#msgstr "Continue"
+msgstr "Hald fram"
+
+msgid "dlg.default"
+#msgstr " OK "
+msgstr "Fine"
+
+msgid "menu.title.file"
+#msgstr "File"
+msgstr "Verk"
+
+msgid "menu.title.edit"
+#msgstr "Edit"
+msgstr "Endre"
+
+msgid "menu.title.view"
+#msgstr "View"
+msgstr "Vis"
+
+msgid "menu.title.bookmarks"
+#msgstr "Bookmarks"
+msgstr "Nålar"
+
+msgid "menu.title.identity"
+#msgstr "Identity"
+msgstr "Sjel"
+
+msgid "menu.title.window"
+#msgstr "Window"
+msgstr "Vindauge"
+
+msgid "menu.title.help"
+#msgstr "Help"
+msgstr "Hjelp"
+
+msgid "menu.newwindow"
+#msgstr "New Window"
+msgstr "Nytt Vindauge"
+
+msgid "menu.newtab"
+#msgstr "New Tab"
+msgstr "Ny Fane"
+
+msgid "menu.reopentab"
+#msgstr "Reopen Last Closed Tab"
+msgstr "Gjenopne Siste Lukkede Fane"
+
+msgid "menu.closetab"
+#msgstr "Close Tab"
+msgstr "Lukk Fane"
+
+msgid "menu.closetab.other"
+#msgstr "Close Other Tabs"
+msgstr "Lukk Andre Fanar"
+
+msgid "menu.closetab.left"
+#msgstr "Close Tabs To Left"
+msgstr "Lukk Fanar Til Venstre"
+
+msgid "menu.closetab.right"
+#msgstr "Close Tabs To Right"
+msgstr "Lukk Fanar Til Høgre"
+
+msgid "menu.closetab.above"
+#msgstr "Close Tabs Above"
+msgstr "Lukk Fanar Over"
+
+msgid "menu.closetab.below"
+#msgstr "Close Tabs Below"
+msgstr "Lukk Faner Under"
+
+msgid "menu.duptab"
+#msgstr "Duplicate Tab"
+msgstr "Dobla Fane"
+
+msgid "menu.tab.next"
+#msgstr "Show Next Tab"
+msgstr "Vis Neste Fane"
+
+msgid "menu.tab.prev"
+#msgstr "Show Previous Tab"
+msgstr "Vis Forrige Fane"
+
+msgid "menu.movetab.left"
+#msgstr "Move Tab Left"
+msgstr "Flytt Fane til Venstre"
+
+msgid "menu.movetab.right"
+#msgstr "Move Tab Right"
+msgstr "Flytt Fane til Høgre"
+
+msgid "menu.movetab.split"
+#msgstr "Move Tab to Other Side"
+msgstr "Flytt Fane til Andre Siden"
+
+msgid "menu.movetab.newwindow"
+#msgstr "Move Tab to New Window"
+msgstr "Flytt Fane til Nytt Vindauge"
+
+msgid "menu.window.min"
+#msgstr "Minimize"
+msgstr "Minst"
+
+msgid "menu.window.max"
+#msgstr "Maximize"
+msgstr "Størst"
+
+msgid "menu.window.full"
+#msgstr "Toggle Full Screen"
+msgstr "Knepp Full Skjerm"
+
+msgid "menu.split.merge"
+#msgstr "Unsplit"
+msgstr "Klem"
+
+msgid "menu.split.swap"
+#msgstr "Swap Sides"
+msgstr "Byt Sidar"
+
+msgid "menu.split.horizontal"
+#msgstr "Horizontal"
+msgstr "Vannrett"
+
+msgid "menu.split.vertical"
+#msgstr "Vertical"
+msgstr "Loddrett"
+
+msgid "menu.openlocation"
+#msgstr "Open Location…"
+msgstr "Opne setje…"
+
+msgid "menu.downloads"
+#msgstr "Show Downloads"
+msgstr "Vis Meddragningar"
+
+msgid "menu.export"
+#msgstr "Export"
+msgstr "Trekk..."
+
+msgid "menu.import"
+#msgstr "Import…"
+msgstr "Skubb…"
+
+msgid "menu.pageinfo"
+#msgstr "Show Page Information"
+msgstr "Vis Sted Opplysningar"
+
+msgid "menu.unexpire"
+#msgstr "Ignore Expiry and Continue Loading"
+msgstr "Oversjå Utgåing og Hald Fram med Meddragningen"
+
+msgid "menu.find"
+#msgstr "Find on Page"
+msgstr "Finn på siden"
+
+msgid "macos.menu.find"
+#msgstr "Find"
+msgstr "Finn"
+
+msgid "menu.open.external"
+#msgstr "Open in Another App"
+msgstr "Opne med eit Anna Verktøy"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+#msgstr "Save to Files"
+msgstr "Lagra til Verk"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+#msgstr "Save to Downloads"
+msgstr "Lagra til Meddragningar"
+
+msgid "menu.save.downloads.open"
+#msgstr "Save to Downloads and Open File"
+msgstr "Lagra til Meddragningar og Opna Verk"
+
+msgid "menu.sidebar"
+#msgstr "Toggle Sidebar"
+msgstr "Knepp Sidefelt"
+
+msgid "menu.sidebar.left"
+#msgstr "Toggle Left Sidebar"
+msgstr "Knepp Venstre Sidefelt"
+
+msgid "menu.sidebar.right"
+#msgstr "Toggle Right Sidebar"
+msgstr "Skru Høgre Sidefelt"
+
+msgid "menu.sidebar.configure"
+#msgstr "Configure…"
+msgstr "Tilpass…"
+
+msgid "menu.zoom.in"
+#msgstr "Zoom In"
+msgstr "Surr Inn"
+
+msgid "menu.zoom.out"
+#msgstr "Zoom Out"
+msgstr "Surr Ut"
+
+msgid "menu.zoom.reset"
+#msgstr "Reset Zoom"
+msgstr "Nullstill Surr"
+
+msgid "menu.view.split"
+#msgstr "Split View"
+msgstr "Knekt Visning"
+
+msgid "menu.newfolder"
+#msgstr "New Folder…"
+msgstr "Ny Grein…"
+
+msgid "menu.sort.alpha"
+#msgstr "Sort Alphabetically"
+msgstr "Still Stavradleg"
+
+msgid "menu.fold"
+#msgstr "Fold'"
+msgstr "Fald"
+
+msgid "menu.foldall"
+#msgstr "Fold All"
+msgstr "Fald Alt"
+
+msgid "menu.unfoldall"
+#msgstr "Unfold All"
+msgstr "Fald Ut Alle"
+
+msgid "menu.bookmarks.list"
+#msgstr "List All Bookmarks"
+msgstr "Rams Alle Nålar"
+
+msgid "macos.menu.bookmarks.list"
+#msgstr "List All"
+msgstr "Rams Alt"
+
+msgid "menu.userdata"
+#msgstr "User Data"
+msgstr "Glode Lys"
+
+msgid "menu.bookmarks.bytag"
+#msgstr "List Bookmarks by Tag"
+msgstr "Rams Nålar gitt Knagg"
+
+msgid "macos.menu.bookmarks.bytag"
+#msgstr "List by Tag"
+msgstr "Rams gitt Knagg"
+
+msgid "menu.bookmarks.bytime"
+#msgstr "List Bookmarks by Creation Time"
+msgstr "Rams Nålar gitt Planta Tidspunkt"
+
+msgid "macos.menu.bookmarks.bytime"
+#msgstr "List by Creation Time"
+msgstr "Rams gitt Planta Tidspunkt"
+
+# This opens "about:feeds" and should have a different label than `menu.show.feeds`.
+msgid "menu.feeds.entrylist"
+#msgstr "List Feed Entries"
+msgstr "Rams Straum Innslag"
+
+msgid "menu.preferences"
+#msgstr "Preferences…"
+msgstr "Vilje…"
+
+msgid "menu.update"
+#msgstr "Check for Updates…"
+msgstr "Sjekk etter Nyslag…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+#msgstr "Settings"
+msgstr "Innstillingar"
+
+msgid "menu.help"
+#msgstr "Help"
+msgstr "Hjelp"
+
+msgid "menu.releasenotes"
+#msgstr "Release Notes"
+msgstr "Nyslag Skildring"
+
+msgid "menu.website"
+#msgstr "Project Website…"
+msgstr "Tiltak Vevsted…"
+
+msgid "menu.email"
+#msgstr "Contact via Email"
+msgstr "Antak med Epost"
+
+msgid "menu.quit"
+#msgstr "Quit Lagrange"
+msgstr "Avslutt Lagrange"
+
+msgid "menu.cut"
+#msgstr "Cut"
+msgstr "Klipp"
+
+msgid "menu.copy"
+#msgstr "Copy"
+msgstr "Kopier"
+
+msgid "menu.paste"
+#msgstr "Paste"
+msgstr "Lim inn"
+
+msgid "menu.paste.go"
+#msgstr "Paste and Go"
+msgstr "Lim inn og Reis"
+
+msgid "menu.paste.snippet"
+#msgstr "Paste Snippet"
+msgstr "Lim inn snipp"
+
+msgid "menu.search"
+#msgstr "Search"
+msgstr "Søk"
+
+msgid "menu.snippet.add"
+#msgstr "Snippet from Selection…"
+msgstr "Snipp frå Markering…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+#msgstr "Select All"
+msgstr "Vel Alt"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+#msgstr "Delete"
+msgstr "Luk"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+#msgstr "Undo"
+msgstr "Angre"
+
+msgid "menu.select.clear"
+#msgstr "Clear Selection"
+msgstr "Avmarker"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+#msgstr "Copy Link to Page"
+msgstr "Kopier Stemnet til Sted"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+#msgstr "Show Bookmarks"
+msgstr "Vis Nålar"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+#msgstr "Show Feed Entries"
+msgstr "Vis Straum Innslag"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+#msgstr "Show History"
+msgstr "Vis Reise"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+#msgstr "Show Identities"
+msgstr "Vis Sjel"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+#msgstr "Hide Identities"
+msgstr "Gøym Sjel"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+#msgstr "Show Page Outline"
+msgstr "Vis Sted Omkrins"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+#msgstr "Show Site Structure"
+msgstr "Vis Sted Stilkverk"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+#msgstr "Show Subscriptions"
+msgstr "Vis Fulgte"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+#msgstr "Show Tabs"
+msgstr "Vis Fanar"
+
+msgid "menu.back"
+#msgstr "Go Back"
+msgstr "Attande"
+
+msgid "menu.forward"
+#msgstr "Go Forward"
+msgstr "Gå Fram"
+
+msgid "menu.parent"
+#msgstr "Go to Parent"
+msgstr "Gå til Stamme"
+
+msgid "menu.root"
+#msgstr "Go to Root"
+msgstr "Gå til Hovudstamme"
+
+msgid "menu.home"
+#msgstr "Go Home"
+msgstr "Gå Heim"
+
+msgid "menu.reload"
+#msgstr "Reload Page"
+msgstr "Bank igjen"
+
+msgid "menu.autoreload"
+#msgstr "Set Auto-Reload…"
+msgstr "Lag Stadig-Gjenbank..."
+
+msgid "menu.page.bookmark"
+#msgstr "Bookmark Page…"
+msgstr "Nål Side…"
+
+msgid "menu.page.subscribe"
+msgstr "Fylgj Side…"
+
+msgid "menu.aboutpages"
+#msgstr "About Pages"
+msgstr "Om Stedene"
+
+# Used on the mobile Settings page.
+msgid "menu.about"
+#msgstr "About"
+msgstr "Om"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+#msgstr "About Lagrange"
+msgstr "Om Lagrange"
+
+msgid "menu.fonts"
+#msgstr "Manage Fonts…"
+msgstr "Handter Skriftslag…"
+
+msgid "panel.back"
+#msgstr "Back"
+msgstr "Attende"
+
+msgid "menu.debug"
+#msgstr "Debug Information"
+msgstr "Avlusing Opplysningar"
+
+msgid "menu.tools"
+#msgstr "Tools"
+msgstr "Verktøy"
+
+msgid "menu.import.links"
+#msgstr "Import All Links on Page…"
+msgstr "Skubb Alle Peik på Siden…"
+
+msgid "menu.page.import"
+#msgstr "Import Links as Bookmarks…"
+msgstr "Skubb Peik som Stiftar…"
+
+msgid "menu.page.visitlinks"
+#msgstr "Mark All Links as Visited"
+msgstr "Marker Alle Peik som Gjesta"
+
+msgid "menu.page.translate"
+#msgstr "Translate…"
+msgstr "Målvend…"
+
+msgid "menu.page.copyurl"
+#msgstr "Copy Page URL"
+msgstr "Kopier Stemnet"
+
+msgid "menu.page.copysource"
+#msgstr "Copy Page Source"
+msgstr "Kopier Kjelde"
+
+msgid "menu.viewformat.plain"
+#msgstr "View as Plain Text"
+msgstr "Vis som Rein Skrift"
+
+msgid "menu.viewformat.gemini"
+#msgstr "View as Gemtext"
+msgstr "Vis som Tvillingskrift"
+
+msgid "menu.bookmarks.refresh"
+#msgstr "Refresh Remote Bookmarks"
+msgstr "Oppfrisk Fjerne Stiftar"
+
+msgid "menu.feeds.refresh"
+#msgstr "Refresh Feeds"
+msgstr "Gjenbank Straumar"
+
+msgid "menu.identity.new"
+#msgstr "New Identity…"
+msgstr "Ny Sjel…"
+
+msgid "menu.identity.newdomain"
+#msgstr "New Identity for Domain…"
+msgstr "Ny Sjel for Stedet..."
+
+msgid "menu.identity.import"
+#msgstr "Import…"
+msgstr "Skubb…"
+
+msgid "menu.identities"
+#msgstr "Manage Identities"
+msgstr "Handter Sjelar"
+
+msgid "menu.identity.notactive"
+#msgstr "No Active Identity"
+msgstr "Ingen Kneppa Sjel"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+#msgstr "Set Action:"
+msgstr "Sett Tiltak:"
+
+msgid "menu.bookmark.addtofolder"
+#msgstr "Add Bookmark to Folder:"
+msgstr "Legg Nålar til Grein:"
+
+msgid "menu.bookmark.movetofolder"
+#msgstr "Move Bookmark to Folder:"
+msgstr "Flytt Nålar til Grein:"
+
+msgid "sidebar.close"
+#msgstr "Done"
+msgstr "Ferdig"
+
+msgid "sidebar.bookmarks"
+#msgstr "Bookmarks"
+msgstr "Nålar"
+
+msgid "sidebar.feeds"
+#msgstr "Feed Entries"
+msgstr "Straum Innslag"
+
+msgid "sidebar.history"
+#msgstr "History"
+msgstr "Reise"
+
+msgid "sidebar.identities"
+#msgstr "Identities"
+msgstr "Sjelar"
+
+msgid "sidebar.outline"
+#msgstr "Outline"
+msgstr "Oversyn"
+
+msgid "sidebar.structure"
+#msgstr "Structure"
+msgstr "Stilkverk"
+
+msgid "sidebar.documents"
+#msgstr "Tabs"
+msgstr "Fanar"
+
+msgid "sidebar.subscriptions"
+#msgstr "Subscriptions"
+msgstr "Fylgde"
+
+msgid "sidebar.action.bookmarks.newfolder"
+#msgstr "New Folder"
+msgstr "Ny Grein"
+
+msgid "sidebar.action.bookmarks.edit"
+#msgstr "Edit"
+msgstr "Endre"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+#msgstr "Read All"
+msgstr "Les Alt"
+
+msgid "sidebar.action.show"
+#msgstr "Show:"
+msgstr "Vis:"
+
+msgid "sidebar.action.feeds.showall"
+#msgstr "All"
+msgstr "Alt"
+
+msgid "sidebar.action.feeds.showunread"
+#msgstr "Unread"
+msgstr "Ulest"
+
+msgid "sidebar.action.ident.new"
+#msgstr "New…"
+msgstr "Ny…"
+
+msgid "sidebar.action.ident.import"
+#msgstr "Import…"
+msgstr "Skubb…"
+
+msgid "sidebar.action.history.clear"
+#msgstr "Clear"
+msgstr "Rensk"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+#msgstr[0] "Unread"
+#msgstr[1] "Unread"
+msgstr[0] "Ulest"
+msgstr[1] "Uleste"
+
+msgid "sidebar.sub.empty"
+#msgstr "Empty feed"
+msgstr "Tom straum"
+
+msgid "menu.feed.edit"
+#msgstr "Feed Settings…"
+msgstr "Straum Innstillingar…"
+
+msgid "menu.sub.edit"
+#msgstr "Edit Bookmark…"
+msgstr "Endre Nålar…"
+
+msgid "toolbar.outline"
+#msgstr "Page Outline"
+msgstr "Side Oversyn"
+
+msgid "hint.findtext"
+#msgstr "find text on page"
+msgstr "finn skrift på siden"
+
+msgid "status.query"
+#msgstr "Search Query"
+msgstr "Søk bod"
+
+msgid "status.query.tight"
+#msgstr "Search"
+msgstr "Søk"
+
+msgid "status.feeds"
+#msgstr "Updating Feeds"
+msgstr "Opplys Straumar"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u byte"
+msgstr[1] "%u bytes"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u verk"
+msgstr[1] "%u verk"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u skriftslag"
+msgstr[1] "%u skriftslag"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u innslag"
+msgstr[1] "%u innslag"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+#msgstr "Received at %I:%M %p\non %b %d, %Y"
+msgstr "Mottatt %I:%M %p\nden %b %d, %Y"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "feeds.today"
+#msgstr "Today"
+msgstr "Idag"
+
+msgid "feeds.entry.markread"
+#msgstr "Mark as Read"
+msgstr "Marker som Lest"
+
+msgid "feeds.entry.markunread"
+#msgstr "Mark as Unread"
+msgstr "Marker som Ulest"
+
+msgid "feeds.entry.markbelowread"
+#msgstr "Mark Below as Read"
+msgstr "Marker nedenfor som Lest"
+
+msgid "sidebar.entry.bookmark"
+#msgstr "Add Bookmark…"
+msgstr "Legg til Nål…"
+
+msgid "feeds.entry.bookmark"
+#msgstr "Add Bookmark…"
+msgstr "Legg til Nål…"
+
+msgid "feeds.entry.openfeed"
+#msgstr "Open Feed Page"
+msgstr "Opne Straum Side"
+
+msgid "feeds.edit"
+#msgstr "Edit Feed…"
+msgstr "Endra Straum…"
+
+msgid "feeds.unsubscribe"
+#msgstr "Unsubscribe…"
+msgstr "Avfylgj…"
+
+msgid "feeds.markallread"
+#msgstr "Mark All as Read"
+msgstr "Marker Alt som Lest"
+
+msgid "feeds.refresh"
+#msgstr "Refresh Feeds"
+msgstr "Opplys Straumar"
+
+msgid "feeds.reset"
+#msgstr "Reset Known Entries"
+msgstr "Nullstill Kjente Innslag"
+
+msgid "feeds.atom.translated"
+#msgstr "This Atom XML document has been automatically translated to a Gemini feed to allow subscribing to it."
+msgstr "Dette fylgjeverket (Atom XML) har blitt stadig-målvendt til ein tvillingvev straum for å gje støtte for fylgjing. "
+
+msgid "menu.opentab"
+#msgstr "Open in New Tab"
+msgstr "Opne i Ny Fane"
+
+msgid "menu.opentab.background"
+#msgstr "Open in Background Tab"
+msgstr "Opne i Bakgrunns Fanen"
+
+msgid "menu.openwindow"
+#msgstr "Open in New Window"
+msgstr "Opne i Nytt Vindauge"
+
+msgid "menu.folder.opentab"
+msgstr "Opne i Ny Fane"
+
+msgid "menu.openfile"
+#msgstr "Open File…"
+msgstr "Opne Verk…"
+
+msgid "menu.edit"
+#msgstr "Edit…"
+msgstr "Endra…"
+
+msgid "menu.dup"
+#msgstr "Duplicate…"
+msgstr "Dobla…"
+
+msgid "menu.copyurl"
+#msgstr "Copy URL"
+msgstr "Kopier Stemnet"
+
+msgid "menu.forgeturl"
+#msgstr "Forget URL"
+msgstr "Luk Stemnet"
+
+msgid "history.clear"
+#msgstr "Clear History…"
+msgstr "Luk Reise…"
+
+msgid "heading.history.clear"
+#msgstr "Clear History"
+msgstr "Luk Reise"
+
+msgid "dlg.confirm.history.clear"
+#msgstr "Do you really want to erase the history of all visited pages?"
+msgstr "Har du røyndleg lyst til å luka alle nålane?"
+
+msgid "dlg.history.clear"
+#msgstr "Clear History"
+msgstr "Gløym Reise"
+
+msgid "heading.confirm.bookmarks.delete"
+#msgstr "Delete Bookmarks"
+msgstr "Luk Nålar"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+#msgstr[0] "Do you really want to delete the bookmark inside this folder?"
+#msgstr[1] "Do you really want to delete all %u bookmarks inside this folder?"
+msgstr[0] "Har du røyndleg lyst til å luka nålen i denne greinen?"
+msgstr[1] "Har du røyndleg lyst til å luka alle %u nålar i denne greinen?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+#msgstr[0] "Delete Bookmark"
+#msgstr[1] "Delete %u Bookmarks"
+msgstr[0] "Luk Nål"
+msgstr[1] "Luk %u Nålar"
+
+msgid "bookmark.tag.home"
+#msgstr "Use as Homepage"
+msgstr "Bruk som Heimekrok"
+
+msgid "bookmark.tag.sub"
+#msgstr "Subscribe to Feed"
+msgstr "Fylgj Straum"
+
+msgid "bookmark.tag.remote"
+#msgstr "Use as Bookmark Source"
+msgstr "Bruk som Nål Kjelde"
+
+msgid "bookmark.tag.linksplit"
+#msgstr "Links open to the side"
+msgstr "Peik opna til sides. "
+
+msgid "bookmark.untag.home"
+#msgstr "Remove Homepage"
+msgstr "Luk Heimkrok"
+
+msgid "bookmark.untag.sub"
+#msgstr "Unsubscribe from Feed"
+msgstr "Avfylgj Straumen"
+
+msgid "bookmark.untag.remote"
+#msgstr "Remove Bookmark Source"
+msgstr "Fjern Nål Kjelde"
+
+msgid "bookmark.delete"
+#msgstr "Delete Bookmark"
+msgstr "Luk Stift"
+
+msgid "bookmark.folder.delete"
+#msgstr "Delete Bookmark Folder"
+msgstr "Luk Nål Grein"
+
+msgid "bookmarks.reload"
+#msgstr "Refresh Remote Sources"
+msgstr "Opplys Fjerne Kjeldar"
+
+msgid "hint.filter.bookmark"
+#msgstr "filter bookmarks"
+msgstr "sil nålar"
+
+msgid "ident.using"
+#msgstr "Using on this page"
+msgstr "Bruker på dette stedet"
+
+msgid "ident.notused"
+#msgstr "Not used"
+msgstr "Ubrukt"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+#msgstr[0] "Used on %u URL"
+#msgstr[1] "Used on %u URLs"
+msgstr[0] "Brukt på %u stemnet"
+msgstr[1] "Brukt på %u stemnar"
+
+msgid "ident.temporary"
+#msgstr "Temporary"
+msgstr "Mellombels"
+
+# strftime() formatted
+msgid "ident.expiry"
+#msgstr "Expires %b %d, %Y"
+msgstr "Utgår %b %d, %Y"
+
+msgid "ident.sendmsg"
+#msgstr "Send Message As…"
+msgstr "Send Melding Som…"
+
+msgid "ident.use"
+#msgstr "Use on This Page"
+msgstr "Bruk på Dette Stedet"
+
+msgid "ident.stopuse"
+#msgstr "Stop Using on This Page"
+msgstr "Stopp å Bruke på Dette Stedet"
+
+msgid "ident.stopuse.all"
+#msgstr "Stop Using Everywhere"
+msgstr "Stopp å Bruke Overalt"
+
+msgid "ident.unset"
+#msgstr "Unpin"
+msgstr "Knepp av"
+
+msgid "ident.export"
+#msgstr "Export"
+msgstr "Trekk"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+#msgstr "Use %s"
+msgstr "Bruk %s"
+
+msgid "heading.ident.use"
+#msgstr "Identity Usage"
+msgstr "Sjel Bruk"
+
+msgid "menu.edit.notes"
+#msgstr "Edit Notes…"
+msgstr "Endra merknad"
+
+msgid "heading.ident.notes"
+#msgstr "Identity Notes"
+msgstr "Sjel Notatar"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+#msgstr "Notes about %s:"
+msgstr "Merknad om %s:"
+
+msgid "ident.fingerprint"
+#msgstr "Copy SHA-256 Fingerprint"
+msgstr "Kopier Hakka Fingeravtrykk (SHA-256)"
+
+msgid "ident.delete"
+#msgstr "Delete Identity…"
+msgstr "Luk Sjel…"
+
+msgid "heading.ident.delete"
+#msgstr "Delete Identity"
+msgstr "Luk Sjel"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+# msgstr "Do you really want to delete the identity %s\"%s\"%s including its certificate and private key files?"
+msgstr "Har du røyndleg lyst til å luka Sjelen %s\"%s\"%s i tillegg til nøkkelkort og løynenøklar?"
+
+msgid "dlg.ident.delete"
+#msgstr "Delete Identity and Files"
+msgstr "Luk Sjel og Verk"
+
+msgid "sidebar.empty.idents"
+#msgstr "No Identities"
+msgstr "Ingen Sjel"
+
+msgid "sidebar.empty.unread"
+#msgstr "No Unread Entries"
+msgstr "Ingen Uleste Innslag"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+#msgstr "See %sHelp%s for more information about TLS client certificates."
+msgstr "Sjå %Hjelp%s for meir opplysningar om nøkkelkort (TLS)."
+
+msgid "heading.unsub"
+#msgstr "Unsubscribe"
+msgstr "Avfylgj"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+#msgstr "Really unsubscribe from feed \"%s\"?"
+msgstr "Er du trygg på at du vil avfylgja straumen  \"%s\"?"
+
+msgid "dlg.unsub"
+#msgstr "Unsubscribe"
+msgstr "Avfylgj"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+#msgstr "You can save it as a file to your Downloads folder: press %s or select \"%s\" from the menu."
+msgstr "Du kan lagra den som eit verk i Meddragning greinen: trykk %s or vel \"%s\" frå grannen."
+
+msgid "error.server.msg"
+#msgstr "Server responded with the message:"
+msgstr "Verten svarte med meldingen:"
+
+msgid "heading.pageinfo"
+#msgstr "Page Information"
+msgstr "Sted Opplysningar"
+
+msgid "pageinfo.header.cached"
+#msgstr "(cached content)"
+msgstr "(mellomlager innhald)"
+
+msgid "pageinfo.cert.status"
+#msgstr "Certificate Status:"
+msgstr "Nøkkelkort Tilstand:"
+
+msgid "pageinfo.cert.ca.verified"
+#msgstr "Verified by CA"
+msgstr "Godkjent av nøkkelkort-løyvaren (CA)"
+
+msgid "pageinfo.cert.ca.unverified"
+#msgstr "Not verified by CA"
+msgstr "Ikkje godkjent av nøkkelkort-løyvaren (CA)"
+
+msgid "pageinfo.cert.notexpired"
+#msgstr "Not expired"
+msgstr "Ikkje utgått"
+
+msgid "pageinfo.cert.expired"
+#msgstr "Expired"
+msgstr "Utgått"
+
+msgid "pageinfo.cert.trusted"
+#msgstr "Trusted"
+msgstr "Gyldig"
+
+msgid "pageinfo.cert.untrusted"
+#msgstr "Not trusted"
+msgstr "Ikkje Gyldig"
+
+msgid "pageinfo.domain.match"
+#msgstr "Domain name matches"
+msgstr "Stedsnamn samsvar"
+
+msgid "pageinfo.domain.mismatch"
+#msgstr "Domain name mismatch"
+msgstr "Steds namn avvik"
+
+msgid "dlg.cert.trust"
+#msgstr "Trust"
+msgstr "Trygg"
+
+msgid "dlg.cert.fingerprint"
+#msgstr "Fingerprints"
+msgstr "Fingeravtrykk"
+
+msgid "dlg.cert.fingerprint.pubkey"
+# msgstr "Copy SHA-256 of Public Key"
+msgstr "Kopier Hakk (SHA-256) frå Felles Nøkkel"
+
+msgid "dlg.cert.fingerprint.full"
+#msgstr "Copy SHA-256 of Certificate"
+msgstr "Kopier Hakk (SHA-256) frå Nøkkelkort"
+
+msgid "pageinfo.settings"
+#msgstr "Settings"
+msgstr "Innstillingar"
+
+msgid "heading.sitespec"
+#msgstr "Steds-særeigne Innstillingar"
+msgstr "Steds-særeigne Innstillingar"
+
+msgid "sitespec.ansi"
+#msgstr "ANSI escape warnings:"
+msgstr "Tegnsett (ANSI) avslutt varlsingar"
+
+msgid "sitespec.palette"
+#msgstr "Theme palette seed:"
+msgstr "Krinspreg fargegrann frø:"
+
+msgid "sitespec.tlscache"
+#msgstr "Resume TLS session:"
+msgstr "Hald Fram med Trygg Kopling (TLS):"
+
+msgid "sitespec.accept"
+#msgstr "Save Settings"
+msgstr "Lagra Innstillingar"
+
+msgid "keys.pageinfo"
+#msgstr "Show page information"
+msgstr "Vis side opplysningar"
+
+msgid "keys.sitespec"
+#msgstr "Show site-specific settings"
+msgstr "Vis steds-særprega innstillingar"
+
+msgid "keys.menubar.focus"
+#msgstr "Focus the menu bar"
+msgstr "Blikk grannsfelt"
+
+msgid "keys.identmenu"
+#msgstr "Open Identity menu"
+msgstr "Opne Sjel grann"
+
+msgid "keys.contextmenu"
+#msgstr "Open context menu"
+msgstr "Opne samanheng grann"
+
+#, c-format
+msgid "dlg.input.prompt"
+#msgstr "Enter input for %s:"
+msgstr "Gje skrift til %s:"
+
+msgid "dlg.input.linebreak"
+#msgstr "Line break"
+msgstr "Linjeslutt"
+
+msgid "dlg.input.send"
+#msgstr "Send"
+msgstr "Send"
+
+msgid "menu.input.setprompt"
+#msgstr "Assume This URL Requires Input"
+msgstr "Anta at Stemnet Trong Utfylling"
+
+msgid "menu.input.unsetprompt"
+#msgstr "Don't Assume This URL Requires Input"
+msgstr "Ikkja Anta at Stemnen Trong Utfylling"
+
+msgid "menu.input.clear"
+#msgstr "Clear History"
+msgstr "Gløym Reise"
+
+msgid "menu.input.restore"
+#msgstr "Restore Previous:"
+msgstr "Gjenopprett Forrige:"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+#msgstr "Paste Preceding Line"
+msgstr "Lim Inn Forrige Linje"
+
+msgid "keys.input.precedingline"
+#msgstr "Input prompt: Paste preceding line"
+msgstr "Gje bod: Lim inn forrigje linje"
+
+msgid "heading.save"
+#msgstr "File Saved"
+msgstr "Verk Lagra"
+
+msgid "heading.save.incomplete"
+#msgstr "Page Incomplete"
+msgstr "Side Ufullstendig"
+
+msgid "dlg.save.incomplete"
+#msgstr "The page contents are still being downloaded."
+msgstr "Sidens innhald drages framleis."
+
+msgid "dlg.save.size"
+#msgstr "Size:"
+msgstr "Storleik:"
+
+msgid "dlg.save.opendownload"
+#msgstr "Open Downloaded File"
+msgstr "Opne Meddraga Verk"
+
+msgid "heading.save.error"
+#msgstr "Error Saving File"
+msgstr "Misblømt Lagra Verk"
+
+msgid "heading.import.bookmarks"
+#msgstr "Import Bookmarks"
+msgstr "Skubb Nålar"
+
+msgid "dlg.import.intofolder"
+#msgstr "Add to Folder:"
+msgstr "Legg til Grein:"
+
+msgid "dlg.import.headings"
+#msgstr "Subfolders from Headings:"
+msgstr "Undergrein frå Hovudar:"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+#msgstr[0] "Found one new link on the page."
+#msgstr[1] "Found %d new links on the page."
+msgstr[0] "Fann eit nytt stemne på siden."
+msgstr[1] "Fann %d nye stemnar på siden."
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+#msgstr[0] "%sAdd Bookmark"
+#msgstr[1] "%sAdd %d Bookmarks"
+msgstr[0] "%sLegg til Nål"
+msgstr[1] "%sLegg %d Nålar"
+
+msgid "dlg.import.notnew"
+#msgstr "All links on this page are already bookmarked."
+msgstr "Alle stemnene på denne siden er allereie nålfesta."
+
+msgid "dlg.import.notfound"
+#msgstr "There are no links on this page."
+msgstr "Det er ingen stemnar på denne siden."
+
+msgid "heading.autoreload"
+#msgstr "Auto-Reload"
+msgstr "Stadig-Opplys"
+
+msgid "dlg.autoreload"
+#msgstr "Select the auto-reload interval for this tab."
+msgstr "Vel gjenopplysnings tidsrommet for denne fanen."
+
+msgid "reload.never"
+#msgstr "Never"
+msgstr "Aldrig"
+
+msgid "reload.onceperday"
+#msgstr "Once per day"
+msgstr "Dagleg"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+#msgstr[0] "%d minute"
+#msgstr[1] "%d minutes"
+msgstr[0] "%d minutt"
+msgstr[1] "%d minuttar"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+#msgstr[0] "%d hour"
+#msgstr[1] "%d hours"
+msgstr[0] "%d time"
+msgstr[1] "%d timar"
+
+msgid "link.newtab"
+#msgstr "Open Link in New Tab"
+msgstr "Gjest Peiket i ei Ny Fana"
+
+msgid "link.newtab.background"
+#msgstr "Open Link in Background Tab"
+msgstr "Gjest Peiket i ei Bagrunns Fana"
+
+msgid "link.side"
+#msgstr "Open Link to the Side"
+msgstr "Gjest Peiket ved Siden av"
+
+msgid "link.side.newtab"
+#msgstr "Open Link in New Tab to the Side"
+msgstr "Gjest Peiket i ei Ny Fana ved Siden av"
+
+msgid "link.newwindow"
+#msgstr "Open Link in New Window"
+msgstr "Gjest Peik i Nytt Vindauge"
+
+msgid "link.browser"
+#msgstr "Open Link in Default Browser"
+msgstr "Gjest Peik i det Vanlege Vevauget"
+
+msgid "link.noproxy"
+#msgstr "Open without Proxy"
+msgstr "Opna uten Ombod"
+
+msgid "link.copy"
+#msgstr "Copy Link"
+msgstr "Kopier Stemnet"
+
+msgid "link.copy.label"
+#msgstr "Copy Link Label"
+msgstr "Kopier Peik Knagg"
+
+msgid "link.searchurl"
+#msgstr "Use as Search URL"
+msgstr "Bruk som søke stemne"
+
+msgid "link.bookmark"
+#msgstr "Bookmark Link…"
+msgstr "Nålfest stemne…"
+
+msgid "link.snippet"
+#msgstr "Snippet from Link…"
+msgstr "Snipp Frå Stemne…"
+
+msgid "link.download"
+#msgstr "Download Linked File"
+msgstr "Drag Tilknytta Verk"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+#msgstr "Show in Finder"
+msgstr "Vis i Finder"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+#msgstr "Show in File Manager"
+msgstr "Vis i Verk Utforskar"
+
+msgid "menu.share"
+#msgstr "Share"
+msgstr "Del"
+
+msgid "link.file.delete"
+#msgstr "Delete File"
+msgstr "Luk Verk"
+
+msgid "heading.file.delete"
+#msgstr "Delete File"
+msgstr "Luk Verk"
+
+msgid "dlg.file.delete.confirm"
+#msgstr "Are you sure you want to delete this file?"
+msgstr "Er du trygg på at du har lyst til å luka vekk dette verket?"
+
+msgid "dlg.file.delete"
+#msgstr "Delete"
+msgstr "Luk"
+
+msgid "heading.openlink"
+#msgstr "Open Link"
+msgstr "Gjest Peik"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+#msgstr "Open Link"
+msgstr "Gjest dette peiket i hypertekst (http)  vevauge?\n%s%s"
+
+msgid "dlg.openlink"
+#msgstr "Open Link"
+msgstr "Gjest Peik"
+
+msgid "dlg.certwarn.title"
+#msgstr "Security Issue"
+msgstr "Tryggleik Ufrisk"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+#msgstr[0] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in one day. "
+msgstr[0] "Det kan hende at det mottatte nøkkelkortet har blitt omnyet -- det er for det riktige stedet og har ikkje utløpt endå. Det noverandes gyldige nøkkelkortet vil utgå %s, om ein dag."
+
+#msgstr[1] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
+msgstr[1] "Det kan hende at det mottatte nøkkelkortet har blitt omnyet  — det er for det riktige stedet og har ikkje utløpt endå. Det noverandes gyldige nøkkelkortet vil utgå %s, om %d dagar."
+
+msgid "dlg.certwarn.different"
+#msgstr "The received certificate is valid but different than the one we trust."
+msgstr "Det mottatte nøkkelkortet er gyldig, men ulikt frå den me stoler på."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+#msgstr "The received certificate has expired on %s."
+msgstr "Det mottatte nøkkelkortet gjekk ut %s."
+
+msgid "dlg.certwarn.domain"
+# msgstr "The received certificate is for the wrong domain (%s). This may be a server configuration problem."
+msgstr "Det mottatte nøkkelkort er for urett sted (%s). Dette kan vera ein feilinnstillings ufrisk."
+
+msgid "dlg.certwarn.domain.expired"
+#msgstr "The received certificate is expired AND for the wrong domain."
+msgstr "Det mottatte nøkkelkortet er utgått OG er for feil sted."
+
+msgid "heading.certimport"
+#msgstr "Import Identity"
+msgstr "Skubb Sjel"
+
+msgid "dlg.certimport.help"
+#msgstr "Paste a PEM-encoded certificate and/or private key, or drop a .crt/.key file on the window."
+msgstr "Lim inn nøkkelkort styrka av glodevernar PEM og/eller løynenøkkel, eller legg nøklar (.crt/.key) i vindauget. "
+
+msgid "dlg.certimport.notfound"
+#msgstr "No certificate or private key was found."
+msgstr "Ingen nøkkelkort eller løynenøkkel vart funnen."
+
+msgid "dlg.certimport.notfound.page"
+#msgstr "No certificate/key found on the current page."
+msgstr "Ingen nøkkelkort/ fellesnøkkel funnen på denne siden."
+
+msgid "heading.certimport.pasted"
+#msgstr "Pasted from Clipboard"
+msgstr "Limt Inn frå Utklippstavlå"
+
+msgid "heading.certimport.dropped"
+#msgstr "Dropped File"
+msgstr "Lagt Verk"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+#msgstr "Import Certificate/Key File"
+msgstr "Skubb Nøkkelkort/ Fellesnøkkel"
+
+msgid "dlg.certimport.import"
+#msgstr "Import"
+msgstr "Skubb"
+
+msgid "dlg.certimport.paste"
+#msgstr "Paste from Clipboard"
+msgstr "Lim Inn frå Utklippstavlå"
+
+msgid "dlg.certimport.notes"
+#msgstr "Notes:"
+msgstr "Merknadar:"
+
+msgid "hint.certimport.description"
+#msgstr "description"
+msgstr "skildring"
+
+msgid "dlg.certimport.nocert"
+#msgstr "No Certificate"
+msgstr "Ingen Nøkkelkort"
+
+msgid "dlg.certimport.nokey"
+# msgstr "No Private Key"
+msgstr "Ingen Løynenøkkel"
+
+msgid "link.hint.audio"
+#msgstr "Audio"
+msgstr "Lyd"
+
+msgid "link.hint.image"
+#msgstr "Image"
+msgstr "Bilete"
+
+msgid "heading.import.userdata"
+#msgstr "Import User Data"
+msgstr "Skubb Glodelys"
+
+msgid "heading.import.userdata.error"
+#msgstr "Import Failed"
+msgstr "Skubb Misblømet"
+
+msgid "import.userdata.bookmarks"
+#msgstr "Bookmarks:"
+msgstr "Nålar:"
+
+msgid "import.userdata.snippets"
+#msgstr "Snippets:"
+msgstr "Snippar:"
+
+msgid "import.userdata.idents"
+#msgstr "Identities:"
+msgstr "SJELAR:"
+
+msgid "import.userdata.history"
+#msgstr "History:"
+msgstr "Reise:"
+
+msgid "import.userdata.trusted"
+#msgstr "Trusted certificates:"
+msgstr "Gyldige nøkkelkort:"
+
+msgid "import.userdata.sitespec"
+#msgstr "Site settings:"
+msgstr "Steds Innstillingar:"
+
+msgid "dlg.userdata.no"
+#msgstr "None"
+msgstr "Ingen"
+
+msgid "dlg.userdata.missing"
+#msgstr "If Missing"
+msgstr "Viss Manglet"
+
+msgid "dlg.userdata.all"
+#msgstr "All (Overwrite)"
+msgstr "Alt (Overskriv)"
+
+msgid "dlg.userdata.alldup"
+#msgstr "All (Keep Duplicates)"
+msgstr "Alt (Hald på Dobbeltdel)"
+
+msgid "import.userdata"
+#msgstr "Import Selected Data"
+msgstr "Skubb Utpeikt Lys"
+
+msgid "import.userdata.dupfolder"
+#msgstr "Imported Duplicates"
+msgstr "Skubb Dobbeltdelar"
+
+msgid "import.userdata.error"
+#msgstr "%s is not a valid Lagrange export archive."
+msgstr "%s er ikkje eit gyldig trekk arkiv i Lagrange."
+
+msgid "bookmark.title.blank"
+#msgstr "Blank Page"
+msgstr "Tom Side"
+
+msgid "bookmark.export.title.folder"
+#msgstr "Bookmarks"
+msgstr "Nålar"
+
+msgid "bookmark.export.title.tag"
+#msgstr "Bookmark tags"
+msgstr "Nål knaggar"
+
+msgid "bookmark.export.title.time"
+#msgstr "Created bookmarks"
+msgstr "Lagde nålar"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+m#sgstr[0] "You have %d bookmark."
+#msgstr[1] "You have %d bookmarks."
+msgstr[0] "Du har %d nål."
+msgstr[1] "Du har %d nålar."
+
+msgid "bookmark.export.saving"
+#msgstr "Save this page to export them, or you can copy them to the clipboard."
+msgstr "Lagre denne siden for å trekka dei, eller du kan kopiera dei til utklippstavlå."
+
+msgid "bookmark.export.taginfo"
+#msgstr "In this list each heading represents a bookmark tag. Only tagged bookmarks are listed. Bookmarks with multiple tags are repeated under each tag."
+msgstr "I denne ramsen tilviser kvart hovud ein nål. Berre nålar med knagg er ramset opp. Nålar med fleire knaggar blir gjentatt under kvar knagg."
+
+msgid "bookmark.export.format.sub"
+#msgstr "This page is formatted according to the \"Subscribing to Gemini pages\" companion specification."
+msgstr "Denne siden er kroppet etter \"Subscribing to Gemini pages\" tilføyde innstillingar."
+
+msgid "bookmark.export.format.linklines"
+#msgstr "Each link represents a bookmark."
+msgstr "Kvart peik tilviser ein nål."
+
+msgid "bookmark.export.format.otherlines"
+#msgstr "Bullet lines and quotes are reserved for additional information about the preceding bookmark. Text lines and preformatted text are considered comments and should be ignored."
+msgstr "Skudd linjar og hermingar er bordet for tilleggs opplysningar angående nålen. Skrift linjar og førekroppet skrift blir ansett som merknadar og kjem til å bli oversett."
+
+msgid "bookmark.export.format.folders"
+#msgstr "Folder structure is defined by level 2/3 headings."
+msgstr "Greinverket er skildra av flate 2/3 hovudar"
+
+msgid "bookmark.export.format.tags"
+#msgstr "Tags are defined by level 2 headings."
+msgstr "Knaggar er skildra av flate 2 hovudar."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+#msgstr "BOOKMARKS"
+msgstr "Nålar"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+#msgstr "FEEDS"
+msgstr "STRAUMAR"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+#msgstr "SNIPPETS"
+msgstr "SNIPPAR"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+#msgstr "HISTORY"
+msgstr "REISE"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+#msgstr "PAGE CONTENT"
+msgstr "SIDE INNHALD"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+#msgstr "IDENTITIES"
+msgstr "SJELAR"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+#msgstr "OTHER"
+msgstr "ANNA"
+
+msgid "menu.page.upload"
+#msgstr "Upload with Titan…"
+msgstr "Hus med Titan…"
+
+msgid "menu.page.upload.edit"
+#msgstr "Edit Page with Titan…"
+msgstr "Endra Sidå med Titan…"
+
+msgid "spartan.input"
+#msgstr "Enter text to send:"
+msgstr "Gje det som skal Sendes:"
+
+msgid "dlg.spartan.upload"
+#msgstr "Open Editor…"
+msgstr "Opna Tuklar…"
+
+msgid "heading.upload"
+#msgstr "Upload with Titan"
+msgstr "Hus med Titan"
+
+msgid "heading.upload.edit"
+#msgstr "Edit with Titan"
+msgstr "Tukla med Titan"
+
+msgid "heading.upload.misfin"
+#msgstr "Send Misfin Message"
+msgstr "Send Melding (Misfin)"
+
+msgid "heading.upload.spartan"
+#msgstr "Upload with Spartan"
+msgstr "Hus med Spartan"
+
+msgid "heading.upload.error.file"
+#msgstr "Invalid File"
+msgstr "Ugyldig Verk"
+
+msgid "dlg.upload.edit.error"
+#msgstr "Failed to download contents of the editable resource."
+msgstr "Misblømte i å draga med innhald frå det endrebare verket."
+
+msgid "dlg.upload.edit.incompatible"
+#msgstr "This type of resource cannot be edited in the application."
+msgstr "Dette verkslaget kan ikkje bli endra i verktøyet."
+
+msgid "heading.upload.edit.error"
+#msgstr "Editing Failed"
+msgstr "Endring misblømte"
+
+msgid "heading.upload.misfin.noident"
+#msgstr "No Misfin Identities"
+msgstr "Ingen Misfin Sjel"
+
+msgid "dlg.upload.misfin.noident"
+#msgstr "You must first import a Misfin certificate to send messages."
+msgstr "Du må først skubba eit Misfin nøkkelkort for å kunne senda meldingar."
+
+msgid "heading.misfin.ok"
+#msgstr "Message Sent"
+msgstr "Melding sendt"
+
+# Only shown in a message box when CCing self fails.
+msgid "misfin.cc"
+#msgstr "Sending Myself a Copy"
+msgstr "Sender Meg Sjølv ein Kopi"
+
+# Only shown in a message box when verifying the recipient fails.
+msgid "misfin.verify"
+#msgstr "Verifying Recipient"
+msgstr "Godkjenner mottakar"
+
+msgid "misfin.success"
+#msgstr "You message was sent successfully."
+msgstr "Din melding blei sendt blømsamt."
+
+msgid "misfin.redirect"
+#msgstr "The recipient requests sending the message to a different address."
+msgstr "Mottakaren førespør om å senda meldingen til eit anna stemne. "
+
+msgid "misfin.failure"
+#msgstr "An error occurred while sending the message."
+msgstr "Ein misbløming skjedde ved sending av meldingen."
+
+msgid "misfin.needcert"
+#msgstr "You must identify yourself by providing a Misfin certificate."
+msgstr "Du må sjela deg ved å visa eit Misfin nøkkelkort."
+
+msgid "misfin.unauth"
+#msgstr "You are not authorized to send messages to this recipient."
+msgstr "Du har ikkje løyve til å senda meldingar til denne mottakaren."
+
+msgid "misfin.badcert"
+#msgstr "Your Misfin certificate is invalid."
+msgstr "Ditt Misfin nøkkelkort er ugyldig."
+
+msgid "misfin.changed"
+#msgstr "Your Misfin certificate does not match the one expected by the recipient."
+msgstr "Ditt Misfin nøkkelkort stemmer ikkje overens med kva mottakaren rekna med."
+
+
+msgid "misfin.unknown"
+#msgstr "Failed to communicate with the server."
+msgstr "Misblømte i å tala med verten."
+
+msgid "upload.error.directory"
+#msgstr "Only individual files can be uploaded, not directories."
+msgstr "Berre enkle verk kan bli meddraget, ikkje greinar."
+
+msgid "misfin.self.copy"
+#msgstr "Send me a copy"
+msgstr "Send meg ein kopi"
+
+msgid "upload.id"
+#msgstr "Identity:"
+msgstr "Sjel:"
+
+msgid "upload.from"
+#msgstr "From:"
+msgstr "Frå:"
+
+msgid "upload.to"
+#msgstr "To:"
+msgstr "Til:"
+
+msgid "heading.upload.id"
+#msgstr "Credentials"
+msgstr "Nøkkelkvelv"
+
+msgid "dlg.upload.id.none"
+# msgstr "None"
+msgstr "Ingen"
+
+msgid "dlg.upload.id.default"
+# msgstr "Default Identity"
+msgstr "Vanleg Sjel"
+
+msgid "heading.upload.dest"
+#msgstr "Address"
+msgstr "Stemne"
+
+msgid "upload.type"
+#msgstr "Content"
+msgstr "Innhald"
+
+msgid "heading.upload.text"
+#msgstr "Text"
+msgstr "Skrift"
+
+msgid "menu.upload.export"
+#msgstr "Export Text"
+msgstr "Skubb Skrift"
+
+msgid "menu.upload.delete"
+#msgstr "Delete All"
+msgstr "Luk Alt"
+
+msgid "menu.upload.delete.confirm"
+#msgstr "Really Delete All (No Undo)"
+msgstr "Røyndleg Luk alt (Ingen Angre)"
+
+msgid "hint.upload.text"
+#msgstr "enter text to upload"
+msgstr "gje skrift å husa"
+
+msgid "hint.upload.misfin"
+#msgstr "enter message"
+msgstr "gje melding"
+
+msgid "heading.upload.file"
+#msgstr "File"
+msgstr "Verk"
+
+msgid "upload.file.name"
+#msgstr "File name:"
+msgstr "Verk namn:"
+
+msgid "upload.file.path"
+#msgstr "File path:"
+msgstr "Verk setje:"
+
+msgid "upload.file.drophere"
+#msgstr "enter file path or drag-and-drop a file on the window"
+msgstr "gje verk setje eller løft-og-legg eit verk i vindauget"
+
+msgid "upload.file.size"
+#msgstr "File size:"
+msgstr "Verk storleik:"
+
+msgid "upload.mime"
+#msgstr "MIME type:"
+msgstr "MIME slag:"
+
+msgid "upload.token"
+#msgstr "Token:"
+msgstr "Bong:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+#msgstr "URL"
+msgstr "Stemne"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+#msgstr "Content"
+msgstr "Innhald"
+
+msgid "hint.upload.path"
+#msgstr "URL path"
+msgstr "Stemne setje"
+
+msgid "hint.upload.token"
+#msgstr "see server's instructions"
+msgstr "sjå vertens losing"
+
+msgid "hint.upload.token.long"
+#msgstr "token — see server's instructions"
+msgstr "bong — sjå vertens losing"
+
+msgid "dlg.upload.send"
+#msgstr "Upload"
+msgstr "Hus"
+
+msgid "dlg.upload.sendmsg"
+#msgstr "Send Message"
+msgstr "Send Melding"
+
+msgid "dlg.upload.edit"
+#msgstr "Submit"
+msgstr "Lever"
+
+msgid "upload.port"
+#msgstr "Port…"
+msgstr "Port…"
+
+msgid "heading.uploadport"
+#msgstr "Titan Upload Port"
+msgstr "Titan Hus Port"
+
+msgid "dlg.uploadport.msg"
+#msgstr "Set the Titan server port to use for this URL. The port is saved in the site-specific configuration."
+msgstr "Bruk Titan vernadens port for å bruka dette stemnet. Porten er lagret i stedets særoppsett."
+
+msgid "dlg.uploadport.set"
+#msgstr "Set Port"
+msgstr "Vel Port"
+
+# used on mobile
+msgid "dlg.upload.text"
+#msgstr "Enter text to upload"
+msgstr "Gje skrift å husa"
+
+# used on mobile
+msgid "dlg.upload.file"
+#msgstr "No file selected"
+msgstr "Ingen Verk Vald"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+#msgstr "Select File…"
+msgstr "Vel Verk…"
+
+msgid "heading.translate"
+#msgstr "Translate Page"
+msgstr "Målvend Side"
+
+msgid "dlg.translate.unavail"
+#msgstr "Service Unavailable"
+msgstr "Verktøy Utilgjengeleg"
+
+msgid "dlg.translate.fail"
+#msgstr "Request Failed"
+msgstr "Spurnad Feilet"
+
+msgid "dlg.translate"
+#msgstr "Translate"
+msgstr "Målvend"
+
+msgid "dlg.translate.from"
+#msgstr "From:"
+msgstr "Frå:"
+
+msgid "dlg.translate.to"
+#msgstr "To:"
+msgstr "Til:"
+
+msgid "dlg.translate.pre"
+#msgstr "Skip preformatted:"
+msgstr "Hopp over førekroppet:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+#msgstr "Auto-detect"
+msgstr "Vane-merk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Aserbajdsjansk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Katalansk"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Czech"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Dansk"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Nederlandsk"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finsk"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Gresk"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebraisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Kinesisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Tysk"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Engelsk"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Fransk"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "Indisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Ungarn"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irsk"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italiensk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japansk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Koreansk"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polsk"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portugisisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovakisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Russisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Svensk"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Tyrkisk"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrainsk"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Spansk"
+
+msgid "heading.glyphfinder"
+#msgstr "Missing Glyphs"
+msgstr "Manglandes Rissar"
+
+msgid "dlg.glyphfinder.missing"
+#msgstr "The following characters could not be shown:"
+msgstr "Dei fylgjandes stavane kunne ikkje visast:"
+
+msgid "dlg.glyphfinder.help"
+#msgstr "You can try searching the skyjake.fi Font Library for fonts that provide glyphs for these characters, or manually install new TrueType fonts."
+msgstr "Du må finna skriftslag som dekker rissar for stavane. Du kan til dømes reisa til vevstedet skyjake.fi under Font Library, eller laga eit nytt TrueType skriftslag på eigehand."
+
+msgid "dlg.glyphfinder.help.empty"
+#msgstr "Please reload the page to check again for missing glyphs."
+msgstr "Vennligst oppfrisk siden for å sjekka manglandes rissar."
+
+msgid "dlg.glyphfinder.disable"
+#msgstr "Disable Warnings"
+msgstr "Skru av Varsling"
+
+msgid "dlg.glyphfinder.search"
+#msgstr "Search Font Library"
+msgstr "Søk Skriftslag Bokvevsla"
+
+msgid "heading.glyphfinder.results"
+#msgstr "Search Results"
+msgstr "Søkets Funn"
+
+msgid "glyphfinder.results"
+#msgstr "The following fontpacks provide one or more of the missing glyphs:"
+msgstr "Fylgjandes skriftpakkar tilbyr ein eller fleire av dei manglandes rissane:"
+
+msgid "glyphfinder.results.empty"
+#msgstr "Sorry, no matching fontpacks were found."
+msgstr "Leisamt, ingen samsvarandes skriftpakkar blei funnet."
+
+msgid "heading.newident"
+#msgstr "New Identity"
+msgstr "Ny Sjel"
+
+msgid "dlg.newident.rsa.selfsign"
+#msgstr "Creating a self-signed 2048-bit RSA certificate."
+msgstr "Lager eit sjølv-signert nøkkelkort med framgangsmåten 2048-bit RSA."
+
+msgid "dlg.newident.until"
+#msgstr "Valid until:"
+msgstr "Gyldig inntil:"
+
+msgid "hint.newident.date"
+#msgstr "YYYY or YYYY-MM-DD"
+msgstr "ÅÅÅÅ or ÅÅÅÅ-MM-DD"
+
+msgid "hint.newident.optional"
+#msgstr "optional"
+msgstr "valfritt"
+
+msgid "dlg.newident.commonname"
+#msgstr "Common name:"
+msgstr "Vanleg namn:"
+
+msgid "dlg.newident.temp"
+#msgstr "Temporary:"
+msgstr "Mellombels:"
+
+msgid "dlg.newident.notsaved"
+#msgstr "not saved to disk"
+msgstr "ikkje lagra på disk"
+
+msgid "dlg.newident.scope"
+#msgstr "Use on:"
+msgstr "Bruk på:"
+
+msgid "dlg.newident.scope.domain"
+#msgstr "Current Domain"
+msgstr "Noverandes sted"
+
+msgid "dlg.newident.scope.dir"
+#msgstr "Current Directory"
+msgstr "Noverandes Stemne"
+
+msgid "dlg.newident.scope.page"
+#msgstr "Current Page"
+msgstr "Noverandes side"
+
+msgid "dlg.newident.scope.none"
+#msgstr "Not Used"
+msgstr "Ikkje brukt"
+
+msgid "dlg.newident.email"
+#msgstr "Email:"
+msgstr "Epost:"
+
+msgid "dlg.newident.userid"
+#msgstr "User ID:"
+msgstr "Glode Sjel:"
+
+msgid "dlg.newident.domain"
+#msgstr "Domain:"
+msgstr "Sted:"
+
+msgid "dlg.newident.org"
+#msgstr "Organization:"
+msgstr "Bregnel:"
+
+msgid "dlg.newident.country"
+#msgstr "Country:"
+msgstr "Land:"
+
+msgid "dlg.newident.more"
+#msgstr "More…"
+msgstr "Meir…"
+
+msgid "dlg.newident.create"
+#msgstr "Create Identity"
+msgstr "Lag Sjel"
+
+msgid "heading.newident.missing"
+#msgstr "Missing Info"
+msgstr "Manglandes lys"
+
+msgid "dlg.newindent.missing.commonname"
+#msgstr "A \"Common name\" must be specified."
+msgstr "Eit \"Vanleg namn\" må angis."
+
+msgid "heading.newident.date.bad"
+#msgstr "Invalid Date"
+msgstr "Ugyldig dato"
+
+msgid "dlg.newident.date.past"
+#msgstr "Expiration date must be in the future."
+msgstr "Utgått dato må vera satt til framtiden. ."
+
+msgid "dlg.newident.date.example"
+#msgstr "Please check the \"Valid until\" date. Examples:\n• 2030\n• 2025-06-30\n• 2021-12-31 23:59:59"
+msgstr "Vennlegst sjekk  \"Gyldig inntil\" dato. Dømar:\n• 2030\n• 2025-06-30\n• 2021-12-31 23:59:59"
+
+msgid "heading.feedcfg"
+#msgstr "Feed Settings"
+msgstr "Straum Innstillingar"
+
+msgid "heading.subscribe"
+#msgstr "Subscribe to Page"
+msgstr "Fylgj siden"
+
+msgid "dlg.feed.title"
+#msgstr "Title:"
+msgstr "Overskrift:"
+
+msgid "dlg.feed.entrytype"
+#msgstr "Entry type:"
+msgstr "Innslag slag:"
+
+msgid "dlg.feed.type.gemini"
+#msgstr "YYYY-MM-DD Links"
+msgstr "ÅÅÅÅ-MM-DD Peik"
+
+msgid "dlg.feed.type.headings"
+#msgstr "New Headings"
+msgstr "Nytt Hovud"
+
+msgid "dlg.feed.ignoreweb"
+#msgstr "Ignore HTTP(S) links:"
+msgstr "Oversjå hyptertekst (HTTP) peik:"
+
+msgid "dlg.feed.save"
+#msgstr "Save Settings"
+msgstr "Lagre innstillingar"
+
+msgid "dlg.feed.sub"
+#msgstr "Subscribe"
+msgstr "Fylgj"
+
+msgid "heading.bookmark.add"
+#msgstr "Add Bookmark"
+msgstr "Legg til Nål"
+
+msgid "heading.bookmark.edit"
+#msgstr "Edit Bookmark"
+msgstr "Endre Nål"
+
+msgid "heading.bookmark.editfolder"
+#msgstr "Edit Folder"
+msgstr "Endre Grein"
+
+msgid "dlg.bookmark.save"
+#msgstr "Save Bookmark"
+msgstr "Lagre Nål"
+
+msgid "dlg.bookmark.title"
+#msgstr "Title:"
+msgstr "Overskrift:"
+
+msgid "dlg.bookmark.url"
+#msgstr "URL:"
+msgstr "Stemne:"
+
+msgid "dlg.bookmark.folder"
+#msgstr "Folder:"
+msgstr "Grein:"
+
+msgid "dlg.bookmark.parentfolder"
+#msgstr "Parent folder:"
+msgstr "Stamme grein:"
+
+msgid "dlg.bookmark.tags"
+#msgstr "Tags:"
+msgstr "Knaggar:"
+
+msgid "hint.dlg.bookmark.tags"
+#msgstr "space-separated terms"
+msgstr "mellomroms-enka innrammingar"
+
+msgid "dlg.bookmark.notes"
+msgstr "Merknadar:"
+
+msgid "hint.dlg.bookmark.notes"
+#msgstr "free-form private notes"
+msgstr "sjølvstyrt glodelege notatar"
+
+msgid "dlg.bookmark.identity"
+#msgstr "Pinned identity:"
+msgstr "Festet sjel:"
+
+msgid "dlg.bookmark.icon"
+#msgstr "Icon:"
+msgstr "Stempel:"
+
+msgid "heading.bookmark.tags"
+#msgstr "Behavior"
+msgstr "Framferd"
+
+msgid "heading.addfolder"
+#msgstr "Add Folder"
+msgstr "Legg til Grein"
+
+msgid "dlg.addfolder.defaulttitle"
+#msgstr "New Folder"
+msgstr "Ny Grein"
+
+msgid "dlg.addfolder.prompt"
+#msgstr "Enter the name of the new folder:"
+msgstr "Legg til namnet på den nye greinen:"
+
+msgid "dlg.addfolder"
+#msgstr "Add Folder"
+msgstr "Legg til Grein"
+
+msgid "heading.prefs"
+#msgstr "Preferences"
+msgstr "Vilje"
+
+# used on mobile
+msgid "heading.settings"
+#msgstr "Settings"
+msgstr "Innstillingar"
+
+msgid "heading.prefs.certs"
+#msgstr "Certificates"
+msgstr "Nøkkelkort"
+
+msgid "heading.prefs.support"
+#msgstr "Support"
+msgstr "Losing"
+
+msgid "heading.prefs.user"
+#msgstr "User Data"
+msgstr "Glode Lys"
+
+# tab button
+msgid "heading.prefs.colors"
+#msgstr "Colors"
+msgstr "Fargar"
+
+msgid "heading.prefs.fonts"
+#msgstr "Fonts"
+msgstr "Skriftslag"
+
+# tab button
+msgid "heading.prefs.general"
+#msgstr "General"
+msgstr "Grovt"
+
+msgid "heading.prefs.appearance"
+#msgstr "Appearance"
+msgstr "Utseende"
+
+# tab button
+msgid "heading.prefs.interface"
+#msgstr "Behavior"
+msgstr "Framferd"
+
+msgid "heading.prefs.ui"
+#msgstr "User Interface"
+msgstr "Glode dugeflate"
+
+msgid "heading.prefs.theme"
+#msgstr "Theme"
+msgstr "Visningsslag"
+
+msgid "heading.prefs.sidebars"
+#msgstr "Sidebars"
+msgstr "Sidefelt"
+
+msgid "prefs.sidebar.left"
+#msgstr "Left"
+msgstr "Venstre"
+
+msgid "prefs.sidebar.right"
+#msgstr "Right"
+msgstr "Høgre"
+
+# tab button
+msgid "heading.prefs.keys"
+#msgstr "Keys"
+msgstr "Nøklar"
+
+msgid "heading.prefs.layout"
+#msgstr "Page Layout"
+msgstr "Sted Oppsett"
+
+msgid "heading.prefs.content"
+#msgstr "Content"
+msgstr "Innhald"
+
+# tab button
+msgid "heading.prefs.network"
+#msgstr "Network"
+msgstr "Vev"
+
+msgid "heading.prefs.paragraph"
+#msgstr "Paragraph"
+msgstr "Avsnitt"
+
+msgid "heading.prefs.uitheme"
+#msgstr "UI Colors"
+msgstr "Glodeflate Fargar"
+
+msgid "heading.prefs.pagecontent"
+#msgstr "Page Colors"
+msgstr "Sted Fargar"
+
+msgid "heading.prefs.proxies"
+#msgstr "Proxies"
+msgstr "Ombod"
+
+msgid "heading.prefs.scrolling"
+#msgstr "Scrolling"
+msgstr " Blading"
+
+msgid "heading.prefs.sizing"
+#msgstr "Sizing"
+msgstr "Storleik"
+
+msgid "heading.prefs.widelayout"
+#msgstr "Wide Layout"
+msgstr "Vidt oppsett"
+
+# tab button
+msgid "heading.prefs.style"
+#msgstr "Page Style"
+msgstr "Sted Stil"
+
+# tab button
+msgid "heading.prefs.userinterface"
+#msgstr "User Interface"
+msgstr "Glode dugeflate"
+
+msgid "heading.prefs.snip"
+#msgstr "Snippets"
+msgstr "Snippar"
+
+msgid "prefs.downloads"
+#msgstr "Downloads folder:"
+msgstr "Meddragnings grein:"
+
+msgid "prefs.searchurl"
+#msgstr "Search URL:"
+msgstr "Søk stemne:"
+
+msgid "prefs.hoverlink"
+#msgstr "Show URL on hover:"
+msgstr "Vis stemne ved seiling :"
+
+msgid "prefs.centershort"
+#msgstr "Vertical centering:"
+msgstr "Loddrett kjerning"
+
+msgid "prefs.collapsepre"
+#msgstr "Collapse preformatted:"
+msgstr "Slå saman førekroppet:"
+
+msgid "prefs.bookmarks.addbottom"
+#msgstr "Add bookmarks to bottom:"
+msgstr "Legg nålar nederst i rekkjå:"
+
+msgid "collapse.never"
+#msgstr "Never"
+msgstr "Aldrig"
+
+msgid "collapse.notbydefault"
+#msgstr "Manually"
+msgstr "Handisk"
+
+msgid "collapse.bydefault"
+#msgstr "At Page Load"
+msgstr "Mens Side Drager"
+
+msgid "collapse.always"
+#msgstr "Always"
+msgstr "Alltid"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+#msgstr "Open images in Data URLs:"
+msgstr "Opne biletar stadig:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+#msgstr "Open index.gmi in ZIP archives:"
+msgstr "Gjest inngangsdør stadig ved opning av arkiv:"
+
+msgid "prefs.markdown.viewsource"
+#msgstr "View Markdown as source:"
+msgstr "Vis avmerk som kjelde:"
+
+msgid "prefs.pinsplit"
+#msgstr "Split view pinning:"
+msgstr "Knekt visnings merking:"
+
+msgid "prefs.pinsplit.none"
+#msgstr "None"
+msgstr "Ingen"
+
+msgid "prefs.pinsplit.left"
+#msgstr "Left Tab"
+msgstr "Venstre Fane"
+
+msgid "prefs.pinsplit.right"
+#msgstr "Right Tab"
+msgstr "Høgre Fane"
+
+msgid "prefs.smoothscroll"
+#msgstr "Smooth scrolling:"
+msgstr "Bla flytende:"
+
+msgid "prefs.scrollspeed.keyboard"
+#msgstr "Keyboard speed:"
+msgstr "Tastatur fart:"
+
+msgid "prefs.scrollspeed.mouse"
+#msgstr "Mouse speed:"
+msgstr "Mus fart:"
+
+msgid "prefs.imageloadscroll"
+#msgstr "Load next image on scroll key:"
+msgstr "Drag neste bilete med bla knapp:"
+
+msgid "prefs.uilayout"
+#msgstr "Layout:"
+msgstr "Oppsett:"
+
+msgid "prefs.bottomnavbar"
+#msgstr "Bottom Nav Bar"
+msgstr "Nedre Sol Felt"
+
+msgid "prefs.bottomtabbar"
+#msgstr "Bottom Tabs"
+msgstr "Nedre Fanar"
+
+msgid "prefs.hidetabs"
+#msgstr "Hide tab bar:"
+msgstr "Gøym fane felt:"
+
+msgid "prefs.menubar"
+#msgstr "Menu Bar"
+msgstr "Grann Felt"
+
+msgid "prefs.evensplit"
+#msgstr "Split tabs evenly:"
+msgstr "Del fanar parvis:"
+
+msgid "prefs.swipe.edge"
+#msgstr "Swiping from edge:"
+msgstr "Stryk frå kanten:"
+
+msgid "prefs.swipe.page"
+#msgstr "Swiping on page:"
+msgstr "Stryk på siden:"
+
+msgid "prefs.hidetoolbarscroll"
+#msgstr "Hide toolbar on scroll:"
+msgstr "Gøym verktøyfelt ved blading:"
+
+msgid "heading.prefs.toolbaractions"
+#msgstr "Toolbar Actions"
+msgstr "Verktøyfelt Tak"
+
+msgid "heading.prefs.toolbartabs"
+#msgstr "Toolbar Tabs"
+msgstr "Verktøyfelt Fanar"
+
+msgid "heading.prefs.toolbartabs.left"
+#msgstr "Left Toolbar Tabs"
+msgstr "Venstre Verktøyfelt Fanar"
+
+msgid "heading.prefs.toolbartabs.right"
+#msgstr "Right Toolbar Tabs"
+msgstr "Høgre Verktøyfelt Fanar"
+
+msgid "prefs.toolbaraction1"
+#msgstr "Button 1"
+msgstr "Knapp 1"
+
+msgid "prefs.toolbaraction2"
+#msgstr "Button 2"
+msgstr "Knapp 2"
+
+msgid "prefs.ostheme"
+#msgstr "Use system theme:"
+msgstr "Bruk bregna visningslag:"
+
+msgid "prefs.theme"
+#msgstr "UI theme:"
+msgstr "dugeflate visningslag:"
+
+msgid "prefs.theme.black"
+#msgstr "Black"
+msgstr "Svart"
+
+msgid "prefs.theme.dark"
+#msgstr "Dark"
+msgstr "Mørk"
+
+msgid "prefs.theme.light"
+#msgstr "Light"
+msgstr "Lys"
+
+msgid "prefs.theme.white"
+#msgstr "White"
+msgstr "Kvit"
+
+msgid "prefs.accent"
+#msgstr "Accent color:"
+msgstr "Tydeleg Farge:"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+#msgstr "System"
+msgstr "Bregna"
+
+msgid "prefs.accent.teal"
+#msgstr "Teal"
+msgstr "Krikk"
+
+msgid "prefs.accent.orange"
+#msgstr "Orange"
+msgstr "Oransje"
+
+msgid "prefs.accent.red"
+msgstr "Red"
+msgstr "Raud"
+
+msgid "prefs.accent.green"
+#msgstr "Green"
+msgstr "Grøn"
+
+msgid "prefs.accent.blue"
+#msgstr "Blue"
+msgstr "Blå"
+
+msgid "prefs.accent.gray"
+#msgstr "Gray"
+msgstr "Grå"
+
+msgid "prefs.feedinterval"
+#msgstr "Feed refresh interval:"
+msgstr "Straum oppfrisknings mellomrom:"
+
+msgid "prefs.feedinterval.manual"
+#msgstr "Manual"
+msgstr "Handbok"
+
+msgid "prefs.uilang"
+#msgstr "Language:"
+msgstr "Tungemål:"
+
+msgid "prefs.time.24h"
+#msgstr "24-hour time:"
+msgstr "24-timars tid:"
+
+msgid "prefs.retaintabs"
+#msgstr "Restore tabs at launch:"
+msgstr "Gjennopprett fanar ved oppstart:"
+
+msgid "prefs.uiscale"
+#msgstr "UI scale factor:"
+msgstr "Glodeflate stigningsmål:"
+
+msgid "prefs.customframe"
+#msgstr "Custom window frame:"
+msgstr "Tilpassa vindauge ramme:"
+
+msgid "prefs.blink"
+#msgstr "Blinking cursor:"
+msgstr "Glimtandes markør:"
+
+msgid "prefs.returnkey"
+#msgstr "Return key behavior:"
+msgstr "Motta nøkkel framferd:"
+
+msgid "prefs.returnkey.linebreak"
+#msgstr "Line break"
+msgstr "Ny linje"
+
+msgid "prefs.returnkey.accept"
+#msgstr "Accept"
+msgstr "Godta"
+
+msgid "prefs.animate"
+#msgstr "Animations:"
+msgstr "Billedrørslar:"
+
+msgid "prefs.retainwindow"
+#msgstr "Save window placement:"
+msgstr "Lagra vindaug setje:"
+
+msgid "prefs.sideicon"
+#msgstr "Capsule icon on left side:"
+msgstr "Stedets stempel på venstre side:"
+
+msgid "prefs.doctheme.dark"
+#msgstr "Dark theme:"
+msgstr "Mørkt visningsslag:"
+
+msgid "prefs.doctheme.light"
+#msgstr "Light theme:"
+msgstr "Lyst visningsslag:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+#msgstr "Colorful Dark"
+msgstr "Fargeblømt Svart"
+
+msgid "prefs.doctheme.name.colorfullight"
+#msgstr "Colorful Light"
+msgstr "Fargeblømt Lyst"
+
+msgid "prefs.doctheme.name.vibrantlight"
+#msgstr "Vibrant Light"
+msgstr "Dirrandes Lyst"
+
+msgid "prefs.doctheme.name.black"
+#msgstr "Black"
+msgstr "Svart"
+
+msgid "prefs.doctheme.name.gray"
+#msgstr "Gray"
+msgstr "Grått"
+
+msgid "prefs.doctheme.name.white"
+#msgstr "White"
+msgstr "Kvitt"
+
+msgid "prefs.doctheme.name.sepia"
+#msgstr "Sepia"
+msgstr "Sepia"
+
+msgid "prefs.doctheme.name.highcontrast"
+#msgstr "High Contrast"
+msgstr "Høg Skarpleik"
+
+msgid "prefs.doctheme.name.oceanic"
+#msgstr "Oceanic"
+msgstr "Havleg"
+
+msgid "prefs.saturation"
+#msgstr "Saturation:"
+msgstr "Metning:"
+
+msgid "prefs.imagestyle"
+#msgstr "Colorize images:"
+msgstr "Fargepreg biletar:"
+
+msgid "prefs.imagestyle.original"
+#msgstr "None"
+msgstr "Ingen"
+
+msgid "prefs.imagestyle.grayscale"
+#msgstr "Grayscale"
+msgstr "Gråstigning"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+#msgstr "BG-to-FG"
+msgstr "Bakgrunn-til-Framgrunn"
+
+msgid "prefs.imagestyle.text"
+#msgstr "Text Color"
+msgstr "Skrift Farge"
+
+msgid "prefs.imagestyle.preformat"
+#msgstr "Preformatted Color"
+msgstr "Førekroppet Farge"
+
+msgid "prefs.tui.simple"
+#msgstr "Force ASCII character set:"
+msgstr "Tving ASCII bokstav stokk:"
+
+msgid "prefs.font.ui"
+#msgstr "UI font:"
+msgstr "Glodeflate skriftslag:"
+
+msgid "prefs.font.heading"
+#msgstr "Headings:"
+msgstr "Overskrift:"
+
+msgid "prefs.font.body"
+#msgstr "Body:"
+msgstr "Kropp:"
+
+msgid "prefs.font.mono"
+#msgstr "Preformatted:"
+msgstr "Førekroppet:"
+
+msgid "prefs.font"
+#msgstr "Body font:"
+msgstr "Kropp skriftslag:"
+
+msgid "prefs.mono"
+#msgstr "Monospace body:"
+msgstr "Monospace kropp:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+#msgstr "Monospace font:"
+msgstr "Monospace skriftslag:"
+
+msgid "prefs.mono.gemini"
+#msgstr "Gemini"
+msgstr "Tvillingvev"
+
+msgid "prefs.mono.gopher"
+#msgstr "Gopher"
+msgstr "Gopher"
+
+msgid "prefs.gopher.gemstyle"
+#msgstr "Autodetect Gopher menu styling:"
+msgstr "Gjenkjenn Gopher grann stil:"
+
+msgid "prefs.boldlink"
+#msgstr "Bold links:"
+msgstr "Feite peik:"
+
+msgid "prefs.boldlink.visited"
+#msgstr "Visited"
+msgstr "Gjestet"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+#msgstr "On Dark"
+msgstr "På Mørk"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+#msgstr "On Light"
+msgstr "På Lys"
+
+msgid "prefs.gemtext.ansi"
+#msgstr "Gemtext ANSI escapes:"
+msgstr "Gemtext ANSI escapes:*"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+#msgstr "FG Color"
+msgstr "Framgrunn Farge"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+#msgstr "BG Color"
+msgstr "Bakgrunn Farge"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+#msgstr "Font Style"
+msgstr "Skriftslag stil"
+
+msgid "prefs.font.warnmissing"
+#msgstr "Font glyph warnings:"
+msgstr "Skriftslag risse varsling:"
+
+msgid "prefs.font.smooth"
+#msgstr "Font smoothing:"
+msgstr "Skriftslag mjukning:"
+
+msgid "prefs.editor.highlight"
+#msgstr "Syntax highlighting:"
+msgstr "Skrift Stilkverk Markering:"
+
+msgid "prefs.linewidth"
+#msgstr "Line width:"
+msgstr "Strøk bredde:"
+
+msgid "prefs.expandline"
+#msgstr "Expand to long lines:"
+msgstr "Utvid til lange strøk:"
+
+msgid "prefs.linewidth.normal"
+#msgstr "Normal"
+msgstr "Vanleg"
+
+msgid "prefs.linewidth.fill"
+#msgstr "Fill"
+msgstr "Fyll"
+
+msgid "prefs.linespacing"
+#msgstr "Line spacing:"
+msgstr "Strøk mellomrom:"
+
+msgid "prefs.tabwidth"
+#msgstr "Tab width:"
+msgstr "Fane bredde:"
+
+msgid "prefs.quoteicon"
+#msgstr "Quote indicator:"
+msgstr "Herming kjennsmerke:"
+
+msgid "prefs.quoteicon.icon"
+#msgstr "\" Icon"
+msgstr "\" Stempel"
+
+msgid "prefs.quoteicon.line"
+#msgstr "Line"
+msgstr "Strøk"
+
+msgid "prefs.quote.italic"
+#msgstr "Quote text in italics:"
+msgstr "Herming i skråstil:"
+
+msgid "prefs.biglede"
+#msgstr "Big 1st paragaph:"
+msgstr "Stor første avsnitt:"
+
+msgid "prefs.justify"
+#msgstr "Justify:"
+msgstr "Grunngjev:"
+
+msgid "prefs.plaintext.wrap"
+#msgstr "Wrap long plaintext lines:"
+msgstr "Føy lange reinskrift linjar:"
+
+msgid "prefs.warn.security"
+#msgstr "TLS security warnings:"
+msgstr "TLS tryggleik varslingar:"
+
+msgid "prefs.redirect.allowscheme"
+#msgstr "Scheme-changing redirects:"
+msgstr "Scheme-endrandes ompeikingar*:"
+
+msgid "prefs.decodeurls"
+#msgstr "Decode URLs:"
+msgstr "Avslør Stemnane:"
+
+msgid "prefs.urlsize"
+#msgstr "Maximum URL size:"
+msgstr "Største stemne storleik:"
+
+msgid "prefs.cachesize"
+#msgstr "Cache size:"
+msgstr "Mellomlager storleik:"
+
+msgid "prefs.memorysize"
+#msgstr "Memory size:"
+msgstr "Hugs storleik:"
+
+msgid "prefs.ca.file"
+#msgstr "CA file:"
+msgstr "Nøkkekort verk:"
+
+msgid "prefs.ca.path"
+#msgstr "CA path:"
+msgstr "Nøkkelkort setje:"
+
+msgid "prefs.proxy.gemini"
+#msgstr "Gemini proxy:"
+msgstr "Tvillingvev ombod:"
+
+msgid "prefs.proxy.gopher"
+#msgstr "Gopher proxy:"
+msgstr "Gopher ombod:"
+
+msgid "prefs.proxy.http"
+#msgstr "HTTP proxy:"
+msgstr "HTTP ombod:"
+
+msgid "menu.binding.reset"
+#msgstr "Reset to Default"
+msgstr "Nullstill til Vanleg"
+
+msgid "menu.binding.clear"
+#msgstr "Remove"
+msgstr "Fjern"
+
+msgid "archive.exit"
+#msgstr "Exit the archive"
+msgstr "Lukk arkivet"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+#msgstr[0] "This archive contains %u item and its compressed size is %.1f MB."
+msgstr[0] "Dette arkivet inneheld %u innslag, og dets samanpressa storleik er  %.1f MB."
+#msgstr[1] "This archive contains %u items and its compressed size is %.1f MB."
+msgstr[1] "Dette arkivet inneheld %u innslag, og deira samanpressa storleik er %.1f MB."
+
+msgid "dir.empty"
+#msgstr "This directory is empty."
+msgstr "Denne setjen er tom."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+#msgstr[0] "This directory contains %u item."
+msgstr[0] "Denne setjen inneheld %u innslaget."
+#msgstr[1] "This directory contains %u items."
+msgstr[1] "Denne setjen inneheld %u innslagene."
+
+msgid "keys.top"
+#msgstr "Jump to Top"
+msgstr "Hopp til topp"
+
+msgid "keys.bottom"
+#msgstr "Jump to Bottom"
+msgstr "Hopp til Botn"
+
+msgid "keys.scroll.up"
+#msgstr "Scroll up"
+msgstr "Skyv opp"
+
+msgid "keys.scroll.down"
+#msgstr "Scroll down"
+msgstr "Skyv ned"
+
+msgid "keys.scroll.halfpage.up"
+#msgstr "Scroll up half a page"
+msgstr "Skyv opp ein halv side"
+
+msgid "keys.scroll.halfpage.down"
+#msgstr "Scroll down half a page"
+msgstr "Skyv ned ein halv side"
+
+msgid "keys.scroll.page.up"
+#msgstr "Scroll up a page"
+msgstr "Skyv opp ein side"
+
+msgid "keys.scroll.page.down"
+#msgstr "Scroll down a page"
+msgstr "Skyv ned ein side"
+
+msgid "keys.back"
+#msgstr "Go back"
+msgstr "Gå attende"
+
+msgid "keys.forward"
+#msgstr "Go forward"
+msgstr "Gå fram"
+
+msgid "keys.parent"
+#msgstr "Go to parent directory"
+msgstr "Gå til stamme setje"
+
+msgid "keys.root"
+#msgstr "Go to capsule root"
+msgstr "Gå til stedets hovudstamme"
+
+msgid "keys.reload"
+#msgstr "Reload page"
+msgstr "Gjenbank"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+#msgstr "Enter a snippet query"
+msgstr "Skriv snipp bod"
+
+msgid "keys.link.modkey"
+#msgstr "Open link via modifier key"
+msgstr "Opne peik gjennom ein endra nøkkel"
+
+msgid "keys.link.homerow"
+#msgstr "Open link via home row keys"
+msgstr "Opne peik gjennom heimerad nøklar"
+
+msgid "keys.link.homerow.newtab"
+#msgstr "Open link in new tab via home row keys"
+msgstr "Opne peik i ny fane gjennom heimerad nøklar"
+
+msgid "keys.link.homerow.hover"
+#msgstr "Hover on link via home row keys"
+msgstr "Seigl over peik gjennom heimerad nøklar"
+
+msgid "keys.link.homerow.next"
+#msgstr "Next set of home row key links"
+msgstr "Neste stokk av heimerad nøkkel lenkar"
+
+msgid "keys.bookmark.add"
+#msgstr "Add bookmark"
+msgstr "Legg til Stifte"
+
+msgid "keys.bookmark.addfolder"
+#msgstr "Add bookmark folder"
+msgstr "Legg til nål grein"
+
+msgid "keys.subscribe"
+#msgstr "Subscribe to page"
+msgstr "Fylgj side"
+
+msgid "keys.findtext"
+#msgstr "Find text on page"
+msgstr "Finn skrift på side"
+
+msgid "keys.zoom.in"
+#msgstr "Zoom in"
+msgstr "Surr inn"
+
+msgid "keys.zoom.out"
+#msgstr "Zoom out"
+msgstr "Surr ut"
+
+msgid "keys.zoom.reset"
+#msgstr "Reset zoom"
+msgstr "Surr saman"
+
+msgid "keys.fullscreen"
+#msgstr "Toggle fullscreen mode"
+msgstr "Knepp fullskjerm stand"
+
+msgid "keys.tab.new"
+#msgstr "New tab"
+msgstr "Ny fane"
+
+msgid "keys.tab.close"
+#msgstr "Close tab"
+msgstr "Lukk fane"
+
+msgid "keys.tab.close.other"
+#msgstr "Close other tabs"
+msgstr "Lukk andre fanar"
+
+msgid "keys.tab.prev"
+#msgstr "Previous tab"
+msgstr "Forrige fane"
+
+msgid "keys.tab.next"
+#msgstr "Next tab"
+msgstr "Neste fane"
+
+msgid "keys.split.menu"
+#msgstr "Set view split mode"
+msgstr "Sett visning knekt stand"
+
+msgid "keys.split.next"
+#msgstr "Switch focus to next split"
+msgstr "Bytt blikk til neste knekk"
+
+msgid "keys.split.item"
+#msgstr "Split view menu:"
+msgstr "Knekt visnings grann:"
+
+msgid "keys.hoverurl"
+#msgstr "Toggle show URL on hover"
+msgstr "Knepp vis stemne på seiling"
+
+msgid "keys.upload"
+#msgstr "Upload with Titan"
+msgstr "Hus med Titan"
+
+msgid "keys.upload.edit"
+#msgstr "Edit Page with Titan"
+msgstr "Endre Side med Titan"
+
+msgid "keys.feeds.showall"
+#msgstr "Sidebar: Show all feed entries"
+msgstr "Sidefelt: Vis alle straum innslag"
+
+msgid "keys.feeds.showunread"
+#msgstr "Sidebar: Show unread feed entries"
+msgstr "Sidefelt: Vis uleste straum innslag"
+
+msgid "error.badstatus"
+#msgstr "Unknown Status Code"
+msgstr "Ukjent Tilstand Bod"
+
+msgid "error.badstatus.msg"
+#msgstr "The server responded with a status code that is not in the Gemini protocol specification. Maybe the server is malfunctioning."
+msgstr "Verten svarte med eit tilstand bod som ikkje er innenfor tvillingvevets semjemål. Kanskje verten er vranginnstilt. "
+
+msgid "error.openfile"
+#msgstr "Failed to Open File"
+msgstr "Misblømet å Opna Verket"
+
+msgid "error.openfile.msg"
+#msgstr "The requested file does not exist or is inaccessible. Please check the file path."
+msgstr "Det førespurte verket finnest ikkje eller er utilgjengeleg. Vennlegst sjekk verk setjen."
+
+msgid "error.badresource"
+#msgstr "Invalid Resource"
+msgstr "Ugyldig verk"
+
+msgid "error.badresource.msg"
+#msgstr "The requested resource does not exist."
+msgstr "Det førespurte verket finnes ikkje."
+
+msgid "error.unsupported.media"
+#msgstr "Unsupported Content Type"
+msgstr "Ustøtta Innhald Slag"
+
+msgid "error.unsupported.media.msg"
+#msgstr "The received content cannot be viewed with this application."
+msgstr "Det mottatte innhaldet kan ikkje bli vist i dette verktøyet."
+
+msgid "error.unsupported.protocol"
+#msgstr "Unsupported Protocol"
+msgstr "Ustøtta Semjemål"
+
+msgid "error.unsupported.protocol.msg"
+#msgstr "The requested protocol is not supported by this application."
+msgstr "Det førespurte semjemålet er ikkje støtta av dette verktøyet."
+
+msgid "error.badheader"
+#msgstr "Invalid Header"
+msgstr "Ugyldig Hovud"
+
+msgid "error.badheader.msg"
+#msgstr "The received header does not conform to the protocol specification. Perhaps the server is malfunctioning or does not support this protocol."
+msgstr "Det mottatte hovudet tilpasser seg ikkje semjemålet. Kanskje verten er kråkemålet eller at den ikkje snakker semjemålet."
+
+msgid "error.incompleteheader"
+#msgstr "Incomplete Header"
+msgstr "Ufullstendig Hovude"
+
+msgid "error.incompleteheader.msg"
+#msgstr "The server's response did not contain a complete header. Perhaps the server is malfunctioning, or you tried to contact a non-Gemini server."
+msgstr "Vertens svar hadde ikkje eit fullstendig hovude. Kanskje verten er kråkemålet, eller at du røynet å antaka ein ikkje-tvillingvev vert."
+
+msgid "error.badredirect"
+#msgstr "Invalid Redirect"
+msgstr "Ugyldig Ompeik"
+
+msgid "error.badredirect.msg"
+#msgstr "The server responded with a redirect but did not provide a valid destination URL. Perhaps the server is malfunctioning."
+msgstr "Verten svarte med eit ompeik, men gav ikkje ein gyldig stemne. Kanskje verten er vrangferda?"
+
+msgid "error.schemeredirect"
+#msgstr "Scheme-Changing Redirect"
+msgstr "Setnad-Endring Ompeik"
+
+msgid "error.schemeredirect.msg"
+#msgstr "The server attempted to redirect us to a URL whose scheme is different than the originating URL's scheme. Here is the link so you can open it manually if appropriate."
+msgstr "Verten røynet å ompeika oss til eit stemne der setnad var ulikt det opphavlege stemne setnaden. Her er eit peik som du kan opne handleg om det skulle passe."
+
+msgid "error.manyredirects"
+#msgstr "Too Many Redirects"
+msgstr "For Mange Ompeik"
+
+msgid "error.manyredirects.msg"
+#msgstr "You may be stuck in a redirection loop. The next redirected URL is below if you want to continue manually."
+msgstr "Du er kanskje surret inn i eit ompeik kvervel. Det neste ompeik stemnet er under om du har lyst til å halda fram handleg."
+
+msgid "error.tls"
+#msgstr "Network/TLS Failure"
+msgstr "Vev/ TLS Misbløm"
+
+msgid "error.tls.msg"
+#msgstr "Failed to communicate with the server."
+msgstr "Misblømet å talemåla med verten."
+
+msgid "error.certexpired"
+#msgstr "Expired Certificate"
+msgstr "Utgått Nøkkelkort"
+
+msgid "error.certexpired.msg"
+#msgstr "Connection to the server was cancelled because its TLS certificate has expired."
+msgstr "Kopling til vert blei avbrutt på grunn av nøkkelkortet (TLS) har utgått ."
+
+msgid "error.proxyexpired"
+#msgstr "Expired Proxy Certificate"
+msgstr "Utgått Ombod Nøkkelkort"
+
+msgid "error.proxyexpired.msg"
+#msgstr "The connection was cancelled because the proxy server's TLS certificate has expired."
+msgstr "Koplingen blei avbrutt fordi ombud verten's nøkkelkort (TLS) har utgått ."
+
+msgid "error.certverify"
+#msgstr "Untrusted Server"
+msgstr "Utrygg vert"
+
+msgid "error.certverify.msg"
+#msgstr "Connection to the server was cancelled because its TLS certificate does not match the one we trust. Please check if the server has announced a certificate change. If not, it is possible that a malicious third party is masquerading as the server you tried to reach.\n\nThe certificate can be marked as trusted in Page Information."
+msgstr "Kopling til verten var avbrutt fordi dens nøkkelkort (TLS) ikkje samsvarer med dei me stoler på. Vennlegst sjekk om verten har omtalt ein nøkkelkort endring. Viss ikkje, så er det mogleg at ein ondsinnet tredjepart har tilslører seg som verten du røyner å gjesta. \n\nNøkkelkortet kan bli markert som trygg i Sted Opplysningar"
+
+msgid "error.proxyverify"
+#msgstr "Untrusted Proxy"
+msgstr "Utrygt Ombod"
+
+msgid "error.proxyverify.msg"
+#msgstr "Connection was cancelled because the proxy server's TLS certificate does not match the one we trust.\n\nThe proxy server's certificate can be marked as trusted in Page Information."
+msgstr "Koplingen blei avbrutt fordi ombods vertens nøkkelkort (TLS) ikkje samsvarer med den me stoler på.\n\nOmbods verten's nøkkelkort kan bli markert som trygg i Sted Opplysningar."
+
+msgid "error.temporary"
+#msgstr "Temporary Failure"
+msgstr "Mellombels Misbløm"
+
+msgid "error.temporary.msg"
+#msgstr "The request has failed, but may succeed if you try again in the future."
+msgstr "Førespurnaden har misblømet, men kan bløma om du røyner igjen."
+
+msgid "error.unavail"
+#msgstr "Server Unavailable"
+msgstr "Vert Utilgjengeleg"
+
+msgid "error.unavail.msg"
+#msgstr "The server is unavailable due to overload or maintenance. Check back later."
+msgstr "Verten er utilgjengeleg på grunn av overbyrde eller vedlikehald. Sjekk igjen seinare."
+
+msgid "error.cgi"
+#msgstr "CGI Error"
+msgstr "CGI Misbløm"
+
+msgid "error.cgi.msg"
+#msgstr "Failure during dynamic content generation on the server. This may be due to malfunctioning serverside software."
+msgstr "Misblømet ved brygging av tøyeleg innhald på verten. Dette kan vera på grunn av misferda vertsleg programvare."
+
+msgid "error.proxy"
+#msgstr "Proxy Error"
+msgstr "Ombud Misbløm"
+
+msgid "error.proxy.msg"
+#msgstr "A proxy request failed because the server was unable to successfully complete a transaction with the remote host. Perhaps there are difficulties with network connectivity."
+msgstr "Ein ombuds førespurnad misblømet på grunn av at verten ikkje var i stand til å blømt utføra eit samtak med den fjerne verten. Kanskje det er vanskelegdomar med vevets tilkopling. "
+
+msgid "error.slowdown"
+#msgstr "Slow Down"
+msgstr "Saktna Ned"
+
+msgid "error.slowdown.msg"
+#msgstr "The server is rate limiting requests. Please wait…"
+msgstr "Verten avgrenser førespurnadar. Vennlegst vent..."
+
+msgid "error.permanent"
+#msgstr "Permanent Failure"
+msgstr "Støypt Misbløm"
+
+msgid "error.permanent.msg"
+#msgstr "Your request has failed and will fail in the future as well if repeated."
+msgstr "Din førespurnad har misblømt og vil misbløma i igjen dersom gjenrøynt"
+
+msgid "error.notfound"
+#msgstr "Not Found"
+msgstr "Ikkje funnen"
+
+msgid "error.notfound.msg"
+#msgstr "The requested resource could not be found at this time."
+msgstr "Det førespurte verket kunne ikkje bli funnet på dette tidsodd."
+
+msgid "error.gone"
+#msgstr "Gone"
+msgstr "Svunnen"
+
+msgid "error.gone.msg"
+#msgstr "The requested resource is no longer available."
+msgstr "Det førespurte verket er ikkje lengre tilgjengeleg."
+
+msgid "error.proxyrefusal"
+#msgstr "Proxy Request Refused"
+msgstr "Ombud Førespurnad Nekta"
+
+msgid "error.proxyrefusal.msg"
+#msgstr "The request was for a resource at a domain not served by the server and the server does not accept proxy requests."
+msgstr "Førespurnaden var for eit verk frå eit sted utenfor vernaden, og verten godtek ikkje ombuds førespurnadar."
+
+msgid "error.badrequest"
+#msgstr "Bad Request"
+msgstr "Dårleg Førespurnad"
+
+msgid "error.badrequest.msg"
+#msgstr "The server did not understand your request."
+msgstr "Verten kunne ikkje skjøna din førespurnad."
+
+msgid "error.cert.needed"
+#msgstr "Certificate Required"
+msgstr "Nøkkelkort Påkrevd"
+
+msgid "error.cert.needed.msg"
+#msgstr "Access to the requested resource requires identification via a client certificate."
+msgstr "Tilgang til det førespurte verket krever å sjela seg gjennom eit nøkkelkort."
+
+msgid "error.cert.auth"
+#msgstr "Certificate Not Authorized"
+msgstr "Nøkkelkort Ikkje Løyven"
+
+msgid "error.cert.auth.msg"
+#msgstr "The provided client certificate is valid but is not authorized for accessing the requested resource."
+msgstr "Det gitte gjeste nøkkelkortet er gyldig, men er ikkje løyven for å få tilgang til det førespurte verket."
+
+msgid "error.cert.invalid"
+#msgstr "Invalid Certificate"
+msgstr "Ugyldig Nøkkelkort"
+
+msgid "error.cert.invalid.msg"
+#msgstr "The provided client certificate is expired or invalid."
+msgstr "Det gitte gjeste nøkkelkortet har utgått eller er ugyldig."
+
+msgid "error.ansi"
+#msgstr "Terminal Emulation"
+msgstr "Terminal Emulation"
+
+msgid "error.ansi.msg"
+#msgstr "This page may not be displayed correctly. It uses ANSI escape sequences to style text, which is only partially supported. You could try using a terminal emulator to view it."
+msgstr "Denne siden kan ikkje bli vist riktig. Den bruker \"ANSI escape sequaneces\" for å steila skriften, som er berre delvis støttet. Du kan røyna å bruka \"terminal emulator\" for å sjå det."
+
+msgid "error.glyphs"
+#msgstr "Missing Glyphs"
+msgstr "Manglandes Rissar"
+
+msgid "error.glyphs.msg"
+#msgstr "This page could not be displayed in full because some characters are missing. You can install additional fonts to fix this."
+msgstr "Denne siden kunne ikkje bli vist fultt ut fordi nokre stavar mangler. Du kan innføre nye skriftslag for å bregna dette."
+
+msgid "error.showutf8"
+#msgstr "Autodetected UTF-8"
+msgstr "Gjenkjente UTF-8"
+
+msgid "error.showutf8.msg"
+#msgstr "The media type of this page was not recognized but it is valid UTF-8 encoded text."
+msgstr "Media typen av denne siden var ikkje gjenkjennbar, men er gyldig som UTF-8 kodet skrift. "
+
+msgid "gempub.cover.viewlocal"
+#msgstr "This Gempub book can be viewed after it has been saved locally."
+msgstr "Denne boken (Gempub) kan bli vist etter at den har blitt lagret ."
+
+msgid "gempub.cover.untitled"
+#msgstr "Untitled Book"
+msgstr "Namnlaus Bok"
+
+msgid "gempub.cover.aboutbook"
+#msgstr "About this book"
+msgstr "Om denne boken"
+
+msgid "gempub.cover.view"
+#msgstr "View Gempub contents"
+msgstr "Vis bokens innhald"
+
+msgid "gempub.cover.image"
+#msgstr "Cover image"
+msgstr "Framside"
+
+msgid "gempub.meta.author"
+#msgstr "Author"
+msgstr "Talar"
+
+msgid "gempub.meta.version"
+#msgstr "Version"
+msgstr "Slag"
+
+msgid "gempub.meta.revdate"
+#msgstr "Revision date"
+msgstr "Omskrivings dato"
+
+msgid "gempub.meta.pub"
+#msgstr "Published"
+msgstr "Utgitt"
+
+msgid "gempub.meta.pubdate"
+#msgstr "Publish date"
+msgstr "Utgitt dato"
+
+msgid "gempub.meta.lang"
+#msgstr "Language"
+msgstr "Tungemål"
+
+msgid "gempub.meta.license"
+#msgstr "License"
+msgstr "Brukssemje"
+
+msgid "heading.fontpack.meta"
+#msgstr "Fonts"
+msgstr "Skriftslag"
+
+msgid "heading.fontpack.meta.enabled"
+#msgstr "Enabled fontpacks"
+msgstr "Kneppede skriftslagpakkar"
+
+msgid "heading.fontpack.meta.disabled"
+#msgstr "Disabled fontpacks"
+msgstr "Avkneppa skriftslagpakkar"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+#msgstr "View file"
+msgstr "Vis verk"
+
+#, c-format
+msgid "fontpack.meta.version"
+#msgstr "Version %d"
+msgstr "Slag %d"
+
+msgid "fontpack.meta.installed"
+#msgstr "Installed"
+msgstr "Innfør"
+
+msgid "fontpack.meta.notinstalled"
+#msgstr "Not installed"
+msgstr "Ikkje innført"
+
+msgid "fontpack.meta.disabled"
+#msgstr ", disabled"
+msgstr ", avskrudd"
+
+#, c-format
+msgid "fontpack.enable"
+#msgstr "Enable \"%s\""
+msgstr "Knepp \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+#msgstr "Disable \"%s\""
+msgstr "Avknepp \"%s\""
+
+msgid "fontpack.export"
+#msgstr "View fontpack.ini template"
+msgstr "Vis skriftslagpakke mal (fontpack.ini)"
+
+#, c-format
+msgid "fontpack.install"
+#msgstr "Install \"%s\""
+msgstr "innfør \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+#msgstr "Upgrade \"%s\" to version %d"
+msgstr "Slagbetra \"%s\" til slag %d"
+
+#, c-format
+msgid "fontpack.delete"
+#msgstr "Permanently delete \"%s\""
+msgstr "Støypleg luka \"%s\""
+
+msgid "heading.fontpack.delete"
+#msgstr "Delete Fontpack"
+msgstr "Luk Skriftslagpakke"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+#msgstr "Do you really want to permanently delete the fontpack \"%s\"?"
+msgstr "Har du røyndleg lyst til å støypleg luka skriftslagpakken \"%s\"?"
+
+msgid "dlg.fontpack.delete"
+#msgstr "Delete Fontpack"
+msgstr "Luk Skriftslagpakken"
+
+msgid "fontpack.help"
+#msgstr "Lagrange fontpacks are ZIP archives that contain a set of font files and associated configuration parameters. Once installed, the fonts can be used for document content and the UI. The active fonts are selected in Preferences > Fonts."
+msgstr "Lagrange skriftslagpakkar er arkiv som inneheld skriftslag og tilknytta innstillingar. Ved innføring kan skriftslagene nyttast i brev og glodekrinsen. Det brukte skriftslaget blir vald i Vilje > Skriftslag."
+
+msgid "fontpack.install.ttf"
+#msgstr "Install TrueType Font"
+msgstr "Innfør Skriftslag (TrueType)"
+
+msgid "fontpack.open.fontsdir"
+#msgstr "Open User Fonts Directory"
+msgstr "Opne Glode Skriftslag Setje"
+
+msgid "fontpack.open.aboutfonts"
+#msgstr "Show Installed Fonts"
+msgstr "Vis Innførte Skriftslag"
+
+msgid "truetype.help"
+#msgstr "Lagrange attempts to load all individual TrueType files that are copied to the user fonts directory."
+msgstr "Lagrange røyner å draga alle skriftslag som blei kopiert til brukar skriftslag setje. Skriftslag kjem i skap av (TrueType)."
+
+msgid "truetype.help.installed"
+#msgstr "This font is installed in the user fonts directory."
+msgstr "Dette skriftslaget er innført i glode skriftslag setjen."
+
+msgid "heading.dismiss.warning"
+#msgstr "Dismiss Warning?"
+msgstr "Oversjå Varsling?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+#msgstr "Permanently dismiss warning about terminal emulation on %s?"
+msgstr "Støypleg oversjå varsling om \"terminal emulation\" på %s?"
+
+msgid "dlg.dismiss.warning"
+#msgstr "Dismiss Warning"
+msgstr "Oversjå Varsling"
+
+msgid "sniped.new"
+#msgstr "New Snippet"
+msgstr "Ny Snipp"
+
+msgid "sniped.help"
+#msgstr "Snippets whose name begins with a bang (e.g., \"!w\") can be used in URL fields as a query shortcut."
+msgstr "Snippar med namn som byrjar med ein pang (til dømes \"!w\") kan nyttas i stemne feltet som ein snarveg til eit bod." 
+
+msgid "menu.snip.edit"
+#msgstr "Edit…"
+msgstr "Endre…"
+
+msgid "menu.snip.clipboard"
+#msgstr "Copy to Clipboard"
+msgstr "Kopier til Utklippstavlå"
+
+msgid "menu.snip.delete"
+#msgstr "Delete"
+msgstr "Luk"
+
+msgid "menu.snip.prefs"
+#msgstr "Configure…"
+msgstr "Innstill…"
+
+msgid "heading.snip.new"
+#msgstr "New Snippet"
+msgstr "Ny Snipp"
+
+msgid "heading.snip.edit"
+#msgstr "Edit Snippet"
+msgstr "Endre Snipp"
+
+msgid "snip.name"
+#msgstr "Name:"
+msgstr "Namn:"
+
+msgid "snip.content"
+#msgstr "Content:"
+msgstr "Innhald:"
+
+msgid "snip.accept"
+#msgstr "Save Snippet"
+msgstr "Lagre Snipp"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.url"
+#msgstr "Enter URL"
+msgstr "Gje Stemne"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.linkkeys"
+#msgstr "Open link"
+msgstr "Gjest peik"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menu"
+#msgstr "Context menu"
+msgstr "Samheng grann"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.menubar"
+#msgstr "Menubar"
+msgstr "Grannfelt"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.sidebar"
+#msgstr "Sidebar"
+msgstr "Sidefelt"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.new"
+#msgstr "New tab"
+msgstr "Ny Fane"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.tab.close"
+#msgstr "Close tab"
+msgstr "Lukk Fane"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.hover"
+#msgstr "Focus link"
+msgstr "Blikk Peik"
+
+# Keyboard shortcut for the terminal. Should be very short or abbreviated.
+msgid "term.focus"
+#msgstr "Focus"
+msgstr "Blikk
