@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: lagrange dev\n"
-"Language: no-em\n"
+"Language: no_em\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit"
