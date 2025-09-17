@@ -100,6 +100,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <SDL_misc.h>
 #endif
 
+#if defined (iPlatformWindows)
+#   define strdup(path) _strdup(path)
+#endif
+
 iDeclareType(App)
 
 #if defined (iPlatformAppleDesktop)
@@ -6106,21 +6110,26 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
     return;
 #endif
     iProcess *proc = new_Process();
-    setArguments_Process(proc, iClob(newStringsCStr_StringList(
 #if defined (iPlatformAppleDesktop) || (defined (iPlatformTerminal) && defined (iPlatformApple))
+    setArguments_Process(proc, iClob(newStringsCStr_StringList(
         "/usr/bin/env",
         "open",
         cstr_String(url),
+        NULL))
 #elif defined (iPlatformLinux) || defined (iPlatformOther) || defined (iPlatformHaiku)
+    setArguments_Process(proc, iClob(newStringsCStr_StringList(
         "/usr/bin/env",
         "xdg-open",
         cstr_String(url),
+        NULL))
 #elif defined (iPlatformMsys) || defined (iPlatformWindows)
+    /* TODO: The prompt window is shown momentarily... */
+    setArguments_Process(proc, iClob(newStringsCStr_StringList(
         concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
         cstr_String(url),
-        /* TODO: The prompt window is shown momentarily... */
-#endif
         NULL))
+#endif
+
     );
     start_Process(proc);
     waitForFinished_Process(proc);
