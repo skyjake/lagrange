@@ -453,6 +453,9 @@ macro (set_common_app_properties target)
             /wd4267
             # temporarily disable shadowing warnings
             /wd4456 /wd4457
+
+            # methods via function pointers
+            /wd4152
         )
     else ()
         target_compile_options (${target} PUBLIC
