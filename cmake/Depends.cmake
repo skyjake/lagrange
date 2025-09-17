@@ -41,6 +41,8 @@ else ()
     set (TFDN_ENABLE_TESTS       OFF CACHE BOOL "" FORCE)
     set (TFDN_ENABLE_WEBREQUEST  OFF CACHE BOOL "" FORCE)
     set (TFDN_ENABLE_STATIC_LINK ${ENABLE_STATIC} CACHE BOOL "" FORCE)
+
+    message (STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
     add_subdirectory (lib/the_Foundation)
     add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
     if (NOT OPENSSL_FOUND)

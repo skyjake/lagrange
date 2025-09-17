@@ -15,7 +15,7 @@
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
 
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.15)
 
 project (Lagrange
     VERSION 1.21.0
@@ -399,7 +399,7 @@ elseif (APPLE)
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif ()
-if (MSYS OR MINGW)
+if (MSYS OR MINGW OR WIN32)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
     set (WINRC_PRODUCT_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},0,0)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
@@ -413,7 +413,7 @@ if (MSYS OR MINGW)
         src/platform/win32.h
     )
 endif ()
-if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
+if (MSYS OR MINGW OR WIN32 OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
@@ -444,10 +444,20 @@ macro (set_common_app_properties target)
         src
         ${CMAKE_CURRENT_BINARY_DIR}
     )
-    target_compile_options (${target} PUBLIC
-        -Werror=implicit-function-declaration
-        -Wno-deprecated-declarations
-    )
+    if (MSVC)
+        target_compile_options (${target} PUBLIC
+            /utf-8 /std:c11 /experimental:c11atomics
+            /W4 /WX
+            /D_CRT_SECURE_NO_WARNINGS
+            # disable size_t downcasts
+            /wd4267
+        )
+    else ()
+        target_compile_options (${target} PUBLIC
+            -Werror=implicit-function-declaration
+            -Wno-deprecated-declarations
+        )
+    endif ()
     target_compile_definitions (${target} PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
     if (CFLAG_INCOMPATIBLE_POINTER_TYPES)
         target_compile_options (${target} PUBLIC -Werror=incompatible-pointer-types)
@@ -500,7 +510,7 @@ if (ENABLE_GUI)
     if (APPLE AND NOT MOBILE)
         target_compile_definitions (app PUBLIC -DiPlatformAppleDesktop=1)
     endif ()
-    if (ENABLE_CUSTOM_FRAME AND (MSYS OR MINGW))
+    if (ENABLE_CUSTOM_FRAME AND (MSYS OR MINGW OR WIN32))
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
     endif ()
     if (ENABLE_KERNING)
@@ -681,7 +691,7 @@ done
             LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
         )
     endif ()
-    if (MSYS OR MINGW)
+    if (MSYS OR MINGW OR WIN32)
         target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
         if (ENABLE_WINSPARKLE)
             target_link_libraries (app PUBLIC winsparkle)
@@ -823,3 +833,32 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
     endif ()
 endif ()
+
+message (STATUS "Summary:")
+message (STATUS "ENABLE_CUSTOM_FRAME     : ${ENABLE_CUSTOM_FRAME}")
+message (STATUS "ENABLE_DOWNLOAD_EDIT    : ${ENABLE_DOWNLOAD_EDIT}")
+message (STATUS "ENABLE_GUI              : ${ENABLE_GUI}")
+message (STATUS "ENABLE_IDLE_SLEEP       : ${ENABLE_IDLE_SLEEP}")
+message (STATUS "ENABLE_IPC              : ${ENABLE_IPC}")
+message (STATUS "ENABLE_KERNING          : ${ENABLE_KERNING}")
+message (STATUS "ENABLE_MAC_MENUS        : ${ENABLE_MAC_MENUS}")
+message (STATUS "ENABLE_MOBILE_PHONE     : ${ENABLE_MOBILE_PHONE}")
+message (STATUS "ENABLE_MOBILE_TABLET    : ${ENABLE_MOBILE_TABLET}")
+message (STATUS "ENABLE_POPUP_MENUS      : ${ENABLE_POPUP_MENUS}")
+message (STATUS "ENABLE_RELATIVE_EMBED   : ${ENABLE_RELATIVE_EMBED}")
+message (STATUS "ENABLE_RESIZE_DRAW      : ${ENABLE_RESIZE_DRAW}")
+message (STATUS "ENABLE_STATIC           : ${ENABLE_STATIC}")
+message (STATUS "ENABLE_TUI              : ${ENABLE_TUI}")
+message (STATUS "ENABLE_WINDOWPOS_FIX    : ${ENABLE_WINDOWPOS_FIX}")
+message (STATUS "ENABLE_X11_SWRENDER     : ${ENABLE_X11_SWRENDER}")
+message (STATUS "ENABLE_X11_XLIB         : ${ENABLE_X11_XLIB}")
+message (STATUS "ENABLE_FRIBIDI          : ${ENABLE_FRIBIDI}")
+message (STATUS "ENABLE_FRIBIDI_BUILD    : ${ENABLE_FRIBIDI_BUILD}")
+message (STATUS "ENABLE_HARFBUZZ         : ${ENABLE_HARFBUZZ}")
+message (STATUS "ENABLE_HARFBUZZ_MINIMAL : ${ENABLE_HARFBUZZ_MINIMAL}")
+message (STATUS "ENABLE_MPG123           : ${ENABLE_MPG123}")
+message (STATUS "ENABLE_OPUS             : ${ENABLE_OPUS}")
+message (STATUS "ENABLE_SPARKLE          : ${ENABLE_SPARKLE}")
+message (STATUS "ENABLE_WEBP             : ${ENABLE_WEBP}")
+message (STATUS "ENABLE_JXL              : ${ENABLE_JXL}")
+message (STATUS "ENABLE_WINSPARKLE       : ${ENABLE_WINSPARKLE}")
