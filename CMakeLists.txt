@@ -591,12 +591,21 @@ if (ENABLE_GUI)
     if (ENABLE_X11_SWRENDER)
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
     endif ()
-    if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
-        target_link_libraries (app PUBLIC SDL2::SDL2-static)
+    if (VCPKG_TOOLCHAIN)
+        find_package (SDL2 CONFIG REQUIRED)
+        target_link_libraries (app
+            PRIVATE
+            $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+            $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        )
     else ()
-        target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
-        target_compile_options (app PUBLIC ${SDL2_CFLAGS})
-        target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+        if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
+            target_link_libraries (app PUBLIC SDL2::SDL2-static)
+        else ()
+            target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
+            target_compile_options (app PUBLIC ${SDL2_CFLAGS})
+            target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+        endif ()
     endif ()
 
     # Check for SDL_TEXTEDITING support.
