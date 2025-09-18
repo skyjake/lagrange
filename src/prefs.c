@@ -27,9 +27,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <assert.h>
 #include <the_Foundation/fileinfo.h>
 
+#if defined (_MSC_VER)
+// TODO: vs doesn't like bools[x], I think this is quite sane alternative
+_Static_assert(offsetof(iPrefs, geminiStyledGopher) == offsetof(iPrefs, bools) + geminiStyledGopher_PrefsBool,
+               "memory layout mismatch (needs struct packing?)");
+#else
 _Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
                    offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
+#endif
 
 void init_Prefs(iPrefs *d) {
     iForIndices(i, d->strings) {
