@@ -842,7 +842,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
 #if !defined (iPlatformTerminal)
 #   if defined (iPlatformMsys) || defined (iPlatformWindows)
     /* Must scale by UI scaling factor. */
-    mulfv_I2(&rect.size, desktopDPI_Win32());
+    mulfv_I2(&rect.size, desktopDPI_Win32(NULL));
 #   endif
 #   if defined (iPlatformLinux) && !defined (iPlatformAndroid)
     /* Scale by the primary (?) monitor DPI. */

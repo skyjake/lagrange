@@ -487,8 +487,7 @@ static float displayScale_Window_(const iWindow *d) {
     /* TODO: iOS text size setting? */
     return 1.0f;
 #elif defined (iPlatformMsys) || defined (iPlatformWindows)
-    iUnused(d);
-    return desktopDPI_Win32();
+    return desktopDPI_Win32(d->win);
 #elif defined (iPlatformAndroidMobile)
     return displayDensity_Android();
 #else
