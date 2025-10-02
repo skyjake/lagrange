@@ -554,7 +554,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
     if (!keepActions) {
-        if (focus_Widget() && focus_Widget() != d->list &&
+        if (focus_Widget() && focus_Widget() != as_Widget(d->list) &&
             hasParent_Widget(focus_Widget(), as_Widget(d))) {
             /* Something inside this sidebar has input focus, so let it go first. */
             setFocus_Widget(NULL);
