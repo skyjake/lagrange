@@ -457,17 +457,22 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
                     endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
                     endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
+                    endsWithCase_String(path, ".hdr")  ||
 #if defined (LAGRANGE_ENABLE_JXL)
                     endsWithCase_String(path, ".jxl") ||
 #endif
 #if defined (LAGRANGE_ENABLE_WEBP)
                     endsWithCase_String(path, ".webp") ||
 #endif
-                    endsWithCase_String(path, ".hdr")  || endsWithCase_String(path, ".pic")) {
+                    endsWithCase_String(path, ".pic")) {
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }
                 else if (endsWithCase_String(path, ".mp3") || endsWithCase_String(path, ".wav") ||
-                         endsWithCase_String(path, ".mid") || endsWithCase_String(path, ".ogg")) {
+                         endsWithCase_String(path, ".ogg") ||
+#if defined (LAGRANGE_ENABLE_OPUS)
+                         endsWithCase_String(path, ".opus") ||
+#endif
+                         endsWithCase_String(path, ".mid")) {
                     link->flags |= audioFileExtension_GmLinkFlag;
                 }
                 else if (endsWithCase_String(path, ".fontpack")) {

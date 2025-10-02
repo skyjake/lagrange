@@ -2189,8 +2189,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
                         isEmpty_SortedArray(&d->tickers)) {
                         if (!d->isIdling) {
-//                            printf("[App] idling...\n");
-//                            fflush(stdout);
+# if !defined (NDEBUG) && !defined (iPlatformTerminal)
+                            printf("[App] idling...\n");
+                            fflush(stdout);
+# endif
                         }
                         d->isIdling = iTrue;
                     }
@@ -2198,8 +2200,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 d->lastEventTime = SDL_GetTicks();
                 if (d->isIdling) {
-//                    printf("[App] ...woke up\n");
-//                    fflush(stdout);
+# if !defined (NDEBUG) && !defined (iPlatformTerminal)
+                    printf("[App] ...woke up\n");
+                    fflush(stdout);
+# endif
                 }
                 d->isIdling = iFalse;
                 gotEvents = iTrue;
@@ -5223,8 +5227,8 @@ iBool handleCommand_App(const char *cmd) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
-        if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType &&
-            !isTerminal_Platform()) {
+        if (prefs_App()->detachedPrefs && (!isWindows_Platform() || !prefs_App()->customFrame) && 
+            deviceType_App() == desktop_AppDeviceType && !isTerminal_Platform()) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
         }

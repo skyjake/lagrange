@@ -436,14 +436,15 @@ static enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
     }
     d->opusLastInputSize = size_Block(input);
     while (size_Array(&d->pendingOutput) < d->output.count) {
-        float       buffer[512];
-        const int   samplePerCh  = op_read_float(d->opus, buffer, sizeof(buffer) / sizeof(float), NULL);
+        float       buffer[4096];
+        const int   samplePerCh  = op_read_float(d->opus, buffer, iElemCount(buffer), NULL);
         const float gain         = d->gain;
         const int   totalSamples = samplePerCh * d->output.numChannels;
+//        assert (samplePerCh >= 0);
         for (size_t i = 0; i < totalSamples; i++) {
             buffer[i] *= gain;
         }
-        pushBackN_Array(&d->pendingOutput, buffer, totalSamples);
+        pushBackN_Array(&d->pendingOutput, buffer, samplePerCh);
         if (totalSamples == 0) {
             status = needMoreInput_DecoderStatus;
             break;

@@ -30,6 +30,10 @@
 		<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
 		<key>NSHighResolutionCapable</key>
 		<true/>
+		<key>CADisableMinimumFrameDuration</key>
+		<true/>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
 		<key>NSRequiresAquaSystemAppearance</key>
 		<false/>
 		<key>NSSupportsAutomaticGraphicsSwitching</key>

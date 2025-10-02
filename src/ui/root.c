@@ -579,7 +579,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "focus.set")) {
-        if (hasLabel_Command(cmd, "id2")) {
+        if (hasLabel_Command(cmd, "id2") && focus_Widget()) {
             iWidget *override = findWidget_App(cstr_Command(cmd, "id2"));
             if (isVisible_Widget(override) && !isFocused_Widget(override)) {
                 setFocus_Widget(override);

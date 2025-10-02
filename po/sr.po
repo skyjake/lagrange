@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2025-08-27 16:23+0000\n"
+"PO-Revision-Date: 2025-09-22 09:53+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1286,8 +1286,8 @@ msgstr ""
 
 msgid "error.badheader.msg"
 msgstr ""
-"Примљено заглавље не поштује спецификацију протокола Џемини. Можда је сервер "
-"неисправан, или сте покушали да приступите не-Џемини серверу."
+"Примљено заглавље не поштује спецификацију протокола. Можда је сервер "
+"неисправан или не подржава овај протокол."
 
 msgid "error.badredirect.msg"
 msgstr ""
@@ -2956,3 +2956,12 @@ msgstr "Затвори доње картице"
 
 msgid "prefs.quote.italic"
 msgstr "Цитати курзивом:"
+
+msgid "link.copy.label"
+msgstr "Копирај натпис везе"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "Картице алата здесна"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "Картице алата слева"

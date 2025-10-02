@@ -1132,7 +1132,15 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
     }
     else if (d->protocol == misfin_UploadProtocol) {
         set_String(&d->url, &d->originalUrl);
-        setText_InputWidget(d->path, collectNewRange_String(parts.path));
+        if (!isEmpty_Range(&parts.user) && !isEmpty_Range(&parts.host)) {
+            /* URI format: "misfin://user@host". */
+            setText_InputWidget(
+                d->path, collectNewRange_String((iRangecc) { parts.user.start, parts.host.end }));
+        }
+        else {
+            /* URI format: "misfin:user@host". */
+            setText_InputWidget(d->path, collectNewRange_String(parts.path));
+        }
         misfinAddressValidator_UploadWidget_(d->path, d);
         if (size_Range(&parts.query) > 1) {
             /* A message body is included. */

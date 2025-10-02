@@ -81,10 +81,11 @@ struct Impl_Touch {
     iFloat3 pos[numHistory_Touch_];
     size_t posCount;
     iFloat3 accum;
-    iInt2 pendingScroll[3]; /* SDL_FINGERMOTION sometimes arrives in clumps on iOS;
-                               buffer the scrolls to post more evenly */
-    int numPendingScroll;
-    int pendingScrollThreshold;
+    iInt2 pendingScrollDelta; /* SDL_FINGERMOTION sometimes arrives unevently on iOS;
+                                 accumulate the scrolls to smooth them out per refresh event */
+    uint32_t pendingScrollTicks; /* accumulated milliseconds */
+    uint32_t pendingScrollLastTime;
+    uint32_t pendingScrollLastPostTime;
 };
 
 iLocalDef void pushPos_Touch_(iTouch *d, const iFloat3 pos, uint32_t time) {
@@ -293,15 +294,27 @@ static uint32_t gestureSpan_Touch_(const iTouch *d) {
 }
 
 static void postPendingScroll_TouchState_(iTouchState *d, iTouch *touch) {
-    if (touch->numPendingScroll > touch->pendingScrollThreshold) {
-        const iInt2 pixels = touch->pendingScroll[0];
-//            printf("%u :: (%d/%d) pending scroll %d,%d\n", nowTime, touch->numPendingScroll, touch->pendingScrollThreshold, pixels.x, pixels.y);
-        memmove(touch->pendingScroll, touch->pendingScroll + 1,
-                sizeof(touch->pendingScroll[0]) * (iElemCount(touch->pendingScroll) - 1));
-        touch->numPendingScroll--;
-        dispatchMotion_Touch_(touch->startPos, 0);
-        setCurrent_Root(touch->affinity->root);
-        dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
+    if (touch->pendingScrollTicks) {
+        const uint32_t now = SDL_GetTicks();
+        const uint32_t elapsed = now - touch->pendingScrollLastPostTime;
+        touch->pendingScrollLastPostTime = now;
+        iInt2 pixels = touch->pendingScrollDelta;
+        if (elapsed < touch->pendingScrollTicks) {
+            /* Post a partial move. */
+            mulfv_I2(&pixels, elapsed / (float) touch->pendingScrollTicks);
+            touch->pendingScrollTicks -= elapsed;
+        }
+        else {
+            touch->pendingScrollTicks = 0;
+        }
+        subv_I2(&touch->pendingScrollDelta, pixels);
+#if 0
+        printf("%u :: (%u) pending scroll %d,%d\n", now, touch->pendingScrollTicks, pixels.x, pixels.y);
+#endif
+        if (!isEqual_I2(pixels, zero_I2())) {
+            dispatchMotion_Touch_(touch->startPos, 0);
+            setCurrent_Root(touch->affinity->root);
+            dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                 .type = SDL_MOUSEWHEEL,
                 .which = SDL_TOUCH_MOUSEID,
                 .windowID = id_Window(window_Widget(touch->affinity)),
@@ -309,10 +322,11 @@ static void postPendingScroll_TouchState_(iTouchState *d, iTouch *touch) {
                 .x = pixels.x,
                 .y = pixels.y,
                 .direction = perPixel_MouseWheelFlag,
-        });
-        /* TODO: Keep increasing movement if the direction is the same. */
-        clearWidgetMomentum_TouchState_(d, touch->affinity);
-        touch->edge = none_TouchEdge;
+            });
+            /* TODO: Keep increasing movement if the direction is the same. */
+            clearWidgetMomentum_TouchState_(d, touch->affinity);
+            touch->edge = none_TouchEdge;
+        }
     }
 }
 
@@ -804,23 +818,20 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                    iOS, it seems!), so we won't post the scroll event immediately but instead
                    wait until next ticker iteration. This allows us to buffer events if too many
                    arrive at once. */
-                const int maxPending = iElemCount(touch->pendingScroll);
-                if (touch->numPendingScroll == maxPending) {
-                    addv_I2(&touch->pendingScroll[maxPending - 1], pixels);
+#if defined (iPlatformAndroidMobile)
+                const uint32_t pendingTimeMax = d->stepDurationMs;
+#else
+                const uint32_t pendingTimeMax = (d->stepDurationMs < 16 ? 3 : 2) * d->stepDurationMs;
+#endif
+                if (fing->timestamp - touch->pendingScrollLastTime <= pendingTimeMax) {
+                    touch->pendingScrollTicks += fing->timestamp - touch->pendingScrollLastTime;
                 }
                 else {
-                    touch->pendingScroll[touch->numPendingScroll] = pixels;
-#if defined (iPlatformAppleMobile)
-                    touch->pendingScrollThreshold = iMin(touch->numPendingScroll, 1);
-#else
-                    touch->pendingScrollThreshold = 0;
-#endif
-                    touch->numPendingScroll++;
-#if defined (iPlatformAndroidMobile)
-                    /* No need to wait. */
-                    postPendingScroll_TouchState_(d, touch);
-#endif
+                    touch->pendingScrollTicks += pendingTimeMax;
                 }
+                touch->pendingScrollLastTime = fing->timestamp;
+                addv_I2(&touch->pendingScrollDelta, pixels);
+                addTickerRoot_App(update_TouchState_, NULL, d); /* post the event(s) later */
             }
         }
     }

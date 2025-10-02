@@ -1372,7 +1372,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
             if (mw || extraw) {
-                invalidate_Window_(d, iTrue /* force full reset */);
+                invalidate_Window_(d, iFalse);
             }
             break;
         }
@@ -1753,18 +1753,22 @@ void draw_MainWindow(iMainWindow *d) {
        when the custom frame is being used. */ {
         setCurrent_Root(w->roots[0]);
         iColor back;
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
-                                    ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
-                                ? uiAnnotation_ColorId
-                                : uiSeparator_ColorId);
-#else
-        back = get_Color(uiBackground_ColorId);
-        if (deviceType_App() == phone_AppDeviceType) {
-            /* Page background extends to safe area, so fill it completely. */
-            back = get_Color(tmBackground_ColorId);
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)        
+        if (prefs_App()->customFrame && numRoots_Window(as_Window(d)) == 1) {
+            back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
+                                        ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                    ? uiAnnotation_ColorId
+                                    : uiSeparator_ColorId);
         }
+        else
 #endif
+        {
+            back = get_Color(uiBackground_ColorId);
+            if (deviceType_App() == phone_AppDeviceType) {
+                /* Page background extends to safe area, so fill it completely. */
+                back = get_Color(tmBackground_ColorId);
+            }
+        }
         unsetClip_Paint(&p); /* update clip to full window */
         SDL_SetRenderDrawColor(w->render, back.r, back.g, back.b, 255);
         SDL_RenderClear(w->render);
@@ -1824,11 +1828,16 @@ void draw_MainWindow(iMainWindow *d) {
                     }
                     if (root == w->keyRoot) {
                         const iBool isDark = isDark_ColorTheme(colorTheme_App());
-                        fillRect_Paint(&p, (iRect){
-                            topLeft_Rect(bounds),
-                            init_I2(width_Rect(bounds), gap_UI / 2)
-                        }, isDark ? uiBackgroundSelected_ColorId
-                                  : uiIcon_ColorId);
+                        const int keyColor = isDark ? uiBackgroundSelected_ColorId
+                                                    : uiIcon_ColorId;
+                        const iInt2 keySize = init_I2(width_Rect(bounds), gap_UI / 2);
+                        fillRect_Paint(&p, (iRect){ topLeft_Rect(bounds), keySize }, keyColor);
+                        if (keySize.x < d->base.size.x) {
+                            fillRect_Paint(&p, (iRect){
+                                addY_I2(bottomLeft_Rect(bounds), -gap_UI / 2),
+                                keySize
+                            }, keyColor);
+                        }
                     }
                 }
             }
@@ -2143,7 +2152,8 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
         /* Add some room for the active root indicator. */
         for (int i = 0; i < 2; i++) {
             if (w->roots[i]) {
-                w->roots[i]->widget->padding[1] = (splitMode ? 1 : 0);
+                w->roots[i]->widget->padding[1] = (splitMode ? gap_UI / 2 : 0);
+                w->roots[i]->widget->padding[3] = (splitMode ? gap_UI / 2 : 0);
             }
         }
         d->splitMode = splitMode;
@@ -2151,7 +2161,9 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
         postCommand_App("window.resized"); /* not really, but widgets may need to change layout */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         /* Update custom frame controls. */ {
-            const iBool hideCtl0 = numRoots_Window(as_Window(d)) != 1;
+            const iBool isVerticalSplit = (splitFlags & vertical_WindowSplit) != 0;
+            const iBool hideCtl0 = numRoots_Window(as_Window(d)) > 1 && !isVerticalSplit;
+            const iBool hideCtl1 = numRoots_Window(as_Window(d)) > 1 && isVerticalSplit;
             iWidget *winBar = findChild_Widget(d->base.roots[0]->widget, "winbar");
             if (winBar) {
                 setFlags_Widget(
@@ -2159,13 +2171,19 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 setFlags_Widget(
                     findChild_Widget(winBar, "winbar.max"), hidden_WidgetFlag, hideCtl0);
                 setFlags_Widget(
-                    findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl0);
+                    findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl0);                
                 if (d->base.roots[1]) {
                     winBar = findChild_Widget(d->base.roots[1]->widget, "winbar");
                     setFlags_Widget(
                         findChild_Widget(winBar, "winbar.icon"), hidden_WidgetFlag, iTrue);
                     setFlags_Widget(
                         findChild_Widget(winBar, "winbar.app"), hidden_WidgetFlag, iTrue);
+                    setFlags_Widget(
+                        findChild_Widget(winBar, "winbar.min"), hidden_WidgetFlag, hideCtl1);
+                    setFlags_Widget(
+                        findChild_Widget(winBar, "winbar.max"), hidden_WidgetFlag, hideCtl1);
+                    setFlags_Widget(
+                        findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl1);                
                 }
             }
         }

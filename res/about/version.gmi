@@ -6,6 +6,18 @@
 ```
 # Release notes
 
+## 1.19.3
+* Updated bundled Noto Emoji font (Unicode 17).
+* Changed priority for focusing search fields: focus the page contents search field unless the sidebar has focus.
+* Fixed garbled stereo Opus playback.
+* Fixed media type associated with .opus file extension.
+* Fixed opening Opus audio as an inline player.
+* TUI: Fixed moving focus to the sidebar when opening it.
+* Misfin: Parse URIs with the format "misfin://user@host" as well, because these may be more compatible with external applications.
+* Windows: Improved focus indication in split view mode.
+* Windows: Fixed frame color when custom frame is disabled.
+* Updated UI translations.
+
 ## 1.19.2
 * Indicate automatic reloading in the Tabs list.
 * Fixed broken timestamp calculation when creating identities.

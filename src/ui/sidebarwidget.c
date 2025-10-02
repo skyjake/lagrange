@@ -554,7 +554,8 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
     if (!keepActions) {
-        if (focus_Widget() && hasParent_Widget(focus_Widget(), as_Widget(d))) {
+        if (focus_Widget() && focus_Widget() != d->list &&
+            hasParent_Widget(focus_Widget(), as_Widget(d))) {
             /* Something inside this sidebar has input focus, so let it go first. */
             setFocus_Widget(NULL);
         }
@@ -1903,10 +1904,10 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
             if (isTerminal_Platform()) {
-                setFocus_Widget(as_Widget(list_SidebarWidget(d)));
-                if (wasChanged) {
-                    setCursorItem_ListWidget(list_SidebarWidget(d), 0);
-                }
+                // if (wasShown) {
+                    // setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+                // }
+                setCursorItem_ListWidget(list_SidebarWidget(d), 0);
             }
         }
         refresh_Widget(findChild_Widget(w, "buttons"));
@@ -1930,12 +1931,6 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
-        if (!isHiding && !isMobile_Platform()) {
-            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
-        }
-        else {
-            setFocus_Widget(NULL);
-        }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad =
@@ -2003,6 +1998,12 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         if (isDesktop_Platform() && prefs_App()->evenSplit) {
             resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
+        }
+        if (!isHiding && !isMobile_Platform()) {
+            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+        }
+        else {
+            setFocus_Widget(NULL);
         }
         refresh_Widget(w->parent);
         return iTrue;

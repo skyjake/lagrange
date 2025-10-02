@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 1.19 (6)
+* Fixed hardware keyboard hardware input (disabled SDL's keyboard handler that was interfering).
+
+## 1.19 (5)
+* Increased smoothness of scroll gestures.
+
+## 1.19 (4)
+* Enabled high screen refresh rates (120 Hz).
+* Updated SDL to 2.32.8.
+* Bumped minimum iOS version to 15.
+
 ## 1.19 (3)
 * Indicate automatic reloading in the Tabs list.
 * Update Tabs list when reordering tabs.

@@ -291,7 +291,7 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
                 adjustEdges_Rect(&thumb, 0, 0, 0, 3 * gap_UI); /* counter the fat finger */
             }
             const iRect thumbRect = shrunk_Rect(
-                thumb, init_I2(isPressed ? gap_UI * 0.75f : (gap_UI * 1.2f), gap_UI / 2));
+                thumb, init_I2(isPressed ? gap_UI * 1.0f : (gap_UI * 1.2f), gap_UI / 2));
             fillRect_Paint(&p, thumbRect, isPressed ? uiTextStrong_ColorId : d->thumbColor);
             if (p.alpha < 255) {
                 SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
