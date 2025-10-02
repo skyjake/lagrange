@@ -45,6 +45,22 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.19.3" date="2025-10-02">
+            <description>
+                <ul>
+                    <li>Updated bundled Noto Emoji font (Unicode 17).</li>
+                    <li>Changed priority for focusing search fields: focus the page contents search field unless the sidebar has focus.</li>
+                    <li>Fixed garbled stereo Opus playback.</li>
+                    <li>Fixed media type associated with .opus file extension.</li>
+                    <li>Fixed opening Opus audio as an inline player.</li>
+                    <li>Misfin: Parse URIs with the format "misfin://user@host" as well, because these may be more compatible with external applications.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.3</url>
+        </release>
         <release version="1.19.2" date="2025-09-13">
             <description>
                 <ul>
