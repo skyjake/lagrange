@@ -809,8 +809,8 @@ void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
     /* Only delete the files if we created them. */
     const char *filename = certPath_GmCerts_(d, identity);
     if (filename) {
-        remove(format_CStr("%s.crt", filename));
-        remove(format_CStr("%s.key", filename));
+        removePath_CStr(format_CStr("%s.crt", filename));
+        removePath_CStr(format_CStr("%s.key", filename));
     }
     removeOne_PtrArray(&d->idents, identity);
     collect_GmIdentity(identity);

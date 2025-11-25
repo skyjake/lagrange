@@ -131,7 +131,9 @@ static struct {
 iBool init_Resources(const char *path) {
     archive_ = new_Archive();
     iBool ok = iFalse;
-    // printf("Resources: Checking %s\n", path);
+#ifndef NDEBUG
+    printf("[Resources] Checking: %s\n", path);
+#endif
 #if defined (iPlatformAndroidMobile)
     /* Resources are bundled as assets so they cannot be loaded as a regular file.
        Fortunately, SDL implements a file wrapper. */

@@ -325,7 +325,7 @@ static void saveBackup_InputWidget_(iInputWidget *d) {
 
 static void eraseBackup_InputWidget_(iInputWidget *d) {
     if (d->backupPath) {
-        remove(cstr_String(d->backupPath));
+        removePath_CStr(cstr_String(d->backupPath));
         delete_String(d->backupPath);
         d->backupPath = NULL;
     }

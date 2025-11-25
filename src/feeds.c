@@ -757,7 +757,7 @@ void resetKnownEntries_Feeds(void) {
     iFeeds *d = &feeds_;
     iString *saveDir = copy_String(&d->saveDir);
     deinit_Feeds();
-    remove(cstrCollect_String(concatCStr_Path(saveDir, feedsFilename_Feeds_)));
+    removePath_CStr(cstrCollect_String(concatCStr_Path(saveDir, feedsFilename_Feeds_)));
     init_Feeds(cstr_String(saveDir));
     delete_String(saveDir);
 }

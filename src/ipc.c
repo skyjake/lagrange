@@ -61,7 +61,7 @@ void init_Ipc(const char *runDir) {
 
 static void doStopListening_Ipc_(iIpc *d) {
     if (d->isListening) {
-        remove(lockFilePath_(d));
+        removePath_CStr(lockFilePath_(d));
         d->isListening = iFalse;
     }
 }
@@ -76,7 +76,7 @@ iProcessId check_Ipc(void) {
         pid = atoi(constData_Block(running));
         if (!exists_Process(pid)) {
             pid = 0;
-            remove(cstr_String(path_File(f))); /* Stale. */
+            removePath_CStr(cstr_String(path_File(f))); /* Stale. */
         }
     }
     iRelease(f);
@@ -119,7 +119,7 @@ static void handleUserSignal_(int sig) {
         postCommands_Ipc_(collect_Block(readAll_File(f)));
     }
     iRelease(f);
-    remove(path);
+    removePath_CStr(path);
 }
 
 void listen_Ipc(void) {
@@ -163,7 +163,7 @@ static void handleSignal_IpcResponse_(int sig) {
     if (open_File(f, text_FileMode | readOnly_FileMode)) {
         iBlock *input = readAll_File(f);
         close_File(f);
-        remove(cstr_String(path_File(f)));
+        removePath_CStr(cstr_String(path_File(f)));
         setBlock_String(d->output, input);
         d->success = iTrue;
         delete_Block(input);

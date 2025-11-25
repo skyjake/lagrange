@@ -503,7 +503,7 @@ static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
     iForIndices(i, names) {
         const char *src = concatPath_CStr(intDataDir, names[i]);
         if (copyFile_(src, concatPath_CStr(extDataDir, names[i]))) {
-            remove(src);
+            removePath_CStr(src);
         }
     }
     /* Copy identities as well. */
@@ -515,7 +515,7 @@ static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
             const iRangecc name = baseName_Path(path_FileInfo(entry.value));
             const char *src = cstr_String(path_FileInfo(entry.value));
             if (copyFile_(src, concatPath_CStr(dstIdents, cstr_Rangecc(name)))) {
-                remove(src);
+                removePath_CStr(src);
             }
         }
         rmdir_Path(collectNewCStr_String(srcIdents));
@@ -1048,9 +1048,9 @@ static void saveState_App_(const iApp *d, iBool withContent) {
 void commitFile_App(const char *path, const char *tempPathWithNewContents) {
     iString *oldPath = collectNewCStr_String(path);
     appendCStr_String(oldPath, ".old");
-    rename(path, cstr_String(oldPath));
-    rename(tempPathWithNewContents, path);
-    remove(cstr_String(oldPath));
+    renamePath_CStr(path, cstr_String(oldPath));
+    renamePath_CStr(tempPathWithNewContents, path);
+    removePath_CStr(cstr_String(oldPath));
 }
 
  void deferVisitedSave_App(void) {
@@ -1667,7 +1667,7 @@ static void deinit_App(iApp *d) {
     iRecycle();
     /* Delete all temporary files created while running. */
     iConstForEach(StringSet, tmp, d->tempFilesPendingDeletion) {
-        remove(cstr_String(tmp.value));
+        removePath_CStr(cstr_String(tmp.value));
     }
     deinit_Array(&d->initialWindowRects);
     deinit_Array(&d->initialWindowDesktops);
@@ -4951,7 +4951,7 @@ iBool handleCommand_App(const char *cmd) {
                 2);
         }
         else {
-            remove(path);
+            removePath_CStr(path);
         }
         return iTrue;
     }
@@ -5453,7 +5453,7 @@ iBool handleCommand_App(const char *cmd) {
         if (pack && loadPath_FontPack(pack)) {
             if (argLabel_Command(cmd, "confirmed")) {
                 remove_StringSet(d->prefs.disabledFontPacks, packId);
-                remove(cstr_String(loadPath_FontPack(pack)));
+                removePath_CStr(cstr_String(loadPath_FontPack(pack)));
                 reload_Fonts();
                 postCommand_App("navigate.reload");
             }

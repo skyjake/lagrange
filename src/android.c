@@ -61,7 +61,7 @@ static const char *cachePath_(void) {
 
 static void clearCachedFiles_(void) {
     iForEach(DirFileInfo, dir, iClob(newCStr_DirFileInfo(cachePath_()))) {
-        remove(cstr_String(path_FileInfo(dir.value)));
+        removePath_CStr(cstr_String(path_FileInfo(dir.value)));
     }
 }
 
