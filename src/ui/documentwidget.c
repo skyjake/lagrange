@@ -4290,7 +4290,8 @@ static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidge
     }
     if (isGemini || willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "data") ||
         equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "finger") ||
-        equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "spartan")) {
+        equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "spartan") ||
+        equalCase_Rangecc(scheme, "nex")) {
         isNative = iTrue;
         /* Regular links that we can open. */
         pushBackN_Array(items,

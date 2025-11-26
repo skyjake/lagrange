@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.19.4
+* Fixed: Context menu for Nex links.
+* Windows: Fixed crash when opening WebP images.
+* Windows: Fixed file path regressions that caused issues like fontpacks and identities not being loaded at launch. Paths that contain non-Latin characters were not correctly converted to/from UTF-8. The regressions occurred when switching to the MinGW build toolchain in 1.19.0.
+
 ## 1.19.3
 * Updated bundled Noto Emoji font (Unicode 17).
 * Changed priority for focusing search fields: focus the page contents search field unless the sidebar has focus.
