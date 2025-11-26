@@ -45,6 +45,17 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.19.4" date="2025-11-26">
+            <description>
+                <ul>
+                    <li>Fixed: Context menu for Nex links.</li>
+                    <li>Titan: Don't send requests with an empty path.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.4</url>
+        </release>
         <release version="1.19.3" date="2025-10-02">
             <description>
                 <ul>
