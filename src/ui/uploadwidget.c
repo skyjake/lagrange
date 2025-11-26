@@ -870,6 +870,9 @@ static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
         }
         append_String(reqUrl, path);
     }
+    else {
+        appendCStr_String(reqUrl, "/");
+    }
     iUrl parts;
     init_Url(&parts, &d->originalUrl);
     if (!isEmpty_Range(&parts.query)) {
@@ -1105,10 +1108,14 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
                 ? parts.query.start /* query is excluded here */
                 : constEnd_String(url) });
         }
+        else {
+            appendCStr_String(&d->url, "/"); /* help parsers understand the URL with params */
+        }
         const iRangecc siteRoot = urlRoot_String(&d->url);
         iUrl parts;
         init_Url(&parts, &d->url);
-        setTextCStr_LabelWidget(d->info, cstr_Rangecc((iRangecc){ parts.host.start, siteRoot.end }));
+        setTextCStr_LabelWidget(d->info,
+                                cstr_Rangecc((iRangecc) { parts.host.start, siteRoot.end }));
         /* From root onwards, the URL is editable. */
         setTextCStr_InputWidget(d->path,
                                 cstr_Rangecc((iRangecc){ siteRoot.end, constEnd_String(&d->url) }));

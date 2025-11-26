@@ -8,6 +8,7 @@
 
 ## 1.19.4
 * Fixed: Context menu for Nex links.
+* Titan: Don't send requests with an empty path.
 * Windows: Fixed crash when opening WebP images.
 * Windows: Fixed file path regressions that caused issues like fontpacks and identities not being loaded at launch. Paths that contain non-Latin characters were not correctly converted to/from UTF-8. The regressions occurred when switching to the MinGW build toolchain in 1.19.0.
 
