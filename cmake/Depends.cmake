@@ -232,8 +232,9 @@ if (ENABLE_TUI)
     endif ()
 endif ()
 
+find_package (SDL2 QUIET) # includes static link variant
 pkg_check_modules (SDL2 REQUIRED sdl2)
 pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)
-pkg_check_modules (WEBP IMPORTED_TARGET libwebp)
+pkg_check_modules (WEBP IMPORTED_TARGET libwebpdecoder)
 pkg_check_modules (JXL IMPORTED_TARGET libjxl libjxl_threads)
 pkg_check_modules (OPUSFILE IMPORTED_TARGET opusfile)
