@@ -6,6 +6,42 @@
 ```
 # Release notes
 
+## 1.20 (4)
+* Improved UI of inline audio player for touch screens: taller area, removed volume button.
+* Fixed stability and behavior issues with audio players. For example, history navigation was not releasing audio player resources when leaving a page. (Previously, they were just paused.)
+* Fixed excessive audio player refresh interval.
+* Fixed auto-stopping an audio player when at end of content.
+* Fixed ability to scroll the page while an input prompt is open.
+* Moved "Paste Preceding Line" to top of context menu.
+* Updated UI translations.
+
+## 1.20 (3)
+* Added SOCKS5 proxy support. When enabled, all connections and DNS resolution are tunneled through the proxy.
+* Added option to prefer IPv6 in DNS resolution.
+* Added context menu for error/warning messages. These messages are not selectable text so this way one can copy the message to the clipboard.
+* Added context menu for input dialog prompt text.
+* Plain text lines are wrapped to the maximum available width when the expand-to-long-lines option is enabled.
+* Improved warning message when there is a problem with the proxy server certificate.
+* Revised order of input prompt Ellipsis menu items; added prompt position toggle.
+* Gopher: Fixed misdetected menu styling particularly with non-ASCII characters.
+* Fixed opening a link context menu using the keyboard shortcut will remember which link as hovered using the keyboard.
+* Fixed an initial spurious letter appearing in text fields as a result of hardware keyboard events.
+* Fixed issue with audio status updates based on playback state.
+
+## 1.19 (10)
+* Fixed "Manage Identities" opening the wrong page in Settings when a gamepad is connected.
+
+## 1.19 (9)
+* Fixed spurious focus set in context menus.
+* Updated Help page for iOS/iPadOS.
+
+## 1.19 (8)
+* Added gamepad support (for testing, work-in-progress).
+
+## 1.19 (7)
+* Updated bundled Noto Emoji font (Unicode 17).
+* Updated UI translations.
+
 ## 1.19 (6)
 * Fixed hardware keyboard hardware input (disabled SDL's keyboard handler that was interfering).
 

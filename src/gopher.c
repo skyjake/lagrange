@@ -48,24 +48,21 @@ static iBool isPreformatted_(iRangecc text) {
     int  numDiag   = 0;
     int  numSpace  = 0;
     int  numRepeat = 0;
-    char chPrev    = 0;
+    iChar chPrev   = 0;
     if (!prefs_App()->geminiStyledGopher) {
         return iFalse; /* just regular text */
     }
-    for (const char *ch = text.start; ch != text.end; ch++) {
-        if (*ch < 0) {
-            iChar uc;
-            int len = decodeBytes_MultibyteChar(ch, text.end, &uc);
-            if (len > 0) {
-                if (isBoxDrawing_Char(uc)) {
-                    if (++numDiag == 3)
-                        return iTrue;
-                }
-                ch += len - 1;
-                continue;
-            }
+    trimEnd_Rangecc(&text);
+    for (const char *chPos = text.start; chPos < text.end; ) {
+        iChar ch = 0;
+        int len = decodeBytes_MultibyteChar(chPos, text.end, &ch);
+        if (len <= 0) break;
+        chPos += len;
+        if (isBoxDrawing_Char(ch)) {
+            if (++numDiag == 3) return iTrue;
+            continue;
         }
-        if (*ch != '.' && *ch == chPrev) {
+        if (ch != '.' && ch == chPrev) {
             if (numRepeat++ == 6) {
                 return iTrue;
             }
@@ -73,15 +70,15 @@ static iBool isPreformatted_(iRangecc text) {
         else {
             numRepeat = 0;
         }
-        chPrev = *ch;
-        if (isDiagram_(*ch)) {
+        chPrev = ch;
+        if (ch < 128 && isDiagram_(ch)) {
             if (++numDiag == 3)
                 return iTrue;
         }
         else {
             numDiag = 0;
         }
-        if (*ch == ' ' || *ch == '\n') {
+        if (ch == ' ' || ch == '\n') {
             if (++numSpace == 3) return iTrue;
         }
         else {
@@ -202,7 +199,11 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     setPre_Gopher_(d, iFalse);
                     appendEscapedLineToOutput_Gopher_(d, text, size_Range(&text));
                     setPre_Gopher_(d, iTrue);
-                    appendEscapedLineToOutput_Gopher_(d, path, port.end - path.start);
+                    appendEscapedLineToOutput_Gopher_(d,
+                                                      path,
+                                                      !isEmpty_Range(&port) && port.end > path.start
+                                                          ? port.end - path.start
+                                                          : size_Range(&path));
                     break;
             }
             delete_String(buf);

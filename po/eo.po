@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-19 04:46+0000\n"
-"PO-Revision-Date: 2024-10-19 13:37+0000\n"
+"PO-Revision-Date: 2025-10-03 04:25+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -617,9 +617,6 @@ msgstr "Turkisa"
 
 msgid "dlg.translate.from"
 msgstr "De:"
-
-msgid "hint.newident.optional"
-msgstr "nedeviga"
 
 msgid "prefs.accent.orange"
 msgstr "Oranĝa"
@@ -1372,3 +1369,16 @@ msgstr "Fermi langeton"
 # Keyboard shortcut for the terminal. Should be very short or abbreviated.
 msgid "term.tab.new"
 msgstr "Nova langeto"
+
+msgid "menu.sidebar.configure"
+msgstr "Agordi…"
+
+msgid "menu.search"
+msgstr "Serĉi"
+
+msgid "menu.export"
+msgstr "Eksporti"
+
+#, fuzzy
+msgid "menu.import"
+msgstr "Importi…"

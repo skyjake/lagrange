@@ -825,9 +825,6 @@ msgstr "Creando un certificado RSA autofirmado de 2048 bits."
 msgid "hint.newident.date"
 msgstr "YYYY o YYYY-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "opcional"
-
 msgid "dlg.newident.commonname"
 msgstr "Nombre común:"
 

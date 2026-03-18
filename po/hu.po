@@ -843,9 +843,6 @@ msgstr "Önaláírt 2048-bites RSA tanúsítvány létrehozása."
 msgid "dlg.newident.until"
 msgstr "Érvényesség:"
 
-msgid "hint.newident.optional"
-msgstr "nem kötelező"
-
 msgid "dlg.newident.commonname"
 msgstr "Általános név (CN):"
 

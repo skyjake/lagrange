@@ -408,9 +408,6 @@ msgstr "Valide usque:"
 msgid "hint.newident.date"
 msgstr "AAAA o AAAA-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "optional"
-
 msgid "dlg.newident.commonname"
 msgstr "Nomine commun:"
 

@@ -164,9 +164,11 @@ struct Impl_GmDocument {
     iString   localHost;
     iInt2     size;
     int       contentWidth; /* some runs may extend past the requested width */
+    int       maxContentWidth;
+    int       wrapWidth;    /* if non-zero, overrides the line wrap width */
     int       outsideMargin;
-    iArray    layout; /* contents of source, laid out in document space */
-    iStringArray auxText; /* generated text that appears on the page but is not part of the source */
+    iArray    layout;     /* contents of source, laid out in document space */
+    iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
     iString   title; /* the first top-level title */
     iArray    headings;
@@ -640,7 +642,7 @@ struct Impl_RunTypesetter {
     iInt2  pos;
     float  lineHeightReduction;
     int    indent;
-    int    layoutWidth;
+    int    layoutWidth; /* for detecting wide (scrollable) runs */
     int    rightMargin;
     iBool  isWordWrapped;
     iBool  isPreformat;
@@ -747,6 +749,27 @@ static iBool isHRule_(iRangecc line) {
     return n >= 3;
 }
 
+static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
+    const iPrefs *prefs = prefs_App();
+    /* Only do this once (and whenever font size changes). */
+    if (d->wrapWidth) return;
+    /* For plain text with word wrap and expand-to-long-lines, measure all lines first to
+       find the widest one and potentially increase the layout width up to the full canvas
+       width, so that long lines don't have to be wrapped unnecessarily. */
+    if (d->format == plainText_SourceFormat && prefs->plainTextWrap && prefs->expandToLongLines) {
+        int      maxLine = 0;
+        iRangecc seg     = iNullRange;
+        while (nextSplit_Rangecc(range_String(&d->source), "\n", &seg)) {
+            iRangecc line = seg;
+            if (*line.end == '\r') {
+                line.end--; /* trim CR always */
+            }
+            maxLine = iMaxi(maxLine, measureRange_Text(plainText_FontId, line).advance.x);
+        }
+        d->wrapWidth = iMin(maxLine, d->maxContentWidth);
+    }
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     static iRegExp *ansiPattern_;
     if (!ansiPattern_) {
@@ -834,8 +857,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     d->warnings &= ~missingGlyphs_GmDocumentWarning;
     checkMissing_Text(); /* clear the flag */
     setAnsiFlags_Text(d->theme.ansiEscapes);
+    determinePlainTextWrapWidth_GmDocument(d);
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
-        iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
+        iRangecc line = contentLine; /* `line` will be trimmed; modifying would
+                                         confuse `nextSplit_Rangecc` */
         if (*line.end == '\r') {
             line.end--; /* trim CR always */
         }
@@ -1211,8 +1236,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 rts.baseColor = rts.run.color;
                 iWrapText wrapText = { .text     = line,
                                        .maxWidth = rts.isWordWrapped
-                                                       ? d->size.x - run.bounds.pos.x -
-                                                             rts.indent - rts.rightMargin
+                                                       ? d->wrapWidth > 0
+                                                             ? d->wrapWidth
+                                                             : (d->size.x - run.bounds.pos.x -
+                                                                rts.indent - rts.rightMargin)
                                                        : 0 /* unlimited */,
                                        .mode     = word_WrapTextMode,
                                        .wrapFunc = typesetOneLine_RunTypesetter_,
@@ -1365,7 +1392,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 case audio_MediaType: {
                     run.bounds.pos    = pos;
                     run.bounds.size.x = d->size.x;
-                    run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
+                    run.bounds.size.y = lineHeight_Text(uiContent_FontId) *
+                                            (isMobile_Platform() ? 1.5f : 1.0f) + 3 * gap_UI;
                     run.visBounds     = run.bounds;
                     pushBack_Array(&d->layout, &run);
                     break;
@@ -1443,6 +1471,8 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->url);
     init_String(&d->localHost);
     d->outsideMargin = 0;
+    d->maxContentWidth = 0;
+    d->wrapWidth = 0;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_StringArray(&d->auxText);
@@ -2175,15 +2205,18 @@ enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
     return d->viewFormat;
 }
 
-void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
-    d->size.x        = width;
-    d->outsideMargin = iMax(0, (canvasWidth - width) / 2); /* distance to edge of the canvas */
+void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth, int maxContentWidth) {
+    d->size.x          = width;
+    d->maxContentWidth = maxContentWidth;
+    d->outsideMargin   = iMax(0, (canvasWidth - width) / 2); /* distance to edge of the canvas */
+    d->wrapWidth       = 0;
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
 
-iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
-    if (d->size.x != width || d->flags.isLayoutInvalidated) {
-        setWidth_GmDocument(d, width, canvasWidth);
+iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth, int maxContentWidth) {
+    if (d->size.x != width || d->maxContentWidth != maxContentWidth ||
+        d->flags.isLayoutInvalidated) {
+        setWidth_GmDocument(d, width, canvasWidth, maxContentWidth);
         return iTrue;
     }
     return iFalse;
@@ -2568,7 +2601,7 @@ static void import_GmDocument_(iGmDocument *d) {
 }
 
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int canvasWidth,
-                          enum iGmDocumentUpdate updateType) {
+                          int maxContentWidth, enum iGmDocumentUpdate updateType) {
     /* TODO: This API has been set up to allow partial/progressive updating of the content.
        Currently the entire source is replaced every time, though. */
 //    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
@@ -2576,13 +2609,13 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     if (size_String(source) == size_String(&d->origSource)) {
         iAssert(equal_String(source, &d->origSource));
 //        printf("[GmDocument] source is unchanged!\n");
-        updateWidth_GmDocument(d, width, canvasWidth);
+        updateWidth_GmDocument(d, width, canvasWidth, maxContentWidth);
         return; /* Nothing to do. */
     }
     /* Normalize and convert to Gemtext if needed. */
     set_String(&d->origSource, source);
     import_GmDocument_(d);
-    setWidth_GmDocument(d, width, canvasWidth); /* re-do layout */
+    setWidth_GmDocument(d, width, canvasWidth, maxContentWidth); /* re-do layout */
 }
 
 void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {
@@ -2908,6 +2941,11 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     if (isTerminal_Platform()) {
         return iFalse; /* can't show/play media (TODO: image rendering?) */
     }
+    /* We may already have media for this link. */
+    if (findMediaForLink_Media(d->media, linkId, none_MediaType).type) {
+        return iTrue;
+    }
+    /* Check the URL if it appears like a potential media link. */
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||

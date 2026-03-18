@@ -88,23 +88,30 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 | `ENABLE_CUSTOM_FRAME` | Draw a custom window frame. (Only on Microsoft Windows.) The custom frame is more in line with the visual style of the rest of the UI, but does not implement all of the native window behaviors (e.g., snapping, system menu). |
 | `ENABLE_DOWNLOAD_EDIT` | Allow changing the Downloads directory via the Preferences dialog. This should be set to **OFF** in sandboxed environments where  downloaded files must be saved into a specific place. |
 | `ENABLE_GUI` | Build the GUI application (the default). |
-| `ENABLE_IDLE_SLEEP` | Sleep in the main thread instead of waiting for events. On some platforms, when using SDL 2.0.16 or earlier, `SDL_WaitEvent()` may have a relatively high CPU usage. Setting this to **ON** polls for events periodically but otherwise keeps the main thread sleeping, reducing CPU usage. The drawback is that there is a slightly increased latency reacting to new events after idle mode ends. |
 | `ENABLE_FRIBIDI` | Use the GNU FriBidi library for processing bidirectional text. FriBidi implements the Unicode Bidirectional Algorithm to determine text directions. |
 | `ENABLE_FRIBIDI_BUILD` | Compile the GNU FriBidi library as part of the build. If set to **OFF**, `pkg-config` is used instead to locate the library. |
+| `ENABLE_GAMEPAD` | Allow gamepad UI input. |
 | `ENABLE_HARFBUZZ` | Use the HarfBuzz library for shaping Unicode text. This is required for correctly rendering complex scripts and combining glyphs. If disabled, a simplified text shaping algorithm is used that only works for non-complex languages like English. |
-| `ENABLE_HARFBUZZ_MINIMAL` | Build the HarfBuzz library with all dependencies disabled. Useful when building the app for distribution so that the number of deployed dependencies will be minimized. A system-provided version of HarfBuzz is likely built with dependencies on FreeType and ICU at least. If set to **OFF**, `pkg-config` will be used to find HarfBuzz. | 
+| `ENABLE_HARFBUZZ_MINIMAL` | Build the HarfBuzz library with all dependencies disabled. Useful when building the app for distribution so that the number of deployed dependencies will be minimized. A system-provided version of HarfBuzz is likely built with dependencies on FreeType and ICU at least. If set to **OFF**, `pkg-config` will be used to find HarfBuzz. |
+| `ENABLE_IDLE_SLEEP` | Sleep in the main thread instead of waiting for events. On some platforms, when using SDL 2.0.16 or earlier, `SDL_WaitEvent()` may have a relatively high CPU usage. Setting this to **ON** polls for events periodically but otherwise keeps the main thread sleeping, reducing CPU usage. The drawback is that there is a slightly increased latency reacting to new events after idle mode ends. |
 | `ENABLE_IPC` | Instances of the Lagrange executable communicate via signals or (on Windows) a system-provided IPC mechanism. This is used for controlling an existing Lagrange window via the CLI. If set to **OFF**, each instance of the app runs without knowledge of other instances. This may cause them to overwrite each other's runtime files. |
 | `ENABLE_KERNING` | Use kerning information in the fonts to adjust glyph placement. Setting this **ON** improves text appearance in subtle ways but slows down text rendering. It may be a good idea to set this to **OFF** when running on a slow CPU. This option only affects the simple built-in text renderer, and has no effect on HarfBuzz. |
+| `ENABLE_MAC_MENUS` | Use native context menus on macOS. |
+| `ENABLE_MOBILE_HANDHELD` | Use the mobile handheld UI variant. Assumes that a gamepad is used for controlling the app, `ENABLE_GAMEPAD` should also be set. It is suitable for handheld game consoles, for instance. |
 | `ENABLE_MOBILE_PHONE` | Use the mobile phone UI variant. This replaces the sidebars with a sliding sheet and has other touch-friendly features. Settings and dialogs are presented as form-based sheets. |
 | `ENABLE_MOBILE_TABLET` | Use the tablet UI variant. Sidebars are available as on the desktop, but Settings and dialogs are presented as form-based sheets. |
 | `ENABLE_MPG123` | Use the mpg123 library for decoding MPEG audio files. |
 | `ENABLE_OPUS` | Use the opusfile library for decoding Opus audio files. |
+| `ENABLE_POPUP_MENUS` | Use popup windows for context menus. If **OFF**, menus are confined inside the main window. |
 | `ENABLE_RELATIVE_EMBED` | Locate resources only in relation to the executable. Useful when any system/predefined directories are not supposed to be accessed, e.g., in the Windows portable build. |
+| `ENABLE_RESIZE_DRAW` | Force the window to redraw while being resized. May be necessary on some platforms. |
+| `ENABLE_SPARKLE` | Use the Sparkle framework for automatic updates. (macOS only) |
 | `ENABLE_STATIC` | Link dependencies statically. |
 | `ENABLE_TUI` | Build the TUI application (`clagrange`). The SEALCurses library is required (it replaces SDL); check that the `lib/sealcurses` submodule is checked out. |
 | `ENABLE_WEBP` | Use libwebp to decode .webp images, if `pkg-config` can find the library. |
 | `ENABLE_JXL`| Use libjxl to decode .jxl images, if `pkg-config` can find the library. |
 | `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
+| `ENABLE_WINSPARKLE` | Use WinSparkle for automatic updates. (Windows only) |
 | `ENABLE_X11_SWRENDER` | Default to software rendering when running under X11. By default Lagrange attempts to use the GPU for rendering the user interface. You can also use the `--sw` option at launch to force software rendering. |
 | `ENABLE_X11_XLIB` | Use the Xlib API directly under X11. This is used for window decoration color theming, for example. |
 

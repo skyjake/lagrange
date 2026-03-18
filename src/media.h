@@ -101,10 +101,12 @@ iInt2           imageSize_Media         (const iMedia *, iMediaId imageId);
 SDL_Texture *   imageTexture_Media      (const iMedia *, iMediaId imageId);
 iBool           imageFailed_Media       (const iMedia *, iMediaId imageId); /* return true if decoding failed */
 
-size_t          numAudio_Media          (const iMedia *);
-iPlayer *       audioPlayer_Media       (const iMedia *, iMediaId audioId);
-void            pauseAllPlayers_Media   (const iMedia *, iBool setPaused);
-size_t          numActivePlayers_Media  (const iMedia *);
+size_t          numAudio_Media              (const iMedia *);
+iPlayer *       audioPlayer_Media           (const iMedia *, iMediaId audioId);
+//void            pauseAllPlayers_Media       (const iMedia *, iBool setPaused);
+void            releasePlayers_Media        (const iMedia *); /* document becomes not-current */
+void            stopFinishedPlayers_Media   (const iMedia *);
+size_t          numActivePlayers_Media      (const iMedia *);
 
 void            downloadStats_Media     (const iMedia *, iMediaId downloadId, const iString **path_out,
                                          float *bytesPerSecond_out, iBool *isFinished_out);
@@ -120,15 +122,19 @@ iDeclareClass(MediaRequest)
 struct Impl_MediaRequest {
     iObject          object;
     iDocumentWidget *doc;
+    iMedia *         media; /* non-owning ref; NULL for reused requests */
     unsigned int     linkId;
     iGmRequest *     req;
 };
 
-iDeclareObjectConstructionArgs(MediaRequest, iDocumentWidget *doc, unsigned int linkId,
-                               const iString *url, iBool enableFilters,
+iDeclareObjectConstructionArgs(MediaRequest, iDocumentWidget *doc, iMedia *media,
+                               unsigned int linkId, const iString *url, iBool enableFilters,
                                const iGmIdentity *overrideDefaultIdentity)
 
 void    resubmitWithUrl_MediaRequest    (iMediaRequest *, const iString *url);
+
+/* Direct streaming delivery from network thread (bypasses SDL queue). fullData == NULL marks complete. */
+void    updateStreamData_Media          (iMedia *, uint16_t linkId, const iBlock *fullData);
 
 iMediaRequest * newReused_MediaRequest  (iDocumentWidget *doc, unsigned int linkId,
                                          iGmRequest *request);

@@ -6,6 +6,46 @@
 ```
 # Release notes
 
+## 1.20 (Beta 48)
+* Save state when app is stopped (e.g., force-closing).
+* Ignore spurious Back button events.
+* Fixed potential hang when laying out text into a narrow space.
+
+## 1.20 (Beta 47)
+* Audio: Playback and streaming are possible also in the background, using native Android media decoders. The new app permissions for Foreground Service (Media Playback), Notifications, and Wake Lock are needed for this.
+* Audio: Show an Android notification when audio is playing (required by OS for background audio). The first time audio is played, you will be prompted to enable notifications.
+* Audio: SDL-based playback (Ogg Vorbis) has lower latency.
+* Improved UI of inline audio player for touch screens: taller area, removed volume button.
+* Fixed stability and behavior issues with audio players. For example, history navigation was not releasing audio player resources when leaving a page. (Previously, they were just paused.)
+* Fixed excessive audio player refresh interval.
+* Fixed auto-stopping an audio player when at end of content.
+* Fixed ability to scroll the page while an input prompt is open.
+* Fixed behavior of system Back button. (Should not exit the app!)
+* Moved "Paste Preceding Line" to top of context menu.
+* Updated UI translations.
+
+## 1.20 (Beta 46)
+* Added support for native audio playback. You can play MP3, Vorbis, Opus, and other audio formats using Android's native decoders. However, streaming audio is not supported in any of these formats.
+* Added SOCKS5 proxy support. When enabled, all connections and DNS resolution are tunneled through the proxy.
+* Added option to prefer IPv6 in DNS resolution.
+* Added context menu for error/warning messages. These messages are not selectable text so this way one can copy the message to the clipboard.
+* Added context menu for input dialog prompt text.
+* Plain text lines are wrapped to the maximum available width when the expand-to-long-lines option is enabled.
+* Improved warning message when there is a problem with the proxy server certificate.
+* Revised order of input prompt Ellipsis menu items; added prompt position toggle.
+* Gopher: Fixed misdetected menu styling particularly with non-ASCII characters.
+* Fixed opening a link context menu using the keyboard shortcut will remember which link as hovered using the keyboard.
+
+## 1.19 (Beta 45)
+* Fixed the app metadata so HTTP(S) URIs can be opened in Lagrange from other apps.
+* Declare Lagrange as a "browser" in the app metadata so it can be chosen as the default system browser. This is useful when a HTTP proxy has been configured.
+* Improved warning message when there is a problem with the proxy server certificate.
+* Long-pressing an error/warning message allows copying the message to clipboard.
+
+## 1.19 (Beta 44)
+* Updated bundled Noto Emoji font (Unicode 17).
+* Updated UI translations.
+
 ## 1.19 (Beta 43)
 * Indicate automatic reloading in the Tabs list.
 * Update Tabs list when reordering tabs.

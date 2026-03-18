@@ -24,23 +24,59 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "export.h"
 #include "resources.h"
+#include "audio/player.h"
 #include "ui/command.h"
 #include "ui/metrics.h"
 #include "ui/mobile.h"
 #include "ui/window.h"
 
 #include <the_Foundation/archive.h>
+#include <the_Foundation/atomic.h>
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
-#include <jni.h>
+
 #include <SDL.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <android/log.h>
+#include <jni.h>
+
+static JavaVM *javaVm_        = NULL; /* cached at startup; used for thread-agnostic JNI access */
+static jobject cachedActivity_ = NULL; /* JNI global ref to activity; valid from any thread */
+
+/* Background blocking: when the app is in the background with no SDL audio playing, the event
+   loop blocks on a condition variable to avoid spinning. The mutex protects all access to the
+   condition variable, ensuring correct memory visibility across CPU cores. */
+static iAtomicInt  isAppInBackground_;
+static iCondition  blockCond_;
+static iMutex      blockMutex_;
+
+iDeclareType(AndroidAudioPlayer);
+
+enum iAndroidAudioPlayerState {
+    initialized_AndroidAudioPlayerState,
+    playing_AndroidAudioPlayerState,
+    paused_AndroidAudioPlayerState,
+};
+
+struct Impl_AndroidAudioPlayer {
+    iString cacheFilePath;
+    iBool   isStreaming;  /* using MediaDataSource path instead of a cache file */
+    iBool   isFinished;  /* set when Java MediaPlayer sends audio.finished */
+    float   volume;
+    float   currentTime; /* seconds */
+    float   duration;    /* seconds */
+    enum iAndroidAudioPlayerState state;
+};
+
+iBool isAppInBackground_Android(void) {
+    return value_Atomic(&isAppInBackground_);
+}
 
 JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
         JNIEnv* env, jclass jcls, jstring command)
@@ -103,6 +139,16 @@ static int startLogOutputThread_(void) {
 }
 
 void setupApplication_Android(void) {
+    init_Condition(&blockCond_);
+    init_Mutex(&blockMutex_);
+    /* Cache the JavaVM pointer and activity global ref for use from non-SDL threads. */
+    if (!javaVm_) {
+        JNIEnv *env = (JNIEnv *) SDL_AndroidGetJNIEnv();
+        (*env)->GetJavaVM(env, &javaVm_);
+        jobject localActivity = (jobject) SDL_AndroidGetActivity();
+        cachedActivity_ = (*env)->NewGlobalRef(env, localActivity);
+        (*env)->DeleteLocalRef(env, localActivity);
+    }
 #if !defined (NDEBUG)
     startLogOutputThread_();
 #endif
@@ -136,6 +182,22 @@ void exportDownloadedFile_Android(const iString *localPath, const iString *mime)
 
 float displayDensity_Android(void) {
     return toFloat_String(at_CommandLine(commandLine_App(), 1));
+}
+
+/**
+ * Get a JNI environment for the current thread, attaching it to the JVM if needed.
+ * Sets *needDetach to iTrue if DetachCurrentThread must be called afterwards.
+ * Works on both SDL-managed threads and native POSIX threads (e.g., network I/O threads).
+ */
+static JNIEnv *currentJNIEnv_(jboolean *needDetach) {
+    JNIEnv *env = NULL;
+    *needDetach = JNI_FALSE;
+    if (!javaVm_) return NULL;
+    if ((*javaVm_)->GetEnv(javaVm_, (void **) &env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        (*javaVm_)->AttachCurrentThread(javaVm_, &env, NULL);
+        *needDetach = JNI_TRUE;
+    }
+    return env;
 }
 
 void javaCommand_Android(const char *format, ...) {
@@ -391,6 +453,22 @@ iBool handleCommand_Android(const char *cmd) {
         delete_Block(decoded);
         return iTrue;
     }
+    else if (equal_Command(cmd, "android.audio.time")) {
+        iAndroidAudioPlayer *plr = pointerLabel_Command(cmd, "player");
+        if (plr) {
+            plr->currentTime = argLabel_Command(cmd, "pos") / 1000.0f;
+            plr->duration    = argLabel_Command(cmd, "dur") / 1000.0f;
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "android.audio.finished")) {
+        iAndroidAudioPlayer *plr = pointerLabel_Command(cmd, "player");
+        if (plr) {
+            plr->isFinished = iTrue;
+            postCommand_App("media.player.update");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "android.insets")) {
         topInset_    = (float) argLabel_Command(cmd, "top");
         bottomInset_ = (float) argLabel_Command(cmd, "bottom");
@@ -400,6 +478,239 @@ iBool handleCommand_Android(const char *cmd) {
     }
     return iFalse;
 }
+
+/*----------------------------------------------------------------------------------------------*/
+
+void notifySDLAudioStarted_Android(void) {
+    iGuardMutex(&blockMutex_, {
+        signal_Condition(&blockCond_);
+    });
+}
+
+void blockWhileAppInBackground_Android(void) {
+    /* On Android, we control event loop blocking manually so we can play audio in the
+       background using the SDL audio thread. */
+    if (!isAppInBackground_Android() || numActiveSDLAudio_Player() > 0) return;
+    iGuardMutex(&blockMutex_,
+        /* We will block here until the app returns to the foreground, or
+           there is audio playing. */
+        while (isAppInBackground_Android() && numActiveSDLAudio_Player() == 0) {
+            iTime timeout;
+            initSeconds_Time(&timeout, 1.0);
+            waitTimeout_Condition(&blockCond_, &blockMutex_, &timeout);
+        }
+    );
+}
+
+JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppPaused(
+        JNIEnv *env, jclass jcls)
+{
+    iUnused(env, jcls);
+    iGuardMutex(&blockMutex_, set_Atomic(&isAppInBackground_, 1))
+}
+
+JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppResumed(
+        JNIEnv *env, jclass jcls)
+{
+    iUnused(env, jcls);
+    iGuardMutex(&blockMutex_, {
+        set_Atomic(&isAppInBackground_, 0);
+        signal_Condition(&blockCond_);
+    })
+}
+
+JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppStopping(
+        JNIEnv *env, jclass jcls) {
+    iUnused(env, jcls);
+    /* Called synchronously from Java onStop(); saves full state including cached tab
+       content before the process may be killed. */
+    saveState_App();
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDefineTypeConstruction(AndroidAudioPlayer)
+
+static const char *audioCacheDir_(void) {
+    return concatPath_CStr(cachePath_(), "Audio");
+}
+
+static const char *audioFileExt_(const iString *mimeType) {
+    /* Note: There is a similar type-to-extension mapping on the Java audio side. */
+    if (startsWithCase_String(mimeType, "audio/mpeg") ||
+        startsWithCase_String(mimeType, "audio/mp3")) {
+        return ".mp3";
+    }
+    if (startsWithCase_String(mimeType, "audio/ogg")) {
+        return ".ogg";
+    }
+    if (startsWithCase_String(mimeType, "audio/mp4") ||
+        startsWithCase_String(mimeType, "audio/mpeg4") ||
+        startsWithCase_String(mimeType, "audio/m4a") ||
+        startsWithCase_String(mimeType, "audio/x-m4a")) {
+        return ".m4a";
+    }
+    if (startsWithCase_String(mimeType, "audio/aac") ||
+        startsWithCase_String(mimeType, "audio/x-aac")) {
+        return ".aac";
+    }
+    if (startsWithCase_String(mimeType, "audio/flac") ||
+        startsWithCase_String(mimeType, "audio/x-flac")) {
+        return ".flac";
+    }
+    if (startsWithCase_String(mimeType, "audio/3gpp")) {
+        return ".3gp";
+    }
+#if !defined (LAGRANGE_ENABLE_OPUS)
+    /* Opus in Ogg: opusfile is not compiled for Android, use MediaPlayer (API 21+). */
+    if (startsWithCase_String(mimeType, "audio/opus")) {
+        return ".opus";
+    }
+#endif
+    return "";
+}
+
+void init_AndroidAudioPlayer(iAndroidAudioPlayer *d) {
+    init_String(&d->cacheFilePath);
+    d->volume      = 1.0f;
+    d->currentTime = 0.0f;
+    d->duration    = 0.0f;
+    d->state       = initialized_AndroidAudioPlayerState;
+    d->isStreaming = iFalse;
+    d->isFinished  = iFalse;
+}
+
+void deinit_AndroidAudioPlayer(iAndroidAudioPlayer *d) {
+    javaCommand_Android("audio.deinit player:%p", d);
+    setInput_AndroidAudioPlayer(d, NULL, NULL);
+}
+
+void setupData_AndroidAudioPlayer(iAndroidAudioPlayer *d, const iString *mediaType) {
+    d->isStreaming = iTrue;
+    javaCommand_Android("audio.init player:%p volume:%.4f mime:%s",
+                        d, d->volume, cstr_String(mediaType));
+}
+
+void appendData_AndroidAudioPlayer(iAndroidAudioPlayer *d, const void *bytes, size_t size) {
+    jboolean   needDetach;
+    JNIEnv    *env     = currentJNIEnv_(&needDetach);
+    jobject    activity = cachedActivity_; /* global ref — valid from any thread */
+    jclass     cls      = (*env)->GetObjectClass(env, activity);
+    jmethodID  mid      = (*env)->GetMethodID(env, cls, "appendAudioData", "(Ljava/lang/String;[B)V");
+    iString   *ptrStr   = newFormat_String("%p", d);
+    jstring    ptrJStr  = (*env)->NewStringUTF(env, cstr_String(ptrStr));
+    jbyteArray arr      = (*env)->NewByteArray(env, (jsize) size);
+    (*env)->SetByteArrayRegion(env, arr, 0, (jsize) size, (const jbyte *) bytes);
+    (*env)->CallVoidMethod(env, activity, mid, ptrJStr, arr);
+    (*env)->DeleteLocalRef(env, arr);
+    (*env)->DeleteLocalRef(env, ptrJStr);
+    (*env)->DeleteLocalRef(env, cls);
+    delete_String(ptrStr);
+    if (needDetach) (*javaVm_)->DetachCurrentThread(javaVm_);
+}
+
+void setComplete_AndroidAudioPlayer(iAndroidAudioPlayer *d) {
+    /* TODO: replace this; we can use `appendData_AndroidAudioPlayer` with bytes==NULL */
+    jboolean  needDetach;
+    JNIEnv   *env      = currentJNIEnv_(&needDetach);
+    jobject   activity = cachedActivity_; /* global ref — valid from any thread */
+    jclass    cls      = (*env)->GetObjectClass(env, activity);
+    jmethodID mid      = (*env)->GetMethodID(env, cls, "completeAudioData", "(Ljava/lang/String;)V");
+    iString  *ptrStr   = newFormat_String("%p", d);
+    jstring   ptrJStr  = (*env)->NewStringUTF(env, cstr_String(ptrStr));
+    (*env)->CallVoidMethod(env, activity, mid, ptrJStr);
+    (*env)->DeleteLocalRef(env, ptrJStr);
+    (*env)->DeleteLocalRef(env, cls);
+    delete_String(ptrStr);
+    if (needDetach) (*javaVm_)->DetachCurrentThread(javaVm_);
+}
+
+iBool setInput_AndroidAudioPlayer(iAndroidAudioPlayer *d, const iString *mimeType,
+                                  const iBlock *audioFileData) {
+    if (!isEmpty_String(&d->cacheFilePath)) {
+        remove(cstr_String(&d->cacheFilePath));
+        clear_String(&d->cacheFilePath);
+    }
+    if (mimeType && audioFileData) {
+        const char *ext = audioFileExt_(mimeType);
+        if (!*ext) return iFalse;
+        const iString *dir = collectNewCStr_String(audioCacheDir_());
+        makeDirs_Path(dir);
+        iFile *f = newCStr_File(format_CStr("%s/%u%s", cstr_String(dir), SDL_GetTicks(), ext));
+        if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, audioFileData);
+            set_String(&d->cacheFilePath, path_File(f));
+        }
+        iRelease(f);
+    }
+    return !isEmpty_String(&d->cacheFilePath);
+}
+
+void play_AndroidAudioPlayer(iAndroidAudioPlayer *d) {
+    if (d->state == playing_AndroidAudioPlayerState) {
+        return;
+    }
+    d->currentTime = 0.0f; /* playing from the start */
+    if (d->isStreaming) {
+        javaCommand_Android("audio.play player:%p volume:%.4f", d, d->volume);
+        d->state = playing_AndroidAudioPlayerState;
+    }
+    else if (!isEmpty_String(&d->cacheFilePath)) {
+        javaCommand_Android("audio.play player:%p volume:%.4f path:%s",
+                            d, d->volume, cstr_String(&d->cacheFilePath));
+        d->state = playing_AndroidAudioPlayerState;
+    }
+}
+
+void stop_AndroidAudioPlayer(iAndroidAudioPlayer *d) {
+    if (d->state != initialized_AndroidAudioPlayerState) {
+        javaCommand_Android("audio.stop player:%p", d);
+        d->state = initialized_AndroidAudioPlayerState;
+    }
+}
+
+void setPaused_AndroidAudioPlayer(iAndroidAudioPlayer *d, iBool paused) {
+    if (d->state == initialized_AndroidAudioPlayerState) {
+        return; /* not started yet */
+    }
+    if (paused && d->state != paused_AndroidAudioPlayerState) {
+        javaCommand_Android("audio.pause player:%p", d);
+        d->state = paused_AndroidAudioPlayerState;
+    }
+    else if (!paused && d->state == paused_AndroidAudioPlayerState) {
+        javaCommand_Android("audio.resume player:%p", d);
+        d->state = playing_AndroidAudioPlayerState;
+    }
+}
+
+void setVolume_AndroidAudioPlayer(iAndroidAudioPlayer *d, float volume) {
+    d->volume = volume;
+    if (d->state != initialized_AndroidAudioPlayerState) {
+        javaCommand_Android("audio.volume player:%p volume:%.4f", d, volume);
+    }
+}
+
+iBool isStarted_AndroidAudioPlayer(const iAndroidAudioPlayer *d) {
+    return d->state != initialized_AndroidAudioPlayerState;
+}
+
+iBool isPaused_AndroidAudioPlayer(const iAndroidAudioPlayer *d) {
+    return d->state == paused_AndroidAudioPlayerState;
+}
+
+iBool isFinished_AndroidAudioPlayer(const iAndroidAudioPlayer *d) {
+    return d->isFinished;
+}
+
+float currentTime_AndroidAudioPlayer(const iAndroidAudioPlayer *d) {
+    return d->currentTime;
+}
+
+float duration_AndroidAudioPlayer(const iAndroidAudioPlayer *d) {
+    return d->duration;
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom) {
     if (left) *left = leftInset_;

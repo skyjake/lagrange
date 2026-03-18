@@ -264,6 +264,7 @@ struct Impl_DocumentWidget {
     int            mediaTimer;
     const iGmRun * contextLink;
     iClick         click;
+    iClick         midClick;   /* opens link */
     iInt2          contextPos; /* coordinates of latest right click */
     int            pinchZoomInitial;
     int            pinchZoomPosted;
@@ -286,6 +287,7 @@ struct Impl_DocumentWidget {
     iString *      certSubject;
     int            redirectCount;
     iObjectList *  media; /* inline media requests */
+    uint32_t       lastMediaInterval;
 
     /* Document: */
     iPersistentDocumentState mod;
@@ -404,6 +406,9 @@ iBool isHoverAllowed_DocumentWidget(const iDocumentWidget *d) {
     }
     if (d->flags & (noHoverWhileScrolling_DocumentWidgetFlag |
                     drawDownloadCounter_DocumentWidgetFlag)) {
+        return iFalse;
+    }
+    if (d->midClick.isActive && d->midClick.isDragging) {
         return iFalse;
     }
     if (d->flags & pinchZoom_DocumentWidgetFlag) {
@@ -529,6 +534,23 @@ static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     uint32_t now = SDL_GetTicks();
+    iBool didLockUnlock = iFalse;
+#if defined (iPlatformAndroidMobile)
+    /* On Android, the SDL main thread may be suspended when the app is backgrounded,
+       causing the document.request.updated command queue to stall. Streaming audio data
+       must be forwarded directly on the network thread to keep the audio buffer filled.
+       updateSourceData_Player (called via updateStreamData_Media) tracks buffer size and
+       only passes new bytes — safe to call repeatedly and from multiple threads. */
+    if (d->state != ready_RequestState) {
+        iGmResponse *resp = lockResponse_GmRequest(d->request);
+        if (startsWith_String(&resp->meta, "audio/")) {
+            const iGmLinkId imgLinkId = 1; /* navigation audio always uses link ID 1 */
+            updateStreamData_Media(media_GmDocument(d->view->doc), imgLinkId, &resp->body);
+        }
+        unlockResponse_GmRequest(d->request);
+        didLockUnlock = iTrue;
+    }
+#endif
     if (now - d->lastRequestUpdateAt > 100) {
         d->lastRequestUpdateAt = now;
         postCommand_Widget(obj,
@@ -537,7 +559,7 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
                            id_GmRequest(d->request),
                            d->request);
     }
-    else {
+    else if (!didLockUnlock) {
         /* This will tell GmRequest to notify us again when new data comes in. */
         lockResponse_GmRequest(d->request);
         unlockResponse_GmRequest(d->request);
@@ -631,8 +653,11 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
             iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view->doc), mediaId_GmRun(run));
             if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
-                (isStarted_Player(plr) && !isPaused_Player(plr))) {
-                interval = iMin(interval, 1000 / 15);
+                (isStarted_Player(plr) && !isComplete_Player(plr))) {
+                interval = iMin(interval, 1000 / 15); /* download status animation */
+            }
+            else if (isStarted_Player(plr) && !isPaused_Player(plr)) {
+                interval = iMin(interval, 1000); /* per-second position */
             }
 #endif
         }
@@ -640,13 +665,21 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
             interval = iMin(interval, 1000);
         }
     }
+    /* Keep the timer running for active off-screen players so end-of-playback
+       is detected even when the player widget is scrolled out of view. */
+    if (interval == invalidInterval_ &&
+        numActivePlayers_Media(media_GmDocument(d->view->doc)) > 0) {
+        interval = 1000;
+    }
     return interval != invalidInterval_ ? interval : 0;
 }
 
 static uint32_t postMediaUpdate_DocumentWidget_(uint32_t interval, void *context) {
     /* Called in timer thread; don't access the widget. */
     iUnused(context);
-    postCommand_App("media.player.update");
+    if (!isSuspended_App()) {
+        postCommand_App("media.player.update");
+    }
     return interval;
 }
 
@@ -680,7 +713,13 @@ static void animateMedia_DocumentWidget_(iDocumentWidget *d) {
         }
         return;
     }
-    uint32_t interval = mediaUpdateInterval_DocumentWidget_(d);
+    const uint32_t interval = mediaUpdateInterval_DocumentWidget_(d);
+    if (interval != d->lastMediaInterval && d->mediaTimer) {
+        /* We need to change the interval. */
+        SDL_RemoveTimer(d->mediaTimer);
+        d->mediaTimer = 0;
+    }
+    d->lastMediaInterval = interval;
     if (interval && !d->mediaTimer) {
         d->mediaTimer = SDL_AddTimer(interval, postMediaUpdate_DocumentWidget_, d);
     }
@@ -922,7 +961,8 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *newDoc) {
-    pauseAllPlayers_Media(media_GmDocument(d->view->doc), iTrue);
+    clear_ObjectList(d->media);
+    releasePlayers_Media(media_GmDocument(d->view->doc));
     releaseViewDocument_DocumentWidget_(d);
     d->view->doc = ref_Object(newDoc);
     documentWasChanged_DocumentWidget_(d);
@@ -1056,7 +1096,10 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     }
     /* Make a new document for the error page.*/
     iGmDocument *errorDoc = new_GmDocument();
-    setWidth_GmDocument(errorDoc, documentWidth_DocumentView(d->view), width_Widget(d));
+    setWidth_GmDocument(errorDoc,
+                        documentWidth_DocumentView(d->view),
+                        width_Widget(d),
+                        maxDocumentWidth_DocumentView(d->view));
     setUrl_GmDocument(errorDoc, d->mod.url);
     setFormat_GmDocument(errorDoc, gemini_SourceFormat);
     replaceDocument_DocumentWidget_(d, errorDoc);
@@ -1429,13 +1472,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             appendCStr_String(&str, "\n");
                             appendCStr_String(&str, cstr_Lang("fontpack.help"));
                             appendCStr_String(&str, "\n");
-//                            footerItems = actions_FontPack(fp, iTrue);
-//                            const iArray *actions =;
                             iConstForEach(Array, a, actions_FontPack(fp, iTrue)) {
                                 pushBack_Array(footerItems, a.value);
                             }
-//                            makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
-//                                                              size_Array(actions));
                             delete_FontPack(fp);
                         }
                     }
@@ -1627,6 +1666,7 @@ static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
     if (isTitanUrl_String(d->mod.url)) {
         return iFalse; /* don't fetch Titan URLs from here, only through UploadWidget */
     }
+    releasePlayers_Media(media_GmDocument(d->view->doc));
     postCommandf_Root(as_Widget(d)->root,
                       "document.request.started doc:%p url:%s",
                       d,
@@ -1752,7 +1792,11 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
                                 cstrCollect_String(format_Date(&d->certExpiry, "%Y-%m-%d")));
         }
         else if (certFlags & timeVerified_GmCertFlag) {
+            const iString *proxy = schemeProxy_App(urlScheme_String(d->mod.url));
             appendFormat_String(str, cstr_Lang("dlg.certwarn.domain"),
+                                cstr_Rangecc(urlHost_String(proxy
+                                    ? collectNewFormat_String("gemini://%s", cstr_String(proxy))
+                                    : d->mod.url)),
                                 cstr_String(d->certSubject));
         }
         else {
@@ -1784,7 +1828,10 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateWidthAndRedoLayout_DocumentWidget_(iDocumentWidget *d) {
-    setWidth_GmDocument(d->view->doc, documentWidth_DocumentView(d->view), width_Widget(d));
+    setWidth_GmDocument(d->view->doc,
+                        documentWidth_DocumentView(d->view),
+                        width_Widget(d),
+                        maxDocumentWidth_DocumentView(d->view));
     documentRunsInvalidated_DocumentWidget(d); /* GmRuns reallocated */
 }
 
@@ -1795,7 +1842,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     clear_ObjectList(d->media);
     delete_Gempub(d->sourceGempub);
     d->sourceGempub = NULL;
-    pauseAllPlayers_Media(media_GmDocument(d->view->doc), iTrue);
+    releasePlayers_Media(media_GmDocument(d->view->doc));
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
     releaseViewDocument_DocumentWidget_(d);
@@ -2090,6 +2137,7 @@ static void makePastePrecedingLineMenuItem_(iMenuItem *item_out, const iWidget *
 static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     const char     *context       = cstr_String(&menu->data);
     const iWidget  *buttons       = pointerLabel_Command(context, "buttons");
+    const iLabelWidget *prompt    = findChild_Widget(parent_Widget(buttons), "valueinput.prompt");
     const iString  *url           = string_Command(context, "url");
     const char     *precedingLine = suffixPtr_Command(context, "preceding");
     /* Compose new menu items. */
@@ -2097,7 +2145,26 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     iMenuItem pasteItem;
     makePastePrecedingLineMenuItem_(&pasteItem, buttons, precedingLine);
     pushBack_Array(items, &pasteItem);
+    pushBack_Array(items,
+                   &(iMenuItem) { "${menu.input.pasteprompt}",
+                                  0,
+                                  0,
+                                  format_CStr("!valueinput.set ptr:%p text:%s",
+                                              buttons,
+                                              cstr_String(text_LabelWidget(prompt))) });
     pushBack_Array(items, &(iMenuItem){ "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" });
+    if (isDesktop_Platform()) {
+        /* Location of the prompt. */
+        pushBackN_Array(
+            items,
+            (iMenuItem[]) {
+                { "---" },
+                { prefs_App()->bottomInput ? "${menu.input.showtop}" : "${menu.input.showbottom}",
+                  0,
+                  0,
+                  format_CStr("!valueinput.togglebottom ptr:%p", buttons) } },
+            2);
+    }
     pushBackN_Array(
         items,
         (iMenuItem[]){
@@ -2111,8 +2178,6 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
         const iStringArray *recentInput = recentlySubmittedInput_App();
         if (!isEmpty_StringArray(recentInput)) {
             pushBack_Array(items, &(iMenuItem){ "---" });
-            pushBack_Array(items,
-                           &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
             pushBack_Array(items, &(iMenuItem){
                 isMobile_Platform() ? "---${ST:menu.input.restore}" : "```${menu.input.restore}"
             });
@@ -2135,6 +2200,10 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
                                                          buttons,
                                                          cstr_String(i.value)) });
             }
+            pushBackN_Array(
+                items,
+                (iMenuItem[]) { { "---" }, { "${menu.input.clear}", 0, 0, "!recentinput.clear" } },
+                2);
         }
     }
     return items;
@@ -2417,11 +2486,15 @@ static void removeMediaRequest_DocumentWidget_(iDocumentWidget *d, iGmLinkId lin
 }
 
 static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters) {
+    if (linkFlags_GmDocument(d->view->doc, linkId) & content_GmLinkFlag) {
+        return iFalse; /* We have the content, no need to request anything. */
+    }
     if (!findMediaRequest_DocumentWidget(d, linkId)) {
         const iString *mediaUrl = absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->view->doc, linkId));
         pushBack_ObjectList(
             d->media,
             iClob(new_MediaRequest(d,
+                                   media_GmDocument(d->view->doc),
                                    linkId,
                                    mediaUrl,
                                    enableFilters,
@@ -2852,6 +2925,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         /* We may need to adjust navba ralignment paddings. */
         updateNavBarSize_Root(w->root);
         return iFalse;
+    }
+    if (equalWidget_Command(cmd, w, "banner.copy")) {
+        const size_t index = arg_Command(cmd);
+        if (index < numItems_Banner(d->banner)) {
+            iRegExp *ansi = iClob(makeAnsiEscapePattern_Text(iTrue));
+            iString *msg = collect_String(copy_String(message_Banner(d->banner, index)));
+            replaceRegExp_String(msg, ansi, "", NULL, NULL);
+            removeColorEscapes_String(msg);
+            SDL_SetClipboardText(cstr_String(msg));
+        }
+        return iTrue;
     }
     if (equal_Command(cmd, "visited.changed")) {
         updateVisitedLinks_GmDocument(d->view->doc);
@@ -3398,7 +3482,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
-            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+            setupSheetTransition_Mobile(as_Widget(upload),
+                                        incoming_TransitionFlag |
+                                            dialogTransitionDir_Widget(as_Widget(upload)));
             if (argLabel_Command(cmd, "copy") && isUtf8_Rangecc(range_Block(&d->sourceContent))) {
                 iString text;
                 initBlock_String(&text, &d->sourceContent);
@@ -3430,6 +3516,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
 #endif
     else if (equal_Command(cmd, "media.player.update")) {
+        stopFinishedPlayers_Media(media_GmDocument(d->view->doc));
         updateMedia_DocumentWidget_(d);
         return iFalse;
     }
@@ -3960,7 +4047,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "contextkey") && document_App() == d) {
         if (!isTerminal_Platform()) {
-            d->view->hoverLink = NULL;
+            d->view->hoverLink = d->view->hoverKeyLink; /* mouse might be hovering over something */
         }
         emulateMouseClick_Widget(w, SDL_BUTTON_RIGHT);
         return iTrue;
@@ -4043,7 +4130,12 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
                 return iTrue;
             }
             if (contains_Rect(ui.playPauseRect, mouse)) {
-                setPaused_Player(plr, !isPaused_Player(plr));
+                if (isStarted_Player(plr)) {
+                    setPaused_Player(plr, !isPaused_Player(plr));
+                }
+                else {
+                    start_Player(plr);
+                }
                 animateMedia_DocumentWidget_(d);
                 return iTrue;
             }
@@ -4260,14 +4352,19 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
         /* Hovering over the scroll widget, for example. */
         return iTrue;
     }
-    if (!hover) {
-        /* We need the actual mouse coordinates, `mouseCoord_Window()` does not return
-           valid coordinates if the mouse is deemed to be outside. */
+    /* What _is_ the mouse cursor actually on? We need the actual coordinates,
+       `mouseCoord_Window()` does not return valid coordinates if the mouse is
+       deemed to be outside. */
+    iInt2 pos;
+    if (isInteracting_Touch()) {
+        pos = latestPosition_Touch();
+    }
+    else {
         int x, y;
         SDL_GetMouseState(&x, &y);
-        return hitChild_Window(win, coord_Window(win, x, y)) == d;
+        pos = coord_Window(win, x, y);
     }
-    return iFalse;
+    return hitChild_Window(win, pos) == d; /* over the document, so we can scroll */
 }
 
 static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidget *d,
@@ -4456,6 +4553,7 @@ static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return iTrue;
 }
 
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -4492,7 +4590,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentView(view, run->linkId) == ord) {
                     if (d->flags & setHoverViaKeys_DocumentWidgetFlag) {
-                        view->hoverLink = run;
+                        view->hoverLink = view->hoverKeyLink = run;
                         updateHoverLinkInfo_DocumentView(view);
                     }
                     else {
@@ -4609,6 +4707,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         if (isVisible_Widget(d->menu)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         }
+        else if (d->midClick.isActive) {
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_SIZENS);
+        }
 #if 0
         else if (contains_Rect(siteBannerRect_DocumentWidget_(d), mpos)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
@@ -4628,6 +4729,23 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (processMediaEvents_DocumentWidget_(d, ev)) {
         return iTrue;
     }
+    /* The middle mouse button. */
+    switch (processEvent_Click(&d->midClick, ev)) {
+        case finished_ClickResult:
+            if (view->hoverLink && !d->midClick.isDragging) {
+                /* Open the hovered link; dragging will have cancelled hover. */
+                postOpenLinkCommand_DocumentWidget_(
+                    d,
+                    view->hoverLink->linkId,
+                    (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
+                        (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag
+                                                      : newBackground_OpenTabFlag));
+                return iTrue;
+            }
+            break;
+        default:
+            break;
+    }
     if (ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_X1) {
             postCommand_Root(w->root, "navigate.back");
@@ -4637,20 +4755,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             postCommand_Root(w->root, "navigate.forward");
             return iTrue;
         }
-        if (ev->button.button == SDL_BUTTON_MIDDLE && view->hoverLink) {
-            postOpenLinkCommand_DocumentWidget_(
-                d,
-                view->hoverLink->linkId,
-                (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
-                    (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag));
-            return iTrue;
-        }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
             contains_DocumentWidget_(d, init_I2(ev->button.x, ev->button.y))) {
             const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
             if (!isVisible_Widget(d->menu)) {
-                d->contextLink = view->hoverLink;
-                d->contextPos = mousePos;
+                d->contextLink     = view->hoverLink;
+                d->contextPos      = mousePos;
+                view->hoverKeyLink = NULL; /* after this we'll need a new key-hover action */
                 if (d->menu) {
                     destroy_Widget(d->menu);
                     d->menu = NULL;
@@ -4662,9 +4773,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d->menu = makeLinkContextMenu_DocumentWidget_(d, d->contextLink);
                 }
                 else if (contains_Banner(d->banner, mousePos)) {
-                    const iString *urlRoot = collectNewRange_String(urlRoot_String(d->mod.url));
-                    d->menu = makeLinkContextMenuWithParameters_DocumentWidget_(
-                        d, urlRoot, urlRoot, 0, none_MediaType);
+                    if (itemAtCoord_Banner(d->banner, mousePos) == iInvalidPos) {
+                        const iString *urlRoot = collectNewRange_String(urlRoot_String(d->mod.url));
+                        d->menu = makeLinkContextMenuWithParameters_DocumentWidget_(
+                            d, urlRoot, urlRoot, 0, none_MediaType);
+                    }
                 }
                 else {
                     if (deviceType_App() == desktop_AppDeviceType) {
@@ -4806,6 +4919,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 return iTrue;
             }
 #endif /* LAGRANGE_ENABLE_AUDIO */
+            if (isHandheld_Platform() && ~d->flags & selecting_DocumentWidgetFlag) {
+                /* Not starting drag-to-select with left button. */
+                return iTrue;
+            }
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && view->hoverPre &&
                 prefs_App()->collapsePre != always_Collapse &&
@@ -4840,10 +4957,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     stop_Anim(&d->view->scrollY.pos);
                 }
             }
-//            printf("mark %zu ... %zu {%s}\n", d->selectMark.start - cstr_String(source_GmDocument(d->view->doc)),
-//                   d->selectMark.end - cstr_String(source_GmDocument(d->view->doc)),
-//                   d->selectMark.end > d->selectMark.start ? cstr_Rangecc(d->selectMark) : "");
-//            fflush(stdout);
+            // printf("mark %zu ... %zu {%s}\n",
+                   // d->selectMark.start - cstr_String(source_GmDocument(d->view->doc)),
+                   // d->selectMark.end - cstr_String(source_GmDocument(d->view->doc)),
+                   // d->selectMark.end > d->selectMark.start ? cstr_Rangecc(d->selectMark) : "");
+            // fflush(stdout);
             refresh_Widget(w);
             return iTrue;
         }
@@ -4927,7 +5045,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                               allowHide_MediaFlag);
                                 /* Cancel a partially received request. */ {
                                     iMediaRequest *req = findMediaRequest_DocumentWidget(d, linkId);
-                                    if (!isFinished_GmRequest(req->req)) {
+                                    if (req && !isFinished_GmRequest(req->req)) {
                                         cancel_GmRequest(req->req);
                                         removeMediaRequest_DocumentWidget_(d, linkId);
                                         /* Note: Some of the audio IDs have changed now, layout must
@@ -5296,6 +5414,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->request             = NULL;
     d->requestLinkId       = 0;
     d->media               = new_ObjectList();
+    d->lastMediaInterval   = 0;
     d->banner              = new_Banner();
     setOwner_Banner(d->banner, d);
     d->redirectCount    = 0;
@@ -5316,6 +5435,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_String(&d->pendingGotoHeading);
     init_String(&d->linePrecedingLink);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    init_Click(&d->midClick, d, SDL_BUTTON_MIDDLE);
     d->linkInfo = (deviceType_App() == desktop_AppDeviceType ? new_LinkInfo() : NULL);
     allocView_DocumentWidget_(d);
     d->swipeView   = NULL;
@@ -5354,7 +5474,7 @@ void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
     cancelAllRequests_DocumentWidget(d);
-    pauseAllPlayers_Media(media_GmDocument(d->view->doc), iTrue);
+    releasePlayers_Media(media_GmDocument(d->view->doc));
     removeTicker_App(animate_DocumentWidget, d);
     removeTicker_App(prerender_DocumentView, d->view);
     removeTicker_App(refreshWhileScrolling_DocumentWidget, d);
@@ -5389,6 +5509,7 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
                          source,
                          docWidth,
                          width_Widget(d),
+                         maxDocumentWidth_DocumentView(d->view),
                          isFinished_GmRequest(d->request) ? final_GmDocumentUpdate
                                                           : partial_GmDocumentUpdate);
     setWidth_Banner(d->banner, docWidth);

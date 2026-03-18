@@ -1574,10 +1574,13 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
 //                        printf("out of room at lp:%d! safeBreakPos:%d (idx:%zu) breakAdv:%f\n",
 //                               logPos, safeBreakPos,
 //                               breakRunIndex, breakAdvance);
-                        if (safeBreakPos >= 0) {
+                        if (safeBreakPos > wrapPosRange.start) {
+                            /* There's a usable break position ahead of the line start. */
                             wrapPosRange.end = safeBreakPos;
                         }
                         else {
+                            /* No usable safe break (either none found, or it equals the start
+                               of the current line, which would cause no forward progress). */
                             if (wrapMode == word_WrapTextMode && run->logical.start > wrapPosRange.start) {
                                 /* Don't have a word break position, so the whole run needs
                                    to be cut. */
@@ -1587,9 +1590,18 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
                                 wrapResumeRunIndex = runIndex;
                                 break;
                             }
-                            wrapPosRange.end = logPos;
-                            breakAdvance     = wrapAdvance;
-                            breakRunIndex    = runIndex;
+                            if (logPos == wrapPosRange.start) {
+                                /* The very first glyph on this line is too wide to fit.
+                                   Force it onto the line anyway to ensure forward progress
+                                   and prevent an infinite loop. */
+                                wrapPosRange.end = logPos + 1;
+                                breakAdvance     = wrapAdvance + xAdvance;
+                            }
+                            else {
+                                wrapPosRange.end = logPos;
+                                breakAdvance     = wrapAdvance;
+                            }
+                            breakRunIndex = runIndex;
                         }
                         wrapResumePos = wrapPosRange.end;
                         if (wrapMode != anyCharacter_WrapTextMode) {

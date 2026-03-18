@@ -21,14 +21,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "mediaui.h"
-#include "media.h"
+
+#include "app.h"
+#include "audio/player.h"
 #include "documentwidget.h"
 #include "gmdocument.h"
-#include "audio/player.h"
-#include "paint.h"
-#include "util.h"
 #include "lang.h"
-#include "app.h"
+#include "media.h"
+#include "paint.h"
+#include "touch.h"
+#include "util.h"
 
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringlist.h>
@@ -111,11 +113,17 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
     d->player = player;
     d->bounds = bounds;
-    const int height = height_Rect(bounds);
-    d->playPauseRect = (iRect){ addX_I2(topLeft_Rect(bounds), gap_UI / 2), init_I2(3 * height / 2, height) };
-    d->rewindRect    = (iRect){ topRight_Rect(d->playPauseRect), init1_I2(height) };
-    d->menuRect      = (iRect){ addX_I2(topRight_Rect(bounds), -height - gap_UI / 2), init1_I2(height) };
-    d->volumeRect    = (iRect){ addX_I2(topLeft_Rect(d->menuRect), -height), init1_I2(height) };
+    const int height   = height_Rect(bounds);
+    const int butWidth = height;
+    d->playPauseRect = (iRect){ addX_I2(topLeft_Rect(bounds), gap_UI / 2),
+                                   init_I2(butWidth * (isMobile_Platform() ? 1.25f : 1.5f), height) };
+    d->rewindRect    = (iRect){ topRight_Rect(d->playPauseRect), init_I2(butWidth, height) };
+    d->menuRect      = (iRect){ addX_I2(topRight_Rect(bounds), -butWidth - gap_UI / 2), init_I2(butWidth, height) };
+    d->volumeRect    = (iRect){ addX_I2(topLeft_Rect(d->menuRect), -butWidth), init_I2(butWidth, height) };
+    if (isMobile_Platform()) {
+        /* No per-player volume control; it's too fiddly. */
+        adjustEdges_Rect(&d->volumeRect, 0, 0, 0, width_Rect(d->volumeRect));
+    }
     d->volumeAdjustRect = d->volumeRect;
     adjustEdges_Rect(&d->volumeAdjustRect, 0, 0, 0, -35 * gap_UI);
     d->scrubberRect  = initCorners_Rect(topRight_Rect(d->rewindRect), bottomLeft_Rect(d->volumeRect));
@@ -127,9 +135,11 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
 }
 
 static void drawInlineButton_(iPaint *p, iRect rect, const char *label, int font) {
-    const iInt2 mouse     = mouseCoord_Window(get_Window(), 0);
+    const iInt2 mouse     = isInteracting_Touch() ? fingerPosition_Touch()
+                                                  : mouseCoord_Window(get_Window(), 0);
     const iBool isHover   = contains_Rect(rect, mouse);
-    const iBool isPressed = isHover && (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
+    const iBool isPressed = isHover && (isInteracting_Touch() ||
+                                        (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0);
     const int frame = (isPressed ? uiTextCaution_ColorId : isHover ? uiHeading_ColorId : uiAnnotation_ColorId);
     iRect frameRect = shrunk_Rect(rect, init_I2(gap_UI / 2, gap_UI));
     drawRect_Paint(p, frameRect, frame);
@@ -156,7 +166,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                       uiContent_FontId);
     drawInlineButton_(p, d->rewindRect, "\u23ee", uiContent_FontId);
     drawInlineButton_(p, d->menuRect, menu_Icon, uiContent_FontId);
-    if (!isAdjusting) {
+    if (!isAdjusting && !isMobile_Platform()) {
         drawInlineButton_(
             p, d->volumeRect, volumeChar_(volume_Player(d->player)), uiContentSymbols_FontId);
     }
@@ -198,8 +208,11 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const float normPos  = totalTime > 0 ? playTime / totalTime : 0.0f;
     const int   part     = (s2 - s1) * normPos;
     const int   scrubMax = (s2 - s1) * streamProgress_Player(d->player);
-    drawHLine_Paint(p, init_I2(s1, yMid), part, bright);
-    drawHLine_Paint(p, init_I2(s1 + part, yMid), scrubMax - part, dim);
+    const int   barThick = gap_UI / 4;
+    fillRect_Paint(p, (iRect){ init_I2(s1,   yMid - barThick / 2),
+                               init_I2(part, barThick) }, bright);
+    fillRect_Paint(p, (iRect){ init_I2(s1 + part,       yMid - barThick / 2),
+                               init_I2(scrubMax - part, barThick) }, dim);
     const char *dot = "\u23fa";
     const int dotWidth = measure_Text(uiLabel_FontId, dot).advance.x;
     draw_Text(uiLabel_FontId,

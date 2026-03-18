@@ -725,9 +725,6 @@ msgstr "Tymczasowo:"
 msgid "dlg.newident.notsaved"
 msgstr "nie zapisano na dysku"
 
-msgid "hint.newident.optional"
-msgstr "pole opcjonalne"
-
 msgid "dlg.newident.userid"
 msgstr "Identyfikator użytkownika:"
 

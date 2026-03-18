@@ -66,7 +66,7 @@ void endTarget_Paint(iPaint *d) {
         origin_Paint = d->oldOrigin;
         d->oldOrigin = zero_I2();
         d->oldTarget = NULL;
-        d->setTarget = NULL;        
+        d->setTarget = NULL;
     }
 }
 
@@ -182,6 +182,31 @@ void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) 
     }
     SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, (int) n);
     free(offsetPoints);
+}
+
+void drawEmbossedFrame_Paint(iPaint *p, iRect rect, int color1, int color2, iBool noBottom,
+                             iBool noTop) {
+    iInt2 points[] = {
+        bottomLeft_Rect(rect),
+        topLeft_Rect(rect),
+        topRight_Rect(rect),
+        bottomRight_Rect(rect),
+        bottomLeft_Rect(rect)
+    };
+#if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
+    if (isOpenGLRenderer_Window()) {
+        /* A very curious regression in SDL 2.0.16. */
+        points[3].x--;
+    }
+#endif
+    if (noBottom) {
+        drawLines_Paint(p, points + 2, 2, color2);
+        drawLines_Paint(p, points, 3, color1);
+    }
+    else {
+        drawLines_Paint(p, points + 2, 3, color2);
+        drawLines_Paint(p, points, noTop ? 2 : 3, color1);
+    }
 }
 
 void drawPin_Paint(iPaint *d, iRect rangeRect, int dir, int pinColor) {

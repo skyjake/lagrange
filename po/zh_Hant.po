@@ -57,9 +57,6 @@ msgstr "有效期至："
 msgid "hint.newident.date"
 msgstr "YYYY 或 YYYY-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "選填"
-
 msgid "dlg.newident.commonname"
 msgstr "通用名稱（CN）："
 

@@ -1,4 +1,3 @@
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
@@ -9,8 +8,8 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
-"Content-Transfer-Encoding: ENCODING\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Translate Toolkit 3.3.3\n"
 
 msgid "sidebar.feeds"
@@ -718,9 +717,6 @@ msgstr "翻译至："
 
 msgid "dlg.newident.until"
 msgstr "有效期至："
-
-msgid "hint.newident.optional"
-msgstr "选填"
 
 msgid "dlg.newident.commonname"
 msgstr "通用名称（CN）："

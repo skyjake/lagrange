@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2024-10-06 10:28+0000\n"
+"PO-Revision-Date: 2025-10-05 16:56+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -42,7 +42,7 @@ msgid "menu.feeds.refresh"
 msgstr "Refriscar feedes"
 
 msgid "sidebar.feeds"
-msgstr "Feedes"
+msgstr "Elementes del feed"
 
 msgid "sidebar.history"
 msgstr "Diarium"
@@ -98,7 +98,7 @@ msgstr "General"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "IdU"
+msgstr "Conduida"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -369,7 +369,7 @@ msgid "menu.show.bookmarks"
 msgstr "Monstrar marca-págines"
 
 msgid "menu.show.feeds"
-msgstr "Monstrar feedes"
+msgstr "Monstrar elementes del feed"
 
 msgid "menu.show.history"
 msgstr "Monstra li Diarium"
@@ -767,9 +767,6 @@ msgstr "Valid til:"
 msgid "hint.newident.date"
 msgstr "AAAA o AAAA-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "facultativ"
-
 msgid "dlg.newident.commonname"
 msgstr "Comun nómine:"
 
@@ -945,7 +942,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Secun date de creation"
 
 msgid "menu.feeds.entrylist"
-msgstr "Monstrar li elementes del feed"
+msgstr "Listar li elementes del feed"
 
 msgid "menu.releasenotes"
 msgstr "Notas del publication"
@@ -1128,8 +1125,8 @@ msgstr "Cap-linea ínvalid"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Li recivet cap-linea ne conforma al specification del protocol Gemini. "
-"Fórsan li servitor malfunctiona o vu contacte un servitor non-Gemini."
+"Li recivet cap-linea ne conforma al specification del protocol. Fórsan li "
+"servitor malfunctiona o ne supporta ti protocol."
 
 msgid "error.badredirect"
 msgstr "Redirection ínvalid"
@@ -2834,3 +2831,87 @@ msgstr "Inviar un copie a me"
 
 msgid "upload.type"
 msgstr "Contenete"
+
+msgid "menu.closetab.above"
+msgstr "Cluder li cartes a supra"
+
+msgid "menu.closetab.below"
+msgstr "Cluder li cartes ad infra"
+
+msgid "sidebar.structure"
+msgstr "Structura"
+
+msgid "sidebar.documents"
+msgstr "Cartes"
+
+msgid "sidebar.sub.empty"
+msgstr "Li feed es vacui"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u element"
+msgstr[1] "%u elementes"
+
+msgid "menu.input.copyprompt"
+msgstr "Copiar li descrition"
+
+msgid "menu.input.pasteprompt"
+msgstr "Collar li descrition"
+
+msgid "menu.sidebar.configure"
+msgstr "Configurar…"
+
+msgid "sidebar.subscriptions"
+msgstr "Abonnamentes"
+
+msgid "menu.sub.edit"
+msgstr "Redacter li marca-págine…"
+
+msgid "prefs.sidebar.left"
+msgstr "Levul"
+
+msgid "prefs.sidebar.right"
+msgstr "Dextri"
+
+msgid "menu.feed.edit"
+msgstr "Parametres del feed…"
+
+msgid "heading.prefs.ui"
+msgstr "Interfacie"
+
+msgid "prefs.hidetabs"
+msgstr "Celar li barra de cartes:"
+
+msgid "link.copy.label"
+msgstr "Copiar li textu del ligament"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "Copiar li missage"
+
+msgid "heading.prefs.theme"
+msgstr "Tema"
+
+msgid "heading.prefs.sidebars"
+msgstr "Paneles lateral"
+
+msgid "hint.filter.bookmark"
+msgstr "filtrar marca-págines"
+
+msgid "prefs.quote.italic"
+msgstr "Textu de citationes in italic:"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Monstrar li structura del site"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Monstrar abonnamentes"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Monstrar cartes"
+
+msgid "menu.fold"
+msgstr "Contraher"

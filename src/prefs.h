@@ -35,6 +35,7 @@ iDeclareType(Prefs);
 enum iPrefsString {
     /* General */
     uiLanguage_PrefsString,
+    keyboardLayout_PrefsString,
     downloadDir_PrefsString,
     searchUrl_PrefsString,
     recentMisfinId_PrefsString,
@@ -45,6 +46,10 @@ enum iPrefsString {
     geminiProxy_PrefsString,
     gopherProxy_PrefsString,
     httpProxy_PrefsString,
+
+    socksServer_PrefsString,
+    socksUser_PrefsString,
+    socksPassword_PrefsString,
 
     /* Style */
     uiFont_PrefsString,
@@ -70,12 +75,15 @@ enum iPrefsBool {
     blinkingCursor_PrefsBool,
     bottomNavBar_PrefsBool,
     bottomTabBar_PrefsBool,
+    bottomInput_PrefsBool,
+
     menuBar_PrefsBool,
-    
     simpleChars_PrefsBool,
     evenSplit_PrefsBool,
     detachedPrefs_PrefsBool,
     editorSyntaxHighlighting_PrefsBool,
+
+    useGamepad_PrefsBool,
 
     /* Document presentation */
     italicQuote_PrefsBool,
@@ -104,6 +112,7 @@ enum iPrefsBool {
     warnCertSecurity_PrefsBool,
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
+    preferIPv6_PrefsBool,
 
     /* Style */
     monospaceGemini_PrefsBool,
@@ -150,17 +159,20 @@ struct Impl_Prefs {
             iBool retainWindowSize;
             iBool uiAnimations;
             iBool hideToolbarOnScroll;
-            
+
             iBool hideTabBar;
             iBool blinkingCursor;
             iBool bottomNavBar;
             iBool bottomTabBar;
+            iBool bottomInput;
+
             iBool menuBar;
-            
             iBool simpleChars;
             iBool evenSplit;
             iBool detachedPrefs;
             iBool editorSyntaxHighlighting;
+
+            iBool useGamepad;
 
             /* Document presentation */
             iBool italicQuote;
@@ -189,6 +201,7 @@ struct Impl_Prefs {
             iBool warnTlsSecurity;
             iBool decodeUserVisibleURLs;
             iBool allowSchemeChangingRedirect;
+            iBool preferIPv6;
 
             /* Style */
             iBool monospaceGemini;
@@ -222,7 +235,6 @@ struct Impl_Prefs {
     enum iColorAccent accent;
 
     /* Window and User Interface */
-    float               uiScale;
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
     iBool               sidebarModeEnabled[2][maxSidebarModes_Prefs];

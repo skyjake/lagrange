@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "snippets.h"
 #include "root.h"
 #include "touch.h"
+#include "gamepad.h"
 #include "util.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
@@ -66,7 +67,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 static iWindow *    theWindow_;
 static iMainWindow *theMainWindow_;
 
+#if defined (iPlatformMobileHandheld)
+static float initialUiScale_ = 1.25f;
+#else
 static float initialUiScale_ = 1.0f;
+#endif
 static iBool isOpenGLRenderer_;
 static iBool isDrawing_;
 static iBool isResizing_;
@@ -97,12 +102,12 @@ static const iMenuItem fileMenuItems_[] = {
 #if defined (LAGRANGE_PC_MENUS)
     { "---" },
     { "${menu.preferences}", preferences_KeyShortcut, "preferences" },
-#if !defined (iPlatformTerminal)
+# if !defined (iPlatformTerminal)
     { "${menu.fonts}", 0, 0, "open newtab:1 switch:1 url:about:fonts" },
-#endif
-#if defined (LAGRANGE_ENABLE_WINSPARKLE)
+# endif
+# if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
-#endif
+# endif
     { "---" },
     { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
 #endif
@@ -147,7 +152,7 @@ static const iMenuItem viewMenuItems_[] = {
     { NULL }
 };
 
-static iMenuItem bookmarksMenuItems_[] = {
+iMenuItem bookmarksMenuItems_Window[] = {
     { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
@@ -204,7 +209,7 @@ const iMenuItem topLevelMenus_Window[7] = {
     { "${menu.title.file}", 0, 0, (const void *) fileMenuItems_ },
     { "${menu.title.edit}", 0, 0, (const void *) editMenuItems_ },
     { "${menu.title.view}", 0, 0, (const void *) viewMenuItems_ },
-    { "${menu.title.bookmarks}", 0, 0, (const void *) bookmarksMenuItems_ },
+    { "${menu.title.bookmarks}", 0, 0, (const void *) bookmarksMenuItems_Window },
     { "${menu.title.identity}", 0, 0, (const void *) identityMenuItems_ },
     { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
     { "${menu.title.help}", 0, 0, (const void *) helpMenuItems_ },
@@ -644,6 +649,15 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
         pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
 }
 
+SDL_Texture *makeTextureFromImageData_Window(const iWindow *d, const iBlock *data) {
+    SDL_Surface *surf    = loadImage_(data, 0);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(d->render, surf);
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    free(surf->pixels);
+    SDL_FreeSurface(surf);
+    return texture;
+}
+
 static void updateMetrics_Window_(const iWindow *d) {
     setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
 }
@@ -672,6 +686,9 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->keyRoot       = NULL;
     d->borderShadow  = NULL;
     d->frameCount    = 0;
+    init_Click(&d->midDrag, NULL, SDL_BUTTON_MIDDLE);
+    d->midDragTime   = 0;
+    d->midDragAccum  = 0.0f;
     iZap(d->roots);
     iZap(d->cursors);
     create_Window_(d, rect, flags);
@@ -865,7 +882,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         d->appIcon = SDL_CreateTextureFromSurface(d->base.render, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
-        /* We need to observe non-client-area events. */
+        /* We need to observe non-client-area events (custom frame). */
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
@@ -940,6 +957,20 @@ void rootOrder_Window(const iWindow *d, iRoot *roots[2]) {
     else {
         roots[0] = roots[1] = NULL;
     }
+}
+
+void emulateKeyPress_Window(const iWindow *d, int key, int mods) {
+    SDL_KeyboardEvent event = {
+        .type     = SDL_KEYDOWN,
+        .windowID = id_Window(d),
+        .state    = SDL_PRESSED,
+        .keysym   = { .sym = key, .mod = mods },
+    };
+    SDL_PushEvent((SDL_Event *) &event);
+    /* The key is immediately released. */
+    event.type  = SDL_KEYUP;
+    event.state = SDL_RELEASED;
+    SDL_PushEvent((SDL_Event *) &event);
 }
 
 static void invalidate_Window_(iAnyWindow *d, iBool forced) {
@@ -1347,16 +1378,41 @@ void updateHover_Window(iWindow *d) {
     d->hover = hitChild_Window(d, mouseCoord_Window(d, 0));
 }
 
+static void scrollOnMiddleDrag_Window_(void *context) {
+    iWindow *d = context;
+    if (d->midDrag.isActive && d->midDrag.isDragging) {
+        const uint32_t now            = SDL_GetTicks();
+        const double   elapsedSeconds = (now - d->midDragTime) / 1000.0;
+        const float    speed          = delta_Click(&d->midDrag).y * 1.0f / gap_UI;
+        d->midDragTime                = now;
+        d->midDragAccum += iAbs(speed * speed * elapsedSeconds);
+        const int scroll = (int) d->midDragAccum;
+        if (scroll) {
+            d->midDragAccum -= scroll; /* fractional part remains */
+            SDL_MouseWheelEvent ev = {
+                .type      = SDL_MOUSEWHEEL,
+                .timestamp = now,
+                .windowID  = id_Window(d),
+                .y         = -iSign(speed) * scroll
+            };
+            setPerPixel_MouseWheelEvent(&ev, iTrue);
+            SDL_PushEvent((SDL_Event *) &ev);
+        }
+        addTicker_App(scrollOnMiddleDrag_Window_, d);
+    }
+}
+
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     iMainWindow *mw     = (type_Window(d) == main_WindowType ? as_MainWindow(d) : NULL);
     iWindow *    extraw = (type_Window(d) == extra_WindowType ? d : NULL);
     switch (ev->type) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         case SDL_SYSWMEVENT: {
-            /* We observe native Win32 messages for better user interaction with the
-               window frame. Mouse clicks especially will not generate normal SDL
-               events if they happen on the custom hit-tested regions. These events
-               are processed only there; the UI widgets do not get involved. */
+            /* We observe native Win32 messages for dark mode detection and better
+               user interaction with the custom window frame. Mouse clicks especially
+               will not generate normal SDL events if they happen on the custom
+               hit-tested regions. These events are processed only there; the UI
+               widgets do not get involved. */
             processNativeEvent_Win32(ev->syswm.msg, d);
             break;
         }
@@ -1435,6 +1491,29 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     setCurrent_Root(grabbed->root);
                     wasUsed = dispatchEvent_Widget(grabbed, &event);
                 }
+            }
+            /* Middle button drag-to-scroll: observe the gesture before widgets get the events. */
+            switch (processEvent_Click(&d->midDrag, &event)) {
+                case started_ClickResult:
+                    /* Let the event also reach widgets (e.g., link clicking). */
+                    break;
+                case drag_ClickResult:
+                    setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+                    if (!d->midDragTime) {
+                        d->midDragAccum = 0;
+                        d->midDragTime  = SDL_GetTicks();
+                        addTicker_App(scrollOnMiddleDrag_Window_, d);
+                    }
+                    wasUsed = iTrue;
+                    break;
+                case finished_ClickResult:
+                case aborted_ClickResult:
+                    setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+                    d->midDragTime  = 0;
+                    d->midDragAccum = 0;
+                    break;
+                default:
+                    break;
             }
             /* If there is a priority handler for key events, offer the event to it first.
                This is similar to mouse grabbing, but the handler can refuse the event. */
@@ -1567,8 +1646,8 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
                     continue;
                 }
             }
-            if (ev->type == SDL_MOUSEWHEEL && !contains_Rect(rect_Root(root),
-                                                             coord_MouseWheelEvent(&ev->wheel))) {
+            if (ev->type == SDL_MOUSEWHEEL &&
+                !contains_Rect(rect_Root(root), coord_MouseWheelEvent(&ev->wheel))) {
                 continue; /* Only process the event in the relevant split. */
             }
             if (!root->widget) {
@@ -1753,7 +1832,7 @@ void draw_MainWindow(iMainWindow *d) {
        when the custom frame is being used. */ {
         setCurrent_Root(w->roots[0]);
         iColor back;
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)        
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         if (prefs_App()->customFrame && numRoots_Window(as_Window(d)) == 1) {
             back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                         ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
@@ -1842,13 +1921,18 @@ void draw_MainWindow(iMainWindow *d) {
                 }
             }
         }
+        draw_Gamepad(gamepad_App());
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
+        iWidget *sample = focus_Widget();
         draw_Text(uiLabelBold_FontId,
                   safeRect_Root(w->roots[0]).pos,
                   d->base.frameCount & 1 ? red_ColorId : white_ColorId,
-                  "%d",
-                  drawCount_);
+                  "%d  %p:%s:%s",
+                  drawCount_,
+                  sample,
+                  class_Widget(sample) ? class_Widget(sample)->name : "",
+                  cstr_String(id_Widget(sample)));
         drawCount_ = 0;
 #endif
     }
@@ -1934,6 +2018,9 @@ iInt2 mouseCoord_Window(const iWindow *d, int whichDevice) {
            our touch coordinates on the Y axis (?). Maybe a pixel ratio thing? */
         iUnused(d);
         return latestPosition_Touch();
+    }
+    if (whichDevice == mouseId_Gamepad) {
+        return pointerCoord_Gamepad(gamepad_App());
     }
     if (!d->isMouseInside) {
         return init_I2(-1000000, -1000000);
@@ -2171,7 +2258,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 setFlags_Widget(
                     findChild_Widget(winBar, "winbar.max"), hidden_WidgetFlag, hideCtl0);
                 setFlags_Widget(
-                    findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl0);                
+                    findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl0);
                 if (d->base.roots[1]) {
                     winBar = findChild_Widget(d->base.roots[1]->widget, "winbar");
                     setFlags_Widget(
@@ -2183,7 +2270,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                     setFlags_Widget(
                         findChild_Widget(winBar, "winbar.max"), hidden_WidgetFlag, hideCtl1);
                     setFlags_Widget(
-                        findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl1);                
+                        findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl1);
                 }
             }
         }
@@ -2381,101 +2468,4 @@ iWindow *newExtra_Window(iWidget *rootWidget) {
     recreateSnippetMenu_Root(root);
     setCurrent_Window(oldWin);
     return win;
-}
-
-iDeclareType(FolderItems);
-
-struct Impl_FolderItems {
-    iHashNode node;
-    iArray *items;
-};
-
-void cleanupBookmarksMenu_Widget(iWidget *menu) {
-    /* Destroy the previously created folder submenus. */
-    iConstForEach(PtrArray, c,
-                  findChildren_Widget(menu ? root_Widget(menu)
-                                           : get_Root()->widget, "bfmenu.*")) {
-        destroy_Widget(c.ptr);
-    }
-}
-
-const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
-    /* TODO: Updating the items is only needed if 1) there hasn't been an update yet, or 2)
-       bookmarks have changed. */
-    cleanupBookmarksMenu_Widget(menu);
-    iWidget *rootWidget = (menu ? root_Widget(menu) : get_Root()->widget);
-    iBool    isFirst    = iTrue;
-    iString *title      = new_String();
-    iHash   *hash       = new_Hash();
-    iArray  *items      = collectNew_Array(sizeof(iMenuItem));
-    pushBackN_Array(items, bookmarksMenuItems_, count_MenuItem(bookmarksMenuItems_));
-    /* Append top-level bookmarks and create new submenus. */
-    iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, NULL, NULL)) {
-        const iBookmark *bm = i.ptr;
-        iArray *dest = items;
-        if (bm->parentId) {
-            iFolderItems *f = (iFolderItems *) value_Hash(hash, bm->parentId);
-            if (!f) {
-                f = iZapMalloc(FolderItems);
-                f->node.key = bm->parentId;
-                f->items = new_Array(sizeof(iMenuItem));
-                insert_Hash(hash, &f->node);
-            }
-            dest = f->items;
-        }
-        else if (isFirst) {
-            isFirst = iFalse;
-            pushBack_Array(dest, &(iMenuItem){ "---" });
-        }
-        iString iconStr;
-        if (isFolder_Bookmark(bm)) {
-            initCStr_String(&iconStr, folder_Icon);
-        }
-        else if (bm->icon) {
-            initUnicodeN_String(&iconStr, &bm->icon, 1);
-        }
-        else {
-            initCStr_String(&iconStr, pin_Icon);
-        }
-        /* Truncate titles to a reasonable width. */ {
-            set_String(title, &bm->title);
-#if !defined (LAGRANGE_NATIVE_MENU)
-            const int maxTitleWidth = 60 * gap_UI;
-            const char *end;
-            tryAdvanceNoWrap_Text(uiLabel_FontId, range_String(title), maxTitleWidth, &end);
-            if (end < constEnd_String(title)) {
-                truncate_Block(&title->chars, end - constBegin_String(title));
-                appendCStr_String(title, "\u2026" /* ellipsis */);
-            }
-#endif
-        }
-        iString *setIdentArg = NULL;
-        if (!isEmpty_String(&bm->identity)) {
-            setIdentArg = copy_String(&bm->identity);
-            prependCStr_String(setIdentArg, " setident:");
-        }
-        pushBack_Array(
-            dest,
-            &(iMenuItem){ format_CStr("%s %s", cstr_String(&iconStr), cstr_String(title)),
-                          0,
-                          0,
-                          isFolder_Bookmark(bm)
-                              ? format_CStr("submenu id:bfmenu.%d", id_Bookmark(bm))
-                              : format_CStr("!open%s url:%s",
-                                            setIdentArg ? cstr_String(setIdentArg) : "",
-                                            cstr_String(&bm->url)) });
-        delete_String(setIdentArg);
-        deinit_String(&iconStr);
-    }
-    /* Create folder menus. */
-    iForEach(Hash, h, hash) {
-        iFolderItems *f = (iFolderItems *) h.value;
-        iWidget *bfmenu = makeMenu_Widget(rootWidget, data_Array(f->items), size_Array(f->items));
-        setId_Widget(bfmenu, format_CStr("bfmenu.%d", f->node.key));
-        delete_Array(f->items);
-        free(remove_HashIterator(&h));
-    }
-    delete_Hash(hash);
-    delete_String(title);
-    return items;
 }

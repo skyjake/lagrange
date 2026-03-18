@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "command.h"
+#include "keyboardwidget.h"
 #include "keys.h"
 #include "lang.h"
 #include "paint.h"
@@ -2315,7 +2316,7 @@ static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
 static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
     iInputWidget *d = widget;
     iWidget *w = as_Widget(d);
-    if (!isFocused_Widget(w)) { //} || isAffectedByVisualOffset_Widget(w)) {
+    if (!isFocused_Widget(w)) {
         return;
     }
     iRect rect    = boundsWithoutVisualOffset_Widget(w);
@@ -2373,7 +2374,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
     }
 #endif
-    if (deviceType_App() != desktop_AppDeviceType && isCommand_UserEvent(ev, "menu.opened")) {
+    if (deviceType_App() != desktop_AppDeviceType && focus_Widget() == w &&
+        isCommand_UserEvent(ev, "menu.opened")) {
         setFocus_Widget(NULL);
         return iFalse;
     }
@@ -2800,18 +2802,18 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_a:
             case SDLK_e:
                 if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
-#  if defined (iPlatformTerminal)
-                    /* Move to the start/end of the current wrapped line. */
-                    moveCursorByLine_InputWidget_(d, 0, key == 'a' ? -1 : +1);
-                    refresh_Widget(w);
-                    return iTrue;
-#  endif
-#  if defined (iPlatformApple)
-                    /* Move to the start/end of the current paragraph. */
-                    setCursor_InputWidget(d, key == 'a' ? lineFirst : lineLast);
-                    refresh_Widget(w);
-                    return iTrue;
-#  endif
+                    if (isTerminal_Platform()) {
+                        /* Move to the start/end of the current wrapped line. */
+                        moveCursorByLine_InputWidget_(d, 0, key == 'a' ? -1 : +1);
+                        refresh_Widget(w);
+                        return iTrue;
+                    }
+                    if (isApple_Platform()) {
+                        /* Move to the start/end of the current paragraph. */
+                        setCursor_InputWidget(d, key == 'a' ? lineFirst : lineLast);
+                        refresh_Widget(w);
+                        return iTrue;
+                    }
                 }
                 break;
             case SDLK_LEFT:
@@ -2850,9 +2852,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(d);
                     return iTrue;
                 }
-                // if (isArrowUpDownConsumed_InputWidget_(d)) {
-                //     return iTrue;
-                // }
                 /* For moving to lookup from url entry. */
                 if (processEvent_Widget(as_Widget(d), ev)) {
                     return iTrue;

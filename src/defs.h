@@ -56,6 +56,14 @@ iLocalDef iBool isMobileLinux_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isHandheld_Platform(void) {
+#if defined (iPlatformMobileHandheld)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isApple_Platform(void) {
 #if defined (iPlatformApple)
     return iTrue;
@@ -216,6 +224,12 @@ enum iReturnKeyBehavior {
 #else
         RETURN_KEY_BEHAVIOR(control_ReturnKeyFlag, 0),
 #endif
+    onlyWithMods_ReturnKeyBehavior =
+#if defined (iPlatformApple)
+        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, gui_ReturnKeyFlag),
+#else
+        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, control_ReturnKeyFlag),
+#endif
 #if defined (iPlatformTerminal)
     default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(gui_ReturnKeyFlag, 0),
 #elif defined (iPlatformAndroidMobile)
@@ -277,6 +291,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define fontpack_Icon       "\U0001f520"
 #define fonts_Icon          "\U0001f5da"
 #define forwardArrow_Icon   "\U0001f872"
+#define gamepad_Icon        "\U0001f3ae"
 #define gear_Icon           "\u2699"
 #define globe_Icon          "\U0001f310"
 #define guppy_Icon          "\U0001f41f"
@@ -296,6 +311,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define menu_Icon           "\U0001d362"
 #define midEllipsis_Icon    "\u2022\u2022\u2022"
 #define network_Icon        "\U0001f5a7"
+#define networkProxy_Icon   "\u27a0"
 #define nex_Icon            "\U0001f687"
 #define openExt_Icon        "\u27a0"
 #define openLock_Icon       "\U0001f513"

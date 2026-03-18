@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "certlistwidget.h"
 #include "command.h"
 #include "defs.h"
+#include "gamepad.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "root.h"
@@ -131,18 +132,45 @@ static iWidget *findDetailStack_(iWidget *topPanel) {
     return findChild_Widget(parent_Widget(topPanel), "detailstack");
 }
 
-static void unselectAllPanelButtons_(iWidget *topPanel) {
+static iBool forEachPanelButton_(iWidget *topPanel,
+                                iBool (*callback)(void *context, iAnyObject *object),
+                                void *context) {
     iForEach(ObjectList, i, children_Widget(topPanel)) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
-            iLabelWidget *label = i.object;
-            if (!cmp_String(command_LabelWidget(label), "panel.open")) {
-                if (isSelected_Widget(i.object)) {
-                    refresh_Widget(i.object);
+            if (!cmp_String(command_LabelWidget(i.object), "panel.open")) {
+                if (!callback(context, i.object)) {
+                    return iFalse;
                 }
-                setFlags_Widget(i.object, selected_WidgetFlag, iFalse);
             }
         }
     }
+    return iTrue;
+}
+
+static iBool focusSelectedPanelButton_(void *context, iAnyObject *object) {
+    iUnused(context);
+    if (isSelected_Widget(object)) {
+        if (flags_Widget(object) & focusable_WidgetFlag) {
+            setFocus_Widget(object);
+        }
+        else {
+            iWidget *w = findFocusable_Widget(object, forward_WidgetFocusDir);
+            if (w) {
+                setFocus_Widget(w);
+            }
+        }
+        return iFalse;
+    }
+    return iTrue;
+}
+
+static iBool unselectPanelButton_(void *context, iAnyObject *object) {
+    iUnused(context);
+    if (isSelected_Widget(object)) {
+        setFlags_Widget(object, selected_WidgetFlag, iFalse);
+        refresh_Widget(object);
+    }
+    return iTrue;
 }
 
 static iWidget *findTitleLabel_(iWidget *panel) {
@@ -278,7 +306,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         /* This command is sent by the button that opens the panel. */
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
-        unselectAllPanelButtons_(topPanel);
+        forEachPanelButton_(topPanel, unselectPanelButton_, NULL);
         int panelIndex = -1;
         size_t childIndex = 0;
         iForEach(ObjectList, i, children_Widget(findDetailStack_(topPanel))) {
@@ -286,7 +314,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != panel);
             /* Animate the current panel in. */
             if (child == panel && isPortrait) {
-                setupSheetTransition_Mobile(panel, iTrue);
+                setupSheetTransition_Mobile(panel, incoming_TransitionFlag | right_TransitionDir);
                 panelIndex = (int) childIndex;
             }
             childIndex++;
@@ -300,6 +328,9 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         refresh_Widget(button);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
         updateListHeights_(findDetailStack_(topPanel));
+        if (isPointerHidden_Gamepad(gamepad_App())) {
+            setFocus_Widget(findFocusable_Widget(panel, forward_WidgetFocusDir));
+        }
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -313,7 +344,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
                 iWidget *child = i.object;
                 if (!cmp_String(id_Widget(child), "panel") && isVisible_Widget(child)) {
     //                closeMenu_Widget(child);
-                    setupSheetTransition_Mobile(child, iFalse);
+                    setupSheetTransition_Mobile(child, right_TransitionDir);
                     setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
                     setFocus_Widget(NULL);
                     setTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
@@ -324,7 +355,10 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             }
         }
         updateNaviActionVisibility_(sheet, topPanel);
-        unselectAllPanelButtons_(topPanel);
+        if (isPointerHidden_Gamepad(gamepad_App())) {
+            forEachPanelButton_(topPanel, focusSelectedPanelButton_, NULL);
+        }
+        forEachPanelButton_(topPanel, unselectPanelButton_, NULL);
         if (!wasClosed) {
             iWidget *widget = NULL;
             /* TODO: Should come up with a more general-purpose approach here. */
@@ -352,6 +386,9 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             }
             else {
                 postCommand_Widget(topPanel, "cancel");
+            }
+            if (isHandheld_Platform()) {
+                postCommand_App("keyboard.hide");
             }
         }
         return iTrue;
@@ -570,7 +607,15 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setFlags_Widget(as_Widget(drop),
                         alignRight_WidgetFlag | noBackground_WidgetFlag |
                             frameless_WidgetFlag, iTrue);
-        setId_Widget(as_Widget(drop), id);
+        if (startsWith_CStr(id, "prefs.gamepad.")) {
+            /* Special case: we are using this ID for identifying the button and trigger
+               as well during command handling. */
+            setId_Widget(as_Widget(drop),
+                         format_CStr("gamepad.set trig:%c button:%c", id[16], id[14]));
+        }
+        else {
+            setId_Widget(as_Widget(drop), id);
+        }
         if (argLabel_Command(spec, "noheading")) {
             widget = makeValuePadding_(as_Widget(drop));
         }
@@ -584,13 +629,16 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
         const iBool isRadio      = equal_Command(spec, "radio");
         const iBool isHorizontal = argLabel_Command(spec, "horizontal");
+        const iBool noHeading    = argLabel_Command(spec, "noheading");
         const int   rowLen       = argLabel_Command(spec, "rowlen");
         removeBorderFromLastChild_(panel);
         addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
-        iLabelWidget *head = makeHeading_Widget(label);
-        setAllCaps_LabelWidget(head, iTrue);
-        setRemoveTrailingColon_LabelWidget(head, iTrue);
-        addChild_Widget(panel, iClob(head));
+        if (!noHeading) {
+            iLabelWidget *head = makeHeading_Widget(label);
+            setAllCaps_LabelWidget(head, iTrue);
+            setRemoveTrailingColon_LabelWidget(head, iTrue);
+            addChild_Widget(panel, iClob(head));
+        }
         widget = new_Widget();
         iWidget *subDiv = widget;
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
@@ -1114,12 +1162,14 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
     if (!isUsingPanelLayout_Mobile()) {
         if (prefs_App()->uiAnimations) {
             setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
+            const int offscreenShift = (dir == top_TransitionDir ? -height_Widget(sheet)
+                                                                 : height_Widget(sheet));
             if (isIncoming) {
-                setVisualOffset_Widget(sheet, -height_Widget(sheet), 0, 0);
+                setVisualOffset_Widget(sheet, offscreenShift, 0, 0);
                 setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
             }
             else {
-                setVisualOffset_Widget(sheet, -height_Widget(sheet), 200, easeIn_AnimFlag);
+                setVisualOffset_Widget(sheet, offscreenShift, 200, easeIn_AnimFlag);
             }
         }
         return;

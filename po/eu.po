@@ -1377,9 +1377,6 @@ msgstr "Identitate berria"
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Norberak sinatutako 2048-bit RSA ziurtagiria sortzen."
 
-msgid "hint.newident.optional"
-msgstr "aukerakoa"
-
 msgid "dlg.newident.temp"
 msgstr "Behin-behinean:"
 

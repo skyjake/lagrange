@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2025-08-31 13:23+0000\n"
+"PO-Revision-Date: 2026-03-09 12:53+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -608,12 +608,12 @@ msgid "dlg.certwarn.title"
 msgstr "Güvenlik sorunu"
 
 msgid "dlg.certwarn.different"
-msgstr "Alınan sertifika geçerli ancak bizim güvendiğimizden farklı."
+msgstr "Sunucu sertifikası geçerli; ancak bizim güvendiğimizden farklı."
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-"Alınan sertifika başka bir alan adı için (%s). Bu bir sunucu yapılandırma "
-"sorunu olabilir."
+"İstek “%s” konumuna gönderildi; ancak başka bir etki alanı için bir "
+"sertifika alındı (%s). Bu, bir sunucu yapılandırması sorunu olabilir."
 
 msgid "heading.certimport"
 msgstr "Kimlik içe aktar"
@@ -928,7 +928,7 @@ msgid "heading.prefs.pagecontent"
 msgstr "Sayfa renkleri"
 
 msgid "heading.prefs.proxies"
-msgstr "Vekiller"
+msgstr "Gemini Vekilleri"
 
 msgid "heading.prefs.scrolling"
 msgstr "Sarma"
@@ -1218,7 +1218,7 @@ msgstr "Desteklenmeyen İçerik Türü"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Alınan üstbilgi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
+"Yanıt üstbilgisi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
 "veya bu protokolü desteklemiyor olabilir."
 
 msgid "error.badredirect"
@@ -1692,20 +1692,20 @@ msgstr "Dosyayı sil"
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] ""
-"Alınan sertifika yakın zamanda yenilenmiş olabilir — doğru alan adı için ve "
-"henüz süresi dolmamış. Şu anki güvenilen sertifikanın %s tarihinde, bir gün "
-"içerisinde süresi dolacak."
+"Sunucu sertifikası yakın zamanda yenilenmiş olabilir — doğru alan adı için "
+"ve henüz süresi dolmamış. Şu anki güvenilen sertifikanın %s tarihinde, bir "
+"gün içerisinde süresi dolacak."
 msgstr[1] ""
-"Alınan sertifika yakın zamanda yenilenmiş olabilir — doğru alan adı için ve "
-"henüz süresi dolmamış. Şu anki güvenilen sertifikanın %s tarihinde, %d gün "
-"içerisinde süresi dolacak."
+"Sunucu sertifikası yakın zamanda yenilenmiş olabilir — doğru alan adı için "
+"ve henüz süresi dolmamış. Şu anki güvenilen sertifikanın %s tarihinde, %d "
+"gün içerisinde süresi dolacak."
 
 #, c-format
 msgid "dlg.certwarn.expired"
-msgstr "Alınan sertifikanın süresi %s tarihinde dolmuş."
+msgstr "Sunucu sertifikasının süresi %s tarihinde dolmuş."
 
 msgid "dlg.certwarn.domain.expired"
-msgstr "Alınan sertifikanın süresi dolmuş VE başka bir alan adı için."
+msgstr "Sunucu sertifikasının süresi dolmuş VE başka bir alan adı için."
 
 msgid "dlg.certimport.help"
 msgstr ""
@@ -1784,9 +1784,6 @@ msgstr "İspanyolca"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Kendinden imzalı 2048 bit RSA sertifikası oluşturuluyor."
-
-msgid "hint.newident.optional"
-msgstr "isteğe bağlı"
 
 msgid "dlg.newident.notsaved"
 msgstr "diske kaydedilmedi"
@@ -1874,7 +1871,7 @@ msgid "prefs.font.body"
 msgstr "Gövde:"
 
 msgid "prefs.mono"
-msgstr "Eş aralıklı gövde:"
+msgstr "Şu protokollerle kullan:"
 
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
@@ -2964,3 +2961,88 @@ msgstr "Sağ araç çubuğu sekmeleri"
 
 msgid "link.copy.label"
 msgstr "Bağlantı etiketini kopyala"
+
+msgid "menu.input.copyprompt"
+msgstr "İstemi kopyala"
+
+msgid "menu.input.pasteprompt"
+msgstr "İstemi yapıştır"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "İletiyi kopyala"
+
+msgid "heading.prefs.gamepad"
+msgstr "Oyun kolu"
+
+msgid "prefs.gamepad"
+msgstr "Oyun kolu etkin:"
+
+msgid "prefs.gamepad.primary"
+msgstr "Birincil tık"
+
+msgid "prefs.gamepad.secondary"
+msgstr "İkincil tık"
+
+msgid "prefs.gamepad.cancel"
+msgstr "İptal"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Ana menü"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Sayfa menüsü"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Kenar çubuğu"
+
+msgid "prefs.gamepad.reload"
+msgstr "Sayfayı yeniden yükle"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Sayfa URL’sini düzenle"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "SA-T + "
+
+msgid "menu.input.showtop"
+msgstr "İstemi üstte göster"
+
+msgid "menu.input.showbottom"
+msgstr "İstemi altta göster"
+
+msgid "prefs.bottominput"
+msgstr "Giriş istemi altta:"
+
+msgid "prefs.ipv6"
+msgstr "IPv6’yı yeğle:"
+
+msgid "hint.optional"
+msgstr "isteğe bağlı"
+
+msgid "heading.prefs.monodoc"
+msgstr "Eş Aralıklı Görünüş"
+
+msgid "heading.font.options"
+msgstr "Seçenekler"
+
+msgid "heading.prefs.sidebars.tabs"
+msgstr "Kenar Çubuğu Sekmeleri"
+
+msgid "heading.prefs.proxy"
+msgstr "Vekiller"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
+msgid "prefs.socks.password"
+msgstr "Parola:"
+
+msgid "prefs.socks.server"
+msgstr "Vekil sunucu:"
+
+msgid "hint.socks.server"
+msgstr "makine-adı:1080"
+
+msgid "prefs.socks.user"
+msgstr "Kullanıcı adı:"

@@ -360,9 +360,6 @@ msgstr "Préférences…"
 msgid "menu.help"
 msgstr "Aide"
 
-msgid "hint.newident.optional"
-msgstr "facultatif"
-
 msgid "dlg.newident.temp"
 msgstr "Temporaire :"
 

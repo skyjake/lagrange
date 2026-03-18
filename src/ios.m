@@ -240,6 +240,7 @@ API_AVAILABLE(ios(13.0))
     iSystemTextInput *sysCtrl;
     float sysCtrlLineSpacing;
     NSMutableArray<PopupData *> *popupMenus;
+    BOOL suppressFirstTextChange;
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -257,6 +258,7 @@ static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting not
     sysCtrl = NULL;
     sysCtrlLineSpacing = 0.0f;
     popupMenus = [[NSMutableArray<PopupData *> alloc] init];
+    suppressFirstTextChange = NO;
     return self;
 }
 
@@ -363,6 +365,16 @@ static void sendReturnKeyPress_(int kmods) {
 
 -(void)setSystemTextInput:(iSystemTextInput *)sys {
     sysCtrl = sys;
+    if (sys) {
+        /* Suppress the first text change to prevent a "spill over" key event from inserting
+           a spurious character when the text field appears due to a hardware key press. The
+           flag is cleared on the next run loop iteration, so only the in-flight key event
+           that triggered the text field creation is affected. */
+        suppressFirstTextChange = YES;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->suppressFirstTextChange = NO;
+        });
+    }
 }
 
 -(void)setSystemTextLineSpacing:(float)height {
@@ -381,6 +393,10 @@ static void sendReturnKeyPress_(int kmods) {
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
 replacementString:(NSString *)string {
+    if (suppressFirstTextChange) {
+        suppressFirstTextChange = NO;
+        return NO;
+    }
     iSystemTextInput *sysCtrl = [appState_ systemTextInput];
     notifyChange_SystemTextInput_(sysCtrl);
     return YES;
@@ -388,6 +404,10 @@ replacementString:(NSString *)string {
 
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range
  replacementText:(NSString *)text {
+    if (suppressFirstTextChange) {
+        suppressFirstTextChange = NO;
+        return NO;
+    }
     if ([text isEqualToString:@"\n"]) {
         const iBool isCommandKeyDown = (modState_Keys() & KMOD_PRIMARY) != 0;
         if (isCommandKeyDown ||
@@ -786,8 +806,6 @@ void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
     d->player = NULL;
     d->volume = 1.0f;
     d->state = initialized_AVFAudioPlayerState;
-    /* Playback is imminent. */
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 }
 
 void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
@@ -795,6 +813,11 @@ void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
     if (d->player) {
         CFBridgingRelease(d->player);
         d->player = nil;
+    }
+    if (d->state != initialized_AVFAudioPlayerState) {
+        [[AVAudioSession sharedInstance] setActive:NO
+                                       withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                             error:nil];
     }
 }
 
@@ -849,6 +872,8 @@ iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const
 
 void play_AVFAudioPlayer(iAVFAudioPlayer *d) {
     if (d->state != playing_AVFAudioPlayerState) {
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+        [[AVAudioSession sharedInstance] setActive:YES error:nil];
         [REF_d_player play];
         d->state = playing_AVFAudioPlayerState;
     }
@@ -857,6 +882,19 @@ void play_AVFAudioPlayer(iAVFAudioPlayer *d) {
 void stop_AVFAudioPlayer(iAVFAudioPlayer *d) {
     [REF_d_player stop];
     d->state = initialized_AVFAudioPlayerState;
+    [[AVAudioSession sharedInstance] setActive:NO
+                                   withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                         error:nil];
+}
+
+iBool isFinished_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    /* AVAudioPlayer has no completion callback, so we poll:
+       if the state is still 'playing' but the player is no longer playing,
+       it reached the end of the audio naturally. */
+    if (d->state == playing_AVFAudioPlayerState && d->player) {
+        return ![REF_d_player isPlaying];
+    }
+    return iFalse;
 }
 
 void setPaused_AVFAudioPlayer(iAVFAudioPlayer *d, iBool paused) {
@@ -865,6 +903,8 @@ void setPaused_AVFAudioPlayer(iAVFAudioPlayer *d, iBool paused) {
         d->state = paused_AVFAudioPlayerState;
     }
     else if (!paused && d->state != playing_AVFAudioPlayerState) {
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+        [[AVAudioSession sharedInstance] setActive:YES error:nil];
         [REF_d_player play];
         d->state = playing_AVFAudioPlayerState;
     }

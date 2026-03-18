@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2024-12-10 02:38+0000\n"
+"PO-Revision-Date: 2026-03-14 00:26+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -32,7 +32,7 @@ msgid "prefs.uiscale"
 msgstr "Factor de escalamiento de la Interfaz:"
 
 msgid "prefs.mono"
-msgstr "Fuente Mono-espaciada para el Cuerpo:"
+msgstr "Usar con protocolos:"
 
 msgid "prefs.biglede"
 msgstr "Primer párrafo más grande:"
@@ -56,9 +56,8 @@ msgstr "El protocolo solicitado no está soportado por esta aplicación."
 
 msgid "error.badheader.msg"
 msgstr ""
-"La cabecera recibida no sigue la especificación del protocolo Gemini. Tal "
-"vez el servidor esté fallando, o intentó contactar un servidor que no es del "
-"protocolo Gemini."
+"La cabecera de la respuesta no sigue la especificación del protocolo. Tal "
+"vez el servidor esté fallando o no tiene soporte para este protocolo."
 
 msgid "error.schemeredirect.msg"
 msgstr ""
@@ -148,7 +147,7 @@ msgstr "General"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "IU"
+msgstr "Comportamiento"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -266,7 +265,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Listar por Fecha de Creación"
 
 msgid "menu.feeds.entrylist"
-msgstr "Mostrar Entradas de Suscripciones"
+msgstr "Listar Entradas de Suscripciones"
 
 msgid "menu.preferences"
 msgstr "Preferencias…"
@@ -293,7 +292,7 @@ msgid "menu.show.bookmarks"
 msgstr "Mostrar Marcadores"
 
 msgid "menu.show.feeds"
-msgstr "Mostrar Suscripciones"
+msgstr "Mostrar Entradas de Suscripciones"
 
 msgid "menu.show.history"
 msgstr "Mostrar Historial"
@@ -687,10 +686,11 @@ msgstr "Hindi"
 
 #, c-format
 msgid "dlg.certwarn.expired"
-msgstr "El certificado recibido expiró el %s."
+msgstr "El certificado del servidor expiró el %s."
 
 msgid "dlg.certwarn.domain.expired"
-msgstr "El certificado recibido ha expirado Y es para el dominio incorrecto."
+msgstr ""
+"El certificado del servidor ha expirado Y es para el dominio incorrecto."
 
 msgid "heading.certimport"
 msgstr "Importar Identidad"
@@ -781,13 +781,13 @@ msgstr "Pestaña siguiente"
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] ""
-"El certificado recibido puede haber sido renovado recientemente — es para el "
-"dominio correcto y no ha expirado. El certificado confiable actual expirará "
-"el %s, en un día."
+"El certificado del servidor puede haber sido renovado recientemente — es "
+"para el dominio correcto y no ha expirado. El certificado confiable actual "
+"expirará el %s, en un día."
 msgstr[1] ""
-"El certificado recibido puede haber sido renovado recientemente — es para el "
-"dominio correcto y no ha expirado. El certificado confiable actual expirará "
-"el %s, en %d días."
+"El certificado del servidor puede haber sido renovado recientemente — es "
+"para el dominio correcto y no ha expirado. El certificado confiable actual "
+"expirará el %s, en %d días."
 
 msgid "menu.title.bookmarks"
 msgstr "Marcadores"
@@ -805,7 +805,7 @@ msgid "menu.releasenotes"
 msgstr "Notas de la Versión"
 
 msgid "sidebar.feeds"
-msgstr "Suscripciones"
+msgstr "Entradas de Suscripciones"
 
 msgid "prefs.theme.white"
 msgstr "Blanco"
@@ -893,9 +893,6 @@ msgstr "Válido hasta:"
 msgid "hint.newident.date"
 msgstr "YYYY ó YYYY-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "opcional"
-
 msgid "dlg.newident.commonname"
 msgstr "Nombre común:"
 
@@ -963,7 +960,7 @@ msgid "heading.prefs.pagecontent"
 msgstr "Colores de la Página"
 
 msgid "heading.prefs.proxies"
-msgstr "Proxys"
+msgstr "Proxys Gemini"
 
 msgid "heading.prefs.scrolling"
 msgstr "Desplazamiento"
@@ -1248,16 +1245,17 @@ msgstr ""
 
 msgid "dlg.certwarn.different"
 msgstr ""
-"El certificado recibido es válido pero diferente del certificado en el que "
-"se confía."
+"El certificado del servidor es válido pero diferente del certificado en el "
+"que se confía."
 
 msgid "prefs.accent"
 msgstr "Color de acento:"
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-"El certificado recibido es para el dominio incorrecto (%s). Esto se puede "
-"deber a problemas de configuración del servidor."
+"La solicitud fue enviada a \"%s\" pero recibimos un certificado para un "
+"dominio diferente (%s). Esto se puede deber a problemas de configuración del "
+"servidor."
 
 msgid "prefs.doctheme.light"
 msgstr "Tema claro:"
@@ -2873,3 +2871,174 @@ msgstr "Contenido"
 
 msgid "prefs.expandline"
 msgstr "Expandir a lineas largas:"
+
+msgid "prefs.gamepad.primary"
+msgstr "Click Primario"
+
+msgid "prefs.gamepad.secondary"
+msgstr "Click Secundario"
+
+msgid "prefs.gamepad.cancel"
+msgstr "Cancelar"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Menú Principal"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Menú de Página"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Barra Lateral"
+
+msgid "prefs.gamepad.reload"
+msgstr "Recargar Página"
+
+msgid "menu.feed.edit"
+msgstr "Configuración de Lista…"
+
+msgid "heading.prefs.ui"
+msgstr "Interfaz de Usuario"
+
+msgid "heading.prefs.theme"
+msgstr "Tema"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Pestañas de Barra de Herramientas"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "Copiar Mensaje"
+
+msgid "prefs.hidetabs"
+msgstr "Ocultar barra de pestañas:"
+
+msgid "menu.closetab.above"
+msgstr "Cerrar Pestañas Arriba"
+
+msgid "menu.closetab.below"
+msgstr "Cerrar Pestañas Abajo"
+
+msgid "link.copy.label"
+msgstr "Copiar Etiqueta de Enlace"
+
+msgid "menu.sidebar.configure"
+msgstr "Configurar…"
+
+msgid "prefs.sidebar.right"
+msgstr "Derecha"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "Pestañas de Barra de Herramientas Izquierda"
+
+msgid "prefs.quote.italic"
+msgstr "Citar texto en itálicas:"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Mostrar Estructura del Sitio"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Mostrar Suscripciones"
+
+msgid "sidebar.structure"
+msgstr "Estructura"
+
+msgid "menu.sub.edit"
+msgstr "Editar Marcador…"
+
+msgid "menu.fold"
+msgstr "Plegar"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Mostrar Pestañas"
+
+msgid "sidebar.documents"
+msgstr "Pestañas"
+
+msgid "sidebar.subscriptions"
+msgstr "Suscripciones"
+
+msgid "sidebar.sub.empty"
+msgstr "Lista Vacía"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u entrada"
+msgstr[1] "%u entradas"
+
+msgid "menu.input.showtop"
+msgstr "Mostrar Sugerencia en el Tope"
+
+msgid "menu.input.showbottom"
+msgstr "Mostrar Sugerencia en el Fondo"
+
+msgid "heading.prefs.sidebars"
+msgstr "Barras Laterales"
+
+msgid "prefs.sidebar.left"
+msgstr "Izquierda"
+
+msgid "prefs.bottominput"
+msgstr "Entrar Sugerencia en el Fondo:"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "Pestañas de Barra de Herramientas Derecha"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Editar URL de Página"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "GD + "
+
+msgid "feeds.reset"
+msgstr "Reiniciar Entradas Conocidas"
+
+msgid "hint.filter.bookmark"
+msgstr "filtrar marcadores"
+
+msgid "heading.prefs.gamepad"
+msgstr "Mando de Juegos"
+
+msgid "prefs.gamepad"
+msgstr "Mando de juegos activado:"
+
+msgid "menu.input.copyprompt"
+msgstr "Copiar Sugerencia"
+
+msgid "menu.input.pasteprompt"
+msgstr "Pegar Sugerencia"
+
+msgid "prefs.ipv6"
+msgstr "Preferir IPv6:"
+
+msgid "prefs.socks.user"
+msgstr "Nombre de usuario:"
+
+msgid "hint.optional"
+msgstr "opcional"
+
+msgid "heading.prefs.monodoc"
+msgstr "Aspecto Mono-espaciado"
+
+msgid "heading.font.options"
+msgstr "Opciones"
+
+msgid "heading.prefs.sidebars.tabs"
+msgstr "Pestañas de la Barra Lateral"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
+msgid "heading.prefs.proxy"
+msgstr "Proxys"
+
+msgid "prefs.socks.server"
+msgstr "Servidor proxy:"
+
+msgid "hint.socks.server"
+msgstr "hostname:1080"
+
+msgid "prefs.socks.password"
+msgstr "Contraseña:"

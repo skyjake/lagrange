@@ -112,6 +112,8 @@ typedef BOOL (WINAPI *AllowDarkModeForWindowFunc)(HWND hWnd, BOOL allow);
 static AllowDarkModeForWindowFunc        AllowDarkModeForWindow_;
 static SetWindowCompositionAttributeFunc SetWindowCompositionAttribute_;
 
+static iBool isSystemDarkMode_;
+
 iDeclareType(HandleDarkness)
 
 struct Impl_HandleDarkness {
@@ -223,6 +225,35 @@ static void enableDarkMode_Win32(void) {
     }
 }
 
+static iBool readSystemDarkMode_(void) {
+    DWORD value = 1; /* default: light */
+    DWORD size = sizeof(value);
+    RegGetValueW(HKEY_CURRENT_USER,
+                 L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                 L"AppsUseLightTheme",
+                 RRF_RT_DWORD,
+                 NULL,
+                 &value,
+                 &size);
+    return (value == 0); /* 0 = dark mode */
+}
+
+static WNDPROC sdlWndProc_;
+
+static LRESULT CALLBACK darkModeWndProc_(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_SETTINGCHANGE && lParam) {
+        if (!wcscmp((const wchar_t *) lParam, L"ImmersiveColorSet")) {
+            const iBool isDark = readSystemDarkMode_();
+            if (isDark != isSystemDarkMode_) {
+                isSystemDarkMode_ = isDark;
+                postCommandf_App("~os.theme.changed dark:%d contrast:1",
+                                 isSystemDarkMode_ ? 1 : 0);
+            }
+        }
+    }
+    return CallWindowProc(sdlWndProc_, hwnd, msg, wParam, lParam);
+}
+
 void init_Win32(void) {
 #if !SDL_VERSION_ATLEAST(2, 24, 0)
     /* New SDL versions configure DPI awareness for us. */
@@ -257,11 +288,23 @@ void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     }
 }
 
+void setupApplication_Win32(void) {
+    isSystemDarkMode_ = readSystemDarkMode_();
+    postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+}
+
 void enableDarkMode_SDLWindow(SDL_Window *win) {
+    HWND hwnd = windowHandle_(win);
     if (AllowDarkModeForWindow_) {
-        HWND hwnd = windowHandle_(win);
         AllowDarkModeForWindow_(hwnd, TRUE);
         refreshTitleBarThemeColor_(hwnd);
+    }
+    /* Subclass the SDL window to intercept WM_SETTINGCHANGE for dark mode detection.
+       SDL may handle WM_SETTINGCHANGE internally and does not forward it via SYSWMEVENT
+       or the SDL_SetWindowsMessageHook callback. */
+    if (!sdlWndProc_ && hwnd) {
+        sdlWndProc_ = (WNDPROC) GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+        SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR) darkModeWndProc_);
     }
 }
 
@@ -281,6 +324,11 @@ void handleCommand_Win32(const char *cmd) {
             }
         }
     }
+    else if (equal_Command(cmd, "ostheme")) {
+        if (arg_Command(cmd)) {
+            postCommandf_App("os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+        }
+    }
     else if (equal_Command(cmd, "window.focus.gained")) {
         /* Purge old windows from the darkness. */
         cleanDark_();
@@ -288,12 +336,6 @@ void handleCommand_Win32(const char *cmd) {
 }
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-iInt2 cursor_Win32(void) {
-    POINT p;
-    GetPhysicalCursorPos(&p);
-    return init_I2(p.x, p.y);
-}
-
 void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
     static int winDown_[2] = { 0, 0 };
     HWND hwnd = msg->msg.win.hwnd;
@@ -383,6 +425,8 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
                     window->ignoreClick = iTrue; /* avoid hitting something inside the window */
                     setSnap_MainWindow(mw, yMaximized_WindowSnap);
                     break;
+                default:
+                    break;
                 }
             }
             //fflush(stdout);
@@ -415,6 +459,12 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         }
 #endif
     }
+}
+
+iInt2 cursor_Win32(void) {
+    POINT p;
+    GetPhysicalCursorPos(&p);
+    return init_I2(p.x, p.y);
 }
 #endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
 

@@ -32,9 +32,6 @@ msgstr "التركية"
 msgid "dlg.glyphfinder.search"
 msgstr "البحث في مكتبة الخطوط"
 
-msgid "hint.newident.optional"
-msgstr "إختياري"
-
 msgid "dlg.newident.scope.none"
 msgstr "غير مستخدم"
 

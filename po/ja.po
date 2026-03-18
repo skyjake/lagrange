@@ -475,9 +475,6 @@ msgstr "アップロードするテキストを入力"
 msgid "heading.translate"
 msgstr "ページを翻訳"
 
-msgid "hint.newident.optional"
-msgstr "オプション"
-
 msgid "heading.feedcfg"
 msgstr "フィードの設定"
 

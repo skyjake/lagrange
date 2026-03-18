@@ -34,12 +34,12 @@ float    desktopDPI_Win32(void);
 void     useExecutableIconResource_SDLWindow(SDL_Window *);
 void     enableDarkMode_SDLWindow(SDL_Window *);
 void     enableConsoleOutput_Win32();
+void     setupApplication_Win32(void);
 void     handleCommand_Win32(const char *cmd);
 iString *windowsDirectory_Win32(void);
 iString *tempDirectory_Win32(void);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-iInt2 cursor_Win32(void);
-void  processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window);
-void  setup_SDLWindow(SDL_Window *);
+void     processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window);
+iInt2    cursor_Win32(void);
 #endif

@@ -1,5 +1,5 @@
 # Lagrange - A Beautiful Gemini Client
-# Copyright: 2020-2024 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright: 2020-2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # Notes:
 # - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.19.4
+    VERSION 1.20.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (COPYRIGHT_YEAR 2025)
+set (COPYRIGHT_YEAR 2026)
 if (IOS)
-    set (PROJECT_VERSION 1.19)
-    set (IOS_BUNDLE_VERSION 6)
-    set (IOS_BUILD_DATE "2025-09-23")
+    set (PROJECT_VERSION 1.20)
+    set (IOS_BUNDLE_VERSION 4)
+    set (IOS_BUILD_DATE "2026-03-15")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.19)
-    set (ANDROID_BUILD_VERSION b43)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2025-09-13")
+    set (PROJECT_VERSION 1.20)
+    set (ANDROID_BUILD_VERSION b48)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-03-18")
 endif ()
 
 # Load modules from the source tree
@@ -50,11 +50,13 @@ endif ()
 # Build configuration.
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_GAMEPAD          "Allow UI to be controlled with a gamepad" ON)
 option (ENABLE_GUI              "Build the GUI application" ON)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ${DEFAULT_IDLE_SLEEP})
 option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_MAC_MENUS        "Use native context menus (macOS)" ON)
+option (ENABLE_MOBILE_HANDHELD  "Use the phone mobile UI with tweaks for handheld consoles" OFF)
 option (ENABLE_MOBILE_PHONE     "Use the phone mobile UI design instead of desktop UI" OFF)
 option (ENABLE_MOBILE_TABLET    "Use the tablet mobile UI design instead of desktop UI" OFF)
 option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
@@ -73,12 +75,16 @@ option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional t
 option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
 option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
+option (ENABLE_JXL              "Use libjxl to decode .jxl images (via pkg-config)" ON)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
 option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
-option (ENABLE_JXL              "Use libjxl to decode .jxl images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
+
+if (ENABLE_MOBILE_HANDHELD)
+    set (ENABLE_MOBILE_PHONE ON) # phone UI implied
+endif ()
 
 include (BuildType)
 include (Resources)
@@ -147,12 +153,16 @@ else ()
         res/about/version-0.13.gmi
         res/about/version-1.5.gmi
         res/about/version-1.10.gmi
+        res/about/version-1.15.gmi
         res/about/version.gmi
         res/arg-help.txt
     )
 endif ()
 if ((UNIX AND NOT APPLE) OR MSYS OR MINGW)
     list (APPEND RESOURCES res/lagrange-64.png)
+endif ()
+if (ENABLE_GAMEPAD)
+    list (APPEND RESOURCES res/pointer.png)
 endif ()
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 make_resources (${EMB_BIN} ${RESOURCES})
@@ -228,30 +238,18 @@ set (SOURCES
     # User interface:
     src/ui/banner.c
     src/ui/banner.h
-    src/ui/bindingswidget.c
-    src/ui/bindingswidget.h
-    src/ui/certimportwidget.c
-    src/ui/certimportwidget.h
-    src/ui/certlistwidget.c
-    src/ui/certlistwidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c
     src/ui/command.h
     src/ui/documentview.c
     src/ui/documentview.h
-    src/ui/documentwidget.c
-    src/ui/documentwidget.h
-    src/ui/indicatorwidget.c
-    src/ui/indicatorwidget.h
+    src/ui/gamepad.c
+    src/ui/gamepad.h
     src/ui/font.c
     src/ui/font.h
     src/ui/linkinfo.c
     src/ui/linkinfo.h
-    src/ui/listwidget.c
-    src/ui/listwidget.h
-    src/ui/lookupwidget.c
-    src/ui/lookupwidget.h
     src/ui/keys.c
     src/ui/keys.h
     src/ui/metrics.c
@@ -264,20 +262,12 @@ set (SOURCES
     src/ui/mediaui.h
     src/ui/mobile.c
     src/ui/mobile.h
-    src/ui/scrollwidget.c
-    src/ui/scrollwidget.h
-    src/ui/sidebarwidget.c
-    src/ui/sidebarwidget.h
-    src/ui/snippetwidget.c
-    src/ui/snippetwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
     src/ui/touch.h
     src/ui/translation.c
     src/ui/translation.h
-    src/ui/uploadwidget.c
-    src/ui/uploadwidget.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c
@@ -287,10 +277,34 @@ set (SOURCES
     # Widgets:
     src/ui/widget.c
     src/ui/widget.h
+    src/ui/bindingswidget.c
+    src/ui/bindingswidget.h
+    src/ui/certimportwidget.c
+    src/ui/certimportwidget.h
+    src/ui/certlistwidget.c
+    src/ui/certlistwidget.h
+    src/ui/documentwidget.c
+    src/ui/documentwidget.h
+    src/ui/indicatorwidget.c
+    src/ui/indicatorwidget.h
     src/ui/inputwidget.c
     src/ui/inputwidget.h
+    src/ui/keyboardwidget.c
+    src/ui/keyboardwidget.h
     src/ui/labelwidget.c
     src/ui/labelwidget.h
+    src/ui/listwidget.c
+    src/ui/listwidget.h
+    src/ui/lookupwidget.c
+    src/ui/lookupwidget.h
+    src/ui/scrollwidget.c
+    src/ui/scrollwidget.h
+    src/ui/sidebarwidget.c
+    src/ui/sidebarwidget.h
+    src/ui/snippetwidget.c
+    src/ui/snippetwidget.h
+    src/ui/uploadwidget.c
+    src/ui/uploadwidget.h
     # Resources:
     res/about/about.gmi
     res/about/help.gmi
@@ -391,6 +405,9 @@ else ()
     if (ENABLE_MOBILE_TABLET)
         add_definitions (-DiPlatformMobileTablet=1)
     endif ()
+    if (ENABLE_MOBILE_HANDHELD)
+        add_definitions (-DiPlatformMobileHandheld=1)
+    endif ()
 endif ()
 
 macro (set_common_app_properties target)
@@ -427,6 +444,9 @@ macro (set_common_app_properties target)
     endif ()
     if (ENABLE_IPC)
         target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_IPC=1)
+    endif ()
+    if (ENABLE_GAMEPAD)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_GAMEPAD=1)
     endif ()
 
     # Common dependencies.
@@ -507,9 +527,13 @@ if (ENABLE_GUI)
     if (ENABLE_X11_SWRENDER)
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
     endif ()
-    target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
-    target_compile_options (app PUBLIC ${SDL2_CFLAGS})
-    target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+    if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
+        target_link_libraries (app PUBLIC SDL2::SDL2-static)
+    else ()
+        target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
+        target_compile_options (app PUBLIC ${SDL2_CFLAGS})
+        target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+    endif ()
     if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
         if (TARGET harfbuzz-lib)
             target_link_libraries (app PUBLIC harfbuzz-lib)

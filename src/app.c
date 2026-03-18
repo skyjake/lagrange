@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/color.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
+#include "ui/gamepad.h"
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
@@ -60,8 +61,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/garbage.h>
+#include <the_Foundation/networkproxy.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
+#include <the_Foundation/socket.h>
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
@@ -183,6 +186,7 @@ struct Impl_App {
     int          autoReloadTimer; /* TODO: only start this when tabs are autoreloading */
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
+    iGamepad *   gamepad;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
@@ -190,7 +194,7 @@ struct Impl_App {
     unsigned int idleSleepDelayMs;
 #endif
 #if defined (iPlatformAndroidMobile)
-    float        displayDensity;
+    uint32_t     lastBackButtonTime; /* detect and discard rapid Back button presses */
 #endif
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     iRoot *      submenuRoot; /* offscreen, since the application menu is not tied to a window */
@@ -300,6 +304,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         }
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
+    appendFormat_String(str, "keyboard id:%s\n", cstr_String(&d->prefs.strings[keyboardLayout_PrefsString]));
     if (d->window) {
         appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
     }
@@ -332,6 +337,18 @@ static iString *serializePrefs_App_(const iApp *d) {
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
+#if defined (LAGRANGE_USE_GAMEPAD)
+    appendFormat_String(str, "gamepad.set clear:1\n");
+    for (int i = 0; i < max_GamepadAction; i++) {
+        if (actions_Gamepad[i] != unassigned_Gamepad) {
+            appendFormat_String(str,
+                                "gamepad.set trig:%d button:%d arg:%d\n",
+                                (actions_Gamepad[i] & triggerMod_Gamepad) != 0,
+                                actions_Gamepad[i] & ~triggerMod_Gamepad,
+                                i);
+        }
+    }
+#endif /* LAGRANGE_USE_GAMEPAD */
     if (isMobile_Platform()) {
         appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
         appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
@@ -364,6 +381,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
+        { "prefs.bottominput", &d->prefs.bottomInput },
         { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.centershort", &d->prefs.centerShortDocs },
@@ -373,9 +391,11 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.expandline", &d->prefs.expandToLongLines },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
+        { "prefs.gamepad", &d->prefs.useGamepad },
         { "prefs.gopher.gemstyle", &d->prefs.geminiStyledGopher },
         { "prefs.hidetabs", &d->prefs.hideTabBar },
         { "prefs.hoverlink", &d->prefs.hoverLink },
+        { "prefs.ipv6", &d->prefs.preferIPv6 },
         { "prefs.justify", &d->prefs.justifyParagraph },
         { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
         { "prefs.menubar", &d->prefs.menuBar },
@@ -412,6 +432,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.strings[geminiProxy_PrefsString]));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.strings[gopherProxy_PrefsString]));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.strings[httpProxy_PrefsString]));
+    appendFormat_String(str, "proxy.socks noupdate:1 user:%s\n", cstr_String(&d->prefs.strings[socksUser_PrefsString]));
+    appendFormat_String(str, "proxy.socks noupdate:1 password:%s\n", cstr_String(&d->prefs.strings[socksPassword_PrefsString]));
+    appendFormat_String(str, "proxy.socks address:%s\n", cstr_String(&d->prefs.strings[socksServer_PrefsString]));
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.strings[downloadDir_PrefsString]));
 #endif
@@ -1405,6 +1428,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
     d->commandEcho            = contains_CommandLine(&d->args, "echo;E");
+#if defined (iPlatformAndroidMobile)
+    d->lastBackButtonTime = 0;
+# ifndef NDEBUG
+    d->commandEcho = iTrue;
+# endif
+#endif
     d->forceSoftwareRender    = contains_CommandLine(&d->args, "sw");
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
     if (d->commandEcho) {
@@ -1473,6 +1502,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (iPlatformAndroidMobile)
     setupApplication_Android();
+#endif
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+    setupApplication_Win32();
 #endif
     init_Keys();
     init_Fonts(dataDir_App_());
@@ -1560,9 +1592,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         d->isIdling      = iFalse;
         d->lastEventTime = 0;
         d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
-#if defined (iPlatformTerminal)
+# if defined (iPlatformTerminal)
         d->idleSleepDelayMs = 1000 / 60;
-#else
+# else
         SDL_DisplayMode dispMode;
         SDL_GetWindowDisplayMode(d->window->win, &dispMode);
         if (dispMode.refresh_rate) {
@@ -1571,10 +1603,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
         else {
             d->idleSleepDelayMs = 1000 / 60;
         }
-#endif
+# endif
         d->idleSleepDelayMs *= 0.9f;
     }
 #endif
+    d->gamepad = (prefs_App()->useGamepad ? new_Gamepad() : NULL);
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
@@ -1612,6 +1645,7 @@ static void deinit_App(iApp *d) {
     if (d->tempFilesPendingDeletion == NULL) {
         return; /* already deinitialized */
     }
+    delete_Gamepad(d->gamepad);
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     delete_Root(d->submenuRoot);
 #endif
@@ -1919,6 +1953,11 @@ void saveStateQuickly_App(void) {
     saveState_App_(&app_, iFalse /* cached content is not saved */);
 }
 
+void saveState_App(void) {
+    saveState_App_(&app_, iTrue /* including cache */);
+    savePrefs_App_(&app_);
+}
+
 const iStringArray *recentlySubmittedInput_App(void) {
     return app_.recentlySubmittedInput;
 }
@@ -2010,6 +2049,9 @@ static iBool                pendingMotionPosted_;
 static SDL_MouseMotionEvent pendingMotion_;
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
+#if defined (iPlatformAndroidMobile)
+    blockWhileAppInBackground_Android(); /* unless audio playing/streaming */
+#endif
 #if !defined (iPlatformApple)
     /* If there is accumulated mouse motion, don't spend too long processing events.
         We want to refresh the UI ASAP, if necessary. */
@@ -2076,7 +2118,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
         switch (ev.type) {
             case SDL_QUIT:
-                if (!isMobile_Platform() || isMobileLinux_Platform()) {
+                if (isDesktop_Platform() || isMobileLinux_Platform() || isHandheld_Platform()) {
                     d->isRunning = iFalse;
                     if (findWidget_App("prefs")) {
                         /* Make sure changed preferences get saved. */
@@ -2119,6 +2161,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (d->isTextInputActive) {
                     SDL_StartTextInput();
                 }
+                postCommand_App("media.player.update"); /* in case there are any */
                 break;
             case SDL_APP_WILLENTERBACKGROUND: {
 #if defined (iPlatformAppleMobile)
@@ -2208,6 +2251,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isIdling = iFalse;
                 gotEvents = iTrue;
 #endif /* LAGRANGE_ENABLE_IDLE_SLEEP */
+                if (processEvent_Gamepad(d->gamepad, &ev)) {
+                    /* Controller events are eaten and turned into key/button and wheel events. */
+                    continue;
+                }
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
                     if (d->prefs.capsLockKeyModifier) {
@@ -2226,6 +2273,14 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAndroidMobile)
                 /* Use the system Back button to close panels, if they're open. */
                 if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_AC_BACK) {
+                    const uint32_t now = SDL_GetTicks();
+                    if (now - d->lastBackButtonTime < 100) {
+                        /* Suspiciously rapid, must be a double-posted event. The behavior of
+                           the back button/gesture has been changing over the years, so on some
+                           versions of Android it may get handled via multiple mechanisms. */
+                        continue;
+                    }
+                    d->lastBackButtonTime = now;
                     SDL_UserEvent panelBackCmd = { .type = SDL_USEREVENT,
                                                    .code = command_UserEventCode,
                                                    .data1 = iDupStr("panel.close"),
@@ -2685,6 +2740,13 @@ iBool isRefreshPending_App(void) {
     return !isEmpty_SortedArray(&d->tickers) || value_Atomic(&app_.pendingRefresh);
 }
 
+iBool isSuspended_App(void) {
+#if defined (iPlatformAndroidMobile)
+    if (isAppInBackground_Android()) return iTrue;
+#endif
+    return app_.isSuspended;
+}
+
 iBool isFinishedLaunching_App(void) {
     return app_.isFinishedLaunching;
 }
@@ -3132,6 +3194,10 @@ iPeriodic *periodic_App(void) {
     return &app_.periodic;
 }
 
+iGamepad *gamepad_App(void) {
+    return app_.gamepad;
+}
+
 iRoot *submenuRoot_MacOS(void) {
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     return app_.submenuRoot;
@@ -3142,6 +3208,11 @@ iRoot *submenuRoot_MacOS(void) {
 
 iBool isLandscape_App(void) {
     const iInt2 size = size_Window(get_Window());
+    if (isHandheld_Platform()) {
+        /* Prefer the portrait layout due to the larger default font size.
+           Can't fit as much stuff in the landscape navbar. */
+        return size.x > size.y * 1.4f;
+    }
     return size.x > size.y;
 }
 
@@ -3244,7 +3315,7 @@ static void updateImageStyleButton_(iLabelWidget *button, int style) {
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences") ||
         equal_Command(cmd, "tabs.close")) {
-        setupSheetTransition_Mobile(d, iFalse);
+        setupSheetTransition_Mobile(d, dialogTransitionDir_Widget(d));
         enableToolbar_Root(get_Root(), iTrue);
         /* Apply the new UI scaling factor to all non-popup windows. */ {
             const float uiScale =
@@ -3292,6 +3363,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gopher")));
         postCommandf_App("proxy.http address:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.http")));
+        postCommandf_App("proxy.socks noupdate:1 user:%s",
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.socks.user")));
+        postCommandf_App("proxy.socks noupdate:1 password:%s",
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.socks.password")));
+        postCommandf_App("proxy.socks address:%s",
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.socks.server")));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
         if (tabs) {
             postCommandf_App("prefs.dialogtab arg:%u",
@@ -3323,6 +3400,31 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "returnkey.set")) {
         updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.returnkey"),
                                             format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "gamepad.set")) {
+#if defined (LAGRANGE_USE_GAMEPAD)
+        const int trig   = argLabel_Command(cmd, "trig");
+        const int button = argLabel_Command(cmd, "button");
+        const int action = arg_Command(cmd);
+        updateDropdownSelection_LabelWidget(
+            findChild_Widget(d, format_CStr("gamepad.set trig:%d button:%d", trig, button)),
+            format_CStr(" arg:%d", action));
+        /* Each action can be assigned to a single button only, so another dropdown
+           may need updating, too. */
+        for (int b = SDL_CONTROLLER_BUTTON_A; b <= SDL_CONTROLLER_BUTTON_START; b++) {
+            for (int t = 0; t <= 1; t++) {
+                if (b != button || t != trig) {
+                    if (findAction_Gamepad(b, t) == action) {
+                        updateDropdownSelection_LabelWidget(
+                            findChild_Widget(d, format_CStr("gamepad.set trig:%d button:%d", t, b)),
+                            " arg:-1");
+                    }
+                }
+            }
+        }
+        refresh_Widget(d);
+#endif /* LAGRANGE_USE_GAMEPAD */
         return iFalse;
     }
     else if (equal_Command(cmd, "toolbar.action.set")) {
@@ -3717,6 +3819,32 @@ static const iString *popClosedTabUrl_App_(iApp *d) {
     return collect_String(takeLast_StringList(d->recentlyClosedTabUrls));
 }
 
+static void updateNetworkProxy_App_(iApp *d) {
+    iNetworkProxy *proxy = NULL;
+    if (!isEmpty_String(&d->prefs.strings[socksServer_PrefsString])) {
+        iString *uri =
+            collect_String(copy_String(&d->prefs.strings[socksServer_PrefsString]));
+        if (indexOfCStr_String(uri, "://") == iInvalidPos) {
+            prependCStr_String(uri, "socks5://");
+        }
+        iUrl parts;
+        init_Url(&parts, uri);
+        if (isEmpty_Range(&parts.host)) {
+            use_NetworkProxy(NULL);
+            return;
+        }
+        const uint16_t port = port_Url(&parts);
+        proxy = new_NetworkProxy(collectNewRange_String(parts.host), port ? port : 1080);
+        setCredentials_NetworkProxy(proxy,
+                                    &d->prefs.strings[socksUser_PrefsString],
+                                    &d->prefs.strings[socksPassword_PrefsString]);
+        use_NetworkProxy(proxy);
+    }
+    else {
+        use_NetworkProxy(NULL);
+    }
+}
+
 static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     const iBool isFrozen = !d->window ||
         (d->window->type == main_WindowType && as_MainWindow(d->window)->isDrawFrozen);
@@ -3770,6 +3898,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             setCurrent_Lang(cstr_String(val));
             postCommand_App("lang.changed");
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "keyboard")) {
+        set_String(&d->prefs.strings[keyboardLayout_PrefsString], string_Command(cmd, "id"));
         return iTrue;
     }
     else if (equal_Command(cmd, "navbar.action.set")) {
@@ -3835,6 +3967,21 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.menuBar = arg_Command(cmd) != 0;
         if (!isFrozen) {
             postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.bottominput.changed")) {
+        d->prefs.bottomInput = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gamepad.changed")) {
+        d->prefs.useGamepad = arg_Command(cmd) != 0;
+        if (d->prefs.useGamepad && !d->gamepad) {
+            d->gamepad = new_Gamepad();
+        }
+        else if (!d->prefs.useGamepad && d->gamepad) {
+            delete_Gamepad(d->gamepad);
+            d->gamepad = NULL;
         }
         return iTrue;
     }
@@ -4124,6 +4271,11 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.allowSchemeChangingRedirect = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.ipv6.changed")) {
+        d->prefs.preferIPv6 = arg_Command(cmd) != 0;
+        setPreferIPv6_Socket(d->prefs.preferIPv6);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "smoothscroll")) {
         d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
@@ -4149,6 +4301,31 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "returnkey.set")) {
         d->prefs.returnKey = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "gamepad.set")) {
+#if defined (LAGRANGE_USE_GAMEPAD)
+        if (argLabel_Command(cmd, "clear")) {
+            for (int i = 0; i < max_GamepadAction; i++) {
+                actions_Gamepad[i] = unassigned_Gamepad;
+            }
+            return iTrue;
+        }
+        const int trig      = argLabel_Command(cmd, "trig");
+        const int button    = argLabel_Command(cmd, "button");
+        const int modButton = button | (trig ? triggerMod_Gamepad : 0);
+        const int action    = arg_Command(cmd);
+        if (action >= 0 && action < max_GamepadAction) {
+            actions_Gamepad[action] = modButton;
+        }
+        else {
+            for (int i = 0; i < max_GamepadAction; i++) {
+                if (actions_Gamepad[i] == modButton) {
+                    actions_Gamepad[i] = unassigned_Gamepad;
+                }
+            }
+        }
+#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
@@ -4299,6 +4476,24 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "proxy.http")) {
         setCStr_String(&d->prefs.strings[httpProxy_PrefsString], suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.socks")) {
+        if (hasLabel_Command(cmd, "address")) {
+            setCStr_String(&d->prefs.strings[socksServer_PrefsString],
+                           suffixPtr_Command(cmd, "address"));
+        }
+        else if (hasLabel_Command(cmd, "user")) {
+            setCStr_String(&d->prefs.strings[socksUser_PrefsString],
+                           suffixPtr_Command(cmd, "user"));
+        }
+        else if (hasLabel_Command(cmd, "password")) {
+            setCStr_String(&d->prefs.strings[socksPassword_PrefsString],
+                           suffixPtr_Command(cmd, "password"));
+        }
+        if (!argLabel_Command(cmd, "noupdate")) {
+            updateNetworkProxy_App_(d);
+        }
         return iTrue;
     }
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
@@ -4598,7 +4793,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));
-            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+            setupSheetTransition_Mobile(as_Widget(upload),
+                                        incoming_TransitionFlag |
+                                            dialogTransitionDir_Widget(as_Widget(upload)));
             /* User can resize the upload dialog. */
             setResizeId_Widget(as_Widget(upload), "upload");
             restoreWidth_Widget(as_Widget(upload));
@@ -5118,6 +5315,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomnavbar"), d->prefs.bottomNavBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.bottominput"), d->prefs.bottomInput);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetabs"), d->prefs.hideTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
@@ -5177,6 +5375,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.editor.highlight"),
                          d->prefs.editorSyntaxHighlighting);
         setToggle_Widget(findChild_Widget(dlg, "prefs.tui.simple"), d->prefs.simpleChars);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gamepad"), d->prefs.useGamepad);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
@@ -5215,6 +5414,7 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.ipv6"), d->prefs.preferIPv6);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);
@@ -5222,19 +5422,24 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.strings[geminiProxy_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.strings[gopherProxy_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.strings[httpProxy_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.socks.server"), &d->prefs.strings[socksServer_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.socks.user"), &d->prefs.strings[socksUser_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.socks.password"), &d->prefs.strings[socksPassword_PrefsString]);
         iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
         if (tabs) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
-        if (prefs_App()->detachedPrefs && (!isWindows_Platform() || !prefs_App()->customFrame) && 
+        if (prefs_App()->detachedPrefs && (!isWindows_Platform() || !prefs_App()->customFrame) &&
             deviceType_App() == desktop_AppDeviceType && !isTerminal_Platform()) {
-            /* Detach into a window if it doesn't fit otherwise. */
+            /* Detach into a window. */
             promoteDialogToWindow_Widget(dlg);
         }
         if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
-            /* TODO: Don't hardcode the panel index. */
-            iWidget *idPanel = panel_Mobile(dlg, 3);
+            iWidget *idPanel = panel_Mobile(dlg,
+                                            isConnected_Gamepad(gamepad_App())
+                                                ? 4
+                                                : 3); /* TODO: Don't hardcode the panel index. */
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
         }
@@ -5244,7 +5449,8 @@ iBool handleCommand_App(const char *cmd) {
             }
             else {
                 /* TODO: Don't hardcode the panel index. */
-                iWidget *snippetPanel = panel_Mobile(dlg, 8);
+                iWidget *snippetPanel =
+                    panel_Mobile(dlg, isConnected_Gamepad(gamepad_App()) ? 9 : 8);
                 iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), snippetPanel);
                 postCommand_Widget(button, "panel.open");
             }
@@ -5259,6 +5465,9 @@ iBool handleCommand_App(const char *cmd) {
                 iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), snippetPanel);
                 postCommand_Widget(button, "panel.open");
             }
+        }
+        if (isPointerHidden_Gamepad(gamepad_App())) {
+            setFocus_Widget(findFocusable_Widget(dlg, forward_WidgetFocusDir));
         }
     }
     else if (equal_Command(cmd, "navigate.home") && isMainWin) {

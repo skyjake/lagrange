@@ -430,6 +430,9 @@ iWindow *   promoteDialogToWindow_Widget    (iWidget *);
 iBool       isPromoted_Widget               (iWidget *);
 void        destroyDialog_Widget            (iWidget *);
 
+const iArray *  updateBookmarksMenu_Widget  (iWidget *menu);
+void            cleanupBookmarksMenu_Widget (iWidget *menu);
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(PerfTimer)

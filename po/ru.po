@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2024-12-24 02:17+0000\n"
-"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
+"PO-Revision-Date: 2026-03-04 17:15+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -153,7 +153,7 @@ msgid "menu.show.bookmarks"
 msgstr "Показать закладки"
 
 msgid "menu.show.feeds"
-msgstr "Показать ленты"
+msgstr "Показать записи в ленте"
 
 msgid "menu.show.history"
 msgstr "Показать историю"
@@ -234,7 +234,7 @@ msgid "sidebar.bookmarks"
 msgstr "Закладки"
 
 msgid "sidebar.feeds"
-msgstr "Ленты"
+msgstr "Записи в ленте"
 
 msgid "sidebar.history"
 msgstr "История"
@@ -243,7 +243,7 @@ msgid "sidebar.identities"
 msgstr "Клиентские сертификаты"
 
 msgid "sidebar.outline"
-msgstr "Структура"
+msgstr "Оглавление"
 
 msgid "sidebar.unread"
 msgid_plural "sidebar.unread.n"
@@ -583,8 +583,8 @@ msgstr "Срок действия полученного сертификата 
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-"Полученный сертификат относится к неправильному домену (%s). Это может быть "
-"проблема конфигурации сервера."
+"Был выполнен запрос к «%s», но получен сертификат для другого домена (%s). "
+"Это может быть проблема конфигурации сервера."
 
 msgid "dlg.certwarn.domain.expired"
 msgstr ""
@@ -662,9 +662,6 @@ msgstr "Действителен до:"
 
 msgid "hint.newident.date"
 msgstr "ГГГГ или ГГГ-ММ-ДД"
-
-msgid "hint.newident.optional"
-msgstr "необязательно"
 
 msgid "dlg.newident.commonname"
 msgstr "Субъект:"
@@ -754,7 +751,7 @@ msgid "heading.prefs.general"
 msgstr "Общие"
 
 msgid "heading.prefs.interface"
-msgstr "Интерфейс"
+msgstr "Поведение"
 
 msgid "heading.prefs.keys"
 msgstr "Клавиатура"
@@ -1109,9 +1106,8 @@ msgstr "Полученный контент нельзя просмотреть 
 
 msgid "error.badheader.msg"
 msgstr ""
-"Полученный заголовок не соответствует спецификации протокола Gemini. "
-"Возможно, сервер неисправен, или вы пытались связаться с сервером, отличным "
-"от Gemini."
+"Полученный заголовок не соответствует спецификации протокола. Возможно, "
+"сервер неисправен или не поддерживает данный протокол."
 
 msgid "error.badredirect.msg"
 msgstr ""
@@ -2852,3 +2848,115 @@ msgstr "Содержимое"
 
 msgid "prefs.expandline"
 msgstr "Подгонять под длинные строки:"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Показать структуру сайта"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Показать подписки"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Показать вкладки"
+
+msgid "sidebar.structure"
+msgstr "Структура сайта"
+
+msgid "sidebar.sub.empty"
+msgstr "Пустая лента"
+
+msgid "menu.fold"
+msgstr "Свернуть"
+
+msgid "sidebar.documents"
+msgstr "Вкладки"
+
+msgid "sidebar.subscriptions"
+msgstr "Подписки"
+
+msgid "menu.sub.edit"
+msgstr "Редактирование закладки…"
+
+msgid "menu.feed.edit"
+msgstr "Настройки ленты…"
+
+msgid "heading.prefs.ui"
+msgstr "Пользовательский интерфейс"
+
+msgid "heading.prefs.theme"
+msgstr "Тема"
+
+msgid "prefs.sidebar.left"
+msgstr "Слева"
+
+msgid "prefs.sidebar.right"
+msgstr "Справа"
+
+msgid "menu.closetab.above"
+msgstr "Закрыть вкладки сверху"
+
+msgid "menu.closetab.below"
+msgstr "Закрыть вкладки снизу"
+
+msgid "menu.sidebar.configure"
+msgstr "Настройка…"
+
+msgid "hint.filter.bookmark"
+msgstr "фильтр закладок"
+
+msgid "feeds.reset"
+msgstr "Сбросить известные записи"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u запись"
+msgstr[1] "%u записи"
+msgstr[2] "%u записей"
+
+msgid "prefs.quote.italic"
+msgstr "Выделять цитаты курсивом:"
+
+msgid "heading.prefs.sidebars"
+msgstr "Боковые панели"
+
+msgid "prefs.hidetabs"
+msgstr "Скрыть вкладки:"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "Копировать сообщение"
+
+msgid "link.copy.label"
+msgstr "Копировать текст ссылки"
+
+msgid "heading.prefs.gamepad"
+msgstr "Геймпад"
+
+msgid "prefs.gamepad"
+msgstr "Геймпад включен:"
+
+msgid "prefs.gamepad.reload"
+msgstr "Перезагрузить страницу"
+
+msgid "prefs.gamepad.cancel"
+msgstr "Отмена"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Главное меню"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Боковая панель"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Меню страницы"
+
+msgid "menu.input.copyprompt"
+msgstr "Копировать промпт"
+
+msgid "menu.input.pasteprompt"
+msgstr "Вставить промпт"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Редактировать URL страницы"

@@ -248,7 +248,10 @@ void init_GmAudio(iGmAudio *d) {
 
 void deinit_GmAudio(iGmAudio *d) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
-    delete_Player(d->player);
+    //delete_Player(d->player);
+    /* On Android, the Java side may have just sent us a notification about this
+       so give some time to react to the queued message. */
+    iCollectDel(d->player, delete_Player);
 #endif
     deinit_GmMediaProps_(&d->props);
 }
@@ -451,7 +454,9 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
             if (!isStarted_Player(audio->player)) {
                 /* Maybe the previous updates didn't have enough data. */
-                start_Player(audio->player);
+                if (start_Player(audio->player)) {
+                    postCommandf_App("media.player.started player:%p", audio->player);
+                }
             }
         }
 #endif
@@ -627,12 +632,36 @@ iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
     return NULL;
 }
 
+#if 0
 void pauseAllPlayers_Media(const iMedia *d, iBool setPaused) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
     for (size_t i = 0; i < size_PtrArray(&d->items[audio_MediaType]); ++i) {
         const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], i);
         if (audio->player) {
             setPaused_Player(audio->player, setPaused);
+        }
+    }
+#endif
+}
+#endif
+
+void releasePlayers_Media(const iMedia *d) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
+    for (size_t i = 0; i < size_PtrArray(&d->items[audio_MediaType]); ++i) {
+        const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], i);
+        if (audio->player) {
+            stop_Player(audio->player);
+        }
+    }
+#endif
+}
+
+void stopFinishedPlayers_Media(const iMedia *d) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
+    for (size_t i = 0; i < size_PtrArray(&d->items[audio_MediaType]); ++i) {
+        const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], i);
+        if (audio->player && isStarted_Player(audio->player) && isFinished_Player(audio->player)) {
+            stop_Player(audio->player);
         }
     }
 #endif
@@ -649,6 +678,19 @@ size_t numActivePlayers_Media(const iMedia *d) {
     }
 #endif
     return n;
+}
+
+void updateStreamData_Media(iMedia *d, iGmLinkId linkId, const iBlock *fullData) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
+    const iMediaId mid = findLinkAudio_Media(d, linkId);
+    if (mid.type == audio_MediaType) {
+        iPlayer *player = audioPlayer_Media(d, mid);
+        if (player) {
+            updateSourceData_Player(player, NULL, fullData,
+                                    fullData ? append_PlayerUpdate : complete_PlayerUpdate);
+        }
+    }
+#endif
 }
 
 void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **path_out,
@@ -672,18 +714,30 @@ void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **p
 
 static void updated_MediaRequest_(iAnyObject *obj) {
     iMediaRequest *d = obj;
+    if (d->media) {
+        iGmResponse *resp = lockResponse_GmRequest(d->req);
+        updateStreamData_Media(d->media, d->linkId, &resp->body);
+        unlockResponse_GmRequest(d->req);
+    }
     postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
 }
 
 static void finished_MediaRequest_(iAnyObject *obj) {
     iMediaRequest *d = obj;
+    if (d->media) {
+        iGmResponse *resp = lockResponse_GmRequest(d->req);
+        updateStreamData_Media(d->media, d->linkId, &resp->body);
+        unlockResponse_GmRequest(d->req);
+        updateStreamData_Media(d->media, d->linkId, NULL); /* mark complete */
+    }
     postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
 }
 
-void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, unsigned int linkId,
-                       const iString *url, iBool enableFilters,
+void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iMedia *media,
+                       unsigned int linkId, const iString *url, iBool enableFilters,
                        const iGmIdentity *overrideDefaultIdentity) {
     d->doc    = doc;
+    d->media  = media;
     d->linkId = linkId;
     d->req    = new_GmRequest(certs_App());
     setUrl_GmRequest(d->req, url);
@@ -719,6 +773,7 @@ iMediaRequest *newReused_MediaRequest(iDocumentWidget *doc, unsigned int linkId,
                                       iGmRequest *request) {
     iMediaRequest *d = new_Object(&Class_MediaRequest);
     d->doc = doc;
+    d->media = NULL; /* reused requests are image/redirect only, never audio */
     d->linkId = linkId;
     d->req = request; /* takes ownership */
     iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
@@ -727,7 +782,8 @@ iMediaRequest *newReused_MediaRequest(iDocumentWidget *doc, unsigned int linkId,
 }
 
 iDefineObjectConstructionArgs(MediaRequest,
-                              (iDocumentWidget *doc, unsigned int linkId, const iString *url,
-                               iBool enableFilters, const iGmIdentity *overrideDefaultIdentity),
-                              doc, linkId, url, enableFilters, overrideDefaultIdentity)
+                              (iDocumentWidget *doc, iMedia *media, unsigned int linkId,
+                               const iString *url, iBool enableFilters,
+                               const iGmIdentity *overrideDefaultIdentity),
+                              doc, media, linkId, url, enableFilters, overrideDefaultIdentity)
 iDefineClass(MediaRequest)

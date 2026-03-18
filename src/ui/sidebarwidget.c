@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "documentwidget.h"
 #include "feeds.h"
+#include "gamepad.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
@@ -1871,7 +1872,9 @@ static void setSlidingSheetPos_SidebarWidget_(iSidebarWidget *d, enum iSlidingSh
         setVisualOffset_Widget(w, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
         setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
     }
-    //    animateSlidingSheetHeight_SidebarWidget_(d);
+    if (isHandheld_Platform()) {
+        setScrollMode_ListWidget(d->list, normal_ScrollMode);
+    }
 }
 
 static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
@@ -1879,6 +1882,17 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     if (equal_Command(cmd, "width")) {
         setWidth_SidebarWidget(
             d, arg_Command(cmd) * (argLabel_Command(cmd, "gaps") ? 1.0f : (1.0f / gap_UI)));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "cycle")) {
+        const int dir  = arg_Command(cmd);
+        int       mode = (d->mode + dir) % max_SidebarMode;
+        for (int i = 0; i < max_SidebarMode; i++, mode = (mode + dir) % max_SidebarMode) {
+            if (prefs_App()->sidebarModeEnabled[d->side][mode]) {
+                postCommand_Widget(w, "%s.mode arg:%d", d->side == 0 ? "sidebar" : "sidebar2", mode);
+                break;
+            }
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "mode")) {
@@ -1976,7 +1990,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                 setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 0, 0);
                 setVisualOffset_Widget(w, 0, 300, animFlags);
                 // animateSlidingSheetHeight_SidebarWidget_(d);
-                setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
+                setScrollMode_ListWidget(d->list,
+                                         isHandheld_Platform()
+                                             ? normal_ScrollMode
+                                             : disabledAtTopBothDirections_ScrollMode);
+                if (isPointerHidden_Gamepad(gamepad_App())){
+                    movePointerOntoWidget_Gamepad(gamepad_App(), as_Widget(d->list), 100);
+                }
             }
             else {
                 setVisualOffset_Widget(
@@ -1999,12 +2019,15 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (isDesktop_Platform() && prefs_App()->evenSplit) {
             resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
         }
-        if (!isHiding && !isMobile_Platform()) {
+        if (!isHiding && (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App()))) {
             setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
         else {
             setFocus_Widget(NULL);
         }
+        //if (isConnected_Gamepad(gamepad_App())) {
+        //    movePointerOntoWidget_Gamepad(gamepad_App(), NULL, 0); /* update hover */
+        //}
         refresh_Widget(w->parent);
         return iTrue;
     }
@@ -2975,6 +2998,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 refresh_Widget(w);
             }
             else {
+            #if 0
+                if (ev->wheel.which == mouseId_Gamepad) {
+                    /* With the gamepad, you can't slide the sheet, only scroll the list. */
+                    setScrollMode_ListWidget(d->list, normal_ScrollMode);
+                }
+            #endif
                 return iFalse;
             }
             return iTrue;

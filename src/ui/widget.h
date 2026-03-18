@@ -137,6 +137,7 @@ enum iWidgetFlag2 {
     leftEdgeResizing_WidgetFlag2            = iBit(10),
     rightEdgeResizing_WidgetFlag2           = iBit(11),
     childMenuOpenedAsPopup_WidgetFlag2      = iBit(12),
+    mustStayOnTop_WidgetFlag2               = iBit(13),
 };
 
 enum iWidgetAddPos {
@@ -178,9 +179,9 @@ struct Impl_Widget {
     iAnim        overflowScrollOpacity; /* scrollbar fading */
     iString      data; /* custom user data */
     /* Callbacks. */
-    iBool      (*commandHandler)(iWidget *, const char *);
-    const iArray *(*updateMenuItems)(iWidget *); /* returns the updated items for the menu */
-    void       (*menuClosed)(iWidget *);
+    iBool           (*commandHandler)(iWidget *, const char *);
+    const iArray *  (*updateMenuItems)(iWidget *); /* returns the updated items for the menu */
+    void            (*menuClosed)(iWidget *);
 };
 
 iDeclareObjectConstruction(Widget)
@@ -298,6 +299,7 @@ iLocalDef iWidget *lastChild_Widget(iAnyObject *d) {
 }
 
 iBool   isVisible_Widget            (const iAnyObject *);
+iBool   isSelfHidden_Widget         (const iAnyObject *); /* sometimes may unhide based on parent */
 iBool   isDisabled_Widget           (const iAnyObject *);
 iBool   isFocused_Widget            (const iAnyObject *);
 iBool   isHover_Widget              (const iAnyObject *);
@@ -344,6 +346,14 @@ void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
 void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
+
+iLocalDef iBool isHoverable_Widget(const iWidget *d) {
+    if (d) {
+        return flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & disabled_WidgetFlag &&
+               !isSelfHidden_Widget(d);
+    }
+    return iFalse;
+}
 
 iDeclareType(WidgetScrollInfo)
 

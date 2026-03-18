@@ -980,11 +980,20 @@ msgstr "Line break"
 msgid "dlg.input.send"
 msgstr "Send"
 
+msgid "menu.input.copyprompt"
+msgstr "Copy Prompt"
+
 msgid "menu.input.setprompt"
 msgstr "Assume This URL Requires Input"
 
 msgid "menu.input.unsetprompt"
 msgstr "Don't Assume This URL Requires Input"
+
+msgid "menu.input.showtop"
+msgstr "Show Prompt at Top"
+
+msgid "menu.input.showbottom"
+msgstr "Show Prompt at Bottom"
 
 msgid "menu.input.clear"
 msgstr "Clear History"
@@ -995,6 +1004,9 @@ msgstr "Restore Previous:"
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"
 msgstr "Paste Preceding Line"
+
+msgid "menu.input.pasteprompt"
+msgstr "Paste Prompt"
 
 msgid "keys.input.precedingline"
 msgstr "Input prompt: Paste preceding line"
@@ -1140,27 +1152,31 @@ msgstr "Open this link in the default browser?\n%s%s"
 msgid "dlg.openlink"
 msgstr "Open Link"
 
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "Copy Message"
+
 msgid "dlg.certwarn.title"
 msgstr "Security Issue"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
-msgstr[0] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in one day."
-msgstr[1] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
+msgstr[0] "The server certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in one day."
+msgstr[1] "The server certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
 
 msgid "dlg.certwarn.different"
-msgstr "The received certificate is valid but different than the one we trust."
+msgstr "The server certificate is valid but different than the one we trust."
 
 #, c-format
 msgid "dlg.certwarn.expired"
-msgstr "The received certificate has expired on %s."
+msgstr "The server certificate has expired on %s."
 
 msgid "dlg.certwarn.domain"
-msgstr "The received certificate is for the wrong domain (%s). This may be a server configuration problem."
+msgstr "The request was sent to \"%s\" but we received a certificate for a different domain (%s). This may be a server configuration problem."
 
 msgid "dlg.certwarn.domain.expired"
-msgstr "The received certificate is expired AND for the wrong domain."
+msgstr "The server certificate is expired AND for the wrong domain."
 
 msgid "heading.certimport"
 msgstr "Import Identity"
@@ -1699,7 +1715,7 @@ msgstr "Valid until:"
 msgid "hint.newident.date"
 msgstr "YYYY or YYYY-MM-DD"
 
-msgid "hint.newident.optional"
+msgid "hint.optional"
 msgstr "optional"
 
 msgid "dlg.newident.commonname"
@@ -1869,6 +1885,12 @@ msgstr "Colors"
 msgid "heading.prefs.fonts"
 msgstr "Fonts"
 
+msgid "heading.prefs.monodoc"
+msgstr "Monospace Appearance"
+
+msgid "heading.font.options"
+msgstr "Options"
+
 # tab button
 msgid "heading.prefs.general"
 msgstr "General"
@@ -1889,6 +1911,9 @@ msgstr "Theme"
 msgid "heading.prefs.sidebars"
 msgstr "Sidebars"
 
+msgid "heading.prefs.sidebars.tabs"
+msgstr "Sidebar Tabs"
+
 msgid "prefs.sidebar.left"
 msgstr "Left"
 
@@ -1898,6 +1923,9 @@ msgstr "Right"
 # tab button
 msgid "heading.prefs.keys"
 msgstr "Keys"
+
+msgid "heading.prefs.gamepad"
+msgstr "Gamepad"
 
 msgid "heading.prefs.layout"
 msgstr "Page Layout"
@@ -1909,6 +1937,12 @@ msgstr "Content"
 msgid "heading.prefs.network"
 msgstr "Network"
 
+msgid "heading.prefs.proxy"
+msgstr "Proxies"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
 msgid "heading.prefs.paragraph"
 msgstr "Paragraph"
 
@@ -1919,7 +1953,7 @@ msgid "heading.prefs.pagecontent"
 msgstr "Page Colors"
 
 msgid "heading.prefs.proxies"
-msgstr "Proxies"
+msgstr "Gemini Proxies"
 
 msgid "heading.prefs.scrolling"
 msgstr "Scrolling"
@@ -1949,6 +1983,9 @@ msgstr "Search URL:"
 
 msgid "prefs.hoverlink"
 msgstr "Show URL on hover:"
+
+msgid "prefs.bottominput"
+msgstr "Input prompt at bottom:"
 
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
@@ -2209,12 +2246,13 @@ msgstr "Preformatted:"
 msgid "prefs.font"
 msgstr "Body font:"
 
-msgid "prefs.mono"
-msgstr "Monospace body:"
-
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
 msgstr "Monospace font:"
+
+# Which protocols should the monospace body font by applied with.
+msgid "prefs.mono"
+msgstr "Use with protocols:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -2307,6 +2345,9 @@ msgstr "TLS security warnings:"
 msgid "prefs.redirect.allowscheme"
 msgstr "Scheme-changing redirects:"
 
+msgid "prefs.ipv6"
+msgstr "Prefer IPv6:"
+
 msgid "prefs.decodeurls"
 msgstr "Decode URLs:"
 
@@ -2333,6 +2374,48 @@ msgstr "Gopher proxy:"
 
 msgid "prefs.proxy.http"
 msgstr "HTTP proxy:"
+
+msgid "prefs.socks.server"
+msgstr "Proxy server:"
+
+msgid "hint.socks.server"
+msgstr "hostname:1080"
+
+msgid "prefs.socks.user"
+msgstr "Username:"
+
+msgid "prefs.socks.password"
+msgstr "Password:"
+
+msgid "prefs.gamepad"
+msgstr "Gamepad enabled:"
+
+msgid "prefs.gamepad.primary"
+msgstr "Primary Click"
+
+msgid "prefs.gamepad.secondary"
+msgstr "Secondary Click"
+
+msgid "prefs.gamepad.cancel"
+msgstr "Cancel"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Main Menu"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Page Menu"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Sidebar"
+
+msgid "prefs.gamepad.reload"
+msgstr "Reload Page"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Edit Page URL"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "RT + "
 
 msgid "menu.binding.reset"
 msgstr "Reset to Default"
@@ -2513,7 +2596,7 @@ msgid "error.badheader"
 msgstr "Invalid Header"
 
 msgid "error.badheader.msg"
-msgstr "The received header does not conform to the protocol specification. Perhaps the server is malfunctioning or does not support this protocol."
+msgstr "The response header does not conform to the protocol specification. Perhaps the server is malfunctioning or does not support this protocol."
 
 msgid "error.incompleteheader"
 msgstr "Incomplete Header"

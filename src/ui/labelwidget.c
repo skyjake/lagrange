@@ -50,14 +50,17 @@ struct Impl_LabelWidget {
         uint16_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
         uint16_t drawAsOutline       : 1; /* draw as outline, filled with background color */
         uint16_t noTopFrame          : 1;
+
         uint16_t noBottomFrame       : 1;
         uint16_t wrap                : 1;
         uint16_t allCaps             : 1;
         uint16_t removeTrailingColon : 1;
+
         uint16_t chevron             : 1;
         uint16_t checkMark           : 1;
         uint16_t truncateToFit       : 1;
         uint16_t menuCanceling       : 1;
+
         uint16_t noLabel             : 1;
         uint16_t untranslated        : 1;
     } flags;
@@ -115,7 +118,7 @@ static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
 
 static void trigger_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    if (isTerminal_Platform() && isSubmenuItem_LabelWidget_(d)) {
+    if ((isTerminal_Platform() || isHandheld_Platform()) && isSubmenuItem_LabelWidget_(d)) {
         postCommand_Widget(w, "submenu.open");
         return;
     }
@@ -501,30 +504,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         if (isButton) {
-            iInt2 points[] = {
-                bottomLeft_Rect(frameRect),
-                topLeft_Rect(frameRect),
-                topRight_Rect(frameRect),
-                bottomRight_Rect(frameRect),
-                bottomLeft_Rect(frameRect)
-            };
-#if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
-            if (isOpenGLRenderer_Window()) {
-                /* A very curious regression in SDL 2.0.16. */
-                points[3].x--;
-            }
-#endif
-            if (d->flags.noBottomFrame && !isFocused_Widget(w) && !isHover) {
-                drawLines_Paint(&p, points + 2, 2, frame2);
-                drawLines_Paint(&p, points, 3, frame);
-            }
-            else {
-                drawLines_Paint(&p, points + 2, 3, frame2);
-                drawLines_Paint(&p,
-                                points,
-                                (d->flags.noTopFrame && !isFocused_Widget(w) && !isHover ? 2 : 3),
-                                frame);
-            }
+            drawEmbossedFrame_Paint(&p,
+                                    frameRect,
+                                    frame,
+                                    frame2,
+                                    d->flags.noBottomFrame && !isFocused_Widget(w) && !isHover,
+                                    d->flags.noTopFrame && !isFocused_Widget(w) && !isHover);
         }
     }
     setClip_Paint(&p, rect);

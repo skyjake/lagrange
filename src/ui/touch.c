@@ -1038,6 +1038,15 @@ iInt2 latestTapPosition_Touch(void) {
     return touchState_()->latestLongPressStartPos;
 }
 
+iInt2 fingerPosition_Touch(void) {
+    if (numFingers_Touch() == 1) {
+        iTouchState *d = touchState_();
+        const iTouch *touch = constFront_Array(d->touches);
+        return initF3_I2(touch->pos[0]);
+    }
+    return init1_I2(-1);
+}
+
 iBool isHovering_Touch(void) {
     iTouchState *d = touchState_();
     if (numFingers_Touch() == 1) {
@@ -1054,6 +1063,10 @@ iBool isHovering_Touch(void) {
 
 size_t numFingers_Touch(void) {
     return size_Array(touchState_()->touches);
+}
+
+iBool isInteracting_Touch(void) {
+    return numFingers_Touch() || !isEmpty_Array(touchState_()->moms);
 }
 
 #else /* iPlatformTerminal */
@@ -1106,6 +1119,10 @@ iBool isHovering_Touch(void) {
 
 size_t numFingers_Touch(void) {
     return 0;
+}
+
+iBool isInteracting_Touch(void) {
+    return iFalse;
 }
 
 #endif

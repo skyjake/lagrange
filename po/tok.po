@@ -666,9 +666,6 @@ msgstr "tenpo ni la ona li wile tawa weka:"
 msgid "hint.newident.date"
 msgstr "YYYY anu YYYY-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "namako"
-
 msgid "dlg.newident.commonname"
 msgstr "nimi:"
 

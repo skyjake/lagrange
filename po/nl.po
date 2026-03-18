@@ -1137,9 +1137,6 @@ msgstr "Er wordt een zelfondertekend 2048-bit RSA-certificaat gemaakt."
 msgid "dlg.newident.until"
 msgstr "Geldig tot:"
 
-msgid "hint.newident.optional"
-msgstr "optioneel"
-
 msgid "dlg.newident.commonname"
 msgstr "Gewone naam:"
 

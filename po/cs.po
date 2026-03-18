@@ -1288,9 +1288,6 @@ msgstr "Vytváří se vlastně podepsaný 2048-bitový RSA certifikát."
 msgid "hint.newident.date"
 msgstr "RRRR nebo RRRR-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "volitelný"
-
 msgid "dlg.newident.until"
 msgstr "Platná do:"
 

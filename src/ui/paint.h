@@ -64,6 +64,8 @@ iLocalDef void drawVLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
     drawLine_Paint(d, pos, addY_I2(pos, len), color);
 }
 
+void    drawEmbossedFrame_Paint (iPaint *, iRect rect, int color1, int color2,
+                                 iBool noBottom, iBool noTop);
 void    drawPin_Paint       (iPaint *, iRect rangeRect, int dir, int pinColor);
 
 iInt2   size_SDLTexture     (SDL_Texture *);

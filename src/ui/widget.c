@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "periodic.h"
 #include "touch.h"
 #include "command.h"
+#include "gamepad.h"
 #include "paint.h"
 #include "root.h"
 #include "util.h"
@@ -263,6 +264,7 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
         win->hover = NULL;
     }
     if (win->focus == d) {
+        postCommandf_App("focus.lost ptr:%p destroyed:1", win->focus);
         win->focus = NULL;
     }
     if (win->keyPriority == d) {
@@ -313,6 +315,20 @@ int64_t flags_Widget(const iWidget *d) {
     return d ? d->flags : 0;
 }
 
+static void addToOnTop_Widget_(iWidget *d) {
+    iPtrArray *onTop = onTop_Root(d->root);
+    iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
+    /* Ensure the overlay widgets are really on top. */
+    size_t pos = size_PtrArray(onTop);
+    if (!isEmpty_PtrArray(onTop)) {
+        for (; pos > 0 &&
+               ((iWidget *) at_PtrArray(onTop, pos - 1))->flags2 & mustStayOnTop_WidgetFlag2;
+             pos--) {
+        }
+    }
+    insert_PtrArray(onTop, pos, d);
+}
+
 void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     if (d) {
         if (deviceType_App() != desktop_AppDeviceType) {
@@ -328,7 +344,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
                     raise_Widget(d);
                 }
                 else {
-                    pushBack_PtrArray(onTop, d);
+                    addToOnTop_Widget_(d);
                 }
             }
             else {
@@ -438,19 +454,18 @@ void setCommandHandler_Widget(iWidget *d, iBool (*handler)(iWidget *, const char
 }
 
 void setRoot_Widget(iWidget *d, iRoot *root) {
-    if (d->flags & keepOnTop_WidgetFlag) {
-        iAssert(indexOf_PtrArray(onTop_Root(root), d) == iInvalidPos);
-        /* Move it over the new root's onTop list. */
-        removeOne_PtrArray(onTop_Root(d->root), d);
-        if (d != root->widget) {
-            iAssert(indexOf_PtrArray(onTop_Root(d->root), d) == iInvalidPos);
-            pushBack_PtrArray(onTop_Root(root), d);
-        }
-    }
     if (d->root != root) {
+        if (d->flags & keepOnTop_WidgetFlag) {
+            iPtrArray *onTop = onTop_Root(d->root);
+            iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
+            removeOne_PtrArray(onTop, d);
+        }
         d->root = root;
         if (class_Widget(d)->rootChanged) {
             class_Widget(d)->rootChanged(d);
+        }
+        if (d->flags & keepOnTop_WidgetFlag && d != root->widget) {
+            addToOnTop_Widget_(d);
         }
     }
     iForEach(ObjectList, i, d->children) {
@@ -1206,7 +1221,8 @@ iLocalDef iBool isMouseEvent_(const SDL_Event *ev) {
             ev->type == SDL_MOUSEBUTTONUP || ev->type == SDL_MOUSEBUTTONDOWN);
 }
 
-iLocalDef iBool isHidden_Widget_(const iWidget *d) {
+iBool isSelfHidden_Widget(const iAnyObject *obj) {
+    const iWidget *d = constAs_Widget(obj);
     if (d->flags & visibleOnParentHover_WidgetFlag &&
         (isHover_Widget(d) || isHover_Widget(d->parent))) {
         return iFalse;
@@ -1218,8 +1234,8 @@ iLocalDef iBool isHidden_Widget_(const iWidget *d) {
 }
 
 iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
-    return !isHidden_Widget_(d) || (d->flags & visualOffset_WidgetFlag &&
-                                    ~d->flags2 & permanentVisualOffset_WidgetFlag2);
+    return !isSelfHidden_Widget(d) ||
+           (d->flags & visualOffset_WidgetFlag && ~d->flags2 & permanentVisualOffset_WidgetFlag2);
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
@@ -1229,11 +1245,11 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
     }
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
-    if ((d->flags & disabled_WidgetFlag) || (isHidden_Widget_(d) &&
+    if ((d->flags & disabled_WidgetFlag) || (isSelfHidden_Widget(d) &&
                                              d->flags & disabledWhenHidden_WidgetFlag)) {
         if (isKey || isMouse) return iFalse;
     }
-    if (isHidden_Widget_(d)) {
+    if (isSelfHidden_Widget(d)) {
         if (isMouse) return iFalse;
     }
     return iTrue;
@@ -1299,6 +1315,15 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     fflush(stdout);
                 }
 #endif
+#if 0
+                if (ev->type == SDL_MOUSEWHEEL) {
+                    printf("[%p] %s:'%s' (on top) ate the wheel\n",
+                           widget,
+                           class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
                 return iTrue;
             }
         }
@@ -1306,9 +1331,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     else if (ev->type == SDL_MOUSEMOTION &&
              ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
-             flags_Widget(d) & hover_WidgetFlag &&
-             !isHidden_Widget_(d) /* hidden flag on self */ &&
-             ~flags_Widget(d) & disabled_WidgetFlag) {
+             isHoverable_Widget(d)) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
             setHover_Widget(d);
 #if 0
@@ -1540,11 +1563,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
              (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
              (mouseGrab_Widget() == d || contains_Widget(d, init_I2(ev->button.x, ev->button.y)))) {
         postCommand_Widget(d,
-                           "mouse.clicked arg:%d button:%d coord:%d %d",
+                           "mouse.clicked arg:%d button:%d coord:%d %d id:%s",
                            ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
                            ev->button.button,
                            ev->button.x,
-                           ev->button.y);
+                           ev->button.y,
+                           cstr_String(id_Widget(d)));
         return iTrue;
     }
     else if (d->flags & commandOnClick_WidgetFlag &&
@@ -1564,7 +1588,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
         else if (ev->type == SDL_MOUSEMOTION && ev->motion.which != SDL_TOUCH_MOUSEID &&
-                 ev->motion.y >= 0) {
+                 ev->motion.which != mouseId_Gamepad && ev->motion.y >= 0) {
             /* TODO: Motion events occur frequently. Maybe it would help if these were handled
                via audiences that specifically register to listen for motion, to minimize the
                number of widgets that need to process them. */
@@ -1575,19 +1599,14 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             else {
                 const iWindow *win = window_Widget(d);
-                //SDL_Rect usable;
-                //SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
-                //                           &usable);
                 const int bottomLimit =
-                /*iMin(*/ bottom_Rect(visibleRect_Root(d->root)) /*, usable.h * win->pixelRatio) */
-                    - hoverScrollLimit;
+                    bottom_Rect(visibleRect_Root(d->root)) - hoverScrollLimit;
                 if (ev->motion.y > bottomLimit) {
                     speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
                 }
             }
             const int dir = speed > 0 ? 1 : -1;
             if (speed != 0.0f && isOverflowScrollPossible_Widget_(d, dir)) {
-//                speed = dir * powf(speed, 1.5f);
                 const uint32_t nowTime = SDL_GetTicks();
                 uint32_t elapsed = nowTime - lastHoverOverflowMotionTime_;
                 if (elapsed > 100) {
@@ -1620,7 +1639,6 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                         startPos_ = buttonPos;
                         startWidth_ = width_Rect(bounds);
                         d->flags2 |= leftEdgeResizing_WidgetFlag2;
-//                        setFocus_Widget(NULL);
                         setMouseGrab_Widget(d);
                     }
                     return iTrue;
@@ -1633,7 +1651,6 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                             startPos_ = buttonPos;
                             startWidth_ = width_Rect(bounds);
                             d->flags2 |= rightEdgeResizing_WidgetFlag2;
-//                            setFocus_Widget(NULL);
                             setMouseGrab_Widget(d);
                         }
                         return iTrue;
@@ -1652,23 +1669,6 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 else {
                     newWidth = startWidth_ + 2 * (startPos_.x - mousePos.x);
                 }
-//                d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
-//                d->rect.size.x = iMin(width_Widget(parent_Widget(d)), d->rect.size.x);
-//                if (class_Widget(d)->sizeChanged) {
-//                    class_Widget(d)->sizeChanged(d);
-//                }
-//                arrange_Widget(d);
-//                refresh_Widget(d);
-//                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
-//                /* Also notify the widget directly for additional handling. */
-//                const SDL_UserEvent notif = {
-//                    .type      = SDL_USEREVENT,
-//                    .timestamp = SDL_GetTicks(),
-//                    .code      = command_UserEventCode,
-//                    .data1     = "widget.resized",
-//                    .data2     = d->root,
-//                };
-//                dispatchEvent_Widget(d, (const SDL_Event *) &notif);
                 applyInteractiveResize_Widget(d, newWidth);
                 setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
                 return iTrue;
@@ -1759,7 +1759,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.y);
         return isMobile_Platform(); /* on mobile, consume missed taps to prevent accidental input */
     }
-    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) &&
+    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) && ev->type != SDL_MOUSEWHEEL &&
         contains_Rect(rect_Root(d->root), mouseCoord_SDLEvent(ev))) {
         if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
             d->flags & commandOnClick_WidgetFlag) {
@@ -2247,7 +2247,7 @@ void changeChildIndex_Widget(iWidget *d, iAnyObject *child, size_t newIndex) {
 }
 
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
-    if (isHidden_Widget_(d)) {
+    if (isSelfHidden_Widget(d)) {
         return NULL;
     }
     /* Check for on-top widgets first. */
@@ -2523,7 +2523,7 @@ const iWidget *findTopmostFocusRoot_Widget_(const iWidget *d) {
     }
     iReverseConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        const iWidget *root = findTopmostFocusRoot_Widget_(child);
+        const iWidget *root  = findTopmostFocusRoot_Widget_(child);
         if (root) {
             return root;
         }
@@ -2654,7 +2654,7 @@ void raise_Widget(iWidget *d) {
     if (d->flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
         iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
         removeOne_PtrArray(onTop, d);
-        pushBack_PtrArray(onTop, d);
+        addToOnTop_Widget_(d);
     }
 }
 

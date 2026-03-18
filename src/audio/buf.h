@@ -44,6 +44,7 @@ struct Impl_InputBuf {
     iCondition changed;
     iBlock     data;
     iBool      isComplete;
+    iBool      isShuttingDown; /* set before deinit to prevent concurrent access */
 };
 
 iDeclareTypeConstruction(InputBuf)

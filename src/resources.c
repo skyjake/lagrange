@@ -38,6 +38,7 @@ iBlock blobLicense_Resources;
 iBlock blobVersion_0_13_Resources;
 iBlock blobVersion_1_5_Resources;
 iBlock blobVersion_1_10_Resources;
+iBlock blobVersion_1_15_Resources;
 iBlock blobVersion_Resources;
 iBlock blobArghelp_Resources;
 iBlock blobCs_Resources;
@@ -68,6 +69,7 @@ iBlock blobUk_Resources;
 iBlock blobZh_Hans_Resources;
 iBlock blobZh_Hant_Resources;
 iBlock imageLogo_Resources;
+iBlock imagePointer_Resources;
 iBlock imageShadow_Resources;
 iBlock imageLagrange64_Resources;
 iBlock blobMacosSystemFontsIni_Resources;
@@ -91,6 +93,7 @@ static struct {
     { &blobVersion_0_13_Resources, "about/version-0.13.gmi" },
     { &blobVersion_1_5_Resources, "about/version-1.5.gmi" },
     { &blobVersion_1_10_Resources, "about/version-1.10.gmi" },
+    { &blobVersion_1_15_Resources, "about/version-1.15.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },
 #endif
     { &blobArghelp_Resources, "arg-help.txt" },
@@ -122,6 +125,7 @@ static struct {
     { &blobZh_Hans_Resources, "lang/zh_Hans.bin" },
     { &blobZh_Hant_Resources, "lang/zh_Hant.bin" },
     { &imageLogo_Resources, "logo.png" },
+    { &imagePointer_Resources, "pointer.png" },
     { &imageShadow_Resources, "shadow.png" },
     { &imageLagrange64_Resources, "lagrange-64.png" },
     { &blobMacosSystemFontsIni_Resources, "macos-system-fonts.ini" },

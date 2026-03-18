@@ -35,16 +35,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 extern iBool isPhone_iOS(void);
 #endif
 
-iDeclareType(Bookmarks)
-iDeclareType(DocumentWidget)
-iDeclareType(CommandLine)
-iDeclareType(GmCerts)
-iDeclareType(MainWindow)
-iDeclareType(MimeHooks)
-iDeclareType(Periodic)
-iDeclareType(Root)
-iDeclareType(Visited)
-iDeclareType(Window)
+iDeclareType(Bookmarks);
+iDeclareType(DocumentWidget);
+iDeclareType(CommandLine);
+iDeclareType(Gamepad);
+iDeclareType(GmCerts);
+iDeclareType(MainWindow);
+iDeclareType(MimeHooks);
+iDeclareType(Periodic);
+iDeclareType(Root);
+iDeclareType(Visited);
+iDeclareType(Window);
 
 typedef void iAnyWindow;
 
@@ -112,6 +113,7 @@ iBool               isFinishedLaunching_App     (void);
 iBool               isRunningUnderWindowSystem_App(void);
 iBool               isRunningUnderWayland_App   (void);
 iBool               isRefreshPending_App        (void);
+iBool               isSuspended_App             (void); /* one should not be doing anything when suspended */
 iBool               isLandscape_App             (void);
 iLocalDef iBool     isPortrait_App              (void) { return !isLandscape_App(); }
 iLocalDef iBool     isPortraitPhone_App         (void) { return isPortrait_App() && deviceType_App() == phone_AppDeviceType; }
@@ -146,6 +148,7 @@ iBookmarks *        bookmarks_App               (void);
 iMimeHooks *        mimeHooks_App               (void);
 iPeriodic *         periodic_App                (void);
 iRoot *             submenuRoot_MacOS           (void);
+iGamepad *          gamepad_App                 (void);
 
 iDocumentWidget *   document_App                (void);
 iObjectList *       listDocuments_App           (const iRoot *rootOrNull); /* NULL for all roots of current window */
@@ -154,7 +157,8 @@ iDocumentWidget *   newTab_App                  (const iDocumentWidget *duplicat
 
 void                trimCache_App               (void);
 void                trimMemory_App              (void);
-void                saveStateQuickly_App        (void);
+void                saveState_App               (void); /* full save including cached content */
+void                saveStateQuickly_App        (void); /* excluding cached content */
 void                deferVisitedSave_App        (void);
 void                setTextInputActive_App      (iBool);
 

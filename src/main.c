@@ -77,6 +77,11 @@ int main(int argc, char **argv) {
     SDL_EnableScreenSaver();
     SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "1");
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
+#if defined (iPlatformAndroidMobile)
+    SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1"); /* we want SDLK_AC_BACK */
+    SDL_SetHint(SDL_HINT_ANDROID_BLOCK_ON_PAUSE, "0");         /* don't block event loop on pause */
+    SDL_SetHint(SDL_HINT_ANDROID_BLOCK_ON_PAUSE_PAUSEAUDIO, "0"); /* don't pause audio on pause */
+#endif
 #if SDL_VERSION_ATLEAST(2, 0, 8)
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 #endif
@@ -85,6 +90,11 @@ int main(int argc, char **argv) {
 #endif
 #if !defined (iPlatformTerminal)
     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+    SDL_GameControllerAddMapping(
+        "19009b4d4b4800000111000000010000,retrogame_joypad,a:b1,b:b0,x:b2,y:b3,back:b8,start:b9,"
+        "guide:b10,leftshoulder:b4,rightshoulder:b5,lefttrigger:b6,righttrigger:b7,leftstick:b11,"
+        "rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftx:a0,lefty:a1,righty:a3,"
+        "rightx:a2");
 #endif
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
         fprintf(stderr, "[SDL] init failed: %s\n", SDL_GetError());

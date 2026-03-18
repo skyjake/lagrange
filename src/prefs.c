@@ -35,6 +35,7 @@ void init_Prefs(iPrefs *d) {
     iForIndices(i, d->strings) {
         init_String(&d->strings[i]);
     }
+    setCStr_String(&d->strings[keyboardLayout_PrefsString], "us-english"); /* KeyboardWidget */
     d->dialogTab                    = 0;
     d->langFrom                     = 0; /* auto-detect */
     d->langTo                       = 8; /* en */
@@ -48,10 +49,10 @@ void init_Prefs(iPrefs *d) {
     d->customFrame              = iFalse; /* needs some more work to be default */
     d->retainWindowSize         = iTrue;
     d->uiAnimations             = iTrue;
-    d->uiScale                  = 1.0f; /* default set elsewhere */
     d->inputZoomLevel           = 0;
     d->editorZoomLevel          = 0;
     d->editorSyntaxHighlighting = iTrue;
+    d->useGamepad               = isDesktop_Platform(); /* enabled by default on desktop */
     d->zoomPercent              = 100;
     d->navbarActions[0]         = back_ToolbarAction;
     d->navbarActions[1]         = forward_ToolbarAction;
@@ -98,6 +99,7 @@ void init_Prefs(iPrefs *d) {
     if (isTerminal_Platform()) {
         d->bottomNavBar = iTrue;
     }
+    d->bottomInput                            = iFalse; /* affects desktop only */
     d->menuBar                                = (deviceType_App() == desktop_AppDeviceType);
     d->simpleChars                            = iTrue;  /* only in terminal */
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
@@ -125,6 +127,7 @@ void init_Prefs(iPrefs *d) {
     d->capsLockKeyModifier                    = iFalse;
     d->misfinSelfCopy                         = iTrue;
     d->allowSchemeChangingRedirect            = iFalse; /* must be manually followed */
+    d->preferIPv6                             = iFalse;
     d->decodeUserVisibleURLs                  = iTrue;
     d->warnTlsSecurity                        = iTrue;
     d->maxCacheSize                           = 10;

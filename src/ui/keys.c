@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "keys.h"
 #include "util.h"
+#include "gamepad.h"
 #include "window.h"
 #include "app.h"
 
@@ -107,6 +108,7 @@ int mapMods_Keys(int modFlags) {
 
 int modState_Keys(void) {
     int state = SDL_GetModState() & ~(KMOD_NUM | KMOD_MODE | KMOD_CAPS);
+    state |= modState_Gamepad(gamepad_App());
     /* Treat capslock as a modifier key. */
     if (capsLockDown_) state |= KMOD_CAPS;
     return mapMods_Keys(state);

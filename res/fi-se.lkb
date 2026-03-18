@@ -1,0 +1,27 @@
+@fi-se: Finnish/Swedish
+
+page: lowercase
+row: 1 2 3 4 5 6 7 8 9 0
+row: q w e r t y u i o p å
+row: a s d f g h j k l ö ä
+row: {+@uppercase ⇧} {} z x c v b n m {} {+0x8 ⌫}
+row: {++@symbols #+=} {@emoji 🙂} {-0x20} {++0xd ⏎}
+
+page: uppercase
+row: ! " # € % & / ( ) =
+row: Q W E R T Y U I O P Å
+row: A S D F G H J K L Ö Ä
+row: {!+@lowercase ⇧} {} Z X C V B N M {} {+0x8 ⌫}
+row: {++@symbols #+=} {@emoji 🙂} {-0x20} {++0xd ⏎}
+onkey: lowercase
+
+page: symbols
+row: [ ] # + % ^ = * {{ }
+row: - / : ; ( ) $ & @ •
+row: _ \ | ~ < > € £ ¥
+row: {-} . , ? ! ' ` " {+0x8 ⌫}
+row: {++@lowercase abc} {-0x20} {++0xd ⏎}
+
+page: emoji
+row: 🙂 😊 😃 😂 😅 🙁 {0x8 ⌫}
+row: {++@lowercase abc} {-0x20} {++0xd ⏎}

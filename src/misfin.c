@@ -170,7 +170,9 @@ void openMessageComposer_Misfin(const iString *url, const iGmIdentity *sender) {
         postCommand_Widget(upload, "focus.set id:upload.path");
     }
     addChild_Widget(get_Root()->widget, iClob(upload));
-    setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+    setupSheetTransition_Mobile(as_Widget(upload),
+                                incoming_TransitionFlag |
+                                    dialogTransitionDir_Widget(as_Widget(upload)));
     /* User can resize the upload dialog. */
     setResizeId_Widget(as_Widget(upload), "upload");
     restoreWidth_Widget(as_Widget(upload));

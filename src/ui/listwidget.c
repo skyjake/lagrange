@@ -21,13 +21,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "listwidget.h"
-#include "scrollwidget.h"
-#include "paint.h"
-#include "util.h"
-#include "command.h"
-#include "touch.h"
-#include "visbuf.h"
 #include "app.h"
+#include "command.h"
+#include "gamepad.h"
+#include "paint.h"
+#include "scrollwidget.h"
+#include "touch.h"
+#include "util.h"
+#include "visbuf.h"
 
 #include <the_Foundation/intset.h>
 
@@ -98,7 +99,8 @@ void init_ListWidget(iListWidget *d) {
     d->dragItem = iInvalidPos;
     d->dragOrigin = zero_I2();
     d->dragHandleWidth = 0;
-    initButtons_Click(&d->click, d, SDL_BUTTON_LMASK | SDL_BUTTON_MMASK);
+    init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    init_Click(&d->midClick, d, SDL_BUTTON_MIDDLE);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
     iForIndices(i, d->visBuf->buffers) {
@@ -340,6 +342,11 @@ static iBool moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) 
     }
     if (d->cursorItem != iInvalidPos) {
         scrollToItem_ListWidget(d, d->cursorItem, prefs_App()->uiAnimations ? animSpan : 0);
+        if (isConnected_Gamepad(gamepad_App())) {
+            /* The gamepad pointer is moved to match the selected list item position. */
+            movePointer_Gamepad(gamepad_App(), mid_Rect(itemRectWithoutVisualOffset_ListWidget(d,
+                d->cursorItem)), 0);
+        }
     }
     return d->cursorItem != oldCursor;
 }
@@ -654,6 +661,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         postCommand_Widget(w, "listswipe.moved arg:%d coord:%d %d", ev->wheel.x, coord.x, coord.y);
         return iTrue;
     }
+    /* Left button: item selection, dragging. */
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             d->noHoverWhileScrolling = iFalse;
@@ -664,9 +672,6 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             abortDrag_ListWidget_(d);
             break;
         case drag_ClickResult:
-            if (d->click.clickButton != SDL_BUTTON_LEFT) {
-                return iFalse;
-            }
             if (d->dragItem == iInvalidPos && length_I2(delta_Click(&d->click)) > gap_UI) {
                 const size_t over = itemIndex_ListWidget(d, d->click.startPos);
                 if (over != iInvalidPos &&
@@ -697,14 +702,40 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         default:
             break;
     }
+    /* Middle button: secondary item action. */
+    switch (processEvent_Click(&d->midClick, ev)) {
+        case started_ClickResult:
+            updateHover_ListWidget_(d, mouseCoord_Window(get_Window(), ev->button.which));
+            return iTrue;
+        case finished_ClickResult:
+            if (!d->midClick.isDragging && d->hoverItem != iInvalidPos) {
+                postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p device:%u",
+                                   d->hoverItem,
+                                   SDL_BUTTON_MIDDLE,
+                                   constHoverItem_ListWidget(d),
+                                   ev->button.which);
+            }
+            return iTrue;
+        case aborted_ClickResult:
+            return iTrue;
+        default:
+            break;
+    }
     return processEvent_Widget(w, ev);
 }
 
 iRect itemRect_ListWidget(const iListWidget *d, size_t index) {
     const iRect bounds  = innerBounds_Widget(constAs_Widget(d));
     const int   scrollY = pos_SmoothScroll(&d->scrollY);
-    return (iRect){ addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
-                    init_I2(width_Rect(bounds), d->itemHeight) };
+    return (iRect) { addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
+                     init_I2(width_Rect(bounds), d->itemHeight) };
+}
+
+iRect itemRectWithoutVisualOffset_ListWidget(const iListWidget *d, size_t index) {
+    const iRect bounds  = innerBoundsWithoutVisualOffset_Widget(constAs_Widget(d));
+    const int   scrollY = targetValue_Anim(&d->scrollY.pos);
+    return (iRect) { addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
+                     init_I2(width_Rect(bounds), d->itemHeight) };
 }
 
 static void draw_ListWidget_(const iListWidget *d) {

@@ -765,9 +765,6 @@ msgstr "Valido fino:"
 msgid "hint.newident.date"
 msgstr "YYYY oppure YYYY-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "opzionale"
-
 msgid "dlg.newident.commonname"
 msgstr "Nome comune:"
 

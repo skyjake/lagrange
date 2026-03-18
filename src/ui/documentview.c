@@ -111,6 +111,7 @@ void init_DocumentView(iDocumentView *d) {
     d->hoverPre      = NULL;
     d->hoverAltPre   = NULL;
     d->hoverLink     = NULL;
+    d->hoverKeyLink  = NULL;
     d->animWideRunId = 0;
     init_Anim(&d->animWideRunOffset, 0);
     iZap(d->renderRuns);
@@ -201,7 +202,7 @@ void invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *d) 
     resetWideRuns_DocumentView(d);
 }
 
-static int maxDocumentWidth_DocumentView_(const iDocumentView *d) {
+int maxDocumentWidth_DocumentView(const iDocumentView *d) {
     const iWidget *w        = constAs_Widget(d->owner);
     const iRect    bounds   = bounds_Widget(w);
     const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
@@ -217,7 +218,7 @@ int documentWidth_DocumentView(const iDocumentView *d) {
         prefsWidth /= aspect_UI * 0.8f;
     }
     return iMini(fontSize_UI * prefsWidth * prefs->zoomPercent / 100,
-                 maxDocumentWidth_DocumentView_(d));
+                 maxDocumentWidth_DocumentView(d));
 }
 
 int documentTopPad_DocumentView(const iDocumentView *d) {
@@ -243,9 +244,11 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     /* Content may not be always wrappable, so let it extend to window width if needed. */
     if (prefs_App()->expandToLongLines &&
         contentWidth_GmDocument(d->doc) > size_GmDocument(d->doc).x &&
-        contentWidth_GmDocument(d->doc) < size_GmDocument(d->doc).x * 1.333f) { /* < ⅓ increase */
+        (/* TODO: compare to maxContentWidth! */
+         format_GmDocument(d->doc) == plainText_SourceFormat ||
+         contentWidth_GmDocument(d->doc) < size_GmDocument(d->doc).x * 1.333f)) { /* < ⅓ increase */
         rect.size.x = iMini(iMax(rect.size.x, contentWidth_GmDocument(d->doc)),
-                            maxDocumentWidth_DocumentView_(d));
+                            maxDocumentWidth_DocumentView(d));
     }
     rect.pos.x  = mid_Rect(bounds).x - rect.size.x / 2;
     rect.pos.y  = top_Rect(bounds) + margin;
@@ -389,6 +392,7 @@ static void unhover_DocumentView_(iDocumentView *d) {
         d->hoverLink = NULL;
         updateHoverLinkInfo_DocumentView(d);
     }
+    d->hoverKeyLink = NULL;
 }
 
 void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
@@ -576,9 +580,10 @@ void invalidate_DocumentView(iDocumentView *d) {
 
 void documentRunsInvalidated_DocumentView(iDocumentView *d) {
     /* Note: Don't call this only, the owner widget keeps pointers, too. */
-    d->hoverPre    = NULL;
-    d->hoverAltPre = NULL;
-    d->hoverLink   = NULL;
+    d->hoverPre     = NULL;
+    d->hoverAltPre  = NULL;
+    d->hoverLink    = NULL;
+    d->hoverKeyLink = NULL;
     clear_PtrArray(&d->visibleMedia);
     iZap(d->visibleRuns);
     iZap(d->renderRuns);
@@ -593,7 +598,10 @@ void resetScroll_DocumentView(iDocumentView *d) {
 }
 
 iBool updateWidth_DocumentView(iDocumentView *d) {
-    if (updateWidth_GmDocument(d->doc, documentWidth_DocumentView(d), width_Widget(d->owner))) {
+    if (updateWidth_GmDocument(d->doc,
+                               documentWidth_DocumentView(d),
+                               width_Widget(d->owner),
+                               maxDocumentWidth_DocumentView(d))) {
         documentRunsInvalidated_DocumentView(d); /* GmRuns reallocated */
         return iTrue;
     }
@@ -777,7 +785,9 @@ size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId)
 
 iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, iBool keepCenter) {
     const int newWidth = documentWidth_DocumentView(d);
-    if (newWidth == size_GmDocument(d->doc).x && !keepCenter /* not a font change */) {
+    if (newWidth == size_GmDocument(d->doc).x && !keepCenter /* not a font change */ &&
+        !(prefs_App()->expandToLongLines && prefs_App()->plainTextWrap &&
+          format_GmDocument(d->doc) == plainText_SourceFormat)) {
         return iFalse;
     }
     /* Font changes (i.e., zooming) will keep the view centered, otherwise keep the top
@@ -791,7 +801,10 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
         voffset = visibleRange_DocumentView(d).start - top_Rect(run->visBounds);
     }
     run = NULL;
-    setWidth_GmDocument(d->doc, newWidth, width_Widget(d->owner));
+    setWidth_GmDocument(d->doc,
+                        newWidth,
+                        width_Widget(d->owner),
+                        maxDocumentWidth_DocumentView(d));
     setWidth_Banner(d->banner, newWidth);
     documentRunsInvalidated_DocumentWidget(d->owner);
     if (runLoc && !keepCenter) {
@@ -948,7 +961,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const int          linkFlags = linkFlags_GmDocument(doc, run->linkId);
     /* Hover state of a link. */
     const iBool isPartOfHover = (run->linkId && d->view->hoverLink &&
-                                 run->linkId == d->view->hoverLink->linkId);
+                                 run->linkId == d->view->hoverLink->linkId &&
+                                 ~linkFlags & content_GmLinkFlag);
     iBool isHover = (isPartOfHover && ~run->flags & decoration_GmRunFlag);
     /* Visible (scrolled) position of the run. */
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),

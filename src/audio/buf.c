@@ -29,10 +29,22 @@ void init_InputBuf(iInputBuf *d) {
     init_Condition(&d->changed);
     init_Block(&d->data, 0);
     d->isComplete = iTrue;
+    d->isShuttingDown = iFalse;
 }
 
 void deinit_InputBuf(iInputBuf *d) {
+    /* Lock the mutex so we can safely free the data block. Any concurrent caller
+       holding the mutex (e.g., updateSourceData_Player on a network thread) will
+       finish before we proceed. After unlocking, concurrent callers will see
+       isShuttingDown and bail out immediately. */
+    lock_Mutex(&d->mtx);
+    d->isShuttingDown = iTrue;
     deinit_Block(&d->data);
+    unlock_Mutex(&d->mtx);
+    /* Acquire once more to ensure any thread that saw isShuttingDown has released
+       the mutex before we destroy it. */
+    lock_Mutex(&d->mtx);
+    unlock_Mutex(&d->mtx);
     deinit_Condition(&d->changed);
     deinit_Mutex(&d->mtx);
 }

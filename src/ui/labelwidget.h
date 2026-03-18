@@ -30,26 +30,26 @@ iDeclareWidgetClass(LabelWidget)
 iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *command)
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
-void    setNoAutoMinHeight_LabelWidget  (iLabelWidget *, iBool noAutoMinHeight);
-void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
-void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
-void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
+void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
 void    setCheckMark_LabelWidget    (iLabelWidget *, iBool checkMark);
-void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
+void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
+void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
+void    setFont_LabelWidget         (iLabelWidget *, int fontId);
+void    setIconColor_LabelWidget    (iLabelWidget *, int color);
+void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
+void    setMenuCanceling_LabelWidget(iLabelWidget *, iBool menuCanceling);
+void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
+void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
+void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
+void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
+void    setRemoveTrailingColon_LabelWidget(iLabelWidget *, iBool removeTrailingColon);
+void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
+void    setTextColor_LabelWidget    (iLabelWidget *, int color);
+void    setTextOffset_LabelWidget   (iLabelWidget *, iInt2 offset);
+void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
 void    setTranslation_LabelWidget  (iLabelWidget *, iBool translationEnabled);
 void    setTruncateToFit_LabelWidget(iLabelWidget *, iBool truncateToFit);
-void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
-void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
-void    setRemoveTrailingColon_LabelWidget  (iLabelWidget *, iBool removeTrailingColon);
-void    setMenuCanceling_LabelWidget(iLabelWidget *, iBool menuCanceling);
-void    setTextOffset_LabelWidget   (iLabelWidget *, iInt2 offset);
-void    setFont_LabelWidget         (iLabelWidget *, int fontId);
-void    setTextColor_LabelWidget    (iLabelWidget *, int color);
-void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
-void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
-void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
-void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
-void    setIconColor_LabelWidget    (iLabelWidget *, int color);
+void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
 
 iBool   checkIcon_LabelWidget       (iLabelWidget *);
 void    updateSize_LabelWidget      (iLabelWidget *);

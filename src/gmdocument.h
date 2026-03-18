@@ -197,21 +197,23 @@ enum iGmDocumentUpdate {
     final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
 };
 
+/* TODO: Add `GmDocumentMetrics` struct for width, maxContentWidth, canvasWidth */
+
 void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *paletteSeed,
                                  const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat sourceFormat);
 iBool   setViewFormat_GmDocument(iGmDocument *, enum iSourceFormat viewFormat); /* returns True if changed */
 enum iSourceFormat viewFormat_GmDocument(const iGmDocument *);
-void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth);
-iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth);
+void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth, int maxContentWidth);
+iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth, int maxContentWidth);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int canvasWidth,
-                                 enum iGmDocumentUpdate updateType);
+                                 int maxContentWidth, enum iGmDocumentUpdate updateType);
 void    setWarning_GmDocument   (iGmDocument *, int warning, iBool set);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 

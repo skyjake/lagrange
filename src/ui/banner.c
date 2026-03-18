@@ -149,6 +149,10 @@ iBool contains_Banner(const iBanner *d, iInt2 coord) {
     return contains_Rect(d->rect, coord);
 }
 
+const iString *message_Banner(const iBanner *d, size_t itemIndex) {
+    return &constValue_Array(&d->items, itemIndex, iBannerItem).text;
+}
+
 void clear_Banner(iBanner *d) {
     iForEach(Array, i, &d->items) {
         deinit_BannerItem(i.value);
@@ -262,7 +266,7 @@ void draw_Banner(const iBanner *d) {
     setBaseAttributes_Text(-1, -1);
 }
 
-static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
+size_t itemAtCoord_Banner(const iBanner *d, iInt2 coord) {
     iInt2 pos = addY_I2(topLeft_Rect(d->rect),
                         isEmpty_String(&d->site) ? noSiteTopPad_Banner_
                                                  : (lineHeight_Text(banner_FontId) * 2));
@@ -306,7 +310,7 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
             if (isInside ^ d->isHover) {
                 d->isHover = isInside;
             }
-            const size_t at = d->isHover ? itemAtCoord_Banner_(d, coord) : iInvalidPos;
+            const size_t at = d->isHover ? itemAtCoord_Banner(d, coord) : iInvalidPos;
             if (at != d->hoverIndex) {
                 d->hoverIndex = at;
                 refresh_Widget(w);
@@ -314,18 +318,32 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
             break;
         }
         case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEBUTTONUP: {
             /* Clicking on the top/side banner navigates to site root. */
-            if (ev->button.button == SDL_BUTTON_LEFT) {
-                const iInt2 coord = init_I2(ev->button.x, ev->button.y);
-                const iBool isInside = contains_Rect(d->rect, coord);
+            const iInt2 coord    = init_I2(ev->button.x, ev->button.y);
+            const iBool isInside = contains_Rect(d->rect, coord);
+            if (isInside && ev->button.button == SDL_BUTTON_RIGHT &&
+                ev->button.state == SDL_RELEASED) {
+                const size_t index = itemAtCoord_Banner(d, coord);
+                if (index < iInvalidPos) {
+                    //const iBannerItem *item = constAt_Array(&d->items, index);
+                    iArray *menuItems = new_Array(sizeof(iMenuItem));
+                    pushBack_Array(menuItems, &(iMenuItem){ "${menu.banner.copy}", 0, 0,
+                                                            format_CStr("!banner.copy ptr:%p arg:%u",
+                                                                        d->doc, index) });
+                    openMenu_Widget(makeMenu_Widget(get_Root()->widget, constData_Array(menuItems), size_Array(menuItems)),
+                                    mouseCoord_Window(get_Window(), 0));
+                    delete_Array(menuItems);
+                }
+            }
+            else if (ev->button.button == SDL_BUTTON_LEFT) {
                 if (isInside && ev->button.state == SDL_PRESSED) {
                     d->isClick = iTrue;
                     return iTrue;
                 }
                 else if (ev->button.state == SDL_RELEASED) {
                     if (d->isClick && isInside) {
-                        const size_t index = itemAtCoord_Banner_(d, coord);
+                        const size_t index = itemAtCoord_Banner(d, coord);
                         if (index == iInvalidPos) {
                             if (coord.y < top_Rect(d->rect) + d->siteHeight) {
                                 postCommand_Widget(d->doc, "navigate.root");
@@ -351,7 +369,7 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                                                             "%s" restore_ColorEscape,
                                                             cstr_Rangecc(urlHost_String(
                                                                 url_DocumentWidget(d->doc))))),
-                                            (iMenuItem[]){
+                                            (iMenuItem[]) {
                                                 { "${cancel}" },
                                                 { uiTextAction_ColorEscape "${dlg.dismiss.warning}",
                                                   SDLK_RETURN,
@@ -378,6 +396,7 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
 //                }
             }
             break;
+        }
     }
     return iFalse;
 }

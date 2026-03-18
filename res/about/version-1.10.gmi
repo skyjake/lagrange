@@ -1,6 +1,6 @@
 # Release notes
 
-=> about:version  Newer versions
+=> about:version-1.15  Newer versions
 
 ## 1.10.6
 * Added bindings for switching Feeds list to Unread/All mode.

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2025-09-02 06:26+0000\n"
+"PO-Revision-Date: 2026-03-12 05:58+0000\n"
 "Last-Translator: josé m. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -55,22 +55,22 @@ msgstr "Tes a certeza de querer eliminar este ficheiro?"
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] ""
-"O certificado recibido podería ter sido renovado hai pouco — é para o "
+"O certificado do servidor podería ter sido renovado hai pouco — é para o "
 "dominio correcto e non caducou. O certificado actual de confianza vai "
 "caducar en %s, nun día."
 msgstr[1] ""
-"O certificado recibido podería ter sido renovado hai pouco — é para o "
+"O certificado do servidor podería ter sido renovado hai pouco — é para o "
 "dominio correcto e non caducou. O certificado actual de confianza vai "
 "caducar en %s, en %d días."
 
 #, c-format
 msgid "dlg.certwarn.expired"
-msgstr "O certificado recibido caducou en %s."
+msgstr "O certificado do servidor caducou o %s."
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-"O certificado recibido é para o dominio incorrecto (%s). Podería deberse a "
-"un problema na configuración do servidor."
+"Enviouse a solicitude a \"%s\" pero recibeuse un certificado dun dominio "
+"diferente (%s). Pode deberse a un problema de configuración do servidor."
 
 msgid "dlg.certimport.notfound.page"
 msgstr "Non se atopa certificado ou chave na páxina actual."
@@ -803,11 +803,12 @@ msgstr "Abrir ligazón"
 
 msgid "dlg.certwarn.different"
 msgstr ""
-"O certificado recibido é válido pero diferente ao que temos establecida a "
+"O certificado do servidor é válido pero diferente ao que temos establecida a "
 "confianza nel."
 
 msgid "dlg.certwarn.domain.expired"
-msgstr "O certificado recibido está caducado E era para un dominio incorrecto."
+msgstr ""
+"O certificado do servidor está caducado E era para un dominio incorrecto."
 
 msgid "heading.certimport"
 msgstr "Importar identidade"
@@ -996,9 +997,6 @@ msgstr "Válido ata:"
 msgid "hint.newident.date"
 msgstr "YYYY ou YYYY-MM-DD"
 
-msgid "hint.newident.optional"
-msgstr "optativo"
-
 msgid "dlg.newident.commonname"
 msgstr "Nome común:"
 
@@ -1128,7 +1126,7 @@ msgid "heading.prefs.uitheme"
 msgstr "Cores da IU"
 
 msgid "heading.prefs.proxies"
-msgstr "Proxies"
+msgstr "Mandatarios gemini"
 
 msgid "heading.prefs.scrolling"
 msgstr "Desprazamento"
@@ -1262,7 +1260,7 @@ msgid "prefs.font"
 msgstr "Letra do corpo:"
 
 msgid "prefs.mono"
-msgstr "Letra mono para os textos:"
+msgstr "Usar cos protocolos:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -1445,7 +1443,7 @@ msgstr "O protocolo solicitado non ten soporte nesta aplicación."
 
 msgid "error.badheader.msg"
 msgstr ""
-"A cabeceira recibida non segue a especificación do protocolo. Pode que o "
+"A cabeceira da resposta non segue a especificación do protocolo. Pode que o "
 "servidor non funcione ben, ou que non sexa compatible con este protocolo."
 
 msgid "error.badredirect.msg"
@@ -2951,3 +2949,88 @@ msgstr "Barra esqueda de pestanas"
 
 msgid "heading.prefs.toolbartabs.right"
 msgstr "Barra dereita de pestanas"
+
+msgid "menu.input.pasteprompt"
+msgstr "Pegar Indicación"
+
+msgid "heading.prefs.gamepad"
+msgstr "Gamepad"
+
+msgid "menu.input.copyprompt"
+msgstr "Copia Indicación"
+
+msgid "prefs.gamepad"
+msgstr "Gamepad activado:"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "Copiar mensaxe"
+
+msgid "menu.input.showtop"
+msgstr "Mostrar o prompt arriba"
+
+msgid "menu.input.showbottom"
+msgstr "Mostrar o prompt abaixo"
+
+msgid "prefs.bottominput"
+msgstr "Prompt de escritura abaixo:"
+
+msgid "prefs.gamepad.primary"
+msgstr "Click prinicpal"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "RT + "
+
+msgid "prefs.ipv6"
+msgstr "Preferir IPv6:"
+
+msgid "prefs.gamepad.secondary"
+msgstr "Click secundario"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Menú principal"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Menú da páxina"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Panel lateral"
+
+msgid "prefs.gamepad.reload"
+msgstr "Recargar páxina"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Editar URL da páxina"
+
+msgid "hint.optional"
+msgstr "optativo"
+
+msgid "heading.prefs.monodoc"
+msgstr "Aparencia monoespazo"
+
+msgid "heading.font.options"
+msgstr "Opcións"
+
+msgid "heading.prefs.sidebars.tabs"
+msgstr "Pestanas laterais"
+
+msgid "heading.prefs.proxy"
+msgstr "Mandatarios"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
+msgid "prefs.socks.server"
+msgstr "Servidor mandatario:"
+
+msgid "hint.socks.server"
+msgstr "hostname:1080"
+
+msgid "prefs.socks.user"
+msgstr "Identificador:"
+
+msgid "prefs.socks.password"
+msgstr "Contrasinal:"
+
+msgid "prefs.gamepad.cancel"
+msgstr "Cancelar"

@@ -32,8 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "lookupwidget.h"
+#include "keyboardwidget.h"
 #include "sidebarwidget.h"
 #include "snippets.h"
+#include "gamepad.h"
 #include "window.h"
 #include "../visited.h"
 #include "../history.h"
@@ -126,6 +128,10 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { "${menu.page.copyurl}", 0, 0, "document.copylink" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
+#if defined (iPlatformMobileHandheld)
+    { "---" },
+    { "${menu.quit}", 0, 0, "quit" },
+#endif
     { NULL }
 };
 
@@ -493,13 +499,15 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             if (isMenuBar) {
                 setFlags_Widget(button, selected_WidgetFlag, iTrue);
             }
-            openMenuFlags_Widget(menu,
-                                 hasLabel_Command(cmd, "coord") ? coord_Command(cmd)
-                                 : isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
-                                                 : topLeft_Rect(bounds_Widget(button)),
-                                 postCommands_MenuOpenFlags |
-                                     (isMenuBar ? fromMenuBar_MenuOpenFlags : 0) |
-                                     (isSubmenu ? submenu_MenuOpenFlags : 0));
+            openMenuFlags_Widget(
+                menu,
+                hasLabel_Command(cmd, "coord") ? coord_Command(cmd)
+                : isPlacedUnder                ? bottomLeft_Rect(bounds_Widget(button))
+                                               : topLeft_Rect(bounds_Widget(button)),
+                postCommands_MenuOpenFlags |
+                    (isPointerHidden_Gamepad(gamepad_App()) ? setFocus_MenuOpenFlags : 0) |
+                    (isMenuBar ? fromMenuBar_MenuOpenFlags : 0) |
+                    (isSubmenu ? submenu_MenuOpenFlags : 0));
         }
         else {
             closeMenu_Widget(menu);
@@ -717,10 +725,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             else {
                 addChild_Widget(root, iClob(sidebar));
                 setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
-                int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
-#if defined (iPlatformAndroidMobile)
-                midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
-#endif
+                int midHeight = height_Widget(root) * (isHandheld_Platform() ? 0.75f : 0.5f);
+                if (isAndroid_Platform()) {
+                    midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
+                }
                 setMidHeight_SidebarWidget(sidebar, midHeight);
                 setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
                 setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
@@ -2304,6 +2312,10 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(menu, "toolbar.menu"); /* view menu */
     }
 #endif /* iPlatformMobile */
+    if (isHandheld_Platform()) {
+        iKeyboardWidget *kbd = new_KeyboardWidget();
+        addChildIdFlags_Widget(root, iClob(kbd), "keyboard", 0);
+    }
     setupMovableElements_Root_(d);
     updateNavBarActions_(navBar);
     updatePadding_Root(d);

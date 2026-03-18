@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2025-09-22 09:53+0000\n"
+"PO-Revision-Date: 2026-03-10 20:34+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -165,7 +165,7 @@ msgid "sidebar.bookmarks"
 msgstr "Обележивачи"
 
 msgid "sidebar.outline"
-msgstr "Структура"
+msgstr "Структура странице"
 
 msgid "toolbar.outline"
 msgstr "Структура странице"
@@ -493,9 +493,6 @@ msgstr "Важи до:"
 msgid "hint.newident.date"
 msgstr "ГГГГ или ГГГГ-ММ-ДД"
 
-msgid "hint.newident.optional"
-msgstr "необавезно"
-
 msgid "dlg.newident.notsaved"
 msgstr "не чува се на диск"
 
@@ -821,7 +818,7 @@ msgstr "Захтев проксију је одбијен"
 
 msgid "dlg.certwarn.different"
 msgstr ""
-"Примљени сертификат је исправан али се разликује од онога коме је указано "
+"Сертификат сервера је исправан али се разликује од онога коме је указано "
 "поверење."
 
 msgid "error.schemeredirect.msg"
@@ -867,7 +864,7 @@ msgstr "Преформатирани текст без натписа"
 
 #, c-format
 msgid "dlg.certwarn.expired"
-msgstr "Примљени сертификат је истекао %s."
+msgstr "Сертификат сервера је истекао %s."
 
 msgid "error.tls.msg"
 msgstr "Неуспешна комуникација са сервером."
@@ -891,7 +888,7 @@ msgid "about.powered"
 msgstr "Заснован на SDL 2, OpenSSL и ☕️"
 
 msgid "dlg.certwarn.domain.expired"
-msgstr "Примљени сертификат је истекао И за погрешан је домен."
+msgstr "Сертификат сервера је истекао И за погрешан је домен."
 
 msgid "error.cgi.msg"
 msgstr ""
@@ -1043,7 +1040,7 @@ msgid "sidebar.identities"
 msgstr "Идентитети"
 
 msgid "heading.prefs.proxies"
-msgstr "Проксији"
+msgstr "Проксији за Џемини"
 
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
@@ -1137,7 +1134,7 @@ msgid "dlg.history.clear"
 msgstr "Очисти историју"
 
 msgid "prefs.mono"
-msgstr "Тело странице фонтом једнаке ширине:"
+msgstr "Користити за протоколе:"
 
 msgid "bookmark.tag.sub"
 msgstr "Претплати се на фид"
@@ -1229,8 +1226,8 @@ msgstr ""
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-"Примљени сертификат је за погрешан домен (%s). Ово може бити проблем при "
-"подешавању сервера."
+"Захтев је упућен „%s“, али је примљен сертификат за други домен (%s). Ово "
+"може бити услед подешавања сервера."
 
 msgid "pageinfo.domain.match"
 msgstr "Назив домена одговара"
@@ -1286,7 +1283,7 @@ msgstr ""
 
 msgid "error.badheader.msg"
 msgstr ""
-"Примљено заглавље не поштује спецификацију протокола. Можда је сервер "
+"Заглавље одговора не поштује спецификацију протокола. Можда је сервер "
 "неисправан или не подржава овај протокол."
 
 msgid "error.badredirect.msg"
@@ -1298,15 +1295,15 @@ msgstr ""
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] ""
-"Примљени сертификат је можда недавно обновљен — он је за исправан домен и "
+"Сертификат сервера је можда недавно обновљен — он је за исправан домен и "
 "није истекао. Сертификат коме је тренутно указано поверење ће истећи %s, за "
 "један дан."
 msgstr[1] ""
-"Примљени сертификат је можда недавно обновљен — он је за исправан домен и "
+"Сертификат сервера је можда недавно обновљен — он је за исправан домен и "
 "није истекао. Сертификат коме је тренутно указано поверење ће истећи %s, за "
 "%d дана."
 msgstr[2] ""
-"Примљени сертификат је можда недавно обновљен — он је за исправан домен и "
+"Сертификат сервера је можда недавно обновљен — он је за исправан домен и "
 "није истекао. Сертификат коме је тренутно указано поверење ће истећи %s, за "
 "%d дана."
 
@@ -2455,7 +2452,7 @@ msgid "menu.identity.newdomain"
 msgstr "Нов идентитет домена…"
 
 msgid "dlg.newident.scope.dir"
-msgstr "Текући директоријум"
+msgstr "Текућем директоријуму"
 
 msgid "ident.unset"
 msgstr "Откачи"
@@ -2904,7 +2901,7 @@ msgid "menu.show.opendocs"
 msgstr "Прикажи картице"
 
 msgid "sidebar.structure"
-msgstr "Структура"
+msgstr "Структура сајта"
 
 msgid "sidebar.documents"
 msgstr "Картице"
@@ -2965,3 +2962,88 @@ msgstr "Картице алата здесна"
 
 msgid "heading.prefs.toolbartabs.left"
 msgstr "Картице алата слева"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "Копирај поруку"
+
+msgid "menu.input.copyprompt"
+msgstr "Копирај промпт"
+
+msgid "menu.input.pasteprompt"
+msgstr "Налепи промпт"
+
+msgid "heading.prefs.gamepad"
+msgstr "Гејмпед"
+
+msgid "prefs.gamepad"
+msgstr "Гејмпед активан:"
+
+msgid "prefs.gamepad.primary"
+msgstr "Примарни клик"
+
+msgid "prefs.gamepad.secondary"
+msgstr "Секундарни клик"
+
+msgid "prefs.gamepad.cancel"
+msgstr "Поништи"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Главни мени"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Мени странице"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Панел"
+
+msgid "prefs.gamepad.reload"
+msgstr "Поново учитај"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Уреди УРЛ стране"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "RT + "
+
+msgid "menu.input.showtop"
+msgstr "Прикажи промпт на врху"
+
+msgid "menu.input.showbottom"
+msgstr "Прикажи промпт на дну"
+
+msgid "prefs.bottominput"
+msgstr "Промпт за унос на дну:"
+
+msgid "hint.optional"
+msgstr "опционо"
+
+msgid "heading.prefs.monodoc"
+msgstr "Једнаке ширине слова"
+
+msgid "heading.font.options"
+msgstr "Опције"
+
+msgid "heading.prefs.sidebars.tabs"
+msgstr "Картице панела"
+
+msgid "heading.prefs.proxy"
+msgstr "Проксији"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
+msgid "prefs.socks.user"
+msgstr "Корисничко име:"
+
+msgid "prefs.socks.password"
+msgstr "Лозинка:"
+
+msgid "prefs.ipv6"
+msgstr "Префериран IPv6:"
+
+msgid "prefs.socks.server"
+msgstr "Прокси сервер:"
+
+msgid "hint.socks.server"
+msgstr "nazivhosta:1080"

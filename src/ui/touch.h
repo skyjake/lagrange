@@ -45,5 +45,7 @@ iBool                   hasAffinity_Touch           (const iWidget *);
 
 iInt2   latestPosition_Touch    (void); /* valid during processing of current event */
 iInt2   latestTapPosition_Touch (void);
+iInt2   fingerPosition_Touch    (void); /* actual coordinates of the current single-finger touch */
 iBool   isHovering_Touch        (void); /* stationary touch or a long-press drag ongoing */
 size_t  numFingers_Touch        (void);
+iBool   isInteracting_Touch     (void); /* ongoing finger or momentum gestures */

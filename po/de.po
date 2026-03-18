@@ -877,9 +877,6 @@ msgstr "Gültig bis:"
 msgid "hint.newident.date"
 msgstr "JJJJ oder JJJJ-MM-TT"
 
-msgid "hint.newident.optional"
-msgstr "optional"
-
 msgid "dlg.newident.commonname"
 msgstr "Gebräuchlicher Name:"
 

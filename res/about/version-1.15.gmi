@@ -1,0 +1,315 @@
+# Release notes
+
+=> about:version  Newer versions
+
+## 1.15.9
+* Added new UI translation: Basque (euskara).
+* Improved opening and closing of tabs. New tabs now open to the right of the current tab.
+* Allow scaling up small images up to 2x size.
+* Fixed possible crash when closing tabs.
+* Fixed crashes on Wayland due to use of X11-specific code.
+* Updated UI translations.
+
+## 1.15.8
+* Fixed activation of a pinned identity in inline media requests.
+* Fixed potential crash when changing split view mode during a UI animation.
+* Updated UI translations.
+
+## 1.15.7
+* Fixed window contents getting frozen after Reset Zoom when zoom level is already at 100%.
+* Fixed key modifiers not being recognized before a text field has been activated. (Affects some versions of SDL.)
+* Updated UI translations.
+
+## 1.15.6
+* The Outline tab in the sidebar now uses regular UI colors, like other sidebar tabs.
+* Fixed handling of the AltGr key during text input.
+* Fixed incorrect background colors for Preferences tab buttons with certain themes (e.g., Colorful Light).
+* Updated UI translations.
+
+## 1.15.5
+* Added several new translated languages: Azerbaijani, Catalan, Czech, Danish, Dutch, Esperanto, Finnish, Greek, Hebrew, Hungarian, Indonesian, Irish, Korean, Persian, Polish, Slovak, Swedish, Turkish, and Ukrainian. (LibreTranslate server was upgraded to v1.3.10.)
+* Added "Auto-detect" as the default source language for translation.
+* Added option to skip preformatted blocks when translating a page.
+* Fixed translation of link lines. Only the link label is now translated.
+* Fixed lines on translated pages sometimes shifting position and getting the wrong line types.
+* Fixed handling of redirects when fetching subscribed feed pages.
+* Fixed saving the "Split view pinning" setting so it doesn't reset when relaunching the app.
+* Updated UI translations.
+
+## 1.15.4
+* Fixed crash when trying to open a tab, New Identity dialog, or the Identity menu when the Preferences window is focused.
+* Fixed potential crash if switching focus to a widget being dismissed (e.g., popup going away).
+* Fixed text input becoming unresponsive when focus switches from a popup being dismissed to a new popup.
+* Fixed closing the Preferences window with Ctrl+W or ⌘W.
+* Fixed unnecessary page layout update when closing Preferences.
+* Updated UI translations.
+
+## 1.15.3
+* Fixed handling of redirects in the inline media player and file downloader.
+* Updated UI translations.
+
+## 1.15.2
+* Fixed moving input focus to the next window when closing a window.
+* Centered footer info text for better balance.
+* Fixed TUI build.
+* Updated UI translations.
+
+## 1.15.1
+* Fixed opening multiple Preferences windows at the same time.
+* Fixed the Preferences window missing a window icon.
+* Footer information moved out of the margin area and under the page content.
+* Updated UI translations.
+
+## 1.15
+New features:
+* Preferences dialog opens as a separate window.
+* Option `--prefs-sheet`: open Preferences as a sheet like in previous releases.
+* Reordering tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
+* Move a tab to the other side of a split view (tab context menu).
+* Move a tab to a new window (tab context menu).
+* Added a "Window" menu to the menu bar that has actions for manipulating and switching the active window, and duplicating and switching tabs. (On macOS, this menu has already been available.)
+* macOS: 🌐E opens the native Character Viewer.
+* Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
+* Japanese UI translation (13% complete).
+
+Changes and enhancements:
+* Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
+* Mouse cursor turns into the I-beam only over selectable text.
+* Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
+* macOS: "Window" menu has new actions for duplicating and switching tabs.
+* GTK: Request dark window theme if the app UI color theme is dark.
+* Prevent high-resolution mice from flooding event processing with too many motion events and delaying UI refresh.
+* Updated UI translations.
+
+Fixes:
+* Changing the UI scaling factor will now affect all existing and newly created windows.
+* Possible crash when duplicating a tab.
+* Issues with event processing when multiple windows are open.
+* Workaround for a hang when running many parallel requests with MIME filter hooks.
+
+## 1.14.2
+* Fixed a potential crash when using musl libc.
+* Fixed a potential crash when closing tabs in split view mode.
+* Fixed inconsistent spacing after level 1 headings.
+* Fixed endless reload animation events if a split view is closed while loading a page.
+* Fixed page load progress indicator that was being obscured by active split marker in split view.
+* Fixed potential crash when trying to reuse a TLS session.
+* FreeBSD: By default use the system-provided SSL library (that can be LibreSSL).
+* macOS: Prebuilt binaries use LibreSSL instead of OpenSSL.
+* Updated UI translations.
+
+## 1.14.1
+* Fixed possible crash when closing a tab with the outline sidebar visible.
+* Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.
+* macOS: "Settings" menu item was disabled on Ventura.
+* Updated UI translations.
+
+## 1.14
+New features:
+* A bookmark folder can be opened in new tabs, in the same window or a new one, one tab per bookmark.
+* Pinned bookmark identities. A simpler way to use identities. When the "Pinned identity" property is set on a bookmark, opening the bookmark causes the selected identity to be "pinned" to the tab: while you stay on the same site, the identity remains in use when opening links. However, when opening a link to another site, a new tab gets opened. (The old way of per-URL identities is still available, too.)
+* New identities can be created for use in the current directory (as opposed to domain or page).
+* Option `--dump` (`-d`) to print contents of URLs/paths to stdout. Metadata is printed to stderr.
+* Option `--dump-identity` (`-I`) selects the identity to use with `--dump`.
+* Option `--replace-tab URL` opens a URL, replacing contents of the active tab.
+* Option `--user DIR` (`-U`) to set the directory where user data is stored.
+
+Changes and enhancements:
+* When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.
+* URLs opened via system-level handlers always open a new tab, like URLs opened via the command line.
+* MIME types of many new file extensions are recognized (courtesy of John Cowan).
+* The regular expression library PCRE2 is preferred over PCRE, if available. The older library is in maintenance mode.
+* Updated UI translations.
+
+Fixes:
+* Accidental backwards navigation when quickly refreshing the page twice.
+* Page scroll position is kept when loading finishes, if the user already scrolled during loading.
+* Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
+* Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.
+* ANSI escapes 39 and 49 (reset FG/BG color to default) were not working.
+
+## 1.13.8
+* Fixed issues with text selection and range visualization.
+* macOS: Fixed crash when opening URLs via system handler when no windows open.
+* TUI: Improved POSIX compliance in build-tui script.
+
+## 1.13.7
+* Fixed reporting of errors related to a proxy server certificate.
+* An untrusted proxy server certificate can be trusted via Page Information.
+* Updated UI translations.
+
+## 1.13.6
+* Added option to split tabs evenly, excluding sidebar widths (default: no).
+* Fixed crash when switching view to plain text.
+* Fixed manually entered image URLs inadvertently opening inline.
+* Fixed mouse event handling in split view mode when a dialog is open on one side. The other side would not receive wheel events unless input focus was first switched over.
+* Fixed issues with popup menu positioning.
+* Fixed drawing of the widget scroll indicator when a widget doesn't fit vertically in the window.
+* Possible workaround for an issue with mouse hover autoscrolling on an external displays.
+* Don't open an endless number of bookmark creation/edit dialogs when holding down the keyboard shortcut (Ctrl+D/⌘D).
+* Percent-encode backslashes in externally opened URLs, for improved compatibility.
+* Custom link icons are allowed with unsupported/unrecognized protocols (i.e., Emoji at the start of link label).
+* Use file name as the tab/window title if the content has no headings.
+* Avoid redundancy in tab/window titles ("Cosmos — Cosmos" → "Cosmos").
+* macOS: Fixed a sidebar animation glitch when in split view mode.
+* macOS: Adjusted idle UI refresh rate when using the Metal backend, to avoid stutters.
+* Updated UI translations.
+
+## 1.13.5
+* Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices.
+* Fixed crash when determining the name of a ZIP file from a URL.
+* Fixed misparsing of URL to form the name of a downloaded file (`%23` decoded too early).
+* macOS: Fixed window state being forgotten when all windows are closed. Normally state is saved when quitting, but on macOS the app will keep running without any windows.
+* TUI: Added "Simple characters" setting (in Preferences > Fonts) that replaces selected Unicode symbols with ASCII approximations.
+* TUI: Level 1 headings are two lines tall and underlined.
+* TUI: Don't load any fontpacks.
+* TUI: `build-tui.sh` now has interactive build config.
+* Updated UI translations.
+
+## 1.13.4
+* TUI: Improved detection of supported color modes. The preferred mode is a modifiable palette with 256+ colors. As a fallback, use a fixed VGA palette, or basic monochrome if the terminal doesn't support colors.
+* TUI: Tuned build flags in `build-tui.sh` as a Linux workaround (set `-O1` on SEALCurses).
+* TUI: Ignore the LAGRANGE_OVERRIDE_DPI environment variable.
+* Spartan: Fixed opening URLs in other apps via operating system handlers.
+* Updated language strings.
+
+## 1.13.3
+* Changed URL field bookmark indicator for better consistency.
+* Show a proper error page if server closes the connection before a header is fully received.
+* Spartan: Prefilled prompt input from URL query string is selected by default.
+* Spartan: Fixed composing request content out of the query string.
+* Spartan: Fixed handling of empty path in a request.
+* Spartan: Allow opening URLs from command line.
+* Spartan: .desktop file includes Spartan scheme handling.
+* macOS: Register app as Spartan URL scheme handler.
+* macOS: Fixed relaunching the app after installing an update via Sparkle.
+* Windows: Register Gopher and Spartan URL handlers.
+* TUI: Fixed `build-tui.sh` so it doesn't expect the_Foundation to be preinstalled.
+
+## 1.13.2
+* Fixed failure to restore the selected fonts at launch.
+* Fixed window state being reset when quitting the app by closing the last window. (No such problem was occurring when quitting via menu or Ctrl+Q.)
+
+## 1.13.1
+* Fixed crash when opening Preferences. The text renderer had problems with font lookup.
+
+## 1.13
+New features:
+* Curses-based `clagrange` for running the app in the terminal. This is a complete TUI port of the original GUI version including, e.g., UI animations, smooth scrolling, and split view mode. `clagrange` has separate preferences, UI state, and key bindings but the rest of the runtime files are shared with the GUI version.
+* Build option `ENABLE_TUI`: build a text mode version of the app so it can be run in the terminal. Enabling this produces an executable called `clagrange` that is not linked with SDL.
+* URL field indicator that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.
+* Checking server certificates using a bundled root CA file.
+* Build option `CACERT_PEM_PATH`: path of a cacert.pem file that contains trusted root CA certificates. This file is included in resources.lgr.
+* Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.
+* Reopening the last closed tab. The default binding is Shift+Ctrl+T (⇧⌘T).
+* Page context menu item "View as Plain Text": show the page source as plain text.
+* Option to view Markdown as source or as a Gemtext conversion (default: as source).
+
+Changes and enhancements:
+* Updated Noto Emoji font with support for Unicode 14. There should be no more missing Emoji glyphs.
+* Improved UI keyboard navigation. The sidebar and all widgets in dialogs are accessible via Tab cycling, and new shortcuts have been added for opening menus. Menu items and lists are cursor-navigable. Opening the sidebar automatically gives it keyboard focus.
+* When bookmarking a page, show the Edit Bookmark dialog if there's already a bookmark for the URL. The Edit Bookmark dialog has a new Duplicate button for actually making a duplicate bookmark.
+* Markdown documents support horizontal rules.
+* TUI: Zoom controls resize the open sidebar (left sidebar if both visible).
+* macOS: Keep app running even after all windows are closed. Clicking on the dock icon opens a new window.
+
+Fixes:
+* Sidebar page outline not updated when the current tab changes.
+* The Escape key closes the bookmark editor dialog as intended.
+* Preferences: "Justify" option must be hidden if HarfBuzz is not used.
+* macOS: Window refresh tweaks to avoid stutters (Metal renderer).
+
+## 1.12.2
+* Fixed positioning of the language translation dialog's progress animation.
+* Fixed hovering on links via the keyboard (default binding: H).
+* Tab buttons use theme background color with light Oceanic to avoid a color clash.
+* Feed refresh indicator uses the accent color.
+* Updated UI translations.
+
+## 1.12.1
+* Windows: Fixed importing identities (path separator confusion).
+* Updated Help: export/import, user data archives, paragraph justification.
+* Updated UI translations.
+
+## 1.12
+New features:
+* Export and import user data as a ZIP archive, including identities, bookmarks, site-specific settings, trusted certificate fingerprints, and browsing history.
+* UI layout options: the navigation/tab bars can be moved to the bottom of the window, and one can have a traditional menu bar instead of the hamburger menu. On macOS, the normal menu bar is used as before.
+* Added style option to justify paragraphs that are at least three lines long.
+* Added new content theme "Oceanic" with support for both dark and light modes.
+* Added new UI accent colors: Red, Green, Blue, Gray.
+* Feeds: Added "Mark Below as Read" context menu item.
+* macOS: A set of system fonts is available for use in content/UI. In practice, these are .ttc files loaded from /System/Library/Fonts/, rendered using Lagrange's own text renderer.
+* Site-specific setting for TLS session resumption (enabled by default).
+
+Changes and enhancements:
+* Roboto is the new default content/UI font, except on Windows where Segoe UI is the default font.
+* Toggles use symbols instead of YES/NO.
+* UI uses only one accent color at a time.
+* Theme palette tuning: adjusted generated palettes of Colorful Dark/Light, improved the Sepia theme, and added a dark mode Sepia variant.
+* Certain pages like Help open in a new tab. If the page is already open in a tab, that tab is activated instead of opening a new one.
+* Improved word wrapping with more breaking punctuation.
+* Text renderer uses additional subpixel offsets with lower-density displays.
+* Text rendering optimizations: avoid repeated shaping of the same text.
+* UI rendering optimizations.
+
+Fixes:
+* Fixed a possible crash when clicking on the first link of a page with the monospace body text option enabled.
+* Fixed occasional small gaps between glyph backgrounds.
+* Fixed problems with marking feed entries as read/unread.
+* The bookmark dialog doesn't show irrelevant fields when editing a bookmark folder.
+* Spurious spaces are removed from ends of bookmark titles.
+* Pasting text into an input field should not decode reserved URL characters.
+* Percent-encoded spaces (%20) in a file name were not decoded when saving a file.
+* Windows: Fixed issues with restoring window placement in maximized mode.
+
+## 1.11.2
+* Added a keybinding for focusing the URL field.
+* Sidebar items (bookmarks, feed entries, history) can be middle-clicked to open in a new tab. Holding Shift will open the tab in the foreground.
+* Flags can be used as link icons. Note that additional fonts and HarfBuzz are required for all the flag symbols to be visible.
+* Updated UI translations.
+
+## 1.11.1
+* Fixed opening bookmarks in a new window.
+* Fixed use of a cached TLS session after deactivating a client certificate.
+
+## 1.11
+⚠️ Downgrading back to v1.10 causes all site-specific themes to be forgotten. Back up your sitespec.ini beforehand.
+
+New features:
+* Multiple windows. Windows can be opened via the menu, Ctrl/⌘+N, or link context menus.
+* Restoring tabs at launch is now optional. Added a toggle in Preferences > General.
+* Site-specific settings (Shift+Ctrl/⌘+Comma), with options for theme customization and showing ANSI escape warnings. The custom theme is based on a "seed string" chosen by the user.
+* Fontpack search. Fonts in the skyjake.fi font library have been indexed based on all the glyphs they provide, so one can look up which fontpacks provide any missing glyphs.
+* "Manage Fonts" button on the Preferences > Fonts tab. It opens "about:fonts".
+* "Tab width" setting (default: 8). This controls how TAB characters are displayed on pages.
+* Setting for maximum valid URI length on 'text/gemini' link lines.
+* Option to show images decoded from data URLs immediately after loading a page. This is limited to JPEG, PNG, WebP, and GIF (no animations).
+* "Paste and Go" in the input field context menu.
+* TLS session caching: reduces the need for redundant handshaking by keeping old TLS sessions cached for 10 minutes.
+* UI language for Italian.
+
+Changes and enhancements:
+* The input prompt dialog saves entered text persistently, just like the Upload dialog. This prevents losing text if the dialog is closed accidentally.
+* Input field backup is done per window, e.g., "uploadbackup.2.txt".
+* Sidebar context menus have more consistent "open" menu items, now including opening the item in a new window.
+* The missing glyphs warning dialog now shows a list of the missing code points.
+* Downloading the Classic Set fontpack is no longer suggested since fontpacks can be searched as needed.
+* Abbreviate font pack descriptions on "about:fonts". The full description is shown when viewing a single fontpack.
+* The active tab button uses the theme background color if the page color theme has a bright colorful background to avoid clashing with the UI accent color.
+* Adjusted colors of the Gray and Black page themes.
+* Added additional (small) variations to theme hues.
+* Data URLs have their own link icon.
+* Adjusted appearance of context menus.
+* Updated UI translations.
+
+Fixes:
+* Incorrect behavior and UI glitches related to data URLs. The UI will now omit the encoded part of data URLs.
+* Occasional mismatch between page and banner backgrounds. It was due to loss of precision when converting colors to 8-bit RGB.
+* Issues with changing UI metrics when a window moves between displays. Not all UI elements were rescaled properly.
+* Glitches with opening and closing context menus.
+* TAB characters are no longer forcibly normalized to spaces.
+* Pasting LF characters in the URL field should not be possible.
+* Avoid reinitializing fonts more than once during startup.
+
+=> about:version-1.10  Older versions

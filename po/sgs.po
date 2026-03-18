@@ -1260,9 +1260,6 @@ msgstr "Vuokītiū"
 msgid "lang.en"
 msgstr "Onglu"
 
-msgid "hint.newident.optional"
-msgstr "naprivaluoms"
-
 msgid "heading.prefs.proxies"
 msgstr "Proxy serverē"
 
