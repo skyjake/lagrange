@@ -16,7 +16,7 @@ New features:
 * Context menu for input dialog prompt text.
 * Option for Return key behavior: Shift for newline, Command/Control for accept.
 * Option to prefer IPv6 in DNS resolution.
-* Experimental gamepad support. You scroll the page and move a pointer with the thumb sticks, and map actions to gamepad buttons. (Gamepad does not interact with native popups, so gamepad controls work best without any native UI controls.)
+* Experimental gamepad support. You can scroll the page and move a pointer with the thumb sticks, and map actions to gamepad buttons. (Gamepad does not interact with native popups, so gamepad controls work best without any native UI controls.)
 * Build option for handheld devices (ENABLE_MOBILE_HANDHELD). This is a variant of the mobile phone layout with the assumption that a gamepad is used for controlling the app. It is suitable for handheld game consoles, for instance.
 
 Changes and enhancements:
