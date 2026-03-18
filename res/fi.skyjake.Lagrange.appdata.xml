@@ -45,6 +45,34 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.20" date="2026-03-18">
+            <description>
+                <ul>
+                    <li>SOCKS5 proxy support. When enabled, all connections and DNS resolution are tunneled through the proxy.</li>
+                    <li>Option to show input prompts at bottom of window (Preferences > Appearance). The placement can also be toggled in the input prompt […] menu.</li>
+                    <li>Scroll the page and lists by dragging with the middle mouse button.</li>
+                    <li>Context menu for error/warning messages. These messages are not selectable text so this way one can copy the message to the clipboard.</li>
+                    <li>Context menu for input dialog prompt text.</li>
+                    <li>Option for Return key behavior: Shift for newline, Command/Control for accept.</li>
+                    <li>Option to prefer IPv6 in DNS resolution.</li>
+                    <li>Fixed ability to scroll the page while an input prompt is open.</li>
+                    <li>Plain text lines are wrapped to the maximum available width when the expand-to-long-lines option is enabled.</li>
+                    <li>Improved warning message when there is a problem with the proxy server certificate.</li>
+                    <li>Revised order of input prompt […] menu items; added prompt position toggle.</li>
+                    <li>Stability and behavior issues with audio players. For example, history navigation was not releasing audio player resources when leaving a page. (Previously, they were just paused.)</li>
+                    <li>Auto-stopping an audio player when at end of content.</li>
+                    <li>Excessive audio player refresh interval.</li>
+                    <li>Opening a link context menu using the keyboard shortcut will remember which link as hovered using the keyboard.</li>
+                    <li>Gopher: Misdetected menu styling particularly with non-ASCII characters.</li>
+                    <li>Potential hang when laying out text into a narrow space.</li>
+                    <li>Invalid initial layout for resizable input fields, causing a flicker.</li>
+                    <li>OpenSSL error messages are no longer printed to stderr.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.0</url>
+        </release>
         <release version="1.19.4" date="2025-11-26">
             <description>
                 <ul>
