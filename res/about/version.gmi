@@ -24,7 +24,7 @@ Changes and enhancements:
 * Fixed ability to scroll the page while an input prompt is open.
 * Plain text lines are wrapped to the maximum available width when the expand-to-long-lines option is enabled.
 * Improved warning message when there is a problem with the proxy server certificate.
-* Revised order of input prompt Ellipsis menu items; added prompt position toggle.
+* Revised order of input prompt […] menu items; added prompt position toggle.
 
 Fixes:
 * Stability and behavior issues with audio players. For example, history navigation was not releasing audio player resources when leaving a page. (Previously, they were just paused.)
