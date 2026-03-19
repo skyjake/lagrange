@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.20.1
+* Windows: Fixed network connections with SOCKS5 enabled.
+* Preferences: Hide the SOCKS5 password in the input field (use "sensitive" mode).
+* Updated UI translations.
+
 ## 1.20
 
 New features:

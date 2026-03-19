@@ -3693,7 +3693,7 @@ iWidget *makePreferences_Widget(void) {
             { "heading id:heading.prefs.socks" },
             { "input id:prefs.socks.server hint:hint.socks.server" },
             { "input id:prefs.socks.user" },
-            { "input id:prefs.socks.password" },
+            { "input id:prefs.socks.password sensitive:1" },
             { "padding" },
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
@@ -4292,6 +4292,7 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_(headings, values, "prefs.socks.user", iClob(field = new_InputWidget(0)));
         setHint_InputWidget(field, "${hint.optional}");
         addPrefsInputWithHeading_(headings, values, "prefs.socks.password", iClob(field = new_InputWidget(0)));
+        setSensitiveContent_InputWidget(field, iTrue);
         setHint_InputWidget(field, "${hint.optional}");
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));

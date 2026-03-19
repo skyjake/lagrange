@@ -720,6 +720,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         if (hasLabel_Command(spec, "hint")) {
             setHint_InputWidget(input, cstr_Lang(cstr_Command(spec, "hint")));
         }
+        setSensitiveContent_InputWidget(input, argLabel_Command(spec, "sensitive") != 0);
         setId_Widget(as_Widget(input), id);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
         setLineBreaksEnabled_InputWidget(input, !argLabel_Command(spec, "nolinebreaks"));
