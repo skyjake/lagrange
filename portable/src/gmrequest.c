@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "ui/text.h"
 #include "resources.h"
-#include "sitespec.h"
+#include <lagrange/sitespec.h>
 #include "defs.h"
 
 #include <errno.h>

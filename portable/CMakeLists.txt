@@ -198,8 +198,6 @@ set (SOURCES
     src/prefs.c
     src/prefs.h
     src/resources.h
-    src/sitespec.c
-    src/sitespec.h
     src/snippets.c
     src/snippets.h
     src/stb_image.h

@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../history.h"
 #include "../gmcerts.h"
 #include "../gmutil.h"
-#include "../sitespec.h"
+#include <lagrange/sitespec.h>
 #include "../visited.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)

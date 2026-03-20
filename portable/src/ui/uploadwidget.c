@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "color.h"
 #include "command.h"
 #include "gmrequest.h"
-#include "sitespec.h"
+#include <lagrange/sitespec.h>
 #include "misfin.h"
 #include "window.h"
 #include "gmcerts.h"

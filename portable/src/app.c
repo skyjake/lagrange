@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "misfin.h"
 #include "periodic.h"
 #include "resources.h"
-#include "sitespec.h"
+#include <lagrange/sitespec.h>
 #include "snippets.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"

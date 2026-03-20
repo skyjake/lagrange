@@ -8,6 +8,7 @@ add_library (core STATIC
     src/gmutil.c
     src/lang.c
     src/resources.c
+    src/sitespec.c
 )
 
 set_property (TARGET core PROPERTY C_STANDARD 11)

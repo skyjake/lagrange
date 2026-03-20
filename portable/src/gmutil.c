@@ -22,21 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmutil.h"
 #include "lang.h"
-#include "sitespec.h"
 #include "ui/color.h"
-
-const iBlock *urlPaletteSeed_String(const iString *url) {
-    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
-        return urlThemeSeed_String(url);
-    }
-    /* Check for a site-specific setting. */
-    const iString *seed =
-        valueString_SiteSpec(collectNewRange_String(urlRoot_String(url)), paletteSeed_SiteSpecKey);
-    if (!isEmpty_String(seed)) {
-        return utf8_String(seed);
-    }
-    return urlThemeSeed_String(url);
-}
 
 const iString *prettyDataUrl_String(const iString *d, int contentColor) {
     iUrl url;

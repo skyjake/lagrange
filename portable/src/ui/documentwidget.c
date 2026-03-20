@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
-#include "sitespec.h"
+#include <lagrange/sitespec.h>
 #include "touch.h"
 #include "translation.h"
 #include "uploadwidget.h"

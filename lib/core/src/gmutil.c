@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lagrange/gmutil.h>
+#include <lagrange/sitespec.h>
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -911,4 +912,17 @@ const iGmError *get_GmError(enum iGmStatusCode code) {
     }
     iAssert(errors_[0].code == unknownStatusCode_GmStatusCode);
     return &errors_[0].err; /* unknown */
+}
+
+const iBlock *urlPaletteSeed_String(const iString *url) {
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        return urlThemeSeed_String(url);
+    }
+    /* Check for a site-specific setting. */
+    const iString *seed =
+        valueString_SiteSpec(collectNewRange_String(urlRoot_String(url)), paletteSeed_SiteSpecKey);
+    if (!isEmpty_String(seed)) {
+        return utf8_String(seed);
+    }
+    return urlThemeSeed_String(url);
 }

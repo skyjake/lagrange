@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "defs.h"
+#include <lagrange/defs.h>
 #include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringset.h>
 
