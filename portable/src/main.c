@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #  include <mpg123.h>
 #endif
 
+#include "lagrange/core.h"
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/tlsrequest.h>
 #include <SDL.h>
@@ -62,6 +63,7 @@ int main(int argc, char **argv) {
     mpg123_init();
 #endif
     init_Foundation();
+    init_Core();
     /* IssueID #122: Recommended set of TLS ciphers for Gemini */
     setCiphers_TlsRequest("ECDHE-ECDSA-AES256-GCM-SHA384:"
                           "ECDHE-ECDSA-CHACHA20-POLY1305:"
@@ -98,6 +100,7 @@ int main(int argc, char **argv) {
 #endif
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
         fprintf(stderr, "[SDL] init failed: %s\n", SDL_GetError());
+        deinit_Foundation();
         return -1;
     }
     init_Updater();
@@ -107,6 +110,7 @@ int main(int argc, char **argv) {
     mpg123_exit();
 #endif
     deinit_Updater();
+    deinit_Core();
     deinit_Foundation();
     return 0;
 }
