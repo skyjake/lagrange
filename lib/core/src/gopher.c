@@ -20,9 +20,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "gopher.h"
-#include <lagrange/prefs.h>
-#include "app.h"
+#include "lagrange/gopher.h"
+#include "lagrange/prefs.h"
 
 #include <ctype.h>
 
@@ -44,12 +43,12 @@ iLocalDef iBool isBoxDrawing_Char(iChar c) {
     return (c >= 0x2500 && c <= 0x257f);
 }
 
-static iBool isPreformatted_(iRangecc text) {
+static iBool isPreformatted_(iBool geminiStyled, iRangecc text) {
     int  numDiag   = 0;
     int  numSpace  = 0;
     int  numRepeat = 0;
     iChar chPrev   = 0;
-    if (!prefs_App()->geminiStyledGopher) {
+    if (!geminiStyled) {
         return iFalse; /* just regular text */
     }
     trimEnd_Rangecc(&text);
@@ -137,7 +136,7 @@ static iBool convertSource_Gopher_(iGopher *d) {
             switch (lineType) {
                 case 'i':
                 case '3': {
-                    setPre_Gopher_(d, isPreformatted_(text));
+                    setPre_Gopher_(d, isPreformatted_(get_Prefs()->geminiStyledGopher, text));
                     appendEscapedLineToOutput_Gopher_(d, text, size_Range(&text));
                     break;
                 }

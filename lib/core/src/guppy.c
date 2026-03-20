@@ -21,15 +21,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "guppy.h"
+#include "lagrange/guppy.h"
 #include <the_Foundation/address.h>
 #include <the_Foundation/regexp.h>
-#include <SDL_timer.h>
-#include <SDL_version.h>
-
-#if !SDL_VERSION_ATLEAST(2, 0, 18) || defined (SDL_SEAL_CURSES)
-#   define SDL_GetTicks64   SDL_GetTicks
-#endif
 
 enum iGuppyState {
     none_GuppyState,
@@ -49,6 +43,56 @@ iDefineAudienceGetter(Guppy, error);
 
 static iRegExp *metaPattern_;
 
+static void request_Guppy_(iGuppy *d) {
+    write_Datagram(d->datagram, utf8_String(collectNewFormat_String("%s\r\n", cstr_String(d->url))));
+}
+
+static void ack_Guppy_(iGuppy *d, const int seq) {
+    write_Datagram(d->datagram, utf8_String(collectNewFormat_String("%d\r\n", seq)));
+}
+
+/* Timer thread: waits on a condition with a 100ms timeout, retrying the request
+   or sending acks until cancelled or the session times out.
+   The thread never holds timerMutex and d->mtx simultaneously, which allows
+   cancel_Guppy to lock timerMutex (to set the flag and signal) even while the
+   caller holds d->mtx — no lock-order inversion, no deadlock. */
+static iThreadResult retryThread_Guppy_(iThread *thread) {
+    iGuppy *d = userData_Thread(thread);
+    lock_Mutex(&d->timerMutex);
+    while (d->timerRunning) {
+        iTime timeout;
+        initTimeout_Time(&timeout, 0.1);
+        waitTimeout_Condition(&d->timerCond, &d->timerMutex, &timeout);
+        if (!d->timerRunning) break;
+        unlock_Mutex(&d->timerMutex);
+        lock_Mutex(d->mtx);
+        /* Stop the session on timeout */
+        if (isValid_Time(&d->firstSent) && elapsedSeconds_Time(&d->firstSent) >= 6.0) {
+            unlock_Mutex(d->mtx);
+            iGuardMutex(&d->timerMutex, d->timerRunning = iFalse);
+            iNotifyAudience(d, timeout, GuppyTimeout);
+            return 0;
+        }
+        /* Resend the request if we're still waiting for the first chunk */
+        if (!d->firstSeq && isConnected_Datagram(d->datagram) &&
+            elapsedSeconds_Time(&d->lastSent) >= 1.0) {
+            request_Guppy_(d);
+            d->lastSent = now_Time();
+        }
+        /* Resend the last ack if we're still waiting for more chunks */
+        else if (d->currentSeq && elapsedSeconds_Time(&d->lastSent) >= 0.5) {
+            ack_Guppy_(d, d->currentSeq);
+            d->lastSent = now_Time();
+        }
+        unlock_Mutex(d->mtx);
+        lock_Mutex(&d->timerMutex);
+    }
+    unlock_Mutex(&d->timerMutex);
+    return 0;
+}
+
+static void addressLookupFinished_Guppy_(iGuppy *d, iAddress *address);
+
 void init_Guppy(iGuppy *d) {
     if (!metaPattern_) {
         metaPattern_ = new_RegExp("^([0-9]+)(.*)", 0);
@@ -59,9 +103,12 @@ void init_Guppy(iGuppy *d) {
     d->address = NULL;
     d->datagram = new_Datagram();
     d->body = NULL;
-    d->timer = 0;
-    d->firstSent = 0;
-    d->lastSent = 0;
+    d->timer = NULL;
+    init_Mutex(&d->timerMutex);
+    init_Condition(&d->timerCond);
+    d->timerRunning = iFalse;
+    d->firstSent = (iTime){ 0 };
+    d->lastSent  = (iTime){ 0 };
     iForIndices(i, d->chunks) {
         d->chunks[i].seq = 0;
         init_Block(&d->chunks[i].data, 0);
@@ -75,8 +122,16 @@ void init_Guppy(iGuppy *d) {
 
 void deinit_Guppy(iGuppy *d) {
     if (d->timer) {
-        SDL_RemoveTimer(d->timer);
+        lock_Mutex(&d->timerMutex);
+        d->timerRunning = iFalse;
+        signal_Condition(&d->timerCond);
+        unlock_Mutex(&d->timerMutex);
+        join_Thread(d->timer);
+        iRelease(d->timer);
+        d->timer = NULL;
     }
+    deinit_Condition(&d->timerCond);
+    deinit_Mutex(&d->timerMutex);
     iForIndices(i, d->chunks) {
         deinit_Block(&d->chunks[i].data);
     }
@@ -84,39 +139,6 @@ void deinit_Guppy(iGuppy *d) {
     delete_Audience(d->error);
     iRelease(d->address);
     iRelease(d->datagram);
-}
-
-static void request_Guppy_(iGuppy *d) {
-    write_Datagram(d->datagram, utf8_String(collectNewFormat_String("%s\r\n", cstr_String(d->url))));
-}
-
-static void ack_Guppy_(iGuppy *d, const int seq) {
-    write_Datagram(d->datagram, utf8_String(collectNewFormat_String("%d\r\n", seq)));
-}
-
-static uint32_t retryGuppy_(uint32_t interval, iAny *ptr) {
-    iUnused(interval);
-    iGuppy *d = (iGuppy *) ptr;
-    lock_Mutex(d->mtx);
-    const uint64_t now = SDL_GetTicks64();
-    /* Stop the session on timeout */
-    if (now >= d->firstSent + 6000) {
-       unlock_Mutex(d->mtx);
-       iNotifyAudience(d, timeout, GuppyTimeout);
-       return 0;
-    }
-    /* Resend the request if we're still waiting for the first chunk */
-    if (!d->firstSeq && isConnected_Datagram(d->datagram) && now >= d->lastSent + 1000) {
-        request_Guppy_(d);
-        d->lastSent = now;
-    }
-    /* Resend the last ack if we're still waiting for more chunks */
-    else if (d->currentSeq && now >= d->lastSent + 500) {
-        ack_Guppy_(d, d->currentSeq);
-        d->lastSent = now;
-    }
-    unlock_Mutex(d->mtx);
-    return 100;
 }
 
 static void addressLookupFinished_Guppy_(iGuppy *d, iAddress *address) {
@@ -128,12 +150,18 @@ static void addressLookupFinished_Guppy_(iGuppy *d, iAddress *address) {
     }
     connect_Datagram(d->datagram, d->address);
     request_Guppy_(d);
-    d->lastSent = SDL_GetTicks64();
-    if (!d->firstSent) {
+    d->lastSent = now_Time();
+    if (!isValid_Time(&d->firstSent)) {
         d->firstSent = d->lastSent;
     }
     if (!d->timer) {
-        d->timer = SDL_AddTimer(100, retryGuppy_, d);
+        lock_Mutex(&d->timerMutex);
+        d->timerRunning = iTrue;
+        unlock_Mutex(&d->timerMutex);
+        d->timer = new_Thread(retryThread_Guppy_);
+        setName_Thread(d->timer, "GuppyTimer");
+        setUserData_Thread(d->timer, d);
+        start_Thread(d->timer);
     }
 }
 
@@ -156,8 +184,16 @@ void cancel_Guppy(iGuppy *d) {
     if (d->address) {
         iDisconnect(Address, d->address, lookupFinished, d, addressLookupFinished_Guppy_);
     }
-    SDL_RemoveTimer(d->timer);
-    d->timer = 0;
+    /* Signal the timer thread to stop. Don't join here — cancel_Guppy may be
+       called while d->mtx is held, and the timer thread may be waiting to acquire
+       that same mutex. Joining while holding d->mtx would deadlock. deinit_Guppy
+       performs the join once the caller has released d->mtx. */
+    if (d->timer) {
+        iGuardMutex(&d->timerMutex, {
+            d->timerRunning = iFalse;
+            signal_Condition(&d->timerCond);
+        });
+    }
 }
 
 static void storeChunk_Guppy_(iGuppy *d, int seq, const void *data, size_t size) {
@@ -276,7 +312,7 @@ static enum iGuppyState processResponse_Guppy_(iGuppy *d, iBool *notifyUpdate) {
                     }
                     if (seq >= 6) {
                         ack_Guppy_(d, seq);
-                        d->lastSent = SDL_GetTicks64();
+                        d->lastSent = now_Time();
                         if (d->state == inProgress_GuppyState) {
                             storeChunk_Guppy_(
                                 d, seq, constData_Block(data) + crlf + 2, size_Block(data) - crlf - 2);

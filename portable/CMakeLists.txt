@@ -179,10 +179,6 @@ set (SOURCES
     src/gmrequest.h
     src/gmutil.c
     src/gmutil.h
-    src/gopher.c
-    src/gopher.h
-    src/guppy.c
-    src/guppy.h
     src/history.c
     src/history.h
     src/lookup.c

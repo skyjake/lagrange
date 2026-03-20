@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/datagram.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/thread.h>
 
 iDeclareType(GuppyChunk);
 iDeclareClass(Guppy);
@@ -48,9 +49,12 @@ struct Impl_Guppy {
     iBlock *    body; /* not owned */
     iAddress *  address;
     iDatagram * datagram;
-    int         timer;
-    uint64_t    firstSent;
-    uint64_t    lastSent;
+    iThread *   timer;
+    iMutex      timerMutex;
+    iCondition  timerCond;
+    iBool       timerRunning;
+    iTime       firstSent;
+    iTime       lastSent;
     iGuppyChunk chunks[16];
     int         firstSeq;
     int         lastSeq;

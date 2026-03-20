@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Prefs);
 
+const iPrefs *  get_Prefs   (void); /* returns the global instance (set in init_Prefs) */
+
 enum iPrefsString {
     /* General */
     uiLanguage_PrefsString,

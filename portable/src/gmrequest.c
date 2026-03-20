@@ -23,8 +23,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "gmcerts.h"
-#include "gopher.h"
-#include "guppy.h"
+#include <lagrange/gopher.h>
+#include <lagrange/guppy.h>
 #include "app.h" /* dataDir_App() */
 #include "mimehooks.h"
 #include "defs.h"

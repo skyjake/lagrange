@@ -21,15 +21,23 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/prefs.h"
+#include "lagrange/core.h"
 
 #include <assert.h>
 #include <the_Foundation/fileinfo.h>
+
+static const iPrefs *prefs_;
+
+const iPrefs *get_Prefs(void) {
+    return prefs_;
+}
 
 _Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
                    offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
 
 void init_Prefs(iPrefs *d) {
+    prefs_ = d; /* global access; there is only one Prefs */
     iForIndices(i, d->strings) {
         init_String(&d->strings[i]);
     }

@@ -6,6 +6,8 @@ project (lagrange-core)
 add_library (core STATIC
     src/core.c
     src/gmutil.c
+    src/gopher.c
+    src/guppy.c
     src/lang.c
     src/resources.c
     src/prefs.c

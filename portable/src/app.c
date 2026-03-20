@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "mimehooks.h"
 #include "misfin.h"
 #include "periodic.h"
+#include <lagrange/core.h>
 #include <lagrange/resources.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>

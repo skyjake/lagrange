@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
-#include "gopher.h"
+#include <lagrange/gopher.h>
 #include "history.h"
 #include "indicatorwidget.h"
 #include "inputwidget.h"
