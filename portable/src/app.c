@@ -30,8 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "history.h"
+#include "gempub.h"
 #include "ipc.h"
-#include "mimehooks.h"
+#include <lagrange/mimehooks.h>
 #include "misfin.h"
 #include "periodic.h"
 #include <lagrange/core.h>
@@ -1485,6 +1486,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->bookmarks = new_Bookmarks();
     d->lastVisitedSaveTime = 0;
     d->pendingVisitedSave  = iFalse;
+    setup_Gempub();
     /* Dumping requested pages. */
     if (doDump) {
         const iGmIdentity *ident = NULL;
@@ -1577,7 +1579,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     load_Visited(d->visited, dataDir_App_());
-    load_MimeHooks(d->mimehooks, dataDir_App_());
+    if (!load_MimeHooks(d->mimehooks, dataDir_App_())) {
+        postCommand_App("~config.error where:mimehooks.txt");
+    }
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,

@@ -25,10 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 
 iDeclareType(GmDocument)
+iDeclareType(MimeHooks)
 
 iDeclareType(Gempub)
 iDeclareTypeConstruction(Gempub)
-        
+
 enum iGempubProperty {
     title_GempubProperty,
     index_GempubProperty,
@@ -41,10 +42,9 @@ enum iGempubProperty {
     copyright_GempubProperty,
     license_GempubProperty,
     version_GempubProperty,
-    cover_GempubProperty,            
+    cover_GempubProperty,
     max_GempubProperty
-};    
-    
+};
 iBool       open_Gempub             (iGempub *, const iBlock *data);
 iBool       openFile_Gempub         (iGempub *, const iString *path);
 iBool       openUrl_Gempub          (iGempub *, const iString *url);
@@ -65,5 +65,7 @@ size_t          navSize_Gempub          (const iGempub *);
 size_t          navIndex_Gempub         (const iGempub *, const iString *url);
 const iString * navLinkUrl_Gempub       (const iGempub *, size_t index);
 const iString * navLinkLabel_Gempub     (const iGempub *, size_t index);
+
+void        setup_Gempub            (void); /* one-time setup at launch */
 
 extern const char *mimeType_Gempub;

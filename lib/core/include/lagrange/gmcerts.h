@@ -108,3 +108,5 @@ void                signIn_GmCerts          (iGmCerts *, iGmIdentity *identity, 
 void                signOut_GmCerts         (iGmCerts *, const iString *url);
 
 iBool               verifyDomain_GmCerts    (const iTlsCertificate *cert, iRangecc domain);
+
+iGmCerts *          get_GmCerts             (void);

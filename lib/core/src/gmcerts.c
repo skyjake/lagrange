@@ -316,6 +316,10 @@ static const char *magicIdentity_GmCerts_ = "iden";
 
 iDefineTypeConstructionArgs(GmCerts, (const char *saveDir), saveDir)
 
+iGmCerts *get_GmCerts(void) {
+    return theCerts_;
+}
+
 void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta) {
     if (trusted) {
         iString line;

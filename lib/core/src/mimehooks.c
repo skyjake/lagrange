@@ -20,11 +20,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "mimehooks.h"
-#include "defs.h"
-#include "gmutil.h"
-#include "gempub.h"
-#include "app.h"
+#include "lagrange/mimehooks.h"
+
+#include <lagrange/lang.h>
+#include <lagrange/gmutil.h>
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -220,26 +219,13 @@ finished:
     return output;
 }
 
-iBlock *translateGemPubCoverPage_(const iBlock *source, const iString *requestUrl) {
-    iBlock *output = NULL;
-    iGempub *gempub = new_Gempub();
-    if (open_Gempub(gempub, source)) {
-        setBaseUrl_Gempub(gempub, requestUrl);
-        output = newCStr_Block("20 text/gemini; charset=utf-8\r\n");
-        iString *src = coverPageSource_Gempub(gempub);
-        append_Block(output, utf8_String(src));
-        delete_String(src);
-    }
-    delete_Gempub(gempub);
-    return output;
-}
-
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
 
 struct Impl_MimeHooks {
     iPtrArray filters;
+    iPtrArray builtins; /* iMimeHookFunc pointers */
 };
 
 static iMimeHooks *theMimehooks_;
@@ -253,19 +239,20 @@ iMimeHooks *get_MimeHooks(void) {
 void init_MimeHooks(iMimeHooks *d) {
     theMimehooks_ = d; /* global instance */
     init_PtrArray(&d->filters);
+    init_PtrArray(&d->builtins);
+    addBuiltinFilter_MimeHooks(d, translateAtomXmlToGeminiFeed_);
 }
 
 void deinit_MimeHooks(iMimeHooks *d) {
     iForEach(PtrArray, i, &d->filters) {
         delete_FilterHook(i.ptr);
     }
+    deinit_PtrArray(&d->builtins);
     deinit_PtrArray(&d->filters);
 }
 
-static iBool checkGemPub_(const iString *mime, const iString *requestUrl) {
-    /* Only process GemPub in local files. */
-    return (equalCase_Rangecc(urlScheme_String(requestUrl), "file") &&
-            startsWithCase_String(mime, mimeType_Gempub));
+void addBuiltinFilter_MimeHooks(iMimeHooks *d, iMimeHookFunc func) {
+    pushBack_PtrArray(&d->builtins, (void *) func);
 }
 
 iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
@@ -300,15 +287,8 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
         }
     }
     /* Built-in filters. */
-    if (checkGemPub_(mime, requestUrl)) {
-        iBlock *result = translateGemPubCoverPage_(body, requestUrl);
-        if (result) {
-            return result;
-        }
-    }
-    init_RegExpMatch(&m);
-    if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
-        iBlock *result = translateAtomXmlToGeminiFeed_(mime, body, requestUrl);
+    iConstForEach(PtrArray, bi, &d->builtins) {
+        iBlock *result = ((iMimeHookFunc) bi.ptr)(mime, body, requestUrl);
         if (result) {
             return result;
         }
@@ -316,7 +296,7 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
     return NULL;
 }
 
-void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
+iBool load_MimeHooks(iMimeHooks *d, const char *saveDir) {
     iBool reportError = iFalse;
     iFile *f = newCStr_File(concatPath_CStr(saveDir, mimeHooksFilename_MimeHooks_));
     if (open_File(f, read_FileMode | text_FileMode)) {
@@ -353,9 +333,7 @@ void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
         delete_Block(src);
     }
     iRelease(f);
-    if (reportError) {
-        postCommand_App("~config.error where:mimehooks.txt");
-    }
+    return !reportError;
 }
 
 void save_MimeHooks(const iMimeHooks *d) {

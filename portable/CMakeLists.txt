@@ -183,8 +183,6 @@ set (SOURCES
     src/lookup.h
     src/media.c
     src/media.h
-    src/mimehooks.c
-    src/mimehooks.h
     src/misfin.c
     src/misfin.h
     src/periodic.c

@@ -21,14 +21,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gempub.h"
+#include <lagrange/mimehooks.h>
 #include "gmutil.h"
 #include "defs.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "ui/util.h"
-#include "app.h"
 
 #include <lagrange/lang.h>
+#include <lagrange/gmcerts.h>
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
@@ -73,7 +74,7 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
     if (!isEmpty_Array(d->navLinks)) {
         return;
     }
-    iGmRequest *index = iClob(new_GmRequest(certs_App()));
+    iGmRequest *index = iClob(new_GmRequest(get_GmCerts()));
     setUrl_GmRequest(index, indexPageUrl_Gempub(d));
     submit_GmRequest(index); /* this is just a local file read */
     iAssert(isFinished_GmRequest(index));
@@ -353,4 +354,30 @@ iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
         }
     }
     return haveImage;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static iBlock *mimeHook_Gempub_(const iString *mime, const iBlock *body,
+                                const iString *requestUrl) {
+    /* Only process GemPub for local files. */
+    if (!equalCase_Rangecc(urlScheme_String(requestUrl), "file") ||
+        !startsWithCase_String(mime, mimeType_Gempub)) {
+        return NULL;
+    }
+    iBlock * output = NULL;
+    iGempub *gempub = new_Gempub();
+    if (open_Gempub(gempub, body)) {
+        setBaseUrl_Gempub(gempub, requestUrl);
+        output       = newCStr_Block("20 text/gemini; charset=utf-8\r\n");
+        iString *src = coverPageSource_Gempub(gempub);
+        append_Block(output, utf8_String(src));
+        delete_String(src);
+    }
+    delete_Gempub(gempub);
+    return output;
+}
+
+void setup_Gempub(void) {
+    addBuiltinFilter_MimeHooks(get_MimeHooks(), mimeHook_Gempub_);
 }
