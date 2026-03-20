@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "gmdocument.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>

@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "fontpack.h"
 #include <lagrange/resources.h>
 #include "ui/window.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include "app.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)

@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gempub.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include "gmutil.h"
 #include <lagrange/gopher.h>
 #include "history.h"

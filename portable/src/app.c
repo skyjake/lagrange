@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "feeds.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include "gmutil.h"
 #include "history.h"
 #include "gempub.h"

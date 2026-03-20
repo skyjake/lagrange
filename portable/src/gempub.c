@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "defs.h"
 #include "gmdocument.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include "ui/util.h"
 
 #include <lagrange/lang.h>

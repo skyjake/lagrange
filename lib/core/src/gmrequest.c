@@ -20,14 +20,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "gmrequest.h"
-#include <lagrange/mimehooks.h>
+#include "lagrange/gmrequest.h"
 
 #include <lagrange/gmcerts.h>
 #include <lagrange/gmutil.h>
 #include <lagrange/gopher.h>
 #include <lagrange/guppy.h>
 #include <lagrange/lang.h>
+#include <lagrange/mimehooks.h>
 #include <lagrange/prefs.h>
 #include <lagrange/sitespec.h>
 

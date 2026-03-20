@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "media.h"
 #include "gmdocument.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include "the_Foundation/block.h"
 #include "ui/window.h"
 #include "ui/paint.h" /* size_SDLTexture */

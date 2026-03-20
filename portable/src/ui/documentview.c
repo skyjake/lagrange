@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "documentwidget.h"
 #include "gempub.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include "gmutil.h"
 #include "media.h"
 #include "paint.h"

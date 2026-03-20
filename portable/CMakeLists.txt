@@ -173,8 +173,6 @@ set (SOURCES
     src/gempub.h
     src/gmdocument.c
     src/gmdocument.h
-    src/gmrequest.c
-    src/gmrequest.h
     src/gmutil.c
     src/gmutil.h
     src/history.c

@@ -52,12 +52,12 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
 iDeclareType(GmLink)
 
 struct Impl_GmLink {
-    iString url; /* resolved */
-    iRangecc urlRange; /* URL in the source */
+    iString  url;        /* resolved */
+    iRangecc urlRange;   /* URL in the source */
     iRangecc labelRange; /* label in the source */
-    iRangecc labelIcon; /* special icon defined in the label text */
-    iTime when;
-    int flags;
+    iRangecc labelIcon;  /* special icon defined in the label text */
+    iTime    when;
+    int      flags;
 };
 
 void init_GmLink(iGmLink *d) {

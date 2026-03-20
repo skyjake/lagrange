@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "feeds.h"
 #include "bookmarks.h"
-#include "gmrequest.h"
+#include <lagrange/gmrequest.h>
 #include <lagrange/visited.h>
 #include <lagrange/lang.h>
 #include "app.h"
