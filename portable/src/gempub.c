@@ -22,12 +22,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gempub.h"
 #include "gmutil.h"
-#include <lagrange/lang.h>
 #include "defs.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "ui/util.h"
 #include "app.h"
+
+#include <lagrange/lang.h>
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
@@ -39,12 +40,12 @@ const char *mimeType_Gempub = "application/gpub+zip";
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(GempubNavLink)
- 
+
 struct Impl_GempubNavLink {
     iString url;
     iString label;
 };
-    
+
 static void init_GempubNavLink(iGempubNavLink *d) {
     init_String(&d->url);
     init_String(&d->label);
@@ -52,13 +53,13 @@ static void init_GempubNavLink(iGempubNavLink *d) {
 
 static void deinit_GempubNavLink(iGempubNavLink *d) {
     deinit_String(&d->url);
-    deinit_String(&d->label);   
+    deinit_String(&d->label);
 }
 
 iDefineTypeConstruction(GempubNavLink)
-    
+
 /*----------------------------------------------------------------------------------------------*/
-    
+
 struct Impl_Gempub {
     iArchive *arch;
     iString baseUrl;
@@ -67,7 +68,7 @@ struct Impl_Gempub {
 };
 
 iDefineTypeConstruction(Gempub)
-    
+
 static void parseNavigationLinks_Gempub_(const iGempub *d) {
     if (!isEmpty_Array(d->navLinks)) {
         return;
@@ -95,7 +96,7 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
                 setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
                 trim_String(&link.label);
                 if (isEmpty_String(&link.label)) {
-                    setRange_String(&link.label, url);                    
+                    setRange_String(&link.label, url);
                 }
                 pushBack_Array(d->navLinks, &link);
             }
@@ -103,7 +104,7 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
         }
     }
 }
-    
+
 void init_Gempub(iGempub *d) {
     d->arch = NULL;
     init_String(&d->baseUrl);
@@ -124,7 +125,7 @@ void deinit_Gempub(iGempub *d) {
     deinit_String(&d->baseUrl);
     iRelease(d->arch);
 }
-    
+
 static iBool parseMetadata_Gempub_(iGempub *d) {
     iAssert(isOpen_Archive(d->arch));
     /* Parse the metadata and check if the required contents are present. */
@@ -165,7 +166,7 @@ static iBool parseMetadata_Gempub_(iGempub *d) {
         }
     }
     return iTrue;
-}    
+}
 
 iBool open_Gempub(iGempub *d, const iBlock *data) {
     close_Gempub(d);
@@ -269,7 +270,7 @@ const iString *navLinkLabel_Gempub(const iGempub *d, size_t index) {
     if (index < size_Array(d->navLinks)) {
         return &constValue_Array(d->navLinks, index, iGempubNavLink).label;
     }
-    return NULL;    
+    return NULL;
 }
 
 static iBool hasProperty_Gempub_(const iGempub *d, enum iGempubProperty prop) {

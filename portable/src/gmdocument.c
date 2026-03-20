@@ -21,7 +21,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmdocument.h"
-#include "gmtypesetter.h"
 #include "gmutil.h"
 #include <lagrange/lang.h>
 #include "ui/color.h"
