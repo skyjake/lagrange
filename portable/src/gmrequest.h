@@ -22,10 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <lagrange/gmutil.h>
 #include <the_Foundation/audience.h>
 #include <the_Foundation/tlsrequest.h>
-
-#include "gmutil.h"
 
 iDeclareType(GmCerts)
 iDeclareType(GmIdentity)

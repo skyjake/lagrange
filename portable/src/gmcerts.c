@@ -21,10 +21,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmcerts.h"
-#include "gmutil.h"
-#include "defs.h"
 #include "app.h"
 
+#include <lagrange/core.h>
+#include <lagrange/prefs.h>
+#include <lagrange/gmutil.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/mutex.h>
@@ -350,8 +351,8 @@ void saveIdentities_GmCerts(const iGmCerts *d) {
         serialize_GmCerts(d, NULL, stream_File(f));
     }
     iRelease(f);
-    commitFile_App(cstrCollect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)),
-                   cstr_String(tempPath));
+    commitFile_Core(cstrCollect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)),
+                    cstr_String(tempPath));
 }
 
 static void save_GmCerts_(const iGmCerts *d) {
@@ -544,7 +545,7 @@ iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int dep
         /* We only check the primary certificate. */
         return iTrue;
     }
-    if (!prefs_App()->warnTlsSecurity) {
+    if (!get_Prefs()->warnTlsSecurity) {
         return iTrue; /* User wants to disregard security concerns. */
     }
     const iAddress *address = address_TlsRequest(request);

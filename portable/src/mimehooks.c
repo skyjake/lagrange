@@ -80,7 +80,7 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
     seg = iNullRange;
     while (nextSplit_Rangecc(range_String(mime), ";", &seg)) {
         pushBackRange_StringList(args, seg);
-    }    
+    }
     lock_Mutex(mtx_);
     iBlock *output = NULL;
     for (int attempts = 0; attempts < 3; attempts++) {

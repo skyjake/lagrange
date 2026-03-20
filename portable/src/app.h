@@ -193,7 +193,6 @@ iDocumentWidget *document_Command       (const char *cmd);
 iAny *      findWidget_App              (const char *id);
 iBool       moveFocusWithArrows_App     (const void *sdlEvent);
 iBool       moveFocusInsideMenu_App     (const void *sdlEvent);
-void        commitFile_App              (const char *path, const char *tempPathWithNewContents); /* latter will be removed */
 void        openInDefaultBrowser_App    (const iString *url, const iString *mime);
 void        revealPath_App              (const iString *path);
 void        updateCACertificates_App    (void);

@@ -22,6 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/core.h"
 
+#include <the_Foundation/path.h>
+#include <the_Foundation/string.h>
+
 iDeclareType(Core)
 
 struct Impl_Core {
@@ -45,4 +48,12 @@ void setPhone_Core(iBool isPhone) {
 
 iBool isPhone_Core(void) {
     return core_.isPhone;
+}
+
+void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
+    iString *oldPath = collectNewCStr_String(path);
+    appendCStr_String(oldPath, ".old");
+    renamePath_CStr(path, cstr_String(oldPath));
+    renamePath_CStr(tempPathWithNewContents, path);
+    removePath_CStr(cstr_String(oldPath));
 }

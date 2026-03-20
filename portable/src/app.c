@@ -1066,16 +1066,8 @@ static void saveState_App_(const iApp *d, iBool withContent) {
     }
     /* Copy it over to the real file. This avoids truncation if the app for any reason crashes
        before the state file is fully written. */
-    commitFile_App(concatPath_CStr(dataDir_App_(), stateFileName_App_),
-                   concatPath_CStr(dataDir_App_(), tempStateFileName_App_));
-}
-
-void commitFile_App(const char *path, const char *tempPathWithNewContents) {
-    iString *oldPath = collectNewCStr_String(path);
-    appendCStr_String(oldPath, ".old");
-    renamePath_CStr(path, cstr_String(oldPath));
-    renamePath_CStr(tempPathWithNewContents, path);
-    removePath_CStr(cstr_String(oldPath));
+    commitFile_Core(concatPath_CStr(dataDir_App_(), stateFileName_App_),
+                    concatPath_CStr(dataDir_App_(), tempStateFileName_App_));
 }
 
  void deferVisitedSave_App(void) {

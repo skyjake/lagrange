@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "app.h"
 
+#include <lagrange/core.h>
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/mutex.h>
@@ -536,7 +538,7 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     }
     iRelease(f);
     unlock_Mutex(d->mtx);
-    commitFile_App(finalPath, tempPath);
+    commitFile_Core(finalPath, tempPath);
 }
 
 static iRangei orderRange_Bookmarks_(const iBookmarks *d) {

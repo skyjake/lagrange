@@ -28,3 +28,5 @@ void    init_Core       (void);
 void    deinit_Core     (void);
 
 void    setPhone_Core   (iBool isPhone); /* determined at runtime (iOS) */
+
+void    commitFile_Core (const char *path, const char *tempPathWithNewContents); /* latter will be removed */

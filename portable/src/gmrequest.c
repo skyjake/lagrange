@@ -21,14 +21,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmrequest.h"
-#include "gmutil.h"
 #include "gmcerts.h"
+#include "mimehooks.h"
+#include "app.h"
+
+#include <lagrange/gmutil.h>
 #include <lagrange/gopher.h>
 #include <lagrange/guppy.h>
-#include "app.h" /* dataDir_App() */
-#include "mimehooks.h"
-#include "defs.h"
-
 #include <lagrange/sitespec.h>
 
 #include <the_Foundation/archive.h>
@@ -39,7 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/socket.h>
 #include <the_Foundation/tlsrequest.h>
-#include <SDL_timer.h>
 #include <errno.h>
 
 static iAboutHandlerFunc aboutHandlers_[16];
