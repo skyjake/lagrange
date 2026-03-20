@@ -36,6 +36,8 @@ _Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
                    offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
 
+iDefineTypeConstruction(Prefs)
+
 void init_Prefs(iPrefs *d) {
     prefs_ = d; /* global access; there is only one Prefs */
     iForIndices(i, d->strings) {
