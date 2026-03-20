@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "util.h"
 #include "app.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif

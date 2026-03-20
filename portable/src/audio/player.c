@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "player.h"
 #include "defs.h"
 #include "buf.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "../app.h"
 
 #include <the_Foundation/atomic.h>

@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "inputwidget.h"
 #include "listwidget.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "lookup.h"
 #include "snippets.h"
 #include "util.h"

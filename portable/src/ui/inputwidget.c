@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "keyboardwidget.h"
 #include "keys.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "paint.h"
 #include "periodic.h"
 #include "prefs.h"

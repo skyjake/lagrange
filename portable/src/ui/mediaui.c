@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "documentwidget.h"
 #include "gmdocument.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "media.h"
 #include "paint.h"
 #include "touch.h"

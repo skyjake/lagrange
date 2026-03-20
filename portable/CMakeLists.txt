@@ -1,6 +1,9 @@
 # Lagrange - A Beautiful Gemini Client
 # Copyright: 2020-2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
+# This is the portable cross-platform GUI shell for Lagrange.
+# It uses SDL for input and rendering and provides its own custom UI widgets.
+#
 # Notes:
 # - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
 #   GNU libunistring, zlib.
@@ -184,7 +187,6 @@ set (SOURCES
     src/guppy.h
     src/history.c
     src/history.h
-    src/lang.h
     src/lookup.c
     src/lookup.h
     src/media.c

@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmtypesetter.h"
 #include "gmutil.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "ui/color.h"
 #include "ui/text.h"
 #include "ui/metrics.h"

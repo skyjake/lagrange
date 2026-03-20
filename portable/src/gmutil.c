@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmutil.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "ui/color.h"
 
 const iString *prettyDataUrl_String(const iString *d, int contentColor) {

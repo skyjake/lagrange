@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gempub.h"
 #include "gmutil.h"
-#include "lang.h"
+#include <lagrange/lang.h>
 #include "defs.h"
 #include "gmdocument.h"
 #include "gmrequest.h"

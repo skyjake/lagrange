@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <lagrange/defs.h>
-#include "lang.h"
+#include <lagrange/lang.h>
 
 enum iScrollType {
     keyboard_ScrollType,
