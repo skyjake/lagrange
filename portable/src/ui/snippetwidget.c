@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "listwidget.h"
-#include "../snippets.h"
+#include <lagrange/snippets.h>
 #include "app.h"
 
 #include <SDL_clipboard.h>

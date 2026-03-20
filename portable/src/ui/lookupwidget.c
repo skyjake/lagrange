@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "listwidget.h"
 #include <lagrange/lang.h>
 #include "lookup.h"
-#include "snippets.h"
+#include <lagrange/snippets.h>
 #include "util.h"
 #include <lagrange/visited.h>
 

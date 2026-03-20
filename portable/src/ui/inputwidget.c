@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "periodic.h"
 #include "prefs.h"
-#include "snippets.h"
+#include <lagrange/snippets.h>
 #include "touch.h"
 #include "util.h"
 

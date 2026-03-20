@@ -44,7 +44,7 @@ Optimization notes:
 #include "text.h"
 #include "color.h"
 #include "metrics.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include "window.h"
 #include "paint.h"
 #include "app.h"

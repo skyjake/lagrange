@@ -26,13 +26,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include "keys.h"
 #include "labelwidget.h"
 #include "documentwidget.h"
 #include "sidebarwidget.h"
 #include "paint.h"
-#include "snippets.h"
+#include <lagrange/snippets.h>
 #include "root.h"
 #include "touch.h"
 #include "gamepad.h"

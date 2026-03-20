@@ -197,9 +197,6 @@ set (SOURCES
     src/periodic.h
     src/prefs.c
     src/prefs.h
-    src/resources.h
-    src/snippets.c
-    src/snippets.h
     src/stb_image.h
     src/stb_image_resize2.h
     src/stb_truetype.h

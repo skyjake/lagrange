@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "periodic.h"
 #include "root.h"
 #include <lagrange/sitespec.h>
-#include "snippets.h"
+#include <lagrange/snippets.h>
 #include "snippetwidget.h"
 #include "text.h"
 #include "touch.h"

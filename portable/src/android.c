@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "android.h"
 #include "app.h"
 #include "export.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include "audio/player.h"
 #include "ui/command.h"
 #include "ui/metrics.h"

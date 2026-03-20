@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fontpack.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include "ui/window.h"
 #include "gmrequest.h"
 #include "app.h"

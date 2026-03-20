@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "feeds.h"
 #include "bookmarks.h"
 #include "ui/text.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include <lagrange/sitespec.h>
 #include "defs.h"
 

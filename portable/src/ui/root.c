@@ -27,14 +27,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include "inputwidget.h"
 #include "keys.h"
 #include "labelwidget.h"
 #include "lookupwidget.h"
 #include "keyboardwidget.h"
 #include "sidebarwidget.h"
-#include "snippets.h"
+#include <lagrange/snippets.h>
 #include "gamepad.h"
 #include "window.h"
 #include "../history.h"

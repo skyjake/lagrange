@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keyboardwidget.h"
 #include "labelwidget.h"
 #include "paint.h"
-#include "resources.h"
+#include <lagrange/resources.h>
 #include "util.h"
 #include "window.h"
 
