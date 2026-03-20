@@ -39,10 +39,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdlib.h>
 
 #define outputPath_CommandLineOption "output;o"
-#define identity_CommandLineOption   "ident"
-#define dataDir_CommandLineOption    "data-dir"
-#define printMeta_CommandLineOption  "print-meta;q"
-#define help_CommandLineOption       "help;?"
+#define identity_CommandLineOption   "ident;I"
+#define dataDir_CommandLineOption    "user;U"
+#define printMeta_CommandLineOption  "print;p"
+#define help_CommandLineOption       "help;h"
 
 iDeclareType(State)
 
@@ -53,6 +53,19 @@ struct Impl_State {
     iBool       printMeta;
     iFile      *outputFile; /* NULL means write to stdout */
 };
+
+static void printUsage_(const char *prog) {
+    fprintf(stderr,
+            "Usage: %s [OPTIONS] URL...\n"
+            "\n"
+            "Options:\n"
+            "  -o FILE, --output=FILE  Write response body to FILE instead of stdout\n"
+            "  -I NAME, --ident=NAME   Use the Lagrange identity matching NAME\n"
+            "  -U DIR, --user=DIR      User data directory (default: platform-specific)\n"
+            "  -p, --print             Print response status and meta string to stderr\n"
+            "  -h, --help              Print this help and exit\n",
+            prog);
+}
 
 static const char *defaultDataDir_(void) {
 #if defined (iPlatformAppleDesktop)
@@ -77,33 +90,26 @@ static const char *defaultDataDir_(void) {
 static void requestFinished_(iAnyObject *obj, iGmRequest *req) {
     iState *d = userData_Object(obj);
     lock_Mutex(d->mutex);
-    if (d->printMeta) {
-        fprintf(stderr, "%d %s\n", status_GmRequest(req), cstr_String(meta_GmRequest(req)));
+    const int status = status_GmRequest(req);
+    if (d->printMeta || !status || category_GmStatusCode(status) > categorySuccess_GmStatusCode) {
+        fprintf(stderr, "%d %s\n", status, cstr_String(meta_GmRequest(req)));
     }
-    const iBlock *body = body_GmRequest(req);
-    if (d->outputFile) {
-        write_File(d->outputFile, body);
+    if (category_GmStatusCode(status) == categoryInput_GmStatusCode) {
+        fprintf(stderr, "server requests input for URL: %s\n", cstr_String(url_GmRequest(req)));
     }
-    else {
-        fwrite(constData_Block(body), size_Block(body), 1, stdout);
+    else if (isSuccess_GmStatusCode(status)) {
+        const iBlock *body = body_GmRequest(req);
+        if (d->outputFile) {
+            write_File(d->outputFile, body);
+        }
+        else {
+            fwrite(constData_Block(body), size_Block(body), 1, stdout);
+        }
     }
     if (--d->remaining == 0) {
         signal_Condition(d->finished);
     }
     unlock_Mutex(d->mutex);
-}
-
-static void printUsage_(const char *prog) {
-    fprintf(stderr,
-            "Usage: %s [OPTIONS] URL...\n"
-            "\n"
-            "Options:\n"
-            "  -o FILE, --output=FILE   Write response body to FILE instead of stdout\n"
-            "  --ident=NAME             Use the Lagrange identity matching NAME\n"
-            "  --data-dir=DIR           Lagrange data directory (default: platform-specific)\n"
-            "  -q, --print-meta         Print response status code and meta string to stderr\n"
-            "  -?, --help               Print this help and exit\n",
-            prog);
 }
 
 static void printError_(const char *format, ...) {
