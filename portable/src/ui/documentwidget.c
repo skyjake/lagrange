@@ -56,7 +56,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "uploadwidget.h"
 #include "util.h"
 #include "visbuf.h"
-#include "visited.h"
+#include <lagrange/visited.h>
 #include "window.h"
 
 #if defined (iPlatformAppleDesktop)

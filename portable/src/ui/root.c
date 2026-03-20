@@ -37,12 +37,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "snippets.h"
 #include "gamepad.h"
 #include "window.h"
-#include "../visited.h"
 #include "../history.h"
 #include "../gmcerts.h"
 #include "../gmutil.h"
+
 #include <lagrange/sitespec.h>
-#include "../visited.h"
+#include <lagrange/visited.h>
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "../win32.h"

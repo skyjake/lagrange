@@ -22,8 +22,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "gmrequest.h"
-
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>

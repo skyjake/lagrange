@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lookup.h"
 #include "snippets.h"
 #include "util.h"
-#include "visited.h"
+#include <lagrange/visited.h>
 
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/thread.h>

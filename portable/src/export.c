@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmcerts.h"
 #include <lagrange/sitespec.h>
 #include "snippets.h"
-#include "visited.h"
+#include <lagrange/visited.h>
 
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/file.h>

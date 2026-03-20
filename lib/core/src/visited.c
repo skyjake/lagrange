@@ -20,8 +20,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "visited.h"
-#include "app.h"
+#include "lagrange/visited.h"
+#include "lagrange/gmutil.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>

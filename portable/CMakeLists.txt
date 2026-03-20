@@ -204,8 +204,6 @@ set (SOURCES
     src/stb_image_resize2.h
     src/stb_truetype.h
     src/updater.h
-    src/visited.c
-    src/visited.h
     # User interface:
     src/ui/banner.c
     src/ui/banner.h

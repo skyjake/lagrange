@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/metrics.h"
 #include "ui/mediaui.h"
 #include "ui/window.h"
-#include "visited.h"
+#include <lagrange/visited.h>
 #include "bookmarks.h"
 #include "app.h"
 #include "defs.h"

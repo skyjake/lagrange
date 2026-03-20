@@ -54,7 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 #include "ui/window.h"
 #include "updater.h"
-#include "visited.h"
+#include <lagrange/visited.h>
 
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/commandline.h>

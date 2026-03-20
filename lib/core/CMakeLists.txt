@@ -9,6 +9,7 @@ add_library (core STATIC
     src/lang.c
     src/resources.c
     src/sitespec.c
+    src/visited.c
 )
 
 set_property (TARGET core PROPERTY C_STANDARD 11)

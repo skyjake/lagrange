@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "touch.h"
 #include "util.h"
-#include "visited.h"
+#include <lagrange/visited.h>
 
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
