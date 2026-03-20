@@ -425,6 +425,7 @@ macro (set_common_app_properties target)
     endif ()
 
     # Common dependencies.
+    target_link_libraries (${target} PUBLIC core)
     target_link_libraries (${target} PUBLIC the_Foundation::the_Foundation)
     if (HAIKU)
         target_link_libraries (${target} PUBLIC network bsd)
