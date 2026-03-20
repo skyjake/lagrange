@@ -95,3 +95,9 @@ const iAddress *    address_GmRequest           (const iGmRequest *);
 
 int                 certFlags_GmRequest         (const iGmRequest *);
 iDate               certExpirationDate_GmRequest(const iGmRequest *);
+
+/* About page handlers are called in registration order when responding to
+   "about:" requests. */
+typedef const iBlock *(*iAboutHandlerFunc)(iRangecc path, iRangecc query);
+
+void                addAboutHandler_GmRequest   (iAboutHandlerFunc func);

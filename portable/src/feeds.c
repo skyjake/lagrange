@@ -723,6 +723,8 @@ static void load_Feeds_(iFeeds *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static const iBlock *aboutFeedsPage_Feeds_(iRangecc path, iRangecc query);
+
 void init_Feeds(const char *saveDir) {
     iFeeds *d = &feeds_;
     d->refreshTimer = 0;
@@ -735,6 +737,7 @@ void init_Feeds(const char *saveDir) {
     init_SortedArray(&d->entries, sizeof(iFeedEntry *), cmp_FeedEntryPtr_);
     load_Feeds_(d);
     setRefreshInterval_Feeds(prefs_App()->feedInterval);
+    addAboutHandler_GmRequest(aboutFeedsPage_Feeds_);
 }
 
 void deinit_Feeds(void) {
@@ -902,7 +905,7 @@ size_t numUnread_Feeds(void) {
     return count;
 }
 
-const iString *entryListPage_Feeds(void) {
+static const iString *entryListPage_Feeds_(void) {
     iFeeds *d = &feeds_;
     iString *src = collectNew_String();
     setCStr_String(src, translateCStr_Lang("# ${feeds.list.title}\n\n"));
@@ -950,4 +953,12 @@ const iString *entryListPage_Feeds(void) {
     }
     unlock_Mutex(d->mtx);
     return src;
+}
+
+static const iBlock *aboutFeedsPage_Feeds_(iRangecc path, iRangecc query) {
+    iUnused(query);
+    if (equalCase_Rangecc(path, "feeds")) {
+        return utf8_String(entryListPage_Feeds_());
+    }
+    return NULL;
 }

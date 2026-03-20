@@ -182,3 +182,24 @@ void deinit_Resources(void) {
 const iArchive *archive_Resources(void) {
     return archive_;
 }
+
+const iBlock *aboutPageSource_Resources(iRangecc path, iRangecc query) {
+    iUnused(query);
+    const struct { const char *name; const iBlock *data; } pages[] = {
+        { "about",        &blobAbout_Resources },
+        { "lagrange",     &blobLagrange_Resources },
+        { "help",         &blobHelp_Resources },
+        { "license",      &blobLicense_Resources },
+        { "version",      &blobVersion_Resources },
+        { "version-1.15", &blobVersion_1_15_Resources },
+        { "version-1.10", &blobVersion_1_10_Resources },
+        { "version-1.5",  &blobVersion_1_5_Resources },
+        { "version-0.13", &blobVersion_0_13_Resources },
+    };
+    iForIndices(i, pages) {
+        if (equalCase_Rangecc(path, pages[i].name)) {
+            return pages[i].data;
+        }
+    }
+    return NULL;
+}

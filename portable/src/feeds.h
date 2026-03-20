@@ -60,6 +60,5 @@ void    resetKnownEntries_Feeds (void);
 
 const iPtrArray *   listEntries_Feeds   (void);
 const iPtrArray *   listMatchingEntries_Feeds(const char *urlPrefix);
-const iString *     entryListPage_Feeds (void);
 size_t              numSubscribed_Feeds (void);
 size_t              numUnread_Feeds     (void);

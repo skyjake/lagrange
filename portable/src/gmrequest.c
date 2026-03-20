@@ -27,14 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "guppy.h"
 #include "app.h" /* dataDir_App() */
 #include "mimehooks.h"
-#include "feeds.h"
-#include "bookmarks.h"
-#include "ui/text.h"
-#include <lagrange/resources.h>
-#include <lagrange/sitespec.h>
 #include "defs.h"
 
-#include <errno.h>
+#include <lagrange/sitespec.h>
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
@@ -44,8 +39,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/socket.h>
 #include <the_Foundation/tlsrequest.h>
-
 #include <SDL_timer.h>
+#include <errno.h>
+
+static iAboutHandlerFunc aboutHandlers_[16];
+static size_t            numAboutHandlers_;
+
+void addAboutHandler_GmRequest(iAboutHandlerFunc func) {
+    iAssert(numAboutHandlers_ < iElemCount(aboutHandlers_));
+    iForIndices(i, aboutHandlers_) {
+        if (aboutHandlers_[i] == func) {
+            return; /* don't add the same handler twice */
+        }
+    }
+    aboutHandlers_[numAboutHandlers_++] = func;
+}
+
+static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
+    for (size_t i = 0; i < numAboutHandlers_; i++) {
+        const iBlock *result = aboutHandlers_[i](path, query);
+        if (result) return result;
+    }
+    return NULL;
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstruction(GmResponse)
 
@@ -360,45 +378,6 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         applyFilter_GmRequest_(d);
     }
     iNotifyAudience(d, finished, GmRequestFinished);
-}
-
-static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
-    const struct { const char *name; const iBlock *data; } staticPages[] = {
-        { "about",          &blobAbout_Resources },
-        { "lagrange",       &blobLagrange_Resources },
-        { "help",           &blobHelp_Resources },
-        { "license",        &blobLicense_Resources },
-        { "version",        &blobVersion_Resources },
-        { "version-1.15",   &blobVersion_1_15_Resources },
-        { "version-1.10",   &blobVersion_1_10_Resources },
-        { "version-1.5",    &blobVersion_1_5_Resources },
-        { "version-0.13",   &blobVersion_0_13_Resources },
-    };
-    iForIndices(i, staticPages) {
-        if (equalCase_Rangecc(path, staticPages[i].name)) {
-            return staticPages[i].data;
-        }
-    }
-    if (equalCase_Rangecc(path, "debug")) {
-        return utf8_String(debugInfo_App());
-    }
-    if (equalCase_Rangecc(path, "fonts")) {
-        return utf8_String(infoPage_Fonts(query));
-    }
-    if (equalCase_Rangecc(path, "feeds")) {
-        return utf8_String(entryListPage_Feeds());
-    }
-    if (equalCase_Rangecc(path, "bookmarks")) {
-        return utf8_String(bookmarkListPage_Bookmarks(
-            bookmarks_App(),
-            equal_Rangecc(query, "?tags")      ? listByTag_BookmarkListType
-            : equal_Rangecc(query, "?created") ? listByCreationTime_BookmarkListType
-                                               : listByFolder_BookmarkListType));
-    }
-    if (equalCase_Rangecc(path, "blank")) {
-        return utf8_String(collectNewCStr_String("\n"));
-    }
-    return NULL;
 }
 
 static const iBlock *replaceVariables_(const iBlock *block) {

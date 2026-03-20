@@ -179,12 +179,29 @@ struct Impl_Bookmarks {
 
 iDefineTypeConstruction(Bookmarks)
 
+static iBookmarks *current_Bookmarks_;
+
+static const iBlock *aboutBookmarksPage_Bookmarks_(iRangecc path, iRangecc query) {
+    if (equalCase_Rangecc(path, "bookmarks")) {
+        return utf8_String(bookmarkListPage_Bookmarks(
+            current_Bookmarks_,
+            equal_Rangecc(query, "?tags")      ? listByTag_BookmarkListType
+            : equal_Rangecc(query, "?created") ? listByCreationTime_BookmarkListType
+                                               : listByFolder_BookmarkListType));
+    }
+    return NULL;
+}
+
 void init_Bookmarks(iBookmarks *d) {
     d->mtx = new_Mutex();
     d->idEnum = 0;
     init_Hash(&d->bookmarks);
     d->recentFolderId = 0;
     init_PtrArray(&d->remoteRequests);
+    if (!current_Bookmarks_) {
+        current_Bookmarks_ = d;
+    }
+    addAboutHandler_GmRequest(aboutBookmarksPage_Bookmarks_);
 }
 
 void deinit_Bookmarks(iBookmarks *d) {

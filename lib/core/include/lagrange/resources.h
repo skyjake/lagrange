@@ -23,14 +23,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/block.h>
+#include <the_Foundation/range.h>
 
 iDeclareType(Archive)
 
-iBool               init_Resources      (const char *path);
-iBool               initData_Resources  (const iBlock *data); /* for platforms that pre-load the archive (e.g., Android) */
-void                deinit_Resources    (void);
+iBool               init_Resources              (const char *path);
+iBool               initData_Resources          (const iBlock *data); /* for platforms that pre-load the archive (e.g., Android) */
+void                deinit_Resources            (void);
 
-const iArchive *    archive_Resources   (void);
+const iArchive *    archive_Resources           (void);
+const iBlock *      aboutPageSource_Resources   (iRangecc path, iRangecc query);
 
 extern iBlock blobAbout_Resources;
 extern iBlock blobHelp_Resources;

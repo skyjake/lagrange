@@ -614,6 +614,13 @@ static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
     return collect_String(concatCStr_Path(&d->userDir, "fonts"));
 }
 
+static const iBlock *aboutFontsPage_Fonts_(iRangecc path, iRangecc query) {
+    if (equalCase_Rangecc(path, "fonts")) {
+        return utf8_String(infoPage_Fonts(query));
+    }
+    return NULL;
+}
+
 void init_Fonts(const char *userDir) {
     iFonts *d = &fonts_;
     if (isTerminal_Platform()) {
@@ -791,6 +798,7 @@ void init_Fonts(const char *userDir) {
 #if !defined (NDEBUG)
     printf("[FontPack] %zu fonts available\n", size_Array(&d->specOrder));
 #endif
+    addAboutHandler_GmRequest(aboutFontsPage_Fonts_);
 }
 
 void deinit_Fonts(void) {

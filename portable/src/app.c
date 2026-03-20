@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "feeds.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
+#include "gmrequest.h"
 #include "gmutil.h"
 #include "history.h"
 #include "ipc.h"
@@ -1253,6 +1254,22 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     unlock_Mutex(dumpMutex_);
 }
 
+static const iBlock *aboutDebugPage_(iRangecc path, iRangecc query) {
+    iUnused(query);
+    if (equalCase_Rangecc(path, "debug")) {
+        return utf8_String(debugInfo_App());
+    }
+    return NULL;
+}
+
+static const iBlock *aboutBlankPage_(iRangecc path, iRangecc query) {
+    iUnused(query);
+    if (equalCase_Rangecc(path, "blank")) {
+        return utf8_String(collectNewCStr_String("\n"));
+    }
+    return NULL;
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
 #if defined (iPlatformAndroid)
@@ -1337,6 +1354,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
     init_Lang();
+    /* Register "about:" page handlers. */
+    addAboutHandler_GmRequest(aboutPageSource_Resources);
+    addAboutHandler_GmRequest(aboutDebugPage_);
+    addAboutHandler_GmRequest(aboutBlankPage_);
     iStringList *openCmds = new_StringList();
 #if !defined (iPlatformAndroidMobile)
     /* Configure the valid command line options. */ {
