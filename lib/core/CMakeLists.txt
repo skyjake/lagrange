@@ -8,6 +8,7 @@ add_library (core STATIC
     src/gmutil.c
     src/lang.c
     src/resources.c
+    src/prefs.c
     src/sitespec.c
     src/snippets.c
     src/visited.c

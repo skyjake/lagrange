@@ -20,9 +20,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "prefs.h"
-#include "ui/sidebarwidget.h"
-#include "app.h"
+#include "lagrange/prefs.h"
 
 #include <assert.h>
 #include <the_Foundation/fileinfo.h>

@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "x11.h"
 #include "ui/command.h"
 #include "ui/window.h"
-#include "prefs.h"
+#include <lagrange/prefs.h>
 #include "app.h"
 
 #include <SDL_syswm.h>

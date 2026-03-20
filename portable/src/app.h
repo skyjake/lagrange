@@ -23,17 +23,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/objectlist.h>
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/stringarray.h>
 #include <the_Foundation/time.h>
 
-#include "prefs.h"
+#include <lagrange/prefs.h>
+#include "gmcerts.h"
 #include "ui/color.h"
 
-#if defined (iPlatformAppleMobile)
-extern iBool isPhone_iOS(void);
-#endif
 
 iDeclareType(Bookmarks);
 iDeclareType(DocumentWidget);
@@ -60,12 +59,6 @@ typedef void iAnyWindow;
 #define windowHeight_CommandLineOption      "height;h"
 #define uiTheme_CommandLineOption           "theme;t"
 
-enum iAppDeviceType {
-    desktop_AppDeviceType,
-    tablet_AppDeviceType,
-    phone_AppDeviceType,
-};
-
 enum iAppEventMode {
     waitForNewEvents_AppEventMode,
     postedEventsOnly_AppEventMode,
@@ -89,20 +82,6 @@ enum iNewTabFlag {
     append_NewTabFlag     = iBit(2),
     reuseBlank_NewTabFlag = iBit(3),
 };
-
-iLocalDef enum iAppDeviceType deviceType_App(void) {
-#if defined (iPlatformMobilePhone)
-    return phone_AppDeviceType;
-#elif defined (iPlatformMobileTablet)
-    return tablet_AppDeviceType;
-#elif defined (iPlatformAppleMobile)
-    return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
-#elif defined (iPlatformAndroidMobile)
-    return phone_AppDeviceType; /* TODO: Java side could tell us via cmdline if this is a tablet. */
-#else
-    return desktop_AppDeviceType;
-#endif
-}
 
 int                 run_App                     (int argc, char **argv);
 void                processEvents_App           (enum iAppEventMode mode);

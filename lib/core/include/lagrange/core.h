@@ -22,7 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include "defs.h"
 
-void    init_Core   (void);
-void    deinit_Core (void);
+void    init_Core       (void);
+void    deinit_Core     (void);
+
+void    setPhone_Core   (iBool isPhone); /* determined at runtime (iOS) */

@@ -22,11 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/stringset.h>
-
-#include "gmdocument.h"
-#include "ui/color.h"
-#include "ui/text.h"
 
 /* User preferences */
 

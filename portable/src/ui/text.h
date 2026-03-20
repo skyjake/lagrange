@@ -62,13 +62,6 @@ void    setDocumentFontSize_Text(iText *, float fontSizeFactor); /* affects all 
 void    resetFonts_Text         (iText *);
 void    resetFontCache_Text     (iText *);
 
-enum iAnsiFlag {
-    allowFg_AnsiFlag        = iBit(1),
-    allowBg_AnsiFlag        = iBit(2),
-    allowFontStyle_AnsiFlag = iBit(3),
-    allowAll_AnsiFlag       = 0x7,
-};
-
 void    setOpacity_Text         (float opacity);
 void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
 void    setAnsiFlags_Text       (int ansiFlags);

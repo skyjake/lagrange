@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/lang.h>
 #include "paint.h"
 #include "periodic.h"
-#include "prefs.h"
+#include <lagrange/prefs.h>
 #include <lagrange/snippets.h>
 #include "touch.h"
 #include "util.h"
@@ -49,6 +49,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 #include <SDL_version.h>
+#include "text.h"
+#include "../gmutil.h"
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"

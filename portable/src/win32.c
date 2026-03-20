@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "win32.h"
 #include "ui/window.h"
 #include "ui/command.h"
-#include "prefs.h"
+#include <lagrange/prefs.h>
 #include "app.h"
 
 #include <SDL_syswm.h>

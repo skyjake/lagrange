@@ -25,16 +25,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Core)
 
 struct Impl_Core {
-    int dummy; /* placeholder */
+    iBool isPhone;
 };
 
 static iCore core_;
 
 void init_Core(void) {
     iCore *d = &core_;
-    d->dummy = 0;
+    d->isPhone = iFalse;
 }
 
 void deinit_Core(void) {
     /* nothing to do yet */
+}
+
+void setPhone_Core(iBool isPhone) {
+    core_.isPhone = isPhone;
+}
+
+iBool isPhone_Core(void) {
+    return core_.isPhone;
 }

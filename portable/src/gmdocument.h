@@ -52,19 +52,6 @@ enum iGmLineType {
 enum iGmLineType    lineType_Rangecc   (const iRangecc line);
 void                trimLine_Rangecc   (iRangecc *line, enum iGmLineType type, iBool normalize);
 
-enum iGmDocumentTheme {
-    colorfulDark_GmDocumentTheme,
-    colorfulLight_GmDocumentTheme,
-    black_GmDocumentTheme,
-    gray_GmDocumentTheme,
-    white_GmDocumentTheme,
-    sepia_GmDocumentTheme,
-    highContrast_GmDocumentTheme,
-    oceanic_GmDocumentTheme,
-    vibrantLight_GmDocumentTheme,
-    max_GmDocumentTheme
-};
-
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
 
 typedef uint16_t iGmLinkId;

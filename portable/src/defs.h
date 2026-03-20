@@ -25,69 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/defs.h>
 #include <lagrange/lang.h>
 
-enum iScrollType {
-    keyboard_ScrollType,
-    mouse_ScrollType,
-    max_ScrollType
-};
-
-enum iToolbarAction {
-    back_ToolbarAction        = 0,
-    forward_ToolbarAction     = 1,
-    home_ToolbarAction        = 2,
-    parent_ToolbarAction      = 3,
-    reload_ToolbarAction      = 4,
-    newTab_ToolbarAction      = 5,
-    closeTab_ToolbarAction    = 6,
-    addBookmark_ToolbarAction = 7,
-    translate_ToolbarAction   = 8,
-    upload_ToolbarAction      = 9,
-    editPage_ToolbarAction    = 10,
-    findText_ToolbarAction    = 11,
-    settings_ToolbarAction    = 12,
-    leftSidebar_ToolbarAction    = 13, /* desktop/tablet only */
-    rightSidebar_ToolbarAction   = 14, /* desktop/tablet only */
-    scrollToTop_ToolbarAction    = 15,
-    scrollToBottom_ToolbarAction = 16,
-    max_ToolbarAction
-};
-
-enum iReturnKeyFlag {
-    noMod_ReturnKeyFlag   = 0,
-    shift_ReturnKeyFlag   = 1,
-    control_ReturnKeyFlag = 2,
-    gui_ReturnKeyFlag     = 3,
-    mask_ReturnKeyFlag    = 0xf,
-    accept_ReturnKeyFlag  = 4, /* shift */
-};
-
-#define RETURN_KEY_BEHAVIOR(newlineFlag, acceptFlag) \
-    ((newlineFlag) & 3 | ((acceptFlag) << accept_ReturnKeyFlag))
-
-/* Return key behavior is not handled via normal bindings because only certain combinations
-   are valid. */
-enum iReturnKeyBehavior {
-    acceptWithPrimaryMod_ReturnKeyBehavior =
-#if defined (iPlatformApple)
-        RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
-#else
-        RETURN_KEY_BEHAVIOR(control_ReturnKeyFlag, 0),
-#endif
-    onlyWithMods_ReturnKeyBehavior =
-#if defined (iPlatformApple)
-        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, gui_ReturnKeyFlag),
-#else
-        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, control_ReturnKeyFlag),
-#endif
-#if defined (iPlatformTerminal)
-    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(gui_ReturnKeyFlag, 0),
-#elif defined (iPlatformAndroidMobile)
-    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
-#else
-    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, 0),
-#endif
-};
-
 int     keyMod_ReturnKeyFlag    (int flag);
 
 /* Special keyboard modifier flag to indicate where menu items are valid. */

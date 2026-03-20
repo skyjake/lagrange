@@ -28,20 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(ListWidget)
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feedEntries_SidebarMode,
-    subscriptions_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    siteStructure_SidebarMode,
-    openDocuments_SidebarMode,
-    history_SidebarMode,
-    /*gempubIndex_SidebarMode,*/
-    /*customPage_SidebarMode,*/
-    max_SidebarMode
-};
-
 const char *    icon_SidebarMode    (enum iSidebarMode mode);
 
 enum iSidebarSide {

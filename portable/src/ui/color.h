@@ -22,34 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <lagrange/defs.h>
 #include <the_Foundation/range.h>
 #include <the_Foundation/math.h>
-
-enum iColorTheme {
-    pureBlack_ColorTheme,
-    dark_ColorTheme,
-    light_ColorTheme,
-    pureWhite_ColorTheme,
-    max_ColorTheme
-};
-
-enum iColorAccent {
-    cyan_ColorAccent,
-    orange_ColorAccent,
-    red_ColorAccent,
-    green_ColorAccent,
-    blue_ColorAccent,
-    gray_ColorAccent,
-    system_ColorAccent,
-    max_ColorAccent
-};
-
-iLocalDef iBool isDark_ColorTheme(enum iColorTheme d) {
-    return d == pureBlack_ColorTheme || d == dark_ColorTheme;
-}
-iLocalDef iBool isLight_ColorTheme(enum iColorTheme d) {
-    return !isDark_ColorTheme(d);
-}
 
 enum iColorId {
     none_ColorId = -1,

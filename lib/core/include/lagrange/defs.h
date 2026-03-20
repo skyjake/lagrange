@@ -112,6 +112,8 @@ iLocalDef iBool isWindows_Platform(void) {
 #endif
 }
 
+iBool isPhone_Core(void); /* determined at runtime (iOS) */
+
 enum iGmRequestState {
     initialized_GmRequestState,
     receivingHeader_GmRequestState,
@@ -174,6 +176,145 @@ enum iDirection {
     right_Direction,
     down_Direction,
     left_Direction,
+};
+
+enum iScrollType {
+    keyboard_ScrollType,
+    mouse_ScrollType,
+    max_ScrollType
+};
+
+enum iToolbarAction {
+    back_ToolbarAction        = 0,
+    forward_ToolbarAction     = 1,
+    home_ToolbarAction        = 2,
+    parent_ToolbarAction      = 3,
+    reload_ToolbarAction      = 4,
+    newTab_ToolbarAction      = 5,
+    closeTab_ToolbarAction    = 6,
+    addBookmark_ToolbarAction = 7,
+    translate_ToolbarAction   = 8,
+    upload_ToolbarAction      = 9,
+    editPage_ToolbarAction    = 10,
+    findText_ToolbarAction    = 11,
+    settings_ToolbarAction    = 12,
+    leftSidebar_ToolbarAction    = 13,
+    rightSidebar_ToolbarAction   = 14,
+    scrollToTop_ToolbarAction    = 15,
+    scrollToBottom_ToolbarAction = 16,
+    max_ToolbarAction
+};
+
+enum iReturnKeyFlag {
+    noMod_ReturnKeyFlag   = 0,
+    shift_ReturnKeyFlag   = 1,
+    control_ReturnKeyFlag = 2,
+    gui_ReturnKeyFlag     = 3,
+    mask_ReturnKeyFlag    = 0xf,
+    accept_ReturnKeyFlag  = 4, /* shift */
+};
+
+#define RETURN_KEY_BEHAVIOR(newlineFlag, acceptFlag) \
+    ((newlineFlag) & 3 | ((acceptFlag) << accept_ReturnKeyFlag))
+
+enum iReturnKeyBehavior {
+    acceptWithPrimaryMod_ReturnKeyBehavior =
+#if defined (iPlatformApple)
+        RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
+#else
+        RETURN_KEY_BEHAVIOR(control_ReturnKeyFlag, 0),
+#endif
+    onlyWithMods_ReturnKeyBehavior =
+#if defined (iPlatformApple)
+        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, gui_ReturnKeyFlag),
+#else
+        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, control_ReturnKeyFlag),
+#endif
+#if defined (iPlatformTerminal)
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(gui_ReturnKeyFlag, 0),
+#elif defined (iPlatformAndroidMobile)
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
+#else
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, 0),
+#endif
+};
+
+enum iColorTheme {
+    pureBlack_ColorTheme,
+    dark_ColorTheme,
+    light_ColorTheme,
+    pureWhite_ColorTheme,
+    max_ColorTheme
+};
+
+iLocalDef iBool isDark_ColorTheme(enum iColorTheme d) {
+    return d == pureBlack_ColorTheme || d == dark_ColorTheme;
+}
+iLocalDef iBool isLight_ColorTheme(enum iColorTheme d) {
+    return !isDark_ColorTheme(d);
+}
+
+enum iColorAccent {
+    cyan_ColorAccent,
+    orange_ColorAccent,
+    red_ColorAccent,
+    green_ColorAccent,
+    blue_ColorAccent,
+    gray_ColorAccent,
+    system_ColorAccent,
+    max_ColorAccent
+};
+
+enum iGmDocumentTheme {
+    colorfulDark_GmDocumentTheme,
+    colorfulLight_GmDocumentTheme,
+    black_GmDocumentTheme,
+    gray_GmDocumentTheme,
+    white_GmDocumentTheme,
+    sepia_GmDocumentTheme,
+    highContrast_GmDocumentTheme,
+    oceanic_GmDocumentTheme,
+    vibrantLight_GmDocumentTheme,
+    max_GmDocumentTheme
+};
+
+enum iAppDeviceType {
+    desktop_AppDeviceType,
+    tablet_AppDeviceType,
+    phone_AppDeviceType,
+};
+
+iLocalDef enum iAppDeviceType deviceType_App(void) {
+#if defined (iPlatformMobilePhone)
+    return phone_AppDeviceType;
+#elif defined (iPlatformMobileTablet)
+    return tablet_AppDeviceType;
+#elif defined (iPlatformAppleMobile)
+    return isPhone_Core() ? phone_AppDeviceType : tablet_AppDeviceType;
+#elif defined (iPlatformAndroidMobile)
+    return phone_AppDeviceType;
+#else
+    return desktop_AppDeviceType;
+#endif
+}
+
+enum iSidebarMode {
+    bookmarks_SidebarMode,
+    feedEntries_SidebarMode,
+    subscriptions_SidebarMode,
+    identities_SidebarMode,
+    documentOutline_SidebarMode,
+    siteStructure_SidebarMode,
+    openDocuments_SidebarMode,
+    history_SidebarMode,
+    max_SidebarMode
+};
+
+enum iAnsiFlag {
+    allowFg_AnsiFlag        = iBit(1),
+    allowBg_AnsiFlag        = iBit(2),
+    allowFontStyle_AnsiFlag = iBit(3),
+    allowAll_AnsiFlag       = 0x7,
 };
 
 /* Icons */
