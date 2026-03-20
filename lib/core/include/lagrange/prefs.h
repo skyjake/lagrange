@@ -271,6 +271,9 @@ struct Impl_Prefs {
 
 iDeclareTypeConstruction(Prefs);
 
+const iString * schemeProxy_Prefs            (const iPrefs *, iRangecc scheme);
+iBool           schemeProxyHostAndPort_Prefs (const iPrefs *, iRangecc scheme, const iString **host, uint16_t *port);
+
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);
     return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);

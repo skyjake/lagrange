@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "listwidget.h"
 #include "uploadwidget.h"
 #include "misfin.h"
-#include "../gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "../app.h"
 
 #include <SDL_clipboard.h>

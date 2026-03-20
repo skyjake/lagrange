@@ -20,8 +20,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "gmcerts.h"
-#include "app.h"
+#include "lagrange/gmcerts.h"
 
 #include <lagrange/core.h>
 #include <lagrange/prefs.h>
@@ -310,6 +309,8 @@ struct Impl_GmCerts {
     iPtrArray idents;
 };
 
+static iGmCerts *theCerts_;
+
 static const char *magicIdMeta_GmCerts_   = "lgL2";
 static const char *magicIdentity_GmCerts_ = "iden";
 
@@ -540,7 +541,7 @@ static void load_GmCerts_(iGmCerts *d) {
 }
 
 iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int depth) {
-    iGmCerts *d = certs_App();
+    iGmCerts *d = theCerts_;
     if (depth != 0) {
         /* We only check the primary certificate. */
         return iTrue;
@@ -561,6 +562,7 @@ iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int dep
 }
 
 void init_GmCerts(iGmCerts *d, const char *saveDir) {
+    theCerts_ = d; /* global instance */
     d->mtx = new_Mutex();
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();

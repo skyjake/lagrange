@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "metrics.h"
 #include "paint.h"
 #include "documentwidget.h"
-#include "../gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "../app.h"
 
 #include <SDL_render.h>

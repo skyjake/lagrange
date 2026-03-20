@@ -53,3 +53,5 @@ void        load_MimeHooks          (iMimeHooks *, const char *saveDir);
 void        save_MimeHooks          (const iMimeHooks *);
 
 const iString *debugInfo_MimeHooks  (const iMimeHooks *);
+
+iMimeHooks *get_MimeHooks           (void); /* global instance (set in init_MimeHooks) */

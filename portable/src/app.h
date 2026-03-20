@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 
 #include <lagrange/prefs.h>
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "ui/color.h"
 
 
@@ -107,8 +107,6 @@ void                setInputZoomLevel_App       (int level);
 void                setEditorZoomLevel_App      (int level);
 void                setRecentMenuBarIndex_App   (int index);
 enum iColorTheme    colorTheme_App              (void);
-const iString *     schemeProxy_App             (iRangecc scheme);
-iBool               schemeProxyHostAndPort_App  (iRangecc scheme, const iString **host, uint16_t *port);
 iBool               willUseProxy_App            (const iRangecc scheme);
 const iString *     searchQueryUrl_App          (const iString *queryStringUnescaped);
 const iString *     fileNameForUrl_App          (const iString *url, const iString *mime);

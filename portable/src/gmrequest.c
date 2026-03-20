@@ -21,13 +21,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmrequest.h"
-#include "gmcerts.h"
 #include "mimehooks.h"
-#include "app.h"
+//#include "app.h"
 
+#include <lagrange/gmcerts.h>
 #include <lagrange/gmutil.h>
 #include <lagrange/gopher.h>
 #include <lagrange/guppy.h>
+#include <lagrange/lang.h>
+#include <lagrange/prefs.h>
 #include <lagrange/sitespec.h>
 
 #include <the_Foundation/archive.h>
@@ -276,7 +278,7 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
                 resp->statusCode = code;
                 d->state         = receivingBody_GmRequestState;
                 notifyUpdate     = iTrue;
-                if (d->isFilterEnabled && willTryFilter_MimeHooks(mimeHooks_App(), &resp->meta)) {
+                if (d->isFilterEnabled && willTryFilter_MimeHooks(get_MimeHooks(), &resp->meta)) {
                     d->isRespFiltered = iTrue;
                 }
             }
@@ -320,7 +322,7 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 
 static void applyFilter_GmRequest_(iGmRequest *d) {
     iAssert(d->state == finished_GmRequestState);
-    iBlock *xbody = tryFilter_MimeHooks(mimeHooks_App(), &d->resp->meta, &d->resp->body, &d->url);
+    iBlock *xbody = tryFilter_MimeHooks(get_MimeHooks(), &d->resp->meta, &d->resp->body, &d->url);
     if (xbody) {
         lock_Mutex(d->mtx);
         clear_String(&d->resp->meta);
@@ -1032,7 +1034,7 @@ static void fileRequest_GmRequest_(iGmRequest *d) {
                     goto fileRequestFinished;
                 }
                 /* Check for a Gemini index page. */
-                if (isDir && prefs_App()->openArchiveIndexPages) {
+                if (isDir && get_Prefs()->openArchiveIndexPages) {
                     const iString *indexPath = directoryIndexPage_Archive_(arch, entryPath);
                     if (indexPath) {
                         set_String(entryPath, indexPath);
@@ -1165,9 +1167,9 @@ void submit_GmRequest(iGmRequest *d) {
         dataRequest_GmRequest_(d);
         return;
     }
-    else if (schemeProxy_App(url.scheme)) {
+    else if (schemeProxy_Prefs(get_Prefs(), url.scheme)) {
         /* User has configured a proxy server for this scheme. */
-        schemeProxyHostAndPort_App(url.scheme, &host, &port);
+        schemeProxyHostAndPort_Prefs(get_Prefs(), url.scheme, &host, &port);
         d->isProxy = iTrue;
     }
     else if (equalCase_Rangecc(url.scheme, "gopher")) {

@@ -182,3 +182,35 @@ void deinit_Prefs(iPrefs *d) {
         deinit_String(&d->strings[i]);
     }
 }
+
+const iString *schemeProxy_Prefs(const iPrefs *d, iRangecc scheme) {
+    const iString *proxy = NULL;
+    if (equalCase_Rangecc(scheme, "gemini")) {
+        proxy = &d->strings[geminiProxy_PrefsString];
+    }
+    else if (equalCase_Rangecc(scheme, "gopher")) {
+        proxy = &d->strings[gopherProxy_PrefsString];
+    }
+    else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
+        proxy = &d->strings[httpProxy_PrefsString];
+    }
+    return isEmpty_String(proxy) ? NULL : proxy;
+}
+
+iBool schemeProxyHostAndPort_Prefs(const iPrefs *d, iRangecc scheme, const iString **host,
+                                   uint16_t *port) {
+    const iString *proxy = schemeProxy_Prefs(d, scheme);
+    if (!proxy) {
+        return iFalse;
+    }
+    if (contains_String(proxy, ':')) {
+        const size_t cpos = indexOf_String(proxy, ':');
+        *port = atoi(cstr_String(proxy) + cpos + 1);
+        *host = collect_String(newCStrN_String(cstr_String(proxy), cpos));
+    }
+    else {
+        *host = proxy;
+        *port = 0;
+    }
+    return iTrue;
+}

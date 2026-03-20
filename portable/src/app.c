@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "export.h"
 #include "feeds.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
@@ -2831,37 +2831,6 @@ enum iColorTheme colorTheme_App(void) {
     return app_.prefs.theme;
 }
 
-const iString *schemeProxy_App(iRangecc scheme) {
-    iApp *d = &app_;
-    const iString *proxy = NULL;
-    if (equalCase_Rangecc(scheme, "gemini")) {
-        proxy = &d->prefs.strings[geminiProxy_PrefsString];
-    }
-    else if (equalCase_Rangecc(scheme, "gopher")) {
-        proxy = &d->prefs.strings[gopherProxy_PrefsString];
-    }
-    else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
-        proxy = &d->prefs.strings[httpProxy_PrefsString];
-    }
-    return isEmpty_String(proxy) ? NULL : proxy;
-}
-
-iBool schemeProxyHostAndPort_App(iRangecc scheme, const iString **host, uint16_t *port) {
-    const iString *proxy = schemeProxy_App(scheme);
-    if (!proxy) {
-        return iFalse;
-    }
-    if (contains_String(proxy, ':')) {
-        const size_t cpos = indexOf_String(proxy, ':');
-        *port = atoi(cstr_String(proxy) + cpos + 1);
-        *host = collect_String(newCStrN_String(cstr_String(proxy), cpos));
-    }
-    else {
-        *host = proxy;
-        *port = 0;
-    }
-    return iTrue;
-}
 
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
@@ -3802,7 +3771,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
 }
 
 iBool willUseProxy_App(const iRangecc scheme) {
-    return schemeProxy_App(scheme) != NULL;
+    return schemeProxy_Prefs(get_Prefs(), scheme) != NULL;
 }
 
 const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {

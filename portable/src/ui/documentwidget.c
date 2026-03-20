@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentview.h"
 #include "export.h"
 #include "gempub.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
@@ -1792,7 +1792,7 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
                                 cstrCollect_String(format_Date(&d->certExpiry, "%Y-%m-%d")));
         }
         else if (certFlags & timeVerified_GmCertFlag) {
-            const iString *proxy = schemeProxy_App(urlScheme_String(d->mod.url));
+            const iString *proxy = schemeProxy_Prefs(get_Prefs(), urlScheme_String(d->mod.url));
             appendFormat_String(str, cstr_Lang("dlg.certwarn.domain"),
                                 cstr_Rangecc(urlHost_String(proxy
                                     ? collectNewFormat_String("gemini://%s", cstr_String(proxy))
@@ -3271,9 +3271,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iRangecc host = urlHost_String(d->mod.url);
         uint16_t port = urlPort_String(d->mod.url);
         if (d->flags & proxyRequest_DocumentWidgetFlag &&
-            schemeProxy_App(scheme)) {
+            schemeProxy_Prefs(get_Prefs(), scheme)) {
             const iString *proxyHost;
-            schemeProxyHostAndPort_App(scheme, &proxyHost, &port);
+            schemeProxyHostAndPort_Prefs(get_Prefs(), scheme, &proxyHost, &port);
             host = range_String(proxyHost);
         }
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {

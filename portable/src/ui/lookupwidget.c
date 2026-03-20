@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "documentwidget.h"
 #include "feeds.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "gmutil.h"
 #include "history.h"
 #include "inputwidget.h"

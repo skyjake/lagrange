@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gamepad.h"
 #include "window.h"
 #include "../history.h"
-#include "../gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "../gmutil.h"
 
 #include <lagrange/sitespec.h>

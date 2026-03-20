@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "feeds.h"
 #include "gamepad.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "inputwidget.h"

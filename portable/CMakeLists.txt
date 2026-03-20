@@ -171,8 +171,6 @@ set (SOURCES
     src/fontpack.h
     src/gempub.c
     src/gempub.h
-    src/gmcerts.c
-    src/gmcerts.h
     src/gmdocument.c
     src/gmdocument.h
     src/gmrequest.c

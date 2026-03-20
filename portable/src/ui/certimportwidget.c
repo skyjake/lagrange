@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "color.h"
 #include "command.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "text.h"

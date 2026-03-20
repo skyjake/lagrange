@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "mobile.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/string.h>

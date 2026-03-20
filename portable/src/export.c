@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "bookmarks.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
 #include <lagrange/visited.h>

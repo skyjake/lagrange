@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "defs.h"
+#include <lagrange/defs.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/tlsrequest.h>

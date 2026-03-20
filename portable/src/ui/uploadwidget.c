@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/sitespec.h>
 #include "misfin.h"
 #include "window.h"
-#include "gmcerts.h"
+#include <lagrange/gmcerts.h>
 #include "periodic.h"
 #include "app.h"
 

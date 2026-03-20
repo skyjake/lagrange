@@ -242,9 +242,16 @@ struct Impl_MimeHooks {
     iPtrArray filters;
 };
 
+static iMimeHooks *theMimehooks_;
+
 iDefineTypeConstruction(MimeHooks)
 
+iMimeHooks *get_MimeHooks(void) {
+    return theMimehooks_;
+}
+
 void init_MimeHooks(iMimeHooks *d) {
+    theMimehooks_ = d; /* global instance */
     init_PtrArray(&d->filters);
 }
 
