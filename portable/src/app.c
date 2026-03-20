@@ -1309,12 +1309,28 @@ static void init_App_(iApp *d, int argc, char **argv) {
             "resources.lgr" /* cwd */
         };
         iBool wasLoaded = iFalse;
+#if defined (iPlatformAndroidMobile)
+        /* Resources are APK assets; must be read via SDL_RWops. */
+        iForIndices(i, paths) {
+            SDL_RWops *io = SDL_RWFromFile(paths[i], "rb");
+            if (io) {
+                iBlock buf;
+                init_Block(&buf, (size_t) SDL_RWsize(io));
+                SDL_RWread(io, data_Block(&buf), size_Block(&buf), 1);
+                SDL_RWclose(io);
+                wasLoaded = initData_Resources(&buf);
+                deinit_Block(&buf);
+                if (wasLoaded) break;
+            }
+        }
+#else
         iForIndices(i, paths) {
             if (init_Resources(paths[i])) {
                 wasLoaded = iTrue;
                 break;
             }
         }
+#endif
         if (!wasLoaded) {
             fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
             exit(-1);

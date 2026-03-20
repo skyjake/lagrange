@@ -20,14 +20,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "resources.h"
+#include "lagrange/resources.h"
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/version.h>
-
-#if defined (iPlatformAndroidMobile)
-#   include <SDL_rwops.h>
-#endif
 
 static iArchive *archive_;
 
@@ -132,45 +128,47 @@ static struct {
     { &blobCacertPem_Resources, "cacert.pem" },
 };
 
+static iBool initFromArchive_Resources_(void) {
+    iVersion appVer;
+    init_Version(&appVer, range_CStr(LAGRANGE_APP_VERSION));
+    iVersion resVer;
+    init_Version(&resVer, range_Block(dataCStr_Archive(archive_, "VERSION")));
+    if (!cmp_Version(&resVer, &appVer)) {
+        iForIndices(i, entries_) {
+            const iBlock *data = dataCStr_Archive(archive_, entries_[i].archivePath);
+            if (data) {
+                initCopy_Block(entries_[i].data, data);
+            }
+        }
+        return iTrue;
+    }
+    fprintf(stderr, "[Resources] version mismatch (%s != " LAGRANGE_APP_VERSION ")\n",
+            cstr_Block(dataCStr_Archive(archive_, "VERSION")));
+    iRelease(archive_);
+    archive_ = NULL;
+    return iFalse;
+}
+
 iBool init_Resources(const char *path) {
-    archive_ = new_Archive();
-    iBool ok = iFalse;
 #ifndef NDEBUG
     printf("[Resources] Checking: %s\n", path);
 #endif
-#if defined (iPlatformAndroidMobile)
-    /* Resources are bundled as assets so they cannot be loaded as a regular file.
-       Fortunately, SDL implements a file wrapper. */
-    SDL_RWops *io = SDL_RWFromFile(path, "rb");
-    if (io) {
-        iBlock buf;
-        init_Block(&buf, (size_t) SDL_RWsize(io));
-        SDL_RWread(io, data_Block(&buf), size_Block(&buf), 1);
-        SDL_RWclose(io);
-        ok = openData_Archive(archive_, &buf);
-        deinit_Block(&buf);
-    }
-#else
-    ok = openFile_Archive(archive_, collectNewCStr_String(path));
-#endif
-    if (ok) {
-        iVersion appVer;
-        init_Version(&appVer, range_CStr(LAGRANGE_APP_VERSION));
-        iVersion resVer;
-        init_Version(&resVer, range_Block(dataCStr_Archive(archive_, "VERSION")));
-        if (!cmp_Version(&resVer, &appVer)) {
-            iForIndices(i, entries_) {
-                const iBlock *data = dataCStr_Archive(archive_, entries_[i].archivePath);
-                if (data) {
-                    initCopy_Block(entries_[i].data, data);
-                }
-            }
-            return iTrue;
-        }
-        fprintf(stderr, "[Resources] %s: version mismatch (%s != " LAGRANGE_APP_VERSION ")\n",
-                path, cstr_Block(dataCStr_Archive(archive_, "VERSION")));
+    archive_ = new_Archive();
+    if (openFile_Archive(archive_, collectNewCStr_String(path))) {
+        return initFromArchive_Resources_();
     }
     iRelease(archive_);
+    archive_ = NULL;
+    return iFalse;
+}
+
+iBool initData_Resources(const iBlock *data) {
+    archive_ = new_Archive();
+    if (openData_Archive(archive_, data)) {
+        return initFromArchive_Resources_();
+    }
+    iRelease(archive_);
+    archive_ = NULL;
     return iFalse;
 }
 

@@ -184,7 +184,6 @@ set (SOURCES
     src/guppy.h
     src/history.c
     src/history.h
-    src/lang.c
     src/lang.h
     src/lookup.c
     src/lookup.h
@@ -198,7 +197,6 @@ set (SOURCES
     src/periodic.h
     src/prefs.c
     src/prefs.h
-    src/resources.c
     src/resources.h
     src/sitespec.c
     src/sitespec.h

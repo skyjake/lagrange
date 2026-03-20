@@ -552,6 +552,20 @@ void swap_DocumentView(iDocumentView *d, iDocumentView *swapBuffersWith) {
     updateVisible_DocumentView(swapBuffersWith);
 }
 
+static iString *timeFormatHourPreference_Lang(const char *formatMsgId) {
+    iString *str = newCStr_String(cstr_Lang(formatMsgId));
+    translate_Lang(str);
+    if (prefs_App()->time24h) {
+        replace_String(str, "%I", "%H");
+        replace_String(str, " %p", "");
+        replace_String(str, "%p", "");
+    }
+    else {
+        replace_String(str, "%H:%M", "%I:%M %p");
+    }
+    return str;
+}
+
 static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
     if (!isExposed_Window(get_Window())) {
         return;
