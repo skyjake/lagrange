@@ -32,3 +32,11 @@ target_compile_definitions (core PUBLIC
 target_link_libraries (core PUBLIC
     the_Foundation::the_Foundation
 )
+
+option (CORE_ENABLE_TEST "Build core library test tools" OFF)
+
+if (CORE_ENABLE_TEST)
+    add_executable (gmget test/gmget.c)
+    set_property (TARGET gmget PROPERTY C_STANDARD 11)
+    target_link_libraries (gmget PRIVATE core)
+endif ()

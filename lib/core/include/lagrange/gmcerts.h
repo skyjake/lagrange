@@ -64,6 +64,7 @@ iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 
 typedef iBool (*iGmCertsIdentityFilterFunc)(void *context, const iGmIdentity *);
 
+void                setReadOnly_GmCerts     (iGmCerts *, iBool readOnly);
 iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, uint16_t port,
                                              const iTlsCertificate *cert);
 void                setTrusted_GmCerts      (iGmCerts *, iRangecc domain, uint16_t port,

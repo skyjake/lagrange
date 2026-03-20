@@ -303,10 +303,11 @@ iDefineTypeConstruction(GmIdentity)
 /*-----------------------------------------------------------------------------------------------*/
 
 struct Impl_GmCerts {
-    iMutex *mtx;
-    iString saveDir;
+    iMutex      *mtx;
+    iString      saveDir;
     iStringHash *trusted;
-    iPtrArray idents;
+    iPtrArray    idents;
+    iBool        isReadOnly;
 };
 
 static iGmCerts *theCerts_;
@@ -349,6 +350,9 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
 }
 
 void saveIdentities_GmCerts(const iGmCerts *d) {
+    if (d->isReadOnly) {
+        return;
+    }
     const iString *tempPath = collect_String(
             concatCStr_Path(&d->saveDir, tempIdentsFilename_GmCerts_));
     iFile *f = new_File(tempPath);
@@ -361,6 +365,9 @@ void saveIdentities_GmCerts(const iGmCerts *d) {
 }
 
 static void save_GmCerts_(const iGmCerts *d) {
+    if (d->isReadOnly) {
+        return;
+    }
     iBeginCollect();
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, trustedFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
@@ -568,6 +575,7 @@ iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int dep
 void init_GmCerts(iGmCerts *d, const char *saveDir) {
     theCerts_ = d; /* global instance */
     d->mtx = new_Mutex();
+    d->isReadOnly = iFalse;
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();
     init_PtrArray(&d->idents);
@@ -587,6 +595,10 @@ void deinit_GmCerts(iGmCerts *d) {
         deinit_String(&d->saveDir);
     });
     delete_Mutex(d->mtx);
+}
+
+void setReadOnly_GmCerts(iGmCerts *d, iBool readOnly) {
+    d->isReadOnly = readOnly;
 }
 
 static iRangecc stripFirstDomainLabel_(iRangecc domain) {
