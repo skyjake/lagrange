@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.20 (5)
+* Fixed a crash during event handling when no gamepad is connected.
+* Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.
+
 ## 1.20 (4)
 * Improved UI of inline audio player for touch screens: taller area, removed volume button.
 * Fixed stability and behavior issues with audio players. For example, history navigation was not releasing audio player resources when leaving a page. (Previously, they were just paused.)
