@@ -45,6 +45,18 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.20.2" date="2026-03-21">
+            <description>
+                <ul>
+                    <li>Fixed a crash during event handling when no gamepad is connected.</li>
+                    <li>Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.</li>
+                    <li>Fixed build issue with glibc 2.43+.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.2</url>
+        </release>
         <release version="1.20.1" date="2026-03-19">
             <description>
                 <ul>
