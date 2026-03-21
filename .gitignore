@@ -10,3 +10,4 @@ build-*/
 *.orig
 /.cache/
 /.jked/
+/plan/

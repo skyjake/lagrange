@@ -730,11 +730,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
         }
         case subscriptions_SidebarMode: {
+            iDeclareType(FeedItem);
             struct Impl_FeedItem {
                 iHashNode     node;
                 iSidebarItem *item;
             };
-            iDeclareType(FeedItem);
             iHash hash;
             init_Hash(&hash);
             /* Make an item for each subscribed page. */
@@ -765,10 +765,13 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                TODO: Do this while refreshing feeds... */
             iConstForEach(PtrArray, e, listFeedEntries_SidebarWidget_(d)) {
                 const iFeedEntry *entry = e.ptr;
-                iSidebarItem     *item = ((iFeedItem *) value_Hash(&hash, entry->bookmarkId))->item;
-                item->count++;
-                if (!isValid_Time(&item->ts) || cmp_Time(&entry->posted, &item->ts) > 0) {
-                    item->ts = entry->posted; /* latest timestamp */
+                const iFeedItem *feedItem = (const iFeedItem *) value_Hash(&hash, entry->bookmarkId);
+                if (feedItem) { /* if NULL, we don't have the subscription any more */
+                    iSidebarItem *item = feedItem->item;
+                    item->count++;
+                    if (!isValid_Time(&item->ts) || cmp_Time(&entry->posted, &item->ts) > 0) {
+                        item->ts = entry->posted; /* latest timestamp */
+                    }
                 }
             }
             /* Finalize the items. */

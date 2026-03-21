@@ -63,7 +63,7 @@ int findAction_Gamepad(int button, iBool trigger) {
 struct Impl_Gamepad {
     SDL_GameController *ctl;
     int      joyIndex;
-    iWindow *window; /* we assume there is one window and it won't change */
+    iWindow *window; /* TODO: we assume there is one window and it won't change; must fix! */
     iPtrSet *openMenus;
     float    scrollSpeed;
     float    scrollAccum; /* pixels */
@@ -126,7 +126,7 @@ static void addTicker_Gamepad_(iGamepad *d) {
 }
 
 void movePointer_Gamepad(iGamepad *d, iInt2 coord, int span) {
-    if (!d || !d->window) return;
+    if (!isConnected_Gamepad(d) || !d->window) return;
     setValue_Anim(&d->pointerf[0], coord.x, span);
     setValue_Anim(&d->pointerf[1], coord.y, span);
     d->pointer = divf_I2(coord, d->window->pixelRatio);
@@ -145,7 +145,7 @@ void movePointer_Gamepad(iGamepad *d, iInt2 coord, int span) {
 }
 
 void movePointerOntoWidget_Gamepad(iGamepad *d, iWidget *widget, int span) {
-    if (d && widget) {
+    if (isConnected_Gamepad(d) && widget) {
         const iInt2 mid = mid_Rect(boundsWithoutVisualOffset_Widget(widget));
         movePointer_Gamepad(d, mid, span);
         setHover_Widget(widget);
@@ -153,7 +153,9 @@ void movePointerOntoWidget_Gamepad(iGamepad *d, iWidget *widget, int span) {
 }
 
 static void pointerOntoFocus_Gamepad_(iGamepad *d) {
-    movePointerOntoWidget_Gamepad(d, focus_Widget(), 100);
+    if (isConnected_Gamepad(d)) {
+        movePointerOntoWidget_Gamepad(d, focus_Widget(), 100);
+    }
 }
 
 static void ticker_Gamepad_(void *context) {
@@ -308,11 +310,11 @@ iBool isPointing_Gamepad(const iGamepad *d) {
 }
 
 iInt2 pointerCoord_Gamepad(const iGamepad *d) {
-    return d ? coord_Window(d->window, d->pointer.x, d->pointer.y) : zero_I2();
+    return isConnected_Gamepad(d) ? coord_Window(d->window, d->pointer.x, d->pointer.y) : zero_I2();
 }
 
 int modState_Gamepad(const iGamepad *d) {
-    return d && d->rightTrigger ? KMOD_SHIFT : 0;
+    return isConnected_Gamepad(d) && d->rightTrigger ? KMOD_SHIFT : 0;
 }
 
 const char *buttonName_Gamepad(const iGamepad *d, int sdlGameControllerButton) {
@@ -401,18 +403,6 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
         return iFalse;
     }
     const SDL_Event *event = sdlEvent;
-    if (isCommand_UserEvent(sdlEvent, "focus.gained")) {
-        pointerOntoFocus_Gamepad_(d);
-        return iFalse;
-    }
-    else if (isCommand_UserEvent(sdlEvent, "menu.opened")) {
-        insert_PtrSet(d->openMenus, pointer_Command(command_UserEvent(sdlEvent)));
-        return iFalse;
-    }
-    else if (isCommand_UserEvent(sdlEvent, "menu.closed")) {
-        remove_PtrSet(d->openMenus, pointer_Command(command_UserEvent(sdlEvent)));
-        return iFalse;
-    }
     switch (event->type) {
         case SDL_CONTROLLERDEVICEADDED: {
             const SDL_ControllerDeviceEvent *dev = &event->cdevice;
@@ -428,6 +418,25 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
             }
             return iTrue;
         }
+        default:
+            break;
+    }
+    if (isCommand_UserEvent(sdlEvent, "menu.opened")) {
+        insert_PtrSet(d->openMenus, pointer_Command(command_UserEvent(sdlEvent)));
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(sdlEvent, "menu.closed")) {
+        remove_PtrSet(d->openMenus, pointer_Command(command_UserEvent(sdlEvent)));
+        return iFalse;
+    }
+    if (!isConnected_Gamepad(d)) {
+        return iFalse;
+    }
+    if (isCommand_UserEvent(sdlEvent, "focus.gained")) {
+        pointerOntoFocus_Gamepad_(d);
+        return iFalse;
+    }
+    switch (event->type) {
         case SDL_CONTROLLERAXISMOTION: {
             const SDL_ControllerAxisEvent *axis = &event->caxis;
             // printf("[Gamepad] axis:%d value:%d\n", axis->axis, axis->value);
@@ -670,7 +679,7 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
 }
 
 void draw_Gamepad(const iGamepad *d) {
-    if (!d) {
+    if (!isConnected_Gamepad(d)) {
         return;
     }
     /* Draw the pointer. */
