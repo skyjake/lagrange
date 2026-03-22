@@ -54,17 +54,11 @@ set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to in
 set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check when searching 'resources.lgr'")
 
 # Optional dependencies.
-option (ENABLE_CORETEXT         "Use Core Text for text rendering (Apple platforms)" ${APPLE})
+option (ENABLE_CORETEXT         "Use Core Text for text rendering (macOS/iOS)" ${APPLE})
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
 option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
 option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
-
-# Core Text replaces HarfBuzz and FriBidi on Apple platforms.
-if (ENABLE_CORETEXT)
-    set (ENABLE_HARFBUZZ OFF)
-    set (ENABLE_FRIBIDI  OFF)
-endif ()
 option (ENABLE_JXL              "Use libjxl to decode .jxl images (via pkg-config)" ON)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
@@ -72,6 +66,14 @@ option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 
+if (ENABLE_CORETEXT)
+    if (NOT APPLE)
+        message (FATAL_ERROR "Core Text is only available on Apple platforms")
+    endif ()
+    # Core Text replaces HarfBuzz and FriBidi on Apple platforms.
+    set (ENABLE_HARFBUZZ OFF)
+    set (ENABLE_FRIBIDI  OFF)
+endif ()
 if (ENABLE_MOBILE_HANDHELD)
     set (ENABLE_MOBILE_PHONE ON) # phone UI implied
 endif ()
@@ -163,6 +165,13 @@ if (IOS)
 endif ()
 
 # Source files.
+set (AUDIO_SOURCES
+    src/audio/buf.c
+    src/audio/buf.h
+    src/audio/player.c
+    src/audio/player.h
+    src/audio/stb_vorbis.c
+)
 set (SOURCES
     src/main.c
     src/app.c
@@ -198,6 +207,15 @@ set (SOURCES
     src/stb_image_resize2.h
     src/stb_truetype.h
     src/updater.h
+    # Graphics:
+    src/render/attributedtext.c
+    src/render/attributedtext.h
+    src/render/font.c
+    src/render/font.h
+    src/render/paint.c
+    src/render/paint.h
+    src/render/text.c
+    src/render/text.h
     # User interface:
     src/ui/banner.c
     src/ui/banner.h
@@ -207,14 +225,6 @@ set (SOURCES
     src/ui/documentview.h
     src/ui/gamepad.c
     src/ui/gamepad.h
-    src/render/attributedtext.c
-    src/render/attributedtext.h
-    src/render/font.c
-    src/render/font.h
-    src/render/paint.c
-    src/render/paint.h
-    src/render/text.c
-    src/render/text.h
     src/ui/linkinfo.c
     src/ui/linkinfo.h
     src/ui/keys.c
@@ -276,7 +286,6 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-
 if (IOS OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
@@ -293,20 +302,14 @@ set (TUI_SOURCES
     src/updater.c
 )
 
+# Now specify the GUI-only sources:
+list (APPEND SOURCES ${AUDIO_SOURCES})
 if (ENABLE_CORETEXT)
     list (APPEND SOURCES src/platform/text_apple.c)
 else ()
     set (ENABLE_STB_TRUETYPE YES)
     list (APPEND SOURCES src/render/text_stb.c)
 endif ()
-# Audio playback
-list (APPEND SOURCES
-    src/audio/buf.c
-    src/audio/buf.h
-    src/audio/player.c
-    src/audio/player.h
-    src/audio/stb_vorbis.c
-)
 if (ENABLE_JXL AND JXL_FOUND)
     list (APPEND SOURCES src/jpegxl.c src/jpegxl.h)
 endif ()
@@ -342,7 +345,10 @@ if (IOS)
         MACOSX_PACKAGE_LOCATION Resources
     )
 elseif (APPLE)
-    list (APPEND SOURCES src/platform/macos.m src/platform/macos.h)
+    list (APPEND SOURCES
+        src/platform/macos.m
+        src/platform/macos.h
+    )
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif ()
@@ -350,10 +356,17 @@ if (MSYS OR MINGW)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
     set (WINRC_PRODUCT_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},0,0)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
-    list (APPEND SOURCES src/platform/win32.c src/platform/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
-    list (APPEND TUI_SOURCES src/platform/win32.c src/platform/win32.h)
+    list (APPEND SOURCES
+        src/platform/win32.c
+        src/platform/win32.h
+        ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc
+    )
+    list (APPEND TUI_SOURCES
+        src/platform/win32.c
+        src/platform/win32.h
+    )
+    if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
 endif ()
-if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
@@ -525,7 +538,10 @@ if (ENABLE_GUI)
             target_link_libraries (app PUBLIC "-framework AppKit")
         endif ()
         if (ENABLE_CORETEXT)
-            target_link_libraries (app PUBLIC "-framework CoreText" "-framework CoreGraphics")
+            target_link_libraries (app PUBLIC
+                "-framework CoreText"
+                "-framework CoreGraphics"
+            )
             target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CORETEXT=1)
         endif ()
         if (ENABLE_SPARKLE)
