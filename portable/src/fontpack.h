@@ -104,6 +104,7 @@ enum iFontSpecFlags {
     monospace_FontSpecFlag        = iBit(3),  /* can be used in preformatted content */
     auxiliary_FontSpecFlag        = iBit(4),  /* only used for looking up glyphs missing from other fonts */
     allowSpacePunct_FontSpecFlag  = iBit(5),  /* space/punctuation glyphs from this auxiliary font can be used */
+    ignoreAsFallback_FontSpecFlag = iBit(6),  /* exclude from fallback list; selectable only explicitly */
     fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
 };
 

@@ -57,8 +57,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(AppleFont)
 
 struct Impl_AppleFont {
-    iBaseFont font;     /* spec, file, height, baseline */
-    CTFontRef ctFont;   /* nullptr if not yet initialized or unavailable */
+    iBaseFont font;      /* spec, file, height, baseline */
+    CTFontRef ctFont;    /* NULL until first use (lazy) */
+    float     pointSize; /* target point size; computed at init, used when creating ctFont */
 };
 
 static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFile *file,
@@ -66,48 +67,47 @@ static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFil
     const int   scaleType   = scaleType_FontSpec(sizeId);
     const float heightScale = spec->heightScale[scaleType];
     const float glyphScale  = spec->glyphScale[scaleType];
-    d->font.spec            = spec;
-    d->font.file            = file;
-    d->font.height          = (int) (baseHeight * heightScale);
-    d->ctFont               = NULL;
-    if (!file || (!file->data && size_Block(&file->sourceData) == 0)) {
+    d->font.spec  = spec;
+    d->font.file  = file;
+    d->font.height = (int) (baseHeight * heightScale);
+    d->ctFont     = NULL;
+    d->pointSize  = 0.0f;
+    if (!file || !file->data) {
+        /* No usable font data; baseline is a rough estimate. */
         d->font.baseline = d->font.height * 3 / 4;
         return;
     }
-    /* Compute the CTFont point size that yields approximately the desired pixel height. */
+    /* Compute the target point size and estimate the baseline from design metrics.
+       CTFont creation is deferred until first use (ensureCtFont_AppleFont_). */
     const int totalEm = file->ascent - file->descent;
-    float pointSize = (totalEm > 0)
-                          ? d->font.height * glyphScale * (float) file->emAdvance / (float) totalEm
-                          : (float) d->font.height;
-    if (pointSize < 1.0f) pointSize = 1.0f;
-    if (size_Block(&file->sourceData) > 0) {
-        /* Raw font data: create CTFont via CGFont. */
-        const void       *bytes    = constData_Block(&file->sourceData);
-        size_t            sz       = size_Block(&file->sourceData);
-        CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, bytes, sz, NULL);
-        CGFontRef         cgFont   = CGFontCreateWithDataProvider(provider);
-        CGDataProviderRelease(provider);
-        if (!cgFont) {
-            d->font.baseline = d->font.height * 3 / 4;
-            return;
-        }
-        d->ctFont = CTFontCreateWithGraphicsFont(cgFont, (CGFloat) pointSize, NULL, NULL);
-        CGFontRelease(cgFont);
+    d->pointSize = (totalEm > 0)
+                       ? d->font.height * glyphScale * (float) file->emAdvance / (float) totalEm
+                       : (float) d->font.height;
+    if (d->pointSize < 1.0f) d->pointSize = 1.0f;
+    /* Baseline ≈ ascent fraction of height, derived from the same design metrics. */
+    d->font.baseline = (totalEm > 0)
+                           ? (int) roundf((float) d->font.height * glyphScale *
+                                          (float) file->ascent / (float) totalEm)
+                           : d->font.height * 3 / 4;
+    if (d->font.baseline >= d->font.height) {
+        d->font.baseline = d->font.height - 1;
+    }
+}
+
+static void ensureCtFont_AppleFont_(iAppleFont *d, CFArrayRef cascadeList) {
+    if (d->ctFont || !d->font.file || !d->font.file->data) return;
+    CTFontRef ref = (CTFontRef) (uintptr_t) d->font.file->data;
+    if (cascadeList) {
+        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
+            kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        CFDictionarySetValue(attrs, kCTFontCascadeListAttribute, cascadeList);
+        CTFontDescriptorRef desc = CTFontDescriptorCreateWithAttributes(attrs);
+        CFRelease(attrs);
+        d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) d->pointSize, NULL, desc);
+        CFRelease(desc);
     }
     else {
-        /* Named system font: scale the reference CTFont stored in file->data. */
-        CTFontRef ref = (CTFontRef) (uintptr_t) file->data;
-        d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) pointSize, NULL, NULL);
-    }
-    if (d->ctFont) {
-        d->font.baseline = (int) roundf((float) CTFontGetAscent(d->ctFont));
-        /* Clamp baseline so there is room for descenders. */
-        if (d->font.baseline >= d->font.height) {
-            d->font.baseline = d->font.height - 1;
-        }
-    }
-    else {
-        d->font.baseline = d->font.height * 3 / 4;
+        d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) d->pointSize, NULL, NULL);
     }
 }
 
@@ -221,6 +221,7 @@ iDefineTypeConstructionArgs(AppleTextRun,
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(AppleText)
+static void clearRunCache_AppleText_(iAppleText *);
 
 struct Impl_AppleText {
     iText          base;
@@ -228,6 +229,7 @@ struct Impl_AppleText {
     int            overrideFontId;     /* always checked first for glyphs */
     iFontSpec      monoFallback;       /* copy of Iosevka spec, low priority fallback */
     iArray         fontPriorityOrder;  /* iPrioMapItem array, sorted descending */
+    CFArrayRef     cascadeList;        /* retained; shared by all lazily-created CTFonts */
     iBool          missingGlyphs;
     iChar          missingChars[20];   /* rotating buffer of missing characters */
     float          opacity;
@@ -250,20 +252,23 @@ iLocalDef iAppleFont *appleFont_Text_(int id) {
 /*----------------------------------------------------------------------------------------------*/
 
 static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
-    /* Build a cascade list (CFArrayRef of CTFontDescriptors) from all fonts in priority order.
-       Each descriptor represents one font family at regular style (for identification only;
-       Core Text will scale to the actual point size when falling back).
-       The system UI font is appended last to maximise Unicode coverage. */
+    /* Build a cascade list (CFArrayRef of CTFontDescriptors) from user-installed fontpack fonts
+       in priority order. System-enumerated fonts (apple-* IDs) are intentionally excluded:
+       the system UI font appended at the end already gives full Unicode coverage via CoreText's
+       own fallback chain. Each descriptor is derived from the 12pt reference CTFont held by
+       the iFontFile, so no sized ctFont needs to exist yet. */
     CFMutableArrayRef list = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
     iConstForEach(Array, it, &d->fontPriorityOrder) {
         const iPrioMapItem *item = it.value;
         const iAppleFont   *af   = appleFont_AppleText_(
             d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
-        if (af && af->ctFont) {
-            CTFontDescriptorRef desc = CTFontCopyFontDescriptor(af->ctFont);
-            CFArrayAppendValue(list, desc);
-            CFRelease(desc);
-        }
+        if (!af || !af->font.spec || !af->font.file || !af->font.file->data) continue;
+        /* Skip fonts that are not intended to participate in the cascade fallback chain. */
+        if (af->font.spec->flags & ignoreAsFallback_FontSpecFlag) continue;
+        CTFontRef           ref  = (CTFontRef) (uintptr_t) af->font.file->data;
+        CTFontDescriptorRef desc = CTFontCopyFontDescriptor(ref);
+        CFArrayAppendValue(list, desc);
+        CFRelease(desc);
     }
     /* Append the default system UI font as the final fallback so Core Text can draw any
        Unicode character the fontpack fonts may not cover (emoji, CJK, symbols, etc.). */
@@ -278,26 +283,20 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
 }
 
 static void applyCascadeList_AppleText_(iAppleText *d) {
-    /* Rebuild all CTFonts with the global cascade list applied. */
-    CFArrayRef cascadeList = buildCascadeList_AppleText_(d);
+    /* Rebuild the cascade list and discard all existing CTFonts so they are recreated lazily
+       with the updated cascade on next use. */
+    if (d->cascadeList) {
+        CFRelease(d->cascadeList);
+    }
+    d->cascadeList = buildCascadeList_AppleText_(d);
     iForEach(Array, it, &d->fonts) {
         iAppleFont *af = it.value;
-        if (!af->ctFont) continue;
-        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
-                                                                 1,
-                                                                 &kCFTypeDictionaryKeyCallBacks,
-                                                                 &kCFTypeDictionaryValueCallBacks);
-        CFDictionarySetValue(attrs, kCTFontCascadeListAttribute, cascadeList);
-        CTFontDescriptorRef desc    = CTFontDescriptorCreateWithAttributes(attrs);
-        CTFontRef           newFont = CTFontCreateCopyWithAttributes(af->ctFont, 0.0f, NULL, desc);
-        CFRelease(desc);
-        CFRelease(attrs);
-        if (newFont) {
+        if (af->ctFont) {
             CFRelease(af->ctFont);
-            af->ctFont = newFont;
+            af->ctFont = NULL;
         }
     }
-    CFRelease(cascadeList);
+    clearRunCache_AppleText_(d);
 }
 
 static void setupFontVariants_AppleText_(iAppleText *d, const iFontSpec *spec, int baseId,
@@ -360,6 +359,10 @@ static void deinitFonts_AppleText_(iAppleText *d) {
         deinit_AppleFont_(it.value);
     }
     clear_Array(&d->fonts);
+    if (d->cascadeList) {
+        CFRelease(d->cascadeList);
+        d->cascadeList = NULL;
+    }
 }
 
 static void clearRunCache_AppleText_(iAppleText *d) {
@@ -519,6 +522,7 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         }
         return;
     }
+    ensureCtFont_AppleFont_(af, tx->cascadeList);
     if (!af->ctFont) {
         if (args->metrics_out) {
             args->metrics_out->bounds  = init_Rect(0, 0, 0, d->height);
@@ -922,6 +926,7 @@ void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
         set_String(&spec->id, &id);
         set_String(&spec->name, &familyName);
         spec->priority = 1;
+        spec->flags |= ignoreAsFallback_FontSpecFlag; /* excluded from cascade; selected explicitly */
         if (isMono) spec->flags |= monospace_FontSpecFlag;
         for (int s = 0; s < max_FontStyle; s++) {
             spec->styles[s] = files[s]; /* iFontSpec takes ownership of each ref */
@@ -949,6 +954,7 @@ iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
     init_Array(&d->fonts, sizeof(iAppleFont));
     init_Array(&d->fontPriorityOrder, sizeof(iPrioMapItem));
     d->overrideFontId  = -1;
+    d->cascadeList     = NULL;
     d->missingGlyphs   = iFalse;
     d->opacity         = 1.0f;
     iZap(d->missingChars);
