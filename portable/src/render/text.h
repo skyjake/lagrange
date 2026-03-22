@@ -72,6 +72,20 @@ void    resetMissing_Text       (iText *);
 iBool   checkMissing_Text       (void); /* returns the flag, and clears it */
 SDL_Texture *glyphCache_Text    (void);
 
+iDeclareType(FontInitCallbacks)     /* Font initialization helpers shared across backends */
+
+struct Impl_FontInitCallbacks {
+    int   (*alloc)      (iText *);  /* allocates a set of size+style variants, returns
+                                       the index of the first one */
+    void  (*setupSpec)  (iText *, const iFontSpec *, int baseId, float uiSize, float textSize);
+                                                      /* initializes size+style variants */
+    iBool (*hasSpec)    (iText *, const iFontSpec *); /* FontSpec is already present in the
+                                                         backend's font list? */
+};
+
+void    initFonts_Text          (iText *, iArray *fontPriorityOrder, int *overrideFontId,
+                                 iFontSpec *monoFallback, const iFontInitCallbacks *); /* called from backend */
+
 /*----------------------------------------------------------------------------------------------*/
 
 int     lineHeight_Text         (int fontId);

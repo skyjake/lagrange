@@ -55,7 +55,7 @@ int fontWithFamily_Text(int font, enum iFontId familyId) {
 
 iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
     iTextMetrics tm;
-#if !defined (LAGRANGE_ENABLE_HARFBUZZ)
+#if !defined (LAGRANGE_ENABLE_HARFBUZZ) && !defined (LAGRANGE_ENABLE_CORETEXT)
     /* In simple mode, each line must be wrapped first so we can break at the right points
        and do wrap notifications before drawing. */
     iRangecc text = d->text;

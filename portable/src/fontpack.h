@@ -25,14 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/archive.h>
 #include <the_Foundation/ptrarray.h>
 
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-#   include "stb_truetype.h"
-#endif
-
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-#   include <hb.h>
-#endif
-
 #define mimeType_FontPack "application/lagrange-fontpack+zip"
 
 /* Fontpacks are ZIP archives that contain a configuration file and one of more font
@@ -77,31 +69,19 @@ float   scale_FontSize  (enum iFontSize size);
 
 iDeclareClass(FontFile)
 iDeclareObjectConstruction(FontFile)
-    
+
 struct Impl_FontFile {
     iObject         object; /* reference-counted */
     iString         id; /* for detecting when the same file is used in many places */
     int             colIndex;
     enum iFontStyle style;
     iBlock          sourceData;
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    stbtt_fontinfo  stbInfo;
-#endif
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    hb_blob_t *hbBlob;
-    hb_face_t *hbFace;
-    hb_font_t *hbFont;
-#endif
+    void *          data; /* internal data managed by Text (backend-specific)*/
     /* Metrics: */
     int ascent, descent, emAdvance;
 };
 
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-iLocalDef uint32_t findGlyphIndex_FontFile(const iFontFile *d, iChar ch) {
-    return stbtt_FindGlyphIndex(&d->stbInfo, ch);
-}
-#endif
-
+iBool       isMonospace_FontFile        (const iFontFile *);
 float       scaleForPixelHeight_FontFile(const iFontFile *, int pixelHeight);
 int         glyphAdvance_FontFile       (const iFontFile *, uint32_t glyphIndex);
 void        measureGlyph_FontFile       (const iFontFile *, uint32_t glyphIndex,

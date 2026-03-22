@@ -99,6 +99,14 @@ struct Impl_BaseFont {
     int              baseline;
 };
 
+/* Font priority map entry: used by backends to track fonts sorted by priority.
+   Shared here so text.c can sort the array without knowing backend internals. */
+iDeclareType(PrioMapItem)
+struct Impl_PrioMapItem {
+    int      priority;
+    uint32_t fontIndex; /* base font ID in the backend's font array */
+};
+
 typedef void iAnyFont;
 
 iLocalDef iBool isMonospaced_Font(const iAnyFont *d) {

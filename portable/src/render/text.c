@@ -23,17 +23,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "text.h"
 #include "color.h"
 #include "paint.h"
+#include "../fontpack.h"
+#include "../app.h"
 
+#include <the_Foundation/array.h>
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
+#include <lagrange/defs.h>
+#include <lagrange/prefs.h>
 #include <SDL_hints.h>
-
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-#   include <hb.h>
-#endif
-
-#if defined (LAGRANGE_ENABLE_FRIBIDI)
-#   include <fribidi.h>
-#endif
 
 static iText *current_Text_;
 
@@ -89,6 +87,48 @@ iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
         pattern++;
     }
     return new_RegExp(pattern, 0);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static int cmp_PrioMapItem_(const void *a, const void *b) {
+    const iPrioMapItem *i = a, *j = b;
+    return -iCmp(i->priority, j->priority); /* descending */
+}
+
+static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback) {
+    const iFontSpec *spec = findSpec_Fonts(cstr_String(&prefs_App()->strings[ps]));
+    return spec ? spec : findSpec_Fonts(fallback);
+}
+
+void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
+                    iFontSpec *monoFallback, const iFontInitCallbacks *cb) {
+    const float uiSize   = fontSize_UI * (isMobile_Platform() ? 1.1f : 1.0f);
+    const float textSize = fontSize_UI * d->contentFontSize;
+    *overrideFontId = -1;
+    clear_Array(fontPriorityOrder);
+    /* Mandatory fonts (must match the fixed slot IDs in font.h). */
+    cb->setupSpec(d, tryFindSpec_(uiFont_PrefsString,               "default"),      default_FontId,           uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(monospaceFont_PrefsString,        "iosevka"),      monospace_FontId,         uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(headingFont_PrefsString,          "default"),      documentHeading_FontId,   uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(bodyFont_PrefsString,             "default"),      documentBody_FontId,      uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(monospaceDocumentFont_PrefsString,"iosevka-body"), documentMonospace_FontId, uiSize, textSize);
+    /* Auxiliary and user-installed fonts. */
+    iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
+        const iFontSpec *spec = s.ptr;
+        if (spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
+            cb->setupSpec(d, spec, cb->alloc(d), uiSize, textSize);
+        }
+    }
+    /* Iosevka as a low-priority fallback if not already the monospace font. */
+    const iFontSpec *iosevka = findSpec_Fonts("iosevka");
+    if (iosevka && !cb->hasSpec(d, iosevka)) {
+        *monoFallback          = *iosevka;
+        monoFallback->priority = 20;
+        cb->setupSpec(d, monoFallback, cb->alloc(d), uiSize, textSize);
+    }
+    sort_Array(fontPriorityOrder, cmp_PrioMapItem_);
+    gap_Text = iRound(gap_UI * d->contentFontSize);
 }
 
 /*----------------------------------------------------------------------------------------------*/

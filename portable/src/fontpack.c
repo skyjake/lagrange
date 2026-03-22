@@ -67,6 +67,9 @@ float scale_FontSize(enum iFontSize size) {
 
 iDefineObjectConstruction(FontFile)
 
+extern void allocData_FontFile      (iFontFile *); /* backend-specific */
+extern void deallocData_FontFile    (iFontFile *); /* backend-specific */
+
 void init_FontFile(iFontFile *d) {
     init_String(&d->id);
     d->colIndex  = 0;
@@ -75,69 +78,20 @@ void init_FontFile(iFontFile *d) {
     d->ascent    = 0;
     d->descent   = 0;
     init_Block(&d->sourceData, 0);
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    iZap(d->stbInfo);
-#endif
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    d->hbBlob = NULL;
-    d->hbFace = NULL;
-    d->hbFont = NULL;
-#endif
+    d->data = NULL;
 }
 
 static void load_FontFile_(iFontFile *d, const iBlock *data) {
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     set_Block(&d->sourceData, data);
-#if 0
-    /* Count the number of available fonts. */
-    for (int i = 0; ; i++) {
-        if (stbtt_GetFontOffsetForIndex(constData_Block(&d->sourceData), i) < 0) {
-            printf("%s: contains %d fonts\n", cstr_String(&d->id), i);
-            break;
-        }
-    }
-#endif
-    const size_t offset = stbtt_GetFontOffsetForIndex(constData_Block(&d->sourceData),
-                                                      d->colIndex);
-    stbtt_InitFont(&d->stbInfo, constData_Block(data), offset);
-    /* Basic metrics. */
-    stbtt_GetFontVMetrics(&d->stbInfo, &d->ascent, &d->descent, NULL);
-    stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &d->emAdvance, NULL);
-#endif
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    /* HarfBuzz will read the font data. */
-    d->hbBlob = hb_blob_create(constData_Block(data), size_Block(&d->sourceData),
-                               HB_MEMORY_MODE_READONLY, NULL, NULL);
-    d->hbFace = hb_face_create(d->hbBlob, d->colIndex);
-    d->hbFont = hb_font_create(d->hbFace);
-#endif
+    allocData_FontFile(d);
 }
 
 static iBool detectMonospace_FontFile_(const iFontFile *d) {
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    int em, i, period;
-    stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &em, NULL);
-    stbtt_GetCodepointHMetrics(&d->stbInfo, 'i', &i, NULL);
-    stbtt_GetCodepointHMetrics(&d->stbInfo, '.', &period, NULL);
-    return em == i && em == period;
-#else
-    return iFalse;
-#endif
+    return isMonospace_FontFile(d);
 }
 
 static void unload_FontFile_(iFontFile *d) {
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    /* HarfBuzz objects. */
-    hb_font_destroy(d->hbFont);
-    hb_face_destroy(d->hbFace);
-    hb_blob_destroy(d->hbBlob);
-    d->hbFont = NULL;
-    d->hbFace = NULL;
-    d->hbBlob = NULL;
-#endif
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    iZap(d->stbInfo);
-#endif
+    deallocData_FontFile(d);
     clear_Block(&d->sourceData);
 }
 
@@ -146,43 +100,6 @@ void deinit_FontFile(iFontFile *d) {
     unload_FontFile_(d);
     deinit_Block(&d->sourceData);
     deinit_String(&d->id);
-}
-
-float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    return stbtt_ScaleForPixelHeight(&d->stbInfo, pixelHeight);
-#else
-    return 1.0f;
-#endif
-}
-
-uint8_t *rasterizeGlyph_FontFile(const iFontFile *d, float xScale, float yScale, float xShift,
-                                 uint32_t glyphIndex, int *w, int *h) {
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    return stbtt_GetGlyphBitmapSubpixel(
-        &d->stbInfo, xScale, yScale, xShift, 0.0f, glyphIndex, w, h, 0, 0);
-#else
-    return NULL;
-#endif
-}
-
-void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
-                           float xScale, float yScale, float xShift,
-                           int *x0, int *y0, int *x1, int *y1) {
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    stbtt_GetGlyphBitmapBoxSubpixel(
-        &d->stbInfo, glyphIndex, xScale, yScale, xShift, 0.0f, x0, y0, x1, y1);
-#endif
-}
-
-int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    int adv = 0;
-    stbtt_GetGlyphHMetrics(&d->stbInfo, glyphIndex, &adv, NULL);
-    return adv;
-#else
-    return 1;
-#endif
 }
 
 /*----------------------------------------------------------------------------------------------*/

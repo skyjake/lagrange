@@ -54,10 +54,17 @@ set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to in
 set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check when searching 'resources.lgr'")
 
 # Optional dependencies.
+option (ENABLE_CORETEXT         "Use Core Text for text rendering (Apple platforms)" ${APPLE})
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
 option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
 option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
+
+# Core Text replaces HarfBuzz and FriBidi on Apple platforms.
+if (ENABLE_CORETEXT)
+    set (ENABLE_HARFBUZZ OFF)
+    set (ENABLE_FRIBIDI  OFF)
+endif ()
 option (ENABLE_JXL              "Use libjxl to decode .jxl images (via pkg-config)" ON)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
@@ -286,10 +293,12 @@ set (TUI_SOURCES
     src/updater.c
 )
 
-set (ENABLE_STB_TRUETYPE YES)
-list (APPEND SOURCES
-    src/render/text_stb.c
-)
+if (ENABLE_CORETEXT)
+    list (APPEND SOURCES src/platform/text_apple.c)
+else ()
+    set (ENABLE_STB_TRUETYPE YES)
+    list (APPEND SOURCES src/render/text_stb.c)
+endif ()
 # Audio playback
 list (APPEND SOURCES
     src/audio/buf.c
@@ -514,6 +523,10 @@ if (ENABLE_GUI)
             target_link_libraries (app PUBLIC "-framework UIKit")
         else ()
             target_link_libraries (app PUBLIC "-framework AppKit")
+        endif ()
+        if (ENABLE_CORETEXT)
+            target_link_libraries (app PUBLIC "-framework CoreText" "-framework CoreGraphics")
+            target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CORETEXT=1)
         endif ()
         if (ENABLE_SPARKLE)
             target_link_libraries (app PUBLIC sparkle)

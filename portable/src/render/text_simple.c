@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "text.h"
+#include "stb_fontdata.h"
 #include "defs.h"
 #include <SDL_version.h>
 
@@ -388,7 +389,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (enableKerning_Text && next) {
                 const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
                 int kern = stbtt_GetGlyphKernAdvance(
-                    &glyph->font->font.file->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
+                    &stbData_FontFile(glyph->font->font.file)->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
                 /* Nunito needs some kerning fixes. */
                 if (glyph->font->font.spec->flags & fixNunitoKerning_FontSpecFlag) {
                     if (ch == 'W' && (next == 'i' || next == 'h')) {

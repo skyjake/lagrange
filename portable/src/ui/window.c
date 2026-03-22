@@ -1941,7 +1941,8 @@ void draw_MainWindow(iMainWindow *d) {
         SDL_RenderCopy(d->base.render, d->backBuf, NULL, NULL);
     }
 #if 0
-    /* Text cache debugging. */ {
+    /* Text cache debugging. */
+    if (glyphCache_Text()) {
         SDL_Rect rect = { d->roots[0]->widget->rect.size.x - 640, 0, 640, 2.5 * 640 };
         SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
         SDL_RenderFillRect(d->render, &rect);

@@ -42,6 +42,7 @@ Optimization notes:
 */
 
 #include "text.h"
+#include "stb_fontdata.h"
 #include "app.h"
 #include "attributedtext.h"
 #include "color.h"
@@ -256,17 +257,6 @@ struct Impl_CacheRow {
     iInt2 pos;
 };
 
-iDeclareType(PrioMapItem)
-struct Impl_PrioMapItem {
-    int      priority;
-    uint32_t fontIndex;
-};
-
-static int cmp_PrioMapItem_(const void *a, const void *b) {
-    const iPrioMapItem *i = a, *j = b;
-    return -iCmp(i->priority, j->priority);
-}
-
 iDeclareType(FontRunArgs)
 iDeclareType(FontRun)
 iDeclareTypeConstructionArgs(FontRun, const iFontRunArgs *args, const iRangecc text, uint32_t crc)
@@ -278,7 +268,7 @@ struct Impl_StbText {
     iText          base;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
     int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */
-    iFontSpec      iosevkaFallback; /* copy of Iosevka as a low-priority spec */
+    iFontSpec      monoFallback; /* copy of Iosevka as a low-priority spec */
     iArray         fontPriorityOrder;
     SDL_Texture *  cache;
     iInt2          cacheSize;
@@ -301,9 +291,8 @@ iLocalDef iFont *font_Text_(enum iFontId id) {
     return at_Array(&current_StbText_()->fonts, id & mask_FontId);
 }
 
-static void setupFontVariants_StbText_(iStbText *d, const iFontSpec *spec, int baseId) {
-    const float uiSize   = fontSize_UI * (isMobile_Platform() ? 1.1f : 1.0f);
-    const float textSize = fontSize_UI * d->base.contentFontSize;
+static void setupFontVariants_StbText_(iStbText *d, const iFontSpec *spec, int baseId,
+                                       float uiSize, float textSize) {
     if (spec->flags & override_FontSpecFlag && d->overrideFontId < 0) {
         /* This is the highest priority override font. */
         d->overrideFontId = baseId;
@@ -342,59 +331,40 @@ iLocalDef enum iFontStyle styleId_Text_(const iFont *d) {
     return style_FontId(fontId_Text_(d));
 }
 
-static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback) {
-    const iFontSpec *spec = findSpec_Fonts(cstr_String(&prefs_App()->strings[ps]));
-    return spec ? spec : findSpec_Fonts(fallback);
+static void setupVariants_StbText_(iText *base, const iFontSpec *spec, int baseId,
+                                     float uiSize, float textSize) {
+    setupFontVariants_StbText_((iStbText *) base, spec, baseId, uiSize, textSize);
 }
 
-static const iFont *findFontVariant_StbText_(const iStbText *d, const iFontSpec *spec) {
+static iBool hasVariant_StbText_(iText *base, const iFontSpec *spec) {
+    const iStbText *d = (const iStbText *) base;
     for (size_t i = 0; i < size_Array(&d->fonts); i += maxVariants_Fonts) {
-        const iFont *font = constAt_Array(&d->fonts, i);
-        if (font->font.spec == spec) {
-            return font;
-        }
+        if (((const iFont *) constAt_Array(&d->fonts, i))->font.spec == spec) return iTrue;
     }
-    return NULL;
+    return iFalse;
+}
+
+static int allocateSlot_StbText_(iText *base) {
+    iStbText *d = (iStbText *) base;
+    const int fontId = (int) size_Array(&d->fonts);
+    resize_Array(&d->fonts, fontId + maxVariants_Fonts);
+    return fontId;
 }
 
 static void initFonts_StbText_(iStbText *d) {
-    /* The `fonts` array has precomputed scaling factors and other parameters in all sizes
-       and styles for each available font. Indices to `fonts` act as font runtime IDs. */
-    /* First the mandatory fonts. */
-    d->overrideFontId = -1;
-    clear_Array(&d->fontPriorityOrder);
-    resize_Array(&d->fonts, auxiliary_FontId); /* room for the built-ins */
-    setupFontVariants_StbText_(d, tryFindSpec_(uiFont_PrefsString, "default"), default_FontId);
-    setupFontVariants_StbText_(d, tryFindSpec_(monospaceFont_PrefsString, "iosevka"), monospace_FontId);
-    setupFontVariants_StbText_(d, tryFindSpec_(headingFont_PrefsString, "default"), documentHeading_FontId);
-    setupFontVariants_StbText_(d, tryFindSpec_(bodyFont_PrefsString, "default"), documentBody_FontId);
-    setupFontVariants_StbText_(d, tryFindSpec_(monospaceDocumentFont_PrefsString, "iosevka-body"), documentMonospace_FontId);
-    /* Check if there are auxiliary fonts available and set those up, too. */
-    iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
-        const iFontSpec *spec = s.ptr;
-//        printf("spec '%s': prio=%d\n", cstr_String(&spec->name), spec->priority);
-        if (spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
-            const int fontId = size_Array(&d->fonts);
-            resize_Array(&d->fonts, fontId + maxVariants_Fonts);
-            setupFontVariants_StbText_(d, spec, fontId);
-        }
-    }
-    /* If Iosevka is not the monospace font, add it as a fallback variant because it has a good
-       coverage of symbols. */ {
-        const iFontSpec *iosevka = findSpec_Fonts("iosevka"); /* this is expected to be built-in */
-        if (iosevka && !findFontVariant_StbText_(d, iosevka)) {
-            d->iosevkaFallback = *iosevka;
-            d->iosevkaFallback.priority = 20; /* make it pretty important */
-            const int fontId = size_Array(&d->fonts);
-            resize_Array(&d->fonts, fontId + maxVariants_Fonts);
-            setupFontVariants_StbText_(d, &d->iosevkaFallback, fontId);
-        }
-    }
-    sort_Array(&d->fontPriorityOrder, cmp_PrioMapItem_);
+    resize_Array(&d->fonts, auxiliary_FontId); /* pre-size for mandatory font slots */
+    initFonts_Text(&d->base,
+                   &d->fontPriorityOrder,
+                   &d->overrideFontId,
+                   &d->monoFallback,
+                   &(iFontInitCallbacks) {
+                       .setupSpec = setupVariants_StbText_,
+                       .hasSpec   = hasVariant_StbText_,
+                       .alloc     = allocateSlot_StbText_,
+                   });
 #if !defined (NDEBUG)
     printf("[Text] %zu font variants ready\n", size_Array(&d->fonts));
 #endif
-    gap_Text = iRound(gap_UI * d->base.contentFontSize);
 }
 
 static void deinitFonts_StbText_(iStbText *d) {
@@ -496,6 +466,94 @@ void deinit_StbText(iStbText *d) {
     deinit_Array(&d->fonts);
     deinit_Text(&d->base);
 }
+
+/*----------------------------------------------------------------------------------------------*/
+/* Backend font metrics API (called from fontpack.c). */
+
+void allocData_FontFile(iFontFile *d) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    iStbFontData *bd = malloc(sizeof(iStbFontData));
+    const size_t offset = stbtt_GetFontOffsetForIndex(constData_Block(&d->sourceData),
+                                                      d->colIndex);
+    stbtt_InitFont(&bd->stbInfo, constData_Block(&d->sourceData), offset);
+    stbtt_GetFontVMetrics(&bd->stbInfo, &d->ascent, &d->descent, NULL);
+    stbtt_GetCodepointHMetrics(&bd->stbInfo, 'M', &d->emAdvance, NULL);
+#   if defined (LAGRANGE_ENABLE_HARFBUZZ)
+    bd->hbBlob = hb_blob_create(constData_Block(&d->sourceData), size_Block(&d->sourceData),
+                                HB_MEMORY_MODE_READONLY, NULL, NULL);
+    bd->hbFace = hb_face_create(bd->hbBlob, d->colIndex);
+    bd->hbFont = hb_font_create(bd->hbFace);
+#   endif
+    d->data = bd;
+#endif
+}
+
+void deallocData_FontFile(iFontFile *d) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    iStbFontData *bd = stbData_FontFile(d);
+    if (!bd) return;
+#   if defined (LAGRANGE_ENABLE_HARFBUZZ)
+    hb_font_destroy(bd->hbFont);
+    hb_face_destroy(bd->hbFace);
+    hb_blob_destroy(bd->hbBlob);
+#   endif
+    free(bd);
+    d->data = NULL;
+#endif
+}
+
+iBool isMonospace_FontFile(const iFontFile *d) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    const iStbFontData *bd = stbData_FontFile(d);
+    if (!bd) return iFalse;
+    int em, i, period;
+    stbtt_GetCodepointHMetrics(&bd->stbInfo, 'M', &em, NULL);
+    stbtt_GetCodepointHMetrics(&bd->stbInfo, 'i', &i, NULL);
+    stbtt_GetCodepointHMetrics(&bd->stbInfo, '.', &period, NULL);
+    return em == i && em == period;
+#else
+    return iFalse;
+#endif
+}
+
+float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    return stbtt_ScaleForPixelHeight(&stbData_FontFile(d)->stbInfo, pixelHeight);
+#else
+    return 1.0f;
+#endif
+}
+
+uint8_t *rasterizeGlyph_FontFile(const iFontFile *d, float xScale, float yScale, float xShift,
+                                 uint32_t glyphIndex, int *w, int *h) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    return stbtt_GetGlyphBitmapSubpixel(
+        &stbData_FontFile(d)->stbInfo, xScale, yScale, xShift, 0.0f, glyphIndex, w, h, 0, 0);
+#else
+    return NULL;
+#endif
+}
+
+void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
+                           float xScale, float yScale, float xShift,
+                           int *x0, int *y0, int *x1, int *y1) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    stbtt_GetGlyphBitmapBoxSubpixel(
+        &stbData_FontFile(d)->stbInfo, glyphIndex, xScale, yScale, xShift, 0.0f, x0, y0, x1, y1);
+#endif
+}
+
+int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    int adv = 0;
+    stbtt_GetGlyphHMetrics(&stbData_FontFile(d)->stbInfo, glyphIndex, &adv, NULL);
+    return adv;
+#else
+    return 1;
+#endif
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
     iStbText *d = iMalloc(StbText);
@@ -962,7 +1020,7 @@ static void deinit_GlyphBuffer_(iGlyphBuffer *d) {
 
 static void shape_GlyphBuffer_(iGlyphBuffer *d) {
     if (!d->glyphInfo) {
-        hb_shape(d->font->font.file->hbFont, d->hb, NULL, 0);
+        hb_shape(stbData_FontFile(d->font->font.file)->hbFont, d->hb, NULL, 0);
         d->glyphInfo = hb_buffer_get_glyph_infos(d->hb, &d->glyphCount);
         d->glyphPos  = hb_buffer_get_glyph_positions(d->hb, &d->glyphCount);
     }
