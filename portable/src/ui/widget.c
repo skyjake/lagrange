@@ -23,17 +23,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 #include "app.h"
-#include "periodic.h"
-#include "touch.h"
 #include "command.h"
 #include "gamepad.h"
-#include "paint.h"
+#include "inputwidget.h"
+#include "labelwidget.h"
+#include "periodic.h"
+#include "render/paint.h"
 #include "root.h"
+#include "touch.h"
 #include "util.h"
 #include "window.h"
-
-#include "labelwidget.h"
-#include "inputwidget.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>

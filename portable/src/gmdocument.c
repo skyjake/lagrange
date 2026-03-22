@@ -23,8 +23,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmutil.h"
 #include <lagrange/lang.h>
-#include "ui/color.h"
-#include "ui/text.h"
+#include "color.h"
+#include "render/text.h"
 #include "ui/metrics.h"
 #include "ui/mediaui.h"
 #include "ui/window.h"

@@ -25,7 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "documentwidget.h"
 #include "root.h"
-#include "color.h"
 #include "command.h"
 #include <lagrange/gmrequest.h>
 #include <lagrange/sitespec.h>
@@ -50,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/thread.h>
 #include <SDL_timer.h>
-#include "text.h"
+#include "render/text.h"
 
 iDefineObjectConstructionArgs(UploadWidget, (enum iUploadProtocol protocol), protocol)
 

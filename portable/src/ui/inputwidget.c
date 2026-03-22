@@ -35,9 +35,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keyboardwidget.h"
 #include "keys.h"
 #include <lagrange/lang.h>
-#include "paint.h"
 #include "periodic.h"
 #include <lagrange/prefs.h>
+#include "render/paint.h"
 #include <lagrange/snippets.h>
 #include "touch.h"
 #include "util.h"
@@ -49,15 +49,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 #include <SDL_version.h>
-#include "text.h"
+#include "render/text.h"
 #include "../gmutil.h"
 
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
-
 #if defined (iPlatformAndroidMobile)
-#   include "android.h"
+#   include "platform/android.h"
 #endif
 
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)

@@ -19,17 +19,18 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
- 
+
 #pragma once
 
-#include "text.h"
+#include "render/text.h"
 #include "util.h"
-#include "../gmdocument.h"
-#include "../ui/documentwidget.h"
+#include "gmdocument.h"
+
+iDeclareType(DocumentWidget)
 
 iDeclareType(LinkInfo)
 iDeclareTypeConstruction(LinkInfo)
-    
+
 struct Impl_LinkInfo {
     const iDocumentWidget *doc;
     iGmLinkId linkId;

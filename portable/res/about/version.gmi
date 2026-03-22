@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.20.2
+* Fixed a crash during event handling when no gamepad is connected.
+* Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.
+* Fixed build issue with glibc 2.43+.
+
 ## 1.20.1
 * Windows: Fixed network connections with SOCKS5 enabled.
 * Preferences: Hide the SOCKS5 password in the input field (use "sensitive" mode).

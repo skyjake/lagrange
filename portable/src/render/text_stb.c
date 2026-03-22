@@ -42,12 +42,13 @@ Optimization notes:
 */
 
 #include "text.h"
-#include "color.h"
-#include "metrics.h"
-#include <lagrange/resources.h>
-#include "window.h"
-#include "paint.h"
 #include "app.h"
+#include "attributedtext.h"
+#include "color.h"
+#include "paint.h"
+#include <lagrange/resources.h>
+#include "ui/metrics.h"
+#include "ui/window.h"
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>

@@ -23,8 +23,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "macos.h"
 #include "app.h"
 #include <lagrange/lang.h>
-#include "ui/color.h"
-#include "ui/text.h"
+#include "color.h"
+#include "render/text.h"
 #include "ui/command.h"
 #include "ui/keys.h"
 #include "ui/widget.h"

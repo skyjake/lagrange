@@ -1113,6 +1113,10 @@ iInt2 latestTapPosition_Touch(void) {
     return init1_I2(-1);
 }
 
+iInt2 fingerPosition_Touch(void) {
+    return init1_I2(-1);
+}
+
 iBool isHovering_Touch(void) {
     return iFalse;
 }

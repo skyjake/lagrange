@@ -25,7 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "bindingswidget.h"
 #include "bookmarks.h"
-#include "color.h"
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
@@ -37,26 +36,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "periodic.h"
+#include "render/text.h"
 #include "root.h"
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
 #include "snippetwidget.h"
-#include "text.h"
 #include "touch.h"
 #include "uploadwidget.h"
 #include "widget.h"
 #include "window.h"
 
-#if defined (iPlatformAppleMobile)
-#   include "../ios.h"
-#endif
-
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
-
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
-#   include "x11.h"
+#   include "platform/x11.h"
 #endif
 
 #include <the_Foundation/math.h>

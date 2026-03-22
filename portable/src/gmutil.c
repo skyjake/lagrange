@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmutil.h"
 #include <lagrange/lang.h>
-#include "ui/color.h"
+#include "color.h"
 
 const iString *prettyDataUrl_String(const iString *d, int contentColor) {
     iUrl url;

@@ -8,13 +8,13 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
     set (PROJECT_VERSION 1.20)
-    set (IOS_BUNDLE_VERSION 4)
-    set (IOS_BUILD_DATE "2026-03-15")
+    set (IOS_BUNDLE_VERSION 5)
+    set (IOS_BUILD_DATE "2026-03-21")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.20)
-    set (ANDROID_BUILD_VERSION b48)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-03-18")
+    set (ANDROID_BUILD_VERSION b49)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-03-21")
 endif ()
 
 # Load modules from the source tree

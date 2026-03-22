@@ -21,10 +21,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "labelwidget.h"
-#include "text.h"
-#include "defs.h"
-#include "color.h"
-#include "paint.h"
+#include "render/text.h"
+#include "render/paint.h"
 #include "app.h"
 #include "util.h"
 #include "keys.h"

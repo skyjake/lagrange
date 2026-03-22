@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "command.h"
 #include "gamepad.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "scrollwidget.h"
 #include "touch.h"
 #include "util.h"

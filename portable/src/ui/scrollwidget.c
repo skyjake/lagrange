@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "scrollwidget.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "util.h"
 #include "periodic.h"
 #include "touch.h"

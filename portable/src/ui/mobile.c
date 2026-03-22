@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "root.h"
 #include "snippetwidget.h"
-#include "text.h"
+#include "render/text.h"
 #include "widget.h"
 #include "window.h"
 

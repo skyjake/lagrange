@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lagrange/prefs.h>
 #include <lagrange/gmcerts.h>
-#include "ui/color.h"
+#include "color.h"
 
 
 iDeclareType(Bookmarks);

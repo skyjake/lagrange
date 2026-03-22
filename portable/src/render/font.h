@@ -113,8 +113,6 @@ iBaseFont *     characterFont_BaseFont  (iBaseFont *, iChar ch);
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(TextAttrib)
-iDeclareType(AttributedRun)
-iDeclareType(AttributedText)
 
 /* Initial attributes at the start of a text string. These may be modified by control
    sequences inside a text run. */
@@ -148,43 +146,6 @@ enum iScript {
 iLocalDef iBool isCJK_Script(enum iScript d) {
     return d == han_Script || d == hiragana_Script || d == katakana_Script;
 }
-
-struct Impl_AttributedRun {
-    iRangei     logical; /* UTF-32 codepoint indices in the logical-order text */
-    iTextAttrib attrib;
-    iBaseFont  *font;
-    iColor      fgColor_; /* any RGB color; A > 0 */
-    iColor      bgColor_; /* any RGB color; A > 0 */
-    struct {
-        uint8_t isLineBreak : 1;
-        uint8_t script      : 7; /* if script detected */
-    } flags;
-};
-
-const char *sourcePtr_AttributedText(const iAttributedText *, int logicalPos);
-iColor      fgColor_AttributedRun   (const iAttributedRun *);
-iColor      bgColor_AttributedRun   (const iAttributedRun *);
-
-iDeclareTypeConstructionArgs(AttributedText, iRangecc text, size_t maxLen, iAnyFont *font,
-                             int colorId, int baseDir, iAnyFont *baseFont, int baseFgColorId,
-                             iChar overrideChar)
-
-struct Impl_AttributedText {
-    iRangecc source; /* original source text */
-    size_t   maxLen;
-    iBaseFont *font;
-    int      fgColorId;
-    iBaseFont *baseFont;
-    int      baseFgColorId;
-    iBool    isBaseRTL;
-    iArray   runs;
-    iArray   logical;         /* UTF-32 text in logical order (mixed directions; matches source) */
-    iArray   visual;          /* UTF-32 text in visual order (LTR) */
-    iArray   logicalToVisual; /* map visual index to logical index */
-    iArray   visualToLogical;
-    iArray   logicalToSourceOffset; /* map logical character to an UTF-8 offset in the source text */
-    char *   bidiLevels;
-};
 
 /*----------------------------------------------------------------------------------------------*/
 

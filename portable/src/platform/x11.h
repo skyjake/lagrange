@@ -25,13 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/defs.h>
 #include <SDL_video.h>
 
-iBool   isXSession_X11                  (void);
-void    setDarkWindowTheme_SDLWindow    (SDL_Window *, iBool setDark);
-void    handleCommand_X11               (const char *cmd);
+iBool    isXSession_X11                   (void);
 
-iBool getWindowDesktop_X11(SDL_Window *win, unsigned long *out);
-void  setWindowDesktop_X11(SDL_Window *win, unsigned long desk);
-void  setWindowDesktopPropOnly_X11(SDL_Window *win, unsigned long desk);
-iBool getCurrentDesktop_X11(SDL_Window *refWin, unsigned long *out);
+iBool    getCurrentDesktop_SDLWindow      (SDL_Window *, unsigned long *out);
+iBool    getDesktop_SDLWindow             (SDL_Window *, unsigned long *out);
+void     setDesktop_SDLWindow             (SDL_Window *, unsigned long desk);
+void     setDesktopPropOnly_SDLWindow     (SDL_Window *, unsigned long desk);
+void     setDarkWindowTheme_SDLWindow     (SDL_Window *, iBool setDark);
 
-
+void     handleCommand_X11                (const char *cmd);
