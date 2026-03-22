@@ -136,6 +136,8 @@ struct Impl_FontPackId {
     int version;
 };
 
+void                addSpec_FontPack        (iFontPack *, iFontSpec *); /* transfer ownership */
+void                applyIniTweaks_FontPack (iFontPack *, const iString *ini); /* apply metadata from INI to existing specs */
 void                setReadOnly_FontPack    (iFontPack *, iBool readOnly);
 void                setStandalone_FontPack  (iFontPack *, iBool standalone);
 void                setLoadPath_FontPack    (iFontPack *, const iString *path);

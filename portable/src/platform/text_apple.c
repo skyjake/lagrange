@@ -70,30 +70,35 @@ static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFil
     d->font.file            = file;
     d->font.height          = (int) (baseHeight * heightScale);
     d->ctFont               = NULL;
-    if (!file || size_Block(&file->sourceData) == 0) {
+    if (!file || (!file->data && size_Block(&file->sourceData) == 0)) {
         d->font.baseline = d->font.height * 3 / 4;
         return;
     }
-    /* Create a CGFont from the raw font data. */
-    const void       *bytes    = constData_Block(&file->sourceData);
-    size_t            sz       = size_Block(&file->sourceData);
-    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, bytes, sz, NULL);
-    CGFontRef         cgFont   = CGFontCreateWithDataProvider(provider);
-    CGDataProviderRelease(provider);
-    if (!cgFont) {
-        d->font.baseline = d->font.height * 3 / 4;
-        return;
-    }
-    /* Compute the CTFont point size that yields approximately the desired pixel height.
-       stbtt ascent > 0, descent <= 0; total EM height = (ascent - descent) in stbtt units.
-       pointSize = desiredPixels * emAdvance / totalEmHeight  (maps em to pixel height). */
-    const int totalEm = file->ascent - file->descent; /* both in stbtt units */
+    /* Compute the CTFont point size that yields approximately the desired pixel height. */
+    const int totalEm = file->ascent - file->descent;
     float pointSize = (totalEm > 0)
                           ? d->font.height * glyphScale * (float) file->emAdvance / (float) totalEm
                           : (float) d->font.height;
     if (pointSize < 1.0f) pointSize = 1.0f;
-    d->ctFont = CTFontCreateWithGraphicsFont(cgFont, (CGFloat) pointSize, NULL, NULL);
-    CGFontRelease(cgFont);
+    if (size_Block(&file->sourceData) > 0) {
+        /* Raw font data: create CTFont via CGFont. */
+        const void       *bytes    = constData_Block(&file->sourceData);
+        size_t            sz       = size_Block(&file->sourceData);
+        CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, bytes, sz, NULL);
+        CGFontRef         cgFont   = CGFontCreateWithDataProvider(provider);
+        CGDataProviderRelease(provider);
+        if (!cgFont) {
+            d->font.baseline = d->font.height * 3 / 4;
+            return;
+        }
+        d->ctFont = CTFontCreateWithGraphicsFont(cgFont, (CGFloat) pointSize, NULL, NULL);
+        CGFontRelease(cgFont);
+    }
+    else {
+        /* Named system font: scale the reference CTFont stored in file->data. */
+        CTFontRef ref = (CTFontRef) (uintptr_t) file->data;
+        d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) pointSize, NULL, NULL);
+    }
     if (d->ctFont) {
         d->font.baseline = (int) roundf((float) CTFontGetAscent(d->ctFont));
         /* Clamp baseline so there is room for descenders. */
@@ -247,7 +252,8 @@ iLocalDef iAppleFont *appleFont_Text_(int id) {
 static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
     /* Build a cascade list (CFArrayRef of CTFontDescriptors) from all fonts in priority order.
        Each descriptor represents one font family at regular style (for identification only;
-       Core Text will scale to the actual point size when falling back). */
+       Core Text will scale to the actual point size when falling back).
+       The system UI font is appended last to maximise Unicode coverage. */
     CFMutableArrayRef list = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
     iConstForEach(Array, it, &d->fontPriorityOrder) {
         const iPrioMapItem *item = it.value;
@@ -258,6 +264,15 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
             CFArrayAppendValue(list, desc);
             CFRelease(desc);
         }
+    }
+    /* Append the default system UI font as the final fallback so Core Text can draw any
+       Unicode character the fontpack fonts may not cover (emoji, CJK, symbols, etc.). */
+    CTFontRef sysFont = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 0.0, NULL);
+    if (sysFont) {
+        CTFontDescriptorRef sysDesc = CTFontCopyFontDescriptor(sysFont);
+        CFArrayAppendValue(list, sysDesc);
+        CFRelease(sysDesc);
+        CFRelease(sysFont);
     }
     return list;
 }
@@ -656,26 +671,50 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
 /*----------------------------------------------------------------------------------------------*/
 
 void allocData_FontFile(iFontFile *d) {
-    /* Create a CTFont from the raw font data to read metrics. */
-    const void       *bytes    = constData_Block(&d->sourceData);
-    size_t            sz       = size_Block(&d->sourceData);
-    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, bytes, sz, NULL);
-    CGFontRef         cgFont   = CGFontCreateWithDataProvider(provider);
-    CGDataProviderRelease(provider);
-    if (!cgFont) return;
-    /* Read ascent/descent from CGFont (in design units). */
-    d->ascent  = CGFontGetAscent(cgFont);  /* positive */
-    d->descent = CGFontGetDescent(cgFont); /* negative (same sign convention as stbtt) */
-    /* Use a temporary CTFont at an arbitrary size to look up the 'M' advance. */
-    CTFontRef tmpFont = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
-    CGFontRelease(cgFont);
+    CTFontRef tmpFont = NULL;
+    if (size_Block(&d->sourceData) > 0) {
+        /* Create a CTFont from raw font data. */
+        const void       *bytes    = constData_Block(&d->sourceData);
+        size_t            sz       = size_Block(&d->sourceData);
+        CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, bytes, sz, NULL);
+        CGFontRef         cgFont   = CGFontCreateWithDataProvider(provider);
+        CGDataProviderRelease(provider);
+        if (!cgFont) return;
+        /* Read ascent/descent from CGFont (in design units). */
+        d->ascent  = CGFontGetAscent(cgFont);  /* positive */
+        d->descent = CGFontGetDescent(cgFont); /* negative (same sign convention as stbtt) */
+        tmpFont = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
+        CGFontRelease(cgFont);
+    }
+    else if (!isEmpty_String(&d->id)) {
+        /* Named system font: look up by PostScript name. */
+        CFStringRef psName = CFStringCreateWithCString(kCFAllocatorDefault,
+                                                       cstr_String(&d->id),
+                                                       kCFStringEncodingUTF8);
+        tmpFont = CTFontCreateWithName(psName, 12.0, NULL);
+        CFRelease(psName);
+        if (!tmpFont) return;
+        /* Read design-unit metrics via CGFont. */
+        CGFontRef cgFont = CTFontCopyGraphicsFont(tmpFont, NULL);
+        if (cgFont) {
+            d->ascent  = CGFontGetAscent(cgFont);
+            d->descent = CGFontGetDescent(cgFont);
+            CGFontRelease(cgFont);
+        }
+        else {
+            /* Fallback: scale pixel metrics at 12pt to design units. */
+            CGFloat upm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
+            d->ascent  = (int) roundf((float) (CTFontGetAscent(tmpFont)  * upm / 12.0));
+            d->descent = -(int) roundf((float) (CTFontGetDescent(tmpFont) * upm / 12.0));
+        }
+    }
     if (!tmpFont) return;
+    /* Read the 'M' advance and convert to design units for emAdvance. */
     UniChar mChar  = 'M';
     CGGlyph mGlyph = 0;
     CTFontGetGlyphsForCharacters(tmpFont, &mChar, &mGlyph, 1);
     if (mGlyph) {
-        /* Convert the advance from points back to design units. */
-        CGSize adv = CGSizeZero;
+        CGSize  adv       = CGSizeZero;
         CTFontGetAdvancesForGlyphs(tmpFont, kCTFontOrientationDefault, &mGlyph, &adv, 1);
         CGFloat unitsPerEm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
         CGFloat pointSize  = CTFontGetSize(tmpFont);
@@ -684,7 +723,7 @@ void allocData_FontFile(iFontFile *d) {
     else {
         d->emAdvance = (int) CTFontGetUnitsPerEm(tmpFont);
     }
-    d->data = (void *) (uintptr_t) tmpFont; /* retain for isMonospace_FontFile */
+    d->data = (void *) (uintptr_t) tmpFont; /* retained; released by deallocData_FontFile */
 }
 
 void deallocData_FontFile(iFontFile *d) {
@@ -704,6 +743,200 @@ iBool isMonospace_FontFile(const iFontFile *d) {
     CTFontGetAdvancesForGlyphs(font, kCTFontOrientationDefault, glyphs, adv, 3);
     return fabsf((float) (adv[0].width - adv[1].width)) < 0.01f &&
            fabsf((float) (adv[0].width - adv[2].width)) < 0.01f;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+/* System font enumeration                                                                      */
+
+static void setCFStringRef_String_(iString *d, CFStringRef src) {
+    if (!src) {
+        clear_String(d);
+        return;
+    }
+    /* Determine the maximum required buffer size for a UTF-8 conversion. */
+    const CFIndex len =
+        CFStringGetMaximumSizeForEncoding(CFStringGetLength(src), kCFStringEncodingUTF8);
+    resize_Block(&d->chars, len);
+    if (CFStringGetCString(
+            src, data_Block(&d->chars), size_Block(&d->chars) + 1, kCFStringEncodingUTF8)) {
+        /* Trim down to the actual size. */
+        resize_Block(&d->chars, strlen(cstr_String(d)));
+    }
+    else {
+        clear_String(d);
+    }
+}
+
+static iFontFile *namedFontFile_(CTFontRef font) {
+    /* Create a named FontFile from a CTFont; id = PostScript name, no sourceData.
+       Returns NULL if the font is inaccessible or has no metrics. */
+    if (!font) return NULL;
+    CFStringRef ps = CTFontCopyName(font, kCTFontPostScriptNameKey);
+    if (!ps) return NULL;
+    char        buf[256]; /* PostScript names are pretty short */
+    const iBool ok = CFStringGetCString(ps, buf, sizeof(buf), kCFStringEncodingUTF8);
+    CFRelease(ps);
+    if (!ok || buf[0] == '\0') return NULL;
+    iFontFile *ff = new_FontFile();
+    setCStr_String(&ff->id, buf);
+    allocData_FontFile(ff); /* fills ascent/descent/emAdvance from named lookup */
+    if (!ff->data) {
+        iRelease(ff);
+        return NULL;
+    }
+    return ff;
+}
+
+static CTFontRef styleVariant_(CTFontRef base, CTFontSymbolicTraits traits) {
+    /* Return a CTFont with the requested symbolic traits, or NULL if the family has no such
+       variant (or the result is the same font as `base`). Caller must CFRelease result. */
+    CTFontRef var = CTFontCreateCopyWithSymbolicTraits(base, 0.0, NULL, traits, traits);
+    if (!var) return NULL;
+    CFStringRef vn   = CTFontCopyName(var, kCTFontPostScriptNameKey);
+    CFStringRef bn   = CTFontCopyName(base, kCTFontPostScriptNameKey);
+    const iBool same = (vn && bn && CFStringCompare(vn, bn, 0) == kCFCompareEqualTo);
+    if (vn) CFRelease(vn);
+    if (bn) CFRelease(bn);
+    if (same) {
+        CFRelease(var);
+        return NULL;
+    }
+    return var;
+}
+
+static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat weight) {
+    /* Return a CTFont matching a target weight for the given family, verifying it is a
+       different variant from `base`. Caller must CFRelease result. */
+    CFNumberRef wNum = CFNumberCreate(kCFAllocatorDefault, kCFNumberCGFloatType, &weight);
+    CFMutableDictionaryRef traitDict = CFDictionaryCreateMutable(
+        kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFDictionarySetValue(traitDict, kCTFontWeightTrait, wNum);
+    CFRelease(wNum);
+    CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
+        kCFAllocatorDefault, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFDictionarySetValue(attrs, kCTFontFamilyNameAttribute, familyName);
+    CFDictionarySetValue(attrs, kCTFontTraitsAttribute, traitDict);
+    CFRelease(traitDict);
+    CTFontDescriptorRef desc = CTFontDescriptorCreateWithAttributes(attrs);
+    CFRelease(attrs);
+    CTFontRef var = CTFontCreateWithFontDescriptor(desc, 12.0, NULL);
+    CFRelease(desc);
+    if (!var) return NULL;
+    /* Verify it is from the same family and is distinct from base. */
+    CFStringRef vFamily = CTFontCopyName(var, kCTFontFamilyNameKey);
+    const iBool sameFamily =
+        vFamily &&
+        CFStringCompare(vFamily, familyName, kCFCompareCaseInsensitive) == kCFCompareEqualTo;
+    if (vFamily) CFRelease(vFamily);
+    if (!sameFamily) {
+        CFRelease(var);
+        return NULL;
+    }
+    CFStringRef vn   = CTFontCopyName(var, kCTFontPostScriptNameKey);
+    CFStringRef bn   = CTFontCopyName(base, kCTFontPostScriptNameKey);
+    const iBool same = (vn && bn && CFStringCompare(vn, bn, 0) == kCFCompareEqualTo);
+    if (vn) CFRelease(vn);
+    if (bn) CFRelease(bn);
+    if (same) {
+        CFRelease(var);
+        return NULL;
+    }
+    return var;
+}
+
+void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
+    CFArrayRef families = CTFontManagerCopyAvailableFontFamilyNames();
+    if (!families) return;
+    const CFIndex n = CFArrayGetCount(families);
+    iString id;
+    iString familyName;
+    init_String(&id);
+    init_String(&familyName);
+    for (CFIndex i = 0; i < n; i++) {
+        CFStringRef family = CFArrayGetValueAtIndex(families, i);
+        /* Skip private/internal fonts whose names begin with '.'. */
+        if (CFStringGetLength(family) == 0 ||
+            CFStringGetCharacterAtIndex(family, 0) == '.') {
+            continue;
+        }
+        /* Get the family name as an iString (handles any length, full UTF-8). */
+        setCFStringRef_String_(&familyName, family);
+        if (isEmpty_String(&familyName)) {
+            continue;
+        }
+        /* Build the apple-* spec ID: lowercase ASCII alphanumeric, non-alphanum -> hyphen.
+           The needSep flag defers hyphens so no trailing separator is possible. */
+        setCStr_String(&id, "apple-");
+        iBool needSep = iFalse;
+        iConstForEach(String, it, &familyName) {
+            const iChar ch = it.value;
+            if (isAlphaNumeric_Char(ch)) {
+                if (needSep) { appendChar_String(&id, '-'); needSep = iFalse; }
+                appendChar_String(&id, lower_Char(ch));
+            }
+            else if (size_String(&id) > 6) {
+                needSep = iTrue;
+            }
+        }
+        /* Create the base (regular) CTFont for this family. */
+        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
+            kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        CFDictionarySetValue(attrs, kCTFontFamilyNameAttribute, family);
+        CTFontDescriptorRef baseDesc = CTFontDescriptorCreateWithAttributes(attrs);
+        CFRelease(attrs);
+        CTFontRef baseFont = CTFontCreateWithFontDescriptor(baseDesc, 12.0, NULL);
+        CFRelease(baseDesc);
+        if (!baseFont) {
+            continue;
+        }
+        /* Find style variants: bold, italic, light (~-0.4), semibold (~0.3). */
+        CTFontRef boldFont     = styleVariant_(baseFont, kCTFontTraitBold);
+        CTFontRef italicFont   = styleVariant_(baseFont, kCTFontTraitItalic);
+        CTFontRef lightFont    = weightVariant_(family, baseFont, -0.4); /* light */
+        CTFontRef semiboldFont = weightVariant_(family, baseFont,  0.3); /* semibold */
+        /* Create iFontFile entries (PostScript-name based). */
+        iFontFile *files[max_FontStyle];
+        files[regular_FontStyle]  = namedFontFile_(baseFont);
+        if (!files[regular_FontStyle]) {
+            /* Font is inaccessible; skip this family. */
+            if (boldFont)     CFRelease(boldFont);
+            if (italicFont)   CFRelease(italicFont);
+            if (lightFont)    CFRelease(lightFont);
+            if (semiboldFont) CFRelease(semiboldFont);
+            CFRelease(baseFont);
+            continue;
+        }
+        files[bold_FontStyle]     = namedFontFile_(boldFont);
+        files[italic_FontStyle]   = namedFontFile_(italicFont);
+        files[light_FontStyle]    = namedFontFile_(lightFont);
+        files[semiBold_FontStyle] = namedFontFile_(semiboldFont);
+        /* Fill any missing styles with a reference to the regular file. */
+        for (int s = 0; s < max_FontStyle; s++) {
+            if (!files[s]) {
+                files[s] = ref_Object(files[regular_FontStyle]);
+            }
+        }
+        /* Build the iFontSpec. */
+        iBool isMono = (CTFontGetSymbolicTraits(baseFont) & kCTFontTraitMonoSpace) != 0;
+        iFontSpec *spec = new_FontSpec();
+        set_String(&spec->id, &id);
+        set_String(&spec->name, &familyName);
+        spec->priority = 1;
+        if (isMono) spec->flags |= monospace_FontSpecFlag;
+        for (int s = 0; s < max_FontStyle; s++) {
+            spec->styles[s] = files[s]; /* iFontSpec takes ownership of each ref */
+        }
+        addSpec_FontPack(pack, spec);
+        /* Release CTFont variant refs (iFontFile already holds its own via data). */
+        if (boldFont)     CFRelease(boldFont);
+        if (italicFont)   CFRelease(italicFont);
+        if (lightFont)    CFRelease(lightFont);
+        if (semiboldFont) CFRelease(semiboldFont);
+        CFRelease(baseFont);
+    }
+    deinit_String(&familyName);
+    deinit_String(&id);
+    CFRelease(families);
 }
 
 /*----------------------------------------------------------------------------------------------*/

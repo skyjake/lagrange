@@ -205,6 +205,12 @@ static float nextTabStop_Font_(const iFont *d, float x) {
 
 #include "text_simple.c"
 
+/* Stub implementations for backend-specific FontFile API.
+   The TUI backend never loads real font binary data, so these are no-ops. */
+void  allocData_FontFile  (iFontFile *d) { iUnused(d); }
+void  deallocData_FontFile(iFontFile *d) { iUnused(d); }
+iBool isMonospace_FontFile(const iFontFile *d) { iUnused(d); return iFalse; }
+
 void run_Font(iBaseFont *font, const iRunArgs *args) {
     runSimple_Font_((iFont *) font, args);
 }

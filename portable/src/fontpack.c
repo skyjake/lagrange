@@ -177,6 +177,7 @@ struct Impl_FontPack {
     int             version;
     iBool           isStandalone;
     iBool           isReadOnly;
+    iBool           tweaksOnly; /* if true, update existing specs; don't create new ones */
     iPtrArray       fonts;   /* array of FontSpecs */
     const iArchive *archive; /* opened ZIP archive */
     iString *       loadPath;
@@ -187,9 +188,10 @@ iDefineTypeConstruction(FontPack)
 
 void init_FontPack(iFontPack *d) {
     init_String(&d->id);
-    d->version = 0;
+    d->version     = 0;
     d->isStandalone = iFalse;
-    d->isReadOnly = iFalse;
+    d->isReadOnly   = iFalse;
+    d->tweaksOnly   = iFalse;
     init_PtrArray(&d->fonts);
     d->archive  = NULL;
     d->loadSpec = NULL;
@@ -225,36 +227,54 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
     iFontPack *d = context;
     if (isStart) {
         iAssert(!d->loadSpec);
-        /* Each font ID must be unique in the non-standalone packs. */
-        if (d->isStandalone || !findSpec_Fonts(cstr_String(table))) {
-            d->loadSpec = new_FontSpec();
-            set_String(&d->loadSpec->id, table);
-            if (d->loadPath) {
-                set_String(&d->loadSpec->sourcePath, d->loadPath);
+        if (d->tweaksOnly) {
+            /* Find an existing spec in this pack to apply tweaks to. */
+            iConstForEach(PtrArray, i, &d->fonts) {
+                iFontSpec *s = i.ptr;
+                if (!cmp_String(&s->id, cstr_String(table))) {
+                    d->loadSpec = s; /* not owned; just a reference for updating */
+                    break;
+                }
+            }
+        }
+        else {
+            /* Each font ID must be unique in the non-standalone packs. */
+            if (d->isStandalone || !findSpec_Fonts(cstr_String(table))) {
+                d->loadSpec = new_FontSpec();
+                set_String(&d->loadSpec->id, table);
+                if (d->loadPath) {
+                    set_String(&d->loadSpec->sourcePath, d->loadPath);
+                }
             }
         }
     }
     else if (d->loadSpec) {
-        /* Set fallback font files. */ {
-            const iFontFile **styles = d->loadSpec->styles;
-            if (!styles[regular_FontStyle]) {
-                fprintf(stderr, "[FontPack] \"%s\" missing a regular style font file\n",
-                        cstr_String(table));
-                delete_FontSpec(d->loadSpec);
-                d->loadSpec = NULL;
-                return;
-            }
-            if (!styles[semiBold_FontStyle]) {
-                styles[semiBold_FontStyle] = ref_Object(styles[bold_FontStyle]);
-            }
-            for (size_t s = 0; s < max_FontStyle; s++) {
-                if (!styles[s]) {
-                    styles[s] = ref_Object(styles[regular_FontStyle]);
+        if (d->tweaksOnly) {
+            /* Tweaks applied in-place; just release the reference. */
+            d->loadSpec = NULL;
+        }
+        else {
+            /* Set fallback font files. */ {
+                const iFontFile **styles = d->loadSpec->styles;
+                if (!styles[regular_FontStyle]) {
+                    fprintf(stderr, "[FontPack] \"%s\" missing a regular style font file\n",
+                            cstr_String(table));
+                    delete_FontSpec(d->loadSpec);
+                    d->loadSpec = NULL;
+                    return;
+                }
+                if (!styles[semiBold_FontStyle]) {
+                    styles[semiBold_FontStyle] = ref_Object(styles[bold_FontStyle]);
+                }
+                for (size_t s = 0; s < max_FontStyle; s++) {
+                    if (!styles[s]) {
+                        styles[s] = ref_Object(styles[regular_FontStyle]);
+                    }
                 }
             }
+            pushBack_PtrArray(&d->fonts, d->loadSpec);
+            d->loadSpec = NULL;
         }
-        pushBack_PtrArray(&d->fonts, d->loadSpec);
-        d->loadSpec = NULL;
     }
 }
 
@@ -392,6 +412,17 @@ static iBool load_FontPack_(iFontPack *d, const iString *ini) {
     iAssert(d->loadSpec == NULL);
     iEndCollect();
     return ok;
+}
+
+void addSpec_FontPack(iFontPack *d, iFontSpec *spec) {
+    pushBack_PtrArray(&d->fonts, spec);
+}
+
+void applyIniTweaks_FontPack(iFontPack *d, const iString *ini) {
+    d->tweaksOnly = iTrue;
+    load_FontPack_(d, ini);
+    d->tweaksOnly = iFalse;
+    iAssert(d->loadSpec == NULL);
 }
 
 static const char *fontpackIniEntryPath_ = "fontpack.ini";
@@ -589,20 +620,21 @@ void init_Fonts(const char *userDir) {
             }
         }
 #endif
-#if defined (iPlatformAppleDesktop)
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+        extern void enumeratePlatformFonts_FontPack_(iFontPack *); /* Core Text impl */
         pack = new_FontPack();
         setReadOnly_FontPack(pack, iTrue);
-        pack->loadPath = newCStr_String("/System/Library/Fonts/");
-        setCStr_String(&pack->id, "macos-system-fonts");
-        iString ini;
-        initBlock_String(&ini, &blobMacosSystemFontsIni_Resources);
-        if (load_FontPack_(pack, &ini)) {
+        setCStr_String(&pack->id, "system-fonts");
+        enumeratePlatformFonts_FontPack_(pack);
+        /* Apply overrides/tweaks from the curated metadata. */
+        applyIniTweaks_FontPack(
+            pack, collect_String(newBlock_String(&blobMacosSystemFontsIni_Resources)));
+        if (!isEmpty_PtrArray(&pack->fonts)) {
             pushBack_PtrArray(&d->packs, pack);
         }
         else {
             delete_FontPack(pack);
         }
-        deinit_String(&ini);
 #endif
     }
     /* Find and load .fontpack files in known locations. */ {
