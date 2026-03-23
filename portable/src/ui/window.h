@@ -174,6 +174,7 @@ iWindow *   get_Window              (void);
 iBool       isOpenGLRenderer_Window (void);
 
 void        setCurrent_Window       (iAnyWindow *);
+void        makeTextCurrent_Window  (iAnyWindow *); /* Window's Text renderer becomes active  */
 void        postRefresh_Window      (iAnyWindow *);
 
 iLocalDef iBool isExposed_Window(const iWindow *d) {

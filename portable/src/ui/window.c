@@ -851,7 +851,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #   endif
 #endif /* !defined (iPlatformTerminal) */
     setWindowIcon_Window_(as_Window(d));
-    setCurrent_Text(d->base.text);
+    makeTextCurrent_Window(&d->base);
     SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
     d->maxDrawableHeight = d->base.size.y;
     setupUserInterface_MainWindow(d);
@@ -1778,7 +1778,7 @@ void draw_MainWindow(iMainWindow *d) {
     if (deviceType_App() == desktop_AppDeviceType) {
         checkPixelRatioChange_Window_(&d->base);
     }
-    setCurrent_Text(d->base.text);
+    makeTextCurrent_Window(&d->base);
     /* Check if root needs resizing. */ {
         const iBool wasPortrait = isPortrait_App();
 #if defined (iPlatformMobile)
@@ -2045,18 +2045,28 @@ iWindow *get_Window(void) {
     return theWindow_;
 }
 
+void makeTextCurrent_Window(iAnyWindow *d) {
+    setCurrent_Text(d ? as_Window(d)->text : NULL);
+    /* Backends that share one iText across all windows (e.g. CoreText/Apple) store the
+       renderer in the iText struct. Keep it pointing at the currently-active window so
+       that init_TextBuf / draw_TextBuf use the right SDL renderer. */
+    if (d && current_Text()) {
+        current_Text()->render = as_Window(d)->render;
+    }
+}
+
 void setCurrent_Window(iAnyWindow *d) {
     theWindow_ = d;
     if (type_Window(d) == main_WindowType) {
         theMainWindow_ = d;
     }
     if (d) {
-        setCurrent_Text(theWindow_->text);
+        makeTextCurrent_Window(theWindow_);
         setCurrent_Root(theWindow_->keyRoot);
         updateMetrics_Window_(d);
     }
     else {
-        setCurrent_Text(NULL);
+        makeTextCurrent_Window(NULL);
         setCurrent_Root(NULL);
     }
 }

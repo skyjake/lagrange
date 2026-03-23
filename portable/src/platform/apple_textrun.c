@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    Builds a CFMutableAttributedString with per-segment CoreText font and color
    attributes, enabling native CoreText styling. */
 
-#include "text_apple.h"
+#include "apple_text.h"
 #include "render/text.h"
 #include "render/font.h"
 #include "color.h"
@@ -48,7 +48,7 @@ struct Impl_TextSegment {
     iColor  bgColor;   /* .a > 0: fill background with this RGB */
 };
 
-CFStringRef lagBgKey_ = NULL; /* initialized in new_Text(); declared extern in text_apple.h */
+CFStringRef lagBgKey_ = NULL; /* initialized in new_Text() */
 
 static CGColorRef cgColor_(int colorId) {
     const iColor    c        = get_Color(colorId);

@@ -306,10 +306,10 @@ set (TUI_SOURCES
 list (APPEND SOURCES ${AUDIO_SOURCES})
 if (ENABLE_CORETEXT)
     list (APPEND SOURCES
-        src/platform/fontcache_apple.c
-        src/platform/text_apple.h
-        src/platform/text_apple.c
-        src/platform/textrun_apple.c)
+        src/platform/apple_fontcache.c
+        src/platform/apple_text.h
+        src/platform/apple_text.c
+        src/platform/apple_textrun.c)
 else ()
     set (ENABLE_STB_TRUETYPE YES)
     list (APPEND SOURCES src/render/text_stb.c)

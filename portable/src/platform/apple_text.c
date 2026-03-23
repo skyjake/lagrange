@@ -52,7 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <CoreGraphics/CoreGraphics.h>
 #include <SDL_render.h>
 
-#include "text_apple.h"
+#include "apple_text.h"
 
 #include <math.h>
 #include <stdint.h>
@@ -529,6 +529,12 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         const CFIndex endIdx    = startIdx + lineLen;
         const char   *lineStart = srcPtr_(startIdx);
         const char   *lineEnd   = (endIdx <= run->utf16Len) ? srcPtr_(endIdx) : text.end;
+        /* WrapText callback: notify about this line — must come before drawing so that
+           any SDL fills (e.g. mark/selection background) land beneath the text. */
+        if (wrap && wrap->wrapRange_.start) {
+            iTextAttrib attrib = { .fgColorId = args->color };
+            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, 0, lastLineW);
+        }
         /* Draw the line (only when in draw mode). */
         if (isDraw) {
             CTLineRef drawLine = line;
@@ -540,11 +546,6 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             }
             drawLine_AppleText_(tx, drawLine, af, pos, args->color, args->mode);
             if (drawLine != line) CFRelease(drawLine);
-        }
-        /* WrapText callback: notify about this line. */
-        if (wrap && wrap->wrapRange_.start) {
-            iTextAttrib attrib = { .fgColorId = args->color };
-            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, 0, lastLineW);
         }
         /* Hit testing: find the character at hitPoint (screen coordinate -> source pointer). */
         if (wrap && !wrap->hitChar_out) {
