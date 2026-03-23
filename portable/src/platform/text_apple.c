@@ -69,13 +69,14 @@ static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFil
     d->font.height          = (int) (baseHeight * heightScale);
     d->ctFont               = NULL;
     d->pointSize            = 0.0f;
-    if (!file || !file->data) {
-        /* No usable font data; baseline is a rough estimate. */
+    if (!file) {
+        /* No font at all; baseline is a rough estimate. */
         d->font.baseline = d->font.height * 3 / 4;
         return;
     }
     /* Compute the target point size and estimate the baseline from design metrics.
-       CTFont creation is deferred until first use (ensureCtFont_AppleFont_). */
+       For system fonts loaded from the font cache, file->data is NULL here and will be
+       created lazily by ensureCtFont_AppleFont_; metrics are already set from the cache. */
     const int totalEm = file->ascent - file->descent;
     d->pointSize = (totalEm > 0 && file->unitsPerEm > 0)
                        ? d->font.height * glyphScale * (float) file->unitsPerEm / (float) totalEm
@@ -88,6 +89,8 @@ static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFil
     if (d->font.baseline >= d->font.height) {
         d->font.baseline = d->font.height - 1;
     }
+    d->vertOffset = (int) roundf(d->font.height * (1.0f - glyphScale) / 2.0f *
+                                 spec->vertOffsetScale[scaleType]);
 }
 
 void ensureCtFont_AppleFont_(iAppleFont *d, CFArrayRef cascadeList) {
@@ -381,8 +384,8 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
         return;
     }
     /* CG origin is at bottom-left (y-up). `baseline` is the distance from the top of the
-       line box to the baseline, so the CG y position is h - baseline. */
-    CGContextSetTextPosition(ctx, 0.0, (CGFloat) (h - af->font.baseline));
+       line box to the baseline; vertOffset shifts the glyph down to center it. */
+    CGContextSetTextPosition(ctx, 0.0, (CGFloat) (h - af->font.baseline - af->vertOffset));
     /* Draw background color fills (before glyphs) for any runs that carry lagBgKey_. */
     CFArrayRef glyphRuns = CTLineGetGlyphRuns(line);
     CFIndex    runCount  = CFArrayGetCount(glyphRuns);
@@ -395,18 +398,29 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
         CGFloat  xOff = CTLineGetOffsetForStringIndex(line, sr.location, NULL);
         double   rW   = CTRunGetTypographicBounds(ctRun, CFRangeMake(0, 0), NULL, NULL, NULL);
         CGContextSetFillColorWithColor(ctx, bgCg);
-        CGContextFillRect(ctx, CGRectMake(xOff, 0, (CGFloat) rW, (CGFloat) h));
+        CGContextFillRect(ctx, CGRectMake(xOff, (CGFloat) af->vertOffset,
+                                              (CGFloat) rW, (CGFloat) (h - af->vertOffset)));
     }
     /* Draw glyphs with baked-in foreground colors from kCTForegroundColorAttributeName. */
     CTLineDraw(line, ctx);
     CGContextRelease(ctx);
     /* Upload to an SDL texture and blit it. Fg colors are already baked in; only
-       apply opacity via the alpha modulator. */
+       apply opacity via the alpha modulator. Use STREAMING access + Lock/Unlock to
+       avoid breaking the Metal render encoder when a render target is active. */
     SDL_Renderer *render = get_Window()->render;
     SDL_Texture  *tex =
-        SDL_CreateTexture(render, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, w, h);
+        SDL_CreateTexture(render, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, w, h);
     if (tex) {
-        SDL_UpdateTexture(tex, NULL, pixels, (int) stride);
+        void *texPixels = NULL;
+        int   texPitch  = 0;
+        if (SDL_LockTexture(tex, NULL, &texPixels, &texPitch) == 0) {
+            for (int row = 0; row < h; row++) {
+                memcpy((char *) texPixels + row * texPitch,
+                       (char *) pixels    + row * (int) stride,
+                       (size_t) w * 4);
+            }
+            SDL_UnlockTexture(tex);
+        }
         SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
         SDL_SetTextureAlphaMod(tex, (uint8_t) (d->opacity * 255.0f + 0.5f));
         const iInt2 orig = origin_Paint;
@@ -465,12 +479,15 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         wrap->wrapRange_ = (iRangecc) { text.start, text.start };
     }
 
-    iInt2   pos        = args->pos;
-    int     totalWidth = 0;
-    int     lastLineW  = 0;
-    int     lineCount  = 0;
-    CFIndex startIdx   = 0;
-    iBool   keepGoing  = iTrue;
+    const iBool isVisual = (args->mode & visualFlag_RunMode) != 0;
+
+    iInt2   pos          = args->pos;
+    int     totalWidth   = 0;
+    int     lastLineW    = 0;
+    int     lineCount    = 0;
+    CFIndex startIdx     = 0;
+    iBool   keepGoing    = iTrue;
+    iRect   visualBounds = { zero_I2(), zero_I2() }; /* accumulated when isVisual */
 
     while (startIdx < run->utf16Len && keepGoing) {
         /* Determine how many UTF-16 units fit on this line. */
@@ -494,6 +511,20 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         double ascentD, descentD, leadingD;
         double lineWidth = CTLineGetTypographicBounds(line, &ascentD, &descentD, &leadingD);
         lastLineW        = (int) ceilf((float) lineWidth);
+        /* Visual (ink) bounds: tight glyph path box, converted to screen coords (y-down). */
+        if (isVisual && args->metrics_out) {
+            CGRect vb = CTLineGetBoundsWithOptions(line, kCTLineBoundsUseGlyphPathBounds);
+            /* CoreText coords: origin.y = descent below baseline (negative); y increases up.
+               Screen coords: y increases down, baseline at pos.y + af->font.baseline. */
+            int vx = pos.x + (int) floor(vb.origin.x);
+            int vy = pos.y + af->font.baseline + af->vertOffset
+                     - (int) ceil(vb.origin.y + vb.size.height);
+            int vw = (int) ceil(vb.size.width);
+            int vh = (int) ceil(vb.size.height);
+            iRect lineVisual = init_Rect(vx, vy, vw, vh);
+            visualBounds = isEmpty_Rect(visualBounds) ? lineVisual
+                                                      : union_Rect(visualBounds, lineVisual);
+        }
         /* Source text pointers for the line boundaries. */
         const CFIndex endIdx    = startIdx + lineLen;
         const char   *lineStart = srcPtr_(startIdx);
@@ -571,7 +602,8 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         if (!wrap) break;
     }
     if (args->metrics_out) {
-        args->metrics_out->bounds = init_Rect(0, 0, totalWidth, lineCount * d->height);
+        args->metrics_out->bounds = isVisual ? visualBounds
+                                             : init_Rect(0, 0, totalWidth, lineCount * d->height);
         args->metrics_out->advance =
             init_I2(lastLineW, (lineCount > 1 ? lineCount - 1 : 0) * d->height);
     }

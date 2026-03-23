@@ -135,8 +135,10 @@ iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
                 iFontSpec *spec = new_FontSpec();
                 set_String(&spec->id, &entry.id);
                 set_String(&spec->name, &entry.name);
-                spec->flags    = (int) entry.flags;
-                spec->priority = 1;
+                spec->flags          = (int) entry.flags;
+                spec->priority       = 1;
+                spec->glyphScale[0]  = defaultSystemGlyphScale_AppleText;
+                spec->glyphScale[1]  = defaultSystemGlyphScale_AppleText;
                 iFontFile *regularFile = NULL;
                 for (int s = 0; s < max_FontStyle; s++) {
                     iFontFile *ff;
@@ -266,44 +268,64 @@ static CTFontRef styleVariant_(CTFontRef base, CTFontSymbolicTraits traits) {
     return var;
 }
 
-static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat weight) {
-    /* Return a CTFont matching a target weight for the given family, verifying it is a
-       different variant from `base`. Caller must CFRelease result. */
-    CFNumberRef wNum = CFNumberCreate(kCFAllocatorDefault, kCFNumberCGFloatType, &weight);
-    CFMutableDictionaryRef traitDict = CFDictionaryCreateMutable(
-        kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-    CFDictionarySetValue(traitDict, kCTFontWeightTrait, wNum);
-    CFRelease(wNum);
+static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat targetWeight) {
+    /* Enumerate all upright non-bold members of the family and return the one whose
+       weight is closest to targetWeight, as long as it is distinct from base.
+       This avoids accidentally picking italic or bold-condensed variants that happen
+       to carry the requested weight. Caller must CFRelease result. */
     CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
-        kCFAllocatorDefault, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetValue(attrs, kCTFontFamilyNameAttribute, familyName);
-    CFDictionarySetValue(attrs, kCTFontTraitsAttribute, traitDict);
-    CFRelease(traitDict);
-    CTFontDescriptorRef desc = CTFontDescriptorCreateWithAttributes(attrs);
+    CTFontDescriptorRef familyDesc = CTFontDescriptorCreateWithAttributes(attrs);
     CFRelease(attrs);
-    CTFontRef var = CTFontCreateWithFontDescriptor(desc, 12.0, NULL);
-    CFRelease(desc);
-    if (!var) return NULL;
-    /* Verify it is from the same family and is distinct from base. */
-    CFStringRef vFamily = CTFontCopyName(var, kCTFontFamilyNameKey);
-    const iBool sameFamily =
-        vFamily &&
-        CFStringCompare(vFamily, familyName, kCFCompareCaseInsensitive) == kCFCompareEqualTo;
-    if (vFamily) CFRelease(vFamily);
-    if (!sameFamily) {
-        CFRelease(var);
+    /* NULL mandatory set: all attributes in the descriptor are mandatory (family name only). */
+    CFArrayRef allDescs = CTFontDescriptorCreateMatchingFontDescriptors(familyDesc, NULL);
+    CFRelease(familyDesc);
+    if (!allDescs) {
         return NULL;
     }
-    CFStringRef vn   = CTFontCopyName(var, kCTFontPostScriptNameKey);
-    CFStringRef bn   = CTFontCopyName(base, kCTFontPostScriptNameKey);
-    const iBool same = (vn && bn && CFStringCompare(vn, bn, 0) == kCFCompareEqualTo);
-    if (vn) CFRelease(vn);
-    if (bn) CFRelease(bn);
-    if (same) {
-        CFRelease(var);
-        return NULL;
+    CFStringRef         basePSName = CTFontCopyName(base, kCTFontPostScriptNameKey);
+    CTFontDescriptorRef bestDesc   = NULL;
+    CGFloat             bestDiff   = 1000.0;
+    for (CFIndex i = 0; i < CFArrayGetCount(allDescs); i++) {
+        CTFontDescriptorRef desc = (CTFontDescriptorRef) CFArrayGetValueAtIndex(allDescs, i);
+        CFDictionaryRef     traits =
+            (CFDictionaryRef) CTFontDescriptorCopyAttribute(desc, kCTFontTraitsAttribute);
+        if (!traits) {
+            continue;
+        }
+        /* Skip italic and bold variants — we want a clean upright light face. */
+        CFNumberRef symNum = (CFNumberRef) CFDictionaryGetValue(traits, kCTFontSymbolicTrait);
+        CTFontSymbolicTraits symTraits = 0;
+        if (symNum) CFNumberGetValue(symNum, kCFNumberSInt32Type, &symTraits);
+        CGFloat     weight = 0.0;
+        CFNumberRef wNum   = (CFNumberRef) CFDictionaryGetValue(traits, kCTFontWeightTrait);
+        if (wNum) CFNumberGetValue(wNum, kCFNumberCGFloatType, &weight);
+        CFRelease(traits);
+        if (symTraits & (kCTFontTraitItalic | kCTFontTraitBold | kCTFontTraitCondensed)) {
+            continue;
+        }        /* Must be distinct from base. */
+        CFStringRef psName =
+            (CFStringRef) CTFontDescriptorCopyAttribute(desc, kCTFontNameAttribute);
+        const iBool isSame =
+            (psName && basePSName && CFStringCompare(psName, basePSName, 0) == kCFCompareEqualTo);
+        if (psName) {
+            CFRelease(psName);
+        }
+        if (isSame) {
+            continue;
+        }
+        const CGFloat diff = fabs(weight - targetWeight);
+        if (diff < bestDiff) {
+            bestDiff = diff;
+            bestDesc = desc;
+        }
     }
-    return var;
+
+    CTFontRef result = bestDesc ? CTFontCreateWithFontDescriptor(bestDesc, 12.0, NULL) : NULL;
+    if (basePSName) CFRelease(basePSName);
+    CFRelease(allDescs);
+    return result;
 }
 
 void enumerateSystemFonts_FontPack_(iFontPack *pack) {
@@ -387,7 +409,9 @@ void enumerateSystemFonts_FontPack_(iFontPack *pack) {
         iFontSpec *spec   = new_FontSpec();
         set_String(&spec->id, &id);
         set_String(&spec->name, &familyName);
-        spec->priority = 1;
+        spec->priority      = 1;
+        spec->glyphScale[0] = defaultSystemGlyphScale_AppleText;
+        spec->glyphScale[1] = defaultSystemGlyphScale_AppleText;
         spec->flags |=
             ignoreAsFallback_FontSpecFlag; /* excluded from cascade; selected explicitly */
         if (isMono) spec->flags |= monospace_FontSpecFlag;
