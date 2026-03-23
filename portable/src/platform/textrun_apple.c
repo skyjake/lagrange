@@ -128,7 +128,7 @@ static iBool parseEscapes_AppleTextRun_(
             p++; /* skip the leading \v byte */
             if (p >= end) break;
             uint8_t esc = (uint8_t) *p++;
-            if (esc == 0x0B) { /* double \v — extended color range */
+            if (esc == 0x0B) { /* double \v: extended color range */
                 if (p < end) {
                     uint8_t nextByte = (uint8_t) *p++;
                     curFgColorId =
@@ -136,7 +136,7 @@ static iBool parseEscapes_AppleTextRun_(
                 }
                 curFgColor.a = 0;
             }
-            else if (esc == 0x24) { /* ASCII '$' — restore default colors */
+            else if (esc == 0x24) { /* ASCII '$': restore default colors */
                 curFgColorId = baseColorId;
                 curFgColor.a = 0;
                 curBgColor.a = 0;

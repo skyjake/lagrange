@@ -537,10 +537,10 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iBool didLockUnlock = iFalse;
 #if defined (iPlatformAndroidMobile)
     /* On Android, the SDL main thread may be suspended when the app is backgrounded,
-       causing the document.request.updated command queue to stall. Streaming audio data
+       causing the posting of "document.request.updated" to stall. Streaming audio data
        must be forwarded directly on the network thread to keep the audio buffer filled.
-       updateSourceData_Player (called via updateStreamData_Media) tracks buffer size and
-       only passes new bytes — safe to call repeatedly and from multiple threads. */
+       `updateSourceData_Player` (called via `updateStreamData_Media`) tracks buffer size and
+       only passes new bytes. Safe to call repeatedly and from multiple threads. */
     if (d->state != ready_RequestState) {
         iGmResponse *resp = lockResponse_GmRequest(d->request);
         if (startsWith_String(&resp->meta, "audio/")) {

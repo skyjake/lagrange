@@ -51,11 +51,6 @@ static void ack_Guppy_(iGuppy *d, const int seq) {
     write_Datagram(d->datagram, utf8_String(collectNewFormat_String("%d\r\n", seq)));
 }
 
-/* Timer thread: waits on a condition with a 100ms timeout, retrying the request
-   or sending acks until cancelled or the session times out.
-   The thread never holds timerMutex and d->mtx simultaneously, which allows
-   cancel_Guppy to lock timerMutex (to set the flag and signal) even while the
-   caller holds d->mtx — no lock-order inversion, no deadlock. */
 static iThreadResult retryThread_Guppy_(iThread *thread) {
     iGuppy *d = userData_Thread(thread);
     lock_Mutex(&d->timerMutex);
@@ -184,10 +179,9 @@ void cancel_Guppy(iGuppy *d) {
     if (d->address) {
         iDisconnect(Address, d->address, lookupFinished, d, addressLookupFinished_Guppy_);
     }
-    /* Signal the timer thread to stop. Don't join here — cancel_Guppy may be
+    /* Signal the timer thread to stop. Don't join here. `cancel_Guppy` may be
        called while d->mtx is held, and the timer thread may be waiting to acquire
-       that same mutex. Joining while holding d->mtx would deadlock. deinit_Guppy
-       performs the join once the caller has released d->mtx. */
+       that same mutex. `deinit_Guppy` performs the join. */
     if (d->timer) {
         iGuardMutex(&d->timerMutex, {
             d->timerRunning = iFalse;

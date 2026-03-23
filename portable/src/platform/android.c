@@ -594,7 +594,7 @@ void setupData_AndroidAudioPlayer(iAndroidAudioPlayer *d, const iString *mediaTy
 void appendData_AndroidAudioPlayer(iAndroidAudioPlayer *d, const void *bytes, size_t size) {
     jboolean   needDetach;
     JNIEnv    *env     = currentJNIEnv_(&needDetach);
-    jobject    activity = cachedActivity_; /* global ref — valid from any thread */
+    jobject    activity = cachedActivity_; /* global ref, valid from any thread */
     jclass     cls      = (*env)->GetObjectClass(env, activity);
     jmethodID  mid      = (*env)->GetMethodID(env, cls, "appendAudioData", "(Ljava/lang/String;[B)V");
     iString   *ptrStr   = newFormat_String("%p", d);
@@ -613,7 +613,7 @@ void setComplete_AndroidAudioPlayer(iAndroidAudioPlayer *d) {
     /* TODO: replace this; we can use `appendData_AndroidAudioPlayer` with bytes==NULL */
     jboolean  needDetach;
     JNIEnv   *env      = currentJNIEnv_(&needDetach);
-    jobject   activity = cachedActivity_; /* global ref — valid from any thread */
+    jobject   activity = cachedActivity_; /* global ref, valid from any thread */
     jclass    cls      = (*env)->GetObjectClass(env, activity);
     jmethodID mid      = (*env)->GetMethodID(env, cls, "completeAudioData", "(Ljava/lang/String;)V");
     iString  *ptrStr   = newFormat_String("%p", d);

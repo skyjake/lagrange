@@ -294,7 +294,7 @@ static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat 
         if (!traits) {
             continue;
         }
-        /* Skip italic and bold variants — we want a clean upright light face. */
+        /* Skip italic and bold variants. We want a clean upright light face. */
         CFNumberRef symNum = (CFNumberRef) CFDictionaryGetValue(traits, kCTFontSymbolicTrait);
         CTFontSymbolicTraits symTraits = 0;
         if (symNum) CFNumberGetValue(symNum, kCFNumberSInt32Type, &symTraits);
