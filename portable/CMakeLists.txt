@@ -305,7 +305,11 @@ set (TUI_SOURCES
 # Now specify the GUI-only sources:
 list (APPEND SOURCES ${AUDIO_SOURCES})
 if (ENABLE_CORETEXT)
-    list (APPEND SOURCES src/platform/text_apple.c)
+    list (APPEND SOURCES
+        src/platform/fontcache_apple.c
+        src/platform/text_apple.h
+        src/platform/text_apple.c
+        src/platform/textrun_apple.c)
 else ()
     set (ENABLE_STB_TRUETYPE YES)
     list (APPEND SOURCES src/render/text_stb.c)

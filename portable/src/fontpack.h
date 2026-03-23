@@ -78,7 +78,7 @@ struct Impl_FontFile {
     iBlock          sourceData;
     void *          data; /* internal data managed by Text (backend-specific)*/
     /* Metrics: */
-    int ascent, descent, emAdvance;
+    int ascent, descent, emAdvance, unitsPerEm;
 };
 
 iBool       isMonospace_FontFile        (const iFontFile *);
