@@ -621,15 +621,18 @@ void init_Fonts(const char *userDir) {
         }
 #endif
 #if defined (LAGRANGE_ENABLE_CORETEXT)
-        extern void enumeratePlatformFonts_FontPack_(iFontPack *); /* Core Text impl */
+        /* Cache the system fonts because there might be lots of them and they don't
+           change that often. */
+        extern void loadCachedFontPack_AppleText(const iString *cacheFile, iFontPack *pack);
         pack = new_FontPack();
         setReadOnly_FontPack(pack, iTrue);
         setCStr_String(&pack->id, "system-fonts");
-        enumeratePlatformFonts_FontPack_(pack);
-        /* Apply overrides/tweaks from the curated metadata. */
-        applyIniTweaks_FontPack(
-            pack, collect_String(newBlock_String(&blobMacosSystemFontsIni_Resources)));
+        loadCachedFontPack_AppleText(
+            collect_String(concatCStr_Path(&d->userDir, "system-fonts.lgr")), pack);
         if (!isEmpty_PtrArray(&pack->fonts)) {
+            /* Apply overrides/tweaks from the curated metadata. */
+            applyIniTweaks_FontPack(
+                pack, collect_String(newBlock_String(&blobMacosSystemFontsIni_Resources)));
             pushBack_PtrArray(&d->packs, pack);
         }
         else {

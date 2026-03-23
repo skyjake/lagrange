@@ -38,10 +38,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/resources.h>
 
 #include <the_Foundation/array.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
 #include <the_Foundation/math.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/block.h>
 #include <the_Foundation/ptrarray.h>
+#include <the_Foundation/thread.h>
+#include <the_Foundation/time.h>
 
 #include <CoreText/CoreText.h>
 #include <CoreGraphics/CoreGraphics.h>
@@ -52,13 +57,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdlib.h>
 #include <string.h>
 
+void        allocData_FontFile      (iFontFile *); /* found below */
+static void stopWorker_AppleText_   (void);
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(AppleFont)
 
 struct Impl_AppleFont {
-    iBaseFont font;      /* spec, file, height, baseline */
-    CTFontRef ctFont;    /* NULL until first use (lazy) */
+    iBaseFont font;
+    CTFontRef ctFont;    /* NULL until first use (lazy load) */
     float     pointSize; /* target point size; computed at init, used when creating ctFont */
 };
 
@@ -67,11 +75,11 @@ static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFil
     const int   scaleType   = scaleType_FontSpec(sizeId);
     const float heightScale = spec->heightScale[scaleType];
     const float glyphScale  = spec->glyphScale[scaleType];
-    d->font.spec  = spec;
-    d->font.file  = file;
-    d->font.height = (int) (baseHeight * heightScale);
-    d->ctFont     = NULL;
-    d->pointSize  = 0.0f;
+    d->font.spec            = spec;
+    d->font.file            = file;
+    d->font.height          = (int) (baseHeight * heightScale);
+    d->ctFont               = NULL;
+    d->pointSize            = 0.0f;
     if (!file || !file->data) {
         /* No usable font data; baseline is a rough estimate. */
         d->font.baseline = d->font.height * 3 / 4;
@@ -85,21 +93,31 @@ static void init_AppleFont_(iAppleFont *d, const iFontSpec *spec, const iFontFil
                        : (float) d->font.height;
     if (d->pointSize < 1.0f) d->pointSize = 1.0f;
     /* Baseline ≈ ascent fraction of height, derived from the same design metrics. */
-    d->font.baseline = (totalEm > 0)
-                           ? (int) roundf((float) d->font.height * glyphScale *
-                                          (float) file->ascent / (float) totalEm)
-                           : d->font.height * 3 / 4;
+    d->font.baseline = (totalEm > 0) ? (int) roundf((float) d->font.height * glyphScale *
+                                                    (float) file->ascent / (float) totalEm)
+                                     : d->font.height * 3 / 4;
     if (d->font.baseline >= d->font.height) {
         d->font.baseline = d->font.height - 1;
     }
 }
 
 static void ensureCtFont_AppleFont_(iAppleFont *d, CFArrayRef cascadeList) {
-    if (d->ctFont || !d->font.file || !d->font.file->data) return;
+    if (d->ctFont || d->pointSize <= 0.0f) return;
+    if (!d->font.file) return;
+    if (!d->font.file->data) {
+        /* Font was loaded from cache: create the reference CTFont lazily now. */
+        allocData_FontFile((iFontFile *) d->font.file);
+        if (!d->font.file->data) {
+            d->pointSize = 0.0f; /* permanently unavailable; skip future attempts */
+            return;
+        }
+    }
     CTFontRef ref = (CTFontRef) (uintptr_t) d->font.file->data;
     if (cascadeList) {
-        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
-            kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
+                                                                 1,
+                                                                 &kCFTypeDictionaryKeyCallBacks,
+                                                                 &kCFTypeDictionaryValueCallBacks);
         CFDictionarySetValue(attrs, kCTFontCascadeListAttribute, cascadeList);
         CTFontDescriptorRef desc = CTFontDescriptorCreateWithAttributes(attrs);
         CFRelease(attrs);
@@ -220,25 +238,29 @@ iDefineTypeConstructionArgs(AppleTextRun,
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareClass(AppleText)
 iDeclareType(AppleText)
-static void clearRunCache_AppleText_(iAppleText *);
 
 struct Impl_AppleText {
-    iText          base;
-    iArray         fonts;              /* iAppleFont array */
+    iObject        object;
+    iText          base;               /* public iText instance */
+    iArray         fonts;              /* initialized fonts ready for use */
     int            overrideFontId;     /* always checked first for glyphs */
     iFontSpec      monoFallback;       /* copy of Iosevka spec, low priority fallback */
-    iArray         fontPriorityOrder;  /* iPrioMapItem array, sorted descending */
+    iArray         fontPriorityOrder;  /* PrioMapItem[] (descending priority) */
     CFArrayRef     cascadeList;        /* retained; shared by all lazily-created CTFonts */
-    iBool          missingGlyphs;
-    iChar          missingChars[20];   /* rotating buffer of missing characters */
     float          opacity;
     iAppleTextRun *runCache[maxRunCache_AppleText_];
     uint32_t       runCacheSerial;
 };
 
+iLocalDef iAppleText *appleText_(iText *t) {
+    /* `t is a member of the class intance, so back up to find the instance itself. */
+    return (iAppleText *) ((char *) t - offsetof(iAppleText, base));
+}
+
 iLocalDef iAppleText *current_AppleText_(void) {
-    return (iAppleText *) current_Text();
+    return appleText_(current_Text());
 }
 
 iLocalDef iAppleFont *appleFont_AppleText_(iAppleText *d, int id) {
@@ -250,6 +272,8 @@ iLocalDef iAppleFont *appleFont_Text_(int id) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
+
+static void clearRunCache_AppleText_(iAppleText *);
 
 static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
     /* Build a cascade list (CFArrayRef of CTFontDescriptors) from user-installed fontpack fonts
@@ -319,11 +343,11 @@ static void setupFontVariants_AppleText_(iAppleText *d, const iFontSpec *spec, i
 
 static void setupVariants_AppleText_(iText *base, const iFontSpec *spec, int baseId,
                                        float uiSize, float textSize) {
-    setupFontVariants_AppleText_((iAppleText *) base, spec, baseId, uiSize, textSize);
+    setupFontVariants_AppleText_(appleText_(base), spec, baseId, uiSize, textSize);
 }
 
 static iBool hasVariant_AppleText_(iText *base, const iFontSpec *spec) {
-    const iAppleText *d = (const iAppleText *) base;
+    const iAppleText *d = appleText_(base);
     for (size_t i = 0; i < size_Array(&d->fonts); i += maxVariants_Fonts) {
         if (((const iAppleFont *) constAt_Array(&d->fonts, i))->font.spec == spec) return iTrue;
     }
@@ -331,7 +355,7 @@ static iBool hasVariant_AppleText_(iText *base, const iFontSpec *spec) {
 }
 
 static int allocateSlot_AppleText_(iText *base) {
-    iAppleText *d = (iAppleText *) base;
+    iAppleText *d = appleText_(base);
     const int fontId = (int) size_Array(&d->fonts);
     resize_Array(&d->fonts, fontId + maxVariants_Fonts);
     return fontId;
@@ -450,7 +474,7 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     CTLineDraw(line, ctx);
     CGContextRelease(ctx);
     /* Upload to an SDL texture and blit it. */
-    SDL_Renderer *render = current_Text()->render;
+    SDL_Renderer *render = get_Window()->render;
     SDL_Texture  *tex =
         SDL_CreateTexture(render, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, w, h);
     if (tex) {
@@ -687,14 +711,13 @@ void allocData_FontFile(iFontFile *d) {
         /* Read ascent/descent from CGFont (in design units). */
         d->ascent  = CGFontGetAscent(cgFont);  /* positive */
         d->descent = CGFontGetDescent(cgFont); /* negative (same sign convention as stbtt) */
-        tmpFont = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
+        tmpFont    = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
         CGFontRelease(cgFont);
     }
     else if (!isEmpty_String(&d->id)) {
         /* Named system font: look up by PostScript name. */
-        CFStringRef psName = CFStringCreateWithCString(kCFAllocatorDefault,
-                                                       cstr_String(&d->id),
-                                                       kCFStringEncodingUTF8);
+        CFStringRef psName = CFStringCreateWithCString(
+            kCFAllocatorDefault, cstr_String(&d->id), kCFStringEncodingUTF8);
         tmpFont = CTFontCreateWithName(psName, 12.0, NULL);
         CFRelease(psName);
         if (!tmpFont) return;
@@ -708,8 +731,8 @@ void allocData_FontFile(iFontFile *d) {
         else {
             /* Fallback: scale pixel metrics at 12pt to design units. */
             CGFloat upm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
-            d->ascent  = (int) roundf((float) (CTFontGetAscent(tmpFont)  * upm / 12.0));
-            d->descent = -(int) roundf((float) (CTFontGetDescent(tmpFont) * upm / 12.0));
+            d->ascent   = (int) roundf((float) (CTFontGetAscent(tmpFont) * upm / 12.0));
+            d->descent  = -(int) roundf((float) (CTFontGetDescent(tmpFont) * upm / 12.0));
         }
     }
     if (!tmpFont) return;
@@ -718,7 +741,7 @@ void allocData_FontFile(iFontFile *d) {
     CGGlyph mGlyph = 0;
     CTFontGetGlyphsForCharacters(tmpFont, &mChar, &mGlyph, 1);
     if (mGlyph) {
-        CGSize  adv       = CGSizeZero;
+        CGSize adv = CGSizeZero;
         CTFontGetAdvancesForGlyphs(tmpFont, kCTFontOrientationDefault, &mGlyph, &adv, 1);
         CGFloat unitsPerEm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
         CGFloat pointSize  = CTFontGetSize(tmpFont);
@@ -749,8 +772,7 @@ iBool isMonospace_FontFile(const iFontFile *d) {
            fabsf((float) (adv[0].width - adv[2].width)) < 0.01f;
 }
 
-/*----------------------------------------------------------------------------------------------*/
-/* System font enumeration                                                                      */
+/*- System font enumeration --------------------------------------------------------------------*/
 
 static void setCFStringRef_String_(iString *d, CFStringRef src) {
     if (!src) {
@@ -848,19 +870,18 @@ static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat 
     return var;
 }
 
-void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
+void enumerateSystemFonts_FontPack_(iFontPack *pack) {
     CFArrayRef families = CTFontManagerCopyAvailableFontFamilyNames();
     if (!families) return;
     const CFIndex n = CFArrayGetCount(families);
-    iString id;
-    iString familyName;
+    iString       id;
+    iString       familyName;
     init_String(&id);
     init_String(&familyName);
     for (CFIndex i = 0; i < n; i++) {
         CFStringRef family = CFArrayGetValueAtIndex(families, i);
         /* Skip private/internal fonts whose names begin with '.'. */
-        if (CFStringGetLength(family) == 0 ||
-            CFStringGetCharacterAtIndex(family, 0) == '.') {
+        if (CFStringGetLength(family) == 0 || CFStringGetCharacterAtIndex(family, 0) == '.') {
             continue;
         }
         /* Get the family name as an iString (handles any length, full UTF-8). */
@@ -875,7 +896,10 @@ void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
         iConstForEach(String, it, &familyName) {
             const iChar ch = it.value;
             if (isAlphaNumeric_Char(ch)) {
-                if (needSep) { appendChar_String(&id, '-'); needSep = iFalse; }
+                if (needSep) {
+                    appendChar_String(&id, '-');
+                    needSep = iFalse;
+                }
                 appendChar_String(&id, lower_Char(ch));
             }
             else if (size_String(&id) > 6) {
@@ -883,8 +907,10 @@ void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
             }
         }
         /* Create the base (regular) CTFont for this family. */
-        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
-            kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
+                                                                 1,
+                                                                 &kCFTypeDictionaryKeyCallBacks,
+                                                                 &kCFTypeDictionaryValueCallBacks);
         CFDictionarySetValue(attrs, kCTFontFamilyNameAttribute, family);
         CTFontDescriptorRef baseDesc = CTFontDescriptorCreateWithAttributes(attrs);
         CFRelease(attrs);
@@ -897,15 +923,15 @@ void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
         CTFontRef boldFont     = styleVariant_(baseFont, kCTFontTraitBold);
         CTFontRef italicFont   = styleVariant_(baseFont, kCTFontTraitItalic);
         CTFontRef lightFont    = weightVariant_(family, baseFont, -0.4); /* light */
-        CTFontRef semiboldFont = weightVariant_(family, baseFont,  0.3); /* semibold */
+        CTFontRef semiboldFont = weightVariant_(family, baseFont, 0.3);  /* semibold */
         /* Create iFontFile entries (PostScript-name based). */
         iFontFile *files[max_FontStyle];
-        files[regular_FontStyle]  = namedFontFile_(baseFont);
+        files[regular_FontStyle] = namedFontFile_(baseFont);
         if (!files[regular_FontStyle]) {
             /* Font is inaccessible; skip this family. */
-            if (boldFont)     CFRelease(boldFont);
-            if (italicFont)   CFRelease(italicFont);
-            if (lightFont)    CFRelease(lightFont);
+            if (boldFont) CFRelease(boldFont);
+            if (italicFont) CFRelease(italicFont);
+            if (lightFont) CFRelease(lightFont);
             if (semiboldFont) CFRelease(semiboldFont);
             CFRelease(baseFont);
             continue;
@@ -921,21 +947,22 @@ void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
             }
         }
         /* Build the iFontSpec. */
-        iBool isMono = (CTFontGetSymbolicTraits(baseFont) & kCTFontTraitMonoSpace) != 0;
-        iFontSpec *spec = new_FontSpec();
+        iBool      isMono = (CTFontGetSymbolicTraits(baseFont) & kCTFontTraitMonoSpace) != 0;
+        iFontSpec *spec   = new_FontSpec();
         set_String(&spec->id, &id);
         set_String(&spec->name, &familyName);
         spec->priority = 1;
-        spec->flags |= ignoreAsFallback_FontSpecFlag; /* excluded from cascade; selected explicitly */
+        spec->flags |=
+            ignoreAsFallback_FontSpecFlag; /* excluded from cascade; selected explicitly */
         if (isMono) spec->flags |= monospace_FontSpecFlag;
         for (int s = 0; s < max_FontStyle; s++) {
             spec->styles[s] = files[s]; /* iFontSpec takes ownership of each ref */
         }
         addSpec_FontPack(pack, spec);
         /* Release CTFont variant refs (iFontFile already holds its own via data). */
-        if (boldFont)     CFRelease(boldFont);
-        if (italicFont)   CFRelease(italicFont);
-        if (lightFont)    CFRelease(lightFont);
+        if (boldFont) CFRelease(boldFont);
+        if (italicFont) CFRelease(italicFont);
+        if (lightFont) CFRelease(lightFont);
         if (semiboldFont) CFRelease(semiboldFont);
         CFRelease(baseFont);
     }
@@ -945,34 +972,337 @@ void enumeratePlatformFonts_FontPack_(iFontPack *pack) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
+/* System font cache
+   Persists the result of enumerateSystemFonts_FontPack_ so subsequent launches skip the
+   expensive Core Text enumeration entirely. A background worker validates and refreshes. */
+
+static const uint32_t magic_FontCacheFile_   = 0x6C674643u; /* "lgFC" */
+static const uint32_t version_FontCacheFile_ = 1u;
+
+iDeclareType(FontCacheEntry)
+
+struct Impl_FontCacheEntry {
+    iString  id;
+    iString  name;
+    uint32_t flags;
+    iString  psNames  [max_FontStyle]; /* PostScript name; if same as [0] = no distinct variant */
+    int32_t  ascent   [max_FontStyle];
+    int32_t  descent  [max_FontStyle];
+    int32_t  emAdvance[max_FontStyle];
+};
+
+static void init_FontCacheEntry(iFontCacheEntry *d) {
+    iZap(d);
+    init_String(&d->id);
+    init_String(&d->name);
+    iForIndices(i, d->psNames) {
+        init_String(&d->psNames[i]);
+    }
+}
+
+static void deinit_FontCacheEntry(iFontCacheEntry *d) {
+    iForIndices(i, d->psNames) {
+        deinit_String(&d->psNames[i]);
+    }
+    deinit_String(&d->name);
+    deinit_String(&d->id);
+}
+
+static void serialize_FontCacheEntry(const iFontCacheEntry *d, iStream *outs) {
+    serialize_String(&d->id, outs);
+    serialize_String(&d->name, outs);
+    writeU32_Stream(outs, d->flags);
+    iForIndices(i, d->psNames) {
+        serialize_String(&d->psNames[i], outs);
+        write32_Stream(outs, d->ascent[i]);
+        write32_Stream(outs, d->descent[i]);
+        write32_Stream(outs, d->emAdvance[i]);
+    }
+}
+
+static void deserialize_FontCacheEntry(iFontCacheEntry *d, iStream *ins) {
+    deserialize_String(&d->id, ins);
+    deserialize_String(&d->name, ins);
+    d->flags = readU32_Stream(ins);
+    iForIndices(i, d->psNames) {
+        deserialize_String(&d->psNames[i], ins);
+        d->ascent[i]    = read32_Stream(ins);
+        d->descent[i]   = read32_Stream(ins);
+        d->emAdvance[i] = read32_Stream(ins);
+    }
+}
+
+static void fontDirModTime_(const iString *path, iDate *date_out) {
+    iZap(*date_out);
+    if (isEmpty_String(path)) return;
+    iFileInfo *info = new_FileInfo(path);
+    if (isDirectory_FileInfo(info)) {
+        iTime t = lastModified_FileInfo(info);
+        init_Date(date_out, &t);
+    }
+    iRelease(info);
+}
+
+static void currentFontDirModTimes_(iDate *libFonts_out, iDate *userLibFonts_out) {
+    iString *path = concatCStr_Path(collect_String(home_Path()), "Library/Fonts");
+    fontDirModTime_(path, userLibFonts_out);
+    setCStr_String(path, "/Library/Fonts");
+    fontDirModTime_(path, libFonts_out);
+    delete_String(path);
+}
+
+iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
+    iFile *f = new_File(cachePath);
+    iBool ok = iFalse;
+    if (open_File(f, readOnly_FileMode)) {
+        iStream *ins = stream_File(f);
+        const uint32_t magic   = readU32_Stream(ins);
+        const uint32_t version = readU32_Stream(ins);
+        const uint32_t ctVer   = readU32_Stream(ins);
+        if (magic == magic_FontCacheFile_ && version == version_FontCacheFile_ &&
+            ctVer == CTGetCoreTextVersion()) {
+            /* Skip the stored mtimes; used only by the background worker. */
+            iDate tmp;
+            deserialize_Date(&tmp, ins); /* /Library/Fonts mtime */
+            deserialize_Date(&tmp, ins); /* ~/Library/Fonts mtime */
+            const uint32_t count = readU32_Stream(ins);
+            ok = iTrue;
+            iFontCacheEntry entry;
+            init_FontCacheEntry(&entry);
+            for (uint32_t i = 0; i < count && !atEnd_Stream(ins); i++) {
+                deserialize_FontCacheEntry(&entry, ins);
+                /* Build iFontSpec + iFontFile stubs; CTFontRef remains NULL until first use. */
+                iFontSpec *spec = new_FontSpec();
+                set_String(&spec->id, &entry.id);
+                set_String(&spec->name, &entry.name);
+                spec->flags    = (int) entry.flags;
+                spec->priority = 1;
+                iFontFile *regularFile = NULL;
+                for (int s = 0; s < max_FontStyle; s++) {
+                    iFontFile *ff;
+                    if (s != regular_FontStyle && regularFile &&
+                        equal_String(&entry.psNames[s], &entry.psNames[regular_FontStyle])) {
+                        ff = ref_Object(regularFile); /* no distinct variant; share regular */
+                    }
+                    else {
+                        ff = new_FontFile();
+                        set_String(&ff->id, &entry.psNames[s]);
+                        ff->ascent    = entry.ascent[s];
+                        ff->descent   = entry.descent[s];
+                        ff->emAdvance = entry.emAdvance[s];
+                        /* ff->data remains NULL; created lazily in ensureCtFont_AppleFont_ */
+                    }
+                    spec->styles[s] = ff;
+                    if (s == regular_FontStyle) {
+                        regularFile = ff;
+                    }
+                }
+                addSpec_FontPack(pack, spec);
+            }
+            deinit_FontCacheEntry(&entry);
+        }
+        close_File(f);
+    }
+    iRelease(f);
+    return ok && !isEmpty_PtrArray(listSpecs_FontPack(pack));
+}
+
+void saveCached_FontPack_(const iFontPack *pack, const iString *cachePath) {
+    iFile *f = new_File(cachePath);
+    if (open_File(f, writeOnly_FileMode)) {
+        iStream *outs = stream_File(f);
+        writeU32_Stream(outs, magic_FontCacheFile_);
+        writeU32_Stream(outs, version_FontCacheFile_);
+        writeU32_Stream(outs, CTGetCoreTextVersion());
+        /* Snapshot the current font directory mtimes for later comparison. */
+        iDate libModTime, userLibModTime;
+        currentFontDirModTimes_(&libModTime, &userLibModTime);
+        serialize_Date(&libModTime, outs);
+        serialize_Date(&userLibModTime, outs);
+        /* Write one entry per spec. */
+        const iPtrArray *specs = listSpecs_FontPack(pack);
+        writeU32_Stream(outs, (uint32_t) size_PtrArray(specs));
+        iFontCacheEntry entry;
+        init_FontCacheEntry(&entry);
+        iConstForEach(PtrArray, i, specs) {
+            const iFontSpec *spec = i.ptr;
+            set_String(&entry.id, &spec->id);
+            set_String(&entry.name, &spec->name);
+            entry.flags = (uint32_t) spec->flags;
+            for (int s = 0; s < max_FontStyle; s++) {
+                const iFontFile *ff = spec->styles[s];
+                if (ff) {
+                    set_String(&entry.psNames[s], &ff->id);
+                    entry.ascent[s]    = (int32_t) ff->ascent;
+                    entry.descent[s]   = (int32_t) ff->descent;
+                    entry.emAdvance[s] = (int32_t) ff->emAdvance;
+                }
+            }
+            serialize_FontCacheEntry(&entry, outs);
+        }
+        deinit_FontCacheEntry(&entry);
+        close_File(f);
+    }
+    iRelease(f);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(FontWorker)
+
+struct Impl_FontWorker {
+    iThread *thread;
+    iString  cachePath;
+    iBool    stopWorker;
+};
+
+static iFontWorker *worker_;
+
+iDeclareTypeConstructionArgs(FontWorker, const iString *cachePath)
+
+static iThreadResult refresh_FontWorker_(iThread *thread) {
+    iFontWorker *d = userData_Thread(thread);
+    /* Check if font directories have changed since the cache was written. */
+    iBool needsRefresh = iTrue; /* assume refresh needed if cache is unreadable */
+    iFile *f = new_File(&d->cachePath);
+    if (open_File(f, readOnly_FileMode)) {
+        iStream *ins   = stream_File(f);
+        uint32_t magic = readU32_Stream(ins);
+        uint32_t ver   = readU32_Stream(ins);
+        uint32_t ctVer = readU32_Stream(ins);
+        if (magic == magic_FontCacheFile_ &&
+            ver   == version_FontCacheFile_ &&
+            ctVer == CTGetCoreTextVersion()) {
+            iDate cachedLib, cachedUserLib;
+            deserialize_Date(&cachedLib,     ins);
+            deserialize_Date(&cachedUserLib, ins);
+            iDate currentLib, currentUserLib;
+            currentFontDirModTimes_(&currentLib, &currentUserLib);
+            iTime cl, cc, ul, uc;
+            init_Time(&cl, &cachedLib);     init_Time(&cc, &currentLib);
+            init_Time(&ul, &cachedUserLib); init_Time(&uc, &currentUserLib);
+            needsRefresh = (cmp_Time(&cl, &cc) != 0 || cmp_Time(&ul, &uc) != 0);
+        }
+        close_File(f);
+    }
+    iRelease(f);
+    if (!needsRefresh || d->stopWorker) {
+        goto done_;
+    }
+    /* Font directories changed: re-enumerate and save a fresh cache. */
+    iFontPack *fresh = new_FontPack();
+    setReadOnly_FontPack(fresh, iTrue);
+    enumerateSystemFonts_FontPack_(fresh);
+    if (!d->stopWorker) {
+        saveCached_FontPack_(fresh, &d->cachePath);
+    }
+    delete_FontPack(fresh);
+    if (!d->stopWorker) {
+        /* Ask the main thread to reload fonts with the fresh cache. */
+        postCommand_App("font.reload");
+    }
+done_:
+    /* Self-destruct: clear global pointer, release thread handle (skips join in deinit),
+       then release self. deinit_FontWorker sees d->thread == NULL and skips join_Thread. */
+    worker_ = NULL;
+    iRelease(d->thread);
+    d->thread = NULL;
+    delete_FontWorker(d);
+    return 0;
+}
+
+static void start_FontWorker_(iFontWorker *d) {
+    iAssert(!d->thread);
+    d->stopWorker = iFalse;
+    d->thread = new_Thread(refresh_FontWorker_);
+    setName_Thread(d->thread, "FontWorker");
+    setUserData_Thread(d->thread, d);
+    start_Thread(d->thread);
+}
+
+static void stop_FontWorker_(iFontWorker *d) {
+    if (d->thread) {
+        d->stopWorker = iTrue;
+        join_Thread(d->thread);
+        iReleasePtr(&d->thread);
+    }
+}
+
+void init_FontWorker(iFontWorker *d, const iString *cachePath) {
+    d->thread = NULL;
+    d->stopWorker = iFalse;
+    initCopy_String(&d->cachePath, cachePath);
+    start_FontWorker_(d);
+}
+
+void deinit_FontWorker(iFontWorker *d) {
+    stop_FontWorker_(d);
+    deinit_String(&d->cachePath);
+}
+
+iDefineTypeConstructionArgs(FontWorker, (const iString *cachePath), cachePath)
+
+static void startWorker_AppleText_(const iString *cachePath) {
+    if (!worker_) {
+        worker_ = new_FontWorker(cachePath);
+    }
+}
+
+static void stopWorker_AppleText_(void) {
+    if (worker_) {
+        delete_FontWorker(worker_);
+        worker_ = NULL;
+    }
+}
+
+void loadCachedFontPack_AppleText(const iString *cacheFile, iFontPack *pack) {
+    /* Load from cache; fall back to synchronous enumeration on first run or OS update. */
+    if (!tryLoadCached_FontPack_(pack, cacheFile)) {
+        enumerateSystemFonts_FontPack_(pack);
+        saveCached_FontPack_(pack, cacheFile);
+    }
+    /* Validate cache in background; re-enumerates and reloads only if dirs have changed. */
+    startWorker_AppleText_(cacheFile);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static iAppleText *sharedText_;
 
 iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
-    iAppleText *d = iMalloc(AppleText);
-    init_Text(&d->base, render, documentFontSizeFactor);
-    iText *oldActive = current_Text();
-    setCurrent_Text(&d->base);
-    init_Array(&d->fonts, sizeof(iAppleFont));
-    init_Array(&d->fontPriorityOrder, sizeof(iPrioMapItem));
-    d->overrideFontId  = -1;
-    d->cascadeList     = NULL;
-    d->missingGlyphs   = iFalse;
-    d->opacity         = 1.0f;
-    iZap(d->missingChars);
-    iZap(d->runCache);
-    d->runCacheSerial = 0;
-    initFonts_AppleText_(d);
-    setCurrent_Text(oldActive);
-    return (iText *) d;
+    if (!sharedText_) {
+        sharedText_ = iNew(AppleText);
+        init_Text(&sharedText_->base, render, documentFontSizeFactor);
+        iText *oldActive = current_Text();
+        setCurrent_Text(&sharedText_->base);
+        init_Array(&sharedText_->fonts, sizeof(iAppleFont));
+        init_Array(&sharedText_->fontPriorityOrder, sizeof(iPrioMapItem));
+        sharedText_->overrideFontId = -1;
+        sharedText_->cascadeList    = NULL;
+        sharedText_->opacity        = 1.0f;
+        sharedText_->runCacheSerial = 0;
+        iZap(sharedText_->runCache);
+        initFonts_AppleText_(sharedText_);
+        setCurrent_Text(oldActive);
+    }
+    else {
+        ref_Object(sharedText_); /* all windows use the same one */
+    }
+    return &sharedText_->base;
+}
+
+void deinit_AppleText(iAppleText *d) {
+    clearRunCache_AppleText_(d);
+    deinitFonts_AppleText_(d);
+    deinit_Array(&d->fontPriorityOrder);
+    deinit_Array(&d->fonts);
+    deinit_Text(&d->base);
+    iAssert(sharedText_ == d);
+    sharedText_ = NULL;
 }
 
 void delete_Text(iText *d) {
-    iAppleText *at = (iAppleText *) d;
-    clearRunCache_AppleText_(at);
-    deinitFonts_AppleText_(at);
-    deinit_Array(&at->fontPriorityOrder);
-    deinit_Array(&at->fonts);
-    deinit_Text(d);
-    free(d);
+    deref_Object(appleText_(d));
 }
 
 void setOpacity_Text(float opacity) {
@@ -980,7 +1310,7 @@ void setOpacity_Text(float opacity) {
 }
 
 void resetFonts_Text(iText *d) {
-    iAppleText *at = (iAppleText *) d;
+    iAppleText *at = appleText_(d);
     iText *oldActive = current_Text();
     setCurrent_Text(d);
     clearRunCache_AppleText_(at);
@@ -990,7 +1320,7 @@ void resetFonts_Text(iText *d) {
 }
 
 void resetFontCache_Text(iText *d) {
-    iAppleText *at = (iAppleText *) d;
+    iAppleText *at = appleText_(d);
     iText *oldActive = current_Text();
     setCurrent_Text(d);
     clearRunCache_AppleText_(at);
@@ -1000,22 +1330,16 @@ void resetFontCache_Text(iText *d) {
 iBool checkMissing_Text(void) {
     /* Core Text handles missing glyphs internally via the cascade list, so the missing-glyph
        machinery is mostly a no-op here. We can assume the OS will find the glyph. */
-    iAppleText *d       = current_AppleText_();
-    const iBool missing = d->missingGlyphs;
-    d->missingGlyphs    = iFalse;
-    return missing;
+    return iFalse;
 }
 
 iChar missing_Text(size_t index) {
-    iAppleText *d = current_AppleText_();
-    if (index >= iElemCount(d->missingChars)) return 0;
-    return d->missingChars[index];
+    iUnused(index);
+    return 0;
 }
 
 void resetMissing_Text(iText *d) {
-    iAppleText *at = (iAppleText *) d;
-    at->missingGlyphs = iFalse;
-    iZap(at->missingChars);
+    iUnused(d);
 }
 
 SDL_Texture *glyphCache_Text(void) {
@@ -1027,3 +1351,5 @@ void cache_Text(int fontId, iRangecc text) {
     /* Pre-rendering is a no-op in the Core Text backend; runs are cached lazily. */
     iUnused(fontId, text);
 }
+
+iDefineClass(AppleText)
