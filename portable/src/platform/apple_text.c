@@ -216,27 +216,12 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
         CFArrayAppendValue(list, desc);
         CFRelease(desc);
     }
-    /* Append the system cascade for broad Unicode coverage, filtering out all Apple Color
-       Emoji variants. The substring search covers both the historical "AppleColorEmoji" name
-       and the macOS Sequoia UI variant ".AppleColorEmojiUI" / ".Apple Color Emoji UI". */
+    /* Final fallback for broad Unicode coverage. */
     CTFontRef sysFont = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 0.0, NULL);
     if (sysFont) {
-        CFArrayRef sysCascade = CTFontCopyDefaultCascadeListForLanguages(sysFont, NULL);
-        if (sysCascade) {
-            for (CFIndex i = 0; i < CFArrayGetCount(sysCascade); i++) {
-                CTFontDescriptorRef fd         = CFArrayGetValueAtIndex(sysCascade, i);
-                CFStringRef         psName     = CTFontDescriptorCopyAttribute(fd, kCTFontNameAttribute);
-                CFStringRef         familyName = CTFontDescriptorCopyAttribute(fd, kCTFontFamilyNameAttribute);
-                const iBool isColorEmoji =
-                    (psName     && CFStringFind(psName,     CFSTR("ColorEmoji"),  0).location != kCFNotFound) ||
-                    (familyName && CFStringFind(familyName, CFSTR("Color Emoji"), 0).location != kCFNotFound);
-                if (psName)     CFRelease(psName);
-                if (familyName) CFRelease(familyName);
-                if (isColorEmoji) continue;
-                CFArrayAppendValue(list, fd);
-            }
-            CFRelease(sysCascade);
-        }
+        CTFontDescriptorRef desc = CTFontCopyFontDescriptor(sysFont);
+        CFArrayAppendValue(list, desc);
+        CFRelease(desc);
         CFRelease(sysFont);
     }
     return list;
