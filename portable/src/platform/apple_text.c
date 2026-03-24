@@ -689,9 +689,10 @@ void allocData_FontFile(iFontFile *d) {
         CGFontRef         cgFont   = CGFontCreateWithDataProvider(provider);
         CGDataProviderRelease(provider);
         if (!cgFont) return;
-        /* Read ascent/descent from CGFont (in design units). */
-        d->ascent  = CGFontGetAscent(cgFont);  /* positive */
-        d->descent = CGFontGetDescent(cgFont); /* negative (same sign convention as stbtt) */
+        /* Read ascent/descent/lineGap from CGFont (in design units). */
+        d->ascent  = CGFontGetAscent(cgFont);          /* positive */
+        d->descent = CGFontGetDescent(cgFont);         /* negative (same sign convention as stbtt) */
+        d->lineGap = iMax(0, CGFontGetLeading(cgFont)); /* non-negative line gap */
         tmpFont    = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
         CGFontRelease(cgFont);
     }
@@ -707,6 +708,7 @@ void allocData_FontFile(iFontFile *d) {
         if (cgFont) {
             d->ascent  = CGFontGetAscent(cgFont);
             d->descent = CGFontGetDescent(cgFont);
+            d->lineGap = iMax(0, CGFontGetLeading(cgFont));
             CGFontRelease(cgFont);
         }
         else {
@@ -714,6 +716,7 @@ void allocData_FontFile(iFontFile *d) {
             CGFloat upm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
             d->ascent   = (int) roundf((float) (CTFontGetAscent(tmpFont) * upm / 12.0));
             d->descent  = -(int) roundf((float) (CTFontGetDescent(tmpFont) * upm / 12.0));
+            d->lineGap  = iMax(0, (int) roundf((float) (CTFontGetLeading(tmpFont) * upm / 12.0)));
         }
     }
     if (!tmpFont) return;

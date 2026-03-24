@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    the enumerated fonts. */
 
 static const uint32_t magic_FontCacheFile_   = 0x6C674643u; /* "lgFC" */
-static const uint32_t version_FontCacheFile_ = 2u;
+static const uint32_t version_FontCacheFile_ = 3u;
 
 iDeclareType(FontCacheEntry)
 
@@ -45,6 +45,7 @@ struct Impl_FontCacheEntry {
     iString  psNames  [max_FontStyle]; /* PostScript name; if same as [0] = no distinct variant */
     int32_t  ascent   [max_FontStyle];
     int32_t  descent  [max_FontStyle];
+    int32_t  lineGap  [max_FontStyle];
     int32_t  emAdvance [max_FontStyle];
     int32_t  unitsPerEm[max_FontStyle];
 };
@@ -74,6 +75,7 @@ static void serialize_FontCacheEntry(const iFontCacheEntry *d, iStream *outs) {
         serialize_String(&d->psNames[i], outs);
         write32_Stream(outs, d->ascent[i]);
         write32_Stream(outs, d->descent[i]);
+        write32_Stream(outs, d->lineGap[i]);
         write32_Stream(outs, d->emAdvance[i]);
         write32_Stream(outs, d->unitsPerEm[i]);
     }
@@ -87,6 +89,7 @@ static void deserialize_FontCacheEntry(iFontCacheEntry *d, iStream *ins) {
         deserialize_String(&d->psNames[i], ins);
         d->ascent[i]    = read32_Stream(ins);
         d->descent[i]   = read32_Stream(ins);
+        d->lineGap[i]   = read32_Stream(ins);
         d->emAdvance[i]  = read32_Stream(ins);
         d->unitsPerEm[i] = read32_Stream(ins);
     }
@@ -109,6 +112,14 @@ static void currentFontDirModTimes_(iDate *libFonts_out, iDate *userLibFonts_out
     setCStr_String(path, "/Library/Fonts");
     fontDirModTime_(path, libFonts_out);
     delete_String(path);
+}
+
+static float glyphScaleFromMetrics_(const iFontFile *regularFace) {
+    if (!regularFace) return defaultSystemGlyphScale_AppleText;
+    const int totalEm  = regularFace->ascent - regularFace->descent; /* descent is negative */
+    const int naturalH = totalEm + iMax(0, regularFace->lineGap);
+    return (totalEm > 0 && naturalH > 0) ? (float) totalEm / (float) naturalH
+                                         : defaultSystemGlyphScale_AppleText;
 }
 
 iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
@@ -135,10 +146,8 @@ iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
                 iFontSpec *spec = new_FontSpec();
                 set_String(&spec->id, &entry.id);
                 set_String(&spec->name, &entry.name);
-                spec->flags          = (int) entry.flags;
-                spec->priority       = 1;
-                spec->glyphScale[0]  = defaultSystemGlyphScale_AppleText;
-                spec->glyphScale[1]  = defaultSystemGlyphScale_AppleText;
+                spec->flags    = (int) entry.flags;
+                spec->priority = 1;
                 iFontFile *regularFile = NULL;
                 for (int s = 0; s < max_FontStyle; s++) {
                     iFontFile *ff;
@@ -149,8 +158,9 @@ iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
                     else {
                         ff = new_FontFile();
                         set_String(&ff->id, &entry.psNames[s]);
-                        ff->ascent    = entry.ascent[s];
-                        ff->descent   = entry.descent[s];
+                        ff->ascent     = entry.ascent[s];
+                        ff->descent    = entry.descent[s];
+                        ff->lineGap    = entry.lineGap[s];
                         ff->emAdvance  = entry.emAdvance[s];
                         ff->unitsPerEm = entry.unitsPerEm[s];
                         /* ff->data remains NULL; created lazily in ensureCtFont_AppleFont_ */
@@ -160,6 +170,10 @@ iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
                         regularFile = ff;
                     }
                 }
+                const float gs      = glyphScaleFromMetrics_(regularFile);
+                spec->glyphScale[0] = gs;
+                spec->glyphScale[1] = gs;
+                iAssert(gs <= 1.0f);
                 addSpec_FontPack(pack, spec);
             }
             deinit_FontCacheEntry(&entry);
@@ -196,8 +210,9 @@ void saveCached_FontPack_(const iFontPack *pack, const iString *cachePath) {
                 const iFontFile *ff = spec->styles[s];
                 if (ff) {
                     set_String(&entry.psNames[s], &ff->id);
-                    entry.ascent[s]    = (int32_t) ff->ascent;
-                    entry.descent[s]   = (int32_t) ff->descent;
+                    entry.ascent[s]     = (int32_t) ff->ascent;
+                    entry.descent[s]    = (int32_t) ff->descent;
+                    entry.lineGap[s]    = (int32_t) ff->lineGap;
                     entry.emAdvance[s]  = (int32_t) ff->emAdvance;
                     entry.unitsPerEm[s] = (int32_t) ff->unitsPerEm;
                 }
@@ -409,11 +424,15 @@ void enumerateSystemFonts_FontPack_(iFontPack *pack) {
         iFontSpec *spec   = new_FontSpec();
         set_String(&spec->id, &id);
         set_String(&spec->name, &familyName);
-        spec->priority      = 1;
-        spec->glyphScale[0] = defaultSystemGlyphScale_AppleText;
-        spec->glyphScale[1] = defaultSystemGlyphScale_AppleText;
-        spec->flags |=
-            ignoreAsFallback_FontSpecFlag; /* excluded from cascade; selected explicitly */
+        spec->priority = 1;
+        spec->flags   |= ignoreAsFallback_FontSpecFlag; /* excluded from cascade; selected explicitly */
+        /* Compute glyphScale from the regular face's line spacing metrics so that each font
+           is rendered at the correct proportional size within the typesetter's line box. */ {
+            const float gs      = glyphScaleFromMetrics_(files[regular_FontStyle]);
+            spec->glyphScale[0] = gs;
+            spec->glyphScale[1] = gs;
+            iAssert(gs <= 1.0f);
+        }
         if (isMono) spec->flags |= monospace_FontSpecFlag;
         for (int s = 0; s < max_FontStyle; s++) {
             spec->styles[s] = files[s]; /* iFontSpec takes ownership of each ref */
