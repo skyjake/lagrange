@@ -402,6 +402,12 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
         free(pixels);
         return;
     }
+    /* Enable fractional glyph positioning: glyphs are placed at their natural
+       sub-pixel advances rather than being quantized to integer pixel boundaries.
+       This is the CoreText equivalent of the STB backend's per-glyph subpixel variants. */
+    CGContextSetShouldAntialias(ctx, true);
+    CGContextSetShouldSubpixelPositionFonts(ctx, true);
+    CGContextSetShouldSubpixelQuantizeFonts(ctx, false);
     /* CG origin is at bottom-left (y-up). `baseline` is the distance from the top of the
        line box to the baseline; vertOffset shifts the glyph down to center it. */
     CGContextSetTextPosition(ctx, 0.0, (CGFloat) (h - af->font.baseline - af->vertOffset));
