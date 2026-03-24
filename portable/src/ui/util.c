@@ -4089,14 +4089,16 @@ iWidget *makePreferences_Widget(void) {
                                                 "prefs.boldlink.dark",
                                                 "prefs.boldlink.light" },
                               3);
+    #if defined (LAGRANGE_ENABLE_CORETEXT)
         addDialogToggle_Widget(headings, values, "${prefs.font.coloremoji}", "prefs.font.coloremoji");
+    #endif
         addDialogToggle_Widget(headings, values, "${prefs.quote.italic}", "prefs.quote.italic");
-        #if !defined (LAGRANGE_ENABLE_CORETEXT)
+    #if !defined (LAGRANGE_ENABLE_CORETEXT)
         if (!isTerminal_Platform()) {
             addDialogPadding_(headings, values);
             addDialogToggle_Widget(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
         }
-        #endif
+    #endif
     }
     /* Page layout. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
