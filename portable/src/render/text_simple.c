@@ -21,7 +21,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "text.h"
-#include "stb_fontdata.h"
 #include "defs.h"
 #include <SDL_version.h>
 
