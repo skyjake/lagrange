@@ -554,17 +554,17 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             iTextAttrib attrib = { .fgColorId = args->color };
             keepGoing          = notify_WrapText(wrap, lineEnd, attrib, 0, lastLineW);
         }
+        /* Create a justified version of the line when justification is requested.
+           This must be used for both drawing and offset/hit queries so that
+           CTLineGetOffsetForStringIndex returns positions matching the drawn glyphs. */
+        CTLineRef justifiedLine = NULL;
+        if (args->justify && args->layoutBound > 0) {
+            justifiedLine = CTLineCreateJustifiedLine(line, 1.0, (double) args->layoutBound);
+        }
+        CTLineRef activeLine = justifiedLine ? justifiedLine : line;
         /* Draw the line (only when in draw mode). */
         if (isDraw) {
-            CTLineRef drawLine = line;
-            /* Justified drawing: create a wider version of the line if requested. */
-            if (args->justify && args->layoutBound > 0) {
-                CTLineRef justified =
-                    CTLineCreateJustifiedLine(line, 1.0, (double) args->layoutBound);
-                if (justified) drawLine = justified;
-            }
-            drawLine_AppleText_(tx, drawLine, af, pos, args->color, args->mode);
-            if (drawLine != line) CFRelease(drawLine);
+            drawLine_AppleText_(tx, activeLine, af, pos, args->color, args->mode);
         }
         /* Hit testing: find the character at hitPoint (screen coordinate -> source pointer). */
         if (wrap && !wrap->hitChar_out) {
@@ -574,7 +574,7 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
                 int localX = wrap->hitPoint.x - pos.x;
                 if (localX < 0) localX = 0;
                 CFIndex idx =
-                    CTLineGetStringIndexForPosition(line, CGPointMake((CGFloat) localX, 0.0));
+                    CTLineGetStringIndexForPosition(activeLine, CGPointMake((CGFloat) localX, 0.0));
                 /* Clamp to the line's range. */
                 if (idx < startIdx) idx = startIdx;
                 if (idx > endIdx) idx = endIdx;
@@ -586,8 +586,8 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
                     wrap->hitChar_out = lineEnd;
                 }
                 /* Normalized X position within the glyph. */
-                CGFloat thisOff = CTLineGetOffsetForStringIndex(line, idx, NULL);
-                CGFloat nextOff = CTLineGetOffsetForStringIndex(line, idx + 1, NULL);
+                CGFloat thisOff = CTLineGetOffsetForStringIndex(activeLine, idx, NULL);
+                CGFloat nextOff = CTLineGetOffsetForStringIndex(activeLine, idx + 1, NULL);
                 if (nextOff > thisOff + 0.5f) {
                     wrap->hitGlyphNormX_out = iClamp(
                         (float) (localX - thisOff) / (float) (nextOff - thisOff), 0.0f, 1.0f);
@@ -604,13 +604,14 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
                     break;
                 }
             }
-            CGFloat off          = CTLineGetOffsetForStringIndex(line, hitIdx, NULL);
+            CGFloat off          = CTLineGetOffsetForStringIndex(activeLine, hitIdx, NULL);
             wrap->hitAdvance_out = init_I2((int) (pos.x - args->pos.x + off), pos.y - args->pos.y);
             wrap->hitChar        = NULL; /* mark as found */
         }
         /* Update running metrics. */
         totalWidth = iMax(totalWidth, lastLineW);
         lineCount++;
+        if (justifiedLine) CFRelease(justifiedLine);
         CFRelease(line);
         startIdx += lineLen;
         pos.y += d->height;
