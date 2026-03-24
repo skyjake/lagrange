@@ -45,6 +45,7 @@ struct Impl_Text {
     int           ansiFlags;
     int           baseFontId; /* base attributes (for restoring via escapes) */
     int           baseFgColorId;
+    iBool         needRefresh;
 };
 
 iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar);
@@ -58,9 +59,14 @@ void    deinit_Text             (iText *);
 void    setCurrent_Text         (iText *);
 iText * current_Text            (void);
 
-void    setDocumentFontSize_Text(iText *, float fontSizeFactor); /* affects all except `default*` fonts */
-void    resetFonts_Text         (iText *);
-void    resetFontCache_Text     (iText *);
+void    setDocumentFontSize_Text    (iText *, float fontSizeFactor); /* affects all except `default*` fonts */
+void    resetFontsIfNeeded_Text     (iText *);
+void    resetFontCache_Text         (iText *);
+
+iLocalDef void resetFonts_Text(iText *d) {
+    d->needRefresh = iTrue;
+    resetFontsIfNeeded_Text(d);
+}
 
 void    setOpacity_Text         (float opacity);
 void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */

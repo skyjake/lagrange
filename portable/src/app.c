@@ -391,6 +391,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.editor.highlight", &d->prefs.editorSyntaxHighlighting },
         { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.expandline", &d->prefs.expandToLongLines },
+        { "prefs.font.coloremoji", &d->prefs.colorEmoji },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.gamepad", &d->prefs.useGamepad },
@@ -3789,8 +3790,13 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 
 void resetFonts_App(void) {
     iApp *d = &app_;
-    iConstForEach(PtrArray, win, listWindows_App_(d, collectNew_PtrArray())) {
-        resetFonts_Text(text_Window(win.ptr));
+    iPtrArray *windows = listWindows_App_(d, collectNew_PtrArray());
+    /* Mark all Text instances for refresh first. Windows may be sharing them. */
+    iConstForEach(PtrArray, pre, windows) {
+        text_Window(pre.ptr)->needRefresh = iTrue;
+    }
+    iConstForEach(PtrArray, win, windows) {
+        resetFontsIfNeeded_Text(text_Window(win.ptr));
     }
 }
 
@@ -4102,6 +4108,15 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
             }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.font.coloremoji.changed")) {
+        const iBool isSet = (arg_Command(cmd) != 0);
+        if (d->prefs.colorEmoji != isSet) {
+            d->prefs.colorEmoji = isSet;
+            resetFonts_App();
+            postCommand_App("font.changed");
         }
         return iTrue;
     }

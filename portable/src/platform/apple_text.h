@@ -37,8 +37,8 @@ iDeclareClass(AppleText)
 /* Font variant (size + style) with a lazily-created CTFont. */
 struct Impl_AppleFont {
     iBaseFont font;
-    CTFontRef ctFont;    /* NULL until first use (lazy load) */
-    float     pointSize; /* target point size; computed at init, used when creating ctFont */
+    CTFontRef ctFont;     /* NULL until first use (lazy load) */
+    float     pointSize;  /* target point size; computed at init, used when creating ctFont */
     int       vertOffset; /* pixels to shift baseline down to center glyph in line box */
 };
 

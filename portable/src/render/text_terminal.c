@@ -159,7 +159,7 @@ void delete_Text(iText *d) {
     free(d);
 }
 
-void resetFonts_Text(iText *d) {}
+void resetFontsIfNeeded_Text(iText *d) { iUnused(d); }
 
 void resetFontCache_Text(iText *d) {}
 

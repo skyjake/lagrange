@@ -578,7 +578,9 @@ static void resetCache_StbText_(iStbText *d) {
     initCache_StbText_(d);
 }
 
-void resetFonts_Text(iText *d) {
+void resetFontsIfNeeded_Text(iText *d) {
+    if (!d->needRefresh) return;
+    d->needRefresh = iFalse;
     iText *oldActive = current_Text();
     iStbText *s = (iStbText *) d;
     setCurrent_Text(d); /* some routines rely on the global `activeText_` pointer */

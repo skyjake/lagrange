@@ -129,6 +129,7 @@ enum iPrefsBool {
     plainTextWrap_PrefsBool,
     expandToLongLines_PrefsBool,
     geminiStyledGopher_PrefsBool,
+    colorEmoji_PrefsBool,
 
     /* Meta */
     max_PrefsBool
@@ -218,6 +219,7 @@ struct Impl_Prefs {
             iBool plainTextWrap;
             iBool expandToLongLines;
             iBool geminiStyledGopher;
+            iBool colorEmoji; /* macOS only: prefer Apple Color Emoji over bundled B&W fonts */
         };
     };
 

@@ -190,16 +190,24 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
 static void clearRunCache_AppleText_(iAppleText *);
 
 static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
-    /* Build a cascade list (CFArrayRef of CTFontDescriptors) from user-installed fontpack fonts
-       in priority order. System-enumerated fonts (apple-* IDs) are intentionally excluded:
-       the system UI font appended at the end already gives full Unicode coverage via CoreText's
-       own fallback chain. Each descriptor is derived from the 12pt reference CTFont held by
-       the iFontFile, so no sized ctFont needs to exist yet. */
+    /* Build a cascade list (CFArrayRef of CTFontDescriptors) from user-installed FontPack fonts
+       in priority order. System-enumerated fonts ("apple-*"" IDs) are intentionally excluded.
+       The colorEmoji preference controls whether Apple Color Emoji leads the cascade
+       or is filtered out of the system cascade (disable/B&W mode). */
     CFMutableArrayRef list = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+    if (get_Prefs()->colorEmoji) {
+        CTFontRef ref = CTFontCreateWithName(CFSTR("AppleColorEmoji"), 0.0, NULL);
+        if (ref) {
+            CTFontDescriptorRef desc = CTFontCopyFontDescriptor(ref);
+            CFArrayAppendValue(list, desc);
+            CFRelease(desc);
+            CFRelease(ref);
+        }
+    }
     iConstForEach(Array, it, &d->fontPriorityOrder) {
         const iPrioMapItem *item = it.value;
-        const iAppleFont   *af   = appleFont_AppleText_(
-            d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
+        const iAppleFont   *af =
+            appleFont_AppleText_(d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
         if (!af || !af->font.spec || !af->font.file || !af->font.file->data) continue;
         /* Skip fonts that are not intended to participate in the cascade fallback chain. */
         if (af->font.spec->flags & ignoreAsFallback_FontSpecFlag) continue;
@@ -208,13 +216,24 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
         CFArrayAppendValue(list, desc);
         CFRelease(desc);
     }
-    /* Append the default system UI font as the final fallback so Core Text can draw any
-       Unicode character the fontpack fonts may not cover (emoji, CJK, symbols, etc.). */
+    /* Append the full system cascade for Unicode coverage, except for Color Emoji since
+       that was added manually if desired. */
     CTFontRef sysFont = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 0.0, NULL);
     if (sysFont) {
-        CTFontDescriptorRef sysDesc = CTFontCopyFontDescriptor(sysFont);
-        CFArrayAppendValue(list, sysDesc);
-        CFRelease(sysDesc);
+        CFArrayRef sysCascade = CTFontCopyDefaultCascadeListForLanguages(sysFont, NULL);
+        if (sysCascade) {
+            for (CFIndex i = 0; i < CFArrayGetCount(sysCascade); i++) {
+                CTFontDescriptorRef fd = CFArrayGetValueAtIndex(sysCascade, i);
+                CFStringRef psName     = CTFontDescriptorCopyAttribute(fd, kCTFontNameAttribute);
+                const iBool isColorEmoji =
+                    psName &&
+                    (CFStringCompare(psName, CFSTR("AppleColorEmoji"), 0) == kCFCompareEqualTo);
+                if (psName) CFRelease(psName);
+                if (isColorEmoji) continue;
+                CFArrayAppendValue(list, fd);
+            }
+            CFRelease(sysCascade);
+        }
         CFRelease(sysFont);
     }
     return list;
@@ -734,14 +753,17 @@ void setOpacity_Text(float opacity) {
     current_AppleText_()->opacity = iClamp(opacity, 0.0f, 1.0f);
 }
 
-void resetFonts_Text(iText *d) {
+void resetFontsIfNeeded_Text(iText *d) {
     iAppleText *at = appleText_(d);
-    iText *oldActive = current_Text();
-    setCurrent_Text(d);
-    clearRunCache_AppleText_(at);
-    deinitFonts_AppleText_(at);
-    initFonts_AppleText_(at);
-    setCurrent_Text(oldActive);
+    if (d->needRefresh) {
+        iText *oldActive = current_Text();
+        setCurrent_Text(d);
+        clearRunCache_AppleText_(at);
+        deinitFonts_AppleText_(at);
+        initFonts_AppleText_(at);
+        setCurrent_Text(oldActive);
+        d->needRefresh = iFalse;
+    }
 }
 
 void resetFontCache_Text(iText *d) {
