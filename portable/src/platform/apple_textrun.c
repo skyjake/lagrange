@@ -120,7 +120,7 @@ static iBool prepare_AppleTextRun_(
     const char *end = rawText + rawLen;
 
     while (p < end) {
-        if ((uint8_t) *p == 0x0B) { /* \v color escape */
+        if ((uint8_t) *p == '\v') {
             /* Flush current segment before changing state. */
             if (utf16Idx > segStartUtf16) {
                 segments[segCount++] = (iTextSegment) { segStartUtf16, utf16Idx,   curFontId,
@@ -149,9 +149,9 @@ static iBool prepare_AppleTextRun_(
             segStartUtf16 = utf16Idx;
             continue;
         }
-
-        if ((uint8_t) *p == 0x1b) {         /* ANSI escape */
-            const char  *ansiStart = p + 1; /* skip past \x1b; pattern excludes it */
+        /* ANSI escapes. */
+        if ((uint8_t) *p == 0x1b) {
+            const char *ansiStart = p + 1; /* skip past \x1b; pattern excludes it */
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(
@@ -224,7 +224,6 @@ static iBool prepare_AppleTextRun_(
             }
             /* Not a recognized ANSI escape: fall through and treat \x1b as a regular char. */
         }
-
         /* Regular character: decode UTF-8 codepoint and copy to clean buffer. */
         iChar ch     = 0;
         int   nbytes = decodeBytes_MultibyteChar(p, end, &ch);
@@ -244,7 +243,6 @@ static iBool prepare_AppleTextRun_(
         cleanLen += (size_t) nbytes;
         p += nbytes;
     }
-
     /* Flush the final segment. */
     if (utf16Idx > segStartUtf16) {
         segments[segCount++] = (iTextSegment) { segStartUtf16, utf16Idx,   curFontId,

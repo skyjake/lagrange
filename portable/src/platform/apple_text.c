@@ -690,11 +690,22 @@ void allocData_FontFile(iFontFile *d) {
         CGDataProviderRelease(provider);
         if (!cgFont) return;
         /* Read ascent/descent/lineGap from CGFont (in design units). */
-        d->ascent  = CGFontGetAscent(cgFont);          /* positive */
-        d->descent = CGFontGetDescent(cgFont);         /* negative (same sign convention as stbtt) */
+        d->ascent  = CGFontGetAscent(cgFont);           /* positive */
+        d->descent = CGFontGetDescent(cgFont);          /* negative (same sign convention as stbtt) */
         d->lineGap = iMax(0, CGFontGetLeading(cgFont)); /* non-negative line gap */
         tmpFont    = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
         CGFontRelease(cgFont);
+        /* Read usWin metrics from the OS/2 table — NSLayoutManager uses these for the
+           line-fragment rectangle, so they must inform our glyphScale calculation. */
+        if (tmpFont) {
+            CFDataRef os2 = CTFontCopyTable(tmpFont, kCTFontTableOS2, kCTFontTableOptionNoOptions);
+            if (os2 && CFDataGetLength(os2) >= 78) {
+                const uint8_t *b = (const uint8_t *) CFDataGetBytePtr(os2);
+                d->winAscent  = (b[74] << 8) | b[75]; /* usWinAscent  (uint16, big-endian) */
+                d->winDescent = (b[76] << 8) | b[77]; /* usWinDescent (uint16, big-endian) */
+            }
+            if (os2) CFRelease(os2);
+        }
     }
     else if (!isEmpty_String(&d->id)) {
         /* Named system font: look up by PostScript name. */
@@ -717,6 +728,15 @@ void allocData_FontFile(iFontFile *d) {
             d->ascent   = (int) roundf((float) (CTFontGetAscent(tmpFont) * upm / 12.0));
             d->descent  = -(int) roundf((float) (CTFontGetDescent(tmpFont) * upm / 12.0));
             d->lineGap  = iMax(0, (int) roundf((float) (CTFontGetLeading(tmpFont) * upm / 12.0)));
+        }
+        /* Read usWin metrics from the OS/2 table manually. */ {
+            CFDataRef os2 = CTFontCopyTable(tmpFont, kCTFontTableOS2, kCTFontTableOptionNoOptions);
+            if (os2 && CFDataGetLength(os2) >= 78) {
+                const uint8_t *b = (const uint8_t *) CFDataGetBytePtr(os2);
+                d->winAscent  = (b[74] << 8) | b[75];
+                d->winDescent = (b[76] << 8) | b[77];
+            }
+            if (os2) CFRelease(os2);
         }
     }
     if (!tmpFont) return;
