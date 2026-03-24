@@ -164,6 +164,7 @@ void init_Prefs(iPrefs *d) {
     d->plainTextWrap      = iTrue;
     d->expandToLongLines  = iTrue;
     d->geminiStyledGopher = iTrue;
+    d->colorEmoji         = iFalse;
     d->imageStyle         = original_ImageStyle;
     d->docThemeDark       = colorfulDark_GmDocumentTheme;
     d->docThemeLight      = white_GmDocumentTheme;

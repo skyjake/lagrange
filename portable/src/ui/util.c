@@ -4089,6 +4089,7 @@ iWidget *makePreferences_Widget(void) {
                                                 "prefs.boldlink.dark",
                                                 "prefs.boldlink.light" },
                               3);
+        addDialogToggle_Widget(headings, values, "${prefs.font.coloremoji}", "prefs.font.coloremoji");
         addDialogToggle_Widget(headings, values, "${prefs.quote.italic}", "prefs.quote.italic");
         #if !defined (LAGRANGE_ENABLE_CORETEXT)
         if (!isTerminal_Platform()) {

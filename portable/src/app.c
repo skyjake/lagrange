@@ -5389,6 +5389,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
                          d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.font.coloremoji"), d->prefs.colorEmoji);
         setToggle_Widget(findChild_Widget(dlg, "prefs.editor.highlight"),
                          d->prefs.editorSyntaxHighlighting);
         setToggle_Widget(findChild_Widget(dlg, "prefs.tui.simple"), d->prefs.simpleChars);
