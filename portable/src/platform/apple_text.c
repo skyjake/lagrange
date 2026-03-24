@@ -393,8 +393,10 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     uint32_t    *pixels = calloc(h, stride);
     if (!pixels) return;
     /* Create CGBitmapContext: ARGB premultiplied, 32-bit little-endian (=
-       SDL_PIXELFORMAT_ARGB8888). */
-    CGColorSpaceRef cs  = CGColorSpaceCreateDeviceRGB();
+       SDL_PIXELFORMAT_ARGB8888).
+       Use sRGB (not device RGB) so that the color encoding matches the SDL render target
+       on all hardware, including P3-gamut displays where device RGB would differ. */
+    CGColorSpaceRef cs  = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef    ctx = CGBitmapContextCreate(
         pixels, w, h, 8, stride, cs, kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
     CGColorSpaceRelease(cs);
@@ -408,6 +410,8 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     CGContextSetShouldAntialias(ctx, true);
     CGContextSetShouldSubpixelPositionFonts(ctx, true);
     CGContextSetShouldSubpixelQuantizeFonts(ctx, false);
+    CGContextSetAllowsFontSmoothing(ctx, true);
+    CGContextSetShouldSmoothFonts(ctx, true);
     /* CG origin is at bottom-left (y-up). `baseline` is the distance from the top of the
        line box to the baseline; vertOffset shifts the glyph down to center it. */
     CGContextSetTextPosition(ctx, 0.0, (CGFloat) (h - af->font.baseline - af->vertOffset));
@@ -429,8 +433,7 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     /* Draw glyphs with baked-in foreground colors from kCTForegroundColorAttributeName. */
     CTLineDraw(line, ctx);
     CGContextRelease(ctx);
-    /* Upload to an SDL texture and blit it. Fg colors are already baked in; only
-       apply opacity via the alpha modulator. Use STREAMING access + Lock/Unlock to
+    /* Upload to an SDL texture and blit it. Use STREAMING access with Lock/Unlock to
        avoid breaking the Metal render encoder when a render target is active. */
     SDL_Renderer *render = get_Window()->render;
     SDL_Texture  *tex =
@@ -446,8 +449,22 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
             }
             SDL_UnlockTexture(tex);
         }
-        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-        SDL_SetTextureAlphaMod(tex, (uint8_t) (d->opacity * 255.0f + 0.5f));
+        /* Premultiplied-alpha blend: srcRGB is already multiplied by coverage, so
+           use srcColorFactor=ONE to avoid double-multiplying. This prevents the
+           heavier/darker glyph edges that SDL_BLENDMODE_BLEND would produce. */
+        SDL_SetTextureBlendMode(tex, SDL_ComposeCustomBlendMode(
+            SDL_BLENDFACTOR_ONE,
+            SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            SDL_BLENDOPERATION_ADD,
+            SDL_BLENDFACTOR_ONE,
+            SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            SDL_BLENDOPERATION_ADD));
+        const uint8_t alphaMod = (uint8_t) (d->opacity * 255.0f + 0.5f);
+        SDL_SetTextureAlphaMod(tex, alphaMod);
+        if (alphaMod < 255) {
+            /* Need to pre-multiply RGB with alpha. */
+            SDL_SetTextureColorMod(tex, alphaMod, alphaMod, alphaMod);
+        }
         const iInt2 orig = origin_Paint;
         SDL_RenderCopy(render,
                        tex,
