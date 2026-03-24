@@ -555,21 +555,16 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
     iRect   visualBounds = { zero_I2(), zero_I2() }; /* accumulated when isVisual */
 
     while (startIdx < run->utf16Len && keepGoing) {
-        /* Determine how many UTF-16 units fit on this line. */
-        const double wrapWidth = !wrap             ? 0.0
-                               : wrap->maxWidth > 0 ? (double) wrap->maxWidth
-                                                    : 1e9; /* no width limit: still break at \n */
-        CFIndex      lineLen;
-        if (wrapWidth > 0.5) {
-            if (!wrap || wrap->mode == word_WrapTextMode) {
-                lineLen = CTTypesetterSuggestLineBreak(run->typesetter, startIdx, wrapWidth);
-            }
-            else { /* anyCharacter_WrapTextMode */
-                lineLen = CTTypesetterSuggestClusterBreak(run->typesetter, startIdx, wrapWidth);
-            }
+        /* Determine how many UTF-16 units fit on this line.
+           When there is no explicit width limit, use a very large value so that
+           CTTypesetterSuggestLineBreak still honours hard newlines (\n). */
+        const double wrapWidth = (wrap && wrap->maxWidth > 0) ? (double) wrap->maxWidth : 1e9;
+        CFIndex lineLen;
+        if (!wrap || wrap->mode == word_WrapTextMode) {
+            lineLen = CTTypesetterSuggestLineBreak(run->typesetter, startIdx, wrapWidth);
         }
-        else {
-            lineLen = run->utf16Len - startIdx;
+        else { /* anyCharacter_WrapTextMode */
+            lineLen = CTTypesetterSuggestClusterBreak(run->typesetter, startIdx, wrapWidth);
         }
         if (lineLen <= 0) break;
         /* Shape the line. */
@@ -596,8 +591,6 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         const CFIndex endIdx    = startIdx + lineLen;
         const char   *lineStart = srcPtr_(startIdx);
         const char   *lineEnd   = (endIdx <= run->utf16Len) ? srcPtr_(endIdx) : text.end;
-        /* WrapText callback: notify about this line — must come before drawing so that
-           any SDL fills (e.g. mark/selection background) land beneath the text. */
         if (wrap && wrap->wrapRange_.start) {
             iTextAttrib attrib = { .fgColorId = args->color };
             keepGoing          = notify_WrapText(wrap, lineEnd, attrib, 0, lastLineW);
@@ -667,20 +660,23 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         if (wrap && wrap->maxLines > 0 && (size_t) lineCount >= wrap->maxLines) {
             break;
         }
-        /* Without a WrapText (single-line call), process only one line. */
-        if (!wrap) break;
     }
     if (args->metrics_out) {
         args->metrics_out->bounds = isVisual ? visualBounds
                                              : init_Rect(0, 0, totalWidth, lineCount * d->height);
+        /* advance.x is where more text could be appended: the last line's width,
+           unless the text ended with \n, in which case the cursor has jumped to
+           the left edge of the next (empty) line. */
+        const iBool endedWithNewline = (run->textLen > 0 &&
+                                        run->text[run->textLen - 1] == '\n');
         args->metrics_out->advance =
-            init_I2(lastLineW, (lineCount > 1 ? lineCount - 1 : 0) * d->height);
+            init_I2(endedWithNewline ? 0 : lastLineW, lineCount * d->height);
     }
 #undef srcPtr_
 }
 
 void allocData_FontFile(iFontFile *d) {
-    CTFontRef tmpFont = NULL;
+    CTFontRef font = NULL;
     if (size_Block(&d->sourceData) > 0) {
         /* Create a CTFont from raw font data. */
         const void       *bytes    = constData_Block(&d->sourceData);
@@ -690,19 +686,20 @@ void allocData_FontFile(iFontFile *d) {
         CGDataProviderRelease(provider);
         if (!cgFont) return;
         /* Read ascent/descent/lineGap from CGFont (in design units). */
-        d->ascent  = CGFontGetAscent(cgFont);           /* positive */
-        d->descent = CGFontGetDescent(cgFont);          /* negative (same sign convention as stbtt) */
+        d->ascent  = CGFontGetAscent(cgFont);  /* positive */
+        d->descent = CGFontGetDescent(cgFont); /* negative (same sign convention as stbtt) */
         d->lineGap = iMax(0, CGFontGetLeading(cgFont)); /* non-negative line gap */
-        tmpFont    = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
+        font       = CTFontCreateWithGraphicsFont(cgFont, 12.0, NULL, NULL);
         CGFontRelease(cgFont);
-        /* Read usWin metrics from the OS/2 table — NSLayoutManager uses these for the
-           line-fragment rectangle, so they must inform our glyphScale calculation. */
-        if (tmpFont) {
-            CFDataRef os2 = CTFontCopyTable(tmpFont, kCTFontTableOS2, kCTFontTableOptionNoOptions);
+        /* Read usWin metrics from the OS/2 table. For example, NSLayoutManager uses these
+           for the line-fragment rectangle, so they must inform our glyphScale calculation
+           for us to replicate the native text layout. */
+        if (font) {
+            CFDataRef os2 = CTFontCopyTable(font, kCTFontTableOS2, kCTFontTableOptionNoOptions);
             if (os2 && CFDataGetLength(os2) >= 78) {
                 const uint8_t *b = (const uint8_t *) CFDataGetBytePtr(os2);
-                d->winAscent  = (b[74] << 8) | b[75]; /* usWinAscent  (uint16, big-endian) */
-                d->winDescent = (b[76] << 8) | b[77]; /* usWinDescent (uint16, big-endian) */
+                d->winAscent     = (b[74] << 8) | b[75]; /* usWinAscent  (uint16, big-endian) */
+                d->winDescent    = (b[76] << 8) | b[77]; /* usWinDescent (uint16, big-endian) */
             }
             if (os2) CFRelease(os2);
         }
@@ -711,11 +708,11 @@ void allocData_FontFile(iFontFile *d) {
         /* Named system font: look up by PostScript name. */
         CFStringRef psName = CFStringCreateWithCString(
             kCFAllocatorDefault, cstr_String(&d->id), kCFStringEncodingUTF8);
-        tmpFont = CTFontCreateWithName(psName, 12.0, NULL);
+        font = CTFontCreateWithName(psName, 12.0, NULL);
         CFRelease(psName);
-        if (!tmpFont) return;
+        if (!font) return;
         /* Read design-unit metrics via CGFont. */
-        CGFontRef cgFont = CTFontCopyGraphicsFont(tmpFont, NULL);
+        CGFontRef cgFont = CTFontCopyGraphicsFont(font, NULL);
         if (cgFont) {
             d->ascent  = CGFontGetAscent(cgFont);
             d->descent = CGFontGetDescent(cgFont);
@@ -724,39 +721,39 @@ void allocData_FontFile(iFontFile *d) {
         }
         else {
             /* Fallback: scale pixel metrics at 12pt to design units. */
-            CGFloat upm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
-            d->ascent   = (int) roundf((float) (CTFontGetAscent(tmpFont) * upm / 12.0));
-            d->descent  = -(int) roundf((float) (CTFontGetDescent(tmpFont) * upm / 12.0));
-            d->lineGap  = iMax(0, (int) roundf((float) (CTFontGetLeading(tmpFont) * upm / 12.0)));
+            CGFloat upm = (CGFloat) CTFontGetUnitsPerEm(font);
+            d->ascent   = (int) roundf((float) (CTFontGetAscent(font) * upm / 12.0));
+            d->descent  = -(int) roundf((float) (CTFontGetDescent(font) * upm / 12.0));
+            d->lineGap  = iMax(0, (int) roundf((float) (CTFontGetLeading(font) * upm / 12.0)));
         }
         /* Read usWin metrics from the OS/2 table manually. */ {
-            CFDataRef os2 = CTFontCopyTable(tmpFont, kCTFontTableOS2, kCTFontTableOptionNoOptions);
+            CFDataRef os2 = CTFontCopyTable(font, kCTFontTableOS2, kCTFontTableOptionNoOptions);
             if (os2 && CFDataGetLength(os2) >= 78) {
                 const uint8_t *b = (const uint8_t *) CFDataGetBytePtr(os2);
-                d->winAscent  = (b[74] << 8) | b[75];
-                d->winDescent = (b[76] << 8) | b[77];
+                d->winAscent     = (b[74] << 8) | b[75];
+                d->winDescent    = (b[76] << 8) | b[77];
             }
             if (os2) CFRelease(os2);
         }
     }
-    if (!tmpFont) return;
+    if (!font) return;
     /* Read the 'M' advance and convert to design units for emAdvance. */
     UniChar mChar  = 'M';
     CGGlyph mGlyph = 0;
-    CTFontGetGlyphsForCharacters(tmpFont, &mChar, &mGlyph, 1);
+    CTFontGetGlyphsForCharacters(font, &mChar, &mGlyph, 1);
     if (mGlyph) {
         CGSize adv = CGSizeZero;
-        CTFontGetAdvancesForGlyphs(tmpFont, kCTFontOrientationDefault, &mGlyph, &adv, 1);
-        CGFloat unitsPerEm = (CGFloat) CTFontGetUnitsPerEm(tmpFont);
-        CGFloat pointSize  = CTFontGetSize(tmpFont);
+        CTFontGetAdvancesForGlyphs(font, kCTFontOrientationDefault, &mGlyph, &adv, 1);
+        CGFloat unitsPerEm = (CGFloat) CTFontGetUnitsPerEm(font);
+        CGFloat pointSize  = CTFontGetSize(font);
         d->emAdvance       = (int) roundf((float) (adv.width * unitsPerEm / pointSize));
         d->unitsPerEm      = (int) unitsPerEm;
     }
     else {
-        d->unitsPerEm = (int) CTFontGetUnitsPerEm(tmpFont);
+        d->unitsPerEm = (int) CTFontGetUnitsPerEm(font);
         d->emAdvance  = d->unitsPerEm;
     }
-    d->data = (void *) (uintptr_t) tmpFont; /* retained; released by deallocData_FontFile */
+    d->data = (void *) (uintptr_t) font; /* retained; released by deallocData_FontFile */
 }
 
 void deallocData_FontFile(iFontFile *d) {
