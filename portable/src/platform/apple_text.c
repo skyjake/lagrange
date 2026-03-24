@@ -410,8 +410,8 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     CGContextSetShouldAntialias(ctx, true);
     CGContextSetShouldSubpixelPositionFonts(ctx, true);
     CGContextSetShouldSubpixelQuantizeFonts(ctx, false);
-    CGContextSetAllowsFontSmoothing(ctx, true);
-    CGContextSetShouldSmoothFonts(ctx, true);
+    CGContextSetAllowsFontSmoothing(ctx, false);
+    CGContextSetShouldSmoothFonts(ctx, false);
     /* CG origin is at bottom-left (y-up). `baseline` is the distance from the top of the
        line box to the baseline; vertOffset shifts the glyph down to center it. */
     CGContextSetTextPosition(ctx, 0.0, (CGFloat) (h - af->font.baseline - af->vertOffset));

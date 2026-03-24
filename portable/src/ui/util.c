@@ -4090,10 +4090,12 @@ iWidget *makePreferences_Widget(void) {
                                                 "prefs.boldlink.light" },
                               3);
         addDialogToggle_Widget(headings, values, "${prefs.quote.italic}", "prefs.quote.italic");
+        #if !defined (LAGRANGE_ENABLE_CORETEXT)
         if (!isTerminal_Platform()) {
             addDialogPadding_(headings, values);
             addDialogToggle_Widget(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
         }
+        #endif
     }
     /* Page layout. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
