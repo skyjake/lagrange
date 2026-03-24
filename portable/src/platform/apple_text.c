@@ -516,7 +516,9 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
 
     while (startIdx < run->utf16Len && keepGoing) {
         /* Determine how many UTF-16 units fit on this line. */
-        const double wrapWidth = wrap ? (double) wrap->maxWidth : 0.0;
+        const double wrapWidth = !wrap             ? 0.0
+                               : wrap->maxWidth > 0 ? (double) wrap->maxWidth
+                                                    : 1e9; /* no width limit: still break at \n */
         CFIndex      lineLen;
         if (wrapWidth > 0.5) {
             if (!wrap || wrap->mode == word_WrapTextMode) {
