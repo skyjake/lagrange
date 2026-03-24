@@ -1,4 +1,4 @@
-/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -42,7 +42,7 @@ Optimization notes:
 */
 
 #include "text.h"
-#include "stb_fontdata.h"
+#include "text_stb.h"
 #include "app.h"
 #include "attributedtext.h"
 #include "color.h"

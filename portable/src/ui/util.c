@@ -4120,7 +4120,7 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
         addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
-        #if defined (LAGRANGE_ENABLE_HARFBUZZ)
+        #if defined (LAGRANGE_ENABLE_HARFBUZZ) || defined (LAGRANGE_ENABLE_CORETEXT)
         addDialogToggle_Widget(headings, values, "${prefs.justify}", "prefs.justify");
         #endif
         addDialogToggle_Widget(headings, values, "${prefs.biglede}", "prefs.biglede");

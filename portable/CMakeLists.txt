@@ -312,7 +312,10 @@ if (ENABLE_CORETEXT)
         src/platform/apple_textrun.c)
 else ()
     set (ENABLE_STB_TRUETYPE YES)
-    list (APPEND SOURCES src/render/text_stb.c)
+    list (APPEND SOURCES
+        src/render/text_stb.c
+        src/render/text_stb.h
+    )
 endif ()
 if (ENABLE_JXL AND JXL_FOUND)
     list (APPEND SOURCES src/jpegxl.c src/jpegxl.h)
