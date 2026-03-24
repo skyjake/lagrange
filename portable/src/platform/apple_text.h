@@ -65,6 +65,7 @@ iDeclareTypeConstructionArgs(AppleTextRun,
 
 iAppleFont *appleFont_AppleText_    (iAppleText *, int fontId);
 CFArrayRef  cascadeList_AppleText_  (const iAppleText *);
+CTFontRef   overrideFont_AppleText_ (iAppleText *, iChar ch, float pointSize);
 
 void        allocData_FontFile      (iFontFile *); /* backend-implemented */
 

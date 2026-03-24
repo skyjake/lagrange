@@ -191,11 +191,11 @@ static void clearRunCache_AppleText_(iAppleText *);
 
 static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
     /* Build a cascade list (CFArrayRef of CTFontDescriptors) from user-installed FontPack fonts
-       in priority order. System-enumerated fonts ("apple-*"" IDs) are intentionally excluded.
-       The colorEmoji preference controls whether Apple Color Emoji leads the cascade
-       or is filtered out of the system cascade (disable/B&W mode). */
+       in priority order, followed by the filtered system cascade for Unicode coverage.
+       System-enumerated fonts ("apple-*" IDs) are excluded from the fontpack section. */
     CFMutableArrayRef list = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
     if (get_Prefs()->colorEmoji) {
+        /* System Emoji font gets top priority. */
         CTFontRef ref = CTFontCreateWithName(CFSTR("AppleColorEmoji"), 0.0, NULL);
         if (ref) {
             CTFontDescriptorRef desc = CTFontCopyFontDescriptor(ref);
@@ -216,19 +216,22 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
         CFArrayAppendValue(list, desc);
         CFRelease(desc);
     }
-    /* Append the full system cascade for Unicode coverage, except for Color Emoji since
-       that was added manually if desired. */
+    /* Append the system cascade for broad Unicode coverage, filtering out all Apple Color
+       Emoji variants. The substring search covers both the historical "AppleColorEmoji" name
+       and the macOS Sequoia UI variant ".AppleColorEmojiUI" / ".Apple Color Emoji UI". */
     CTFontRef sysFont = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 0.0, NULL);
     if (sysFont) {
         CFArrayRef sysCascade = CTFontCopyDefaultCascadeListForLanguages(sysFont, NULL);
         if (sysCascade) {
             for (CFIndex i = 0; i < CFArrayGetCount(sysCascade); i++) {
-                CTFontDescriptorRef fd = CFArrayGetValueAtIndex(sysCascade, i);
-                CFStringRef psName     = CTFontDescriptorCopyAttribute(fd, kCTFontNameAttribute);
+                CTFontDescriptorRef fd         = CFArrayGetValueAtIndex(sysCascade, i);
+                CFStringRef         psName     = CTFontDescriptorCopyAttribute(fd, kCTFontNameAttribute);
+                CFStringRef         familyName = CTFontDescriptorCopyAttribute(fd, kCTFontFamilyNameAttribute);
                 const iBool isColorEmoji =
-                    psName &&
-                    (CFStringCompare(psName, CFSTR("AppleColorEmoji"), 0) == kCFCompareEqualTo);
-                if (psName) CFRelease(psName);
+                    (psName     && CFStringFind(psName,     CFSTR("ColorEmoji"),  0).location != kCFNotFound) ||
+                    (familyName && CFStringFind(familyName, CFSTR("Color Emoji"), 0).location != kCFNotFound);
+                if (psName)     CFRelease(psName);
+                if (familyName) CFRelease(familyName);
                 if (isColorEmoji) continue;
                 CFArrayAppendValue(list, fd);
             }
@@ -237,6 +240,41 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
         CFRelease(sysFont);
     }
     return list;
+}
+
+CTFontRef overrideFont_AppleText_(iAppleText *d, iChar ch, float pointSize) {
+    const iBool forceMonochrome = (ch == 0x1F310 /* globe with meridians */);
+    if (get_Prefs()->colorEmoji && !forceMonochrome) return NULL; /* cascade decides */
+    /* Build UTF-16 units for CTFontGetGlyphsForCharacters. */
+    UniChar uChars[2];
+    CGGlyph glyphs[2];
+    CFIndex nUnits;
+    if (ch >= 0x10000) {
+        iChar tmp = ch - 0x10000;
+        uChars[0] = (UniChar)(0xD800 + (tmp >> 10));
+        uChars[1] = (UniChar)(0xDC00 + (tmp & 0x3FF));
+        nUnits    = 2;
+    }
+    else {
+        uChars[0] = (UniChar) ch;
+        nUnits    = 1;
+    }
+    /* Find the highest-priority B&W auxiliary font that has a glyph for this codepoint. */
+    iConstForEach(Array, it, &d->fontPriorityOrder) {
+        const iPrioMapItem *item = it.value;
+        const iAppleFont   *af  =
+            appleFont_AppleText_(d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
+        if (!af || !af->font.spec || !af->font.file || !af->font.file->data) continue;
+        if (af->font.spec->flags & ignoreAsFallback_FontSpecFlag) continue;
+        if (!(af->font.spec->flags & auxiliary_FontSpecFlag))      continue;
+        CTFontRef ref = (CTFontRef)(uintptr_t) af->font.file->data;
+        if (CTFontGetGlyphsForCharacters(ref, uChars, glyphs, nUnits) && glyphs[0] != 0) {
+            return CTFontCreateCopyWithAttributes(ref, (CGFloat) pointSize, NULL, NULL);
+        }
+    }
+    /* No B&W font has the glyph. */
+    if (forceMonochrome) return NULL; /* cascade decides */
+    return CTFontCreateWithName(CFSTR("AppleColorEmoji"), (CGFloat) pointSize, NULL);
 }
 
 static void applyCascadeList_AppleText_(iAppleText *d) {

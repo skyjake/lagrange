@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "color.h"
 
 #include <lagrange/defs.h>
+#include <lagrange/prefs.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/string.h>
 
@@ -73,7 +74,7 @@ iDefineTypeConstructionArgs(AppleTextRun,
     (const char *rawText, size_t rawLen, int fontId, int colorId, iAppleText *tx),
     rawText, rawLen, fontId, colorId, tx)
 
-static iBool parseEscapes_AppleTextRun_(
+static iBool prepare_AppleTextRun_(
     iAppleText                   *tx,
     const char                   *rawText,
     size_t                        rawLen,
@@ -251,7 +252,6 @@ static iBool parseEscapes_AppleTextRun_(
     }
     utf16Map[utf16Idx] = rawLen; /* sentinel: past-end offset */
     cleanBuf[cleanLen] = '\0';
-
     /* Build a CFString from the clean UTF-8 buffer. */
     CFStringRef cfStr = CFStringCreateWithBytes(kCFAllocatorDefault,
                                                 (const UInt8 *) cleanBuf,
@@ -264,13 +264,10 @@ static iBool parseEscapes_AppleTextRun_(
         free(segments);
         return iFalse;
     }
-
-    /* Create a mutable attributed string from the clean text. */
+    /* Apply per-segment font, foreground color, and optional background color attributes. */
     CFMutableAttributedStringRef mAttrStr = CFAttributedStringCreateMutable(kCFAllocatorDefault, 0);
     CFAttributedStringReplaceString(mAttrStr, CFRangeMake(0, 0), cfStr);
     CFRelease(cfStr);
-
-    /* Apply per-segment font, foreground color, and optional background color attributes. */
     CFArrayRef cascadeList = cascadeList_AppleText_(tx);
     for (size_t si = 0; si < segCount; si++) {
         const iTextSegment *seg   = &segments[si];
@@ -302,7 +299,41 @@ static iBool parseEscapes_AppleTextRun_(
         CFRelease(attrs);
         CFRelease(fgCg);
     }
-
+    /* Override kCTFontAttributeName for Emoji codepoints that need explicit font selection.
+       When colorEmoji=false: all Emoji get B&W font or AppleColorEmoji as last resort.
+       When colorEmoji=true: only select codepoints get a B&W override.
+       Setting the font via attribute bypasses the cascade and CoreText's system
+       Emoji-presentation override. */ {
+        const char *cp  = cleanBuf;
+        const char *cpe = cleanBuf + cleanLen;
+        CFIndex     u16 = 0;
+        while (cp < cpe) {
+            iChar ch;
+            int   nb = decodeBytes_MultibyteChar(cp, cpe, &ch);
+            if (nb <= 0) { cp++; continue; }
+            const CFIndex u16end = u16 + (ch >= 0x10000 ? 2 : 1);
+            if (isEmoji_Char(ch)) {
+                /* Determine point size from the segment covering this UTF-16 position. */
+                float pointSize = 0.0f;
+                for (size_t s = 0; s < segCount; s++) {
+                    if (u16 >= segments[s].startUtf16 && u16 < segments[s].endUtf16) {
+                        const iAppleFont *af = appleFont_AppleText_(tx, segments[s].fontId);
+                        if (af) pointSize = af->pointSize;
+                        break;
+                    }
+                }
+                if (pointSize <= 0.0f) pointSize = 16.0f;
+                CTFontRef font = overrideFont_AppleText_(tx, ch, pointSize);
+                if (font) {
+                    CFRange range = CFRangeMake(u16, u16end - u16);
+                    CFAttributedStringSetAttribute(mAttrStr, range, kCTFontAttributeName, font);
+                    CFRelease(font);
+                }
+            }
+            cp += nb;
+            u16  = u16end;
+        }
+    }
     free(segments);
     *clean_out      = cleanBuf;
     *cleanLen_out   = cleanLen;
@@ -322,9 +353,16 @@ void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
     d->fontId     = fontId;
     d->colorId    = colorId;
     CFMutableAttributedStringRef mAttrStr = NULL;
-    if (!parseEscapes_AppleTextRun_(tx, rawText, rawLen, fontId, colorId,
-                                    &d->text, &d->textLen,
-                                    &d->utf16ToSrc, &d->utf16Len, &mAttrStr)) {
+    if (!prepare_AppleTextRun_(tx,
+                               rawText,
+                               rawLen,
+                               fontId,
+                               colorId,
+                               &d->text,
+                               &d->textLen,
+                               &d->utf16ToSrc,
+                               &d->utf16Len,
+                               &mAttrStr)) {
         return;
     }
     d->typesetter = CTTypesetterCreateWithAttributedString(mAttrStr);
