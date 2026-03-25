@@ -309,7 +309,9 @@ if (ENABLE_CORETEXT)
         src/platform/apple_fontcache.c
         src/platform/apple_text.h
         src/platform/apple_text.c
-        src/platform/apple_textrun.c)
+        src/platform/apple_textrun.c
+        src/platform/apple_sfsymbols.m
+    )
 else ()
     set (ENABLE_STB_TRUETYPE YES)
     list (APPEND SOURCES

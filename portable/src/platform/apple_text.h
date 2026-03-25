@@ -63,11 +63,19 @@ iDeclareTypeConstructionArgs(AppleTextRun,
 
 /*----------------------------------------------------------------------------------------------*/
 
-iAppleFont *appleFont_AppleText_    (iAppleText *, int fontId);
-CFArrayRef  cascadeList_AppleText_  (const iAppleText *);
-CTFontRef   overrideFont_AppleText_ (iAppleText *, iChar ch, float pointSize);
+const iAppleFont *  constAppleFont_AppleText_   (const iAppleText *, int fontId);
+CFArrayRef          cascadeList_AppleText_      (const iAppleText *);
+CTFontRef           overrideFont_AppleText_     (const iAppleText *, iChar ch, float pointSize);
 
-void        allocData_FontFile      (iFontFile *); /* backend-implemented */
+iAppleFont *appleFont_AppleText_        (iAppleText *, int fontId);
+const char *sfSymbolName_AppleText_     (iChar iconChar); /* NULL if not in table */
 
-extern CFStringRef lagBgKey_; /* custom CFAttributedString attribute key for per-run background
-                                 color (CGColorRef value) */
+void        allocData_FontFile          (iFontFile *); /* backend-implemented */
+
+/* Render an SF Symbol glyph as a tinted CGImage (caller must CGImageRelease).
+   `slotPixels`: height of the square slot in screen pixels in which to place the glyph. */
+CGImageRef  sfSymbolCreateImage_Apple   (const char *symbolName, float pointSize, CGColorRef color,
+                                         int slotPixels);
+
+extern CFStringRef lagBgKey_;       /* custom CFAttributedString attribute: per-run bg CGColorRef */
+extern CFStringRef lagSfSymbolKey_; /* custom CFAttributedString attribute: SF Symbol CGImageRef */

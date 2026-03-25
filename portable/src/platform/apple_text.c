@@ -129,8 +129,58 @@ static void deinit_AppleFont_(iAppleFont *d) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
+/* SF Symbols: map UI icon codepoints (from defs.h) to system symbol names. At init time
+   we scan the BMP PUA range of .AppleSymbolsFont to find the PUA character for each name. */
 
-#define maxRunCache_AppleText_ 16
+/* TODO: Use this table as the canonical source for SF Symbols mappings on iOS, too.
+         See ios.m for the use of icons in menus. */
+
+static const struct { iChar iconChar; const char *symbolName; } sfSymbolMap_[] = {
+    /* clang-format off */
+    { 0x10117,  "list.bullet"               }, /* page_Icon */
+    { 0x1f310,  "globe"                     }, /* globe_Icon */
+    { 0x1f3e0,  "house.fill"                }, /* home_Icon */
+    { 0x1f464,  "person.fill"               }, /* person_Icon */
+    { 0x1f4c1,  "folder"                    }, /* folder_Icon */
+    { 0x1f4e4,  "square.and.arrow.up"       }, /* export_Icon */
+    { 0x1f503,  "arrow.clockwise"           }, /* reload_Icon */
+    { 0x1f50d,  "magnifyingglass"           }, /* magnifyingGlass_Icon */
+    { 0x1f512,  "lock.fill"                 }, /* closedLock_Icon */
+    { 0x1f513,  "lock.open.fill"            }, /* openLock_Icon */
+    { 0x1f516,  "bookmark.fill"             }, /* bookmark_Icon */
+    { 0x1f553,  "clock"                     }, /* clock_Icon */
+    { 0x1f56e,  "book"                      }, /* book_Icon */
+    { 0x1f870,  "arrow.backward"            }, /* backArrow_Icon */
+    { 0x1f871,  "arrow.up"                  }, /* upArrow_Icon */
+    { 0x1f872,  "arrow.forward"             }, /* forwardArrow_Icon */
+    { 0x1f873,  "arrow.down"                }, /* downArrow_Icon */
+    { 0x22f0,   "list.bullet.indent"        }, /* hierarchy_Icon */
+    { 0x2398,   "doc.on.doc.fill"           }, /* clipCopy_Icon / copy_Icon */
+    { 0x23f2,   "clock.arrow.2.circlepath"  }, /* timer_Icon */
+    { 0x2611,   "checkmark.square.fill"     }, /* ballotChecked_Icon */
+    { 0x2610,   "square"                    }, /* ballotUnchecked_Icon */
+    { 0x2699,   "gear"                      }, /* gear_Icon */
+    { 0x270e,   "pencil"                    }, /* edit_Icon */
+    { 0x2714,   "checkmark"                 }, /* check_Icon */
+    { 0x2750,   "square.on.square"          }, /* openTabBg_Icon */
+    { 0x2795,   "plus"                      }, /* add_Icon */
+    { 0x2912,   "arrow.up.to.line"          }, /* upArrowBar_Icon */
+    { 0x2913,   "arrow.down.to.line"        }, /* downArrowBar_Icon */
+    { 0x2a2f,   "xmark"                     }, /* close_Icon */
+    { 0x2b9c,   "chevron.backward"          }, /* leftArrowhead_Icon */
+    { 0x27a4,   "chevron.forward"           }, /* rightArrowhead_Icon */
+    { 0x25e7,   "rectangle.lefthalf.filled" }, /* leftHalf_Icon */
+    { 0x25e8,   "rectangle.righthalf.filled"}, /* rightHalf_Icon */
+    { 0x2605,   "star"                      }, /* star_Icon */
+    { 0x2606,   "star.fill"                 }, /* whiteStar_Icon */
+    { 0x26a0,   "exclamationmark.triangle"  }, /* warning_Icon */
+    { 0x2ba5,   "paperplane"                }, /* upload_Icon */
+    { 0x2ba7,   "square.and.arrow.down"     }, /* download_Icon */
+    /* clang-format on */
+};
+
+#define symbolMapSize_          iElemCount(sfSymbolMap_)
+#define maxRunCache_AppleText_  256    /* big enough for UI label and document runs */
 
 struct Impl_AppleText {
     iObject        object;
@@ -142,10 +192,16 @@ struct Impl_AppleText {
     CFArrayRef     cascadeList;        /* retained; shared by all lazily-created CTFonts */
     float          opacity;
 
-    /* Run cache: stores CTTypesetters and UTF16-to-source mappings for recently shaped text.
+    /* Run cache stores CTTypesetters and UTF16-to-source mappings for recently shaped text.
        A run is keyed by (CRC of raw text, fontId, colorId). */
     iAppleTextRun *runCache[maxRunCache_AppleText_];
     uint32_t       runCacheSerial;
+#if !defined(NDEBUG)
+    /* Cache performance statistics: */
+    uint32_t       cacheHits;
+    uint32_t       cacheMisses;
+    uint32_t       cacheEvictions; /* valid entries displaced by a new miss */
+#endif
 };
 
 iLocalDef iAppleText *appleText_(iText *t) {
@@ -157,35 +213,21 @@ iLocalDef iAppleText *current_AppleText_(void) {
     return appleText_(current_Text());
 }
 
-iAppleFont *appleFont_AppleText_(iAppleText *d, int id) {
-    return at_Array(&d->fonts, id & mask_FontId);
+const iAppleFont *constAppleFont_AppleText_(const iAppleText *d, int id) {
+    return constAt_Array(&d->fonts, id & mask_FontId);
 }
 
-CFArrayRef cascadeList_AppleText_(const iAppleText *d) {
-    return d->cascadeList;
+iAppleFont *appleFont_AppleText_(iAppleText *d, int id) {
+    return at_Array(&d->fonts, id & mask_FontId);
 }
 
 iLocalDef iAppleFont *appleFont_Text_(int id) {
     return appleFont_AppleText_(current_AppleText_(), id);
 }
 
-iBaseFont *font_Text(enum iFontId id) {
-    return (iBaseFont *) appleFont_Text_(id);
+CFArrayRef cascadeList_AppleText_(const iAppleText *d) {
+    return d->cascadeList;
 }
-
-enum iFontId fontId_Text(const void *font) {
-    const iAppleFont *af = font;
-    return (enum iFontId)(af - (const iAppleFont *) constData_Array(&current_AppleText_()->fonts));
-}
-
-iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
-    /* Core Text handles per-character fallback internally via the cascade list.
-       Return d unchanged; the cascade list ensures correct glyph selection. */
-    iUnused(ch);
-    return d;
-}
-
-/*----------------------------------------------------------------------------------------------*/
 
 static void clearRunCache_AppleText_(iAppleText *);
 
@@ -227,7 +269,7 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
     return list;
 }
 
-CTFontRef overrideFont_AppleText_(iAppleText *d, iChar ch, float pointSize) {
+CTFontRef overrideFont_AppleText_(const iAppleText *d, iChar ch, float pointSize) {
     const iBool forceMonochrome = (ch == 0x1F310 /* globe with meridians */);
     if (get_Prefs()->colorEmoji && !forceMonochrome) return NULL; /* cascade decides */
     /* Build UTF-16 units for CTFontGetGlyphsForCharacters. */
@@ -236,8 +278,8 @@ CTFontRef overrideFont_AppleText_(iAppleText *d, iChar ch, float pointSize) {
     CFIndex nUnits;
     if (ch >= 0x10000) {
         iChar tmp = ch - 0x10000;
-        uChars[0] = (UniChar)(0xD800 + (tmp >> 10));
-        uChars[1] = (UniChar)(0xDC00 + (tmp & 0x3FF));
+        uChars[0] = (UniChar) (0xD800 + (tmp >> 10));
+        uChars[1] = (UniChar) (0xDC00 + (tmp & 0x3FF));
         nUnits    = 2;
     }
     else {
@@ -247,12 +289,12 @@ CTFontRef overrideFont_AppleText_(iAppleText *d, iChar ch, float pointSize) {
     /* Find the highest-priority B&W auxiliary font that has a glyph for this codepoint. */
     iConstForEach(Array, it, &d->fontPriorityOrder) {
         const iPrioMapItem *item = it.value;
-        const iAppleFont   *af  =
-            appleFont_AppleText_(d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
+        const iAppleFont   *af =
+            constAppleFont_AppleText_(d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
         if (!af || !af->font.spec || !af->font.file || !af->font.file->data) continue;
         if (af->font.spec->flags & ignoreAsFallback_FontSpecFlag) continue;
-        if (!(af->font.spec->flags & auxiliary_FontSpecFlag))      continue;
-        CTFontRef ref = (CTFontRef)(uintptr_t) af->font.file->data;
+        if (!(af->font.spec->flags & auxiliary_FontSpecFlag)) continue;
+        CTFontRef ref = (CTFontRef) (uintptr_t) af->font.file->data;
         if (CTFontGetGlyphsForCharacters(ref, uChars, glyphs, nUnits) && glyphs[0] != 0) {
             return CTFontCreateCopyWithAttributes(ref, (CGFloat) pointSize, NULL, NULL);
         }
@@ -260,6 +302,13 @@ CTFontRef overrideFont_AppleText_(iAppleText *d, iChar ch, float pointSize) {
     /* No B&W font has the glyph. */
     if (forceMonochrome) return NULL; /* cascade decides */
     return CTFontCreateWithName(CFSTR("AppleColorEmoji"), (CGFloat) pointSize, NULL);
+}
+
+const char *sfSymbolName_AppleText_(iChar iconChar) {
+    for (size_t i = 0; i < symbolMapSize_; i++) {
+        if (sfSymbolMap_[i].iconChar == iconChar) return sfSymbolMap_[i].symbolName;
+    }
+    return NULL;
 }
 
 static void applyCascadeList_AppleText_(iAppleText *d) {
@@ -368,6 +417,9 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
         if (r && r->hash == hash && r->fontId == fontId && r->colorId == colorId &&
             r->rawTextLen == rawLen) {
             r->lastUsed = ++d->runCacheSerial;
+#if !defined(NDEBUG)
+            d->cacheHits++;
+#endif
             return r;
         }
     }
@@ -387,9 +439,23 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     }
     /* Evict the LRU entry. */
     if (d->runCache[lruSlot]) {
+#if !defined(NDEBUG)
+        d->cacheEvictions++;
+#endif
         delete_AppleTextRun(d->runCache[lruSlot]);
         d->runCache[lruSlot] = NULL;
     }
+#if !defined(NDEBUG)
+    d->cacheMisses++;
+    /* Print a rolling summary every 500 misses. */
+    if (d->cacheMisses % 500 == 0) {
+        const uint32_t total = d->cacheHits + d->cacheMisses;
+        printf("[RunCache] hits=%u misses=%u evictions=%u hit-rate=%.1f%% (capacity=%d)\n",
+               d->cacheHits, d->cacheMisses, d->cacheEvictions,
+               total ? 100.0 * d->cacheHits / total : 0.0,
+               maxRunCache_AppleText_);
+    }
+#endif
     /* Create a new run. */
     iAppleTextRun *r = new_AppleTextRun(text.start, rawLen, fontId, colorId, d);
     if (r) {
@@ -455,6 +521,26 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     }
     /* Draw glyphs with baked-in foreground colors from kCTForegroundColorAttributeName. */
     CTLineDraw(line, ctx);
+    /* Composite SF Symbol images for any runs carrying lagSfSymbolKey_. */
+    if (lagSfSymbolKey_) {
+        for (CFIndex ri = 0; ri < runCount; ri++) {
+            CTRunRef        ctRun = (CTRunRef) CFArrayGetValueAtIndex(glyphRuns, ri);
+            CFDictionaryRef ra    = CTRunGetAttributes(ctRun);
+            CGImageRef      sfImg = (CGImageRef) CFDictionaryGetValue(ra, lagSfSymbolKey_);
+            if (!sfImg) continue;
+            CFRange sr   = CTRunGetStringRange(ctRun);
+            CGFloat xOff = CTLineGetOffsetForStringIndex(line, sr.location, NULL);
+            double  rW   = CTRunGetTypographicBounds(ctRun, CFRangeMake(0, 0), NULL, NULL, NULL);
+            /* The CGImage was rendered at exactly (slotPixels × natural aspect ratio) pixels,
+               so draw it 1:1 with no scaling. Center in the line height box to have margin
+               all sides. */
+            CGFloat drawW = (CGFloat) CGImageGetWidth(sfImg);
+            CGFloat drawH = (CGFloat) CGImageGetHeight(sfImg);
+            CGFloat drawX = xOff + floorf(((CGFloat) rW - drawW) * 0.5f);
+            CGFloat drawY = floorf(((CGFloat) h - drawH) * 0.5f + 0.5f);
+            CGContextDrawImage(ctx, CGRectMake(drawX, drawY, drawW, drawH), sfImg);
+        }
+    }
     CGContextRelease(ctx);
     /* Upload to an SDL texture and blit it. Use STREAMING access with Lock/Unlock to
        avoid breaking the Metal render encoder when a render target is active. */
@@ -493,6 +579,7 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
                        tex,
                        &(SDL_Rect) { 0, 0, w, h },
                        &(SDL_Rect) { pos.x + orig.x, pos.y + orig.y, w, h });
+        // SDL_RenderDrawRect(render, &(SDL_Rect) { pos.x + orig.x, pos.y + orig.y, w - 1, h - 1 }); /* debug */
         SDL_DestroyTexture(tex);
     }
     free(pixels);
@@ -586,6 +673,33 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             iRect lineVisual = init_Rect(vx, vy, vw, vh);
             visualBounds = isEmpty_Rect(visualBounds) ? lineVisual
                                                       : union_Rect(visualBounds, lineVisual);
+            /* kCTLineBoundsUseGlyphPathBounds ignores CTRunDelegate inline objects (no glyph
+               path for the transparent U+FFFC placeholder). Add SF Symbol rects manually. */
+            if (lagSfSymbolKey_) {
+                CFArrayRef sfRuns   = CTLineGetGlyphRuns(line);
+                CFIndex    sfRunCnt = CFArrayGetCount(sfRuns);
+                for (CFIndex ri = 0; ri < sfRunCnt; ri++) {
+                    CTRunRef        sr    = (CTRunRef) CFArrayGetValueAtIndex(sfRuns, ri);
+                    CFDictionaryRef ra    = CTRunGetAttributes(sr);
+                    CGImageRef      sfImg = (CGImageRef) CFDictionaryGetValue(ra, lagSfSymbolKey_);
+                    if (!sfImg) continue;
+                    CFRange strRange = CTRunGetStringRange(sr);
+                    CGFloat sx       = CTLineGetOffsetForStringIndex(line, strRange.location, NULL);
+                    double  sW       = CTRunGetTypographicBounds(sr, CFRangeMake(0,0),
+                                                                 NULL, NULL, NULL);
+                    /* Use the actual drawn image dimensions (not the typographic slot) so the
+                       visual bounds correctly reflects what is visible on screen. The draw
+                       position mirrors drawLine_AppleText_: drawY = floor((h-drawH)/2) in CG
+                       Y-up, which maps to screen top = pos.y + ceil((h-drawH)/2). */
+                    CGFloat drawW = (CGFloat) CGImageGetWidth(sfImg);
+                    CGFloat drawH = (CGFloat) CGImageGetHeight(sfImg);
+                    int sfx = pos.x + (int) floor(sx + ((CGFloat)sW - drawW) * 0.5f);
+                    int sfy = pos.y + (int) ceil(((float)af->font.height - drawH) * 0.5f);
+                    iRect sfRect = init_Rect(sfx, sfy, (int) ceil(drawW), (int) ceil(drawH));
+                    visualBounds = isEmpty_Rect(visualBounds) ? sfRect
+                                                              : union_Rect(visualBounds, sfRect);
+                }
+            }
         }
         /* Source text pointers for the line boundaries. */
         const CFIndex endIdx    = startIdx + lineLen;
@@ -781,7 +895,8 @@ static iAppleText *sharedText_;
 
 iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
     if (!lagBgKey_) {
-        lagBgKey_ = CFSTR("LagrangeBgColor"); /* custom attribute key for background colors */
+        lagBgKey_       = CFSTR("LagrangeBgColor");  /* per-run background CGColorRef */
+        lagSfSymbolKey_ = CFSTR("LagrangeSfSymbol"); /* per-run SF Symbol CGImageRef */
     }
     if (!sharedText_) {
         sharedText_ = iNew(AppleText);
@@ -866,6 +981,22 @@ SDL_Texture *glyphCache_Text(void) {
 void cache_Text(int fontId, iRangecc text) {
     /* Pre-rendering is a no-op in the Core Text backend; runs are cached lazily. */
     iUnused(fontId, text);
+}
+
+iBaseFont *font_Text(enum iFontId id) {
+    return (iBaseFont *) appleFont_Text_(id);
+}
+
+enum iFontId fontId_Text(const void *font) {
+    const iAppleFont *af = font;
+    return (enum iFontId)(af - (const iAppleFont *) constData_Array(&current_AppleText_()->fonts));
+}
+
+iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
+    /* Core Text handles per-character fallback internally via the cascade list.
+       Return d unchanged; the cascade list ensures correct glyph selection. */
+    iUnused(ch);
+    return d;
 }
 
 iDefineClass(AppleText)

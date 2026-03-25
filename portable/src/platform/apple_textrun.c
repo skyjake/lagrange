@@ -49,7 +49,33 @@ struct Impl_TextSegment {
     iColor  bgColor;   /* .a > 0: fill background with this RGB */
 };
 
-CFStringRef lagBgKey_ = NULL; /* initialized in new_Text() */
+CFStringRef lagBgKey_       = NULL; /* initialized in new_Text() */
+CFStringRef lagSfSymbolKey_ = NULL; /* initialized in new_Text() */
+
+static iBool isUiFontId_(int fontId) {
+    /* Returns true if the font ID refers to a UI-sized font (not document content).
+       UI fonts use size indices 0–(contentRegular_FontSize-1). */
+    return (fontId % maxVariants_Fonts) % max_FontSize < contentRegular_FontSize;
+}
+
+/* SF Symbol inline image: metrics for CTRunDelegate and the CGImage for compositing. */
+typedef struct {
+    CFIndex    u16Pos;
+    CGImageRef image;
+    CGFloat    ascent, descent, width;
+} iSfSymbolInfo;
+
+static CGFloat sfAscent_ (void *r) { return ((iSfSymbolInfo *)r)->ascent;  }
+static CGFloat sfDescent_(void *r) { return ((iSfSymbolInfo *)r)->descent; }
+static CGFloat sfWidth_  (void *r) { return ((iSfSymbolInfo *)r)->width;   }
+static void    sfDealloc_(void *r) {
+    iSfSymbolInfo *info = (iSfSymbolInfo *)r;
+    if (info->image) CGImageRelease(info->image);
+    free(info);
+}
+static const CTRunDelegateCallbacks kSfDelegateCallbacks_ = {
+    kCTRunDelegateVersion1, sfDealloc_, sfAscent_, sfDescent_, sfWidth_
+};
 
 static CGColorRef cgColor_(int colorId) {
     const iColor    c        = get_Color(colorId);
@@ -97,13 +123,16 @@ static iBool prepare_AppleTextRun_(
        one UTF-16 unit per raw byte. */
     char     *cleanBuf = malloc(rawLen * 4 + 1);
     size_t   *utf16Map = malloc((rawLen * 4 + 2) * sizeof(size_t));
-    iTextSegment *segments = malloc((rawLen + 1) * sizeof(iTextSegment));
-    if (!cleanBuf || !utf16Map || !segments) {
+    iTextSegment  *segments = malloc((rawLen + 1) * sizeof(iTextSegment));
+    iSfSymbolInfo *sfInfos  = malloc((rawLen + 1) * sizeof(iSfSymbolInfo));
+    if (!cleanBuf || !utf16Map || !segments || !sfInfos) {
         free(cleanBuf);
         free(utf16Map);
         free(segments);
+        free(sfInfos);
         return iFalse;
     }
+    int sfInfoCount = 0;
 
     size_t  cleanLen  = 0;
     CFIndex utf16Idx  = 0;
@@ -118,9 +147,8 @@ static iBool prepare_AppleTextRun_(
 
     const char *p   = rawText;
     const char *end = rawText + rawLen;
-
     while (p < end) {
-        if ((uint8_t) *p == '\v') {
+        if (*p == '\v') {
             /* Flush current segment before changing state. */
             if (utf16Idx > segStartUtf16) {
                 segments[segCount++] = (iTextSegment) { segStartUtf16, utf16Idx,   curFontId,
@@ -129,7 +157,7 @@ static iBool prepare_AppleTextRun_(
             p++; /* skip the leading \v byte */
             if (p >= end) break;
             uint8_t esc = (uint8_t) *p++;
-            if (esc == 0x0B) { /* double \v: extended color range */
+            if (esc == '\v') { /* extended color range */
                 if (p < end) {
                     uint8_t nextByte = (uint8_t) *p++;
                     curFgColorId =
@@ -137,7 +165,7 @@ static iBool prepare_AppleTextRun_(
                 }
                 curFgColor.a = 0;
             }
-            else if (esc == 0x24) { /* ASCII '$': restore default colors */
+            else if (esc == '$') { /* restore default colors */
                 curFgColorId = baseColorId;
                 curFgColor.a = 0;
                 curBgColor.a = 0;
@@ -150,7 +178,7 @@ static iBool prepare_AppleTextRun_(
             continue;
         }
         /* ANSI escapes. */
-        if ((uint8_t) *p == 0x1b) {
+        if (*p == 0x1b) {
             const char *ansiStart = p + 1; /* skip past \x1b; pattern excludes it */
             iRegExpMatch m;
             init_RegExpMatch(&m);
@@ -231,16 +259,48 @@ static iBool prepare_AppleTextRun_(
             p++; /* skip unrecognized byte */
             continue;
         }
-        /* Record source offset for each UTF-16 unit produced by this codepoint. */
+        /* SF Symbol substitution: replace UI icon chars with inline images (U+FFFC placeholder).
+           Only applies for UI-sized fonts; document fonts pass through unchanged. */
+        const char *symbolName = isUiFontId_(curFontId) ? sfSymbolName_AppleText_(ch) : NULL;
+        if (symbolName) {
+            const iAppleFont *af = constAppleFont_AppleText_(tx, curFontId);
+            /* Metrics. */
+            float      pts  = af ? af->pointSize : 16.0f;
+            CGFloat    asc  = af ? (CGFloat) af->font.baseline : pts * 0.8f;
+            CGFloat    desc = af ? (CGFloat) (af->font.height - af->font.baseline) : pts * 0.2f;
+            CGColorRef fg   = (curFgColor.a > 0) ? cgColorFromColor_(curFgColor)
+                                                 : cgColor_(curFgColorId);
+            /* Render at ~80% of the line height so the symbol fits comfortably inside the
+               slot with natural margins. */
+            const float symbolScale = 0.8f;
+            CGImageRef  img = sfSymbolCreateImage_Apple(
+                symbolName, pts, fg, (int) ceilf((asc + desc) * symbolScale));
+            CFRelease(fg);
+            if (img) {
+                CGFloat wid = asc + desc; /* square slot; image is fit-inside at draw time */
+                sfInfos[sfInfoCount++] = (iSfSymbolInfo){ utf16Idx, img, asc, desc, wid };
+                /* Encode U+FFFC (object replacement character) as BMP placeholder. */
+                iMultibyteChar encMb;
+                init_MultibyteChar(&encMb, 0xFFFC);
+                const int encLen = (int) strlen(encMb.bytes);
+                memcpy(cleanBuf + cleanLen, encMb.bytes, encLen);
+                cleanLen += (size_t) encLen;
+                utf16Map[utf16Idx++] = (size_t)(p - rawText);
+                p += nbytes;
+                continue;
+            }
+            /* Image unavailable: fall through to render original character. */
+        }
+        /* Regular character: encode into clean buffer. */
         utf16Map[utf16Idx++] = (size_t)(p - rawText);
         if (ch >= 0x10000) {
-            /* Supplementary character occupies two UTF-16 units (surrogate pair);
-               both map to the same source offset. */
             utf16Map[utf16Idx++] = (size_t)(p - rawText);
         }
-        /* Append raw UTF-8 bytes to clean buffer. */
-        memcpy(cleanBuf + cleanLen, p, (size_t) nbytes);
-        cleanLen += (size_t) nbytes;
+        iMultibyteChar encMb;
+        init_MultibyteChar(&encMb, ch);
+        const int encLen = (int) strlen(encMb.bytes);
+        memcpy(cleanBuf + cleanLen, encMb.bytes, encLen);
+        cleanLen += (size_t) encLen;
         p += nbytes;
     }
     /* Flush the final segment. */
@@ -257,9 +317,13 @@ static iBool prepare_AppleTextRun_(
                                                 kCFStringEncodingUTF8,
                                                 false);
     if (!cfStr) {
+        for (int i = 0; i < sfInfoCount; i++) {
+            if (sfInfos[i].image) CGImageRelease(sfInfos[i].image);
+        }
         free(cleanBuf);
         free(utf16Map);
         free(segments);
+        free(sfInfos);
         return iFalse;
     }
     /* Apply per-segment font, foreground color, and optional background color attributes. */
@@ -270,13 +334,15 @@ static iBool prepare_AppleTextRun_(
     for (size_t si = 0; si < segCount; si++) {
         const iTextSegment *seg   = &segments[si];
         CFRange             range = CFRangeMake(seg->startUtf16, seg->endUtf16 - seg->startUtf16);
-        if (range.length <= 0) continue;
-
+        if (range.length <= 0) {
+            continue;
+        }
         /* Resolve CTFont for this segment. */
         iAppleFont *af = appleFont_AppleText_(tx, seg->fontId);
         ensureCtFont_AppleFont_(af, cascadeList);
-        if (!af->ctFont) continue;
-
+        if (!af->ctFont) {
+            continue;
+        }
         /* Build fg CGColor. */
         CGColorRef fgCg =
             (seg->fgColor.a > 0) ? cgColorFromColor_(seg->fgColor) : cgColor_(seg->fgColorId);
@@ -315,7 +381,7 @@ static iBool prepare_AppleTextRun_(
                 float pointSize = 0.0f;
                 for (size_t s = 0; s < segCount; s++) {
                     if (u16 >= segments[s].startUtf16 && u16 < segments[s].endUtf16) {
-                        const iAppleFont *af = appleFont_AppleText_(tx, segments[s].fontId);
+                        const iAppleFont *af = constAppleFont_AppleText_(tx, segments[s].fontId);
                         if (af) pointSize = af->pointSize;
                         break;
                     }
@@ -333,6 +399,27 @@ static iBool prepare_AppleTextRun_(
         }
     }
     free(segments);
+    /* Apply CTRunDelegate and image attributes for each collected SF Symbol inline object. */
+    for (int i = 0; i < sfInfoCount; i++) {
+        iSfSymbolInfo *info       = iMalloc(SfSymbolInfo);
+        *info                     = sfInfos[i];
+        sfInfos[i].image          = NULL; /* ownership transferred to delegate refCon */
+        CTRunDelegateRef delegate = CTRunDelegateCreate(&kSfDelegateCallbacks_, info);
+        CFRange          r        = CFRangeMake(info->u16Pos, 1);
+        /* Transparent foreground color suppresses CT rendering of the placeholder glyph. */
+        const CGFloat   zero[4] = { 0.0, 0.0, 0.0, 0.0 };
+        CGColorSpaceRef cs      = CGColorSpaceCreateDeviceRGB();
+        CGColorRef      clr     = CGColorCreate(cs, zero);
+        CGColorSpaceRelease(cs);
+        CFAttributedStringSetAttribute(mAttrStr, r, kCTRunDelegateAttributeName, delegate);
+        CFAttributedStringSetAttribute(mAttrStr, r, kCTForegroundColorAttributeName, clr);
+        if (info->image) {
+            CFAttributedStringSetAttribute(mAttrStr, r, lagSfSymbolKey_, info->image);
+        }
+        CFRelease(delegate);
+        CFRelease(clr);
+    }
+    free(sfInfos);
     *clean_out      = cleanBuf;
     *cleanLen_out   = cleanLen;
     *utf16ToSrc_out = utf16Map;
