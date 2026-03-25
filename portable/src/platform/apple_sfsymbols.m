@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   import <UIKit/UIKit.h>
 #endif
 
+#include <the_Foundation/defs.h>
+#include <the_Foundation/rect.h>
+
 CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CGColorRef color,
                                      int slotPixels) {
     NSString *name = [NSString stringWithUTF8String:symbolName];
@@ -46,18 +49,15 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
         if (!img) return NULL;
         NSSize sz = img.size;
         if (sz.width <= 0 || sz.height <= 0) return NULL;
-        /* Compute render dimensions: fit the symbol's natural aspect ratio into slotPixels tall,
-           so the bitmap is exactly the size it will be drawn at — no scaling at composite time. */
-        NSInteger renderH = (NSInteger)(slotPixels > 0 ? slotPixels : (int)ceil(sz.height));
-        NSInteger renderW = (NSInteger)ceil(sz.width * renderH / sz.height);
+        iAssert(slotPixels >= 0);
         /* Render into a concrete bitmap. Using a drawing-handler NSImage and
-           CGImageForProposedRect: is unreliable — the handler may never be called
+           CGImageForProposedRect: is unreliable, the handler may never be called
            because the image has no backing raster representation until drawn.
            NSBitmapImageRep forces immediate rendering. */
         NSBitmapImageRep *rep =
             [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                                    pixelsWide:renderW
-                                                    pixelsHigh:renderH
+                                                    pixelsWide:slotPixels
+                                                    pixelsHigh:slotPixels
                                                  bitsPerSample:8
                                                samplesPerPixel:4
                                                       hasAlpha:YES
@@ -69,10 +69,16 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
         NSGraphicsContext *gc = [NSGraphicsContext graphicsContextWithBitmapImageRep:rep];
         [NSGraphicsContext saveGraphicsState];
         [NSGraphicsContext setCurrentContext:gc];
-        /* Tint: fill with the target color, then mask to symbol alpha with DestinationIn. */
+        /* Calculate where the glyph will go inside the slot. */
+        const iRect  bounds   = init_Rect(0, 0, slotPixels, slotPixels);
+        const iRect  glyph    = init_Rect(0, 0, (int) ceilf(sz.width), (int) ceilf(sz.height));
+        const iRect  centered = moved_Rect(glyph, divi_I2(sub_I2(bounds.size, glyph.size), 2));
+        const NSRect dstRect  = NSMakeRect(centered.pos.x,  centered.pos.y,
+                                           centered.size.x, centered.size.y);
+        /* Fill with the target color, then mask to symbol alpha with DestinationIn. */
         [[NSColor colorWithCGColor:color] set];
-        NSRectFill(NSMakeRect(0, 0, renderW, renderH));
-        [img drawInRect:NSMakeRect(0, 0, renderW, renderH)
+        NSRectFill(dstRect);
+        [img drawInRect:dstRect
                fromRect:NSZeroRect
               operation:NSCompositingOperationDestinationIn
                fraction:1.0
@@ -82,8 +88,8 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
         /* DEBUG: 1-pixel checkerboard to verify 1:1 pixel mapping on screen. */ {
             uint8_t  *px  = [rep bitmapData];
             NSInteger bpr = [rep bytesPerRow];
-            for (NSInteger y = 0; y < renderH; y++) {
-                for (NSInteger x = 0; x < renderW; x++) {
+            for (NSInteger y = 0; y < slotPixels; y++) {
+                for (NSInteger x = 0; x < slotPixels; x++) {
                     if ((x ^ y) & 1) {
                         uint8_t *p = px + y * bpr + x * 4;
                         p[0] = 255; p[1] = 0; p[2] = 0; p[3] = 255; /* opaque red */

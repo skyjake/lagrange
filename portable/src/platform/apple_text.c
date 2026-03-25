@@ -171,8 +171,8 @@ static const struct { iChar iconChar; const char *symbolName; } sfSymbolMap_[] =
     { 0x27a4,   "chevron.forward"           }, /* rightArrowhead_Icon */
     { 0x25e7,   "rectangle.lefthalf.filled" }, /* leftHalf_Icon */
     { 0x25e8,   "rectangle.righthalf.filled"}, /* rightHalf_Icon */
-    { 0x2605,   "star"                      }, /* star_Icon */
-    { 0x2606,   "star.fill"                 }, /* whiteStar_Icon */
+    { 0x2605,   "star.fill"                 }, /* star_Icon */
+    { 0x2606,   "star"                      }, /* whiteStar_Icon */
     { 0x26a0,   "exclamationmark.triangle"  }, /* warning_Icon */
     { 0x2ba5,   "paperplane"                }, /* upload_Icon */
     { 0x2ba7,   "square.and.arrow.down"     }, /* download_Icon */
