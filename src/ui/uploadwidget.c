@@ -25,7 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "documentwidget.h"
 #include "root.h"
-#include "color.h"
 #include "command.h"
 #include "gmrequest.h"
 #include "sitespec.h"
@@ -584,8 +583,6 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         }
         setFlags_Widget(findChild_Widget(w, "upload.type.text"), selected_WidgetFlag, iTrue);
         showCollapsed_Widget(findChild_Widget(w, "dlg.upload.file.button"), iFalse);
-        // if (isPortraitPhone_App()) {
-        // }
         enableUploadPanelButton_UploadWidget_(d, iTrue);
     }
     else {
@@ -752,7 +749,10 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         setFocus_Widget(as_Widget(d->input));
     }
     setFont_InputWidget(d->input, font_UploadWidget_(d, regular_FontStyle));
-    setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
+    /* This works like a traditional text editor, unless we use the CJK IME-friendly mode. */
+    setUseReturnKeyBehavior_InputWidget(
+        d->input,
+        prefs_App()->returnKey == onlyWithMods_ReturnKeyBehavior);
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");
     switch (d->protocol) {
@@ -1292,25 +1292,43 @@ static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText) {
     return iTrue;
 }
 
+static iBool isTitanEditMode_UploadWidget_(const iUploadWidget *d) {
+    /* Titan edit mode only handles text content, so the type field is hidden. */
+    return d->protocol == titan_UploadProtocol &&
+           isSelfHidden_Widget(findChild_Widget(constAs_Widget(d), "upload.type"));
+}
+
+static void updatePanelActionVisibility_UploadWidget_(iUploadWidget *d) {
+    if (isUsingPanelLayout_Mobile()) {
+        /* We control the visibility of the Upload button manually. */
+        const size_t panelIndex = currentPanelIndex_Mobile(as_Widget(d));
+        const iBool alwaysShow =
+            (isSideBySideLayout_Mobile() /* there's room */ ||
+             isTitanEditMode_UploadWidget_(d) ||
+             d->protocol == misfin_UploadProtocol); /* no ambiguity about upload parameters */
+        /* Don't upload from subpages since we can't see the destination. */
+        const iBool showingChildPanel = (panelIndex != iInvalidPos);
+        enableUploadPanelButton_UploadWidget_(d, alwaysShow || !showingChildPanel);
+    }
+}
+
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
     if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed")) {
         updateInputMaxHeight_UploadWidget_(d);
+        updatePanelActionVisibility_UploadWidget_(d);
     }
     else if (equal_Command(cmd, "panel.changed")) {
-        const size_t panelIndex = currentPanelIndex_Mobile(w); /* TODO: Should ask ID/name, not index. */
+        const size_t panelIndex = currentPanelIndex_Mobile(w);
+        /* TODO: Should check ID/name, not index. */
         if (panelIndex == (d->protocol == titan_UploadProtocol ? 1 : 0)) {
             setFocus_Widget(as_Widget(d->input));
         }
         else {
             setFocus_Widget(NULL);
         }
-        if (isPortraitPhone_App() && (d->protocol == misfin_UploadProtocol ||
-                                      isVisible_Widget(findChild_Widget(w, "upload.type")))) {
-            /* Don't upload from subpages in non-edit mode. */
-            enableUploadPanelButton_UploadWidget_(d, panelIndex == iInvalidPos);
-        }
+        updatePanelActionVisibility_UploadWidget_(d);
         refresh_Widget(d->input);
         return iFalse;
     }
@@ -1429,6 +1447,9 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
     if (isCommand_Widget(w, ev, "upload.accept")) {
+        if (isUsingPanelLayout_Mobile() && isSelfHidden_Widget(acceptButton_UploadWidget_(d))) {
+            return iTrue; /* prevent accidental uploads */
+        }
         if (d->editRequest) {
             return iTrue; /* ongoing edit request */
         }

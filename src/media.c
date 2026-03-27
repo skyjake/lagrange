@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "the_Foundation/block.h"
 #include "ui/window.h"
-#include "ui/paint.h" /* size_SDLTexture */
+#include "render/paint.h" /* size_SDLTexture */
 #include "audio/player.h"
 #include "app.h"
 #include "stb_image.h"

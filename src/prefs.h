@@ -25,8 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringset.h>
 
 #include "gmdocument.h"
-#include "ui/color.h"
-#include "ui/text.h"
+#include "render/text.h"
 
 /* User preferences */
 
@@ -113,6 +112,7 @@ enum iPrefsBool {
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
     preferIPv6_PrefsBool,
+    useProxy_PrefsBool,
 
     /* Style */
     monospaceGemini_PrefsBool,
@@ -202,6 +202,7 @@ struct Impl_Prefs {
             iBool decodeUserVisibleURLs;
             iBool allowSchemeChangingRedirect;
             iBool preferIPv6;
+            iBool useProxy;
 
             /* Style */
             iBool monospaceGemini;

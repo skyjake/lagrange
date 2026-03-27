@@ -36,8 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "resources.h"
 #include "sitespec.h"
 #include "snippets.h"
+#include "render/text.h"
 #include "ui/certimportwidget.h"
-#include "ui/color.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
 #include "ui/gamepad.h"
@@ -48,7 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/lookupwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
-#include "ui/text.h"
 #include "ui/touch.h"
 #include "ui/uploadwidget.h"
 #include "ui/util.h"
@@ -79,20 +78,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 //#define LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION 1
 
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
 #if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#   include "platform/ios.h"
 #endif
 #if defined (iPlatformAndroidMobile)
-#   include "android.h"
+#   include "platform/android.h"
 #   include <SDL_log.h>
 #endif
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
-#   include "win32.h"
+#   include "platform/win32.h"
 #endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
-#   include "x11.h"
+#   include "platform/x11.h"
 #endif
 #if SDL_VERSION_ATLEAST(2, 0, 14)
 #   include <SDL_misc.h>
@@ -282,7 +281,7 @@ static iString *serializePrefs_App_(const iApp *d) {
             int deskOut = win->place.desktop;
             if (deskOut < 0) {
                 unsigned long dk;
-                if (getWindowDesktop_X11(win->base.win, &dk)) {
+                if (getDesktop_SDLWindow(win->base.win, &dk)) {
                     deskOut = (int) dk;
                 }
             }
@@ -406,6 +405,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.redirect.allowscheme", &d->prefs.allowSchemeChangingRedirect },
         { "prefs.retaintabs", &d->prefs.retainTabs },
         { "prefs.sideicon", &d->prefs.sideIcon },
+        { "prefs.socks", &d->prefs.useProxy },
         { "prefs.swipe.edge", &d->prefs.edgeSwipe },
         { "prefs.swipe.page", &d->prefs.pageSwipe },
         { "prefs.time.24h", &d->prefs.time24h },
@@ -640,6 +640,10 @@ static void loadPrefs_App_(iApp *d) {
                 handleCommand_App(cmd);
                 haveCA = iTrue;
             }
+            else if (equal_Command(cmd, "prefs.socks.changed")) {
+                /* This will affect the proxy setup later during loading of prefs. */
+                d->prefs.useProxy = arg_Command(cmd) != 0;
+            }
             else if (equal_Command(cmd, "misfin.recent")) {
                 setRange_String(&d->prefs.strings[recentMisfinId_PrefsString], range_Command(cmd, "fp"));
             }
@@ -742,7 +746,7 @@ static void savePrefs_App_(const iApp *d) {
             const iMainWindow *win = it.ptr;
             if (win && win->base.win) {
                 unsigned long dk;
-                if (getWindowDesktop_X11(win->base.win, &dk)) {
+                if (getDesktop_SDLWindow(win->base.win, &dk)) {
                     ((iMainWindow *) win)->place.desktop = (int) dk;
                 }
             }
@@ -3821,7 +3825,7 @@ static const iString *popClosedTabUrl_App_(iApp *d) {
 
 static void updateNetworkProxy_App_(iApp *d) {
     iNetworkProxy *proxy = NULL;
-    if (!isEmpty_String(&d->prefs.strings[socksServer_PrefsString])) {
+    if (d->prefs.useProxy && !isEmpty_String(&d->prefs.strings[socksServer_PrefsString])) {
         iString *uri =
             collect_String(copy_String(&d->prefs.strings[socksServer_PrefsString]));
         if (indexOfCStr_String(uri, "://") == iInvalidPos) {
@@ -4031,7 +4035,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
                 if (id_Window(as_Window(win)) == winId) {
                     win->place.desktop = desk;
                     /* Use the active desktop switching function. */
-                    setWindowDesktop_X11(win->base.win, (unsigned long) desk);
+                    setDesktop_SDLWindow(win->base.win, (unsigned long) desk);
                     break;
                 }
             }
@@ -4492,6 +4496,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
                            suffixPtr_Command(cmd, "password"));
         }
         if (!argLabel_Command(cmd, "noupdate")) {
+            updateNetworkProxy_App_(d);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.socks.changed")) {
+        d->prefs.useProxy = arg_Command(cmd) != 0;
+        if (isFinishedLaunching_App()) {
             updateNetworkProxy_App_(d);
         }
         return iTrue;
@@ -5415,6 +5426,7 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ipv6"), d->prefs.preferIPv6);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.socks"), d->prefs.useProxy);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);

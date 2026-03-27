@@ -25,7 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "bindingswidget.h"
 #include "bookmarks.h"
-#include "color.h"
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
@@ -37,26 +36,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "periodic.h"
+#include "render/text.h"
 #include "root.h"
 #include "sitespec.h"
 #include "snippets.h"
 #include "snippetwidget.h"
-#include "text.h"
 #include "touch.h"
 #include "uploadwidget.h"
 #include "widget.h"
 #include "window.h"
 
-#if defined (iPlatformAppleMobile)
-#   include "../ios.h"
-#endif
-
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
-
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
-#   include "x11.h"
+#   include "platform/x11.h"
 #endif
 
 #include <the_Foundation/math.h>
@@ -859,10 +856,11 @@ static void closeSubmenus_(iWidget *menu, iRoot *root) {
                 if (!submenu) {
                     submenu = findChild_Widget(root->widget, subId);
                 }
-                iAssert(submenu);
-                remove_Periodic(periodic_App(), submenu);
-                closeSubmenus_(submenu, root);
-                closeMenu_Widget(submenu);
+                if (submenu) {
+                    remove_Periodic(periodic_App(), submenu);
+                    closeSubmenus_(submenu, root);
+                    closeMenu_Widget(submenu);
+                }
             }
         }
     }
@@ -879,8 +877,7 @@ static void openSubmenu_(iWidget *d) {
     closeSubmenus_(menu, root);
     iWidget *submenu = findChild_Widget(
         root->widget, cstr_Command(cstr_String(command_LabelWidget((iLabelWidget *) d)), "id"));
-    iAssert(submenu);
-    if (!isVisible_Widget(submenu)) {
+    if (submenu && !isVisible_Widget(submenu)) {
         remove_Periodic(periodic_App(), menu);
 //        printf("openSubmenu_ %s isPopup:%d\n d's window type: %d",
 //               cstr_String(id_Widget(submenu)), isPopup, window_Widget(d)->type); fflush(stdout);
@@ -3691,6 +3688,7 @@ iWidget *makePreferences_Widget(void) {
             { "heading text:${prefs.proxy.http}" },
             { "input id:prefs.proxy.http noheading:1" },
             { "heading id:heading.prefs.socks" },
+            { "toggle id:prefs.socks" },
             { "input id:prefs.socks.server hint:hint.socks.server" },
             { "input id:prefs.socks.user" },
             { "input id:prefs.socks.password sensitive:1" },
@@ -4285,6 +4283,8 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
         /* SOCKS configuration. */
         makeTwoColumnHeading_("${heading.prefs.socks}", headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.socks}", "prefs.socks");
+        addDialogPadding_(headings, values);
         iInputWidget *field = new_InputWidget(0);
         setHint_InputWidget(field, "${hint.socks.server}");
         addPrefsInputWithHeading_(headings, values, "prefs.socks.server", iClob(field));

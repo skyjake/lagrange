@@ -254,14 +254,14 @@ void open_Gopher(iGopher *d, const iString *url) {
     else {
         d->type = '1';
     }
-    if (d->type == '7' && isEmpty_Range(&parts.query)) {
+    const iString *reqPath =
+        collect_String(urlDecode_String(collectNewRange_String(parts.path)));
+    if (d->type == '7' && isEmpty_Range(&parts.query) && !contains_String(reqPath, '\t')) {
         /* Ask for the query parameters first. */
         d->needQueryArgs = iTrue;
         return;
     }
     /* MIME type determined by the item type. */
-    const iString *reqPath =
-        collect_String(urlDecodeExclude_String(collectNewRange_String(parts.path), "\t"));
     switch (d->type) {
         case '0': {
             const char *detected = mediaTypeFromFileExtension_String(reqPath);

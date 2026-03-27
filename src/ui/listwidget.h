@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "scrollwidget.h"
-#include "paint.h"
+#include "render/paint.h"
 
 #include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>

@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "fontpack.h"
 #include "lang.h"
 #include "sitespec.h"
-#include "ui/color.h"
+#include "color.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>

@@ -24,13 +24,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "updater.h"
 
 #if defined (iPlatformAppleDesktop)
-#  include "macos.h"
+#  include "platform/macos.h"
 #endif
 #if defined (iPlatformAppleMobile)
-#  include "ios.h"
+#  include "platform/ios.h"
 #endif
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
-#  include "win32.h"
+#  include "platform/win32.h"
 #  define SDL_MAIN_HANDLED
 #endif
 #if defined (LAGRANGE_ENABLE_MPG123)

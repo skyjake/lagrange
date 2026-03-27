@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "mimehooks.h"
 #include "feeds.h"
 #include "bookmarks.h"
-#include "ui/text.h"
+#include "render/text.h"
 #include "resources.h"
 #include "sitespec.h"
 #include "defs.h"

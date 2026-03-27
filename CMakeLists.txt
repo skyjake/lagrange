@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.20.2
+    VERSION 1.20.3
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -30,8 +30,8 @@ if (IOS)
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.20)
-    set (ANDROID_BUILD_VERSION b48)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-03-18")
+    set (ANDROID_BUILD_VERSION b49)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-03-21")
 endif ()
 
 # Load modules from the source tree
@@ -184,6 +184,8 @@ set (SOURCES
     src/app.h
     src/bookmarks.c
     src/bookmarks.h
+    src/color.c
+    src/color.h
     src/defs.h
     src/export.c
     src/export.h
@@ -235,35 +237,36 @@ set (SOURCES
     src/updater.h
     src/visited.c
     src/visited.h
+    # Rendering:
+    src/render/attributedtext.c
+    src/render/attributedtext.h
+    src/render/font.c
+    src/render/font.h
+    src/render/paint.c
+    src/render/paint.h
+    src/render/text.c
+    src/render/text.h
     # User interface:
     src/ui/banner.c
     src/ui/banner.h
-    src/ui/color.c
-    src/ui/color.h
     src/ui/command.c
     src/ui/command.h
     src/ui/documentview.c
     src/ui/documentview.h
     src/ui/gamepad.c
     src/ui/gamepad.h
-    src/ui/font.c
-    src/ui/font.h
     src/ui/linkinfo.c
     src/ui/linkinfo.h
     src/ui/keys.c
     src/ui/keys.h
     src/ui/metrics.c
     src/ui/metrics.h
-    src/ui/paint.c
-    src/ui/paint.h
     src/ui/root.c
     src/ui/root.h
     src/ui/mediaui.c
     src/ui/mediaui.h
     src/ui/mobile.c
     src/ui/mobile.h
-    src/ui/text.c
-    src/ui/text.h
     src/ui/touch.c
     src/ui/touch.h
     src/ui/translation.c
@@ -326,13 +329,13 @@ endif ()
 
 set (TUI_SOURCES
     ${SOURCES}
-    src/ui/text_terminal.c
+    src/render/text_terminal.c
     src/updater.c
 )
 
 set (ENABLE_STB_TRUETYPE YES)
 list (APPEND SOURCES
-    src/ui/text_stb.c
+    src/render/text_stb.c
 )
 # Audio playback
 list (APPEND SOURCES
@@ -342,29 +345,34 @@ list (APPEND SOURCES
     src/audio/player.h
     src/audio/stb_vorbis.c
 )
+if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+    # Ignore a warning from stb_vorbis.
+    set_source_files_properties (src/audio/stb_vorbis.c PROPERTIES
+        COMPILE_OPTIONS "-Wno-tautological-compare")
+endif()
 if (ENABLE_JXL AND JXL_FOUND)
     list (APPEND SOURCES src/jpegxl.c src/jpegxl.h)
 endif ()
 if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
     list (APPEND SOURCES
-        src/x11.c
-        src/x11.h
+        src/platform/x11.c
+        src/platform/x11.h
     )
 endif ()
 if (ANDROID)
     set (MOBILE 1)
     add_definitions (-DiPlatformAndroidMobile=1)
     list (APPEND SOURCES
-        src/android.c
-        src/android.h
+        src/platform/android.c
+        src/platform/android.h
     )
 endif ()
 if (IOS)
     set (MOBILE 1)
     add_definitions (-DiPlatformAppleMobile=1)
     list (APPEND SOURCES
-        src/ios.m
-        src/ios.h
+        src/platform/ios.m
+        src/platform/ios.h
         app/Images.xcassets
         res/LaunchScreen.storyboard
         res/PrivacyInfo.xcprivacy
@@ -377,7 +385,10 @@ if (IOS)
         MACOSX_PACKAGE_LOCATION Resources
     )
 elseif (APPLE)
-    list (APPEND SOURCES src/macos.m src/macos.h)
+    list (APPEND SOURCES
+        src/platform/macos.m
+        src/platform/macos.h
+    )
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif ()
@@ -385,8 +396,15 @@ if (MSYS OR MINGW)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
     set (WINRC_PRODUCT_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},0,0)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
-    list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
-    list (APPEND TUI_SOURCES src/win32.c src/win32.h)
+    list (APPEND SOURCES
+        src/platform/win32.c
+        src/platform/win32.h
+        ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc
+    )
+    list (APPEND TUI_SOURCES
+        src/platform/win32.c
+        src/platform/win32.h
+    )
 endif ()
 if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)

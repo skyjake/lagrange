@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "lang.h"
 #include "media.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "touch.h"
 #include "util.h"
 

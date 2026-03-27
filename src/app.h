@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 
 #include "prefs.h"
-#include "ui/color.h"
 
 #if defined (iPlatformAppleMobile)
 extern iBool isPhone_iOS(void);

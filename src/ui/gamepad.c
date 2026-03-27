@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "keyboardwidget.h"
 #include "labelwidget.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "resources.h"
 #include "util.h"
 #include "window.h"

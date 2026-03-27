@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "lang.h"
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
 
 iDeclareType(BindingItem)

@@ -32,20 +32,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "media.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "root.h"
 #include "mediaui.h"
 #include "touch.h"
 #include "util.h"
 
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
 #if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#   include "platform/ios.h"
 #endif
 #if defined (iPlatformAndroidMobile)
-#   include "android.h"
+#   include "platform/android.h"
 #endif
 
 #include <the_Foundation/archive.h>

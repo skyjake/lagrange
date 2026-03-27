@@ -23,17 +23,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 #include "app.h"
-#include "periodic.h"
-#include "touch.h"
 #include "command.h"
 #include "gamepad.h"
-#include "paint.h"
+#include "inputwidget.h"
+#include "labelwidget.h"
+#include "periodic.h"
+#include "render/paint.h"
 #include "root.h"
+#include "touch.h"
 #include "util.h"
 #include "window.h"
-
-#include "labelwidget.h"
-#include "inputwidget.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
@@ -1213,7 +1212,9 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
-    return (ev->type == SDL_KEYUP || ev->type == SDL_KEYDOWN || ev->type == SDL_TEXTINPUT);
+    return (ev->type == SDL_KEYUP || ev->type == SDL_KEYDOWN ||
+            ev->type == SDL_TEXTINPUT || ev->type == SDL_TEXTEDITING ||
+            ev->type == SDL_TEXTEDITING_EXT);
 }
 
 iLocalDef iBool isMouseEvent_(const SDL_Event *ev) {

@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.20 (Beta 49)
+* Fixed a crash during event handling when no gamepad is connected.
+* Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.
+
 ## 1.20 (Beta 48)
 * Save state when app is stopped (e.g., force-closing).
 * Ignore spurious Back button events.

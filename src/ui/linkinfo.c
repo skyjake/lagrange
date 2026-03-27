@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "linkinfo.h"
 #include "metrics.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "documentwidget.h"
 #include "../gmcerts.h"
 #include "../app.h"
@@ -131,7 +131,7 @@ void infoText_LinkInfo(const iDocumentWidget *widget, iGmLinkId linkId,
     }
 }
 
-iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId, int maxWidth) {    
+iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId, int maxWidth) {
     if (!d) {
         return iFalse;
     }
@@ -159,7 +159,7 @@ iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId
         else {
             if (targetValue_Anim(&d->opacity) > 0) {
                 setValue_Anim(&d->opacity, 0, isAnimated ? 150 : 0);
-            }            
+            }
         }
         return iTrue;
     }
@@ -169,7 +169,7 @@ iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId
 void invalidate_LinkInfo(iLinkInfo *d) {
     if (targetValue_Anim(&d->opacity) > 0) {
         setValue_Anim(&d->opacity, 0, prefs_App()->uiAnimations ? 150 : 0);
-    }            
+    }
 }
 
 void draw_LinkInfo(const iLinkInfo *d, iInt2 topLeft) {

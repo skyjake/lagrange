@@ -23,12 +23,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "certimportwidget.h"
 
 #include "app.h"
-#include "color.h"
 #include "command.h"
 #include "gmcerts.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
-#include "text.h"
+#include "render/text.h"
 #include "ui/util.h"
 
 #if defined (iPlatformAppleMobile)

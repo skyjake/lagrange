@@ -128,6 +128,7 @@ void init_Prefs(iPrefs *d) {
     d->misfinSelfCopy                         = iTrue;
     d->allowSchemeChangingRedirect            = iFalse; /* must be manually followed */
     d->preferIPv6                             = iFalse;
+    d->useProxy                               = iTrue;
     d->decodeUserVisibleURLs                  = iTrue;
     d->warnTlsSecurity                        = iTrue;
     d->maxCacheSize                           = 10;

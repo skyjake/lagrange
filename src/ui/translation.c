@@ -27,8 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "ui/documentwidget.h"
 #include "ui/labelwidget.h"
-#include "ui/paint.h"
 #include "ui/util.h"
+#include "render/paint.h"
 
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringlist.h>
@@ -372,7 +372,7 @@ void submit_Translation(iTranslation *d) {
                 case heading3_GmLineType:
                     prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
                     translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
-                    break;                    
+                    break;
                 default:
                     translatedPart = cleanLine;
                     break;
@@ -431,7 +431,7 @@ static iBool processResult_Translation_(iTranslation *d) {
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
 //    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
-//    fflush(stdout);    
+//    fflush(stdout);
     iRegExp *pattern = iClob(new_RegExp(".*translatedText\":\"(.*)\"\\}", caseSensitive_RegExpOption));
     iRegExpMatch m;
     init_RegExpMatch(&m);
@@ -516,7 +516,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             }
             else {
                 setPos_Widget(as_Widget(prog), langs->rect.pos);
-                
+
             }
             setFixedSize_Widget(as_Widget(prog), init_I2(width_Rect(innerBounds_Widget(d->dlg)),
                                                          langs->rect.size.y));

@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "documentwidget.h"
 #include "sidebarwidget.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "snippets.h"
 #include "root.h"
 #include "touch.h"
@@ -39,16 +39,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
-#   include "../win32.h"
+#   include "platform/win32.h"
 #endif
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
 #if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#   include "platform/ios.h"
 #endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
-#  include "../x11.h"
+#   include "platform/x11.h"
 #endif
 
 #include <the_Foundation/file.h>
@@ -1177,7 +1177,7 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
     }
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
     unsigned long desk;
-    if (getWindowDesktop_X11(d->base.win, &desk)) {
+    if (getDesktop_SDLWindow(d->base.win, &desk)) {
         d->place.desktop = (int) desk;
     }
 #endif
@@ -1611,6 +1611,10 @@ static uint32_t windowId_SDLEvent_(const SDL_Event *ev) {
             return ev->key.windowID;
         case SDL_TEXTINPUT:
             return ev->text.windowID;
+        case SDL_TEXTEDITING:
+            return ev->edit.windowID;
+        case SDL_TEXTEDITING_EXT:
+            return ev->editExt.windowID;
         case SDL_USEREVENT:
             return ev->user.windowID;
         default:
@@ -1638,7 +1642,9 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != root) {
                 continue; /* Not meant for this root. */
             }
-            if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT)
+            if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP ||
+                 ev->type == SDL_TEXTINPUT || ev->type == SDL_TEXTEDITING ||
+                 ev->type == SDL_TEXTEDITING_EXT)
                      && d->keyRoot != root) {
                 if (!isEscapeKeypress_(ev)) {
                     /* Key events go only to the root with keyboard focus, with the exception

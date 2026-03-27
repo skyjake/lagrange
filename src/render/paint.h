@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/rect.h>
 #include "color.h"
 #include "text.h"
-#include "window.h"
+#include "ui/window.h"
 
 iDeclareType(Paint)
 

@@ -76,7 +76,7 @@ static iBool getDesktop_X11(Display *dpy, Window w, unsigned long *out) {
     return iFalse;
 }
 
-iBool getWindowDesktop_X11(SDL_Window *win, unsigned long *out) {
+iBool getDesktop_SDLWindow(SDL_Window *win, unsigned long *out) {
     if (!isXSession_X11()) {
         return iFalse;
     }
@@ -88,7 +88,7 @@ iBool getWindowDesktop_X11(SDL_Window *win, unsigned long *out) {
     return getDesktop_X11(wm.info.x11.display, wm.info.x11.window, out);
 }
 
-void setWindowDesktopPropOnly_X11(SDL_Window *win, unsigned long desk) {
+void setDesktopPropOnly_SDLWindow(SDL_Window *win, unsigned long desk) {
     if (!isXSession_X11()) return;
     SDL_SysWMinfo wm;
     SDL_VERSION(&wm.version);
@@ -106,7 +106,7 @@ void setWindowDesktopPropOnly_X11(SDL_Window *win, unsigned long desk) {
     XFlush(dpy);
 }
 
-iBool getCurrentDesktop_X11(SDL_Window *anyWin, unsigned long *out) {
+iBool getCurrentDesktop_SDLWindow(SDL_Window *anyWin, unsigned long *out) {
     if (!isXSession_X11()) return iFalse;
     SDL_SysWMinfo wm;
     SDL_VERSION(&wm.version);
@@ -131,7 +131,7 @@ iBool getCurrentDesktop_X11(SDL_Window *anyWin, unsigned long *out) {
     return iFalse;
 }
 
-void setWindowDesktop_X11(SDL_Window *win, unsigned long desk) {
+void setDesktop_SDLWindow(SDL_Window *win, unsigned long desk) {
     if (!isXSession_X11()) {
         return;
     }
@@ -148,7 +148,7 @@ void setWindowDesktop_X11(SDL_Window *win, unsigned long desk) {
     Window            root = DefaultRootWindow(dpy);
     XWindowAttributes attrs;
     if (XGetWindowAttributes(dpy, w, &attrs) && attrs.map_state == IsUnmapped) {
-        setWindowDesktopPropOnly_X11(win, desk);
+        setDesktopPropOnly_SDLWindow(win, desk);
         return;
     }
     Atom   NET_WM_DESKTOP = XInternAtom(dpy, "_NET_WM_DESKTOP", False);

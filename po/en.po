@@ -2375,6 +2375,9 @@ msgstr "Gopher proxy:"
 msgid "prefs.proxy.http"
 msgstr "HTTP proxy:"
 
+msgid "prefs.socks"
+msgstr "Proxy enabled:"
+
 msgid "prefs.socks.server"
 msgstr "Proxy server:"
 

@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "listwidget.h"
 #include "mobile.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "root.h"
 #include "scrollwidget.h"
 #include "touch.h"

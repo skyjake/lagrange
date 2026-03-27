@@ -26,9 +26,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "gamepad.h"
 #include "inputwidget.h"
-#include "paint.h"
+#include "render/paint.h"
+#include "render/text.h"
 #include "root.h"
-#include "text.h"
 #include "window.h"
 
 #include <SDL_timer.h>

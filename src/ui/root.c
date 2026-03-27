@@ -44,14 +44,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../sitespec.h"
 #include "../visited.h"
 
-#if defined (iPlatformMsys) || defined (iPlatformWindows)
-#   include "../win32.h"
-#endif
 #if defined (iPlatformAppleDesktop)
-#   include "macos.h"
+#   include "platform/macos.h"
 #endif
 #if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#   include "platform/ios.h"
+#endif
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+#   include "platform/win32.h"
 #endif
 
 #include <SDL_timer.h>

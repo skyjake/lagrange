@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "documentwidget.h"
 #include "lang.h"
-#include "paint.h"
+#include "render/paint.h"
 #include "util.h"
 #include "app.h"
 
