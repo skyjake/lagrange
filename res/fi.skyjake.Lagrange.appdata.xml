@@ -45,6 +45,21 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.20.4" date="2026-04-16">
+            <description>
+                <ul>
+                    <li>Fixed potential hang when stopping a network connection when a SOCKS proxy is active.</li>
+                    <li>Possible fix for Heading subscription entries returning to an unread state after a long time.</li>
+                    <li>Quit the app cleanly when receiving a SIGTERM signal.</li>
+                    <li>Improved CJK IME presentation.</li>
+                    <li>Added a "Copy Link as Gemtext" context menu action and fixed missing items. (Courtesy of Sidney Cammeresi.)</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.4</url>
+        </release>
         <release version="1.20.3" date="2026-03-27">
             <description>
                 <ul>
