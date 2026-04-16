@@ -6,7 +6,7 @@
 ```
 # Release notes
 
-## 1.20 (7)
+## 1.20 (8)
 * Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
 * Fixed the "now playing" audio indication appearing unnecessarily in Control Center. This should only happen when actually playing audio.
 * Possible fix for Heading subscription entries returning to an unread state after a long time.
