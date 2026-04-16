@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2026-03-09 12:53+0000\n"
+"PO-Revision-Date: 2026-04-06 23:44+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -110,19 +110,19 @@ msgid "menu.title.help"
 msgstr "Yardım"
 
 msgid "menu.closetab"
-msgstr "Sekmeyi kapat"
+msgstr "Sekmeyi Kapat"
 
 msgid "menu.closetab.left"
-msgstr "Soldaki sekmeleri kapat"
+msgstr "Soldaki Sekmeleri Kapat"
 
 msgid "menu.closetab.right"
-msgstr "Sağdaki sekmeleri kapat"
+msgstr "Sağdaki Sekmeleri Kapat"
 
 msgid "menu.duptab"
-msgstr "Sekmeyi çoğalt"
+msgstr "Sekmeyi Çoğalt"
 
 msgid "menu.split.merge"
-msgstr "Bölme yapma"
+msgstr "Bölmeyi Kapat"
 
 msgid "menu.split.horizontal"
 msgstr "Yatay"
@@ -131,52 +131,52 @@ msgid "menu.split.vertical"
 msgstr "Dikey"
 
 msgid "menu.openlocation"
-msgstr "Konum aç…"
+msgstr "Konum Aç…"
 
 msgid "macos.menu.find"
 msgstr "Bul"
 
 msgid "menu.downloads"
-msgstr "İndirilenleri göster"
+msgstr "İndirilenleri Göster"
 
 msgid "menu.pageinfo"
-msgstr "Sayfa bilgisini göster"
+msgstr "Sayfa Bilgisini Göster"
 
 msgid "menu.find"
-msgstr "Sayfada bul"
+msgstr "Sayfada Bul"
 
 msgid "menu.save.downloads.open"
-msgstr "İndirilenlere kaydet ve dosyayı aç"
+msgstr "İndirilenler’e Kaydet ve Dosyayı Aç"
 
 msgid "menu.sidebar"
-msgstr "Kenar çubuğunu aç/kapat"
+msgstr "Kenar Çubuğunu Aç/Kapat"
 
 msgid "menu.sidebar.left"
-msgstr "Sol kenar çubuğunu aç/kapat"
+msgstr "Sol Kenar Çubuğunu Aç/Kapat"
 
 msgid "menu.sidebar.right"
-msgstr "Sağ kenar çubuğunu aç/kapat"
+msgstr "Sağ Kenar Çubuğunu Aç/Kapat"
 
 msgid "menu.zoom.reset"
-msgstr "Yakınlaştırmayı sıfırla"
+msgstr "Yakınlaştırmayı Sıfırla"
 
 msgid "menu.view.split"
-msgstr "Bölünmüş görünüm"
+msgstr "Bölünmüş Görünüm"
 
 msgid "menu.newfolder"
-msgstr "Yeni klasör…"
+msgstr "Yeni Klasör…"
 
 msgid "menu.sort.alpha"
-msgstr "Abecesel sırala"
+msgstr "Abecesel Olarak Sırala"
 
 msgid "macos.menu.bookmarks.list"
-msgstr "Tümünü listele"
+msgstr "Tümünü Listele"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr "Etikete göre listele"
+msgstr "Künyeye Göre Listele"
 
 msgid "menu.feeds.entrylist"
-msgstr "Besleme girdilerini listele"
+msgstr "Besleme Girdilerini Listele"
 
 msgid "menu.preferences"
 msgstr "Tercihler…"
@@ -186,10 +186,10 @@ msgid "menu.settings"
 msgstr "Ayarlar"
 
 msgid "menu.website"
-msgstr "Proje web sitesi…"
+msgstr "Proje Web Sitesi…"
 
 msgid "menu.quit"
-msgstr "Lagrange’den çık"
+msgstr "Lagrange’den Çık"
 
 msgid "menu.cut"
 msgstr "Kes"
@@ -203,73 +203,73 @@ msgstr "Sil"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.undo"
-msgstr "Geri al"
+msgstr "Geri Al"
 
 msgid "menu.select.clear"
-msgstr "Seçimi temizle"
+msgstr "Seçimi Temizle"
 
 # Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
 msgid "menu.copy.pagelink"
-msgstr "Sayfa bağlantısını kopyala"
+msgstr "Sayfa Bağlantısını Kopyala"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
-msgstr "Besleme girdilerini göster"
+msgstr "Besleme Girdilerini Göster"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
-msgstr "Sayfa ana hatını göster"
+msgstr "Sayfa Ana Hattını Göster"
 
 msgid "menu.back"
-msgstr "Geri git"
+msgstr "Geri Git"
 
 msgid "menu.forward"
-msgstr "İleri git"
+msgstr "İleri Git"
 
 msgid "menu.parent"
-msgstr "Üste git"
+msgstr "Üste Git"
 
 msgid "menu.root"
-msgstr "Köke git"
+msgstr "Köke Git"
 
 msgid "menu.reload"
-msgstr "Sayfayı yeniden yükle"
+msgstr "Sayfayı Yeniden Yükle"
 
 msgid "menu.page.bookmark"
-msgstr "Sayfayı yer imlerine ekle…"
+msgstr "Sayfaya Yer İmi Koy…"
 
 msgid "menu.page.subscribe"
-msgstr "Sayfaya abone ol…"
+msgstr "Sayfaya Abone Ol…"
 
 msgid "menu.about"
 msgstr "Hakkında"
 
 msgid "menu.aboutpages"
-msgstr "“about:” sayfaları"
+msgstr "“about:” Sayfaları"
 
 msgid "menu.import.links"
-msgstr "Sayfadaki tüm bağlantıları içe aktar…"
+msgstr "Sayfadaki Tüm Bağlantıları İçe Aktar…"
 
 msgid "menu.page.translate"
 msgstr "Çevir…"
 
 msgid "menu.page.copyurl"
-msgstr "Sayfa URL’sini kopyala"
+msgstr "Sayfa URL’sini Kopyala"
 
 msgid "menu.page.copysource"
-msgstr "Sayfa kaynağını kopyala"
+msgstr "Sayfa Kaynağını Kopyala"
 
 msgid "menu.feeds.refresh"
-msgstr "Beslemeleri yenile"
+msgstr "Beslemeleri Yenile"
 
 msgid "menu.identity.new"
-msgstr "Yeni kimlik…"
+msgstr "Yeni Kimlik…"
 
 msgid "menu.identity.import"
-msgstr "İçe aktar…"
+msgstr "İçe Aktar…"
 
 msgid "menu.identity.notactive"
-msgstr "Etkin kimlik yok"
+msgstr "Etkin Kimlik Yok"
 
 msgid "sidebar.bookmarks"
 msgstr "Yer imleri"
@@ -296,7 +296,7 @@ msgid "sidebar.action.ident.import"
 msgstr "İçe aktar…"
 
 msgid "toolbar.outline"
-msgstr "Sayfa ana hatı"
+msgstr "Sayfa ana hattı"
 
 msgid "hint.findtext"
 msgstr "sayfada metin bul"
@@ -364,13 +364,13 @@ msgid "feeds.refresh"
 msgstr "Beslemeleri yenile"
 
 msgid "menu.opentab"
-msgstr "Yeni sekmede aç"
+msgstr "Yeni Sekmede Aç"
 
 msgid "menu.opentab.background"
-msgstr "Arka plan sekmesinde aç"
+msgstr "Arka Plan Sekmesinde Aç"
 
 msgid "menu.openfile"
-msgstr "Dosya aç…"
+msgstr "Dosya Aç…"
 
 msgid "menu.edit"
 msgstr "Düzenle…"
@@ -379,13 +379,13 @@ msgid "menu.dup"
 msgstr "Çoğalt…"
 
 msgid "menu.copyurl"
-msgstr "URL’yi kopyala"
+msgstr "URL’yi Kopyala"
 
 msgid "history.clear"
 msgstr "Geçmişi temizle…"
 
 msgid "heading.history.clear"
-msgstr "Geçmişi temizle"
+msgstr "Geçmişi Temizle"
 
 msgid "dlg.history.clear"
 msgstr "Geçmişi temizle"
@@ -393,29 +393,29 @@ msgstr "Geçmişi temizle"
 #, c-format
 msgid "dlg.bookmarks.delete"
 msgid_plural "dlg.bookmarks.delete.n"
-msgstr[0] "Yer imini sil"
-msgstr[1] "%u yer imini sil"
+msgstr[0] "Yer İmini Sil"
+msgstr[1] "%u Yer İmini Sil"
 
 msgid "bookmark.tag.home"
-msgstr "Ana sayfa olarak kullan"
+msgstr "Ana Sayfa Olarak Kullan"
 
 msgid "bookmark.tag.linksplit"
 msgstr "Bağlantılar yan tarafa doğru açılır"
 
 msgid "bookmark.untag.home"
-msgstr "Ana sayfayı kaldır"
+msgstr "Ana Sayfayı Kaldır"
 
 msgid "bookmark.untag.sub"
-msgstr "Abonelikten çık"
+msgstr "Abonelikten Çık"
 
 msgid "bookmark.untag.remote"
-msgstr "Yer imi kaynağını kaldır"
+msgstr "Yer imi Kaynağını Kaldır"
 
 msgid "bookmark.delete"
-msgstr "Yer imini sil"
+msgstr "Yer İmini Sil"
 
 msgid "bookmarks.reload"
-msgstr "Uzak konum kaynaklarını yenile"
+msgstr "Uzak Kaynakları Yenile"
 
 msgid "ident.using"
 msgstr "Bu sayfada kullanılıyor"
@@ -447,13 +447,13 @@ msgid "ident.export"
 msgstr "Dışa aktar"
 
 msgid "heading.ident.use"
-msgstr "Kimlik kullanımı"
+msgstr "Kimlik Kullanımı"
 
 msgid "menu.edit.notes"
-msgstr "Notları düzenle…"
+msgstr "Notları Düzenle…"
 
 msgid "heading.ident.notes"
-msgstr "Kimlik notlar"
+msgstr "Kimlik Notları"
 
 msgid "ident.fingerprint"
 msgstr "SHA-256 parmak izini kopyala"
@@ -462,7 +462,7 @@ msgid "ident.delete"
 msgstr "Kimliği sil…"
 
 msgid "heading.ident.delete"
-msgstr "Kimliği sil"
+msgstr "Kimliği Sil"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -477,7 +477,7 @@ msgid "sidebar.empty.idents"
 msgstr "Kimlik yok"
 
 msgid "heading.unsub"
-msgstr "Abonelikten çık"
+msgstr "Abonelikten Çık"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -487,7 +487,7 @@ msgid "dlg.unsub"
 msgstr "Abonelikten çık"
 
 msgid "heading.pageinfo"
-msgstr "Sayfa bilgisi"
+msgstr "Sayfa Bilgisi"
 
 msgid "pageinfo.header.cached"
 msgstr "(önbelleklenmiş içerik)"
@@ -527,7 +527,7 @@ msgid "dlg.input.linebreak"
 msgstr "Satır sonu"
 
 msgid "heading.save"
-msgstr "Dosya kaydedildi"
+msgstr "Dosya Kaydedildi"
 
 msgid "dlg.save.incomplete"
 msgstr "Sayfa içeriği hâlâ indiriliyor."
@@ -539,7 +539,7 @@ msgid "dlg.save.opendownload"
 msgstr "İndirilen dosyayı aç"
 
 msgid "heading.import.bookmarks"
-msgstr "Yer imlerini içe aktar"
+msgstr "Yer İmleri İçe Aktar"
 
 #, c-format
 msgid "dlg.import.add"
@@ -548,7 +548,7 @@ msgstr[0] "%sYer imi ekle"
 msgstr[1] "%s%d yer imi ekle"
 
 msgid "heading.autoreload"
-msgstr "Kendiliğinden yeniden yükle"
+msgstr "Kendiliğinden Yeniden Yükle"
 
 msgid "reload.never"
 msgstr "Hiçbir zaman"
@@ -566,22 +566,22 @@ msgstr[0] "%d saat"
 msgstr[1] "%d saat"
 
 msgid "link.newtab"
-msgstr "Bağlantıyı yeni sekmede aç"
+msgstr "Bağlantıyı Yeni Sekmede Aç"
 
 msgid "link.side"
-msgstr "Bağlantıyı yan tarafa doğru aç"
+msgstr "Bağlantıyı Yan Tarafa Doğru Aç"
 
 msgid "link.side.newtab"
-msgstr "Bağlantıyı yan tarafa doğru yeni sekmede aç"
+msgstr "Bağlantıyı Yan Tarafa Doğru Yeni Sekmede Aç"
 
 msgid "link.browser"
-msgstr "Bağlantıyı öntanımlı tarayıcıda aç"
+msgstr "Bağlantıyı Öntanımlı Tarayıcıda Aç"
 
 msgid "link.copy"
-msgstr "Bağlantıyı kopyala"
+msgstr "Bağlantıyı Kopyala"
 
 msgid "link.download"
-msgstr "Bağlantılı dosyayı indir"
+msgstr "Bağlantılı Dosyayı İndir"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Bu dosyayı silmek istediğinizden emin misiniz?"
@@ -590,10 +590,10 @@ msgid "dlg.file.delete"
 msgstr "Sil"
 
 msgid "heading.openlink"
-msgstr "Bağlantı aç"
+msgstr "Bağlantıyı Aç"
 
 msgid "heading.file.delete"
-msgstr "Dosyayı sil"
+msgstr "Dosyayı Sil"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -602,7 +602,7 @@ msgstr ""
 "%s%s"
 
 msgid "dlg.openlink"
-msgstr "Bağlantı aç"
+msgstr "Bağlantıyı Aç"
 
 msgid "dlg.certwarn.title"
 msgstr "Güvenlik sorunu"
@@ -616,7 +616,7 @@ msgstr ""
 "sertifika alındı (%s). Bu, bir sunucu yapılandırması sorunu olabilir."
 
 msgid "heading.certimport"
-msgstr "Kimlik içe aktar"
+msgstr "Kimlik İçe Aktar"
 
 msgid "dlg.certimport.notfound"
 msgstr "Bir sertifika veya gizli anahtar bulunamadı."
@@ -625,10 +625,10 @@ msgid "dlg.certimport.notfound.page"
 msgstr "Geçerli sayfada bir sertifika/anahtar bulunamadı."
 
 msgid "heading.certimport.pasted"
-msgstr "Panodan yapıştırılmış"
+msgstr "Panodan Yapıştırılmış"
 
 msgid "heading.certimport.dropped"
-msgstr "Bırakılan dosya"
+msgstr "Bırakılan Dosya"
 
 msgid "dlg.certimport.import"
 msgstr "İçe aktar"
@@ -668,7 +668,7 @@ msgstr ""
 "biçimlendirilmiştir."
 
 msgid "bookmark.export.format.linklines"
-msgstr "Her bir bağlantı bir yer imini gösterir."
+msgstr "Her bir bağlantı, bir yer imini gösterir."
 
 msgid "bookmark.export.format.folders"
 msgstr "Klasör yapısı ikinci/üçüncü düzey başlık olarak tanımlanmıştır."
@@ -694,7 +694,7 @@ msgid "heading.lookup.other"
 msgstr "DİĞER"
 
 msgid "heading.upload"
-msgstr "Titan ile karşıya yükle"
+msgstr "Titan ile Karşıya Yükle"
 
 msgid "upload.id"
 msgstr "Kimlik:"
@@ -730,7 +730,7 @@ msgid "upload.port"
 msgstr "Kapı…"
 
 msgid "heading.uploadport"
-msgstr "Titan karşıya yükleme kapısı"
+msgstr "Titan Karşıya Yükleme Kapısı"
 
 msgid "dlg.uploadport.set"
 msgstr "Kapı ayarla"
@@ -745,10 +745,10 @@ msgstr "Seçili dosya yok"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Dosya seç…"
+msgstr "Dosya Seç…"
 
 msgid "heading.translate"
-msgstr "Sayfayı çevir"
+msgstr "Sayfayı Çevir"
 
 msgid "dlg.translate.fail"
 msgstr "İstek başarısız oldu"
@@ -791,7 +791,7 @@ msgid "lang.ru"
 msgstr "Rusça"
 
 msgid "heading.newident"
-msgstr "Yeni kimlik"
+msgstr "Yeni Kimlik"
 
 msgid "dlg.newident.until"
 msgstr "Şu tarihe kadar geçerli:"
@@ -830,13 +830,13 @@ msgid "dlg.newident.more"
 msgstr "Daha fazla…"
 
 msgid "heading.newident.missing"
-msgstr "Bilgi eksik"
+msgstr "Bilgi Eksik"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "Bir “Ortak ad” belirtilmelidir."
 
 msgid "heading.newident.date.bad"
-msgstr "Geçersiz tarih"
+msgstr "Geçersiz Tarih"
 
 msgid "heading.feedcfg"
 msgstr "Besleme ayarları"
@@ -854,7 +854,7 @@ msgid "dlg.feed.type.gemini"
 msgstr "YYYY-AA-GG bağlantıları"
 
 msgid "dlg.feed.type.headings"
-msgstr "Yeni başlıklar"
+msgstr "Yeni Başlıklar"
 
 msgid "dlg.feed.save"
 msgstr "Ayarları kaydet"
@@ -863,10 +863,10 @@ msgid "dlg.feed.sub"
 msgstr "Abone ol"
 
 msgid "heading.bookmark.add"
-msgstr "Yer imi ekle"
+msgstr "Yer İmi Ekle"
 
 msgid "heading.bookmark.edit"
-msgstr "Yer imini düzenle"
+msgstr "Yer İmini Düzenle"
 
 msgid "dlg.bookmark.title"
 msgstr "Başlık:"
@@ -875,7 +875,7 @@ msgid "dlg.bookmark.url"
 msgstr "URL:"
 
 msgid "dlg.bookmark.tags"
-msgstr "Etiketler:"
+msgstr "Künyeler:"
 
 msgid "dlg.bookmark.icon"
 msgstr "Simge:"
@@ -925,7 +925,7 @@ msgid "heading.prefs.paragraph"
 msgstr "Paragraf"
 
 msgid "heading.prefs.pagecontent"
-msgstr "Sayfa renkleri"
+msgstr "Sayfa Renkleri"
 
 msgid "heading.prefs.proxies"
 msgstr "Gemini Vekilleri"
@@ -938,11 +938,11 @@ msgstr "Boyutlandırma"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Sayfa biçemi"
+msgstr "Sayfa Biçemi"
 
 # tab button
 msgid "heading.prefs.userinterface"
-msgstr "Kullanıcı arabirimi"
+msgstr "Kullanıcı Arayüzü"
 
 msgid "prefs.downloads"
 msgstr "İndirilenler klasörü:"
@@ -1141,7 +1141,7 @@ msgid "keys.root"
 msgstr "Kapsül köküne git"
 
 msgid "keys.link.modkey"
-msgstr "Bağlantıyı değiştiren düğmeyle aç"
+msgstr "Bağlantıyı niteleyici düğmeyle aç"
 
 msgid "keys.link.homerow.hover"
 msgstr "Bağlantılar üzerine orta düğme dizisiyle gel"
@@ -1359,10 +1359,10 @@ msgid "heading.fontpack.meta"
 msgstr "Yazıtipleri"
 
 msgid "heading.fontpack.meta.enabled"
-msgstr "Yazıtipi paketlerini etkinleştir"
+msgstr "Etkin Yazıtipi Paketleri"
 
 msgid "heading.fontpack.meta.disabled"
-msgstr "Devre dışı bırakılan yazıtipi paketleri"
+msgstr "Devre Dışı Yazıtipi Paketleri"
 
 # Action label
 msgid "fontpack.meta.viewfile"
@@ -1405,7 +1405,7 @@ msgid "fontpack.delete"
 msgstr "“%s” ögesini kalıcı olarak sil"
 
 msgid "heading.fontpack.delete"
-msgstr "Yazıtipi paketini sil"
+msgstr "Yazıtipi Paketini Sil"
 
 msgid "dlg.fontpack.delete"
 msgstr "Yazıtipi paketini sil"
@@ -1428,7 +1428,7 @@ msgid "truetype.help.installed"
 msgstr "Bu yazıtipi, kullanıcı yazıtipleri dizinine kurulmuş."
 
 msgid "heading.dismiss.warning"
-msgstr "Uyarı atlansın mı?"
+msgstr "Uyarıyı Atla?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
@@ -1486,20 +1486,20 @@ msgid "menu.title.view"
 msgstr "Görünüm"
 
 msgid "menu.newtab"
-msgstr "Yeni sekme"
+msgstr "Yeni Sekme"
 
 msgid "menu.closetab.other"
-msgstr "Diğer sekmeleri kapat"
+msgstr "Diğer Sekmeleri Kapat"
 
 msgid "menu.split.swap"
-msgstr "Tarafları değiştir"
+msgstr "Tarafları Değiştir"
 
 msgid "menu.unexpire"
-msgstr "Süre dolmasını yok say ve yüklemeyi sürdür"
+msgstr "Süre Dolmasını Yok Say ve Yüklemeyi Sürdür"
 
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
-msgstr "Dosyalara kaydet"
+msgstr "Dosyalar’a Kaydet"
 
 msgid "menu.zoom.in"
 msgstr "Yakınlaştır"
@@ -1508,63 +1508,63 @@ msgid "menu.zoom.out"
 msgstr "Uzaklaştır"
 
 msgid "menu.bookmarks.list"
-msgstr "Tüm yer imlerini listele"
+msgstr "Tüm Yer İmlerini Listele"
 
 msgid "menu.bookmarks.bytag"
-msgstr "Yer imlerini etikete göre listele"
+msgstr "Yer İmlerini Künyeye Göre Listele"
 
 msgid "menu.bookmarks.bytime"
-msgstr "Yer imlerini oluşturulma zamanına göre listele"
+msgstr "Yer İmlerini Oluşturulma Zamanına Göre Listele"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr "Oluşturulma zamanına göre listele"
+msgstr "Oluşturulma Zamanına Göre Listele"
 
 msgid "menu.help"
 msgstr "Yardım"
 
 msgid "menu.releasenotes"
-msgstr "Sürüm notları"
+msgstr "Sürüm Notları"
 
 msgid "menu.copy"
 msgstr "Kopyala"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
-msgstr "Tümünü seç"
+msgstr "Tümünü Seç"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
-msgstr "İndirilenlere kaydet"
+msgstr "İndirilenler’e Kaydet"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.bookmarks"
-msgstr "Yer imlerini göster"
+msgstr "Yer İmlerini Göster"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.history"
-msgstr "Geçmişi göster"
+msgstr "Geçmişi Göster"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.identities"
-msgstr "Kimlikleri göster"
+msgstr "Kimlikleri Göster"
 
 msgid "menu.autoreload"
-msgstr "Kendiliğinden yeniden yükle…"
+msgstr "Kendiliğinden Yeniden Yükle…"
 
 msgid "menu.fonts"
-msgstr "Yazıtiplerini yönet…"
+msgstr "Yazıtiplerini Yönet…"
 
 msgid "panel.back"
 msgstr "Geri"
 
 msgid "menu.debug"
-msgstr "Hata ayıklama bilgisi"
+msgstr "Hata Ayıklama Bilgisi"
 
 msgid "menu.page.import"
-msgstr "Bağlantıları yer imi olarak içe aktar…"
+msgstr "Bağlantıları Yer İmi Olarak İçe Aktar…"
 
 msgid "menu.bookmarks.refresh"
-msgstr "Uzak konum yer imlerini yenile"
+msgstr "Uzak Yer İmlerini Yenile"
 
 msgid "sidebar.outline"
 msgstr "Ana hat"
@@ -1601,14 +1601,14 @@ msgstr ""
 "beslemesine çevrildi."
 
 msgid "menu.forgeturl"
-msgstr "URL’yi unut"
+msgstr "URL’yi Unut"
 
 msgid "dlg.confirm.history.clear"
 msgstr ""
 "Tüm ziyaret edilen sayfalar geçmişini temizlemek istediğinizden emin misiniz?"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "Yer imlerini sil"
+msgstr "Yer İmlerini Sil"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -1617,10 +1617,10 @@ msgstr[0] "Bu klasördeki yer imini silmek istediğinizden emin misiniz?"
 msgstr[1] "Bu klasördeki %u yer imini silmek istediğinizden emin misiniz?"
 
 msgid "bookmark.tag.sub"
-msgstr "Beslemeye abone ol"
+msgstr "Beslemeye Abone Ol"
 
 msgid "bookmark.tag.remote"
-msgstr "Yer imi kaynağı olarak kullan"
+msgstr "Yer imi Kaynağı Olarak Kullan"
 
 msgid "ident.stopuse"
 msgstr "Bu sayfada kullanmayı bırak"
@@ -1656,15 +1656,15 @@ msgid "dlg.input.send"
 msgstr "Gönder"
 
 msgid "heading.save.incomplete"
-msgstr "Sayfa tam değil"
+msgstr "Sayfa Tam Değil"
 
 msgid "heading.save.error"
-msgstr "Dosya kaydedilirken hata"
+msgstr "Dosya Kaydedilirken Hata"
 
 #, c-format
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
-msgstr[0] "Sayfada bir yeni bağlantı bulundu."
+msgstr[0] "Sayfada 1 yeni bağlantı bulundu."
 msgstr[1] "Sayfada %d yeni bağlantı bulundu."
 
 msgid "dlg.import.notnew"
@@ -1677,13 +1677,13 @@ msgid "reload.onceperday"
 msgstr "Günde bir kez"
 
 msgid "link.newtab.background"
-msgstr "Bağlantıyı arka plan sekmesinde aç"
+msgstr "Bağlantıyı Arka Plan Sekmesinde Aç"
 
 msgid "link.noproxy"
 msgstr "Vekil olmadan aç"
 
 msgid "link.bookmark"
-msgstr "Bağlantıyı yer imlerine ekle…"
+msgstr "Bağlantıya Yer İmi Koy…"
 
 msgid "link.file.delete"
 msgstr "Dosyayı sil"
@@ -1720,7 +1720,7 @@ msgid "hint.certimport.description"
 msgstr "tanım"
 
 msgid "bookmark.export.title.tag"
-msgstr "Yer imi etiketleri"
+msgstr "Yer imi künyeleri"
 
 msgid "bookmark.export.saving"
 msgstr ""
@@ -1729,9 +1729,9 @@ msgstr ""
 
 msgid "bookmark.export.taginfo"
 msgstr ""
-"Bu listede her bir başlık bir yer imi etiketini gösterir. Yalnızca "
-"etiketlenen yer imleri listelenirler. Birden çok etikete iye yer imleri her "
-"bir etiketin altında yinelenirler."
+"Bu listede her bir başlık bir yer imi künyesini gösterir. Yalnızca "
+"künyelenen yer imleri listelenirler. Birden çok künyesi olan yer imleri her "
+"bir künyenin altında yinelenirler."
 
 msgid "bookmark.export.format.otherlines"
 msgstr ""
@@ -1740,14 +1740,14 @@ msgstr ""
 "olarak işlem görür ve yok sayılmalıdır."
 
 msgid "bookmark.export.format.tags"
-msgstr "Etiketler ikinci düzey başlık olarak tanımlanmıştır."
+msgstr "Künyeler, ikinci düzey başlık olarak tanımlanmıştır."
 
 # Interpret as "Results from page content..."
 msgid "heading.lookup.pagecontent"
 msgstr "SAYFA İÇERİĞİ"
 
 msgid "menu.page.upload"
-msgstr "Titan ile karşıya yükle…"
+msgstr "Titan ile Karşıya Yükle…"
 
 msgid "hint.upload.text"
 msgstr "karşıya yüklenecek metni girin"
@@ -1821,10 +1821,10 @@ msgid "heading.prefs.colors"
 msgstr "Renkler"
 
 msgid "heading.prefs.uitheme"
-msgstr "Arabirim renkleri"
+msgstr "Arabirim Renkleri"
 
 msgid "heading.prefs.widelayout"
-msgstr "Geniş dizilim"
+msgstr "Geniş Yerleşim"
 
 msgid "prefs.bookmarks.addbottom"
 msgstr "Yer imlerini alta ekle:"
@@ -1912,7 +1912,7 @@ msgid "prefs.ca.path"
 msgstr "CA yolu:"
 
 msgid "menu.binding.reset"
-msgstr "Öntanımlılara sıfırla"
+msgstr "Öntanımlılara Sıfırla"
 
 msgid "menu.binding.clear"
 msgstr "Kaldır"
@@ -2051,7 +2051,7 @@ msgid "prefs.hoverlink"
 msgstr "Üzerine gelince URL’yi göster:"
 
 msgid "menu.update"
-msgstr "Güncellemeleri denetle…"
+msgstr "Güncellemeleri Denetle…"
 
 msgid "dlg.bookmark.folder"
 msgstr "Klasör:"
@@ -2071,10 +2071,10 @@ msgid "sidebar.action.feeds.markallread"
 msgstr "Tümünü oku"
 
 msgid "menu.home"
-msgstr "Ana sayfaya git"
+msgstr "Ana Sayfaya Git"
 
 msgid "menu.identities"
-msgstr "Kimlikleri yönet"
+msgstr "Kimlikleri Yönet"
 
 msgid "prefs.toolbaraction1"
 msgstr "Düğme 1"
@@ -2094,17 +2094,17 @@ msgid "ident.switch"
 msgstr "%s kullan"
 
 msgid "menu.upload.delete.confirm"
-msgstr "Tümünü gerçekten sil (geri alınamaz)"
+msgstr "Tümünü Gerçekten Sil (Geri Alınamaz)"
 
 msgid "keys.upload.edit"
 msgstr "Sayfayı Titan ile düzenle"
 
 msgid "menu.open.external"
-msgstr "Başka bir uygulamada aç"
+msgstr "Başka Uygulamada Aç"
 
 # Active identity toolbar menu.
 msgid "menu.hide.identities"
-msgstr "Kimlikleri gizle"
+msgstr "Kimlikleri Gizle"
 
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "Yeni klasör"
@@ -2120,26 +2120,26 @@ msgstr "Okunmamış girdi yok"
 
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"
-msgstr "Önceki satırı yapıştır"
+msgstr "Önceki Satırı Yapıştır"
 
 # Shows where a local file is using the Finder.
 msgid "menu.reveal.macos"
-msgstr "Finder’da göster"
+msgstr "Finder’da Göster"
 
 msgid "menu.share"
 msgstr "Paylaş"
 
 msgid "menu.page.upload.edit"
-msgstr "Sayfayı Titan ile düzenle…"
+msgstr "Sayfayı Titan ile Düzenle…"
 
 msgid "heading.upload.id"
-msgstr "Kimlik bilgileri"
+msgstr "Kimlik Bilgileri"
 
 msgid "menu.upload.export"
-msgstr "Metni dışa aktar"
+msgstr "Metni Dışa Aktar"
 
 msgid "menu.upload.delete"
-msgstr "Tümünü sil"
+msgstr "Tümünü Sil"
 
 # Mobile subheading in the Upload dialog.
 msgid "upload.url"
@@ -2156,7 +2156,7 @@ msgid "hint.upload.token.long"
 msgstr "jeton — sunucunun yönergelerine bakın"
 
 msgid "heading.prefs.toolbaractions"
-msgstr "Araç çubuğu eylemleri"
+msgstr "Araç Çubuğu Eylemleri"
 
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
@@ -2176,10 +2176,10 @@ msgid "keys.input.precedingline"
 msgstr "Girdi istemi: Önceki satırı yapıştır"
 
 msgid "menu.newwindow"
-msgstr "Yeni pencere"
+msgstr "Yeni Pencere"
 
 msgid "heading.sitespec"
-msgstr "Siteye özel ayarlar"
+msgstr "Siteye Özel Ayarlar"
 
 msgid "keys.sitespec"
 msgstr "Siteye özel ayarları göster"
@@ -2216,10 +2216,10 @@ msgid "keys.pageinfo"
 msgstr "Sayfa bilgisini göster"
 
 msgid "menu.openwindow"
-msgstr "Yeni pencerede aç"
+msgstr "Yeni Pencerede Aç"
 
 msgid "link.newwindow"
-msgstr "Bağlantıyı yeni pencerede aç"
+msgstr "Bağlantıyı Yeni Pencerede Aç"
 
 msgid "dlg.glyphfinder.missing"
 msgstr "Aşağıdaki karakterler gösterilemedi:"
@@ -2248,7 +2248,7 @@ msgid "prefs.tabwidth"
 msgstr "Sekme genişliği:"
 
 msgid "menu.paste.go"
-msgstr "Yapıştır ve git"
+msgstr "Yapıştır ve Git"
 
 msgid "prefs.retaintabs"
 msgstr "Başlangıçta sekmeleri geri yükle:"
@@ -2264,10 +2264,10 @@ msgstr ""
 "aygıtlar arası veri aktarımında kullanılabilirler."
 
 msgid "menu.export"
-msgstr "Dışa aktar"
+msgstr "Dışa Aktar"
 
 msgid "menu.import"
-msgstr "İçe aktar…"
+msgstr "İçe Aktar…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2283,10 +2283,10 @@ msgid "dlg.certimport.paste"
 msgstr "Panodan yapıştır"
 
 msgid "heading.import.userdata"
-msgstr "Kullanıcı verisini içe aktar"
+msgstr "Kullanıcı Verisi İçe Aktar"
 
 msgid "heading.import.userdata.error"
-msgstr "İçe aktarma başarısız"
+msgstr "İçe Aktarma Başarısız"
 
 msgid "import.userdata.bookmarks"
 msgstr "Yer imleri:"
@@ -2325,7 +2325,7 @@ msgid "import.userdata.error"
 msgstr "%s, geçerli bir dışa aktarılmış Lagrange arşivi değil."
 
 msgid "heading.bookmark.editfolder"
-msgstr "Klasörü düzenle"
+msgstr "Klasörü Düzenle"
 
 msgid "dlg.bookmark.parentfolder"
 msgstr "Üst klasör:"
@@ -2364,13 +2364,13 @@ msgid "prefs.justify"
 msgstr "İki yana yasla:"
 
 msgid "menu.reopentab"
-msgstr "Son kapatılan sekmeyi yeniden aç"
+msgstr "Son Kapatılan Sekmeyi Yeniden Aç"
 
 msgid "menu.viewformat.plain"
-msgstr "Düz metin olarak görüntüle"
+msgstr "Düz Metin Olarak Görüntüle"
 
 msgid "menu.viewformat.gemini"
-msgstr "Gemtext olarak görüntüle"
+msgstr "Gemtext Olarak Görüntüle"
 
 msgid "keys.menubar.focus"
 msgstr "Menü çubuğuna odaklan"
@@ -2385,10 +2385,10 @@ msgid "spartan.input"
 msgstr "Gönderilecek metni girin:"
 
 msgid "dlg.spartan.upload"
-msgstr "Düzenleyiciyi aç…"
+msgstr "Düzenleyiciyi Aç…"
 
 msgid "heading.upload.spartan"
-msgstr "Spartan ile karşıya yükle"
+msgstr "Spartan ile Karşıya Yükle"
 
 msgid "prefs.markdown.viewsource"
 msgstr "Markdown kaynağını görüntüle:"
@@ -2430,7 +2430,7 @@ msgid "hint.dlg.bookmark.tags"
 msgstr "boşlukla ayrılmış terimler"
 
 msgid "menu.folder.opentab"
-msgstr "Yeni sekmelerde aç"
+msgstr "Yeni Sekmelerde Aç"
 
 msgid "bookmark.folder.delete"
 msgstr "Yer imleri klasörünü sil"
@@ -2445,7 +2445,7 @@ msgid "dlg.bookmark.identity"
 msgstr "Sabitlenmiş kimlik:"
 
 msgid "menu.identity.newdomain"
-msgstr "Alan adı için yeni kimlik…"
+msgstr "Alan Adı için Yeni Kimlik…"
 
 msgid "dlg.newident.scope.dir"
 msgstr "Geçerli dizin"
@@ -2454,22 +2454,22 @@ msgid "ident.unset"
 msgstr "Sabitlemeyi kaldır"
 
 msgid "heading.prefs.user"
-msgstr "Kullanıcı verisi"
+msgstr "Kullanıcı Verisi"
 
 msgid "menu.email"
-msgstr "E-posta gönder"
+msgstr "E-posta Gönder"
 
 msgid "menu.movetab.left"
-msgstr "Sekmeyi sola taşı"
+msgstr "Sekmeyi Sola Taşı"
 
 msgid "menu.movetab.right"
-msgstr "Sekmeyi sağa taşı"
+msgstr "Sekmeyi Sağa Taşı"
 
 msgid "heading.prefs.appearance"
 msgstr "Görünüş"
 
 msgid "heading.prefs.layout"
-msgstr "Sayfa yerleşimi"
+msgstr "Sayfa Yerleşimi"
 
 msgid "heading.prefs.content"
 msgstr "İçerik"
@@ -2493,19 +2493,19 @@ msgid "menu.window.max"
 msgstr "Büyüt"
 
 msgid "menu.window.full"
-msgstr "Tam ekranı aç/kapat"
+msgstr "Tam Ekranı Aç/Kapat"
 
 msgid "menu.tab.next"
-msgstr "Sonraki sekmeyi göster"
+msgstr "Sonraki Sekmeyi Göster"
 
 msgid "menu.tab.prev"
-msgstr "Önceki sekmeyi göster"
+msgstr "Önceki Sekmeyi Göster"
 
 msgid "menu.movetab.split"
-msgstr "Sekmeyi diğer yana taşı"
+msgstr "Sekmeyi Diğer Yana Taşı"
 
 msgid "menu.movetab.newwindow"
-msgstr "Sekmeyi yeni pencereye taşı"
+msgstr "Sekmeyi Yeni Pencereye Taşı"
 
 msgid "dlg.translate.pre"
 msgstr "Önceden biçimlendirilmişi atla:"
@@ -2594,43 +2594,43 @@ msgid "prefs.redirect.allowscheme"
 msgstr "Şema değiştiren yeniden yönlendirmeler:"
 
 msgid "menu.foldall"
-msgstr "Tümünü katla"
+msgstr "Tümünü Katla"
 
 msgid "menu.unfoldall"
-msgstr "Tümünü aç"
+msgstr "Tümünü Aç"
 
 msgid "menu.userdata"
-msgstr "Kullanıcı verisi"
+msgstr "Kullanıcı Verisi"
 
 msgid "menu.search"
 msgstr "Ara"
 
 msgid "menu.paste.snippet"
-msgstr "Kırpıntıyı yapıştır"
+msgstr "Kırpıntıyı Yapıştır"
 
 msgid "menu.tools"
 msgstr "Araçlar"
 
 msgid "menu.page.visitlinks"
-msgstr "Tüm bağlantıları ziyaret edilmiş olarak imle"
+msgstr "Tüm Bağlantıları Ziyaret Edilmiş Olarak İmle"
 
 msgid "menu.snippet.add"
-msgstr "Seçimden kırpıntı…"
+msgstr "Seçimden Kırpıntı…"
 
 msgid "menu.bookmark.addtofolder"
-msgstr "Klasöre yer imi ekle:"
+msgstr "Klasöre Yer İmi Koy:"
 
 msgid "menu.input.setprompt"
-msgstr "Bu URL’nin girdi gerektirdiğini varsay"
+msgstr "Bu URL’nin Girdi Gerektirdiğini Varsay"
 
 msgid "menu.input.unsetprompt"
-msgstr "Bu URL’nin girdi gerektirdiğini varsayma"
+msgstr "Bu URL’nin Girdi Gerektirdiğini Varsayma"
 
 msgid "menu.input.clear"
-msgstr "Geçmişi temizle"
+msgstr "Geçmişi Temizle"
 
 msgid "menu.input.restore"
-msgstr "Öncekini geri yükle:"
+msgstr "Öncekini Geri Yükle:"
 
 msgid "dlg.import.intofolder"
 msgstr "Klasöre ekle:"
@@ -2642,10 +2642,10 @@ msgid "dlg.import.notfound"
 msgstr "Bu sayfada bağlantı yok."
 
 msgid "link.searchurl"
-msgstr "Arama URL’si olarak kullan"
+msgstr "Arama URL’si Olarak Kullan"
 
 msgid "link.snippet"
-msgstr "Bağlantıdan kırpıntı…"
+msgstr "Bağlantıdan Kırpıntı…"
 
 msgid "import.userdata.snippets"
 msgstr "Kırpıntılar:"
@@ -2700,7 +2700,7 @@ msgid "menu.snip.edit"
 msgstr "Düzenle…"
 
 msgid "menu.snip.clipboard"
-msgstr "Panoya kopyala"
+msgstr "Panoya Kopyala"
 
 msgid "menu.snip.delete"
 msgstr "Sil"
@@ -2723,17 +2723,17 @@ msgid "snip.accept"
 msgstr "Kırpıntıyı kaydet"
 
 msgid "menu.bookmark.movetofolder"
-msgstr "Klasöre yer imini taşı:"
+msgstr "Klasöre Yer İmini Taşı:"
 
 # A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
 msgid "keys.bang"
 msgstr "Bir kırpıntı sorgusu ekle"
 
 msgid "heading.snip.new"
-msgstr "Yeni kırpıntı"
+msgstr "Yeni Kırpıntı"
 
 msgid "heading.snip.edit"
-msgstr "Kırpıntıyı düzenle"
+msgstr "Kırpıntıyı Düzenle"
 
 msgid "heading.upload.dest"
 msgstr "Adres"
@@ -2787,13 +2787,13 @@ msgid "upload.error.directory"
 msgstr "Yalnızca dosyalar yüklenebilir, dizinler değil."
 
 msgid "heading.upload.error.file"
-msgstr "Geçersiz dosya"
+msgstr "Geçersiz Dosya"
 
 msgid "upload.file.path"
 msgstr "Dosya yolu:"
 
 msgid "heading.upload.edit"
-msgstr "Titan ile düzenle"
+msgstr "Titan ile Düzenle"
 
 msgid "dlg.upload.edit.error"
 msgstr "Düzenlenebilir özkaynağın içeriği indirilemedi."
@@ -2802,7 +2802,7 @@ msgid "dlg.upload.edit.incompatible"
 msgstr "Bu türden özkaynak uygulamada düzenlenemiyor."
 
 msgid "heading.upload.edit.error"
-msgstr "Düzenleme başarısız"
+msgstr "Düzenleme Başarısız"
 
 msgid "dlg.upload.edit"
 msgstr "Gönder"
@@ -2818,17 +2818,17 @@ msgid "ident.sendmsg"
 msgstr "İletiyi farklı gönder…"
 
 msgid "heading.upload.misfin"
-msgstr "Misfin iletisi gönder"
+msgstr "Misfin İletisi Gönder"
 
 msgid "heading.upload.misfin.noident"
-msgstr "Misfin kimliği yok"
+msgstr "Misfin Kimliği Yok"
 
 msgid "dlg.upload.misfin.noident"
 msgstr ""
 "İleti gönderebilmek için önce bir Misfin sertifikası içe aktarmalısınız."
 
 msgid "heading.misfin.ok"
-msgstr "İleti gönderildi"
+msgstr "İleti Gönderildi"
 
 msgid "misfin.success"
 msgstr "İletiniz başarıyla gönderildi."
@@ -2880,10 +2880,10 @@ msgid "prefs.expandline"
 msgstr "Uzun satırlara genişlet:"
 
 msgid "menu.closetab.above"
-msgstr "Yukarıdaki sekmeleri kapat"
+msgstr "Yukarıdaki Sekmeleri Kapat"
 
 msgid "menu.closetab.below"
-msgstr "Aşağıdaki sekmeleri kapat"
+msgstr "Aşağıdaki Sekmeleri Kapat"
 
 msgid "sidebar.structure"
 msgstr "Yapı"
@@ -2898,7 +2898,7 @@ msgid "sidebar.sub.empty"
 msgstr "Boş besleme"
 
 msgid "menu.sub.edit"
-msgstr "Yer imini düzenle…"
+msgstr "Yer İmini Düzenle…"
 
 msgid "num.entries"
 msgid_plural "num.entries.n"
@@ -2918,28 +2918,28 @@ msgid "feeds.reset"
 msgstr "Bilinen girdileri sıfırla"
 
 msgid "menu.show.structure"
-msgstr "Site yapısını göster"
+msgstr "Site Yapısını Göster"
 
 msgid "menu.show.subscriptions"
-msgstr "Abonelikleri göster"
+msgstr "Abonelikleri Göster"
 
 msgid "menu.show.opendocs"
-msgstr "Sekmeleri göster"
+msgstr "Sekmeleri Göster"
 
 msgid "menu.fold"
 msgstr "Katla"
 
 msgid "heading.prefs.ui"
-msgstr "Kullanıcı arayüzü"
+msgstr "Kullanıcı Arayüzü"
 
 msgid "prefs.hidetabs"
 msgstr "Sekme çubuğunu gizle:"
 
 msgid "heading.prefs.toolbartabs"
-msgstr "Araç çubuğu sekmeleri"
+msgstr "Araç Çubuğu Sekmeleri"
 
 msgid "menu.feed.edit"
-msgstr "Besleme ayarları…"
+msgstr "Besleme Ayarları…"
 
 msgid "menu.sidebar.configure"
 msgstr "Yapılandır…"
@@ -2954,26 +2954,26 @@ msgid "prefs.sidebar.right"
 msgstr "Sağ"
 
 msgid "heading.prefs.toolbartabs.left"
-msgstr "Sol araç çubuğu sekmeleri"
+msgstr "Sol Araç Çubuğu Sekmeleri"
 
 msgid "heading.prefs.toolbartabs.right"
-msgstr "Sağ araç çubuğu sekmeleri"
+msgstr "Sağ Araç Çubuğu Sekmeleri"
 
 msgid "link.copy.label"
-msgstr "Bağlantı etiketini kopyala"
+msgstr "Bağlantı Etiketini Kopyala"
 
 msgid "menu.input.copyprompt"
-msgstr "İstemi kopyala"
+msgstr "İstemi Kopyala"
 
 msgid "menu.input.pasteprompt"
-msgstr "İstemi yapıştır"
+msgstr "İstemi Yapıştır"
 
 # Context menu action for warning/error banners.
 msgid "menu.banner.copy"
-msgstr "İletiyi kopyala"
+msgstr "İletiyi Kopyala"
 
 msgid "heading.prefs.gamepad"
-msgstr "Oyun kolu"
+msgstr "Oyun Kolu"
 
 msgid "prefs.gamepad"
 msgstr "Oyun kolu etkin:"
@@ -3006,10 +3006,10 @@ msgid "prefs.gamepad.triggermod"
 msgstr "SA-T + "
 
 msgid "menu.input.showtop"
-msgstr "İstemi üstte göster"
+msgstr "İstemi Üstte Göster"
 
 msgid "menu.input.showbottom"
-msgstr "İstemi altta göster"
+msgstr "İstemi Altta Göster"
 
 msgid "prefs.bottominput"
 msgstr "Giriş istemi altta:"
@@ -3046,3 +3046,21 @@ msgstr "makine-adı:1080"
 
 msgid "prefs.socks.user"
 msgstr "Kullanıcı adı:"
+
+msgid "prefs.socks"
+msgstr "Vekil etkin:"
+
+msgid "macos.menu.hide"
+msgstr "Lagrange’yi Gizle"
+
+msgid "macos.menu.hideothers"
+msgstr "Diğerlerini Gizle"
+
+msgid "macos.menu.showall"
+msgstr "Tümünü Göster"
+
+msgid "macos.menu.services"
+msgstr "Servisler"
+
+msgid "link.copy.gemtext"
+msgstr "Bağlantıyı Gemtext Olarak Kopyala"

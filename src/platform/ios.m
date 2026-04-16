@@ -41,8 +41,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #import <UIKit/UIKit.h>
 #import <MediaPlayer/MediaPlayer.h>
 
-static iBool isSystemDarkMode_ = iFalse;
-static iBool isPhone_          = iFalse;
+static iBool isSystemDarkMode_      = iFalse;
+static iBool isPhone_               = iFalse;
+static iBool isRemoteCenterInited_  = iFalse;
 
 static UIWindow *uiWindow_(const iWindow *window) {
     SDL_SysWMinfo wm;
@@ -460,24 +461,9 @@ static void enableMouse_(iBool yes) {
     SDL_EventState(SDL_MOUSEBUTTONUP, yes);
 }
 
-void setupApplication_iOS(void) {
-    enableMouse_(iFalse);
-    NSString *deviceModel = [[UIDevice currentDevice] model];
-    if ([deviceModel isEqualToString:@"iPhone"]) {
-        isPhone_ = iTrue;
-    }
-    appState_ = [[AppState alloc] init];
-    [appState_ setupHaptics];
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:appState_
-               selector:@selector(keyboardOnScreen:)
-                   name:UIKeyboardWillShowNotification
-                 object:nil];
-    [center addObserver:appState_
-               selector:@selector(keyboardOffScreen:)
-                   name:UIKeyboardWillHideNotification
-                 object:nil];
-    /* Media player remote controls. */
+static void setupRemoteCommandCenter_(void) {
+    if (isRemoteCenterInited_) return; /* one-time */
+    isRemoteCenterInited_ = iTrue;
     MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
     [[commandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
         iPlayer *player = active_Player();
@@ -526,6 +512,25 @@ void setupApplication_iOS(void) {
     [[commandCenter skipForwardCommand] setEnabled:NO];
     [[commandCenter skipBackwardCommand] setEnabled:NO];
     [[commandCenter changePlaybackPositionCommand] setEnabled:NO];
+}
+
+void setupApplication_iOS(void) {
+    enableMouse_(iFalse);
+    NSString *deviceModel = [[UIDevice currentDevice] model];
+    if ([deviceModel isEqualToString:@"iPhone"]) {
+        isPhone_ = iTrue;
+    }
+    appState_ = [[AppState alloc] init];
+    [appState_ setupHaptics];
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:appState_
+               selector:@selector(keyboardOnScreen:)
+                   name:UIKeyboardWillShowNotification
+                 object:nil];
+    [center addObserver:appState_
+               selector:@selector(keyboardOffScreen:)
+                   name:UIKeyboardWillHideNotification
+                 object:nil];
 }
 
 static iBool isDarkMode_(iWindow *window) {
@@ -700,6 +705,7 @@ void updateNowPlayingInfo_iOS(void) {
         clearNowPlayingInfo_iOS();
         return;
     }
+    setupRemoteCommandCenter_();
     NSMutableDictionary<NSString *, id> *info = [[NSMutableDictionary<NSString *, id> alloc] init];
     [info setObject:[NSNumber numberWithDouble:time_Player(player)]
             forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
@@ -723,7 +729,9 @@ void updateNowPlayingInfo_iOS(void) {
 }
 
 void clearNowPlayingInfo_iOS(void) {
-    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
+    if (isRemoteCenterInited_) {
+        [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
+    }
 }
 
 void exportDownloadedFile_iOS(const iString *path) {

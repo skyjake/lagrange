@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2026-03-10 20:34+0000\n"
+"PO-Revision-Date: 2026-04-10 20:22+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -3047,3 +3047,21 @@ msgstr "Прокси сервер:"
 
 msgid "hint.socks.server"
 msgstr "nazivhosta:1080"
+
+msgid "prefs.socks"
+msgstr "Прокси активан:"
+
+msgid "link.copy.gemtext"
+msgstr "Копирај везу као Џемтекст"
+
+msgid "macos.menu.hide"
+msgstr "Сакриј Lagrange"
+
+msgid "macos.menu.hideothers"
+msgstr "Сакриј друге"
+
+msgid "macos.menu.showall"
+msgstr "Прикажи све"
+
+msgid "macos.menu.services"
+msgstr "Сервиси"

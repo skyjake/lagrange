@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdarg.h>
 
 #if defined (iPlatformAppleMobile)
-#   include "../ios.h"
+#   include "platform/ios.h"
 #endif
 
 struct Impl_WidgetDrawBuffer {

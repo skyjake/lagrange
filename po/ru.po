@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2026-03-23 15:24+0000\n"
+"PO-Revision-Date: 2026-03-29 18:06+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -2978,3 +2978,9 @@ msgstr "Пароль:"
 
 msgid "hint.socks.server"
 msgstr "адрес:1080"
+
+msgid "prefs.socks"
+msgstr "Прокси включен:"
+
+msgid "prefs.socks.user"
+msgstr "Имя пользователя:"

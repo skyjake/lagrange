@@ -569,6 +569,29 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     return iTrue;
 }
 
+void localizeApplicationMenu_MacOS(void) {
+    NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
+    const int n = [appMenu numberOfItems];
+    [[appMenu itemAtIndex:0]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("menu.aboutapp")]];
+    [[appMenu itemAtIndex:2]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("menu.preferences")]];
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+    [[appMenu itemAtIndex:3]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("menu.update")]];
+#endif
+    [[appMenu itemAtIndex:n - 7]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("macos.menu.services")]];
+    [[appMenu itemAtIndex:n - 5]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("macos.menu.hide")]];
+    [[appMenu itemAtIndex:n - 4]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("macos.menu.hideothers")]];
+    [[appMenu itemAtIndex:n - 3]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("macos.menu.showall")]];
+    [[appMenu itemAtIndex:n - 1]
+        setTitle:[NSString stringWithUTF8String:cstr_Lang("menu.quit")]];
+}
+
 void setupApplication_MacOS(void) {
     SDL_EventState(SDL_QUIT, SDL_FALSE); /* handle app quit manually */
     NSApplication *app = [NSApplication sharedApplication];
@@ -1000,6 +1023,9 @@ void handleCommand_MacOS(const char *cmd) {
             }
             mainIndex++;
         }
+    }
+    else if (equal_Command(cmd, "lang.changed")) {
+        localizeApplicationMenu_MacOS();
     }
     else if (equal_Command(cmd, "emojipicker")) {
         [NSApp orderFrontCharacterPalette:nil];

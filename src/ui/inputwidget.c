@@ -754,14 +754,29 @@ static size_t length_InputWidget_(const iInputWidget *d) {
 
 static void updateLine_InputWidget_(iInputWidget *d, iInputLine *line) {
     iAssert(endsWith_String(&line->text, "\n") || isLastLine_InputWidget_(d, line));
-    iWrapText wrapText = wrap_InputWidget_(d, indexOf_Array(&d->lines, line));
+    const int y = indexOf_Array(&d->lines, line);
+    iWrapText wrapText = wrap_InputWidget_(d, y);
     if (wrapText.maxWidth <= minWidth_InputWidget_) {
         line->wrapLines.end = line->wrapLines.start + 1;
         return;
     }
+    /* If this is the cursor line and IME composition is active, measure with
+       the preedit text inserted at the cursor so wrapping accounts for it. */
+    iString temp;
+    const iBool hasPreedit = (y == d->cursor.y && !isEmpty_String(&d->preedit));
+    if (hasPreedit) {
+        initCopy_String(&temp, &line->text);
+        insertData_Block(&temp.chars, d->cursor.x,
+                         constBegin_String(&d->preedit),
+                         size_String(&d->preedit));
+        wrapText.text = range_String(&temp);
+    }
     const iTextMetrics tm = measure_WrapText(&wrapText, d->font);
     line->wrapLines.end = line->wrapLines.start + height_Rect(tm.bounds) / lineHeight_Text(d->font);
     iAssert(!isEmpty_Range(&line->wrapLines));
+    if (hasPreedit) {
+        deinit_String(&temp);
+    }
 }
 
 static void updateLineRangesStartingFrom_InputWidget_(iInputWidget *d, int y) {
@@ -2727,6 +2742,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             SDL_free((char *)compText);
         }
         showCursor_InputWidget_(d);
+        updateAllLinesAndResizeHeight_InputWidget_(d);
         updateTextInputRect_InputWidget_(d);
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
         refresh_Widget(d);
@@ -2752,12 +2768,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
            processes the key. Consume unmodified and Option keys so the widget
            doesn't also act on them (e.g., Option+Enter for Hanja selection).
            Cmd/Ctrl combos are let through as app shortcuts. */
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
         if (!isEmpty_String(&d->preedit) &&
             !(ev->key.keysym.mod & (KMOD_GUI | KMOD_CTRL)) &&
             ev->key.keysym.sym != SDLK_ESCAPE &&
             ev->key.keysym.sym != SDLK_TAB) {
             return iTrue;
         }
+#endif
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -3132,6 +3150,24 @@ static void draw_InputWidget_(const iInputWidget *d) {
     iRect         markerRects[2] = { zero_Rect(), zero_Rect() };
 #endif
     const int     visLineOffsetY = visLineOffsetY_InputWidget_(d);
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    /* If IME composition is active, create a version of the cursor line with the
+       preedit text inserted so draw_WrapText wraps it correctly. */
+    iString preeditLine;
+    const iBool hasPreeditLine =
+        (isFocused && !isEmpty_String(&d->preedit) &&
+         contains_Range(&visLines, d->cursor.y));
+    if (hasPreeditLine) {
+        const iInputLine *curLine = constAt_Array(&d->lines, d->cursor.y);
+        initCopy_String(&preeditLine, &curLine->text);
+        insertData_Block(&preeditLine.chars, d->cursor.x,
+                         constBegin_String(&d->preedit),
+                         size_String(&d->preedit));
+    }
+    else {
+        init_String(&preeditLine); /* unused, but must be valid for deinit */
+    }
+#endif
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */
@@ -3173,7 +3209,12 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.wrapFunc = isFocused ? draw_MarkPainter_ : NULL; /* mark is drawn under each line of text */
         for (size_t vis = visLines.start; vis < visLines.end; vis++) {
             const iInputLine *line = constAt_Array(&d->lines, vis);
-            wrapText.text = range_String(&line->text);
+            if (hasPreeditLine && (int) vis == d->cursor.y) {
+                wrapText.text = range_String(&preeditLine);
+            }
+            else {
+                wrapText.text = range_String(&line->text);
+            }
             marker.line   = line;
             marker.pos    = drawPos;
             iInputWidgetHighlight highlight = { .font = d->font, .color = fg };
@@ -3196,64 +3237,91 @@ static void draw_InputWidget_(const iInputWidget *d) {
         for (int i = d->cursor.y - 1; i >= visLines.start; i--) {
             visWrapsAbove += numWrapLines_InputLine_(constAt_Array(&d->lines, i));
         }
-        cursorCoord = relativeCursorCoord_InputWidget_(d);
-    }
-    /* Draw IME composition (preedit) text inline at the cursor, with an
-       underline to distinguish it from committed text. Text after the cursor
-       is redrawn shifted to the right so it doesn't overlap. */
-    if (isFocused && !isEmpty_String(&d->preedit) &&
-        contains_Range(&visLines, d->cursor.y)) {
-        const iInt2 compPos = add_I2(
-            addY_I2(topLeft_Rect(contentBounds),
-                    visLineOffsetY + visWrapsAbove * lineHeight_Text(d->font)),
-            cursorCoord);
-        const iRangecc compText = range_String(&d->preedit);
-        const int lh = lineHeight_Text(d->font);
-        /* Clear from cursor to right edge, then redraw preedit + shifted tail. */
-        const int clearWidth = right_Rect(contentBounds) - compPos.x;
-        if (clearWidth > 0) {
-            fillRect_Paint(&p,
-                           (iRect){ compPos, init_I2(clearWidth, lh) },
-                           uiInputBackgroundFocused_ColorId);
+        if (hasPreeditLine) {
+            /* Compute cursor coord in the preedit-inclusive wrapped layout.
+               The cursor sits at the end of the preedit text. */
+            iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
+            wt.text = range_String(&preeditLine);
+            wt.hitChar = wt.text.start + d->cursor.x + size_String(&d->preedit);
+            measure_WrapText(&wt, d->font);
+            cursorCoord = wt.hitAdvance_out;
         }
-        drawRange_Text(d->font, compPos, uiInputTextFocused_ColorId, compText);
-        /* Underline the preedit text. The active segment (preeditCursor..+preeditLength)
-           gets a thicker underline to distinguish it from the rest. */
-        const int baseline = compPos.y + lh - 1;
-        if (d->preeditLength > 0 && d->preeditCursor + d->preeditLength <= size_String(&d->preedit)) {
-            const iRangecc before = { compText.start, compText.start + d->preeditCursor };
-            const iRangecc active = { compText.start + d->preeditCursor,
-                                      compText.start + d->preeditCursor + d->preeditLength };
-            const iRangecc after  = { active.end, compText.end };
-            const int xBefore = measureRange_Text(d->font, before).advance.x;
-            const int xActive = measureRange_Text(d->font, active).advance.x;
-            if (!isEmpty_Range(&before)) {
-                drawHLine_Paint(&p, init_I2(compPos.x, baseline),
-                                xBefore, uiInputCursor_ColorId);
+        else {
+            cursorCoord = relativeCursorCoord_InputWidget_(d);
+        }
+    }
+    /* Draw underline under IME composition (preedit) text. The text itself is
+       already drawn by the draw_WrapText loop above (inserted into the line). */
+    if (hasPreeditLine) {
+        iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
+        wt.text = range_String(&preeditLine);
+        const int lh = lineHeight_Text(d->font);
+        const int mw = wt.maxWidth;
+        const iInt2 origin = addY_I2(topLeft_Rect(contentBounds),
+                                     visLineOffsetY + visWrapsAbove * lh);
+        /* Find where the preedit starts in the wrapped layout. */
+        wt.hitChar = wt.text.start + d->cursor.x;
+        measure_WrapText(&wt, d->font);
+        const iInt2 compCoord = wt.hitAdvance_out;
+        /* Preedit end coord is the cursor position (already computed). */
+        const iInt2 endCoord = cursorCoord;
+        if (d->preeditLength > 0 &&
+            d->preeditCursor + d->preeditLength <= size_String(&d->preedit)) {
+            /* The preedit has three regions: "before" (thin underline),
+               "active" (double underline for the clause being converted),
+               and "after" (thin underline). Compute interior boundary coords. */
+            wt.hitChar = wt.text.start + d->cursor.x + d->preeditCursor;
+            measure_WrapText(&wt, d->font);
+            const iInt2 actStart = wt.hitAdvance_out;
+            wt.hitChar = wt.text.start + d->cursor.x + d->preeditCursor + d->preeditLength;
+            measure_WrapText(&wt, d->font);
+            const iInt2 actEnd = wt.hitAdvance_out;
+            /* "Before" segment: thin underline. */
+            if (d->preeditCursor > 0) {
+                for (int ly = compCoord.y; ly <= actStart.y; ly += lh) {
+                    const int x0 = (ly == compCoord.y ? compCoord.x : 0);
+                    const int x1 = (ly == actStart.y ? actStart.x : mw);
+                    if (x1 > x0) {
+                        drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                        x1 - x0, uiInputCursor_ColorId);
+                    }
+                }
             }
-            drawHLine_Paint(&p, init_I2(compPos.x + xBefore, baseline),
-                            xActive, uiInputCursor_ColorId);
-            drawHLine_Paint(&p, init_I2(compPos.x + xBefore, baseline - 1),
-                            xActive, uiInputCursor_ColorId);
-            if (!isEmpty_Range(&after)) {
-                drawHLine_Paint(&p, init_I2(compPos.x + xBefore + xActive, baseline),
-                                preeditWidth - xBefore - xActive, uiInputCursor_ColorId);
+            /* "Active" segment: double underline. */
+            for (int ly = actStart.y; ly <= actEnd.y; ly += lh) {
+                const int x0 = (ly == actStart.y ? actStart.x : 0);
+                const int x1 = (ly == actEnd.y ? actEnd.x : mw);
+                if (x1 > x0) {
+                    drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                    x1 - x0, uiInputCursor_ColorId);
+                    drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 2)),
+                                    x1 - x0, uiInputCursor_ColorId);
+                }
+            }
+            /* "After" segment: thin underline. */
+            if (d->preeditCursor + d->preeditLength < (int) size_String(&d->preedit)) {
+                for (int ly = actEnd.y; ly <= endCoord.y; ly += lh) {
+                    const int x0 = (ly == actEnd.y ? actEnd.x : 0);
+                    const int x1 = (ly == endCoord.y ? endCoord.x : mw);
+                    if (x1 > x0) {
+                        drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                        x1 - x0, uiInputCursor_ColorId);
+                    }
+                }
             }
         }
         else {
-            drawHLine_Paint(&p, init_I2(compPos.x, baseline), preeditWidth,
-                            uiInputCursor_ColorId);
+            /* Simple case: single thin underline for entire preedit. */
+            for (int ly = compCoord.y; ly <= endCoord.y; ly += lh) {
+                const int x0 = (ly == compCoord.y ? compCoord.x : 0);
+                const int x1 = (ly == endCoord.y ? endCoord.x : mw);
+                if (x1 > x0) {
+                    drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                    x1 - x0, uiInputCursor_ColorId);
+                }
+            }
         }
-        /* Redraw the text after the cursor, shifted right by the preedit width. */
-        const char *afterCursor = charPos_InputWidget_(d, d->cursor);
-        const char *lineEnd = constEnd_String(lineString_InputWidget_(d, d->cursor.y));
-        if (afterCursor < lineEnd) {
-            const iRangecc tail = { afterCursor, lineEnd };
-            drawRange_Text(d->font,
-                           init_I2(compPos.x + preeditWidth, compPos.y),
-                           uiInputTextFocused_ColorId,
-                           tail);
-        }
+        deinit_String(&preeditLine);
     }
     /* Draw the insertion point. */
     if (isFocused && (d->cursorVis || !isBlinkingCursor_()) &&
@@ -3286,7 +3354,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
         }
         const iInt2 curPos = add_I2(addY_I2(topLeft_Rect(contentBounds), visLineOffsetY +
                                             visWrapsAbove * lineHeight_Text(d->font)),
-                                    addX_I2(addX_I2(cursorCoord, preeditWidth),
+                                    addX_I2(addX_I2(cursorCoord,
+                                                    hasPreeditLine ? 0 : preeditWidth),
                                             (d->mode == insert_InputMode ? -curSize.x / 2 : 0)));
         const iRect curRect  = { curPos, curSize };
 #if defined (SDL_SEAL_CURSES)

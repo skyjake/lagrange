@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.20 (Beta 50)
+* Added option to easily toggle SOCKS5 without losing the configuration.
+* Fixed localhost addresses not being ignored by the SOCKS5 proxy.
+* Fixed intermittent layout issue in the Upload UI related to the action buttons at the top.
+* Gopher: Improving handling of a TAB character in Gopher URIs (query string).
+* Updated stb library (bugfixes for image, image_resize2, truetype, vorbis).
+
 ## 1.20 (Beta 49)
 * Fixed a crash during event handling when no gamepad is connected.
 * Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.

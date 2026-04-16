@@ -124,6 +124,11 @@ static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 
+#if defined (iPlatformAppleDesktop) || defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
+#   define LAGRANGE_HANDLE_SIGTERM
+#   include <signal.h>
+#endif
+
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
@@ -1257,6 +1262,13 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     unlock_Mutex(dumpMutex_);
 }
 
+#if defined (LAGRANGE_HANDLE_SIGTERM)
+static void postQuitOnSigTerm_(int sig) {
+    iUnused(sig);
+    SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+}
+#endif
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
 #if defined (iPlatformAndroid)
@@ -1495,6 +1507,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         exit(0);
     }
     init_Periodic(&d->periodic);
+#if defined (LAGRANGE_HANDLE_SIGTERM)
+    signal(SIGTERM, postQuitOnSigTerm_);
+#endif
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
 # if defined (LAGRANGE_NATIVE_MENU)
@@ -1521,6 +1536,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         set_Array(&d->initialWindowRects, 0, &winRect);
     }
     loadPrefs_App_(d);
+#if defined (iPlatformAppleDesktop)
+    localizeApplicationMenu_MacOS();
+#endif
     updateActive_Fonts();
     load_Keys(dataDir_App_());
     iRect *winRect0 = at_Array(&d->initialWindowRects, 0);

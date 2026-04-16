@@ -3386,33 +3386,38 @@ static iArray *gamepadButtonInfo_(void) {
 
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
-    const iMenuItem langItems[] = { { u8"Čeština - cs", 0, 0, "uilang id:cs" },
+    const iMenuItem langItems[] = { /* Latin */
+                                    { u8"Čeština - cs", 0, 0, "uilang id:cs" },
                                     { u8"Deutsch - de", 0, 0, "uilang id:de" },
                                     { u8"English - en", 0, 0, "uilang id:en" },
                                     { u8"Español - es", 0, 0, "uilang id:es" },
                                     { u8"Español (México) - es", 0, 0, "uilang id:es_MX" },
-                                    { u8"Euskara - eu", 0, 0, "uilang id:eu" },
                                     { u8"Esperanto - eo", 0, 0, "uilang id:eo" },
+                                    { u8"Euskara - eu", 0, 0, "uilang id:eu" },
                                     { u8"Français - fr", 0, 0, "uilang id:fr" },
                                     { u8"Galego - gl", 0, 0, "uilang id:gl" },
                                     { u8"Interlingua - ia", 0, 0, "uilang id:ia" },
                                     { u8"Interlingue - ie", 0, 0, "uilang id:ie" },
                                     { u8"Interslavic - isv", 0, 0, "uilang id:isv" },
                                     { u8"Italiano - it", 0, 0, "uilang id:it" },
-                                    { u8"日本語 - ja", 0, 0, "uilang id:ja" },
                                     { u8"Magyar - hu", 0, 0, "uilang id:hu" },
                                     { u8"Nederlands - nl", 0, 0, "uilang id:nl" },
                                     { u8"Polski - pl", 0, 0, "uilang id:pl" },
-                                    { u8"Русский - ru", 0, 0, "uilang id:ru" },
                                     { u8"Samogitian - sgs", 0, 0, "uilang id:sgs" },
                                     { u8"Slovak - sk", 0, 0, "uilang id:sk" },
-                                    { u8"Српски - sr", 0, 0, "uilang id:sr" },
                                     { u8"Suomi - fi", 0, 0, "uilang id:fi" },
                                     { u8"Toki pona - tok", 0, 0, "uilang id:tok" },
                                     { u8"Türkçe - tr", 0, 0, "uilang id:tr" },
+                                    { "---" },
+                                    /* Cyrillic */
+                                    { u8"Русский - ru", 0, 0, "uilang id:ru" },
+                                    { u8"Српски - sr", 0, 0, "uilang id:sr" },
                                     { u8"Українська - uk", 0, 0, "uilang id:uk" },
+                                    { "---" },
+                                    /* CJK */
                                     { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
                                     { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
+                                    { u8"日本語 - ja", 0, 0, "uilang id:ja" },
                                     { NULL } };
     const iMenuItem feedIntervalItems[] = {
         { "${prefs.feedinterval.manual}", 0, 0, format_CStr("feedinterval.set arg:%d", manual_FeedInterval) },

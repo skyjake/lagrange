@@ -31,12 +31,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 
 #if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#   include "platform/ios.h"
 #   define pickFile_Mobile pickFile_iOS
 #endif
 
 #if defined (iPlatformAndroidMobile)
-#   include "android.h"
+#   include "platform/android.h"
 #   define pickFile_Mobile pickFile_Android
 #endif
 
@@ -47,9 +47,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDefineObjectConstruction(CertImportWidget)
 
-static const int validColor_   = green_ColorId;
+static const int validColor_     = green_ColorId;
 static const int validTextColor_ = uiText_ColorId;
-static const int invalidColor_ = uiEmbossHover2_ColorId;
+static const int invalidColor_   = uiEmbossHover2_ColorId;
 
 struct Impl_CertImportWidget {
     iWidget widget;
