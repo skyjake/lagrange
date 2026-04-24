@@ -1611,10 +1611,12 @@ static uint32_t windowId_SDLEvent_(const SDL_Event *ev) {
             return ev->key.windowID;
         case SDL_TEXTINPUT:
             return ev->text.windowID;
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
         case SDL_TEXTEDITING:
             return ev->edit.windowID;
         case SDL_TEXTEDITING_EXT:
             return ev->editExt.windowID;
+#endif
         case SDL_USEREVENT:
             return ev->user.windowID;
         default:
@@ -1642,10 +1644,11 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != root) {
                 continue; /* Not meant for this root. */
             }
-            if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP ||
-                 ev->type == SDL_TEXTINPUT || ev->type == SDL_TEXTEDITING ||
-                 ev->type == SDL_TEXTEDITING_EXT)
-                     && d->keyRoot != root) {
+            if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+                 || ev->type == SDL_TEXTEDITING || ev->type == SDL_TEXTEDITING_EXT
+#endif
+                ) && d->keyRoot != root) {
                 if (!isEscapeKeypress_(ev)) {
                     /* Key events go only to the root with keyboard focus, with the exception
                        of Escape that will also affect the entire window. */

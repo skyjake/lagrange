@@ -285,7 +285,7 @@ struct Impl_InputWidget {
     iInt2           lastTapPos;
     int             tapCount;
     int             cursorVis;
-#if defined(LAGRANGE_HAVE_SDL_TEXTEDITING)
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
     iString         preedit;        /* IME composition ("preedit") text, shown inline but not
                                        yet part of the document (e.g., a Korean syllable being
                                        assembled). Committed on Enter or when composition ends. */
