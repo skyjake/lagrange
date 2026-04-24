@@ -200,6 +200,18 @@ msgstr "Cerca nella pagina"
 msgid "macos.menu.find"
 msgstr "Cerca"
 
+msgid "macos.menu.hide"
+msgstr "Nascondi Lagrange"
+
+msgid "macos.menu.hideothers"
+msgstr "Nascondi altre"
+
+msgid "macos.menu.showall"
+msgstr "Mostra tutte"
+
+msgid "macos.menu.services"
+msgstr "Servizi"
+
 msgid "menu.downloads"
 msgstr "Mostra i Download"
 
@@ -2277,7 +2289,7 @@ msgstr "Importa…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
-msgstr "Riguardo Lagrange"
+msgstr "Informazioni su Lagrange"
 
 msgid "feeds.entry.markbelowread"
 msgstr "Segna quelli sotto come Letti"

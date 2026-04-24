@@ -360,52 +360,50 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
     initCurrent_Time(&now);
     if (isHeadings) {
         lock_Mutex(d->mtx);
-//        printf("Updating sourceID %d...\n", sourceId);
         iStringSet *known = listHeadingEntriesFrom_Feeds_(d, sourceId);
-//        puts("  Known URLs:");
-//        iConstForEach(StringSet, ss, known) {
-//            printf("   {%s}\n", cstr_String(ss.value));
-//        }
         iStringSet *presentInSource = new_StringSet();
         /* Look for unknown entries. */
         iForEach(PtrArray, i, incoming) {
             iFeedEntry *entry = i.ptr;
             insert_StringSet(presentInSource, &entry->url);
             if (!contains_StringSet(known, &entry->url)) {
-//                printf("  {%s} is new\n", cstr_String(&entry->url));
                 insert_SortedArray(&d->entries, &entry);
                 gotNew = iTrue;
                 remove_PtrArrayIterator(&i);
             }
         }
-//        puts("  URLs present in source:");
-//        iConstForEach(StringSet, ps, presentInSource) {
-//            printf("    {%s}\n", cstr_String(ps.value));
-//        }
-//        puts("  URLs to purge:");
-        /* All known entries that are no longer present in source must be deleted. */
+        iString *headingsPageUrl = NULL;
         iForEach(Array, e, &d->entries.values) {
             iFeedEntry *entry = *(iFeedEntry **) e.value;
+            /* All known entries that are no longer present in source must be deleted.  */
             if (entry->bookmarkId == sourceId &&
                 !contains_StringSet(presentInSource, &entry->url)) {
-//                printf("    {%s}\n", cstr_String(&entry->url));
                 delete_FeedEntry(entry);
                 remove_ArrayIterator(&e);
             }
+            /* Remember the base page URL of heading entries; it is used for read-status
+               tracking and must be kept in visited. */
+            else if (!headingsPageUrl && entry->bookmarkId == sourceId && entry->isHeading) {
+                headingsPageUrl = copy_String(url_FeedEntry(entry));
+            }
         }
-//        puts("Done.");
         iRelease(presentInSource);
         iRelease(known);
         unlock_Mutex(d->mtx);
+        if (headingsPageUrl) {
+            /* Ensure the page URL is kept so heading entry read status doesn't expire.
+               Without this, the Kept flag set by `markEntryAsRead_Feeds` would be cleared
+               by the unkept-cleanup below (which only knows fragment-suffixed entry URLs). */
+            setUrlKept_Visited(visited_App(), headingsPageUrl, iTrue);
+            delete_String(headingsPageUrl);
+        }
     }
     else {
         /* All visited URLs still present in the source should be kept indefinitely so their
            read status remains correct. The Kept flag will be cleared after the URL has been
            discarded from the entry database and enough time has passed. */ {
-//            printf("updating entries from %d:\n", sourceId);
             iForEach(PtrArray, i, incoming) {
                 const iFeedEntry *entry = i.ptr;
-//                printf("marking as kept: {%s}\n", cstr_String(&entry->url));
                 setUrlKept_Visited(visited_App(), &entry->url, iTrue);
             }
         }
@@ -531,6 +529,11 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
             insert_StringSet(knownEntryUrls, &entry->url);
+            if (entry->isHeading) {
+                /* The read status of heading entries is tracked via the fragment-stripped base
+                   URL in visited. Include it so its "kept" flag is preserved by the cleanup. */
+                insert_StringSet(knownEntryUrls, url_FeedEntry(entry));
+            }
         }
         unlock_Mutex(d->mtx);
         iConstForEach(PtrArray, j, listKept_Visited(visited_App())) {

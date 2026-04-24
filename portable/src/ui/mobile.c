@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "window.h"
 
 #if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#   include "platform/ios.h"
 #endif
 
 const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
@@ -285,8 +285,9 @@ static void updateNaviActionVisibility_(iWidget *sheet, iWidget *curPanel) {
     iWidget      *navi        = findChild_Widget(sheet, "panel.navi");
     iWidget      *naviActions = findChild_Widget(navi, "navi.actions");
     iForEach(ObjectList, i, children_Widget(naviActions)) {
-        setFlags_Widget(i.object, hidden_WidgetFlag,
-                        userData_Object(i.object) && userData_Object(i.object) != curPanel);
+        if (userData_Object(i.object)) {
+            setFlags_Widget(i.object, hidden_WidgetFlag, userData_Object(i.object) != curPanel);
+        }
     }
     arrange_Widget(navi);
     refresh_Widget(navi);

@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
-#   include "win32.h"
+#   include "platform/win32.h"
 #endif
 
 #include <the_Foundation/archive.h>

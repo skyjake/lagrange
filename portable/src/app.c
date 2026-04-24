@@ -127,6 +127,11 @@ static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 
+#if defined (iPlatformAppleDesktop) || defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
+#   define LAGRANGE_HANDLE_SIGTERM
+#   include <signal.h>
+#endif
+
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
@@ -409,6 +414,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.redirect.allowscheme", &d->prefs.allowSchemeChangingRedirect },
         { "prefs.retaintabs", &d->prefs.retainTabs },
         { "prefs.sideicon", &d->prefs.sideIcon },
+        { "prefs.socks", &d->prefs.useProxy },
         { "prefs.swipe.edge", &d->prefs.edgeSwipe },
         { "prefs.swipe.page", &d->prefs.pageSwipe },
         { "prefs.time.24h", &d->prefs.time24h },
@@ -642,6 +648,10 @@ static void loadPrefs_App_(iApp *d) {
                    handled via the event loop. */
                 handleCommand_App(cmd);
                 haveCA = iTrue;
+            }
+            else if (equal_Command(cmd, "prefs.socks.changed")) {
+                /* This will affect the proxy setup later during loading of prefs. */
+                d->prefs.useProxy = arg_Command(cmd) != 0;
             }
             else if (equal_Command(cmd, "misfin.recent")) {
                 setRange_String(&d->prefs.strings[recentMisfinId_PrefsString], range_Command(cmd, "fp"));
@@ -1264,6 +1274,13 @@ static const iBlock *aboutBlankPage_(iRangecc path, iRangecc query) {
     return NULL;
 }
 
+#if defined (LAGRANGE_HANDLE_SIGTERM)
+static void postQuitOnSigTerm_(int sig) {
+    iUnused(sig);
+    SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+}
+#endif
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
 #if defined (iPlatformAndroid)
@@ -1523,6 +1540,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         exit(0);
     }
     init_Periodic(&d->periodic);
+#if defined (LAGRANGE_HANDLE_SIGTERM)
+    signal(SIGTERM, postQuitOnSigTerm_);
+#endif
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
 # if defined (LAGRANGE_NATIVE_MENU)
@@ -1549,6 +1569,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         set_Array(&d->initialWindowRects, 0, &winRect);
     }
     loadPrefs_App_(d);
+#if defined (iPlatformAppleDesktop)
+    localizeApplicationMenu_MacOS();
+#endif
     updateActive_Fonts();
     load_Keys(dataDir_App_());
     iRect *winRect0 = at_Array(&d->initialWindowRects, 0);
@@ -3829,7 +3852,7 @@ static const iString *popClosedTabUrl_App_(iApp *d) {
 
 static void updateNetworkProxy_App_(iApp *d) {
     iNetworkProxy *proxy = NULL;
-    if (!isEmpty_String(&d->prefs.strings[socksServer_PrefsString])) {
+    if (d->prefs.useProxy && !isEmpty_String(&d->prefs.strings[socksServer_PrefsString])) {
         iString *uri =
             collect_String(copy_String(&d->prefs.strings[socksServer_PrefsString]));
         if (indexOfCStr_String(uri, "://") == iInvalidPos) {
@@ -4509,6 +4532,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
                            suffixPtr_Command(cmd, "password"));
         }
         if (!argLabel_Command(cmd, "noupdate")) {
+            updateNetworkProxy_App_(d);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.socks.changed")) {
+        d->prefs.useProxy = arg_Command(cmd) != 0;
+        if (isFinishedLaunching_App()) {
             updateNetworkProxy_App_(d);
         }
         return iTrue;
@@ -5433,6 +5463,7 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ipv6"), d->prefs.preferIPv6);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.socks"), d->prefs.useProxy);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);

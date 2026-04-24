@@ -112,6 +112,7 @@ enum iPrefsBool {
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
     preferIPv6_PrefsBool,
+    useProxy_PrefsBool,
 
     /* Style */
     monospaceGemini_PrefsBool,
@@ -202,6 +203,7 @@ struct Impl_Prefs {
             iBool decodeUserVisibleURLs;
             iBool allowSchemeChangingRedirect;
             iBool preferIPv6;
+            iBool useProxy;
 
             /* Style */
             iBool monospaceGemini;

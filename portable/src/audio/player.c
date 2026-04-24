@@ -45,10 +45,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <opusfile.h>
 #endif
 #if defined (iPlatformAppleMobile)
-#   include "../ios.h"
+#   include "platform/ios.h"
 #endif
 #if defined (iPlatformAndroidMobile)
-#   include "../android.h"
+#   include "platform/android.h"
 #endif
 
 /*----------------------------------------------------------------------------------------------*/
@@ -1005,20 +1005,16 @@ size_t sourceDataSize_Player(const iPlayer *d) {
     return size;
 }
 
-static iBool setupSDLAudio_(iBool init) {
+static iBool setupSDLAudio_(void) {
     static iBool isAudioInited_ = iFalse;
-    if (init && !isAudioInited_) {
+    if (!isAudioInited_) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
             fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
             return iFalse;
         }
         isAudioInited_ = iTrue;
     }
-    else if (!init && isAudioInited_ && !isAndroid_Platform()) {
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
-        isAudioInited_ = iFalse;
-    }
-    return isAudioInited_;
+    return iTrue;
 }
 
 static void resumeDevice_Player_(iPlayer *d) {
@@ -1125,7 +1121,7 @@ iBool start_Player(iPlayer *d) {
     }
     content.output.callback = writeOutputSamples_Player_;
     content.output.userdata = d;
-    if (!setupSDLAudio_(iTrue)) {
+    if (!setupSDLAudio_()) {
         return iFalse;
     }
     d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.output, &d->spec, 0);
@@ -1191,9 +1187,6 @@ void stop_Player(iPlayer *d) {
         d->device = 0;
         delete_Decoder(d->decoder);
         d->decoder = NULL;
-        if (numActiveSDLAudio_Player() == 0) {
-            setupSDLAudio_(iFalse); /* nothing playing, so quit the entire audio subsystem */
-        }
     }
 }
 

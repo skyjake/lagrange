@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_timer.h>
 
 #if defined (iPlatformAppleMobile)
-#   include "../ios.h"
+#   include "platform/ios.h"
 #endif
 
 #if !defined (iPlatformTerminal)

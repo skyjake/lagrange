@@ -6,6 +6,26 @@
 ```
 # Release notes
 
+## 1.20.5
+* Fixed: Bookmark context menu closes prematurely when any page is loaded.
+
+## 1.20.4
+* Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
+* Possible fix for Heading subscription entries returning to an unread state after a long time.
+* Quit the app cleanly when receiving a SIGTERM signal.
+* Improved CJK IME presentation. (Courtesy of Sidney Cammeresi.)
+* Added a "Copy Link as Gemtext" context menu action and fixed missing items. (Courtesy of Sidney Cammeresi.)
+* Updated UI translations.
+
+## 1.20.3
+* Fixed crash when hovering on an empty bookmark folder in the Bookmarks menu.
+* Improved CJK IME support in text fields. (Courtesy of Sidney Cammeresi.)
+* Upload dialog's text editor uses the modifier-key-only Return key behavior when that is the active one. This should help with composing CJK text.
+* Added option to easily toggle SOCKS5 without losing the configuration.
+* Fixed localhost addresses not being ignored by the SOCKS5 proxy.
+* Gopher: Improving handling of a TAB character in Gopher URIs (query string).
+* Updated stb library (bugfixes for image, image_resize2, truetype, vorbis).
+
 ## 1.20.2
 * Fixed a crash during event handling when no gamepad is connected.
 * Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.

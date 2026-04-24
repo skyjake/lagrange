@@ -3327,7 +3327,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.copylink") && document_App() == d) {
         if (d->contextLink) {
-            if (argLabel_Command(cmd, "label")) {
+            if (argLabel_Command(cmd, "gemtext")) {
+                const iString *url   = canonicalUrl_String(absoluteUrl_String(
+                    d->mod.url, linkUrl_GmDocument(d->view->doc, d->contextLink->linkId)));
+                iRangecc       label = linkLabel_GmDocument(d->view->doc, d->contextLink->linkId);
+                const iString *gemtext =
+                    collectNewFormat_String("=> %s %s\n", cstr_String(url), cstr_Rangecc(label));
+                SDL_SetClipboardText(cstr_String(gemtext));
+            }
+            else if (argLabel_Command(cmd, "label")) {
                 SDL_SetClipboardText(
                     cstr_Rangecc(linkLabel_GmDocument(d->view->doc, d->contextLink->linkId)));
             }
@@ -4486,6 +4494,7 @@ static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidge
             { "---" },
             { copy_Icon " ${link.copy}", 0, 0, "document.copylink" },
             { "${link.copy.label}", 0, 0, "document.copylink label:1" },
+            { "${link.copy.gemtext}", 0, 0, "document.copylink gemtext:1" },
             { "---" },
             { bookmark_Icon " ${link.bookmark}", 0, 0,
               format_CStr("!bookmark.add title:%s url:%s", cstr_String(encLabel), cstr_String(linkUrl)) },
@@ -4495,7 +4504,7 @@ static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidge
             { magnifyingGlass_Icon " ${link.searchurl}", 0, 0,
               format_CStr("!searchurl address:%s", cstr_String(linkUrl)) },
         },
-        6);
+        9);
     delete_String(encLabel);
     if (isNative && linkId && linkMediaType != download_MediaType &&
         !equalCase_Rangecc(scheme, "file")) {

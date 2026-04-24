@@ -106,7 +106,7 @@ iRegExp *       newGemtextLink_RegExp   (void);
 #define GEMINI_DEFAULT_PORT_CSTR    "1965"
 #define MISFIN_DEFAULT_PORT         ((uint16_t) 1958)
 #define URL_RESERVED_CHARS          ":/?#[]@!$&'()*+,;=" /* RFC 3986 */
-#define URL_DECODE_EXCLUDE_CHARS    URL_RESERVED_CHARS "%\""
+#define URL_DECODE_EXCLUDE_CHARS    URL_RESERVED_CHARS "%\"\t"
 #define URL_ENCODE_EXCLUDE_CHARS    URL_RESERVED_CHARS "%"
 
 struct Impl_Url {

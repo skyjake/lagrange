@@ -61,7 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
 #   include "mobile.h"
-#   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 1 /* System-provided UI control almost handles everything. */
+#   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 1 /* System-provided UI control handles almost everything. */
 #else
 #   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 0
 iDeclareType(SystemTextInput)
@@ -90,9 +90,14 @@ static void enableEditorKeysInMenus_(iBool enable) {
 }
 
 static void updateMetrics_InputWidget_(iInputWidget *);
+static void contentsWereChanged_InputWidget_(iInputWidget *);
 
 /*----------------------------------------------------------------------------------------------*/
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+
+static void insertRange_InputWidget_(iInputWidget *, iRangecc);
+static void pushUndo_InputWidget_(iInputWidget *);
+static iBool deleteMarked_InputWidget_(iInputWidget *);
 
 iDeclareType(InputLine)
 
@@ -271,7 +276,8 @@ struct Impl_InputWidget {
     iArray          lines;        /* iInputLine[] */
     iInt2           cursor;       /* cursor position: x = byte offset, y = line index */
     iInt2           prevCursor;   /* previous cursor position */
-    iRanges         mark;         /* TODO: would likely simplify things to use two Int2's for marking; no conversions needed */
+    iRanges         mark;         /* TODO: would likely simplify things to use two Int2's
+                                     for marking; no conversions needed */
     iRanges         initialMark;
     iArray          undoStack;
     uint32_t        tapStartTime;
@@ -279,10 +285,64 @@ struct Impl_InputWidget {
     iInt2           lastTapPos;
     int             tapCount;
     int             cursorVis;
+#if defined(LAGRANGE_HAVE_SDL_TEXTEDITING)
+    iString         preedit;        /* IME composition ("preedit") text, shown inline but not
+                                       yet part of the document (e.g., a Korean syllable being
+                                       assembled). Committed on Enter or when composition ends. */
+    int             preeditCursor;  /* byte offset of active segment within preedit */
+    int             preeditLength;  /* byte length of active segment within preedit */
+    int             preeditAdvance; /* cached pixel width of preedit text */
+# endif
 #endif
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
+
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+static void clearPreedit_InputWidget_(iInputWidget *d) {
+    clear_String(&d->preedit);
+    d->preeditCursor = 0;
+    d->preeditLength = 0;
+    d->preeditAdvance = 0;
+}
+
+/* Convert a character (codepoint) offset to a byte offset within a UTF-8 string. */
+static int charToByteOffset_(const char *s, const char *end, int charOff) {
+    const char *p = s;
+    for (int i = 0; i < charOff && p < end; i++) {
+        iChar ch;
+        int n = decodeBytes_MultibyteChar(p, end, &ch);
+        p += iMax(n, 1);
+    }
+    return (int)(p - s);
+}
+
+/* Store preedit state from an SDL TEXTEDITING or TEXTEDITING_EXT event.
+   Converts the cursor/length from character offsets (as SDL provides) to
+   byte offsets for internal use. */
+static void setPreedit_InputWidget_(iInputWidget *d, const char *text, int start, int length) {
+    setCStr_String(&d->preedit, text);
+    const iRangecc range = range_String(&d->preedit);
+    d->preeditCursor = charToByteOffset_(range.start, range.end, start);
+    d->preeditLength = charToByteOffset_(range.start + d->preeditCursor, range.end, length);
+    d->preeditAdvance = isEmpty_String(&d->preedit) ? 0
+        : measureRange_Text(d->font, range).advance.x;
+}
+
+/* Finalize any in-progress IME composition by inserting the preedit text. Called
+   when the widget loses focus or editing ends, so partially composed
+   text (e.g., an uncommitted Korean syllable) isn't silently discarded. */
+static void commitPreedit_InputWidget_(iInputWidget *d) {
+    if (!isEmpty_String(&d->preedit)) {
+        pushUndo_InputWidget_(d);
+        insertRange_InputWidget_(d, range_String(&d->preedit));
+        contentsWereChanged_InputWidget_(d);
+        clearPreedit_InputWidget_(d);
+    }
+}
+#endif /* LAGRANGE_HAVE_SDL_TEXTEDITING */
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
 
 static int extraPaddingHeight_InputWidget_(const iInputWidget *d) {
     if ((isPortraitPhone_App() || deviceType_App() == tablet_AppDeviceType) &&
@@ -701,14 +761,33 @@ static size_t length_InputWidget_(const iInputWidget *d) {
 
 static void updateLine_InputWidget_(iInputWidget *d, iInputLine *line) {
     iAssert(endsWith_String(&line->text, "\n") || isLastLine_InputWidget_(d, line));
-    iWrapText wrapText = wrap_InputWidget_(d, indexOf_Array(&d->lines, line));
+    const int y = indexOf_Array(&d->lines, line);
+    iWrapText wrapText = wrap_InputWidget_(d, y);
     if (wrapText.maxWidth <= minWidth_InputWidget_) {
         line->wrapLines.end = line->wrapLines.start + 1;
         return;
     }
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    /* If this is the cursor line and IME composition is active, measure with
+       the preedit text inserted at the cursor so wrapping accounts for it. */
+    iString temp;
+    const iBool hasPreedit = (y == d->cursor.y && !isEmpty_String(&d->preedit));
+    if (hasPreedit) {
+        initCopy_String(&temp, &line->text);
+        insertData_Block(&temp.chars, d->cursor.x,
+                         constBegin_String(&d->preedit),
+                         size_String(&d->preedit));
+        wrapText.text = range_String(&temp);
+    }
+#endif
     const iTextMetrics tm = measure_WrapText(&wrapText, d->font);
     line->wrapLines.end = line->wrapLines.start + height_Rect(tm.bounds) / lineHeight_Text(d->font);
     iAssert(!isEmpty_Range(&line->wrapLines));
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    if (hasPreedit) {
+        deinit_String(&temp);
+    }
+#endif
 }
 
 static void updateLineRangesStartingFrom_InputWidget_(iInputWidget *d, int y) {
@@ -797,8 +876,21 @@ static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
     }
 #endif
 #if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile) && !defined (SDL_SEAL_CURSES)
-    const iRect bounds = bounds_Widget(constAs_Widget(d));
-    SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
+    /* Tell SDL where the text cursor is so the OS can position IME candidate
+       windows (e.g., the Korean Hanja selection panel) near the insertion point.
+       Coordinates must be in points, not pixels, hence the pixelRatio division. */
+    iBool inBounds;
+    iInt2 wc = cursorToWindowCoord_InputWidget_(d, d->cursor, &inBounds);
+    const int lh = lineHeight_Text(d->font);
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    if (!isEmpty_String(&d->preedit)) {
+        wc.x += d->preeditAdvance;
+    }
+#endif
+    const float pr = get_Window()->pixelRatio;
+    SDL_SetTextInputRect(&(SDL_Rect){
+        (int)(wc.x / pr), (int)(wc.y / pr), 1, (int)(lh / pr)
+    });
 #endif
 }
 
@@ -862,6 +954,12 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->lastTapTime  = 0;
     d->tapCount     = 0;
     d->cursorVis    = 0;
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    init_String(&d->preedit);
+    d->preeditCursor = 0;
+    d->preeditLength = 0;
+    d->preeditAdvance = 0;
+#endif
     iZap(d->mark);
     splitToLines_(&iStringLiteral(""), &d->lines);
 #endif
@@ -907,6 +1005,9 @@ void deinit_InputWidget(iInputWidget *d) {
     delete_SystemTextInput(d->sysCtrl);
     deinit_String(&d->text);
 #else
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    deinit_String(&d->preedit);
+#endif
     startOrStopCursorTimer_InputWidget_(d, iFalse);
     clearInputLines_(&d->lines);
     deactivateInputMode_InputWidget_(d);
@@ -1299,8 +1400,6 @@ iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
     return (flags_Widget(constAs_Widget(d)) & selected_WidgetFlag) != 0;
 }
 
-static void contentsWereChanged_InputWidget_(iInputWidget *);
-
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
 void systemInputChanged_InputWidget_(iSystemTextInput *sysCtrl, void *widget) {
     iInputWidget *d = widget;
@@ -1410,16 +1509,24 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         delete_SystemTextInput(d->sysCtrl);
         d->sysCtrl = NULL;
     }
-#else
+#else /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
     if (!accept) {
         /* Overwrite the edited lines. */
         splitToLines_(&d->oldText, &d->lines);
+        #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+        clearPreedit_InputWidget_(d);
+        #endif
+    }
+    else {
+        #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+        commitPreedit_InputWidget_(d);
+        #endif
     }
     d->inFlags &= ~isMarking_InputWidgetFlag;
     deactivateInputMode_InputWidget_(d);
     startOrStopCursorTimer_InputWidget_(d, iFalse);
     window_Widget(w)->keyPriority = NULL;
-#endif
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag | touchDrag_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
@@ -1961,6 +2068,9 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
             break;
         case started_ClickResult: {
             setFocus_Widget(w);
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+            commitPreedit_InputWidget_(d);
+#endif
             const iInt2 oldCursor = d->cursor;
             setCursor_InputWidget(d, coordCursor_InputWidget_(d, pos_Click(&d->click)));
             if (keyMods_Sym(modState_Keys()) == KMOD_SHIFT) {
@@ -2425,6 +2535,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                                            isCommand_UserEvent(ev, "window.focus.gained"))) {
         /* Ignore events happening in other windows. */
         if (arg_Command(command_UserEvent(ev)) == id_Window(window_Widget(w))) {
+            if (isCommand_UserEvent(ev, "window.focus.lost")) {
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+                commitPreedit_InputWidget_(d); /* don't lose in-progress composition */
+#endif
+            }
             startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
             d->cursorVis = 1;
             refresh_Widget(d);
@@ -2596,6 +2711,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return false_EventResult;
     }
     if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
+        /* TEXTINPUT: a normal (e.g. non-CJK) keypress or the IME has finalized
+           text to commit. */
         if ((modState_Keys() & (KMOD_CTRL | KMOD_ALT)) == KMOD_CTRL) {
             /* Note: AltGr on Windows is reported as Ctrl+Alt. */
             return iTrue;
@@ -2603,16 +2720,69 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         if (isLinux_Platform() && keyMods_Sym(modState_Keys()) == KMOD_CTRL) {
             return iTrue;
         }
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+        if (isEmpty_String(&d->preedit)) {
+            /* Not finishing an IME composition, so this needs its own undo entry.
+               (Compositions already pushed undo when they started.) */
+            pushUndo_InputWidget_(d);
+        }
+        clearPreedit_InputWidget_(d);
+#else
         pushUndo_InputWidget_(d);
+#endif
         deleteMarked_InputWidget_(d);
         insertRange_InputWidget_(d, range_CStr(ev->text.text));
         contentsWereChanged_InputWidget_(d);
+        updateTextInputRect_InputWidget_(d);
         return iTrue;
     }
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    if ((ev->type == SDL_TEXTEDITING || ev->type == SDL_TEXTEDITING_EXT) &&
+        isFocused_Widget(w)) {
+        /* IME is composing text that hasn't been committed yet (e.g., assembling a
+           Korean syllable from individual jamo keystrokes). We store it separately
+           and draw it inline at the cursor position. TEXTEDITING_EXT is used for
+           composition strings that exceed the 32-byte TEXTEDITING buffer. */
+        const char *compText;
+        int compStart, compLen;
+        if (ev->type == SDL_TEXTEDITING_EXT) {
+            /* Ownership is transferred; freed below after the text is copied. */
+            compText  = ev->editExt.text;
+            compStart = ev->editExt.start;
+            compLen   = ev->editExt.length;
+        }
+        else {
+            compText  = ev->edit.text;
+            compStart = ev->edit.start;
+            compLen   = ev->edit.length;
+        }
+        if (compText[0] == '\0') {
+            /* Empty composition: IME cancelled or composition ended without commit. */
+            clearPreedit_InputWidget_(d);
+        }
+        else {
+            if (isEmpty_String(&d->preedit)) {
+                /* First event of a new composition. Delete any selected text. */
+                pushUndo_InputWidget_(d);
+                deleteMarked_InputWidget_(d);
+            }
+            setPreedit_InputWidget_(d, compText, compStart, compLen);
+        }
+        if (ev->type == SDL_TEXTEDITING_EXT) {
+            SDL_free((char *)compText);
+        }
+        showCursor_InputWidget_(d);
+        updateAllLinesAndResizeHeight_InputWidget_(d);
+        updateTextInputRect_InputWidget_(d);
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+        refresh_Widget(d);
+        return iTrue;
+    }
+#endif /* LAGRANGE_HAVE_SDL_TEXTEDITING */
     const iInt2 curMax    = cursorMax_InputWidget_(d);
     const iInt2 lineFirst = init_I2(0, d->cursor.y);
     const iInt2 lineLast  = init_I2(endX_InputWidget_(d, d->cursor.y), d->cursor.y);
-#endif
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
     /* Click behavior depends on device type. */ {
         const int mbResult = (deviceType_App() == desktop_AppDeviceType
                               ? processPointerEvents_InputWidget_(d, ev)
@@ -2625,6 +2795,18 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
+        /* While an IME composition is active, SDL sends KEYDOWN before the IME
+           processes the key. Consume unmodified and Option keys so the widget
+           doesn't also act on them (e.g., Option+Enter for Hanja selection).
+           Cmd/Ctrl combos are let through as app shortcuts. */
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT && defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+        if (!isEmpty_String(&d->preedit) &&
+            !(ev->key.keysym.mod & (KMOD_GUI | KMOD_CTRL)) &&
+            ev->key.keysym.sym != SDLK_ESCAPE &&
+            ev->key.keysym.sym != SDLK_TAB) {
+            return iTrue;
+        }
+#endif
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -2645,8 +2827,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
-#  if defined (iPlatformApple)
-        if (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
+        if (isApple_Platform() && (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT))) {
             switch (key) {
                 case SDLK_UP:
                 case SDLK_DOWN:
@@ -2655,7 +2836,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
-#  endif
         d->prevCursor = d->cursor;
         if (isSelectAllEvent_InputWidget_(&ev->key)) {
             selectAll_InputWidget(d);
@@ -2999,6 +3179,28 @@ static void draw_InputWidget_(const iInputWidget *d) {
     iRect         markerRects[2] = { zero_Rect(), zero_Rect() };
 #endif
     const int     visLineOffsetY = visLineOffsetY_InputWidget_(d);
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    /* If IME composition is active, create a version of the cursor line with the
+       preedit text inserted so draw_WrapText wraps it correctly. */
+# if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    iString preeditLine;
+    const iBool hasPreeditLine =
+        (isFocused && !isEmpty_String(&d->preedit) &&
+         contains_Range(&visLines, d->cursor.y));
+    if (hasPreeditLine) {
+        const iInputLine *curLine = constAt_Array(&d->lines, d->cursor.y);
+        initCopy_String(&preeditLine, &curLine->text);
+        insertData_Block(&preeditLine.chars, d->cursor.x,
+                         constBegin_String(&d->preedit),
+                         size_String(&d->preedit));
+    }
+    else {
+        init_String(&preeditLine); /* unused, but must be valid for deinit */
+    }
+# else
+    const iBool hasPreeditLine = iFalse;
+# endif
+#endif
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */
@@ -3040,7 +3242,15 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.wrapFunc = isFocused ? draw_MarkPainter_ : NULL; /* mark is drawn under each line of text */
         for (size_t vis = visLines.start; vis < visLines.end; vis++) {
             const iInputLine *line = constAt_Array(&d->lines, vis);
-            wrapText.text = range_String(&line->text);
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+            if (hasPreeditLine && (int) vis == d->cursor.y) {
+                wrapText.text = range_String(&preeditLine);
+            }
+            else
+#endif
+            {
+                wrapText.text = range_String(&line->text);
+            }
             marker.line   = line;
             marker.pos    = drawPos;
             iInputWidgetHighlight highlight = { .font = d->font, .color = fg };
@@ -3056,17 +3266,114 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.wrapFunc = NULL;
         wrapText.context  = NULL;
     }
+    int visWrapsAbove = 0;
+    iInt2 cursorCoord = zero_I2();
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    const int preeditWidth = d->preeditAdvance;
+#else
+    const int preeditWidth = 0;
+#endif
+    if (isFocused && contains_Range(&visLines, d->cursor.y)) {
+        for (int i = d->cursor.y - 1; i >= visLines.start; i--) {
+            visWrapsAbove += numWrapLines_InputLine_(constAt_Array(&d->lines, i));
+        }
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+        if (hasPreeditLine) {
+            /* Compute cursor coord in the preedit-inclusive wrapped layout.
+               The cursor sits at the end of the preedit text. */
+            iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
+            wt.text = range_String(&preeditLine);
+            wt.hitChar = wt.text.start + d->cursor.x + size_String(&d->preedit);
+            measure_WrapText(&wt, d->font);
+            cursorCoord = wt.hitAdvance_out;
+        }
+        else
+#endif
+        {
+            cursorCoord = relativeCursorCoord_InputWidget_(d);
+        }
+    }
+#if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
+    /* Draw underline under IME composition (preedit) text. The text itself is
+       already drawn by the draw_WrapText loop above (inserted into the line). */
+    if (hasPreeditLine) {
+        iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
+        wt.text = range_String(&preeditLine);
+        const int lh = lineHeight_Text(d->font);
+        const int mw = wt.maxWidth;
+        const iInt2 origin = addY_I2(topLeft_Rect(contentBounds),
+                                     visLineOffsetY + visWrapsAbove * lh);
+        /* Find where the preedit starts in the wrapped layout. */
+        wt.hitChar = wt.text.start + d->cursor.x;
+        measure_WrapText(&wt, d->font);
+        const iInt2 compCoord = wt.hitAdvance_out;
+        /* Preedit end coord is the cursor position (already computed). */
+        const iInt2 endCoord = cursorCoord;
+        if (d->preeditLength > 0 &&
+            d->preeditCursor + d->preeditLength <= size_String(&d->preedit)) {
+            /* The preedit has three regions: "before" (thin underline),
+               "active" (double underline for the clause being converted),
+               and "after" (thin underline). Compute interior boundary coords. */
+            wt.hitChar = wt.text.start + d->cursor.x + d->preeditCursor;
+            measure_WrapText(&wt, d->font);
+            const iInt2 actStart = wt.hitAdvance_out;
+            wt.hitChar = wt.text.start + d->cursor.x + d->preeditCursor + d->preeditLength;
+            measure_WrapText(&wt, d->font);
+            const iInt2 actEnd = wt.hitAdvance_out;
+            /* "Before" segment: thin underline. */
+            if (d->preeditCursor > 0) {
+                for (int ly = compCoord.y; ly <= actStart.y; ly += lh) {
+                    const int x0 = (ly == compCoord.y ? compCoord.x : 0);
+                    const int x1 = (ly == actStart.y ? actStart.x : mw);
+                    if (x1 > x0) {
+                        drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                        x1 - x0, uiInputCursor_ColorId);
+                    }
+                }
+            }
+            /* "Active" segment: double underline. */
+            for (int ly = actStart.y; ly <= actEnd.y; ly += lh) {
+                const int x0 = (ly == actStart.y ? actStart.x : 0);
+                const int x1 = (ly == actEnd.y ? actEnd.x : mw);
+                if (x1 > x0) {
+                    drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                    x1 - x0, uiInputCursor_ColorId);
+                    drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 2)),
+                                    x1 - x0, uiInputCursor_ColorId);
+                }
+            }
+            /* "After" segment: thin underline. */
+            if (d->preeditCursor + d->preeditLength < (int) size_String(&d->preedit)) {
+                for (int ly = actEnd.y; ly <= endCoord.y; ly += lh) {
+                    const int x0 = (ly == actEnd.y ? actEnd.x : 0);
+                    const int x1 = (ly == endCoord.y ? endCoord.x : mw);
+                    if (x1 > x0) {
+                        drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                        x1 - x0, uiInputCursor_ColorId);
+                    }
+                }
+            }
+        }
+        else {
+            /* Simple case: single thin underline for entire preedit. */
+            for (int ly = compCoord.y; ly <= endCoord.y; ly += lh) {
+                const int x0 = (ly == compCoord.y ? compCoord.x : 0);
+                const int x1 = (ly == endCoord.y ? endCoord.x : mw);
+                if (x1 > x0) {
+                    drawHLine_Paint(&p, add_I2(origin, init_I2(x0, ly + lh - 1)),
+                                    x1 - x0, uiInputCursor_ColorId);
+                }
+            }
+        }
+        deinit_String(&preeditLine);
+    }
+#endif /* LAGRANGE_HAVE_SDL_TEXTEDITING */
     /* Draw the insertion point. */
     if (isFocused && (d->cursorVis || !isBlinkingCursor_()) &&
         contains_Range(&visLines, d->cursor.y) &&
         (deviceType_App() == desktop_AppDeviceType || isEmpty_Range(&d->mark))) {
         iInt2    curSize;
-        iRangecc cursorChar    = iNullRange;
-        int      visWrapsAbove = 0;
-        for (int i = d->cursor.y - 1; i >= visLines.start; i--) {
-            const iInputLine *line = constAt_Array(&d->lines, i);
-            visWrapsAbove += numWrapLines_InputLine_(line);
-        }
+        iRangecc cursorChar = iNullRange;
         if (d->mode == overwrite_InputMode) {
             /* Block cursor that overlaps a character. */
             cursorChar.start = charPos_InputWidget_(d, d->cursor);
@@ -3090,10 +3397,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
             /* Bar cursor. */
             curSize = init_I2(gap_UI / 2, lineHeight_Text(d->font));
         }
-        const iInt2 advance = relativeCursorCoord_InputWidget_(d);
         const iInt2 curPos = add_I2(addY_I2(topLeft_Rect(contentBounds), visLineOffsetY +
                                             visWrapsAbove * lineHeight_Text(d->font)),
-                                    addX_I2(advance,
+                                    addX_I2(addX_I2(cursorCoord,
+                                                    hasPreeditLine ? 0 : preeditWidth),
                                             (d->mode == insert_InputMode ? -curSize.x / 2 : 0)));
         const iRect curRect  = { curPos, curSize };
 #if defined (SDL_SEAL_CURSES)
@@ -3125,7 +3432,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
             drawPin_Paint(&p, markerRects[i], i, uiTextCaution_ColorId);
         }
     }
-#endif
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
     drawChildren_Widget(w);
 }
 

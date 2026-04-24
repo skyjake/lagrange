@@ -2199,7 +2199,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         if ((equal_Command(cmd, "tabs.changed") &&
              startsWith_Rangecc(range_Command(cmd, "id"), "doc")) ||
             equal_Command(cmd, "document.changed")) {
-            updateItems_SidebarWidget_(d);
+            if (d->mode != bookmarks_SidebarMode) {
+                updateItems_SidebarWidget_(d);
+            }
             if (d->mode != siteStructure_SidebarMode) {
                 scrollOffset_ListWidget(d->list, 0);
             }

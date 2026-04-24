@@ -254,6 +254,18 @@ msgstr "Find on Page"
 msgid "macos.menu.find"
 msgstr "Find"
 
+msgid "macos.menu.hide"
+msgstr "Hide Lagrange"
+
+msgid "macos.menu.hideothers"
+msgstr "Hide Others"
+
+msgid "macos.menu.showall"
+msgstr "Show All"
+
+msgid "macos.menu.services"
+msgstr "Services"
+
 msgid "menu.open.external"
 msgstr "Open in Another App"
 
@@ -1106,6 +1118,9 @@ msgstr "Copy Link"
 
 msgid "link.copy.label"
 msgstr "Copy Link Label"
+
+msgid "link.copy.gemtext"
+msgstr "Copy Link as Gemtext"
 
 msgid "link.searchurl"
 msgstr "Use as Search URL"
@@ -2374,6 +2389,9 @@ msgstr "Gopher proxy:"
 
 msgid "prefs.proxy.http"
 msgstr "HTTP proxy:"
+
+msgid "prefs.socks"
+msgstr "Proxy enabled:"
 
 msgid "prefs.socks.server"
 msgstr "Proxy server:"

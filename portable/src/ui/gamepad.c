@@ -186,10 +186,12 @@ static void ticker_Gamepad_(void *context) {
                 .type      = SDL_MOUSEWHEEL,
                 .which     = mouseId_Gamepad,
                 .windowID  = id_Window(d->window),
+                .direction = perPixel_MouseWheelFlag,
                 .y         = -pixels,
+#if SDL_VERSION_ATLEAST(2, 26, 0)
                 .mouseX    = d->pointer.x,
                 .mouseY    = d->pointer.y,
-                .direction = perPixel_MouseWheelFlag,
+#endif
             });
             d->scrollAccum -= pixels;
         }
