@@ -8,6 +8,8 @@
 
 ## 1.20.5
 * Fixed: Bookmark context menu closes prematurely when any page is loaded.
+* Improved build compatibility with old versions of SDL.
+* Adjusted minimum page margins on desktop for increased breathing room.
 
 ## 1.20.4
 * Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
