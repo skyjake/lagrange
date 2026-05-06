@@ -267,6 +267,14 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
             checkServerCertificate_GmRequest_(d);
             iRelease(metaPattern);
         }
+        else if (size_String(&resp->meta) > 1024) {
+            /* The Gemini "tech overview" caps <META> at 1024 bytes; formal specification leaves
+               it currently undefined. */
+            clear_String(&resp->meta);
+            resp->statusCode = invalidHeader_GmStatusCode;
+            d->state         = finished_GmRequestState;
+            notifyDone       = iTrue;
+        }
     }
     else if (d->state == receivingBody_GmRequestState) {
         append_Block(&resp->body, data);

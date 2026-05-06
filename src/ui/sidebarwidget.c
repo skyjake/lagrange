@@ -1001,6 +1001,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                          iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
                                          frameless_WidgetFlag | noBackground_WidgetFlag);
                 iInputWidget *filter = new_InputWidget(0);
+                setBackgroundColor_Widget(as_Widget(filter), uiBackgroundSidebar_ColorId);
                 setText_InputWidget(filter, &d->bookmarkFilter);
                 setId_Widget(as_Widget(filter), "filter.bookmark.input");
                 setHint_InputWidget(filter, "${hint.filter.bookmark}");
@@ -2199,7 +2200,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         if ((equal_Command(cmd, "tabs.changed") &&
              startsWith_Rangecc(range_Command(cmd, "id"), "doc")) ||
             equal_Command(cmd, "document.changed")) {
-            updateItems_SidebarWidget_(d);
+            if (d->mode != bookmarks_SidebarMode) {
+                updateItems_SidebarWidget_(d);
+            }
             if (d->mode != siteStructure_SidebarMode) {
                 scrollOffset_ListWidget(d->list, 0);
             }

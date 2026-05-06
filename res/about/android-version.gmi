@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.20 (Beta 51)
+* Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
+* Possible fix for Heading subscription entries returning to an unread state after a long time.
+* Added a "Copy Link as Gemtext" context menu action and fixed missing items. (Courtesy of Sidney Cammeresi.)
+* Updated UI translations.
+
 ## 1.20 (Beta 50)
 * Added option to easily toggle SOCKS5 without losing the configuration.
 * Fixed localhost addresses not being ignored by the SOCKS5 proxy.

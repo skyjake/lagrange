@@ -206,8 +206,10 @@ int maxDocumentWidth_DocumentView(const iDocumentView *d) {
     const iWidget *w        = constAs_Widget(d->owner);
     const iRect    bounds   = bounds_Widget(w);
     const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
-    const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
-                                     -1.0f, 10.0f); /* adapt to width */
+    const float    adjust =
+        iClamp((float) bounds.size.x / gap_UI / 11 - 12,
+               isDesktop_Platform() && !isTerminal_Platform() ? 2.0f /* no contraction */ : -1.0f,
+               10.0f); /* adapt to width */
     return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2);
 }
 

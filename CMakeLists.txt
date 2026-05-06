@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.20.4
+    VERSION 1.20.5
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -30,8 +30,8 @@ if (IOS)
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.20)
-    set (ANDROID_BUILD_VERSION b50)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-03-27")
+    set (ANDROID_BUILD_VERSION b51)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-04-16")
 endif ()
 
 # Load modules from the source tree
@@ -90,6 +90,8 @@ include (BuildType)
 include (Resources)
 include (Depends)
 include (CheckCCompilerFlag)
+include (CheckCSourceCompiles)
+include (CMakePushCheckState)
 
 check_c_compiler_flag (-Werror=incompatible-pointer-types CFLAG_INCOMPATIBLE_POINTER_TYPES)
 
@@ -551,6 +553,29 @@ if (ENABLE_GUI)
         target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
         target_compile_options (app PUBLIC ${SDL2_CFLAGS})
         target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+    endif ()
+
+    # Check for SDL_TEXTEDITING support.
+    cmake_push_check_state (RESET)
+    if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
+        get_target_property (_sdl2_incdirs SDL2::SDL2-static INTERFACE_INCLUDE_DIRECTORIES)
+    else ()
+        set (_sdl2_incdirs ${SDL2_INCLUDE_DIRS})
+    endif ()
+    set (CMAKE_REQUIRED_INCLUDES ${_sdl2_incdirs})
+    check_c_source_compiles (
+        "#include <SDL.h>
+        int main(void) {
+            int a = SDL_TEXTEDITING;
+            int b = SDL_TEXTEDITING_EXT;
+            return a + b;
+        }"
+        HAVE_SDL_TEXTEDITING
+    )
+    cmake_pop_check_state ()
+
+    if (HAVE_SDL_TEXTEDITING)
+        target_compile_definitions (app PUBLIC LAGRANGE_HAVE_SDL_TEXTEDITING=1)
     endif ()
     if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
         if (TARGET harfbuzz-lib)

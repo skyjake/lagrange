@@ -822,6 +822,9 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "menu.closed") ||
            equal_Command(cmd, "menu.keepatbottom") ||
            equal_Command(cmd, "layout.changed") ||
+           startsWith_CStr(cmd, "open idle:1") || /* opening a URL sometime later */
+           (equal_Command(cmd, "open") &&
+            argLabel_Command(cmd, "redirect")) || /* not a user action */
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -955,6 +958,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
 #if !defined (NDEBUG) && !defined (iPlatformTerminal)
             printf("closemenu being called on %p (id:%s) due to cmd: %s\n", menu,
                    cstr_String(id_Widget(menu)), cmd);
+            fflush(stdout);
 #endif
             closeMenu_Widget(menu);
         }
@@ -1278,6 +1282,7 @@ iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n,
     }
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
+                        fixedPosition_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
                         resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);

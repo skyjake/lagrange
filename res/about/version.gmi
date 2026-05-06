@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.20.5
+* Fixed: Bookmark context menu closes prematurely when any page is loaded.
+* Fixed: Mismatched Bookmarks sidebar filter field background color.
+* Fixed: Reject server responses where the header is too long.
+* Improved build compatibility with old versions of SDL.
+* Adjusted minimum page margins on desktop for increased breathing room.
+
 ## 1.20.4
 * Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
 * Possible fix for Heading subscription entries returning to an unread state after a long time.

@@ -186,10 +186,12 @@ static void ticker_Gamepad_(void *context) {
                 .type      = SDL_MOUSEWHEEL,
                 .which     = mouseId_Gamepad,
                 .windowID  = id_Window(d->window),
+                .direction = perPixel_MouseWheelFlag,
                 .y         = -pixels,
+#if SDL_VERSION_ATLEAST(2, 26, 0)
                 .mouseX    = d->pointer.x,
                 .mouseY    = d->pointer.y,
-                .direction = perPixel_MouseWheelFlag,
+#endif
             });
             d->scrollAccum -= pixels;
         }
@@ -244,14 +246,15 @@ static void hidePointer_Gamepad_(iGamepad *d, iBool completely) {
 
 /*-----------------------------------------------------------------------------------------------*/
 
-static void sdlInit_(void) {
+static iBool sdlInit_(void) {
     if (!wasInited_) {
         if (SDL_Init(SDL_INIT_GAMECONTROLLER)) {
             fprintf(stderr, "[Gamepad] failed to initialize: %s\n", SDL_GetError());
-            return;
+            return iFalse;
         }
         wasInited_ = iTrue;
     }
+    return iTrue;
 }
 
 void init_Gamepad(iGamepad *d) {
@@ -272,7 +275,10 @@ void init_Gamepad(iGamepad *d) {
     setFlags_Anim(&d->pointerf[0], easeOut_AnimFlag, iTrue);
     setFlags_Anim(&d->pointerf[1], easeOut_AnimFlag, iTrue);
     d->buttons = 0;
-    sdlInit_();
+    if (!sdlInit_()) {
+        d->pointerTexture = NULL;
+        return;
+    }
     SDL_GameControllerEventState(SDL_ENABLE);
     d->pointerTexture = makeTextureFromImageData_Window(d->window, &imagePointer_Resources);
     /* Look for gamepads. */
@@ -286,13 +292,15 @@ void init_Gamepad(iGamepad *d) {
 
 void deinit_Gamepad(iGamepad *d) {
     close_Gamepad_(d);
-    SDL_GameControllerEventState(SDL_IGNORE);
-    SDL_DestroyTexture(d->pointerTexture);
     delete_PtrSet(d->openMenus);
+    if (wasInited_) {
+        SDL_GameControllerEventState(SDL_IGNORE);
+        SDL_DestroyTexture(d->pointerTexture);
+    }
 }
 
 iBool isAvailable_Gamepad(void) {
-    sdlInit_();
+    if (!sdlInit_()) return iFalse;
     for (int i = 0; i < SDL_NumJoysticks(); i++) {
         if (SDL_IsGameController(i)) {
             return iTrue;
