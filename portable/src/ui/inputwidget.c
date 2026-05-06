@@ -1,4 +1,5 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2026 Jaakko Keränen <jaakko.keranen@iki.fi>
+   Copyright 2026 Sidney Cammeresi <sac@cheesecake.org>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -937,6 +938,7 @@ static void deactivateInputMode_InputWidget_(iInputWidget *d) {
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
+    w->bgColor = uiInputBackground_ColorId;
     d->validator = NULL;
     d->validatorContext = NULL;
     d->highlighter = NULL;
@@ -3145,7 +3147,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     init_Paint(&p);
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
-        &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
+        &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : w->bgColor);
     if (!isTerminal_Platform() && ~w->flags & frameless_WidgetFlag) {
         drawRectThickness_Paint(&p,
                                 adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),

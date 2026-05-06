@@ -1001,6 +1001,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                          iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
                                          frameless_WidgetFlag | noBackground_WidgetFlag);
                 iInputWidget *filter = new_InputWidget(0);
+                setBackgroundColor_Widget(as_Widget(filter), uiBackgroundSidebar_ColorId);
                 setText_InputWidget(filter, &d->bookmarkFilter);
                 setId_Widget(as_Widget(filter), "filter.bookmark.input");
                 setHint_InputWidget(filter, "${hint.filter.bookmark}");
