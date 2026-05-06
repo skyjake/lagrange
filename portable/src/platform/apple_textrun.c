@@ -97,8 +97,8 @@ static CGColorRef cgColorFromColor_(const iColor c) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstructionArgs(AppleTextRun,
-    (const char *rawText, size_t rawLen, int fontId, int colorId, iAppleText *tx),
-    rawText, rawLen, fontId, colorId, tx)
+    (const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor, iAppleText *tx),
+    rawText, rawLen, fontId, colorId, resolvedColor, tx)
 
 static iBool prepare_AppleTextRun_(
     iAppleText                   *tx,
@@ -429,14 +429,17 @@ static iBool prepare_AppleTextRun_(
 }
 
 void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
-                       int fontId, int colorId, iAppleText *tx) {
+                       int fontId, int colorId, iColor resolvedColor, iAppleText *tx) {
     iZap(*d);
-    d->hash       = iCrc32(rawText, rawLen)
-                    ^ (uint32_t)((unsigned)fontId << 8)
-                    ^ (uint32_t)((unsigned)(colorId & mask_ColorId) << 16);
-    d->rawTextLen = rawLen;
-    d->fontId     = fontId;
-    d->colorId    = colorId;
+    uint32_t colorPacked;
+    memcpy(&colorPacked, &resolvedColor, 4);
+    d->hash          = iCrc32(rawText, rawLen)
+                       ^ (uint32_t)((unsigned)fontId << 8)
+                       ^ colorPacked;
+    d->rawTextLen    = rawLen;
+    d->fontId        = fontId;
+    d->colorId       = colorId;
+    d->resolvedColor = resolvedColor;
     CFMutableAttributedStringRef mAttrStr = NULL;
     if (!prepare_AppleTextRun_(tx,
                                rawText,

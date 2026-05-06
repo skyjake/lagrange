@@ -46,11 +46,12 @@ void ensureCtFont_AppleFont_(iAppleFont *, CFArrayRef cascadeList);
 
 /* Cached shaped text run with escape-parsed attributes. */
 struct Impl_AppleTextRun {
-    uint32_t        hash;        /* CRC for cache lookup */
-    size_t          rawTextLen;  /* raw byte length, for cache collision check */
+    uint32_t        hash;         /* CRC for cache lookup */
+    size_t          rawTextLen;   /* raw byte length, for cache collision check */
     int             fontId;
-    int             colorId;     /* base fg color ID; part of cache key */
-    char           *text;        /* clean UTF-8 (escape-stripped); owned */
+    int             colorId;      /* base fg color ID; used for drawing */
+    iColor          resolvedColor; /* actual RGBA at creation time; part of cache key */
+    char           *text;         /* clean UTF-8 (escape-stripped); owned */
     size_t          textLen;
     CTTypesetterRef typesetter;
     size_t         *utf16ToSrc;  /* [utf16Idx] -> byte offset from rawText start; owned */
@@ -59,7 +60,7 @@ struct Impl_AppleTextRun {
 };
 
 iDeclareTypeConstructionArgs(AppleTextRun,
-    const char *rawText, size_t rawLen, int fontId, int colorId, iAppleText *tx)
+    const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor, iAppleText *tx)
 
 /*----------------------------------------------------------------------------------------------*/
 

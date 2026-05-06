@@ -406,16 +406,20 @@ static void clearRunCache_AppleText_(iAppleText *d) {
 
 static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int fontId,
                                               int colorId) {
-    /* Find or create a run cache entry for the given raw text, font, and base color. */
-    const size_t   rawLen = (size_t) (text.end - text.start);
-    const uint32_t hash   = iCrc32(text.start, rawLen)
-                            ^ (uint32_t) ((unsigned) fontId << 8)
-                            ^ (uint32_t) ((unsigned) (colorId & mask_ColorId) << 16);
+    /* Find or create a run cache entry for the given raw text, font, and base color.
+       The resolved RGBA is part of the key so palette changes cause cache misses. */
+    const size_t   rawLen        = (size_t) (text.end - text.start);
+    const iColor   resolvedColor = get_Color(colorId & mask_ColorId);
+    uint32_t       colorPacked;
+    memcpy(&colorPacked, &resolvedColor, 4);
+    const uint32_t hash = iCrc32(text.start, rawLen)
+                          ^ (uint32_t) ((unsigned) fontId << 8)
+                          ^ colorPacked;
     /* Search for an existing entry. */
     for (int i = 0; i < maxRunCache_AppleText_; i++) {
         iAppleTextRun *r = d->runCache[i];
-        if (r && r->hash == hash && r->fontId == fontId && r->colorId == colorId &&
-            r->rawTextLen == rawLen) {
+        if (r && r->hash == hash && r->fontId == fontId &&
+            equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen) {
             r->lastUsed = ++d->runCacheSerial;
 #if !defined(NDEBUG)
             d->cacheHits++;
@@ -457,7 +461,7 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     }
 #endif
     /* Create a new run. */
-    iAppleTextRun *r = new_AppleTextRun(text.start, rawLen, fontId, colorId, d);
+    iAppleTextRun *r = new_AppleTextRun(text.start, rawLen, fontId, colorId, resolvedColor, d);
     if (r) {
         r->lastUsed          = ++d->runCacheSerial;
         d->runCache[lruSlot] = r;
