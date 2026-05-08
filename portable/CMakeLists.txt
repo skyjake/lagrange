@@ -29,6 +29,11 @@ set (DEFAULT_IDLE_SLEEP OFF)
 if (IOS)
     set (DEFAULT_IDLE_SLEEP ON)
 endif ()
+if (NOT APPLE AND NOT IOS)
+    set (DEFAULT_FREETYPE ON)
+else ()
+    set (DEFAULT_FREETYPE OFF)
+endif ()
 
 # Build configuration.
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
@@ -55,6 +60,7 @@ set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check wh
 
 # Optional dependencies.
 option (ENABLE_CORETEXT         "Use Core Text for text rendering (macOS/iOS)" ${APPLE})
+option (ENABLE_FREETYPE         "Use FreeType for text rendering (Windows/Linux)" ${DEFAULT_FREETYPE})
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
 option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
@@ -70,9 +76,18 @@ if (ENABLE_CORETEXT)
     if (NOT APPLE)
         message (FATAL_ERROR "Core Text is only available on Apple platforms")
     endif ()
+    if (ENABLE_FREETYPE)
+        message (FATAL_ERROR "ENABLE_CORETEXT and ENABLE_FREETYPE are mutually exclusive")
+    endif ()
     # Core Text replaces HarfBuzz and FriBidi on Apple platforms.
     set (ENABLE_HARFBUZZ OFF)
     set (ENABLE_FRIBIDI  OFF)
+endif ()
+if (ENABLE_FREETYPE)
+    # FreeType uses the system HarfBuzz (via hb-ft.h) which is co-installed with
+    # the system FreeType. Using lib/harfbuzz/ would produce an ABI-incompatible copy.
+    set (ENABLE_HARFBUZZ         ON  CACHE BOOL "" FORCE)
+    set (ENABLE_HARFBUZZ_MINIMAL OFF CACHE BOOL "" FORCE)
 endif ()
 if (ENABLE_MOBILE_HANDHELD)
     set (ENABLE_MOBILE_PHONE ON) # phone UI implied
@@ -317,10 +332,25 @@ if (ENABLE_CORETEXT)
         src/platform/apple_text.c
         src/platform/apple_textrun.c
         src/platform/apple_sfsymbols.m
+        src/platform/fontcache.h
+        src/platform/fontcache.c
+    )
+elseif (ENABLE_FREETYPE)
+    list (APPEND SOURCES
+        src/platform/fontcache.h
+        src/platform/fontcache.c
+        src/platform/freetype_fontcache.h
+        src/platform/freetype_fontcache.c
+        src/platform/freetype_text.h
+        src/platform/freetype_text.c
+        src/render/text_backend.h
+        src/render/text_backend.c
     )
 else ()
     set (ENABLE_STB_TRUETYPE YES)
     list (APPEND SOURCES
+        src/render/text_backend.h
+        src/render/text_backend.c
         src/render/text_stb.c
         src/render/text_stb.h
     )
@@ -568,6 +598,23 @@ if (ENABLE_GUI)
             target_include_directories (app PUBLIC ${FRIBIDI_INCLUDE_DIRS})
         endif ()
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)
+    endif ()
+    if (ENABLE_FREETYPE AND Freetype_FOUND)
+        target_link_libraries (app PUBLIC Freetype::Freetype)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FREETYPE=1)
+        if (UNIX AND NOT APPLE AND FONTCONFIG_FOUND)
+            if (TARGET PkgConfig::FONTCONFIG)
+                target_link_libraries (app PUBLIC PkgConfig::FONTCONFIG)
+            else ()
+                target_link_libraries (app PUBLIC ${FONTCONFIG_LIBRARIES})
+                target_include_directories (app PUBLIC ${FONTCONFIG_INCLUDE_DIRS})
+            endif ()
+            target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FONTCONFIG=1)
+        endif ()
+        if (WIN32 OR MINGW)
+            target_link_libraries (app PUBLIC dwrite)
+            target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_DIRECTWRITE=1)
+        endif ()
     endif ()
     if (APPLE)
         if (IOS)

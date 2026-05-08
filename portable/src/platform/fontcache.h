@@ -20,24 +20,44 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* Backend-private data structures for the STB TrueType + HarfBuzz rendering backend.
-   Only include this from files that are part of the STB backend (text_stb.c,
-   text_simple.c). Do not include from fontpack.h or other widely-included headers. */
+/* Shared font cache entry data structures and serialization.
+   Used by both the Apple CoreText backend (apple_fontcache.c) and the
+   FreeType backend (freetype_fontcache.c).
+
+   The per-style `identifier` field carries a PostScript name on Apple
+   and a file path on FreeType. The `colIndex` is used only by FreeType
+   (face index within a TTC); Apple always stores 0 there. */
 
 #pragma once
 
-#include "text_backend.h"
-#include "../stb_truetype.h"
+#include "../fontpack.h"
 
-typedef struct {
-#   if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    hb_blob_t *hbBlob;
-    hb_face_t *hbFace;
-    hb_font_t *hbFont;
-#   endif
-    stbtt_fontinfo stbInfo;
-} iStbFontData;
+#include <the_Foundation/stream.h>
+#include <the_Foundation/string.h>
 
-iLocalDef iStbFontData *stbData_FontFile(const iFontFile *d) {
-    return (iStbFontData *) d->data;
-}
+iDeclareType(FontCacheStyle)
+iDeclareTypeConstruction(FontCacheStyle)
+iDeclareTypeSerialization(FontCacheStyle)
+
+struct Impl_FontCacheStyle {
+    iString  identifier; /* PostScript name (CoreText) or file path (FreeType) */
+    int32_t  colIndex;   /* face index inside a TTC; 0 for CoreText */
+    int32_t  ascent;
+    int32_t  descent;
+    int32_t  lineGap;
+    int32_t  winAscent;
+    int32_t  winDescent;
+    int32_t  emAdvance;
+    int32_t  unitsPerEm;
+};
+
+iDeclareType(FontCacheEntry)
+iDeclareTypeConstruction(FontCacheEntry)
+iDeclareTypeSerialization(FontCacheEntry)
+
+struct Impl_FontCacheEntry {
+    iString          id;
+    iString          name;
+    uint32_t         flags;
+    iFontCacheStyle  styles[max_FontStyle];
+};

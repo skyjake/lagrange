@@ -24,9 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include <SDL_version.h>
 
-iDeclareType(Font)
-
-/* TODO: Include this in text_stb.c as an runtime option. */
+/* TODO: Include this in text_stb.c as a runtime option. */
 
 iLocalDef iBool isWrapPunct_(iChar c) {
     /* Punctuation that participates in word-wrapping. */
@@ -81,9 +79,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
     const enum iRunMode mode        = args->mode;
     const char *        lastWordEnd = args->text.start;
     SDL_Renderer *render = current_Text()->render;
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-    SDL_Texture *cache = current_StbText_()->cache;
-#endif
+    SDL_Texture *cache = currentRaster_Text_()->grayscaleCache.texture;
     iAssert(args->text.end >= args->text.start);
     if (wrap) {
         wrap->wrapRange_        = args->text;
@@ -100,9 +96,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
     /* The default text foreground color. */
     if (mode & draw_RunMode) {
         const iColor clr = get_Color(args->color);
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
         SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
-#endif
 #if defined (SDL_SEAL_CURSES)
         const enum iFontStyle style = style_FontId(fontId_Text(d));
         SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
@@ -151,9 +145,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                                      &clr,
                                      NULL,
                                      NULL);
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
                     SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
-#endif
 #if defined (SDL_SEAL_CURSES)
                     SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
 #endif
@@ -245,9 +237,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                 }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(colorNum);
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
                     SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
-#endif
 #if defined (SDL_SEAL_CURSES)
                     SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
 #endif
@@ -270,7 +260,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
 //            printf("[Text] missing from cache: %lc (%x)\n", (int) ch, ch);
             //cacheTextGlyphs_Font_(d, args->text);
-            cacheSingleGlyph_Font_(glyph->font, index_Glyph_(glyph));
+            cacheSingleGlyph_Font_((iRasterFont *) glyph->font, index_Glyph_(glyph));
             glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
         int x2 = x1 + glyph->rect[hoff].size.x;
@@ -306,13 +296,13 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
         const int yLineMax = ypos + d->font.height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                         ypos + glyph->font->font.baseline + glyph->d[hoff].y,
+                         ypos + ((iRasterFont *) glyph->font)->font.baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
                          glyph->rect[hoff].size.y };
         if (glyph->font != d) {
-            if (glyph->font->font.height > d->font.height) {
+            if (((iRasterFont *) glyph->font)->font.height > d->font.height) {
                 /* Center-align vertically so the baseline isn't totally offset. */
-                dst.y -= (glyph->font->font.height - d->font.height) / 2;
+                dst.y -= (((iRasterFont *) glyph->font)->font.height - d->font.height) / 2;
             }
         }
         /* Update the bounding box. */
@@ -326,7 +316,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
         else {
             bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
-            bounds.size.y = iMax(bounds.size.y, ypos + glyph->font->font.height - orig.y);
+            bounds.size.y = iMax(bounds.size.y, ypos + ((iRasterFont *) glyph->font)->font.height - orig.y);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
@@ -361,9 +351,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                    the partially transparent pixels. */
                 SDL_RenderFillRect(render, &dst);
             }
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
             SDL_RenderCopy(render, cache, &src, &dst);
-#endif
 #if defined (SDL_SEAL_CURSES)
             SDL_RenderDrawUnicode(render, dst.x, dst.y, ch);
             if (src.h == 2) {
@@ -386,11 +374,12 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, args->text.end);
             if (enableKerning_Text && next) {
-                const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
+                iRasterFont *rf = (iRasterFont *) glyph->font;
+                const uint32_t nextGlyphIndex = glyphIndex_Font_(rf, next);
                 int kern = stbtt_GetGlyphKernAdvance(
-                    &stbData_FontFile(glyph->font->font.file)->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
+                    &stbData_FontFile(rf->font.file)->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
                 /* Nunito needs some kerning fixes. */
-                if (glyph->font->font.spec->flags & fixNunitoKerning_FontSpecFlag) {
+                if (rf->font.spec->flags & fixNunitoKerning_FontSpecFlag) {
                     if (ch == 'W' && (next == 'i' || next == 'h')) {
                         kern = -30;
                     }
@@ -405,8 +394,8 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
 //                    printf("%lc(%u) -> %lc(%u): kern %d (%f)\n", ch, glyph->glyphIndex, next,
 //                           nextGlyphIndex,
 //                           kern, d->xScale * kern);
-                    xpos       += glyph->font->xScale * kern;
-                    xposExtend += glyph->font->xScale * kern;
+                    xpos       += rf->xScale * kern;
+                    xposExtend += rf->xScale * kern;
                 }
             }
         }

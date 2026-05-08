@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "apple_text.h"
+#include "fontcache.h"
 #include "app.h"
 
 #include <the_Foundation/thread.h>
@@ -35,73 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const uint32_t magic_FontCacheFile_   = 0x6C674643u; /* "lgFC" */
 static const uint32_t version_FontCacheFile_ = 4u;
-
-iDeclareType(FontCacheEntry)
-
-struct Impl_FontCacheEntry {
-    iString  id;
-    iString  name;
-    uint32_t flags;
-    struct {
-        iString  psNames; /* PostScript name; if same as [0] = no distinct variant */
-        int32_t  ascent;
-        int32_t  descent;
-        int32_t  lineGap;
-        int32_t  winAscent;
-        int32_t  winDescent;
-        int32_t  emAdvance;
-        int32_t  unitsPerEm;
-    } metrics[max_FontStyle];
-};
-
-static void init_FontCacheEntry(iFontCacheEntry *d) {
-    iZap(*d);
-    init_String(&d->id);
-    init_String(&d->name);
-    iForIndices(i, d->metrics) {
-        init_String(&d->metrics[i].psNames);
-    }
-}
-
-static void deinit_FontCacheEntry(iFontCacheEntry *d) {
-    iForIndices(i, d->metrics) {
-        deinit_String(&d->metrics[i].psNames);
-    }
-    deinit_String(&d->name);
-    deinit_String(&d->id);
-}
-
-static void serialize_FontCacheEntry(const iFontCacheEntry *d, iStream *outs) {
-    serialize_String(&d->id, outs);
-    serialize_String(&d->name, outs);
-    writeU32_Stream(outs, d->flags);
-    iForIndices(i, d->metrics) {
-        serialize_String(&d->metrics[i].psNames, outs);
-        write32_Stream(outs, d->metrics[i].ascent);
-        write32_Stream(outs, d->metrics[i].descent);
-        write32_Stream(outs, d->metrics[i].lineGap);
-        write32_Stream(outs, d->metrics[i].winAscent);
-        write32_Stream(outs, d->metrics[i].winDescent);
-        write32_Stream(outs, d->metrics[i].emAdvance);
-        write32_Stream(outs, d->metrics[i].unitsPerEm);
-    }
-}
-
-static void deserialize_FontCacheEntry(iFontCacheEntry *d, iStream *ins) {
-    deserialize_String(&d->id, ins);
-    deserialize_String(&d->name, ins);
-    d->flags = readU32_Stream(ins);
-    iForIndices(i, d->metrics) {
-        deserialize_String(&d->metrics[i].psNames, ins);
-        d->metrics[i].ascent     = read32_Stream(ins);
-        d->metrics[i].descent    = read32_Stream(ins);
-        d->metrics[i].lineGap    = read32_Stream(ins);
-        d->metrics[i].winAscent  = read32_Stream(ins);
-        d->metrics[i].winDescent = read32_Stream(ins);
-        d->metrics[i].emAdvance  = read32_Stream(ins);
-        d->metrics[i].unitsPerEm = read32_Stream(ins);
-    }
-}
 
 static void fontDirModTime_(const iString *path, iDate *date_out) {
     iZap(*date_out);
@@ -165,20 +99,20 @@ iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
                 for (int s = 0; s < max_FontStyle; s++) {
                     iFontFile *ff;
                     if (s != regular_FontStyle && regularFile &&
-                        equal_String(&entry.metrics[s].psNames,
-                                     &entry.metrics[regular_FontStyle].psNames)) {
+                        equal_String(&entry.styles[s].identifier,
+                                     &entry.styles[regular_FontStyle].identifier)) {
                         ff = ref_Object(regularFile); /* no distinct variant; share regular */
                     }
                     else {
                         ff = new_FontFile();
-                        set_String(&ff->id, &entry.metrics[s].psNames);
-                        ff->ascent     = entry.metrics[s].ascent;
-                        ff->descent    = entry.metrics[s].descent;
-                        ff->lineGap    = entry.metrics[s].lineGap;
-                        ff->winAscent  = entry.metrics[s].winAscent;
-                        ff->winDescent = entry.metrics[s].winDescent;
-                        ff->emAdvance  = entry.metrics[s].emAdvance;
-                        ff->unitsPerEm = entry.metrics[s].unitsPerEm;
+                        set_String(&ff->id, &entry.styles[s].identifier);
+                        ff->ascent     = entry.styles[s].ascent;
+                        ff->descent    = entry.styles[s].descent;
+                        ff->lineGap    = entry.styles[s].lineGap;
+                        ff->winAscent  = entry.styles[s].winAscent;
+                        ff->winDescent = entry.styles[s].winDescent;
+                        ff->emAdvance  = entry.styles[s].emAdvance;
+                        ff->unitsPerEm = entry.styles[s].unitsPerEm;
                         /* ff->data remains NULL; created lazily in ensureCtFont_AppleFont_ */
                     }
                     spec->styles[s] = ff;
@@ -225,14 +159,14 @@ void saveCached_FontPack_(const iFontPack *pack, const iString *cachePath) {
             for (int s = 0; s < max_FontStyle; s++) {
                 const iFontFile *ff = spec->styles[s];
                 if (ff) {
-                    set_String(&entry.metrics[s].psNames, &ff->id);
-                    entry.metrics[s].ascent      = (int32_t) ff->ascent;
-                    entry.metrics[s].descent     = (int32_t) ff->descent;
-                    entry.metrics[s].lineGap     = (int32_t) ff->lineGap;
-                    entry.metrics[s].winAscent   = (int32_t) ff->winAscent;
-                    entry.metrics[s].winDescent  = (int32_t) ff->winDescent;
-                    entry.metrics[s].emAdvance   = (int32_t) ff->emAdvance;
-                    entry.metrics[s].unitsPerEm  = (int32_t) ff->unitsPerEm;
+                    set_String(&entry.styles[s].identifier, &ff->id);
+                    entry.styles[s].ascent      = (int32_t) ff->ascent;
+                    entry.styles[s].descent     = (int32_t) ff->descent;
+                    entry.styles[s].lineGap     = (int32_t) ff->lineGap;
+                    entry.styles[s].winAscent   = (int32_t) ff->winAscent;
+                    entry.styles[s].winDescent  = (int32_t) ff->winDescent;
+                    entry.styles[s].emAdvance   = (int32_t) ff->emAdvance;
+                    entry.styles[s].unitsPerEm  = (int32_t) ff->unitsPerEm;
                 }
             }
             serialize_FontCacheEntry(&entry, outs);

@@ -20,24 +20,32 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* Backend-private data structures for the STB TrueType + HarfBuzz rendering backend.
-   Only include this from files that are part of the STB backend (text_stb.c,
-   text_simple.c). Do not include from fontpack.h or other widely-included headers. */
+/* System font enumeration and caching for the FreeType backend.
+   Provides enumerateSystemFonts_FontPack_() which discovers all fonts
+   available from the OS (via fontconfig on Linux, DirectWrite on Windows)
+   and populates font packs for use by the Lagrange font system. */
 
 #pragma once
 
-#include "text_backend.h"
-#include "../stb_truetype.h"
+#include "../fontpack.h"
 
-typedef struct {
-#   if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    hb_blob_t *hbBlob;
-    hb_face_t *hbFace;
-    hb_font_t *hbFont;
-#   endif
-    stbtt_fontinfo stbInfo;
-} iStbFontData;
+/**
+ * Enumerate all system fonts and create iFontFile/iFontSpec entries in the
+ * global font pack list. Uses a binary disk cache ("lgFC" format) to avoid
+ * re-scanning the OS font database on every launch.
+ *
+ * The background validation thread updates the cache when font directories
+ * change and sets needRefresh on the iText instance.
+ */
+void enumerateSystemFonts_FontPack_(iFontPack *);
 
-iLocalDef iStbFontData *stbData_FontFile(const iFontFile *d) {
-    return (iStbFontData *) d->data;
-}
+/**
+ * Load system fonts from the binary cache if it is up-to-date, falling back to a
+ * full enumeration if not. Always starts a background validation thread.
+ *
+ * @return iTrue if fonts were loaded from the existing cache (fast path).
+ */
+iBool loadCachedSystemFonts_FontPack_(iFontPack *);
+
+/** Stop the background font cache validation thread (call on shutdown). */
+void stopFontWorker_FtFontCache(void);

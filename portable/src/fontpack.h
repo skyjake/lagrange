@@ -88,6 +88,7 @@ struct Impl_FontFile {
     int winDescent; /* OS/2 usWinDescent; 0 if unavailable */
 };
 
+uint32_t    findGlyphIndex_FontFile     (const iFontFile *, iChar ch);
 iBool       isMonospace_FontFile        (const iFontFile *);
 float       scaleForPixelHeight_FontFile(const iFontFile *, int pixelHeight);
 int         glyphAdvance_FontFile       (const iFontFile *, uint32_t glyphIndex);
