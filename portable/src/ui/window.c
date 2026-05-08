@@ -691,6 +691,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->midDragAccum  = 0.0f;
     iZap(d->roots);
     iZap(d->cursors);
+    d->text = NULL;
     create_Window_(d, rect, flags);
     SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
 #if !defined (iPlatformTerminal)
@@ -718,6 +719,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     }
     setCurrent_Window(d); /* Text assumes global state is up-to-date */
     d->text = new_Text(d->render, (float) prefs_App()->zoomPercent / 100.0f);
+    makeTextCurrent_Window(d);
 }
 
 static void deinitRoots_Window_(iWindow *d) {
