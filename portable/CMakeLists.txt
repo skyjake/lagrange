@@ -88,6 +88,15 @@ if (ENABLE_FREETYPE)
     # the system FreeType. Using lib/harfbuzz/ would produce an ABI-incompatible copy.
     set (ENABLE_HARFBUZZ         ON  CACHE BOOL "" FORCE)
     set (ENABLE_HARFBUZZ_MINIMAL OFF CACHE BOOL "" FORCE)
+    find_package (Freetype REQUIRED)
+    # FontConfig is only needed on non-Windows systems.
+    if (UNIX AND NOT APPLE AND PKG_CONFIG_FOUND)
+        pkg_check_modules (FONTCONFIG IMPORTED_TARGET fontconfig)
+        if (FONTCONFIG_FOUND)
+            message (STATUS "Using fontconfig: ${FONTCONFIG_LIBRARIES}")
+        endif ()
+    endif ()
+    message (STATUS "Using FreeType: ${FREETYPE_LIBRARIES}")
 endif ()
 if (ENABLE_MOBILE_HANDHELD)
     set (ENABLE_MOBILE_PHONE ON) # phone UI implied

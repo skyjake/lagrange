@@ -178,18 +178,6 @@ if (ENABLE_FRIBIDI)
     endif ()
 endif ()
 
-if (ENABLE_FREETYPE)
-    find_package (Freetype REQUIRED)
-    # hb-ft.h is provided by the system HarfBuzz package (already found above).
-    # FontConfig is only needed on non-Windows systems.
-    if (UNIX AND NOT APPLE AND PKG_CONFIG_FOUND)
-        pkg_check_modules (FONTCONFIG IMPORTED_TARGET fontconfig)
-        if (FONTCONFIG_FOUND)
-            message (STATUS "Using fontconfig: ${FONTCONFIG_LIBRARIES}")
-        endif ()
-    endif ()
-    message (STATUS "Using FreeType: ${FREETYPE_LIBRARIES}")
-endif ()
 
 add_custom_target (ext-deps DEPENDS ${_dependsToBuild})
 
