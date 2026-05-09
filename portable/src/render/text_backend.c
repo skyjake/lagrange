@@ -362,7 +362,10 @@ void init_Font(iRasterFont *d, const iFontSpec *fontSpec, const iFontFile *fontF
         }
     }
     d->emAdvance     = fontFile->emAdvance * d->xScale;
-    d->font.baseline = fontFile->ascent * d->yScale;
+    d->font.baseline = (int) roundf(fontFile->ascent * d->yScale);
+    if (d->font.baseline >= d->font.height) {
+        d->font.baseline = d->font.height - 1;
+    }
     d->vertOffset    = d->font.height * (1.0f - glyphScale) / 2 *
                        fontSpec->vertOffsetScale[scaleType];
     d->table = NULL;

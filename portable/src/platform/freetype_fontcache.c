@@ -314,10 +314,10 @@ static enum iFontStyle fcStyleToFontStyle_(int weight, int slant) {
     const iBool isItalic = (slant  != FC_SLANT_ROMAN);
     const iBool isLight  = (weight <= FC_WEIGHT_LIGHT);
     const iBool isSemi   = (weight >= FC_WEIGHT_DEMIBOLD && weight < FC_WEIGHT_BOLD);
-    if (isBold && !isItalic) return bold_FontStyle;
-    if (isItalic && !isBold) return italic_FontStyle;
-    if (isLight)             return light_FontStyle;
-    if (isSemi)              return semiBold_FontStyle;
+    if (isBold)   return bold_FontStyle;     /* bold or bold-italic -> bold slot */
+    if (isSemi)   return semiBold_FontStyle;
+    if (isItalic) return italic_FontStyle;
+    if (isLight)  return light_FontStyle;
     return regular_FontStyle;
 }
 
