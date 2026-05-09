@@ -59,14 +59,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /*----------------------------------------------------------------------------------------------*/
 
-static FT_Library ftLibrary_ = NULL;
+static FT_Library ftLibrary_     = NULL;
+static int        ftLibraryRefs_ = 0;
 
 static void initFtLibrary_(void) {
-    if (ftLibrary_) return;
-    const FT_Error err = FT_Init_FreeType(&ftLibrary_);
-    iAssert(err == 0);
-    /* LCD filter makes subpixel rendering smoother without fringing. */
-    FT_Library_SetLcdFilter(ftLibrary_, FT_LCD_FILTER_DEFAULT);
+    if (!ftLibrary_) {
+        const FT_Error err = FT_Init_FreeType(&ftLibrary_);
+        iAssert(err == 0);
+        /* LCD filter makes subpixel rendering smoother without fringing. */
+        FT_Library_SetLcdFilter(ftLibrary_, FT_LCD_FILTER_DEFAULT);
+    }
+    ftLibraryRefs_++;
 }
 
 FT_Library ftLibrary_FtText(void) {
@@ -75,7 +78,7 @@ FT_Library ftLibrary_FtText(void) {
 }
 
 static void doneFtLibrary_(void) {
-    if (ftLibrary_) {
+    if (ftLibrary_ && --ftLibraryRefs_ == 0) {
         FT_Done_FreeType(ftLibrary_);
         ftLibrary_ = NULL;
     }
@@ -133,7 +136,20 @@ void allocData_FontFile(iFontFile *d) {
     }
     fd->hasColorGlyphs = FT_HAS_COLOR(face);
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    fd->hbFont = hb_ft_font_create(fd->ftFace, NULL);
+    /* Raw blob (not hb_ft_font_create) gives design-unit advances, consistent with xScale. */
+    hb_blob_t *hbBlob;
+    if (size_Block(&d->sourceData) > 0) {
+        hbBlob = hb_blob_create(constData_Block(&d->sourceData),
+                                (unsigned int) size_Block(&d->sourceData),
+                                HB_MEMORY_MODE_READONLY, NULL, NULL);
+    }
+    else {
+        hbBlob = hb_blob_create_from_file(cstr_String(&d->id));
+    }
+    hb_face_t *hbFace = hb_face_create(hbBlob, (unsigned int) d->colIndex);
+    fd->hbFont = hb_font_create(hbFace);
+    hb_face_destroy(hbFace);
+    hb_blob_destroy(hbBlob);
 #endif
     d->data = fd;
 }
@@ -153,6 +169,7 @@ void deallocData_FontFile(iFontFile *d) {
     }
     free(fd);
     d->data = NULL;
+    doneFtLibrary_();
 }
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -196,14 +213,15 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
     FT_Face face = fd->ftFace;
     const FT_UInt ppem = iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
     FT_Set_Pixel_Sizes(face, ppem, ppem);
-    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_BITMAP | FT_LOAD_NO_HINTING) != 0) return;
-    FT_BBox cbox;
-    FT_Glyph_Get_CBox((FT_Glyph) face->glyph, FT_GLYPH_BBOX_PIXELS, &cbox);
+    /* Hinted load: metrics are grid-snapped, matching the rasterizer and avoiding 1px y-jitter. */
+    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_BITMAP) != 0) return;
     iUnused(yScale, xShift);
-    *x0 = (int) cbox.xMin;
-    *y0 = -(int) cbox.yMax;
-    *x1 = (int) cbox.xMax;
-    *y1 = -(int) cbox.yMin;
+    const FT_Glyph_Metrics *m = &face->glyph->metrics;
+    if (m->width == 0 || m->height == 0) return;
+    *x0 = (int)(m->horiBearingX >> 6);
+    *y0 = -(int)(m->horiBearingY >> 6);
+    *x1 = (int)((m->horiBearingX + m->width  + 63) >> 6);
+    *y1 =  (int)((m->height - m->horiBearingY + 63) >> 6);
 }
 
 /* Returns a heap-allocated 8-bit grayscale bitmap. The caller must free() it. */
@@ -614,6 +632,7 @@ void resetFontsIfNeeded_Text(iText *d) {
     iText *oldActive = current_Text();
     iFtText *s = (iFtText *) d;
     setCurrent_Text(d);
+    clearCachedFontRuns_RasterText_(s);
     deinitFonts_RasterText(s);
     deinitCache_FtText_(s);
     initCache_FtText_(s);
