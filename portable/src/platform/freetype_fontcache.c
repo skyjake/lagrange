@@ -65,8 +65,12 @@ static const uint32_t magic_FtFontCache_   = 0x6C674643u; /* "lgFC" */
 static const uint32_t version_FtFontCache_ = 2u; /* v2 adds mtime header */
 
 static void extractMetrics_(const char *filePath, int colIndex, iFontCacheStyle *out) {
+    FT_Library lib = ftLibrary_FtText(); /* increments ref count */
     FT_Face face = NULL;
-    if (FT_New_Face(ftLibrary_FtText(), filePath, colIndex, &face) != 0 || !face) return;
+    if (FT_New_Face(lib, filePath, colIndex, &face) != 0 || !face) {
+        doneFtLibrary_FtText();
+        return;
+    }
     TT_OS2 *os2 = FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
     if (os2) {
         out->winAscent  = (int32_t) os2->usWinAscent;
@@ -87,6 +91,7 @@ static void extractMetrics_(const char *filePath, int colIndex, iFontCacheStyle 
         out->emAdvance = (int32_t) face->units_per_EM;
     }
     FT_Done_Face(face);
+    doneFtLibrary_FtText();
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -105,7 +110,7 @@ static iFontFile *makeFontFile_(const iFontCacheStyle *style, enum iFontStyle st
     f->winDescent = style->winDescent;
     f->emAdvance  = style->emAdvance;
     f->unitsPerEm = style->unitsPerEm;
-    /* sourceData left empty: allocData_FontFile() uses f->id as the file path. */
+    allocData_FontFile(f); /* sourceData is empty; loads via f->id file path */
     return f;
 }
 
@@ -131,7 +136,7 @@ static iBool addEntryToFontPack_(const iFontCacheEntry *e, iFontPack *pack) {
         spec->vertOffsetScale[t] = 1.0f;
     }
     for (int s = 0; s < max_FontStyle; s++) {
-        spec->styles[s] = files[s];
+        spec->styles[s] = ref_Object(files[s]);
     }
     addSpec_FontPack(pack, spec);
     for (int s = 0; s < max_FontStyle; s++) {
@@ -201,7 +206,7 @@ static uint64_t fontDirMtimeMillis_(void) {
    and styles[s].colIndex as the face index. */
 
 static iString *cacheFilePath_(void) {
-    return concatCStr_Path(dataDir_App(), "ft_fonts.lgfc");
+    return concatCStr_Path(dataDir_App(), "system-fonts.lgr");
 }
 
 /* v2 cache header: magic(u32), version(u32), mtime_ms(u64), count(u32) */
@@ -321,16 +326,15 @@ static void enumerateFontconfig_(iArray *entries_out) {
     if (!config) return;
     FcPattern  *pat = FcPatternCreate();
     FcObjectSet *os = FcObjectSetBuild(FC_FAMILY, FC_FILE, FC_INDEX,
-                                       FC_WEIGHT, FC_SLANT, FC_SPACING, NULL);
-    FcFontSet *fs = FcFontList(config, pat, os);
+                                       FC_WEIGHT, FC_SLANT, FC_SPACING,
+                                       FC_FONTFORMAT, NULL);
+    FcFontSet   *fs = FcFontList(config, pat, os);
     FcObjectSetDestroy(os);
     FcPatternDestroy(pat);
-    if (!fs) { FcConfigDestroy(config); return; }
-
-    /* Group fonts by family name (normalized to spec ID). */
-    iStringHash familyMap; /* spec ID -> index in entries_out */
-    init_StringHash(&familyMap);
-
+    if (!fs) {
+        FcConfigDestroy(config);
+        return;
+    }
     for (int i = 0; i < fs->nfont; i++) {
         FcPattern *font = fs->fonts[i];
         FcChar8 *familyCStr = NULL;
@@ -341,36 +345,41 @@ static void enumerateFontconfig_(iArray *entries_out) {
         int      spacing    = FC_PROPORTIONAL;
         if (FcPatternGetString(font, FC_FAMILY, 0, &familyCStr) != FcResultMatch) continue;
         if (FcPatternGetString(font, FC_FILE,   0, &fileCStr)   != FcResultMatch) continue;
+        FcChar8 *formatCStr = NULL;
+        FcPatternGetString(font, FC_FONTFORMAT, 0, &formatCStr);
+        if (!formatCStr ||
+            (iCmpStrN((const char *) formatCStr, "TrueType", 8) != 0 &&
+             iCmpStrN((const char *) formatCStr, "CFF",      3) != 0)) {
+            continue; /* skip non-OpenType formats (PCF bitmaps, Type 1, etc.) */
+        }
         FcPatternGetInteger(font, FC_INDEX,   0, &colIndex);
         FcPatternGetInteger(font, FC_WEIGHT,  0, &weight);
         FcPatternGetInteger(font, FC_SLANT,   0, &slant);
         FcPatternGetInteger(font, FC_SPACING, 0, &spacing);
-
-        iString specId;
-        init_String(&specId);
-        makeSpecId_((const char *) familyCStr, &specId);
-
-        /* Find or create entry. */
-        iAnyObject *existing = value_StringHash(&familyMap, &specId);
-        iFontCacheEntry *entry;
-        if (existing) {
-            entry = at_Array(entries_out, (size_t) existing);
+        iFontCacheEntry *entry = NULL;
+        /* Find or create entry via linear scan (one-time init, so fast enough). */ {
+            iString specId;
+            init_String(&specId);
+            makeSpecId_((const char *) familyCStr, &specId);
+            iForEach(Array, j, entries_out) {
+                if (equal_String(&((iFontCacheEntry *) j.value)->id, &specId)) {
+                    entry = j.value;
+                    break;
+                }
+            }
+            if (!entry) {
+                iFontCacheEntry newEntry;
+                init_FontCacheEntry(&newEntry);
+                set_String(&newEntry.id, &specId);
+                setCStr_String(&newEntry.name, (const char *) familyCStr);
+                if (spacing == FC_MONO) newEntry.flags |= monospace_FontSpecFlag;
+                pushBack_Array(entries_out, &newEntry);
+                entry = back_Array(entries_out);
+            }
+            deinit_String(&specId);
         }
-        else {
-            iFontCacheEntry newEntry;
-            init_FontCacheEntry(&newEntry);
-            set_String(&newEntry.id, &specId);
-            setCStr_String(&newEntry.name, (const char *) familyCStr);
-            if (spacing == FC_MONO) newEntry.flags |= monospace_FontSpecFlag;
-            const size_t idx = size_Array(entries_out);
-            pushBack_Array(entries_out, &newEntry);
-            entry = at_Array(entries_out, idx);
-            insertCStr_StringHash(&familyMap, cstr_String(&specId), (iAnyObject *)(size_t) idx);
-        }
-        deinit_String(&specId);
-
         const enum iFontStyle styleId = fcStyleToFontStyle_(weight, slant);
-        iFontCacheStyle    *sty     = &entry->styles[styleId];
+        iFontCacheStyle      *sty     = &entry->styles[styleId];
         if (!isEmpty_String(&sty->identifier)) {
             /* Style slot already filled. */
             continue;
@@ -379,7 +388,6 @@ static void enumerateFontconfig_(iArray *entries_out) {
         sty->colIndex = colIndex;
         extractMetrics_((const char *) fileCStr, colIndex, sty);
     }
-    deinit_StringHash(&familyMap);
     FcFontSetDestroy(fs);
     FcConfigDestroy(config);
 }
@@ -753,7 +761,7 @@ void enumerateSystemFonts_FontPack_(iFontPack *pack) {
 }
 
 iBool loadCachedSystemFonts_FontPack_(iFontPack *pack) {
-    iString *cachePath = cacheFilePath_();
+    iString *cachePath = collect_String(cacheFilePath_());
     const iBool ok = readCache_(cachePath, pack);
     if (!ok) {
         /* First run or stale cache: enumerate synchronously. */
@@ -761,7 +769,6 @@ iBool loadCachedSystemFonts_FontPack_(iFontPack *pack) {
     }
     /* Start background thread to check if dirs have changed since last enumeration. */
     startWorker_(cachePath);
-    iRelease(cachePath);
     return ok;
 }
 

@@ -83,3 +83,5 @@ void deinit_FtText(iFtText *);
 
 /* Shared FreeType library handle; initialized lazily on first use. */
 FT_Library ftLibrary_FtText(void);
+void       doneFtLibrary_FtText(void);
+void       allocData_FontFile   (iFontFile *); /* backend-specific; declared here for fontcache use */

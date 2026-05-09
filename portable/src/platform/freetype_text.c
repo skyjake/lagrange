@@ -84,6 +84,10 @@ static void doneFtLibrary_(void) {
     }
 }
 
+void doneFtLibrary_FtText(void) {
+    doneFtLibrary_();
+}
+
 /*----------------------------------------------------------------------------------------------*/
 /* FontFile backend API (declared in fontpack.h, called from fontpack.c). */
 
@@ -218,9 +222,9 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
     iUnused(yScale, xShift);
     const FT_Glyph_Metrics *m = &face->glyph->metrics;
     if (m->width == 0 || m->height == 0) return;
-    *x0 = (int)(m->horiBearingX >> 6);
+    *x0 =  (int)(m->horiBearingX >> 6);
     *y0 = -(int)(m->horiBearingY >> 6);
-    *x1 = (int)((m->horiBearingX + m->width  + 63) >> 6);
+    *x1 =  (int)((m->horiBearingX + m->width  + 63) >> 6);
     *y1 =  (int)((m->height - m->horiBearingY + 63) >> 6);
 }
 

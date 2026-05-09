@@ -478,7 +478,9 @@ void deinit_GlyphBuffer_(iGlyphBuffer *d) {
 
 void shape_GlyphBuffer_(iGlyphBuffer *d) {
     if (!d->glyphInfo) {
-        hb_shape(hbFont_FontFile(d->font->font.file), d->hb, NULL, 0);
+        hb_font_t *hbFont = hbFont_FontFile(d->font->font.file);
+        if (!hbFont) return;
+        hb_shape(hbFont, d->hb, NULL, 0);
         d->glyphInfo = hb_buffer_get_glyph_infos(d->hb, &d->glyphCount);
         d->glyphPos  = hb_buffer_get_glyph_positions(d->hb, &d->glyphCount);
     }

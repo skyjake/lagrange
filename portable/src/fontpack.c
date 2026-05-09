@@ -21,6 +21,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fontpack.h"
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+#   include "platform/freetype_fontcache.h"
+#endif
 #include <lagrange/resources.h>
 #include "ui/window.h"
 #include <lagrange/gmrequest.h>
@@ -618,6 +621,18 @@ void init_Fonts(const char *userDir) {
             else {
                 delete_FontPack(sys);
             }
+        }
+#endif
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+        pack = new_FontPack();
+        setReadOnly_FontPack(pack, iTrue);
+        setCStr_String(&pack->id, "system-fonts");
+        loadCachedSystemFonts_FontPack_(pack);
+        if (!isEmpty_PtrArray(&pack->fonts)) {
+            pushBack_PtrArray(&d->packs, pack);
+        }
+        else {
+            delete_FontPack(pack);
         }
 #endif
 #if defined (LAGRANGE_ENABLE_CORETEXT)
