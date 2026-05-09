@@ -201,6 +201,7 @@ void init_RasterText(iRasterText *d, SDL_Renderer *render, float documentFontSiz
     d->missingGlyphs  = iFalse;
     iZap(d->missingChars);
     iZap(d->cachedFontRuns);
+    init_GlyphCache(&d->colorCache);
     /* Grayscale palette: antialiased glyph mask tinted at render time. */ {
         SDL_Color colors[256];
         for (int i = 0; i < 256; ++i) {
@@ -219,11 +220,20 @@ void init_RasterText(iRasterText *d, SDL_Renderer *render, float documentFontSiz
     }
 }
 
-void deinit_RasterText(iRasterText *d) {
+void clearCachedFontRuns_RasterText_(iRasterText *d) {
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     iForIndices(i, d->cachedFontRuns) {
         delete_FontRun(d->cachedFontRuns[i]);
+        d->cachedFontRuns[i] = NULL;
     }
+#else
+    iUnused(d);
+#endif
+}
+
+void deinit_RasterText(iRasterText *d) {
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+    clearCachedFontRuns_RasterText_(d);
 #endif
     SDL_FreePalette(d->blackAndWhite);
     SDL_FreePalette(d->grayscale);
@@ -328,6 +338,8 @@ void deinitFonts_RasterText(iRasterText *d) {
         deinit_Font(i.value);
     }
     clear_Array(&d->fonts);
+    clear_Array(&d->fontPriorityOrder);
+    d->overrideFontId = -1;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -1143,12 +1155,11 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
                     iRasterFont  *runFont  = (iRasterFont *) run->font;
                     const iGlyph *glyph    = glyphByIndex_Font_(runFont, glyphId);
                     const float   xOffset  = runFont->xScale * buf->glyphPos[i].x_offset;
-                    const float   xAdvance = runFont->xScale * buf->glyphPos[i].x_advance;
+                    const float   xAdvance = fabsf(runFont->xScale * buf->glyphPos[i].x_advance);
                     const iChar   ch       = logicalText[logPos];
                     const enum iWrapTextMode wrapMode = isCJK_Script(run->flags.script)
                                                             ? anyCharacter_WrapTextMode
                                                             : args->wrap->mode;
-                    iAssert(xAdvance >= 0);
                     if (wrapMode == word_WrapTextMode) {
                         if (((prevCh[0] == '-' || prevCh[0] == '/' || prevCh[0] == '\\' ||
                               prevCh[0] == '?' || prevCh[0] == '!' || prevCh[0] == '&' ||

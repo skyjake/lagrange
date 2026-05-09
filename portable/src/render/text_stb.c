@@ -218,6 +218,7 @@ void resetFontsIfNeeded_Text(iText *d) {
     iText *oldActive = current_Text();
     iStbText *s = (iStbText *) d;
     setCurrent_Text(d); /* some routines rely on the global `activeText_` pointer */
+    clearCachedFontRuns_RasterText_(s);
     deinitFonts_RasterText(s);
     deinitCache_StbText_(s);
     initCache_StbText_(s);

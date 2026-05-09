@@ -221,8 +221,9 @@ void deinitGrayscaleCache_RasterText_   (iRasterText *);
 
 void init_RasterText        (iRasterText *, SDL_Renderer *, float documentFontSizeFactor);
 void deinit_RasterText      (iRasterText *);
-void initFonts_RasterText   (iRasterText *);
-void deinitFonts_RasterText (iRasterText *);
+void initFonts_RasterText              (iRasterText *);
+void deinitFonts_RasterText            (iRasterText *);
+void clearCachedFontRuns_RasterText_   (iRasterText *);
 
 /*----------------------------------------------------------------------------------------------*/
 
