@@ -859,7 +859,7 @@ static void closeSubmenus_(iWidget *menu, iRoot *root) {
                 if (!submenu) {
                     submenu = findChild_Widget(root->widget, subId);
                 }
-                if (submenu) {
+                if (submenu && isVisible_Widget(submenu)) {
                     remove_Periodic(periodic_App(), submenu);
                     closeSubmenus_(submenu, root);
                     closeMenu_Widget(submenu);
@@ -878,8 +878,13 @@ static void openSubmenu_(iWidget *d) {
     const iBool isPopup = type_Window(window_Widget(menu)) == popup_WindowType;
     iRoot      *root    = isPopup ? constAs_Widget(userData_Object(menu))->root : d->root;
     closeSubmenus_(menu, root);
-    iWidget *submenu = findChild_Widget(
-        root->widget, cstr_Command(cstr_String(command_LabelWidget((iLabelWidget *) d)), "id"));
+    const char *subId = cstr_Command(cstr_String(command_LabelWidget((iLabelWidget *) d)), "id");
+    iWidget *submenu = findChild_Widget(root->widget, subId);
+    if (!submenu && isPopup) {
+        /* Inline submenus live inside the menu widget; when the menu was promoted
+           to a popup window they moved with it, so also search there. */
+        submenu = findChild_Widget(window_Widget(menu)->roots[0]->widget, subId);
+    }
     if (submenu && !isVisible_Widget(submenu)) {
         remove_Periodic(periodic_App(), menu);
 //        printf("openSubmenu_ %s isPopup:%d\n d's window type: %d",
@@ -1027,6 +1032,10 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             iBool isInfo = iFalse;
             iBool isDisabled = iFalse;
             if (startsWith_CStr(labelText, "---")) {
+                if (equal_CStr(labelText, "---:")) {
+                    /* This is just a submenu terminator. */
+                    continue;
+                }
                 /* A submenu with items embedded in this one. */
                 labelText += 3;
                 submenuId = newFormat_String("sub.%p.%zu", menu, i);
@@ -1700,8 +1709,11 @@ void closeMenu_Widget(iWidget *d) {
     if (type_Window(win) == popup_WindowType) {
         iWidget *originalParent = userData_Object(d);
         setUserData_Object(d, NULL);
-        /* This may have been a popup window opened from a root being deleted. */
-        if (!isRecentlyDeleted_Widget(originalParent)) {
+        /* This may have been a popup window opened from a root being deleted.
+           originalParent may also be NULL if the widget ended up in a popup
+           window as a passenger (e.g., an inline submenu carried by its parent
+           menu) without being individually promoted via openMenuAnchorFlags_Widget. */
+        if (originalParent && !isRecentlyDeleted_Widget(originalParent)) {
             win->roots[0]->widget = NULL;
             setRoot_Widget(d, originalParent->root);
             addChild_Widget(originalParent, d);
@@ -1909,6 +1921,32 @@ iWidget *dropdownMenu_Widget(const iWidget *dropButton) {
     return menu;
 }
 
+static iBool updateMenuSelection_Widget_(iWidget *menu, iLabelWidget *dropButton,
+                                         const char *selectedCommand) {
+    iBool wasFound = iFalse;
+    iForEach(ObjectList, i, children_Widget(menu)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *item       = i.object;
+            const iBool   isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
+            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
+            if (isSelected) {
+                updateText_LabelWidget(dropButton,
+                                       replaceNewlinesWithDash_(text_LabelWidget(item)));
+                checkIcon_LabelWidget(dropButton);
+                if (!icon_LabelWidget(dropButton)) {
+                    setIcon_LabelWidget(dropButton, icon_LabelWidget(item));
+                }
+                wasFound = iTrue;
+            }
+        }
+        else if (isInstance_Object(i.object, &Class_Widget)) {
+            /* Possibly a submenu. They get populated as child menus of the parent menu. */
+            wasFound |= updateMenuSelection_Widget_(i.object, dropButton, selectedCommand);
+        }
+    }
+    return wasFound;
+}
+
 void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *selectedCommand) {
     if (!dropButton) {
         return;
@@ -1927,21 +1965,7 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
         updateSystemMenuFromNativeItems_Widget(menu);
         return;
     }
-    iForEach(ObjectList, i, children_Widget(menu)) {
-        if (isInstance_Object(i.object, &Class_LabelWidget)) {
-            iLabelWidget *item = i.object;
-            const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
-            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
-            if (isSelected) {
-                updateText_LabelWidget(dropButton,
-                                       replaceNewlinesWithDash_(text_LabelWidget(item)));
-                checkIcon_LabelWidget(dropButton);
-                if (!icon_LabelWidget(dropButton)) {
-                    setIcon_LabelWidget(dropButton, icon_LabelWidget(item));
-                }
-            }
-        }
-    }
+    updateMenuSelection_Widget_(menu, dropButton, selectedCommand);
 }
 
 const char *selectedDropdownCommand_LabelWidget(const iLabelWidget *dropButton) {
@@ -3097,6 +3121,8 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
         id);
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
 static iBool proportionalFonts_(const iFontSpec *spec) {
     return (spec->flags & monospace_FontSpecFlag) == 0 && ~spec->flags & auxiliary_FontSpecFlag;
 }
@@ -3105,30 +3131,89 @@ static iBool monospaceFonts_(const iFontSpec *spec) {
     return (spec->flags & monospace_FontSpecFlag) != 0 && ~spec->flags & auxiliary_FontSpecFlag;
 }
 
+/* Copy up to the first `numWords` space-delimited words of `name` into `out`. */
+static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, int numWords) {
+    const char *p = name;
+    int words = 0;
+    const char *underline = strchr(name, '_');
+    if (underline) {
+        size_t len = iMin(underline - name, outSize - 1);
+        memcpy(out, name, len);
+        out[len] = '\0';
+        return;
+    }
+    while (*p) {
+        if (*p == ' '|| *p == '_') {
+            words++;
+            if (words == numWords) break;
+        }
+        p++;
+    }
+    size_t len = iMin((size_t)(p - name), outSize - 1);
+    memcpy(out, name, len);
+    out[len] = '\0';
+}
+
+/* `name` starts with `prefix` at a word boundary? (space or end of string) */
+static iBool hasFamilyPrefix_(const char *name, const char *prefix, size_t prefixLen) {
+    if (iCmpStrN(name, prefix, prefixLen) != 0) return iFalse;
+    const char c = name[prefixLen];
+    return c == '\0' || c == ' ' || c == '_';
+}
+
+static void appendGroupedFontItems_(iArray *items, const iPtrArray *specs, const char *id) {
+    const size_t n = size_PtrArray(specs);
+    char prefix[128];
+    for (size_t i = 0; i < n;) {
+        const iFontSpec *spec = constAt_PtrArray(specs, i);
+        extractFamilyPrefix_(cstr_String(&spec->name), prefix, sizeof(prefix), 2);
+        const size_t prefixLen = strlen(prefix);
+        /* Count how many consecutive fonts share this word prefix. */
+        size_t groupEnd = i + 1;
+        while (groupEnd < n) {
+            const iFontSpec *s = constAt_PtrArray(specs, groupEnd);
+            if (!hasFamilyPrefix_(cstr_String(&s->name), prefix, prefixLen)) break;
+            groupEnd++;
+        }
+        const size_t groupSize = groupEnd - i;
+        if (groupSize >= 3) {
+            /* Emit a submenu header followed by the group's fonts. */
+            pushBack_Array(items, &(iMenuItem) { format_CStr("---%s", prefix) });
+            for (size_t j = i; j < groupEnd; j++) {
+                const iFontSpec *s = constAt_PtrArray(specs, j);
+                pushBack_Array(
+                    items,
+                    &(iMenuItem) { cstr_String(&s->name),
+                                   0,
+                                   0,
+                                   format_CStr("!font.set %s:%s", id, cstr_String(&s->id)) });
+            }
+            pushBack_Array(items, &(iMenuItem) { "---:" }); /* terminate the group */
+        }
+        else {
+            /* Emit the font(s) flat. */
+            for (size_t j = i; j < groupEnd; j++) {
+                const iFontSpec *s = constAt_PtrArray(specs, j);
+                pushBack_Array(
+                    items,
+                    &(iMenuItem) { cstr_String(&s->name),
+                                   0,
+                                   0,
+                                   format_CStr("!font.set %s:%s", id, cstr_String(&s->id)) });
+            }
+        }
+        i = groupEnd;
+    }
+}
+
 static const iArray *makeFontItems_(const char *id) {
     iArray *items = collectNew_Array(sizeof(iMenuItem));
     if (!startsWith_CStr(id, "mono")) {
-        iConstForEach(PtrArray, i, listSpecs_Fonts(proportionalFonts_)) {
-            const iFontSpec *spec = i.ptr;
-            pushBack_Array(
-                items,
-                &(iMenuItem){ cstr_String(&spec->name),
-                              0,
-                              0,
-                              format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
-        }
+        appendGroupedFontItems_(items, listSpecs_Fonts(proportionalFonts_), id);
         pushBack_Array(items, &(iMenuItem){ "---" });
     }
-    iConstForEach(PtrArray, j, listSpecs_Fonts(monospaceFonts_)) {
-        const iFontSpec *spec = j.ptr;
-        pushBack_Array(
-            items,
-            &(iMenuItem){ cstr_String(&spec->name),
-                          0,
-                          0,
-                          format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
-    }
-    pushBack_Array(items, &(iMenuItem){ NULL }); /* terminator */
+    appendGroupedFontItems_(items, listSpecs_Fonts(monospaceFonts_), id);
+    pushBack_Array(items, &(iMenuItem){ NULL });
     return items;
 }
 
@@ -3142,6 +3227,8 @@ static void addFontButtons_(iWidget *parent, const char *id) {
     setId_Widget(as_Widget(button), format_CStr("prefs.font.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
 }
+
+/*----------------------------------------------------------------------------------------------*/
 
 void updatePreferencesLayout_Widget(iWidget *prefs) {
     if (!prefs || deviceType_App() != desktop_AppDeviceType) {
@@ -3262,6 +3349,9 @@ size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
     int widest = 0;
     size_t widestPos = iInvalidPos;
     for (size_t i = 0; i < num && items[i].label; i++) {
+        if (startsWith_CStr(items[i].label, "---")) {
+            continue; /* skip separators and submenu headers */
+        }
         const int width =
             measure_Text(uiLabel_FontId,
                          translateCStr_Lang(items[i].label))
@@ -3391,39 +3481,42 @@ static iArray *gamepadButtonInfo_(void) {
 
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
-    const iMenuItem langItems[] = { /* Latin */
-                                    { u8"Čeština - cs", 0, 0, "uilang id:cs" },
-                                    { u8"Deutsch - de", 0, 0, "uilang id:de" },
-                                    { u8"English - en", 0, 0, "uilang id:en" },
-                                    { u8"Español - es", 0, 0, "uilang id:es" },
-                                    { u8"Español (México) - es", 0, 0, "uilang id:es_MX" },
-                                    { u8"Esperanto - eo", 0, 0, "uilang id:eo" },
-                                    { u8"Euskara - eu", 0, 0, "uilang id:eu" },
-                                    { u8"Français - fr", 0, 0, "uilang id:fr" },
-                                    { u8"Galego - gl", 0, 0, "uilang id:gl" },
-                                    { u8"Interlingua - ia", 0, 0, "uilang id:ia" },
-                                    { u8"Interlingue - ie", 0, 0, "uilang id:ie" },
-                                    { u8"Interslavic - isv", 0, 0, "uilang id:isv" },
-                                    { u8"Italiano - it", 0, 0, "uilang id:it" },
-                                    { u8"Magyar - hu", 0, 0, "uilang id:hu" },
-                                    { u8"Nederlands - nl", 0, 0, "uilang id:nl" },
-                                    { u8"Polski - pl", 0, 0, "uilang id:pl" },
-                                    { u8"Samogitian - sgs", 0, 0, "uilang id:sgs" },
-                                    { u8"Slovak - sk", 0, 0, "uilang id:sk" },
-                                    { u8"Suomi - fi", 0, 0, "uilang id:fi" },
-                                    { u8"Toki pona - tok", 0, 0, "uilang id:tok" },
-                                    { u8"Türkçe - tr", 0, 0, "uilang id:tr" },
-                                    { "---" },
-                                    /* Cyrillic */
-                                    { u8"Русский - ru", 0, 0, "uilang id:ru" },
-                                    { u8"Српски - sr", 0, 0, "uilang id:sr" },
-                                    { u8"Українська - uk", 0, 0, "uilang id:uk" },
-                                    { "---" },
-                                    /* CJK */
-                                    { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
-                                    { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
-                                    { u8"日本語 - ja", 0, 0, "uilang id:ja" },
-                                    { NULL } };
+    /* clang-format off */
+    const iMenuItem langItems[] = {
+        /* Latin */
+        { u8"Čeština - cs", 0, 0, "uilang id:cs" },
+        { u8"Deutsch - de", 0, 0, "uilang id:de" },
+        { u8"English - en", 0, 0, "uilang id:en" },
+        { u8"Español - es", 0, 0, "uilang id:es" },
+        { u8"Español (México) - es", 0, 0, "uilang id:es_MX" },
+        { u8"Esperanto - eo", 0, 0, "uilang id:eo" },
+        { u8"Euskara - eu", 0, 0, "uilang id:eu" },
+        { u8"Français - fr", 0, 0, "uilang id:fr" },
+        { u8"Galego - gl", 0, 0, "uilang id:gl" },
+        { u8"Interlingua - ia", 0, 0, "uilang id:ia" },
+        { u8"Interlingue - ie", 0, 0, "uilang id:ie" },
+        { u8"Interslavic - isv", 0, 0, "uilang id:isv" },
+        { u8"Italiano - it", 0, 0, "uilang id:it" },
+        { u8"Magyar - hu", 0, 0, "uilang id:hu" },
+        { u8"Nederlands - nl", 0, 0, "uilang id:nl" },
+        { u8"Polski - pl", 0, 0, "uilang id:pl" },
+        { u8"Samogitian - sgs", 0, 0, "uilang id:sgs" },
+        { u8"Slovak - sk", 0, 0, "uilang id:sk" },
+        { u8"Suomi - fi", 0, 0, "uilang id:fi" },
+        { u8"Toki pona - tok", 0, 0, "uilang id:tok" },
+        { u8"Türkçe - tr", 0, 0, "uilang id:tr" },
+        { "---" },
+        /* Cyrillic */
+        { u8"Русский - ru", 0, 0, "uilang id:ru" },
+        { u8"Српски - sr", 0, 0, "uilang id:sr" },
+        { u8"Українська - uk", 0, 0, "uilang id:uk" },
+        { "---" },
+        /* CJK */
+        { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
+        { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
+        { u8"日本語 - ja", 0, 0, "uilang id:ja" },
+        { NULL }
+    };
     const iMenuItem feedIntervalItems[] = {
         { "${prefs.feedinterval.manual}", 0, 0, format_CStr("feedinterval.set arg:%d", manual_FeedInterval) },
         { formatCStrs_Lang("num.minutes.n", 30), 0, 0, format_CStr("feedinterval.set arg:%d", thirtyMinutes_FeedInterval) },
@@ -3441,6 +3534,7 @@ iWidget *makePreferences_Widget(void) {
         { "${collapse.always}", 0, 0, format_CStr("collapsepre.set arg:%d", always_Collapse) },
         { NULL }
     };
+    /* clang-format on */
     const iMenuItem returnKeyBehaviorItems[] = {
         { returnKeyBehaviorStr_(default_ReturnKeyBehavior),
           0,
@@ -4100,7 +4194,7 @@ iWidget *makePreferences_Widget(void) {
                                                 "prefs.boldlink.dark",
                                                 "prefs.boldlink.light" },
                               3);
-    #if defined (LAGRANGE_ENABLE_CORETEXT)
+    #if defined (LAGRANGE_ENABLE_CORETEXT) || defined (LAGRANGE_ENABLE_FREETYPE)
         addDialogToggle_Widget(headings, values, "${prefs.font.coloremoji}", "prefs.font.coloremoji");
     #endif
         addDialogToggle_Widget(headings, values, "${prefs.quote.italic}", "prefs.quote.italic");
