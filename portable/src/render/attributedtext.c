@@ -343,6 +343,9 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         if (isControl_Char(ch) || ch == 0x202f /* NNBSP */) {
             continue;
         }
+        if (isCombining_Char(ch)) {
+            continue; /* stays in current run; HarfBuzz handles variant selection */
+        }
         iAssert(run.font != NULL);
         if (ch == 0x20) {
             if (run.font->spec->flags & auxiliary_FontSpecFlag &&

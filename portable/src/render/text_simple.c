@@ -20,15 +20,17 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+/* NOTE: This source file is included from text_backend.c (conditionally) and
+   text_terminal.c for rendering and measuring text runs. */
+
 #include "text.h"
 #include "defs.h"
 #include <SDL_version.h>
 
-/* TODO: Include this in text_stb.c as a runtime option. */
-
 iLocalDef iBool isWrapPunct_(iChar c) {
     /* Punctuation that participates in word-wrapping. */
-    return (c == '/' || c == '\\' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
+    return (c == '/' || c == '\\' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' ||
+            c == ':' || c == 0xad);
 }
 
 iLocalDef iBool isClosingBracket_(iChar c) {
@@ -174,7 +176,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             }
         }
         if (isVariationSelector_Char(ch)) {
-            ch = nextChar_(&chPos, args->text.end); /* skip it */
+            continue; /* no variant selection in simple renderer */
         }
         /* Special instructions. */ {
             if (ch == 0xad) { /* soft hyphen */
