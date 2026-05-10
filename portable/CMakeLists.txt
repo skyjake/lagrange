@@ -419,14 +419,14 @@ if (MSYS OR MINGW)
         src/platform/win32.c
         src/platform/win32.h
     )
-    if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
-endif ()
-    add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
     add_definitions (-DiPlatformMobile=1)
 else ()
     add_definitions (-DiPlatformDesktop=1)
+    if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
+        add_definitions (-DiPlatformPcDesktop=1)
+    endif ()
     # Forced UI design.
     if (ENABLE_MOBILE_PHONE OR ENABLE_MOBILE_TABLET)
         add_definitions (-DiPlatformMobile=1)
