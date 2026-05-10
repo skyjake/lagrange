@@ -114,6 +114,19 @@ static iFontFile *makeFontFile_(const iFontCacheStyle *style, enum iFontStyle st
     return f;
 }
 
+#define defaultSystemGlyphScale_FreeType_ 0.866f
+
+static float glyphScaleFromMetrics_(const iFontFile *reg) {
+    /* FIXME: This is probably the same for both FreeType and Core Text. */
+    if (!reg) return defaultSystemGlyphScale_FreeType_;
+    const int   sTypoTotal = reg->ascent - reg->descent;       /* descent is negative */
+    const int   winTotal   = reg->winAscent + reg->winDescent; /* 0 if unavailable */
+    const int   naturalH   = iMax(sTypoTotal, winTotal) + iMax(0, reg->lineGap);
+    const float gs = (sTypoTotal > 0 && naturalH > 0) ? (float) sTypoTotal / (float) naturalH
+                                                      : defaultSystemGlyphScale_FreeType_;
+    return iMax(gs, 0.8f); /* floor: don't over-shrink fonts with very large Win metrics */
+}
+
 static iBool addEntryToFontPack_(const iFontCacheEntry *e, iFontPack *pack) {
     if (isEmpty_String(&e->styles[regular_FontStyle].identifier)) return iFalse;
     iFontFile *files[max_FontStyle];
@@ -129,15 +142,11 @@ static iBool addEntryToFontPack_(const iFontCacheEntry *e, iFontPack *pack) {
     set_String(&spec->id, &e->id);
     set_String(&spec->name, &e->name);
     spec->flags = e->flags;
-    /* Default scaling: 1:1. */
-    for (int t = 0; t < 2; t++) {
-        spec->heightScale[t]     = 1.0f;
-        spec->glyphScale[t]      = 1.0f;
-        spec->vertOffsetScale[t] = 1.0f;
-    }
     for (int s = 0; s < max_FontStyle; s++) {
         spec->styles[s] = ref_Object(files[s]);
     }
+    /* Default scaling based on metrics. */
+    spec->glyphScale[0] = spec->glyphScale[1] = glyphScaleFromMetrics_(spec->styles[0]);
     addSpec_FontPack(pack, spec);
     for (int s = 0; s < max_FontStyle; s++) {
         iRelease(files[s]);
