@@ -854,6 +854,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             const iBool hasCommand = (items[i].command && items[i].command[0]);
             iBool isChecked = iFalse;
             iBool isDisabled = iFalse;
+            iArray *submenuItems = NULL;
             if (startsWith_CStr(label, "###")) {
                 isChecked = iTrue;
                 label += 3;
@@ -861,6 +862,21 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             else if (startsWith_CStr(label, "///") || startsWith_CStr(label, "```")) {
                 isDisabled = iTrue;
                 label += 3;
+            }
+            else if (startsWith_CStr(label, "---")) {
+                if (equal_CStr(label, "---:")) {
+                    /* This is just a submenu terminator. */
+                    continue;
+                }
+                /* A submenu with items embedded in this one. */
+                label += 3;
+                // submenuId = newFormat_String("sub.%p.%zu", menu, i);
+                /* Collect the contents of the submenu. */
+                submenuItems = new_Array(sizeof(iMenuItem));
+                for (i++; i < n && items[i].label && !startsWith_CStr(items[i].label, "---"); i++) {
+                    pushBack_Array(submenuItems, &items[i]);
+                }
+                i--;
             }
             iString itemTitle;
             initCStr_String(&itemTitle, label);
@@ -873,7 +889,15 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             NSAttributedString *title = [[NSAttributedString alloc] initWithString:cleanString_(&itemTitle)];
             item.attributedTitle = title;
             [title release];
-            if (hasCommand && startsWith_CStr(items[i].command, "submenu id:")) {
+            if (submenuItems) {
+                NSMenu *sub = [[NSMenu alloc] init];
+                sub.autoenablesItems = YES;
+                makeMenuItems_(sub, commands, 0, isBookmarksMenu, constData_Array(submenuItems),
+                               size_Array(submenuItems));
+                [item setSubmenu:sub];
+                [sub release];
+            }
+            else if (hasCommand && startsWith_CStr(items[i].command, "submenu id:")) {
                 NSMenu *sub = [[NSMenu alloc] init];
                 sub.autoenablesItems = YES;
                 const char *submenuId = cstr_String(string_Command(items[i].command, "id"));
