@@ -53,6 +53,7 @@ iString *misfinIdentity_GmIdentity  (const iGmIdentity *, iString *blurb_out);
 
 void    setUse_GmIdentity           (iGmIdentity *, const iString *url, iBool use);
 void    clearUse_GmIdentity         (iGmIdentity *);
+void    clearUseOnUrl_GmIdentity    (iGmIdentity *, const iString *url);
 const iString *findUse_GmIdentity   (const iGmIdentity *, const iString *url);
 
 const iString *name_GmIdentity(const iGmIdentity *);
