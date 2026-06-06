@@ -77,6 +77,7 @@ enum iFontId {
     monospaceParagraph_FontId = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
     monospaceBold_FontId      = FONT_ID(documentMonospace_FontId, semiBold_FontStyle, contentRegular_FontSize),
     plainText_FontId          = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
+    plainTextSmall_FontId     = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentSmall_FontSize),
 };
 
 iLocalDef enum iFontStyle style_FontId(enum iFontId id) {
@@ -163,6 +164,7 @@ struct Impl_WrapText {
     int         maxWidth;
     size_t      maxLines;     /* 0: unlimited */
     enum iWrapTextMode mode;
+    int         firstLineIndent; /* initial X offset, first line only */
     iBool       justify;
     iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
                           int advance);

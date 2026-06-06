@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 1.20 (9)
+* Reduced idle CPU usage. (SDL's event waiting API is not optimal for avoiding any app activity between events, so it is now bypassed natively.)
+* Improve legibility of text after a wrapped paragraph by adding a small first-line indent if the next text line follows immediately.
+* Use a smaller font for plain text documents to fit more content in the window, matching the font used in preformatted blocks.
+* Fixed: Prevent overlapping identity activations by removing any existing ones before activating a new identity on a given URL. (To conveniently switch between previously used identities, use the menu that appears when clicking the navbar Identity button. That preserves the current activation scope.)
+* Gopher: Detect an unexpected binary response to a type `0` selector.
+* Gopher: Detect when the response is a gophermap even if we requested type `0`.
+* Gopher: Plain text now respects the "expand to long lines" option, avoiding wrapping when there is room in the window.
+* Gopher: Fixed handling the `.\r\n` terminator in text responses.
+* Updated UI translations.
+
 ## 1.20 (8)
 * Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
 * Fixed the "now playing" audio indication appearing unnecessarily in Control Center. This should only happen when actually playing audio.

@@ -1096,6 +1096,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     }
     /* Make a new document for the error page.*/
     iGmDocument *errorDoc = new_GmDocument();
+    setMode_GmDocument(errorDoc, coverPage_GmDocumentMode); /* UI content */
     setWidth_GmDocument(errorDoc,
                         documentWidth_DocumentView(d->view),
                         width_Widget(d),
@@ -1352,9 +1353,11 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         initBlock_String(&str, &response->body); /* Note: Body may be megabytes in size. */
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
-            iRangecc charset = range_CStr("utf-8");
-            enum iSourceFormat docFormat = undefined_SourceFormat;
-            const iString *mimeStr = collect_String(lower_String(&response->meta)); /* for convenience */
+            iRangecc           charset     = range_CStr("utf-8");
+            enum iSourceFormat docFormat   = undefined_SourceFormat;
+            iBool              isCoverPage = iFalse;
+            const iString     *mimeStr =
+                collect_String(lower_String(&response->meta)); /* for convenience */
             set_String(&d->sourceMime, mimeStr);
             iRangecc mime = range_String(mimeStr);
             iRangecc seg = iNullRange;
@@ -1367,6 +1370,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                         /* Detect fontpacks even if the server doesn't use the right media type. */
                         if (detect_FontPack(&response->body)) {
                             param = range_CStr(mimeType_FontPack);
+                            isCoverPage = iTrue;
                         }
                         else if (isUtf8_Rangecc(range_Block(&response->body))) {
                             param = range_CStr("text/plain");
@@ -1381,6 +1385,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             endsWithCase_Rangecc(fileName, ".markdown")) {
                             param = range_CStr("text/markdown");
                         }
+#if 0
                         else if ((endsWithCase_Rangecc(fileName, ".gmi") ||
                                   endsWithCase_Rangecc(fileName, ".gemini")) &&
                                  isEmpty_Range(&parts.query)) {
@@ -1394,9 +1399,10 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                media type and force a Gemtext view mode on the document.
                                (https://github.com/skyjake/lagrange/issues/359) */
                         }
+#endif
                     }
                 }
-                if (equal_Rangecc(param, "text/gemini")) {
+                if (equal_Rangecc(param, "text/gemini") || equal_Rangecc(param, "text/gophermap")) {
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
@@ -1414,6 +1420,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 }
                 else if (isRequestFinished && equal_Rangecc(param, "font/ttf")) {
                     clear_String(&str);
+                    isCoverPage = iTrue;
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     format_String(&str, "# TrueType Font\n");
@@ -1454,6 +1461,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                           endsWithCase_Rangecc(param, "+zip")))) {
                     iArray *footerItems = collectNew_Array(sizeof(iMenuItem));
                     clear_String(&str);
+                    isCoverPage = iTrue;
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     iArchive *zip = new_Archive();
@@ -1547,6 +1555,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");
                     /* Make a simple document with an image or audio player. */
                     clear_String(&str);
+                    isCoverPage = iTrue;
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
@@ -1617,6 +1626,10 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     deinit_String(&str);
                     return;
                 }
+            }
+            if (isCoverPage) {
+                /* Cover pages are not considered normal content (e.g., error message, overview). */
+                setMode_GmDocument(d->view->doc, coverPage_GmDocumentMode);
             }
             setFormat_GmDocument(d->view->doc, docFormat);
             /* Convert the source to UTF-8 if needed. */

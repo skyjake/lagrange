@@ -264,6 +264,17 @@ void clearUse_GmIdentity(iGmIdentity *d) {
     clear_StringSet(d->useUrls);
 }
 
+void clearUseOnUrl_GmIdentity(iGmIdentity *d, const iString *url) {
+    iForEach(Array, i, &d->useUrls->strings.values) {
+        iString *used = i.value;
+        if (startsWithCase_String(used, cstr_String(url)) /* `url` overrides */ ||
+            startsWithCase_String(url, cstr_String(used))) /* existing overrides */ {
+            deinit_String(used);
+            remove_ArrayIterator(&i);
+        }
+    }
+}
+
 const iString *findUse_GmIdentity(const iGmIdentity *d, const iString *url) {
     if (!d) return NULL;
     iConstForEach(StringSet, using, d->useUrls) {
@@ -831,7 +842,11 @@ const iPtrArray *identities_GmCerts(const iGmCerts *d) {
 
 void signIn_GmCerts(iGmCerts *d, iGmIdentity *identity, const iString *url) {
     if (identity) {
-        signOut_GmCerts(d, url);
+        /* Henceforth, `url` should only have `identity` as the active identity, so any other
+           overlapping use needs to be stopped beforehand. */
+        iForEach(PtrArray, i, &d->idents) {
+            clearUseOnUrl_GmIdentity(i.ptr, url);
+        }
         setUse_GmIdentity(identity, url, iTrue);
     }
 }

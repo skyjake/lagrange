@@ -1490,7 +1490,8 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
             xCursor = 0;
             yCursor += d->font.height;
         }
-        float wrapAdvance = 0.0f;
+        float     wrapAdvance = 0.0f;
+        const int lineIndent  = (yCursor == 0 && wrap ? wrap->firstLineIndent : 0);
         /* First we need to figure out how much text fits on the current line. */
         if (wrap) {
             float breakAdvance = -1.0f;
@@ -1572,7 +1573,7 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
                     /* Out of room? */
                     if (wrap->maxWidth > 0 &&
                         wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
-                        args->wrap->maxWidth) {
+                        args->wrap->maxWidth - lineIndent) {
 //                        printf("out of room at lp:%d! safeBreakPos:%d (idx:%zu) breakAdv:%f\n",
 //                               logPos, safeBreakPos,
 //                               breakRunIndex, breakAdvance);
@@ -1643,7 +1644,7 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
                                  size_Range(&wrapRuns),
                                  wrapPosRange,
                                  &wrapAdvance,
-                                 layoutBound,
+                                 layoutBound - lineIndent,
                                  wrapRuns.start > 0 && wrapRuns.end == runCount /* last wrap? */);
         }
         /* Hit tests. */
@@ -1750,12 +1751,10 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
         }
         iAssert(size_Array(&runOrder) == size_Range(&wrapRuns));
         /* Alignment. */
-        int origin = 0;
+        int origin = lineIndent;
         iBool isRightAligned = attrText->isBaseRTL;
-        if (isRightAligned) {
-            if (layoutBound > 0) {
-                origin = layoutBound - wrapAdvance;
-            }
+        if (isRightAligned && layoutBound > 0) {
+            origin = layoutBound - wrapAdvance - lineIndent;
         }
         /* Make a callback for each wrapped line. */
         if (wrap && wrap->wrapFunc &&

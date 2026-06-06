@@ -465,6 +465,12 @@ static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
         notify = iTrue;
     }
     unlock_Mutex(d->mtx);
+    if (d->gopher.type) {
+        /* This may change the media type and content of the page. */
+        if (checkFormat_Gopher(&d->gopher)) {
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
+    }
     if (notify) {
         iNotifyAudience(d, finished, GmRequestFinished);
     }

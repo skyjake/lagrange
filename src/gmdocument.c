@@ -83,6 +83,7 @@ struct Impl_GmTheme {
     int ansiEscapes;
     int colors[max_GmLineType];
     int fonts[max_GmLineType];
+    int plainTextFont;
 };
 
 static uint32_t themeHash_(const iBlock *data) {
@@ -188,6 +189,7 @@ struct Impl_GmDocument {
         iBool isPaletteValid : 1;
         iBool isGopherMenu : 1;
         iBool isConvertedMarkdown : 1;
+        iBool isCoverPage : 1;
     } flags;
 };
 
@@ -202,6 +204,9 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (d->flags.isConvertedMarkdown) {
         return iFalse;
     }
+    if (d->flags.isCoverPage) {
+        return iFalse;
+    }
     const iRangecc scheme = urlScheme_String(&d->url);
     if (equalCase_Rangecc(scheme, "gemini")) {
         return prefs_App()->monospaceGemini;
@@ -210,6 +215,11 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
         return prefs_App()->monospaceGopher;
     }
     return iFalse;
+}
+
+static iBool isGopher_GmDocument_(const iGmDocument *d) {
+    const iRangecc scheme = urlScheme_String(&d->url);
+    return (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger"));
 }
 
 static void initTheme_GmDocument_(iGmDocument *d) {
@@ -227,12 +237,15 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     memcpy(theme->colors, defaultColors, sizeof(theme->colors));
     const iPrefs *prefs    = prefs_App();
     const iBool   isMono   = isForcedMonospace_GmDocument_(d);
+    const iBool   isGopher = isGopher_GmDocument_(d);
+    const iBool   isMonoGopher = isMono && isGopher;
     const iBool   isDarkBg = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     const enum iFontId headingFont = isMono ? documentMonospace_FontId : documentHeading_FontId;
     const enum iFontId bodyFont    = isMono ? documentMonospace_FontId : documentBody_FontId;
-    theme->fonts[text_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize);
-    theme->fonts[bullet_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize);
+    const int          bodySize    = isMonoGopher ? contentSmall_FontSize : contentRegular_FontSize;
+    theme->fonts[text_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, bodySize);
+    theme->fonts[bullet_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, bodySize);
     theme->fonts[preformatted_GmLineType] = preformatted_FontId;
     theme->fonts[quote_GmLineType] = isMono               ? monospaceParagraph_FontId
                                      : prefs->italicQuote ? quote_FontId
@@ -240,11 +253,13 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
     theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentLarge_FontSize);
     theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentBig_FontSize);
-    theme->fonts[link_GmLineType] = FONT_ID(
-        bodyFont,
-        ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight)) ? semiBold_FontStyle
-                                                                                   : regular_FontStyle,
-        contentRegular_FontSize);
+    theme->fonts[link_GmLineType] =
+        FONT_ID(bodyFont,
+                ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
+                    ? semiBold_FontStyle
+                    : regular_FontStyle,
+                bodySize);
+    theme->plainTextFont = plainTextSmall_FontId;
 }
 
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
@@ -565,10 +580,8 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
-static iBool isGopher_GmDocument_(const iGmDocument *d) {
-    const iRangecc scheme = urlScheme_String(&d->url);
-    return (equalCase_Rangecc(scheme, "gopher") ||
-            equalCase_Rangecc(scheme, "finger"));
+static iBool isGopherMenu_GmDocument_(const iGmDocument *d) {
+    return isGopher_GmDocument_(d) && d->format == gemini_SourceFormat;
 }
 
 static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
@@ -749,14 +762,19 @@ static iBool isHRule_(iRangecc line) {
     return n >= 3;
 }
 
+static iBool isMonospace_GmDocument_(const iGmDocument *d) {
+    if (d->format == plainText_SourceFormat) return iTrue;
+    return isForcedMonospace_GmDocument_(d);
+}
+
 static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
     const iPrefs *prefs = prefs_App();
     /* Only do this once (and whenever font size changes). */
     if (d->wrapWidth) return;
-    /* For plain text with word wrap and expand-to-long-lines, measure all lines first to
+    /* For plain text with word wrap and expand-to-long-lines, measure all lines øπfirst to
        find the widest one and potentially increase the layout width up to the full canvas
        width, so that long lines don't have to be wrapped unnecessarily. */
-    if (d->format == plainText_SourceFormat && prefs->plainTextWrap && prefs->expandToLongLines) {
+    if (isMonospace_GmDocument_(d) && prefs->plainTextWrap && prefs->expandToLongLines) {
         int      maxLine = 0;
         iRangecc seg     = iNullRange;
         while (nextSplit_Rangecc(range_String(&d->source), "\n", &seg)) {
@@ -764,7 +782,7 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
             if (*line.end == '\r') {
                 line.end--; /* trim CR always */
             }
-            maxLine = iMaxi(maxLine, measureRange_Text(plainText_FontId, line).advance.x);
+            maxLine = iMaxi(maxLine, measureRange_Text(d->theme.plainTextFont, line).advance.x);
         }
         d->wrapWidth = iMin(maxLine, d->maxContentWidth);
     }
@@ -779,6 +797,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
     const iBool   isGopher          = isGopher_GmDocument_(d);
+    const iBool   isGopherMenu      = isGopherMenu_GmDocument_(d);
     const iBool   isNarrow          = d->size.x < 90 * gap_Text * aspect_UI;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text * aspect_UI;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text * aspect_UI;
@@ -845,6 +864,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = undefined_GmLineType;
     iBool            followsBlank  = iFalse;
+    iBool            prevWrapParagraph = iFalse; /* previous line was a wrapped paragraph */
     iString          firstContentLine; /* may be used as a title if one isn't specified */
     init_String(&firstContentLine);
     if (isGopher && !prefs->geminiStyledGopher) {
@@ -906,10 +926,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             indent = indents[type];
             if (type == preformatted_GmLineType) {
-                /* Begin a new preformatted block. */
                 isPreformat = iTrue;
+                /* Begin a new preformatted block. */
                 const size_t preIndex = preId++;
-                preFont = preformatted_FontId;
+                preFont               = preformatted_FontId;
                 /* Use a smaller font if the block contents are wide. */
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
@@ -931,6 +951,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags |= folded_GmPreMetaFlag;
                 }
                 pushBack_Array(&d->preMeta, &meta);
+                prevWrapParagraph = iFalse;
                 continue;
             }
             else if (type == link_GmLineType) {
@@ -964,11 +985,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             run.mediaType = max_MediaType; /* preformatted block */
             run.mediaId = preId;
-            run.font = (d->format == plainText_SourceFormat ? plainText_FontId : preFont);
+            run.font = (d->format == plainText_SourceFormat ? d->theme.plainTextFont : preFont);
             indent = indents[type];
         }
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
+            prevWrapParagraph = iFalse;
             if (type == preformatted_GmLineType) {
                 /* Empty lines in a preformatted blocks should functionally be part of the block. */
                 run.bounds = (iRect){ pos, init_I2(1, lineHeight_Text(run.font)) };
@@ -1208,16 +1230,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 rts.rightMargin = gap_Text * (isTextType ? 4 : 0);
             }
             if (!isMono) {
-#if 0
-                /* Upper-level headings are typeset a bit tighter. */
-                /* FIXME: Oops, text renderer clears glyph backgrounds so it clips the adjacent line. */
-                if (type == heading1_GmLineType) {
-                    rts.lineHeightReduction = 0.10f;
-                }
-                else if (type == heading2_GmLineType) {
-                    rts.lineHeightReduction = 0.06f;
-                }
-#endif
                 /* Visited links are never bold. */
                 if (run.linkId && !prefs->boldLinkVisited &&
                     linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
@@ -1227,6 +1239,20 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!prefs->quoteIcon && type == quote_GmLineType) {
                 rts.run.flags |= ruler_GmRunFlag;
             }
+            /* Determine the maximum width of wrapped lines. */
+            const int wrapMaxWidth =
+                rts.isWordWrapped
+                    ? d->wrapWidth > 0
+                          ? d->wrapWidth
+                          : (d->size.x - run.bounds.pos.x - rts.indent - rts.rightMargin)
+                    : 0 /* unlimited */;
+            const iBool indentParagraphFirstLine = iTrue; /* could be a preference */
+            int firstLineIndent = 0;
+            if (indentParagraphFirstLine && type == text_GmLineType && prevWrapParagraph) {
+                /* Previous line was text, too, and it wrapped so add some first-line
+                   indentation to make the new line distinct from the wrapped preceding lines. */
+                firstLineIndent = lineHeight_Text(rts.run.font); /* about 1 em */
+            }
             for (;;) { /* need to retry if the font needs changing */
                 rts.run.flags |= startOfLine_GmRunFlag;
                 if (!isParagraphJustified) {
@@ -1234,17 +1260,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 }
                 rts.baseFont  = rts.run.font;
                 rts.baseColor = rts.run.color;
-                iWrapText wrapText = { .text     = line,
-                                       .maxWidth = rts.isWordWrapped
-                                                       ? d->wrapWidth > 0
-                                                             ? d->wrapWidth
-                                                             : (d->size.x - run.bounds.pos.x -
-                                                                rts.indent - rts.rightMargin)
-                                                       : 0 /* unlimited */,
-                                       .mode     = word_WrapTextMode,
-                                       .wrapFunc = typesetOneLine_RunTypesetter_,
-                                       .context  = &rts };
+                iWrapText wrapText = { .text            = line,
+                                       .maxWidth        = wrapMaxWidth,
+                                       .firstLineIndent = firstLineIndent,
+                                       .mode            = word_WrapTextMode,
+                                       .wrapFunc        = typesetOneLine_RunTypesetter_,
+                                       .context         = &rts };
                 measure_WrapText(&wrapText, rts.run.font);
+                prevWrapParagraph = (size_Array(&rts.layout) > 1 && type == text_GmLineType);
                 if (!rts.run.isLede || size_Array(&rts.layout) <= maxLedeLines_) {
                     if (wrapText.baseDir < 0) {
                         /* Right-aligned paragraphs need margins and decorations to be flipped. */
@@ -1492,6 +1515,7 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isLayoutInvalidated = iFalse;
     d->flags.isPaletteValid = iFalse;
     d->flags.isConvertedMarkdown = iFalse;
+    d->flags.isCoverPage = iFalse;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -2185,6 +2209,10 @@ void makePaletteGlobal_GmDocument(const iGmDocument *d) {
 
 void invalidatePalette_GmDocument(iGmDocument *d) {
     d->flags.isPaletteValid = iFalse;
+}
+
+void setMode_GmDocument(iGmDocument *d, enum iGmDocumentMode mode) {
+    d->flags.isCoverPage = (mode == coverPage_GmDocumentMode);
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {

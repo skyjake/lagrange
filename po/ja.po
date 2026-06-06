@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
-"PO-Revision-Date: 2025-07-04 07:49+0000\n"
-"Last-Translator: BALLOON | FU-SEN <balloonakafusen+weblate@gmail.com>\n"
+"PO-Revision-Date: 2026-05-12 06:33+0000\n"
+"Last-Translator: BALLOON | FU-SEN <balloonakafusen+lagrange@gmail.com>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -1754,7 +1754,7 @@ msgid "bookmark.export.format.tags"
 msgstr "タグはレベル2の見出しで定義されます。"
 
 msgid "dlg.bookmark.identity"
-msgstr "次の身分証明をピン留めしました:"
+msgstr "ピン留めする身分証明:"
 
 msgid "heading.prefs.appearance"
 msgstr "外観"
@@ -2792,3 +2792,181 @@ msgstr "ファイルパスを入力するかウィンドウにファイルをド
 
 msgid "keys.link.homerow.next"
 msgstr "ホーム・矢印キーリンクの次のセット"
+
+msgid "menu.closetab.below"
+msgstr "下のタブを閉じる"
+
+msgid "macos.menu.hide"
+msgstr "Lagrange を非表示にする"
+
+msgid "macos.menu.hideothers"
+msgstr "他を非表示にする"
+
+msgid "macos.menu.showall"
+msgstr "すべて表示する"
+
+msgid "macos.menu.services"
+msgstr "サービス"
+
+msgid "sidebar.sub.empty"
+msgstr "フィードは空です"
+
+msgid "menu.sub.edit"
+msgstr "ブックマークの編集…"
+
+msgid "num.entries"
+msgid_plural "num.entries.n"
+msgstr[0] "%u エントリー"
+
+msgid "hint.optional"
+msgstr "オプション"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
+msgid "heading.prefs.gamepad"
+msgstr "ゲームパッド"
+
+msgid "prefs.quote.italic"
+msgstr "引用テキストの斜体:"
+
+msgid "prefs.gamepad"
+msgstr "ゲームパッドの有効:"
+
+msgid "prefs.socks"
+msgstr "プロキシの有効:"
+
+msgid "hint.socks.server"
+msgstr "hostname:1080"
+
+msgid "prefs.socks.password"
+msgstr "パスワード:"
+
+msgid "menu.input.copyprompt"
+msgstr "プロンプトをコピー"
+
+msgid "menu.input.pasteprompt"
+msgstr "プロンプトの減り付け"
+
+msgid "prefs.sidebar.right"
+msgstr "右"
+
+msgid "menu.closetab.above"
+msgstr "上のタブを閉じる"
+
+msgid "sidebar.structure"
+msgstr "構成"
+
+msgid "sidebar.documents"
+msgstr "タブ"
+
+msgid "hint.filter.bookmark"
+msgstr "ブックマークをフィルターする"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "サイドバー"
+
+msgid "link.copy.gemtext"
+msgstr "Gemtext のリンクをコピー"
+
+msgid "heading.prefs.monodoc"
+msgstr "等幅フォントの外見"
+
+msgid "heading.font.options"
+msgstr "オプション"
+
+msgid "heading.prefs.sidebars.tabs"
+msgstr "サイドバータブ"
+
+msgid "heading.prefs.proxy"
+msgstr "プロキシ"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "ツールバータブ"
+
+msgid "prefs.gamepad.reload"
+msgstr "ページの再読み込み"
+
+msgid "prefs.ipv6"
+msgstr "IPv6 を優先:"
+
+msgid "prefs.socks.server"
+msgstr "プロキシサーバー:"
+
+msgid "prefs.socks.user"
+msgstr "ユーザー名:"
+
+msgid "prefs.gamepad.cancel"
+msgstr "キャンセル"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "ページメニュー"
+
+msgid "prefs.gamepad.editurl"
+msgstr "ページ URL の編集"
+
+msgid "menu.input.showtop"
+msgstr "プロンプトを上に表示"
+
+msgid "menu.input.showbottom"
+msgstr "プロンプトを下に表示"
+
+msgid "menu.feed.edit"
+msgstr "フィードの設定…"
+
+msgid "heading.prefs.ui"
+msgstr "ユーザーインターフェイス"
+
+msgid "prefs.hidetabs"
+msgstr "タブバーを非表示:"
+
+msgid "heading.prefs.sidebars"
+msgstr "サイドバー"
+
+msgid "prefs.sidebar.left"
+msgstr "左"
+
+msgid "prefs.bottominput"
+msgstr "入力プロンプトを下に:"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "メインメニュー"
+
+msgid "menu.sidebar.configure"
+msgstr "設定…"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+#, fuzzy
+msgid "menu.show.subscriptions"
+msgstr "購読を表示"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "タブを表示"
+
+#, fuzzy
+msgid "sidebar.subscriptions"
+msgstr "購読"
+
+# Context menu action for warning/error banners.
+msgid "menu.banner.copy"
+msgstr "メッセージをコピー"
+
+msgid "link.copy.label"
+msgstr "リンクラベルのコピー"
+
+msgid "heading.prefs.theme"
+msgstr "テーマ"
+
+msgid "heading.prefs.toolbartabs.left"
+msgstr "ツールバータブを左に"
+
+msgid "heading.prefs.toolbartabs.right"
+msgstr "ツールバータブを右に"
+
+msgid "feeds.reset"
+msgstr "既知エントリーをリセット"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "サイト構造を表示"
