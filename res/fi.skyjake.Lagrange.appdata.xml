@@ -38,6 +38,23 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="1.20.6" date="2026-06-06">
+            <description>
+                <ul>
+                    <li>Improve legibility of text after a wrapped paragraph by adding a small first-line indent if the next text line follows immediately.</li>
+                    <li>Use a smaller font for plain text documents to fit more content in the window, matching the font used in preformatted blocks.</li>
+                    <li>Fixed: Prevent overlapping identity activations by removing any existing ones before activating a new identity on a given URL. (To conveniently switch between previously used identities, use the menu that appears when clicking the navbar Identity button. That preserves the current activation scope.)</li>
+                    <li>Gopher: Detect an unexpected binary response to a type `0` selector.</li>
+                    <li>Gopher: Detect when the response is a gophermap even if we requested type `0`.</li>
+                    <li>Gopher: Plain text now respects the "expand to long lines" option, avoiding wrapping when there is room in the window.</li>
+                    <li>Gopher: Fixed handling the `.\r\n` terminator in text responses.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.6</url>
+        </release>
         <release version="1.20.5" date="2026-05-06">
             <description>
                 <ul>
@@ -171,23 +188,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.2</url>
-        </release>
-        <release version="1.19.1" date="2025-09-06">
-            <description>
-                <ul>
-                    <li>Improved alignment of the URL field to page contents.</li>
-                    <li>Fixed build errors and runtime crashes when compiling for mobile Linux.</li>
-                    <li>Fixed tab bar context menu placement.</li>
-                    <li>Fixed popups being dismissed prematurely (by an input notification).</li>
-                    <li>Fixed missing mouse hover indication on keyboard-focused buttons.</li>
-                    <li>Fixed text colors in the New Identity dialog's error popups.</li>
-                    <li>Fixed failure to create identity due to timestamp calculation error.</li>
-                    <li>Updated UI translations.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.1</url>
         </release>
     </releases>
 </component>
