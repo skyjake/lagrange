@@ -344,6 +344,10 @@ static void enumerateFontconfig_(iArray *entries_out) {
         FcConfigDestroy(config);
         return;
     }
+    /* Two passes: non-italic faces first so they take priority in shared style slots.
+       Both bold and bold-italic map to bold_FontStyle, so without this ordering a
+       bold-italic face returned first by fontconfig would lock out the plain bold face. */
+    for (int pass = 0; pass < 2; pass++) {
     for (int i = 0; i < fs->nfont; i++) {
         FcPattern *font = fs->fonts[i];
         FcChar8 *familyCStr = NULL;
@@ -365,6 +369,8 @@ static void enumerateFontconfig_(iArray *entries_out) {
         FcPatternGetInteger(font, FC_WEIGHT,  0, &weight);
         FcPatternGetInteger(font, FC_SLANT,   0, &slant);
         FcPatternGetInteger(font, FC_SPACING, 0, &spacing);
+        if (pass == 0 && slant != FC_SLANT_ROMAN) continue;
+        if (pass == 1 && slant == FC_SLANT_ROMAN) continue;
         iFontCacheEntry *entry = NULL;
         /* Find or create entry via linear scan (one-time init, so fast enough). */ {
             iString specId;
@@ -397,6 +403,7 @@ static void enumerateFontconfig_(iArray *entries_out) {
         sty->colIndex = colIndex;
         extractMetrics_((const char *) fileCStr, colIndex, sty);
     }
+    } /* pass */
     FcFontSetDestroy(fs);
     FcConfigDestroy(config);
 }
