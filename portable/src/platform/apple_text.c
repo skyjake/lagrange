@@ -649,7 +649,10 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         /* Determine how many UTF-16 units fit on this line.
            When there is no explicit width limit, use a very large value so that
            CTTypesetterSuggestLineBreak still honours hard newlines (\n). */
-        const double wrapWidth = (wrap && wrap->maxWidth > 0) ? (double) wrap->maxWidth : 1e9;
+        const int    lineIndent = (lineCount == 0 && wrap ? wrap->firstLineIndent : 0);
+        const double wrapWidth  = (wrap && wrap->maxWidth > 0)
+                                      ? (double) (wrap->maxWidth - lineIndent)
+                                      : 1e9;
         CFIndex lineLen;
         if (!wrap || wrap->mode == word_WrapTextMode) {
             lineLen = CTTypesetterSuggestLineBreak(run->typesetter, startIdx, wrapWidth);
@@ -711,7 +714,7 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         const char   *lineEnd   = (endIdx <= run->utf16Len) ? srcPtr_(endIdx) : text.end;
         if (wrap && wrap->wrapRange_.start) {
             iTextAttrib attrib = { .fgColorId = args->color };
-            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, 0, lastLineW);
+            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, lineIndent, lastLineW);
         }
         /* Create a justified version of the line when justification is requested.
            This must be used for both drawing and offset/hit queries so that
