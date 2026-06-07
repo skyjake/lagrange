@@ -1126,7 +1126,8 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
             xCursor = 0;
             yCursor += d->font.height;
         }
-        float wrapAdvance = 0.0f;
+        float     wrapAdvance = 0.0f;
+        const int lineIndent  = (yCursor == 0 && wrap ? wrap->firstLineIndent : 0);
         if (wrap) {
             float  breakAdvance  = -1.0f;
             size_t breakRunIndex = iInvalidPos;
@@ -1194,7 +1195,7 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
                     }
                     if (wrap->maxWidth > 0 &&
                         wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
-                        args->wrap->maxWidth) {
+                        args->wrap->maxWidth - lineIndent) {
                         if (safeBreakPos > wrapPosRange.start) {
                             wrapPosRange.end = safeBreakPos;
                         }
@@ -1247,7 +1248,7 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
                                  size_Range(&wrapRuns),
                                  wrapPosRange,
                                  &wrapAdvance,
-                                 layoutBound,
+                                 layoutBound - lineIndent,
                                  wrapRuns.start > 0 && wrapRuns.end == runCount);
         }
         if (checkHitPoint || checkHitChar) {
@@ -1342,10 +1343,10 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
             }
         }
         iAssert(size_Array(&runOrder) == size_Range(&wrapRuns));
-        int   origin         = 0;
+        int   origin         = lineIndent;
         iBool isRightAligned = attrText->isBaseRTL;
         if (isRightAligned && layoutBound > 0) {
-            origin = layoutBound - wrapAdvance;
+            origin = layoutBound - wrapAdvance - lineIndent;
         }
         if (wrap && wrap->wrapFunc &&
             !notify_WrapText(args->wrap,

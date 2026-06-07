@@ -184,11 +184,18 @@ enum iGmDocumentUpdate {
     final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
 };
 
+enum iGmDocumentMode {
+    normal_GmDocumentMode,
+    coverPage_GmDocumentMode, /* document represents the actual data that cannot be
+                                 directly presented */
+};
+
 /* TODO: Add `GmDocumentMetrics` struct for width, maxContentWidth, canvasWidth */
 
 void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *paletteSeed,
                                  const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
+void    setMode_GmDocument      (iGmDocument *, enum iGmDocumentMode mode);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat sourceFormat);
 iBool   setViewFormat_GmDocument(iGmDocument *, enum iSourceFormat viewFormat); /* returns True if changed */
 enum iSourceFormat viewFormat_GmDocument(const iGmDocument *);
@@ -222,6 +229,7 @@ const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun 
                                              void *context);
 enum iSourceFormat format_GmDocument        (const iGmDocument *);
 iInt2           size_GmDocument             (const iGmDocument *);
+iBool           isGopherMenu_GmDocument     (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 iGmRunRange     runRange_GmDocument         (const iGmDocument *);

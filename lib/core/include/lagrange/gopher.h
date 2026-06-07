@@ -43,6 +43,7 @@ iDeclareTypeConstruction(Gopher)
 
 void    open_Gopher             (iGopher *, const iString *url);
 iBool   processResponse_Gopher  (iGopher *, const iBlock *data);
+iBool   checkFormat_Gopher      (iGopher *);
 void    cancel_Gopher           (iGopher *);
 
 void    setUrlItemType_Gopher   (iString *url, char itemType);

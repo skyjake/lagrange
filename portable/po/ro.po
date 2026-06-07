@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2025-07-07 06:44+0000\n"
+"PO-Revision-Date: 2026-05-14 18:04+0000\n"
 "Last-Translator: Sava Alexandru Stefan <savaalexandrustefan@gmail.com>\n"
 "Language-Team: Romanian <http://weblate.skyjake.fi/projects/lagrange/ui/ro/>"
 "\n"
@@ -532,3 +532,12 @@ msgstr "Setează Reîncărcarea Automată…"
 
 msgid "menu.page.bookmark"
 msgstr "Marchează Pagina…"
+
+msgid "macos.menu.showall"
+msgstr "Arată tot"
+
+msgid "macos.menu.services"
+msgstr "Servicii"
+
+msgid "menu.sidebar.configure"
+msgstr "Configurează…"

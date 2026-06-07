@@ -6,8 +6,25 @@
 ```
 # Release notes
 
+## 1.20.7
+* Fixed: Text layout overflow when monospace body appearance is enabled with Gemini. (It was getting confused with normal plain text.)
+* Fixed: Content width expansion in Gopher menus was measuring the line width incorrectly.
+* Adjusted first-line indentation to only occur when both previous and current paragraphs are getting wrapped.
+
+## 1.20.6
+* Improve legibility of text after a wrapped paragraph by adding a small first-line indent if the next text line follows immediately.
+* Use a smaller font for plain text documents to fit more content in the window, matching the font used in preformatted blocks.
+* Fixed: Prevent overlapping identity activations by removing any existing ones before activating a new identity on a given URL. (To conveniently switch between previously used identities, use the menu that appears when clicking the navbar Identity button. That preserves the current activation scope.)
+* Gopher: Detect an unexpected binary response to a type `0` selector.
+* Gopher: Detect when the response is a gophermap even if we requested type `0`.
+* Gopher: Plain text now respects the "expand to long lines" option, avoiding wrapping when there is room in the window.
+* Gopher: Fixed handling the `.\r\n` terminator in text responses.
+* Updated UI translations.
+
 ## 1.20.5
 * Fixed: Bookmark context menu closes prematurely when any page is loaded.
+* Fixed: Mismatched Bookmarks sidebar filter field background color.
+* Fixed: Reject server responses where the header is too long.
 * Improved build compatibility with old versions of SDL.
 * Adjusted minimum page margins on desktop for increased breathing room.
 

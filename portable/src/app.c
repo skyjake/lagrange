@@ -85,6 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 #if defined (iPlatformAppleMobile)
 #   include "platform/ios.h"
+#   include <CoreFoundation/CoreFoundation.h>
 #endif
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
@@ -1120,6 +1121,17 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 }
 #endif
 
+#if defined (iPlatformAppleMobile)
+static int wakeRunLoopOnEvent_App_(void *userdata, SDL_Event *event) {
+    /* This is a callback for more efficient event waiting. */
+    iUnused(userdata, event);
+    CFRunLoopRef rl = CFRunLoopGetMain();
+    CFRunLoopStop(rl);
+    CFRunLoopWakeUp(rl);
+    return 0;
+}
+#endif
+
 static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
     iUnused(param);
     postCommand_Root(NULL, "document.autoreload");
@@ -2130,6 +2142,21 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
         /* We may be allowed to block here until an event comes in. */
         if (isWaitingAllowed_App_(d)) {
+#if defined (iPlatformAppleMobile)
+            if (SDL_PollEvent(event)) {
+                /* Events already queued, no need to wait. */
+                return iTrue;
+            }
+            /* Block on the iOS run loop instead of polling via SDL_WaitEvent,
+               which would spin internally and use ~4x more CPU.
+               `returnAfterSourceHandled=false` lets the loop process unrelated
+               system sources (display sync, etc.) internally; we only break out
+               when `wakeRunLoopOnEvent_App_` stops the loop in response to an
+               actual SDL event being pushed. */
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.250, false);
+            SDL_PumpEvents();
+            return SDL_PollEvent(event);
+#else
             if (isAppleDesktop_Platform() && d->window && d->window->type == main_WindowType &&
                 as_MainWindow(d->window)->enableBackBuf) {
                 /* SDL Metal workaround: if we block here for too long, there will be a longer
@@ -2139,6 +2166,7 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
             }
             /* Wait indefinitely. */
             return SDL_WaitEvent(event);
+#endif
         }
     }
     /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return
@@ -2704,6 +2732,10 @@ static int run_App_(iApp *d) {
     if (isResizeDrawEnabled_()) {
         SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
     }
+#if defined (iPlatformAppleMobile)
+    /* Wakeup hook for the CFRunLoop-based event wait in nextEvent_App_(). */
+    SDL_AddEventWatch(wakeRunLoopOnEvent_App_, NULL);
+#endif
     while (d->isRunning) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
@@ -2715,6 +2747,9 @@ static int run_App_(iApp *d) {
         recycle_Garbage();
     }
     SDL_DelEventWatch(resizeWatcher_, d);
+#if defined (iPlatformAppleMobile)
+    SDL_DelEventWatch(wakeRunLoopOnEvent_App_, NULL);
+#endif
     return 0;
 }
 
