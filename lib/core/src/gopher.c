@@ -43,7 +43,8 @@ iLocalDef iBool isBoxDrawing_Char(iChar c) {
     return (c >= 0x2500 && c <= 0x257f);
 }
 
-static iBool isPreformatted_(iBool geminiStyled, iRangecc text) {
+static iBool isPreformatted_(iRangecc text) {
+    const iBool geminiStyled = get_Prefs()->geminiStyledGopher;
     int  numDiag   = 0;
     int  numSpace  = 0;
     int  numRepeat = 0;
