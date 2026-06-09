@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.20.7
+* Fixed: Text layout overflow when monospace body appearance is enabled with Gemini. (It was getting confused with normal plain text.)
+* Fixed: Link icons not matching the body font size.
+* Fixed: Link numbers/letters not matching the body font size.
+* Fixed: Content width expansion in Gopher menus. (Line width measured incorrectly.)
+* Adjusted first-line indentation to only occur when both previous and current paragraphs are getting wrapped.
+
 ## 1.20.6
 * Improve legibility of text after a wrapped paragraph by adding a small first-line indent if the next text line follows immediately.
 * Use a smaller font for plain text documents to fit more content in the window, matching the font used in preformatted blocks.

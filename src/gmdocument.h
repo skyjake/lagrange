@@ -242,6 +242,8 @@ const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun 
                                              void *context);
 enum iSourceFormat format_GmDocument        (const iGmDocument *);
 iInt2           size_GmDocument             (const iGmDocument *);
+iBool           isGopherMenu_GmDocument     (const iGmDocument *);
+enum iFontId    font_GmDocument             (const iGmDocument *, enum iGmLineType lineType);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 iGmRunRange     runRange_GmDocument         (const iGmDocument *);
@@ -285,4 +287,3 @@ const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
 iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
 iBool           preIsFolded_GmDocument  (const iGmDocument *, uint16_t preId);
 iBool           preHasAltText_GmDocument(const iGmDocument *, uint16_t preId);
-

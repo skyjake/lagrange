@@ -1,4 +1,0 @@
-name: 'docker'
-runs:
-  using: 'docker'
-  image: 'debian-dockerfile'

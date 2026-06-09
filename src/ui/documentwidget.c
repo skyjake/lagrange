@@ -1409,7 +1409,8 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 else if (equal_Rangecc(param, "text/markdown")) {
                     docFormat = markdown_SourceFormat;
                     setRange_String(&d->sourceMime, param);
-                    postCommand_Widget(d, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
+                    postCommand_Widget(
+                        d, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
                          equal_Rangecc(param, "application/json") ||
