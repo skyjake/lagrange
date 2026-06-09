@@ -38,6 +38,20 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="1.20.7" date="2026-06-09">
+            <description>
+                <ul>
+                    <li>Fixed: Text layout overflow when monospace body appearance is enabled with Gemini. (It was getting confused with normal plain text.)</li>
+                    <li>Fixed: Link icons not matching the body font size.</li>
+                    <li>Fixed: Link numbers/letters not matching the body font size.</li>
+                    <li>Fixed: Content width expansion in Gopher menus. (Line width measured incorrectly.)</li>
+                    <li>Adjusted first-line indentation to only occur when both previous and current paragraphs are getting wrapped.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.7</url>
+        </release>
         <release version="1.20.6" date="2026-06-06">
             <description>
                 <ul>
@@ -175,19 +189,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.3</url>
-        </release>
-        <release version="1.19.2" date="2025-09-13">
-            <description>
-                <ul>
-                    <li>Indicate automatic reloading in the Tabs list.</li>
-                    <li>Fixed broken timestamp calculation when creating identities.</li>
-                    <li>Fixed parsing Gemini response header when there are excessive whitespace characters present.</li>
-                    <li>Fixed event handling glitch when opening a popup in split view mode.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.2</url>
         </release>
     </releases>
 </component>
