@@ -1,5 +1,0 @@
-lagrange (0.0.1-1) unstable; urgency=low
-
-  * Setting up automatic builds via GitHub CI.
-
- -- Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>  Sun, 29 Nov 2020 14:56:00 +0200

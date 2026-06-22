@@ -814,6 +814,23 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
     }
 }
 
+static iBool isLineIndentable_(iRangecc line) {
+    trim_Rangecc(&line);
+    if (size_Range(&line) < 3 || !isAlpha_Char(*line.start)) {
+        /* Maybe a numbered list, or a symbol of some sort. */
+        return iFalse;
+    }
+    /* Lists typically have punctuation at the beginning. */
+    for (const char *i = line.start; i != line.start + 3; i++) {
+        if (isPunct_Char(*i) && *i != '`') {
+            if ((*i == '\'' || *i == '"') && i != line.start) continue;
+            return iFalse;
+        }
+    }
+    /* Looks like regular text. */
+    return iTrue;
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     static iRegExp *ansiPattern_;
     if (!ansiPattern_) {
@@ -1269,7 +1286,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                           ? d->wrapWidth
                           : (d->size.x - run.bounds.pos.x - rts.indent - rts.rightMargin)
                     : 0 /* unlimited */;
-            const iBool indentParagraphFirstLine = iTrue; /* could be a preference */
+            const iBool indentParagraphFirstLine = isLineIndentable_(line);
             int firstLineIndent = 0;
             if (indentParagraphFirstLine && type == text_GmLineType && prevWrapParagraph) {
                 /* Previous line was text, too, and it wrapped so we may need some first-line
