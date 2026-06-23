@@ -449,13 +449,36 @@ macro (set_common_app_properties target)
             /utf-8 /std:c11 /experimental:c11atomics
             /W4 /WX
             /D_CRT_SECURE_NO_WARNINGS
-            # disable size_t downcasts
-            /wd4267
-            # temporarily disable shadowing warnings
-            /wd4456 /wd4457
-
+            # undefined (method), assuming extern
+            /wd4013
+            # '<': signed/unsigned mismatch
+            /wd4018
+            # formal parameter is not referenced in the body
+            /wd4100
+            # unreferenced local variable
+            /wd4101
             # methods via function pointers
             /wd4152
+            # unreferenced variable - common in widgets: `iWidget* widget = some_call()`
+            /wd4189
+            # disable float->int conversions
+            /wd4244
+            # disable int -> uint32 sig/unsig conversion coming mainly from stb vorbis
+            /wd4245
+            # disable size_t downcasts
+            /wd4267
+            # truncation from double to const float (ms being too eager)
+            /wd4305
+            # signed vs unsigned comparison
+            /wd4389
+            # temporarily disable shadowing warnings
+            /wd4456 /wd4457
+            # potentially uninitialized local variable `mid` (stb_vorbis), VS likely gets confused by gotos
+            /wd4701
+            # unreachable code, for some reason VS doesn't like iDeclareTypeConstruction macro in foundation/string.h
+            /wd4702
+            # operand are different enum types (iTransitionFlags vs iTransitionDir) - tbf, not sure why is vs reporting this in C mode
+            /wd5287 /wd5286
         )
     else ()
         target_compile_options (${target} PUBLIC
