@@ -271,7 +271,10 @@ static CFArrayRef buildCascadeList_AppleText_(iAppleText *d) {
 
 CTFontRef overrideFont_AppleText_(const iAppleText *d, iChar ch, float pointSize) {
     const iBool forceMonochrome = (ch == 0x1F310 /* globe with meridians */);
-    if (get_Prefs()->colorEmoji && !forceMonochrome) return NULL; /* cascade decides */
+    /* Widgets can temporarily disable color Emoji; see setDisableColorEmoji_Text(). */
+    if (get_Prefs()->colorEmoji && !isColorEmojiDisabled_Text() && !forceMonochrome) {
+        return NULL; /* cascade decides */
+    }
     /* Build UTF-16 units for CTFontGetGlyphsForCharacters. */
     UniChar uChars[2];
     CGGlyph glyphs[2];
@@ -372,6 +375,7 @@ static void initFonts_AppleText_(iAppleText *d) {
                    &d->fontPriorityOrder,
                    &d->overrideFontId,
                    &d->monoFallback,
+                   NULL, NULL, /* CoreText handles color Emoji via its own cascade; see overrideFont_AppleText_() */
                    &(iFontInitCallbacks) {
                        .setupSpec = setupVariants_AppleText_,
                        .hasSpec   = hasVariant_AppleText_,

@@ -480,6 +480,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         fg |= underline_ColorId;
     }
     setBaseAttributes_Text(d->font, fg);
+    /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
+    setDisableColorEmoji_Text(!isTabButton_Widget(w));
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
     if (bg >= 0) {
@@ -618,6 +620,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           d->flags.chevron ? rightAngle_Icon : check_Icon);
     }
     setBaseAttributes_Text(-1, -1);
+    setDisableColorEmoji_Text(iFalse);
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }
@@ -627,11 +630,13 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
     if (d->flags.wrap) {
         if (flags_Widget(w) & fixedHeight_WidgetFlag) {
             /* Calculate a new height based on the wrapping. */
+            setDisableColorEmoji_Text(!isTabButton_Widget(w)); /* must match draw_LabelWidget_ */
             const iRect cont = contentBounds_LabelWidget_(d);
             w->rect.size.y =
                 measureWrapRange_Text(d->font, width_Rect(cont), range_String(&d->label))
                     .bounds.size.y +
                 padding_LabelWidget_(d, 0).y + padding_LabelWidget_(d, 2).y;
+            setDisableColorEmoji_Text(iFalse);
         }
     }
 }
@@ -639,6 +644,8 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
+    /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
+    setDisableColorEmoji_Text(!isTabButton_Widget(w)); /* must match draw_LabelWidget_ */
     iInt2 size;
     if (!d->flags.noLabel) {
         size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
@@ -658,6 +665,7 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     if (isTerminal_Platform()) {
         size.x = iMax(size.x, 3);
     }
+    setDisableColorEmoji_Text(iFalse);
     return size;
 }
 

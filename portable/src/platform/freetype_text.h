@@ -49,6 +49,10 @@ typedef struct {
 #endif
     FT_Face    ftFace;
     iBool      hasColorGlyphs; /* FT_HAS_COLOR: CBDT/CBLC or COLR table */
+    iBool      isFixedSize;    /* no scalable outline, only fixed bitmap strikes (e.g. Noto
+                                   Color Emoji); FT_Set_Pixel_Sizes() only works at native size */
+    int        fixedSizeIndex; /* best available_sizes[] index to select */
+    int        fixedSizePpem;  /* native pixel height of that embedded strike */
 } iFtFontData;
 
 iLocalDef iFtFontData *ftData_FontFile(const iFontFile *d) {

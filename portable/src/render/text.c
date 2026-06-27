@@ -43,6 +43,7 @@ void init_Text(iText *d, SDL_Renderer *render, float documentFontSizeFactor) {
     d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC prefix */);
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
+    d->disableColorEmoji = iFalse;
 }
 
 void deinit_Text(iText *d) {
@@ -77,6 +78,14 @@ void setAnsiFlags_Text(int ansiFlags) {
     current_Text_->ansiFlags = ansiFlags;
 }
 
+void setDisableColorEmoji_Text(iBool disable) {
+    current_Text_->disableColorEmoji = disable;
+}
+
+iBool isColorEmojiDisabled_Text(void) {
+    return current_Text_->disableColorEmoji;
+}
+
 int ansiFlags_Text(void) {
     return current_Text_->ansiFlags;
 }
@@ -101,11 +110,45 @@ static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback)
     return spec ? spec : findSpec_Fonts(fallback);
 }
 
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+/* Well-known color Emoji font names, in preference order; see findColorEmojiSpec_(). */
+static const char *colorEmojiNames_[] = {
+    "Noto Color Emoji", "Twemoji Mozilla", "Segoe UI Emoji",
+    "JoyPixels", "OpenMoji Color", "Blobmoji", NULL
+};
+
+static const iFontSpec *findColorEmojiSpec_(void) {
+    for (size_t k = 0; colorEmojiNames_[k]; k++) {
+        iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
+            const iFontSpec *spec = i.ptr;
+            const iFontFile *file = spec->styles[regular_FontStyle];
+            if (file && !cmpCase_String(&spec->name, colorEmojiNames_[k]) &&
+                hasColorGlyphs_FontFile(file)) {
+                return spec;
+            }
+        }
+    }
+    /* No well-known name matched; fall back to any font with color glyphs. */
+    iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
+        const iFontSpec *spec = i.ptr;
+        const iFontFile *file = spec->styles[regular_FontStyle];
+        if (file && hasColorGlyphs_FontFile(file)) {
+            return spec;
+        }
+    }
+    return NULL;
+}
+#endif
+
 void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
-                    iFontSpec *monoFallback, const iFontInitCallbacks *cb) {
+                    iFontSpec *monoFallback, int *colorEmojiFontId, iFontSpec *colorEmojiSpec,
+                    const iFontInitCallbacks *cb) {
     const float uiSize   = fontSize_UI * (isMobile_Platform() ? 1.1f : 1.0f);
     const float textSize = fontSize_UI * d->contentFontSize;
     *overrideFontId = -1;
+    if (colorEmojiFontId) {
+        *colorEmojiFontId = -1;
+    }
     clear_Array(fontPriorityOrder);
     /* Mandatory fonts (must match the fixed slot IDs in font.h). */
     cb->setupSpec(d, tryFindSpec_(uiFont_PrefsString,               "default"),      default_FontId,           uiSize, textSize);
@@ -127,6 +170,24 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
         monoFallback->priority = 20;
         cb->setupSpec(d, monoFallback, cb->alloc(d), uiSize, textSize);
     }
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+    /* Find an installed color Emoji font (e.g. Noto Color Emoji) so glyph lookup can
+       prefer it over the bundled monochrome fonts. */
+    if (colorEmojiFontId && colorEmojiSpec && prefs_App()->colorEmoji) {
+        const iFontSpec *colorEmoji = findColorEmojiSpec_();
+        if (colorEmoji && !cb->hasSpec(d, colorEmoji)) {
+            /* Local copy tagged auxiliary so a trailing space/punctuation isn't measured
+               with this font's metrics (attributedtext.c resets such runs to the base font). */
+            *colorEmojiSpec = *colorEmoji;
+            colorEmojiSpec->flags |= auxiliary_FontSpecFlag;
+            *colorEmojiFontId = cb->alloc(d);
+            cb->setupSpec(d, colorEmojiSpec, *colorEmojiFontId, uiSize, textSize);
+#if !defined (NDEBUG)
+            printf("[Text] Color Emoji font: %s\n", cstr_String(&colorEmoji->name));
+#endif
+        }
+    }
+#endif
     sort_Array(fontPriorityOrder, cmp_PrioMapItem_);
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }

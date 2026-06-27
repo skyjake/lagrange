@@ -46,6 +46,7 @@ struct Impl_Text {
     int           baseFontId; /* base attributes (for restoring via escapes) */
     int           baseFgColorId;
     iBool         needRefresh;
+    iBool         disableColorEmoji; /* set by widgets to suppress color Emoji temporarily */
 };
 
 iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar);
@@ -71,6 +72,8 @@ iLocalDef void resetFonts_Text(iText *d) {
 void    setOpacity_Text         (float opacity);
 void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
 void    setAnsiFlags_Text       (int ansiFlags);
+void    setDisableColorEmoji_Text (iBool disable); /* suppresses color Emoji until set again */
+iBool   isColorEmojiDisabled_Text (void);
 int     ansiFlags_Text          (void);
 
 iChar   missing_Text            (size_t index);
@@ -90,7 +93,9 @@ struct Impl_FontInitCallbacks {
 };
 
 void    initFonts_Text          (iText *, iArray *fontPriorityOrder, int *overrideFontId,
-                                 iFontSpec *monoFallback, const iFontInitCallbacks *); /* called from backend */
+                                 iFontSpec *monoFallback, int *colorEmojiFontId,
+                                 iFontSpec *colorEmojiSpec, const iFontInitCallbacks *);
+                                 /* called from backend; last two may both be NULL (e.g., CoreText) */
 
 /*----------------------------------------------------------------------------------------------*/
 

@@ -197,6 +197,8 @@ struct Impl_RasterText {
     iText        base;
     iArray       fonts;             /* iRasterFont[] */
     int          overrideFontId;    /* highest-priority override font (-1 if none) */
+    int          colorEmojiFontId;  /* detected system color-Emoji font (-1 if none/disabled) */
+    iFontSpec    colorEmojiSpec;    /* copy of the detected color-Emoji FontSpec, tagged auxiliary */
     iFontSpec    monoFallback;      /* copy of Iosevka as low-priority monospace spec */
     iArray       fontPriorityOrder; /* iPrioMapItem[] sorted by priority */
     iGlyphCache  grayscaleCache;    /* 8-bit INDEX8 atlas; used by both backends */

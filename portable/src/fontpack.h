@@ -90,6 +90,7 @@ struct Impl_FontFile {
 
 uint32_t    findGlyphIndex_FontFile     (const iFontFile *, iChar ch);
 iBool       isMonospace_FontFile        (const iFontFile *);
+iBool       hasColorGlyphs_FontFile     (const iFontFile *); /* font-wide COLR/CBDT/sbix presence */
 float       scaleForPixelHeight_FontFile(const iFontFile *, int pixelHeight);
 int         glyphAdvance_FontFile       (const iFontFile *, uint32_t glyphIndex);
 void        measureGlyph_FontFile       (const iFontFile *, uint32_t glyphIndex,

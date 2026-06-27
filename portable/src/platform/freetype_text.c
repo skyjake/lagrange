@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "ui/metrics.h"
 #include "ui/window.h"
+#include "stb_image_resize2.h"
 
 #include <lagrange/prefs.h>
 #include <lagrange/defs.h>
@@ -139,6 +140,19 @@ void allocData_FontFile(iFontFile *d) {
         d->emAdvance = (int) face->units_per_EM;
     }
     fd->hasColorGlyphs = FT_HAS_COLOR(face);
+    /* Some color fonts (e.g. Noto Color Emoji) have only fixed-size bitmap strikes;
+       FT_Set_Pixel_Sizes() only works at their native size, so pick the best one now. */
+    fd->isFixedSize = !FT_IS_SCALABLE(face) && face->num_fixed_sizes > 0;
+    if (fd->isFixedSize) {
+        int best = 0;
+        for (int i = 1; i < face->num_fixed_sizes; i++) {
+            if (face->available_sizes[i].height > face->available_sizes[best].height) {
+                best = i;
+            }
+        }
+        fd->fixedSizeIndex = best;
+        fd->fixedSizePpem  = face->available_sizes[best].height;
+    }
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     /* Raw blob (not hb_ft_font_create) gives design-unit advances, consistent with xScale. */
     hb_blob_t *hbBlob;
@@ -199,9 +213,24 @@ float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
     return (float) pixelHeight / (float) (d->ascent - d->descent);
 }
 
+/* Selects the native strike and returns the scale factor to the requested xScale size
+   (using ascent-descent as units-per-em, since unitsPerEm is 0 for these faces). */
+static float prepareFixedSize_(FT_Face face, const iFontFile *d, const iFtFontData *fd,
+                                float xScale) {
+    FT_Select_Size(face, fd->fixedSizeIndex);
+    if (fd->fixedSizePpem <= 0) return 1.0f;
+    const float targetPpem = xScale * (float) (d->ascent - d->descent);
+    return targetPpem / (float) fd->fixedSizePpem;
+}
+
 int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
     const iFtFontData *fd = ftData_FontFile(d);
     if (!fd || !fd->ftFace) return 0;
+    if (fd->isFixedSize) {
+        /* Advance is unused here (HarfBuzz computes it); just select the right strike. */
+        FT_Select_Size(fd->ftFace, fd->fixedSizeIndex);
+        return 0;
+    }
     if (FT_Load_Glyph(fd->ftFace, glyphIndex, FT_LOAD_NO_BITMAP | FT_LOAD_NO_HINTING) != 0) {
         return 0;
     }
@@ -215,11 +244,23 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
     *x0 = *y0 = *x1 = *y1 = 0;
     if (!fd || !fd->ftFace) return;
     FT_Face face = fd->ftFace;
+    iUnused(yScale, xShift);
+    if (fd->isFixedSize) {
+        const float scale = prepareFixedSize_(face, d, fd, xScale);
+        if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) != 0) return;
+        FT_GlyphSlot slot = face->glyph;
+        if (slot->bitmap.width == 0 || slot->bitmap.rows == 0) return;
+        /* Match rasterizeGlyphEx_FontFile_()'s rounding so sizes stay consistent. */
+        *x0 = (int) roundf(slot->bitmap_left * scale);
+        *y0 = (int) roundf(-slot->bitmap_top * scale);
+        *x1 = *x0 + iMax(1, (int) roundf((float) slot->bitmap.width * scale));
+        *y1 = *y0 + iMax(1, (int) roundf((float) slot->bitmap.rows * scale));
+        return;
+    }
     const FT_UInt ppem = iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
     FT_Set_Pixel_Sizes(face, ppem, ppem);
     /* Hinted load: metrics are grid-snapped, matching the rasterizer and avoiding 1px y-jitter. */
     if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_BITMAP) != 0) return;
-    iUnused(yScale, xShift);
     const FT_Glyph_Metrics *m = &face->glyph->metrics;
     if (m->width == 0 || m->height == 0) return;
     *x0 =  (int)(m->horiBearingX >> 6);
@@ -387,9 +428,28 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
     *isColor_out = iFalse;
     if (!fd || !fd->ftFace) return NULL;
     FT_Face face = fd->ftFace;
+    iUnused(yScale, xShift);
+    if (fd->isFixedSize) {
+        const float scale = prepareFixedSize_(face, d, fd, xScale);
+        if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) != 0) return NULL;
+        FT_GlyphSlot slot = face->glyph;
+        if (slot->bitmap.pixel_mode != FT_PIXEL_MODE_BGRA ||
+            slot->bitmap.width == 0 || slot->bitmap.rows == 0) {
+            return NULL;
+        }
+        const int sw = (int) slot->bitmap.width;
+        const int sh = (int) slot->bitmap.rows;
+        const int dw = iMax(1, (int) roundf(sw * scale));
+        const int dh = iMax(1, (int) roundf(sh * scale));
+        *w = dw;
+        *h = dh;
+        *isColor_out = iTrue;
+        /* FreeType's BGRA bitmaps use premultiplied alpha; STBIR_BGRA_PM matches that. */
+        return stbir_resize_uint8_linear(slot->bitmap.buffer, sw, sh, slot->bitmap.pitch,
+                                         NULL, dw, dh, 0, STBIR_BGRA_PM);
+    }
     const FT_UInt ppem = iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
     FT_Set_Pixel_Sizes(face, ppem, ppem);
-    iUnused(yScale, xShift);
     /* First try FT_LOAD_COLOR which on FreeType >= 2.12 renders both CBDT and COLR as BGRA. */
     if (fd->hasColorGlyphs) {
         if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) == 0) {
@@ -455,6 +515,9 @@ static void initCache_FtText_(iFtText *d) {
     cc->size.x       = iMin(2048, d->grayscaleCache.size.x);
     cc->size.y       = iMin(2048, d->grayscaleCache.size.y);
     cc->rowAllocStep = iMax(4, textSize / 4);
+    for (int h = cc->rowAllocStep; h <= 5 * textSize + cc->rowAllocStep; h += cc->rowAllocStep) {
+        pushBack_Array(&cc->rows, &(iCacheRow){ .height = 0 });
+    }
     cc->bottom       = 0;
     cc->texture      = SDL_CreateTexture(d->base.render,
                                          SDL_PIXELFORMAT_RGBA32,
@@ -516,12 +579,10 @@ static SDL_Palette *glyphPalette_(void) {
 }
 
 /* Upload a BGRA color glyph bitmap to the color atlas. Returns the atlas rect. */
-static iRect uploadColorGlyph_(iFtText *tx, uint8_t *bgraBitmap, int w, int h) {
+static void uploadColorGlyph_(iFtText *tx, uint8_t *bgraBitmap, iRect atlasRect) {
     iGlyphCache *cc = &tx->colorCache;
-    /* Find a position in the color cache. The color cache uses assignPos_GlyphCache. */
-    const iInt2 sz  = init_I2(w, h);
-    const iInt2 pos = assignPos_GlyphCache(cc, sz);
-    iRect atlasRect = { pos, sz };
+    const int    w  = atlasRect.size.x;
+    const int    h  = atlasRect.size.y;
     /* Swap BGRA → RGBA for SDL (SDL_PIXELFORMAT_RGBA32 is RGBA on all platforms). */
     uint8_t *rgba = malloc((size_t) w * h * 4);
     for (int i = 0; i < w * h; i++) {
@@ -543,7 +604,11 @@ static iRect uploadColorGlyph_(iFtText *tx, uint8_t *bgraBitmap, int w, int h) {
     SDL_DestroyTexture(bufTex);
     SDL_FreeSurface(surf);
     free(rgba);
-    return atlasRect;
+}
+
+iBool hasColorGlyphs_FontFile(const iFontFile *d) {
+    const iFtFontData *fd = ftData_FontFile(d);
+    return fd && fd->hasColorGlyphs;
 }
 
 iBool isColorGlyph_(const iFontFile *d, uint32_t glyphIndex) {
@@ -557,8 +622,14 @@ iBool isColorGlyph_(const iFontFile *d, uint32_t glyphIndex) {
                                   &layerGlyphIdx, &layerColorIdx, &iter)) {
         return iTrue;
     }
-    /* Check CBDT/CBLC: glyph has an embedded color bitmap at a reasonable size. */
-    FT_Set_Pixel_Sizes(fd->ftFace, 0, 16); /* any size; just checking for bitmap */
+    /* Check CBDT/CBLC: glyph has an embedded color bitmap. Fixed-size faces must select their
+       native strike directly; FT_Set_Pixel_Sizes() with an arbitrary size yields an empty bitmap. */
+    if (fd->isFixedSize) {
+        FT_Select_Size(fd->ftFace, fd->fixedSizeIndex);
+    }
+    else {
+        FT_Set_Pixel_Sizes(fd->ftFace, 0, 16); /* any size; just checking for bitmap */
+    }
     if (FT_Load_Glyph(fd->ftFace, glyphIndex, FT_LOAD_COLOR | FT_LOAD_NO_HINTING) == 0 &&
         fd->ftFace->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA) {
         return iTrue;
@@ -582,9 +653,13 @@ iBool rasterizeForCache_Font_(iRasterFont *font, iGlyph *glyph, SDL_Surface *sur
                 si * offsetStep_Glyph_(), index_Glyph_(glyph),
                 &w, &h, &isColor);
             if (isColor) {
-                glyph->colorRect = uploadColorGlyph_(currentRaster_Text_(), bmp, w, h);
-                glyph->flags    |= isColor_GlyphFlag | rasterized0_GlyphFlag;
-                free(bmp);
+                /* colorRect was already reserved in glyphByIndex_Font_(); sizes must match. */
+                iAssert(bmp == NULL || (w == glyph->colorRect.size.x && h == glyph->colorRect.size.y));
+                if (bmp) {
+                    uploadColorGlyph_(currentRaster_Text_(), bmp, glyph->colorRect);
+                    free(bmp);
+                }
+                glyph->flags |= isColor_GlyphFlag | rasterized0_GlyphFlag;
                 break; /* color emoji handled; all subpixel slots share rect[0] */
             }
             if (bmp) {

@@ -156,8 +156,12 @@ void deinit_GlyphCache(iGlyphCache *d) {
 iInt2 assignPos_GlyphCache(iGlyphCache *d, iInt2 glyphSize) {
     iAssert(d->texture);
     iAssert(glyphSize.x > 0 && glyphSize.y > 0);
-    /* Index directly into the pre-allocated rows array: one bucket per height step. */
-    iCacheRow *cur = at_Array(&d->rows, (glyphSize.y - 1) / d->rowAllocStep);
+    /* One bucket per height step; grow on demand for glyphs taller than pre-populated. */
+    const size_t rowIndex = (size_t) (glyphSize.y - 1) / (size_t) d->rowAllocStep;
+    while (rowIndex >= size_Array(&d->rows)) {
+        pushBack_Array(&d->rows, &(iCacheRow){ .height = 0 });
+    }
+    iCacheRow *cur = at_Array(&d->rows, rowIndex);
     if (cur->height == 0) {
         cur->height = (1 + (glyphSize.y - 1) / d->rowAllocStep) * d->rowAllocStep;
         cur->pos.y  = d->bottom;
@@ -323,6 +327,8 @@ void initFonts_RasterText(iRasterText *d) {
                    &d->fontPriorityOrder,
                    &d->overrideFontId,
                    &d->monoFallback,
+                   &d->colorEmojiFontId,
+                   &d->colorEmojiSpec,
                    &(iFontInitCallbacks){
                        .setupSpec = setupFontVariants_RasterText_,
                        .hasSpec   = hasVariant_RasterText_,
@@ -339,7 +345,8 @@ void deinitFonts_RasterText(iRasterText *d) {
     }
     clear_Array(&d->fonts);
     clear_Array(&d->fontPriorityOrder);
-    d->overrideFontId = -1;
+    d->overrideFontId   = -1;
+    d->colorEmojiFontId = -1;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -402,6 +409,17 @@ iRasterFont *characterFont_Font_(iRasterFont *d, iChar ch, uint32_t *glyphIndex)
     const iBool           isMonospaced = isMonospaced_RasterFont(d);
     iRasterText *tx    = currentRaster_Text_();
     iRasterFont *overrideFont = NULL;
+    /* Prefer the detected system color Emoji font for Emoji codepoints over the bundled
+       monochrome glyphs. Globe icon excluded (reused as a plain UI glyph); widgets may
+       disable this temporarily via setDisableColorEmoji_Text(). */
+    if (tx->colorEmojiFontId >= 0 && !isColorEmojiDisabled_Text() &&
+        ch != 0x1F310 && isEmoji_Char(ch)) {
+        iRasterFont *colorFont =
+            (iRasterFont *) font_Text(FONT_ID(tx->colorEmojiFontId, styleId, sizeId));
+        if (colorFont != d && (*glyphIndex = glyphIndex_Font_(colorFont, ch)) != 0) {
+            return colorFont;
+        }
+    }
     if (ch != 0x20 && tx->overrideFontId >= 0) {
         overrideFont = (iRasterFont *) font_Text(FONT_ID(tx->overrideFontId, styleId, sizeId));
         if (overrideFont != d && (*glyphIndex = glyphIndex_Font_(overrideFont, ch)) != 0) {
@@ -751,10 +769,23 @@ iGlyph *glyphByIndex_Font_(iRasterFont *d, uint32_t glyphIndex) {
         glyph = new_Glyph(glyphIndex);
         glyph->font = d;
         if (isColorGlyph_(d->font.file, glyphIndex)) {
-            /* Color glyph: skip grayscale allocation entirely.
-               Only the advance is needed now; colorRect is filled by cacheGlyphs_Font_. */
+            /* Color glyph: skip grayscale allocation, but reserve the atlas rect now (pixel
+               upload stays deferred to draw time) so measure-only callers, like gmdocument.c
+               sizing a link's Emoji icon, see the correct colorRect.size before any drawing. */
             glyph->flags  |= isColor_GlyphFlag;
             glyph->advance = d->xScale * glyphAdvance_FontFile(d->font.file, glyphIndex);
+            int x0, y0, x1, y1;
+            measureGlyph_FontFile(d->font.file, glyphIndex, d->xScale, d->yScale, 0.0f,
+                                  &x0, &y0, &x1, &y1);
+            glyph->d[0]   = init_I2(x0, y0);
+            glyph->d[0].y += d->vertOffset;
+            const iInt2 size = init_I2(x1 - x0, y1 - y0);
+            if (size.x > 0 && size.y > 0) {
+                glyph->colorRect = (iRect){ assignPos_GlyphCache(&tx->colorCache, size), size };
+            }
+            else {
+                setRasterized_Glyph_(glyph, 0); /* nothing to draw */
+            }
         }
         else {
             for (int offsetIndex = 0; offsetIndex < numOffsetSteps_Glyph_; offsetIndex++) {
@@ -828,7 +859,7 @@ void cacheGlyphs_Font_(iRasterFont *d, const uint32_t *glyphIndices, size_t numG
                 break;
             }
             if ((glyph->flags & isColor_GlyphFlag) &&
-                !isEmpty_Rect(glyph->colorRect)) continue; /* already uploaded to color atlas */
+                isRasterized_Glyph_(glyph, 0)) continue; /* already uploaded to color atlas */
             if (isFullyRasterized_Glyph_(glyph)) continue;
             if (!buf) {
                 rasters = new_Array(sizeof(iRasterGlyph));
@@ -966,8 +997,9 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             SDL_Rect dst;
             if (isColor) {
                 dst = (SDL_Rect){
-                    d->orig.x + (int)(d->xCursor + xOffset),
-                    d->orig.y + (int)(d->yCursor - yOffset) + d->font->font.baseline,
+                    d->orig.x + (int)(d->xCursor + xOffset) + glyph->d[0].x,
+                    d->orig.y + (int)(d->yCursor - yOffset) +
+                        ((iRasterFont *) glyph->font)->font.baseline + glyph->d[0].y,
                     glyph->colorRect.size.x, glyph->colorRect.size.y
                 };
             }
@@ -1026,12 +1058,13 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                     }
                 }
                 if (layerIndex == foreground_RunLayerType && !isSpace) {
-                    if (isColor ? isEmpty_Rect(glyph->colorRect)
-                                : !isRasterized_Glyph_(glyph, hoff)) {
+                    /* Color glyphs reserve their atlas rect eagerly; only the pixel
+                       upload is deferred to here (see glyphByIndex_Font_). */
+                    const int rasterHoff = isColor ? 0 : hoff;
+                    if (!isRasterized_Glyph_(glyph, rasterHoff)) {
                         cacheSingleGlyph_Font_(runFont, glyphId);
                         glyph = glyphByIndex_Font_(runFont, glyphId);
-                        iAssert(isColor ? !isEmpty_Rect(glyph->colorRect)
-                                        : isRasterized_Glyph_(glyph, hoff));
+                        iAssert(isRasterized_Glyph_(glyph, rasterHoff));
                     }
                     SDL_Rect src;
                     if (isColor) {
