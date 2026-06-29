@@ -38,6 +38,19 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="1.20.9" date="2026-06-29">
+            <description>
+                <ul>
+                    <li>Fixed: Potential crash when Fingerprints menu open in Page Information.</li>
+                    <li>Fixed: Page Information popup dismissed inadvertently.</li>
+                    <li>Improved list resizing performance: contents should not be invalidated on height changes, since items are anyway buffered for vertical scrolling.</li>
+                    <li>Ask SDL to use the Wayland video backend when running on a Wayland display. (This should fix rendering glitches on KDE Plasma.)</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.9</url>
+        </release>
         <release version="1.20.8" date="2026-06-22">
             <description>
                 <ul>
@@ -173,17 +186,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.0</url>
-        </release>
-        <release version="1.19.4" date="2025-11-26">
-            <description>
-                <ul>
-                    <li>Fixed: Context menu for Nex links.</li>
-                    <li>Titan: Don't send requests with an empty path.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.19.4</url>
         </release>
     </releases>
 </component>
