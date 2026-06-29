@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.20.9
+* Fixed: Potential crash when Fingerprints menu open in Page Information.
+* Fixed: Page Information popup dismissed inadvertently.
+* Improved list resizing performance: contents should not be invalidated on height changes, since items are anyway buffered for vertical scrolling.
+* Ask SDL to use the Wayland video backend when running on a Wayland display. (This should fix rendering glitches on KDE Plasma.)
+
 ## 1.20.8
 * Adjusted first-line indentation so it not applied to text that looks like lists (starts with punctuation, numbers, etc.).
 * Updated UI translations.

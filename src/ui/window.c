@@ -798,6 +798,9 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     }
 #endif
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+#if defined (SDL_HINT_RENDER_BATCHING)
+    SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1"); /* unbatched text rendering is _slow_ */
+#endif
     init_Window(&d->base, main_WindowType, rect, flags);
     d->isDrawFrozen           = iTrue;
 #if defined (iPlatformMsys) || defined (iPlatformWindows)

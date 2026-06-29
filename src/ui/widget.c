@@ -272,6 +272,9 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     if (win->lastHover == d) {
         win->lastHover = NULL;
     }
+    if (win->mouseGrab == d) {
+        setMouseGrab_Widget(NULL);
+    }
     iForEach(ObjectList, i, d->children) {
         aboutToBeDestroyed_Widget_(as_Widget(i.object));
     }

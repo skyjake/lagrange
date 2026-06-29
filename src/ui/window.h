@@ -100,7 +100,7 @@ struct Impl_Window {
     iInt2         size;
     iWidget *     hover;
     iWidget *     lastHover;    /* cleared if deleted */
-    iWidget *     mouseGrab;
+    iWidget *     mouseGrab;    /* cleared if deleted */
     iWidget *     keyPriority;  /* window dispatches keyboard events to this widget first */
     iWidget *     focus;
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */

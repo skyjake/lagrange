@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.20 (16)
+* Tell SDL to batch render operations whenever possible to potentially improve drawing performance.
+
+## 1.20 (15)
+* Now using SDL3 via sdl2-compat. This is required on iOS 27 where UIScene based lifecycle management is mandatory. (SDL2 iOS apps will not launch when built against the 27 SDK.)
+* Improved app lifecycle event handling. It is done synchronously for robust state saving when backgrounding/terminating the app.
+* Smoother animation of the toolbar especially when the "Tabs" is open. (Optimized performance of list widgets: height changes do not warrant invalidating cached content.)
+* Adjusted first-line indentation so it not applied to text that looks like lists (starts with punctuation, numbers, etc.).
+* Updated UI translations.
+
 ## 1.20 (11)
 * Fixed: Link icons not matching the body font size.
 * Fixed: Link numbers/letters not matching the body font size.

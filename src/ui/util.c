@@ -2874,6 +2874,9 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "menu.closed") ||
           equal_Command(cmd, "input.backup") ||
           equal_Command(cmd, "input.ended") ||
+          equal_Command(cmd, "mouse.missed") ||
+          equal_Command(cmd, "menu.cancel") ||
+          equal_Command(cmd, "server.copycert") ||
           startsWith_CStr(cmd, "visited.") ||
           startsWith_CStr(cmd, "cancel menu:") ||
           startsWith_CStr(cmd, "feeds.update.") ||

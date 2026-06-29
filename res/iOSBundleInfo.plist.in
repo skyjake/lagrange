@@ -51,6 +51,29 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		<!-- Adopt the UIKit scene-based life cycle (required when built with the
+		     iOS 27 SDK; see TN3187). SDL provides the scene delegate; the
+		     configuration name and delegate class must match what SDL's UIKit
+		     backend expects (SDLSceneConfiguration / SDLUIKitSceneDelegate). -->
+		<key>UIApplicationSceneManifest</key>
+		<dict>
+			<key>UIApplicationSupportsMultipleScenes</key>
+			<false/>
+			<key>UISceneConfigurations</key>
+			<dict>
+				<key>UIWindowSceneSessionRoleApplication</key>
+				<array>
+					<dict>
+						<key>UISceneConfigurationName</key>
+						<string>SDLSceneConfiguration</string>
+						<key>UISceneDelegateClassName</key>
+						<string>SDLUIKitSceneDelegate</string>
+					</dict>
+				</array>
+			</dict>
+		</dict>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIAppFonts</key>

@@ -99,6 +99,8 @@ void init_ListWidget(iListWidget *d) {
     d->dragItem = iInvalidPos;
     d->dragOrigin = zero_I2();
     d->dragHandleWidth = 0;
+    d->minVisBufHeight = 0;
+    d->lastWidth = -1;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Click(&d->midClick, d, SDL_BUTTON_MIDDLE);
     init_IntSet(&d->invalidItems);
@@ -215,6 +217,10 @@ void setDragHandleWidth_ListWidget(iListWidget *d, int dragHandleWidth) {
     if (dragHandleWidth == 0) {
         setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     }
+}
+
+void setMinVisBufHeight_ListWidget(iListWidget *d, int height) {
+    d->minVisBufHeight = height;
 }
 
 void scrollOffset_ListWidget(iListWidget *d, int offset) {
@@ -373,8 +379,15 @@ static void redrawHoverItem_ListWidget_(iListWidget *d) {
 }
 
 static void sizeChanged_ListWidget_(iListWidget *d) {
+    /* Item drawing only depends on the list's width, not its height, so a pure height
+       change (e.g., while a sliding sheet is animating) doesn't need to invalidate
+       already-rendered items; newly revealed rows are drawn incrementally as usual. */
+    const int width = width_Rect(innerBounds_Widget(constAs_Widget(d)));
     updateVisible_ListWidget(d);
-    invalidate_ListWidget(d);
+    if (d->lastWidth != width) {
+        d->lastWidth = width;
+        invalidate_ListWidget(d);
+    }
 }
 
 static void updateHover_ListWidget_(iListWidget *d, const iInt2 mouse) {
@@ -749,7 +762,11 @@ static void draw_ListWidget_(const iListWidget *d) {
     init_Paint(&p);
     drawLayerEffects_Widget(w);
     drawBackground_Widget(w);
-    alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight);
+    iInt2 visBufSize = bounds.size;
+    if (d->minVisBufHeight > visBufSize.y) {
+        visBufSize.y = d->minVisBufHeight;
+    }
+    alloc_VisBuf(d->visBuf, visBufSize, d->itemHeight);
     /* Update invalid regions/items. */ {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
            one should be enough. Probably an off-by-one error in the calculation of the

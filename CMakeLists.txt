@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.10)
 
 project (Lagrange
-    VERSION 1.20.8
+    VERSION 1.20.9
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
     set (PROJECT_VERSION 1.20)
-    set (IOS_BUNDLE_VERSION 11)
-    set (IOS_BUILD_DATE "2026-06-09")
+    set (IOS_BUNDLE_VERSION 16)
+    set (IOS_BUILD_DATE "2026-06-28")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.20)
-    set (ANDROID_BUILD_VERSION b53)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-06-09")
+    set (ANDROID_BUILD_VERSION b55)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-06-28")
 endif ()
 
 # Load modules from the source tree
@@ -606,7 +606,8 @@ if (ENABLE_GUI)
         if (ENABLE_SPARKLE)
             target_link_libraries (app PUBLIC sparkle)
         endif ()
-        if (SDL2_LIBRARY_DIRS)
+        if (SDL2_LIBRARY_DIRS AND NOT IOS)
+            # On iOS, the runpath is set to @executable_path/Frameworks below.
             set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
         endif ()
         set_target_properties (app PROPERTIES
@@ -636,6 +637,27 @@ if (ENABLE_GUI)
                 XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
                 XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)" # fix missing dSYM issue
                 MACOSX_BUNDLE_ICON_FILE "AppIcon"
+            )
+            # Embed (and sign) the dynamic sdl2-compat and SDL3 in the app bundle.
+            set_target_properties (app PROPERTIES
+                XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks"
+                XCODE_EMBED_FRAMEWORKS
+                    "${IOS_DIR}/SDL2.framework;${IOS_DIR}/SDL3.framework"
+                XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY      YES
+                XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
+            )
+            # Copy SDL dSYMs into BUILT_PRODUCTS_DIR so Xcode includes them in
+            # the xcarchive for App Store / TestFlight crash symbolication.
+            set (_sdl_dsym_script "${CMAKE_CURRENT_BINARY_DIR}/copy-sdl-dsyms.sh")
+            file (WRITE "${_sdl_dsym_script}"
+"#!/bin/sh
+for dsym in '${IOS_DIR}/SDL2.framework.dSYM' '${IOS_DIR}/SDL3.framework.dSYM'; do
+    [ -d \"\$dsym\" ] && cp -r \"\$dsym\" \"\$BUILT_PRODUCTS_DIR/\"
+done
+")
+            add_custom_command (TARGET app POST_BUILD
+                COMMAND /bin/sh "${_sdl_dsym_script}"
+                COMMENT "Copying SDL dSYMs to build products"
             )
         endif ()
         if (XCODE_DEVELOPMENT_TEAM)

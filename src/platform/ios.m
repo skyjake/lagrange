@@ -664,7 +664,20 @@ iBool processEvent_iOS(const SDL_Event *ev) {
         const char *cmd = command_UserEvent(ev);
         //NSLog(@"%s", cmd);
         if (equal_Command(cmd, "window.unfreeze")) {
-            id<UIApplicationDelegate> dlg = [UIApplication sharedApplication].delegate;
+            /* Under the UIScene life cycle the launch window is owned by the scene
+               delegate, not the application delegate, so dismiss it there. */
+            id dlg = nil;
+            if (@available(iOS 13.0, *)) {
+                for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                    if ([scene isKindOfClass:[UIWindowScene class]]) {
+                        dlg = ((UIWindowScene *) scene).delegate;
+                        if (dlg) break;
+                    }
+                }
+            }
+            if (!dlg) {
+                dlg = [UIApplication sharedApplication].delegate;
+            }
             callVoidMethod(dlg, @"hideLaunchScreen");
             /* When the application is launching, it is too early to post a SDL_DROPFILE
                event. The customized SDL application delegate saves the launch URL, so

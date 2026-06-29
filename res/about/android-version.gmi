@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.20 (Beta 55)
+* Workaround for UI state getting wiped during app upgrade.
+
+## 1.20 (Beta 54)
+* Adjusted first-line indentation so it not applied to text that looks like lists (starts with punctuation, numbers, etc.).
+* Updated UI translations.
+
 ## 1.20 (Beta 53)
 * Fixed: Link icons not matching the body font size.
 * Fixed: Link numbers/letters not matching the body font size.

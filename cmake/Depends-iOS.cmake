@@ -4,7 +4,7 @@ find_package (the_Foundation REQUIRED)
 
 set (SDL2_INCLUDE_DIRS ${IOS_DIR}/include/SDL2)
 set (SDL2_LDFLAGS
-    ${IOS_DIR}/lib/libSDL2.a
+    ${IOS_DIR}/SDL2.framework/SDL2
     "-framework AudioToolbox"
     "-framework AVFoundation"
     "-framework AVFAudio"
@@ -12,7 +12,6 @@ set (SDL2_LDFLAGS
     "-framework CoreGraphics"
     "-framework CoreHaptics"
     "-framework CoreMotion"
-    "-framework Foundation"
     "-framework Foundation"
     "-framework GameController"
     "-framework MediaPlayer"

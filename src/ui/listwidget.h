@@ -76,6 +76,8 @@ struct Impl_ListWidget {
     iClick         midClick; /* middle button: open item in background tab */
     iIntSet        invalidItems;
     iVisBuf       *visBuf;
+    int            minVisBufHeight; /* avoids texture realloc while height is animating */
+    int            lastWidth; /* avoids invalidating cached items when only height changes */
     enum iScrollMode scrollMode;
     iBool          noHoverWhileScrolling;
 //    iBool          freezeOnDrag; /* freeze drawing when item dragged, to avoid glitching */
@@ -100,6 +102,7 @@ int     scrollPos_ListWidget        (const iListWidget *);
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
 void    setScrollMode_ListWidget    (iListWidget *, enum iScrollMode mode);
 void    setDragHandleWidth_ListWidget(iListWidget *, int dragHandleWidth);
+void    setMinVisBufHeight_ListWidget(iListWidget *, int height);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);

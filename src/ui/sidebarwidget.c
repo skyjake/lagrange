@@ -1371,6 +1371,9 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
 
 static void updateSlidingSheetHeight_SidebarWidget_(iSidebarWidget *sidebar, iRoot *root) {
     if (!isPortraitPhone_App() || !isVisible_Widget(sidebar)) return;
+    /* The list's VisBuf is sized to fit the largest possible sheet height so its
+       backing textures aren't reallocated on every frame during animations. */
+    setMinVisBufHeight_ListWidget(list_SidebarWidget_(sidebar), height_Rect(safeRect_Root(root)));
     iWidget  *d       = as_Widget(sidebar);
     const int oldSize = d->rect.size.y;
     const int newSize = bottom_Rect(safeRect_Root(d->root)) - top_Rect(bounds_Widget(d));
