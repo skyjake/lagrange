@@ -1225,6 +1225,8 @@ static void stbi__vertical_flip(void *image, int w, int h, int bytes_per_pixel)
    size_t bytes_per_row = (size_t)w * bytes_per_pixel;
    stbi_uc temp[2048];
    stbi_uc *bytes = (stbi_uc *)image;
+   if (w <= 0 || h <= 0 || bytes_per_pixel <= 0) return;
+   if (bytes_per_row / (size_t)bytes_per_pixel != (size_t)w) return; /* guard against integer overflow */
 
    for (row = 0; row < (h>>1); row++) {
       stbi_uc *row0 = bytes + row*bytes_per_row;
