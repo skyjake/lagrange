@@ -1877,6 +1877,78 @@ const iString *debugInfo_App(void) {
         appendFormat_String(msg, "\n## User directory\n%s\n", cstr_String(dataDir_App()));
         appendFormat_String(msg, "\n## Executable path\n%s\n", cstr_String(execPath_App()));
     }
+    appendFormat_String(msg, "\n## Features\n"); {
+        const char *enabled[2] = { ballotUnchecked_Icon, ballotChecked_Icon };
+        appendFormat_String(msg,
+                            "Device type: %s\n\n",
+                            isTerminal_Platform()                       ? "terminal"
+                            : deviceType_App() == desktop_AppDeviceType ? "desktop"
+                            : deviceType_App() == tablet_AppDeviceType  ? "tablet"
+                                                                        : "phone");
+        appendFormat_String(msg, "%s Context menus are real windows\n", enabled[
+#if defined (LAGRANGE_ENABLE_POPUP_MENUS)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s Gamepad support\n", enabled[
+#if defined (LAGRANGE_ENABLE_GAMEPAD)
+            1
+#else
+            0
+#endif
+        ]);
+        appendFormat_String(msg, "%s TrueType fonts (vector, monochrome)\n", enabled[
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s BiDi text\n", enabled[
+#if defined (LAGRANGE_ENABLE_FRIBIDI)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s HarfBuzz text shaping\n", enabled[
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s MPEG audio\n", enabled[
+#if defined (LAGRANGE_ENABLE_MPG123)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s Opus audio\n", enabled[
+#if defined (LAGRANGE_ENABLE_OPUS)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s JPEG XL images\n", enabled[
+#if defined (LAGRANGE_ENABLE_JXL)
+            1
+#else
+            0
+#endif
+            ]);
+        appendFormat_String(msg, "%s WebP images\n", enabled[
+#if defined (LAGRANGE_ENABLE_WEBP)
+            1
+#else
+            0
+#endif
+            ]);
+    }
     appendFormat_String(msg, "\n## Memory usage\n"); {
         iMemInfo total = { 0, 0 };
         iForEach(ObjectList, i, docs) {
