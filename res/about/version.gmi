@@ -6,8 +6,16 @@
 ```
 # Release notes
 
-## 1.20.10
-* Fixed: Overflowing text with "View as Plain Text".
+## 1.21
+
+New features:
+* Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
+
+Changes and enhancements:
+* Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
+
+Fixes:
+* Overflowing text with "View as Plain Text".
 
 ## 1.20.9
 * Fixed: Potential crash when Fingerprints menu open in Page Information.
