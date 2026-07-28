@@ -466,7 +466,9 @@ int cmpGopherStructureUrl_(const iString *a, const iString *b) {
 #endif
 
 static iBool isGopherStructure_SidebarWidget_(const iSidebarWidget *d) {
-    return equal_Rangecc(urlScheme_String(&d->structureHost), "gopher");
+    /* Note: case-sensitive, unlike scheme comparisons elsewhere. */
+    const iRangecc scheme = urlScheme_String(&d->structureHost);
+    return equal_Rangecc(scheme, "gopher") || equal_Rangecc(scheme, "gophers");
 }
 
 static void removeStructureUnfold_SidebarWidget_(iSidebarWidget *d, const iString *url) {

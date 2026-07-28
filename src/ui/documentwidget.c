@@ -1741,7 +1741,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     const iRangecc scheme = urlScheme_String(d->mod.url);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
-        equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "gopher")) {
+        equalCase_Rangecc(scheme, "spartan") || isGopherScheme_Rangecc(scheme)) {
         setRange_String(d->titleUser, urlUser_String(d->mod.url));
     }
     else {
@@ -2356,7 +2356,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
-            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+            (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
+             equalCase_Rangecc(urlScheme_String(d->mod.url), "gophers")) &&
             prefs_App()->warnTlsSecurity) {
             statusCode = tlsServerCertificateNotVerified_GmStatusCode;
         }
@@ -3173,7 +3174,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
             }
         }
-        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
+            equalCase_Rangecc(urlScheme_String(d->mod.url), "gophers")) {
             appendFormat_String(
                 msg,
                 "\n%s${pageinfo.cert.status}\n"
@@ -4410,7 +4412,7 @@ static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidge
     }
     if (isGemini || willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "data") ||
         equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "finger") ||
-        equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "spartan") ||
+        isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "spartan") ||
         equalCase_Rangecc(scheme, "nex")) {
         isNative = iTrue;
         /* Regular links that we can open. */

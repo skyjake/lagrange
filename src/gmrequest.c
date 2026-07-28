@@ -508,22 +508,95 @@ static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     }
 }
 
-static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+static void tlsGopherRead_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    iBool notifyUpdate = iFalse;
+    lock_Mutex(d->mtx);
+    d->resp->statusCode = success_GmStatusCode;
+    iBlock *data = readAll_TlsRequest(req);
+    if (!isEmpty_Block(data)) {
+        if (processResponse_Gopher(&d->gopher, data)) {
+            notifyUpdate = iTrue;
+        }
+    }
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+}
+
+static void tlsGopherFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    iAssert(req == d->req);
+    lock_Mutex(d->mtx);
+    /* There shouldn't be anything left to read. */ {
+        iBlock *data = readAll_TlsRequest(req);
+        iAssert(isEmpty_Block(data));
+        delete_Block(data);
+        initCurrent_Time(&d->resp->when);
+    }
+    if (status_TlsRequest(req) == error_TlsRequestStatus) {
+        d->state = failure_GmRequestState;
+        if (!isVerified_TlsRequest(req)) {
+            if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
+                d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
+            }
+            else {
+                d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+            }
+            setCStr_String(&d->resp->meta, get_GmError(d->resp->statusCode)->title);
+        }
+        else {
+            d->resp->statusCode = tlsFailure_GmStatusCode;
+            set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+        }
+    }
+    else {
+        d->state = finished_GmRequestState;
+    }
+    checkServerCertificate_GmRequest_(d);
+    unlock_Mutex(d->mtx);
+    /* This may change the media type and content of the page. */
+    if (checkFormat_Gopher(&d->gopher)) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port,
+                                             iBool useTls) {
     clear_Block(&d->gopher.source);
     iGmResponse *resp = d->resp;
     d->gopher.meta   = &resp->meta;
     d->gopher.output = &resp->body;
+    d->gopher.isTls  = useTls;
     d->state         = receivingBody_GmRequestState;
-    d->gopher.socket = new_Socket(cstr_String(host), port);
-    iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
-    iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
-    iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
     open_Gopher(&d->gopher, &d->url);
     if (d->gopher.needQueryArgs) {
         resp->statusCode = input_GmStatusCode;
         setCStr_String(&resp->meta, "Enter query:");
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
+        return;
+    }
+    if (useTls) {
+        /* The `iTlsRequest` is `d->req`, not something owned by `iGopher`, so the certificate
+           machinery (`checkServerCertificate_GmRequest_()`) and all the certificate UI work
+           without any changes. */
+        d->req = new_TlsRequest();
+        iConnect(TlsRequest, d->req, readyRead, d, tlsGopherRead_GmRequest_);
+        iConnect(TlsRequest, d->req, finished,  d, tlsGopherFinished_GmRequest_);
+        setHost_TlsRequest(d->req, host, port);
+        setContent_TlsRequest(d->req, &d->gopher.request);
+        submit_TlsRequest(d->req);
+    }
+    else {
+        d->gopher.socket = new_Socket(cstr_String(host), port);
+        iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
+        iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
+        iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
+        open_Socket(d->gopher.socket);
+        writeData_Socket(d->gopher.socket, constData_Block(&d->gopher.request),
+                         size_Block(&d->gopher.request));
     }
 }
 
@@ -1207,12 +1280,13 @@ void submit_GmRequest(iGmRequest *d) {
         schemeProxyHostAndPort_App(url.scheme, &host, &port);
         d->isProxy = iTrue;
     }
-    else if (equalCase_Rangecc(url.scheme, "gopher")) {
-        beginGopherConnection_GmRequest_(d, host, port ? port : 70);
+    else if (isGopherScheme_Rangecc(url.scheme)) {
+        beginGopherConnection_GmRequest_(d, host, port ? port : 70,
+                                         isTlsScheme_Rangecc(url.scheme));
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "finger")) {
-        beginGopherConnection_GmRequest_(d, host, port ? port : 79);
+        beginGopherConnection_GmRequest_(d, host, port ? port : 79, iFalse);
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "spartan")) {

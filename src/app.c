@@ -2966,7 +2966,7 @@ const iString *schemeProxy_App(iRangecc scheme) {
     if (equalCase_Rangecc(scheme, "gemini")) {
         proxy = &d->prefs.strings[geminiProxy_PrefsString];
     }
-    else if (equalCase_Rangecc(scheme, "gopher")) {
+    else if (isGopherScheme_Rangecc(scheme)) {
         proxy = &d->prefs.strings[gopherProxy_PrefsString];
     }
     else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {

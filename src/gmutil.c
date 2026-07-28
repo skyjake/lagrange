@@ -102,7 +102,7 @@ uint16_t port_Url(const iUrl *d) {
     if (isEmpty_Range(&d->scheme) || equalCase_Rangecc(d->scheme, "gemini")) {
         port = GEMINI_DEFAULT_PORT;
     }
-    else if (equalCase_Rangecc(d->scheme, "gopher")) {
+    else if (isGopherScheme_Rangecc(d->scheme)) {
         port = 70;
     }
     else if (equalCase_Rangecc(d->scheme, "finger")) {
@@ -157,7 +157,7 @@ void stripUrlPort_String(iString *d) {
 static iBool isDefaultPort_Url_(const iUrl *d) {
     return (equalCase_Rangecc(d->scheme, "gemini") &&
             equal_Rangecc(d->port, GEMINI_DEFAULT_PORT_CSTR)) ||
-           (equalCase_Rangecc(d->scheme, "gopher") && equal_Rangecc(d->port, "70"));
+           (isGopherScheme_Rangecc(d->scheme) && equal_Rangecc(d->port, "70"));
 }
 
 const iString *urlDefaultPortStripped_String(const iString *d) {
@@ -426,7 +426,7 @@ iBool isKnownScheme_Rangecc(iRangecc scheme) {
 }
 
 iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
-    static const char *schemes[] = { "gemini", "gopher", "finger", "spartan",
+    static const char *schemes[] = { "gemini", "gopher", "gophers", "finger", "spartan",
                                      "http",   "https",  "file" };
     iForIndices(i, schemes) {
         if (equalCase_Rangecc(scheme, schemes[i])) {
@@ -434,6 +434,15 @@ iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
         }
     }
     return iFalse;
+}
+
+iBool isGopherScheme_Rangecc(iRangecc scheme) {
+    return equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "gophers");
+}
+
+iBool isTlsScheme_Rangecc(iRangecc scheme) {
+    return equalCase_Rangecc(scheme, "gophers") || equalCase_Rangecc(scheme, "gemini") ||
+           equalCase_Rangecc(scheme, "titan") || equalCase_Rangecc(scheme, "misfin");
 }
 
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {

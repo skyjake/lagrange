@@ -166,7 +166,8 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     iBeginCollect();
                     setPre_Gopher_(d, iFalse);
                     format_String(buf,
-                                  "=> gopher://%s:%s/%c%s %s\n",
+                                  "=> %s://%s:%s/%c%s %s\n",
+                                  d->isTls ? "gophers" : "gopher",
                                   cstr_Rangecc(domain),
                                   isEmpty_Range(&port) ? "70" : cstr_Rangecc(port),
                                   lineType,
@@ -236,15 +237,18 @@ static iBool convertSource_Gopher_(iGopher *d) {
 
 void init_Gopher(iGopher *d) {
     d->socket        = NULL;
+    d->isTls         = iFalse;
     d->type          = 0;
     d->needQueryArgs = iFalse;
     d->isPre         = iFalse;
     d->meta          = NULL;
     d->output        = NULL;
     init_Block(&d->source, 0);
+    init_Block(&d->request, 0);
 }
 
 void deinit_Gopher(iGopher *d) {
+    deinit_Block(&d->request);
     deinit_Block(&d->source);
     iReleasePtr(&d->socket);
 }
@@ -318,17 +322,19 @@ void open_Gopher(iGopher *d, const iString *url) {
             break;
     }
     d->isPre = iFalse;
-    open_Socket(d->socket);
-    writeData_Socket(d->socket, cstr_String(reqPath), size_String(reqPath));
+    /* Compose the request bytes; the caller sends them via the active transport
+       (`writeData_Socket()` or `setContent_TlsRequest()`). */
+    clear_Block(&d->request);
+    appendData_Block(&d->request, cstr_String(reqPath), size_String(reqPath));
     if (!isEmpty_Range(&parts.query)) {
         iAssert(*parts.query.start == '?');
         parts.query.start++;
-        writeData_Socket(d->socket, "\t", 1);
+        appendData_Block(&d->request, "\t", 1);
         const iString *reqQuery =
             collect_String(urlDecode_String(collectNewRange_String(parts.query)));
-        writeData_Socket(d->socket, cstr_String(reqQuery), size_String(reqQuery));
+        appendData_Block(&d->request, cstr_String(reqQuery), size_String(reqQuery));
     }
-    writeData_Socket(d->socket, "\r\n", 2);
+    appendData_Block(&d->request, "\r\n", 2);
 }
 
 void cancel_Gopher(iGopher *d) {
@@ -409,7 +415,7 @@ iBool processResponse_Gopher(iGopher *d, const iBlock *data) {
 void setUrlItemType_Gopher(iString *url, char itemType) {
     iUrl parts;
     init_Url(&parts, url);
-    if (equalCase_Rangecc(parts.scheme, "gopher")) {
+    if (isGopherScheme_Rangecc(parts.scheme)) {
         if (parts.path.start && size_Range(&parts.path) >= 2) {
             ((char *) parts.path.start)[1] = itemType;
         }

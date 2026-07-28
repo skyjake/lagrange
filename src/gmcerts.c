@@ -624,6 +624,10 @@ iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
 
 static void makeTrustKey_(iRangecc domain, uint16_t port, iString *key_out) {
     punyEncodeDomain_Rangecc(domain, key_out);
+    /* The Gemini fallback is safe for `gophers` too: every caller (including the TLS verify
+       callback, which has no URL/scheme to consult) passes the port of a live connection or a
+       port already resolved via `port_Url()`, which fills in 70 for `gopher`/`gophers`. A zero
+       port here can therefore only mean an actual Gemini default. */
     appendFormat_String(key_out, ";%u", port ? port : GEMINI_DEFAULT_PORT);
 }
 
