@@ -1885,13 +1885,17 @@ const iString *debugInfo_App(void) {
                             : deviceType_App() == desktop_AppDeviceType ? "desktop"
                             : deviceType_App() == tablet_AppDeviceType  ? "tablet"
                                                                         : "phone");
-        appendFormat_String(msg, "%s Context menus are real windows\n", enabled[
-#if defined (LAGRANGE_ENABLE_POPUP_MENUS)
-            1
+#if defined (LAGRANGE_ENABLE_MAC_MENUS)
+        appendFormat_String(msg, "%s Native macOS menus\n", enabled[1]);
 #else
+        appendFormat_String(msg, "%s Context menus are separate windows\n", enabled[
+# if defined (LAGRANGE_ENABLE_POPUP_MENUS)
+            1
+# else
             0
-#endif
+# endif
             ]);
+#endif
         appendFormat_String(msg, "%s Gamepad support\n", enabled[
 #if defined (LAGRANGE_ENABLE_GAMEPAD)
             1
