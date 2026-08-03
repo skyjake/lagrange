@@ -2424,8 +2424,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                             postCommand_App("bookmarks.changed");
                         }
                     }
-                    /* We only follow a fixed number of redirects at once, per Gemini spec. */
-                    if (d->redirectCount >= 5) {
+                    /* We only follow a fixed number of redirects at once, per Gemini spec.
+                       Titan uploads are discrete, user-initiated actions rather than an
+                       automatic redirect chain, so the limit does not apply to them. */
+                    if (equalCase_Rangecc(srcScheme, "gemini") && d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
                     /* Redirects with the same scheme are automatic, and switching automatically

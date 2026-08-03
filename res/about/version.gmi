@@ -15,6 +15,7 @@ Changes and enhancements:
 * Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
 
 Fixes:
+* The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.
 * Overflowing text with "View as Plain Text".
