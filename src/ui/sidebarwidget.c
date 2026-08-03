@@ -1820,7 +1820,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
             set_String(&bm->title, title);
             if (!isFolder_Bookmark(bm)) {
-                set_String(&bm->url, url);
+                set_String(&bm->url, canonicalUrl_String(url));
                 set_String(&bm->tags, tags);
                 set_String(&bm->notes, notes);
                 if (isEmpty_String(icon)) {
