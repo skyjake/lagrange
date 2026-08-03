@@ -523,7 +523,11 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     appendRange_String(absolute, rel.query);
     appendRange_String(absolute, rel.fragment);
     normalize_String(absolute);
-    cleanUrlPath_String(absolute);
+    if (!isGopherScheme_Rangecc(scheme) && !equalCase_Rangecc(scheme, "finger")) {
+        /* Gopher/finger paths are opaque selectors, not hierarchical paths, so dot-segments
+           and doubled slashes in them must be preserved as-is instead of being cleaned up. */
+        cleanUrlPath_String(absolute);
+    }
     return absolute;
 }
 
