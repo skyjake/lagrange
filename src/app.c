@@ -1907,9 +1907,11 @@ const iString *debugInfo_App(void) {
                             : deviceType_App() == desktop_AppDeviceType ? "desktop"
                             : deviceType_App() == tablet_AppDeviceType  ? "tablet"
                                                                         : "phone");
-#if defined (LAGRANGE_ENABLE_MAC_MENUS)
+#if defined (LAGRANGE_ENABLE_MAC_MENUS) && defined (iPlatformAppleDesktop)
         appendFormat_String(msg, "%s Native macOS menus\n", enabled[1]);
-#else
+#elif defined (iPlatformAppleMobile)
+        appendFormat_String(msg, "%s Native iOS menus\n", enabled[1]);
+#elif !defined (iPlatformMobile) && !defined (iPlatformTerminal)
         appendFormat_String(msg, "%s Context menus are separate windows\n", enabled[
 # if defined (LAGRANGE_ENABLE_POPUP_MENUS)
             1
@@ -1949,12 +1951,16 @@ const iString *debugInfo_App(void) {
         appendFormat_String(msg, "%s MPEG audio\n", enabled[
 #if defined (LAGRANGE_ENABLE_MPG123)
             1
+#elif defined (iPlatformAndroidMobile)
+            1
 #else
             0
 #endif
             ]);
         appendFormat_String(msg, "%s Opus audio\n", enabled[
 #if defined (LAGRANGE_ENABLE_OPUS)
+            1
+#elif defined (iPlatformAndroidMobile)
             1
 #else
             0
