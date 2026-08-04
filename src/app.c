@@ -87,6 +87,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
 #   include <SDL_log.h>
+#   include <fcntl.h>
+#   include <unistd.h>
 #endif
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
@@ -145,6 +147,7 @@ static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
 
 static const char *prefsFileName_App_       = PREFS_NAME ".cfg";
+static const char *tempPrefsFileName_App_   = PREFS_NAME ".cfg.tmp";
 static const char *oldStateFileName_App_    = STATE_NAME ".binary";
 static const char *stateFileName_App_       = STATE_NAME ".lgr";
 static const char *tempStateFileName_App_   = STATE_NAME ".lgr.tmp";
@@ -761,11 +764,19 @@ static void savePrefs_App_(const iApp *d) {
     }
 #endif
     iString *cfg = serializePrefs_App_(d);
-    iFile *f = new_File(prefsFileName_());
+    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), tempPrefsFileName_App_));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         write_File(f, &cfg->chars);
+        iRelease(f);
+        /* Copy it over to the real file. This avoids truncation if the app for any reason
+           crashes before the prefs file is fully written. */
+        commitFile_App(concatPath_CStr(dataDir_App_(), prefsFileName_App_),
+                       concatPath_CStr(dataDir_App_(), tempPrefsFileName_App_));
     }
-    iRelease(f);
+    else {
+        iRelease(f);
+        fprintf(stderr, "[App] failed to save prefs: %s\n", strerror(errno));
+    }
     delete_String(cfg);
 }
 
@@ -1084,6 +1095,17 @@ static void saveState_App_(const iApp *d, iBool withContent) {
 }
 
 void commitFile_App(const char *path, const char *tempPathWithNewContents) {
+#if defined (iPlatformAndroidMobile)
+    /* Make sure the new content is durable on disk before it replaces the old file: a
+       rename() is atomic but not durable by itself, and Android is more likely to kill
+       the process (or the whole device may lose power) right after this. */ {
+        const int fd = open(tempPathWithNewContents, O_WRONLY);
+        if (fd >= 0) {
+            fsync(fd);
+            close(fd);
+        }
+    }
+#endif
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
     iString *oldPath = collectNewCStr_String(path);
     appendCStr_String(oldPath, ".old");

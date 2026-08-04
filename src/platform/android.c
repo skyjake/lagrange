@@ -56,6 +56,12 @@ static iAtomicInt  isAppInBackground_;
 static iCondition  blockCond_;
 static iMutex      blockMutex_;
 
+/* Synchronizing state/prefs saving on `onStop()`: */
+static iBool       saveRequested_;
+static iMutex      saveMutex_;
+static iCondition  saveCond_;
+static iBool       saveComplete_;
+
 iDeclareType(AndroidAudioPlayer);
 
 enum iAndroidAudioPlayerState {
@@ -141,6 +147,8 @@ static int startLogOutputThread_(void) {
 void setupApplication_Android(void) {
     init_Condition(&blockCond_);
     init_Mutex(&blockMutex_);
+    init_Condition(&saveCond_);
+    init_Mutex(&saveMutex_);
     /* Cache the JavaVM pointer and activity global ref for use from non-SDL threads. */
     if (!javaVm_) {
         JNIEnv *env = (JNIEnv *) SDL_AndroidGetJNIEnv();
@@ -411,6 +419,18 @@ iBool handleCommand_Android(const char *cmd) {
         SDL_PushEvent(&ev);
         return iTrue;
     }
+    else if (equal_Command(cmd, "android.save.state")) {
+        /* Runs on the SDL main thread, which is the only thread allowed to touch app/window/
+           widget state. Requested by Java's onStop() via notifyAppStopping(), which is
+           blocked waiting for `saveComplete_` to be signaled. */
+        saveState_App();
+        iGuardMutex(&blockMutex_, { saveRequested_ = iFalse; });
+        iGuardMutex(&saveMutex_, {
+            saveComplete_ = iTrue;
+            signal_Condition(&saveCond_);
+        });
+        return iTrue;
+    }
     else if (equal_Command(cmd, "theme.changed") || equal_Command(cmd, "tab.changed") ||
              equal_Command(cmd, "document.changed") || equal_Command(cmd, "prefs.dismiss")) {
         const iPrefs *prefs = prefs_App();
@@ -492,9 +512,11 @@ void blockWhileAppInBackground_Android(void) {
        background using the SDL audio thread. */
     if (!isAppInBackground_Android() || numActiveSDLAudio_Player() > 0) return;
     iGuardMutex(&blockMutex_,
-        /* We will block here until the app returns to the foreground, or
-           there is audio playing. */
-        while (isAppInBackground_Android() && numActiveSDLAudio_Player() == 0) {
+        /* We will block here until the app returns to the foreground, there is audio
+           playing, or a state/prefs save has been requested (e.g., the app is being
+           stopped and needs this thread to run the save). */
+        while (isAppInBackground_Android() && numActiveSDLAudio_Player() == 0 &&
+               !saveRequested_) {
             iTime timeout;
             initSeconds_Time(&timeout, 1.0);
             waitTimeout_Condition(&blockCond_, &blockMutex_, &timeout);
@@ -522,9 +544,24 @@ JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppResume
 JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppStopping(
         JNIEnv *env, jclass jcls) {
     iUnused(env, jcls);
-    /* Called synchronously from Java onStop(); saves full state including cached tab
-       content before the process may be killed. */
-    saveState_App();
+    /* Called synchronously from Java onStop(); causes save of full app state including
+       cached tab content before the process may be killed. The save itself must happen
+       on the SDL main thread that owns the app/window/widget state. */
+    iGuardMutex(&saveMutex_, { saveComplete_ = iFalse; });
+    iGuardMutex(&blockMutex_, {
+        saveRequested_ = iTrue;
+        signal_Condition(&blockCond_); /* wake the main thread if it's parked in the background */
+    });
+    postCommand_Root(NULL, "android.save.state"); /* thread-safe; processed on the main thread */
+    iGuardMutex(&saveMutex_, {
+        iTime deadline;
+        initTimeout_Time(&deadline, 2.0);
+        while (!saveComplete_) {
+            if (waitTimeout_Condition(&saveCond_, &saveMutex_, &deadline) == thrd_timedout) {
+                break;
+            }
+        }
+    });
 }
 
 /*----------------------------------------------------------------------------------------------*/
