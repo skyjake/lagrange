@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.20 (Beta 56)
+* The app now comes bundled with commonly trusted root CA certificates (e.g., Let's Encrypt).
+
 ## 1.20 (Beta 55)
 * Workaround for UI state getting wiped during app upgrade.
 
