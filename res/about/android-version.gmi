@@ -6,9 +6,15 @@
 ```
 # Release notes
 
-## 1.20 (Beta 56)
+## 1.21 (Beta 56)
+* Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
+* Gopher: Don't apply URI path normalization to selectors.
+* Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
 * The app now comes bundled with commonly trusted root CA certificates (e.g., Let's Encrypt).
 * Additional safeguards to prevent app state or preference values getting deleted when force-closing the app.
+* The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
+* Fixed bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
+* Fixed overflowing text with "View as Plain Text".
 
 ## 1.20 (Beta 55)
 * Workaround for UI state getting wiped during app upgrade.
