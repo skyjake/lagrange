@@ -13,6 +13,7 @@ New features:
 * "Use on This Domain" in identity context menu.
 
 Changes and enhancements:
+* Improved sidebar layout. Sidebars are now top-level siblings of the document area, which means the tab buttons don't overlap the sidebar area.
 * Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
 
 Fixes:
