@@ -2016,6 +2016,21 @@ uint32_t id_Window(const iWindow *d) {
     return d && d->win ? SDL_GetWindowID(d->win) : 0;
 }
 
+uint32_t serial_Window(const iWindow *d) {
+    return d ? d->serial : 0;
+}
+
+void setSerial_Window(iWindow *d, uint32_t serial) {
+    d->serial = serial;
+}
+
+void advanceSerialCounter_Window(uint32_t pastValue) {
+    /* Called once at startup before any window can be created interactively. */
+    if ((uint32_t) value_Atomic(&windowSerialNumber_) <= pastValue) {
+        set_Atomic(&windowSerialNumber_, pastValue + 1);
+    }
+}
+
 iInt2 size_Window(const iWindow *d) {
     return d ? d->size : zero_I2();
 }

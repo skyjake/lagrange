@@ -143,7 +143,10 @@ iLocalDef enum iWindowType type_Window(const iAnyWindow *d) {
     return main_WindowType;
 }
 
-uint32_t        id_Window               (const iWindow *);
+uint32_t        id_Window               (const iWindow *); /* OS window id; not stable across relaunch */
+uint32_t        serial_Window           (const iWindow *); /* stable window id; survives focus/relaunch */
+void            setSerial_Window        (iWindow *, uint32_t serial); /* for state restoration only */
+void            advanceSerialCounter_Window(uint32_t pastValue); /* avoids colliding with restored serials */
 iInt2           size_Window             (const iWindow *);
 iInt2           maxTextureSize_Window   (const iWindow *);
 float           uiScale_Window          (const iWindow *);

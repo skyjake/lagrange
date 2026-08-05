@@ -852,6 +852,7 @@ static iBool loadState_App_(iApp *d) {
         iMainWindow *    currentWin    = as_MainWindow(d->window);
         iArray *         currentTabs; /* two per window (per root per window) */
         iBool            isFirstTab[2];
+        uint32_t         maxWindowSerial = 0;
         currentTabs = collectNew_Array(sizeof(iCurrentTabs));
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
@@ -877,6 +878,12 @@ static iBool loadState_App_(iApp *d) {
                     addWindow_App(win);
                 }
 #endif
+                if (version >= persistentWindowSerial_FileVersion) {
+                    /* Restore the window's persistent identity. */
+                    const uint32_t serial = readU32_File(f);
+                    setSerial_Window(as_Window(win), serial);
+                    maxWindowSerial = iMax(maxWindowSerial, serial);
+                }
                 pushBack_Array(currentTabs, &(iCurrentTabs){ { NULL, NULL } });
                 isFirstTab[0] = isFirstTab[1] = iTrue;
                 if (isCurrent) {
@@ -967,6 +974,8 @@ static iBool loadState_App_(iApp *d) {
                 return iFalse;
             }
         }
+        /* Avoid collisions with restored windows' serials. */
+        advanceSerialCounter_Window(maxWindowSerial);
         iForEach(Array, i, currentTabs) {
             const iCurrentTabs *cur = i.value;
             win = at_PtrArray(&d->mainWindows, index_ArrayIterator(&i));
@@ -1046,6 +1055,7 @@ static void saveState_App_(const iApp *d, iBool withContent) {
                 writeU32_File(f, win->splitMode);
                 writeU32_File(f, (win->base.keyRoot == win->base.roots[0] ? 0 : 1) |
                                  (constAs_Window(win) == d->window ? current_WindowStateFlag : 0));
+                writeU32_File(f, serial_Window(constAs_Window(win)));
             }
             /* State of UI elements. */ {
                 iForIndices(i, win->base.roots) {
@@ -3768,11 +3778,27 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags)
     return doc;
 }
 
+static void eraseBackupsForWindowSerial_App_(uint32_t serial) {
+    /* Erases this window's input backup files (see setBackupFileName_InputWidget()); the
+       "win" marker avoids matching unrelated version-numbered files like trusted.2.txt. */
+    const iString *suffix = collectNewFormat_String(".win%u.txt", serial);
+    iForEach(DirFileInfo, entry, iClob(newCStr_DirFileInfo(dataDir_App_()))) {
+        if (isDirectory_FileInfo(entry.value)) {
+            continue;
+        }
+        if (endsWith_String(path_FileInfo(entry.value), cstr_String(suffix))) {
+            removePath_CStr(cstr_String(path_FileInfo(entry.value)));
+        }
+    }
+}
+
 void closeWindow_App(iWindow *win) {
     iApp *d = &app_;
     iAssert(win->type == main_WindowType || win->type == extra_WindowType);
     const iBool isMain = (win->type == main_WindowType);
     iWindow *activeWindow = d->window;
+    /* Unlike a full app quit, this window won't be restored, so its backups can go too. */
+    eraseBackupsForWindowSerial_App_(serial_Window(win));
     /* Preferences needs to be dismissed properly. */
     /* TODO: This needs a more generic dialog dismissal command system. Also needed for mobile! */
     if (win->type == extra_WindowType) {
