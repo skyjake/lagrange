@@ -90,6 +90,13 @@ static iGmIdentity *menuIdentity_CertListWidget_(const iCertListWidget *d) {
     return NULL;
 }
 
+static const iString *domainUseUrl_CertListWidget_(const iString *docUrl) {
+    const uint16_t port = urlPort_String(docUrl);
+    const iRangecc host = urlHost_String(docUrl);
+    return collectNewFormat_String(
+        port != GEMINI_DEFAULT_PORT ? "gemini://%s:%hu" : "gemini://%s", cstr_Rangecc(host), port);
+}
+
 static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
     iAssert(d->contextItem);
     iArray *items = collectNew_Array(sizeof(iMenuItem));
@@ -103,6 +110,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
     const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
     const iMenuItem ctxItems[] = {
         { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
+        { "${ident.use.domain}", 0, 0, "ident.use.domain" },
         { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
         { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
         { "---" },
@@ -120,7 +128,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
     };
     pushBackN_Array(items, ctxItems, iElemCount(ctxItems));
     if (ident) {
-        size_t insertPos = firstIndex + 3;
+        size_t insertPos = firstIndex + 4;
         if (!isEmpty_StringSet(ident->useUrls)) {
             insert_Array(items, insertPos++, &(iMenuItem){ "---" });
         }
@@ -140,7 +148,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
                                        format_CStr("!open url:%s", cstr_String(url)) });
         }
         if (!usedOnCurrentPage) {
-            remove_Array(items, firstIndex + 1);
+            remove_Array(items, firstIndex + 2);
         }
         else {
             remove_Array(items, firstIndex);
@@ -209,6 +217,18 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                     signOut_GmCerts(certs_App(), tabUrl);
                     postCommand_App("navigate.reload");
                 }
+                saveIdentities_GmCerts(certs_App());
+                updateItems_CertListWidget(d);
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.use.domain")) {
+            iGmIdentity *ident = menuIdentity_CertListWidget_(d);
+            if (ident) {
+                const iString *docUrl = url_DocumentWidget(document_App());
+                const iString *domainUrl = domainUseUrl_CertListWidget_(docUrl);
+                signIn_GmCerts(certs_App(), ident, domainUrl);
+                postCommand_App("navigate.reload");
                 saveIdentities_GmCerts(certs_App());
                 updateItems_CertListWidget(d);
             }
@@ -356,6 +376,12 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                             (cmdClear && !isUsed_GmIdentity(ident)) ||
                                 (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
                                 (!cmdClear && !cmdUse && !isUsedOn_GmIdentity(ident, docUrl)));
+                    }
+                    else if (equal_Command(cmdItem, "ident.use.domain")) {
+                        const iString *domainUrl = domainUseUrl_CertListWidget_(docUrl);
+                        setFlags_Widget(as_Widget(menuItem),
+                                        disabled_WidgetFlag,
+                                        isUsedOn_GmIdentity(ident, domainUrl));
                     }
                 }
             }

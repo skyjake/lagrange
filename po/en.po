@@ -829,6 +829,9 @@ msgstr "Send Message As…"
 msgid "ident.use"
 msgstr "Use on This Page"
 
+msgid "ident.use.domain"
+msgstr "Use on This Domain"
+
 msgid "ident.stopuse"
 msgstr "Stop Using on This Page"
 

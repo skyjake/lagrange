@@ -10,6 +10,7 @@
 
 New features:
 * Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
+* "Use on This Domain" in identity context menu.
 
 Changes and enhancements:
 * Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
