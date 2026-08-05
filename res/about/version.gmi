@@ -20,6 +20,7 @@ Fixes:
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.
 * Overflowing text with "View as Plain Text".
+* Improved hover highlight contrast with "Gray" UI accent color.
 
 ## 1.20.9
 * Fixed: Potential crash when Fingerprints menu open in Page Information.

@@ -354,6 +354,10 @@ void setThemePalette_Color(enum iColorTheme theme) {
     set_Color(uiTextShortcut_ColorId, mix_Color(get_Color(uiTextShortcut_ColorId),
                                                 get_Color(uiBackground_ColorId),
                                                 0.4f));
+    if (prefs->accent == gray_ColorAccent) {
+        /* Increase visibility of the hover highlight. */
+        copy_(uiBackgroundFramelessHover_ColorId, isDark_ColorTheme(theme) ? accentLo : accentHi);
+    }
     uiPalette_[uiMarked_ColorId  ].a = 128;
     uiPalette_[uiMatching_ColorId].a = 128;
     if (deviceType_App() != desktop_AppDeviceType) {
