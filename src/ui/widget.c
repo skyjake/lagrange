@@ -2459,7 +2459,7 @@ void setFocusWithMethod_Widget(iWidget *d, enum iFocusMethod method) {
             iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
             postCommand_Widget(win->focus, "focus.lost");
         }
-        if (~flags_Widget(d) & focusable_WidgetFlag) {
+        if ((~flags_Widget(d) & focusable_WidgetFlag) || (flags_Widget(d) & destroyPending_WidgetFlag)) {
             d = NULL; /* focusing this is not allowed */
         }
         win->focus = d;
