@@ -2002,8 +2002,17 @@ msgstr "Search URL:"
 msgid "prefs.hoverlink"
 msgstr "Show URL on hover:"
 
-msgid "prefs.bottominput"
-msgstr "Input prompt at bottom:"
+msgid "prefs.promptposition"
+msgstr "Input prompt position:"
+
+msgid "prefs.promptposition.inline"
+msgstr "Inline"
+
+msgid "prefs.promptposition.top"
+msgstr "Top"
+
+msgid "prefs.promptposition.bottom"
+msgstr "Bottom"
 
 msgid "prefs.centershort"
 msgstr "Vertical centering:"

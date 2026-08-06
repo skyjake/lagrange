@@ -3132,6 +3132,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
     iBool          isHint    = isHintVisible_InputWidget_(d);
     const iBool    isFocused = isFocused_Widget(w);
+    const iBool    isDisabled = isDisabled_Widget(w);
     const iBool    isHover   = deviceType_App() == desktop_AppDeviceType &&
                                isHover_Widget(w) &&
                                contains_InputWidget_(d, mouseCoord_Window(get_Window(), 0));
@@ -3147,7 +3148,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
         drawRectThickness_Paint(&p,
                                 adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
                                 isFocused ? gap_UI / 4 : 1,
-                                isFocused ? uiInputFrameFocused_ColorId
+                                isDisabled ? uiTextDisabled_ColorId
+                                : isFocused ? uiInputFrameFocused_ColorId
                                 : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
     }
     if (d->sysCtrl) {
@@ -3157,7 +3159,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     const iRect contentBounds = contentBounds_InputWidget_(d);
     iInt2       drawPos       = topLeft_Rect(contentBounds);
-    const int   fg            = isHint      ? uiAnnotation_ColorId
+    const int   fg            = isDisabled  ? uiTextDisabled_ColorId
+                                : isHint      ? uiAnnotation_ColorId
                                 : isFocused ? uiInputTextFocused_ColorId
                                             : uiInputText_ColorId;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT

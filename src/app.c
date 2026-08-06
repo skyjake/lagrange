@@ -329,6 +329,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "uploadzoom.set arg:%d\n", d->prefs.editorZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
+    appendFormat_String(str, "promptposition.set arg:%d\n", d->prefs.promptPosition);
     appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
@@ -390,7 +391,6 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
-        { "prefs.bottominput", &d->prefs.bottomInput },
         { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.centershort", &d->prefs.centerShortDocs },
@@ -3478,6 +3478,14 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updatePrefsPromptPositionButtons_(iWidget *d, int value) {
+    for (int i = 0; i < 3; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.promptposition.%d", i)),
+                        selected_WidgetFlag,
+                        i == value);
+    }
+}
+
 static void updateFeedIntervalButton_(iLabelWidget *button, int feedInterval) {
     updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", feedInterval));
 }
@@ -3634,6 +3642,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "promptposition.set")) {
+        updatePrefsPromptPositionButtons_(d, arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "feedinterval.set")) {
@@ -4187,10 +4199,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.bottominput.changed")) {
-        d->prefs.bottomInput = arg_Command(cmd) != 0;
-        return iTrue;
-    }
     else if (equal_Command(cmd, "prefs.gamepad.changed")) {
         d->prefs.useGamepad = arg_Command(cmd) != 0;
         if (d->prefs.useGamepad && !d->gamepad) {
@@ -4547,6 +4555,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         d->prefs.pinSplit = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "promptposition.set")) {
+        d->prefs.promptPosition = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "feedinterval.set")) {
@@ -5081,7 +5093,8 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         /* Ensure a new tab is opened where there is no set identity. */
         newTab = new_OpenTabFlag;
     }
-    if (newTab & newTabMask_OpenTabFlag) {
+    const iBool isNewTabDoc = (newTab & newTabMask_OpenTabFlag) != 0;
+    if (isNewTabDoc) {
         /* `newtab:2` to open in background */
         doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0 ? switchTo_NewTabFlag : 0);
     }
@@ -5099,7 +5112,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     }
     setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
     setRedirectCount_DocumentWidget(doc, redirectCount);
-    setOrigin_DocumentWidget(doc, origin);
+    setOrigin_DocumentWidget(doc, origin, isNewTabDoc);
     showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
     /* Do the fetch or load page from cache. */
     setUrlFlags_DocumentWidget(
@@ -5539,7 +5552,6 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomnavbar"), d->prefs.bottomNavBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.bottominput"), d->prefs.bottomInput);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetabs"), d->prefs.hideTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
@@ -5549,6 +5561,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.gopher.gemstyle"), d->prefs.geminiStyledGopher);
         setToggle_Widget(findChild_Widget(dlg, "prefs.redirect.allowscheme"), d->prefs.allowSchemeChangingRedirect);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
+        updatePrefsPromptPositionButtons_(dlg, d->prefs.promptPosition);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
         updateFeedIntervalButton_(findChild_Widget(dlg, "prefs.feedinterval"), d->prefs.feedInterval);
@@ -6081,7 +6094,12 @@ iStringSet *listOpenURLs_App(void) {
     iStringSet *set = new_StringSet();
     iObjectList *docs = listDocuments_App(NULL);
     iConstForEach(ObjectList, i, docs) {
-        insert_StringSet(set, canonicalUrl_String(url_DocumentWidget(i.object)));
+        const iDocumentWidget *doc = i.object;
+        if (isFetchingOwnLink_DocumentWidget(doc)) {
+            /* The URL may still be reverted (e.g., an inline prompt), so avoid visual flicker. */
+            continue;
+        }
+        insert_StringSet(set, canonicalUrl_String(url_DocumentWidget(doc)));
     }
     iRelease(docs);
     return set;

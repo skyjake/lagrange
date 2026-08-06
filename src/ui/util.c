@@ -2427,12 +2427,27 @@ iLabelWidget *addDialogTitle_Widget(iWidget *dlg, const char *text, const char *
     return addDialogTitle_(dlg, text, idOrNull);
 }
 
+static const iString *valueInputCommand_(const iWidget *dlg) {
+    /* Embedded instances store the accept command in `data` instead of `id`. */
+    return !isEmpty_String(&dlg->data) ? &dlg->data : id_Widget(dlg);
+}
+
+static void clearValueInputCommand_(iWidget *dlg) {
+    if (!isEmpty_String(&dlg->data)) {
+        clear_String(&dlg->data); /* embedded instance */
+    }
+    else {
+        setId_Widget(dlg, "");
+    }
+}
+
 static void acceptValueInput_(iWidget *dlg) {
     iInputWidget *input = findChild_Widget(dlg, "input");
-    if (!isEmpty_String(id_Widget(dlg))) {
+    const iString *acceptCommand = valueInputCommand_(dlg);
+    if (!isEmpty_String(acceptCommand)) {
         const iString *val = text_InputWidget(input);
         postCommandf_App("%s arg:%d value:%s",
-                         cstr_String(id_Widget(dlg)),
+                         cstr_String(acceptCommand),
                          toInt_String(val),
                          cstr_String(val));
         setBackupFileName_InputWidget(input, NULL);
@@ -2445,6 +2460,10 @@ iLocalDef int metricFromIndex_(int index) {
 }
 
 static void updateValueInputSizing_(iWidget *dlg) {
+    if (~flags_Widget(dlg) & mouseModal_WidgetFlag) {
+        /* Embedded instances get their width from the caller. */
+        return;
+    }
     const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
@@ -2505,7 +2524,9 @@ int dialogTransitionDir_Widget(const iWidget *dlg) {
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
-    const int transitionDir = isDesktop_Platform() && prefs_App()->bottomInput
+    const iBool isSheet = (flags_Widget(dlg) & mouseModal_WidgetFlag) != 0;
+    const int transitionDir = isDesktop_Platform() &&
+                                      prefs_App()->promptPosition == bottom_InputPromptPosition
                                   ? bottom_TransitionDir
                                   : dialogTransitionDir_Widget(dlg);
     iWidget *ptr = as_Widget(pointer_Command(cmd));
@@ -2526,19 +2547,26 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         if (deviceType_App() != desktop_AppDeviceType) {
             animateToRootVisibleBottom_(dlg, 100);
         }
+        /* Ensure the container/page layout gets resized appropriately. */
+        postCommand_Widget(dlg, "valueinput.resized");
         return iTrue;
     }
     if (equal_Command(cmd, "input.ended")) {
         if (argLabel_Command(cmd, "enter") && hasParent_Widget(ptr, dlg)) {
-            if (arg_Command(cmd)) {
+            const iBool accepted = arg_Command(cmd);
+            if (accepted) {
                 acceptValueInput_(dlg);
             }
             else {
-                postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
-                setId_Widget(dlg, ""); /* no further commands to emit */
+                postCommandf_App("valueinput.cancelled id:%s", cstr_String(valueInputCommand_(dlg)));
+                clearValueInputCommand_(dlg);
             }
-            setupSheetTransition_Mobile(dlg, transitionDir);
-            destroy_Widget(dlg);
+            if (isSheet) {
+                setupSheetTransition_Mobile(dlg, transitionDir);
+            }
+            if (isSheet || !accepted) {
+                destroy_Widget(dlg);
+            }
             return iTrue;
         }
         return iFalse;
@@ -2575,16 +2603,20 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancel")) {
-        postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
-        setId_Widget(dlg, ""); /* no further commands to emit */
-        setupSheetTransition_Mobile(dlg, transitionDir);
+        postCommandf_App("valueinput.cancelled id:%s", cstr_String(valueInputCommand_(dlg)));
+        clearValueInputCommand_(dlg);
+        if (isSheet) {
+            setupSheetTransition_Mobile(dlg, transitionDir);
+        }
         destroy_Widget(dlg);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.accept")) {
         acceptValueInput_(dlg);
-        setupSheetTransition_Mobile(dlg, transitionDir);
-        destroy_Widget(dlg);
+        if (isSheet) {
+            setupSheetTransition_Mobile(dlg, transitionDir);
+            destroy_Widget(dlg);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "mouse.clicked") &&
@@ -2604,9 +2636,13 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.togglebottom")) {
+        /* Top/bottom placing only applies to sheets. */
+        iAssert(!isSheet);
+        const iBool wasBottom = prefs_App()->promptPosition == bottom_InputPromptPosition;
         dlg->rect.pos.y = 0;
-        setFlags_Widget(dlg, moveToParentBottomEdge_WidgetFlag, !prefs_App()->bottomInput);
-        postCommand_Widget(dlg, "prefs.bottominput.changed arg:%d", !prefs_App()->bottomInput);
+        setFlags_Widget(dlg, moveToParentBottomEdge_WidgetFlag, !wasBottom);
+        postCommand_Widget(dlg, "promptposition.set arg:%d",
+                           wasBottom ? top_InputPromptPosition : bottom_InputPromptPosition);
         arrange_Widget(dlg);
         return iTrue;
     }
@@ -2617,10 +2653,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     }
     else if (isDesktop_Platform() &&
              (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {
-        /* DocumentWidget sets an ID that gets used as the posted command when the
-           dialog is accepted. An actual configurable flag might be useful here,
-           if resizing in needed in other contexts. */
-        if (startsWith_String(id_Widget(dlg), "!document.input.submit")) {
+        /* DocumentWidget sets an ID (or `data`, for embedded instances) as the posted accept
+           command. A configurable flag might be cleaner if this is needed elsewhere. */
+        if (startsWith_String(valueInputCommand_(dlg), "!document.input.submit")) {
             iInputWidget *input = findChild_Widget(dlg, "input");
             int sizeIndex = prefs_App()->inputZoomLevel;
             if (equal_Command(cmd, "zoom.set")) {
@@ -2735,33 +2770,12 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         parent, initialValue, title, prompt, acceptLabel, command, NULL, 0);
 }
 
-iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iString *initialValue,
-                                                    const char *title, const char *prompt,
-                                                    const char *acceptLabel, const char *command,
-                                                    const iMenuItem *additionalActions,
-                                                    size_t           numAdditionalActions) {
-    if (parent) {
-        setFocus_Widget(NULL);
-    }
-    iWidget *dlg = makeSheet_Widget(command);
-    if (isDesktop_Platform()) {
-        /* The dialog will resize itself appropriately. */
-        setFlags_Widget(dlg, overflowScrollable_WidgetFlag, iFalse);
-    }
-    else {
-        setFlags_Widget(dlg, commandOnClick_WidgetFlag, iTrue);
-    }
-    setCommandHandler_Widget(dlg, valueInputHandler_);
-    if (parent) {
-        addChildFlags_Widget(parent,
-                             iClob(dlg),
-                             isDesktop_Platform() && prefs_App()->bottomInput
-                                 ? moveToParentBottomEdge_WidgetFlag
-                                 : 0);
-    }
-    if (deviceType_App() == desktop_AppDeviceType) { /* conserve space on mobile */
-        addDialogTitle_(dlg, title, "valueinput.title");
-    }
+static iInputWidget *makeValueInputContents_(iWidget *dlg, const iString *initialValue,
+                                             const char *prompt, const char *acceptLabel,
+                                             const iMenuItem *additionalActions,
+                                             size_t numAdditionalActions) {
+    /* Value input instances can be placed either in a sheet or an embedded widget
+       (inline prompt). The returned input widget is owned by `dlg`. */
     iLabelWidget *promptLabel = addWrappedLabel_Widget(dlg, prompt, "valueinput.prompt");
     setFlags_Widget(as_Widget(promptLabel), commandOnClick_WidgetFlag, iTrue);
     iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)),
@@ -2807,6 +2821,39 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         iClob(makeDialogButtons_Widget(constData_Array(&actions), size_Array(&actions))),
         deviceType_App() != desktop_AppDeviceType ? front_WidgetAddPos : back_WidgetAddPos);
     deinit_Array(&actions);
+    return input;
+}
+
+iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iString *initialValue,
+                                                    const char *title, const char *prompt,
+                                                    const char *acceptLabel, const char *command,
+                                                    const iMenuItem *additionalActions,
+                                                    size_t           numAdditionalActions) {
+    if (parent) {
+        setFocus_Widget(NULL);
+    }
+    iWidget *dlg = makeSheet_Widget(command);
+    if (isDesktop_Platform()) {
+        /* The dialog will resize itself appropriately. */
+        setFlags_Widget(dlg, overflowScrollable_WidgetFlag, iFalse);
+    }
+    else {
+        setFlags_Widget(dlg, commandOnClick_WidgetFlag, iTrue);
+    }
+    setCommandHandler_Widget(dlg, valueInputHandler_);
+    if (parent) {
+        addChildFlags_Widget(parent,
+                             iClob(dlg),
+                             isDesktop_Platform() &&
+                                     prefs_App()->promptPosition == bottom_InputPromptPosition
+                                 ? moveToParentBottomEdge_WidgetFlag
+                                 : 0);
+    }
+    if (deviceType_App() == desktop_AppDeviceType) { /* conserve space on mobile */
+        addDialogTitle_(dlg, title, "valueinput.title");
+    }
+    iInputWidget *input = makeValueInputContents_(dlg, initialValue, prompt, acceptLabel,
+                                                  additionalActions, numAdditionalActions);
     arrange_Widget(dlg);
     if (parent) {
         setFocus_Widget(as_Widget(input));
@@ -2823,9 +2870,40 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
     enableResizing_Widget(dlg, width_Widget(dlg), "input");
     setupSheetTransition_Mobile(dlg,
                                 incoming_TransitionFlag |
-                                    (isDesktop_Platform() && prefs_App()->bottomInput
+                                    (isDesktop_Platform() &&
+                                            prefs_App()->promptPosition == bottom_InputPromptPosition
                                          ? bottom_TransitionDir
                                          : dialogTransitionDir_Widget(dlg)));
+    return dlg;
+}
+
+iWidget *makeEmbeddedValueInput_Widget(iWidget *container, const iString *initialValue,
+                                       const char *prompt, const char *acceptLabel,
+                                       const char *command, const iMenuItem *additionalActions,
+                                       size_t numAdditionalActions) {
+    iWidget *dlg = new_Widget();
+    setBackgroundColor_Widget(dlg, uiBackground_ColorId);
+    setFrameColor_Widget(dlg, uiSeparator_ColorId);
+    if (isTerminal_Platform()) {
+        const int vPad = gap_UI / aspect_UI;
+        const int hPad = 2 * gap_UI / aspect_UI;
+        setPadding_Widget(dlg, hPad, vPad, hPad, vPad); /* FIXME: possible aspect_UI bug in here */
+    }
+    else {
+        setPadding1_Widget(dlg, 2 * gap_UI);
+    }
+    setFlags_Widget(dlg,
+                    arrangeVertical_WidgetFlag | arrangeHeight_WidgetFlag |
+                        fixedPosition_WidgetFlag | resizeWidthOfChildren_WidgetFlag,
+                    iTrue);
+    /* There may be multiple inline prompts open on a page so we need to find a specific one.
+       Therefore, the accept command goes into `data`, leaving `id` for lookups. */
+    setCStr_String(&dlg->data, command);
+    setCommandHandler_Widget(dlg, valueInputHandler_);
+    makeValueInputContents_(
+        dlg, initialValue, prompt, acceptLabel, additionalActions, numAdditionalActions);
+    addChild_Widget(container, iClob(dlg));
+    arrange_Widget(dlg);
     return dlg;
 }
 
@@ -4004,7 +4082,18 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_Widget(headings, values, "${prefs.hidetabs}", "prefs.hidetabs");
         addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         if (isDesktop_Platform()) {
-            addDialogToggle_Widget(headings, values, "${prefs.bottominput}", "prefs.bottominput");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.promptposition}")));
+            iWidget *promptPos = new_Widget();
+            /* Input prompt position: inline under the link, or always modal top/bottom. */ {
+                addRadioButton_(promptPos, "prefs.promptposition.0", "${prefs.promptposition.inline}",
+                                "promptposition.set arg:0");
+                addRadioButton_(promptPos, "prefs.promptposition.1", "${prefs.promptposition.top}",
+                                "promptposition.set arg:1");
+                addRadioButton_(promptPos, "prefs.promptposition.2", "${prefs.promptposition.bottom}",
+                                "promptposition.set arg:2");
+            }
+            addChildFlags_Widget(values, iClob(promptPos),
+                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
         if (!isTerminal_Platform()) {
             addDialogPadding_(headings, values);

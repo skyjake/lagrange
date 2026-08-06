@@ -1474,6 +1474,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     pushBack_Array(&d->layout, &run);
                     break;
                 }
+                case inputPrompt_MediaType: {
+                    run.bounds.pos    = pos;
+                    run.bounds.size.x = d->size.x;
+                    int h = 0;
+                    iBool isSensitive;
+                    inputPromptInfo_Media(d->media, media, &isSensitive, NULL, NULL, &h);
+                    if (h <= 0) {
+                        /* Not yet reported by the widget; reserve a placeholder height. */
+                        h = lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                    }
+                    run.bounds.size.y = h;
+                    run.visBounds     = run.bounds;
+                    pushBack_Array(&d->layout, &run);
+                    break;
+                }
                 default:
                     break;
             }
@@ -2912,6 +2927,16 @@ const iGmRun *precedingRun_GmDocument(const iGmDocument *d, const iGmRun *run) {
         return NULL;
     }
     return run;
+}
+
+const iGmRun *findInputPromptRun_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmRunRange range = runRange_GmDocument(d);
+    for (const iGmRun *run = range.start; run != range.end; run++) {
+        if (run->mediaType == inputPrompt_MediaType && run->linkId == linkId) {
+            return run;
+        }
+    }
+    return NULL;
 }
 
 static const iGmLink *link_GmDocument_(const iGmDocument *d, iGmLinkId id) {

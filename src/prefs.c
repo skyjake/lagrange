@@ -99,12 +99,12 @@ void init_Prefs(iPrefs *d) {
     if (isTerminal_Platform()) {
         d->bottomNavBar = iTrue;
     }
-    d->bottomInput                            = iFalse; /* affects desktop only */
     d->menuBar                                = (deviceType_App() == desktop_AppDeviceType);
     d->simpleChars                            = iTrue;  /* only in terminal */
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
     d->detachedPrefs                          = iTrue;
     d->pinSplit                               = 1;
+    d->promptPosition                         = inline_InputPromptPosition;
     d->feedInterval                           = fourHours_FeedInterval;
     d->italicQuote                            = iTrue;
     d->time24h                                = iTrue;

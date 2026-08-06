@@ -274,6 +274,8 @@ struct Impl_DocumentWidget {
     enum iWheelSwipeState wheelSwipeState;
     iString        pendingGotoHeading;
     iString        linePrecedingLink;
+    iString        originId;       /* origin document's widget ID, if opened via cross-split nav */
+    iBool          originToNewTab; /* ...whether that navigation created a fresh tab */
 
     /* Network request: */
     enum iRequestState state;
@@ -335,9 +337,17 @@ static const int homeRowKeys_[] = {
 };
 static int docEnum_ = 0;
 
-static void animateMedia_DocumentWidget_            (iDocumentWidget *d);
-static void updateSideIconBuf_DocumentWidget_       (const iDocumentWidget *d);
-static iBool requestMedia_DocumentWidget_           (iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters);
+static void     animateMedia_DocumentWidget_        (iDocumentWidget *);
+static void     updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *);
+static iBool    requestMedia_DocumentWidget_        (iDocumentWidget *, iGmLinkId linkId,
+                                                     iBool enableFilters);
+static iWidget *makeInlineInputPrompt_DocumentWidget_(iDocumentWidget *, iGmLinkId linkId,
+                                                     const iString *url, iBool isSensitive,
+                                                     const char *promptLabel);
+static iWidget *createInlineInputPrompt_DocumentWidget_(iDocumentWidget *, iGmLinkId linkId,
+                                                     const iString *url, iBool isSensitive,
+                                                     const iString *promptLabel);
+static void     refreshAfterInlineInputPromptChange_DocumentWidget_(iDocumentWidget *);
 
 iRangecc selectionMark_DocumentWidget(const iDocumentWidget *d) {
     /* Normalize so start < end. */
@@ -942,6 +952,15 @@ static void allocView_DocumentWidget_(iDocumentWidget *d) {
     d->view->foundMark  = &d->foundMark;
 }
 
+static void destroyAllInlineInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "inputprompt")) {
+            destroy_Widget(child);
+        }
+    }
+}
+
 static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->flags & swipeAborted_DocumentWidgetFlag) {
         resetSwipeAnimation_DocumentWidget_(d);
@@ -955,6 +974,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
         setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
         allocView_DocumentWidget_(d);
     }
+    destroyAllInlineInputPrompts_DocumentWidget_(d);
     iRelease(d->view->doc);
     d->view->doc = NULL;
     iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iFalse);
@@ -1149,6 +1169,10 @@ static const char *zipPageHeading_(const iRangecc mime) {
     return cstrCollect_String(heading);
 }
 
+static iWidget *findInlineInputPromptBar_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    return findChild_Widget(as_Widget(d), format_CStr("inputprompt%u", linkId));
+}
+
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
     /* Embedded images in data links can be shown immediately as they are already fetched
@@ -1162,6 +1186,48 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
             if (scheme_GmLinkFlag(linkFlags) == data_GmLinkScheme &&
                 (linkFlags & imageFileExtension_GmLinkFlag)) {
                 requestMedia_DocumentWidget_(d, linkId, 0);
+            }
+        }
+    }
+    /* Links marked "Assume This URL Requires Input" show their prompt immediately, not just
+       after a click, avoiding a layout jump. Only applies when prompts can be inline. */
+    if (deviceType_App() == desktop_AppDeviceType &&
+        prefs_App()->promptPosition == inline_InputPromptPosition) {
+        iGmDocument *doc = d->view->doc;
+        iBool     didAny      = iFalse;
+        iGmLinkId firstLinkId = 0;
+        for (size_t linkId = 1; ; linkId++) {
+            const iString *linkUrl = linkUrl_GmDocument(doc, linkId);
+            if (!linkUrl) break;
+            const iString *absUrl = absoluteUrl_String(d->mod.url, linkUrl);
+            if (!isPromptUrl_SiteSpec(absUrl)) {
+                continue;
+            }
+            iUrl url;
+            init_Url(&url, absUrl);
+            if (!isEmpty_Range(&url.query) ||
+                findLinkInputPrompt_Media(media_GmDocument(doc), linkId).type) {
+                continue; /* already has a query, or already created (e.g. restored from cache) */
+            }
+            createInlineInputPrompt_DocumentWidget_(d, (iGmLinkId) linkId, absUrl, iFalse, NULL);
+            if (!firstLinkId) {
+                firstLinkId = (iGmLinkId) linkId;
+            }
+            didAny = iTrue;
+        }
+        if (didAny) {
+            refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+            /* Focus the first one only if it's in view -- otherwise it's as disorienting as
+               the layout jump this feature avoids. */
+            const iGmRun *run = findInputPromptRun_GmDocument(d->view->doc, firstLinkId);
+            if (run) {
+                const iRangei vis = visibleRange_DocumentView(d->view);
+                if (top_Rect(run->bounds) >= vis.start && bottom_Rect(run->bounds) <= vis.end) {
+                    iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, firstLinkId);
+                    if (bar) {
+                        setFocus_Widget(findChild_Widget(bar, "input"));
+                    }
+                }
             }
         }
     }
@@ -2168,13 +2234,16 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
                                               buttons,
                                               cstr_String(text_LabelWidget(prompt))) });
     pushBack_Array(items, &(iMenuItem){ "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" });
-    if (isDesktop_Platform()) {
+    /* An inline prompt is always docked under its link, so only a modal sheet needs this. */
+    const iBool isSheetPrompt = (flags_Widget(parent_Widget(buttons)) & mouseModal_WidgetFlag) != 0;
+    if (isDesktop_Platform() && isSheetPrompt) {
         /* Location of the prompt. */
+        const iBool isBottom = prefs_App()->promptPosition == bottom_InputPromptPosition;
         pushBackN_Array(
             items,
             (iMenuItem[]) {
                 { "---" },
-                { prefs_App()->bottomInput ? "${menu.input.showtop}" : "${menu.input.showbottom}",
+                { isBottom ? "${menu.input.showtop}" : "${menu.input.showbottom}",
                   0,
                   0,
                   format_CStr("!valueinput.togglebottom ptr:%p", buttons) } },
@@ -2224,18 +2293,8 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     return items;
 }
 
-iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
-                                        const char *promptLabel, const char *acceptCommand) {
-    iUrl parts;
-    init_Url(&parts, url);
-    iWidget *dlg = makeValueInput_Widget(
-        as_Widget(d),
-        NULL,
-        format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
-        promptLabel ? promptLabel
-                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
-        uiTextAction_ColorEscape "${dlg.input.send}",
-        acceptCommand);
+static void setupInputPromptDialog_(iDocumentWidget *d, iWidget *dlg, const iString *url,
+                                    iBool isSensitive) {
     iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
     iLabelWidget *lineBreak = NULL;
     if (!isSensitive) {
@@ -2302,7 +2361,162 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
     setSelectAllOnFocus_InputWidget(input, iTrue);
     setSensitiveContent_InputWidget(input, isSensitive);
     setArrowFocusNavigable_InputWidget(input, iFalse);
+}
+
+iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
+                                        const char *promptLabel, const char *acceptCommand) {
+    iUrl parts;
+    init_Url(&parts, url);
+    iWidget *dlg = makeValueInput_Widget(
+        as_Widget(d),
+        NULL,
+        format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
+        promptLabel ? promptLabel
+                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
+        uiTextAction_ColorEscape "${dlg.input.send}",
+        acceptCommand);
+    setupInputPromptDialog_(d, dlg, url, isSensitive);
     return dlg;
+}
+
+static iWidget *makeInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId,
+                                                       const iString *url, iBool isSensitive,
+                                                       const char *promptLabel) {
+    iUrl parts;
+    init_Url(&parts, url);
+    const iString *acceptCommand =
+        collectNewFormat_String("!document.input.submit doc:%p link:%u", d, linkId);
+    iWidget *dlg = makeEmbeddedValueInput_Widget(
+        as_Widget(d),
+        NULL,
+        promptLabel ? promptLabel
+                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
+        uiTextAction_ColorEscape "${dlg.input.send}",
+        cstr_String(acceptCommand),
+        NULL, 0);
+    /* Width must be correct before setupInputPromptDialog_() restores any backup text below,
+       since that re-wraps (and measures height) immediately at the input's current width. */
+    dlg->rect.size.x = documentWidth_DocumentView(d->view);
+    arrange_Widget(dlg);
+    setupInputPromptDialog_(d, dlg, url, isSensitive);
+    arrange_Widget(dlg); /* pick up any height change from restored backup content */
+    setId_Widget(dlg, format_CStr("inputprompt%u", linkId)); /* required for lookup */
+    return dlg;
+}
+
+static iWidget *createInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId,
+                                                         const iString *url, iBool isSensitive,
+                                                         const iString *promptLabel) {
+    /* Creates the bar and records it (and its height) in the document's media cache, so a
+       subsequent layout doesn't fall back to a placeholder height. */
+    iGmDocument *doc = d->view->doc;
+    setInputPrompt_Media(media_GmDocument(doc), linkId, isSensitive, promptLabel, url);
+    iWidget *bar = makeInlineInputPrompt_DocumentWidget_(
+        d, linkId, url, isSensitive, promptLabel ? cstr_String(promptLabel) : NULL);
+    setInputPromptHeight_Media(
+        media_GmDocument(doc), findLinkInputPrompt_Media(media_GmDocument(doc), linkId),
+        height_Widget(bar));
+    return bar;
+}
+
+static void refreshAfterInlineInputPromptChange_DocumentWidget_(iDocumentWidget *d) {
+    redoLayout_GmDocument(d->view->doc);
+    updateVisible_DocumentView(d->view);
+    invalidate_DocumentWidget_(d);
+    refresh_Widget(as_Widget(d));
+}
+
+static void destroyInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, linkId);
+    if (bar) {
+        destroy_Widget(bar);
+    }
+    clearInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
+    refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+}
+
+static void setInlineInputPromptEnabled_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId,
+                                                        iBool enabled) {
+    iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, linkId);
+    if (bar) {
+        setTreeFlags_Widget(bar, disabled_WidgetFlag, !enabled);
+        refresh_Widget(bar);
+    }
+}
+
+static void reenableAllInlineInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "inputprompt")) {
+            setTreeFlags_Widget(child, disabled_WidgetFlag, iFalse);
+            refresh_Widget(child);
+        }
+    }
+}
+
+static void ensureInputPromptVisible_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    /* Only called on creation/resize so this doesn't fight the user's own scrolling. */
+    const iGmRun *run = findInputPromptRun_GmDocument(d->view->doc, linkId);
+    if (!run) {
+        return;
+    }
+    const int     top    = top_Rect(run->bounds);
+    const int     bottom = bottom_Rect(run->bounds);
+    const iRangei vis    = visibleRange_DocumentView(d->view);
+    const int     margin = gap_UI;
+    int offset = 0;
+    if (bottom - top > size_Range(&vis)) {
+        /* Taller than the viewport: prioritize the top over the buttons row. */
+        offset = (top - margin) - vis.start;
+    }
+    else if (bottom + margin > vis.end) {
+        offset = (bottom + margin) - vis.end;
+    }
+    else if (top - margin < vis.start) {
+        offset = (top - margin) - vis.start;
+    }
+    if (offset) {
+        smoothScroll_DocumentView(d->view, offset, 300);
+    }
+}
+
+static void showInlineInputPrompt_DocumentWidget_(iDocumentWidget *target, iGmLinkId linkId,
+                                                   const iString *baseUrl, const iGmResponse *resp,
+                                                   enum iGmStatusCode statusCode) {
+    if (findInlineInputPromptBar_DocumentWidget_(target, linkId)) {
+        destroyInlineInputPrompt_DocumentWidget_(target, linkId);
+    }
+    iWidget *bar = createInlineInputPrompt_DocumentWidget_(
+        target, linkId, baseUrl, statusCode == sensitiveInput_GmStatusCode,
+        isEmpty_String(&resp->meta) ? NULL : &resp->meta);
+    refreshAfterInlineInputPromptChange_DocumentWidget_(target);
+    if (document_App() == target) {
+        /* Only steal focus if this tab is the one being viewed. */
+        setFocus_Widget(findChild_Widget(bar, "input"));
+        ensureInputPromptVisible_DocumentWidget_(target, linkId);
+    }
+}
+
+static void restoreAddressBarAndHistory_DocumentWidget_(iDocumentWidget *d,
+                                                        const iString   *fetchedUrl) {
+    /* The displayed page hasn't changed (e.g., a media/prompt response was inlined into the
+       existing document instead of replacing it), so restore the address bar and history to
+       match rather than leaving them pointed at the new request's URL. `fetchedUrl` is what the
+       just-finished request was for, which may not equal d->mod.url yet at the call site. */
+    if (equal_String(&mostRecentUrl_History(d->mod.history)->url, fetchedUrl)) {
+        undo_History(d->mod.history);
+    }
+    if (setUrl_DocumentWidget_(d, url_GmDocument(d->view->doc))) {
+        postCommand_Widget(d, "!document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+    }
+}
+
+static void cleanupRedirectedFetch_DocumentWidget_(iDocumentWidget *d) {
+    iAssert(!d->originToNewTab);
+    /* This is called in the special case where an input prompt becomes inlined
+       (response does not contain a document body) so the previous document of
+       the tab is retained. */
+    restoreAddressBarAndHistory_DocumentWidget_(d, d->mod.url);
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -2336,12 +2550,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             iRelease(mr);
             /* Reset the fetch state, returning to the originating page. */
             d->state = ready_RequestState;
-            if (equal_String(&mostRecentUrl_History(d->mod.history)->url, url_GmRequest(mr->req))) {
-                undo_History(d->mod.history);
-            }
-            if (setUrl_DocumentWidget_(d, url_GmDocument(d->view->doc))) {
-                postCommand_Widget(d, "!document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
-            }
+            restoreAddressBarAndHistory_DocumentWidget_(d, url_GmRequest(mr->req));
             updateFetchProgress_DocumentWidget_(d);
             postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
             if (isFinished_GmRequest(mr->req)) {
@@ -2375,16 +2584,51 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 /* Let the navigation history know that we have been to this URL even though
                    it is only displayed as an input dialog. */
                 visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
-                makeInputPrompt_DocumentWidget(
-                    d,
-                    d->mod.url,
-                    statusCode == sensitiveInput_GmStatusCode,
-                    isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
-                    format_CStr("!document.input.submit doc:%p", d));
-                if (document_App() != d) {
-                    postCommandf_App("tabs.switch page:%p", d);
+                /* Split-pinning may route this fetch to a different document than the link
+                   lives on. If this one has no anchor but knows its origin, show the prompt
+                   there instead of a modal. A deliberately opened new tab is left alone
+                   (the user did ask for a tab). */
+                iDocumentWidget *target = d;
+                if (prefs_App()->promptPosition == inline_InputPromptPosition &&
+                    !d->requestLinkId && !d->originToNewTab && !isEmpty_String(&d->originId)) {
+                    iDocumentWidget *origin = findWidget_App(cstr_String(&d->originId));
+                    if (origin && origin->requestLinkId) {
+                        target = origin;
+                    }
+                }
+                /* Falls back to the modal if inline isn't possible. */
+                const iBool useModal = deviceType_App() != desktop_AppDeviceType ||
+                                       prefs_App()->promptPosition != inline_InputPromptPosition ||
+                                       !target->requestLinkId;
+                if (useModal) {
+                    makeInputPrompt_DocumentWidget(
+                        d,
+                        d->mod.url,
+                        statusCode == sensitiveInput_GmStatusCode,
+                        isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
+                        format_CStr("!document.input.submit doc:%p", d));
+                    if (document_App() != d) {
+                        /* The modal must be visible to be interacted with at all. */
+                        postCommandf_App("tabs.switch page:%p", d);
+                    }
+                }
+                else if (target == d) {
+                    showInlineInputPrompt_DocumentWidget_(d, d->requestLinkId, d->mod.url, resp,
+                                                          statusCode);
+                    /* Same as the inline-image handling above. */
+                    restoreAddressBarAndHistory_DocumentWidget_(d, d->mod.url);
                 }
                 else {
+                    /* Widget construction targets whatever root is "current", which must
+                       match target's root here (possibly a different split). */
+                    iRoot *oldRoot = current_Root();
+                    setCurrent_Root(as_Widget(target)->root);
+                    showInlineInputPrompt_DocumentWidget_(target, target->requestLinkId, d->mod.url,
+                                                          resp, statusCode);
+                    setCurrent_Root(oldRoot);
+                    cleanupRedirectedFetch_DocumentWidget_(d);
+                }
+                if (document_App() == d) {
                     updateTheme_DocumentWidget_(d);
                 }
                 break;
@@ -2889,6 +3133,7 @@ static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
                 postCommand_Root(w->root, "navigate.back");
             }
         }
+        reenableAllInlineInputPrompts_DocumentWidget_(d);
         updateFetchProgress_DocumentWidget_(d);
         return iTrue;
     }
@@ -3385,24 +3630,76 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
         const iString *url = d->mod.url;
-        if (hasLabel_Command(cmd, "prompturl")) {
+        if (hasLabel_Command(cmd, "link")) {
+            /* Use the stored base URL (document URL may change). */
+            const iGmLinkId linkId = argU32Label_Command(cmd, "link");
+            iBool isSensitive;
+            const iString *label, *baseUrl;
+            int heightPx;
+            inputPromptInfo_Media(media_GmDocument(d->view->doc),
+                                  findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId),
+                                  &isSensitive, &label, &baseUrl, &heightPx);
+            if (baseUrl) {
+                url = baseUrl;
+            }
+        }
+        else if (hasLabel_Command(cmd, "prompturl")) {
             url = string_Command(cmd, "prompturl");
         }
         const iString *userEnteredText = collect_String(suffix_Command(cmd, "value"));
         saveSubmittedInput_App(userEnteredText);
-        postCommandf_Root(
-            w->root,
-            /* use the `redirect:1` argument to cause the input query URL to be
-               replaced in History; we don't want to navigate onto it */
-            "open redirect:1 url:%s",
-            cstrCollect_String(makeQueryUrl_DocumentWidget_(d, url, userEnteredText)));
+        const char *queryUrl = cstrCollect_String(makeQueryUrl_DocumentWidget_(d, url, userEnteredText));
+        if (hasLabel_Command(cmd, "link")) {
+            postCommandf_Root(w->root, "open url:%s", queryUrl);
+            /* Don't dismiss the inline prompt yet. The request may be cancelled before a
+               response arrives, in which case the prompt remain as is for another request
+               attempt. */
+            setInlineInputPromptEnabled_DocumentWidget_(d, argU32Label_Command(cmd, "link"), iFalse);
+        }
+        else {
+            postCommandf_Root(w->root, "open redirect:1 url:%s", queryUrl);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
              equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") &&
-             !hasLabel_Command(cmd, "prompturl") && document_App() == d) {
+             !hasLabel_Command(cmd, "prompturl") && !hasLabel_Command(cmd, "link") &&
+             document_App() == d) {
         postCommand_Root(get_Root(), "navigate.back");
         return iTrue;
+    }
+    else if (equal_Command(cmd, "valueinput.cancelled") && hasLabel_Command(cmd, "link") &&
+             document_Command(cmd) == d) {
+        /* No back-navigation: the original page is still visible underneath. */
+        destroyInlineInputPrompt_DocumentWidget_(d, argU32Label_Command(cmd, "link"));
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, w, "valueinput.resized")) {
+        iWidget *bar = as_Widget(pointer_Command(cmd));
+        if (bar && startsWith_String(id_Widget(bar), "inputprompt")) {
+            const iGmLinkId linkId = (iGmLinkId) atoi(cstr_String(id_Widget(bar)) + 11);
+            iMediaId mediaId = findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
+            if (mediaId.type) {
+                setInputPromptHeight_Media(media_GmDocument(d->view->doc), mediaId, height_Widget(bar));
+                refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+                if (document_App() == d) {
+                    /* The prompt just resized and may now extend past the viewport. */
+                    ensureInputPromptVisible_DocumentWidget_(d, linkId);
+                }
+            }
+        }
+        return iFalse; /* let it also reach the bar's own handler for its internal re-arrange */
+    }
+    else if (equalWidget_Command(cmd, w, "focus.gained")) {
+        iWidget *bar = pointer_Command(cmd);
+        while (bar && !startsWith_String(id_Widget(bar), "inputprompt")) {
+            bar = bar->parent;
+        }
+        if (bar && document_App() == d) {
+            /* Focus should never be (partially or fully) outside the viewable area. */
+            ensureInputPromptVisible_DocumentWidget_(d, (iGmLinkId) atoi(cstr_String(id_Widget(bar)) + 11));
+        }
+        return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
@@ -4346,15 +4643,28 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
         iUrl url;
         init_Url(&url, linkUrl);
         if (isEmpty_Range(&url.query)) {
-            iWidget *dlg = makeInputPrompt_DocumentWidget(
-                d,
-                linkUrl,
-                iFalse,
-                NULL,
-                format_CStr("!document.input.submit prompturl:%s doc:%p",
-                            cstr_String(canonicalUrl_String(linkUrl)),
-                            d));
-            postCommand_Widget(dlg, "focus.set id:input");
+            if (deviceType_App() != desktop_AppDeviceType ||
+                prefs_App()->promptPosition != inline_InputPromptPosition) {
+                iWidget *dlg = makeInputPrompt_DocumentWidget(
+                    d,
+                    linkUrl,
+                    iFalse,
+                    NULL,
+                    format_CStr("!document.input.submit prompturl:%s doc:%p",
+                                cstr_String(canonicalUrl_String(linkUrl)),
+                                d));
+                postCommand_Widget(dlg, "focus.set id:input");
+            }
+            else {
+                /* Prompt may already exist if pre-populated at page load. */
+                iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, linkId);
+                if (!bar) {
+                    bar = createInlineInputPrompt_DocumentWidget_(d, linkId, linkUrl, iFalse, NULL);
+                    refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+                }
+                setFocus_Widget(findChild_Widget(bar, "input"));
+                ensureInputPromptVisible_DocumentWidget_(d, linkId);
+            }
             return;
         }
     }
@@ -5208,6 +5518,63 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     }
 }
 
+static iWidget *recreateInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    iMediaId mediaId = findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
+    if (!mediaId.type) {
+        return NULL;
+    }
+    iBool isSensitive;
+    const iString *label, *baseUrl;
+    int heightPx;
+    inputPromptInfo_Media(media_GmDocument(d->view->doc), mediaId, &isSensitive, &label, &baseUrl, &heightPx);
+    iWidget *bar = makeInlineInputPrompt_DocumentWidget_(
+        d, linkId, baseUrl, isSensitive, label ? cstr_String(label) : NULL);
+    postCommand_Widget(bar, "valueinput.resized"); /* reconcile with the (possibly stale) reserved height */
+    return bar;
+}
+
+void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *view) {
+    /* Must run after render_GmDocument() repopulates visibleMedia for this frame. */
+    iWidget *w = as_Widget(d);
+    /* Only the bars actually visible are shown. */
+    iForEach(ObjectList, i, children_Widget(w)) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "inputprompt")) {
+            setFlags_Widget(child, hidden_WidgetFlag, iTrue);
+        }
+    }
+    iConstForEach(PtrArray, m, &view->visibleMedia) {
+        const iGmRun *run = m.ptr;
+        if (run->mediaType != inputPrompt_MediaType) {
+            continue;
+        }
+        iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, run->linkId);
+        if (!bar) {
+            /* The widget doesn't survive a document swap, but its state does in Media
+               (cf. inline images restored from a cached/history document). */
+            bar = recreateInlineInputPrompt_DocumentWidget_(d, run->linkId);
+            if (!bar) {
+                continue;
+            }
+        }
+        const iRect rect = runRect_DocumentView(view, run); /* in window coords */
+        bar->rect.pos    = windowToLocal_Widget(bar, rect.pos);
+        bar->rect.size.x = rect.size.x;
+        setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
+        arrange_Widget(bar);
+    }
+    /* A hidden prompt would eat scroll keys if left focused. */
+    if (focus_Widget() && isFinished_SmoothScroll(&view->scrollY)) {
+        iWidget *bar = focus_Widget();
+        while (bar && !startsWith_String(id_Widget(bar), "inputprompt")) {
+            bar = bar->parent;
+        }
+        if (bar && bar->flags & hidden_WidgetFlag) {
+            setFocus_Widget(NULL);
+        }
+    }
+}
+
 void didScrollView_DocumentWidget(iDocumentWidget *d) {
     animateMedia_DocumentWidget_(d);
     /* Remember scroll positions of recently visited pages. */ {
@@ -5462,6 +5829,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->mediaTimer      = 0;
     init_String(&d->pendingGotoHeading);
     init_String(&d->linePrecedingLink);
+    init_String(&d->originId);
+    d->originToNewTab = iFalse;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Click(&d->midClick, d, SDL_BUTTON_MIDDLE);
     d->linkInfo = (deviceType_App() == desktop_AppDeviceType ? new_LinkInfo() : NULL);
@@ -5515,6 +5884,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     iRelease(d->request);
     delete_Gempub(d->sourceGempub);
     deinit_String(&d->linePrecedingLink);
+    deinit_String(&d->originId);
     deinit_String(&d->pendingGotoHeading);
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
@@ -5708,11 +6078,16 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     return d;
 }
 
-void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) {
+void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other, iBool isNewTab) {
     if (d != other) {
-        /* TODO: Could remember the other's ID? */
         d->mod.generation = other->mod.generation + 1;
         set_String(&d->linePrecedingLink, &other->linePrecedingLink);
+        set_String(&d->originId, id_Widget(constAs_Widget(other)));
+        d->originToNewTab = isNewTab;
+    }
+    else {
+        clear_String(&d->originId);
+        d->originToNewTab = iFalse;
     }
 }
 
@@ -5747,6 +6122,11 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
         return d->request != NULL || d->flags & pendingRedirect_DocumentWidgetFlag;
     }
     return iFalse;
+}
+
+iBool isFetchingOwnLink_DocumentWidget(const iDocumentWidget *d) {
+    /* Fetching one of the links in the current document. */
+    return isRequestOngoing_DocumentWidget(d) && d->requestLinkId;
 }
 
 void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {

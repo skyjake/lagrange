@@ -535,6 +535,7 @@ void updateVisible_DocumentView(iDocumentView *d) {
         iZap(d->visibleRuns);
         render_GmDocument(d->doc, visRange, addVisible_DocumentView_, d);
     }
+    repositionInlinePrompts_DocumentWidget(d->owner, d); /* uses the visibleMedia scan above */
     const iRangecc newHeading = currentHeading_DocumentView_(d);
     if (memcmp(&oldHeading, &newHeading, sizeof(oldHeading))) {
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;

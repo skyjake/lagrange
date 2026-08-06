@@ -270,6 +270,7 @@ const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
 iRangecc        findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iGmRun *  precedingRun_GmDocument (const iGmDocument *, const iGmRun *run);
+const iGmRun *  findInputPromptRun_GmDocument (const iGmDocument *, iGmLinkId linkId);
 size_t          numLinks_GmDocument     (const iGmDocument *); /* link IDs: 1...numLinks (inclusive) */
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 iRangecc        linkUrlRange_GmDocument (const iGmDocument *, iGmLinkId linkId);

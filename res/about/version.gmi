@@ -9,6 +9,9 @@
 ## 1.21
 
 New features:
+* Inline input prompts. By default, input prompts appear below the originating link, much like inline images. This allows accessing the rest of the page normally while entering input.
+* Links marked "Assume This URL Requires Input" will pre-populate with an inline prompt UI.
+* Option to choose default mode for prompts: inline, top, or bottom.
 * Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
 * "Use on This Domain" in identity context menu.
 
