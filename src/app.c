@@ -5425,8 +5425,11 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "tabs.close") && isMainWin) {
         iWidget *tabs = hasLabel_Command(cmd, "tabs") ? pointerLabel_Command(cmd, "tabs")
                                                       : findWidget_App("doctabs");
-        /* Can't close the last tab on mobile. */
-        if (isMobile_Platform() && tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
+        /* Can't close the last tab on mobile. Same on Windows/Linux when it's the
+           last window, since the app cannot keep running without any windows open. */
+        if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1 &&
+            (isMobile_Platform() ||
+             ((isWindows_Platform() || isLinux_Platform()) && numWindows_App() == 1))) {
             postCommand_App("document.unsetident"); /* implicit unpinning since a tab is closing */
             postCommand_App("navigate.home");
             return iTrue;
