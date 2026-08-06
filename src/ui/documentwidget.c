@@ -249,6 +249,39 @@ enum iDocumentLinkOrdinalMode {
     homeRow_DocumentLinkOrdinalMode,
 };
 
+/* Note about swipe transitions and keeping inline input prompts positioned:
+
+   An inline input prompt is a real widget, similar to what appears in a modal
+   dialog. During a back/forward swipe, up to two DocumentViews are visible at
+   once (d->view and d->swipeView, one drawn sliding over the other), and either
+   one may have one or more prompt widgets as children. The prompts need to keep
+   tracking their documents as they shift, and all prompts need to be drawn at
+   the correct Z order alongside their view's content. This means a normal
+   `drawChildren_Widget()` is not possible, because children are drawn last, on
+   top of everything.
+
+   We use `deferredDraw_WidgetFlag2` that excludes a child from
+   `drawChildren_Widget()` but allows it to be drawn despite being flagged as
+   hidden (which makes them inert). Each flagged bar is drawn manually so they
+   appear in the correct order vs. the DocumentViews.
+
+   The incoming/outgoing prompts are handled differently because of how the
+   underlying document changes hands:
+
+   - Incoming: d->view's own prompts stay completely ordinary, live, findable
+     widgets. These are behind d->swipeView during a back-swipe.
+
+   - Outgoing: d->swipeView's prompts. `releaseViewDocument_DocumentWidget_()`
+     allocates a new DocumentView for the incoming document while the swipe
+     animates, and link IDs are per-document, so the incoming view may reuse the
+     same "inputpromptN" IDs. Therefore, the outgoing prompt widgets are renamed
+     to avoid clashing with the incoming live prompts. The horizontal positions
+     are driven by `visualOffset` rather than by moving `rect` itself, since
+     there is no longer a live document layout to reference. The prompts are
+     kept around, hidden and unfindable, until the swipe finishes, then actually
+     destroyed.
+*/
+
 struct Impl_DocumentWidget {
     iWidget        widget;
     int            flags; /* internal behavior, see enum iDocumentWidgetFlag */
@@ -310,6 +343,8 @@ struct Impl_DocumentWidget {
     iAnim          swipeOffset; /* applies to both views */
     iDocumentView *swipeView;   /* outgoing old view */
     iBanner *      swipeBanner; /* used by swipeView only */
+    iPtrArray      outgoingInputPrompts; /* widgets; see explanation of inline prompts above */
+    iPtrArray      coveredInputPrompts;  /* widgets */
 
     /* Widget structure: */
     iScrollWidget *scroll;
@@ -348,6 +383,8 @@ static iWidget *createInlineInputPrompt_DocumentWidget_(iDocumentWidget *, iGmLi
                                                      const iString *url, iBool isSensitive,
                                                      const iString *promptLabel);
 static void     refreshAfterInlineInputPromptChange_DocumentWidget_(iDocumentWidget *);
+static void     repositionOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *);
+static iWidget *findInlineInputPromptBar_DocumentWidget_(iDocumentWidget *, iGmLinkId linkId);
 
 iRangecc selectionMark_DocumentWidget(const iDocumentWidget *d) {
     /* Normalize so start < end. */
@@ -594,11 +631,24 @@ static void resetSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
         delete_DocumentView(d->swipeView);
     }
     d->swipeView = NULL;
+    /* The outgoing bars are done sliding; actually get rid of them now. */
+    iForEach(PtrArray, o, &d->outgoingInputPrompts) {
+        destroy_Widget(o.ptr);
+    }
+    clear_PtrArray(&d->outgoingInputPrompts);
+    iForEach(PtrArray, c, &d->coveredInputPrompts) {
+        iWidget *bar = c.ptr;
+        setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
+        iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
+    }
+    clear_PtrArray(&d->coveredInputPrompts);
     setValue_Anim(&d->swipeOffset, 0, 0);
     iChangeFlags(d->flags,
                  swipeViewOverlay_DocumentWidgetFlag | swipeAborted_DocumentWidgetFlag |
                      swipeDeferredFinish_DocumentWidgetFlag | swipeRubberband_DocumentWidgetFlag,
                  iFalse);
+    /* Final positioning. */
+    repositionInlinePrompts_DocumentWidget(d, d->view);
 }
 
 static iBool isSwipingBack_DocumentWidget_(const iDocumentWidget *d) {
@@ -624,25 +674,17 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-static void sampleSwipeSpeed_DocumentWidget_(iDocumentWidget *d) {
-    iUnused(d);
-#if 0
-    const uint32_t now = SDL_GetTicks();
-    if (!isFinished_Anim(&d->swipeOffset) && now - d->swipeSampleAt > 100) {
-        d->swipeSampleAt = now;
-        d->swipeSample = value_Anim(&d->swipeOffset);
-    }
-#endif
-}
-
 void animate_DocumentWidget(void *ticker) {
     iDocumentWidget *d = ticker;
     iAssert(isInstance_Object(d, &Class_DocumentWidget));
     refresh_Widget(d);
-    sampleSwipeSpeed_DocumentWidget_(d);
     maybeFinishSwipeAnimation_DocumentWidget_(d);
+    if (!isFinished_Anim(&d->swipeOffset) || d->swipeView) { /* swipe ongoing? */
+        repositionInlinePrompts_DocumentWidget(d, d->view);
+        repositionOutgoingInputPrompts_DocumentWidget_(d);
+    }
     if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
-        !isFinished_Anim(&d->swipeOffset) ||
+        !isFinished_Anim(&d->swipeOffset) || d->swipeView ||
         (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity))) {
         addTicker_App(animate_DocumentWidget, d);
     }
@@ -955,10 +997,34 @@ static void allocView_DocumentWidget_(iDocumentWidget *d) {
 static void destroyAllInlineInputPrompts_DocumentWidget_(iDocumentWidget *d) {
     iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
         iWidget *child = i.object;
-        if (startsWith_String(id_Widget(child), "inputprompt")) {
+        if (startsWith_String(id_Widget(child), "inputprompt") &&
+            ~child->flags2 & deferredDraw_WidgetFlag2) { /* skip a currently covered bar */
             destroy_Widget(child);
         }
     }
+}
+
+static void deferOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    /* Escape the "inputpromptN" id lookup and take these out of the normal draw pass. */
+    iAssert(isEmpty_PtrArray(&d->outgoingInputPrompts));
+    iConstForEach(PtrArray, m, &d->swipeView->visibleMedia) {
+        const iGmRun *run = m.ptr;
+        if (run->mediaType != inputPrompt_MediaType) {
+            continue;
+        }
+        iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, run->linkId);
+        if (!bar) {
+            continue;
+        }
+        setId_Widget(bar, format_CStr("outgoinginputprompt%u", run->linkId));
+        setFlags_Widget(bar, hidden_WidgetFlag | horizontalOffset_WidgetFlag, iTrue);
+        iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
+        if (focus_Widget() == bar || hasParent_Widget(focus_Widget(), bar)) {
+            setFocus_Widget(NULL);
+        }
+        pushBack_PtrArray(&d->outgoingInputPrompts, bar);
+    }
+    repositionOutgoingInputPrompts_DocumentWidget_(d); /* position them before the first draw */
 }
 
 static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
@@ -968,6 +1034,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->view == d->swipeView) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
+        deferOutgoingInputPrompts_DocumentWidget_(d);
         d->swipeBanner = d->banner;
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
@@ -3960,7 +4027,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                          swipeViewOverlay_DocumentWidgetFlag, iTrue);
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
-            sampleSwipeSpeed_DocumentWidget_(d);
         }
         goBack_History(d->mod.history);
         return iTrue;
@@ -3973,7 +4039,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setValue_Anim(&d->swipeOffset, width_Widget(w), 0);
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
-            sampleSwipeSpeed_DocumentWidget_(d);
         }
         goForward_History(d->mod.history);
         return iTrue;
@@ -5533,9 +5598,40 @@ static iWidget *recreateInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iG
     return bar;
 }
 
+static int swipeOffsetOf_DocumentWidget_(const iDocumentWidget *d, const iDocumentView *view) {
+    /* Must match the horizontal offset used to draw `view` in draw_DocumentWidget_(). */
+    const int swipeValue = value_Anim(&d->swipeOffset);
+    if (!d->swipeView) {
+        return view == d->view ? swipeValue : 0;
+    }
+    const iDocumentView *over  = d->flags & swipeViewOverlay_DocumentWidgetFlag ? d->swipeView : d->view;
+    const iDocumentView *under = d->flags & swipeViewOverlay_DocumentWidgetFlag ? d->view : d->swipeView;
+    if (view == over) {
+        return swipeValue;
+    }
+    if (view == under) {
+        return 0.25f * (swipeValue - width_Rect(bounds_Widget(constAs_Widget(d))));
+    }
+    return 0;
+}
+
+static void repositionOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    const int offset = swipeOffsetOf_DocumentWidget_(d, d->swipeView);
+    iForEach(PtrArray, i, &d->outgoingInputPrompts) {
+        setVisualOffset_Widget(i.ptr, offset, 0, 0);
+    }
+}
+
 void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *view) {
     /* Must run after render_GmDocument() repopulates visibleMedia for this frame. */
     iWidget *w = as_Widget(d);
+    const int swipeOffset = swipeOffsetOf_DocumentWidget_(d, view);
+    /* Is `view` currently covered by the outgoing view? (See the comment above the struct.) */
+    const iBool isCovered = view == d->view && d->swipeView &&
+                            (d->flags & swipeViewOverlay_DocumentWidgetFlag) != 0;
+    if (view == d->view) {
+        clear_PtrArray(&d->coveredInputPrompts);
+    }
     /* Only the bars actually visible are shown. */
     iForEach(ObjectList, i, children_Widget(w)) {
         iWidget *child = i.object;
@@ -5559,9 +5655,18 @@ void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *v
         }
         const iRect rect = runRect_DocumentView(view, run); /* in window coords */
         bar->rect.pos    = windowToLocal_Widget(bar, rect.pos);
+        bar->rect.pos.x += swipeOffset;
         bar->rect.size.x = rect.size.x;
-        setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
         arrange_Widget(bar);
+        if (isCovered) {
+            setFlags_Widget(bar, hidden_WidgetFlag, iTrue);
+            iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
+            pushBack_PtrArray(&d->coveredInputPrompts, bar);
+        }
+        else {
+            setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
+            iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
+        }
     }
     /* A hidden prompt would eat scroll keys if left focused. */
     if (focus_Widget() && isFinished_SmoothScroll(&view->scrollY)) {
@@ -5613,6 +5718,20 @@ static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDoc
     }
 }
 
+static void drawOutgoingInputPrompts_DocumentWidget_(const iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->outgoingInputPrompts) {
+        const iWidget *bar = i.ptr;
+        class_Widget(bar)->draw(bar);
+    }
+}
+
+static void drawCoveredInputPrompts_DocumentWidget_(const iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->coveredInputPrompts) {
+        const iWidget *bar = i.ptr;
+        class_Widget(bar)->draw(bar);
+    }
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w          = constAs_Widget(d);
     const iRect    bounds     = bounds_Widget(w);
@@ -5642,6 +5761,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             }
         }
         drawViewOrBlank_DocumentWidget_(d, under, underlayOffset, iFalse);
+        if (under == d->swipeView) {
+            drawOutgoingInputPrompts_DocumentWidget_(d);
+        }
+        else if (under == d->view) {
+            drawCoveredInputPrompts_DocumentWidget_(d);
+        }
         if (overlayOffset > 0) {
             /* Dim the occluded view with a soft shadow. */
             iRect safeBounds = bounds;
@@ -5665,6 +5790,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         }
         drawViewOrBlank_DocumentWidget_(d, over, overlayOffset, iFalse);
+        if (over == d->swipeView) {
+            drawOutgoingInputPrompts_DocumentWidget_(d);
+        }
     }
     else {
         int offset = value_Anim(&d->swipeOffset);
@@ -5838,6 +5966,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->swipeView   = NULL;
     d->swipeBanner = NULL;
     init_Anim(&d->swipeOffset, 0);
+    init_PtrArray(&d->outgoingInputPrompts);
+    init_PtrArray(&d->coveredInputPrompts);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumbColor_ScrollWidget(d->scroll, tmQuote_ColorId);
     d->menu         = NULL; /* created when clicking */
@@ -5877,8 +6007,10 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(refreshWhileScrolling_DocumentWidget, d);
     remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
+    resetSwipeAnimation_DocumentWidget_(d); /* touches d->view; must run before it's deleted */
     delete_DocumentView(d->view);
-    resetSwipeAnimation_DocumentWidget_(d);
+    deinit_PtrArray(&d->outgoingInputPrompts);
+    deinit_PtrArray(&d->coveredInputPrompts);
     delete_LinkInfo(d->linkInfo);
     iRelease(d->media);
     iRelease(d->request);
