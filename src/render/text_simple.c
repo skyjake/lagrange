@@ -68,6 +68,8 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
     const iInt2 orig        = args->pos;
     iTextAttrib attrib      = { .fgColorId = args->color };
+    iColor ansiFg = get_Color(args->color);
+    iBool hasAnsi = iFalse;
     iRect       bounds      = { orig, init_I2(0, d->font.height) };
     float       xpos        = orig.x;
     float       xposMax     = xpos;
@@ -99,7 +101,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
     }
     /* The default text foreground color. */
     if (mode & draw_RunMode) {
-        const iColor clr = get_Color(args->color);
+        const iColor clr = hasAnsi ? ansiFg : get_Color(args->color);
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
         SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
 #endif
@@ -113,7 +115,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                 (mode & underline_RunMode ? SDL_TEXT_ATTRIBUTE_BOLD | SDL_TEXT_ATTRIBUTE_UNDERLINE : 0));
 #endif
         if (args->mode & fillBackground_RunMode) {
-            const iColor initial = get_Color(args->color);
+            const iColor initial = hasAnsi ? ansiFg : get_Color(args->color);
             SDL_SetRenderDrawColor(render, initial.r, initial.g, initial.b, 0);
 //#if defined (SDL_SEAL_CURSES)
 //            SDL_SetRenderTextFillColor(render, initial.r, initial.g, initial.b, 255);
@@ -141,24 +143,28 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(current_Text()->ansiEscape, chPos, args->text.end - chPos, &m)) {
-                if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
+                if (mode & (draw_RunMode | measure_RunMode) && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
-                    iColor clr = get_Color(args->color);
+                    iColor parsedColor;
                     ansiColors_Color(capturedRange_RegExpMatch(&m, 1),
                                      current_Text()->baseFgColorId,
                                      none_ColorId,
                                      iFalse,
-                                     &clr,
+                                     &parsedColor,
                                      NULL,
                                      NULL);
+                    ansiFg = parsedColor;
+                    hasAnsi = iTrue;
+                    if (mode & draw_RunMode) {
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-                    SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
+                        SDL_SetTextureColorMod(cache, parsedColor.r, parsedColor.g, parsedColor.b);
 #endif
 #if defined (SDL_SEAL_CURSES)
-                    SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+                        SDL_SetRenderTextColor(render, parsedColor.r, parsedColor.g, parsedColor.b);
 #endif
-                    if (args->mode & fillBackground_RunMode) {
-                        SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
+                        if (args->mode & fillBackground_RunMode) {
+                            SDL_SetRenderDrawColor(render, parsedColor.r, parsedColor.g, parsedColor.b, 0);
+                        }
                     }
                 }
                 chPos = end_RegExpMatch(&m);
@@ -243,16 +249,20 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                 else if (esc != 0x24) { /* ASCII Cancel */
                     colorNum = esc - asciiBase_ColorEscape;
                 }
-                if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
+                if (mode & (draw_RunMode | measure_RunMode) && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(colorNum);
+                    ansiFg = clr;
+                    hasAnsi = iTrue;
+                    if (mode & draw_RunMode) {
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-                    SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
+                        SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
 #endif
 #if defined (SDL_SEAL_CURSES)
-                    SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+                        SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
 #endif
-                    if (args->mode & fillBackground_RunMode) {
-                        SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
+                        if (args->mode & fillBackground_RunMode) {
+                            SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
+                        }
                     }
                 }
                 prevCh = 0;

@@ -270,21 +270,9 @@ void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, iBool justify, i
 }
 
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
-    /* TODO: Use WrapText here, too */
-    const char *endp;
-    while (!isEmpty_Range(&text)) {
-        iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
-        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
-        if (text.start == endp) {
-            adv = tryAdvanceNoWrap_Text(fontId, text, maxWidth, &endp);
-            if (text.start == endp) {
-                break; /* let's not get stuck */
-            }
-        }
-        text.start = endp;
-        pos.y += iMax(adv.y, lineHeight_Text(fontId));
-    }
-    return pos.y;
+    iWrapText wrap = { .text = text, .maxWidth = maxWidth, .mode = word_WrapTextMode };
+    iTextMetrics tm = draw_WrapText(&wrap, fontId, pos, color);
+    return pos.y + tm.bounds.size.y;
 }
 
 void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, const char *format, ...) {

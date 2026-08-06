@@ -55,44 +55,17 @@ int fontWithFamily_Text(int font, enum iFontId familyId) {
 
 iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
     iTextMetrics tm;
-#if !defined (LAGRANGE_ENABLE_HARFBUZZ)
-    /* In simple mode, each line must be wrapped first so we can break at the right points
-       and do wrap notifications before drawing. */
-    iRangecc text = d->text;
-    iZap(tm);
-    d->wrapRange_ = (iRangecc){ d->text.start, d->text.start };
-    const iInt2 orig = pos;
-    while (!isEmpty_Range(&text)) {
-        const char *endPos;
-        const int width = d->mode == word_WrapTextMode
-                              ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
-                              : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
-        if (endPos == text.start) {
-            break; /* too tight for even a single character */
-        }
-        notify_WrapText(d, endPos, (iTextAttrib){ .fgColorId = color }, 0, width);
-        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
-        text.start = endPos;
-        pos.y += lineHeight_Text(fontId);
-        tm.bounds.size.x = iMax(tm.bounds.size.x, width);
-        tm.bounds.size.y = pos.y - orig.y;
-    }
-    tm.advance = sub_I2(pos, orig);
-#else
     run_Font(font_Text(fontId),
-             &(iRunArgs){
-                 .mode = draw_RunMode | runFlags_FontId(fontId) |
-                         (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
-                         (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
-                 .text = d->text,
-                 .pos = pos,
-                 .wrap = d,
-                 .justify = d->justify,
-                 .layoutBound = d->justify ? d->maxWidth : 0,
-                 .color = color & mask_ColorId,
-                 .metrics_out = &tm,
-             });
-#endif
+             &(iRunArgs){ .mode = draw_RunMode | runFlags_FontId(fontId) |
+                                   (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                   (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
+                           .text = d->text,
+                           .pos = pos,
+                           .wrap = d,
+                           .justify = d->justify,
+                           .layoutBound = d->justify ? d->maxWidth : 0,
+                           .color = color & mask_ColorId,
+                           .metrics_out = &tm });
     return tm;
 }
 
