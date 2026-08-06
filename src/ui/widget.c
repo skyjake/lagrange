@@ -366,7 +366,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
 
 void setTreeFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     if (d) {
-        setFlags_Widget(d, flags, iTrue);
+        setFlags_Widget(d, flags, set);
         iForEach(ObjectList, i, d->children) {
             setTreeFlags_Widget(i.object, flags, set);
         }
@@ -2286,7 +2286,8 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
 
 iAny *findChild_Widget(const iWidget *d, const char *id) {
     if (!d) return NULL;
-    if (cmp_String(id_Widget(d), id) == 0) {
+    /* A widget pending destruction is as good as gone; it only lingers for deferred GC. */
+    if (~d->flags & destroyPending_WidgetFlag && cmp_String(id_Widget(d), id) == 0) {
         return iConstCast(iAny *, d);
     }
     iConstForEach(ObjectList, i, d->children) {
@@ -2297,11 +2298,14 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
 }
 
 static void addMatchingToArray_Widget_(const iWidget *d, const iRangecc id, iPtrArray *found) {
-    if (cmp_String(id_Widget(d), id.start) == 0) {
-        pushBack_PtrArray(found, d);
-    }
-    else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
-        pushBack_PtrArray(found, d);
+    /* A widget pending destruction is as good as gone; it only lingers for deferred GC. */
+    if (~d->flags & destroyPending_WidgetFlag) {
+        if (cmp_String(id_Widget(d), id.start) == 0) {
+            pushBack_PtrArray(found, d);
+        }
+        else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
+            pushBack_PtrArray(found, d);
+        }
     }
     iForEach(ObjectList, i, d->children) {
         addMatchingToArray_Widget_(i.object, id, found);
