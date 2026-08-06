@@ -19,6 +19,7 @@ New features:
 Changes and enhancements:
 * Improved sidebar layout. Sidebars are now top-level siblings of the document area, which means the tab buttons don't overlap the sidebar area.
 * Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
+* On Windows and Linux, closing the last tab no longer quits the app.
 
 Fixes:
 * The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.

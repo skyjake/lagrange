@@ -5443,7 +5443,9 @@ iBool handleCommand_App(const char *cmd) {
             (isMobile_Platform() ||
              ((isWindows_Platform() || isLinux_Platform()) && numWindows_App() == 1))) {
             postCommand_App("document.unsetident"); /* implicit unpinning since a tab is closing */
-            postCommand_App("navigate.home");
+            /* On mobile, we go home because the Home action isn't readily available
+               elsewhere, unless the user has it in the toolbar. */
+            postCommand_App(isMobile_Platform() ? "navigate.home" : "open url:about:blank");
             return iTrue;
         }
         const iRangecc tabId = range_Command(cmd, "id");
