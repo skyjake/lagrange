@@ -130,7 +130,8 @@ enum iWidgetFlag2 {
     visibleOnParentSelected_WidgetFlag2     = iBit(3),
     permanentVisualOffset_WidgetFlag2       = iBit(4), /* usually visual offset overrides hiding */
     commandOnHover_WidgetFlag2              = iBit(5), /* only dispatched to the hovered widget */
-    centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children in the middle */
+    centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children
+                                                          in the middle */
     usedAsPeriodicContext_WidgetFlag2       = iBit(7), /* add_Periodic() called on the widget */
     siblingOrderDraggable_WidgetFlag2       = iBit(8),
     horizontallyResizable_WidgetFlag2       = iBit(9), /* may drag left/right edges to resize */
@@ -138,6 +139,10 @@ enum iWidgetFlag2 {
     rightEdgeResizing_WidgetFlag2           = iBit(11),
     childMenuOpenedAsPopup_WidgetFlag2      = iBit(12),
     mustStayOnTop_WidgetFlag2               = iBit(13),
+    deferredDraw_WidgetFlag2                = iBit(14), /* excluded from the parent's normal
+                                                           drawChildren pass; overrides `hidden`;
+                                                           the owner draws the widget explicitly
+                                                           instead, e.g., to control Z order */
 };
 
 enum iWidgetAddPos {

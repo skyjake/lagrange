@@ -1242,7 +1242,8 @@ iBool isSelfHidden_Widget(const iAnyObject *obj) {
 
 iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
     return !isSelfHidden_Widget(d) ||
-           (d->flags & visualOffset_WidgetFlag && ~d->flags2 & permanentVisualOffset_WidgetFlag2);
+           (d->flags & visualOffset_WidgetFlag && ~d->flags2 & permanentVisualOffset_WidgetFlag2) ||
+           (d->flags2 & deferredDraw_WidgetFlag2);
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
@@ -1992,7 +1993,8 @@ void drawChildren_Widget(const iWidget *d) {
     }
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        if (~child->flags & keepOnTop_WidgetFlag && isDrawn_Widget_(child)) {
+        if (~child->flags & keepOnTop_WidgetFlag && ~child->flags2 & deferredDraw_WidgetFlag2 &&
+            isDrawn_Widget_(child)) {
             incrementDrawCount_(child);
             class_Widget(child)->draw(child);
         }
