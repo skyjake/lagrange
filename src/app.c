@@ -2742,6 +2742,10 @@ static void runTickers_App_(iApp *d) {
         iPtrArray *winList = listWindows_App();
         iForEach(PtrArray, i, winList) {
             iWindow *win = *i.value;
+            /* Tickers must see the same animation time that the upcoming draw will use;
+               otherwise anything a ticker positions from an Anim value is stale by one
+               frame relative to content drawn straight from the same Anim. */
+            win->frameTime = now;
             iForIndices(i, win->roots) {
                 iRoot *root = win->roots[i];
                 if (root) {

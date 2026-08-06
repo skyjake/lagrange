@@ -269,7 +269,7 @@ enum iDocumentLinkOrdinalMode {
    underlying document changes hands:
 
    - Incoming: d->view's own prompts stay completely ordinary, live, findable
-     widgets. These are behind d->swipeView during a back-swipe.
+     widgets. These are covered by d->swipeView during a back-swipe.
 
    - Outgoing: d->swipeView's prompts. `releaseViewDocument_DocumentWidget_()`
      allocates a new DocumentView for the incoming document while the swipe
