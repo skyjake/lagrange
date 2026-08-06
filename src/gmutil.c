@@ -289,10 +289,26 @@ iRangecc urlUser_String(const iString *d) {
     init_Url(&url, d);
     iRegExpMatch m;
     iRangecc found = iNullRange;
-    iForIndices(i, userPats_) {
+    if (isGopherScheme_Rangecc(url.scheme)) {
+        /* The path is "/" + item type + selector; only the tilde convention applies,
+           and only after a valid item type character. The selector may or may not
+           have its own leading slash, e.g. "1~user/" and "1/~user/" are equivalent. */
+        static iRegExp *gopherTildePat_;
+        if (!gopherTildePat_) {
+            gopherTildePat_ = new_RegExp("^/[a-z0-9]/?~([^/?]+)", caseInsensitive_RegExpOption);
+        }
         init_RegExpMatch(&m);
-        if (matchRange_RegExp(userPats_[i], url.path, &m)) {
+        if (matchRange_RegExp(gopherTildePat_, url.path, &m)) {
             found = capturedRange_RegExpMatch(&m, 1);
+        }
+    }
+    else {
+        iForIndices(i, userPats_) {
+            init_RegExpMatch(&m);
+            if (matchRange_RegExp(userPats_[i], url.path, &m)) {
+                found = capturedRange_RegExpMatch(&m, 1);
+                break;
+            }
         }
     }
     return found;

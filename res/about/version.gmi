@@ -23,6 +23,7 @@ Fixes:
 * The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.
+* Gopher: Parsing tilde-prefixed username from selector.
 * Overflowing text with "View as Plain Text".
 * Improved hover highlight contrast with "Gray" UI accent color.
 
