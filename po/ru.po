@@ -3003,9 +3003,6 @@ msgstr "Параметры"
 msgid "heading.prefs.sidebars.tabs"
 msgstr "Вкладки бок. панели"
 
-msgid "prefs.bottominput"
-msgstr "Подсказка ввода снизу:"
-
 msgid "prefs.gamepad.triggermod"
 msgstr "RT + "
 

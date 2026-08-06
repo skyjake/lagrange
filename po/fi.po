@@ -2978,9 +2978,6 @@ msgstr "Näytä kysely yläreunassa"
 msgid "menu.input.showbottom"
 msgstr "Näytä kysely alareunassa"
 
-msgid "prefs.bottominput"
-msgstr "Syötekysely alareunassa:"
-
 msgid "prefs.gamepad.secondary"
 msgstr "Toissijainen napsautus"
 

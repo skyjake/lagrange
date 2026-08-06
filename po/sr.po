@@ -3012,9 +3012,6 @@ msgstr "Прикажи промпт на врху"
 msgid "menu.input.showbottom"
 msgstr "Прикажи промпт на дну"
 
-msgid "prefs.bottominput"
-msgstr "Промпт за унос на дну:"
-
 msgid "hint.optional"
 msgstr "опционо"
 

@@ -3011,9 +3011,6 @@ msgstr "İstemi Üstte Göster"
 msgid "menu.input.showbottom"
 msgstr "İstemi Altta Göster"
 
-msgid "prefs.bottominput"
-msgstr "Giriş istemi altta:"
-
 msgid "prefs.ipv6"
 msgstr "IPv6’yı yeğle:"
 

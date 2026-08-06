@@ -2980,9 +2980,6 @@ msgstr "Barras Laterales"
 msgid "prefs.sidebar.left"
 msgstr "Izquierda"
 
-msgid "prefs.bottominput"
-msgstr "Entrar Sugerencia en el Fondo:"
-
 msgid "heading.prefs.toolbartabs.right"
 msgstr "Pestañas de Barra de Herramientas Derecha"
 
