@@ -426,9 +426,8 @@ void setBackupFileName_InputWidget(iInputWidget *d, const char *fileName) {
         d->backupPath = copy_String(dataDir_App());
     }
     append_Path(d->backupPath, collectNewCStr_String(fileName));
-    /* Use the window's serial number so this is unaffected by focus changes. */
-    appendFormat_String(d->backupPath, ".win%u", serial_Window(as_Widget(d)->root->window));
-    appendCStr_String(d->backupPath, ".txt");
+    /* Use the window's serial number instead of index so this is unaffected by focus changes. */
+    appendFormat_String(d->backupPath, ".win%u.txt", serial_Window(as_Widget(d)->root->window));
     restoreBackup_InputWidget_(d);
 }
 

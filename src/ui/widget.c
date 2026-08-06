@@ -400,6 +400,7 @@ void setMinSize_Widget(iWidget *d, iInt2 minSize) {
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     if (d) {
+        /* FIXME: aspect_UI is not the same for both axes */
         d->padding[0] = left * aspect_UI;
         d->padding[1] = top * aspect_UI;
         d->padding[2] = right * aspect_UI;
