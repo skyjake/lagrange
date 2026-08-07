@@ -117,6 +117,7 @@ struct Impl_Window {
     iClick        midDrag;      /* middle mouse button drag-to-scroll gesture */
     uint32_t      midDragTime;  /* timestamp of last scroll drag event */
     float         midDragAccum;
+    iBool         midClickScroll; /* click-to-scroll active (button released) */
 };
 
 struct Impl_MainWindow {

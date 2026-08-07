@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "sidebarwidget.h"
 #include "render/paint.h"
+#include "scrollwidget.h"
 #include "snippets.h"
 #include "root.h"
 #include "touch.h"
@@ -214,6 +215,8 @@ const iMenuItem topLevelMenus_Window[7] = {
     { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
     { "${menu.title.help}", 0, 0, (const void *) helpMenuItems_ },
 };
+
+static void     stopMidClickScroll_Window_  (iWindow *);
 
 size_t numWindowMenuItems_Window(void) {
     return iElemCount(windowMenuItems_) - 1; /* don't count the terminator */
@@ -689,6 +692,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     init_Click(&d->midDrag, NULL, SDL_BUTTON_MIDDLE);
     d->midDragTime   = 0;
     d->midDragAccum  = 0.0f;
+    d->midClickScroll = iFalse;
     iZap(d->roots);
     iZap(d->cursors);
     create_Window_(d, rect, flags);
@@ -1137,6 +1141,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             }
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
+            stopMidClickScroll_Window_(d);
             if (d->type == popup_WindowType) {
                 /* Popup windows are currently only used for menus. */
 //                closeMenu_Widget(d->roots[0]->widget);
@@ -1342,6 +1347,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
+            stopMidClickScroll_Window_(&d->base);
             postCommandf_App("window.focus.lost arg:%u", id_Window(as_Window(d)));
 #if !defined (iPlatformDesktop)
             setFreezeDraw_MainWindow(d, iTrue);
@@ -1383,10 +1389,17 @@ void updateHover_Window(iWindow *d) {
 
 static void scrollOnMiddleDrag_Window_(void *context) {
     iWindow *d = context;
-    if (d->midDrag.isActive && d->midDrag.isDragging) {
+    const iBool isHoldDragging = d->midDrag.isActive && d->midDrag.isDragging;
+    if (isHoldDragging || d->midClickScroll) {
         const uint32_t now            = SDL_GetTicks();
         const double   elapsedSeconds = (now - d->midDragTime) / 1000.0;
-        const float    speed          = delta_Click(&d->midDrag).y * 1.0f / gap_UI;
+        /* For a held drag, the origin is the press point and the current point tracks the
+           live drag. For toggled click-to-scroll, midDrag.pos is frozen at the position of
+           the click that toggled it on, so it doubles as the origin; the current point is
+           polled directly since no button is held to generate motion events. */
+        const iInt2    originPos      = isHoldDragging ? d->midDrag.startPos : d->midDrag.pos;
+        const iInt2    currentPos     = isHoldDragging ? d->midDrag.pos : mouseCoord_Window(d, 0);
+        const float    speed          = (currentPos.y - originPos.y) * 1.0f / gap_UI;
         d->midDragTime                = now;
         d->midDragAccum += iAbs(speed * speed * elapsedSeconds);
         const int scroll = (int) d->midDragAccum;
@@ -1403,6 +1416,148 @@ static void scrollOnMiddleDrag_Window_(void *context) {
         }
         addTicker_App(scrollOnMiddleDrag_Window_, d);
     }
+}
+
+static void startMidClickScroll_Window_(iWindow *d) {
+    d->midClickScroll = iTrue;
+    d->midDragAccum   = 0;
+    d->midDragTime    = SDL_GetTicks();
+    setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+    /* Grab the mouse to whichever widget was hovered when the gesture started, so it keeps
+       receiving the synthetic scroll events exclusively even if the cursor strays over
+       another scrollable widget (e.g., the document) while scrolling. */
+    setMouseGrab_Widget(d->hover);
+    addTicker_App(scrollOnMiddleDrag_Window_, d);
+}
+
+static void stopMidClickScroll_Window_(iWindow *d) {
+    if (d->midClickScroll) {
+        d->midClickScroll = iFalse;
+        d->midDragTime     = 0;
+        d->midDragAccum    = 0;
+        setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+        setMouseGrab_Widget(NULL);
+    }
+}
+
+static iBool isScrollbarHit_Window_(iWindow *d, iInt2 pos) {
+    iAnyObject *hit = hitChild_Window(d, pos);
+    return hit && isInstance_Object(hit, &Class_ScrollWidget);
+}
+
+static iBool handleMidButton_Window_(iWindow *d, const SDL_Event *event, iBool *wasUsed) {
+    /* Middle button: a plain click toggles click-to-scroll mode on; any click while it's active
+       toggles it back off. The button can also be held down and dragged for the same scrolling
+       effect without toggling a persistent mode. Observe the gesture before widgets get the
+       events. Returns true if nothing else has handled the click yet but it may still start
+       click-to-scroll mode once dispatch to widgets is done. */
+    iBool midClickPending = iFalse;
+    if (d->midClickScroll) {
+        if (event->type == SDL_MOUSEBUTTONDOWN) {
+            /* Any click ends click-to-scroll mode. */
+            stopMidClickScroll_Window_(d);
+            *wasUsed = iTrue;
+        }
+        else if (event->type == SDL_MOUSEBUTTONUP) {
+            *wasUsed = iTrue; /* release of the ending click */
+        }
+        else if (event->type == SDL_MOUSEMOTION) {
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+            *wasUsed = iTrue; /* suppress hover changes while auto-scrolling */
+        }
+    }
+    else switch (processEvent_Click(&d->midDrag, event)) {
+        case started_ClickResult:
+            /* Let the event also reach widgets (e.g., link clicking). */
+            break;
+        case drag_ClickResult:
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+            if (!d->midDragTime) {
+                d->midDragAccum = 0;
+                d->midDragTime  = SDL_GetTicks();
+                addTicker_App(scrollOnMiddleDrag_Window_, d);
+            }
+            *wasUsed = iTrue;
+            break;
+        case finished_ClickResult:
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+            d->midDragTime  = 0;
+            d->midDragAccum = 0;
+            if (!d->midDrag.isDragging && d->hover) {
+                /* A plain middle click. Clicking the scrollbar always starts click-to-scroll;
+                   elsewhere, widgets (links, list items, tabs) get a chance to handle the
+                   click first. */
+                if (isScrollbarHit_Window_(d, pos_Click(&d->midDrag))) {
+                    startMidClickScroll_Window_(d);
+                    *wasUsed = iTrue;
+                }
+                else {
+                    midClickPending = iTrue;
+                }
+            }
+            break;
+        case aborted_ClickResult:
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+            d->midDragTime  = 0;
+            d->midDragAccum = 0;
+            break;
+        default:
+            break;
+    }
+    return midClickPending;
+}
+
+/* Maps mouse coordinates, updates the key root, dispatches to the mouse-grabbed widget, and
+   handles the middle button. Returns iTrue if the caller should stop processing this event
+   immediately (mirroring the early `return iTrue` this replaces); otherwise `*wasUsed` and
+   `*midClickPending` are set for the caller to continue with as before. */
+static iBool handleMouse_Window_(iWindow *d, SDL_Event *event, iBool *wasUsed,
+                                  iBool *midClickPending) {
+    if (event->type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
+        d->ignoreClick = iFalse;
+        return iTrue;
+    }
+    /* Map mouse pointer coordinate to our coordinate system. */
+    if (event->type == SDL_MOUSEMOTION) {
+        setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
+        const iInt2 pos = coord_Window(d, event->motion.x, event->motion.y);
+        event->motion.x = pos.x;
+        event->motion.y = pos.y;
+    }
+    else if (event->type == SDL_MOUSEBUTTONUP || event->type == SDL_MOUSEBUTTONDOWN) {
+        const iInt2 pos = coord_Window(d, event->button.x, event->button.y);
+        event->button.x = pos.x;
+        event->button.y = pos.y;
+        if (event->type == SDL_MOUSEBUTTONDOWN) {
+            /* Button clicks will change keyroot. */
+            if (numRoots_Window(d) > 1) {
+                const iInt2 click = init_I2(event->button.x, event->button.y);
+                iForIndices(i, d->roots) {
+                    iRoot *root = d->roots[i];
+                    if (root != d->keyRoot && contains_Rect(rect_Root(root), click)) {
+                        setKeyRoot_Window(d, root);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    /* A click that ends click-to-scroll mode must not reach the grabbed widget (or
+       anything else): it should only stop the scrolling, nothing more. */
+    const iBool endsMidClickScroll =
+        d->midClickScroll && event->type == SDL_MOUSEBUTTONDOWN;
+    /* Dispatch first to the mouse-grabbed widget. */
+    if (!endsMidClickScroll &&
+        (event->type == SDL_MOUSEMOTION || event->type == SDL_MOUSEWHEEL ||
+         event->type == SDL_MOUSEBUTTONUP || event->type == SDL_MOUSEBUTTONDOWN)) {
+        if (mouseGrab_Widget()) {
+            iWidget *grabbed = mouseGrab_Widget();
+            setCurrent_Root(grabbed->root);
+            *wasUsed = dispatchEvent_Widget(grabbed, event);
+        }
+    }
+    *midClickPending = handleMidButton_Window_(d, event, wasUsed);
+    return iFalse;
 }
 
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
@@ -1456,67 +1611,10 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                    As a workaround, ignore these events. */
                 return iTrue; /* won't go to bindings, either */
             }
-            if (event.type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
-                d->ignoreClick = iFalse;
-                return iTrue;
-            }
-            /* Map mouse pointer coordinate to our coordinate system. */
-            if (event.type == SDL_MOUSEMOTION) {
-                setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
-                const iInt2 pos = coord_Window(d, event.motion.x, event.motion.y);
-                event.motion.x = pos.x;
-                event.motion.y = pos.y;
-            }
-            else if (event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
-                const iInt2 pos = coord_Window(d, event.button.x, event.button.y);
-                event.button.x = pos.x;
-                event.button.y = pos.y;
-                if (event.type == SDL_MOUSEBUTTONDOWN) {
-                    /* Button clicks will change keyroot. */
-                    if (numRoots_Window(d) > 1) {
-                        const iInt2 click = init_I2(event.button.x, event.button.y);
-                        iForIndices(i, d->roots) {
-                            iRoot *root = d->roots[i];
-                            if (root != d->keyRoot && contains_Rect(rect_Root(root), click)) {
-                                setKeyRoot_Window(d, root);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
             iBool wasUsed = iFalse;
-            /* Dispatch first to the mouse-grabbed widget. */
-            if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEWHEEL ||
-                event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
-                if (mouseGrab_Widget()) {
-                    iWidget *grabbed = mouseGrab_Widget();
-                    setCurrent_Root(grabbed->root);
-                    wasUsed = dispatchEvent_Widget(grabbed, &event);
-                }
-            }
-            /* Middle button drag-to-scroll: observe the gesture before widgets get the events. */
-            switch (processEvent_Click(&d->midDrag, &event)) {
-                case started_ClickResult:
-                    /* Let the event also reach widgets (e.g., link clicking). */
-                    break;
-                case drag_ClickResult:
-                    setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
-                    if (!d->midDragTime) {
-                        d->midDragAccum = 0;
-                        d->midDragTime  = SDL_GetTicks();
-                        addTicker_App(scrollOnMiddleDrag_Window_, d);
-                    }
-                    wasUsed = iTrue;
-                    break;
-                case finished_ClickResult:
-                case aborted_ClickResult:
-                    setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
-                    d->midDragTime  = 0;
-                    d->midDragAccum = 0;
-                    break;
-                default:
-                    break;
+            iBool midClickPending = iFalse;
+            if (handleMouse_Window_(d, &event, &wasUsed, &midClickPending)) {
+                return iTrue;
             }
             /* If there is a priority handler for key events, offer the event to it first.
                This is similar to mouse grabbing, but the handler can refuse the event. */
@@ -1528,6 +1626,12 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             /* Dispatch the event to the tree of widgets. */
             if (!wasUsed) {
                 wasUsed = dispatchEvent_Window(d, &event);
+            }
+            if (midClickPending && !wasUsed) {
+                /* Nothing else handled the middle click (no link, item, or tab action),
+                   so start click-to-scroll mode. */
+                startMidClickScroll_Window_(d);
+                wasUsed = iTrue;
             }
             if (!wasUsed) {
                 /* As a special case, clicking the middle mouse button can be used for pasting
@@ -1576,7 +1680,11 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-            if (event.type == SDL_MOUSEMOTION && event.motion.windowID == id_Window(d)) {
+            if ((event.type == SDL_MOUSEMOTION && event.motion.windowID == id_Window(d)) ||
+                ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) &&
+                 event.button.windowID == id_Window(d))) {
+                /* Cursor changes (e.g., ending click-to-scroll mode) must take effect right
+                   away, not only once the next motion event happens to apply them. */
                 applyCursor_Window_(d);
             }
             return wasUsed;
