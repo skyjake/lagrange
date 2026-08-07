@@ -151,7 +151,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
             remove_Array(items, firstIndex + 2);
         }
         else {
-            remove_Array(items, firstIndex);
+            removeN_Array(items, firstIndex, 2); /* both "this page" and "this domain" */
         }
         if (d->contextItem->isMisfin) {
             if (d->contextItem->isMisfin) {
