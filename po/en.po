@@ -2085,6 +2085,9 @@ msgstr "Hide tab bar:"
 msgid "prefs.menubar"
 msgstr "Menu Bar"
 
+msgid "prefs.thickscroll"
+msgstr "Thick scroll bars:"
+
 msgid "prefs.evensplit"
 msgstr "Split tabs evenly:"
 

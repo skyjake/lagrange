@@ -4079,8 +4079,6 @@ iWidget *makePreferences_Widget(void) {
 #endif
             },
             iInvalidSize);
-        addDialogToggle_Widget(headings, values, "${prefs.hidetabs}", "prefs.hidetabs");
-        addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         if (isDesktop_Platform()) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.promptposition}")));
             iWidget *promptPos = new_Widget();
@@ -4095,6 +4093,9 @@ iWidget *makePreferences_Widget(void) {
             addChildFlags_Widget(values, iClob(promptPos),
                                  arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
+        addDialogToggle_Widget(headings, values, "${prefs.thickscroll}", "prefs.thickscroll");
+        addDialogToggle_Widget(headings, values, "${prefs.hidetabs}", "prefs.hidetabs");
+        addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         if (!isTerminal_Platform()) {
             addDialogPadding_(headings, values);
             // makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);

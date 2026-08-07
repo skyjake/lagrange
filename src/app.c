@@ -419,6 +419,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.swipe.edge", &d->prefs.edgeSwipe },
         { "prefs.swipe.page", &d->prefs.pageSwipe },
         { "prefs.time.24h", &d->prefs.time24h },
+        { "prefs.thickscroll", &d->prefs.thickScrollBar },
         { "prefs.tui.simple", &d->prefs.simpleChars },
         { "prefs.warn.security", &d->prefs.warnTlsSecurity },
     };
@@ -4199,6 +4200,17 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.thickscroll.changed")) {
+        d->prefs.thickScrollBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("scrollbar.metrics");
+            postCommand_App("window.resized"); /* redo layout */
+        }
+        else if (!isFinishedLaunching_App()) {
+            postCommand_App("~scrollbar.metrics");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.gamepad.changed")) {
         d->prefs.useGamepad = arg_Command(cmd) != 0;
         if (d->prefs.useGamepad && !d->gamepad) {
@@ -5557,6 +5569,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetabs"), d->prefs.hideTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.thickscroll"), d->prefs.thickScrollBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
         setToggle_Widget(findChild_Widget(dlg, "prefs.evensplit"), d->prefs.evenSplit);
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.edge"), d->prefs.edgeSwipe);

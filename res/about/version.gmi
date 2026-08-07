@@ -14,6 +14,7 @@ New features:
 * Option to choose default mode for prompts: inline, top, or bottom.
 * Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
 * "Use on This Domain" in identity context menu.
+* Appearance option to make scroll bars thicker.
 
 Changes and enhancements:
 * Improved sidebar layout. Sidebars are now top-level siblings of the document area, which means the tab buttons don't overlap the sidebar area.

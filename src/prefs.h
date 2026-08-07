@@ -82,6 +82,7 @@ enum iPrefsBool {
     editorSyntaxHighlighting_PrefsBool,
 
     useGamepad_PrefsBool,
+    thickScrollBar_PrefsBool,
 
     /* Document presentation */
     italicQuote_PrefsBool,
@@ -177,6 +178,7 @@ struct Impl_Prefs {
             iBool editorSyntaxHighlighting;
 
             iBool useGamepad;
+            iBool thickScrollBar;
 
             /* Document presentation */
             iBool italicQuote;
