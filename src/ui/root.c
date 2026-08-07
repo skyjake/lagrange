@@ -1089,14 +1089,9 @@ static void updateNavBarSize_(iWidget *navBar) {
     }
     /* Sidebar alignment paddings. */
     if (!isPhone) {
-        const iWidget *docTabs      = findChild_Widget(root_Widget(navBar), "doctabs");
-        const iBool isTabBarVisible = isVisible_Widget(findChild_Widget(docTabs, "tabs.buttons"));
-        const iBool isNavBarNextToTabs =
-            (prefs_App()->bottomTabBar ^ prefs_App()->bottomNavBar) == 0;
         const iBool isPortraitTablet =
             (deviceType_App() == tablet_AppDeviceType && isPortrait_App());
-        const iBool arePaddingsNeeded =
-            (!isTabBarVisible || !isNavBarNextToTabs) && !isPortraitTablet;
+        const iBool arePaddingsNeeded = !isPortraitTablet;
         iWidget       *sbPad1       = findChild_Widget(navBar, "sbpad1");
         iWidget       *sbPad2       = findChild_Widget(navBar, "sbpad2");
         const iWidget *sidebar      = findWidget_App("sidebar");
