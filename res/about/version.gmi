@@ -29,6 +29,7 @@ Fixes:
 * Gopher: Parsing tilde-prefixed username from selector.
 * Overflowing text with "View as Plain Text".
 * Improved hover highlight contrast with "Gray" UI accent color.
+* macOS: Potential crash after all windows closed.
 
 ## 1.20.9
 * Fixed: Potential crash when Fingerprints menu open in Page Information.

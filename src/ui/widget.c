@@ -237,6 +237,7 @@ void deinit_Widget(iWidget *d) {
     }
     iWindow *win = d->root->window;
     if (win) {
+        /* The window may hold pointers to this widget. */
         if (win->lastHover == d) {
             win->lastHover = NULL;
         }
@@ -245,6 +246,9 @@ void deinit_Widget(iWidget *d) {
         }
         if (win->keyPriority == d) {
             win->keyPriority = NULL;
+        }
+        if (win->focus == d) {
+            win->focus = NULL;
         }
     }
     if (d->flags & nativeMenu_WidgetFlag) {
