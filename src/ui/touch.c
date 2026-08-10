@@ -845,7 +845,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 endPinch_TouchState_(d, touch->pinchId);
                 break;
             }
-            if (touch->edge && !isStationary_Touch_(touch)) {
+            if (touch->edge &&
+                (touch->didPostEdgeMove /* an edge swipe that begun must always be finished */
+                 || !isStationary_Touch_(touch))) {
                 if (touch->didPostEdgeMove) {
                     const iFloat3 gesture = gestureVector_Touch_(touch);
                     const uint32_t duration = gestureSpan_Touch_(touch);
