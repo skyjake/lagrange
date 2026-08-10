@@ -211,7 +211,7 @@ struct Impl_App {
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
-    iArray       initialWindowRects;  /* one per window */
+    iArray       initialWindowRects;  /* one per window, indexed by placementIndex */
     iArray       initialWindowDesktops;
     iPrefs       prefs;
 };
@@ -271,6 +271,15 @@ const iString *dateStr_(const iDate *date) {
                                    date->second);
 }
 
+static iBool isPlacementUnused_App_(const iApp *d, size_t index) {
+    iConstForEach(PtrArray, i, &d->mainWindows) {
+        if (((const iMainWindow *) i.ptr)->place.placementIndex == index) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     appendCStr_String(str, "version app:" LAGRANGE_APP_VERSION "\n");
@@ -280,9 +289,10 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         int w, h, x, y;
+        /* Open windows' current placements. */
         iConstForEach(PtrArray, i, &d->mainWindows) {
             const iMainWindow *win = i.ptr;
-            const size_t winIndex = index_PtrArrayConstIterator(&i);
+            const size_t winIndex = win->place.placementIndex;
             x = win->place.normalRect.pos.x;
             y = win->place.normalRect.pos.y;
             w = win->place.normalRect.size.x;
@@ -310,6 +320,22 @@ static iString *serializePrefs_App_(const iApp *d) {
                                 x,
                                 y,
                                 winSnap);
+        }
+        /* Remembered placements for slots without an open window (e.g., closed earlier
+           this session but not reused). */
+        iConstForEach(Array, ri, &d->initialWindowRects) {
+            const iRect *rect = ri.value;
+            const size_t idx = index_ArrayConstIterator(&ri);
+            if (isEmpty_Rect(*rect) || isPlacementUnused_App_(d, idx)) {
+                continue;
+            }
+            appendFormat_String(str,
+                                "window.setrect index:%zu width:%d height:%d coord:%d %d\n",
+                                idx,
+                                width_Rect(*rect),
+                                height_Rect(*rect),
+                                left_Rect(*rect),
+                                top_Rect(*rect));
         }
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
@@ -667,7 +693,9 @@ static void loadPrefs_App_(iApp *d) {
                 iRect       winRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
                 if (index >= 0 && index < 100) {
-                    resize_Array(&d->initialWindowRects, index + 1);
+                    if ((size_t) index >= size_Array(&d->initialWindowRects)) {
+                        resize_Array(&d->initialWindowRects, index + 1);
+                    }
                     set_Array(&d->initialWindowRects, index, &winRect);
                 }
             }
@@ -675,7 +703,9 @@ static void loadPrefs_App_(iApp *d) {
                  const int index = argLabel_Command(cmd, "index");
                  const int desk  = argLabel_Command(cmd, "desk");
                  if (index >= 0 && index < 100 && desk >= 0) {  // Validate desk >= 0
-                     resize_Array(&d->initialWindowDesktops, index + 1);
+                     if ((size_t) index >= size_Array(&d->initialWindowDesktops)) {
+                         resize_Array(&d->initialWindowDesktops, index + 1);
+                     }
                      set_Array(&d->initialWindowDesktops, index, &((int){ desk }));
                  }
              }
@@ -798,7 +828,10 @@ enum iWindowStateFlag {
 
 static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
     if (windowIndex < size_Array(&d->initialWindowRects)) {
-        return constValue_Array(&d->initialWindowRects, windowIndex, iRect);
+        const iRect rect = constValue_Array(&d->initialWindowRects, windowIndex, iRect);
+        if (!isEmpty_Rect(rect)) {
+            return rect;
+        }
     }
     /* The default window rectangle. */
     iRect rect = init_Rect(-1, -1, 900, 560);
@@ -818,6 +851,15 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
 #   endif
 #endif
     return rect;
+}
+
+static size_t nextWindowPlacementIndex_App_(const iApp *d) {
+    /* Determine the lowest "Nth window" slot not currently occupied by an open main window. */
+    size_t index = 0;
+    while (isPlacementUnused_App_(d, index)) {
+        index++;
+    }
+    return index;
 }
 
 static iBool loadState_App_(iApp *d) {
@@ -876,6 +918,7 @@ static iBool loadState_App_(iApp *d) {
                 }
                 else {
                     win = new_MainWindow(initialWindowRect_App_(d, numWins - 1));
+                    win->place.placementIndex = numWins - 1;
                     addWindow_App(win);
                 }
 #endif
@@ -884,6 +927,23 @@ static iBool loadState_App_(iApp *d) {
                     const uint32_t serial = readU32_File(f);
                     setSerial_Window(as_Window(win), serial);
                     maxWindowSerial = iMax(maxWindowSerial, serial);
+                }
+                if (version >= windowPlacementIndex_FileVersion) {
+                    /* Window placement uses its own logical indexing that allows multi-window
+                       arrangements where individual windows can be closed and opened. */
+                    const size_t placeIndex = readU32_File(f);
+#if !defined (iPlatformTerminal)
+                    if (placeIndex != win->place.placementIndex) {
+                        win->place.placementIndex = placeIndex;
+                        const iRect rect = initialWindowRect_App_(d, placeIndex);
+                        win->place.normalRect = rect;
+                        const iBool setPos = left_Rect(rect) >= 0 || top_Rect(rect) >= 0;
+                        SDL_SetWindowPosition(win->base.win,
+                                              setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                                              setPos ? top_Rect(rect)  : SDL_WINDOWPOS_CENTERED);
+                        SDL_SetWindowSize(win->base.win, width_Rect(rect), height_Rect(rect));
+                    }
+#endif
                 }
                 pushBack_Array(currentTabs, &(iCurrentTabs){ { NULL, NULL } });
                 isFirstTab[0] = isFirstTab[1] = iTrue;
@@ -1057,6 +1117,7 @@ static void saveState_App_(const iApp *d, iBool withContent) {
                 writeU32_File(f, (win->base.keyRoot == win->base.roots[0] ? 0 : 1) |
                                  (constAs_Window(win) == d->window ? current_WindowStateFlag : 0));
                 writeU32_File(f, serial_Window(constAs_Window(win)));
+                writeU32_File(f, (uint32_t) win->place.placementIndex);
             }
             /* State of UI elements. */ {
                 iForIndices(i, win->base.roots) {
@@ -1611,6 +1672,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_PtrArray(&d->popupWindows);
     load_Bookmarks(d->bookmarks, dataDir_App_());
     d->window = (iWindow *) new_MainWindow(*winRect0); /* first window is always created */
+    as_MainWindow(d->window)->place.placementIndex = 0;
     addWindow_App(as_MainWindow(d->window));
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
     int desk = -1;
@@ -3305,7 +3367,9 @@ size_t windowIndex_App(const iMainWindow *win) {
 
 iMainWindow *newMainWindow_App(void) {
     iApp *d = &app_;
-    iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
+    const size_t placeIndex = nextWindowPlacementIndex_App_(d);
+    iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, placeIndex));
+    newWin->place.placementIndex = placeIndex;
     addWindow_App(newWin); /* App takes ownership */
     SDL_ShowWindow(newWin->base.win);
     setCurrent_Window(newWin);
@@ -3835,11 +3899,19 @@ void closeWindow_App(iWindow *win) {
     collect_Garbage(win, isMain ? (iDeleteFunc) delete_MainWindow
                                 : (iDeleteFunc) delete_Window);
     postRefresh_Window(NULL);
-    if (isAppleDesktop_Platform() && isMain && size_PtrArray(&d->mainWindows) == 1) {
-        /* The one and only window is being closed. On macOS, the app will keep running, which
-           means we must save the state of the window now or otherwise it will be lost. A newly
-           opened window will use this saved state if it's the only window of the app. */
-        saveState_App_(d, iTrue);
+    if (isMain) {
+        /* Remember this window's last placement. */
+        iArray *rects = &d->initialWindowRects;
+        const size_t idx = as_MainWindow(win)->place.placementIndex;
+        if (idx >= size_Array(rects)) {
+            resize_Array(rects, idx + 1);
+        }
+        set_Array(rects, idx, &as_MainWindow(win)->place.normalRect);
+        if (isAppleDesktop_Platform() && size_PtrArray(&d->mainWindows) == 1) {
+            /* App keeps running; Quit may not happen at all. */
+            saveState_App_(d, iTrue);
+            savePrefs_App_(d);
+        }
     }
     if (activeWindow == win) {
         d->window = NULL;

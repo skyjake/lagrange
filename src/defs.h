@@ -146,8 +146,9 @@ enum iFileVersion {
     recentUrlSetIdentity_FileVersion    = 9,
     recentlySubmittedInput_FileVersion  = 10,
     persistentWindowSerial_FileVersion  = 11,
+    windowPlacementIndex_FileVersion    = 12,
     /* meta */
-    latest_FileVersion = 11, /* used by state.lgr */
+    latest_FileVersion = 12, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
 };
 

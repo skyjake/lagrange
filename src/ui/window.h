@@ -71,6 +71,7 @@ struct Impl_WindowPlacement {
     int   snap;             /* LAGRANGE_ENABLE_CUSTOM_FRAME */
     int   lastHit;
     int   desktop;          /* remember the workspace */
+    size_t placementIndex;  /* stable "Nth window" slot, for persistent placement storage */
 };
 
 enum iWindowSplit {
