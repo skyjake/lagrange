@@ -766,6 +766,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iFalse; /* all roots must handle this */
     }
+    else if (equal_Command(cmd, "document.openurls.changed")) {
+        updateNavBarSize_Root(root->root);
+        return iFalse; /* all roots must handle this */
+    }
     else if (equal_Command(cmd, "theme.changed")) {
         /* The phone toolbar is draw-buffered so it needs refreshing. */
         refresh_Widget(findWidget_App("toolbar"));
@@ -1167,7 +1171,10 @@ static void updateNavBarSize_(iWidget *navBar) {
 }
 
 void updateNavBarSize_Root(iRoot *d) {
-    updateNavBarSize_(findChild_Widget(d->widget, "navbar"));
+    iWidget *navBar = findChild_Widget(d->widget, "navbar");
+    if (navBar) { /* popup windows don't have one */
+        updateNavBarSize_(navBar);
+    }
 }
 
 static void updateNavBarActions_(iWidget *navBar) {

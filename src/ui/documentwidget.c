@@ -249,6 +249,11 @@ enum iDocumentLinkOrdinalMode {
     homeRow_DocumentLinkOrdinalMode,
 };
 
+enum iLinkUpdateFlags {
+    visited_LinkUpdateFlag = iBit(1),
+    open_LinkUpdateFlag    = iBit(2),
+};
+
 /* Note about swipe transitions and keeping inline input prompts positioned:
 
    An inline input prompt is a real widget, similar to what appears in a modal
@@ -336,6 +341,7 @@ struct Impl_DocumentWidget {
     iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
     iBanner *      banner;
     float          initNormScrollY;
+    enum iLinkUpdateFlags pendingLinkUpdates;
 
     /* Rendering: */
     iDocumentView *view;
@@ -905,6 +911,31 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
         return;
     }
     invalidate_DocumentView(d->view);
+}
+
+static void updateLinkStatus_DocumentWidget_(iDocumentWidget *d, int updates) {
+    iWidget *w = as_Widget(d);
+    if (d != document_Root(w->root)) {
+        d->pendingLinkUpdates |= updates; /* do it when the tab is shown */
+        return;
+    }
+    d->pendingLinkUpdates &= ~updates;
+    if (updates & open_LinkUpdateFlag) {
+        if (updateOpenURLs_GmDocument(d->view->doc)) {
+            invalidate_DocumentWidget_(d);
+            refresh_Widget(d);
+        }
+    }
+    if (updates & visited_LinkUpdateFlag) {
+        updateVisitedLinks_GmDocument(d->view->doc);
+        invalidateVisibleLinks_DocumentView(d->view);
+    }
+}
+
+static void applyPendingLinkUpdates_DocumentWidget_(iDocumentWidget *d) {
+    if (d->pendingLinkUpdates) {
+        updateLinkStatus_DocumentWidget_(d, d->pendingLinkUpdates);
+    }
 }
 
 static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
@@ -3268,12 +3299,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
         /* When any tab changes its document URL, update the open link indicators. */
-        if (updateOpenURLs_GmDocument(d->view->doc)) {
-            invalidate_DocumentWidget_(d);
-            refresh_Widget(d);
-        }
-        /* We may need to adjust navba ralignment paddings. */
-        updateNavBarSize_Root(w->root);
+        updateLinkStatus_DocumentWidget_(d, open_LinkUpdateFlag);
+        /* Note: the navbar is resized once per root; see `handleRootCommands_Widget`. */
         return iFalse;
     }
     if (equalWidget_Command(cmd, w, "banner.copy")) {
@@ -3288,8 +3315,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     if (equal_Command(cmd, "visited.changed")) {
-        updateVisitedLinks_GmDocument(d->view->doc);
-        invalidateVisibleLinks_DocumentView(d->view);
+        updateLinkStatus_DocumentWidget_(d, visited_LinkUpdateFlag);
         return iFalse;
     }
     if (equal_Command(cmd, "document.render")) /* `Periodic` makes direct dispatch to here */ {
@@ -3308,6 +3334,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (equal_Command(cmd, "font.changed")) {
             invalidateCachedLayout_History(d->mod.history);
         }
+        /* Splitting moves documents between roots without a tab switch. */
+        applyPendingLinkUpdates_DocumentWidget_(d);
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("bottombar");
@@ -3362,6 +3390,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "tabs.changed")) {
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
+            /* Link statuses may have changed while we were hidden. */
+            applyPendingLinkUpdates_DocumentWidget_(d);
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
@@ -5981,6 +6011,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iZap(d->sourceTime);
     d->sourceGempub    = NULL;
     d->initNormScrollY = 0;
+    d->pendingLinkUpdates = 0;
     d->grabbedPlayer   = NULL;
     d->mediaTimer      = 0;
     init_String(&d->pendingGotoHeading);
