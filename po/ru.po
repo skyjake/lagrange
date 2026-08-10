@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2026-05-12 01:09+0000\n"
+"PO-Revision-Date: 2026-08-11 04:13+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -3035,3 +3035,21 @@ msgstr "Вкладки на левой панели"
 
 msgid "heading.prefs.toolbartabs.right"
 msgstr "Вкладки на правой панели"
+
+msgid "ident.use.domain"
+msgstr "Использовать на этом домене"
+
+msgid "prefs.promptposition"
+msgstr "Положение поля ввода:"
+
+msgid "prefs.promptposition.bottom"
+msgstr "Снизу"
+
+msgid "prefs.promptposition.top"
+msgstr "Сверху"
+
+msgid "prefs.promptposition.inline"
+msgstr "В строке"
+
+msgid "prefs.thickscroll"
+msgstr "Широкие полосы прокрутки:"
