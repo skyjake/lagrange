@@ -651,6 +651,12 @@ static void resetSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
     repositionInlinePrompts_DocumentWidget(d, d->view);
 }
 
+static void abortSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
+    resetSwipeAnimation_DocumentWidget_(d);
+    iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iFalse);
+    refresh_Widget(d);
+}
+
 static iBool isSwipingBack_DocumentWidget_(const iDocumentWidget *d) {
     return (d->flags & swipeViewOverlay_DocumentWidgetFlag) != 0;
 }
@@ -663,9 +669,15 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
            the old page has been reloaded. */
         if (d->flags & swipeAborted_DocumentWidgetFlag) {
             if (~d->flags & swipeDeferredFinish_DocumentWidgetFlag) {
+                const iBool isBack = isSwipingBack_DocumentWidget_(d);
+                if (isBack ? atNewest_History(d->mod.history) : atOldest_History(d->mod.history)) {
+                    /* The undo navigation would do nothing, so no new document is coming and
+                       the animation would be left hanging. */
+                    resetSwipeAnimation_DocumentWidget_(d);
+                    return;
+                }
                 d->flags |= swipeDeferredFinish_DocumentWidgetFlag;
-                postCommand_Widget(
-                    d, isSwipingBack_DocumentWidget_(d) ? "navigate.forward" : "navigate.back");
+                postCommand_Widget(d, isBack ? "navigate.forward" : "navigate.back");
             }
         }
         else {
@@ -3125,6 +3137,12 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 //    const float maxSpeed = gap_UI * 2000;
 //    const float minSpeed = gap_UI * 500;
     if (equal_Command(cmd, "edgeswipe.ended")) {
+        if (~d->flags & swipeBegun_DocumentWidgetFlag && !d->swipeView) {
+            /* The swipe was not ours; it was handled by someone else (e.g., a sidebar) or
+               rejected in "edgeswipe.moved". Moving the view now would leave it offset with
+               nothing to animate it back. */
+            return iTrue;
+        }
         if (d->flags & swipeRubberband_DocumentWidgetFlag) {
             iChangeFlags(d->flags,
                          swipeRubberband_DocumentWidgetFlag | swipeBegun_DocumentWidgetFlag,
@@ -3154,8 +3172,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         }
         else if (argLabel_Command(cmd, "side") == 1) {
             iChangeFlags(d->flags, swipeBegun_DocumentWidgetFlag, iFalse);
-            if (argLabel_Command(cmd, "abort")) {
-                d->flags |= swipeAborted_DocumentWidgetFlag;
+            if (argLabel_Command(cmd, "abort") || !d->swipeView) {
+                /* Without an outgoing view there is nothing to slide the current view away
+                   for, so it must return to its normal position. */
+                iChangeFlags(d->flags, swipeAborted_DocumentWidgetFlag, d->swipeView != NULL);
                 setValue_Anim(&d->swipeOffset, 0, 100);
                 animate_DocumentWidget(d);
                 return iTrue;
@@ -4021,6 +4041,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
         cancelRequest_DocumentWidget_(d, iFalse);
+        if (!goBack_History(d->mod.history)) {
+            /* No document will be arriving, so nothing would ever end the animation or
+               replace the swiped-away view. */
+            abortSwipeAnimation_DocumentWidget_(d);
+            return iTrue;
+        }
         if (argLabel_Command(cmd, "swipe")) {
             resetSwipeAnimation_DocumentWidget_(d);
             iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag |
@@ -4028,11 +4054,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
         }
-        goBack_History(d->mod.history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.forward") && document_App() == d) {
         cancelRequest_DocumentWidget_(d, iFalse);
+        if (!goForward_History(d->mod.history)) {
+            abortSwipeAnimation_DocumentWidget_(d);
+            return iTrue;
+        }
         if (argLabel_Command(cmd, "swipe")) {
             resetSwipeAnimation_DocumentWidget_(d);
             iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iTrue);
@@ -4040,7 +4069,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
         }
-        goForward_History(d->mod.history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
