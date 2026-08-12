@@ -30,9 +30,11 @@ Fixes:
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.
 * Gopher: Parsing tilde-prefixed username from selector.
+* Underscore-prefix words should not break after the underscore.
 * Overflowing text with "View as Plain Text".
 * Improved hover highlight contrast with "Gray" UI accent color.
 * macOS: Potential crash after all windows closed.
+* TUI: Keep the menubar always visible (top line also used for shortcut keys).
 
 ## 1.20.9
 * Fixed: Potential crash when Fingerprints menu open in Page Information.
