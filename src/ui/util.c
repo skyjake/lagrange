@@ -4072,7 +4072,7 @@ iWidget *makePreferences_Widget(void) {
             values,
             "${prefs.uilayout}",
             (const char *[]) {
-#if defined (LAGRANGE_MAC_MENUBAR)
+#if defined (LAGRANGE_MAC_MENUBAR) || defined (iPlatformTerminal)
                 "prefs.bottomnavbar", "prefs.bottomtabbar", NULL
 #else
                 "prefs.bottomnavbar", "prefs.bottomtabbar", "prefs.menubar", NULL

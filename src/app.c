@@ -4270,7 +4270,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.menubar.changed")) {
-        d->prefs.menuBar = arg_Command(cmd) != 0;
+        d->prefs.menuBar = (arg_Command(cmd) != 0) || isTerminal_Platform(); /* forced in TUI */
         if (!isFrozen) {
             postCommand_App("~root.movable");
         }
