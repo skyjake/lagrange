@@ -756,7 +756,7 @@ Terminal=false
 Type=Application
 StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;x-scheme-handler/misfin;x-scheme-handler/nex;
 ")
         install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT app)
         install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT app)
@@ -798,7 +798,7 @@ Terminal=true
 Type=Application
 StartupWMClass=clagrange
 Icon=fi.skyjake.clagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;x-scheme-handler/misfin;x-scheme-handler/nex;
 ")
         install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT tui)
         install (FILES res/lagrange-256.png
