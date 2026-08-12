@@ -23,6 +23,7 @@ Changes and enhancements:
 * Window placement is persistent also in multi-window arrangements (saved and restored).
 * Placement of previously open windows is stored persistently.
 * On Windows and Linux, closing the last tab no longer quits the app.
+* macOS: Register the app as a "nex://" URL handler.
 
 Fixes:
 * Opening ZIP archives with prepended arbitrary data (e.g., self-extracing archives).
