@@ -37,7 +37,7 @@ iLocalDef iBool isClosingBracket_(iChar c) {
     return (c == ')' || c == ']' || c == '}' || c == '>');
 }
 
-iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
+iLocalDef iBool isWrapBoundary_(const iChar prevCh[2], iChar c) {
     /* Line wrapping boundaries are determined by looking at a character and the
        last character processed. We want to wrap at natural word boundaries where
        possible, so normally we wrap at a space followed a non-space character. As
@@ -45,13 +45,15 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
        can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
        without wrapping on other punctuation used for expressive purposes like
        emoticons :-) */
-    if (isClosingBracket_(prevC) && !isWrapPunct_(c)) {
+    if (isClosingBracket_(prevCh[0]) && !isWrapPunct_(c)) {
         return iTrue;
     }
-    if (isSpace_Char(prevC)) {
+    if (isSpace_Char(prevCh[0])) {
         return iFalse;
     }
-    if ((prevC == '/' || prevC == '\\' || prevC == '-' || prevC == '_' || prevC == '+') &&
+    if ((prevCh[0] == '/' || prevCh[0] == '\\' || prevCh[0] == '-' || prevCh[0] == '+' ||
+         /* Don't wrap right after a leading underscore, or it gets stranded alone. */
+         (prevCh[0] == '_' && (isAlphaNumeric_Char(prevCh[1]) || prevCh[1] == '_'))) &&
         !isWrapPunct_(c)) {
         return iTrue;
     }
@@ -121,7 +123,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
     }
     /* Text rendering is not very straightforward! Let's dive in... */
-    iChar       prevCh = 0;
+    iChar       prevCh[2] = { 0, 0 };
     const char *chPos;
     for (chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
@@ -169,7 +171,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
         iBool isEmoji = isEmoji_Char(ch);
         if (ch == 0x200d) { /* zero-width joiner */
             /* We don't have the composited Emojis. */
-            if (isEmoji_Char(prevCh)) {
+            if (isEmoji_Char(prevCh[0])) {
                 /* skip */
                 nextChar_(&chPos, args->text.end);
                 ch = nextChar_(&chPos, args->text.end);
@@ -209,7 +211,8 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                 lastWordEnd = NULL;
                 xpos = xposExtend = orig.x;
                 ypos += d->font.height;
-                prevCh = ch;
+                prevCh[0] = ch;
+                prevCh[1] = 0;
                 continue;
             }
             if (ch == '\t') {
@@ -230,7 +233,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
 #endif
                 xpos = orig.x + nextTabStop_Font_(d, xRel);
                 xposExtend = iMax(xposExtend, xpos);
-                prevCh = 0;
+                prevCh[0] = prevCh[1] = 0;
                 continue;
             }
             if (ch == '\v') { /* color change */
@@ -255,7 +258,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                         SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
                     }
                 }
-                prevCh = 0;
+                prevCh[0] = prevCh[1] = 0;
                 continue;
             }
             if (isControl_Char(ch)) {
@@ -300,7 +303,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             lastWordEnd = NULL;
             xpos = xposExtend = orig.x;
             ypos += d->font.height;
-            prevCh = 0;
+            prevCh[0] = prevCh[1] = 0;
             chPos = wrapPos;
             continue;
         }
@@ -413,11 +416,13 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
 #endif
         xposExtend = iMax(xposExtend, xpos);
         xposMax    = iMax(xposMax, xposExtend);
-        if ((wrap && wrap->mode == anyCharacter_WrapTextMode) || isWrapBoundary_(prevCh, ch)) {
+        if ((wrap && wrap->mode == anyCharacter_WrapTextMode) ||
+            isWrapBoundary_(prevCh, ch)) {
             lastWordEnd = currentPos; /* mark word wrap position */
             wrapAdvance = x2 - orig.x;
         }
-        prevCh = ch;
+        prevCh[1] = prevCh[0];
+        prevCh[0] = ch;
         if (--maxLen == 0) {
             break;
         }

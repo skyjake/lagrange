@@ -1541,8 +1541,10 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
                     if (wrapMode == word_WrapTextMode) {
                         /* When word-wrapping, only consider certain places breakable. */
                         if (((prevCh[0] == '-' || prevCh[0] == '/' || prevCh[0] == '\\' || prevCh[0] == '?' ||
-                             prevCh[0] == '!' || prevCh[0] == '&' || prevCh[0] == '+' || prevCh[0] == '_' ||
-                             prevCh[0] == '@') &&
+                             prevCh[0] == '!' || prevCh[0] == '&' || prevCh[0] == '+' ||
+                             prevCh[0] == '@' ||
+                             /* Don't wrap right after a leading underscore, or it gets stranded alone. */
+                             (prevCh[0] == '_' && (isAlphaNumeric_Char(prevCh[1]) || prevCh[1] == '_'))) &&
                              !isPunct_Char(ch)) ||
                             (isAlpha_Char(prevCh[1]) && prevCh[0] == '.' && isAlpha_Char(ch))) {
                             safeBreakPos = logPos;
