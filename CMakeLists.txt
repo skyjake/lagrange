@@ -48,6 +48,7 @@ if (IOS)
 endif ()
 
 # Build configuration.
+option (ENABLE_APP_BUNDLE       "Build an app bundle instead of a Unix-style install (macOS)" ON)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
 option (ENABLE_GAMEPAD          "Allow UI to be controlled with a gamepad" ON)
@@ -83,7 +84,10 @@ option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-con
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 
 if (ENABLE_MOBILE_HANDHELD)
-    set (ENABLE_MOBILE_PHONE ON) # phone UI implied
+    set (ENABLE_MOBILE_PHONE ON)    # phone UI implied
+endif ()
+if (IOS)
+    set (ENABLE_APP_BUNDLE ON)      # required
 endif ()
 
 include (BuildType)
@@ -610,9 +614,11 @@ if (ENABLE_GUI)
             # On iOS, the runpath is set to @executable_path/Frameworks below.
             set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
         endif ()
+        if (ENABLE_APP_BUNDLE)
+            set_target_properties (app PROPERTIES OUTPUT_NAME "Lagrange")
+        endif ()
         set_target_properties (app PROPERTIES
-            OUTPUT_NAME "Lagrange"
-            MACOSX_BUNDLE YES
+            MACOSX_BUNDLE ${ENABLE_APP_BUNDLE}
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"
             MACOSX_BUNDLE_INFO_STRING "${PROJECT_VERSION}"
@@ -739,14 +745,16 @@ elseif (HAIKU)
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
     file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
-elseif (UNIX AND NOT APPLE)
+elseif ((UNIX AND NOT APPLE) OR (APPLE AND NOT ENABLE_APP_BUNDLE))
     include (GNUInstallDirs)
     if (TARGET app)
         set_target_properties (app PROPERTIES
             INSTALL_RPATH_USE_LINK_PATH YES
         )
-        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
-        file (WRITE ${desktop} "[Desktop Entry]
+        install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT app)
+        if (NOT APPLE)
+            set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
+            file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 GenericName=Gemini Client
 Comment=${PROJECT_DESCRIPTION}
@@ -758,17 +766,17 @@ StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;x-scheme-handler/misfin;x-scheme-handler/nex;
 ")
-        install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT app)
-        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT app)
-        install (FILES res/lagrange-256.png
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
-            RENAME fi.skyjake.Lagrange.png
-            COMPONENT app
-        )
-        install (FILES res/fi.skyjake.Lagrange.appdata.xml
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
-            COMPONENT app
-        )
+            install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT app)
+            install (FILES res/lagrange-256.png
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+                RENAME fi.skyjake.Lagrange.png
+                COMPONENT app
+            )
+            install (FILES res/fi.skyjake.Lagrange.appdata.xml
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
+                COMPONENT app
+            )
+        endif ()
         install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT app)
         if (NOT ENABLE_RELATIVE_EMBED)
             target_compile_definitions (app PUBLIC
@@ -782,13 +790,12 @@ if (TARGET tuiapp)
     if (MSYS)
         install (TARGETS tuiapp DESTINATION .)
     else ()
-        if (UNIX AND NOT APPLE)
-            include (GNUInstallDirs)
-        endif ()
+        include (GNUInstallDirs)
         install (TARGETS tuiapp DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT tui)
 
-        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.clagrange.desktop)
-        file (WRITE ${desktop} "[Desktop Entry]
+        if (NOT APPLE)
+            set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.clagrange.desktop)
+            file (WRITE ${desktop} "[Desktop Entry]
 Name=clagrange
 GenericName=Gemini Client
 Comment=${PROJECT_DESCRIPTION}
@@ -800,12 +807,13 @@ StartupWMClass=clagrange
 Icon=fi.skyjake.clagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;x-scheme-handler/misfin;x-scheme-handler/nex;
 ")
-        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT tui)
-        install (FILES res/lagrange-256.png
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
-            RENAME fi.skyjake.clagrange.png
-            COMPONENT tui
-        )
+            install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT tui)
+            install (FILES res/lagrange-256.png
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+                RENAME fi.skyjake.clagrange.png
+                COMPONENT tui
+            )
+        endif ()
     endif ()
     if (RESOURCES_LGR_PATH)
         target_compile_definitions (tuiapp PUBLIC
