@@ -1,3 +1,9 @@
+if (VCPKG_TOOLCHAIN AND (MSYS OR MINGW))
+    # Under MSYS2/MinGW, disregard any vcpkg toolchain file that may be set
+    # via the environment by CMake.
+    set (VCPKG_TOOLCHAIN OFF)
+endif ()
+
 if (VCPKG_TOOLCHAIN)
     # `pkg-config` is optional; it is only used for the optional dependencies.
     find_package (PkgConfig QUIET)
