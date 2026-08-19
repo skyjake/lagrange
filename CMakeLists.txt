@@ -839,6 +839,28 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
         endif ()
     endif ()
     install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange COMPONENT resources)
+elseif (WIN32)
+    # Native (non-MSYS/MinGW) Windows build, e.g. MSVC with vcpkg.
+    if (CMAKE_VERSION VERSION_LESS 3.21)
+        message (FATAL_ERROR "Installing a native Windows build requires CMake 3.21 or newer (found ${CMAKE_VERSION}). Please upgrade CMake.")
+    endif ()
+    if (POLICY CMP0207)
+        cmake_policy (SET CMP0207 NEW)
+    endif ()
+    if (TARGET app)        
+        install (TARGETS app
+            # requires CMake 3.21+
+            RUNTIME_DEPENDENCY_SET appRuntimeDeps
+            DESTINATION .
+        )
+        install (RUNTIME_DEPENDENCY_SET appRuntimeDeps
+            PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
+            POST_EXCLUDE_REGEXES ".*[Ww][Ii][Nn][Dd][Oo][Ww][Ss].*[Ss][Yy][Ss][Tt][Ee][Mm]32.*\\.dll"
+            DIRECTORIES $<TARGET_FILE_DIR:app>
+            DESTINATION .
+        )
+    endif ()
+    install (FILES ${EMB_BIN} DESTINATION .)
 endif ()
 
 if (TARGET tuiapp)
