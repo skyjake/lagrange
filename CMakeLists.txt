@@ -457,6 +457,8 @@ macro (set_common_app_properties target)
             /wd4100
             # unreferenced local variable
             /wd4101
+            # 'void' function returning a value (bare `return expr;` in a void function)
+            /wd4098
             # methods via function pointers
             /wd4152
             # unreferenced variable - common in widgets: `iWidget* widget = some_call()`
@@ -469,6 +471,8 @@ macro (set_common_app_properties target)
             /wd4267
             # truncation from double to const float (ms being too eager)
             /wd4305
+            # const object should be initialized (tentative definitions without an initializer)
+            /wd4132
             # signed vs unsigned comparison
             /wd4389
             # temporarily disable shadowing warnings

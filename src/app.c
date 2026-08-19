@@ -100,10 +100,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <SDL_misc.h>
 #endif
 
-#if defined (iPlatformWindows)
-#   define strdup(path) _strdup(path)
-#endif
-
 iDeclareType(App)
 
 #if defined (iPlatformAppleDesktop)
@@ -2866,7 +2862,7 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
         resetFontCache_Text(text_Window(d->window)); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
-            u.user.data1 = strdup("theme.changed auto:1");
+            u.user.data1 = iDupStr("theme.changed auto:1");
             dispatchEvent_Window(as_Window(d->window), &u);
         }
 #endif
@@ -3162,7 +3158,7 @@ void postCommand_Root(iRoot *d, const char *command) {
     }
     SDL_Event ev = { .type = SDL_USEREVENT };
     ev.user.code = command_UserEventCode;
-    ev.user.data1 = strdup(command);
+    ev.user.data1 = iDupStr(command);
     ev.user.data2 = d; /* all events are root-specific */
     ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
     SDL_PushEvent(&ev);
