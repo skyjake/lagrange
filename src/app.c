@@ -114,6 +114,7 @@ static const char *defaultDataDir_App_ = "~/Library/Application Support";
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #define EMB_BIN "../resources.lgr"
+#define EMB_BIN2 "../../resources.lgr" /* MSVC dev build places binary in a subfolder */
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 
 #elif defined (iPlatformAndroidMobile)

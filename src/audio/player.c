@@ -311,7 +311,8 @@ enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
             d->totalInputSize = size_Block(input);
         }
         if (d->inputPos < size_Block(input)) {
-            mpg123_feed(d->mpeg, constData_Block(input) + d->inputPos, size_Block(input) - d->inputPos);
+            const unsigned char *dataPtr = constData_Block(input);
+            mpg123_feed(d->mpeg, dataPtr + d->inputPos, size_Block(input) - d->inputPos);
             if (d->inputPos == 0) {
                 long r; int ch, enc;
                 mpg123_getformat(d->mpeg, &r, &ch, &enc);
@@ -369,7 +370,8 @@ static int readOpus_(void *stream, unsigned char *ptr, int nbytes) {
     const iBlock *input = &d->input->data;
     const size_t  avail = size_Block(input) - d->inputPos;
     const size_t  n     = iMin(avail, nbytes);
-    memcpy(ptr, constData_Block(input) + d->inputPos, n);
+    const char   *dataPtr = constData_Block(input);
+    memcpy(ptr, dataPtr + d->inputPos, n);
     d->inputPos += n;
     return n;
 }
