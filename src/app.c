@@ -6112,19 +6112,19 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
         "/usr/bin/env",
         "open",
         cstr_String(url),
-        NULL));
+        NULL)));
 #elif defined (iPlatformLinux) || defined (iPlatformOther) || defined (iPlatformHaiku)
     setArguments_Process(proc, iClob(newStringsCStr_StringList(
         "/usr/bin/env",
         "xdg-open",
         cstr_String(url),
-        NULL));
+        NULL)));
 #elif defined (iPlatformMsys) || defined (iPlatformWindows)
     /* TODO: The prompt window is shown momentarily... */
     setArguments_Process(proc, iClob(newStringsCStr_StringList(
         concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
         cstr_String(url),
-        NULL));
+        NULL)));
 #endif
     start_Process(proc);
     waitForFinished_Process(proc);
