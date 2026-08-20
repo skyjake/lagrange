@@ -25,8 +25,8 @@ Changes and enhancements:
 * On Windows and Linux, closing the last tab no longer quits the app.
 * Registered the app as a "nex://" URL handler.
 * Linux: Declare the app as a "misfin://" handler in the .desktop file.
-* Windows: Building the app with vcpkg (MSVC).
 * Compatibility with OpenSSL 4.
+* Windows: It is now possible to build the app with MSVC (using vcpkg).
 
 Fixes:
 * Opening ZIP archives with prepended arbitrary data (e.g., self-extracing archives).
