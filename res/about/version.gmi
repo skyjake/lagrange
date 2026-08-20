@@ -27,6 +27,7 @@ Changes and enhancements:
 * Linux: Declare the app as a "misfin://" handler in the .desktop file.
 * Compatibility with OpenSSL 4.
 * Windows: It is now possible to build the app with MSVC (using vcpkg).
+* Updated UI translations.
 
 Fixes:
 * Opening ZIP archives with prepended arbitrary data (e.g., self-extracing archives).
