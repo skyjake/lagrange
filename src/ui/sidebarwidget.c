@@ -1954,6 +1954,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
+        if (isHiding) {
+            cancelDrag_ListWidget(d->list);
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad =
