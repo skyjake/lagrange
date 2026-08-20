@@ -875,7 +875,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         setTextColor_LabelWidget(tabButton, none_ColorId);
         iWidget    *tabCloseButton  = child_Widget(as_Widget(tabButton), 0);
         const iBool tabCloseVisible = avail > width_Widget(tabCloseButton);
-        if (deviceType_App() == tablet_AppDeviceType) {
+        if (deviceType_App() == tablet_AppDeviceType && tabCloseButton) {
             iChangeFlags(as_Widget(tabCloseButton)->flags2, visibleOnParentSelected_WidgetFlag2,
                          tabCloseVisible);
         }
