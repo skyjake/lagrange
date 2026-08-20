@@ -37,6 +37,8 @@ Fixes:
 * Underscore-prefix words should not break after the underscore.
 * Overflowing text with "View as Plain Text".
 * Improved hover highlight contrast with "Gray" UI accent color.
+* Drag action in sidebar is cancelled if the sidebar is dismissed.
+* Potential crash when splitting the view with multiple tabs open.
 * macOS: Potential crash after all windows closed.
 * TUI: Keep the menubar always visible (top line also used for shortcut keys).
 
