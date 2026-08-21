@@ -35,6 +35,7 @@ Fixes:
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.
 * Gopher: Parsing tilde-prefixed username from selector.
+* Gopher/Finger: Spurious autoreloads due to fetched document not getting a timestamp.
 * Underscore-prefix words should not break after the underscore.
 * Overflowing text with "View as Plain Text".
 * Improved hover highlight contrast with "Gray" UI accent color.

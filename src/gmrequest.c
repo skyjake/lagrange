@@ -460,6 +460,7 @@ static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
     iUnused(socket);
     iBool notify = iFalse;
     lock_Mutex(d->mtx);
+    initCurrent_Time(&d->resp->when);
     if (d->state != failure_GmRequestState) {
         d->state = finished_GmRequestState;
         notify = iTrue;
@@ -479,6 +480,7 @@ static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
 static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
     iUnused(socket);
     lock_Mutex(d->mtx);
+    initCurrent_Time(&d->resp->when);
     if (d->guppy) {
         cancel_Guppy(d->guppy);
         iReleasePtr(&d->guppy);

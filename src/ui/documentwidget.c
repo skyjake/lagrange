@@ -2208,7 +2208,7 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
         invalidateVisibleLinks_DocumentView(d->view);
     }
     /* Show and hide toolbar on scroll. */
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() == phone_AppDeviceType && document_App() == d) {
         const float normPos = normScrollPos_DocumentView(d->view);
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
             showToolbar_Root(as_Widget(d)->root, offset < 0 || d->view->scrollY.pos.to <= 0);
@@ -4405,7 +4405,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         showOrHideIndicators_DocumentWidget_(d);
     }
     else if (equal_Command(cmd, "document.autoreload")) {
-        if (d->mod.reloadInterval) {
+        if (d->mod.reloadInterval && !isRequestOngoing_DocumentWidget(d)) {
             if (!isValid_Time(&d->sourceTime) || elapsedSeconds_Time(&d->sourceTime) >=
                     seconds_ReloadInterval_(d->mod.reloadInterval)) {
                 postCommand_Widget(w, "document.reload");
