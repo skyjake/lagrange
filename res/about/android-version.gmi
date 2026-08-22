@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.21 (Beta 57)
+* Fixed: Sidebar dismissed inadvertently when editing bookmarks.
+* Fixed: Hidden toolbar showing itself due to changes in background tabs.
+
 ## 1.21 (Beta 56)
 * Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
 * Gopher: Don't apply URI path normalization to selectors.
