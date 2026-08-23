@@ -23,13 +23,78 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "app.h"
 
+#include <the_Foundation/array.h>
 #include <SDL_version.h>
 
 iInt2 origin_Paint;
 
+/*-----------------------------------------------------------------------------------------------*/
+
+iDeclareType(ClipEntry);
+
+/* Clip rectangle stack. Entries store the render target because switching targets
+   changes to a different coordinate space. */
+struct Impl_ClipEntry {
+    iRect        rect;
+    SDL_Texture *target;
+};
+
+static iArray clipStack_; /* ClipEntry[] */
+
+static void initClipStack_(void) {
+    if (!clipStack_.elementSize) {
+        init_Array(&clipStack_, sizeof(iClipEntry));
+    }
+}
+
+static iBool activeClip_(SDL_Texture *target, iRect *rect_out) {
+    iReverseConstForEach(Array, i, &clipStack_) {
+        const iClipEntry *entry = i.value;
+        if (entry->target == target) {
+            *rect_out = entry->rect;
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
 iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
     iAssert(d->dst);
     return d->dst->render;
+}
+
+static iRect rootClip_Paint_(const iPaint *d, iRect rect) {
+    iRect        targetRect = zero_Rect();
+    SDL_Texture *target     = SDL_GetRenderTarget(renderer_Paint_(d));
+    if (target) {
+        SDL_QueryTexture(target, NULL, NULL, &targetRect.size.x, &targetRect.size.y);
+        rect = intersect_Rect(rect, targetRect);
+    }
+    /* The origin is non-zero when drawing into a widget's own buffer. */
+    if (isEqual_I2(zero_I2(), origin_Paint)) {
+        rect = intersect_Rect(rect, rect_Root(get_Root()));
+    }
+    return rect;
+}
+
+static void applyRootClip_Paint_(const iPaint *d) {
+    if (numRoots_Window(get_Window()) > 1) {
+        iRect rect = rootClip_Paint_(d, rect_Root(get_Root()));
+        if (isEmpty_Rect(rect)) {
+            rect = init_Rect(0, 0, 1, 1);
+        }
+        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+        return;
+    }
+#if SDL_VERSION_ATLEAST(2, 0, 12)
+    SDL_RenderSetClipRect(renderer_Paint_(d), NULL);
+#else
+    const iRect rect =
+        current_Root() ? rect_Root(get_Root()) : (iRect) { zero_I2(), get_Window()->size };
+    SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+#endif
 }
 
 static void setColor_Paint_(const iPaint *d, int color) {
@@ -71,35 +136,33 @@ void endTarget_Paint(iPaint *d) {
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {
+    initClipStack_();
     addv_I2(&rect.pos, origin_Paint);
-    iRect targetRect = zero_Rect();
     SDL_Texture *target = SDL_GetRenderTarget(renderer_Paint_(d));
-    if (target) {
-        SDL_QueryTexture(target, NULL, NULL, &targetRect.size.x, &targetRect.size.y);
-        rect = intersect_Rect(rect, targetRect);
-    }
-    /* The origin is non-zero when drawing into a widget's own buffer. */
-    if (isEqual_I2(zero_I2(), origin_Paint)) {
-        rect = intersect_Rect(rect, rect_Root(get_Root()));
-    }
+    iRect active;
+    rect = activeClip_(target, &active) ? intersect_Rect(rect, active)
+                                        : rootClip_Paint_(d, rect);
     if (isEmpty_Rect(rect)) {
         rect = init_Rect(0, 0, 1, 1);
     }
+    pushBack_Array(&clipStack_, &(iClipEntry){ rect, target });
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
 void unsetClip_Paint(iPaint *d) {
-    if (numRoots_Window(get_Window()) > 1) {
-        setClip_Paint(d, rect_Root(get_Root()));
-        return;
+    initClipStack_();
+    SDL_Texture *target = SDL_GetRenderTarget(renderer_Paint_(d));
+    if (!isEmpty_Array(&clipStack_) &&
+        ((const iClipEntry *) constBack_Array(&clipStack_))->target == target) {
+        popBack_Array(&clipStack_);
     }
-#if SDL_VERSION_ATLEAST(2, 0, 12)
-    SDL_RenderSetClipRect(renderer_Paint_(d), NULL);
-#else
-    const iRect rect =
-        current_Root() ? rect_Root(get_Root()) : (iRect){ zero_I2(), get_Window()->size };
-    SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
-#endif
+    iRect active;
+    if (activeClip_(target, &active)) {
+        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &active);
+    }
+    else {
+        applyRootClip_Paint_(d);
+    }
 }
 
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
