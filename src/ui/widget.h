@@ -182,7 +182,8 @@ struct Impl_Widget {
     iRoot *      root;
     iWidgetDrawBuffer *drawBuf;
     iAnim        overflowScrollOpacity; /* scrollbar fading */
-    iString      data; /* custom user data */
+    iAnim        fadeOpacity;           /* modal/menu background layer dimming */
+    iString      data;                  /* custom user data */
     /* Callbacks. */
     iBool           (*commandHandler)(iWidget *, const char *);
     const iArray *  (*updateMenuItems)(iWidget *); /* returns the updated items for the menu */
@@ -244,6 +245,7 @@ iAny *  findAdjacentFocusable_Widget    (const iWidget *, enum iDirection direct
 iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
+void    drawClipped_Widget              (const iWidget *, iRect clipRect); /* empty rect = unclipped */
 void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
 void    drawBorders_Widget              (const iWidget *); /* called by `drawBackground` */

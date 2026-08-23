@@ -167,6 +167,7 @@ void init_Widget(iWidget *d) {
     d->commandHandler = NULL;
     d->drawBuf        = NULL;
     init_Anim(&d->overflowScrollOpacity, 0.0f);
+    init_Anim(&d->fadeOpacity, -1.0f); /* not yet drawn; undefined opacity */
     init_String(&d->data);
     iZap(d->padding);
     iZap(d->borderPad);
@@ -198,6 +199,19 @@ static void animateOverflowScrollOpacity_Widget_(void *ptr) {
     if (!isFinished_Anim(&d->overflowScrollOpacity)) {
         addTickerRoot_App(animateOverflowScrollOpacity_Widget_, d->root, ptr);
     }
+}
+
+static void fadeOpacityAnimation_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    refresh_Widget(d);
+    if (!isFinished_Anim(&d->fadeOpacity)) {
+        addTickerRoot_App(fadeOpacityAnimation_Widget_, d->root, ptr);
+    }
+}
+
+static void setFadeOpacity_Widget_(iWidget *d, float target, uint32_t span) {
+    setValue_Anim(&d->fadeOpacity, target, span);
+    addTickerRoot_App(fadeOpacityAnimation_Widget_, d->root, d);
 }
 
 static int treeSize_Widget_(const iWidget *d, int n) {
@@ -235,6 +249,7 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & overflowScrollable_WidgetFlag) {
         removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
     }
+    removeTicker_App(fadeOpacityAnimation_Widget_, d);
     iWindow *win = d->root->window;
     if (win) {
         /* The window may hold pointers to this widget. */
@@ -293,6 +308,9 @@ void destroy_Widget(iWidget *d) {
         iAssert(!isRoot_Widget_(d));
         if (isVisible_Widget(d)) {
             refresh_Widget(d);
+        }
+        if (value_Anim(&d->fadeOpacity) > 0.0f) {
+            setFadeOpacity_Widget_(d, 0.0f, 200); /* background fades in smoothly */
         }
         aboutToBeDestroyed_Widget_(d);
         if (!d->root->pendingDestruction) {
@@ -1805,18 +1823,36 @@ void drawLayerEffects_Widget(const iWidget *d) {
     iAssert(window_Widget(d) == get_Window());
     iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
     iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
+    const iBool isShadowStyle =
+        (d->flags & keepOnTop_WidgetFlag) != 0 && deviceType_App() != phone_AppDeviceType;
     if (deviceType_App() == phone_AppDeviceType) {
         if (shadowBorder) {
             fadeBackground = iTrue;
             shadowBorder = iFalse;
         }
     }
-    const iBool isFaded = (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) ||
-                          (d->flags2 & fadeBackground_WidgetFlag2);
-    if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
-        iPaint p;
-        init_Paint(&p);
-        drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
+    /* Update the fade target. */ {
+        iAnim *fadeOpacity = iConstCast(iAnim *, &d->fadeOpacity);
+        const float fadeTarget =
+            (d->flags & destroyPending_WidgetFlag) ? 0.0f : (fadeBackground ? 1.0f : 0.0f);
+        if (value_Anim(fadeOpacity) < 0.0f) {
+            init_Anim(fadeOpacity, 0.0f); /* first time this widget is drawn */
+        }
+        if (targetValue_Anim(fadeOpacity) != fadeTarget) {
+            setFadeOpacity_Widget_(iConstCast(iWidget *, d), fadeTarget, 200);
+        }
+    }
+    const iBool isFaded =
+        (value_Anim(&d->fadeOpacity) > 0.0f && ~d->flags & noFadeBackground_WidgetFlag) ||
+        (d->flags2 & fadeBackground_WidgetFlag2);
+    if (isShadowStyle && ~d->flags & noShadowBorder_WidgetFlag) {
+        /* Smoothly fade the shadow in/out during a transition. */
+        const int shadowAlpha = (int) (30 * (1.0f - value_Anim(&d->fadeOpacity)));
+        if (shadowAlpha > 0) {
+            iPaint p;
+            init_Paint(&p);
+            drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, shadowAlpha);
+        }
     }
     if (isFaded) {
         iPaint p;
@@ -1836,6 +1872,9 @@ void drawLayerEffects_Widget(const iWidget *d) {
                 p.alpha = 0;
             }
             //printf("area:%f visarea:%f alpha:%d\n", rootArea, visibleArea, p.alpha);
+        }
+        if (value_Anim(&d->fadeOpacity) > 0.0f) {
+            p.alpha *= value_Anim(&d->fadeOpacity);
         }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
@@ -2063,7 +2102,7 @@ static void endBufferDraw_Widget_(const iWidget *d) {
     }
 }
 
-void draw_Widget(const iWidget *d) {
+void drawClipped_Widget(const iWidget *d, iRect clipRect /* may be empty */) {
     iAssert(window_Widget(d) == get_Window());
     if (!isDrawn_Widget_(d)) {
         if (d->drawBuf) {
@@ -2083,7 +2122,7 @@ void draw_Widget(const iWidget *d) {
         const iRect bounds = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
-        setClip_Paint(&p, rect_Root(d->root));
+        setClip_Paint(&p, isEmpty_Rect(clipRect) ? rect_Root(d->root) : clipRect);
         SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
                        &(SDL_Rect){ bounds.pos.x, bounds.pos.y,
                                     d->drawBuf->size.x, d->drawBuf->size.y });
@@ -2095,6 +2134,10 @@ void draw_Widget(const iWidget *d) {
         const float opacity = value_Anim(&d->overflowScrollOpacity);
         drawScrollIndicator_Widget(d, &info, uiTextAction_ColorId, opacity);
     }
+}
+
+void draw_Widget(const iWidget *d) {
+    drawClipped_Widget(d, zero_Rect());
 }
 
 void drawScrollIndicator_Widget(const iWidget *d, const iWidgetScrollInfo *info, int color, float opacity) {

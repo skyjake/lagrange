@@ -294,7 +294,7 @@ void destroyPending_Root(iRoot *d) {
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
         iAssert(widget->root == d);
-        if (!isFinished_Anim(&widget->visualOffset) ||
+        if (!isFinished_Anim(&widget->visualOffset) || !isFinished_Anim(&widget->fadeOpacity) ||
             isBeingVisuallyOffsetByReference_Widget(widget)) {
             continue;
         }
