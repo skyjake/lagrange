@@ -1237,6 +1237,16 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
                          windowCoord);
 }
 
+static iBool isClippedAway_Widget_(const iWidget *d, iInt2 windowCoord) {
+    /* Any ancestor may be clipping this widget. */
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        if (w->flags2 & clipChildren_WidgetFlag2 && !contains_Widget(w, windowCoord)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
     return (ev->type == SDL_KEYUP || ev->type == SDL_KEYDOWN || ev->type == SDL_TEXTINPUT
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
@@ -1296,6 +1306,64 @@ void unhover_Widget(void) {
 iLocalDef iBool redispatchEvent_Widget_(iWidget *d, iWidget *dst, const SDL_Event *ev) {
     if (d != dst) {
         return dispatchEvent_Widget(dst, ev);
+    }
+    return iFalse;
+}
+
+static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event *ev) {
+    iAssert(child != d); /* cannot be child of self */
+    iAssert(child->root == d->root);
+    if (child == window_Widget(d)->focus &&
+        (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
+        return iFalse; /* Already dispatched. */
+    }
+    if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
+        return iFalse; /* Already dispatched. */
+    }
+    if (dispatchEvent_Widget(child, ev)) {
+#if 0
+        if (ev->type == SDL_TEXTINPUT) {
+            printf("[%p] %s:'%s' ate text input\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_KEYDOWN) {
+            printf("[%p] %s:'%s' ate the key\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            identify_Widget(child);
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_MOUSEMOTION) {
+            printf("[%p] %s:'%s' ate the motion\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_MOUSEWHEEL) {
+            printf("[%p] %s:'%s' ate the wheel\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+            printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
+                   child, cstr_String(id_Widget(child)),
+                   class_Widget(child)->name,
+                   ev->button.button);
+            fflush(stdout);
+        }
+#endif
+        return iTrue;
     }
     return iFalse;
 }
@@ -1362,7 +1430,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
              ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
              isHoverable_Widget(d)) {
-        if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
+        const iInt2 motionCoord = init_I2(ev->motion.x, ev->motion.y);
+        if (contains_Widget(d, motionCoord) && !isClippedAway_Widget_(d, motionCoord)) {
             setHover_Widget(d);
 #if 0
             printf("<%u> set hover to ", window_Widget(d)->frameTime);
@@ -1372,64 +1441,19 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     if (filterEvent_Widget_(d, ev)) {
+        /* Clipping parents may determine if a child is outside bounds and should not
+           receive mouse events at all. */
+        const iBool skipChildren = (d->flags2 & clipChildren_WidgetFlag2) &&
+                                   isMouseEvent_(ev) && !mouseGrab_Widget() &&
+                                   !contains_Widget(d, mouseCoord_SDLEvent(ev));
         /* Children may handle it first. Done in reverse so children drawn on top get to
            handle the events first. */
-        iReverseForEach(ObjectList, i, d->children) {
-            iWidget *child = as_Widget(i.object);
-            iAssert(child != d); /* cannot be child of self */
-            iAssert(child->root == d->root);
-            if (child == window_Widget(d)->focus &&
-                (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
-                continue; /* Already dispatched. */
-            }
-            if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
-                /* Already dispatched. */
-                continue;
-            }
-            if (dispatchEvent_Widget(child, ev)) {
-#if 0
-                if (ev->type == SDL_TEXTINPUT) {
-                    printf("[%p] %s:'%s' ate text input\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    fflush(stdout);
+        if (!skipChildren) {
+            iReverseForEach(ObjectList, i, d->children) {
+                iWidget *child = as_Widget(i.object);
+                if (dispatchToChild_Widget_(d, child, ev)) {
+                    return iTrue;
                 }
-#endif
-#if 0
-                if (ev->type == SDL_KEYDOWN) {
-                    printf("[%p] %s:'%s' ate the key\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    identify_Widget(child);
-                    fflush(stdout);
-                }
-#endif
-#if 0
-                if (ev->type == SDL_MOUSEMOTION) {
-                    printf("[%p] %s:'%s' ate the motion\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    fflush(stdout);
-                }
-#endif
-#if 0
-                if (ev->type == SDL_MOUSEWHEEL) {
-                    printf("[%p] %s:'%s' ate the wheel\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    fflush(stdout);
-                }
-#endif
-#if 0
-                if (ev->type == SDL_MOUSEBUTTONDOWN) {
-                    printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
-                           child, cstr_String(id_Widget(child)),
-                           class_Widget(child)->name,
-                           ev->button.button);
-                    fflush(stdout);
-                }
-#endif
-                return iTrue;
             }
         }
         //iAssert(get_Root() == d->root);
@@ -2027,6 +2051,12 @@ void drawChildren_Widget(const iWidget *d) {
     if (!isDrawn_Widget_(d)) {
         return;
     }
+    const iBool isClipping = (d->flags2 & clipChildren_WidgetFlag2) != 0;
+    iPaint clipPaint;
+    if (isClipping) {
+        init_Paint(&clipPaint);
+        setClip_Paint(&clipPaint, bounds_Widget(d));
+    }
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
         if (~child->flags & keepOnTop_WidgetFlag && ~child->flags2 & deferredDraw_WidgetFlag2 &&
@@ -2034,6 +2064,9 @@ void drawChildren_Widget(const iWidget *d) {
             incrementDrawCount_(child);
             class_Widget(child)->draw(child);
         }
+    }
+    if (isClipping) {
+        unsetClip_Paint(&clipPaint);
     }
 }
 
@@ -2320,7 +2353,8 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     }
     if ((d->flags & (overflowScrollable_WidgetFlag | hittable_WidgetFlag) ||
          class_Widget(d) != &Class_Widget || d->flags & mouseModal_WidgetFlag) &&
-        ~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
+        ~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord) &&
+        !isClippedAway_Widget_(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;

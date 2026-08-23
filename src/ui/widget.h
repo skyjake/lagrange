@@ -143,6 +143,9 @@ enum iWidgetFlag2 {
                                                            drawChildren pass; overrides `hidden`;
                                                            the owner draws the widget explicitly
                                                            instead, e.g., to control Z order */
+    clipChildren_WidgetFlag2                = iBit(15), /* children are clipped to the widget's
+                                                           bounds for drawing, hit-testing, and
+                                                           mouse dispatch */
 };
 
 enum iWidgetAddPos {

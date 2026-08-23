@@ -645,7 +645,6 @@ static void resetSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
         iWidget *bar = c.ptr;
         setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
         iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
-        setDrawBufferEnabled_Widget(bar, iFalse);
     }
     clear_PtrArray(&d->coveredInputPrompts);
     setValue_Anim(&d->swipeOffset, 0, 0);
@@ -1069,7 +1068,6 @@ static void deferOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *d) {
         setId_Widget(bar, format_CStr("outgoinginputprompt%u", run->linkId));
         setFlags_Widget(bar, hidden_WidgetFlag | horizontalOffset_WidgetFlag, iTrue);
         iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
-        setDrawBufferEnabled_Widget(bar, iTrue); /* see drawClipped_() */
         if (focus_Widget() == bar || hasParent_Widget(focus_Widget(), bar)) {
             setFocus_Widget(NULL);
         }
@@ -5714,7 +5712,6 @@ void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *v
         if (startsWith_String(id_Widget(child), "inputprompt")) {
             setFlags_Widget(child, hidden_WidgetFlag, iTrue);
             iChangeFlags(child->flags2, deferredDraw_WidgetFlag2, iFalse);
-            setDrawBufferEnabled_Widget(child, iFalse);
         }
     }
     iConstForEach(PtrArray, m, &view->visibleMedia) {
@@ -5739,13 +5736,11 @@ void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *v
         if (isCovered) {
             setFlags_Widget(bar, hidden_WidgetFlag, iTrue);
             iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
-            setDrawBufferEnabled_Widget(bar, iTrue); /* see drawClipped_() */
             pushBack_PtrArray(&d->coveredInputPrompts, bar);
         }
         else {
             setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
             iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
-            setDrawBufferEnabled_Widget(bar, iFalse);
         }
     }
     /* A hidden prompt would eat scroll keys if left focused. */
@@ -5800,10 +5795,14 @@ static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDoc
 
 static void drawClipped_(const iPtrArray *bars, const iRect *clipBounds) {
     /* Inline prompts are drawn clipped so they don't escape the document area during swipes. */
+    iPaint p;
+    init_Paint(&p);
+    setClip_Paint(&p, *clipBounds);
     iConstForEach(PtrArray, i, bars) {
         const iWidget *bar = i.ptr;
-        drawClipped_Widget(bar, *clipBounds);
+        class_Widget(bar)->draw(bar);
     }
+    unsetClip_Paint(&p);
 }
 
 static void drawOutgoingInputPrompts_DocumentWidget_(const iDocumentWidget *d,
@@ -6008,6 +6007,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
     setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
+    /* Inline content (input prompts) is anchored to document coordinates and can
+       otherwise bleed outside the viewport into the tab/menu bars. */
+    w->flags2 |= clipChildren_WidgetFlag2;
     init_PersistentDocumentState(&d->mod);
     d->flags = 0;
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
