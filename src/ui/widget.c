@@ -1821,16 +1821,9 @@ void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
     iAssert(window_Widget(d) == get_Window());
-    iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
+    iBool shadowBorder = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
     iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
-    const iBool isShadowStyle =
-        (d->flags & keepOnTop_WidgetFlag) != 0 && deviceType_App() != phone_AppDeviceType;
-    if (deviceType_App() == phone_AppDeviceType) {
-        if (shadowBorder) {
-            fadeBackground = iTrue;
-            shadowBorder = iFalse;
-        }
-    }
+    const iBool isShadowStyle = (d->flags & keepOnTop_WidgetFlag) != 0;
     /* Update the fade target. */ {
         iAnim *fadeOpacity = iConstCast(iAnim *, &d->fadeOpacity);
         const float fadeTarget =
