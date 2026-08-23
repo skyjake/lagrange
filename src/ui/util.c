@@ -2647,7 +2647,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     }
     else if (equal_Command(cmd, "valueinput.togglebottom")) {
         /* Top/bottom placing only applies to sheets. */
-        iAssert(!isSheet);
+        iAssert(isSheet);
         const iBool wasBottom = prefs_App()->promptPosition == bottom_InputPromptPosition;
         dlg->rect.pos.y = 0;
         setFlags_Widget(dlg, moveToParentBottomEdge_WidgetFlag, !wasBottom);

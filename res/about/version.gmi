@@ -17,6 +17,7 @@ New features:
 * Appearance option to make scroll bars thicker.
 
 Changes and enhancements:
+* Input prompts are no longer strictly modal: a click outside the dialog turns the dialog non-modal, allowing normal access to page contents and links.
 * Improved sidebar layout. Sidebars are now top-level siblings of the document area, which means the tab buttons don't overlap the sidebar area.
 * Click middle mouse button to scroll vertically. (No longer necessary to keep holding the button down.) Middle-clicking on links and list items still behaves as before (open in background tab).
 * Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
