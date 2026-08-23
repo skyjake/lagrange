@@ -2427,13 +2427,17 @@ iLabelWidget *addDialogTitle_Widget(iWidget *dlg, const char *text, const char *
     return addDialogTitle_(dlg, text, idOrNull);
 }
 
+iLocalDef iBool isEmbeddedInputPrompt_Widget_(const iWidget *dlg) {
+    return !isEmpty_String(&dlg->data);
+}
+
 static const iString *valueInputCommand_(const iWidget *dlg) {
     /* Embedded instances store the accept command in `data` instead of `id`. */
-    return !isEmpty_String(&dlg->data) ? &dlg->data : id_Widget(dlg);
+    return isEmbeddedInputPrompt_Widget_(dlg) ? &dlg->data : id_Widget(dlg);
 }
 
 static void clearValueInputCommand_(iWidget *dlg) {
-    if (!isEmpty_String(&dlg->data)) {
+    if (isEmbeddedInputPrompt_Widget_(dlg)) {
         clear_String(&dlg->data); /* embedded instance */
     }
     else {
@@ -2460,10 +2464,11 @@ iLocalDef int metricFromIndex_(int index) {
 }
 
 static void updateValueInputSizing_(iWidget *dlg) {
-    if (~flags_Widget(dlg) & mouseModal_WidgetFlag) {
+    if (isEmbeddedInputPrompt_Widget_(dlg)) {
         /* Embedded instances get their width from the caller. */
         return;
     }
+    const iBool isModal = (flags_Widget(dlg) & mouseModal_WidgetFlag) != 0;
     const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
@@ -2483,7 +2488,7 @@ static void updateValueInputSizing_(iWidget *dlg) {
         }
     }
     if (deviceType_App() != desktop_AppDeviceType) {
-        dlg->minSize.y = get_MainWindow()->keyboardHeight == 0 ? 60 * gap_UI : 0;
+        dlg->minSize.y = (isModal && get_MainWindow()->keyboardHeight == 0) ? 60 * gap_UI : 0;
     }
     /* Adjust the maximum number of visible lines. */
     int footer = 6 * gap_UI;
@@ -2492,11 +2497,13 @@ static void updateValueInputSizing_(iWidget *dlg) {
         footer += height_Widget(buttons);
     }
     iInputWidget *input = findChild_Widget(dlg, "input");
-    setLineLimits_InputWidget(input,
-                              1,
-                              (height_Rect(visibleRect_Root(dlg->root)) - footer -
-                               height_Widget(buttons) - height_Widget(prompt)) /
-                                  lineHeight_Text(font_InputWidget(input)));
+    setLineLimits_InputWidget(
+        input,
+        1,
+        isModal
+            ? (height_Rect(visibleRect_Root(dlg->root)) - footer - height_Widget(buttons) -
+               height_Widget(prompt)) / lineHeight_Text(font_InputWidget(input))
+            : 3); /* non-modal: keep the sheet small */
 }
 
 static void animateToRootVisibleBottom_(iWidget *widget, uint32_t span) {
@@ -2524,7 +2531,7 @@ int dialogTransitionDir_Widget(const iWidget *dlg) {
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
-    const iBool isSheet = (flags_Widget(dlg) & mouseModal_WidgetFlag) != 0;
+    const iBool isSheet = !isEmbeddedInputPrompt_Widget_(dlg);
     const int transitionDir = isDesktop_Platform() &&
                                       prefs_App()->promptPosition == bottom_InputPromptPosition
                                   ? bottom_TransitionDir
@@ -2603,7 +2610,10 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancel")) {
-        postCommandf_App("valueinput.cancelled id:%s", cstr_String(valueInputCommand_(dlg)));
+        if (!argLabel_Command(cmd, "navigating")) {
+            /* A navigation-triggered cancel skips this "back" reaction to a user cancel. */
+            postCommandf_App("valueinput.cancelled id:%s", cstr_String(valueInputCommand_(dlg)));
+        }
         clearValueInputCommand_(dlg);
         if (isSheet) {
             setupSheetTransition_Mobile(dlg, transitionDir);
@@ -2650,6 +2660,23 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
              contains_Widget(dlg, coord_Command(cmd))) {
         setFocus_Widget(findChild_Widget(dlg, "input"));
         return iTrue;
+    }
+    else if (isSheet && equal_Command(cmd, "mouse.clicked") && ptr == dlg &&
+             flags_Widget(dlg) & mouseModal_WidgetFlag &&
+             !contains_Widget(dlg, coord_Command(cmd))) {
+        /* User clicked/tapped outside the sheet: clear focus and modal state, keep dialog open. */
+        setFocus_Widget(NULL);
+        setFlags_Widget(dlg, mouseModal_WidgetFlag, iFalse);
+        updateValueInputSizing_(dlg);
+        arrange_Widget(dlg);
+        return iTrue;
+    }
+    else if (isSheet && equal_Command(cmd, "focus.gained") &&
+             ptr == as_Widget(findChild_Widget(dlg, "input"))) {
+        /* Regaining focus re-establishes the modal sheet. */
+        setFlags_Widget(dlg, mouseModal_WidgetFlag, iTrue);
+        updateValueInputSizing_(dlg);
+        arrange_Widget(dlg);
     }
     else if (isDesktop_Platform() &&
              (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {
@@ -2837,9 +2864,7 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         /* The dialog will resize itself appropriately. */
         setFlags_Widget(dlg, overflowScrollable_WidgetFlag, iFalse);
     }
-    else {
-        setFlags_Widget(dlg, commandOnClick_WidgetFlag, iTrue);
-    }
+    setFlags_Widget(dlg, commandOnClick_WidgetFlag, iTrue); /* for toggling modality */
     setCommandHandler_Widget(dlg, valueInputHandler_);
     if (parent) {
         addChildFlags_Widget(parent,

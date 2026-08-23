@@ -1047,6 +1047,15 @@ static void destroyAllInlineInputPrompts_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void cancelInputPrompt_DocumentWidget_(iDocumentWidget *d) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "!document.input.submit")) { /* non-embedded */
+            postCommand_Widget(child, "valueinput.cancel navigating:1");
+        }
+    }
+}
+
 static void deferOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *d) {
     /* Escape the "inputpromptN" id lookup and take these out of the normal draw pass. */
     iAssert(isEmpty_PtrArray(&d->outgoingInputPrompts));
@@ -1085,6 +1094,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
         allocView_DocumentWidget_(d);
     }
     destroyAllInlineInputPrompts_DocumentWidget_(d);
+    cancelInputPrompt_DocumentWidget_(d);
     iRelease(d->view->doc);
     d->view->doc = NULL;
     iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iFalse);
@@ -6206,6 +6216,9 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
                                 const iBlock *setIdent) {
+    /* Dismiss the open input prompt immediately so it doesn't interfere with the
+       content fetch or switch. */
+    cancelInputPrompt_DocumentWidget_(d);
     const iBool allowCache     = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     const iBool allowCachedDoc = (setUrlFlags & disallowCachedDocument_DocumentWidgetSetUrlFlag) == 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
