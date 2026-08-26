@@ -2680,10 +2680,11 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     }
     else if (isDesktop_Platform() &&
              (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {
-        /* DocumentWidget sets an ID (or `data`, for embedded instances) as the posted accept
+        /* DocumentWidget sets an ID (or `data`, for embedded instances) as the posted "accept"
            command. A configurable flag might be cleaner if this is needed elsewhere. */
-        if (startsWith_String(valueInputCommand_(dlg), "!document.input.submit")) {
-            iInputWidget *input = findChild_Widget(dlg, "input");
+        iInputWidget *input = findChild_Widget(dlg, "input");
+        if (isFocused_Widget(input) /* if unfocused, zoom probably meant for document */ &&
+            startsWith_String(valueInputCommand_(dlg), "!document.input.submit")) {
             int sizeIndex = prefs_App()->inputZoomLevel;
             if (equal_Command(cmd, "zoom.set")) {
                 sizeIndex = 0;
@@ -2701,8 +2702,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
             arrange_Widget(dlg);
             arrange_Widget(dlg);
             refresh_Widget(dlg);
+            return iTrue;
         }
-        return iTrue;
+        return iFalse;
     }
     return iFalse;
 }
