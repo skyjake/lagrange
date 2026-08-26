@@ -314,7 +314,7 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
     if (bm) {
         iUnused(table); /* it's the current one */
         if (!cmp_String(key, "url") && tv->type == string_TomlType) {
-            set_String(&bm->url, tv->value.string);
+            set_String(&bm->url, canonicalUrl_String(tv->value.string));
         }
         else if (!cmp_String(key, "originalurl") && tv->type == string_TomlType) {
             set_String(&bm->originalUrl, tv->value.string);
@@ -691,7 +691,7 @@ struct Impl_MatchUrlArgs {
 };
 
 static iBool matchUrlAndIdent_(iMatchUrlArgs *args, const iBookmark *bm) {
-    if (equalCase_String(args->url, &bm->url)) {
+    if (equalCase_String(args->url, canonicalUrl_String(&bm->url))) {
         if ((args->identityFp == NULL && isEmpty_String(&bm->identity)) ||
             (args->identityFp && equal_String(args->identityFp, &bm->identity))) {
             return iTrue;

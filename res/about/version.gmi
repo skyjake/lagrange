@@ -6,6 +6,45 @@
 ```
 # Release notes
 
+## 1.21
+
+New features:
+* Inline input prompts. By default, input prompts appear below the originating link, much like inline images. This allows accessing the rest of the page normally while entering input.
+* Links marked "Assume This URL Requires Input" will pre-populate with an inline prompt UI.
+* Option to choose default mode for prompts: inline, top, or bottom.
+* Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
+* "Use on This Domain" in identity context menu.
+* Appearance option to make scroll bars thicker.
+
+Changes and enhancements:
+* Input prompts are no longer strictly modal: a click outside the dialog turns the dialog non-modal, allowing normal access to page contents and links.
+* Improved sidebar layout. Sidebars are now top-level siblings of the document area, which means the tab buttons don't overlap the sidebar area.
+* Click middle mouse button to scroll vertically. (No longer necessary to keep holding the button down.) Middle-clicking on links and list items still behaves as before (open in background tab).
+* Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
+* Window placement is persistent also in multi-window arrangements (saved and restored).
+* Placement of previously open windows is stored persistently.
+* On Windows and Linux, closing the last tab no longer quits the app.
+* Registered the app as a "nex://" URL handler.
+* Linux: Declare the app as a "misfin://" handler in the .desktop file.
+* Compatibility with OpenSSL 4.
+* Windows: It is now possible to build the app with MSVC (using vcpkg).
+* Updated UI translations.
+
+Fixes:
+* Opening ZIP archives with prepended arbitrary data (e.g., self-extracing archives).
+* The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
+* Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
+* Gopher: Don't apply URI path normalization to selectors.
+* Gopher: Parsing tilde-prefixed username from selector.
+* Gopher/Finger: Spurious autoreloads due to fetched document not getting a timestamp.
+* Underscore-prefix words should not break after the underscore.
+* Overflowing text with "View as Plain Text".
+* Improved hover highlight contrast with "Gray" UI accent color.
+* Drag action in sidebar is cancelled if the sidebar is dismissed.
+* Potential crash when splitting the view with multiple tabs open.
+* macOS: Potential crash after all windows closed.
+* TUI: Keep the menubar always visible (top line also used for shortcut keys).
+
 ## 1.20.9
 * Fixed: Potential crash when Fingerprints menu open in Page Information.
 * Fixed: Page Information popup dismissed inadvertently.

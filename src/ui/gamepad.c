@@ -96,10 +96,15 @@ static void open_Gamepad_(iGamepad *d, int index) {
     d->ctl      = SDL_GameControllerOpen(index);
     char guid[64];
     SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(index), guid, sizeof(guid));
+#if SDL_VERSION_ATLEAST(2, 0, 12)
+    const int type = SDL_GameControllerGetType(d->ctl);
+#else
+    const int type = -1;
+#endif
     fprintf(stderr,
             "[Gamepad] using controller: %s (type:%d, GUID:%s)\n",
             SDL_GameControllerNameForIndex(index),
-            SDL_GameControllerGetType(d->ctl),
+            type,
             guid);
     d->isScrollCancelled = iFalse;
 }
@@ -674,6 +679,7 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
             }
             return iTrue;
         }
+#if SDL_VERSION_ATLEAST(2, 0, 14)
         case SDL_CONTROLLERTOUCHPADDOWN:
         case SDL_CONTROLLERTOUCHPADUP:
         case SDL_CONTROLLERTOUCHPADMOTION: {
@@ -682,6 +688,7 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
             fprintf(stderr, "[Gamepad] touchpad type:%d x:%f y:%f\n", pad->type, pad->x, pad->y);
             return iTrue;
         }
+#endif
     }
     return iFalse;
 }

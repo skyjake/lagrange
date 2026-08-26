@@ -74,7 +74,6 @@ enum iPrefsBool {
     blinkingCursor_PrefsBool,
     bottomNavBar_PrefsBool,
     bottomTabBar_PrefsBool,
-    bottomInput_PrefsBool,
 
     menuBar_PrefsBool,
     simpleChars_PrefsBool,
@@ -83,6 +82,7 @@ enum iPrefsBool {
     editorSyntaxHighlighting_PrefsBool,
 
     useGamepad_PrefsBool,
+    thickScrollBar_PrefsBool,
 
     /* Document presentation */
     italicQuote_PrefsBool,
@@ -142,6 +142,12 @@ enum iCollapse {
     always_Collapse,
 };
 
+enum iInputPromptPosition {
+    inline_InputPromptPosition = 0, /* embedded under the link when possible, otherwise modal */
+    top_InputPromptPosition    = 1, /* always modal, docked at the top */
+    bottom_InputPromptPosition = 2, /* always modal, docked at the bottom */
+};
+
 #define maxNavbarActions_Prefs  4
 #define maxSidebarModes_Prefs   8
 
@@ -164,7 +170,6 @@ struct Impl_Prefs {
             iBool blinkingCursor;
             iBool bottomNavBar;
             iBool bottomTabBar;
-            iBool bottomInput;
 
             iBool menuBar;
             iBool simpleChars;
@@ -173,6 +178,7 @@ struct Impl_Prefs {
             iBool editorSyntaxHighlighting;
 
             iBool useGamepad;
+            iBool thickScrollBar;
 
             /* Document presentation */
             iBool italicQuote;
@@ -246,8 +252,9 @@ struct Impl_Prefs {
     int zoomPercent;
 
     /* Behavior */
-    int                pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
-    enum iFeedInterval feedInterval;
+    int                        pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
+    enum iInputPromptPosition  promptPosition; /* desktop only */
+    enum iFeedInterval         feedInterval;
     int                returnKey;
     int                smoothScrollSpeed[max_ScrollType];
     enum iCollapse     collapsePre;

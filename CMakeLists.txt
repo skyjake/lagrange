@@ -15,23 +15,23 @@
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
 
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.15)
 
 project (Lagrange
-    VERSION 1.20.9
+    VERSION 1.21.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
-    set (PROJECT_VERSION 1.20)
-    set (IOS_BUNDLE_VERSION 16)
-    set (IOS_BUILD_DATE "2026-06-28")
+    set (PROJECT_VERSION 1.21)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2026-08-10")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.20)
-    set (ANDROID_BUILD_VERSION b55)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-06-28")
+    set (PROJECT_VERSION 1.21)
+    set (ANDROID_BUILD_VERSION b56)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-08-04")
 endif ()
 
 # Load modules from the source tree
@@ -48,6 +48,7 @@ if (IOS)
 endif ()
 
 # Build configuration.
+option (ENABLE_APP_BUNDLE       "Build an app bundle instead of a Unix-style install (macOS)" ON)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
 option (ENABLE_GAMEPAD          "Allow UI to be controlled with a gamepad" ON)
@@ -83,7 +84,10 @@ option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-con
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 
 if (ENABLE_MOBILE_HANDHELD)
-    set (ENABLE_MOBILE_PHONE ON) # phone UI implied
+    set (ENABLE_MOBILE_PHONE ON)    # phone UI implied
+endif ()
+if (IOS)
+    set (ENABLE_APP_BUNDLE ON)      # required
 endif ()
 
 include (BuildType)
@@ -395,7 +399,7 @@ elseif (APPLE)
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif ()
-if (MSYS OR MINGW)
+if (MSYS OR MINGW OR WIN32)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
     set (WINRC_PRODUCT_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},0,0)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
@@ -409,7 +413,7 @@ if (MSYS OR MINGW)
         src/platform/win32.h
     )
 endif ()
-if (MSYS OR MINGW OR (UNIX AND NOT MOBILE AND NOT APPLE))
+if (MSYS OR MINGW OR WIN32 OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
@@ -440,10 +444,52 @@ macro (set_common_app_properties target)
         src
         ${CMAKE_CURRENT_BINARY_DIR}
     )
-    target_compile_options (${target} PUBLIC
-        -Werror=implicit-function-declaration
-        -Wno-deprecated-declarations
-    )
+    if (MSVC)
+        target_compile_options (${target} PUBLIC
+            /utf-8 /std:c11 /experimental:c11atomics
+            /W4 /WX
+            /D_CRT_SECURE_NO_WARNINGS
+            # undefined (method), assuming extern
+            /wd4013
+            # '<': signed/unsigned mismatch
+            /wd4018
+            # formal parameter is not referenced in the body
+            /wd4100
+            # unreferenced local variable
+            /wd4101
+            # 'void' function returning a value (bare `return expr;` in a void function)
+            /wd4098
+            # methods via function pointers
+            /wd4152
+            # unreferenced variable - common in widgets: `iWidget* widget = some_call()`
+            /wd4189
+            # disable float->int conversions
+            /wd4244
+            # disable int -> uint32 sig/unsig conversion coming mainly from stb vorbis
+            /wd4245
+            # disable size_t downcasts
+            /wd4267
+            # truncation from double to const float (ms being too eager)
+            /wd4305
+            # const object should be initialized (tentative definitions without an initializer)
+            /wd4132
+            # signed vs unsigned comparison
+            /wd4389
+            # temporarily disable shadowing warnings
+            /wd4456 /wd4457
+            # potentially uninitialized local variable `mid` (stb_vorbis), VS likely gets confused by gotos
+            /wd4701
+            # unreachable code, for some reason VS doesn't like iDeclareTypeConstruction macro in foundation/string.h
+            /wd4702
+            # operand are different enum types (iTransitionFlags vs iTransitionDir) - tbf, not sure why is vs reporting this in C mode
+            /wd5287 /wd5286
+        )
+    else ()
+        target_compile_options (${target} PUBLIC
+            -Werror=implicit-function-declaration
+            -Wno-deprecated-declarations
+        )
+    endif ()
     target_compile_definitions (${target} PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
     if (CFLAG_INCOMPATIBLE_POINTER_TYPES)
         target_compile_options (${target} PUBLIC -Werror=incompatible-pointer-types)
@@ -496,7 +542,7 @@ if (ENABLE_GUI)
     if (APPLE AND NOT MOBILE)
         target_compile_definitions (app PUBLIC -DiPlatformAppleDesktop=1)
     endif ()
-    if (ENABLE_CUSTOM_FRAME AND (MSYS OR MINGW))
+    if (ENABLE_CUSTOM_FRAME AND (MSYS OR MINGW OR WIN32))
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
     endif ()
     if (ENABLE_KERNING)
@@ -549,12 +595,20 @@ if (ENABLE_GUI)
     if (ENABLE_X11_SWRENDER)
         target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
     endif ()
-    if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
-        target_link_libraries (app PUBLIC SDL2::SDL2-static)
+    if (VCPKG_TOOLCHAIN)
+        target_link_libraries (app
+            PRIVATE
+            $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+            $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        )
     else ()
-        target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
-        target_compile_options (app PUBLIC ${SDL2_CFLAGS})
-        target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+        if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
+            target_link_libraries (app PUBLIC SDL2::SDL2-static)
+        else ()
+            target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
+            target_compile_options (app PUBLIC ${SDL2_CFLAGS})
+            target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+        endif ()
     endif ()
 
     # Check for SDL_TEXTEDITING support.
@@ -580,7 +634,10 @@ if (ENABLE_GUI)
         target_compile_definitions (app PUBLIC LAGRANGE_HAVE_SDL_TEXTEDITING=1)
     endif ()
     if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
-        if (TARGET harfbuzz-lib)
+        if (VCPKG_TOOLCHAIN)
+            target_link_libraries (app PRIVATE harfbuzz::harfbuzz-subset)
+            target_link_libraries (app PRIVATE harfbuzz::harfbuzz)
+        elseif (TARGET harfbuzz-lib)
             target_link_libraries (app PUBLIC harfbuzz-lib)
         else ()
             target_link_libraries (app PUBLIC ${HARFBUZZ_LDFLAGS})
@@ -610,9 +667,11 @@ if (ENABLE_GUI)
             # On iOS, the runpath is set to @executable_path/Frameworks below.
             set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
         endif ()
+        if (ENABLE_APP_BUNDLE)
+            set_target_properties (app PROPERTIES OUTPUT_NAME "Lagrange")
+        endif ()
         set_target_properties (app PROPERTIES
-            OUTPUT_NAME "Lagrange"
-            MACOSX_BUNDLE YES
+            MACOSX_BUNDLE ${ENABLE_APP_BUNDLE}
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"
             MACOSX_BUNDLE_INFO_STRING "${PROJECT_VERSION}"
@@ -675,7 +734,7 @@ done
             LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
         )
     endif ()
-    if (MSYS OR MINGW)
+    if (MSYS OR MINGW OR WIN32)
         target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
         if (ENABLE_WINSPARKLE)
             target_link_libraries (app PUBLIC winsparkle)
@@ -710,7 +769,8 @@ endif ()
 if (MSYS)
     if (TARGET app)
         install (TARGETS app DESTINATION .)
-        install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
+        find_file (SDL2_DLL SDL2.dll PATHS ${SDL2_LIBDIR} ${SDL2_LIBDIR}/../bin NO_DEFAULT_PATH)
+        install (PROGRAMS ${SDL2_DLL} DESTINATION .)
     endif ()
     if (TARGET PkgConfig::MPG123)
         install (PROGRAMS ${MPG123_LIBDIR}/../bin/msys-mpg123-0.dll DESTINATION .)
@@ -723,7 +783,8 @@ if (MSYS)
 elseif (MINGW)
     if (TARGET app)
         install (TARGETS app DESTINATION .)
-        install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
+        find_file (SDL2_DLL SDL2.dll PATHS ${SDL2_LIBDIR} ${SDL2_LIBDIR}/../bin NO_DEFAULT_PATH)
+        install (PROGRAMS ${SDL2_DLL} DESTINATION .)
     endif ()
     install (FILES ${EMB_BIN} DESTINATION .)
     install (PROGRAMS res/urlopen.bat DESTINATION .)
@@ -739,14 +800,16 @@ elseif (HAIKU)
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
     file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
-elseif (UNIX AND NOT APPLE)
+elseif ((UNIX AND NOT APPLE) OR (APPLE AND NOT ENABLE_APP_BUNDLE))
     include (GNUInstallDirs)
     if (TARGET app)
         set_target_properties (app PROPERTIES
             INSTALL_RPATH_USE_LINK_PATH YES
         )
-        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
-        file (WRITE ${desktop} "[Desktop Entry]
+        install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT app)
+        if (NOT APPLE)
+            set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
+            file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 GenericName=Gemini Client
 Comment=${PROJECT_DESCRIPTION}
@@ -756,19 +819,19 @@ Terminal=false
 Type=Application
 StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;x-scheme-handler/misfin;x-scheme-handler/nex;
 ")
-        install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT app)
-        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT app)
-        install (FILES res/lagrange-256.png
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
-            RENAME fi.skyjake.Lagrange.png
-            COMPONENT app
-        )
-        install (FILES res/fi.skyjake.Lagrange.appdata.xml
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
-            COMPONENT app
-        )
+            install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT app)
+            install (FILES res/lagrange-256.png
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+                RENAME fi.skyjake.Lagrange.png
+                COMPONENT app
+            )
+            install (FILES res/fi.skyjake.Lagrange.appdata.xml
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
+                COMPONENT app
+            )
+        endif ()
         install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT app)
         if (NOT ENABLE_RELATIVE_EMBED)
             target_compile_definitions (app PUBLIC
@@ -776,19 +839,40 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
         endif ()
     endif ()
     install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange COMPONENT resources)
+elseif (WIN32)
+    # Native (non-MSYS/MinGW) Windows build, e.g. MSVC with vcpkg.
+    if (CMAKE_VERSION VERSION_LESS 3.21)
+        message (FATAL_ERROR "Installing a native Windows build requires CMake 3.21 or newer (found ${CMAKE_VERSION}). Please upgrade CMake.")
+    endif ()
+    if (POLICY CMP0207)
+        cmake_policy (SET CMP0207 NEW)
+    endif ()
+    if (TARGET app)        
+        install (TARGETS app
+            # requires CMake 3.21+
+            RUNTIME_DEPENDENCY_SET appRuntimeDeps
+            DESTINATION .
+        )
+        install (RUNTIME_DEPENDENCY_SET appRuntimeDeps
+            PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
+            POST_EXCLUDE_REGEXES ".*[Ww][Ii][Nn][Dd][Oo][Ww][Ss].*[Ss][Yy][Ss][Tt][Ee][Mm]32.*\\.dll"
+            DIRECTORIES $<TARGET_FILE_DIR:app>
+            DESTINATION .
+        )
+    endif ()
+    install (FILES ${EMB_BIN} DESTINATION .)
 endif ()
 
 if (TARGET tuiapp)
     if (MSYS)
         install (TARGETS tuiapp DESTINATION .)
     else ()
-        if (UNIX AND NOT APPLE)
-            include (GNUInstallDirs)
-        endif ()
+        include (GNUInstallDirs)
         install (TARGETS tuiapp DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT tui)
 
-        set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.clagrange.desktop)
-        file (WRITE ${desktop} "[Desktop Entry]
+        if (NOT APPLE)
+            set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.clagrange.desktop)
+            file (WRITE ${desktop} "[Desktop Entry]
 Name=clagrange
 GenericName=Gemini Client
 Comment=${PROJECT_DESCRIPTION}
@@ -798,14 +882,15 @@ Terminal=true
 Type=Application
 StartupWMClass=clagrange
 Icon=fi.skyjake.clagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;x-scheme-handler/misfin;x-scheme-handler/nex;
 ")
-        install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT tui)
-        install (FILES res/lagrange-256.png
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
-            RENAME fi.skyjake.clagrange.png
-            COMPONENT tui
-        )
+            install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT tui)
+            install (FILES res/lagrange-256.png
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+                RENAME fi.skyjake.clagrange.png
+                COMPONENT tui
+            )
+        endif ()
     endif ()
     if (RESOURCES_LGR_PATH)
         target_compile_definitions (tuiapp PUBLIC
@@ -815,3 +900,32 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
     endif ()
 endif ()
+
+message (STATUS "Summary:")
+message (STATUS "ENABLE_CUSTOM_FRAME     : ${ENABLE_CUSTOM_FRAME}")
+message (STATUS "ENABLE_DOWNLOAD_EDIT    : ${ENABLE_DOWNLOAD_EDIT}")
+message (STATUS "ENABLE_GUI              : ${ENABLE_GUI}")
+message (STATUS "ENABLE_IDLE_SLEEP       : ${ENABLE_IDLE_SLEEP}")
+message (STATUS "ENABLE_IPC              : ${ENABLE_IPC}")
+message (STATUS "ENABLE_KERNING          : ${ENABLE_KERNING}")
+message (STATUS "ENABLE_MAC_MENUS        : ${ENABLE_MAC_MENUS}")
+message (STATUS "ENABLE_MOBILE_PHONE     : ${ENABLE_MOBILE_PHONE}")
+message (STATUS "ENABLE_MOBILE_TABLET    : ${ENABLE_MOBILE_TABLET}")
+message (STATUS "ENABLE_POPUP_MENUS      : ${ENABLE_POPUP_MENUS}")
+message (STATUS "ENABLE_RELATIVE_EMBED   : ${ENABLE_RELATIVE_EMBED}")
+message (STATUS "ENABLE_RESIZE_DRAW      : ${ENABLE_RESIZE_DRAW}")
+message (STATUS "ENABLE_STATIC           : ${ENABLE_STATIC}")
+message (STATUS "ENABLE_TUI              : ${ENABLE_TUI}")
+message (STATUS "ENABLE_WINDOWPOS_FIX    : ${ENABLE_WINDOWPOS_FIX}")
+message (STATUS "ENABLE_X11_SWRENDER     : ${ENABLE_X11_SWRENDER}")
+message (STATUS "ENABLE_X11_XLIB         : ${ENABLE_X11_XLIB}")
+message (STATUS "ENABLE_FRIBIDI          : ${ENABLE_FRIBIDI}")
+message (STATUS "ENABLE_FRIBIDI_BUILD    : ${ENABLE_FRIBIDI_BUILD}")
+message (STATUS "ENABLE_HARFBUZZ         : ${ENABLE_HARFBUZZ}")
+message (STATUS "ENABLE_HARFBUZZ_MINIMAL : ${ENABLE_HARFBUZZ_MINIMAL}")
+message (STATUS "ENABLE_MPG123           : ${ENABLE_MPG123}")
+message (STATUS "ENABLE_OPUS             : ${ENABLE_OPUS}")
+message (STATUS "ENABLE_SPARKLE          : ${ENABLE_SPARKLE}")
+message (STATUS "ENABLE_WEBP             : ${ENABLE_WEBP}")
+message (STATUS "ENABLE_JXL              : ${ENABLE_JXL}")
+message (STATUS "ENABLE_WINSPARKLE       : ${ENABLE_WINSPARKLE}")

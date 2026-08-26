@@ -32,6 +32,7 @@ iDeclareType(GmRequest)
 iDeclareType(History)
 iDeclareType(Banner)
 iDeclareType(ScrollWidget)
+iDeclareType(DocumentView)
 
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
@@ -61,6 +62,7 @@ iRangecc            selectionMark_DocumentWidget        (const iDocumentWidget *
 const iGmIdentity * identity_DocumentWidget             (const iDocumentWidget *);
 int                 generation_DocumentWidget           (const iDocumentWidget *);
 iBool               isRequestOngoing_DocumentWidget     (const iDocumentWidget *);
+iBool               isFetchingOwnLink_DocumentWidget    (const iDocumentWidget *);
 iBool               isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget     (const iDocumentWidget *);
 iBool               isIdentityPinned_DocumentWidget     (const iDocumentWidget *);
@@ -90,7 +92,7 @@ enum iDocumentWidgetSetUrlFlags {
     disallowCachedDocument_DocumentWidgetSetUrlFlag      = iBit(4),
 };
 
-void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);
+void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other, iBool isNewTab);
 void    setIdentity_DocumentWidget      (iDocumentWidget *, const iBlock *setIdent); /* overrides normal sign-in */
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags,
@@ -108,6 +110,7 @@ void    updateSize_DocumentWidget               (iDocumentWidget *);
 void    updateHoverLinkInfo_DocumentWidget      (iDocumentWidget *, uint16_t linkId);
 void    scrollBegan_DocumentWidget              (iAnyObject *, int, uint32_t); /* SmoothScroll callback */
 void    aboutToScrollView_DocumentWidget        (iDocumentWidget *, int scrollMax);
+void    repositionInlinePrompts_DocumentWidget  (iDocumentWidget *, iDocumentView *);
 void    didScrollView_DocumentWidget            (iDocumentWidget *);
 
 void    animate_DocumentWidget                  (iAny *); /* ticker */

@@ -42,6 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "snippets.h"
 #include "touch.h"
 #include "util.h"
+#include "window.h"
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
@@ -425,12 +426,8 @@ void setBackupFileName_InputWidget(iInputWidget *d, const char *fileName) {
         d->backupPath = copy_String(dataDir_App());
     }
     append_Path(d->backupPath, collectNewCStr_String(fileName));
-    const size_t windowIndex = windowIndex_Root(as_Widget(d)->root);
-    /* Each window has its own separate backup. */
-    if (windowIndex > 0) {
-        appendFormat_String(d->backupPath, ".%zu", windowIndex);
-    }
-    appendCStr_String(d->backupPath, ".txt");
+    /* Use the window's serial number instead of index so this is unaffected by focus changes. */
+    appendFormat_String(d->backupPath, ".win%u.txt", serial_Window(as_Widget(d)->root->window));
     restoreBackup_InputWidget_(d);
 }
 
@@ -3131,13 +3128,14 @@ static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, iTextA
 #endif
 
 static void draw_InputWidget_(const iInputWidget *d) {
-    const iWidget *w         = constAs_Widget(d);
-    iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
-    iBool          isHint    = isHintVisible_InputWidget_(d);
-    const iBool    isFocused = isFocused_Widget(w);
-    const iBool    isHover   = deviceType_App() == desktop_AppDeviceType &&
-                               isHover_Widget(w) &&
-                               contains_InputWidget_(d, mouseCoord_Window(get_Window(), 0));
+    const iWidget *w          = constAs_Widget(d);
+    iRect          bounds     = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
+    iBool          isHint     = isHintVisible_InputWidget_(d);
+    const iBool    isFocused  = isFocused_Widget(w);
+    const iBool    isDisabled = isDisabled_Widget(w);
+    const iBool    isHover    = deviceType_App() == desktop_AppDeviceType &&
+                                isHover_Widget(w) &&
+                                contains_InputWidget_(d, mouseCoord_Window(get_Window(), 0));
     if (d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         updateBuffered_InputWidget_(iConstCast(iInputWidget *, d));
     }
@@ -3146,11 +3144,12 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : w->bgColor);
-    if (!isTerminal_Platform() && ~w->flags & frameless_WidgetFlag) {
+    if (!isTerminal_Platform() && ~w->flags & frameless_WidgetFlag && !isDisabled) {
         drawRectThickness_Paint(&p,
                                 adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
                                 isFocused ? gap_UI / 4 : 1,
-                                isFocused ? uiInputFrameFocused_ColorId
+                                //isDisabled ? uiTextDisabled_ColorId
+                                 isFocused ? uiInputFrameFocused_ColorId
                                 : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
     }
     if (d->sysCtrl) {
@@ -3160,7 +3159,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     const iRect contentBounds = contentBounds_InputWidget_(d);
     iInt2       drawPos       = topLeft_Rect(contentBounds);
-    const int   fg            = isHint      ? uiAnnotation_ColorId
+    const int   fg            = isDisabled  ? uiTextDisabled_ColorId
+                                : isHint      ? uiAnnotation_ColorId
                                 : isFocused ? uiInputTextFocused_ColorId
                                             : uiInputText_ColorId;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT

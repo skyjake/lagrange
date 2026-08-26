@@ -130,7 +130,8 @@ enum iWidgetFlag2 {
     visibleOnParentSelected_WidgetFlag2     = iBit(3),
     permanentVisualOffset_WidgetFlag2       = iBit(4), /* usually visual offset overrides hiding */
     commandOnHover_WidgetFlag2              = iBit(5), /* only dispatched to the hovered widget */
-    centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children in the middle */
+    centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children
+                                                          in the middle */
     usedAsPeriodicContext_WidgetFlag2       = iBit(7), /* add_Periodic() called on the widget */
     siblingOrderDraggable_WidgetFlag2       = iBit(8),
     horizontallyResizable_WidgetFlag2       = iBit(9), /* may drag left/right edges to resize */
@@ -138,6 +139,13 @@ enum iWidgetFlag2 {
     rightEdgeResizing_WidgetFlag2           = iBit(11),
     childMenuOpenedAsPopup_WidgetFlag2      = iBit(12),
     mustStayOnTop_WidgetFlag2               = iBit(13),
+    deferredDraw_WidgetFlag2                = iBit(14), /* excluded from the parent's normal
+                                                           drawChildren pass; overrides `hidden`;
+                                                           the owner draws the widget explicitly
+                                                           instead, e.g., to control Z order */
+    clipChildren_WidgetFlag2                = iBit(15), /* children are clipped to the widget's
+                                                           bounds for drawing, hit-testing, and
+                                                           mouse dispatch */
 };
 
 enum iWidgetAddPos {
@@ -177,7 +185,8 @@ struct Impl_Widget {
     iRoot *      root;
     iWidgetDrawBuffer *drawBuf;
     iAnim        overflowScrollOpacity; /* scrollbar fading */
-    iString      data; /* custom user data */
+    iAnim        fadeOpacity;           /* modal/menu background layer dimming */
+    iString      data;                  /* custom user data */
     /* Callbacks. */
     iBool           (*commandHandler)(iWidget *, const char *);
     const iArray *  (*updateMenuItems)(iWidget *); /* returns the updated items for the menu */
@@ -239,6 +248,7 @@ iAny *  findAdjacentFocusable_Widget    (const iWidget *, enum iDirection direct
 iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
+void    drawClipped_Widget              (const iWidget *, iRect clipRect); /* empty rect = unclipped */
 void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
 void    drawBorders_Widget              (const iWidget *); /* called by `drawBackground` */

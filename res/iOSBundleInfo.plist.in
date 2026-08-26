@@ -171,6 +171,14 @@
 					<string>spartan</string>
 				</array>
 			</dict>
+            <dict>
+            	<key>CFBundleURLName</key>
+            	<string>Nex</string>
+            	<key>CFBundleURLSchemes</key>
+            	<array>
+            		<string>nex</string>
+            	</array>
+            </dict>
 			<dict>
 				<key>CFBundleURLName</key>
 				<string>Misfin</string>

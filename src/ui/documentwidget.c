@@ -249,6 +249,43 @@ enum iDocumentLinkOrdinalMode {
     homeRow_DocumentLinkOrdinalMode,
 };
 
+enum iLinkUpdateFlags {
+    visited_LinkUpdateFlag = iBit(1),
+    open_LinkUpdateFlag    = iBit(2),
+};
+
+/* Note the following about swipes and keeping inline input prompts positioned:
+
+   An inline input prompt is a real widget, similar to what appears in a modal
+   dialog. During a back/forward swipe, up to two DocumentViews are visible at
+   once (d->view and d->swipeView, one drawn sliding over the other), and either
+   one may have one or more prompt widgets as children. The prompts need to keep
+   tracking their documents as they shift, and all prompts need to be drawn at
+   the correct Z order alongside their view's content. This means a normal
+   `drawChildren_Widget()` is not possible, because children are drawn last, on
+   top of everything.
+
+   We use `deferredDraw_WidgetFlag2` that excludes a child from
+   `drawChildren_Widget()`. Each flagged bar is drawn manually so they appear in
+   the correct order vs. the DocumentViews.
+
+   The incoming/outgoing prompts are handled differently because of how the
+   underlying document is swapped:
+
+   - Incoming: d->view's own prompts are normal findable widgets, except when
+     covered by d->swipeView during a back-swipe, or offset by rubber-banding
+     at the ends of history.
+
+   - Outgoing: d->swipeView's prompts. `releaseViewDocument_DocumentWidget_()`
+     allocates a new DocumentView for the incoming document while the swipe
+     animates, and link IDs are per-document, so the incoming view may reuse the
+     same "inputpromptN" IDs. Therefore, the outgoing prompt widgets are renamed
+     to avoid clashing with the incoming live prompts. The horizontal positions
+     are driven by `visualOffset` rather than by moving `rect` itself, since
+     there is no longer a live document layout to reference. The prompts are
+     kept around, hidden and unfindable, until the swipe finishes.
+*/
+
 struct Impl_DocumentWidget {
     iWidget        widget;
     int            flags; /* internal behavior, see enum iDocumentWidgetFlag */
@@ -274,6 +311,8 @@ struct Impl_DocumentWidget {
     enum iWheelSwipeState wheelSwipeState;
     iString        pendingGotoHeading;
     iString        linePrecedingLink;
+    iString        originId;       /* origin document's widget ID, if opened via cross-split nav */
+    iBool          originToNewTab; /* ...whether that navigation created a fresh tab */
 
     /* Network request: */
     enum iRequestState state;
@@ -301,6 +340,7 @@ struct Impl_DocumentWidget {
     iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
     iBanner *      banner;
     float          initNormScrollY;
+    enum iLinkUpdateFlags pendingLinkUpdates;
 
     /* Rendering: */
     iDocumentView *view;
@@ -308,6 +348,8 @@ struct Impl_DocumentWidget {
     iAnim          swipeOffset; /* applies to both views */
     iDocumentView *swipeView;   /* outgoing old view */
     iBanner *      swipeBanner; /* used by swipeView only */
+    iPtrArray      outgoingInputPrompts; /* widgets; see explanation of inline prompts above */
+    iPtrArray      coveredInputPrompts;  /* widgets */
 
     /* Widget structure: */
     iScrollWidget *scroll;
@@ -335,9 +377,19 @@ static const int homeRowKeys_[] = {
 };
 static int docEnum_ = 0;
 
-static void animateMedia_DocumentWidget_            (iDocumentWidget *d);
-static void updateSideIconBuf_DocumentWidget_       (const iDocumentWidget *d);
-static iBool requestMedia_DocumentWidget_           (iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters);
+static void     animateMedia_DocumentWidget_        (iDocumentWidget *);
+static void     updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *);
+static iBool    requestMedia_DocumentWidget_        (iDocumentWidget *, iGmLinkId linkId,
+                                                     iBool enableFilters);
+static iWidget *makeInlineInputPrompt_DocumentWidget_(iDocumentWidget *, iGmLinkId linkId,
+                                                     const iString *url, iBool isSensitive,
+                                                     const char *promptLabel);
+static iWidget *createInlineInputPrompt_DocumentWidget_(iDocumentWidget *, iGmLinkId linkId,
+                                                     const iString *url, iBool isSensitive,
+                                                     const iString *promptLabel);
+static void     refreshAfterInlineInputPromptChange_DocumentWidget_(iDocumentWidget *);
+static void     repositionOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *);
+static iWidget *findInlineInputPromptBar_DocumentWidget_(iDocumentWidget *, iGmLinkId linkId);
 
 iRangecc selectionMark_DocumentWidget(const iDocumentWidget *d) {
     /* Normalize so start < end. */
@@ -584,11 +636,30 @@ static void resetSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
         delete_DocumentView(d->swipeView);
     }
     d->swipeView = NULL;
+    /* The outgoing bars are done sliding; actually get rid of them now. */
+    iForEach(PtrArray, o, &d->outgoingInputPrompts) {
+        destroy_Widget(o.ptr);
+    }
+    clear_PtrArray(&d->outgoingInputPrompts);
+    iForEach(PtrArray, c, &d->coveredInputPrompts) {
+        iWidget *bar = c.ptr;
+        setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
+        iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
+    }
+    clear_PtrArray(&d->coveredInputPrompts);
     setValue_Anim(&d->swipeOffset, 0, 0);
     iChangeFlags(d->flags,
                  swipeViewOverlay_DocumentWidgetFlag | swipeAborted_DocumentWidgetFlag |
                      swipeDeferredFinish_DocumentWidgetFlag | swipeRubberband_DocumentWidgetFlag,
                  iFalse);
+    /* Final positioning. */
+    repositionInlinePrompts_DocumentWidget(d, d->view);
+}
+
+static void abortSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
+    resetSwipeAnimation_DocumentWidget_(d);
+    iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iFalse);
+    refresh_Widget(d);
 }
 
 static iBool isSwipingBack_DocumentWidget_(const iDocumentWidget *d) {
@@ -603,9 +674,15 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
            the old page has been reloaded. */
         if (d->flags & swipeAborted_DocumentWidgetFlag) {
             if (~d->flags & swipeDeferredFinish_DocumentWidgetFlag) {
+                const iBool isBack = isSwipingBack_DocumentWidget_(d);
+                if (isBack ? atNewest_History(d->mod.history) : atOldest_History(d->mod.history)) {
+                    /* The undo navigation would do nothing, so no new document is coming and
+                       the animation would be left hanging. */
+                    resetSwipeAnimation_DocumentWidget_(d);
+                    return;
+                }
                 d->flags |= swipeDeferredFinish_DocumentWidgetFlag;
-                postCommand_Widget(
-                    d, isSwipingBack_DocumentWidget_(d) ? "navigate.forward" : "navigate.back");
+                postCommand_Widget(d, isBack ? "navigate.forward" : "navigate.back");
             }
         }
         else {
@@ -614,25 +691,15 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-static void sampleSwipeSpeed_DocumentWidget_(iDocumentWidget *d) {
-    iUnused(d);
-#if 0
-    const uint32_t now = SDL_GetTicks();
-    if (!isFinished_Anim(&d->swipeOffset) && now - d->swipeSampleAt > 100) {
-        d->swipeSampleAt = now;
-        d->swipeSample = value_Anim(&d->swipeOffset);
-    }
-#endif
-}
-
 void animate_DocumentWidget(void *ticker) {
     iDocumentWidget *d = ticker;
     iAssert(isInstance_Object(d, &Class_DocumentWidget));
     refresh_Widget(d);
-    sampleSwipeSpeed_DocumentWidget_(d);
     maybeFinishSwipeAnimation_DocumentWidget_(d);
+    repositionInlinePrompts_DocumentWidget(d, d->view);
+    repositionOutgoingInputPrompts_DocumentWidget_(d);
     if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
-        !isFinished_Anim(&d->swipeOffset) ||
+        !isFinished_Anim(&d->swipeOffset) || d->swipeView ||
         (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity))) {
         addTicker_App(animate_DocumentWidget, d);
     }
@@ -805,7 +872,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         setTextColor_LabelWidget(tabButton, none_ColorId);
         iWidget    *tabCloseButton  = child_Widget(as_Widget(tabButton), 0);
         const iBool tabCloseVisible = avail > width_Widget(tabCloseButton);
-        if (deviceType_App() == tablet_AppDeviceType) {
+        if (deviceType_App() == tablet_AppDeviceType && tabCloseButton) {
             iChangeFlags(as_Widget(tabCloseButton)->flags2, visibleOnParentSelected_WidgetFlag2,
                          tabCloseVisible);
         }
@@ -841,6 +908,31 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
         return;
     }
     invalidate_DocumentView(d->view);
+}
+
+static void updateLinkStatus_DocumentWidget_(iDocumentWidget *d, int updates) {
+    iWidget *w = as_Widget(d);
+    if (d != document_Root(w->root)) {
+        d->pendingLinkUpdates |= updates; /* do it when the tab is shown */
+        return;
+    }
+    d->pendingLinkUpdates &= ~updates;
+    if (updates & open_LinkUpdateFlag) {
+        if (updateOpenURLs_GmDocument(d->view->doc)) {
+            invalidate_DocumentWidget_(d);
+            refresh_Widget(d);
+        }
+    }
+    if (updates & visited_LinkUpdateFlag) {
+        updateVisitedLinks_GmDocument(d->view->doc);
+        invalidateVisibleLinks_DocumentView(d->view);
+    }
+}
+
+static void applyPendingLinkUpdates_DocumentWidget_(iDocumentWidget *d) {
+    if (d->pendingLinkUpdates) {
+        updateLinkStatus_DocumentWidget_(d, d->pendingLinkUpdates);
+    }
 }
 
 static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
@@ -942,6 +1034,48 @@ static void allocView_DocumentWidget_(iDocumentWidget *d) {
     d->view->foundMark  = &d->foundMark;
 }
 
+static void destroyAllInlineInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "inputprompt") &&
+            ~child->flags2 & deferredDraw_WidgetFlag2) { /* skip a currently covered bar */
+            destroy_Widget(child);
+        }
+    }
+}
+
+static void cancelInputPrompt_DocumentWidget_(iDocumentWidget *d) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "!document.input.submit")) { /* non-embedded */
+            postCommand_Widget(child, "valueinput.cancel navigating:1");
+        }
+    }
+}
+
+static void deferOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    /* Escape the "inputpromptN" id lookup and take these out of the normal draw pass. */
+    iAssert(isEmpty_PtrArray(&d->outgoingInputPrompts));
+    iConstForEach(PtrArray, m, &d->swipeView->visibleMedia) {
+        const iGmRun *run = m.ptr;
+        if (run->mediaType != inputPrompt_MediaType) {
+            continue;
+        }
+        iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, run->linkId);
+        if (!bar) {
+            continue;
+        }
+        setId_Widget(bar, format_CStr("outgoinginputprompt%u", run->linkId));
+        setFlags_Widget(bar, hidden_WidgetFlag | horizontalOffset_WidgetFlag, iTrue);
+        iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
+        if (focus_Widget() == bar || hasParent_Widget(focus_Widget(), bar)) {
+            setFocus_Widget(NULL);
+        }
+        pushBack_PtrArray(&d->outgoingInputPrompts, bar);
+    }
+    repositionOutgoingInputPrompts_DocumentWidget_(d); /* position them before the first draw */
+}
+
 static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->flags & swipeAborted_DocumentWidgetFlag) {
         resetSwipeAnimation_DocumentWidget_(d);
@@ -949,12 +1083,15 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->view == d->swipeView) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
+        deferOutgoingInputPrompts_DocumentWidget_(d);
         d->swipeBanner = d->banner;
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
         setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
         allocView_DocumentWidget_(d);
     }
+    destroyAllInlineInputPrompts_DocumentWidget_(d);
+    cancelInputPrompt_DocumentWidget_(d);
     iRelease(d->view->doc);
     d->view->doc = NULL;
     iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iFalse);
@@ -1149,6 +1286,10 @@ static const char *zipPageHeading_(const iRangecc mime) {
     return cstrCollect_String(heading);
 }
 
+static iWidget *findInlineInputPromptBar_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    return findChild_Widget(as_Widget(d), format_CStr("inputprompt%u", linkId));
+}
+
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
     /* Embedded images in data links can be shown immediately as they are already fetched
@@ -1162,6 +1303,48 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
             if (scheme_GmLinkFlag(linkFlags) == data_GmLinkScheme &&
                 (linkFlags & imageFileExtension_GmLinkFlag)) {
                 requestMedia_DocumentWidget_(d, linkId, 0);
+            }
+        }
+    }
+    /* Links marked "Assume This URL Requires Input" show their prompt immediately, not just
+       after a click, avoiding a layout jump. Only applies when prompts can be inline. */
+    if (deviceType_App() == desktop_AppDeviceType &&
+        prefs_App()->promptPosition == inline_InputPromptPosition) {
+        iGmDocument *doc = d->view->doc;
+        iBool     didAny      = iFalse;
+        iGmLinkId firstLinkId = 0;
+        for (size_t linkId = 1; ; linkId++) {
+            const iString *linkUrl = linkUrl_GmDocument(doc, linkId);
+            if (!linkUrl) break;
+            const iString *absUrl = absoluteUrl_String(d->mod.url, linkUrl);
+            if (!isPromptUrl_SiteSpec(absUrl)) {
+                continue;
+            }
+            iUrl url;
+            init_Url(&url, absUrl);
+            if (!isEmpty_Range(&url.query) ||
+                findLinkInputPrompt_Media(media_GmDocument(doc), linkId).type) {
+                continue; /* already has a query, or already created (e.g. restored from cache) */
+            }
+            createInlineInputPrompt_DocumentWidget_(d, (iGmLinkId) linkId, absUrl, iFalse, NULL);
+            if (!firstLinkId) {
+                firstLinkId = (iGmLinkId) linkId;
+            }
+            didAny = iTrue;
+        }
+        if (didAny) {
+            refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+            /* Focus the first one only if it's in view -- otherwise it's as disorienting as
+               the layout jump this feature avoids. */
+            const iGmRun *run = findInputPromptRun_GmDocument(d->view->doc, firstLinkId);
+            if (run) {
+                const iRangei vis = visibleRange_DocumentView(d->view);
+                if (top_Rect(run->bounds) >= vis.start && bottom_Rect(run->bounds) <= vis.end) {
+                    iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, firstLinkId);
+                    if (bar) {
+                        setFocus_Widget(findChild_Widget(bar, "input"));
+                    }
+                }
             }
         }
     }
@@ -1402,7 +1585,8 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
 #endif
                     }
                 }
-                if (equal_Rangecc(param, "text/gemini") || equal_Rangecc(param, "text/gophermap")) {
+                if (equal_Rangecc(param, "text/gemini") ||
+                    equal_Rangecc(param, "text/gophermenu")) {
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
@@ -1740,7 +1924,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     const iRangecc scheme = urlScheme_String(d->mod.url);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
-        equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "gopher")) {
+        equalCase_Rangecc(scheme, "spartan") || isGopherScheme_Rangecc(scheme)) {
         setRange_String(d->titleUser, urlUser_String(d->mod.url));
     }
     else {
@@ -2031,7 +2215,7 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
         invalidateVisibleLinks_DocumentView(d->view);
     }
     /* Show and hide toolbar on scroll. */
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() == phone_AppDeviceType && document_App() == d) {
         const float normPos = normScrollPos_DocumentView(d->view);
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
             showToolbar_Root(as_Widget(d)->root, offset < 0 || d->view->scrollY.pos.to <= 0);
@@ -2167,13 +2351,16 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
                                               buttons,
                                               cstr_String(text_LabelWidget(prompt))) });
     pushBack_Array(items, &(iMenuItem){ "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" });
-    if (isDesktop_Platform()) {
+    /* An inline prompt is always docked under its link, so only a modal sheet needs this. */
+    const iBool isSheetPrompt = (flags_Widget(parent_Widget(buttons)) & mouseModal_WidgetFlag) != 0;
+    if (isDesktop_Platform() && isSheetPrompt) {
         /* Location of the prompt. */
+        const iBool isBottom = prefs_App()->promptPosition == bottom_InputPromptPosition;
         pushBackN_Array(
             items,
             (iMenuItem[]) {
                 { "---" },
-                { prefs_App()->bottomInput ? "${menu.input.showtop}" : "${menu.input.showbottom}",
+                { isBottom ? "${menu.input.showtop}" : "${menu.input.showbottom}",
                   0,
                   0,
                   format_CStr("!valueinput.togglebottom ptr:%p", buttons) } },
@@ -2223,18 +2410,8 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     return items;
 }
 
-iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
-                                        const char *promptLabel, const char *acceptCommand) {
-    iUrl parts;
-    init_Url(&parts, url);
-    iWidget *dlg = makeValueInput_Widget(
-        as_Widget(d),
-        NULL,
-        format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
-        promptLabel ? promptLabel
-                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
-        uiTextAction_ColorEscape "${dlg.input.send}",
-        acceptCommand);
+static void setupInputPromptDialog_(iDocumentWidget *d, iWidget *dlg, const iString *url,
+                                    iBool isSensitive) {
     iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
     iLabelWidget *lineBreak = NULL;
     if (!isSensitive) {
@@ -2301,7 +2478,162 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
     setSelectAllOnFocus_InputWidget(input, iTrue);
     setSensitiveContent_InputWidget(input, isSensitive);
     setArrowFocusNavigable_InputWidget(input, iFalse);
+}
+
+iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
+                                        const char *promptLabel, const char *acceptCommand) {
+    iUrl parts;
+    init_Url(&parts, url);
+    iWidget *dlg = makeValueInput_Widget(
+        as_Widget(d),
+        NULL,
+        format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
+        promptLabel ? promptLabel
+                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
+        uiTextAction_ColorEscape "${dlg.input.send}",
+        acceptCommand);
+    setupInputPromptDialog_(d, dlg, url, isSensitive);
     return dlg;
+}
+
+static iWidget *makeInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId,
+                                                       const iString *url, iBool isSensitive,
+                                                       const char *promptLabel) {
+    iUrl parts;
+    init_Url(&parts, url);
+    const iString *acceptCommand =
+        collectNewFormat_String("!document.input.submit doc:%p link:%u", d, linkId);
+    iWidget *dlg = makeEmbeddedValueInput_Widget(
+        as_Widget(d),
+        NULL,
+        promptLabel ? promptLabel
+                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
+        uiTextAction_ColorEscape "${dlg.input.send}",
+        cstr_String(acceptCommand),
+        NULL, 0);
+    /* Width must be correct before setupInputPromptDialog_() restores any backup text below,
+       since that re-wraps (and measures height) immediately at the input's current width. */
+    dlg->rect.size.x = documentWidth_DocumentView(d->view);
+    arrange_Widget(dlg);
+    setupInputPromptDialog_(d, dlg, url, isSensitive);
+    arrange_Widget(dlg); /* pick up any height change from restored backup content */
+    setId_Widget(dlg, format_CStr("inputprompt%u", linkId)); /* required for lookup */
+    return dlg;
+}
+
+static iWidget *createInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId,
+                                                         const iString *url, iBool isSensitive,
+                                                         const iString *promptLabel) {
+    /* Creates the bar and records it (and its height) in the document's media cache, so a
+       subsequent layout doesn't fall back to a placeholder height. */
+    iGmDocument *doc = d->view->doc;
+    setInputPrompt_Media(media_GmDocument(doc), linkId, isSensitive, promptLabel, url);
+    iWidget *bar = makeInlineInputPrompt_DocumentWidget_(
+        d, linkId, url, isSensitive, promptLabel ? cstr_String(promptLabel) : NULL);
+    setInputPromptHeight_Media(
+        media_GmDocument(doc), findLinkInputPrompt_Media(media_GmDocument(doc), linkId),
+        height_Widget(bar));
+    return bar;
+}
+
+static void refreshAfterInlineInputPromptChange_DocumentWidget_(iDocumentWidget *d) {
+    redoLayout_GmDocument(d->view->doc);
+    updateVisible_DocumentView(d->view);
+    invalidate_DocumentWidget_(d);
+    refresh_Widget(as_Widget(d));
+}
+
+static void destroyInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, linkId);
+    if (bar) {
+        destroy_Widget(bar);
+    }
+    clearInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
+    refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+}
+
+static void setInlineInputPromptEnabled_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId,
+                                                        iBool enabled) {
+    iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, linkId);
+    if (bar) {
+        setTreeFlags_Widget(bar, disabled_WidgetFlag, !enabled);
+        refresh_Widget(bar);
+    }
+}
+
+static void reenableAllInlineInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "inputprompt")) {
+            setTreeFlags_Widget(child, disabled_WidgetFlag, iFalse);
+            refresh_Widget(child);
+        }
+    }
+}
+
+static void ensureInputPromptVisible_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    /* Only called on creation/resize so this doesn't fight the user's own scrolling. */
+    const iGmRun *run = findInputPromptRun_GmDocument(d->view->doc, linkId);
+    if (!run) {
+        return;
+    }
+    const int     top    = top_Rect(run->bounds);
+    const int     bottom = bottom_Rect(run->bounds);
+    const iRangei vis    = visibleRange_DocumentView(d->view);
+    const int     margin = gap_UI;
+    int offset = 0;
+    if (bottom - top > size_Range(&vis)) {
+        /* Taller than the viewport: prioritize the top over the buttons row. */
+        offset = (top - margin) - vis.start;
+    }
+    else if (bottom + margin > vis.end) {
+        offset = (bottom + margin) - vis.end;
+    }
+    else if (top - margin < vis.start) {
+        offset = (top - margin) - vis.start;
+    }
+    if (offset) {
+        smoothScroll_DocumentView(d->view, offset, 300);
+    }
+}
+
+static void showInlineInputPrompt_DocumentWidget_(iDocumentWidget *target, iGmLinkId linkId,
+                                                   const iString *baseUrl, const iGmResponse *resp,
+                                                   enum iGmStatusCode statusCode) {
+    if (findInlineInputPromptBar_DocumentWidget_(target, linkId)) {
+        destroyInlineInputPrompt_DocumentWidget_(target, linkId);
+    }
+    iWidget *bar = createInlineInputPrompt_DocumentWidget_(
+        target, linkId, baseUrl, statusCode == sensitiveInput_GmStatusCode,
+        isEmpty_String(&resp->meta) ? NULL : &resp->meta);
+    refreshAfterInlineInputPromptChange_DocumentWidget_(target);
+    if (document_App() == target) {
+        /* Only steal focus if this tab is the one being viewed. */
+        setFocus_Widget(findChild_Widget(bar, "input"));
+        ensureInputPromptVisible_DocumentWidget_(target, linkId);
+    }
+}
+
+static void restoreAddressBarAndHistory_DocumentWidget_(iDocumentWidget *d,
+                                                        const iString   *fetchedUrl) {
+    /* The displayed page hasn't changed (e.g., a media/prompt response was inlined into the
+       existing document instead of replacing it), so restore the address bar and history to
+       match rather than leaving them pointed at the new request's URL. `fetchedUrl` is what the
+       just-finished request was for, which may not equal d->mod.url yet at the call site. */
+    if (equal_String(&mostRecentUrl_History(d->mod.history)->url, fetchedUrl)) {
+        undo_History(d->mod.history);
+    }
+    if (setUrl_DocumentWidget_(d, url_GmDocument(d->view->doc))) {
+        postCommand_Widget(d, "!document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+    }
+}
+
+static void cleanupRedirectedFetch_DocumentWidget_(iDocumentWidget *d) {
+    iAssert(!d->originToNewTab);
+    /* This is called in the special case where an input prompt becomes inlined
+       (response does not contain a document body) so the previous document of
+       the tab is retained. */
+    restoreAddressBarAndHistory_DocumentWidget_(d, d->mod.url);
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -2335,12 +2667,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             iRelease(mr);
             /* Reset the fetch state, returning to the originating page. */
             d->state = ready_RequestState;
-            if (equal_String(&mostRecentUrl_History(d->mod.history)->url, url_GmRequest(mr->req))) {
-                undo_History(d->mod.history);
-            }
-            if (setUrl_DocumentWidget_(d, url_GmDocument(d->view->doc))) {
-                postCommand_Widget(d, "!document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
-            }
+            restoreAddressBarAndHistory_DocumentWidget_(d, url_GmRequest(mr->req));
             updateFetchProgress_DocumentWidget_(d);
             postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
             if (isFinished_GmRequest(mr->req)) {
@@ -2355,7 +2682,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
-            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+            (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
+             equalCase_Rangecc(urlScheme_String(d->mod.url), "gophers")) &&
             prefs_App()->warnTlsSecurity) {
             statusCode = tlsServerCertificateNotVerified_GmStatusCode;
         }
@@ -2373,16 +2701,51 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 /* Let the navigation history know that we have been to this URL even though
                    it is only displayed as an input dialog. */
                 visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
-                makeInputPrompt_DocumentWidget(
-                    d,
-                    d->mod.url,
-                    statusCode == sensitiveInput_GmStatusCode,
-                    isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
-                    format_CStr("!document.input.submit doc:%p", d));
-                if (document_App() != d) {
-                    postCommandf_App("tabs.switch page:%p", d);
+                /* Split-pinning may route this fetch to a different document than the link
+                   lives on. If this one has no anchor but knows its origin, show the prompt
+                   there instead of a modal. A deliberately opened new tab is left alone
+                   (the user did ask for a tab). */
+                iDocumentWidget *target = d;
+                if (prefs_App()->promptPosition == inline_InputPromptPosition &&
+                    !d->requestLinkId && !d->originToNewTab && !isEmpty_String(&d->originId)) {
+                    iDocumentWidget *origin = findWidget_App(cstr_String(&d->originId));
+                    if (origin && origin->requestLinkId) {
+                        target = origin;
+                    }
+                }
+                /* Falls back to the modal if inline isn't possible. */
+                const iBool useModal = deviceType_App() != desktop_AppDeviceType ||
+                                       prefs_App()->promptPosition != inline_InputPromptPosition ||
+                                       !target->requestLinkId;
+                if (useModal) {
+                    makeInputPrompt_DocumentWidget(
+                        d,
+                        d->mod.url,
+                        statusCode == sensitiveInput_GmStatusCode,
+                        isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
+                        format_CStr("!document.input.submit doc:%p", d));
+                    if (document_App() != d) {
+                        /* The modal must be visible to be interacted with at all. */
+                        postCommandf_App("tabs.switch page:%p", d);
+                    }
+                }
+                else if (target == d) {
+                    showInlineInputPrompt_DocumentWidget_(d, d->requestLinkId, d->mod.url, resp,
+                                                          statusCode);
+                    /* Same as the inline-image handling above. */
+                    restoreAddressBarAndHistory_DocumentWidget_(d, d->mod.url);
                 }
                 else {
+                    /* Widget construction targets whatever root is "current", which must
+                       match target's root here (possibly a different split). */
+                    iRoot *oldRoot = current_Root();
+                    setCurrent_Root(as_Widget(target)->root);
+                    showInlineInputPrompt_DocumentWidget_(target, target->requestLinkId, d->mod.url,
+                                                          resp, statusCode);
+                    setCurrent_Root(oldRoot);
+                    cleanupRedirectedFetch_DocumentWidget_(d);
+                }
+                if (document_App() == d) {
                     updateTheme_DocumentWidget_(d);
                 }
                 break;
@@ -2422,8 +2785,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                             postCommand_App("bookmarks.changed");
                         }
                     }
-                    /* We only follow a fixed number of redirects at once, per Gemini spec. */
-                    if (d->redirectCount >= 5) {
+                    /* We only follow a fixed number of redirects at once, per Gemini spec.
+                       Titan uploads are discrete, user-initiated actions rather than an
+                       automatic redirect chain, so the limit does not apply to them. */
+                    if (equalCase_Rangecc(srcScheme, "gemini") && d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
                     /* Redirects with the same scheme are automatic, and switching automatically
@@ -2810,6 +3175,12 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 //    const float maxSpeed = gap_UI * 2000;
 //    const float minSpeed = gap_UI * 500;
     if (equal_Command(cmd, "edgeswipe.ended")) {
+        if (~d->flags & swipeBegun_DocumentWidgetFlag && !d->swipeView) {
+            /* The swipe was not ours; it was handled by someone else (e.g., a sidebar) or
+               rejected in "edgeswipe.moved". Moving the view now would leave it offset with
+               nothing to animate it back. */
+            return iTrue;
+        }
         if (d->flags & swipeRubberband_DocumentWidgetFlag) {
             iChangeFlags(d->flags,
                          swipeRubberband_DocumentWidgetFlag | swipeBegun_DocumentWidgetFlag,
@@ -2839,8 +3210,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         }
         else if (argLabel_Command(cmd, "side") == 1) {
             iChangeFlags(d->flags, swipeBegun_DocumentWidgetFlag, iFalse);
-            if (argLabel_Command(cmd, "abort")) {
-                d->flags |= swipeAborted_DocumentWidgetFlag;
+            if (argLabel_Command(cmd, "abort") || !d->swipeView) {
+                /* Without an outgoing view there is nothing to slide the current view away
+                   for, so it must return to its normal position. */
+                iChangeFlags(d->flags, swipeAborted_DocumentWidgetFlag, d->swipeView != NULL);
                 setValue_Anim(&d->swipeOffset, 0, 100);
                 animate_DocumentWidget(d);
                 return iTrue;
@@ -2885,6 +3258,7 @@ static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
                 postCommand_Root(w->root, "navigate.back");
             }
         }
+        reenableAllInlineInputPrompts_DocumentWidget_(d);
         updateFetchProgress_DocumentWidget_(d);
         return iTrue;
     }
@@ -2932,12 +3306,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
         /* When any tab changes its document URL, update the open link indicators. */
-        if (updateOpenURLs_GmDocument(d->view->doc)) {
-            invalidate_DocumentWidget_(d);
-            refresh_Widget(d);
-        }
-        /* We may need to adjust navba ralignment paddings. */
-        updateNavBarSize_Root(w->root);
+        updateLinkStatus_DocumentWidget_(d, open_LinkUpdateFlag);
+        /* Note: the navbar is resized once per root; see `handleRootCommands_Widget`. */
         return iFalse;
     }
     if (equalWidget_Command(cmd, w, "banner.copy")) {
@@ -2952,8 +3322,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     if (equal_Command(cmd, "visited.changed")) {
-        updateVisitedLinks_GmDocument(d->view->doc);
-        invalidateVisibleLinks_DocumentView(d->view);
+        updateLinkStatus_DocumentWidget_(d, visited_LinkUpdateFlag);
         return iFalse;
     }
     if (equal_Command(cmd, "document.render")) /* `Periodic` makes direct dispatch to here */ {
@@ -2972,6 +3341,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (equal_Command(cmd, "font.changed")) {
             invalidateCachedLayout_History(d->mod.history);
         }
+        /* Splitting moves documents between roots without a tab switch. */
+        applyPendingLinkUpdates_DocumentWidget_(d);
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("bottombar");
@@ -3026,6 +3397,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "tabs.changed")) {
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
+            /* Link statuses may have changed while we were hidden. */
+            applyPendingLinkUpdates_DocumentWidget_(d);
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
@@ -3172,7 +3545,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
             }
         }
-        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
+            equalCase_Rangecc(urlScheme_String(d->mod.url), "gophers")) {
             appendFormat_String(
                 msg,
                 "\n%s${pageinfo.cert.status}\n"
@@ -3380,24 +3754,76 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
         const iString *url = d->mod.url;
-        if (hasLabel_Command(cmd, "prompturl")) {
+        if (hasLabel_Command(cmd, "link")) {
+            /* Use the stored base URL (document URL may change). */
+            const iGmLinkId linkId = argU32Label_Command(cmd, "link");
+            iBool isSensitive;
+            const iString *label, *baseUrl;
+            int heightPx;
+            inputPromptInfo_Media(media_GmDocument(d->view->doc),
+                                  findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId),
+                                  &isSensitive, &label, &baseUrl, &heightPx);
+            if (baseUrl) {
+                url = baseUrl;
+            }
+        }
+        else if (hasLabel_Command(cmd, "prompturl")) {
             url = string_Command(cmd, "prompturl");
         }
         const iString *userEnteredText = collect_String(suffix_Command(cmd, "value"));
         saveSubmittedInput_App(userEnteredText);
-        postCommandf_Root(
-            w->root,
-            /* use the `redirect:1` argument to cause the input query URL to be
-               replaced in History; we don't want to navigate onto it */
-            "open redirect:1 url:%s",
-            cstrCollect_String(makeQueryUrl_DocumentWidget_(d, url, userEnteredText)));
+        const char *queryUrl = cstrCollect_String(makeQueryUrl_DocumentWidget_(d, url, userEnteredText));
+        if (hasLabel_Command(cmd, "link")) {
+            postCommandf_Root(w->root, "open url:%s", queryUrl);
+            /* Don't dismiss the inline prompt yet. The request may be cancelled before a
+               response arrives, in which case the prompt remain as is for another request
+               attempt. */
+            setInlineInputPromptEnabled_DocumentWidget_(d, argU32Label_Command(cmd, "link"), iFalse);
+        }
+        else {
+            postCommandf_Root(w->root, "open redirect:1 url:%s", queryUrl);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
              equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") &&
-             !hasLabel_Command(cmd, "prompturl") && document_App() == d) {
+             !hasLabel_Command(cmd, "prompturl") && !hasLabel_Command(cmd, "link") &&
+             document_App() == d) {
         postCommand_Root(get_Root(), "navigate.back");
         return iTrue;
+    }
+    else if (equal_Command(cmd, "valueinput.cancelled") && hasLabel_Command(cmd, "link") &&
+             document_Command(cmd) == d) {
+        /* No back-navigation: the original page is still visible underneath. */
+        destroyInlineInputPrompt_DocumentWidget_(d, argU32Label_Command(cmd, "link"));
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, w, "valueinput.resized")) {
+        iWidget *bar = as_Widget(pointer_Command(cmd));
+        if (bar && startsWith_String(id_Widget(bar), "inputprompt")) {
+            const iGmLinkId linkId = (iGmLinkId) atoi(cstr_String(id_Widget(bar)) + 11);
+            iMediaId mediaId = findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
+            if (mediaId.type) {
+                setInputPromptHeight_Media(media_GmDocument(d->view->doc), mediaId, height_Widget(bar));
+                refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+                if (document_App() == d) {
+                    /* The prompt just resized and may now extend past the viewport. */
+                    ensureInputPromptVisible_DocumentWidget_(d, linkId);
+                }
+            }
+        }
+        return iFalse; /* let it also reach the bar's own handler for its internal re-arrange */
+    }
+    else if (equalWidget_Command(cmd, w, "focus.gained")) {
+        iWidget *bar = pointer_Command(cmd);
+        while (bar && !startsWith_String(id_Widget(bar), "inputprompt")) {
+            bar = bar->parent;
+        }
+        if (bar && document_App() == d) {
+            /* Focus should never be (partially or fully) outside the viewable area. */
+            ensureInputPromptVisible_DocumentWidget_(d, (iGmLinkId) atoi(cstr_String(id_Widget(bar)) + 11));
+        }
+        return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
@@ -3652,28 +4078,34 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
         cancelRequest_DocumentWidget_(d, iFalse);
+        if (!goBack_History(d->mod.history)) {
+            /* No document will be arriving, so nothing would ever end the animation or
+               replace the swiped-away view. */
+            abortSwipeAnimation_DocumentWidget_(d);
+            return iTrue;
+        }
         if (argLabel_Command(cmd, "swipe")) {
             resetSwipeAnimation_DocumentWidget_(d);
             iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag |
                          swipeViewOverlay_DocumentWidgetFlag, iTrue);
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
-            sampleSwipeSpeed_DocumentWidget_(d);
         }
-        goBack_History(d->mod.history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.forward") && document_App() == d) {
         cancelRequest_DocumentWidget_(d, iFalse);
+        if (!goForward_History(d->mod.history)) {
+            abortSwipeAnimation_DocumentWidget_(d);
+            return iTrue;
+        }
         if (argLabel_Command(cmd, "swipe")) {
             resetSwipeAnimation_DocumentWidget_(d);
             iChangeFlags(d->flags, viewWasSwipedAway_DocumentWidgetFlag, iTrue);
             setValue_Anim(&d->swipeOffset, width_Widget(w), 0);
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
-            sampleSwipeSpeed_DocumentWidget_(d);
         }
-        goForward_History(d->mod.history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
@@ -3980,7 +4412,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         showOrHideIndicators_DocumentWidget_(d);
     }
     else if (equal_Command(cmd, "document.autoreload")) {
-        if (d->mod.reloadInterval) {
+        if (d->mod.reloadInterval && !isRequestOngoing_DocumentWidget(d)) {
             if (!isValid_Time(&d->sourceTime) || elapsedSeconds_Time(&d->sourceTime) >=
                     seconds_ReloadInterval_(d->mod.reloadInterval)) {
                 postCommand_Widget(w, "document.reload");
@@ -4341,15 +4773,28 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
         iUrl url;
         init_Url(&url, linkUrl);
         if (isEmpty_Range(&url.query)) {
-            iWidget *dlg = makeInputPrompt_DocumentWidget(
-                d,
-                linkUrl,
-                iFalse,
-                NULL,
-                format_CStr("!document.input.submit prompturl:%s doc:%p",
-                            cstr_String(canonicalUrl_String(linkUrl)),
-                            d));
-            postCommand_Widget(dlg, "focus.set id:input");
+            if (deviceType_App() != desktop_AppDeviceType ||
+                prefs_App()->promptPosition != inline_InputPromptPosition) {
+                iWidget *dlg = makeInputPrompt_DocumentWidget(
+                    d,
+                    linkUrl,
+                    iFalse,
+                    NULL,
+                    format_CStr("!document.input.submit prompturl:%s doc:%p",
+                                cstr_String(canonicalUrl_String(linkUrl)),
+                                d));
+                postCommand_Widget(dlg, "focus.set id:input");
+            }
+            else {
+                /* Prompt may already exist if pre-populated at page load. */
+                iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, linkId);
+                if (!bar) {
+                    bar = createInlineInputPrompt_DocumentWidget_(d, linkId, linkUrl, iFalse, NULL);
+                    refreshAfterInlineInputPromptChange_DocumentWidget_(d);
+                }
+                setFocus_Widget(findChild_Widget(bar, "input"));
+                ensureInputPromptVisible_DocumentWidget_(d, linkId);
+            }
             return;
         }
     }
@@ -4409,7 +4854,7 @@ static iWidget *makeLinkContextMenuWithParameters_DocumentWidget_(iDocumentWidge
     }
     if (isGemini || willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "data") ||
         equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "finger") ||
-        equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "spartan") ||
+        isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "spartan") ||
         equalCase_Rangecc(scheme, "nex")) {
         isNative = iTrue;
         /* Regular links that we can open. */
@@ -5203,6 +5648,113 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     }
 }
 
+static iWidget *recreateInlineInputPrompt_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    iMediaId mediaId = findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
+    if (!mediaId.type) {
+        return NULL;
+    }
+    iBool isSensitive;
+    const iString *label, *baseUrl;
+    int heightPx;
+    inputPromptInfo_Media(media_GmDocument(d->view->doc), mediaId, &isSensitive, &label, &baseUrl, &heightPx);
+    iWidget *bar = makeInlineInputPrompt_DocumentWidget_(
+        d, linkId, baseUrl, isSensitive, label ? cstr_String(label) : NULL);
+    postCommand_Widget(bar, "valueinput.resized"); /* reconcile with the (possibly stale) reserved height */
+    return bar;
+}
+
+static int swipeOffsetOf_DocumentWidget_(const iDocumentWidget *d, const iDocumentView *view) {
+    /* Must match the horizontal offset used to draw `view` in draw_DocumentWidget_(). */
+    const int swipeValue = value_Anim(&d->swipeOffset);
+    if (!d->swipeView) {
+        return view == d->view ? swipeValue : 0;
+    }
+    const iBool          isBack = (d->flags & swipeViewOverlay_DocumentWidgetFlag) != 0;
+    const iDocumentView *over   = isBack ? d->swipeView : d->view;
+    const iDocumentView *under  = isBack ? d->view : d->swipeView;
+    if (over == under) {
+        return isBack ? swipeValue
+                       : (int) (0.25f * (swipeValue - width_Rect(bounds_Widget(constAs_Widget(d)))));
+    }
+    if (view == over) {
+        return swipeValue;
+    }
+    if (view == under) {
+        return 0.25f * (swipeValue - width_Rect(bounds_Widget(constAs_Widget(d))));
+    }
+    return 0;
+}
+
+static void repositionOutgoingInputPrompts_DocumentWidget_(iDocumentWidget *d) {
+    const int offset = swipeOffsetOf_DocumentWidget_(d, d->swipeView);
+    iForEach(PtrArray, i, &d->outgoingInputPrompts) {
+        setVisualOffset_Widget(i.ptr, offset, 0, 0);
+    }
+}
+
+void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *view) {
+    /* Must run after render_GmDocument() repopulates visibleMedia for this frame. */
+    iWidget *w = as_Widget(d);
+    const int swipeOffset = swipeOffsetOf_DocumentWidget_(d, view);
+    /* Is `view` currently covered, or rubber-banding without a swipeView? */
+    const iBool isCovered =
+        view == d->view &&
+        ((d->swipeView && (d->flags & swipeViewOverlay_DocumentWidgetFlag) != 0) ||
+         (!d->swipeView && swipeOffset != 0));
+    if (view == d->view) {
+        clear_PtrArray(&d->coveredInputPrompts);
+    }
+    /* Only the bars actually in the viewport are flagged visible. Also clear a stale
+       covered/deferred state, or a bar dropped from `visibleMedia` would never get
+       drawn again. */
+    iForEach(ObjectList, i, children_Widget(w)) {
+        iWidget *child = i.object;
+        if (startsWith_String(id_Widget(child), "inputprompt")) {
+            setFlags_Widget(child, hidden_WidgetFlag, iTrue);
+            iChangeFlags(child->flags2, deferredDraw_WidgetFlag2, iFalse);
+        }
+    }
+    iConstForEach(PtrArray, m, &view->visibleMedia) {
+        const iGmRun *run = m.ptr;
+        if (run->mediaType != inputPrompt_MediaType) {
+            continue;
+        }
+        iWidget *bar = findInlineInputPromptBar_DocumentWidget_(d, run->linkId);
+        if (!bar) {
+            /* The widget doesn't survive a document swap, but its state does in Media
+               (cf. inline images restored from a cached/history document). */
+            bar = recreateInlineInputPrompt_DocumentWidget_(d, run->linkId);
+            if (!bar) {
+                continue;
+            }
+        }
+        const iRect rect = runRect_DocumentView(view, run); /* in window coords */
+        bar->rect.pos    = windowToLocal_Widget(bar, rect.pos);
+        bar->rect.pos.x += swipeOffset;
+        bar->rect.size.x = rect.size.x;
+        arrange_Widget(bar);
+        if (isCovered) {
+            setFlags_Widget(bar, hidden_WidgetFlag, iTrue);
+            iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
+            pushBack_PtrArray(&d->coveredInputPrompts, bar);
+        }
+        else {
+            setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
+            iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
+        }
+    }
+    /* A hidden prompt would eat scroll keys if left focused. */
+    if (focus_Widget() && isFinished_SmoothScroll(&view->scrollY)) {
+        iWidget *bar = focus_Widget();
+        while (bar && !startsWith_String(id_Widget(bar), "inputprompt")) {
+            bar = bar->parent;
+        }
+        if (bar && bar->flags & hidden_WidgetFlag) {
+            setFocus_Widget(NULL);
+        }
+    }
+}
+
 void didScrollView_DocumentWidget(iDocumentWidget *d) {
     animateMedia_DocumentWidget_(d);
     /* Remember scroll positions of recently visited pages. */ {
@@ -5241,6 +5793,28 @@ static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDoc
     }
 }
 
+static void drawClipped_(const iPtrArray *bars, const iRect *clipBounds) {
+    /* Inline prompts are drawn clipped so they don't escape the document area during swipes. */
+    iPaint p;
+    init_Paint(&p);
+    setClip_Paint(&p, *clipBounds);
+    iConstForEach(PtrArray, i, bars) {
+        const iWidget *bar = i.ptr;
+        class_Widget(bar)->draw(bar);
+    }
+    unsetClip_Paint(&p);
+}
+
+static void drawOutgoingInputPrompts_DocumentWidget_(const iDocumentWidget *d,
+                                                     const iRect           *clipBounds) {
+    drawClipped_(&d->outgoingInputPrompts, clipBounds);
+}
+
+static void drawCoveredInputPrompts_DocumentWidget_(const iDocumentWidget *d,
+                                                    const iRect           *clipBounds) {
+    drawClipped_(&d->coveredInputPrompts, clipBounds);
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w          = constAs_Widget(d);
     const iRect    bounds     = bounds_Widget(w);
@@ -5270,6 +5844,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             }
         }
         drawViewOrBlank_DocumentWidget_(d, under, underlayOffset, iFalse);
+        if (under == d->swipeView) {
+            drawOutgoingInputPrompts_DocumentWidget_(d, &clipBounds);
+        }
+        else if (under == d->view) {
+            drawCoveredInputPrompts_DocumentWidget_(d, &clipBounds);
+        }
         if (overlayOffset > 0) {
             /* Dim the occluded view with a soft shadow. */
             iRect safeBounds = bounds;
@@ -5293,6 +5873,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         }
         drawViewOrBlank_DocumentWidget_(d, over, overlayOffset, iFalse);
+        if (over == d->swipeView) {
+            drawOutgoingInputPrompts_DocumentWidget_(d, &clipBounds);
+        }
     }
     else {
         int offset = value_Anim(&d->swipeOffset);
@@ -5304,6 +5887,10 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         drawViewOrBlank_DocumentWidget_(d, d->view, offset,
                                         (d->flags & viewWasSwipedAway_DocumentWidgetFlag) != 0);
+        if (offset) {
+            /* Due to offset, inline prompts may shift outside the document area. */
+            drawCoveredInputPrompts_DocumentWidget_(d, &clipBounds);
+        }
     }
     if (colorTheme_App() == pureWhite_ColorTheme &&
         !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar)) {
@@ -5420,6 +6007,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
     setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
+    /* Inline content (input prompts) is anchored to document coordinates and can
+       otherwise bleed outside the viewport into the tab/menu bars. */
+    w->flags2 |= clipChildren_WidgetFlag2;
     init_PersistentDocumentState(&d->mod);
     d->flags = 0;
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
@@ -5453,10 +6043,13 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iZap(d->sourceTime);
     d->sourceGempub    = NULL;
     d->initNormScrollY = 0;
+    d->pendingLinkUpdates = 0;
     d->grabbedPlayer   = NULL;
     d->mediaTimer      = 0;
     init_String(&d->pendingGotoHeading);
     init_String(&d->linePrecedingLink);
+    init_String(&d->originId);
+    d->originToNewTab = iFalse;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Click(&d->midClick, d, SDL_BUTTON_MIDDLE);
     d->linkInfo = (deviceType_App() == desktop_AppDeviceType ? new_LinkInfo() : NULL);
@@ -5464,6 +6057,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->swipeView   = NULL;
     d->swipeBanner = NULL;
     init_Anim(&d->swipeOffset, 0);
+    init_PtrArray(&d->outgoingInputPrompts);
+    init_PtrArray(&d->coveredInputPrompts);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumbColor_ScrollWidget(d->scroll, tmQuote_ColorId);
     d->menu         = NULL; /* created when clicking */
@@ -5503,13 +6098,16 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(refreshWhileScrolling_DocumentWidget, d);
     remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
+    resetSwipeAnimation_DocumentWidget_(d); /* touches d->view; must run before it's deleted */
     delete_DocumentView(d->view);
-    resetSwipeAnimation_DocumentWidget_(d);
+    deinit_PtrArray(&d->outgoingInputPrompts);
+    deinit_PtrArray(&d->coveredInputPrompts);
     delete_LinkInfo(d->linkInfo);
     iRelease(d->media);
     iRelease(d->request);
     delete_Gempub(d->sourceGempub);
     deinit_String(&d->linePrecedingLink);
+    deinit_String(&d->originId);
     deinit_String(&d->pendingGotoHeading);
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
@@ -5640,6 +6238,9 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
                                 const iBlock *setIdent) {
+    /* Dismiss the open input prompt immediately so it doesn't interfere with the
+       content fetch or switch. */
+    cancelInputPrompt_DocumentWidget_(d);
     const iBool allowCache     = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     const iBool allowCachedDoc = (setUrlFlags & disallowCachedDocument_DocumentWidgetSetUrlFlag) == 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
@@ -5703,11 +6304,16 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     return d;
 }
 
-void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) {
+void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other, iBool isNewTab) {
     if (d != other) {
-        /* TODO: Could remember the other's ID? */
         d->mod.generation = other->mod.generation + 1;
         set_String(&d->linePrecedingLink, &other->linePrecedingLink);
+        set_String(&d->originId, id_Widget(constAs_Widget(other)));
+        d->originToNewTab = isNewTab;
+    }
+    else {
+        clear_String(&d->originId);
+        d->originToNewTab = iFalse;
     }
 }
 
@@ -5742,6 +6348,11 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
         return d->request != NULL || d->flags & pendingRedirect_DocumentWidgetFlag;
     }
     return iFalse;
+}
+
+iBool isFetchingOwnLink_DocumentWidget(const iDocumentWidget *d) {
+    /* Fetching one of the links in the current document. */
+    return isRequestOngoing_DocumentWidget(d) && d->requestLinkId;
 }
 
 void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {

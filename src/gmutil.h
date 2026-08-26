@@ -138,6 +138,8 @@ iBool           isLikelyUrl_String      (const iString *);
 iBool           isTitanUrl_String       (const iString *);
 iBool           isKnownScheme_Rangecc   (iRangecc scheme); /* any URI scheme */
 iBool           isKnownUrlScheme_Rangecc(iRangecc scheme); /* URL schemes only */
+iBool           isGopherScheme_Rangecc  (iRangecc scheme); /* "gopher" or "gophers" */
+iBool           isTlsScheme_Rangecc     (iRangecc scheme); /* "gophers" (and "gemini", "titan", ...) */
 void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
 void            punyEncodeUrlHost_String(iString *absoluteUrl);
 void            stripUrlPort_String     (iString *);

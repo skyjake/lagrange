@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.21 (1)
+* Fixed: Crash when enabling split view mode.
+* Fixed: Sidebar dismissed inadvertently when editing bookmarks.
+* Fixed: Hidden toolbar showing itself due to changes in background tabs.
+
 ## 1.20 (16)
 * Tell SDL to batch render operations whenever possible to potentially improve drawing performance.
 

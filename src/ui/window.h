@@ -71,6 +71,7 @@ struct Impl_WindowPlacement {
     int   snap;             /* LAGRANGE_ENABLE_CUSTOM_FRAME */
     int   lastHit;
     int   desktop;          /* remember the workspace */
+    size_t placementIndex;  /* stable "Nth window" slot, for persistent placement storage */
 };
 
 enum iWindowSplit {
@@ -117,6 +118,7 @@ struct Impl_Window {
     iClick        midDrag;      /* middle mouse button drag-to-scroll gesture */
     uint32_t      midDragTime;  /* timestamp of last scroll drag event */
     float         midDragAccum;
+    iBool         midClickScroll; /* click-to-scroll active (button released) */
 };
 
 struct Impl_MainWindow {
@@ -143,7 +145,10 @@ iLocalDef enum iWindowType type_Window(const iAnyWindow *d) {
     return main_WindowType;
 }
 
-uint32_t        id_Window               (const iWindow *);
+uint32_t        id_Window               (const iWindow *); /* OS window id; not stable across relaunch */
+uint32_t        serial_Window           (const iWindow *); /* stable window id; survives focus/relaunch */
+void            setSerial_Window        (iWindow *, uint32_t serial); /* for state restoration only */
+void            advanceSerialCounter_Window(uint32_t pastValue); /* avoids colliding with restored serials */
 iInt2           size_Window             (const iWindow *);
 iInt2           maxTextureSize_Window   (const iWindow *);
 float           uiScale_Window          (const iWindow *);

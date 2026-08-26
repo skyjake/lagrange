@@ -47,7 +47,7 @@ You need a POSIX-compatible environment to compile Lagrange.
 The required tools are a C11 compiler (e.g., Clang or GCC), CMake, `pkg-config`, and `zip`. Additional tools are required if HarfBuzz and GNU FriBidi are also compiled as part of the build (see next section for details).
 
 1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain HarfBuzz, GNU FriBidi, or [the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation) submodules; check which tarball you are downloading. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/gemini/lagrange`
-2. Check that you have the recommended build tools and dependencies installed: SDL 2, OpenSSL, libpcre, libunistring, GNU FriBidi, and zlib. For example,
+2. Check that you have the build tools and dependencies installed: SDL (2.0.8 or newer), OpenSSL, libpcre, libunistring, GNU FriBidi, and zlib. For example,
    * on macOS using Homebrew: `brew install cmake automake sdl2 openssl@1.1 pcre libunistring fribidi`
    * on Ubuntu: `sudo apt install cmake zip libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libfribidi-dev`
    * on Fedora: `sudo dnf install cmake zip SDL2-devel openssl-devel pcre-devel zlib-devel libunistring-devel fribidi-devel`
@@ -139,7 +139,7 @@ You should use a version of the SDL 2 library that is compiled for native Window
     arch=x64
     libdir=${prefix}/lib/${arch}/
     incdir=${prefix}/include/
-    
+
     Name: sdl2
     Description: Simple DirectMedia Layer
     Version: 2.0.12-msvc

@@ -475,6 +475,11 @@ static void abortDrag_ListWidget_(iListWidget *d) {
     }
 }
 
+void cancelDrag_ListWidget(iListWidget *d) {
+    cancel_Click(&d->click);
+    abortDrag_ListWidget_(d);
+}
+
 static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event *ev) {
     int dir = 0;
     if (ev->type == SDL_MOUSEWHEEL) {

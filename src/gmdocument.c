@@ -210,7 +210,7 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (equalCase_Rangecc(scheme, "gemini")) {
         return prefs_App()->monospaceGemini;
     }
-    if (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger")) {
+    if (isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "finger")) {
         return prefs_App()->monospaceGopher;
     }
     return iFalse;
@@ -218,7 +218,7 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
 
 static iBool isGopher_GmDocument_(const iGmDocument *d) {
     const iRangecc scheme = urlScheme_String(&d->url);
-    return (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger"));
+    return (isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "finger"));
 }
 
 static void initTheme_GmDocument_(iGmDocument *d) {
@@ -425,7 +425,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (startsWithCase_Rangecc(parts.scheme, "http")) {
                 setScheme_GmLink_(link, http_GmLinkScheme);
             }
-            else if (equalCase_Rangecc(parts.scheme, "gopher")) {
+            else if (isGopherScheme_Rangecc(parts.scheme)) {
                 setScheme_GmLink_(link, gopher_GmLinkScheme);
                 if (startsWith_Rangecc(parts.path, "/7")) {
                     link->flags |= query_GmLinkFlag;
@@ -610,8 +610,8 @@ static iBool shouldBeNormalized_GmDocument_(const iGmDocument *d) {
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
         return iFalse;
     }
-    if (startsWithCase_String(&d->url, "gopher:") && (prefs->monospaceGopher ||
-                                                      !prefs->geminiStyledGopher)) {
+    if ((startsWithCase_String(&d->url, "gopher:") || startsWithCase_String(&d->url, "gophers:")) &&
+        (prefs->monospaceGopher || !prefs->geminiStyledGopher)) {
         return iFalse;
     }
     return iTrue;
@@ -1470,6 +1470,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     run.bounds.pos    = pos;
                     run.bounds.size.x = d->size.x;
                     run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                    run.visBounds     = run.bounds;
+                    pushBack_Array(&d->layout, &run);
+                    break;
+                }
+                case inputPrompt_MediaType: {
+                    run.bounds.pos    = pos;
+                    run.bounds.size.x = d->size.x;
+                    int h = 0;
+                    iBool isSensitive;
+                    inputPromptInfo_Media(d->media, media, &isSensitive, NULL, NULL, &h);
+                    if (h <= 0) {
+                        /* Not yet reported by the widget; reserve a placeholder height. */
+                        h = lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                    }
+                    run.bounds.size.y = h;
                     run.visBounds     = run.bounds;
                     pushBack_Array(&d->layout, &run);
                     break;
@@ -2463,7 +2478,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     d->flags.isSpartan = equalCase_Rangecc(parts.scheme, "spartan");
     d->flags.isNex     = equalCase_Rangecc(parts.scheme, "nex") &&
                          (isEmpty_Range(&parts.path) || endsWith_Rangecc(parts.path, "/"));
-    d->flags.isGopherMenu = equalCase_Rangecc(parts.scheme, "gopher") &&
+    d->flags.isGopherMenu = isGopherScheme_Rangecc(parts.scheme) &&
                             startsWith_Rangecc(parts.path, "/1");
 }
 
@@ -2914,6 +2929,16 @@ const iGmRun *precedingRun_GmDocument(const iGmDocument *d, const iGmRun *run) {
     return run;
 }
 
+const iGmRun *findInputPromptRun_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmRunRange range = runRange_GmDocument(d);
+    for (const iGmRun *run = range.start; run != range.end; run++) {
+        if (run->mediaType == inputPrompt_MediaType && run->linkId == linkId) {
+            return run;
+        }
+    }
+    return NULL;
+}
+
 static const iGmLink *link_GmDocument_(const iGmDocument *d, iGmLinkId id) {
     if (id > 0 && id <= size_PtrArray(&d->links)) {
         return constAt_PtrArray(&d->links, id - 1);
@@ -3021,7 +3046,7 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     /* Check the URL if it appears like a potential media link. */
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
-    if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
+    if (equalCase_Rangecc(scheme, "gemini") || isGopherScheme_Rangecc(scheme) ||
         equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "nex") ||
         equalCase_Rangecc(scheme, "finger") || equalCase_Rangecc(scheme, "file") ||
         willUseProxy_App(scheme)) {

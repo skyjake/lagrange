@@ -130,8 +130,9 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     /* Get a copy of the input for further processing. */ {
         lock_Mutex(&d->input->mtx);
         iAssert(inputSampleSize * d->inputPos < size_Block(&d->input->data));
+        const char* dataPtr = constData_Block(&d->input->data);
         memcpy(samples,
-               constData_Block(&d->input->data) + inputSampleSize * d->inputPos,
+               dataPtr + inputSampleSize * d->inputPos,
                inputSampleSize * n);
         d->inputPos += n;
         unlock_Mutex(&d->input->mtx);
@@ -256,11 +257,12 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
     while (size_Array(&d->pendingOutput) < d->output.count) {
         /* Try to decode some input. */
         lock_Mutex(&d->input->mtx);
+        const unsigned char* dataPtr = constData_Block(input);
         int     count     = 0;
         float **samples   = NULL;
         int     remaining = d->inputPos < size_Block(input) ? size_Block(input) - d->inputPos : 0;
         int     consumed  = stb_vorbis_decode_frame_pushdata(
-            d->vorbis, constData_Block(input) + d->inputPos, remaining, NULL, &samples, &count);
+            d->vorbis, dataPtr + d->inputPos, remaining, NULL, &samples, &count);
         d->inputPos += consumed;
         iAssert(d->inputPos <= size_Block(input));
         unlock_Mutex(&d->input->mtx);
@@ -309,7 +311,8 @@ enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
             d->totalInputSize = size_Block(input);
         }
         if (d->inputPos < size_Block(input)) {
-            mpg123_feed(d->mpeg, constData_Block(input) + d->inputPos, size_Block(input) - d->inputPos);
+            const unsigned char *dataPtr = constData_Block(input);
+            mpg123_feed(d->mpeg, dataPtr + d->inputPos, size_Block(input) - d->inputPos);
             if (d->inputPos == 0) {
                 long r; int ch, enc;
                 mpg123_getformat(d->mpeg, &r, &ch, &enc);
@@ -367,7 +370,8 @@ static int readOpus_(void *stream, unsigned char *ptr, int nbytes) {
     const iBlock *input = &d->input->data;
     const size_t  avail = size_Block(input) - d->inputPos;
     const size_t  n     = iMin(avail, nbytes);
-    memcpy(ptr, constData_Block(input) + d->inputPos, n);
+    const char   *dataPtr = constData_Block(input);
+    memcpy(ptr, dataPtr + d->inputPos, n);
     d->inputPos += n;
     return n;
 }

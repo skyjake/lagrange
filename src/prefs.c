@@ -27,9 +27,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <assert.h>
 #include <the_Foundation/fileinfo.h>
 
+#if defined (_MSC_VER)
+// TODO: vs doesn't like bools[x], I think this is quite sane alternative
+_Static_assert(offsetof(iPrefs, geminiStyledGopher) == offsetof(iPrefs, bools) + geminiStyledGopher_PrefsBool,
+               "memory layout mismatch (needs struct packing?)");
+#else
 _Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
                    offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
+#endif
 
 void init_Prefs(iPrefs *d) {
     iForIndices(i, d->strings) {
@@ -53,6 +59,7 @@ void init_Prefs(iPrefs *d) {
     d->editorZoomLevel          = 0;
     d->editorSyntaxHighlighting = iTrue;
     d->useGamepad               = isDesktop_Platform(); /* enabled by default on desktop */
+    d->thickScrollBar           = iFalse;
     d->zoomPercent              = 100;
     d->navbarActions[0]         = back_ToolbarAction;
     d->navbarActions[1]         = forward_ToolbarAction;
@@ -98,13 +105,14 @@ void init_Prefs(iPrefs *d) {
     }
     if (isTerminal_Platform()) {
         d->bottomNavBar = iTrue;
+        d->bottomTabBar = iTrue;
     }
-    d->bottomInput                            = iFalse; /* affects desktop only */
     d->menuBar                                = (deviceType_App() == desktop_AppDeviceType);
     d->simpleChars                            = iTrue;  /* only in terminal */
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
     d->detachedPrefs                          = iTrue;
     d->pinSplit                               = 1;
+    d->promptPosition                         = inline_InputPromptPosition;
     d->feedInterval                           = fourHours_FeedInterval;
     d->italicQuote                            = iTrue;
     d->time24h                                = iTrue;

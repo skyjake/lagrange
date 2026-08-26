@@ -44,8 +44,8 @@ void    init_Paint          (iPaint *);
 void    beginTarget_Paint   (iPaint *, SDL_Texture *target);
 void    endTarget_Paint     (iPaint *);
 
-void    setClip_Paint       (iPaint *, iRect rect);
-void    unsetClip_Paint     (iPaint *);
+void    setClip_Paint       (iPaint *, iRect rect); /* can be nested; intersects previous rect */
+void    unsetClip_Paint     (iPaint *); /* must be paired with the `setClip` calls */
 
 void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);

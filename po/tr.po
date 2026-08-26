@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2026-04-06 23:44+0000\n"
+"PO-Revision-Date: 2026-08-08 04:58+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1438,7 +1438,7 @@ msgid "dlg.dismiss.warning"
 msgstr "Uyarıyı atla"
 
 msgid "doc.pre.nocaption"
-msgstr "Altyazısız önceden biçimlendirilmiş metin"
+msgstr "Alt yazısız, önceden biçimlendirilmiş metin"
 
 #, c-format
 msgid "doc.archive"
@@ -3011,9 +3011,6 @@ msgstr "İstemi Üstte Göster"
 msgid "menu.input.showbottom"
 msgstr "İstemi Altta Göster"
 
-msgid "prefs.bottominput"
-msgstr "Giriş istemi altta:"
-
 msgid "prefs.ipv6"
 msgstr "IPv6’yı yeğle:"
 
@@ -3064,3 +3061,21 @@ msgstr "Servisler"
 
 msgid "link.copy.gemtext"
 msgstr "Bağlantıyı Gemtext Olarak Kopyala"
+
+msgid "prefs.promptposition"
+msgstr "Giriş istemi konumu:"
+
+msgid "prefs.promptposition.inline"
+msgstr "Satır içi"
+
+msgid "prefs.promptposition.top"
+msgstr "Üstte"
+
+msgid "prefs.promptposition.bottom"
+msgstr "Altta"
+
+msgid "ident.use.domain"
+msgstr "Bu Etki Alanında Kullan"
+
+msgid "prefs.thickscroll"
+msgstr "Kalın sarma çubukları:"

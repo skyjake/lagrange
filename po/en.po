@@ -829,6 +829,9 @@ msgstr "Send Message As…"
 msgid "ident.use"
 msgstr "Use on This Page"
 
+msgid "ident.use.domain"
+msgstr "Use on This Domain"
+
 msgid "ident.stopuse"
 msgstr "Stop Using on This Page"
 
@@ -1999,8 +2002,17 @@ msgstr "Search URL:"
 msgid "prefs.hoverlink"
 msgstr "Show URL on hover:"
 
-msgid "prefs.bottominput"
-msgstr "Input prompt at bottom:"
+msgid "prefs.promptposition"
+msgstr "Input prompt position:"
+
+msgid "prefs.promptposition.inline"
+msgstr "Inline"
+
+msgid "prefs.promptposition.top"
+msgstr "Top"
+
+msgid "prefs.promptposition.bottom"
+msgstr "Bottom"
 
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
@@ -2072,6 +2084,9 @@ msgstr "Hide tab bar:"
 
 msgid "prefs.menubar"
 msgstr "Menu Bar"
+
+msgid "prefs.thickscroll"
+msgstr "Thick scroll bars:"
 
 msgid "prefs.evensplit"
 msgstr "Split tabs evenly:"

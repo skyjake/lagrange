@@ -294,7 +294,7 @@ void destroyPending_Root(iRoot *d) {
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
         iAssert(widget->root == d);
-        if (!isFinished_Anim(&widget->visualOffset) ||
+        if (!isFinished_Anim(&widget->visualOffset) || !isFinished_Anim(&widget->fadeOpacity) ||
             isBeingVisuallyOffsetByReference_Widget(widget)) {
             continue;
         }
@@ -699,7 +699,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
         if (deviceType_App() != phone_AppDeviceType) {
             /* If the sidebar is too wide, it may need to be hidden. */
-            const int docWidth = iMaxi(1, width_Widget(findChild_Widget(root, "doctabs")));
+            const int docWidth = iMaxi(1, width_Widget(findChild_Widget(root, "stack")));
             if (isVisible_Widget(sidebar) && 10 * width_Widget(sidebar) / docWidth >= 5) {
                 postCommand_Root(root->root, "sidebar.toggle hide:1");
             }
@@ -764,6 +764,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             updateBottomBarPosition_(bottomBar, iFalse);
             updateToolbarColors_Root(root->root);
         }
+        return iFalse; /* all roots must handle this */
+    }
+    else if (equal_Command(cmd, "document.openurls.changed")) {
+        updateNavBarSize_Root(root->root);
         return iFalse; /* all roots must handle this */
     }
     else if (equal_Command(cmd, "theme.changed")) {
@@ -1089,14 +1093,9 @@ static void updateNavBarSize_(iWidget *navBar) {
     }
     /* Sidebar alignment paddings. */
     if (!isPhone) {
-        const iWidget *docTabs      = findChild_Widget(root_Widget(navBar), "doctabs");
-        const iBool isTabBarVisible = isVisible_Widget(findChild_Widget(docTabs, "tabs.buttons"));
-        const iBool isNavBarNextToTabs =
-            (prefs_App()->bottomTabBar ^ prefs_App()->bottomNavBar) == 0;
         const iBool isPortraitTablet =
             (deviceType_App() == tablet_AppDeviceType && isPortrait_App());
-        const iBool arePaddingsNeeded =
-            (!isTabBarVisible || !isNavBarNextToTabs) && !isPortraitTablet;
+        const iBool arePaddingsNeeded = !isPortraitTablet;
         iWidget       *sbPad1       = findChild_Widget(navBar, "sbpad1");
         iWidget       *sbPad2       = findChild_Widget(navBar, "sbpad2");
         const iWidget *sidebar      = findWidget_App("sidebar");
@@ -1172,7 +1171,10 @@ static void updateNavBarSize_(iWidget *navBar) {
 }
 
 void updateNavBarSize_Root(iRoot *d) {
-    updateNavBarSize_(findChild_Widget(d->widget, "navbar"));
+    iWidget *navBar = findChild_Widget(d->widget, "navbar");
+    if (navBar) { /* popup windows don't have one */
+        updateNavBarSize_(navBar);
+    }
 }
 
 static void updateNavBarActions_(iWidget *navBar) {
@@ -2163,10 +2165,12 @@ void createUserInterface_Root(iRoot *d) {
     /* Tab bar and the document area. */ {
         iWidget *mainStack = new_Widget();
         setId_Widget(mainStack, "stack");
-        addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
-                                                        unhittable_WidgetFlag);
+        addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag |
+                                                        arrangeHorizontal_WidgetFlag |
+                                                        expand_WidgetFlag | unhittable_WidgetFlag);
         iWidget *docTabs = makeTabs_Widget(mainStack);
         setId_Widget(docTabs, "doctabs");
+        setFlags_Widget(docTabs, expand_WidgetFlag, iTrue);
         if (isDesktop_Platform()) {
             setBackgroundColor_Widget(findChild_Widget(docTabs, "tabs.buttons"),
                                       uiBackground_ColorId);
@@ -2189,11 +2193,12 @@ void createUserInterface_Root(iRoot *d) {
     /* Sidebars. */ {
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SidebarSide);
         if (deviceType_App() != phone_AppDeviceType) {
-            /* Sidebars are next to the tab content. */
-            iWidget *content = findChild_Widget(root, "tabs.content");
-            addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
+            /* Sidebars are siblings of doctabs, not inside tabs.content, so the tab
+               button row doesn't extend over the sidebars. */
+            iWidget *mainStack = findChild_Widget(root, "stack");
+            addChildPos_Widget(mainStack, iClob(sidebar1), front_WidgetAddPos);
             iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
-            addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+            addChildPos_Widget(mainStack, iClob(sidebar2), back_WidgetAddPos);
             setFlags_Widget(as_Widget(sidebar2), disabledWhenHidden_WidgetFlag, iTrue);
         }
         else {

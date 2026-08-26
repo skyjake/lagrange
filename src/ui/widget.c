@@ -167,6 +167,7 @@ void init_Widget(iWidget *d) {
     d->commandHandler = NULL;
     d->drawBuf        = NULL;
     init_Anim(&d->overflowScrollOpacity, 0.0f);
+    init_Anim(&d->fadeOpacity, -1.0f); /* not yet drawn; undefined opacity */
     init_String(&d->data);
     iZap(d->padding);
     iZap(d->borderPad);
@@ -198,6 +199,19 @@ static void animateOverflowScrollOpacity_Widget_(void *ptr) {
     if (!isFinished_Anim(&d->overflowScrollOpacity)) {
         addTickerRoot_App(animateOverflowScrollOpacity_Widget_, d->root, ptr);
     }
+}
+
+static void fadeOpacityAnimation_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    refresh_Widget(d);
+    if (!isFinished_Anim(&d->fadeOpacity)) {
+        addTickerRoot_App(fadeOpacityAnimation_Widget_, d->root, ptr);
+    }
+}
+
+static void setFadeOpacity_Widget_(iWidget *d, float target, uint32_t span) {
+    setValue_Anim(&d->fadeOpacity, target, span);
+    addTickerRoot_App(fadeOpacityAnimation_Widget_, d->root, d);
 }
 
 static int treeSize_Widget_(const iWidget *d, int n) {
@@ -235,8 +249,10 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & overflowScrollable_WidgetFlag) {
         removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
     }
+    removeTicker_App(fadeOpacityAnimation_Widget_, d);
     iWindow *win = d->root->window;
     if (win) {
+        /* The window may hold pointers to this widget. */
         if (win->lastHover == d) {
             win->lastHover = NULL;
         }
@@ -245,6 +261,9 @@ void deinit_Widget(iWidget *d) {
         }
         if (win->keyPriority == d) {
             win->keyPriority = NULL;
+        }
+        if (win->focus == d) {
+            win->focus = NULL;
         }
     }
     if (d->flags & nativeMenu_WidgetFlag) {
@@ -289,6 +308,9 @@ void destroy_Widget(iWidget *d) {
         iAssert(!isRoot_Widget_(d));
         if (isVisible_Widget(d)) {
             refresh_Widget(d);
+        }
+        if (value_Anim(&d->fadeOpacity) > 0.0f) {
+            setFadeOpacity_Widget_(d, 0.0f, 200); /* background fades in smoothly */
         }
         aboutToBeDestroyed_Widget_(d);
         if (!d->root->pendingDestruction) {
@@ -366,7 +388,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
 
 void setTreeFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     if (d) {
-        setFlags_Widget(d, flags, iTrue);
+        setFlags_Widget(d, flags, set);
         iForEach(ObjectList, i, d->children) {
             setTreeFlags_Widget(i.object, flags, set);
         }
@@ -400,6 +422,7 @@ void setMinSize_Widget(iWidget *d, iInt2 minSize) {
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     if (d) {
+        /* FIXME: aspect_UI is not the same for both axes */
         d->padding[0] = left * aspect_UI;
         d->padding[1] = top * aspect_UI;
         d->padding[2] = right * aspect_UI;
@@ -1214,6 +1237,16 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
                          windowCoord);
 }
 
+static iBool isClippedAway_Widget_(const iWidget *d, iInt2 windowCoord) {
+    /* Any ancestor may be clipping this widget. */
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        if (w->flags2 & clipChildren_WidgetFlag2 && !contains_Widget(w, windowCoord)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
     return (ev->type == SDL_KEYUP || ev->type == SDL_KEYDOWN || ev->type == SDL_TEXTINPUT
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
@@ -1241,7 +1274,8 @@ iBool isSelfHidden_Widget(const iAnyObject *obj) {
 
 iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
     return !isSelfHidden_Widget(d) ||
-           (d->flags & visualOffset_WidgetFlag && ~d->flags2 & permanentVisualOffset_WidgetFlag2);
+           (d->flags & visualOffset_WidgetFlag && ~d->flags2 & permanentVisualOffset_WidgetFlag2) ||
+           (d->flags2 & deferredDraw_WidgetFlag2);
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
@@ -1272,6 +1306,64 @@ void unhover_Widget(void) {
 iLocalDef iBool redispatchEvent_Widget_(iWidget *d, iWidget *dst, const SDL_Event *ev) {
     if (d != dst) {
         return dispatchEvent_Widget(dst, ev);
+    }
+    return iFalse;
+}
+
+static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event *ev) {
+    iAssert(child != d); /* cannot be child of self */
+    iAssert(child->root == d->root);
+    if (child == window_Widget(d)->focus &&
+        (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
+        return iFalse; /* Already dispatched. */
+    }
+    if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
+        return iFalse; /* Already dispatched. */
+    }
+    if (dispatchEvent_Widget(child, ev)) {
+#if 0
+        if (ev->type == SDL_TEXTINPUT) {
+            printf("[%p] %s:'%s' ate text input\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_KEYDOWN) {
+            printf("[%p] %s:'%s' ate the key\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            identify_Widget(child);
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_MOUSEMOTION) {
+            printf("[%p] %s:'%s' ate the motion\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_MOUSEWHEEL) {
+            printf("[%p] %s:'%s' ate the wheel\n",
+                   child, class_Widget(child)->name,
+                   cstr_String(id_Widget(child)));
+            fflush(stdout);
+        }
+#endif
+#if 0
+        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+            printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
+                   child, cstr_String(id_Widget(child)),
+                   class_Widget(child)->name,
+                   ev->button.button);
+            fflush(stdout);
+        }
+#endif
+        return iTrue;
     }
     return iFalse;
 }
@@ -1338,7 +1430,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
              ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
              isHoverable_Widget(d)) {
-        if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
+        const iInt2 motionCoord = init_I2(ev->motion.x, ev->motion.y);
+        if (contains_Widget(d, motionCoord) && !isClippedAway_Widget_(d, motionCoord)) {
             setHover_Widget(d);
 #if 0
             printf("<%u> set hover to ", window_Widget(d)->frameTime);
@@ -1348,64 +1441,19 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     if (filterEvent_Widget_(d, ev)) {
+        /* Clipping parents may determine if a child is outside bounds and should not
+           receive mouse events at all. */
+        const iBool skipChildren = (d->flags2 & clipChildren_WidgetFlag2) &&
+                                   isMouseEvent_(ev) && !mouseGrab_Widget() &&
+                                   !contains_Widget(d, mouseCoord_SDLEvent(ev));
         /* Children may handle it first. Done in reverse so children drawn on top get to
            handle the events first. */
-        iReverseForEach(ObjectList, i, d->children) {
-            iWidget *child = as_Widget(i.object);
-            iAssert(child != d); /* cannot be child of self */
-            iAssert(child->root == d->root);
-            if (child == window_Widget(d)->focus &&
-                (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
-                continue; /* Already dispatched. */
-            }
-            if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
-                /* Already dispatched. */
-                continue;
-            }
-            if (dispatchEvent_Widget(child, ev)) {
-#if 0
-                if (ev->type == SDL_TEXTINPUT) {
-                    printf("[%p] %s:'%s' ate text input\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    fflush(stdout);
+        if (!skipChildren) {
+            iReverseForEach(ObjectList, i, d->children) {
+                iWidget *child = as_Widget(i.object);
+                if (dispatchToChild_Widget_(d, child, ev)) {
+                    return iTrue;
                 }
-#endif
-#if 0
-                if (ev->type == SDL_KEYDOWN) {
-                    printf("[%p] %s:'%s' ate the key\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    identify_Widget(child);
-                    fflush(stdout);
-                }
-#endif
-#if 0
-                if (ev->type == SDL_MOUSEMOTION) {
-                    printf("[%p] %s:'%s' ate the motion\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    fflush(stdout);
-                }
-#endif
-#if 0
-                if (ev->type == SDL_MOUSEWHEEL) {
-                    printf("[%p] %s:'%s' ate the wheel\n",
-                           child, class_Widget(child)->name,
-                           cstr_String(id_Widget(child)));
-                    fflush(stdout);
-                }
-#endif
-#if 0
-                if (ev->type == SDL_MOUSEBUTTONDOWN) {
-                    printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
-                           child, cstr_String(id_Widget(child)),
-                           class_Widget(child)->name,
-                           ev->button.button);
-                    fflush(stdout);
-                }
-#endif
-                return iTrue;
             }
         }
         //iAssert(get_Root() == d->root);
@@ -1797,20 +1845,31 @@ void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
     iAssert(window_Widget(d) == get_Window());
-    iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
+    iBool shadowBorder = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
     iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
-    if (deviceType_App() == phone_AppDeviceType) {
-        if (shadowBorder) {
-            fadeBackground = iTrue;
-            shadowBorder = iFalse;
+    const iBool isShadowStyle = (d->flags & keepOnTop_WidgetFlag) != 0;
+    /* Update the fade target. */ {
+        iAnim *fadeOpacity = iConstCast(iAnim *, &d->fadeOpacity);
+        const float fadeTarget =
+            (d->flags & destroyPending_WidgetFlag) ? 0.0f : (fadeBackground ? 1.0f : 0.0f);
+        if (value_Anim(fadeOpacity) < 0.0f) {
+            init_Anim(fadeOpacity, 0.0f); /* first time this widget is drawn */
+        }
+        if (targetValue_Anim(fadeOpacity) != fadeTarget) {
+            setFadeOpacity_Widget_(iConstCast(iWidget *, d), fadeTarget, 200);
         }
     }
-    const iBool isFaded = (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) ||
-                          (d->flags2 & fadeBackground_WidgetFlag2);
-    if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
-        iPaint p;
-        init_Paint(&p);
-        drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
+    const iBool isFaded =
+        (value_Anim(&d->fadeOpacity) > 0.0f && ~d->flags & noFadeBackground_WidgetFlag) ||
+        (d->flags2 & fadeBackground_WidgetFlag2);
+    if (isShadowStyle && ~d->flags & noShadowBorder_WidgetFlag) {
+        /* Smoothly fade the shadow in/out during a transition. */
+        const int shadowAlpha = (int) (30 * (1.0f - value_Anim(&d->fadeOpacity)));
+        if (shadowAlpha > 0) {
+            iPaint p;
+            init_Paint(&p);
+            drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, shadowAlpha);
+        }
     }
     if (isFaded) {
         iPaint p;
@@ -1830,6 +1889,9 @@ void drawLayerEffects_Widget(const iWidget *d) {
                 p.alpha = 0;
             }
             //printf("area:%f visarea:%f alpha:%d\n", rootArea, visibleArea, p.alpha);
+        }
+        if (value_Anim(&d->fadeOpacity) > 0.0f) {
+            p.alpha *= value_Anim(&d->fadeOpacity);
         }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
@@ -1989,12 +2051,22 @@ void drawChildren_Widget(const iWidget *d) {
     if (!isDrawn_Widget_(d)) {
         return;
     }
+    const iBool isClipping = (d->flags2 & clipChildren_WidgetFlag2) != 0;
+    iPaint clipPaint;
+    if (isClipping) {
+        init_Paint(&clipPaint);
+        setClip_Paint(&clipPaint, bounds_Widget(d));
+    }
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        if (~child->flags & keepOnTop_WidgetFlag && isDrawn_Widget_(child)) {
+        if (~child->flags & keepOnTop_WidgetFlag && ~child->flags2 & deferredDraw_WidgetFlag2 &&
+            isDrawn_Widget_(child)) {
             incrementDrawCount_(child);
             class_Widget(child)->draw(child);
         }
+    }
+    if (isClipping) {
+        unsetClip_Paint(&clipPaint);
     }
 }
 
@@ -2056,7 +2128,7 @@ static void endBufferDraw_Widget_(const iWidget *d) {
     }
 }
 
-void draw_Widget(const iWidget *d) {
+void drawClipped_Widget(const iWidget *d, iRect clipRect /* may be empty */) {
     iAssert(window_Widget(d) == get_Window());
     if (!isDrawn_Widget_(d)) {
         if (d->drawBuf) {
@@ -2076,7 +2148,7 @@ void draw_Widget(const iWidget *d) {
         const iRect bounds = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
-        setClip_Paint(&p, rect_Root(d->root));
+        setClip_Paint(&p, isEmpty_Rect(clipRect) ? rect_Root(d->root) : clipRect);
         SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
                        &(SDL_Rect){ bounds.pos.x, bounds.pos.y,
                                     d->drawBuf->size.x, d->drawBuf->size.y });
@@ -2088,6 +2160,10 @@ void draw_Widget(const iWidget *d) {
         const float opacity = value_Anim(&d->overflowScrollOpacity);
         drawScrollIndicator_Widget(d, &info, uiTextAction_ColorId, opacity);
     }
+}
+
+void draw_Widget(const iWidget *d) {
+    drawClipped_Widget(d, zero_Rect());
 }
 
 void drawScrollIndicator_Widget(const iWidget *d, const iWidgetScrollInfo *info, int color, float opacity) {
@@ -2277,7 +2353,8 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     }
     if ((d->flags & (overflowScrollable_WidgetFlag | hittable_WidgetFlag) ||
          class_Widget(d) != &Class_Widget || d->flags & mouseModal_WidgetFlag) &&
-        ~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
+        ~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord) &&
+        !isClippedAway_Widget_(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;
@@ -2285,7 +2362,8 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
 
 iAny *findChild_Widget(const iWidget *d, const char *id) {
     if (!d) return NULL;
-    if (cmp_String(id_Widget(d), id) == 0) {
+    /* A widget pending destruction is as good as gone; it only lingers for deferred GC. */
+    if (~d->flags & destroyPending_WidgetFlag && cmp_String(id_Widget(d), id) == 0) {
         return iConstCast(iAny *, d);
     }
     iConstForEach(ObjectList, i, d->children) {
@@ -2296,11 +2374,14 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
 }
 
 static void addMatchingToArray_Widget_(const iWidget *d, const iRangecc id, iPtrArray *found) {
-    if (cmp_String(id_Widget(d), id.start) == 0) {
-        pushBack_PtrArray(found, d);
-    }
-    else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
-        pushBack_PtrArray(found, d);
+    /* A widget pending destruction is as good as gone; it only lingers for deferred GC. */
+    if (~d->flags & destroyPending_WidgetFlag) {
+        if (cmp_String(id_Widget(d), id.start) == 0) {
+            pushBack_PtrArray(found, d);
+        }
+        else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
+            pushBack_PtrArray(found, d);
+        }
     }
     iForEach(ObjectList, i, d->children) {
         addMatchingToArray_Widget_(i.object, id, found);
@@ -2459,7 +2540,7 @@ void setFocusWithMethod_Widget(iWidget *d, enum iFocusMethod method) {
             iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
             postCommand_Widget(win->focus, "focus.lost");
         }
-        if (~flags_Widget(d) & focusable_WidgetFlag) {
+        if ((~flags_Widget(d) & focusable_WidgetFlag) || (flags_Widget(d) & destroyPending_WidgetFlag)) {
             d = NULL; /* focusing this is not allowed */
         }
         win->focus = d;

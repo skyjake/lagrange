@@ -102,7 +102,7 @@ uint16_t port_Url(const iUrl *d) {
     if (isEmpty_Range(&d->scheme) || equalCase_Rangecc(d->scheme, "gemini")) {
         port = GEMINI_DEFAULT_PORT;
     }
-    else if (equalCase_Rangecc(d->scheme, "gopher")) {
+    else if (isGopherScheme_Rangecc(d->scheme)) {
         port = 70;
     }
     else if (equalCase_Rangecc(d->scheme, "finger")) {
@@ -157,7 +157,7 @@ void stripUrlPort_String(iString *d) {
 static iBool isDefaultPort_Url_(const iUrl *d) {
     return (equalCase_Rangecc(d->scheme, "gemini") &&
             equal_Rangecc(d->port, GEMINI_DEFAULT_PORT_CSTR)) ||
-           (equalCase_Rangecc(d->scheme, "gopher") && equal_Rangecc(d->port, "70"));
+           (isGopherScheme_Rangecc(d->scheme) && equal_Rangecc(d->port, "70"));
 }
 
 const iString *urlDefaultPortStripped_String(const iString *d) {
@@ -289,10 +289,26 @@ iRangecc urlUser_String(const iString *d) {
     init_Url(&url, d);
     iRegExpMatch m;
     iRangecc found = iNullRange;
-    iForIndices(i, userPats_) {
+    if (isGopherScheme_Rangecc(url.scheme)) {
+        /* The path is "/" + item type + selector; only the tilde convention applies,
+           and only after a valid item type character. The selector may or may not
+           have its own leading slash, e.g. "1~user/" and "1/~user/" are equivalent. */
+        static iRegExp *gopherTildePat_;
+        if (!gopherTildePat_) {
+            gopherTildePat_ = new_RegExp("^/[a-z0-9]/?~([^/?]+)", caseInsensitive_RegExpOption);
+        }
         init_RegExpMatch(&m);
-        if (matchRange_RegExp(userPats_[i], url.path, &m)) {
+        if (matchRange_RegExp(gopherTildePat_, url.path, &m)) {
             found = capturedRange_RegExpMatch(&m, 1);
+        }
+    }
+    else {
+        iForIndices(i, userPats_) {
+            init_RegExpMatch(&m);
+            if (matchRange_RegExp(userPats_[i], url.path, &m)) {
+                found = capturedRange_RegExpMatch(&m, 1);
+                break;
+            }
         }
     }
     return found;
@@ -426,7 +442,7 @@ iBool isKnownScheme_Rangecc(iRangecc scheme) {
 }
 
 iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
-    static const char *schemes[] = { "gemini", "gopher", "finger", "spartan",
+    static const char *schemes[] = { "gemini", "gopher", "gophers", "finger", "spartan",
                                      "http",   "https",  "file" };
     iForIndices(i, schemes) {
         if (equalCase_Rangecc(scheme, schemes[i])) {
@@ -434,6 +450,15 @@ iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
         }
     }
     return iFalse;
+}
+
+iBool isGopherScheme_Rangecc(iRangecc scheme) {
+    return equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "gophers");
+}
+
+iBool isTlsScheme_Rangecc(iRangecc scheme) {
+    return equalCase_Rangecc(scheme, "gophers") || equalCase_Rangecc(scheme, "gemini") ||
+           equalCase_Rangecc(scheme, "titan") || equalCase_Rangecc(scheme, "misfin");
 }
 
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
@@ -514,7 +539,11 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     appendRange_String(absolute, rel.query);
     appendRange_String(absolute, rel.fragment);
     normalize_String(absolute);
-    cleanUrlPath_String(absolute);
+    if (!isGopherScheme_Rangecc(scheme) && !equalCase_Rangecc(scheme, "finger")) {
+        /* Gopher/finger paths are opaque selectors, not hierarchical paths, so dot-segments
+           and doubled slashes in them must be preserved as-is instead of being cleaned up. */
+        cleanUrlPath_String(absolute);
+    }
     return absolute;
 }
 

@@ -343,23 +343,17 @@ static void update_TouchState_(void *ptr) {
             continue;
         }
         if (touch->edge) {
-            const iFloat3 pos = touch->pos[0];
-            /* Cancel the swipe if the finger doesn't move or moves mostly vertically. */
-            const iFloat3 gestureVector = gestureVector_Touch_(touch);
-            if (fabsf(2 * x_F3(gestureVector)) < fabsf(y_F3(gestureVector)) ||
-                (isStationary_Touch_(touch) && nowTime - touch->startTime > shortPressSpanMs_)) {
-                //const int swipeDir = x_F3(gestureVector) > 0 ? +1 : -1;
-                //dispatchClick_Touch_(touch,
-//                                     touch->edge == left_TouchEdge  && swipeDir > 0 ? SDL_BUTTON_X1 :
-//                                     touch->edge == right_TouchEdge && swipeDir < 0 ? SDL_BUTTON_X2 : 0);
-//                setHover_Widget(NULL);
-                if (touch->didPostEdgeMove) {
-                    postCommandf_App("edgeswipe.ended abort:1 side:%d edge:%d id:%llu",
-                                     touch->edge, touch->edge, touch->id);
+            /* A swipe that has begun stays attached to the finger until it is released.
+               Note that returning to the start position makes the touch "stationary" again. */
+            if (!touch->didPostEdgeMove) {
+                /* Cancel the swipe if the finger doesn't move or moves mostly vertically. */
+                const iFloat3 gestureVector = gestureVector_Touch_(touch);
+                if (fabsf(2 * x_F3(gestureVector)) < fabsf(y_F3(gestureVector)) ||
+                    (isStationary_Touch_(touch) && nowTime - touch->startTime > shortPressSpanMs_)) {
+                    touch->edge = none_TouchEdge;
+                    /* May be a regular drag along the edge so don't remove. */
+                    //remove_ArrayIterator(&i);
                 }
-                touch->edge = none_TouchEdge;
-                /* May be a regular drag along the edge so don't remove. */
-                //remove_ArrayIterator(&i);
             }
             continue;
         }
@@ -845,14 +839,24 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 endPinch_TouchState_(d, touch->pinchId);
                 break;
             }
-            if (touch->edge && !isStationary_Touch_(touch)) {
+            if (touch->edge &&
+                (touch->didPostEdgeMove /* an edge swipe that begun must always be finished */
+                 || !isStationary_Touch_(touch))) {
                 if (touch->didPostEdgeMove) {
                     const iFloat3 gesture = gestureVector_Touch_(touch);
                     const uint32_t duration = gestureSpan_Touch_(touch);
                     const float pixel = window->pixelRatio;
                     const int moveDir = x_F3(gesture) < -pixel ? -1 : x_F3(gesture) > pixel ? +1 : 0;
-                    const int didAbort = (touch->edge == left_TouchEdge  && moveDir < 0) ||
-                                         (touch->edge == right_TouchEdge && moveDir > 0);
+                    int didAbort = (touch->edge == left_TouchEdge  && moveDir < 0) ||
+                                   (touch->edge == right_TouchEdge && moveDir > 0);
+                    if (!didAbort && moveDir == 0) {
+                        /* The finger was not moving when released (e.g., it was brought back
+                           to the starting edge and stopped), so the swipe is only applied if
+                           it actually got far enough. */
+                        const float relPos =
+                            x_F3(delta_Touch_(touch)) * (touch->edge == left_TouchEdge ? 1 : -1);
+                        didAbort = relPos < rootSize.x / 4;
+                    }
                     postCommandf_App("edgeswipe.ended abort:%d side:%d edge:%d id:%llu speed:%d", didAbort,
                                      touch->edge, touch->edge, touch->id,
                                      (int) (duration > 0 ? length_F3(gesture) / (duration / 1000.0f) : 0));

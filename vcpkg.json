@@ -1,0 +1,19 @@
+{
+    "name": "lagrange",
+    "version-string": "0.0.0",
+    "builtin-baseline": "afeb285c9e2e015292985856b9382ea1d82a4492",
+    "dependencies": [
+        "sdl2",
+        "harfbuzz",
+        "fribidi",
+        "openssl",
+        "zlib",
+        "pcre2",
+        "libunistring",
+        "pkgconf",
+        "mpg123",
+        "libwebp",
+        "libjxl",
+        "opusfile"
+    ]
+}

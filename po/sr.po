@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2026-04-10 20:22+0000\n"
+"PO-Revision-Date: 2026-08-12 15:25+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -3012,9 +3012,6 @@ msgstr "Прикажи промпт на врху"
 msgid "menu.input.showbottom"
 msgstr "Прикажи промпт на дну"
 
-msgid "prefs.bottominput"
-msgstr "Промпт за унос на дну:"
-
 msgid "hint.optional"
 msgstr "опционо"
 
@@ -3065,3 +3062,21 @@ msgstr "Прикажи све"
 
 msgid "macos.menu.services"
 msgstr "Сервиси"
+
+msgid "prefs.promptposition.bottom"
+msgstr "На дну"
+
+msgid "prefs.promptposition"
+msgstr "Позиција поља за унос:"
+
+msgid "prefs.promptposition.inline"
+msgstr "У тексту"
+
+msgid "prefs.promptposition.top"
+msgstr "На врху"
+
+msgid "ident.use.domain"
+msgstr "Користи на овом домену"
+
+msgid "prefs.thickscroll"
+msgstr "Широке траке за скроловање:"
