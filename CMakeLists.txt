@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.15)
 
 project (Lagrange
-    VERSION 1.21.0
+    VERSION 1.21.1
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -847,7 +847,7 @@ elseif (WIN32)
     if (POLICY CMP0207)
         cmake_policy (SET CMP0207 NEW)
     endif ()
-    if (TARGET app)        
+    if (TARGET app)
         install (TARGETS app
             # requires CMake 3.21+
             RUNTIME_DEPENDENCY_SET appRuntimeDeps
