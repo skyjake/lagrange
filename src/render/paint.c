@@ -81,9 +81,7 @@ static iRect rootClip_Paint_(const iPaint *d, iRect rect) {
 
 static void applyRootClip_Paint_(const iPaint *d) {
     if (numRoots_Window(get_Window()) > 1) {
-        iRect rect = rect_Root(get_Root());
-        addv_I2(&rect.pos, origin_Paint);
-        rect = rootClip_Paint_(d, rect);
+        iRect rect = rootClip_Paint_(d, moved_Rect(rect_Root(get_Root()), origin_Paint));
         if (isEmpty_Rect(rect)) {
             rect = init_Rect(0, 0, 1, 1);
         }
