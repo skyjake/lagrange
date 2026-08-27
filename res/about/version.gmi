@@ -7,7 +7,7 @@
 # Release notes
 
 ## 1.21.1
-*
+* Fixed: Sidebar tab buttons lack a background color in the second split (clipping issue).
 
 ## 1.21
 
