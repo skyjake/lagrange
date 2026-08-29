@@ -34,7 +34,7 @@ Changes and enhancements:
 * Updated UI translations.
 
 Fixes:
-* Opening ZIP archives with prepended arbitrary data (e.g., self-extracing archives).
+* Opening ZIP archives with prepended arbitrary data (e.g., self-extracting archives).
 * The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.
