@@ -2671,12 +2671,20 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         arrange_Widget(dlg);
         return iTrue;
     }
-    else if (isSheet && equal_Command(cmd, "focus.gained") &&
+    else if (equal_Command(cmd, "focus.gained") &&
              ptr == as_Widget(findChild_Widget(dlg, "input"))) {
-        /* Regaining focus re-establishes the modal sheet. */
-        setFlags_Widget(dlg, mouseModal_WidgetFlag, iTrue);
-        updateValueInputSizing_(dlg);
-        arrange_Widget(dlg);
+        if (isSheet) {
+            /* Regaining focus re-establishes the modal sheet. */
+            setFlags_Widget(dlg, mouseModal_WidgetFlag, iTrue);
+            updateValueInputSizing_(dlg);
+            arrange_Widget(dlg);
+        }
+        if (isMobile_Platform()) {
+            /* The initial contents are selected only when the prompt is first shown. When
+               refocusing later, the user usually wants to add to the existing text instead of
+               replacing all of it. */
+            setSelectAllOnFocus_InputWidget((iInputWidget *) ptr, iFalse);
+        }
     }
     else if (isDesktop_Platform() &&
              (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {
