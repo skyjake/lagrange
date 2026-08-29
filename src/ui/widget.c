@@ -2376,10 +2376,16 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
 static void addMatchingToArray_Widget_(const iWidget *d, const iRangecc id, iPtrArray *found) {
     /* A widget pending destruction is as good as gone; it only lingers for deferred GC. */
     if (~d->flags & destroyPending_WidgetFlag) {
-        if (cmp_String(id_Widget(d), id.start) == 0) {
-            pushBack_PtrArray(found, d);
+        if (!isEmpty_Range(&id) && id.end[-1] == '*') {
+            /* The wildcard matches any suffix, so only the preceding part is compared. */
+            const iRangecc prefix = { id.start, id.end - 1 };
+            const iRangecc wid    = range_String(id_Widget(d));
+            if (size_Range(&wid) >= size_Range(&prefix) &&
+                !iCmpStrN(wid.start, prefix.start, size_Range(&prefix))) {
+                pushBack_PtrArray(found, d);
+            }
         }
-        else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
+        else if (cmp_String(id_Widget(d), id.start) == 0) {
             pushBack_PtrArray(found, d);
         }
     }

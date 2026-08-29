@@ -240,7 +240,7 @@ iBool   contains_Widget                 (const iWidget *, iInt2 windowCoord);
 iBool   containsExpanded_Widget         (const iWidget *, iInt2 windowCoord, int expand);
 iAny *  hitChild_Widget                 (const iWidget *, iInt2 windowCoord);
 iAny *  findChild_Widget                (const iWidget *, const char *id);
-const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
+const iPtrArray *findChildren_Widget    (const iWidget *, const char *id); /* allows wildcard `*` suffix */
 iAny *  findParent_Widget               (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
