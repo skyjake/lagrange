@@ -713,17 +713,26 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             return iFalse;
         }
         else if (deviceType_App() == phone_AppDeviceType) {
-            /* Place the sidebar next to or under doctabs depending on orientation. */
-            removeChild_Widget(parent_Widget(sidebar), sidebar);
+            /* Update the sidebar's child ordinal so the toolbar, sidebar, and dialogs are all
+               layered correctly. */
+            iWidget *sidebarParent =
+                isLandscape_App() ? findChild_Widget(root, "tabs.content") : root;
+            if (!isVisible_Widget(sidebar) || parent_Widget(sidebar) != sidebarParent) {
+                removeChild_Widget(parent_Widget(sidebar), sidebar);
+                if (isLandscape_App()) {
+                    addChildPos_Widget(sidebarParent, iClob(sidebar), front_WidgetAddPos);
+                }
+                else {
+                    addChild_Widget(sidebarParent, iClob(sidebar));
+                }
+            }
             iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
             if (isLandscape_App()) {
                 setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
-                addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
                 setWidth_SidebarWidget(sidebar, 73.0f);
                 setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
             }
             else {
-                addChild_Widget(root, iClob(sidebar));
                 setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
                 int midHeight = height_Widget(root) * (isHandheld_Platform() ? 0.75f : 0.5f);
                 if (isAndroid_Platform()) {

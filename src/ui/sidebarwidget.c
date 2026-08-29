@@ -126,9 +126,10 @@ struct Impl_SidebarWidget {
     iWidget          *blank;
     iListWidget      *list;
     iCertListWidget  *certList;
-    iWidget          *actions;   /* below the list, area for buttons */
-    int               midHeight; /* on portrait phone, the height for the middle state */
-    iBool             isEditing; /* mobile edit mode */
+    iWidget          *actions;      /* below the list, area for buttons */
+    int               midHeight;    /* on portrait phone, the height for the middle state */
+    iBool             isEditing;    /* mobile edit mode */
+    iBool             wasLandscape; /* orientation at the time of the previous resize */
     int               modeScroll[max_SidebarMode];
     iLabelWidget     *modeButtons[max_SidebarMode];
     iLabelWidget     *firstVisibleModeButton;
@@ -1406,6 +1407,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->feedsMode        = all_FeedsMode;
     d->midHeight        = 0;
     d->isEditing        = iFalse;
+    d->wasLandscape     = isLandscape_App();
     d->numUnreadEntries = 0;
     d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0]     = uiContent_FontId;
@@ -2147,12 +2149,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 findChild_Widget(w, "sidebar.title"), hidden_WidgetFlag, isLandscape_App());
             setFlags_Widget(
                 findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, isLandscape_App());
-            /* In landscape, visibility of the toolbar is controlled separately.
-               Keep the sidebar (and edit mode) open behind the bookmark editor; a resize
-               event may occur while it's open, e.g., due to the on-screen keyboard. */
-            const iBool hasOpenBookmarkEditor =
-                d->isEditing && !isEmpty_PtrArray(findChildren_Widget(w->root->widget, "bmed.*"));
-            if (isVisible_Widget(w) && !hasOpenBookmarkEditor) {
+            /* The sidebar is only dismissed when the display orientation changes.
+               Note that keyboard visibility may trigger resize events. */
+            const iBool isLandscape          = isLandscape_App();
+            const iBool didChangeOrientation = (isLandscape != d->wasLandscape);
+            d->wasLandscape                  = isLandscape;
+            /* Keep sidebar open while editing. */
+            if (didChangeOrientation && isVisible_Widget(w) && !d->isEditing) {
                 postCommand_Widget(w, "sidebar.toggle");
             }
             setFlags_Widget(findChild_Widget(w, "buttons"),
