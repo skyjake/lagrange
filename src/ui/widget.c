@@ -148,6 +148,7 @@ void releaseChildren_Widget(iWidget *d) {
 iDefineObjectConstruction(Widget)
 
 void init_Widget(iWidget *d) {
+    removeRecentlyDeleted_Widget(d); /* the address is in use again */
     init_String(&d->id);
     init_String(&d->resizeId);
     d->root           = get_Root();
@@ -2770,6 +2771,14 @@ void addRecentlyDeleted_Widget(iAnyObject *obj) {
        deleted widgets allows ignoring these events. */
     maybeInit_RecentlyDeleted_(&recentlyDeleted_);
     iGuardMutex(&recentlyDeleted_.mtx, insert_PtrSet(recentlyDeleted_.objs, obj));
+}
+
+void removeRecentlyDeleted_Widget(iAnyObject *obj) {
+    /* The memory location of a deleted widget may be reallocated for a new widget; this
+       function is called from the Widget initializer. */
+    if (recentlyDeleted_.objs) {
+        iGuardMutex(&recentlyDeleted_.mtx, remove_PtrSet(recentlyDeleted_.objs, obj));
+    }
 }
 
 void clearRecentlyDeleted_Widget(void) {

@@ -10,6 +10,7 @@
 * Fixed: Handling input events in the correct prompt when multiple prompts are open.
 * Fixed: Sidebar tab buttons lack a background color in the second split (clipping issue).
 * Fixed: Auto-opened input prompt dialog was duplicated when opening the same link again without first dismissing the first prompt.
+* Fixed: Auto-opened input prompt randomly not being responsive.
 
 ## 1.21
 
