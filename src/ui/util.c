@@ -2547,7 +2547,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iFalse;
     }
-    if (equal_Command(cmd, "input.resized")) {
+    if (equalWidget_Command(cmd, dlg, "input.resized")) {
         arrange_Widget(dlg);
         arrange_Widget(dlg);
         refresh_Widget(dlg);
@@ -2578,7 +2578,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iFalse;
     }
-    else if (equal_Command(cmd, "valueinput.set")) {
+    else if (equalWidget_Command(cmd, dlg, "valueinput.set")) {
         iInputWidget *input = findChild_Widget(dlg, "input");
         setTextUndoableCStr_InputWidget(input, suffixPtr_Command(cmd, "text"), iTrue);
         deselect_InputWidget(input);
@@ -2593,7 +2593,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "valueinput.upload")) {
+    else if (equalWidget_Command(cmd, dlg, "valueinput.upload")) {
         setFocus_Widget(NULL);
         iInputWidget *input = findChild_Widget(dlg, "input");
         /* Contents of the editor are transferred via the backup file. */
@@ -2609,7 +2609,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         destroy_Widget(dlg);
         return iTrue;
     }
-    else if (equal_Command(cmd, "valueinput.cancel")) {
+    else if (equal_Command(cmd, "valueinput.cancel") &&
+             /* A global cancel has no source widget, so it closes any open prompt. */
+             (!pointer_Command(cmd) || equalWidget_Command(cmd, dlg, "valueinput.cancel"))) {
         if (!argLabel_Command(cmd, "navigating")) {
             /* A navigation-triggered cancel skips this "back" reaction to a user cancel. */
             postCommandf_App("valueinput.cancelled id:%s", cstr_String(valueInputCommand_(dlg)));
@@ -2621,7 +2623,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         destroy_Widget(dlg);
         return iTrue;
     }
-    else if (equal_Command(cmd, "valueinput.accept")) {
+    else if (equalWidget_Command(cmd, dlg, "valueinput.accept")) {
         acceptValueInput_(dlg);
         if (isSheet) {
             setupSheetTransition_Mobile(dlg, transitionDir);
@@ -2629,23 +2631,25 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "mouse.clicked") &&
+    else if (equalWidget_Command(cmd, dlg, "mouse.clicked") &&
              equal_Rangecc(range_Command(cmd, "id"), "valueinput.prompt") &&
              arg_Command(cmd) == 0 &&
              argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
+        /* The menu is not a child of the dialog, so the target must be explicit. */
         const iMenuItem items[] = {
-            { "${menu.input.copyprompt}", 0, 0, "valueinput.prompt.copy" },
+            { "${menu.input.copyprompt}", 0, 0, format_CStr("valueinput.prompt.copy dlg:%p", dlg) },
         };
         openMenu_Widget(makeMenu_Widget(get_Root()->widget, items, iElemCount(items)),
                         mouseCoord_Window(get_Window(), 0));
         return iTrue;
     }
-    else if (equal_Command(cmd, "valueinput.prompt.copy")) {
+    else if (equal_Command(cmd, "valueinput.prompt.copy") &&
+             pointerLabel_Command(cmd, "dlg") == dlg) {
         SDL_SetClipboardText(
             cstr_String(text_LabelWidget(findChild_Widget(dlg, "valueinput.prompt"))));
         return iTrue;
     }
-    else if (equal_Command(cmd, "valueinput.togglebottom")) {
+    else if (equalWidget_Command(cmd, dlg, "valueinput.togglebottom")) {
         /* Top/bottom placing only applies to sheets. */
         iAssert(isSheet);
         const iBool wasBottom = prefs_App()->promptPosition == bottom_InputPromptPosition;
