@@ -2767,7 +2767,7 @@ iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
 
 void addRecentlyDeleted_Widget(iAnyObject *obj) {
     /* We sometimes include pointers to widgets in command events. Before an event is processed,
-       it is possible that the referened widget has been destroyed. Keeping track of recently
+       it is possible that the referenced widget has been destroyed. Keeping track of recently
        deleted widgets allows ignoring these events. */
     maybeInit_RecentlyDeleted_(&recentlyDeleted_);
     iGuardMutex(&recentlyDeleted_.mtx, insert_PtrSet(recentlyDeleted_.objs, obj));
