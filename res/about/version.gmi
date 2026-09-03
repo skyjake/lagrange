@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.21.1
+* Fixed: Sidebar tab buttons lack a background color in the second split (clipping issue).
+* Fixed: Handling input events in the correct prompt when multiple prompts are open.
+* Fixed: Auto-opened input prompt dialog was duplicated when opening the same link again without first dismissing the first prompt.
+* Fixed: Auto-opened input prompt randomly becoming unresponsive.
+
 ## 1.21
 
 New features:
@@ -31,7 +37,7 @@ Changes and enhancements:
 * Updated UI translations.
 
 Fixes:
-* Opening ZIP archives with prepended arbitrary data (e.g., self-extracing archives).
+* Opening ZIP archives with prepended arbitrary data (e.g., self-extracting archives).
 * The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
 * Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
 * Gopher: Don't apply URI path normalization to selectors.

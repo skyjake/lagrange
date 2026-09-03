@@ -2,7 +2,7 @@
 # Copyright: 2020-2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # Notes:
-# - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
+# - Required dependencies: SDL 2, OpenSSL 1.1.1 or later, libpcre,
 #   GNU libunistring, zlib.
 # - the_Foundation is built as a static library from 'lib/the_Foundation',
 #   if it exists in that location. The Git repository has it as a submodule.
@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.15)
 
 project (Lagrange
-    VERSION 1.21.0
+    VERSION 1.21.1
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -26,12 +26,12 @@ set (COPYRIGHT_YEAR 2026)
 if (IOS)
     set (PROJECT_VERSION 1.21)
     set (IOS_BUNDLE_VERSION 1)
-    set (IOS_BUILD_DATE "2026-08-10")
+    set (IOS_BUILD_DATE "2026-08-29")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.21)
-    set (ANDROID_BUILD_VERSION b56)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-08-04")
+    set (ANDROID_BUILD_VERSION b57)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-08-29")
 endif ()
 
 # Load modules from the source tree
@@ -92,6 +92,7 @@ endif ()
 
 include (BuildType)
 include (Resources)
+include (Summary)
 include (Depends)
 include (CheckCCompilerFlag)
 include (CheckCSourceCompiles)
@@ -847,7 +848,7 @@ elseif (WIN32)
     if (POLICY CMP0207)
         cmake_policy (SET CMP0207 NEW)
     endif ()
-    if (TARGET app)        
+    if (TARGET app)
         install (TARGETS app
             # requires CMake 3.21+
             RUNTIME_DEPENDENCY_SET appRuntimeDeps
@@ -901,31 +902,35 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
     endif ()
 endif ()
 
-message (STATUS "Summary:")
-message (STATUS "ENABLE_CUSTOM_FRAME     : ${ENABLE_CUSTOM_FRAME}")
-message (STATUS "ENABLE_DOWNLOAD_EDIT    : ${ENABLE_DOWNLOAD_EDIT}")
-message (STATUS "ENABLE_GUI              : ${ENABLE_GUI}")
-message (STATUS "ENABLE_IDLE_SLEEP       : ${ENABLE_IDLE_SLEEP}")
-message (STATUS "ENABLE_IPC              : ${ENABLE_IPC}")
-message (STATUS "ENABLE_KERNING          : ${ENABLE_KERNING}")
-message (STATUS "ENABLE_MAC_MENUS        : ${ENABLE_MAC_MENUS}")
-message (STATUS "ENABLE_MOBILE_PHONE     : ${ENABLE_MOBILE_PHONE}")
-message (STATUS "ENABLE_MOBILE_TABLET    : ${ENABLE_MOBILE_TABLET}")
-message (STATUS "ENABLE_POPUP_MENUS      : ${ENABLE_POPUP_MENUS}")
-message (STATUS "ENABLE_RELATIVE_EMBED   : ${ENABLE_RELATIVE_EMBED}")
-message (STATUS "ENABLE_RESIZE_DRAW      : ${ENABLE_RESIZE_DRAW}")
-message (STATUS "ENABLE_STATIC           : ${ENABLE_STATIC}")
-message (STATUS "ENABLE_TUI              : ${ENABLE_TUI}")
-message (STATUS "ENABLE_WINDOWPOS_FIX    : ${ENABLE_WINDOWPOS_FIX}")
-message (STATUS "ENABLE_X11_SWRENDER     : ${ENABLE_X11_SWRENDER}")
-message (STATUS "ENABLE_X11_XLIB         : ${ENABLE_X11_XLIB}")
-message (STATUS "ENABLE_FRIBIDI          : ${ENABLE_FRIBIDI}")
-message (STATUS "ENABLE_FRIBIDI_BUILD    : ${ENABLE_FRIBIDI_BUILD}")
-message (STATUS "ENABLE_HARFBUZZ         : ${ENABLE_HARFBUZZ}")
-message (STATUS "ENABLE_HARFBUZZ_MINIMAL : ${ENABLE_HARFBUZZ_MINIMAL}")
-message (STATUS "ENABLE_MPG123           : ${ENABLE_MPG123}")
-message (STATUS "ENABLE_OPUS             : ${ENABLE_OPUS}")
-message (STATUS "ENABLE_SPARKLE          : ${ENABLE_SPARKLE}")
-message (STATUS "ENABLE_WEBP             : ${ENABLE_WEBP}")
-message (STATUS "ENABLE_JXL              : ${ENABLE_JXL}")
-message (STATUS "ENABLE_WINSPARKLE       : ${ENABLE_WINSPARKLE}")
+print_summary (
+    ENABLE_APP_BUNDLE
+    ENABLE_CUSTOM_FRAME
+    ENABLE_DOWNLOAD_EDIT
+    ENABLE_FRIBIDI
+    ENABLE_FRIBIDI_BUILD
+    ENABLE_GAMEPAD
+    ENABLE_GUI
+    ENABLE_HARFBUZZ
+    ENABLE_HARFBUZZ_MINIMAL
+    ENABLE_IDLE_SLEEP
+    ENABLE_IPC
+    ENABLE_JXL
+    ENABLE_KERNING
+    ENABLE_MAC_MENUS
+    ENABLE_MOBILE_HANDHELD
+    ENABLE_MOBILE_PHONE
+    ENABLE_MOBILE_TABLET
+    ENABLE_MPG123
+    ENABLE_OPUS
+    ENABLE_POPUP_MENUS
+    ENABLE_RELATIVE_EMBED
+    ENABLE_RESIZE_DRAW
+    ENABLE_SPARKLE
+    ENABLE_STATIC
+    ENABLE_TUI
+    ENABLE_WEBP
+    ENABLE_WINDOWPOS_FIX
+    ENABLE_WINSPARKLE
+    ENABLE_X11_SWRENDER
+    ENABLE_X11_XLIB
+)

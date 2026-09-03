@@ -148,6 +148,7 @@ void releaseChildren_Widget(iWidget *d) {
 iDefineObjectConstruction(Widget)
 
 void init_Widget(iWidget *d) {
+    removeRecentlyDeleted_Widget(d); /* the address is in use again */
     init_String(&d->id);
     init_String(&d->resizeId);
     d->root           = get_Root();
@@ -2376,10 +2377,16 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
 static void addMatchingToArray_Widget_(const iWidget *d, const iRangecc id, iPtrArray *found) {
     /* A widget pending destruction is as good as gone; it only lingers for deferred GC. */
     if (~d->flags & destroyPending_WidgetFlag) {
-        if (cmp_String(id_Widget(d), id.start) == 0) {
-            pushBack_PtrArray(found, d);
+        if (!isEmpty_Range(&id) && id.end[-1] == '*') {
+            /* The wildcard matches any suffix, so only the preceding part is compared. */
+            const iRangecc prefix = { id.start, id.end - 1 };
+            const iRangecc wid    = range_String(id_Widget(d));
+            if (size_Range(&wid) >= size_Range(&prefix) &&
+                !iCmpStrN(wid.start, prefix.start, size_Range(&prefix))) {
+                pushBack_PtrArray(found, d);
+            }
         }
-        else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
+        else if (cmp_String(id_Widget(d), id.start) == 0) {
             pushBack_PtrArray(found, d);
         }
     }
@@ -2760,10 +2767,18 @@ iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
 
 void addRecentlyDeleted_Widget(iAnyObject *obj) {
     /* We sometimes include pointers to widgets in command events. Before an event is processed,
-       it is possible that the referened widget has been destroyed. Keeping track of recently
+       it is possible that the referenced widget has been destroyed. Keeping track of recently
        deleted widgets allows ignoring these events. */
     maybeInit_RecentlyDeleted_(&recentlyDeleted_);
     iGuardMutex(&recentlyDeleted_.mtx, insert_PtrSet(recentlyDeleted_.objs, obj));
+}
+
+void removeRecentlyDeleted_Widget(iAnyObject *obj) {
+    /* The memory location of a deleted widget may be reallocated for a new widget; this
+       function is called from the Widget initializer. */
+    if (recentlyDeleted_.objs) {
+        iGuardMutex(&recentlyDeleted_.mtx, remove_PtrSet(recentlyDeleted_.objs, obj));
+    }
 }
 
 void clearRecentlyDeleted_Widget(void) {

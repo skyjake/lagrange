@@ -4764,6 +4764,19 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
     return iFalse;
 }
 
+static iWidget *findInputPromptSheet_DocumentWidget_(iDocumentWidget *d, const iString *promptUrl) {
+    iForEach(ObjectList, i, children_Widget(as_Widget(d))) {
+        const iString *command = id_Widget(i.object);
+        /* The originating URL is in the accept command, stored as the widget ID. */
+        if (startsWith_String(command, "!document.input.submit") &&
+            equal_Rangecc(range_Command(cstr_String(command), "prompturl"),
+                          cstr_String(promptUrl))) {
+            return i.object;
+        }
+    }
+    return NULL;
+}
+
 static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
     const iString *linkUrl = absoluteUrl_String(d->mod.url,
                                                 linkUrl_GmDocument(d->view->doc, linkId));
@@ -4775,15 +4788,24 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
         if (isEmpty_Range(&url.query)) {
             if (deviceType_App() != desktop_AppDeviceType ||
                 prefs_App()->promptPosition != inline_InputPromptPosition) {
-                iWidget *dlg = makeInputPrompt_DocumentWidget(
-                    d,
-                    linkUrl,
-                    iFalse,
-                    NULL,
-                    format_CStr("!document.input.submit prompturl:%s doc:%p",
-                                cstr_String(canonicalUrl_String(linkUrl)),
-                                d));
-                postCommand_Widget(dlg, "focus.set id:input");
+                const iString *promptUrl = canonicalUrl_String(linkUrl);
+                /* A non-modal sheet stays open while the user interacts with the page, so the link
+                   may get reopened. */
+                iWidget *dlg = findInputPromptSheet_DocumentWidget_(d, promptUrl);
+                if (dlg) {
+                    setFocus_Widget(findChild_Widget(dlg, "input")); /* focus the existing prompt */
+                }
+                else {
+                    dlg = makeInputPrompt_DocumentWidget(
+                        d,
+                        linkUrl,
+                        iFalse,
+                        NULL,
+                        format_CStr("!document.input.submit prompturl:%s doc:%p",
+                                    cstr_String(promptUrl),
+                                    d));
+                    postCommand_Widget(dlg, "focus.set id:input");
+                }
             }
             else {
                 /* Prompt may already exist if pre-populated at page load. */

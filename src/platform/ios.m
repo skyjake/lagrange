@@ -45,6 +45,9 @@ static iBool isSystemDarkMode_      = iFalse;
 static iBool isPhone_               = iFalse;
 static iBool isRemoteCenterInited_  = iFalse;
 
+/* How long a newly appeared text field ignores input, to avoid spill-over key events. */
+static const uint32_t inputSpillOverDelay_ = 500;
+
 static UIWindow *uiWindow_(const iWindow *window) {
     SDL_SysWMinfo wm;
     SDL_VERSION(&wm.version);
@@ -241,7 +244,7 @@ API_AVAILABLE(ios(13.0))
     iSystemTextInput *sysCtrl;
     float sysCtrlLineSpacing;
     NSMutableArray<PopupData *> *popupMenus;
-    BOOL suppressFirstTextChange;
+    uint32_t ignoreInputUntil; /* SDL ticks */
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -259,7 +262,7 @@ static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting not
     sysCtrl = NULL;
     sysCtrlLineSpacing = 0.0f;
     popupMenus = [[NSMutableArray<PopupData *> alloc] init];
-    suppressFirstTextChange = NO;
+    ignoreInputUntil = 0;
     return self;
 }
 
@@ -360,22 +363,23 @@ static void sendReturnKeyPress_(int kmods) {
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if ([self isIgnoringInput]) {
+        return NO; /* e.g., a link was just activated by pressing Return */
+    }
     sendReturnKeyPress_(0);
     return NO;
 }
 
 -(void)setSystemTextInput:(iSystemTextInput *)sys {
     sysCtrl = sys;
-    if (sys) {
-        /* Suppress the first text change to prevent a "spill over" key event from inserting
-           a spurious character when the text field appears due to a hardware key press. The
-           flag is cleared on the next run loop iteration, so only the in-flight key event
-           that triggered the text field creation is affected. */
-        suppressFirstTextChange = YES;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            self->suppressFirstTextChange = NO;
-        });
-    }
+    /* Ignore input for a moment so that key events spilling over from whatever caused the
+       text field to appear (e.g., activating a link with the keyboard) don't insert spurious
+       characters. UIKit may deliver them over several run loop iterations. */
+    ignoreInputUntil = sys ? SDL_GetTicks() + inputSpillOverDelay_ : 0;
+}
+
+-(BOOL)isIgnoringInput {
+    return ignoreInputUntil && !SDL_TICKS_PASSED(SDL_GetTicks(), ignoreInputUntil);
 }
 
 -(void)setSystemTextLineSpacing:(float)height {
@@ -394,8 +398,7 @@ static void sendReturnKeyPress_(int kmods) {
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
 replacementString:(NSString *)string {
-    if (suppressFirstTextChange) {
-        suppressFirstTextChange = NO;
+    if ([self isIgnoringInput]) {
         return NO;
     }
     iSystemTextInput *sysCtrl = [appState_ systemTextInput];
@@ -405,8 +408,7 @@ replacementString:(NSString *)string {
 
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range
  replacementText:(NSString *)text {
-    if (suppressFirstTextChange) {
-        suppressFirstTextChange = NO;
+    if ([self isIgnoringInput]) {
         return NO;
     }
     if ([text isEqualToString:@"\n"]) {

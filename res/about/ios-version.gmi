@@ -7,9 +7,23 @@
 # Release notes
 
 ## 1.21 (1)
+* Input prompts are no longer strictly modal: a click outside the dialog turns the dialog non-modal, allowing normal access to page contents and links.
+* Input prompt text field no longer auto-selects all text after refocusing.
+* Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
+* Added "Use on This Domain" in identity context menu.
+* Opening ZIP archives with prepended arbitrary data (e.g., self-extracting archives).
+* Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
+* The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
+* Gopher: Parsing tilde-prefixed username from selector.
+* Gopher: Don't apply URI path normalization to selectors.
 * Fixed: Crash when enabling split view mode.
 * Fixed: Sidebar dismissed inadvertently when editing bookmarks.
 * Fixed: Hidden toolbar showing itself due to changes in background tabs.
+* Fixed: Spurious Gopher/Finger autoreloads due to fetched document not getting a timestamp.
+* Fixed: Underscore-prefix words should not break after the underscore.
+* Fixed: Bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
+* Fixed: Overflowing text with "View as Plain Text".
+* Updated UI translations.
 
 ## 1.20 (16)
 * Tell SDL to batch render operations whenever possible to potentially improve drawing performance.
