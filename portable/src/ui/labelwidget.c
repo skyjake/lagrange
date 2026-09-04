@@ -644,8 +644,13 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
-    /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
-    setDisableColorEmoji_Text(!isTabButton_Widget(w)); /* must match draw_LabelWidget_ */
+    const iBool hasKey = (flags & drawKey_WidgetFlag) != 0 && d->key != 0;
+    /* Action widgets have nothing to measure, and are created before the fonts exist. */
+    const iBool isMeasured = !d->flags.noLabel || hasKey;
+    if (isMeasured) {
+        /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
+        setDisableColorEmoji_Text(!isTabButton_Widget(w)); /* must match draw_LabelWidget_ */
+    }
     iInt2 size;
     if (!d->flags.noLabel) {
         size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
@@ -654,7 +659,7 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     else {
         size = zero_I2();
     }
-    if ((flags & drawKey_WidgetFlag) && d->key) {
+    if (hasKey) {
         iString str;
         init_String(&str);
         keyStr_LabelWidget_(d, &str);
@@ -665,7 +670,9 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     if (isTerminal_Platform()) {
         size.x = iMax(size.x, 3);
     }
-    setDisableColorEmoji_Text(iFalse);
+    if (isMeasured) {
+        setDisableColorEmoji_Text(iFalse);
+    }
     return size;
 }
 
