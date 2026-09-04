@@ -4319,6 +4319,10 @@ iWidget *makePreferences_Widget(void) {
             addFontButtons_(values, "monodoc");
         }
         makeTwoColumnHeading_("${heading.font.options}", headings, values);
+    #if defined (LAGRANGE_ENABLE_CORETEXT) || defined (LAGRANGE_ENABLE_FREETYPE)
+        addDialogToggle_Widget(headings, values, "${prefs.font.coloremoji}", "prefs.font.coloremoji");
+    #endif
+        addDialogToggle_Widget(headings, values, "${prefs.quote.italic}", "prefs.quote.italic");
         addDialogToggleGroup_(headings,
                               values,
                               "${prefs.boldlink}",
@@ -4326,10 +4330,6 @@ iWidget *makePreferences_Widget(void) {
                                                 "prefs.boldlink.dark",
                                                 "prefs.boldlink.light" },
                               3);
-    #if defined (LAGRANGE_ENABLE_CORETEXT) || defined (LAGRANGE_ENABLE_FREETYPE)
-        addDialogToggle_Widget(headings, values, "${prefs.font.coloremoji}", "prefs.font.coloremoji");
-    #endif
-        addDialogToggle_Widget(headings, values, "${prefs.quote.italic}", "prefs.quote.italic");
     #if !defined (LAGRANGE_ENABLE_CORETEXT)
         if (!isTerminal_Platform()) {
             addDialogPadding_(headings, values);
