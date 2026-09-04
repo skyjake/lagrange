@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/prefs.h"
 #include "lagrange/core.h"
+#include "lagrange/gmutil.h"
 
 #include <assert.h>
 #include <the_Foundation/fileinfo.h>
@@ -32,9 +33,15 @@ const iPrefs *get_Prefs(void) {
     return prefs_;
 }
 
+#if defined (_MSC_VER)
+/* MSVC doesn't accept bools[x] here. */
+_Static_assert(offsetof(iPrefs, geminiStyledGopher) == offsetof(iPrefs, bools) + geminiStyledGopher_PrefsBool,
+               "memory layout mismatch (needs struct packing?)");
+#else
 _Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
                    offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
+#endif
 
 iDefineTypeConstruction(Prefs)
 
@@ -61,6 +68,7 @@ void init_Prefs(iPrefs *d) {
     d->editorZoomLevel          = 0;
     d->editorSyntaxHighlighting = iTrue;
     d->useGamepad               = isDesktop_Platform(); /* enabled by default on desktop */
+    d->thickScrollBar           = iFalse;
     d->zoomPercent              = 100;
     d->navbarActions[0]         = back_ToolbarAction;
     d->navbarActions[1]         = forward_ToolbarAction;
@@ -106,13 +114,14 @@ void init_Prefs(iPrefs *d) {
     }
     if (isTerminal_Platform()) {
         d->bottomNavBar = iTrue;
+        d->bottomTabBar = iTrue;
     }
-    d->bottomInput                            = iFalse; /* affects desktop only */
     d->menuBar                                = (deviceType_App() == desktop_AppDeviceType);
     d->simpleChars                            = iTrue;  /* only in terminal */
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
     d->detachedPrefs                          = iTrue;
     d->pinSplit                               = 1;
+    d->promptPosition                         = inline_InputPromptPosition;
     d->feedInterval                           = fourHours_FeedInterval;
     d->italicQuote                            = iTrue;
     d->time24h                                = iTrue;
@@ -192,7 +201,7 @@ const iString *schemeProxy_Prefs(const iPrefs *d, iRangecc scheme) {
     if (equalCase_Rangecc(scheme, "gemini")) {
         proxy = &d->strings[geminiProxy_PrefsString];
     }
-    else if (equalCase_Rangecc(scheme, "gopher")) {
+    else if (isGopherScheme_Rangecc(scheme)) {
         proxy = &d->strings[gopherProxy_PrefsString];
     }
     else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {

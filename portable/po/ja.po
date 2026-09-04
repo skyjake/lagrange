@@ -2926,9 +2926,6 @@ msgstr "サイドバー"
 msgid "prefs.sidebar.left"
 msgstr "左"
 
-msgid "prefs.bottominput"
-msgstr "入力プロンプトを下に:"
-
 msgid "prefs.gamepad.mainmenu"
 msgstr "メインメニュー"
 

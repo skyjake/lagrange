@@ -31,8 +31,10 @@ iDeclareType(Gopher)
 
 struct Impl_Gopher {
     iSocket *socket;
+    iBool    isTls; /* connection uses TLS (`gophers`); the `iTlsRequest` itself is owned by `iGmRequest` */
     char     type;
     iBlock   source;
+    iBlock   request; /* composed request bytes; caller sends these via the active transport */
     iBool    isPre;
     iBool    needQueryArgs;
     iString *meta;

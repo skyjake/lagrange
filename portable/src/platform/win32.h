@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Window)
 
 void     init_Win32(void);
-float    desktopDPI_Win32(void);
+float    desktopDPI_Win32(SDL_Window *);
 void     useExecutableIconResource_SDLWindow(SDL_Window *);
 void     enableDarkMode_SDLWindow(SDL_Window *);
 void     enableConsoleOutput_Win32();

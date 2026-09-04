@@ -53,6 +53,7 @@ enum iMediaType { /* Note: There is a limited number of bits for these; see GmRu
     //animatedImage_MediaType, /* TODO */
     audio_MediaType,
     download_MediaType,
+    inputPrompt_MediaType,
     max_MediaType
 };
 
@@ -86,6 +87,9 @@ iLocalDef iMediaId findLinkAudio_Media (const iMedia *d, uint16_t linkId) {
 iLocalDef iMediaId findLinkDownload_Media(const iMedia *d, uint16_t linkId) {
     return findMediaForLink_Media(d, linkId, download_MediaType);
 }
+iLocalDef iMediaId findLinkInputPrompt_Media(const iMedia *d, uint16_t linkId) {
+    return findMediaForLink_Media(d, linkId, inputPrompt_MediaType);
+}
 
 iLocalDef iBool imageInfo_Media(const iMedia *d, uint16_t mediaId, iGmMediaInfo *info_out) {
     return info_Media(d, (iMediaId){ image_MediaType, mediaId }, info_out);
@@ -110,6 +114,15 @@ size_t          numActivePlayers_Media      (const iMedia *);
 
 void            downloadStats_Media     (const iMedia *, iMediaId downloadId, const iString **path_out,
                                          float *bytesPerSecond_out, iBool *isFinished_out);
+
+iBool           setInputPrompt_Media       (iMedia *, uint16_t linkId, iBool isSensitive,
+                                            const iString *promptLabel /* may be NULL */,
+                                            const iString *baseUrl);
+void            clearInputPrompt_Media     (iMedia *, uint16_t linkId);
+void            inputPromptInfo_Media      (const iMedia *, iMediaId promptId, iBool *isSensitive_out,
+                                            const iString **promptLabel_out, const iString **baseUrl_out,
+                                            int *heightPx_out);
+void            setInputPromptHeight_Media (iMedia *, iMediaId promptId, int heightPx);
 
 /*----------------------------------------------------------------------------------------------*/
 

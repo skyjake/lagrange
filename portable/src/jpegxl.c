@@ -132,8 +132,9 @@ static uint8_t *loadJxl_(iJpegxl *jxl, const iBlock *data, iInt2 *imSize, iGmLin
     // add refcount s.t. data is not freed until decoder is done
     set_Block(d->blockHandle, data);
 
+    const uint8_t *blockData = constData_Block(d->blockHandle);
     JxlDecoderSetInput(d->decoder,
-                       constData_Block(d->blockHandle) + d->nSeenBytes,
+                       blockData + d->nSeenBytes,
                        size_Block(d->blockHandle) - d->nSeenBytes);
 
     if (!isPartial) JxlDecoderCloseInput(d->decoder);
@@ -174,7 +175,7 @@ static uint8_t *loadJxl_(iJpegxl *jxl, const iBlock *data, iInt2 *imSize, iGmLin
 
                 if (status != JXL_DEC_NEED_MORE_INPUT ||
                     JXL_DEC_SUCCESS == JxlDecoderFlushImage(d->decoder)) {
-                    printf("[media] flushed jxl after %lu bytes\n", d->nSeenBytes);
+                    printf("[media] flushed jxl after %zu bytes\n", d->nSeenBytes);
                     *imSize = d->imSize;
                     imgData = malloc(d->bufferSize);
                     memcpy(imgData, d->buffer, d->bufferSize);

@@ -251,7 +251,8 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
             may produce an asymmetric layout: consider a long page with one wide
             preformatted block somewhere in the middle; until that block is seen, the
             page layout looks broken if it's shifted too much to the left. */
-         format_GmDocument(d->doc) == plainText_SourceFormat || isGopherMenu_GmDocument(d->doc) ||
+         viewFormat_GmDocument(d->doc) == plainText_SourceFormat ||
+         isGopherMenu_GmDocument(d->doc) ||
          contentWidth_GmDocument(d->doc) < size_GmDocument(d->doc).x * 1.333f)) { /* < ⅓ increase */
         rect.size.x = iMini(iMax(rect.size.x, contentWidth_GmDocument(d->doc)),
                             maxDocumentWidth_DocumentView(d));
@@ -534,6 +535,7 @@ void updateVisible_DocumentView(iDocumentView *d) {
         iZap(d->visibleRuns);
         render_GmDocument(d->doc, visRange, addVisible_DocumentView_, d);
     }
+    repositionInlinePrompts_DocumentWidget(d->owner, d); /* uses the visibleMedia scan above */
     const iRangecc newHeading = currentHeading_DocumentView_(d);
     if (memcmp(&oldHeading, &newHeading, sizeof(oldHeading))) {
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
@@ -1093,8 +1095,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     linkOrdinalChar_DocumentWidget(d->view->owner,
                                                    ord - ordinalBase_DocumentWidget(d->view->owner));
                 if (ordChar) {
-                    const char *circle = "\u25ef"; /* Large Circle */
-                    const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
+                    const enum iFontSize fontSize =
+                        size_FontId(font_GmDocument(doc, link_GmLineType));
+                    const char *circle     = "\u25ef"; /* Large Circle */
+                    const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, fontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
                     if (isTerminal_Platform()) {
@@ -1104,7 +1108,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                         circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
                     iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
                     addv_I2(&circleArea.pos, topLeft_Rect(nbArea));
-                    drawCentered_Text(FONT_ID(default_FontId, regular_FontStyle, contentSmall_FontSize),
+                    drawCentered_Text(FONT_ID(default_FontId,
+                                              regular_FontStyle,
+                                              fontSize == contentRegular_FontSize
+                                                  ? contentSmall_FontSize
+                                                  : contentTiny_FontSize),
                                       circleArea,
                                       iTrue,
                                       tmQuote_ColorId,

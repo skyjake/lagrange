@@ -401,6 +401,10 @@ iWidget *   makeValueInputWithAdditionalActions_Widget
                                     (iWidget *parent, const iString *initialValue, const char *title,
                                      const char *prompt, const char *acceptLabel, const char *command,
                                      const iMenuItem *additionalActions, size_t numAdditionalActions);
+iWidget *   makeEmbeddedValueInput_Widget
+                                    (iWidget *container, const iString *initialValue,
+                                     const char *prompt, const char *acceptLabel, const char *command,
+                                     const iMenuItem *additionalActions, size_t numAdditionalActions);
 void        updateValueInput_Widget (iWidget *, const char *title, const char *prompt);
 iWidget *   makeSimpleMessage_Widget(const char *title, const char *msg);
 iWidget *   makeMessage_Widget      (const char *title, const char *msg,

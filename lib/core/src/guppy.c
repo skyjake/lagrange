@@ -308,8 +308,9 @@ static enum iGuppyState processResponse_Guppy_(iGuppy *d, iBool *notifyUpdate) {
                         ack_Guppy_(d, seq);
                         d->lastSent = now_Time();
                         if (d->state == inProgress_GuppyState) {
+                            const char* dataPtr = constData_Block(data);
                             storeChunk_Guppy_(
-                                d, seq, constData_Block(data) + crlf + 2, size_Block(data) - crlf - 2);
+                                d, seq, dataPtr + crlf + 2, size_Block(data) - crlf - 2);
                         }
                     }
                 }

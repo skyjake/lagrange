@@ -327,6 +327,31 @@ iDefineTypeConstruction(GmDownload)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(GmInputPrompt)
+
+struct Impl_GmInputPrompt {
+    iGmMediaProps props;       /* props.url holds the query base URL */
+    iBool         isSensitive;
+    iString       promptLabel; /* may be empty -> caller uses a default */
+    int           heightPx;    /* last known real-widget height; 0 = not yet reported */
+};
+
+void init_GmInputPrompt(iGmInputPrompt *d) {
+    init_GmMediaProps_(&d->props);
+    d->isSensitive = iFalse;
+    init_String(&d->promptLabel);
+    d->heightPx = 0;
+}
+
+void deinit_GmInputPrompt(iGmInputPrompt *d) {
+    deinit_String(&d->promptLabel);
+    deinit_GmMediaProps_(&d->props);
+}
+
+iDefineTypeConstruction(GmInputPrompt)
+
+/*----------------------------------------------------------------------------------------------*/
+
 void init_Media(iMedia *d) {
     iForIndices(i, d->items) {
         init_PtrArray(&d->items[i]);
@@ -355,6 +380,9 @@ void clear_Media(iMedia *d) {
     }
     iForEach(PtrArray, n, &d->items[download_MediaType]) {
         deinit_GmDownload(n.ptr);
+    }
+    iForEach(PtrArray, p, &d->items[inputPrompt_MediaType]) {
+        deinit_GmInputPrompt(p.ptr);
     }
     iForIndices(type, d->items) {
         clear_PtrArray(&d->items[type]);
@@ -707,6 +735,75 @@ void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **p
         }
         *bytesPerSecond_out = dl->currentRate;
         *isFinished_out = (dl->path && !dl->file);
+    }
+}
+
+iBool setInputPrompt_Media(iMedia *d, iGmLinkId linkId, iBool isSensitive,
+                          const iString *promptLabel, const iString *baseUrl) {
+    iMediaId existing = findMediaForLink_Media(d, linkId, inputPrompt_MediaType);
+    const iBool isNew = !existing.id;
+    iGmInputPrompt *prompt;
+    if (isNew) {
+        prompt = new_GmInputPrompt();
+        pushBack_PtrArray(&d->items[inputPrompt_MediaType], prompt);
+        prompt->heightPx = 0;
+    }
+    else {
+        prompt = at_PtrArray(&d->items[inputPrompt_MediaType], index_MediaId(existing));
+    }
+    prompt->props.linkId = linkId;
+    set_String(&prompt->props.url, baseUrl);
+    prompt->isSensitive = isSensitive;
+    if (promptLabel) {
+        set_String(&prompt->promptLabel, promptLabel);
+    }
+    else {
+        clear_String(&prompt->promptLabel);
+    }
+    return isNew;
+}
+
+void clearInputPrompt_Media(iMedia *d, iGmLinkId linkId) {
+    iMediaId existing = findMediaForLink_Media(d, linkId, inputPrompt_MediaType);
+    if (existing.id) {
+        iGmInputPrompt *prompt;
+        take_PtrArray(&d->items[inputPrompt_MediaType], index_MediaId(existing), (void **) &prompt);
+        delete_GmInputPrompt(prompt);
+    }
+}
+
+void inputPromptInfo_Media(const iMedia *d, iMediaId promptId, iBool *isSensitive_out,
+                           const iString **promptLabel_out, const iString **baseUrl_out,
+                           int *heightPx_out) {
+    iAssert(promptId.type == inputPrompt_MediaType);
+    if (isSensitive_out) *isSensitive_out = iFalse;
+    if (promptLabel_out) *promptLabel_out = NULL;
+    if (baseUrl_out)     *baseUrl_out     = NULL;
+    if (heightPx_out)    *heightPx_out    = 0;
+    const size_t index = index_MediaId(promptId);
+    if (index < size_PtrArray(&d->items[inputPrompt_MediaType])) {
+        const iGmInputPrompt *prompt = constAt_PtrArray(&d->items[inputPrompt_MediaType], index);
+        if (isSensitive_out) {
+            *isSensitive_out = prompt->isSensitive;
+        }
+        if (promptLabel_out) {
+            *promptLabel_out = isEmpty_String(&prompt->promptLabel) ? NULL : &prompt->promptLabel;
+        }
+        if (baseUrl_out) {
+            *baseUrl_out = &prompt->props.url;
+        }
+        if (heightPx_out) {
+            *heightPx_out = prompt->heightPx;
+        }
+    }
+}
+
+void setInputPromptHeight_Media(iMedia *d, iMediaId promptId, int heightPx) {
+    iAssert(promptId.type == inputPrompt_MediaType);
+    const size_t index = index_MediaId(promptId);
+    if (index < size_PtrArray(&d->items[inputPrompt_MediaType])) {
+        iGmInputPrompt *prompt = at_PtrArray(&d->items[inputPrompt_MediaType], index);
+        prompt->heightPx = heightPx;
     }
 }
 

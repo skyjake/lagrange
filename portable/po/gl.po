@@ -2972,9 +2972,6 @@ msgstr "Mostrar o prompt arriba"
 msgid "menu.input.showbottom"
 msgstr "Mostrar o prompt abaixo"
 
-msgid "prefs.bottominput"
-msgstr "Prompt de escritura abaixo:"
-
 msgid "prefs.gamepad.primary"
 msgstr "Click prinicpal"
 

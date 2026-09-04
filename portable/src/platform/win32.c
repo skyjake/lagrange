@@ -263,9 +263,13 @@ void init_Win32(void) {
     RegisterApplicationRestart(L"", ~RESTART_NO_PATCH);
 }
 
-float desktopDPI_Win32(void) {
+float desktopDPI_Win32(SDL_Window *win) {
     /* Query Direct2D for the desktop DPI (not aware of which monitor, though). */
     float ratio = 1.0f;
+#if defined(_MSC_VER)
+    ratio = (win ? GetDpiForWindow(windowHandle_(win))  : GetDpiForSystem()) / 96.0;
+#else
+    iUnused(win);
     ID2D1Factory *d2dFactory = NULL;
     HRESULT hr = D2D1CreateFactory(
         D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **) &d2dFactory);
@@ -276,6 +280,7 @@ float desktopDPI_Win32(void) {
         ratio = (float) (dpiX / 96.0);
         ID2D1Factory_Release(d2dFactory);
     }
+#endif
     return ratio;
 }
 

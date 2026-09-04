@@ -6,6 +6,52 @@
 ```
 # Release notes
 
+## 1.21 (Beta 57)
+* Input prompts are no longer strictly modal: a click outside the dialog turns the dialog non-modal, allowing normal access to page contents and links.
+* Input prompt text field no longer auto-selects all text after refocusing.
+* Added "Use on This Domain" in identity context menu.
+* Opening ZIP archives with prepended arbitrary data (e.g., self-extracting archives).
+* Gopher: Parsing tilde-prefixed username from selector.
+* Fixed: Sidebar dismissed inadvertently when editing bookmarks.
+* Fixed: Hidden toolbar showing itself due to changes in background tabs.
+* Fixed: Spurious Gopher/Finger autoreloads due to fetched document not getting a timestamp.
+* Fixed: Underscore-prefix words should not break after the underscore.
+* Updated UI translations.
+
+## 1.21 (Beta 56)
+* Gopher: Support for TLS, i.e., "gophers://". Server certificates are handled similarly to Gemini, which means they are verified using TOFU and trusted root CAs.
+* Gopher: Don't apply URI path normalization to selectors.
+* Optional build features are listed in Debug Information. For example, whether JPEG XL support is enabled.
+* The app now comes bundled with commonly trusted root CA certificates (e.g., Let's Encrypt).
+* Additional safeguards to prevent app state or preference values getting deleted when force-closing the app.
+* The redirect limit (5) only applies to Gemini, not Titan. It was being triggered by consecutive edits/uploads.
+* Fixed bookmark URI normalization issue that possibly caused duplicated bookmarks to appear.
+* Fixed overflowing text with "View as Plain Text".
+
+## 1.20 (Beta 55)
+* Workaround for UI state getting wiped during app upgrade.
+
+## 1.20 (Beta 54)
+* Adjusted first-line indentation so it not applied to text that looks like lists (starts with punctuation, numbers, etc.).
+* Updated UI translations.
+
+## 1.20 (Beta 53)
+* Fixed: Link icons not matching the body font size.
+* Fixed: Link numbers/letters not matching the body font size.
+* Fixed: Content width expansion in Gopher menus. (Line width measured incorrectly.)
+* Fixed: Text layout overflow when monospace body appearance is enabled with Gemini. (It was getting confused with normal plain text.)
+* Adjusted first-line indentation to only occur when both previous and current paragraphs are getting wrapped.
+
+## 1.20 (Beta 52)
+* Improve legibility of text after a wrapped paragraph by adding a small first-line indent if the next text line follows immediately.
+* Use a smaller font for plain text documents to fit more content in the window, matching the font used in preformatted blocks.
+* Fixed: Prevent overlapping identity activations by removing any existing ones before activating a new identity on a given URL. (To conveniently switch between previously used identities, use the menu that appears when clicking the navbar Identity button. That preserves the current activation scope.)
+* Gopher: Detect an unexpected binary response to a type `0` selector.
+* Gopher: Detect when the response is a gophermap even if we requested type `0`.
+* Gopher: Plain text now respects the "expand to long lines" option, avoiding wrapping when there is room in the window.
+* Gopher: Fixed handling the `.\r\n` terminator in text responses.
+* Updated UI translations.
+
 ## 1.20 (Beta 51)
 * Fixed potential hang when stopping a network connection when a SOCKS proxy is active.
 * Possible fix for Heading subscription entries returning to an unread state after a long time.

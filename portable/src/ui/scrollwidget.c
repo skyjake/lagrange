@@ -64,8 +64,10 @@ struct Impl_ScrollWidget {
 };
 
 static void updateMetrics_ScrollWidget_(iScrollWidget *d) {
-    iWidget *w = as_Widget(d);
-    w->rect.size.x = (isMobile_Platform() ? 6 : 3) * gap_UI;
+    d->widget.rect.size.x = (isMobile_Platform()           ? 6.0f
+                             : prefs_App()->thickScrollBar ? 4.5f
+                                                           : 3.0f) *
+                            gap_UI;
 }
 
 static void animateOpacity_ScrollWidget_(void *ptr) {
@@ -208,6 +210,10 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
                 addTicker_App(animateOpacity_ScrollWidget_, d);
             }
         }
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "scrollbar.metrics")) {
+        updateMetrics_ScrollWidget_(d);
         return iFalse;
     }
     if (isMobile_Platform()) {

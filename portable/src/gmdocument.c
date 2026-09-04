@@ -209,7 +209,7 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (equalCase_Rangecc(scheme, "gemini")) {
         return prefs_App()->monospaceGemini;
     }
-    if (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger")) {
+    if (isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "finger")) {
         return prefs_App()->monospaceGopher;
     }
     return iFalse;
@@ -217,7 +217,7 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
 
 static iBool isGopher_GmDocument_(const iGmDocument *d) {
     const iRangecc scheme = urlScheme_String(&d->url);
-    return (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger"));
+    return (isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "finger"));
 }
 
 static void initTheme_GmDocument_(iGmDocument *d) {
@@ -424,7 +424,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (startsWithCase_Rangecc(parts.scheme, "http")) {
                 setScheme_GmLink_(link, http_GmLinkScheme);
             }
-            else if (equalCase_Rangecc(parts.scheme, "gopher")) {
+            else if (isGopherScheme_Rangecc(parts.scheme)) {
                 setScheme_GmLink_(link, gopher_GmLinkScheme);
                 if (startsWith_Rangecc(parts.path, "/7")) {
                     link->flags |= query_GmLinkFlag;
@@ -557,8 +557,8 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                                 trimStart_Rangecc(&line);
                             }
                         }
-//                        printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
-//                        fflush(stdout);
+                        // printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
+                        // fflush(stdout);
                     }
                 }
             }
@@ -582,7 +582,11 @@ iBool isGopherMenu_GmDocument(const iGmDocument *d) {
         /* We know from the URL that it's a menu. */
         return iTrue;
     }
-    return isGopher_GmDocument_(d) && d->format == gemini_SourceFormat;
+    return isGopher_GmDocument_(d) && d->format == gemini_SourceFormat && !d->flags.isCoverPage;
+}
+
+enum iFontId font_GmDocument(const iGmDocument *d, enum iGmLineType lineType) {
+    return d->theme.fonts[lineType];
 }
 
 static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
@@ -605,8 +609,8 @@ static iBool shouldBeNormalized_GmDocument_(const iGmDocument *d) {
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
         return iFalse;
     }
-    if (startsWithCase_String(&d->url, "gopher:") && (prefs->monospaceGopher ||
-                                                      !prefs->geminiStyledGopher)) {
+    if ((startsWithCase_String(&d->url, "gopher:") || startsWithCase_String(&d->url, "gophers:")) &&
+        (prefs->monospaceGopher || !prefs->geminiStyledGopher)) {
         return iFalse;
     }
     return iTrue;
@@ -807,6 +811,23 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
         d->wrapWidth = iMin(maxLine, d->maxContentWidth);
         iRelease(linkPattern);
     }
+}
+
+static iBool isLineIndentable_(iRangecc line) {
+    trim_Rangecc(&line);
+    if (size_Range(&line) < 3 || !isAlpha_Char(*line.start)) {
+        /* Maybe a numbered list, or a symbol of some sort. */
+        return iFalse;
+    }
+    /* Lists typically have punctuation at the beginning. */
+    for (const char *i = line.start; i != line.start + 3; i++) {
+        if (isPunct_Char(*i) && *i != '`') {
+            if ((*i == '\'' || *i == '"') && i != line.start) continue;
+            return iFalse;
+        }
+    }
+    /* Looks like regular text. */
+    return iTrue;
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
@@ -1049,10 +1070,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Check the margin vs. previous run. */
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
-            int required =
-                iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
+            int required = iMax(topMargin[type], bottomMargin[prevType]) *
+                           lineHeight_Text(d->theme.fonts[text_GmLineType]);
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
-                required = 1.25f * lineHeight_Text(paragraph_FontId);
+                required = 1.25f * lineHeight_Text(d->theme.fonts[text_GmLineType]);
             }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
@@ -1072,7 +1093,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const iGmPreMeta *meta = constAt_Array(&d->preMeta, preId - 1);
             if (meta->flags & folded_GmPreMetaFlag) {
                 const iBool isBlank = isEmpty_Range(&meta->altText);
-                iGmRun      altText = { .font  = paragraph_FontId,
+                iGmRun      altText = { .font  = d->theme.fonts[text_GmLineType],
                                         .color = tmQuote_ColorId,
                                         .flags = (isBlank ? decoration_GmRunFlag : 0) | altText_GmRunFlag
                 };
@@ -1139,7 +1160,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             quoteRun.bounds = zero_Rect(); /* just visual */
             quoteRun.flags |= decoration_GmRunFlag;
             if (isTerminal_Platform()) {
-                quoteRun.font = paragraph_FontId;
+                quoteRun.font = d->theme.fonts[text_GmLineType];
             }
             pushBack_Array(&d->layout, &quoteRun);
         }
@@ -1169,6 +1190,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : link->flags & fontpackFileExtension_GmLinkFlag ? fontpack_Icon
                                              : scheme == file_GmLinkScheme     ? folder
                                                                                : arrow);
+            /* TODO: List bullets needs the same centering logic. */
+            /* Special exception for the tiny bullet operator. */
+            icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? preformatted_FontId
+                                                                 : icon.font; //d->theme.fonts[text_GmLineType];
             /* Check actual height to align with the paragraph text. The icon glyph
                may come from a different font. */ {
                 const int glyphHeight = measureRange_Text(icon.font, icon.text).bounds.size.y;
@@ -1182,10 +1207,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!isEmpty_Range(&link->labelIcon)) {
                 icon.text = link->labelIcon;
             }
-            /* TODO: List bullets needs the same centering logic. */
-            /* Special exception for the tiny bullet operator. */
-            icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? preformatted_FontId
-                                                                 : paragraph_FontId;
             icon.flags |= decoration_GmRunFlag | startOfLine_GmRunFlag;
             if (!d->flags.isNex) {
                 alignDecoration_GmRun_(&icon, iFalse);
@@ -1195,8 +1216,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                    the source text. */
                 icon.visBounds.size.x = indent * gap_Text; // measureRange_Text(icon.font, icon.text).bounds.size;
                 icon.bounds = icon.visBounds;
-                //icon.flags &= ~decoration_GmRunFlag;
-                //icon.linkId = run.linkId;
             }
             icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
             pushBack_Array(&d->layout, &icon);
@@ -1253,7 +1272,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 /* Visited links are never bold. */
                 if (run.linkId && !prefs->boldLinkVisited &&
                     linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
-                    rts.run.font = paragraph_FontId;
+                    rts.run.font = d->theme.fonts[text_GmLineType];
                 }
             }
             if (!prefs->quoteIcon && type == quote_GmLineType) {
@@ -1266,7 +1285,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                           ? d->wrapWidth
                           : (d->size.x - run.bounds.pos.x - rts.indent - rts.rightMargin)
                     : 0 /* unlimited */;
-            const iBool indentParagraphFirstLine = iTrue; /* could be a preference */
+            const iBool indentParagraphFirstLine = isLineIndentable_(line);
             int firstLineIndent = 0;
             if (indentParagraphFirstLine && type == text_GmLineType && prevWrapParagraph) {
                 /* Previous line was text, too, and it wrapped so we may need some first-line
@@ -1371,7 +1390,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.text      = iNullRange;
             run.font      = uiLabel_FontId;
             run.color     = 0;
-            const int margin = lineHeight_Text(paragraph_FontId) / 2;
+            const int margin = lineHeight_Text(d->theme.fonts[text_GmLineType]) / 2;
             if (media.type) {
                 pos.y += margin;
                 run.bounds.size.y = 0;
@@ -1450,6 +1469,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     run.bounds.pos    = pos;
                     run.bounds.size.x = d->size.x;
                     run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                    run.visBounds     = run.bounds;
+                    pushBack_Array(&d->layout, &run);
+                    break;
+                }
+                case inputPrompt_MediaType: {
+                    run.bounds.pos    = pos;
+                    run.bounds.size.x = d->size.x;
+                    int h = 0;
+                    iBool isSensitive;
+                    inputPromptInfo_Media(d->media, media, &isSensitive, NULL, NULL, &h);
+                    if (h <= 0) {
+                        /* Not yet reported by the widget; reserve a placeholder height. */
+                        h = lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                    }
+                    run.bounds.size.y = h;
                     run.visBounds     = run.bounds;
                     pushBack_Array(&d->layout, &run);
                     break;
@@ -2293,7 +2327,7 @@ static void markLinkRunsVisited_GmDocument_(iGmDocument *d, const iIntSet *linkI
         if (run->linkId && !run->mediaId && contains_IntSet(linkIds, run->linkId)) {
             /* TODO: Does this even work? The font IDs may be different. */
             if (run->font == bold_FontId) {
-                run->font = paragraph_FontId;
+                run->font = d->theme.fonts[text_GmLineType];
             }
             else if (run->flags & decoration_GmRunFlag) {
                 run->color = linkColor_GmDocument(d, run->linkId, icon_GmLinkPart);
@@ -2443,7 +2477,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     d->flags.isSpartan = equalCase_Rangecc(parts.scheme, "spartan");
     d->flags.isNex     = equalCase_Rangecc(parts.scheme, "nex") &&
                          (isEmpty_Range(&parts.path) || endsWith_Rangecc(parts.path, "/"));
-    d->flags.isGopherMenu = equalCase_Rangecc(parts.scheme, "gopher") &&
+    d->flags.isGopherMenu = isGopherScheme_Rangecc(parts.scheme) &&
                             startsWith_Rangecc(parts.path, "/1");
 }
 
@@ -2894,6 +2928,16 @@ const iGmRun *precedingRun_GmDocument(const iGmDocument *d, const iGmRun *run) {
     return run;
 }
 
+const iGmRun *findInputPromptRun_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmRunRange range = runRange_GmDocument(d);
+    for (const iGmRun *run = range.start; run != range.end; run++) {
+        if (run->mediaType == inputPrompt_MediaType && run->linkId == linkId) {
+            return run;
+        }
+    }
+    return NULL;
+}
+
 static const iGmLink *link_GmDocument_(const iGmDocument *d, iGmLinkId id) {
     if (id > 0 && id <= size_PtrArray(&d->links)) {
         return constAt_PtrArray(&d->links, id - 1);
@@ -3001,7 +3045,7 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     /* Check the URL if it appears like a potential media link. */
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
-    if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
+    if (equalCase_Rangecc(scheme, "gemini") || isGopherScheme_Rangecc(scheme) ||
         equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "nex") ||
         equalCase_Rangecc(scheme, "finger") || equalCase_Rangecc(scheme, "file") ||
         willUseProxy_App(scheme)) {

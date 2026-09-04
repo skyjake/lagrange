@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2025-10-05 16:56+0000\n"
+"PO-Revision-Date: 2026-06-22 11:40+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -569,10 +569,10 @@ msgstr "Aperter li ligament"
 
 #, c-format
 msgid "dlg.certwarn.expired"
-msgstr "Li recivet certificat ha expirat ye %s."
+msgstr "Li certificate del servitor ha expirat ye %s."
 
 msgid "dlg.certwarn.domain.expired"
-msgstr "Li recivet certificat es expirat E por un íncorrect dominia."
+msgstr "Li certificate del servitor es expirat E por un íncorrect dominia."
 
 msgid "dlg.certimport.help"
 msgstr ""
@@ -638,7 +638,7 @@ msgid "heading.prefs.colors"
 msgstr "Colores"
 
 msgid "heading.prefs.proxies"
-msgstr "Proxys"
+msgstr "Proxys por Gemini"
 
 msgid "heading.prefs.scrolling"
 msgstr "Rulament"
@@ -1017,12 +1017,12 @@ msgid "pageinfo.cert.ca.unverified"
 msgstr "Ne verificat de CA"
 
 msgid "dlg.certwarn.different"
-msgstr "Li recivet certificate es valid ma ne es li quel es fidet."
+msgstr "Li certificate del servitor es valid ma ne es li quel es fidet."
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-"Li recivet certificate es por un altri dominia (%s). To posse esser un "
-"problema con li configuration del servitor."
+"Pos un demande a «%s», un certificate esset recivet por un altri dominia (%s)"
+". To posse esser un problema con li configuration del servitor."
 
 msgid "dlg.newident.notsaved"
 msgstr "ne gardat sur li disco"
@@ -1125,8 +1125,8 @@ msgstr "Cap-linea ínvalid"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Li recivet cap-linea ne conforma al specification del protocol. Fórsan li "
-"servitor malfunctiona o ne supporta ti protocol."
+"Li cap-lineas ne conforma al specification del protocol. Fórsan li servitor "
+"malfunctiona o ne supporta ti protocol."
 
 msgid "error.badredirect"
 msgstr "Redirection ínvalid"
@@ -1225,13 +1225,13 @@ msgstr "Glissid rulament:"
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] ""
-"Fórsan li recivet certificate esset renovat recentmen — it es por li corect "
-"domina e ne expirat. Li certificate fidet actualmen va expirar ye %s, pos ún "
-"die."
+"Fórsan li certificate del servitor esset renovat recentmen — it es por li "
+"corect domina e ne expirat. Li certificate fidet actualmen va expirar ye %s, "
+"pos ún die."
 msgstr[1] ""
-"Fórsan li recivet certificate esset renovat recentmen — it es por li corect "
-"domina e ne expirat. Li certificate fidet actualmen va expirar ye %s, pos %d "
-"dies."
+"Fórsan li certificate del servitor esset renovat recentmen — it es por li "
+"corect domina e ne expirat. Li certificate fidet actualmen va expirar ye %s, "
+"pos %d dies."
 
 # Interpret as "Results from page content..."
 msgid "heading.lookup.pagecontent"
@@ -1241,7 +1241,7 @@ msgid "prefs.imageloadscroll"
 msgstr "Cargar li sequent image vice de rulament:"
 
 msgid "prefs.mono"
-msgstr "Textu monospacial:"
+msgstr "Usar con protocoles:"
 
 msgid "keys.top"
 msgstr "Ear al inicie"
@@ -2915,3 +2915,84 @@ msgstr "Monstrar cartes"
 
 msgid "menu.fold"
 msgstr "Contraher"
+
+msgid "heading.prefs.socks"
+msgstr "SOCKS5"
+
+msgid "hint.optional"
+msgstr "facultativ"
+
+msgid "heading.prefs.proxy"
+msgstr "Servitores proxy"
+
+msgid "prefs.socks.server"
+msgstr "Servitor proxy:"
+
+msgid "hint.socks.server"
+msgstr "host-nomine:1080"
+
+msgid "prefs.socks.user"
+msgstr "Nómine:"
+
+msgid "prefs.socks.password"
+msgstr "Contrasigne:"
+
+msgid "prefs.gamepad"
+msgstr "Gamepad activ:"
+
+msgid "prefs.gamepad.secondary"
+msgstr "Secundari clic"
+
+msgid "prefs.gamepad.cancel"
+msgstr "Anullar"
+
+msgid "prefs.gamepad.pagemenu"
+msgstr "Menú del págine"
+
+msgid "prefs.gamepad.sidebar"
+msgstr "Panel lateral"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "DT + "
+
+msgid "heading.font.options"
+msgstr "Parametres"
+
+msgid "heading.prefs.sidebars.tabs"
+msgstr "Cartes lateral"
+
+msgid "heading.prefs.gamepad"
+msgstr "Gamepad"
+
+msgid "prefs.gamepad.reload"
+msgstr "Recargar li págine"
+
+msgid "prefs.gamepad.editurl"
+msgstr "Redacter li URL"
+
+msgid "link.copy.gemtext"
+msgstr "Copiar li ligament quam Gemtext"
+
+msgid "prefs.socks"
+msgstr "Proxy activ:"
+
+msgid "prefs.gamepad.primary"
+msgstr "Primari clic"
+
+msgid "macos.menu.hide"
+msgstr "Celar Lagrange"
+
+msgid "macos.menu.hideothers"
+msgstr "Celar altris"
+
+msgid "macos.menu.showall"
+msgstr "Monstrar omni"
+
+msgid "macos.menu.services"
+msgstr "Servicies"
+
+msgid "prefs.ipv6"
+msgstr "Preferer IPv6:"
+
+msgid "prefs.gamepad.mainmenu"
+msgstr "Menú principal"

@@ -114,10 +114,13 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
     iForEach(Array, i, &d->commands.values) {
         iPeriodicCommand *pc = i.value;
         iAssert(isInstance_Object(pc->context, &Class_Widget));
-//        iAssert(~flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag);
         if (contains_PtrSet(&d->pendingRemoval, pc->context)) {
             /* This context is pending removal due to previously dispatched Periodic events
                during the current loop execution. */
+            continue;
+        }
+        if (flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag) {
+            /* Destroyed but not yet collected; root/window may already be stale. */
             continue;
         }
         iRoot *root = constAs_Widget(pc->context)->root;

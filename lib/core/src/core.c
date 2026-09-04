@@ -25,6 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/string.h>
 
+#if defined (iPlatformAndroidMobile)
+#   include <fcntl.h>
+#   include <unistd.h>
+#endif
+
 iDeclareType(Core)
 
 struct Impl_Core {
@@ -51,9 +56,24 @@ iBool isPhone_Core(void) {
 }
 
 void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
+#if defined (iPlatformAndroidMobile)
+    /* Make sure the new content is durable on disk before it replaces the old file: a
+       rename() is atomic but not durable by itself, and Android is more likely to kill
+       the process (or the whole device may lose power) right after this. */ {
+        const int fd = open(tempPathWithNewContents, O_WRONLY);
+        if (fd >= 0) {
+            fsync(fd);
+            close(fd);
+        }
+    }
+#endif
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
     iString *oldPath = collectNewCStr_String(path);
     appendCStr_String(oldPath, ".old");
-    renamePath_CStr(path, cstr_String(oldPath));
+    renamePath_CStr(path, cstr_String(oldPath)); /* move the old file out of the way */
     renamePath_CStr(tempPathWithNewContents, path);
     removePath_CStr(cstr_String(oldPath));
+#else
+    renamePath_CStr(tempPathWithNewContents, path); /* atomic; replaces destination file */
+#endif
 }

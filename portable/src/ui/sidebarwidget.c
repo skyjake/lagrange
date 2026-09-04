@@ -126,9 +126,10 @@ struct Impl_SidebarWidget {
     iWidget          *blank;
     iListWidget      *list;
     iCertListWidget  *certList;
-    iWidget          *actions;   /* below the list, area for buttons */
-    int               midHeight; /* on portrait phone, the height for the middle state */
-    iBool             isEditing; /* mobile edit mode */
+    iWidget          *actions;      /* below the list, area for buttons */
+    int               midHeight;    /* on portrait phone, the height for the middle state */
+    iBool             isEditing;    /* mobile edit mode */
+    iBool             wasLandscape; /* orientation at the time of the previous resize */
     int               modeScroll[max_SidebarMode];
     iLabelWidget     *modeButtons[max_SidebarMode];
     iLabelWidget     *firstVisibleModeButton;
@@ -466,7 +467,9 @@ int cmpGopherStructureUrl_(const iString *a, const iString *b) {
 #endif
 
 static iBool isGopherStructure_SidebarWidget_(const iSidebarWidget *d) {
-    return equal_Rangecc(urlScheme_String(&d->structureHost), "gopher");
+    /* Note: case-sensitive, unlike scheme comparisons elsewhere. */
+    const iRangecc scheme = urlScheme_String(&d->structureHost);
+    return equal_Rangecc(scheme, "gopher") || equal_Rangecc(scheme, "gophers");
 }
 
 static void removeStructureUnfold_SidebarWidget_(iSidebarWidget *d, const iString *url) {
@@ -1371,6 +1374,9 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
 
 static void updateSlidingSheetHeight_SidebarWidget_(iSidebarWidget *sidebar, iRoot *root) {
     if (!isPortraitPhone_App() || !isVisible_Widget(sidebar)) return;
+    /* The list's VisBuf is sized to fit the largest possible sheet height so its
+       backing textures aren't reallocated on every frame during animations. */
+    setMinVisBufHeight_ListWidget(list_SidebarWidget_(sidebar), height_Rect(safeRect_Root(root)));
     iWidget  *d       = as_Widget(sidebar);
     const int oldSize = d->rect.size.y;
     const int newSize = bottom_Rect(safeRect_Root(d->root)) - top_Rect(bounds_Widget(d));
@@ -1401,6 +1407,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->feedsMode        = all_FeedsMode;
     d->midHeight        = 0;
     d->isEditing        = iFalse;
+    d->wasLandscape     = isLandscape_App();
     d->numUnreadEntries = 0;
     d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0]     = uiContent_FontId;
@@ -1815,7 +1822,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
             set_String(&bm->title, title);
             if (!isFolder_Bookmark(bm)) {
-                set_String(&bm->url, url);
+                set_String(&bm->url, canonicalUrl_String(url));
                 set_String(&bm->tags, tags);
                 set_String(&bm->notes, notes);
                 if (isEmpty_String(icon)) {
@@ -1949,6 +1956,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
+        if (isHiding) {
+            cancelDrag_ListWidget(d->list);
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad =
@@ -2139,8 +2149,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 findChild_Widget(w, "sidebar.title"), hidden_WidgetFlag, isLandscape_App());
             setFlags_Widget(
                 findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, isLandscape_App());
-            /* In landscape, visibility of the toolbar is controlled separately. */
-            if (isVisible_Widget(w)) {
+            /* The sidebar is only dismissed when the display orientation changes.
+               Note that keyboard visibility may trigger resize events. */
+            const iBool isLandscape          = isLandscape_App();
+            const iBool didChangeOrientation = (isLandscape != d->wasLandscape);
+            d->wasLandscape                  = isLandscape;
+            /* Keep sidebar open while editing. */
+            if (didChangeOrientation && isVisible_Widget(w) && !d->isEditing) {
                 postCommand_Widget(w, "sidebar.toggle");
             }
             setFlags_Widget(findChild_Widget(w, "buttons"),
