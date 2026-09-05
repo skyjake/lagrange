@@ -392,12 +392,12 @@ if (IOS)
     list (APPEND SOURCES
         src/platform/ios.m
         src/platform/ios.h
-        app/Images.xcassets
+        res/Images.xcassets
         res/LaunchScreen.storyboard
         res/PrivacyInfo.xcprivacy
     )
     set_source_files_properties(
-        app/Images.xcassets
+        res/Images.xcassets
         res/LaunchScreen.storyboard
         res/PrivacyInfo.xcprivacy
     PROPERTIES

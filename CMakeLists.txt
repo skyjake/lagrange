@@ -27,4 +27,4 @@ include (Depends)
 include (CheckCCompilerFlag)
 
 add_subdirectory (lib/core)
-add_subdirectory (portable)
+add_subdirectory (app)
