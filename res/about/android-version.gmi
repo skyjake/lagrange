@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.21 (Beta 58)
+* Fixed: Auto-opened input prompt dialog was duplicated when opening the same link again without first dismissing the first prompt.
+
 ## 1.21 (Beta 57)
 * Input prompts are no longer strictly modal: a click outside the dialog turns the dialog non-modal, allowing normal access to page contents and links.
 * Input prompt text field no longer auto-selects all text after refocusing.
