@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentview.h"
 
 #include "app.h"
-#include "audio/player.h"
+#include "media/player.h"
 #include "banner.h"
 #include "bookmarks.h"
 #include "defs.h"
@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gempub.h"
 #include <lagrange/gmrequest.h>
 #include "gmutil.h"
-#include "media.h"
+#include "media/media.h"
 #include "render/paint.h"
 #include "root.h"
 #include "mediaui.h"

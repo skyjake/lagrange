@@ -21,13 +21,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "media.h"
-#include "gmdocument.h"
+#include "../gmdocument.h"
 #include <lagrange/gmrequest.h>
 #include "the_Foundation/block.h"
 #include "ui/window.h"
 #include "render/paint.h" /* size_SDLTexture */
-#include "audio/player.h"
-#include "app.h"
+#include "player.h"
+#include "../app.h"
 #include "stb_image.h"
 #include "stb_image_resize2.h"
 #include "jpegxl.h" // LAGRANGE_ENABLE_JXL

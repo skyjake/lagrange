@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "ui/metrics.h"
 #include "ui/window.h"
-#include "stb_image_resize2.h"
+#include "media/stb_image_resize2.h"
 
 #include <lagrange/prefs.h>
 #include <lagrange/defs.h>

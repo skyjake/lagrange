@@ -23,11 +23,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "mediaui.h"
 
 #include "app.h"
-#include "audio/player.h"
+#include "media/player.h"
 #include "documentwidget.h"
 #include "gmdocument.h"
 #include <lagrange/lang.h>
-#include "media.h"
+#include "media/media.h"
 #include "render/paint.h"
 #include "touch.h"
 #include "util.h"

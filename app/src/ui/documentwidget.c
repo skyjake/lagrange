@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 
 #include "app.h"
-#include "audio/player.h"
+#include "media/player.h"
 #include "banner.h"
 #include "bookmarks.h"
 #include "command.h"
@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "linkinfo.h"
-#include "media.h"
+#include "media/media.h"
 #include "periodic.h"
 #include "render/paint.h"
 #include "root.h"

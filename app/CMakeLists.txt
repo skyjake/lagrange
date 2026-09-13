@@ -197,14 +197,14 @@ endif ()
 
 # Source files.
 set (AUDIO_SOURCES
-    src/audio/buf.c
-    src/audio/buf.h
-    src/audio/player.c
-    src/audio/player.h
-    src/audio/stb_vorbis.c
+    src/media/buf.c
+    src/media/buf.h
+    src/media/player.c
+    src/media/player.h
+    src/media/stb_vorbis.c
 )
 if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-    set_source_files_properties (src/audio/stb_vorbis.c PROPERTIES
+    set_source_files_properties (src/media/stb_vorbis.c PROPERTIES
         COMPILE_OPTIONS "-Wno-tautological-compare")
 endif()
 set (SOURCES
@@ -232,16 +232,16 @@ set (SOURCES
     src/history.h
     src/lookup.c
     src/lookup.h
-    src/media.c
-    src/media.h
     src/misfin.c
     src/misfin.h
     src/periodic.c
     src/periodic.h
-    src/stb_image.h
-    src/stb_image_resize2.h
-    src/stb_truetype.h
     src/updater.h
+    # Multimedia:
+    src/media/media.c
+    src/media/media.h
+    src/media/stb_image.h
+    src/media/stb_image_resize2.h
     # Graphics:
     src/render/attributedtext.c
     src/render/attributedtext.h
@@ -249,6 +249,7 @@ set (SOURCES
     src/render/font.h
     src/render/paint.c
     src/render/paint.h
+    src/render/stb_truetype.h
     src/render/text.c
     src/render/text.h
     # User interface:
@@ -370,7 +371,7 @@ else ()
     )
 endif ()
 if (ENABLE_JXL AND JXL_FOUND)
-    list (APPEND SOURCES src/jpegxl.c src/jpegxl.h)
+    list (APPEND SOURCES src/media/jpegxl.c src/media/jpegxl.h)
 endif ()
 if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
     list (APPEND SOURCES

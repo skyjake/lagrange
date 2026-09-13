@@ -62,8 +62,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image.h"
-#include "stb_image_resize2.h"
+#include "media/stb_image.h"
+#include "media/stb_image_resize2.h"
 
 static iWindow *    theWindow_;
 static iMainWindow *theMainWindow_;

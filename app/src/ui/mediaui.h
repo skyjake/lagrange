@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "../media.h"
+#include "media/media.h"
 
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>

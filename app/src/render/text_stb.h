@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "text_backend.h"
-#include "../stb_truetype.h"
+#include "stb_truetype.h"
 
 typedef struct {
 #   if defined (LAGRANGE_ENABLE_HARFBUZZ)

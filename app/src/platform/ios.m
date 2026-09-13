@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ios.h"
 #include "app.h"
 #include <lagrange/core.h>
-#include "audio/player.h"
+#include "media/player.h"
 #include "ui/command.h"
 #include "ui/keys.h"
 #include "ui/window.h"

@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "defs.h"
 #include "gmutil.h"
-#include "media.h"
+#include "media/media.h"
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/object.h>

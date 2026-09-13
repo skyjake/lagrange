@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "../stb_truetype.h"
+#include "stb_truetype.h"
 
 typedef iRasterFont iFont;
 typedef iRasterText iStbText;
