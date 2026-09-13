@@ -23,8 +23,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "../gmdocument.h"
-#include "util.h"
-#include "visbuf.h"
+#include "ui/util.h"
+#include "ui/visbuf.h"
 #include <the_Foundation/ptrset.h>
 
 iDeclareType(Banner)

@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 
@@ -177,6 +178,40 @@ iBool open_Gempub(iGempub *d, const iBlock *data) {
     }
     close_Gempub(d);
     return iFalse;
+}
+
+iGempub *openForContent_Gempub(const iBlock *content, const iString *mime, const iString *url) {
+    if (cmpCase_String(mime, "application/octet-stream") && cmpCase_String(mime, mimeType_Gempub) &&
+        !endsWithCase_String(url, ".gpub")) {
+        return NULL;
+    }
+    iGempub *d = new_Gempub();
+    if (open_Gempub(d, content)) {
+        setBaseUrl_Gempub(d, url);
+        return d;
+    }
+    delete_Gempub(d);
+    return NULL;
+}
+
+iGempub *openForLocalUrl_Gempub(const iString *url, iBool *isInsideArchive_out) {
+    *isInsideArchive_out = iFalse;
+    const iString *localPath = collect_String(localFilePathFromUrl_String(url));
+    if (localPath && !fileExists_FileInfo(localPath)) {
+        /* This URL may refer to a file inside the archive. */
+        localPath = findContainerArchive_Path(localPath);
+        *isInsideArchive_out = iTrue;
+    }
+    if (!localPath || !equal_CStr(mediaType_Path(localPath), mimeType_Gempub)) {
+        return NULL;
+    }
+    iGempub *d = new_Gempub();
+    if (openFile_Gempub(d, localPath)) {
+        setBaseUrl_Gempub(d, collect_String(makeFileUrl_String(localPath)));
+        return d;
+    }
+    delete_Gempub(d);
+    return NULL;
 }
 
 iBool openFile_Gempub(iGempub *d, const iString *path) {

@@ -45,7 +45,11 @@ enum iGempubProperty {
     cover_GempubProperty,
     max_GempubProperty
 };
+
 iBool       open_Gempub             (iGempub *, const iBlock *data);
+iGempub *   openForContent_Gempub   (const iBlock *content, const iString *mime,
+                                     const iString *url);
+iGempub *   openForLocalUrl_Gempub  (const iString *url, iBool *isInsideArchive_out);
 iBool       openFile_Gempub         (iGempub *, const iString *path);
 iBool       openUrl_Gempub          (iGempub *, const iString *url);
 void        close_Gempub            (iGempub *);

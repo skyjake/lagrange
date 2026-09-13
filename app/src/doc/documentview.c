@@ -27,16 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "banner.h"
 #include "bookmarks.h"
 #include "defs.h"
-#include "documentwidget.h"
+#include "ui/documentwidget.h"
 #include "gempub.h"
 #include <lagrange/gmrequest.h>
 #include "gmutil.h"
 #include "media/media.h"
 #include "render/paint.h"
-#include "root.h"
-#include "mediaui.h"
-#include "touch.h"
-#include "util.h"
+#include "ui/root.h"
+#include "ui/mediaui.h"
+#include "ui/touch.h"
+#include "ui/util.h"
 
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"

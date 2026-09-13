@@ -22,11 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "banner.h"
 
-#include "command.h"
-#include "documentwidget.h"
+#include "ui/command.h"
+#include "ui/documentwidget.h"
 #include <lagrange/lang.h>
 #include "render/paint.h"
-#include "util.h"
+#include "ui/util.h"
 #include "app.h"
 
 iDeclareType(BannerItem)

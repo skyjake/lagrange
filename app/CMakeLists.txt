@@ -252,17 +252,30 @@ set (SOURCES
     src/render/stb_truetype.h
     src/render/text.c
     src/render/text.h
+    # Document:
+    src/doc/banner.c
+    src/doc/banner.h
+    src/doc/documentview.c
+    src/doc/documentview.h
+    src/doc/fetch.c
+    src/doc/fetch.h
+    src/doc/inlinemedia.c
+    src/doc/inlinemedia.h
+    src/doc/inputprompts.c
+    src/doc/inputprompts.h
+    src/doc/linkcontextmenu.c
+    src/doc/linkcontextmenu.h
+    src/doc/linkinfo.c
+    src/doc/linkinfo.h
+    src/doc/persistentstate.c
+    src/doc/persistentstate.h
+    src/doc/swipe.c
+    src/doc/swipe.h
     # User interface:
-    src/ui/banner.c
-    src/ui/banner.h
     src/ui/command.c
     src/ui/command.h
-    src/ui/documentview.c
-    src/ui/documentview.h
     src/ui/gamepad.c
     src/ui/gamepad.h
-    src/ui/linkinfo.c
-    src/ui/linkinfo.h
     src/ui/keys.c
     src/ui/keys.h
     src/ui/metrics.c

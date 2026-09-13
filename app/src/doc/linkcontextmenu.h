@@ -1,4 +1,4 @@
-/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,28 +22,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "render/text.h"
-#include "util.h"
-#include "gmdocument.h"
+#include "../gmdocument.h"
+#include "../media/media.h"
 
 iDeclareType(DocumentWidget)
+iDeclareType(Widget)
 
-iDeclareType(LinkInfo)
-iDeclareTypeConstruction(LinkInfo)
-
-struct Impl_LinkInfo {
-    const iDocumentWidget *doc;
-    iGmLinkId linkId;
-    int       maxWidth;
-    iTextBuf *buf;
-    iAnim     opacity;
-    iBool     isAltPos;
-};
-
-iBool   update_LinkInfo     (iLinkInfo *, const iDocumentWidget *doc, iGmLinkId linkId,
-                             int maxWidth); /* returns true if changed */
-void    invalidate_LinkInfo (iLinkInfo *);
-iInt2   size_LinkInfo       (const iLinkInfo *);
-void    draw_LinkInfo       (const iLinkInfo *, iInt2 topLeft);
-
-void    infoText_LinkInfo   (const iDocumentWidget *doc, iGmLinkId linkId, iString *text_out);
+iWidget *makeLinkContextMenu_DocumentWidget              (iDocumentWidget *, const iGmRun *link);
+iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *, const iString *linkUrl,
+                                                          const iString  *linkLabel,
+                                                          iGmLinkId       linkId,
+                                                          enum iMediaType linkMediaType);

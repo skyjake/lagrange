@@ -24,15 +24,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "../gmdocument.h"
 #include "widget.h"
+#include "doc/swipe.h"
 #include <the_Foundation/stream.h>
 
 iDeclareType(GmDocument)
 iDeclareType(GmIdentity)
 iDeclareType(GmRequest)
+iDeclareType(GmResponse)
 iDeclareType(History)
 iDeclareType(Banner)
 iDeclareType(ScrollWidget)
 iDeclareType(DocumentView)
+iDeclareType(Click)
+iDeclareType(InputPrompts)
+iDeclareType(InlineMedia)
+iDeclareType(DocumentFetch)
+iDeclareType(PersistentDocumentState)
+iDeclareType(MenuItem)
 
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
@@ -44,6 +52,38 @@ void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs,
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 
 iHistory *          history_DocumentWidget          (iDocumentWidget *);
+iDocumentView *     view_DocumentWidget             (iDocumentWidget *);
+iClick *            click_DocumentWidget            (iDocumentWidget *);
+iDocumentView *     swipeView_DocumentWidget        (iDocumentWidget *);
+iInputPrompts *     inputPrompts_DocumentWidget     (iDocumentWidget *);
+iPersistentDocumentState *mod_DocumentWidget (iDocumentWidget *);
+iBanner *           banner_DocumentWidget           (iDocumentWidget *);
+iInlineMedia *      media_DocumentWidget            (iDocumentWidget *);
+iDocumentFetch *    fetch_DocumentWidget            (iDocumentWidget *);
+iGmLinkId           requestLinkId_DocumentWidget    (const iDocumentWidget *);
+iBool               isUrlChanged_DocumentWidget     (const iDocumentWidget *);
+void                setDrawDownloadCounter_DocumentWidget(iDocumentWidget *, iBool);
+const iString *     originId_DocumentWidget         (const iDocumentWidget *);
+iBool               isOriginToNewTab_DocumentWidget (const iDocumentWidget *);
+void                setFooterButtons_DocumentWidget (iDocumentWidget *, iWidget *buttons);
+iBool               setDocumentUrl_DocumentWidget   (iDocumentWidget *, const iString *url);
+iWidget *           makeInputPrompt_DocumentWidget  (iDocumentWidget *, const iString *url,
+                                                     iBool isSensitive, const char *promptLabel,
+                                                     const char *acceptCommand);
+
+void    updateDocument_DocumentWidget   (iDocumentWidget *, const iGmResponse *response,
+                                         iGmDocument *cachedDoc, iBool isInitialUpdate);
+void    replaceDocument_DocumentWidget  (iDocumentWidget *, iGmDocument *newDoc);
+void    showErrorPage_DocumentWidget    (iDocumentWidget *, enum iGmStatusCode code,
+                                         const iString *meta);
+void    makeFooterButtons_DocumentWidget(iDocumentWidget *, const iMenuItem *items, size_t count);
+void    setLinkNumberMode_DocumentWidget(iDocumentWidget *, iBool set);
+void    updateTheme_DocumentWidget      (iDocumentWidget *);
+iBool               isSwipeOverlay_DocumentWidget   (const iDocumentWidget *);
+int                 swipeOffsetOfView_DocumentWidget(const iDocumentWidget *, const iDocumentView *);
+const iGmIdentity * overrideIdentity_DocumentWidget (const iDocumentWidget *); /* NULL if not set */
+int                 redirectCount_DocumentWidget    (const iDocumentWidget *);
+void                invalidate_DocumentWidget       (iDocumentWidget *);
 iWidget *           footerButtons_DocumentWidget    (const iDocumentWidget *);
 iScrollWidget *     scrollBar_DocumentWidget        (const iDocumentWidget *);
 const iString *     url_DocumentWidget              (const iDocumentWidget *);
@@ -75,13 +115,12 @@ iBool               isBlank_DocumentWidget              (const iDocumentWidget *
 iBool               isUnseen_DocumentWidget             (const iDocumentWidget *);
 iMediaRequest *     findMediaRequest_DocumentWidget     (const iDocumentWidget *, iGmLinkId linkId);
 
+const char *        setIdentArg_DocumentWidget          (const iDocumentWidget *, const iString *dstUrl);
+iBool               isSpartanQueryLink_DocumentWidget   (const iDocumentWidget *, iGmLinkId);
+void                interactingWithLink_DocumentWidget  (iDocumentWidget *, iGmLinkId);
+
 size_t              ordinalBase_DocumentWidget          (const iDocumentWidget *);
 iChar               linkOrdinalChar_DocumentWidget      (const iDocumentWidget *, size_t ord);
-
-enum iWheelSwipeState {
-    none_WheelSwipeState,
-    direct_WheelSwipeState,
-};
 
 enum iWheelSwipeState   wheelSwipeState_DocumentWidget  (const iDocumentWidget *);
 
@@ -102,6 +141,9 @@ void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, 
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
+
+void    setupPromptDialog_DocumentWidget(iDocumentWidget *, iWidget *dlg, const iString *url,
+                                         iBool isSensitive); /* shared by modal and inline prompts */
 
 void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 
