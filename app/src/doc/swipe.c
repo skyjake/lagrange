@@ -103,7 +103,6 @@ void setOutgoingView_DocumentSwipe(iDocumentSwipe *d, iDocumentView *view) {
     d->view = view;
 }
 
-
 void reset_DocumentSwipe(iDocumentSwipe *d) {
     if (d->banner) {
         delete_Banner(d->banner);

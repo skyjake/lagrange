@@ -211,7 +211,6 @@ static const int homeRowKeys_[] = {
 };
 static int docEnum_ = 0;
 
-
 iRangecc selectionMark_DocumentWidget(const iDocumentWidget *d) {
     /* Normalize so start < end. */
     iRangecc norm = d->selectMark;
@@ -3184,7 +3183,6 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
     return hitChild_Window(win, pos) == d; /* over the document, so we can scroll */
 }
 
-
 static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     if (!contains_Widget(constAs_Widget(d), pos)) {
         return iFalse;
@@ -3194,7 +3192,6 @@ static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     }
     return iTrue;
 }
-
 
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);

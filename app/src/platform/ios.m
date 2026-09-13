@@ -150,7 +150,6 @@ API_AVAILABLE(ios(13.0))
     };
 }
 
-
 -(void)playHapticEffect:(NSDictionary *)def {
     NSError *error = nil;
     CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:def

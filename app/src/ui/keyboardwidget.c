@@ -83,7 +83,6 @@ static void deinit_Key(iKey *d) {
     delete_String(d->label);
 }
 
-
 static void init_KeyRow(iKeyRow *d) {
     init_Array(&d->keys, sizeof(iKey));
 }

@@ -33,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmcerts.h>
 #include "color.h"
 
-
 iDeclareType(Bookmarks);
 iDeclareType(DocumentWidget);
 iDeclareType(CommandLine);

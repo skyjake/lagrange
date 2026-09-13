@@ -68,7 +68,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 typedef iRasterFont iFont;
 typedef iRasterText iStbText;
 
-
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 hb_font_t *hbFont_FontFile(const iFontFile *d) {
     return stbData_FontFile(d)->hbFont;
