@@ -1847,7 +1847,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             if (!folder || !hasParent_Bookmark(folder, id_Bookmark(bm))) {
                 bm->parentId = folder ? id_Bookmark(folder) : 0;
             }
-            postCommand_App("bookmarks.changed");
+            notify_App("bookmarks.changed");
         }
         setupSheetTransition_Mobile(editor, dialogTransitionDir_Widget(editor));
         destroy_Widget(editor);
@@ -2069,7 +2069,7 @@ static void bookmarkMoved_SidebarWidget_(iSidebarWidget *d, size_t index, size_t
     updateItems_SidebarWidget_(d);
     /* Don't confuse the user: keep the dragged item in hover state. */
     setHoverItem_ListWidget(d->list, dstIndex + (isBefore ? 0 : 1) + (index < dstIndex ? -1 : 0));
-    postCommandf_App("bookmarks.changed nosidebar:%p",
+    notifyf_App("bookmarks.changed nosidebar:%p",
                      d); /* skip this sidebar since we updated already */
 }
 
@@ -2079,7 +2079,7 @@ static void bookmarkMovedOntoFolder_SidebarWidget_(iSidebarWidget *d, size_t ind
     const iSidebarItem *dstItem    = item_ListWidget(d->list, folderIndex);
     iBookmark          *bm         = get_Bookmarks(bookmarks_App(), movingItem->id);
     bm->parentId                   = dstItem->id;
-    postCommand_App("bookmarks.changed");
+    notify_App("bookmarks.changed");
 }
 
 static size_t numBookmarks_(const iPtrArray *bmList) {
@@ -2295,8 +2295,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             postCommand_App("sidebar.toggle");
             return iTrue;
         }
-        else if (startsWith_CStr(cmd, cstr_String(&d->cmdPrefix))) {
-            if (handleSidebarCommand_SidebarWidget_(d, cmd + size_String(&d->cmdPrefix))) {
+        else if (startsWith_Command(cmd, cstr_String(&d->cmdPrefix))) {
+            if (handleSidebarCommand_SidebarWidget_(
+                    d, skipPrefix_Command(cmd) + size_String(&d->cmdPrefix))) {
                 return iTrue;
             }
         }
@@ -2513,7 +2514,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     removeEntries_Feeds(item->id); /* get rid of unsubscribed entries */
                 }
                 bm->flags ^= flag;
-                postCommand_App("bookmarks.changed");
+                notify_App("bookmarks.changed");
             }
             return iTrue;
         }
@@ -2531,7 +2532,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             removeEntries_Feeds(id_Bookmark(i.ptr));
                         }
                         remove_Bookmarks(bookmarks_App(), item->id);
-                        postCommand_App("bookmarks.changed");
+                        notify_App("bookmarks.changed");
                     }
                     else {
                         setFocus_Widget(NULL);
@@ -2555,7 +2556,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     /* TODO: Move it to a Trash folder? */
                     if (remove_Bookmarks(bookmarks_App(), item->id)) {
                         removeEntries_Feeds(item->id);
-                        postCommand_App("bookmarks.changed");
+                        notify_App("bookmarks.changed");
                     }
                 }
             }
@@ -2623,10 +2624,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 const iFeedEntry *entry = i.ptr;
                 markEntryAsRead_Feeds(entry->bookmarkId, &entry->url, iTrue);
             }
-            postCommand_App("visited.changed");
+            notify_App("visited.changed");
             return iTrue;
         }
-        else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feedEntries_SidebarMode) {
+        else if (startsWith_Command(cmd, "feed.entry.") && d->mode == feedEntries_SidebarMode) {
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "feed.entry.open")) {
@@ -2644,7 +2645,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     const iString *url = urlFragmentStripped_String(&item->url);
                     markEntryAsRead_Feeds(
                         item->id, &item->url, isUnreadEntry_Feeds(item->id, &item->url));
-                    postCommand_App("visited.changed");
+                    notify_App("visited.changed");
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.markread")) {
@@ -2663,7 +2664,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             }
                         }
                     }
-                    postCommand_App("visited.changed");
+                    notify_App("visited.changed");
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
@@ -2699,7 +2700,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (startsWith_CStr(cmd, "sideitem.")) {
+        else if (startsWith_Command(cmd, "sideitem.")) {
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "sideitem.open")) {
@@ -2726,7 +2727,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 return iTrue;
             }
         }
-        else if (startsWith_CStr(cmd, "sub.") && d->mode == subscriptions_SidebarMode) {
+        else if (startsWith_Command(cmd, "sub.") && d->mode == subscriptions_SidebarMode) {
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "sub.edit")) {

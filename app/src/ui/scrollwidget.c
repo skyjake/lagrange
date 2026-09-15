@@ -144,7 +144,7 @@ static void unfade_ScrollWidget_(iScrollWidget *d, float opacity) {
     }
     if (!d->willCheckFade && d->fadeEnabled) {
         d->willCheckFade = iTrue;
-        add_Periodic(periodic_App(), d, "scrollbar.fade");
+        add_Periodic(periodic_App(), d, "*scrollbar.fade");
     }
     refresh_Widget(d);
 }

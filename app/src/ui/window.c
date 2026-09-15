@@ -383,7 +383,7 @@ static iBool updateSize_Window_(iWindow *d, iBool notifyAlways) {
     if (!isResizing_ && (hasChanged || notifyAlways)) {
         iRoot *root = d->roots[0];
         postCommandf_Root(root, "window.resized width:%d height:%d", size->x, size->y);
-        postCommand_Root(root, "widget.overflow"); /* check bounds with updated sizes */
+        notify_Root(root, "widget.overflow"); /* check bounds with updated sizes */
         postRefresh_Window(d);
     }
     return hasChanged;
@@ -408,7 +408,7 @@ static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
                              size->y,
                              isHoriz,
                              isVert);
-            postCommand_App("widget.overflow"); /* check bounds with updated sizes */
+            notify_App("widget.overflow"); /* check bounds with updated sizes */
             postRefresh_Window(d);
         }
         d->place.lastNotifiedSize = *size;
@@ -1057,7 +1057,7 @@ static void notifyMetricsChange_Window_(const iWindow *d) {
     resetFonts_Text(d->text);
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
-            postCommand_Root(d->roots[i], "metrics.changed");
+            notify_Root(d->roots[i], "metrics.changed");
         }
     }
 }
@@ -1124,7 +1124,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             if (d->type == extra_WindowType) {
                 d->focusGainedAt = SDL_GetTicks();
                 setCapsLockDown_Keys(iFalse);
-                postCommandf_App("window.focus.gained arg:%d", id_Window(d));
+                notifyf_App("window.focus.gained arg:%d", id_Window(d));
                 d->isExposed = iTrue;
                 setActiveWindow_App(d);
 #if !defined (iPlatformDesktop)
@@ -1148,7 +1148,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
 //                closeMenu_Widget(d->roots[0]->widget);
             }
             else {
-                postCommandf_App("window.focus.lost arg:%u", id_Window(d));
+                notifyf_App("window.focus.lost arg:%u", id_Window(d));
                 closePopups_App(iTrue);
             }
             return iTrue;
@@ -1156,14 +1156,14 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             unhover_Widget();
             d->isMouseInside = iFalse;
             if (d->type == extra_WindowType) {
-                postCommand_App("window.mouse.exited");
+                notify_App("window.mouse.exited");
             }
             postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_ENTER:
             d->isMouseInside = iTrue;
             if (d->type == extra_WindowType) {
-                postCommand_App("window.mouse.entered");
+                notify_App("window.mouse.entered");
             }
             return iTrue;
     }
@@ -1326,18 +1326,18 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
             d->base.isMouseInside = iFalse;
-            postCommand_App("window.mouse.exited");
+            notify_App("window.mouse.exited");
             return iTrue;
         case SDL_WINDOWEVENT_ENTER:
             d->base.isMouseInside = iTrue;
             //SDL_SetWindowInputFocus(d->base.win); /* BUG? */
-            postCommand_App("window.mouse.entered");
+            notify_App("window.mouse.entered");
             setHoverUnderCursor_Window_(as_Window(d));
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->base.focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
-            postCommandf_App("window.focus.gained arg:%u", id_Window(as_Window(d)));
+            notifyf_App("window.focus.gained arg:%u", id_Window(as_Window(d)));
             d->base.isExposed = iTrue;
             setActiveWindow_App(d);
             setHoverUnderCursor_Window_(as_Window(d));
@@ -1349,7 +1349,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
             stopMidClickScroll_Window_(&d->base);
-            postCommandf_App("window.focus.lost arg:%u", id_Window(as_Window(d)));
+            notifyf_App("window.focus.lost arg:%u", id_Window(as_Window(d)));
 #if !defined (iPlatformDesktop)
             setFreezeDraw_MainWindow(d, iTrue);
 #endif
@@ -1600,7 +1600,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
                 mw->isDrawFrozen = iFalse;
                 draw_MainWindow(mw); /* don't show a frame of placeholder content */
-                postCommand_App("media.player.update"); /* in case a player needs updating */
+                notify_App("media.player.update"); /* in case a player needs updating */
                 return iFalse; /* unfreeze all frozen windows */
             }
             if (processEvent_Touch(&event)) {

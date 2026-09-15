@@ -882,7 +882,7 @@ static const char *loadAnimationCStr_Root_(const iRoot *d) {
 static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
     iRoot *d = root;
     d->loadAnimIndex++;
-    postCommandf_App("window.reload.update root:%p", root);
+    notifyf_App("window.reload.update root:%p", root);
     return interval;
 }
 
@@ -1177,7 +1177,7 @@ static void updateNavBarSize_(iWidget *navBar) {
     }
     updateMetrics_Root(navBar->root); /* tight flags changed; need to resize URL bar contents */
 //    refresh_Widget(navBar);
-    postCommand_Widget(navBar, "layout.changed id:navbar");
+    notify_Widget(navBar, "layout.changed id:navbar");
 }
 
 void updateNavBarSize_Root(iRoot *d) {
@@ -1342,7 +1342,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             return iFalse;
         }
     }
-    else if (startsWith_CStr(cmd, "document.")) {
+    else if (startsWith_Command(cmd, "document.")) {
         /* React to the current document only. */
         if (document_Command(cmd) == document_App()) {
             if (equal_Command(cmd, "document.changed")) {
@@ -1359,7 +1359,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                                  category_GmStatusCode(statusCode) == categoryRedirect_GmStatusCode
                                      ? transient_VisitedUrlFlag
                                      : 0);
-                postCommand_App("visited.changed"); /* sidebar will update */
+                notify_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Root_(get_Root());
                 dismissPortraitPhoneSidebars_Root(get_Root());
@@ -1391,7 +1391,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                         bookmarks_App(),
                         urlStr,
                         siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
-                    postCommand_App("bookmarks.changed");
+                    notify_App("bookmarks.changed");
                 }
                 return iFalse;
             }

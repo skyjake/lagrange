@@ -1339,7 +1339,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->flags &= ~(urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag |
                   unseen_DocumentWidgetFlag);
-    postCommandf_Root(
+    notifyf_Root(
         as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
 }
 
@@ -2409,11 +2409,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iReleasePtr(&d->fetch->request);
         updateVisible_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
-        postCommandf_Root(w->root,
-                          "document.changed doc:%p status:%d url:%s",
-                          d,
-                          d->fetch->sourceStatus,
-                          cstr_String(d->mod.url));
+        notifyf_Root(w->root,
+                     "document.changed doc:%p status:%d url:%s",
+                     d,
+                     d->fetch->sourceStatus,
+                     cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
             scrollToHeading_DocumentView(d->view, cstr_String(&d->pendingGotoHeading));
@@ -2443,7 +2443,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "translation.") && d->translation) {
+    else if (startsWith_Command(cmd, "translation.") && d->translation) {
         const iBool wasHandled = handleCommand_Translation(d->translation, cmd);
         if (isFinished_Translation(d->translation)) {
             delete_Translation(d->translation);
@@ -2934,7 +2934,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
                 delete_Hash(folderInfo);
                 free(headingBookmarkIds);
-                postCommand_App("bookmarks.changed");
+                notify_App("bookmarks.changed");
             }
         }
         else {
@@ -2954,7 +2954,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (d->mod.reloadInterval && !isRequestOngoing_DocumentFetch(d->fetch)) {
             if (!isValid_Time(&d->fetch->sourceTime) || elapsedSeconds_Time(&d->fetch->sourceTime) >=
                     seconds_ReloadInterval(d->mod.reloadInterval)) {
-                postCommand_Widget(w, "document.reload");
+                notify_Widget(w, "document.reload");
             }
         }
     }
@@ -2977,7 +2977,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
         d->mod.reloadInterval = arg_Command(cmd);
         /* Ensure that the indicator gets updated. */
-        postCommandf_Root(get_Root(), "window.reload.update root:%p", get_Root());
+        notifyf_Root(get_Root(), "window.reload.update root:%p", get_Root());
     }
     else if (equalWidget_Command(cmd, w, "document.dismiss")) {
         const iString *site = collectNewRange_String(urlRoot_String(d->mod.url));
@@ -2990,10 +2990,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "pinch.") && document_Command(cmd) == d) {
+    else if (startsWith_Command(cmd, "pinch.") && document_Command(cmd) == d) {
         return handlePinch_DocumentSwipe(d->swipe, cmd);
     }
-    else if ((startsWith_CStr(cmd, "edgeswipe.") || startsWith_CStr(cmd, "swipe.")) &&
+    else if ((startsWith_Command(cmd, "edgeswipe.") || startsWith_Command(cmd, "swipe.")) &&
              document_App() == d) {
         return handleEdgeSwipe_DocumentSwipe(d->swipe, cmd);
     }

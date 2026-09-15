@@ -185,6 +185,13 @@ iLocalDef void postCommand_App(const char *command) {
     postCommand_Root(NULL, command);
 }
 
+/* Notifications are commands but flagged as non-user-triggered (`*` prefix). */
+void        notify_Root             (iRoot *, const char *command);
+void        notifyf_Root            (iRoot *, const char *command, ...);
+void        notifyf_App             (const char *command, ...);
+
+iLocalDef void notify_App(const char *command) { notify_Root(NULL, command); }
+
 iDocumentWidget *document_Command       (const char *cmd);
 
 iAny *      findWidget_App              (const char *id);

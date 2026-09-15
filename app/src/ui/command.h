@@ -26,9 +26,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
 
+#define notification_CommandPrefix  '*' /* not a user action */
+#define global_CommandPrefix        '!' /* not restricted to a particular root */
+#define deferred_CommandPrefix      '~' /* held until launch has finished */
+
+iLocalDef iBool isNotification_Command(const char *d) {
+    return *d == notification_CommandPrefix;
+}
+iLocalDef const char *skipPrefix_Command(const char *d) {
+    return d + (*d == notification_CommandPrefix);
+}
+
+void        makeNotification_Command(iString *command);
+
 iRangecc    name_Command            (const char *command);
 
 iBool       equal_Command           (const char *commandWithArgs, const char *command);
+iBool       startsWith_Command      (const char *commandWithArgs, const char *prefix);
 iBool       equalArg_Command        (const char *commandWithArgs, const char *command,
                                      const char *label, const char *value);
 

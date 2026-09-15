@@ -833,7 +833,7 @@ static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
         memset(stream, d->spec.silence, len);
         if (d->decoder->isDone && size_SampleBuf(&d->decoder->output) == 0 && !d->isFinished) {
             d->isFinished = iTrue; /* signal main thread to call stop_Player */
-            postCommand_App("media.player.update");
+            notify_App("media.player.update");
         }
     }
     signal_Condition(&d->decoder->output.moreNeeded);

@@ -870,7 +870,7 @@ static iBool isRemoteSource_Bookmark_(void *context, const iBookmark *d) {
 
 void remoteRequestFinished_Bookmarks_(iBookmarks *d, iGmRequest *req) {
     iUnused(d);
-    postCommandf_App("bookmarks.request.finished req:%p", req);
+    notifyf_App("bookmarks.request.finished req:%p", req);
 }
 
 void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
@@ -924,7 +924,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
     free(userData_Object(req));
     iRelease(req);
     if (isEmpty_PtrArray(&d->remoteRequests)) {
-        postCommand_App("bookmarks.changed");
+        notify_App("bookmarks.changed");
     }
 }
 
@@ -944,7 +944,7 @@ void fetchRemote_Bookmarks(iBookmarks *d) {
             }
         }
         if (numRemoved) {
-            postCommand_App("bookmarks.changed");
+            notify_App("bookmarks.changed");
         }
     }
     iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, isRemoteSource_Bookmark_, NULL)) {

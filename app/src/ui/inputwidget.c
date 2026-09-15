@@ -397,7 +397,7 @@ static void eraseBackup_InputWidget_(iInputWidget *d) {
 
 static uint32_t backupTimeout_InputWidget_(uint32_t interval, void *context) {
     iInputWidget *d = context;
-    postCommand_Widget(d, "input.backup");
+    notify_Widget(d, "input.backup");
     return 0; /* does not repeat */
 }
 
@@ -910,7 +910,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     if (height_Rect(w->rect) != oldHeight) {
-        postCommand_Widget(d, "input.resized arg:%d", w->root->pendingArrange + 1);
+        notify_Widget(d, "input.resized arg:%d", w->root->pendingArrange + 1);
         updateTextInputRect_InputWidget_(d);
     }
 }
@@ -1552,11 +1552,11 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
             }
         }
     }
-    postCommand_Widget(w,
-                       "input.ended id:%s enter:%d arg:%d",
-                       id,
-                       d->inFlags & enterPressed_InputWidgetFlag ? 1 : 0,
-                       accept ? 1 : 0);
+    notify_Widget(w,
+                  "input.ended id:%s enter:%d arg:%d",
+                  id,
+                  d->inFlags & enterPressed_InputWidgetFlag ? 1 : 0,
+                  accept ? 1 : 0);
 }
 
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -1967,7 +1967,7 @@ void setEatEscape_InputWidget(iInputWidget *d, iBool eatEscape) {
 static void contentsWereChanged_InputWidget_(iInputWidget *d) {
     validate_InputWidget(d);
     if (d->inFlags & notifyEdits_InputWidgetFlag) {
-        postCommand_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
+        notify_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
     }
     if (!d->sysCtrl) {
         refresh_Widget(d);

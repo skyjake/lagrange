@@ -207,7 +207,7 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
         const iString *dstUrl = absoluteUrl_String(&d->url, meta_GmRequest(d->request));
         if (statusCode == redirectPermanent_GmStatusCode) {
             if (updateUrls_Bookmark(bookmarks_App(), &d->url, dstUrl)) {
-                postCommand_App("bookmarks.changed");
+                notify_App("bookmarks.changed");
             }
         }
         /* Set up a new request. */
@@ -463,7 +463,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     iFeedJob *work[maxConcurrentRequests_Feeds]; /* We'll do a couple of concurrent requests. */
     iZap(work);
     iBool gotNew = iFalse;
-    postCommand_App("feeds.update.started");
+    notify_App("feeds.update.started");
     const size_t totalJobs = size_PtrArray(&d->jobs);
     int numFinishedJobs = 0;
     while (!d->stopWorker) {
@@ -506,7 +506,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             }
         }
         if (doNotify) {
-            postCommandf_App("feeds.update.progress arg:%d total:%zu", numFinishedJobs, totalJobs);
+            notifyf_App("feeds.update.progress arg:%d total:%zu", numFinishedJobs, totalJobs);
         }
         /* Stop if everything has finished. */
         if (ongoing == 0 && isEmpty_PtrArray(&d->jobs)) {
@@ -545,7 +545,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
         }
         iRelease(knownEntryUrls);
     }
-    postCommandf_App("feeds.update.finished arg:%d unread:%zu", gotNew ? 1 : 0,
+    notifyf_App("feeds.update.finished arg:%d unread:%zu", gotNew ? 1 : 0,
                      numUnread_Feeds());
     return 0;
 }

@@ -520,7 +520,7 @@ static void checkNewPinch_TouchState_(iTouchState *d, iTouch *newTouch) {
         newTouch->pinchId = other->pinchId = pinch.id; /* associated with a pinch gesture */
         clearWidgetMomentum_TouchState_(d, affinity);
         if (other->edge && other->didPostEdgeMove) {
-            postCommandf_App("edgeswipe.ended abort:1 side:%d edge:%d id:%llu",
+            notifyf_App("edgeswipe.ended abort:1 side:%d edge:%d id:%llu",
                              other->edge, other->edge, other->id);
             other->didPostEdgeMove = iFalse;
         }
@@ -857,7 +857,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                             x_F3(delta_Touch_(touch)) * (touch->edge == left_TouchEdge ? 1 : -1);
                         didAbort = relPos < rootSize.x / 4;
                     }
-                    postCommandf_App("edgeswipe.ended abort:%d side:%d edge:%d id:%llu speed:%d", didAbort,
+                    notifyf_App("edgeswipe.ended abort:%d side:%d edge:%d id:%llu speed:%d", didAbort,
                                      touch->edge, touch->edge, touch->id,
                                      (int) (duration > 0 ? length_F3(gesture) / (duration / 1000.0f) : 0));
                 }

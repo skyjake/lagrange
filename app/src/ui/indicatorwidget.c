@@ -98,9 +98,9 @@ iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
     if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
-        if (startsWith_CStr(cmd, "document.request.")) {
+        if (startsWith_Command(cmd, "document.request.")) {
             if (pointerLabel_Command(cmd, "doc") == parent_Widget(w)) {
-                cmd += 17;
+                cmd = skipPrefix_Command(cmd) + 17;
                 if (equal_Command(cmd, "started")) {
                     setValue_Anim(&d->pos, 0, 0);
                     setValue_Anim(&d->pos, 0.75f, 4000);

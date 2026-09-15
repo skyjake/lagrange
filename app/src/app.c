@@ -1189,7 +1189,7 @@ static void saveState_App_(const iApp *d, iBool withContent) {
         /* Do it later. */
         addDelay_Periodic(&d->periodic,
                           (60 - seconds) * 1000, roots[0]->widget,
-                          "visited.save");
+                          "*visited.save");
         return;
     }
     iForIndices(i, roots) {
@@ -1223,7 +1223,7 @@ static int wakeRunLoopOnEvent_App_(void *userdata, SDL_Event *event) {
 
 static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
     iUnused(param);
-    postCommand_Root(NULL, "document.autoreload");
+    notify_Root(NULL, "document.autoreload");
     return interval;
 }
 
@@ -1719,7 +1719,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
                       collectNewCStr_String("Getting Started"),
                       NULL,
                       0x1f306);
-        postCommand_App("~bookmarks.changed");
+        notify_App("~bookmarks.changed");
     }
     init_Feeds(dataDir_App_());
     /* Widget state init. */
@@ -1745,7 +1745,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("~focus.set id:"); /* clear focus */
     postCommand_App("font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
-    postCommand_Root(NULL, "document.autoreload");
+    notify_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     /* Initialize idle sleep. */ {
         d->isIdling      = iFalse;
@@ -2784,7 +2784,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             if (d->isTextInputActive) {
                 SDL_StartTextInput();
             }
-            postCommand_App("media.player.update"); /* in case there are any */
+            notify_App("media.player.update"); /* in case there are any */
             break;
         case SDL_APP_WILLENTERBACKGROUND: {
 #if defined (iPlatformAppleMobile)
@@ -3133,11 +3133,11 @@ void postCommand_Root(iRoot *d, const char *command) {
     if (strlen(command) == 0) {
         return;
     }
-    if (*command == '!') {
+    if (*command == global_CommandPrefix) {
         /* Global command; this is global context so just ignore. */
         command++;
     }
-    if (*command == '~') {
+    if (*command == deferred_CommandPrefix) {
         /* Requires launch to be finished; defer it if needed. */
         command++;
         if (!app_.isFinishedLaunching) {
@@ -3187,6 +3187,40 @@ void postCommandf_App(const char *command, ...) {
     va_end(args);
     postCommand_Root(NULL, cstr_Block(&chars));
     deinit_Block(&chars);
+}
+
+static void notifyString_(iRoot *d, iString *cmd) {
+    makeNotification_Command(cmd);
+    postCommandString_Root(d, cmd);
+}
+
+void notify_Root(iRoot *d, const char *command) {
+    iString cmd;
+    initCStr_String(&cmd, command);
+    notifyString_(d, &cmd);
+    deinit_String(&cmd);
+}
+
+void notifyf_Root(iRoot *d, const char *command, ...) {
+    iString cmd;
+    init_String(&cmd);
+    va_list args;
+    va_start(args, command);
+    vprintf_Block(&cmd.chars, command, args);
+    va_end(args);
+    notifyString_(d, &cmd);
+    deinit_String(&cmd);
+}
+
+void notifyf_App(const char *command, ...) {
+    iString cmd;
+    init_String(&cmd);
+    va_list args;
+    va_start(args, command);
+    vprintf_Block(&cmd.chars, command, args);
+    va_end(args);
+    notifyString_(NULL, &cmd);
+    deinit_String(&cmd);
 }
 
 iAny *findWidget_App(const char *id) {
@@ -4212,12 +4246,12 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "prefs.sidebar.enabled.")) {
+    else if (startsWith_Command(cmd, "prefs.sidebar.enabled.")) {
         const int mode = atoi(cmd + 22);
         postCommandf_App("sidebar.modes.set arg:%d side:0 mode:%d", arg_Command(cmd), mode);
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "prefs.sidebar2.enabled.")) {
+    else if (startsWith_Command(cmd, "prefs.sidebar2.enabled.")) {
         const int mode = atoi(cmd + 23);
         postCommandf_App("sidebar.modes.set arg:%d side:1 mode:%d", arg_Command(cmd), mode);
         return iTrue;
@@ -4465,7 +4499,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         iBool didChange = iFalse;
-        if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
+        if (startsWith_Command(cmd, "prefs.mono.gemini")) {
             if (d->prefs.monospaceGemini != isSet) {
                 d->prefs.monospaceGemini = isSet;
                 didChange = iTrue;
@@ -4487,10 +4521,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
              equal_Command(cmd, "prefs.boldlink.light.changed") ||
              equal_Command(cmd, "prefs.boldlink.visited.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
-        if (startsWith_CStr(cmd, "prefs.boldlink.visited")) {
+        if (startsWith_Command(cmd, "prefs.boldlink.visited")) {
             d->prefs.boldLinkVisited = isSet;
         }
-        else if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
+        else if (startsWith_Command(cmd, "prefs.boldlink.dark")) {
             d->prefs.boldLinkDark = isSet;
         }
         else {
@@ -4913,7 +4947,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmarks.sort")) {
         sort_Bookmarks(d->bookmarks, arg_Command(cmd), cmpTitleAscending_Bookmark);
-        postCommand_App("bookmarks.changed");
+        notify_App("bookmarks.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.reload.remote")) {
@@ -4930,7 +4964,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "feeds.reset")) {
         resetKnownEntries_Feeds();
-        postCommand_App("feeds.update.finished"); /* not really, but we have zero entries now */
+        notify_App("feeds.update.finished"); /* not really, but we have zero entries now */
         return iTrue;
     }
     else if (equal_Command(cmd, "visited.changed")) {
@@ -5535,7 +5569,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool    isRightmost      = (index == tabCount_Widget(tabs) - 1);
         iBool          wasClosed        = iFalse;
         const int      closedGeneration = generation_DocumentWidget((iDocumentWidget *) doc);
-        postCommand_App("document.openurls.changed");
+        notify_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
                 iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index + 1);
@@ -5858,7 +5892,7 @@ iBool handleCommand_App(const char *cmd) {
                with the default values. */
             const uint32_t bmId = add_Bookmarks(bookmarks_App(), url, title, NULL, icon);
             get_Bookmarks(bookmarks_App(), bmId)->parentId = arg_Command(cmd);
-            postCommand_App("bookmarks.changed");
+            notify_App("bookmarks.changed");
             return iTrue;
         }
         const uint32_t existing = findUrlIdent_Bookmarks(
@@ -5878,7 +5912,7 @@ iBool handleCommand_App(const char *cmd) {
         const uint32_t bmId = argLabel_Command(cmd, "bmid");
         const uint32_t destFolder = arg_Command(cmd);
         get_Bookmarks(bookmarks_App(), bmId)->parentId = destFolder;
-        postCommand_App("bookmarks.changed");
+        notify_App("bookmarks.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.subscribe") && isMainWin) {
@@ -5897,7 +5931,7 @@ iBool handleCommand_App(const char *cmd) {
             if (parentId) {
                 get_Bookmarks(d->bookmarks, id)->parentId = parentId;
             }
-            postCommandf_App("bookmarks.changed added:%zu", id);
+            notifyf_App("bookmarks.changed added:%zu", id);
             setRecentFolder_Bookmarks(d->bookmarks, id);
         }
         else {
@@ -5910,7 +5944,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "feeds.update.")) {
+    else if (startsWith_Command(cmd, "feeds.update.")) {
         const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
         iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
         if (!navBar || !prog) {
@@ -5939,7 +5973,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "document.changed")) {
         /* Set of open tabs has changed. */
-        postCommand_App("document.openurls.changed");
+        notify_App("document.openurls.changed");
         if (deviceType_App() == phone_AppDeviceType) {
             showToolbar_Root(d->window->roots[0], iTrue);
         }

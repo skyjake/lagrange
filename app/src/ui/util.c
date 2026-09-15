@@ -783,48 +783,16 @@ iBool isButton_Widget(const iAnyObject *d) {
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
-    if (equal_Command(cmd, "window.focus.lost") ||
-        equal_Command(cmd, "window.focus.gained")) return iTrue;
-    /* TODO: Perhaps a common way of indicating which commands are notifications and should not
-       be reacted to by menus?! A prefix character could do the trick. */
-    return equal_Command(cmd, "media.updated") ||
-           equal_Command(cmd, "media.player.update") ||
-           startsWith_CStr(cmd, "feeds.update.") ||
-           equal_Command(cmd, "bookmarks.request.started") ||
-           equal_Command(cmd, "bookmarks.request.finished") ||
-           equal_Command(cmd, "bookmarks.changed") ||
-           equal_Command(cmd, "document.autoreload") ||
-           equal_Command(cmd, "document.reload") ||
-           equal_Command(cmd, "document.request.started") ||
-           equal_Command(cmd, "document.request.updated") ||
-           equal_Command(cmd, "document.request.finished") ||
-           equal_Command(cmd, "document.changed") ||
-           equal_Command(cmd, "document.openurls.changed") ||
+    return isNotification_Command(cmd) ||
+           equal_Command(cmd, "document.reload") || /* may also be a user action */
+           /* TODO: mark the Android commands as notifications, too */
            equal_Command(cmd, "android.keyboard.changed") ||
            equal_Command(cmd, "android.input.selrange") ||
            equal_Command(cmd, "android.audio.time") ||
-           equal_Command(cmd, "scrollbar.fade") ||
-           equal_Command(cmd, "visited.changed") ||
-           equal_Command(cmd, "visited.save") ||
-           (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
-           equal_Command(cmd, "widget.overflow") ||
-           equal_Command(cmd, "metrics.changed") ||
-           equal_Command(cmd, "window.reload.update") ||
-           equal_Command(cmd, "window.mouse.exited") ||
-           equal_Command(cmd, "window.mouse.entered") ||
-           equal_Command(cmd, "input.backup") ||
-           equal_Command(cmd, "input.ended") ||
-           equal_Command(cmd, "input.edited") ||
-           equal_Command(cmd, "input.resized") ||
-           equal_Command(cmd, "focus.gained") ||
-           equal_Command(cmd, "focus.lost") ||
-           equal_Command(cmd, "tabs.changed") ||
-           equal_Command(cmd, "menu.closed") ||
-           equal_Command(cmd, "menu.keepatbottom") ||
-           equal_Command(cmd, "layout.changed") ||
-           startsWith_CStr(cmd, "open idle:1") || /* opening a URL sometime later */
+           startsWith_Command(cmd, "open idle:1") || /* opening a URL sometime later */
            (equal_Command(cmd, "open") &&
             argLabel_Command(cmd, "redirect")) || /* not a user action */
+           (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -956,7 +924,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "keyboard.changed") &&
             arg_Command(cmd) == 0) {
             /* May need to reposition the menu. */
-            postCommand_Widget(menu, "menu.keepatbottom");
+            notify_Widget(menu, "menu.keepatbottom");
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
@@ -1738,7 +1706,7 @@ void closeMenu_Widget(iWidget *d) {
         if (d->menuClosed) {
             d->menuClosed(d);
         }
-        postCommand_Widget(d, "menu.closed");
+        notify_Widget(d, "menu.closed");
         setupMenuTransition_Mobile(d, iFalse);
         if (focus_Widget() && hasParent_Widget(focus_Widget(), d)) {
             setFocus_Widget(menubar ? NULL : as_Widget(button));
@@ -2360,9 +2328,9 @@ void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
     }
     /* Notify. */
     if (wasChanged && !isEmpty_String(id_Widget(page))) {
-        postCommandf_Root(constAs_Widget(page)->root,
-                          "tabs.changed id:%s",
-                          cstr_String(id_Widget(constAs_Widget(page))));
+        notifyf_Root(constAs_Widget(page)->root,
+                     "tabs.changed id:%s",
+                     cstr_String(id_Widget(constAs_Widget(page))));
     }
 }
 
@@ -2621,7 +2589,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         setFocus_Widget(NULL);
         iInputWidget *input = findChild_Widget(dlg, "input");
         /* Contents of the editor are transferred via the backup file. */
-        postCommand_Widget(input, "input.backup");
+        notify_Widget(input, "input.backup");
         processEvents_App(postedEventsOnly_AppEventMode); /* unfocus, save backup */
         const iString *url = collect_String(suffix_Command(cmd, "url"));
         iAssert(equalCase_Rangecc(urlScheme_String(url), "spartan"));
@@ -2992,36 +2960,18 @@ static void updateQuestionWidth_(iWidget *dlg) {
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    /* TODO: Add a "notification" type of user events to separate them from user actions. */
-    if (!(equal_Command(cmd, "media.updated") ||
-          equal_Command(cmd, "media.player.update") ||
-          equal_Command(cmd, "bookmarks.request.finished") ||
-          equal_Command(cmd, "bookmarks.changed") ||
-          equal_Command(cmd, "document.autoreload") ||
-          equal_Command(cmd, "document.reload") ||
-          equal_Command(cmd, "document.request.updated") ||
+    if (!(isNotification_Command(cmd) ||
+          equal_Command(cmd, "document.reload") || /* may also be a user action */
           equal_Command(cmd, "document.linkkeys") ||
-          equal_Command(cmd, "document.openurls.changed") ||
-          equal_Command(cmd, "scrollbar.fade") ||
-          equal_Command(cmd, "widget.overflow") ||
-          equal_Command(cmd, "edgeswipe.ended") ||
-          equal_Command(cmd, "layout.changed") ||
           equal_Command(cmd, "theme.changed") ||
-          equal_Command(cmd, "focus.lost") ||
-          equal_Command(cmd, "focus.gained") ||
           equal_Command(cmd, "focus.default") ||
           equal_Command(cmd, "menu.open") ||
           equal_Command(cmd, "menu.opened") ||
-          equal_Command(cmd, "menu.closed") ||
-          equal_Command(cmd, "input.backup") ||
-          equal_Command(cmd, "input.ended") ||
-          equal_Command(cmd, "mouse.missed") ||
           equal_Command(cmd, "menu.cancel") ||
+          equal_Command(cmd, "mouse.missed") ||
           equal_Command(cmd, "server.copycert") ||
-          startsWith_CStr(cmd, "visited.") ||
-          startsWith_CStr(cmd, "cancel menu:") ||
-          startsWith_CStr(cmd, "feeds.update.") ||
-          startsWith_CStr(cmd, "window."))) {
+          startsWith_Command(cmd, "cancel menu:") ||
+          startsWith_Command(cmd, "window."))) {
 #ifndef NDEBUG
         printf("message dismissed by: %s\n", cmd); fflush(stdout);
 #endif
@@ -4815,7 +4765,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             }
             bm->parentId = folder ? id_Bookmark(folder) : 0;
             setRecentFolder_Bookmarks(bookmarks_App(), bm->parentId);
-            postCommandf_App("bookmarks.changed added:%zu", id);
+            notifyf_App("bookmarks.changed added:%zu", id);
         }
         setupSheetTransition_Mobile(editor, dialogTransitionDir_Widget(editor));
         destroy_Widget(editor);
@@ -4880,7 +4830,7 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         bm->flags |= subscribed_BookmarkFlag;
         iChangeFlags(bm->flags, headings_BookmarkFlag, headings);
         iChangeFlags(bm->flags, ignoreWeb_BookmarkFlag, ignoreWeb);
-        postCommand_App("bookmarks.changed");
+        notify_App("bookmarks.changed");
         setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;

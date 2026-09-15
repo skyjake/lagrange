@@ -159,7 +159,7 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
         if (buf) {
             deserialize_Bookmarks(bookmarks_App(), stream_Buffer(buf), bookmarks);
             iRelease(buf);
-            postCommand_App("bookmarks.changed");
+            notify_App("bookmarks.changed");
         }
     }
     if (trusted) {
@@ -200,7 +200,7 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
         if (buf) {
             deserialize_Visited(visited_App(), stream_Buffer(buf), iTrue /* keep latest */);
             iRelease(buf);
-            postCommand_App("visited.changed");
+            notify_App("visited.changed");
         }
     }
     if (siteSpec) {

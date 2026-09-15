@@ -353,6 +353,7 @@ void    applyInteractiveResize_Widget(iWidget *, int width);
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
 void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
+void    notify_Widget               (const iAnyObject *, const char *cmd, ...);
 void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);

@@ -816,7 +816,7 @@ static void updated_MediaRequest_(iAnyObject *obj) {
         updateStreamData_Media(d->media, d->linkId, &resp->body);
         unlockResponse_GmRequest(d->req);
     }
-    postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
+    notifyf_App("media.updated link:%u request:%p", d->linkId, d);
 }
 
 static void finished_MediaRequest_(iAnyObject *obj) {

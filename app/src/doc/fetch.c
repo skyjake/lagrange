@@ -118,11 +118,11 @@ void requestUpdated_DocumentFetch(iAnyObject *obj) {
 #endif
     if (now - d->lastRequestUpdateAt > 100) {
         d->lastRequestUpdateAt = now;
-        postCommand_Widget(obj,
-                           "document.request.updated doc:%p reqid:%u request:%p",
-                           obj,
-                           id_GmRequest(d->request),
-                           d->request);
+        notify_Widget(obj,
+                      "document.request.updated doc:%p reqid:%u request:%p",
+                      obj,
+                      id_GmRequest(d->request),
+                      d->request);
     }
     else if (!didLockUnlock) {
         /* This will tell GmRequest to notify us again when new data comes in. */
@@ -133,11 +133,11 @@ void requestUpdated_DocumentFetch(iAnyObject *obj) {
 
 void requestFinished_DocumentFetch(iAnyObject *obj) {
     iDocumentFetch *d = fetch_DocumentWidget(obj);
-    postCommand_Widget(obj,
-                       "document.request.finished doc:%p reqid:%u request:%p",
-                       obj,
-                       id_GmRequest(d->request),
-                       d->request);
+    notify_Widget(obj,
+                  "document.request.finished doc:%p reqid:%u request:%p",
+                  obj,
+                  id_GmRequest(d->request),
+                  d->request);
 }
 
 void updateProgress_DocumentFetch(const iDocumentFetch *d) {
@@ -324,10 +324,10 @@ iBool fetch_DocumentFetch(iDocumentFetch *d) {
         return iFalse; /* don't fetch Titan URLs from here, only through UploadWidget */
     }
     releasePlayers_Media(media_GmDocument(doc_DocumentFetch_(d)));
-    postCommandf_Root(as_Widget(d->owner)->root,
-                      "document.request.started doc:%p url:%s",
-                      d->owner,
-                      cstr_String(mod_DocumentWidget(d->owner)->url));
+    notifyf_Root(as_Widget(d->owner)->root,
+                 "document.request.started doc:%p url:%s",
+                 d->owner,
+                 cstr_String(mod_DocumentWidget(d->owner)->url));
     setLinkNumberMode_DocumentWidget(d->owner, iFalse);
     setDrawDownloadCounter_DocumentWidget(d->owner, iFalse);
     d->flags &= ~pendingRedirect_DocumentFetchFlag;
@@ -396,7 +396,7 @@ void restoreAddressBarAndHistory_DocumentFetch(iDocumentFetch *d, const iString 
         undo_History(mod_DocumentWidget(d->owner)->history);
     }
     if (setDocumentUrl_DocumentWidget(d->owner, url_GmDocument(doc_DocumentFetch_(d)))) {
-        postCommand_Widget(d->owner, "!document.changed doc:%p url:%s", d->owner, cstr_String(mod_DocumentWidget(d->owner)->url));
+        notify_Widget(d->owner, "!document.changed doc:%p url:%s", d->owner, cstr_String(mod_DocumentWidget(d->owner)->url));
     }
 }
 
@@ -441,7 +441,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
             d->state = ready_RequestState;
             restoreAddressBarAndHistory_DocumentFetch(d, url_GmRequest(mr->req));
             updateProgress_DocumentFetch(d);
-            postCommand_Widget(d->owner, "media.updated link:%u request:%p", d->requestLinkId, mr);
+            notify_Widget(d->owner, "media.updated link:%u request:%p", d->requestLinkId, mr);
             if (isFinished_GmRequest(mr->req)) {
                 postCommand_Widget(d->owner, "media.finished link:%u request:%p", d->requestLinkId, mr);
             }
@@ -556,7 +556,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                     /* Update bookmarks automatically to reflect the permanent redirection. */
                     if (statusCode == redirectPermanent_GmStatusCode) {
                         if (updateUrls_Bookmark(bookmarks_App(), mod_DocumentWidget(d->owner)->url, dstUrl)) {
-                            postCommand_App("bookmarks.changed");
+                            notify_App("bookmarks.changed");
                         }
                     }
                     /* We only follow a fixed number of redirects at once, per Gemini spec.
@@ -687,9 +687,9 @@ void take_DocumentFetch(iDocumentFetch *d, iGmRequest *finishedRequest) {
     d->state = fetching_RequestState;
     iAssert(d->request == NULL);
     d->request = finishedRequest;
-    postCommand_Widget(d->owner,
-                       "document.request.finished doc:%p reqid:%u request:%p",
-                       d->owner,
-                       id_GmRequest(d->request),
-                       d->request);
+    notify_Widget(d->owner,
+                  "document.request.finished doc:%p reqid:%u request:%p",
+                  d->owner,
+                  id_GmRequest(d->request),
+                  d->request);
 }

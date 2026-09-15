@@ -485,7 +485,7 @@ iBool handleCommand_Android(const char *cmd) {
         iAndroidAudioPlayer *plr = pointerLabel_Command(cmd, "player");
         if (plr) {
             plr->isFinished = iTrue;
-            postCommand_App("media.player.update");
+            notify_App("media.player.update");
         }
         return iTrue;
     }

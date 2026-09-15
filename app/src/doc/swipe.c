@@ -214,7 +214,7 @@ int sidebarAreaHeight_DocumentSwipe(const iDocumentSwipe *d) {
 iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
     iWidget *w = as_Widget(d->owner);
     if (!prefs_App()->edgeSwipe &&
-        startsWith_CStr(cmd, "edgeswipe.") && argLabel_Command(cmd, "edge")) {
+        startsWith_Command(cmd, "edgeswipe.") && argLabel_Command(cmd, "edge")) {
         return iFalse;
     }
     if (equal_Command(cmd, "edgeswipe.moved")) {
@@ -341,7 +341,7 @@ void finishWheelSwipe_DocumentSwipe(iDocumentSwipe *d, iBool aborted) {
             //printf("ABORTING: dist:%d speed:%f\n", d->wheelDistance, d->speed);
             abort = 1;
         }
-        postCommand_Widget(d->owner, "edgeswipe.ended wheel:1 side:%d abort:%d", side, abort);
+        notify_Widget(d->owner, "edgeswipe.ended wheel:1 side:%d abort:%d", side, abort);
         d->flags &= ~eitherWheel_DocumentSwipeFlag;
         d->wheelState = none_WheelSwipeState;
     }

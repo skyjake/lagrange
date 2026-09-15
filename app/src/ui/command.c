@@ -55,17 +55,36 @@ static iRangecc find_Token(const iToken *d, const char *cmd) {
     return range;
 }
 
+void makeNotification_Command(iString *d) {
+    /* The marker goes after the "!" and "~" prefixes, just before the command name. */
+    const char *cmd = cstr_String(d);
+    size_t pos = 0;
+    while (cmd[pos] == global_CommandPrefix || cmd[pos] == deferred_CommandPrefix) {
+        pos++;
+    }
+    if (cmd[pos] != notification_CommandPrefix) {
+        const char ch = notification_CommandPrefix;
+        insertData_Block(&d->chars, pos, &ch, 1);
+    }
+}
+
 iRangecc name_Command(const char *command) {
+    command = skipPrefix_Command(command);
     const char *firstSpace = strchr(command, ' ');
     if (!firstSpace) return range_CStr(command);
     return (iRangecc){ command, firstSpace };
 }
 
 iBool equal_Command(const char *cmdWithArgs, const char *cmd) {
+    cmdWithArgs = skipPrefix_Command(cmdWithArgs);
     if (strchr(cmdWithArgs, ':')) {
         return startsWith_CStr(cmdWithArgs, cmd) && cmdWithArgs[strlen(cmd)] == ' ';
     }
     return equal_CStr(cmdWithArgs, cmd);
+}
+
+iBool startsWith_Command(const char *cmdWithArgs, const char *prefix) {
+    return startsWith_CStr(skipPrefix_Command(cmdWithArgs), prefix);
 }
 
 iBool equalArg_Command(const char *commandWithArgs, const char *command, const char *label,

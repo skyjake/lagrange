@@ -158,7 +158,7 @@ static uint32_t postUpdate_InlineMedia_(uint32_t interval, void *context) {
     /* Called in timer thread; don't access the widget. */
     iUnused(context);
     if (!isSuspended_App()) {
-        postCommand_App("media.player.update");
+        notify_App("media.player.update");
     }
     return interval;
 }

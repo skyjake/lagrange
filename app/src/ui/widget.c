@@ -283,7 +283,7 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
         win->hover = NULL;
     }
     if (win->focus == d) {
-        postCommandf_App("focus.lost ptr:%p destroyed:1", win->focus);
+        notifyf_App("focus.lost ptr:%p destroyed:1", win->focus);
         win->focus = NULL;
     }
     if (win->keyPriority == d) {
@@ -2545,7 +2545,7 @@ void setFocusWithMethod_Widget(iWidget *d, enum iFocusMethod method) {
         win->keyPriority = NULL;
         if (win->focus) {
             iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
-            postCommand_Widget(win->focus, "focus.lost");
+            notify_Widget(win->focus, "focus.lost");
         }
         if ((~flags_Widget(d) & focusable_WidgetFlag) || (flags_Widget(d) & destroyPending_WidgetFlag)) {
             d = NULL; /* focusing this is not allowed */
@@ -2554,10 +2554,10 @@ void setFocusWithMethod_Widget(iWidget *d, enum iFocusMethod method) {
         if (d) {
             setKeyRoot_Window(get_Window(), d->root);
             if (method) {
-                postCommand_Widget(d, "focus.gained arg:%d", method);
+                notify_Widget(d, "focus.gained arg:%d", method);
             }
             else {
-                postCommand_Widget(d, "focus.gained");
+                notify_Widget(d, "focus.gained");
             }
         }
     }
@@ -2693,7 +2693,7 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
         va_end(args);
     }
     iBool isGlobal = iFalse;
-    if (*cstr_String(&str) == '!')  {
+    if (*cstr_String(&str) == global_CommandPrefix)  {
         isGlobal = iTrue;
         remove_Block(&str.chars, 0, 1);
     }
@@ -2722,6 +2722,19 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
         deinit_String(&ptrStr);
     }
     postCommandString_Root(isGlobal ? NULL : ((const iWidget *) d)->root, &str);
+    deinit_String(&str);
+}
+
+void notify_Widget(const iAnyObject *d, const char *cmd, ...) {
+    iString str;
+    init_String(&str); {
+        va_list args;
+        va_start(args, cmd);
+        vprintf_Block(&str.chars, cmd, args);
+        va_end(args);
+    }
+    makeNotification_Command(&str);
+    postCommand_Widget(d, "%s", cstr_String(&str));
     deinit_String(&str);
 }
 
