@@ -108,7 +108,7 @@ enum iPrefsBool {
     misfinSelfCopy_PrefsBool,
 
     /* Network */
-    warnCertSecurity_PrefsBool,
+    warnTlsSecurity_PrefsBool,
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
     preferIPv6_PrefsBool,
@@ -135,6 +135,41 @@ enum iPrefsBool {
     /* Meta */
     max_PrefsBool
 };
+
+enum iPrefsSpecFlags {
+    noSerialize_PrefsSpecFlag = iBit(1), /* written to the config file by hand */
+    noDispatch_PrefsSpecFlag  = iBit(2), /* stored by a dedicated command handler */
+    mobileOnly_PrefsSpecFlag  = iBit(3), /* only serialized on mobile */
+    refresh_PrefsSpecFlag     = iBit(4), /* refresh all windows after a change */
+    invalidate_PrefsSpecFlag  = iBit(5), /* invalidate the current window after a change */
+};
+
+iDeclareType(PrefsSpec)
+
+struct Impl_PrefsSpec {
+    const char *id;     /* widget ID; the change command is "<id>.changed" */
+    const char *cfgCmd; /* command in the configuration file; NULL means "<id>.changed" */
+    const char *notify; /* command posted after the value has changed */
+    uint32_t    flags;
+};
+
+const iPrefsSpec *  boolSpec_Prefs      (enum iPrefsBool);
+enum iPrefsBool     findBool_Prefs      (iRangecc cmdName); /* max_PrefsBool if not found */
+iBool               setBool_Prefs       (iPrefs *, enum iPrefsBool, iBool value); /* true if changed */
+void                serializeBools_Prefs(const iPrefs *, iString *out);
+
+iDeclareType(PrefsStringSpec)
+
+struct Impl_PrefsStringSpec {
+    const char *cmd;      /* command that sets the value */
+    const char *label;    /* argument carrying the value; always the last one in the command */
+    const char *args;     /* extra arguments that defer any side effects to a later pref */
+    const char *widgetId; /* InputWidget in Preferences */
+    uint32_t    flags;
+};
+
+const iPrefsStringSpec *stringSpec_Prefs      (enum iPrefsString);
+void                    serializeStrings_Prefs(const iPrefs *, iString *out);
 
 enum iCollapse {
     never_Collapse,

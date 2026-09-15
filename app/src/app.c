@@ -290,7 +290,6 @@ static iString *serializePrefs_App_(const iApp *d) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
 #endif
-    appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         int w, h, x, y;
         /* Open windows' current placements. */
@@ -342,8 +341,6 @@ static iString *serializePrefs_App_(const iApp *d) {
                                 top_Rect(*rect));
         }
     }
-    appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
-    appendFormat_String(str, "keyboard id:%s\n", cstr_String(&d->prefs.strings[keyboardLayout_PrefsString]));
     if (d->window) {
         appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
     }
@@ -361,14 +358,11 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
     appendFormat_String(str, "promptposition.set arg:%d\n", d->prefs.promptPosition);
     appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
-    appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
-    appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "urlsize.set arg:%d\n", d->prefs.maxUrlSize);
-    appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "tabwidth.set arg:%d\n", d->prefs.tabWidth);
@@ -390,7 +384,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
 #endif /* LAGRANGE_USE_GAMEPAD */
     if (isMobile_Platform()) {
-        appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
         appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
         appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
     }
@@ -407,58 +400,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
     }
     appendFormat_String(str, "ansiescape arg:%d\n", d->prefs.gemtextAnsiEscapes);
-    /* TODO: This array belongs in Prefs. It can then be used for command handling as well. */
-    const struct {
-        const char * id;
-        const iBool *value;
-    } boolPrefs[] = {
-        { "misfin.self.copy", &d->prefs.misfinSelfCopy },
-        { "prefs.animate", &d->prefs.uiAnimations },
-        { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
-        { "prefs.biglede", &d->prefs.bigFirstParagraph },
-        { "prefs.blink", &d->prefs.blinkingCursor },
-        { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
-        { "prefs.boldlink.light", &d->prefs.boldLinkLight },
-        { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
-        { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
-        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
-        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
-        { "prefs.centershort", &d->prefs.centerShortDocs },
-        { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
-        { "prefs.editor.highlight", &d->prefs.editorSyntaxHighlighting },
-        { "prefs.evensplit", &d->prefs.evenSplit },
-        { "prefs.expandline", &d->prefs.expandToLongLines },
-        { "prefs.font.coloremoji", &d->prefs.colorEmoji },
-        { "prefs.font.smooth", &d->prefs.fontSmoothing },
-        { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
-        { "prefs.gamepad", &d->prefs.useGamepad },
-        { "prefs.gopher.gemstyle", &d->prefs.geminiStyledGopher },
-        { "prefs.hidetabs", &d->prefs.hideTabBar },
-        { "prefs.hoverlink", &d->prefs.hoverLink },
-        { "prefs.ipv6", &d->prefs.preferIPv6 },
-        { "prefs.justify", &d->prefs.justifyParagraph },
-        { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
-        { "prefs.menubar", &d->prefs.menuBar },
-        { "prefs.mono.gemini", &d->prefs.monospaceGemini },
-        { "prefs.mono.gopher", &d->prefs.monospaceGopher },
-        { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
-        { "prefs.quote.italic", &d->prefs.italicQuote },
-        { "prefs.redirect.allowscheme", &d->prefs.allowSchemeChangingRedirect },
-        { "prefs.retaintabs", &d->prefs.retainTabs },
-        { "prefs.sideicon", &d->prefs.sideIcon },
-        { "prefs.socks", &d->prefs.useProxy },
-        { "prefs.swipe.edge", &d->prefs.edgeSwipe },
-        { "prefs.swipe.page", &d->prefs.pageSwipe },
-        { "prefs.time.24h", &d->prefs.time24h },
-        { "prefs.thickscroll", &d->prefs.thickScrollBar },
-        { "prefs.tui.simple", &d->prefs.simpleChars },
-        { "prefs.warn.security", &d->prefs.warnTlsSecurity },
-    };
-    iForIndices(i, boolPrefs) {
-        appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
-    }
-    appendFormat_String(str, "parentnavskipindex arg:%d\n", d->prefs.skipIndexPageOnParentNavigation);
-    appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
+    serializeBools_Prefs(&d->prefs, str);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
     appendFormat_String(str, "ostheme arg:%d preferdark:%d preferlight:%d\n",
@@ -469,20 +411,11 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
     appendFormat_String(str, "imagestyle.set arg:%d\n", d->prefs.imageStyle);
-    appendFormat_String(str, "ca.file noset:1 path:%s\n", cstr_String(&d->prefs.strings[caFile_PrefsString]));
-    appendFormat_String(str, "ca.path path:%s\n", cstr_String(&d->prefs.strings[caPath_PrefsString]));
-    appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.strings[geminiProxy_PrefsString]));
-    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.strings[gopherProxy_PrefsString]));
-    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.strings[httpProxy_PrefsString]));
-    appendFormat_String(str, "proxy.socks noupdate:1 user:%s\n", cstr_String(&d->prefs.strings[socksUser_PrefsString]));
-    appendFormat_String(str, "proxy.socks noupdate:1 password:%s\n", cstr_String(&d->prefs.strings[socksPassword_PrefsString]));
-    appendFormat_String(str, "proxy.socks address:%s\n", cstr_String(&d->prefs.strings[socksServer_PrefsString]));
+    serializeStrings_Prefs(&d->prefs, str);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.strings[downloadDir_PrefsString]));
 #endif
-    appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.strings[searchUrl_PrefsString]));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
-    appendFormat_String(str, "misfin.recent fp:%s\n", cstr_String(&d->prefs.strings[recentMisfinId_PrefsString]));
     iConstForEach(StringHash, sw, d->savedWidths) {
         const iString     *resizeId = key_StringHashConstIterator(&sw);
         const iSavedWidth *saved    = sw.value->object;
@@ -3625,27 +3558,21 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                 setUiScale_Window(i.ptr, uiScale);
             }
         }
-#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-        postCommandf_App("downloads path:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
-#endif
-        postCommandf_App("customframe arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.customframe")));
-        postCommandf_App("window.retain arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
-        postCommandf_App("smoothscroll arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
-        postCommandf_App("imageloadscroll arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
-        postCommandf_App("hidetoolbarscroll arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.hidetoolbarscroll")));
-        postCommandf_App("ostheme arg:%d", isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        /* Text fields are only read when the dialog is dismissed. */
+        for (enum iPrefsString i = 0; i < max_PrefsString; i++) {
+            const iPrefsStringSpec *spec  = stringSpec_Prefs(i);
+            const iInputWidget     *input = spec->widgetId ?
+                (const iInputWidget *) findChild_Widget(d, spec->widgetId) : NULL;
+            if (input) {
+                postCommandf_App("%s %s%s:%s",
+                                 spec->cmd,
+                                 spec->args ? format_CStr("%s ", spec->args) : "",
+                                 spec->label,
+                                 cstrText_InputWidget(input));
+            }
+        }
         postCommandf_App("font.user path:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.userfont")));
-        postCommandf_App("decodeurls arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
-        postCommandf_App("searchurl address:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
         postCommandf_App("tabwidth.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.tabwidth"))));
         postCommandf_App("cachesize.set arg:%d",
@@ -3654,22 +3581,6 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
         postCommandf_App("urlsize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.urlsize"))));
-        postCommandf_App("ca.file path:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
-        postCommandf_App("ca.path path:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.ca.path")));
-        postCommandf_App("proxy.gemini address:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gemini")));
-        postCommandf_App("proxy.gopher address:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gopher")));
-        postCommandf_App("proxy.http address:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.http")));
-        postCommandf_App("proxy.socks noupdate:1 user:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.socks.user")));
-        postCommandf_App("proxy.socks noupdate:1 password:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.socks.password")));
-        postCommandf_App("proxy.socks address:%s",
-                         cstrText_InputWidget(findChild_Widget(d, "prefs.socks.server")));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
         if (tabs) {
             postCommandf_App("prefs.dialogtab arg:%u",
@@ -4179,9 +4090,159 @@ static void updateNetworkProxy_App_(iApp *d) {
     }
 }
 
+static void prefsStringValueChanged_App_(iApp *d, enum iPrefsString id, iBool isDeferred,
+                                         iBool wasChanged) {
+    switch (id) {
+        case uiLanguage_PrefsString:
+            if (wasChanged) {
+                setCurrent_Lang(cstr_String(&d->prefs.strings[id]));
+                postCommand_App("lang.changed");
+            }
+            break;
+        case searchUrl_PrefsString: {
+            iString *url = &d->prefs.strings[id];
+            if (startsWith_String(url, "//")) {
+                prependCStr_String(url, "gemini:");
+            }
+            if (!isEmpty_String(url) && equal_Rangecc(urlScheme_String(url), "")) {
+                prependCStr_String(url, "gemini://");
+            }
+            break;
+        }
+        case caFile_PrefsString:
+        case caPath_PrefsString:
+            if (!isDeferred) {
+                updateCACertificates_App();
+            }
+            break;
+        case socksServer_PrefsString:
+        case socksUser_PrefsString:
+        case socksPassword_PrefsString:
+            if (!isDeferred) {
+                updateNetworkProxy_App_(d);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+static void prefsBoolValueChanged_App_(iApp *d, enum iPrefsBool id, iBool isFrozen) {
+    switch (id) {
+        case hideToolbarOnScroll_PrefsBool:
+            if (!d->prefs.hideToolbarOnScroll) {
+                showToolbar_Root(get_Root(), iTrue);
+            }
+            break;
+        case simpleChars_PrefsBool:
+#if defined (iPlatformTerminal)
+            SDL_SetHint(SDL_HINT_VIDEO_CURSES_SIMPLE_CHARACTERS, d->prefs.simpleChars ? "1" : "0");
+            invalidate_Window(d->window);
+#endif
+            break;
+        case evenSplit_PrefsBool:
+            if (!isFrozen) {
+                iForEach(PtrArray, i, &d->mainWindows) {
+                    resizeSplits_MainWindow(i.ptr, iTrue);
+                }
+            }
+            break;
+        case useGamepad_PrefsBool:
+            if (d->prefs.useGamepad && !d->gamepad) {
+                d->gamepad = new_Gamepad();
+            }
+            else if (!d->prefs.useGamepad && d->gamepad) {
+                delete_Gamepad(d->gamepad);
+                d->gamepad = NULL;
+            }
+            break;
+        case thickScrollBar_PrefsBool:
+            if (!isFrozen) {
+                postCommand_App("scrollbar.metrics");
+                postCommand_App("window.resized"); /* redo layout */
+            }
+            else if (!isFinishedLaunching_App()) {
+                postCommand_App("~scrollbar.metrics");
+            }
+            break;
+        case preferIPv6_PrefsBool:
+            setPreferIPv6_Socket(d->prefs.preferIPv6);
+            break;
+        case useProxy_PrefsBool:
+            if (isFinishedLaunching_App()) {
+                updateNetworkProxy_App_(d);
+            }
+            break;
+        case colorEmoji_PrefsBool:
+            resetFonts_App();
+            postCommand_App("font.changed");
+            break;
+        case italicQuote_PrefsBool:
+        case monospaceGemini_PrefsBool:
+        case monospaceGopher_PrefsBool:
+        case fontSmoothing_PrefsBool:
+            /* The glyphs must be redrawn, so hide the intermediate state. */
+            if (!isFrozen && get_MainWindow()) {
+                setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
+                if (id == fontSmoothing_PrefsBool) {
+                    resetFontCache_Text(text_Window(get_MainWindow()));
+                }
+                postCommand_App("font.changed");
+                postCommand_App("window.unfreeze");
+            }
+            break;
+        default:
+            break;
+    }
+    if (isFrozen) {
+        return;
+    }
+    const iPrefsSpec *spec = boolSpec_Prefs(id);
+    if (spec->notify) {
+        postCommand_App(spec->notify);
+    }
+    if (spec->flags & refresh_PrefsSpecFlag) {
+        postRefreshAllWindows_App();
+    }
+    if (spec->flags & invalidate_PrefsSpecFlag) {
+        invalidate_Window(d->window);
+    }
+}
+
 static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     const iBool isFrozen = !d->window ||
         (d->window->type == main_WindowType && as_MainWindow(d->window)->isDrawFrozen);
+    /* Boolean preferences. */ {
+        const enum iPrefsBool boolPref = findBool_Prefs(name_Command(cmd));
+        if (boolPref < max_PrefsBool) {
+            if (setBool_Prefs(&d->prefs, boolPref, arg_Command(cmd) != 0)) {
+                prefsBoolValueChanged_App_(d, boolPref, isFrozen);
+            }
+            return iTrue;
+        }
+    }
+    /* String preferences. */ {
+        const iRangecc cmdName    = name_Command(cmd);
+        const iBool    isDeferred = argLabel_Command(cmd, "noset") ||
+                                    argLabel_Command(cmd, "noupdate");
+        iBool didSet = iFalse;
+        for (enum iPrefsString i = 0; i < max_PrefsString; i++) {
+            const iPrefsStringSpec *spec = stringSpec_Prefs(i);
+            if (spec->flags & noDispatch_PrefsSpecFlag || !equal_Rangecc(cmdName, spec->cmd) ||
+                !hasLabel_Command(cmd, spec->label)) {
+                continue;
+            }
+            iString    *value      = &d->prefs.strings[i];
+            const char *arg        = suffixPtr_Command(cmd, spec->label);
+            const iBool wasChanged = !equal_Rangecc(range_String(value), arg);
+            setCStr_String(value, arg);
+            prefsStringValueChanged_App_(d, i, isDeferred, wasChanged);
+            didSet = iTrue;
+        }
+        if (didSet) {
+            return iTrue;
+        }
+    }
     /* Commands related to preferences. */
     if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
@@ -4224,20 +4285,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.dialogTab = arg_Command(cmd);
         return iTrue;
     }
-    else if (equal_Command(cmd, "uilang")) {
-        const iString *lang = string_Command(cmd, "id");
-        iString *val = &d->prefs.strings[uiLanguage_PrefsString];
-        if (!equal_String(lang, val)) {
-            set_String(val, lang);
-            setCurrent_Lang(cstr_String(val));
-            postCommand_App("lang.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "keyboard")) {
-        set_String(&d->prefs.strings[keyboardLayout_PrefsString], string_Command(cmd, "id"));
-        return iTrue;
-    }
     else if (equal_Command(cmd, "navbar.action.set")) {
         d->prefs.navbarActions[iClamp(argLabel_Command(cmd, "button"), 0, maxNavbarActions_Prefs - 1)] =
             iClamp(arg_Command(cmd), 0, max_ToolbarAction - 1);
@@ -4276,27 +4323,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.bottomnavbar.changed")) {
-        d->prefs.bottomNavBar = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            postCommand_App("~root.movable");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.bottomtabbar.changed")) {
-        d->prefs.bottomTabBar = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            postCommand_App("~root.movable");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.hidetabs.changed")) {
-        d->prefs.hideTabBar = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            postCommand_App("~root.movable");
-        }
-        return iTrue;
-    }
     else if (equal_Command(cmd, "prefs.menubar.changed")) {
         d->prefs.menuBar = (arg_Command(cmd) != 0) || isTerminal_Platform(); /* forced in TUI */
         if (!isFrozen) {
@@ -4304,61 +4330,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.thickscroll.changed")) {
-        d->prefs.thickScrollBar = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            postCommand_App("scrollbar.metrics");
-            postCommand_App("window.resized"); /* redo layout */
-        }
-        else if (!isFinishedLaunching_App()) {
-            postCommand_App("~scrollbar.metrics");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gamepad.changed")) {
-        d->prefs.useGamepad = arg_Command(cmd) != 0;
-        if (d->prefs.useGamepad && !d->gamepad) {
-            d->gamepad = new_Gamepad();
-        }
-        else if (!d->prefs.useGamepad && d->gamepad) {
-            delete_Gamepad(d->gamepad);
-            d->gamepad = NULL;
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.evensplit.changed")) {
-        d->prefs.evenSplit = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            iForEach(PtrArray, i, &d->mainWindows) {
-                resizeSplits_MainWindow(i.ptr, iTrue);
-            }
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.tui.simple.changed")) {
-        d->prefs.simpleChars = arg_Command(cmd) != 0;
-#if defined (iPlatformTerminal)
-        SDL_SetHint(SDL_HINT_VIDEO_CURSES_SIMPLE_CHARACTERS, d->prefs.simpleChars ? "1" : "0");
-        invalidate_Window(d->window);
-#endif
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "misfin.self.copy.changed")) {
-        d->prefs.misfinSelfCopy = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "parentnavskipindex")) {
-        d->prefs.skipIndexPageOnParentNavigation = arg_Command(cmd) != 0;
-        return iTrue;
-    }
     else if (equal_Command(cmd, "translation.languages")) {
         d->prefs.langFrom             = argLabel_Command(cmd, "from");
         d->prefs.langTo               = argLabel_Command(cmd, "to");
         d->prefs.translationIgnorePre = argLabel_Command(cmd, "pre") == 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "window.retain")) {
-        d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "window.setdesktop")) {
@@ -4378,10 +4353,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             }
         }
 #endif
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "customframe")) {
-        d->prefs.customFrame = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.set")) {
@@ -4421,57 +4392,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.retaintabs.changed")) {
-        d->prefs.retainTabs = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.swipe.edge.changed")) {
-        d->prefs.edgeSwipe = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.swipe.page.changed")) {
-        d->prefs.pageSwipe = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.quote.italic.changed")) {
-        const iBool isSet = arg_Command(cmd) != 0;
-        if (d->prefs.italicQuote != isSet) {
-            d->prefs.italicQuote = isSet;
-            if (!isFrozen) {
-                postCommand_App("font.changed");
-                postCommand_App("window.unfreeze");
-            }
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.font.coloremoji.changed")) {
-        const iBool isSet = (arg_Command(cmd) != 0);
-        if (d->prefs.colorEmoji != isSet) {
-            d->prefs.colorEmoji = isSet;
-            resetFonts_App();
-            postCommand_App("font.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.font.smooth.changed")) {
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-        }
-        const iBool isSet = (arg_Command(cmd) != 0);
-        if (d->prefs.fontSmoothing != isSet) {
-            d->prefs.fontSmoothing = isSet;
-            if (!isFrozen) {
-                resetFontCache_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
-                postCommand_App("font.changed");
-                postCommand_App("window.unfreeze");
-            }
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.editor.highlight.changed")) {
-        d->prefs.editorSyntaxHighlighting = arg_Command(cmd) != 0;
-        return iFalse;
-    }
     else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
         return iTrue;
@@ -4484,150 +4404,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.markdown.viewsource.changed")) {
-        d->prefs.markdownAsSource = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gopher.gemstyle.changed")) {
-        d->prefs.geminiStyledGopher = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
-             equal_Command(cmd, "prefs.mono.gopher.changed")) {
-        const iBool isSet = (arg_Command(cmd) != 0);
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-        }
-        iBool didChange = iFalse;
-        if (startsWith_Command(cmd, "prefs.mono.gemini")) {
-            if (d->prefs.monospaceGemini != isSet) {
-                d->prefs.monospaceGemini = isSet;
-                didChange = iTrue;
-            }
-        }
-        else {
-            if (d->prefs.monospaceGopher != isSet) {
-                d->prefs.monospaceGopher = isSet;
-                didChange = iTrue;
-            }
-        }
-        if (!isFrozen && didChange) {
-            postCommand_App("font.changed");
-            postCommand_App("window.unfreeze");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
-             equal_Command(cmd, "prefs.boldlink.light.changed") ||
-             equal_Command(cmd, "prefs.boldlink.visited.changed")) {
-        const iBool isSet = (arg_Command(cmd) != 0);
-        if (startsWith_Command(cmd, "prefs.boldlink.visited")) {
-            d->prefs.boldLinkVisited = isSet;
-        }
-        else if (startsWith_Command(cmd, "prefs.boldlink.dark")) {
-            d->prefs.boldLinkDark = isSet;
-        }
-        else {
-            d->prefs.boldLinkLight = isSet;
-        }
-        if (!d->isLoadingPrefs && isFinishedLaunching_App()) {
-            postCommand_App("font.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.biglede.changed")) {
-        d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.justify.changed")) {
-        d->prefs.justifyParagraph = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
-        d->prefs.plainTextWrap = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.expandline.changed")) {
-        d->prefs.expandToLongLines = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.sideicon.changed")) {
-        d->prefs.sideIcon = arg_Command(cmd) != 0;
-        postRefreshAllWindows_App();
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.centershort.changed")) {
-        d->prefs.centerShortDocs = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
     else if (equal_Command(cmd, "collapsepre.set")) {
         d->prefs.collapsePre = arg_Command(cmd);
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
-        d->prefs.hoverLink = arg_Command(cmd) != 0;
-        postRefreshAllWindows_App();
-        return iTrue;
-    }
     else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
-        d->prefs.hoverLink = !d->prefs.hoverLink;
-        postRefreshAllWindows_App();
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.dataurl.openimages.changed")) {
-        d->prefs.openDataUrlImagesOnLoad = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.archive.openindex.changed")) {
-        d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.bookmarks.addbottom.changed")) {
-        d->prefs.addBookmarksToBottom = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.font.warnmissing.changed")) {
-        d->prefs.warnAboutMissingGlyphs = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.animate.changed")) {
-        d->prefs.uiAnimations = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.blink.changed")) {
-        d->prefs.blinkingCursor = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.time.24h.changed")) {
-        d->prefs.time24h = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.redirect.allowscheme.changed")) {
-        d->prefs.allowSchemeChangingRedirect = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.ipv6.changed")) {
-        d->prefs.preferIPv6 = arg_Command(cmd) != 0;
-        setPreferIPv6_Socket(d->prefs.preferIPv6);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "smoothscroll")) {
-        d->prefs.smoothScrolling = arg_Command(cmd);
+        setBool_Prefs(&d->prefs, hoverLink_PrefsBool, !d->prefs.hoverLink);
+        prefsBoolValueChanged_App_(d, hoverLink_PrefsBool, isFrozen);
         return iTrue;
     }
     else if (equal_Command(cmd, "scrollspeed")) {
@@ -4635,18 +4418,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (type == keyboard_ScrollType || type == mouse_ScrollType) {
             d->prefs.smoothScrollSpeed[type] = iClamp(arg_Command(cmd), 1, 40);
         }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "decodeurls")) {
-        d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.warn.security.changed")) {
-        d->prefs.warnTlsSecurity = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "imageloadscroll")) {
-        d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "returnkey.set")) {
@@ -4717,7 +4488,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "ostheme")) {
+    else if (equal_Command(cmd, "ostheme") || equal_Command(cmd, "prefs.ostheme.changed")) {
         d->prefs.useSystemTheme = arg_Command(cmd);
         if (hasLabel_Command(cmd, "preferdark")) {
             d->prefs.systemPreferredColorTheme[0] = argLabel_Command(cmd, "preferdark");
@@ -4769,14 +4540,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "quoteicon.set")) {
-        const iBool quoteIcon = arg_Command(cmd) != 0;
-        if (quoteIcon != d->prefs.quoteIcon) {
-            d->prefs.quoteIcon = quoteIcon;
-            postCommand_App("document.layout.changed redo:1");
-        }
-        return iTrue;
-    }
     else if (equal_Command(cmd, "ansiescape")) {
         d->prefs.gemtextAnsiEscapes = arg_Command(cmd);
         return iTrue;
@@ -4809,54 +4572,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "searchurl")) {
-        iString *url = &d->prefs.strings[searchUrl_PrefsString];
-        setCStr_String(url, suffixPtr_Command(cmd, "address"));
-        if (startsWith_String(url, "//")) {
-            prependCStr_String(url, "gemini:");
-        }
-        if (!isEmpty_String(url) && equal_Rangecc(urlScheme_String(url), "")) {
-            prependCStr_String(url, "gemini://");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.gemini")) {
-        setCStr_String(&d->prefs.strings[geminiProxy_PrefsString], suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.gopher")) {
-        setCStr_String(&d->prefs.strings[gopherProxy_PrefsString], suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.http")) {
-        setCStr_String(&d->prefs.strings[httpProxy_PrefsString], suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.socks")) {
-        if (hasLabel_Command(cmd, "address")) {
-            setCStr_String(&d->prefs.strings[socksServer_PrefsString],
-                           suffixPtr_Command(cmd, "address"));
-        }
-        else if (hasLabel_Command(cmd, "user")) {
-            setCStr_String(&d->prefs.strings[socksUser_PrefsString],
-                           suffixPtr_Command(cmd, "user"));
-        }
-        else if (hasLabel_Command(cmd, "password")) {
-            setCStr_String(&d->prefs.strings[socksPassword_PrefsString],
-                           suffixPtr_Command(cmd, "password"));
-        }
-        if (!argLabel_Command(cmd, "noupdate")) {
-            updateNetworkProxy_App_(d);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.socks.changed")) {
-        d->prefs.useProxy = arg_Command(cmd) != 0;
-        if (isFinishedLaunching_App()) {
-            updateNetworkProxy_App_(d);
-        }
-        return iTrue;
-    }
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.strings[downloadDir_PrefsString], suffixPtr_Command(cmd, "path"));
@@ -4867,20 +4582,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         postCommandf_App("open newtab:%d url:%s",
                          argLabel_Command(cmd, "newtab"),
                          cstrCollect_String(makeFileUrl_String(downloadDir_App())));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ca.file")) {
-        setCStr_String(&d->prefs.strings[caFile_PrefsString], suffixPtr_Command(cmd, "path"));
-        if (!argLabel_Command(cmd, "noset")) {
-            updateCACertificates_App();
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ca.path")) {
-        setCStr_String(&d->prefs.strings[caPath_PrefsString], suffixPtr_Command(cmd, "path"));
-        if (!argLabel_Command(cmd, "noset")) {
-            updateCACertificates_App();
-        }
         return iTrue;
     }
     else if (equal_Command(cmd, "search")) {
@@ -5459,13 +5160,6 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "hidetoolbarscroll")) {
-        d->prefs.hideToolbarOnScroll = arg_Command(cmd);
-        if (!d->prefs.hideToolbarOnScroll) {
-            showToolbar_Root(get_Root(), iTrue);
-        }
-        return iTrue;
-    }
     else if (equal_Command(cmd, "spartan.input")) {
         const char *value = suffixPtr_Command(cmd, "value");
         iRangecc url = range_Command(cmd, "urlesc");
@@ -5664,33 +5358,20 @@ iBool handleCommand_App(const char *cmd) {
         setFocus_Widget(NULL);
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);
-        /* TODO: Use a common table in Prefs to do this more conveniently.
-           Also see `serializePrefs_App_()`. */
-        setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.retaintabs"), d->prefs.retainTabs);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.bookmarks.addbottom"), d->prefs.addBookmarksToBottom);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.font.warnmissing"), d->prefs.warnAboutMissingGlyphs);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.dataurl.openimages"), d->prefs.openDataUrlImagesOnLoad);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.markdown.viewsource"), d->prefs.markdownAsSource);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.bottomnavbar"), d->prefs.bottomNavBar);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.hidetabs"), d->prefs.hideTabBar);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.thickscroll"), d->prefs.thickScrollBar);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.evensplit"), d->prefs.evenSplit);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.edge"), d->prefs.edgeSwipe);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.page"), d->prefs.pageSwipe);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.gopher.gemstyle"), d->prefs.geminiStyledGopher);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.redirect.allowscheme"), d->prefs.allowSchemeChangingRedirect);
+        /* Update preferences values into the widgets. */ {
+            for (int i = 0; i < max_PrefsBool; i++) {
+                const char *id = boolSpec_Prefs(i)->id;
+                if (id) {
+                    setToggle_Widget(findChild_Widget(dlg, id), d->prefs.bools[i]);
+                }
+            }
+            for (int i = 0; i < max_PrefsString; i++) {
+                const char *id = stringSpec_Prefs(i)->widgetId;
+                if (id) {
+                    setText_InputWidget(findChild_Widget(dlg, id), &d->prefs.strings[i]);
+                }
+            }
+        }
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updatePrefsPromptPositionButtons_(dlg, d->prefs.promptPosition);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
@@ -5699,8 +5380,6 @@ iBool handleCommand_App(const char *cmd) {
         updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
         updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.collapsepre"),
                                             format_CStr(" arg:%d", d->prefs.collapsePre));
-        setToggle_Widget(findChild_Widget(dlg, "prefs.time.24h"), d->prefs.time24h);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.quote.italic"), d->prefs.italicQuote);
         updateDropdownSelection_LabelWidget(
             findChild_Widget(dlg, "prefs.returnkey"),
             format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
@@ -5715,36 +5394,14 @@ iBool handleCommand_App(const char *cmd) {
                                  d->prefs.sidebarModeEnabled[side][barMode]);
             }
         }
-        setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(as_Window(d->window))));
-        setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gemini"),
-                        selected_WidgetFlag,
-                        d->prefs.monospaceGemini);
-        setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gopher"),
-                        selected_WidgetFlag,
-                        d->prefs.monospaceGopher);
-        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.visited"),
-                        selected_WidgetFlag,
-                        d->prefs.boldLinkVisited);
-        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.dark"),
-                        selected_WidgetFlag,
-                        d->prefs.boldLinkDark);
-        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.light"),
-                        selected_WidgetFlag,
-                        d->prefs.boldLinkLight);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fg"),
                          d->prefs.gemtextAnsiEscapes & allowFg_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.bg"),
                          d->prefs.gemtextAnsiEscapes & allowBg_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
                          d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.font.coloremoji"), d->prefs.colorEmoji);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.editor.highlight"),
-                         d->prefs.editorSyntaxHighlighting);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.tui.simple"), d->prefs.simpleChars);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.gamepad"), d->prefs.useGamepad);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
@@ -5757,12 +5414,6 @@ iBool handleCommand_App(const char *cmd) {
             findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", d->prefs.quoteIcon)),
             selected_WidgetFlag,
             iTrue);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.justify"), d->prefs.justifyParagraph);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.plaintext.wrap"), d->prefs.plainTextWrap);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.expandline"), d->prefs.expandToLongLines);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
         updateImageStyleButton_(findChild_Widget(dlg, "prefs.imagestyle"), d->prefs.imageStyle);
@@ -5782,19 +5433,6 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
                             collectNewFormat_String("%d", d->prefs.maxUrlSize));
-        setToggle_Widget(findChild_Widget(dlg, "prefs.warn.security"), d->prefs.warnTlsSecurity);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.ipv6"), d->prefs.preferIPv6);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.socks"), d->prefs.useProxy);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.path"), &d->prefs.strings[caPath_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.strings[geminiProxy_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.strings[gopherProxy_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.strings[httpProxy_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.socks.server"), &d->prefs.strings[socksServer_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.socks.user"), &d->prefs.strings[socksUser_PrefsString]);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.socks.password"), &d->prefs.strings[socksPassword_PrefsString]);
         iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
         if (tabs) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
