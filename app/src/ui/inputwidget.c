@@ -3394,7 +3394,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iRect curRect  = { curPos, curSize };
 #if defined (SDL_SEAL_CURSES)
         /* Tell where to place the terminal cursor. */
-        SDL_SetTextInputRect((const SDL_Rect *) &curRect);
+        SDL_SetTextInputArea(get_Window()->win, (const SDL_Rect *) &curRect, 0);
 #endif
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         if (d->mode == overwrite_InputMode) {
