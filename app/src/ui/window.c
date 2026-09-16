@@ -1177,7 +1177,7 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
 
 static void notifyHovered_Window_(iWindow *d) {
     SDL_UserEvent notif = { .type      = SDL_EVENT_USER,
-                            .timestamp = SDL_GetTicks(),
+                            .timestamp = SDL_GetTicksNS(),
                             .code      = command_UserEventCode,
                             .data1     = (void *) format_CStr("mouse.hovered ptr:%p arg:1",
                                                           d->hover) };
@@ -1387,7 +1387,7 @@ static void scrollOnMiddleDrag_Window_(void *context) {
             d->midDragAccum -= scroll; /* fractional part remains */
             SDL_MouseWheelEvent ev = {
                 .type      = SDL_EVENT_MOUSE_WHEEL,
-                .timestamp = now,
+                .timestamp = SDL_MS_TO_NS(now),
                 .windowID  = id_Window(d),
                 .y         = -iSign(speed) * scroll
             };
@@ -1615,7 +1615,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     paste.key.key = SDLK_V;
                     paste.key.mod = KMOD_PRIMARY;
                     paste.key.down       = true;
-                    paste.key.timestamp  = SDL_GetTicks();
+                    paste.key.timestamp  = SDL_GetTicksNS();
                     wasUsed = dispatchEvent_Window(d, &paste);
                 }
                 if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_RIGHT) {
@@ -1787,7 +1787,7 @@ iBool postContextClick_Window(iWindow *d, const SDL_MouseButtonEvent *ev) {
     if (hit) {
         postCommandf_App("contextclick id:%s ptr:%p coord:%d %d",
                          cstr_String(id_Widget(hit)), hit,
-                         ev->x, ev->y);
+                         (int) ev->x, (int) ev->y);
         return iTrue;
     }
     return iFalse;

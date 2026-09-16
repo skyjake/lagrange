@@ -82,7 +82,7 @@ void emulateMouseClickPos_Widget(const iWidget *d, int button, iInt2 clickPos) {
     iMainWindow *wnd = get_MainWindow();
     divfv_I2(&clickPos, wnd->base.pixelRatio); /* ratio is multiplied when processing events */
     SDL_MouseButtonEvent ev = { .type      = SDL_EVENT_MOUSE_BUTTON_DOWN,
-                                .timestamp = SDL_GetTicks(),
+                                .timestamp = SDL_GetTicksNS(),
                                 .windowID  = id_Window(as_Window(wnd)),
                                 .which     = 1024,
                                 .button    = button,

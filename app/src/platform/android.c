@@ -410,7 +410,7 @@ iBool handleCommand_Android(const char *cmd) {
             return iTrue; /* obsolete notification */
         }
         SDL_Event ev = { .type = SDL_EVENT_KEY_DOWN };
-        ev.key.timestamp = SDL_GetTicks();
+        ev.key.timestamp = SDL_GetTicksNS();
         ev.key.key = SDLK_RETURN;
         ev.key.down = true;
         SDL_PushEvent(&ev);

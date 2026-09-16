@@ -2457,7 +2457,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (ev.type == SDL_EVENT_MOUSE_MOTION && !pendingMotionPosted_) {
                     if (numPendingMotionEvents_++ > 0) {
                         pendingMotion_.type      = SDL_EVENT_MOUSE_MOTION;
-                        pendingMotion_.timestamp = SDL_GetTicks();
+                        pendingMotion_.timestamp = SDL_GetTicksNS();
                         pendingMotion_.state     = ev.motion.state;
                         pendingMotion_.which     = ev.motion.which;
                         pendingMotion_.windowID  = ev.motion.windowID;
@@ -2485,7 +2485,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         yPrev = yf;
                         ev.tfinger.fingerID = 0x1234;
                         ev.tfinger.pressure = 1.0f;
-                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.timestamp = SDL_GetTicksNS();
                         ev.tfinger.touchID = SDL_TOUCH_MOUSEID;
                     }
                     else if (ev.type == SDL_EVENT_MOUSE_MOTION) {
@@ -2503,7 +2503,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         yPrev = yf;
                         ev.tfinger.fingerID = 0x1234;
                         ev.tfinger.pressure = 1.0f;
-                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.timestamp = SDL_GetTicksNS();
                         ev.tfinger.touchID = SDL_TOUCH_MOUSEID;
                     }
                 }

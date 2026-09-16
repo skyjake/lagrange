@@ -349,7 +349,7 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
 
 static void sendReturnKeyPress_(int kmods) {
     SDL_Event ev = { .type = SDL_EVENT_KEY_DOWN };
-    ev.key.timestamp = SDL_GetTicks();
+    ev.key.timestamp = SDL_GetTicksNS();
     ev.key.key = SDLK_RETURN;
     ev.key.mod = kmods;
     ev.key.down = true;

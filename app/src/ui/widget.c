@@ -1605,7 +1605,7 @@ void applyInteractiveResize_Widget(iWidget *d, int width) {
     /* Also notify the widget directly for additional handling. */
     const SDL_UserEvent notif = {
         .type      = SDL_EVENT_USER,
-        .timestamp = SDL_GetTicks(),
+        .timestamp = SDL_GetTicksNS(),
         .code      = command_UserEventCode,
         .data1     = "widget.resized",
         .data2     = d->root,
@@ -1621,14 +1621,14 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            "mouse.clicked arg:%d button:%d coord:%d %d id:%s",
                            ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1 : 0,
                            ev->button.button,
-                           ev->button.x,
-                           ev->button.y,
+                           (int) ev->button.x,
+                           (int) ev->button.y,
                            cstr_String(id_Widget(d)));
         return iTrue;
     }
     else if (d->flags & commandOnClick_WidgetFlag &&
              mouseGrab_Widget() == d && ev->type == SDL_EVENT_MOUSE_MOTION) {
-        postCommand_Widget(d, "mouse.moved coord:%d %d", ev->motion.x, ev->motion.y);
+        postCommand_Widget(d, "mouse.moved coord:%d %d", (int) ev->motion.x, (int) ev->motion.y);
         return iTrue;
     }
     else if (d->flags & overflowScrollable_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
@@ -1810,8 +1810,8 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            "mouse.missed arg:%d button:%d coord:%d %d",
                            ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1 : 0,
                            ev->button.button,
-                           ev->button.x,
-                           ev->button.y);
+                           (int) ev->button.x,
+                           (int) ev->button.y);
         return isMobile_Platform(); /* on mobile, consume missed taps to prevent accidental input */
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) && ev->type != SDL_EVENT_MOUSE_WHEEL &&
@@ -1822,8 +1822,8 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                                "mouse.clicked arg:%d button:%d coord:%d %d",
                                ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1 : 0,
                                ev->button.button,
-                               ev->button.x,
-                               ev->button.y);
+                               (int) ev->button.x,
+                               (int) ev->button.y);
         }
         setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_DEFAULT);
         return iTrue;

@@ -521,7 +521,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     }
     else {
         SDL_MouseWheelEvent e = { .type = SDL_EVENT_MOUSE_WHEEL };
-        e.timestamp = SDL_GetTicks();
+        e.timestamp = SDL_GetTicksNS();
         e.windowID = id_Window(win);
         e.which = 1; /* Distinction between trackpad and regular mouse. */
         /* Disregard any wheel acceleration. */
@@ -532,7 +532,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     }
     /* Post corresponding MOUSEWHEEL events. */
     SDL_MouseWheelEvent e = { .type = SDL_EVENT_MOUSE_WHEEL };
-    e.timestamp = SDL_GetTicks();
+    e.timestamp = SDL_GetTicksNS();
     e.windowID = id_Window(win);
     e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. */
     setPerPixel_MouseWheelEvent(&e, isPerPixel);
@@ -1086,7 +1086,7 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
         SDL_MouseButtonEvent mbe = {
             .type = SDL_EVENT_MOUSE_BUTTON_UP,
-            .timestamp = SDL_GetTicks(),
+            .timestamp = SDL_GetTicksNS(),
             .windowID = id_Window(get_Window()),
             0,
             SDL_BUTTON_LEFT,

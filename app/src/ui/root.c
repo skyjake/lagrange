@@ -1296,7 +1296,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         class_InputWidget(url)->processEvent(
             as_Widget(url),
             (SDL_Event *) &(SDL_KeyboardEvent){ .type      = SDL_EVENT_KEY_DOWN,
-                                                .timestamp = SDL_GetTicks(),
+                                                .timestamp = SDL_GetTicksNS(),
                                                 .state     = SDL_PRESSED,
                                                 .keysym    = { .sym = SDLK_BACKSPACE } });
 #endif

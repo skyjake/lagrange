@@ -67,7 +67,7 @@ iDefineTypeConstructionArgs(PeriodicCommand,
 static uint32_t postEvent_Periodic_(void *context, SDL_TimerID timerID, uint32_t interval) {
     iUnused(context, timerID);
     SDL_UserEvent ev = { .type      = SDL_EVENT_USER,
-                         .timestamp = SDL_GetTicks(),
+                         .timestamp = SDL_GetTicksNS(),
                          .code      = periodic_UserEventCode };
     SDL_PushEvent((SDL_Event *) &ev);
     return interval;
