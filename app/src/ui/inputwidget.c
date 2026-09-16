@@ -48,9 +48,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
-#include <SDL_clipboard.h>
-#include <SDL_timer.h>
-#include <SDL_version.h>
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_version.h>
 #include "render/text.h"
 #include "../gmutil.h"
 
@@ -84,8 +84,8 @@ static void enableEditorKeysInMenus_(iBool enable) {
     enableMenuItemsByKey_MacOS(SDLK_RIGHT, KMOD_PRIMARY, enable);
     enableMenuItemsByKey_MacOS(SDLK_UP,    KMOD_PRIMARY, enable);
     enableMenuItemsByKey_MacOS(SDLK_DOWN,  KMOD_PRIMARY, enable);
-    enableMenuItemsByKey_MacOS(SDLK_UP,    KMOD_PRIMARY | KMOD_SHIFT, enable);
-    enableMenuItemsByKey_MacOS(SDLK_DOWN,  KMOD_PRIMARY | KMOD_SHIFT, enable);
+    enableMenuItemsByKey_MacOS(SDLK_UP,    KMOD_PRIMARY | SDL_KMOD_SHIFT, enable);
+    enableMenuItemsByKey_MacOS(SDLK_DOWN,  KMOD_PRIMARY | SDL_KMOD_SHIFT, enable);
 #else
     iUnused(enable);
 #endif
@@ -395,7 +395,8 @@ static void eraseBackup_InputWidget_(iInputWidget *d) {
     }
 }
 
-static uint32_t backupTimeout_InputWidget_(uint32_t interval, void *context) {
+static uint32_t backupTimeout_InputWidget_(void *context, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(timerID, interval);
     iInputWidget *d = context;
     notify_Widget(d, "input.backup");
     return 0; /* does not repeat */
@@ -886,9 +887,9 @@ static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
     }
 #endif
     const float pr = get_Window()->pixelRatio;
-    SDL_SetTextInputRect(&(SDL_Rect){
+    SDL_SetTextInputArea(get_Window()->win, &(SDL_Rect){
         (int)(wc.x / pr), (int)(wc.y / pr), 1, (int)(lh / pr)
-    });
+    }, 0);
 #endif
 }
 
@@ -1627,7 +1628,7 @@ static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
 }
 
 iLocalDef iBool isMarking_(void) {
-    return (modState_Keys() & KMOD_SHIFT) != 0;
+    return (modState_Keys() & SDL_KMOD_SHIFT) != 0;
 }
 
 static void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
@@ -2044,17 +2045,17 @@ static void showClipMenu_InputWidget_(const iInputWidget *d, iInt2 coord) {
 static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
     iWidget *w = as_Widget(d);
-    if (ev->type == SDL_MOUSEMOTION && (isHover_Widget(d) || flags_Widget(w) & keepOnTop_WidgetFlag)) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION && (isHover_Widget(d) || flags_Widget(w) & keepOnTop_WidgetFlag)) {
         const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
         const iInt2 inner = windowToInner_Widget(w, coord);
         setCursor_Window(get_Window(),
                          inner.x >= 2 * gap_UI + d->leftPadding &&
                          inner.x < width_Widget(w) - d->rightPadding
-                             ? SDL_SYSTEM_CURSOR_IBEAM
-                             : SDL_SYSTEM_CURSOR_ARROW);
+                             ? SDL_SYSTEM_CURSOR_TEXT
+                             : SDL_SYSTEM_CURSOR_DEFAULT);
     }
     const iInt2 buttonPos = init_I2(ev->button.x, ev->button.y);
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev->button.button == SDL_BUTTON_RIGHT &&
         contains_Widget(w, buttonPos) /* quick test without traversal */ &&
         hitChild_Widget(w, buttonPos) == w /* don't hit child buttons */) {
         /* Show the copy/paste context menu. */
@@ -2072,7 +2073,7 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
 #endif
             const iInt2 oldCursor = d->cursor;
             setCursor_InputWidget(d, coordCursor_InputWidget_(d, pos_Click(&d->click)));
-            if (keyMods_Sym(modState_Keys()) == KMOD_SHIFT) {
+            if (keyMods_Sym(modState_Keys()) == SDL_KMOD_SHIFT) {
                 d->mark = d->initialMark = (iRanges){
                     cursorToIndex_InputWidget_(d, oldCursor),
                     cursorToIndex_InputWidget_(d, d->cursor)
@@ -2117,7 +2118,7 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
             d->inFlags &= ~isMarking_InputWidgetFlag;
             return true_EventResult;
     }
-    if (ev->type == SDL_MOUSEMOTION && flags_Widget(w) & keepOnTop_WidgetFlag) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION && flags_Widget(w) & keepOnTop_WidgetFlag) {
         const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
         if (contains_Click(&d->click, coord)) {
             return true_EventResult;
@@ -2165,14 +2166,14 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
      - triple-click to select all
      - drag/wheel elsewhere to scroll (contents or overflow), no change in focus
      */
-//    if (ev->type != SDL_MOUSEBUTTONUP && ev->type != SDL_MOUSEBUTTONDOWN &&
-//        ev->type != SDL_MOUSEWHEEL && ev->type != SDL_MOUSEMOTION &&
-//        !(ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) &&
-//        !(ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode)) {
+//    if (ev->type != SDL_EVENT_MOUSE_BUTTON_UP && ev->type != SDL_EVENT_MOUSE_BUTTON_DOWN &&
+//        ev->type != SDL_EVENT_MOUSE_WHEEL && ev->type != SDL_EVENT_MOUSE_MOTION &&
+//        !(ev->type == SDL_EVENT_USER && ev->user.code == widgetTapBegins_UserEventCode) &&
+//        !(ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode)) {
 //        return ignored_EventResult;
 //    }
     if (isFocused_Widget(w)) {
-        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
+        if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTapBegins_UserEventCode) {
             d->lastTapTime = d->tapStartTime;
             d->tapStartTime = SDL_GetTicks();
             const int tapDist = dist_I2(latestPosition_Touch(), d->lastTapPos);
@@ -2224,7 +2225,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
     }
 #if 0
     else if (isFocused_Widget(w)) {
-        if (ev->type == SDL_MOUSEMOTION) {
+        if (ev->type == SDL_EVENT_MOUSE_MOTION) {
             if (~d->inFlags & touchBehavior_InputWidgetFlag) {
                 const iInt2 curPos = relativeCursorCoord_InputWidget_(d);
                 const iInt2 relClick = sub_I2(pos_Click(&d->click),
@@ -2251,8 +2252,8 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             }
         }
         if (d->inFlags & touchBehavior_InputWidgetFlag) {
-            if (ev->type == SDL_MOUSEBUTTONUP ||
-                (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode)) {
+            if (ev->type == SDL_EVENT_MOUSE_BUTTON_UP ||
+                (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode)) {
                 d->inFlags &= ~touchBehavior_InputWidgetFlag;
                 setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
                 setMouseGrab_Widget(NULL);
@@ -2263,9 +2264,9 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
     }
 #endif
 #if 1
-    if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+    if ((ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
         ev->button.button == SDL_BUTTON_RIGHT && contains_Widget(w, latestPosition_Touch())) {
-        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             /*if (isFocused_Widget(w)) {
                 d->inFlags |= isMarking_InputWidgetFlag;
                 d->cursor = touchCoordCursor_InputWidget_(d, latestPosition_Touch());
@@ -2390,7 +2391,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
         }
     }
 #endif
-//    if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+//    if ((ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
 //        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
 //        /* Eat all mouse clicks on the widget. */
 //        return true_EventResult;
@@ -2449,15 +2450,15 @@ static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
 
 static iBool isSelectAllEvent_InputWidget_(const SDL_KeyboardEvent *ev) {
     /* Note: If this were a binding, it would have to conditional on an InputWidget being focused. */
-    if (ev->state != SDL_PRESSED) {
+    if (!ev->down) {
         return iFalse;
     }
-    const int key  = ev->keysym.sym;
-    const int mods = keyMods_Sym(ev->keysym.mod);
+    const int key  = ev->key;
+    const int mods = keyMods_Sym(ev->mod);
 #if defined (iPlatformTerminal)
-    return key == SDLK_a && mods == KMOD_ALT;
+    return key == SDLK_A && mods == SDL_KMOD_ALT;
 #else
-    return key == SDLK_a && mods == KMOD_PRIMARY;
+    return key == SDLK_A && mods == KMOD_PRIMARY;
 #endif
 }
 
@@ -2676,7 +2677,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
      //   updateLinesAndResize_InputWidget_(d);
     }
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
-    if (ev->type == SDL_MOUSEWHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
+    if (ev->type == SDL_EVENT_MOUSE_WHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
         if (numWrapLines_InputWidget_(d) <= size_Range(&d->visWrapLines)) {
             return ignored_EventResult;
         }
@@ -2709,14 +2710,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         return false_EventResult;
     }
-    if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
+    if (ev->type == SDL_EVENT_TEXT_INPUT && isFocused_Widget(w)) {
         /* TEXTINPUT: a normal (e.g. non-CJK) keypress or the IME has finalized
            text to commit. */
-        if ((modState_Keys() & (KMOD_CTRL | KMOD_ALT)) == KMOD_CTRL) {
+        if ((modState_Keys() & (SDL_KMOD_CTRL | SDL_KMOD_ALT)) == SDL_KMOD_CTRL) {
             /* Note: AltGr on Windows is reported as Ctrl+Alt. */
             return iTrue;
         }
-        if (isLinux_Platform() && keyMods_Sym(modState_Keys()) == KMOD_CTRL) {
+        if (isLinux_Platform() && keyMods_Sym(modState_Keys()) == SDL_KMOD_CTRL) {
             return iTrue;
         }
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
@@ -2736,25 +2737,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
-    if ((ev->type == SDL_TEXTEDITING || ev->type == SDL_TEXTEDITING_EXT) &&
-        isFocused_Widget(w)) {
+    if (ev->type == SDL_EVENT_TEXT_EDITING && isFocused_Widget(w)) {
         /* IME is composing text that hasn't been committed yet (e.g., assembling a
            Korean syllable from individual jamo keystrokes). We store it separately
-           and draw it inline at the cursor position. TEXTEDITING_EXT is used for
-           composition strings that exceed the 32-byte TEXTEDITING buffer. */
-        const char *compText;
-        int compStart, compLen;
-        if (ev->type == SDL_TEXTEDITING_EXT) {
-            /* Ownership is transferred; freed below after the text is copied. */
-            compText  = ev->editExt.text;
-            compStart = ev->editExt.start;
-            compLen   = ev->editExt.length;
-        }
-        else {
-            compText  = ev->edit.text;
-            compStart = ev->edit.start;
-            compLen   = ev->edit.length;
-        }
+           and draw it inline at the cursor position. SDL3's composition string has
+           no length limit, so there is no separate "extended" event to handle. */
+        const char *compText  = ev->edit.text;
+        const int   compStart = ev->edit.start;
+        const int   compLen   = ev->edit.length;
         if (compText[0] == '\0') {
             /* Empty composition: IME cancelled or composition ended without commit. */
             clearPreedit_InputWidget_(d);
@@ -2766,9 +2756,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 deleteMarked_InputWidget_(d);
             }
             setPreedit_InputWidget_(d, compText, compStart, compLen);
-        }
-        if (ev->type == SDL_TEXTEDITING_EXT) {
-            SDL_free((char *)compText);
         }
         showCursor_InputWidget_(d);
         updateAllLinesAndResizeHeight_InputWidget_(d);
@@ -2790,24 +2777,24 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             return mbResult >> 1;
         }
     }
-    if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
+    if (ev->type == SDL_EVENT_KEY_UP && isFocused_Widget(w)) {
         return iTrue;
     }
-    if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
+    if (ev->type == SDL_EVENT_KEY_DOWN && isFocused_Widget(w)) {
         /* While an IME composition is active, SDL sends KEYDOWN before the IME
            processes the key. Consume unmodified and Option keys so the widget
            doesn't also act on them (e.g., Option+Enter for Hanja selection).
            Cmd/Ctrl combos are let through as app shortcuts. */
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT && defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
         if (!isEmpty_String(&d->preedit) &&
-            !(ev->key.keysym.mod & (KMOD_GUI | KMOD_CTRL)) &&
-            ev->key.keysym.sym != SDLK_ESCAPE &&
-            ev->key.keysym.sym != SDLK_TAB) {
+            !(ev->key.mod & (SDL_KMOD_GUI | SDL_KMOD_CTRL)) &&
+            ev->key.key != SDLK_ESCAPE &&
+            ev->key.key != SDLK_TAB) {
             return iTrue;
         }
 #endif
-        const int key  = ev->key.keysym.sym;
-        const int mods = keyMods_Sym(ev->key.keysym.mod);
+        const int key  = ev->key.key;
+        const int mods = keyMods_Sym(ev->key.mod);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
         if (mods == KMOD_UNDO) {
             switch (key) {
@@ -2826,7 +2813,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
-        if (isApple_Platform() && (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT))) {
+        if (isApple_Platform() && (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | SDL_KMOD_SHIFT))) {
             switch (key) {
                 case SDLK_UP:
                 case SDLK_DOWN:
@@ -2886,7 +2873,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return (d->inFlags & eatEscape_InputWidgetFlag) != 0;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
             case SDLK_INSERT:
-                if (mods == KMOD_SHIFT) {
+                if (mods == SDL_KMOD_SHIFT) {
                     paste_InputWidget_(d);
                 }
                 return iTrue;
@@ -2921,8 +2908,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
-            case SDLK_d:
-                if (mods != KMOD_CTRL) break;
+            case SDLK_D:
+                if (mods != SDL_KMOD_CTRL) break;
             case SDLK_DELETE:
                 if (!isEmpty_Range(&d->mark)) {
                     pushUndo_InputWidget_(d);
@@ -2947,8 +2934,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
-            case SDLK_k:
-                if (mods == KMOD_CTRL) {
+            case SDLK_K:
+                if (mods == SDL_KMOD_CTRL) {
                     if (!isEmpty_Range(&d->mark)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
@@ -2971,7 +2958,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 break;
             case SDLK_HOME:
             case SDLK_END:
-                if (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
+                if (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | SDL_KMOD_SHIFT)) {
                     setCursor_InputWidget(d, key == SDLK_HOME ? zero_I2() : curMax);
                 }
                 else {
@@ -2979,9 +2966,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 }
                 refresh_Widget(w);
                 return iTrue;
-            case SDLK_a:
-            case SDLK_e:
-                if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
+            case SDLK_A:
+            case SDLK_E:
+                if (mods == SDL_KMOD_CTRL || mods == (SDL_KMOD_CTRL | SDL_KMOD_SHIFT)) {
                     if (isTerminal_Platform()) {
                         /* Move to the start/end of the current wrapped line. */
                         moveCursorByLine_InputWidget_(d, 0, key == 'a' ? -1 : +1);
@@ -3017,7 +3004,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
             case SDLK_TAB:
-                if (mods == (KMOD_ALT | KMOD_SHIFT)) {
+                if (mods == (SDL_KMOD_ALT | SDL_KMOD_SHIFT)) {
                     pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
                     insertChar_InputWidget_(d, '\t');
@@ -3060,7 +3047,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
 #endif
         }
-        if (mods & (KMOD_GUI | KMOD_CTRL)) {
+        if (mods & (SDL_KMOD_GUI | SDL_KMOD_CTRL)) {
             return iFalse;
         }
         return iTrue;

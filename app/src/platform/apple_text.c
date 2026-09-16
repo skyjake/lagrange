@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <CoreText/CoreText.h>
 #include <CoreGraphics/CoreGraphics.h>
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 #include "apple_text.h"
 
@@ -558,7 +558,7 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     if (tex) {
         void *texPixels = NULL;
         int   texPitch  = 0;
-        if (SDL_LockTexture(tex, NULL, &texPixels, &texPitch) == 0) {
+        if (SDL_LockTexture(tex, NULL, &texPixels, &texPitch)) {
             for (int row = 0; row < h; row++) {
                 memcpy((char *) texPixels + row * texPitch,
                        (char *) pixels    + row * (int) stride,
@@ -583,11 +583,11 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
             SDL_SetTextureColorMod(tex, alphaMod, alphaMod, alphaMod);
         }
         const iInt2 orig = origin_Paint;
-        SDL_RenderCopy(render,
+        SDL_RenderTexture(render,
                        tex,
-                       &(SDL_Rect) { 0, 0, w, h },
-                       &(SDL_Rect) { pos.x + orig.x, pos.y + orig.y, w, h });
-        // SDL_RenderDrawRect(render, &(SDL_Rect) { pos.x + orig.x, pos.y + orig.y, w - 1, h - 1 }); /* debug */
+                       &(SDL_FRect) { 0, 0, w, h },
+                       &(SDL_FRect) { pos.x + orig.x, pos.y + orig.y, w, h });
+        // SDL_RenderRect(render, &(SDL_Rect) { pos.x + orig.x, pos.y + orig.y, w - 1, h - 1 }); /* debug */
         SDL_DestroyTexture(tex);
     }
     free(pixels);

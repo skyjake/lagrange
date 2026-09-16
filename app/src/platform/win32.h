@@ -24,8 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
-#include <SDL_video.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_properties.h>
+#include <SDL3/SDL_system.h>
 
 iDeclareType(Window)
 
@@ -40,6 +41,7 @@ iString *windowsDirectory_Win32(void);
 iString *tempDirectory_Win32(void);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-void     processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window);
+void     enableCustomFrameMessageHook_Win32(iWindow *window);
+void     processNativeEvent_Win32(const MSG *msg, iWindow *window);
 iInt2    cursor_Win32(void);
 #endif

@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/thread.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 #include <ctype.h>
 
 iDeclareType(Feeds)
@@ -575,7 +575,8 @@ static iBool startWorker_Feeds_(iFeeds *d) {
     return iFalse;
 }
 
-static uint32_t refresh_Feeds_(uint32_t interval, void *data) {
+static uint32_t refresh_Feeds_(void *userdata, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(userdata, timerID, interval);
     /* Called in the SDL timer thread, so let's start a worker thread for running the refresh. */
     startWorker_Feeds_(&feeds_);
     return feeds_.refreshInterval;

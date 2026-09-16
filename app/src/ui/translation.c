@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringlist.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 #include <math.h>
 
 /*----------------------------------------------------------------------------------------------*/
@@ -136,7 +136,7 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
             get_Color(palette[palCur]), get_Color(palette[palNext]), palPos - (int) palPos);
         SDL_SetRenderDrawColor(renderer_Window(get_Window()), back.r, back.g, back.b, p.alpha);
         SDL_RenderFillRect(renderer_Window(get_Window()),
-                           &(SDL_Rect){ pos.x + origin_Paint.x, pos.y + origin_Paint.y,
+                           &(SDL_FRect){ pos.x + origin_Paint.x, pos.y + origin_Paint.y,
                                         spr->size.x, spr->size.y });
         if (fg >= 0) {
             setOpacity_Text(opacity * 2);
@@ -296,7 +296,8 @@ void deinit_Translation(iTranslation *d) {
     iRelease(d->linePrefixes);
 }
 
-static uint32_t animate_Translation_(uint32_t interval, iAny *ptr) {
+static uint32_t animate_Translation_(iAny *ptr, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(timerID);
     postCommandf_App("translation.update ptr:%p", ((iTranslation *) ptr)->doc);
     return interval;
 }

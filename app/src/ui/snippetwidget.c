@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/snippets.h>
 #include "app.h"
 
-#include <SDL_clipboard.h>
+#include <SDL3/SDL_clipboard.h>
 
 iDeclareType(SnippetItem)
 typedef iListItemClass iSnippetItemClass;
@@ -193,7 +193,7 @@ static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev)
         }
         return iTrue;
     }
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (!isVisible_Widget(d->menu)) {
             d->contextPos = hoverItemIndex_ListWidget(d->list);
         }

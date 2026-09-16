@@ -72,7 +72,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <the_Foundation/thread.h>
 #include <the_Foundation/version.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -89,7 +89,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
-#   include <SDL_log.h>
+#   include <SDL3/SDL_log.h>
 #   include <fcntl.h>
 #   include <unistd.h>
 #endif
@@ -100,7 +100,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "platform/x11.h"
 #endif
 #if SDL_VERSION_ATLEAST(2, 0, 14)
-#   include <SDL_misc.h>
+#   include <SDL3/SDL_misc.h>
 #endif
 
 iDeclareType(App)
@@ -453,8 +453,8 @@ static const char *dataDir_App_(void) {
     }
 #endif
 #if defined (iPlatformAndroid)
-    if (SDL_AndroidGetExternalStorageState() & SDL_ANDROID_EXTERNAL_STORAGE_WRITE) {
-        return SDL_AndroidGetExternalStoragePath();
+    if (SDL_GetAndroidExternalStorageState() & SDL_ANDROID_EXTERNAL_STORAGE_WRITE) {
+        return SDL_GetAndroidExternalStoragePath();
     }
 #endif
     if (defaultDataDir_App_) {
@@ -482,13 +482,13 @@ static iBool copyFile_(const char *srcPath, const char *dstPath) {
 }
 
 static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
-    if (!(SDL_AndroidGetExternalStorageState() & SDL_ANDROID_EXTERNAL_STORAGE_WRITE)) {
+    if (!(SDL_GetAndroidExternalStorageState() & SDL_ANDROID_EXTERNAL_STORAGE_WRITE)) {
         /* As a fallback, user data will be stored in internal storage instead. */
         return;
     }
     /* This is the app-specific "files" directory in internal storage. */
     const char *intDataDir = SDL_GetPrefPath("Jaakko Keränen", "fi.skyjake.lagrange");
-    const char *extDataDir = SDL_AndroidGetExternalStoragePath();
+    const char *extDataDir = SDL_GetAndroidExternalStoragePath();
     const char *names[] = {
         "bookmarks.ini",
         "prefs.cfg",
@@ -523,7 +523,7 @@ static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
 
 static const char *downloadDir_App_(void) {
 #if defined (iPlatformAndroidMobile)
-    const char *dir = concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Downloads");
+    const char *dir = concatPath_CStr(SDL_GetAndroidExternalStoragePath(), "Downloads");
     makeDirs_Path(collectNewCStr_String(dir));
     return dir;
 #endif
@@ -781,9 +781,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
 #   if defined (iPlatformLinux) && !defined (iPlatformAndroid)
     /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
-        float vdpi;
-        SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
-        const float factor = vdpi / 96.0f;
+        const float factor = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
         mulfv_I2(&rect.size, iMax(factor, 1.0f));
     }
 #   endif
@@ -1018,7 +1016,6 @@ static iBool loadState_App_(iApp *d) {
 
     if (currentWin) {
         SDL_RaiseWindow(currentWin->base.win);
-        SDL_SetWindowInputFocus(currentWin->base.win);
         setActiveWindow_App(currentWin);
     }
 
@@ -1133,10 +1130,10 @@ static void saveState_App_(const iApp *d, iBool withContent) {
 }
 
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
+static uint32_t checkAsleep_App_(void *param, SDL_TimerID timerID, uint32_t interval) {
     iApp *d = param;
-    iUnused(d);
-    SDL_Event ev = { .type = SDL_USEREVENT };
+    iUnused(d, timerID);
+    SDL_Event ev = { .type = SDL_EVENT_USER };
     ev.user.code = asleep_UserEventCode;
     SDL_PushEvent(&ev);
     return interval;
@@ -1144,18 +1141,18 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 #endif
 
 #if defined (iPlatformAppleMobile)
-static int wakeRunLoopOnEvent_App_(void *userdata, SDL_Event *event) {
+static bool wakeRunLoopOnEvent_App_(void *userdata, SDL_Event *event) {
     /* This is a callback for more efficient event waiting. */
     iUnused(userdata, event);
     CFRunLoopRef rl = CFRunLoopGetMain();
     CFRunLoopStop(rl);
     CFRunLoopWakeUp(rl);
-    return 0;
+    return false;
 }
 #endif
 
-static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
-    iUnused(param);
+static uint32_t postAutoReloadCommand_App_(void *userdata, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(userdata, timerID);
     notify_Root(NULL, "document.autoreload");
     return interval;
 }
@@ -1308,10 +1305,27 @@ static const iBlock *aboutBlankPage_(iRangecc path, iRangecc query) {
     return NULL;
 }
 
+static const iBlock *aboutLagrangePage_(iRangecc path, iRangecc query) {
+    if (!equalCase_Rangecc(path, "lagrange")) {
+        return NULL;
+    }
+    /* The "Powered by" line names the libraries that this build actually uses. */
+    iString *powered = collect_String(copy_String(string_Lang("about.powered")));
+    replace_String(powered, "OpenSSL", libraryName_TlsRequest());
+    replace_String(powered,
+                   "SDL 2",
+                   isTerminal_Platform()
+                       ? "ncurses"
+                       : format_CStr("SDL %d", SDL_VERSIONNUM_MAJOR(SDL_GetVersion())));
+    iString *page = collect_String(newBlock_String(aboutPageSource_Resources(path, query)));
+    replace_String(page, "${about.powered}", cstr_String(powered));
+    return utf8_String(page);
+}
+
 #if defined (LAGRANGE_HANDLE_SIGTERM)
 static void postQuitOnSigTerm_(int sig) {
     iUnused(sig);
-    SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+    SDL_PushEvent(&(SDL_Event){ .type = SDL_EVENT_QUIT });
 }
 #endif
 
@@ -1343,7 +1357,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone
        cannot be relied on (behavior differs depending on OS). */ {
-        char *exec = SDL_GetBasePath();
+        const char *exec = SDL_GetBasePath();
         if (exec) {
             d->execPath = newCStr_String(concatPath_CStr(
                 exec, cstr_Rangecc(baseName_Path(executablePath_CommandLine(&d->args)))));
@@ -1351,7 +1365,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
         else {
             d->execPath = copy_String(executablePath_CommandLine(&d->args));
         }
-        SDL_free(exec);
     }
     /* Load the resources from a file. Check the executable directory first, then a
        system-wide location, and as a final fallback, the current working directory. */ {
@@ -1372,14 +1385,14 @@ static void init_App_(iApp *d, int argc, char **argv) {
         };
         iBool wasLoaded = iFalse;
 #if defined (iPlatformAndroidMobile)
-        /* Resources are APK assets; must be read via SDL_RWops. */
+        /* Resources are APK assets; must be read via SDL_IOStream. */
         iForIndices(i, paths) {
-            SDL_RWops *io = SDL_RWFromFile(paths[i], "rb");
+            SDL_IOStream *io = SDL_IOFromFile(paths[i], "rb");
             if (io) {
                 iBlock buf;
-                init_Block(&buf, (size_t) SDL_RWsize(io));
-                SDL_RWread(io, data_Block(&buf), size_Block(&buf), 1);
-                SDL_RWclose(io);
+                init_Block(&buf, (size_t) SDL_GetIOSize(io));
+                SDL_ReadIO(io, data_Block(&buf), size_Block(&buf));
+                SDL_CloseIO(io);
                 wasLoaded = initData_Resources(&buf);
                 deinit_Block(&buf);
                 if (wasLoaded) break;
@@ -1399,7 +1412,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
     init_Lang();
-    /* Register "about:" page handlers. */
+    /* Register "about:" page handlers. The Lagrange page must be checked before the
+       generic resource handler, which would also serve it. */
+    addAboutHandler_GmRequest(aboutLagrangePage_);
     addAboutHandler_GmRequest(aboutPageSource_Resources);
     addAboutHandler_GmRequest(aboutDebugPage_);
     addAboutHandler_GmRequest(aboutBlankPage_);
@@ -1687,10 +1702,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
 # if defined (iPlatformTerminal)
         d->idleSleepDelayMs = 1000 / 60;
 # else
-        SDL_DisplayMode dispMode;
-        SDL_GetWindowDisplayMode(d->window->win, &dispMode);
-        if (dispMode.refresh_rate) {
-            d->idleSleepDelayMs = 1000 / dispMode.refresh_rate;
+        const SDL_DisplayMode *dispMode =
+            SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(d->window->win));
+        if (dispMode && dispMode->refresh_rate > 0) {
+            d->idleSleepDelayMs = (unsigned int) (1000 / dispMode->refresh_rate);
         }
         else {
             d->idleSleepDelayMs = 1000 / 60;
@@ -1896,7 +1911,7 @@ const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) 
     makeDirs_Path(collectNewCStr_String(cache));
 #elif defined (iPlatformAndroid)
     iString *      tmpPath  = collectNew_String();
-    const char *   extCache = concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Cache");
+    const char *   extCache = concatPath_CStr(SDL_GetAndroidExternalStoragePath(), "Cache");
     const iRangecc tmpDir   = range_CStr(extCache);
     makeDirs_Path(collectNewCStr_String(extCache));
 #elif defined (P_tmpdir)
@@ -2307,7 +2322,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
         }
 #endif
         switch (ev.type) {
-            case SDL_QUIT:
+            case SDL_EVENT_QUIT:
                 if (isDesktop_Platform() || isMobileLinux_Platform() || isHandheld_Platform()) {
                     d->isRunning = iFalse;
                     if (findWidget_App("prefs")) {
@@ -2318,7 +2333,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     goto backToMainLoop;
                 }
                 break;
-            case SDL_DROPFILE: {
+            case SDL_EVENT_DROP_FILE: {
                 if (isDesktop_Platform() && !d->window) {
                     /* Need to open an empty window now. */
                     handleNonWindowRelatedCommand_App_(d, "window.new url:");
@@ -2329,37 +2344,37 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     wasUsed = processEvent_Window(as_Window(d->window), &ev);
                 }
                 if (!wasUsed) {
-                    if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
-                        startsWithCase_CStr(ev.drop.file, "gopher:") ||
-                        startsWithCase_CStr(ev.drop.file, "spartan:") ||
-                        startsWithCase_CStr(ev.drop.file, "nex:") ||
-                        startsWithCase_CStr(ev.drop.file, "misfin:") ||
-                        startsWithCase_CStr(ev.drop.file, "file:")) {
-                        postCommandf_Root(NULL, "~open newtab:1 url:%s", ev.drop.file);
+                    if (startsWithCase_CStr(ev.drop.data, "gemini:") ||
+                        startsWithCase_CStr(ev.drop.data, "gopher:") ||
+                        startsWithCase_CStr(ev.drop.data, "spartan:") ||
+                        startsWithCase_CStr(ev.drop.data, "nex:") ||
+                        startsWithCase_CStr(ev.drop.data, "misfin:") ||
+                        startsWithCase_CStr(ev.drop.data, "file:")) {
+                        postCommandf_Root(NULL, "~open newtab:1 url:%s", ev.drop.data);
                     }
                     else {
                         postCommandf_Root(NULL,
-                            "~open newtab:1 url:%s", makeFileUrl_CStr(ev.drop.file));
+                            "~open newtab:1 url:%s", makeFileUrl_CStr(ev.drop.data));
                     }
                 }
-                SDL_free(ev.drop.file);
+                /* Note: ev.drop.data is owned by SDL and must not be freed. */
                 break;
             }
             default: {
-                if (ev.type == SDL_USEREVENT && ev.user.code == periodic_UserEventCode) {
+                if (ev.type == SDL_EVENT_USER && ev.user.code == periodic_UserEventCode) {
                     dispatchCommands_Periodic(&d->periodic);
                     continue;
                 }
-                if (ev.type == SDL_USEREVENT && ev.user.code == releaseObject_UserEventCode) {
+                if (ev.type == SDL_EVENT_USER && ev.user.code == releaseObject_UserEventCode) {
                     iRelease(ev.user.data1);
                     continue;
                 }
-                if (ev.type == SDL_USEREVENT && ev.user.code == refresh_UserEventCode) {
+                if (ev.type == SDL_EVENT_USER && ev.user.code == refresh_UserEventCode) {
                     gotRefresh = iTrue;
                     continue;
                 }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-                if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
+                if (ev.type == SDL_EVENT_USER && ev.user.code == asleep_UserEventCode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
                         isEmpty_SortedArray(&d->tickers)) {
                         if (!d->isIdling) {
@@ -2387,23 +2402,23 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     continue;
                 }
                 /* Keyboard modifier mapping. */
-                if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
+                if (ev.type == SDL_EVENT_KEY_DOWN || ev.type == SDL_EVENT_KEY_UP) {
                     if (d->prefs.capsLockKeyModifier) {
                         /* Track Caps Lock state as a modifier. */
-                        if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
-                            setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
+                        if (ev.key.key == SDLK_CAPSLOCK) {
+                            setCapsLockDown_Keys(ev.key.down);
                         }
                     }
                     else {
-                        ev.key.keysym.mod &= ~KMOD_CAPS;
+                        ev.key.mod &= ~SDL_KMOD_CAPS;
                     }
                     if (!isTextInputActive_App()) {
-                        ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                        ev.key.mod = mapMods_Keys(ev.key.mod & ~SDL_KMOD_CAPS);
                     }
                 }
 #if defined (iPlatformAndroidMobile)
                 /* Use the system Back button to close panels, if they're open. */
-                if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_AC_BACK) {
+                if (ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == SDLK_AC_BACK) {
                     const uint32_t now = SDL_GetTicks();
                     if (now - d->lastBackButtonTime < 100) {
                         /* Suspiciously rapid, must be a double-posted event. The behavior of
@@ -2412,7 +2427,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         continue;
                     }
                     d->lastBackButtonTime = now;
-                    SDL_UserEvent panelBackCmd = { .type = SDL_USEREVENT,
+                    SDL_UserEvent panelBackCmd = { .type = SDL_EVENT_USER,
                                                    .code = command_UserEventCode,
                                                    .data1 = iDupStr("panel.close"),
                                                    .data2 = d->window->keyRoot };
@@ -2421,16 +2436,16 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
                 /* Ignore all mouse events; just use touch. */
-                if (ev.type == SDL_MOUSEBUTTONDOWN ||
-                    ev.type == SDL_MOUSEBUTTONUP ||
-                    ev.type == SDL_MOUSEMOTION ||
-                    ev.type == SDL_MOUSEWHEEL) {
+                if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+                    ev.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+                    ev.type == SDL_EVENT_MOUSE_MOTION ||
+                    ev.type == SDL_EVENT_MOUSE_WHEEL) {
                     continue;
                 }
 #endif /* iPlatformAndroidMobile */
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
                 /* Scroll events may be per-pixel or mouse wheel steps. */
-                if (ev.type == SDL_MOUSEWHEEL) {
+                if (ev.type == SDL_EVENT_MOUSE_WHEEL) {
                     ev.wheel.x = -ev.wheel.x;
                 }
 #endif /* iPlatformMsys */
@@ -2439,9 +2454,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                    accumulate the extra ones here. If too much time passes, we'll break the
                    processing loop to check if refresh is needed, after posting an
                    accumulated motion event. */
-                if (ev.type == SDL_MOUSEMOTION && !pendingMotionPosted_) {
+                if (ev.type == SDL_EVENT_MOUSE_MOTION && !pendingMotionPosted_) {
                     if (numPendingMotionEvents_++ > 0) {
-                        pendingMotion_.type      = SDL_MOUSEMOTION;
+                        pendingMotion_.type      = SDL_EVENT_MOUSE_MOTION;
                         pendingMotion_.timestamp = SDL_GetTicks();
                         pendingMotion_.state     = ev.motion.state;
                         pendingMotion_.which     = ev.motion.which;
@@ -2458,38 +2473,38 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 /* Convert mouse events to finger events to test the touch handling. */ {
                     static float xPrev = 0.0f;
                     static float yPrev = 0.0f;
-                    if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
+                    if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev.type == SDL_EVENT_MOUSE_BUTTON_UP) {
                         const float xf = (d->window->pixelRatio * ev.button.x) / (float) d->window->size.x;
                         const float yf = (d->window->pixelRatio * ev.button.y) / (float) d->window->size.y;
-                        ev.type = (ev.type == SDL_MOUSEBUTTONDOWN ? SDL_FINGERDOWN : SDL_FINGERUP);
+                        ev.type = (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? SDL_EVENT_FINGER_DOWN : SDL_EVENT_FINGER_UP);
                         ev.tfinger.x = xf;
                         ev.tfinger.y = yf;
                         ev.tfinger.dx = xf - xPrev;
                         ev.tfinger.dy = yf - yPrev;
                         xPrev = xf;
                         yPrev = yf;
-                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.fingerID = 0x1234;
                         ev.tfinger.pressure = 1.0f;
                         ev.tfinger.timestamp = SDL_GetTicks();
-                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
+                        ev.tfinger.touchID = SDL_TOUCH_MOUSEID;
                     }
-                    else if (ev.type == SDL_MOUSEMOTION) {
-                        if (~ev.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+                    else if (ev.type == SDL_EVENT_MOUSE_MOTION) {
+                        if (~ev.motion.state & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) {
                             continue; /* only when pressing a button */
                         }
                         const float xf = (d->window->pixelRatio * ev.motion.x) / (float) d->window->size.x;
                         const float yf = (d->window->pixelRatio * ev.motion.y) / (float) d->window->size.y;
-                        ev.type = SDL_FINGERMOTION;
+                        ev.type = SDL_EVENT_FINGER_MOTION;
                         ev.tfinger.x = xf;
                         ev.tfinger.y = yf;
                         ev.tfinger.dx = xf - xPrev;
                         ev.tfinger.dy = yf - yPrev;
                         xPrev = xf;
                         yPrev = yf;
-                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.fingerID = 0x1234;
                         ev.tfinger.pressure = 1.0f;
                         ev.tfinger.timestamp = SDL_GetTicks();
-                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
+                        ev.tfinger.touchID = SDL_TOUCH_MOUSEID;
                     }
                 }
 #endif /* LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION */
@@ -2503,13 +2518,13 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         setCurrent_Window(window);
                         /* Focus navigation events take priority over regular processing. */
                         /* Keyboard focus navigation with arrow keys. */
-                        if (focus_Widget() && ev.type == SDL_KEYDOWN &&
-                            keyMods_Sym(ev.key.keysym.mod) == 0) {
+                        if (focus_Widget() && ev.type == SDL_EVENT_KEY_DOWN &&
+                            keyMods_Sym(ev.key.mod) == 0) {
                             if (moveFocusInsideMenu_App(&ev)) {
                                 wasUsed = iTrue;
                             }
                             else {
-                                const int key = ev.key.keysym.sym;
+                                const int key = ev.key.key;
                                 if ((key == SDLK_DOWN || key == SDLK_UP || key == SDLK_LEFT ||
                                      key == SDLK_RIGHT) &&
                                     /* Some widgets handle arrow keys themselves: */
@@ -2529,11 +2544,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
                            existing popup windows. However, after the event has been processed,
                            a new popup menu may have just opened, so we first take a copy
                            of the existing list of popups. */
-                        const iPtrArray *lastPopupWindows = ev.type == SDL_MOUSEBUTTONDOWN ?
+                        const iPtrArray *lastPopupWindows = ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN ?
                             collect_PtrArray(copy_PtrArray(&d->popupWindows)) : NULL;
                         wasUsed = processEvent_Window(window, &ev);
                         if (wasUsed) {
-                            if (ev.type == SDL_MOUSEBUTTONDOWN && window->type != popup_WindowType &&
+                            if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN && window->type != popup_WindowType &&
                                 !isEmpty_Array(lastPopupWindows)) {
                                 /* Clicking outside the open popups is supposed to close all of them. */
                                 iConstForEach(PtrArray, i, lastPopupWindows) {
@@ -2558,7 +2573,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 setCurrent_Window(d->window);
                 if (!wasUsed) {
                     /* Focus cycling. */
-                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB && current_Root()) {
+                    if (ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == SDLK_TAB && current_Root()) {
                         iWidget *startFrom = focus_Widget();
                         const iBool isLimitedFocus = focusRoot_Widget(startFrom) != get_Root()->widget;
                         /* Go to a sidebar if one is visible. */
@@ -2574,14 +2589,14 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         }
                         else {
                             setFocus_Widget(findFocusable_Widget(startFrom,
-                                                                 ev.key.keysym.mod & KMOD_SHIFT
-                                                                     ? backward_WidgetFocusDir
-                                                                     : forward_WidgetFocusDir));
+                                                                 ev.key.mod & SDL_KMOD_SHIFT
+                                                                 ? backward_WidgetFocusDir
+                                                                 : forward_WidgetFocusDir));
                         }
                         wasUsed = iTrue;
                     }
                 }
-                if (!wasUsed && ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE &&
+                if (!wasUsed && ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == SDLK_ESCAPE &&
                     current_Root() && focus_Widget() &&
                     focusRoot_Widget(focus_Widget()) == get_Root()->widget) {
                     /* Pressing Escape will clear focus. */
@@ -2589,10 +2604,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     wasUsed = iTrue;
                 }
                 if (!wasUsed) {
-                    if (!isMobile_Platform() && ev.type == SDL_KEYDOWN &&
-                        ev.key.keysym.sym == SDLK_RETURN &&
+                    if (!isMobile_Platform() && ev.type == SDL_EVENT_KEY_DOWN &&
+                        ev.key.key == SDLK_RETURN &&
                         focusRoot_Widget(focus_Widget()) == get_Root()->widget &&
-                        !keyMods_Sym(ev.key.keysym.mod)) {
+                        !keyMods_Sym(ev.key.mod)) {
                         /* The Return key is hardcoded key for focusing the URL field.
                            Note that you can't bind anything to Return normally, and it is
                            of course used when entering text. */
@@ -2602,20 +2617,20 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 if (!wasUsed) {
                     /* ^G is an alternative for Escape. */
-                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == 'g' &&
-                        keyMods_Sym(ev.key.keysym.mod) == KMOD_CTRL) {
+                    if (ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == 'g' &&
+                        keyMods_Sym(ev.key.mod) == SDL_KMOD_CTRL) {
                         SDL_KeyboardEvent esc = ev.key;
-                        esc.keysym.sym = SDLK_ESCAPE;
-                        esc.keysym.mod = 0;
+                        esc.key = SDLK_ESCAPE;
+                        esc.mod = 0;
                         SDL_PushEvent((SDL_Event *) &esc);
-                        esc.state = SDL_RELEASED;
-                        esc.type  = SDL_KEYUP;
+                        esc.down = false;
+                        esc.type  = SDL_EVENT_KEY_UP;
                         esc.timestamp++;
                         SDL_PushEvent((SDL_Event *) &esc);
                         wasUsed = iTrue;
                     }
                 }
-                if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
+                if (ev.type == SDL_EVENT_USER && ev.user.code == command_UserEventCode) {
 #if !defined (iPlatformTerminal)
 #   if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
@@ -2685,7 +2700,7 @@ backToMainLoop:;
 
 static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
     switch (ev->type) {
-        case SDL_APP_TERMINATING: {
+        case SDL_EVENT_TERMINATING: {
             iForEach(PtrArray, i, &d->mainWindows) {
                 setFreezeDraw_MainWindow(*i.value, iTrue);
             }
@@ -2700,14 +2715,14 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
 #endif
             break;
         }
-        case SDL_APP_LOWMEMORY:
+        case SDL_EVENT_LOW_MEMORY:
             clearCache_App_();
             break;
-        case SDL_APP_WILLENTERFOREGROUND:
+        case SDL_EVENT_WILL_ENTER_FOREGROUND:
             invalidate_Window(as_Window(d->window));
             d->isSuspended = iFalse;
             break;
-        case SDL_APP_DIDENTERFOREGROUND:
+        case SDL_EVENT_DID_ENTER_FOREGROUND:
             d->warmupFrames = 5;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
             d->isIdling = iFalse;
@@ -2715,11 +2730,11 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
 #endif
             postRefreshAllWindows_App();
             if (d->isTextInputActive) {
-                SDL_StartTextInput();
+                SDL_StartTextInput(as_Window(d->window)->win);
             }
             notify_App("media.player.update"); /* in case there are any */
             break;
-        case SDL_APP_WILLENTERBACKGROUND: {
+        case SDL_EVENT_WILL_ENTER_BACKGROUND: {
 #if defined (iPlatformAppleMobile)
             updateNowPlayingInfo_iOS();
 #endif
@@ -2739,7 +2754,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             saveState_App_(d, iTrue);
             d->isSuspended = iTrue;
             if (d->isTextInputActive) {
-                SDL_StopTextInput();
+                SDL_StopTextInput(as_Window(d->window)->win);
             }
             break;
         }
@@ -2791,30 +2806,30 @@ static void runTickers_App_(iApp *d) {
     }
 }
 
-static int lifecycleWatcher_App_(void *user, SDL_Event *event) {
+static bool lifecycleWatcher_App_(void *user, SDL_Event *event) {
     /* Application lifecycle events are delivered synchronously to event watchers
        (the app may be suspended/terminated before the main loop polls again). */
     switch (event->type) {
-        case SDL_APP_TERMINATING:
-        case SDL_APP_LOWMEMORY:
-        case SDL_APP_WILLENTERFOREGROUND:
-        case SDL_APP_DIDENTERFOREGROUND:
-        case SDL_APP_WILLENTERBACKGROUND:
+        case SDL_EVENT_TERMINATING:
+        case SDL_EVENT_LOW_MEMORY:
+        case SDL_EVENT_WILL_ENTER_FOREGROUND:
+        case SDL_EVENT_DID_ENTER_FOREGROUND:
+        case SDL_EVENT_WILL_ENTER_BACKGROUND:
             handleLifecycleEvent_App_(user, event);
             break;
     }
-    return 0;
+    return false;
 }
 
-static int resizeWatcher_(void *user, SDL_Event *event) {
+static bool resizeWatcher_(void *user, SDL_Event *event) {
     iApp *d = user;
-    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+    if (event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
         /* TODO: Investigate if this is still necessary. */
         setCurrent_Window(d->window);
         resetFontCache_Text(text_Window(d->window)); {
-            SDL_Event u = { .type = SDL_USEREVENT };
+            SDL_Event u = { .type = SDL_EVENT_USER };
             u.user.code = command_UserEventCode;
             u.user.data1 = iDupStr("theme.changed auto:1");
             dispatchEvent_Window(as_Window(d->window), &u);
@@ -2829,7 +2844,7 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
             }
         }
     }
-    return 0;
+    return false;
 }
 
 iLocalDef iBool isResizeDrawEnabled_(void) {
@@ -2856,7 +2871,7 @@ static int run_App_(iApp *d) {
         }
     }
     d->isRunning = iTrue;
-    SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
+    SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true); /* open files via drag'n'drop */
     SDL_AddEventWatch(lifecycleWatcher_App_, d); /* synchronous handling */
     if (isResizeDrawEnabled_()) {
         SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
@@ -2875,10 +2890,10 @@ static int run_App_(iApp *d) {
         }
         recycle_Garbage();
     }
-    SDL_DelEventWatch(resizeWatcher_, d);
-    SDL_DelEventWatch(lifecycleWatcher_App_, d);
+    SDL_RemoveEventWatch(resizeWatcher_, d);
+    SDL_RemoveEventWatch(lifecycleWatcher_App_, d);
 #if defined (iPlatformAppleMobile)
-    SDL_DelEventWatch(wakeRunLoopOnEvent_App_, NULL);
+    SDL_RemoveEventWatch(wakeRunLoopOnEvent_App_, NULL);
 #endif
     return 0;
 }
@@ -3042,7 +3057,7 @@ void postRefresh_Window(iAnyWindow *windowPtr) {
         wasPending |= exchange_Atomic(pendingWindow, iTrue);
     }
     if (!wasPending) {
-        SDL_Event ev = { .type = SDL_USEREVENT };
+        SDL_Event ev = { .type = SDL_EVENT_USER };
         ev.user.code = refresh_UserEventCode;
         SDL_PushEvent(&ev);
     }
@@ -3078,7 +3093,7 @@ void postCommand_Root(iRoot *d, const char *command) {
             return;
         }
     }
-    SDL_Event ev = { .type = SDL_USEREVENT };
+    SDL_Event ev = { .type = SDL_EVENT_USER };
     ev.user.code = command_UserEventCode;
     ev.user.data1 = iDupStr(command);
     ev.user.data2 = d; /* all events are root-specific */
@@ -3178,10 +3193,10 @@ iBool moveFocusInsideMenu_App(const void *sdlEvent) {
         return iFalse;
     }
     const SDL_Event *event = sdlEvent;
-    if (event->type != SDL_KEYDOWN) {
+    if (event->type != SDL_EVENT_KEY_DOWN) {
         return iFalse;
     }
-    const int key = event->key.keysym.sym;
+    const int key = event->key.key;
     /* The menubar has special behavior for focus changing to navigate between sibling menus. */
     iWidget *menu = parentMenu_Widget(focus_Widget());
     if (menu) {
@@ -3265,10 +3280,10 @@ iBool moveFocusWithArrows_App(const void *sdlEvent) {
         return iFalse;
     }
     const SDL_Event *event = sdlEvent;
-    if (event->type != SDL_KEYDOWN) {
+    if (event->type != SDL_EVENT_KEY_DOWN) {
         return iFalse;
     }
-    const int key = event->key.keysym.sym;
+    const int key = event->key.key;
     iWidget *nextFocus = findAdjacentFocusable_Widget(focus_Widget(),
                                                         key == SDLK_UP    ? up_Direction
                                                       : key == SDLK_DOWN  ? down_Direction
@@ -3452,11 +3467,16 @@ iBool isRunningUnderWayland_App(void) {
 
 void setTextInputActive_App(iBool active) {
     app_.isTextInputActive = active;
+    if (!app_.window) {
+        /* May be called while tearing down widgets during shutdown. */
+        return;
+    }
+    SDL_Window *win = as_Window(app_.window)->win;
     if (active) {
-        SDL_StartTextInput();
+        SDL_StartTextInput(win);
     }
     else {
-        SDL_StopTextInput();
+        SDL_StopTextInput(win);
     }
 }
 
@@ -3624,7 +3644,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
             format_CStr(" arg:%d", action));
         /* Each action can be assigned to a single button only, so another dropdown
            may need updating, too. */
-        for (int b = SDL_CONTROLLER_BUTTON_A; b <= SDL_CONTROLLER_BUTTON_START; b++) {
+        for (int b = SDL_GAMEPAD_BUTTON_SOUTH; b <= SDL_GAMEPAD_BUTTON_START; b++) {
             for (int t = 0; t <= 1; t++) {
                 if (b != button || t != trig) {
                     if (findAction_Gamepad(b, t) == action) {
@@ -4756,7 +4776,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
     else if (equal_Command(cmd, "quit")) {
         SDL_Event ev;
-        ev.type = SDL_QUIT;
+        ev.type = SDL_EVENT_QUIT;
         SDL_PushEvent(&ev);
     }
     return iFalse;
@@ -4793,7 +4813,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
             "${dlg.input.send}",
             cstr_String(spartanCmd),
             (iMenuItem[]){ { "${dlg.spartan.upload}",
-                             SDLK_u,
+                             SDLK_U,
                              KMOD_PRIMARY,
                              format_CStr("valueinput.upload url:%s",
                                          cstr_String(urlQueryStripped_String(url))) } },

@@ -34,9 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/thread.h>
-#include <SDL_audio.h>
-#include <SDL_timer.h>
-#include <SDL.h>
+#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL.h>
 
 #if defined (LAGRANGE_ENABLE_MPG123)
 #   include <mpg123.h>
@@ -71,6 +71,7 @@ struct Impl_ContentSpec {
     enum iDecoderType type;
     SDL_AudioFormat   inputFormat;
     SDL_AudioSpec     output;
+    int               samples; /* requested device buffer size, in sample frames */
     size_t            totalInputSize;
     uint64_t          totalSamples;
     size_t            inputStartPos;
@@ -140,21 +141,21 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     /* Gain. */ {
         const float gain = d->gain;
         if (d->inputFormat == AUDIO_F64LSB) {
-            iAssert(d->output.format == AUDIO_F32);
+            iAssert(d->output.format == SDL_AUDIO_F32LE);
             double *inValue  = samples;
             float * outValue = samples;
             for (size_t count = numChannels * n; count; count--) {
                 *outValue++ = gain * *inValue++;
             }
         }
-        else if (d->inputFormat == AUDIO_F32) {
+        else if (d->inputFormat == SDL_AUDIO_F32LE) {
             float *value = samples;
             for (size_t count = numChannels * n; count; count--, value++) {
                 *value *= gain;
             }
         }
         else if (d->inputFormat == AUDIO_S24LSB) {
-            iAssert(d->output.format == AUDIO_S16);
+            iAssert(d->output.format == SDL_AUDIO_S16LE);
             const char *inValue  = samples;
             int16_t *   outValue = samples;
             for (size_t count = numChannels * n; count; count--, inValue += 3, outValue++) {
@@ -541,7 +542,7 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     init_SampleBuf(&d->output,
                    spec->output.format,
                    spec->output.channels,
-                   spec->output.samples * 2);
+                   spec->samples * 2);
     init_Mutex(&d->tagMutex);
     iForIndices(i, d->tags) {
         init_String(&d->tags[i]);
@@ -598,6 +599,7 @@ iDefineTypeConstructionArgs(Decoder, (iInputBuf * input, const iContentSpec *spe
 struct Impl_Player {
     SDL_AudioSpec        spec;
     SDL_AudioDeviceID    device;
+    SDL_AudioStream     *stream;
     iString              mime;
     float                volume;
     int                  flags;
@@ -621,7 +623,7 @@ static size_t sampleSize_Player_(const iPlayer *d) {
 }
 
 static int silence_Player_(const iPlayer *d) {
-    return d->spec.silence;
+    return SDL_GetSilenceValueForFormat(d->spec.format);
 }
 
 static iRangecc mediaType_(const iString *str) {
@@ -736,17 +738,17 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
                 content.output.freq     = freq;
                 content.output.channels = numChannels;
                 if (mode == ieeeFloat_WavFormat) {
-                    content.inputFormat   = (bitsPerSample == 32 ? AUDIO_F32 : AUDIO_F64LSB);
-                    content.output.format = AUDIO_F32;
+                    content.inputFormat   = (bitsPerSample == 32 ? SDL_AUDIO_F32LE : AUDIO_F64LSB);
+                    content.output.format = SDL_AUDIO_F32LE;
                 }
                 else if (bitsPerSample == 24) {
                     content.inputFormat   = AUDIO_S24LSB;
-                    content.output.format = AUDIO_S16;
+                    content.output.format = SDL_AUDIO_S16LE;
                 }
                 else {
                     content.inputFormat = content.output.format =
-                        (bitsPerSample == 8 ? AUDIO_U8
-                                            : bitsPerSample == 16 ? AUDIO_S16 : AUDIO_S32);
+                        (bitsPerSample == 8 ? SDL_AUDIO_U8
+                                            : bitsPerSample == 16 ? SDL_AUDIO_S16LE : SDL_AUDIO_S32LE);
                 }
             }
             else if (memcmp(magic, "data", 4) == 0) {
@@ -778,8 +780,8 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
         }
         content.output.freq     = info.sample_rate;
         content.output.channels = numChannels;
-        content.output.format   = AUDIO_F32;
-        content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */
+        content.output.format   = SDL_AUDIO_F32LE;
+        content.inputFormat     = SDL_AUDIO_F32LE; /* actually stb_vorbis provides floats */
         stb_vorbis_close(vrb);
     }
     else if (content.type == mpeg_DecoderType) {
@@ -793,8 +795,8 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
         if (mpg123_getformat(mh, &rate, &channels, &encoding) == MPG123_OK) {
             content.output.freq     = rate;
             content.output.channels = channels;
-            content.inputFormat     = AUDIO_S16;
-            content.output.format   = AUDIO_S16;
+            content.inputFormat     = SDL_AUDIO_S16LE;
+            content.output.format   = SDL_AUDIO_S16LE;
         }
         mpg123_close(mh);
         mpg123_delete(mh);
@@ -809,28 +811,37 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
         }
         content.output.freq     = 48000;
         content.output.channels = head.channel_count;
-        content.inputFormat     = AUDIO_F32;
-        content.output.format   = AUDIO_F32;
+        content.inputFormat     = SDL_AUDIO_F32LE;
+        content.output.format   = SDL_AUDIO_F32LE;
 #endif
     }
     iAssert(content.inputFormat == content.output.format ||
-            (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||
-            (content.inputFormat == AUDIO_F64LSB && content.output.format == AUDIO_F32));
-    content.output.samples = isAndroid_Platform() ? content.output.freq / 4 : 8192;
+            (content.inputFormat == AUDIO_S24LSB && content.output.format == SDL_AUDIO_S16LE) ||
+            (content.inputFormat == AUDIO_F64LSB && content.output.format == SDL_AUDIO_F32LE));
+    content.samples = isAndroid_Platform() ? content.output.freq / 4 : 8192;
     return content;
 }
 
-static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
+static void writeOutputSamples_Player_(void *plr, SDL_AudioStream *stream, int additionalAmount,
+                                        int totalAmount) {
+    iUnused(totalAmount);
+    if (additionalAmount <= 0) {
+        return;
+    }
     iPlayer *d = plr;
     iAssert(d->decoder);
+    Uint8 *buf = SDL_stack_alloc(Uint8, additionalAmount);
+    if (!buf) {
+        return;
+    }
     const size_t sampleSize = sampleSize_Player_(d);
-    const size_t count      = len / sampleSize;
+    const size_t count      = (size_t) additionalAmount / sampleSize;
     lock_Mutex(&d->decoder->outputMutex);
     if (size_SampleBuf(&d->decoder->output) >= count) {
-        read_SampleBuf(&d->decoder->output, count, stream);
+        read_SampleBuf(&d->decoder->output, count, buf);
     }
     else {
-        memset(stream, d->spec.silence, len);
+        memset(buf, silence_Player_(d), additionalAmount);
         if (d->decoder->isDone && size_SampleBuf(&d->decoder->output) == 0 && !d->isFinished) {
             d->isFinished = iTrue; /* signal main thread to call stop_Player */
             notify_App("media.player.update");
@@ -838,6 +849,8 @@ static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
     }
     signal_Condition(&d->decoder->output.moreNeeded);
     unlock_Mutex(&d->decoder->outputMutex);
+    SDL_PutAudioStreamData(stream, buf, additionalAmount);
+    SDL_stack_free(buf);
 }
 
 int numActiveSDLAudio_Player(void) {
@@ -848,6 +861,7 @@ void init_Player(iPlayer *d) {
     iZap(d->spec);
     init_String(&d->mime);
     d->device        = 0;
+    d->stream        = NULL;
     d->decoder       = NULL;
     d->avfPlayer     = NULL;
     d->androidPlayer = NULL;
@@ -909,7 +923,7 @@ iBool isPaused_Player(const iPlayer *d) {
     }
 #endif
     if (!d->device) return iTrue;
-    return SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PAUSED;
+    return SDL_AudioDevicePaused(d->device);
 }
 
 float volume_Player(const iPlayer *d) {
@@ -1012,7 +1026,7 @@ size_t sourceDataSize_Player(const iPlayer *d) {
 static iBool setupSDLAudio_(void) {
     static iBool isAudioInited_ = iFalse;
     if (!isAudioInited_) {
-        if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
             fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
             return iFalse;
         }
@@ -1022,7 +1036,7 @@ static iBool setupSDLAudio_(void) {
 }
 
 static void resumeDevice_Player_(iPlayer *d) {
-    SDL_PauseAudioDevice(d->device, SDL_FALSE);
+    SDL_ResumeAudioDevice(d->device);
 #if defined (iPlatformAndroidMobile)
     javaCommand_Android("audio.sdl.start player:%p", d);
     notifySDLAudioStarted_Android(); /* we control event loop blocking */
@@ -1033,10 +1047,10 @@ static void resumeDevice_Player_(iPlayer *d) {
 }
 
 static iBool pauseDevice_Player_(iPlayer *d) {
-    if (d->device && SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PLAYING) {
+    if (d->device && !SDL_AudioDevicePaused(d->device)) {
         add_Atomic(&numActivePlayers_, -1);
         iAssert(value_Atomic(&numActivePlayers_) >= 0);
-        SDL_PauseAudioDevice(d->device, SDL_TRUE);
+        SDL_PauseAudioDevice(d->device);
 #if defined(iPlatformAndroidMobile)
         javaCommand_Android("audio.sdl.stop player:%p", d);
 #endif
@@ -1123,15 +1137,21 @@ iBool start_Player(iPlayer *d) {
     if (!content.output.freq) {
         return iFalse;
     }
-    content.output.callback = writeOutputSamples_Player_;
-    content.output.userdata = d;
     if (!setupSDLAudio_()) {
         return iFalse;
     }
-    d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.output, &d->spec, 0);
-    if (!d->device) {
+    iString samplesHint;
+    init_String(&samplesHint);
+    format_String(&samplesHint, "%d", content.samples);
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, cstr_String(&samplesHint));
+    deinit_String(&samplesHint);
+    d->stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &content.output,
+                                          writeOutputSamples_Player_, d);
+    if (!d->stream) {
         return iFalse;
     }
+    d->device = SDL_GetAudioStreamDevice(d->stream);
+    d->spec   = content.output;
     d->decoder = new_Decoder(d->data, &content);
     d->decoder->gain = d->volume;
     resumeDevice_Player_(d);
@@ -1153,10 +1173,10 @@ void setPaused_Player(iPlayer *d, iBool isPaused) {
     }
 #endif
     if (isStarted_Player(d)) {
-        if (isPaused && SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PLAYING) {
+        if (isPaused && !SDL_AudioDevicePaused(d->device)) {
             pauseDevice_Player_(d);
         }
-        else if (!isPaused && SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PAUSED) {
+        else if (!isPaused && SDL_AudioDevicePaused(d->device)) {
             resumeDevice_Player_(d);
         }
     }
@@ -1187,7 +1207,8 @@ void stop_Player(iPlayer *d) {
 #endif
     if (isStarted_Player(d)) {
         pauseDevice_Player_(d);
-        SDL_CloseAudioDevice(d->device);
+        SDL_DestroyAudioStream(d->stream); /* also closes the device */
+        d->stream = NULL;
         d->device = 0;
         delete_Decoder(d->decoder);
         d->decoder = NULL;

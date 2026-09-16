@@ -278,10 +278,10 @@ if (ENABLE_TUI)
 endif ()
 
 if (VCPKG_TOOLCHAIN)
-    find_package (SDL2 CONFIG REQUIRED)
+    find_package (SDL3 CONFIG REQUIRED)
 else ()
-    find_package (SDL2 2.0.8 QUIET) # includes static link variant
-    pkg_check_modules (SDL2 REQUIRED sdl2>=2.0.8)
+    find_package (SDL3 3.0.0 QUIET) # includes static link variant
+    pkg_check_modules (SDL3 REQUIRED sdl3>=3.0.0)
 endif ()
 
 if (PKG_CONFIG_FOUND)

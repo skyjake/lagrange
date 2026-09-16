@@ -53,8 +53,8 @@ Optimization notes:
 #include <lagrange/defs.h>
 #include <lagrange/prefs.h>
 
-#include <SDL_hints.h>
-#include <SDL_version.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_version.h>
 
 #if SDL_VERSION_ATLEAST(2, 0, 10)
 #   define LAGRANGE_RASTER_DEPTH    8
@@ -211,7 +211,7 @@ void init_RasterText(iRasterText *d, SDL_Renderer *render, float documentFontSiz
         for (int i = 0; i < 256; ++i) {
             colors[i] = (SDL_Color){ 255, 255, 255, (uint8_t)(255 * powf(i / 255.0f, 1.0f) + 0.5f) };
         }
-        d->grayscale = SDL_AllocPalette(256);
+        d->grayscale = SDL_CreatePalette(256);
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
     }
     /* Black-and-white palette for unsmoothed (bitmap) glyphs. */ {
@@ -219,7 +219,7 @@ void init_RasterText(iRasterText *d, SDL_Renderer *render, float documentFontSiz
         for (int i = 0; i < 256; ++i) {
             colors[i] = (SDL_Color){ 255, 255, 255, i < 100 ? 0 : 255 };
         }
-        d->blackAndWhite = SDL_AllocPalette(256);
+        d->blackAndWhite = SDL_CreatePalette(256);
         SDL_SetPaletteColors(d->blackAndWhite, colors, 0, 256);
     }
 }
@@ -239,8 +239,8 @@ void deinit_RasterText(iRasterText *d) {
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     clearCachedFontRuns_RasterText_(d);
 #endif
-    SDL_FreePalette(d->blackAndWhite);
-    SDL_FreePalette(d->grayscale);
+    SDL_DestroyPalette(d->blackAndWhite);
+    SDL_DestroyPalette(d->grayscale);
     deinit_Array(&d->fontPriorityOrder);
     deinit_Array(&d->fonts);
     deinit_Text(&d->base);
@@ -264,22 +264,22 @@ void initGrayscaleCache_RasterText_(iRasterText *d) {
     init_GlyphCache(gc);
     const iInt2 cacheDims = init_I2(8 * numOffsetSteps_Glyph_, 40);
     gc->size = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
-    SDL_RendererInfo ri;
-    SDL_GetRendererInfo(d->base.render, &ri);
-    if (ri.max_texture_height > 0 && gc->size.y > ri.max_texture_height) {
-        gc->size.y = ri.max_texture_height;
-        gc->size.x = ri.max_texture_width;
+    const Sint64 maxTextureSize = SDL_GetNumberProperty(
+        SDL_GetRendererProperties(d->base.render), SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
+    if (maxTextureSize > 0 && gc->size.y > maxTextureSize) {
+        gc->size.y = (int) maxTextureSize;
+        gc->size.x = (int) maxTextureSize;
     }
     gc->rowAllocStep = iMax(2, textSize / 6);
     for (int h = gc->rowAllocStep; h <= 5 * textSize + gc->rowAllocStep; h += gc->rowAllocStep) {
         pushBack_Array(&gc->rows, &(iCacheRow){ .height = 0 });
     }
     gc->bottom = 0;
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     gc->texture = SDL_CreateTexture(d->base.render,
                                     SDL_PIXELFORMAT_RGBA4444,
                                     SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                     gc->size.x, gc->size.y);
+    SDL_SetTextureScaleMode(gc->texture, SDL_SCALEMODE_NEAREST);
     SDL_SetTextureBlendMode(gc->texture, SDL_BLENDMODE_BLEND);
 }
 
@@ -823,9 +823,11 @@ static void flushGlyphsToCache_(iGlyphCache *cache, iArray *rasters,
     iConstForEach(Array, i, rasters) {
         const iRasterGlyph *rg     = i.value;
         const iRect        *glRect = &rg->glyph->rect[rg->hoff];
-        SDL_RenderCopy(render, bufTex,
-                       (const SDL_Rect *) &rg->rect,
-                       (const SDL_Rect *) glRect);
+        SDL_RenderTexture(render, bufTex,
+                       &(SDL_FRect){ rg->rect.pos.x, rg->rect.pos.y,
+                                     rg->rect.size.x, rg->rect.size.y },
+                       &(SDL_FRect){ glRect->pos.x, glRect->pos.y,
+                                     glRect->size.x, glRect->size.y });
         setRasterized_Glyph_(rg->glyph, rg->hoff);
     }
     SDL_DestroyTexture(bufTex);
@@ -863,9 +865,7 @@ void cacheGlyphs_Font_(iRasterFont *d, const uint32_t *glyphIndices, size_t numG
             if (isFullyRasterized_Glyph_(glyph)) continue;
             if (!buf) {
                 rasters = new_Array(sizeof(iRasterGlyph));
-                buf = SDL_CreateRGBSurfaceWithFormat(0, bufSize.x, bufSize.y,
-                                                     LAGRANGE_RASTER_DEPTH,
-                                                     LAGRANGE_RASTER_FORMAT);
+                buf = SDL_CreateSurface(bufSize.x, bufSize.y, LAGRANGE_RASTER_FORMAT);
                 SDL_SetSurfaceBlendMode(buf, SDL_BLENDMODE_NONE);
                 SDL_SetSurfacePalette(buf, palette);
             }
@@ -893,8 +893,8 @@ void cacheGlyphs_Font_(iRasterFont *d, const uint32_t *glyphIndices, size_t numG
             }
             iForIndices(i, surfaces) {
                 if (surfaces[i]) {
-                    if (surfaces[i]->flags & SDL_PREALLOC) free(surfaces[i]->pixels);
-                    SDL_FreeSurface(surfaces[i]);
+                    if (surfaces[i]->flags & SDL_SURFACE_PREALLOCATED) free(surfaces[i]->pixels);
+                    SDL_DestroySurface(surfaces[i]);
                 }
             }
             if (outOfSpace) break;
@@ -903,7 +903,7 @@ void cacheGlyphs_Font_(iRasterFont *d, const uint32_t *glyphIndices, size_t numG
         if (buf && rasters && isEmpty_Array(rasters)) bufX = 0;
     }
     if (rasters) delete_Array(rasters);
-    if (buf) SDL_FreeSurface(buf);
+    if (buf) SDL_DestroySurface(buf);
     if (isTargetChanged) SDL_SetRenderTarget(current_Text()->render, oldTarget);
 }
 
@@ -1043,10 +1043,10 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                     if (bgClr.a) {
                         SDL_SetRenderDrawColor(current_Text()->render,
                                                bgClr.r, bgClr.g, bgClr.b, 255);
-                        const SDL_Rect bgRect = {
+                        const SDL_FRect bgRect = {
                             origin_Paint.x + d->orig.x + (int) d->xCursor,
                             origin_Paint.y + d->orig.y + (int) d->yCursor,
-                            (int) ceilf(subpixel + xAdvance),
+                            ceilf(subpixel + xAdvance),
                             d->font->font.height,
                         };
                         SDL_RenderFillRect(current_Text()->render, &bgRect);
@@ -1054,7 +1054,8 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                     else if (d->mode & fillBackground_RunMode) {
                         SDL_SetRenderDrawColor(current_Text()->render,
                                                fgClr.r, fgClr.g, fgClr.b, 0);
-                        SDL_RenderFillRect(current_Text()->render, &dst);
+                        SDL_RenderFillRect(current_Text()->render,
+                                           &(SDL_FRect){ dst.x, dst.y, dst.w, dst.h });
                     }
                 }
                 if (layerIndex == foreground_RunLayerType && !isSpace) {
@@ -1069,7 +1070,9 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                     SDL_Rect src;
                     if (isColor) {
                         memcpy(&src, &glyph->colorRect, sizeof(SDL_Rect));
-                        SDL_RenderCopy(current_Text()->render, tx->colorCache.texture, &src, &dst);
+                        SDL_RenderTexture(current_Text()->render, tx->colorCache.texture,
+                                          &(SDL_FRect){ src.x, src.y, src.w, src.h },
+                                          &(SDL_FRect){ dst.x, dst.y, dst.w, dst.h });
                     }
                     else {
                         if (~d->mode & permanentColorFlag_RunMode) {
@@ -1077,8 +1080,9 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                                                    fgClr.r, fgClr.g, fgClr.b);
                         }
                         memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
-                        SDL_RenderCopy(current_Text()->render, tx->grayscaleCache.texture,
-                                       &src, &dst);
+                        SDL_RenderTexture(current_Text()->render, tx->grayscaleCache.texture,
+                                          &(SDL_FRect){ src.x, src.y, src.w, src.h },
+                                          &(SDL_FRect){ dst.x, dst.y, dst.w, dst.h });
                     }
                 }
             }

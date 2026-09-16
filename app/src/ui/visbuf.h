@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/range.h>
 #include <the_Foundation/vec2.h>
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 iDeclareType(VisBuf)
 iDeclareType(VisBufTexture)

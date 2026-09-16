@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/defs.h>
-#include <SDL_video.h>
+#include <SDL3/SDL_video.h>
 
 iBool    isXSession_X11                   (void);
 

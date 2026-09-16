@@ -904,18 +904,6 @@ static void aboutRequest_GmRequest_(iGmRequest *d) {
         resp->statusCode = success_GmStatusCode;
         setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
         set_Block(&resp->body, replaceVariables_(src));
-        if (equalCase_Rangecc(url.path, "lagrange")) {
-            /* The "Powered by" line needs dynamic updates depending on the build. */
-            /* TODO: Would be cleaner to use a variable for this in the page source. */
-            iString body;
-            initBlock_String(&body, &resp->body);
-            replace_String(&body, "OpenSSL", libraryName_TlsRequest());
-            if (isTerminal_Platform()) {
-                replace_String(&body, "SDL 2", "ncurses");
-            }
-            set_Block(&resp->body, utf8_String(&body));
-            deinit_String(&body);
-        }
         d->state = receivingBody_GmRequestState;
         iNotifyAudience(d, updated, GmRequestUpdated);
     }

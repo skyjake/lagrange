@@ -218,10 +218,10 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
     SDL_Renderer *render = renderer_Window(get_Window());
     iForIndices(i, d->buffers) {
         const iVisBufTexture *buf = d->buffers + i;
-        SDL_Rect dst = { topLeft.x,
-                         topLeft.y + buf->origin,
-                         d->texSize.x,
-                         d->texSize.y };
+        SDL_FRect dst = { (float) topLeft.x,
+                          (float) (topLeft.y + buf->origin),
+                          (float) d->texSize.x,
+                          (float) d->texSize.y };
         if (dst.y >= yClipBounds.end || dst.y + dst.h < yClipBounds.start) {
 #if !defined (DEBUG_SCALE)
             continue; /* Outside the clipping area. */
@@ -237,10 +237,10 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
         dst.x += get_Window()->root->rect.size.x / 4;
         dst.y += get_Window()->root->rect.size.y / 4;
 #endif
-        SDL_RenderCopy(render, buf->texture, NULL, &dst);
+        SDL_RenderTexture(render, buf->texture, NULL, &dst);
 #if defined (DEBUG_SCALE)
         SDL_SetRenderDrawColor(render, 0, 0, 255, 255);
-        SDL_RenderDrawRect(render, &dst);
+        SDL_RenderRect(render, &dst);
 #endif
     }
 #if defined (DEBUG_SCALE)
@@ -252,6 +252,6 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
     dst.x += get_Window()->root->rect.size.x / 4;
     dst.y += get_Window()->root->rect.size.y / 4;
     SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-    SDL_RenderDrawRect(render, &dst);
+    SDL_RenderRect(render, &dst);
 #endif
 }

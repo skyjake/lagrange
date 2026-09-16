@@ -56,9 +56,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
-#include <SDL_clipboard.h>
-#include <SDL_timer.h>
-#include <SDL_render.h>
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_render.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -476,12 +476,12 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     if (isHover_Widget(w) &&
         !contains_Widget(constAs_Widget(scrollBar_DocumentWidget(d->owner)), mouse)) {
         setCursor_Window(get_Window(),
-                         d->hoverLink || d->hoverPre ? SDL_SYSTEM_CURSOR_HAND
-                         : selectableRun             ? SDL_SYSTEM_CURSOR_IBEAM
-                                                     : SDL_SYSTEM_CURSOR_ARROW);
+                         d->hoverLink || d->hoverPre ? SDL_SYSTEM_CURSOR_POINTER
+                         : selectableRun             ? SDL_SYSTEM_CURSOR_TEXT
+                                                     : SDL_SYSTEM_CURSOR_DEFAULT);
         if (d->hoverLink &&
             linkFlags_GmDocument(d->doc, d->hoverLink->linkId) & permanent_GmLinkFlag) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW); /* not dismissable */
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_DEFAULT); /* not dismissable */
         }
     }
 }
@@ -960,8 +960,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const iRect  dst   = moved_Rect(run->visBounds, origin);
         if (tex) {
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
-            SDL_RenderCopy(d->paint.dst->render, tex, NULL,
-                        &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+            SDL_RenderTexture(d->paint.dst->render, tex, NULL,
+                        &(SDL_FRect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
             return;
         }
         else if (imageFailed_Media(media, mediaId_GmRun(run))) {
@@ -1385,9 +1385,9 @@ static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffs
                                          ? (gap_Text + lineHeight_Text(heading3_FontId)) / 2
                                          : 0));
             SDL_SetTextureAlphaMod(dbuf->sideIconBuf, 255 * opacity);
-            SDL_RenderCopy(renderer_Window(get_Window()),
+            SDL_RenderTexture(renderer_Window(get_Window()),
                            dbuf->sideIconBuf, NULL,
-                           &(SDL_Rect){ pos.x + horizOffset, pos.y, texSize.x, texSize.y });
+                           &(SDL_FRect){ pos.x + horizOffset, pos.y, texSize.x, texSize.y });
         }
     }
     /* Reception timestamp. On mobile, it's below the footer in the overscroll area. */

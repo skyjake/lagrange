@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmdocument.h"
 #include "../media/media.h"
 #include <the_Foundation/objectlist.h>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 iDeclareType(DocumentWidget)
 iDeclareType(Widget)

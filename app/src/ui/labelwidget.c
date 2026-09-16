@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "touch.h"
 
-#include <SDL_version.h>
+#include <SDL3/SDL_version.h>
 
 struct Impl_LabelWidget {
     iWidget widget;
@@ -213,7 +213,7 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
 #if 0 && defined (iPlatformAppleMobile)
         /* Touch allows activating any button on release. */
         switch (ev->type) {
-            case SDL_MOUSEBUTTONUP: {
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
                 const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
                 if (contains_Widget(w, mouse)) {
                     trigger_LabelWidget_(d);
@@ -223,7 +223,7 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
             }
         }
 #endif
-        if (isSubmenuItem_LabelWidget_(d) && ev->type == SDL_MOUSEBUTTONDOWN &&
+        if (isSubmenuItem_LabelWidget_(d) && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
                 contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
             /* Submenus are triggered by hovering over the item. Clicking down nothing. */
             postCommand_Widget(d, "submenu.open");
@@ -261,9 +261,9 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 break;
         }
         switch (ev->type) {
-            case SDL_KEYDOWN: {
-                const int mods = ev->key.keysym.mod;
-                const int sym  = ev->key.keysym.sym;
+            case SDL_EVENT_KEY_DOWN: {
+                const int mods = ev->key.mod;
+                const int sym  = ev->key.key;
                 if (d->key && sym == d->key && checkModifiers_(mods, d->kmods)) {
                     trigger_LabelWidget_(d);
                     return iTrue;

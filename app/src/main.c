@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lagrange/core.h"
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/tlsrequest.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <signal.h>
 
@@ -72,9 +72,7 @@ int main(int argc, char **argv) {
                           "ECDHE-RSA-CHACHA20-POLY1305:"
                           "ECDHE-RSA-AES128-GCM-SHA256:"
                           "DHE-RSA-AES256-GCM-SHA384");
-#if SDL_VERSION_ATLEAST(2, 24, 0)
-    SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitor");
-#endif
+    /* SDL configures per-monitor DPI awareness automatically. */
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     SDL_EnableScreenSaver();
     SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "1");
@@ -90,20 +88,20 @@ int main(int argc, char **argv) {
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal) && \
     SDL_VERSION_ATLEAST(2, 0, 22)
     /* Use the real Wayland backend when available. */
-    SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+    SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland,x11");
 #endif
 #if 0
     SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1"); /* debugging! */
 #endif
 #if !defined (iPlatformTerminal)
     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-    SDL_GameControllerAddMapping(
+    SDL_AddGamepadMapping(
         "19009b4d4b4800000111000000010000,retrogame_joypad,a:b1,b:b0,x:b2,y:b3,back:b8,start:b9,"
         "guide:b10,leftshoulder:b4,rightshoulder:b5,lefttrigger:b6,righttrigger:b7,leftstick:b11,"
         "rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftx:a0,lefty:a1,righty:a3,"
         "rightx:a2");
 #endif
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         fprintf(stderr, "[SDL] init failed: %s\n", SDL_GetError());
         deinit_Foundation();
         return -1;

@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmcerts.h>
 #include "../app.h"
 
-#include <SDL_clipboard.h>
+#include <SDL3/SDL_clipboard.h>
 
 iDeclareType(CertItem)
 typedef iListItemClass iCertItemClass;
@@ -191,7 +191,7 @@ static void itemClicked_CertListWidget_(iCertListWidget *d, iCertItem *item, siz
 static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
-    if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
         if (equal_Command(cmd, "idents.changed")) {
             updateItems_CertListWidget(d);
@@ -334,11 +334,11 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             return iTrue;
         }
     }
-    if (ev->type == SDL_MOUSEMOTION && !isVisible_Widget(d->menu)) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION && !isVisible_Widget(d->menu)) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         /* Update cursor. */
         if (contains_Widget(w, mouse)) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_DEFAULT);
         }
         else if (d->contextIndex != iInvalidPos) {
             invalidateItem_ListWidget(&d->list, d->contextIndex);
@@ -346,7 +346,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
         }
     }
     /* Update context menu items. */
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         d->contextItem = NULL;
         if (!isVisible_Widget(d->menu)) {
             updateMouseHover_ListWidget(&d->list);

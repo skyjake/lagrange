@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/window.h"
 
 #include <lagrange/gmrequest.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 iDefineTypeConstruction(InlineMedia)
 
@@ -154,9 +154,9 @@ static uint32_t updateInterval_InlineMedia_(const iInlineMedia *d) {
     return interval != invalidInterval_ ? interval : 0;
 }
 
-static uint32_t postUpdate_InlineMedia_(uint32_t interval, void *context) {
+static uint32_t postUpdate_InlineMedia_(void *context, SDL_TimerID timerID, uint32_t interval) {
     /* Called in timer thread; don't access the widget. */
-    iUnused(context);
+    iUnused(context, timerID);
     if (!isSuspended_App()) {
         notify_App("media.player.update");
     }
@@ -367,8 +367,8 @@ void setGrabbedPlayer_InlineMedia(iInlineMedia *d, const iGmRun *run) {
 }
 
 iBool processEvent_InlineMedia(iInlineMedia *d, const SDL_Event *ev) {
-    if (ev->type != SDL_MOUSEBUTTONDOWN && ev->type != SDL_MOUSEBUTTONUP &&
-        ev->type != SDL_MOUSEMOTION) {
+    if (ev->type != SDL_EVENT_MOUSE_BUTTON_DOWN && ev->type != SDL_EVENT_MOUSE_BUTTON_UP &&
+        ev->type != SDL_EVENT_MOUSE_MOTION) {
         return iFalse;
     }
     if (d->grabbedPlayer) {
@@ -391,7 +391,7 @@ iBool processEvent_InlineMedia(iInlineMedia *d, const SDL_Event *ev) {
             continue;
         }
 #if defined (LAGRANGE_ENABLE_AUDIO)
-        if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
+        if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) {
             if (ev->button.button != SDL_BUTTON_LEFT) {
                 return iFalse;
             }
@@ -402,7 +402,7 @@ iBool processEvent_InlineMedia(iInlineMedia *d, const SDL_Event *ev) {
         if (contains_Rect(rect, mouse)) {
             iPlayerUI ui;
             init_PlayerUI(&ui, plr, rect);
-            if (ev->type == SDL_MOUSEBUTTONDOWN && flags_Player(plr) & adjustingVolume_PlayerFlag &&
+            if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && flags_Player(plr) & adjustingVolume_PlayerFlag &&
                 contains_Rect(adjusted_Rect(ui.volumeAdjustRect,
                                             zero_I2(),
                                             init_I2(-height_Rect(ui.volumeAdjustRect), 0)),
@@ -413,7 +413,7 @@ iBool processEvent_InlineMedia(iInlineMedia *d, const SDL_Event *ev) {
                 refresh_Widget(d->owner);
                 return iTrue;
             }
-            else if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+            else if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_MOTION) {
                 refresh_Widget(d->owner);
                 return iTrue;
             }

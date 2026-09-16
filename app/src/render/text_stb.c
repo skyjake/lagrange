@@ -40,10 +40,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrset.h>
 #include <the_Foundation/vec2.h>
-#include <SDL_surface.h>
-#include <SDL_render.h>
-#include <SDL_hints.h>
-#include <SDL_version.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_version.h>
 #include <stdarg.h>
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -242,15 +242,15 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     uint8_t *bmp = rasterizeGlyph_FontFile(d->font.file, d->xScale, d->yScale, xShift, glyphIndex,
                                            &w, &h);
     SDL_Surface *surface8 =
-        SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
+        SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_INDEX8, bmp, w);
     SDL_SetSurfaceBlendMode(surface8, SDL_BLENDMODE_NONE);
     SDL_SetSurfacePalette(surface8, glyphPalette_());
 #if LAGRANGE_RASTER_DEPTH != 8
     /* Convert to the cache format. */
-    SDL_Surface *surf = SDL_ConvertSurfaceFormat(surface8, LAGRANGE_RASTER_FORMAT, 0);
+    SDL_Surface *surf = SDL_ConvertSurface(surface8, LAGRANGE_RASTER_FORMAT);
     SDL_SetSurfaceBlendMode(surf, SDL_BLENDMODE_NONE);
     free(bmp);
-    SDL_FreeSurface(surface8);
+    SDL_DestroySurface(surface8);
     return surf;
 #else
     return surface8;
@@ -287,18 +287,17 @@ iBool rasterizeForCache_Font_(iRasterFont *font, iGlyph *glyph, SDL_Surface *sur
                 font->font.file, font->xScale, font->yScale,
                 si * offsetStep_Glyph_(), index_Glyph_(glyph), &w, &h);
             if (!bmp) continue;
-            SDL_Surface *s = SDL_CreateRGBSurfaceWithFormatFrom(
-                bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
+            SDL_Surface *s = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_INDEX8, bmp, w);
             SDL_SetSurfaceBlendMode(s, SDL_BLENDMODE_NONE);
             SDL_SetSurfacePalette(s, palette);
 #if LAGRANGE_RASTER_DEPTH != 8
-            SDL_Surface *conv = SDL_ConvertSurfaceFormat(s, LAGRANGE_RASTER_FORMAT, 0);
+            SDL_Surface *conv = SDL_ConvertSurface(s, LAGRANGE_RASTER_FORMAT);
             SDL_SetSurfaceBlendMode(conv, SDL_BLENDMODE_NONE);
             free(bmp);
-            SDL_FreeSurface(s);
+            SDL_DestroySurface(s);
             surfaces[si] = conv;
 #else
-            surfaces[si] = s; /* pixels owned by surface (SDL_PREALLOC) */
+            surfaces[si] = s; /* pixels owned by surface (SDL_SURFACE_PREALLOCATED) */
 #endif
         }
     }

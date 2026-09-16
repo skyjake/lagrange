@@ -58,21 +58,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
-#include <SDL_clipboard.h>
-#include <SDL_timer.h>
-#include <SDL_version.h>
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_version.h>
 
 iBool isCommand_SDLEvent(const SDL_Event *d) {
-    return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode;
+    return d->type == SDL_EVENT_USER && d->user.code == command_UserEventCode;
 }
 
 iBool isCommand_UserEvent(const SDL_Event *d, const char *cmd) {
-    return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode &&
+    return d->type == SDL_EVENT_USER && d->user.code == command_UserEventCode &&
            equal_Command(d->user.data1, cmd);
 }
 
 const char *command_UserEvent(const SDL_Event *d) {
-    if (d->type == SDL_USEREVENT && d->user.code == command_UserEventCode) {
+    if (d->type == SDL_EVENT_USER && d->user.code == command_UserEventCode) {
         return d->user.data1;
     }
     return "";
@@ -81,18 +81,18 @@ const char *command_UserEvent(const SDL_Event *d) {
 void emulateMouseClickPos_Widget(const iWidget *d, int button, iInt2 clickPos) {
     iMainWindow *wnd = get_MainWindow();
     divfv_I2(&clickPos, wnd->base.pixelRatio); /* ratio is multiplied when processing events */
-    SDL_MouseButtonEvent ev = { .type      = SDL_MOUSEBUTTONDOWN,
+    SDL_MouseButtonEvent ev = { .type      = SDL_EVENT_MOUSE_BUTTON_DOWN,
                                 .timestamp = SDL_GetTicks(),
                                 .windowID  = id_Window(as_Window(wnd)),
                                 .which     = 1024,
                                 .button    = button,
-                                .state     = SDL_PRESSED,
+                                .down      = true,
                                 .clicks    = 1,
                                 .x         = clickPos.x,
                                 .y         = clickPos.y };
     SDL_PushEvent((SDL_Event *) &ev);
-    ev.type = SDL_MOUSEBUTTONUP;
-    ev.state = SDL_RELEASED;
+    ev.type = SDL_EVENT_MOUSE_BUTTON_UP;
+    ev.down = false;
     ev.timestamp++;
     SDL_PushEvent((SDL_Event *) &ev);
 }
@@ -108,15 +108,15 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
 #if !defined (iPlatformTerminal)
     if (isDesktop_Platform()) {
 # if SDL_VERSION_ATLEAST(2, 26, 0) && !defined (iPlatformApple)
-        return coord_Window(win, ev->mouseX, ev->mouseY);
+        return coord_Window(win, ev->mouse_x, ev->mouse_y);
 # else
         /* We need to figure out where the mouse is in relation to the currently active window.
            It may be outside the actual focus window. */
-        iInt2 mousePos, winPos;
-        SDL_GetGlobalMouseState(&mousePos.x, &mousePos.y);
+        float mouseX, mouseY;
+        iInt2 winPos;
+        SDL_GetGlobalMouseState(&mouseX, &mouseY);
         SDL_GetWindowPosition(win->win, &winPos.x, &winPos.y);
-        subv_I2(&mousePos, winPos);
-        return coord_Window(win, mousePos.x, mousePos.y);
+        return coord_Window(win, (int) mouseX - winPos.x, (int) mouseY - winPos.y);
 # endif
     }
 #endif
@@ -125,12 +125,12 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
 
 iInt2 mouseCoord_SDLEvent(const SDL_Event *ev) {
     switch (ev->type) {
-        case SDL_MOUSEMOTION:
+        case SDL_EVENT_MOUSE_MOTION:
             return init_I2(ev->motion.x, ev->motion.y);
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP:
             return init_I2(ev->button.x, ev->button.y);
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
             return coord_MouseWheelEvent(&ev->wheel);
     }
     return zero_I2();
@@ -145,13 +145,13 @@ static void removePlus_(iString *str) {
 
 void toString_Sym(int key, int kmods, iString *str) {
     if (isTerminal_Platform()) {
-        if (kmods & KMOD_CTRL) {
+        if (kmods & SDL_KMOD_CTRL) {
             appendCStr_String(str, "^");
         }
-        if (kmods & (KMOD_ALT | KMOD_GUI)) {
+        if (kmods & (SDL_KMOD_ALT | SDL_KMOD_GUI)) {
             appendCStr_String(str, "M-");
         }
-        if (kmods & KMOD_SHIFT) {
+        if (kmods & SDL_KMOD_SHIFT) {
             appendCStr_String(str, "Sh-");
         }
         if (key == SDLK_BACKSPACE) {
@@ -180,34 +180,34 @@ void toString_Sym(int key, int kmods, iString *str) {
         }
     }
     else if (isApple_Platform()) {
-        if (kmods & KMOD_CTRL) {
+        if (kmods & SDL_KMOD_CTRL) {
             appendChar_String(str, 0x2303);
         }
-        if (kmods & KMOD_ALT) {
+        if (kmods & SDL_KMOD_ALT) {
             appendChar_String(str, 0x2325);
         }
-        if (kmods & KMOD_SHIFT) {
+        if (kmods & SDL_KMOD_SHIFT) {
             appendCStr_String(str, shift_Icon);
         }
-        if (kmods & KMOD_GUI) {
+        if (kmods & SDL_KMOD_GUI) {
             appendChar_String(str, 0x2318);
         }
     }
     else {
-        if (kmods & KMOD_CTRL) {
+        if (kmods & SDL_KMOD_CTRL) {
             appendCStr_String(str, "Ctrl+");
         }
-        if (kmods & KMOD_ALT) {
+        if (kmods & SDL_KMOD_ALT) {
             appendCStr_String(str, "Alt+");
         }
-        if (kmods & KMOD_SHIFT) {
+        if (kmods & SDL_KMOD_SHIFT) {
             appendCStr_String(str, shift_Icon "+");
         }
-        if (kmods & KMOD_GUI) {
+        if (kmods & SDL_KMOD_GUI) {
             appendCStr_String(str, "Meta+");
         }
     }
-    if (kmods & KMOD_CAPS) {
+    if (kmods & SDL_KMOD_CAPS) {
         appendCStr_String(str, "Caps+");
     }
     if (key == 0x20) {
@@ -274,28 +274,28 @@ int normalizedMod_Sym(int key) {
 }
 
 int keyMods_Sym(int kmods) {
-    kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI | KMOD_CAPS);
+    kmods &= (SDL_KMOD_SHIFT | SDL_KMOD_ALT | SDL_KMOD_CTRL | SDL_KMOD_GUI | SDL_KMOD_CAPS);
     /* Don't treat left/right modifiers differently. */
-    if (kmods & KMOD_SHIFT) kmods |= KMOD_SHIFT;
-    if (kmods & KMOD_CTRL)  kmods |= KMOD_CTRL;
-    if (kmods & KMOD_GUI)   kmods |= KMOD_GUI;
+    if (kmods & SDL_KMOD_SHIFT) kmods |= SDL_KMOD_SHIFT;
+    if (kmods & SDL_KMOD_CTRL)  kmods |= SDL_KMOD_CTRL;
+    if (kmods & SDL_KMOD_GUI)   kmods |= SDL_KMOD_GUI;
     if (!isTextInputActive_App()) {
-        if (kmods & KMOD_ALT) kmods |= KMOD_ALT;
+        if (kmods & SDL_KMOD_ALT) kmods |= SDL_KMOD_ALT;
     }
     return kmods;
 }
 
 int keyMod_ReturnKeyFlag(int flag) {
     flag &= mask_ReturnKeyFlag;
-    const int kmods[4] = { 0, KMOD_SHIFT, KMOD_CTRL, KMOD_GUI };
+    const int kmods[4] = { 0, SDL_KMOD_SHIFT, SDL_KMOD_CTRL, SDL_KMOD_GUI };
     if (flag < 0 || flag >= iElemCount(kmods)) return 0;
     return kmods[flag];
 }
 
 int openTabMode_Sym(int kmods) {
     const int km = keyMods_Sym(kmods);
-    return (km == KMOD_SHIFT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
-           (((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? new_OpenTabFlag :
+    return (km == SDL_KMOD_SHIFT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
+           (((km & KMOD_PRIMARY) && (km & SDL_KMOD_SHIFT)) ? new_OpenTabFlag :
             (km & KMOD_PRIMARY) ? newBackground_OpenTabFlag : 0);
 }
 
@@ -498,7 +498,7 @@ float value_Anim(const iAnim *d) {
 /*-----------------------------------------------------------------------------------------------*/
 
 void init_Click(iClick *d, iAnyObject *widget, int button) {
-    initButtons_Click(d, widget, button ? SDL_BUTTON(button) : 0);
+    initButtons_Click(d, widget, button ? SDL_BUTTON_MASK(button) : 0);
 }
 
 void initButtons_Click(iClick *d, iAnyObject *widget, int buttonMask) {
@@ -526,7 +526,7 @@ iBool contains_Click(const iClick *d, iInt2 coord) {
 }
 
 enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
-    if (event->type == SDL_MOUSEMOTION) {
+    if (event->type == SDL_EVENT_MOUSE_MOTION) {
         if (!d->isActive) {
             return none_ClickResult;
         }
@@ -539,19 +539,19 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
             return drag_ClickResult;
         }
     }
-    if (event->type != SDL_MOUSEBUTTONDOWN && event->type != SDL_MOUSEBUTTONUP) {
+    if (event->type != SDL_EVENT_MOUSE_BUTTON_DOWN && event->type != SDL_EVENT_MOUSE_BUTTON_UP) {
         return none_ClickResult;
     }
     const SDL_MouseButtonEvent *mb = &event->button;
-    if (!(SDL_BUTTON(mb->button) & d->buttons)) {
+    if (!(SDL_BUTTON_MASK(mb->button) & d->buttons)) {
         return none_ClickResult;
     }
     const iInt2 pos = init_I2(mb->x, mb->y);
-    if (event->type == SDL_MOUSEBUTTONDOWN && (!d->isActive || d->clickButton == mb->button)) {
+    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && (!d->isActive || d->clickButton == mb->button)) {
         d->count = mb->clicks;
     }
     if (!d->isActive) {
-        if (mb->state == SDL_PRESSED) {
+        if (mb->down == true) {
             if (contains_Click(d, pos)) {
                 d->isActive = iTrue;
                 d->isDragging = iFalse;
@@ -565,7 +565,7 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
         }
     }
     else { /* Active. */
-        if (mb->state == SDL_RELEASED && mb->button == d->clickButton) {
+        if (mb->down == false && mb->button == d->clickButton) {
             enum iClickResult result = contains_Click(d, pos)
                                            ? finished_ClickResult
                                            : aborted_ClickResult;
@@ -725,7 +725,7 @@ void move_SmoothScroll(iSmoothScroll *d, int offset) {
 }
 
 iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
-    if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+    if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
         const int osDelta = overscroll_SmoothScroll_(d);
         if (osDelta) {
             moveSpan_SmoothScroll(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
@@ -1492,11 +1492,16 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     if (isUsingMenuPopupWindows_()) {
         /* Determine total display bounds where the popup may appear. */
         iRect displayRect = zero_Rect();
-        for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
-            SDL_Rect dispBounds;
-            SDL_GetDisplayUsableBounds(i, &dispBounds);
-            displayRect = union_Rect(
-                displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
+        int numDisplays = 0;
+        SDL_DisplayID *displays = SDL_GetDisplays(&numDisplays);
+        if (displays) {
+            for (int i = 0; i < numDisplays; i++) {
+                SDL_Rect dispBounds;
+                SDL_GetDisplayUsableBounds(displays[i], &dispBounds);
+                displayRect = union_Rect(
+                    displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
+            }
+            SDL_free(displays);
         }
         iRect winRect;
         SDL_Window *sdlWin = get_Window()->win;
@@ -1810,7 +1815,7 @@ void setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disabl
 }
 
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
-    if (menu && ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+    if (menu && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (isVisible_Widget(menu)) {
             closeMenu_Widget(menu);
             return 0x1;
@@ -3537,8 +3542,8 @@ struct Impl_GamepadButtonInfo {
 static iArray *gamepadButtonInfo_(void) {
     iArray *info = collectNew_Array(sizeof(iGamepadButtonInfo));
     for (int t = 0; t <= 1; t++) {
-        for (int b = SDL_CONTROLLER_BUTTON_A; b <= SDL_CONTROLLER_BUTTON_START; b++) {
-            if (b > SDL_CONTROLLER_BUTTON_Y && t) continue; /* trigger only for A, B, X, Y */
+        for (int b = SDL_GAMEPAD_BUTTON_SOUTH; b <= SDL_GAMEPAD_BUTTON_START; b++) {
+            if (b > SDL_GAMEPAD_BUTTON_NORTH && t) continue; /* trigger only for A, B, X, Y */
             pushBack_Array(info,
                            (iGamepadButtonInfo[]) {
                                b, t, format_CStr("gamepad.set trig:%d button:%d", t, b) });

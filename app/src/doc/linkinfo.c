@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmcerts.h>
 #include "../app.h"
 
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 iDefineTypeConstruction(LinkInfo)
 

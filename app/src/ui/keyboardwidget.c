@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "window.h"
 
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 #include <the_Foundation/stringarray.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -180,7 +180,8 @@ static const char *defaultKeyboardConfig_ =
     u8"row: 🙂 😊 😃 😂 😅 🙁 {0x8 " delete_Icon "}\n"
     "row: {++@lowercase abc} {-0x20} {++0xd " return_Icon "}\n";
 
-static uint32_t keyRepeater_KeyboardWidget_(uint32_t interval, void *param) {
+static uint32_t keyRepeater_KeyboardWidget_(void *param, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(timerID, interval);
     iKeyboardWidget *w = param;
     SDL_PushEvent((SDL_Event *) &w->repeatEvent);
     return repeatDelayMs_;
@@ -574,16 +575,21 @@ static void trigger_KeywordWidget_(const iKeyboardWidget *d, const iKey *key) {
         emulateKeyPress_Window(window_Widget(d), key->keySym, 0);
     }
     else if (key->label || key->keySym == SDLK_SPACE) {
-        SDL_TextInputEvent input = {
-            .type     = SDL_TEXTINPUT,
-            .windowID = id_Window(window_Widget(d)),
-        };
+        /* SDL3's text field is a pointer, not an inline buffer, so it needs storage that
+           outlives this call; a static buffer matches the previous fixed-size behavior. */
+        static char text_[32];
+        iZap(text_);
         if (key->label) {
-            strcpy(input.text, cstr_String(key->label));
+            strncpy(text_, cstr_String(key->label), sizeof(text_) - 1);
         }
         else {
-            strcpy(input.text, " ");
+            strcpy(text_, " ");
         }
+        SDL_TextInputEvent input = {
+            .type     = SDL_EVENT_TEXT_INPUT,
+            .windowID = id_Window(window_Widget(d)),
+            .text     = text_,
+        };
         SDL_PushEvent((SDL_Event *) &input);
     }
 }
@@ -602,16 +608,16 @@ static iBool processEvent_KeyboardWidget_(iKeyboardWidget *d, const SDL_Event *e
             return iTrue;
         }
     }
-    else if ((event->type == SDL_MOUSEBUTTONDOWN || event->type == SDL_MOUSEBUTTONUP) &&
+    else if ((event->type == SDL_EVENT_MOUSE_BUTTON_DOWN || event->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
              event->button.button == SDL_BUTTON_RIGHT &&
              contains_Widget(w, pointerCoord_Gamepad(gamepad_App()))) {
         iKey *bspKey = find_KeyPage_(d->visPage, SDLK_BACKSPACE);
         if (!bspKey) return iTrue;
-        if (event->type == SDL_MOUSEBUTTONDOWN && bspKey->flags & invert_KeyFlag) {
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && bspKey->flags & invert_KeyFlag) {
             emulateKeyPress_Window(window_Widget(d), SDLK_BACKSPACE, 0);
             d->repeatWasTriggered = iTrue;
         }
-        else if (event->type == SDL_MOUSEBUTTONUP) {
+        else if (event->type == SDL_EVENT_MOUSE_BUTTON_UP) {
             stopRepeat_KeyboardWidget_(d);
             if (!d->repeatWasTriggered) {
                 emulateKeyPress_Window(window_Widget(d), SDLK_BACKSPACE, 0);
@@ -619,16 +625,16 @@ static iBool processEvent_KeyboardWidget_(iKeyboardWidget *d, const SDL_Event *e
         }
         if (bspKey) {
             if (~bspKey->flags & invert_KeyFlag) startRepeat_KeyboardWidget_(d, event);
-            iChangeFlags(bspKey->flags, invert_KeyFlag, event->type == SDL_MOUSEBUTTONDOWN);
+            iChangeFlags(bspKey->flags, invert_KeyFlag, event->type == SDL_EVENT_MOUSE_BUTTON_DOWN);
             refresh_Widget(d);
         }
         return iTrue;
     }
-    else if ((event->type == SDL_MOUSEBUTTONDOWN || event->type == SDL_MOUSEBUTTONUP) &&
+    else if ((event->type == SDL_EVENT_MOUSE_BUTTON_DOWN || event->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
              event->button.button == SDL_BUTTON_LEFT) {
         const iInt2 relPos = sub_I2(mouseCoord_SDLEvent(event), w->rect.pos);
         const iKey *key    = hitKey_KeyboardWidget_(d, relPos);
-        if (key && event->type == SDL_MOUSEBUTTONDOWN) {
+        if (key && event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             if (d->pressedKey != key) {
                 d->pressedKey = key;
                 if (key->pageId < 0) {
@@ -641,7 +647,7 @@ static iBool processEvent_KeyboardWidget_(iKeyboardWidget *d, const SDL_Event *e
                 d->repeatWasTriggered = iTrue;
             }
         }
-        else if (d->pressedKey && event->type == SDL_MOUSEBUTTONUP) {
+        else if (d->pressedKey && event->type == SDL_EVENT_MOUSE_BUTTON_UP) {
             stopRepeat_KeyboardWidget_(d);
             key = d->pressedKey;
             /* Automatic page switch after keypress. */
@@ -661,7 +667,7 @@ static iBool processEvent_KeyboardWidget_(iKeyboardWidget *d, const SDL_Event *e
         }
         return contains_Widget(w, mouseCoord_SDLEvent(event));
     }
-    else if (event->type == SDL_MOUSEMOTION) {
+    else if (event->type == SDL_EVENT_MOUSE_MOTION) {
         if (contains_Widget(w, mouseCoord_SDLEvent(event))) {
             setHover_KeyboardWidget_(
                 d, hitKey_KeyboardWidget_(d, sub_I2(mouseCoord_SDLEvent(event), w->rect.pos)));

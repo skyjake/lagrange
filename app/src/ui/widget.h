@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 iDeclareType(Root)   /* each widget is associated with a Root */
 iDeclareType(Window) /* each Root is inside a Window */

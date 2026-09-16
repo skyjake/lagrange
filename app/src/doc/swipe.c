@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/widget.h"
 #include "ui/window.h"
 
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 iDefineTypeConstruction(DocumentSwipe)
 

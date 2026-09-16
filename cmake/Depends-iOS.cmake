@@ -2,9 +2,9 @@ message (STATUS "iOS dependency directory: ${IOS_DIR}")
 
 find_package (the_Foundation REQUIRED)
 
-set (SDL2_INCLUDE_DIRS ${IOS_DIR}/include/SDL2)
-set (SDL2_LDFLAGS
-    ${IOS_DIR}/SDL2.framework/SDL2
+set (SDL3_INCLUDE_DIRS ${IOS_DIR}/include/SDL3)
+set (SDL3_LDFLAGS
+    ${IOS_DIR}/SDL3.framework/SDL3
     "-framework AudioToolbox"
     "-framework AVFoundation"
     "-framework AVFAudio"

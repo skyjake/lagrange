@@ -39,9 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/stringlist.h>
-#include <SDL_hints.h>
-#include <SDL_render.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_timer.h>
 
 struct Impl_Media {
     iPtrArray items[max_MediaType];
@@ -185,7 +185,7 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
         iInt2    texSize = d->size;
         /* Resize down to min(maximum texture size, window size). */ {
             SDL_Rect dispRect;
-            SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window->win), &dispRect);
+            SDL_GetDisplayBounds(SDL_GetDisplayForWindow(window->win), &dispRect);
             const iInt2 maxSize = min_I2(isEqual_I2(maxTextureSize_Window(window), zero_I2()) ?
                                          texSize : maxTextureSize_Window(window),
                                          coord_Window(window, dispRect.w, dispRect.h));
@@ -212,13 +212,13 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
             }
         }
         /* Create the texture. */
-        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(
-            imgData, texSize.x, texSize.y, 32, texSize.x * 4, SDL_PIXELFORMAT_ABGR8888);
+        SDL_Surface *surface = SDL_CreateSurfaceFrom(texSize.x, texSize.y, SDL_PIXELFORMAT_ABGR8888,
+                                                     imgData, texSize.x * 4);
         /* TODO: In multiwindow case, all windows must have the same shared renderer?
            Or at least a shared context. */
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); /* linear scaling */
         d->texture = SDL_CreateTextureFromSurface(renderer_Window(window), surface);
-        SDL_FreeSurface(surface);
+        SDL_SetTextureScaleMode(d->texture, SDL_SCALEMODE_LINEAR);
+        SDL_DestroySurface(surface);
         free(imgData);
         isNew = iTrue;
     }

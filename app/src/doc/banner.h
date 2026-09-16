@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 
 #include <the_Foundation/vec2.h>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 iDeclareType(Banner)
 iDeclareTypeConstruction(Banner)

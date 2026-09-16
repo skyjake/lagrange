@@ -809,15 +809,15 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         }
         return iTrue;
     }
-    if (ev->type == SDL_MOUSEMOTION) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION) {
         if (contains_Widget(w, init_I2(ev->motion.x, ev->motion.y))) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_POINTER);
         }
         return iFalse;
     }
-    if (ev->type == SDL_KEYDOWN) {
-        const int mods = keyMods_Sym(ev->key.keysym.mod);
-        const int key = ev->key.keysym.sym;
+    if (ev->type == SDL_EVENT_KEY_DOWN) {
+        const int mods = keyMods_Sym(ev->key.mod);
+        const int key = ev->key.key;
         if (isFocused_Widget(d)) {
             iWidget *url = findWidget_App("url");
             switch (key) {

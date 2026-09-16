@@ -56,9 +56,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/thread.h>
-#include <SDL_hints.h>
-#include <SDL_timer.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_properties.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -88,16 +88,16 @@ iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 
 static const iMenuItem fileMenuItems_[] = {
 #if defined (LAGRANGE_MULTIPLE_WINDOWS)
-    { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
+    { "${menu.newwindow}", SDLK_N, KMOD_PRIMARY, "window.new" },
 #endif
-    { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
-    { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
-    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { "${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
+    { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
+    { "${menu.reopentab}", SDLK_T, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "---" },
     { "${menu.closetab}", 0, 0, "tabs.close" },
     { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
     { "---" },
-    { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
+    { saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
     { "---" },
     { "${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
 #if defined (LAGRANGE_PC_MENUS)
@@ -116,13 +116,13 @@ static const iMenuItem fileMenuItems_[] = {
 };
 
 static const iMenuItem editMenuItems_[] = {
-    { "${menu.cut}", SDLK_x, KMOD_PRIMARY, "input.copy cut:1" },
-    { "${menu.copy}", SDLK_c, KMOD_PRIMARY, "copy" },
-    { "${menu.paste}", SDLK_v, KMOD_PRIMARY, "input.paste" },
+    { "${menu.cut}", SDLK_X, KMOD_PRIMARY, "input.copy cut:1" },
+    { "${menu.copy}", SDLK_C, KMOD_PRIMARY, "copy" },
+    { "${menu.paste}", SDLK_V, KMOD_PRIMARY, "input.paste" },
     { "---" },
-    { "${menu.copy.pagelink}", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
+    { "${menu.copy.pagelink}", SDLK_C, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.copylink" },
     { "---" },
-    { "${macos.menu.find}", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input id2:filter.bookmark.input" },
+    { "${macos.menu.find}", SDLK_F, KMOD_PRIMARY, "focus.set id:find.input id2:filter.bookmark.input" },
     { NULL }
 };
 
@@ -149,7 +149,7 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
+    { "${menu.view.split}", SDLK_J, KMOD_PRIMARY, "submenu id:splitmenu" },
     { NULL }
 };
 
@@ -170,7 +170,7 @@ static const iMenuItem identityMenuItems_[] = {
     { "${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.newdomain}", 0, 0, "ident.new scope:1" },
     { "---" },
-    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
+    { "${menu.identity.import}", SDLK_M, KMOD_SECONDARY, "ident.import" },
     { NULL }
 };
 
@@ -374,7 +374,7 @@ static void setupUserInterface_MainWindow(iMainWindow *d) {
 static iBool updateSize_Window_(iWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->size;
     const iInt2 oldSize = *size;
-    SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
+    SDL_GetCurrentRenderOutputSize(d->render, &size->x, &size->y);
     const iBool hasChanged = !isEqual_I2(oldSize, *size);
     if (hasChanged) {
         windowSizeChanged_Window_(d);
@@ -392,7 +392,7 @@ static iBool updateSize_Window_(iWindow *d, iBool notifyAlways) {
 static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->base.size;
     const iInt2 oldSize = *size;
-    SDL_GetRendererOutputSize(d->base.render, &size->x, &size->y);
+    SDL_GetCurrentRenderOutputSize(d->base.render, &size->x, &size->y);
     size->y -= d->keyboardHeight;
     const iBool hasChanged = !isEqual_I2(oldSize, *size);
     if (hasChanged) {
@@ -436,7 +436,7 @@ static float pixelRatio_Window_(const iWindow *d) {
     return displayScale_iOS(d);
 #else
     int dx, x;
-    SDL_GetRendererOutputSize(d->render, &dx, NULL);
+    SDL_GetCurrentRenderOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
     return (float) dx / (float) x;
 #endif
@@ -492,10 +492,8 @@ static float displayScale_Window_(const iWindow *d) {
     return displayDensity_Android();
 #else
     if (isRunningUnderWindowSystem_App()) {
-        float vdpi = 0.0f;
-        SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
-//      printf("DPI: %f\n", vdpi);
-        const float factor = vdpi / baseDPI_Window / pixelRatio_Window_(d);
+        const float factor =
+            SDL_GetDisplayContentScale(SDL_GetDisplayForWindow(d->win)) / pixelRatio_Window_(d);
         return iMax(1.0f, factor);
     }
     return 1.0f;
@@ -523,7 +521,7 @@ static iRoot *rootAt_Window_(const iWindow *d, iInt2 coord) {
 static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *pos, void *data) {
     iMainWindow *d = data;
     iAssert(d->base.win == win);
-    if (SDL_GetWindowFlags(win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
+    if (SDL_GetWindowFlags(win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN)) {
         return SDL_HITTEST_NORMAL;
     }
     const int snap = snap_MainWindow(d);
@@ -575,7 +573,7 @@ SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos) {
 #endif
 
 void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
-    flags |= SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
+    flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
     if (d->type == main_WindowType || d->type == extra_WindowType) {
         flags |= SDL_WINDOW_RESIZABLE;
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
@@ -586,21 +584,12 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 #endif
     }
     const iBool setPos = left_Rect(rect) >= 0 || top_Rect(rect) >= 0;
-    d->win = SDL_CreateWindow("",
-                              setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
-                              setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED,
-                              width_Rect(rect),
-                              height_Rect(rect),
-                              flags);
+    d->win = SDL_CreateWindow("", width_Rect(rect), height_Rect(rect), flags);
     if (!d->win) {
         if (flags & SDL_WINDOW_OPENGL) {
             /* Try without OpenGL support, then. */
             setForceSoftwareRender_App(iTrue);
-            d->win = SDL_CreateWindow("",
-                                      setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
-                                      setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED,
-                                      width_Rect(rect),
-                                      height_Rect(rect),
+            d->win = SDL_CreateWindow("", width_Rect(rect), height_Rect(rect),
                                       flags & ~SDL_WINDOW_OPENGL);
         }
         if (!d->win) {
@@ -608,29 +597,29 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
             exit(-3);
         }
     }
+    SDL_SetWindowPosition(d->win,
+                          setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                          setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED);
     if (forceSoftwareRender_App()) {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
     }
-    d->render = SDL_CreateRenderer(
-        d->win,
-        -1,
-        (forceSoftwareRender_App() ? SDL_RENDERER_SOFTWARE : SDL_RENDERER_ACCELERATED) |
-            SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+    d->render = SDL_CreateRenderer(d->win, NULL);
     if (!d->render) {
         /* Try a basic software rendering instead. */
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-        d->render = SDL_CreateRenderer(d->win, -1, SDL_RENDERER_SOFTWARE);
+        d->render = SDL_CreateRenderer(d->win, NULL);
         if (!d->render) {
             /* This shouldn't fail.-..? */
             fprintf(stderr, "[window] failed to create renderer: %s\n", SDL_GetError());
             exit(-4);
         }
     }
+    SDL_SetRenderVSync(d->render, 1);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (type_Window(d) == main_WindowType && prefs_App()->customFrame) {
         /* Register a handler for window hit testing (drag, resize). */
         SDL_SetWindowHitTest(d->win, hitTest_MainWindow_, d);
-        SDL_SetWindowResizable(d->win, SDL_TRUE);
+        SDL_SetWindowResizable(d->win, true);
     }
 #endif
 }
@@ -647,8 +636,7 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
         pixels = rsPixels;
         w = h = resized;
     }
-    return SDL_CreateRGBSurfaceWithFormatFrom(
-        pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
+    return SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_RGBA32, pixels, w * num);
 }
 
 SDL_Texture *makeTextureFromImageData_Window(const iWindow *d, const iBlock *data) {
@@ -656,7 +644,7 @@ SDL_Texture *makeTextureFromImageData_Window(const iWindow *d, const iBlock *dat
     SDL_Texture *texture = SDL_CreateTextureFromSurface(d->render, surf);
     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
     free(surf->pixels);
-    SDL_FreeSurface(surf);
+    SDL_DestroySurface(surf);
     return texture;
 }
 
@@ -696,15 +684,14 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     iZap(d->cursors);
     d->text = NULL;
     create_Window_(d, rect, flags);
-    SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
+    SDL_GetCurrentRenderOutputSize(d->render, &d->size.x, &d->size.y);
 #if !defined (iPlatformTerminal)
     /* Renderer info. */ {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(d->render, &info);
 #   if !defined (NDEBUG)
+        const char *rendererName = SDL_GetRendererName(d->render);
         printf("[window] renderer: %s%s\n",
-               info.name,
-               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
+               rendererName,
+               iCmpStr(rendererName, "software") != 0 ? " (accelerated)" : "");
 #   endif
     }
 #   if defined (iPlatformMsys) || defined (iPlatformWindows)
@@ -751,7 +738,7 @@ void deinit_Window(iWindow *d) {
     SDL_DestroyWindow(d->win);
     iForIndices(i, d->cursors) {
         if (d->cursors[i]) {
-            SDL_FreeCursor(d->cursors[i]);
+            SDL_DestroyCursor(d->cursors[i]);
         }
     }
     setCurrent_Window(NULL);
@@ -766,7 +753,7 @@ static void setWindowIcon_Window_(iWindow *d) {
     SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
     SDL_SetWindowIcon(d->win, surf);
     free(surf->pixels);
-    SDL_FreeSurface(surf);
+    SDL_DestroySurface(surf);
 #   endif
 #endif
     iUnused(d); /* other platforms */
@@ -831,16 +818,20 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     SDL_SetWindowMinimumSize(d->base.win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->base.win, "Lagrange");
     /* Some info. */ {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(d->base.render, &info);
-        isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
+        SDL_PropertiesID rendProps = SDL_GetRendererProperties(d->base.render);
+        isOpenGLRenderer_ = !iCmpStr(SDL_GetRendererName(d->base.render), "opengl");
 #if !defined (NDEBUG) && !defined (iPlatformTerminal)
-        printf("[window] max texture size: %d x %d\n",
-               info.max_texture_width,
-               info.max_texture_height);
-        for (size_t i = 0; i < info.num_texture_formats; ++i) {
-            printf("[window] supported texture format: %s\n",
-                   SDL_GetPixelFormatName(info.texture_formats[i]));
+        const Sint64 maxTextureSize =
+            SDL_GetNumberProperty(rendProps, SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
+        printf("[window] max texture size: %lld x %lld\n",
+               (long long) maxTextureSize, (long long) maxTextureSize);
+        const SDL_PixelFormat *texFormats = SDL_GetPointerProperty(
+            rendProps, SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER, NULL);
+        if (texFormats) {
+            for (size_t i = 0; texFormats[i] != SDL_PIXELFORMAT_UNKNOWN; ++i) {
+                printf("[window] supported texture format: %s\n",
+                       SDL_GetPixelFormatName(texFormats[i]));
+            }
         }
 #endif
     }
@@ -860,7 +851,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #endif /* !defined (iPlatformTerminal) */
     setWindowIcon_Window_(as_Window(d));
     makeTextCurrent_Window(&d->base);
-    SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
+    SDL_GetCurrentRenderOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
     d->maxDrawableHeight = d->base.size.y;
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
@@ -869,29 +860,29 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         d->base.borderShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->base.borderShadow, SDL_BLENDMODE_BLEND);
         free(surf->pixels);
-        SDL_FreeSurface(surf);
+        SDL_DestroySurface(surf);
     }
     /* Load the emboss graphic. */ {
         SDL_Surface *surf = loadImage_(&imageLogo_Resources, 0);
         d->logo = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->logo, SDL_BLENDMODE_BLEND);
-#if SDL_VERSION_ATLEAST(2, 0, 12) && !defined (iPlatformTerminal)
-        SDL_SetTextureScaleMode(d->logo, SDL_ScaleModeBest);
+#if !defined (iPlatformTerminal)
+        SDL_SetTextureScaleMode(d->logo, SDL_SCALEMODE_LINEAR);
 #endif
         free(surf->pixels);
-        SDL_FreeSurface(surf);
+        SDL_DestroySurface(surf);
     }
     d->appIcon = NULL;
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, appIconSize_Root());
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         d->appIcon = SDL_CreateTextureFromSurface(d->base.render, surf);
+        SDL_SetTextureScaleMode(d->appIcon, SDL_SCALEMODE_NEAREST);
         free(surf->pixels);
-        SDL_FreeSurface(surf);
-        /* We need to observe non-client-area events (custom frame). */
-        SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
+        SDL_DestroySurface(surf);
+        /* We need to observe non-client-area messages (custom frame). */
+        enableCustomFrameMessageHook_Win32(as_Window(d));
     }
 #endif
 #if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
@@ -932,9 +923,9 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
 }
 
 iInt2 maxTextureSize_Window(const iWindow *d) {
-    SDL_RendererInfo info;
-    SDL_GetRendererInfo(d->render, &info);
-    return init_I2(info.max_texture_width, info.max_texture_height);
+    const Sint64 maxTextureSize = SDL_GetNumberProperty(
+        SDL_GetRendererProperties(d->render), SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0);
+    return init1_I2((int) maxTextureSize);
 }
 
 iBool isFullscreen_MainWindow(const iMainWindow *d) {
@@ -969,15 +960,16 @@ void rootOrder_Window(const iWindow *d, iRoot *roots[2]) {
 
 void emulateKeyPress_Window(const iWindow *d, int key, int mods) {
     SDL_KeyboardEvent event = {
-        .type     = SDL_KEYDOWN,
+        .type     = SDL_EVENT_KEY_DOWN,
         .windowID = id_Window(d),
-        .state    = SDL_PRESSED,
-        .keysym   = { .sym = key, .mod = mods },
+        .down     = true,
+        .key      = key,
+        .mod      = mods,
     };
     SDL_PushEvent((SDL_Event *) &event);
     /* The key is immediately released. */
-    event.type  = SDL_KEYUP;
-    event.state = SDL_RELEASED;
+    event.type = SDL_EVENT_KEY_UP;
+    event.down = false;
     SDL_PushEvent((SDL_Event *) &event);
 }
 
@@ -1030,7 +1022,7 @@ static iBool unsnap_MainWindow_(iMainWindow *d, const iInt2 *newPos) {
         }
         if (newPos) {
             SDL_Rect usable;
-            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->base.win), &usable);
+            SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(d->base.win), &usable);
             /* Snap to top. */
             if (snap == yMaximized_WindowSnap &&
                 iAbs(newPos->y - usable.y) < lineHeight_Text(uiContent_FontId) * 2) {
@@ -1083,35 +1075,33 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     if (ev->windowID != SDL_GetWindowID(d->win)) {
         return iFalse;
     }
-    switch (ev->event) {
-#if SDL_VERSION_ATLEAST(2, 0, 18)
-        case SDL_WINDOWEVENT_DISPLAY_CHANGED:
+    switch (ev->type) {
+        case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
             checkPixelRatioChange_Window_(as_Window(d));
             return iTrue;
-#endif
-        case SDL_WINDOWEVENT_CLOSE:
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
             if (d->type == extra_WindowType) {
                 closeWindow_App(d);
                 return iTrue;
             }
             return iFalse;
-        case SDL_WINDOWEVENT_EXPOSED:
+        case SDL_EVENT_WINDOW_EXPOSED:
             d->isExposed = iTrue;
             if (d->type == extra_WindowType) {
                 checkPixelRatioChange_Window_(d);
             }
             postRefresh_Window(d);
             return iTrue;
-        case SDL_WINDOWEVENT_RESTORED:
-        case SDL_WINDOWEVENT_SHOWN:
+        case SDL_EVENT_WINDOW_RESTORED:
+        case SDL_EVENT_WINDOW_SHOWN:
             postRefresh_Window(d);
             return iTrue;
-        case SDL_WINDOWEVENT_MOVED:
+        case SDL_EVENT_WINDOW_MOVED:
             if (d->type == extra_WindowType) {
                 checkPixelRatioChange_Window_(d);
             }
             return iFalse;
-        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_EVENT_WINDOW_RESIZED:
             if (d->isMinimized) {
                 return iTrue;
             }
@@ -1120,7 +1110,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             updateSize_Window_(d, iTrue);
             postRefresh_Window(d);
             return iTrue;
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
+        case SDL_EVENT_WINDOW_FOCUS_GAINED:
             if (d->type == extra_WindowType) {
                 d->focusGainedAt = SDL_GetTicks();
                 setCapsLockDown_Keys(iFalse);
@@ -1134,14 +1124,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
 #endif
             }
             return iFalse;
-        case SDL_WINDOWEVENT_TAKE_FOCUS:
-            if (d->type == extra_WindowType) {
-                SDL_SetWindowInputFocus(d->win);
-                postRefresh_Window(d);
-                return iTrue;
-            }
-            return iFalse;
-        case SDL_WINDOWEVENT_FOCUS_LOST:
+        case SDL_EVENT_WINDOW_FOCUS_LOST:
             stopMidClickScroll_Window_(d);
             if (d->type == popup_WindowType) {
                 /* Popup windows are currently only used for menus. */
@@ -1152,7 +1135,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 closePopups_App(iTrue);
             }
             return iTrue;
-        case SDL_WINDOWEVENT_LEAVE:
+        case SDL_EVENT_WINDOW_MOUSE_LEAVE:
             unhover_Widget();
             d->isMouseInside = iFalse;
             if (d->type == extra_WindowType) {
@@ -1160,7 +1143,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             }
             postRefresh_Window(d);
             return iTrue;
-        case SDL_WINDOWEVENT_ENTER:
+        case SDL_EVENT_WINDOW_MOUSE_ENTER:
             d->isMouseInside = iTrue;
             if (d->type == extra_WindowType) {
                 notify_App("window.mouse.entered");
@@ -1193,7 +1176,7 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
 }
 
 static void notifyHovered_Window_(iWindow *d) {
-    SDL_UserEvent notif = { .type      = SDL_USEREVENT,
+    SDL_UserEvent notif = { .type      = SDL_EVENT_USER,
                             .timestamp = SDL_GetTicks(),
                             .code      = command_UserEventCode,
                             .data1     = (void *) format_CStr("mouse.hovered ptr:%p arg:1",
@@ -1216,9 +1199,9 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
     if (ev->windowID != SDL_GetWindowID(d->base.win)) {
         return iFalse;
     }
-    switch (ev->event) {
+    switch (ev->type) {
 #if defined (iPlatformDesktop)
-        case SDL_WINDOWEVENT_EXPOSED:
+        case SDL_EVENT_WINDOW_EXPOSED:
             d->base.isExposed = iTrue;
             /* Since we are manually controlling when to redraw the window, we are responsible
                for ensuring that window contents get redrawn after expose events. Under certain
@@ -1239,7 +1222,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             }
 #endif
             return iFalse;
-        case SDL_WINDOWEVENT_MOVED: {
+        case SDL_EVENT_WINDOW_MOVED: {
             if (d->base.isMinimized) {
                 return iFalse;
             }
@@ -1256,7 +1239,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             if (prefs_App()->customFrame) {
                 SDL_Rect usable;
                 iInt2    mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
-                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->base.win), &usable);
+                SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(d->base.win), &usable);
                 const iBool isTop    = iAbs(mouse.y - usable.y) < gap_UI * 20;
                 const iBool isBottom = iAbs(usable.y + usable.h - mouse.y) < gap_UI * 20;
                 if (iAbs(mouse.x - usable.x) < gap_UI) {
@@ -1288,7 +1271,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             addTicker_App(savePlace_MainWindow_, d);
             return iTrue;
         }
-        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_EVENT_WINDOW_RESIZED:
             if (d->base.isMinimized) {
                 return iTrue;
             }
@@ -1303,38 +1286,38 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             checkPixelRatioChange_Window_(as_Window(d));
             postRefresh_Window(d);
             return iTrue;
-        case SDL_WINDOWEVENT_RESTORED:
-        case SDL_WINDOWEVENT_SHOWN:
+        case SDL_EVENT_WINDOW_RESTORED:
+        case SDL_EVENT_WINDOW_SHOWN:
             updateSize_MainWindow_(d, iTrue);
             invalidate_MainWindow_(d, iTrue);
             d->base.isMinimized = iFalse;
             postRefresh_Window(d);
             return iTrue;
-        case SDL_WINDOWEVENT_MAXIMIZED:
+        case SDL_EVENT_WINDOW_MAXIMIZED:
             return iTrue;
-        case SDL_WINDOWEVENT_MINIMIZED:
+        case SDL_EVENT_WINDOW_MINIMIZED:
             d->base.isMinimized = iTrue;
             closePopups_App(iTrue);
             return iTrue;
 #else /* if defined (!iPlatformDesktop) */
-        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_EVENT_WINDOW_RESIZED:
             /* On mobile, this occurs when the display is rotated. */
             invalidate_Window(d);
             postRefresh_Window(d);
             return iTrue;
 #endif
-        case SDL_WINDOWEVENT_LEAVE:
+        case SDL_EVENT_WINDOW_MOUSE_LEAVE:
             unhover_Widget();
             d->base.isMouseInside = iFalse;
             notify_App("window.mouse.exited");
             return iTrue;
-        case SDL_WINDOWEVENT_ENTER:
+        case SDL_EVENT_WINDOW_MOUSE_ENTER:
             d->base.isMouseInside = iTrue;
             //SDL_SetWindowInputFocus(d->base.win); /* BUG? */
             notify_App("window.mouse.entered");
             setHoverUnderCursor_Window_(as_Window(d));
             return iTrue;
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
+        case SDL_EVENT_WINDOW_FOCUS_GAINED:
             d->base.focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
             notifyf_App("window.focus.gained arg:%u", id_Window(as_Window(d)));
@@ -1347,7 +1330,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             postCommand_App("window.unfreeze");
 #endif
             return iFalse;
-        case SDL_WINDOWEVENT_FOCUS_LOST:
+        case SDL_EVENT_WINDOW_FOCUS_LOST:
             stopMidClickScroll_Window_(&d->base);
             notifyf_App("window.focus.lost arg:%u", id_Window(as_Window(d)));
 #if !defined (iPlatformDesktop)
@@ -1355,11 +1338,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
 #endif
             closePopups_App(iTrue);
             return iFalse;
-        case SDL_WINDOWEVENT_TAKE_FOCUS:
-            SDL_SetWindowInputFocus(d->base.win);
-            postRefresh_Window(d);
-            return iTrue;
-        case SDL_WINDOWEVENT_CLOSE:
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 #if defined (iPlatformAppleDesktop)
             closeWindow_App(as_Window(d));
 #else
@@ -1407,7 +1386,7 @@ static void scrollOnMiddleDrag_Window_(void *context) {
         if (scroll) {
             d->midDragAccum -= scroll; /* fractional part remains */
             SDL_MouseWheelEvent ev = {
-                .type      = SDL_MOUSEWHEEL,
+                .type      = SDL_EVENT_MOUSE_WHEEL,
                 .timestamp = now,
                 .windowID  = id_Window(d),
                 .y         = -iSign(speed) * scroll
@@ -1423,7 +1402,7 @@ static void startMidClickScroll_Window_(iWindow *d) {
     d->midClickScroll = iTrue;
     d->midDragAccum   = 0;
     d->midDragTime    = SDL_GetTicks();
-    setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+    setCursor_Window(d, SDL_SYSTEM_CURSOR_NS_RESIZE);
     /* Grab the mouse to whichever widget was hovered when the gesture started, so it keeps
        receiving the synthetic scroll events exclusively even if the cursor strays over
        another scrollable widget (e.g., the document) while scrolling. */
@@ -1436,7 +1415,7 @@ static void stopMidClickScroll_Window_(iWindow *d) {
         d->midClickScroll = iFalse;
         d->midDragTime     = 0;
         d->midDragAccum    = 0;
-        setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+        setCursor_Window(d, SDL_SYSTEM_CURSOR_DEFAULT);
         setMouseGrab_Widget(NULL);
     }
 }
@@ -1454,16 +1433,16 @@ static iBool handleMidButton_Window_(iWindow *d, const SDL_Event *event, iBool *
        click-to-scroll mode once dispatch to widgets is done. */
     iBool midClickPending = iFalse;
     if (d->midClickScroll) {
-        if (event->type == SDL_MOUSEBUTTONDOWN) {
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             /* Any click ends click-to-scroll mode. */
             stopMidClickScroll_Window_(d);
             *wasUsed = iTrue;
         }
-        else if (event->type == SDL_MOUSEBUTTONUP) {
+        else if (event->type == SDL_EVENT_MOUSE_BUTTON_UP) {
             *wasUsed = iTrue; /* release of the ending click */
         }
-        else if (event->type == SDL_MOUSEMOTION) {
-            setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+        else if (event->type == SDL_EVENT_MOUSE_MOTION) {
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_NS_RESIZE);
             *wasUsed = iTrue; /* suppress hover changes while auto-scrolling */
         }
     }
@@ -1472,7 +1451,7 @@ static iBool handleMidButton_Window_(iWindow *d, const SDL_Event *event, iBool *
             /* Let the event also reach widgets (e.g., link clicking). */
             break;
         case drag_ClickResult:
-            setCursor_Window(d, SDL_SYSTEM_CURSOR_SIZENS);
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_NS_RESIZE);
             if (!d->midDragTime) {
                 d->midDragAccum = 0;
                 d->midDragTime  = SDL_GetTicks();
@@ -1481,7 +1460,7 @@ static iBool handleMidButton_Window_(iWindow *d, const SDL_Event *event, iBool *
             *wasUsed = iTrue;
             break;
         case finished_ClickResult:
-            setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_DEFAULT);
             d->midDragTime  = 0;
             d->midDragAccum = 0;
             if (!d->midDrag.isDragging && d->hover) {
@@ -1498,7 +1477,7 @@ static iBool handleMidButton_Window_(iWindow *d, const SDL_Event *event, iBool *
             }
             break;
         case aborted_ClickResult:
-            setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW);
+            setCursor_Window(d, SDL_SYSTEM_CURSOR_DEFAULT);
             d->midDragTime  = 0;
             d->midDragAccum = 0;
             break;
@@ -1514,22 +1493,22 @@ static iBool handleMidButton_Window_(iWindow *d, const SDL_Event *event, iBool *
    `*midClickPending` are set for the caller to continue with as before. */
 static iBool handleMouse_Window_(iWindow *d, SDL_Event *event, iBool *wasUsed,
                                   iBool *midClickPending) {
-    if (event->type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
+    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && d->ignoreClick) {
         d->ignoreClick = iFalse;
         return iTrue;
     }
     /* Map mouse pointer coordinate to our coordinate system. */
-    if (event->type == SDL_MOUSEMOTION) {
-        setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
+    if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        setCursor_Window(d, SDL_SYSTEM_CURSOR_DEFAULT); /* default cursor */
         const iInt2 pos = coord_Window(d, event->motion.x, event->motion.y);
         event->motion.x = pos.x;
         event->motion.y = pos.y;
     }
-    else if (event->type == SDL_MOUSEBUTTONUP || event->type == SDL_MOUSEBUTTONDOWN) {
+    else if (event->type == SDL_EVENT_MOUSE_BUTTON_UP || event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         const iInt2 pos = coord_Window(d, event->button.x, event->button.y);
         event->button.x = pos.x;
         event->button.y = pos.y;
-        if (event->type == SDL_MOUSEBUTTONDOWN) {
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             /* Button clicks will change keyroot. */
             if (numRoots_Window(d) > 1) {
                 const iInt2 click = init_I2(event->button.x, event->button.y);
@@ -1546,11 +1525,11 @@ static iBool handleMouse_Window_(iWindow *d, SDL_Event *event, iBool *wasUsed,
     /* A click that ends click-to-scroll mode must not reach the grabbed widget (or
        anything else): it should only stop the scrolling, nothing more. */
     const iBool endsMidClickScroll =
-        d->midClickScroll && event->type == SDL_MOUSEBUTTONDOWN;
+        d->midClickScroll && event->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
     /* Dispatch first to the mouse-grabbed widget. */
     if (!endsMidClickScroll &&
-        (event->type == SDL_MOUSEMOTION || event->type == SDL_MOUSEWHEEL ||
-         event->type == SDL_MOUSEBUTTONUP || event->type == SDL_MOUSEBUTTONDOWN)) {
+        (event->type == SDL_EVENT_MOUSE_MOTION || event->type == SDL_EVENT_MOUSE_WHEEL ||
+         event->type == SDL_EVENT_MOUSE_BUTTON_UP || event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)) {
         if (mouseGrab_Widget()) {
             iWidget *grabbed = mouseGrab_Widget();
             setCurrent_Root(grabbed->root);
@@ -1564,28 +1543,20 @@ static iBool handleMouse_Window_(iWindow *d, SDL_Event *event, iBool *wasUsed,
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     iMainWindow *mw     = (type_Window(d) == main_WindowType ? as_MainWindow(d) : NULL);
     iWindow *    extraw = (type_Window(d) == extra_WindowType ? d : NULL);
+    /* Non-client-area interaction on Windows (custom frame) is now handled via
+       enableCustomFrameMessageHook_Win32(), which intercepts native messages directly;
+       SDL3 removed the SDL_SYSWMEVENT queue event with no replacement. */
+    if (ev->type >= SDL_EVENT_WINDOW_FIRST && ev->type <= SDL_EVENT_WINDOW_LAST) {
+        if (mw) {
+            return handleWindowEvent_MainWindow_(mw, &ev->window);
+        }
+        else {
+            return handleWindowEvent_Window_(d, &ev->window);
+        }
+    }
     switch (ev->type) {
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        case SDL_SYSWMEVENT: {
-            /* We observe native Win32 messages for dark mode detection and better
-               user interaction with the custom window frame. Mouse clicks especially
-               will not generate normal SDL events if they happen on the custom
-               hit-tested regions. These events are processed only there; the UI
-               widgets do not get involved. */
-            processNativeEvent_Win32(ev->syswm.msg, d);
-            break;
-        }
-#endif
-        case SDL_WINDOWEVENT: {
-            if (mw) {
-                return handleWindowEvent_MainWindow_(mw, &ev->window);
-            }
-            else {
-                return handleWindowEvent_Window_(d, &ev->window);
-            }
-        }
-        case SDL_RENDER_TARGETS_RESET:
-        case SDL_RENDER_DEVICE_RESET: {
+        case SDL_EVENT_RENDER_TARGETS_RESET:
+        case SDL_EVENT_RENDER_DEVICE_RESET: {
             if (mw || extraw) {
                 invalidate_Window_(d, iFalse);
             }
@@ -1606,7 +1577,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
-            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 100) {
+            if (event.type == SDL_EVENT_KEY_DOWN && SDL_GetTicks() - d->focusGainedAt < 100) {
                 /* Suspiciously close to when input focus was received. For example under openbox,
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
                    As a workaround, ignore these events. */
@@ -1619,7 +1590,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
             /* If there is a priority handler for key events, offer the event to it first.
                This is similar to mouse grabbing, but the handler can refuse the event. */
-            if (d->keyPriority && (event.type == SDL_KEYDOWN || event.type == SDL_KEYDOWN)) {
+            if (d->keyPriority && (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_DOWN)) {
                 /* The event is processed directly by the widget only, not dispatched to
                    the widget subtree. When dispatching, children still get priority. */
                 wasUsed = class_Widget(d->keyPriority)->processEvent(d->keyPriority, &event);
@@ -1637,17 +1608,17 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (!wasUsed) {
                 /* As a special case, clicking the middle mouse button can be used for pasting
                    from the clipboard. */
-                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) {
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_MIDDLE) {
                     SDL_Event paste;
                     iZap(paste);
-                    paste.type           = SDL_KEYDOWN;
-                    paste.key.keysym.sym = SDLK_v;
-                    paste.key.keysym.mod = KMOD_PRIMARY;
-                    paste.key.state      = SDL_PRESSED;
+                    paste.type           = SDL_EVENT_KEY_DOWN;
+                    paste.key.key = SDLK_V;
+                    paste.key.mod = KMOD_PRIMARY;
+                    paste.key.down       = true;
                     paste.key.timestamp  = SDL_GetTicks();
                     wasUsed = dispatchEvent_Window(d, &paste);
                 }
-                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_RIGHT) {
                     if (postContextClick_Window(d, &event.button)) {
                         wasUsed = iTrue;
                     }
@@ -1681,8 +1652,8 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-            if ((event.type == SDL_MOUSEMOTION && event.motion.windowID == id_Window(d)) ||
-                ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) &&
+            if ((event.type == SDL_EVENT_MOUSE_MOTION && event.motion.windowID == id_Window(d)) ||
+                ((event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) &&
                  event.button.windowID == id_Window(d))) {
                 /* Cursor changes (e.g., ending click-to-scroll mode) must take effect right
                    away, not only once the next motion event happens to apply them. */
@@ -1706,30 +1677,28 @@ iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
 }
 
 iLocalDef iBool isEscapeKeypress_(const SDL_Event *ev) {
-    return (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) && ev->key.keysym.sym == SDLK_ESCAPE;
+    return (ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_KEY_UP) && ev->key.key == SDLK_ESCAPE;
 }
 
 static uint32_t windowId_SDLEvent_(const SDL_Event *ev) {
     switch (ev->type) {
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP:
             return ev->button.windowID;
-        case SDL_MOUSEMOTION:
+        case SDL_EVENT_MOUSE_MOTION:
             return ev->motion.windowID;
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
             return ev->wheel.windowID;
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP:
             return ev->key.windowID;
-        case SDL_TEXTINPUT:
+        case SDL_EVENT_TEXT_INPUT:
             return ev->text.windowID;
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
-        case SDL_TEXTEDITING:
+        case SDL_EVENT_TEXT_EDITING:
             return ev->edit.windowID;
-        case SDL_TEXTEDITING_EXT:
-            return ev->editExt.windowID;
 #endif
-        case SDL_USEREVENT:
+        case SDL_EVENT_USER:
             return ev->user.windowID;
         default:
             return 0;
@@ -1743,7 +1712,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
         return iFalse; /* Meant for a different window. */
     }
     const iWidget *oldHover = d->hover;
-    if (ev->type == SDL_MOUSEMOTION) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION) {
         /* Hover widget may change. */
         setHover_Widget(NULL);
     }
@@ -1756,9 +1725,9 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != root) {
                 continue; /* Not meant for this root. */
             }
-            if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT
+            if ((ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_KEY_UP || ev->type == SDL_EVENT_TEXT_INPUT
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
-                 || ev->type == SDL_TEXTEDITING || ev->type == SDL_TEXTEDITING_EXT
+                 || ev->type == SDL_EVENT_TEXT_EDITING
 #endif
                 ) && d->keyRoot != root) {
                 if (!isEscapeKeypress_(ev)) {
@@ -1767,7 +1736,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
                     continue;
                 }
             }
-            if (ev->type == SDL_MOUSEWHEEL &&
+            if (ev->type == SDL_EVENT_MOUSE_WHEEL &&
                 !contains_Rect(rect_Root(root), coord_MouseWheelEvent(&ev->wheel))) {
                 continue; /* Only process the event in the relevant split. */
             }
@@ -1777,8 +1746,8 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             setCurrent_Root(root);
             wasUsed = dispatchEvent_Widget(root->widget, ev);
             if (wasUsed) {
-                if (ev->type == SDL_MOUSEBUTTONDOWN ||
-                    ev->type == SDL_MOUSEWHEEL) {
+                if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+                    ev->type == SDL_EVENT_MOUSE_WHEEL) {
                     setKeyRoot_Window(d, root);
                 }
                 break;
@@ -1861,7 +1830,7 @@ void drawQuick_MainWindow(iMainWindow *d) {
     /* Just present what was drawn previously. */
     if (d->backBuf) {
         SDL_Renderer *render = d->base.render;
-        SDL_RenderCopy(render, d->backBuf, NULL, NULL);
+        SDL_RenderTexture(render, d->backBuf, NULL, NULL);
         SDL_RenderPresent(render);
     }
 }
@@ -1880,7 +1849,9 @@ void drawLogo_MainWindow(iMainWindow *d, iRect bounds) {
         iPaint p;
         init_Paint(&p);
         setClip_Paint(&p, bounds);
-        SDL_RenderCopy(d->base.render, d->logo, NULL, (const SDL_Rect *) &embossRect);
+        const SDL_FRect embossFRect = { embossRect.pos.x, embossRect.pos.y,
+                                        embossRect.size.x, embossRect.size.y };
+        SDL_RenderTexture(d->base.render, d->logo, NULL, &embossFRect);
         unsetClip_Paint(&p);
     }
 }
@@ -1906,7 +1877,7 @@ void draw_MainWindow(iMainWindow *d) {
         /* On a mobile device, the window doesn't get freely resized. The render size will
            change when the device orientation changes. */
         iInt2 renderSize;
-        SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
+        SDL_GetCurrentRenderOutputSize(w->render, &renderSize.x, &renderSize.y);
         if (!isEqual_I2(renderSize, w->size)) {
             updateSize_MainWindow_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode); /* apply changes immediately */
@@ -1933,7 +1904,7 @@ void draw_MainWindow(iMainWindow *d) {
                     SDL_DestroyTexture(d->backBuf);
                 }
                 d->backBuf = SDL_CreateTexture(d->base.render,
-                                               SDL_PIXELFORMAT_RGB888,
+                                               SDL_PIXELFORMAT_XRGB8888,
                                                SDL_TEXTUREACCESS_TARGET,
                                                w->size.x,
                                                w->size.y);
@@ -1956,7 +1927,7 @@ void draw_MainWindow(iMainWindow *d) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         if (prefs_App()->customFrame && numRoots_Window(as_Window(d)) == 1) {
             back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
-                                        ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                        ~winFlags & SDL_WINDOW_FULLSCREEN
                                     ? uiAnnotation_ColorId
                                     : uiSeparator_ColorId);
         }
@@ -2010,7 +1981,7 @@ void draw_MainWindow(iMainWindow *d) {
                     iColor iconColor    = get_Color(gotFocus || isLight ? white_ColorId : uiAnnotation_ColorId);
                     SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
                     SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
-                    SDL_RenderCopy(
+                    SDL_RenderTexture(
                         w->render,
                         d->appIcon,
                         NULL,
@@ -2059,7 +2030,7 @@ void draw_MainWindow(iMainWindow *d) {
     }
     if (d->backBuf) {
         SDL_SetRenderTarget(d->base.render, NULL);
-        SDL_RenderCopy(d->base.render, d->backBuf, NULL, NULL);
+        SDL_RenderTexture(d->base.render, d->backBuf, NULL, NULL);
     }
 #if 0
     /* Text cache debugging. */
@@ -2067,7 +2038,7 @@ void draw_MainWindow(iMainWindow *d) {
         SDL_Rect rect = { d->roots[0]->widget->rect.size.x - 640, 0, 640, 2.5 * 640 };
         SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
         SDL_RenderFillRect(d->render, &rect);
-        SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);
+        SDL_RenderTexture(d->render, glyphCache_Text(), NULL, &rect);
     }
 #endif
     SDL_RenderPresent(w->render);
@@ -2162,9 +2133,9 @@ iInt2 mouseCoord_Window(const iWindow *d, int whichDevice) {
     if (!d->isMouseInside) {
         return init_I2(-1000000, -1000000);
     }
-    int x, y;
+    float x, y;
     SDL_GetMouseState(&x, &y);
-    return coord_Window(d, x, y);
+    return coord_Window(d, (int) x, (int) y);
 }
 
 float uiScale_Window(const iWindow *d) {
@@ -2435,11 +2406,11 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
             SDL_MaximizeWindow(d->base.win);
         }
         else if (snapMode == fullscreen_WindowSnap) {
-            SDL_SetWindowFullscreen(d->base.win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            SDL_SetWindowFullscreen(d->base.win, true);
         }
         else {
             if (snap_MainWindow(d) == fullscreen_WindowSnap) {
-                SDL_SetWindowFullscreen(d->base.win, 0);
+                SDL_SetWindowFullscreen(d->base.win, false);
             }
             else {
                 SDL_RestoreWindow(d->base.win);
@@ -2454,9 +2425,9 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
     const int snapDist = gap_UI * 4;
     iRect newRect = zero_Rect();
     SDL_Rect usable;
-    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->base.win), &usable);
+    SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(d->base.win), &usable);
     if (d->place.snap == fullscreen_WindowSnap) {
-        SDL_SetWindowFullscreen(d->base.win, 0);
+        SDL_SetWindowFullscreen(d->base.win, false);
     }
     d->place.snap = snapMode & ~redo_WindowSnap;
     switch (snapMode & mask_WindowSnap) {
@@ -2488,7 +2459,7 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
             }
             break;
         case fullscreen_WindowSnap:
-            SDL_SetWindowFullscreen(d->base.win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            SDL_SetWindowFullscreen(d->base.win, true);
             break;
     }
     if (snapMode & (topBit_WindowSnap | bottomBit_WindowSnap)) {
@@ -2524,7 +2495,7 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
 int snap_MainWindow(const iMainWindow *d) {
     if (!prefs_App()->customFrame) {
         const int flags = SDL_GetWindowFlags(d->base.win);
-        if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+        if (flags & SDL_WINDOW_FULLSCREEN) {
             return fullscreen_WindowSnap;
         }
         else if (flags & SDL_WINDOW_MAXIMIZED) {
@@ -2545,7 +2516,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     setForceSoftwareRender_App(iTrue);
 #endif
     SDL_Rect usableRect;
-    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(get_Window()->win),
+    SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(get_Window()->win),
                                &usableRect);
     const float pixelRatio = get_Window()->pixelRatio;
     iRect winRect = (iRect){ screenPos,
@@ -2562,7 +2533,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
 #if !defined (iPlatformAppleDesktop)
                                   SDL_WINDOW_BORDERLESS |
 #endif
-                                  SDL_WINDOW_POPUP_MENU | SDL_WINDOW_SKIP_TASKBAR);
+                                  SDL_WINDOW_POPUP_MENU | SDL_WINDOW_UTILITY);
 #if defined (iPlatformAppleDesktop)
     hideTitleBar_MacOS(win); /* make it a borderless window, but retain shadow */
 #endif

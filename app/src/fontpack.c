@@ -1219,7 +1219,7 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
     delete_String(userData_Object(d));
     /* We can't delete ourselves; threads must be joined from another thread. */
     SDL_PushEvent((SDL_Event *) &(SDL_UserEvent){
-        .type = SDL_USEREVENT, .code = releaseObject_UserEventCode, .data1 = d });
+        .type = SDL_EVENT_USER, .code = releaseObject_UserEventCode, .data1 = d });
 }
 
 void searchOnlineLibraryForCharacters_Fonts(const iString *chars) {

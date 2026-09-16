@@ -48,10 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 
-#include <SDL_render.h>
-#include <SDL_surface.h>
-#include <SDL_hints.h>
-#include <SDL_version.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_version.h>
 
 #include <math.h>
 #include <stdint.h>
@@ -523,6 +523,7 @@ static void initCache_FtText_(iFtText *d) {
                                          SDL_PIXELFORMAT_RGBA32,
                                          SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                          cc->size.x, cc->size.y);
+    SDL_SetTextureScaleMode(cc->texture, SDL_SCALEMODE_NEAREST);
     SDL_SetTextureBlendMode(cc->texture, SDL_BLENDMODE_BLEND);
 }
 
@@ -591,18 +592,19 @@ static void uploadColorGlyph_(iFtText *tx, uint8_t *bgraBitmap, iRect atlasRect)
         rgba[i * 4 + 2] = bgraBitmap[i * 4 + 0]; /* B ← R */
         rgba[i * 4 + 3] = bgraBitmap[i * 4 + 3]; /* A */
     }
-    SDL_Surface *surf = SDL_CreateRGBSurfaceWithFormatFrom(rgba, w, h, 32, w * 4,
-                                                           SDL_PIXELFORMAT_RGBA32);
+    SDL_Surface *surf = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_RGBA32, rgba, w * 4);
     SDL_SetSurfaceBlendMode(surf, SDL_BLENDMODE_NONE);
     SDL_Renderer *render   = current_Text()->render;
     SDL_Texture  *bufTex   = SDL_CreateTextureFromSurface(render, surf);
     SDL_Texture  *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, cc->texture);
     SDL_SetTextureBlendMode(bufTex, SDL_BLENDMODE_NONE);
-    SDL_RenderCopy(render, bufTex, NULL, (const SDL_Rect *) &atlasRect);
+    SDL_RenderTexture(render, bufTex, NULL,
+                      &(SDL_FRect){ atlasRect.pos.x, atlasRect.pos.y,
+                                    atlasRect.size.x, atlasRect.size.y });
     SDL_SetRenderTarget(render, oldTarget);
     SDL_DestroyTexture(bufTex);
-    SDL_FreeSurface(surf);
+    SDL_DestroySurface(surf);
     free(rgba);
 }
 
@@ -663,8 +665,7 @@ iBool rasterizeForCache_Font_(iRasterFont *font, iGlyph *glyph, SDL_Surface *sur
                 break; /* color emoji handled; all subpixel slots share rect[0] */
             }
             if (bmp) {
-                surfaces[si] = SDL_CreateRGBSurfaceWithFormatFrom(
-                    bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
+                surfaces[si] = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_INDEX8, bmp, w);
                 SDL_SetSurfaceBlendMode(surfaces[si], SDL_BLENDMODE_NONE);
                 SDL_SetSurfacePalette(surfaces[si], palette);
             }

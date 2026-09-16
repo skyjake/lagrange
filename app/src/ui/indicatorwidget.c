@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "command.h"
 
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 struct Impl_IndicatorWidget {
     iWidget widget;

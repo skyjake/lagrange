@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/math.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 #if defined (iPlatformAppleMobile)
 #   include "platform/ios.h"
@@ -81,7 +81,7 @@ struct Impl_Touch {
     iFloat3 pos[numHistory_Touch_];
     size_t posCount;
     iFloat3 accum;
-    iInt2 pendingScrollDelta; /* SDL_FINGERMOTION sometimes arrives unevently on iOS;
+    iInt2 pendingScrollDelta; /* SDL_EVENT_FINGER_MOTION sometimes arrives unevently on iOS;
                                  accumulate the scrolls to smooth them out per refresh event */
     uint32_t pendingScrollTicks; /* accumulated milliseconds */
     uint32_t pendingScrollLastTime;
@@ -135,12 +135,12 @@ static iTouchState *touchState_(void) {
         d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
 #else
         /* Ask SDL about the display refresh rate. */ {
-            SDL_DisplayMode dispMode;
-            SDL_GetDesktopDisplayMode(0, &dispMode);
-            if (dispMode.refresh_rate == 0) {
-                dispMode.refresh_rate = 60;
+            const SDL_DisplayMode *dispMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+            float refreshRate = dispMode ? dispMode->refresh_rate : 0.0f;
+            if (refreshRate == 0) {
+                refreshRate = 60;
             }
-            d->stepDurationMs = 1000.0 / (double) dispMode.refresh_rate;
+            d->stepDurationMs = 1000.0 / (double) refreshRate;
         }
 #endif
         d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
@@ -194,7 +194,7 @@ static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
         touchState_()->currentTouchPos = initF3_I2(pos);
     }
     dispatchEvent_Window(get_Window(), (SDL_Event *) &(SDL_MouseMotionEvent){
-        .type = SDL_MOUSEMOTION,
+        .type = SDL_EVENT_MOUSE_MOTION,
         .timestamp = SDL_GetTicks(),
         .which = SDL_TOUCH_MOUSEID,
         .windowID = id_Window(get_Window()),
@@ -209,10 +209,10 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     touchState_()->currentTouchPos = initF3_I2(tapPos);
     iWindow *window = get_Window();
     SDL_MouseButtonEvent btn = {
-        .type = SDL_MOUSEBUTTONDOWN,
+        .type = SDL_EVENT_MOUSE_BUTTON_DOWN,
         .button = button,
         .clicks = 1,
-        .state = SDL_PRESSED,
+        .down = true,
         .timestamp = SDL_GetTicks(),
         .which = SDL_TOUCH_MOUSEID,
         .windowID = id_Window(window),
@@ -221,8 +221,8 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     };
     iBool wasUsed = dispatchEvent_Window(window, (SDL_Event *) &btn);
     /* Immediately released, too. */
-    btn.type = SDL_MOUSEBUTTONUP;
-    btn.state = SDL_RELEASED;
+    btn.type = SDL_EVENT_MOUSE_BUTTON_UP;
+    btn.down = false;
     btn.timestamp = SDL_GetTicks();
     dispatchEvent_Window(window, (SDL_Event *) &btn);
     if (!wasUsed && button == SDL_BUTTON_RIGHT) {
@@ -234,10 +234,10 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
 static void dispatchButtonDown_Touch_(iFloat3 pos) {
     touchState_()->currentTouchPos = initF3_I2(pos);
     dispatchEvent_Window(get_Window(), (SDL_Event *) &(SDL_MouseButtonEvent){
-        .type = SDL_MOUSEBUTTONDOWN,
+        .type = SDL_EVENT_MOUSE_BUTTON_DOWN,
         .timestamp = SDL_GetTicks(),
         .clicks = 1,
-        .state = SDL_PRESSED,
+        .down = true,
         .which = SDL_TOUCH_MOUSEID,
         .windowID = id_Window(get_Window()),
         .button = SDL_BUTTON_LEFT,
@@ -249,10 +249,10 @@ static void dispatchButtonDown_Touch_(iFloat3 pos) {
 static void dispatchButtonUp_Touch_(iFloat3 pos) {
     touchState_()->currentTouchPos = initF3_I2(pos);
     dispatchEvent_Window(get_Window(), (SDL_Event *) &(SDL_MouseButtonEvent){
-        .type = SDL_MOUSEBUTTONUP,
+        .type = SDL_EVENT_MOUSE_BUTTON_UP,
         .timestamp = SDL_GetTicks(),
         .clicks = 1,
-        .state = SDL_RELEASED,
+        .down = false,
         .which = SDL_TOUCH_MOUSEID,
         .windowID = id_Window(get_Window()),
         .button = SDL_BUTTON_LEFT,
@@ -266,7 +266,7 @@ static void dispatchNotification_Touch_(const iTouch *d, int code) {
         iRoot *oldRoot = current_Root();
         setCurrent_Root(d->affinity->root);
         dispatchEvent_Widget(d->affinity, (SDL_Event *) &(SDL_UserEvent){
-            .type = SDL_USEREVENT,
+            .type = SDL_EVENT_USER,
             .timestamp = SDL_GetTicks(),
             .code = code,
             .data1 = d->affinity,
@@ -315,7 +315,7 @@ static void postPendingScroll_TouchState_(iTouchState *d, iTouch *touch) {
             dispatchMotion_Touch_(touch->startPos, 0);
             setCurrent_Root(touch->affinity->root);
             dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
-                .type = SDL_MOUSEWHEEL,
+                .type = SDL_EVENT_MOUSE_WHEEL,
                 .which = SDL_TOUCH_MOUSEID,
                 .windowID = id_Window(window_Widget(touch->affinity)),
                 .timestamp = SDL_GetTicks(),
@@ -461,7 +461,7 @@ static void update_TouchState_(void *ptr) {
                 iAssert(mom->affinity);
                 setCurrent_Root(mom->affinity->root);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
-                                                        .type = SDL_MOUSEWHEEL,
+                                                        .type = SDL_EVENT_MOUSE_WHEEL,
                                                         .which = SDL_TOUCH_MOUSEID,
                                                         .windowID = id_Window(window_Widget(mom->affinity)),
                                                         .timestamp = nowTime,
@@ -609,7 +609,7 @@ static iBool shouldPostEdgeMove_Touch_(const iTouch *d) {
 
 iBool processEvent_Touch(const SDL_Event *ev) {
     /* We only handle finger events here. */
-    if (ev->type != SDL_FINGERDOWN && ev->type != SDL_FINGERMOTION && ev->type != SDL_FINGERUP) {
+    if (ev->type != SDL_EVENT_FINGER_DOWN && ev->type != SDL_EVENT_FINGER_MOTION && ev->type != SDL_EVENT_FINGER_UP) {
         return iFalse;
     }
     iTouchState *d = touchState_();
@@ -618,7 +618,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
     const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0); /* pixels */
     const uint32_t nowTime = SDL_GetTicks();
-    if (ev->type == SDL_FINGERDOWN) {
+    if (ev->type == SDL_EVENT_FINGER_DOWN) {
         /* Register the new touch. */
         const float x = x_F3(pos);
         enum iTouchEdge edge = none_TouchEdge;
@@ -653,7 +653,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //        printf("drg:[%p] %s:'%s'\n", dragging, dragging ? class_Widget(dragging)->name : "-",
 //               cstr_String(id_Widget(dragging)));
         iTouch newTouch = {
-            .id = fing->fingerId,
+            .id = fing->fingerID,
             .affinity = aff,
 //            .edgeDragging = dragging,
             .didBeginOnTouchDrag = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
@@ -671,8 +671,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         checkNewPinch_TouchState_(d, back_Array(d->touches));
         addTickerRoot_App(update_TouchState_, NULL, d);
     }
-    else if (ev->type == SDL_FINGERMOTION) {
-        iTouch *touch = find_TouchState_(d, fing->fingerId);
+    else if (ev->type == SDL_EVENT_FINGER_MOTION) {
+        iTouch *touch = find_TouchState_(d, fing->fingerID);
         if (touch && touch->edge) {
             clear_Array(d->moms);
             pushPos_Touch_(touch, pos, nowTime);
@@ -687,7 +687,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 if (touch->affinity) {
                     /* First try dispatching directly to the affinity widget. */
                     SDL_UserEvent user = {
-                        .type = SDL_USEREVENT,
+                        .type = SDL_EVENT_USER,
                         .code = command_UserEventCode,
                         .data1 = (void *) cmd,
                         .data2 = touch->affinity->root,
@@ -829,10 +829,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
         }
     }
-    else if (ev->type == SDL_FINGERUP) {
+    else if (ev->type == SDL_EVENT_FINGER_UP) {
         iForEach(Array, i, d->touches) {
             iTouch *touch = i.value;
-            if (touch->id != fing->fingerId) {
+            if (touch->id != fing->fingerID) {
                 continue;
             }
             if (touch->pinchId) {

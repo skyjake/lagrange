@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/path.h>
-#include <SDL_clipboard.h>
+#include <SDL3/SDL_clipboard.h>
 
 iDefineObjectConstruction(CertImportWidget)
 
@@ -253,10 +253,10 @@ static iBool tryImportFromFile_CertImportWidget_(iCertImportWidget *d, const iSt
 
 static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
-    if (ev->type == SDL_KEYDOWN) {
-        const int key  = ev->key.keysym.sym;
-        const int mods = keyMods_Sym(ev->key.keysym.mod);
-        if (key == SDLK_v && mods == KMOD_PRIMARY) {
+    if (ev->type == SDL_EVENT_KEY_DOWN) {
+        const int key  = ev->key.key;
+        const int mods = keyMods_Sym(ev->key.mod);
+        if (key == SDLK_V && mods == KMOD_PRIMARY) {
             if (!tryImportFromClipboard_CertImportWidget_(d)) {
                 makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
                                          "${dlg.certimport.notfound}");
@@ -306,8 +306,8 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         return iTrue;
     }
 #endif
-    if (ev->type == SDL_DROPFILE) {
-        tryImportFromFile_CertImportWidget_(d, collectNewCStr_String(ev->drop.file));
+    if (ev->type == SDL_EVENT_DROP_FILE) {
+        tryImportFromFile_CertImportWidget_(d, collectNewCStr_String(ev->drop.data));
         return iTrue;
     }
     return processEvent_Widget(w, ev);

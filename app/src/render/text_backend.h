@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/hash.h>
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 #   include <hb.h>

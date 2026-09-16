@@ -26,9 +26,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/prefs.h>
 #include "app.h"
 
-#include <SDL_syswm.h>
+#include <SDL3/SDL_properties.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+
+static iBool getX11Handle_(SDL_Window *win, Display **dpy, Window *wnd) {
+    SDL_PropertiesID props = SDL_GetWindowProperties(win);
+    *dpy = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
+    *wnd = (Window) SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    return *dpy != NULL && *wnd != 0;
+}
 
 static iBool getDesktop_X11(Display *dpy, Window w, unsigned long *out) {
     Atom           actual_type;
@@ -80,23 +87,21 @@ iBool getDesktop_SDLWindow(SDL_Window *win, unsigned long *out) {
     if (!isXSession_X11()) {
         return iFalse;
     }
-    SDL_SysWMinfo wm;
-    SDL_VERSION(&wm.version);
-    if (!SDL_GetWindowWMInfo(win, &wm) || wm.subsystem != SDL_SYSWM_X11) {
+    Display *dpy;
+    Window   wnd;
+    if (!getX11Handle_(win, &dpy, &wnd)) {
         return iFalse;
     }
-    return getDesktop_X11(wm.info.x11.display, wm.info.x11.window, out);
+    return getDesktop_X11(dpy, wnd, out);
 }
 
 void setDesktopPropOnly_SDLWindow(SDL_Window *win, unsigned long desk) {
     if (!isXSession_X11()) return;
-    SDL_SysWMinfo wm;
-    SDL_VERSION(&wm.version);
-    if (!SDL_GetWindowWMInfo(win, &wm) || wm.subsystem != SDL_SYSWM_X11) {
+    Display *dpy;
+    Window   w;
+    if (!getX11Handle_(win, &dpy, &w)) {
         return;
     }
-    Display *dpy            = wm.info.x11.display;
-    Window   w              = wm.info.x11.window;
     Atom     NET_WM_DESKTOP = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
     XChangeProperty(
         dpy, w, NET_WM_DESKTOP, XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &desk, 1);
@@ -108,12 +113,11 @@ void setDesktopPropOnly_SDLWindow(SDL_Window *win, unsigned long desk) {
 
 iBool getCurrentDesktop_SDLWindow(SDL_Window *anyWin, unsigned long *out) {
     if (!isXSession_X11()) return iFalse;
-    SDL_SysWMinfo wm;
-    SDL_VERSION(&wm.version);
-    if (!SDL_GetWindowWMInfo(anyWin, &wm) || wm.subsystem != SDL_SYSWM_X11) {
+    Display *dpy;
+    Window   anyWnd;
+    if (!getX11Handle_(anyWin, &dpy, &anyWnd)) {
         return iFalse;
     }
-    Display       *dpy  = wm.info.x11.display;
     Window         root = DefaultRootWindow(dpy);
     Atom           CUR  = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
     Atom           type;
@@ -135,16 +139,11 @@ void setDesktop_SDLWindow(SDL_Window *win, unsigned long desk) {
     if (!isXSession_X11()) {
         return;
     }
-    SDL_SysWMinfo wm;
-    SDL_VERSION(&wm.version);
-    if (!SDL_GetWindowWMInfo(win, &wm) || wm.subsystem != SDL_SYSWM_X11) {
+    Display *dpy;
+    Window   w;
+    if (!getX11Handle_(win, &dpy, &w)) {
         return;
     }
-    if (!wm.info.x11.display || !wm.info.x11.window) {
-        return;
-    }
-    Display          *dpy  = wm.info.x11.display;
-    Window            w    = wm.info.x11.window;
     Window            root = DefaultRootWindow(dpy);
     XWindowAttributes attrs;
     if (XGetWindowAttributes(dpy, w, &attrs) && attrs.map_state == IsUnmapped) {
@@ -185,11 +184,9 @@ void setDarkWindowTheme_SDLWindow(SDL_Window *d, iBool setDark) {
     if (!isXSession_X11()) {
         return;
     }
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    if (SDL_GetWindowWMInfo(d, &wmInfo)) {
-        Display    *dpy   = wmInfo.info.x11.display;
-        Window      wnd   = wmInfo.info.x11.window;
+    Display *dpy;
+    Window   wnd;
+    if (getX11Handle_(d, &dpy, &wnd)) {
         Atom        prop  = XInternAtom(dpy, "_GTK_THEME_VARIANT", False);
         Atom        u8    = XInternAtom(dpy, "UTF8_STRING", False);
         const char *value = setDark ? "dark" : "light";

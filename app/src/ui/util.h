@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/vec2.h>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 #include <ctype.h>
 
 iDeclareType(Click)
@@ -51,7 +51,7 @@ iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
 }
 
 iLocalDef iBool isEmulatedMouseDevice_UserEvent (const SDL_Event *d) {
-    return (d->type == SDL_MOUSEBUTTONDOWN || d->type == SDL_MOUSEBUTTONUP) &&
+    return (d->type == SDL_EVENT_MOUSE_BUTTON_DOWN || d->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
            d->button.which & 1024;
 }
 
@@ -89,23 +89,23 @@ iInt2   mouseCoord_SDLEvent     (const SDL_Event *);
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 
 #if defined (iPlatformTerminal)
-#   define KMOD_PRIMARY     KMOD_CTRL
-#   define KMOD_SECONDARY   KMOD_ALT
-#   define KMOD_TERTIARY    KMOD_CTRL | KMOD_ALT  /* TODO: does this work? */
-#   define KMOD_ACCEPT      KMOD_ALT
-#   define KMOD_UNDO        KMOD_ALT
+#   define KMOD_PRIMARY     SDL_KMOD_CTRL
+#   define KMOD_SECONDARY   SDL_KMOD_ALT
+#   define KMOD_TERTIARY    SDL_KMOD_CTRL | SDL_KMOD_ALT  /* TODO: does this work? */
+#   define KMOD_ACCEPT      SDL_KMOD_ALT
+#   define KMOD_UNDO        SDL_KMOD_ALT
 #   define KMOD_ZOOM        0
 #elif defined (iPlatformApple)
-#   define KMOD_PRIMARY     KMOD_GUI
-#   define KMOD_SECONDARY   KMOD_GUI | KMOD_SHIFT
-#   define KMOD_TERTIARY    KMOD_GUI | KMOD_SHIFT | KMOD_ALT
+#   define KMOD_PRIMARY     SDL_KMOD_GUI
+#   define KMOD_SECONDARY   SDL_KMOD_GUI | SDL_KMOD_SHIFT
+#   define KMOD_TERTIARY    SDL_KMOD_GUI | SDL_KMOD_SHIFT | SDL_KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY
 #else
-#   define KMOD_PRIMARY     KMOD_CTRL
-#   define KMOD_SECONDARY   KMOD_CTRL | KMOD_SHIFT
-#   define KMOD_TERTIARY    KMOD_CTRL | KMOD_SHIFT | KMOD_ALT
+#   define KMOD_PRIMARY     SDL_KMOD_CTRL
+#   define KMOD_SECONDARY   SDL_KMOD_CTRL | SDL_KMOD_SHIFT
+#   define KMOD_TERTIARY    SDL_KMOD_CTRL | SDL_KMOD_SHIFT | SDL_KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY

@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/thread.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 #include "render/text.h"
 
 iDefineObjectConstructionArgs(UploadWidget, (enum iUploadProtocol protocol), protocol)
@@ -1574,7 +1574,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
 #endif
         return iTrue;
     }
-    if (ev->type == SDL_DROPFILE) {
+    if (ev->type == SDL_EVENT_DROP_FILE) {
         if (d->protocol == misfin_UploadProtocol) {
             return iFalse;
         }
@@ -1586,9 +1586,9 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             postCommand_Widget(w, "upload.settype arg:1");
         }
         releaseFile_UploadWidget_(d);
-        setCStr_String(&d->filePath, ev->drop.file);
+        setCStr_String(&d->filePath, ev->drop.data);
         if (d->filePathInput) {
-            setTextCStr_InputWidget(d->filePathInput, ev->drop.file);
+            setTextCStr_InputWidget(d->filePathInput, ev->drop.data);
             filePathValidator_UploadWidget_(d->filePathInput, d);
         }
         else {

@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/widget.h"
 #include "ui/window.h"
 
-#include <SDL_timer.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_properties.h>
 #include <the_Foundation/stringset.h>
 
 #import <AppKit/AppKit.h>
@@ -59,13 +59,10 @@ static iInt2 macVer_(void) {
 }
 
 static NSWindow *nsWindow_(SDL_Window *window) {
-    SDL_SysWMinfo wm;
-    SDL_VERSION(&wm.version);
-    if (SDL_GetWindowWMInfo(window, &wm)) {
-        return wm.info.cocoa.window;
-    }
-    iAssert(false);
-    return nil;
+    NSWindow *win = (__bridge NSWindow *) SDL_GetPointerProperty(
+        SDL_GetWindowProperties(window), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
+    iAssert(win != nil);
+    return win;
 }
 
 static NSString *currentSystemAppearance_(void) {
@@ -78,9 +75,8 @@ static NSString *currentSystemAppearance_(void) {
 
 iBool shouldDefaultToMetalRenderer_MacOS(void) {
     const iInt2 ver = macVer_();
-    SDL_DisplayMode dispMode;
-    SDL_GetDesktopDisplayMode(0, &dispMode);
-    return dispMode.refresh_rate > 60 && (ver.x > 10 || ver.y > 13);
+    const SDL_DisplayMode *dispMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+    return dispMode && dispMode->refresh_rate > 60 && (ver.x > 10 || ver.y > 13);
 }
 
 static void ignoreImmediateKeyDownEvents_(void) {
@@ -524,7 +520,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         }
     }
     else {
-        SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
+        SDL_MouseWheelEvent e = { .type = SDL_EVENT_MOUSE_WHEEL };
         e.timestamp = SDL_GetTicks();
         e.windowID = id_Window(win);
         e.which = 1; /* Distinction between trackpad and regular mouse. */
@@ -535,7 +531,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         return iTrue;
     }
     /* Post corresponding MOUSEWHEEL events. */
-    SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
+    SDL_MouseWheelEvent e = { .type = SDL_EVENT_MOUSE_WHEEL };
     e.timestamp = SDL_GetTicks();
     e.windowID = id_Window(win);
     e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. */
@@ -595,7 +591,7 @@ void localizeApplicationMenu_MacOS(void) {
 }
 
 void setupApplication_MacOS(void) {
-    SDL_EventState(SDL_QUIT, SDL_FALSE); /* handle app quit manually */
+    SDL_SetEventEnabled(SDL_EVENT_QUIT, false); /* handle app quit manually */
     NSApplication *app = [NSApplication sharedApplication];
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
     [app activateIgnoringOtherApps:YES];
@@ -712,16 +708,16 @@ static iString *composeKeyEquivalent_(int key, int kmods, NSEventModifierFlags *
         appendChar_String(str, key);
     }
     *modMask = 0;
-    if (kmods & KMOD_GUI) {
+    if (kmods & SDL_KMOD_GUI) {
         *modMask |= NSEventModifierFlagCommand;
     }
-    if (kmods & KMOD_ALT) {
+    if (kmods & SDL_KMOD_ALT) {
         *modMask |= NSEventModifierFlagOption;
     }
-    if (kmods & KMOD_CTRL) {
+    if (kmods & SDL_KMOD_CTRL) {
         *modMask |= NSEventModifierFlagControl;
     }
-    if (kmods & KMOD_SHIFT) {
+    if (kmods & SDL_KMOD_SHIFT) {
         *modMask |= NSEventModifierFlagShift;
     }
     return str;
@@ -1089,12 +1085,12 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
        SDL would miss the release event while the context menu's event loop is running. */
     if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
         SDL_MouseButtonEvent mbe = {
-            .type = SDL_MOUSEBUTTONUP,
+            .type = SDL_EVENT_MOUSE_BUTTON_UP,
             .timestamp = SDL_GetTicks(),
             .windowID = id_Window(get_Window()),
             0,
             SDL_BUTTON_LEFT,
-            SDL_RELEASED,
+            false,
             1
         };
         SDL_PushEvent((SDL_Event *) &mbe);

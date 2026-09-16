@@ -83,9 +83,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrset.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
-#include <SDL_clipboard.h>
-#include <SDL_timer.h>
-#include <SDL_render.h>
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_render.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -745,7 +745,7 @@ void showErrorPage_DocumentWidget(iDocumentWidget *d, enum iGmStatusCode code,
                                        SDLK_RETURN, 0, "server.unexpire"
                                    },
                                    { info_Icon " ${menu.pageinfo}",
-                                     SDLK_i,
+                                     SDLK_I,
                                      KMOD_PRIMARY,
                                      "document.info" } },
                     2);
@@ -755,7 +755,7 @@ void showErrorPage_DocumentWidget(iDocumentWidget *d, enum iGmStatusCode code,
                 makeFooterButtons_DocumentWidget(
                     d,
                     (iMenuItem[]){ { info_Icon " ${menu.pageinfo}",
-                                     SDLK_i,
+                                     SDLK_I,
                                      KMOD_PRIMARY,
                                      "document.info" } },
                     1);
@@ -766,7 +766,7 @@ void showErrorPage_DocumentWidget(iDocumentWidget *d, enum iGmStatusCode code,
                 break;
             case unsupportedMimeType_GmStatusCode: {
                 iString *key = collectNew_String();
-                toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+                toString_Sym(SDLK_S, KMOD_PRIMARY, key);
 //                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
                 const char *mtype = mediaTypeFromFileExtension_String(d->mod.url);
                 iArray items;
@@ -806,7 +806,7 @@ void showErrorPage_DocumentWidget(iDocumentWidget *d, enum iGmStatusCode code,
         makeFooterButtons_DocumentWidget(
             d,
             (iMenuItem[]){
-                { person_Icon " ${menu.identity.newdomain}", SDLK_n, 0, "ident.new scope:1" },
+                { person_Icon " ${menu.identity.newdomain}", SDLK_N, 0, "ident.new scope:1" },
                 { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
                 { leftHalf_Icon " ${menu.show.identities}", showIdentities_KeyShortcut,
                   deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
@@ -974,7 +974,7 @@ void updateDocument_DocumentWidget(iDocumentWidget *d,
                                   format_CStr("!fontpack.install ttf:1 name:%s",
                                               cstr_Rangecc(name)) },
                                 { folder_Icon " ${fontpack.open.fontsdir}",
-                                  SDLK_d,
+                                  SDLK_D,
                                   0,
                                   format_CStr("!open url:%s/fonts",
                                               cstrCollect_String(makeFileUrl_String(dataDir_App())))
@@ -1038,7 +1038,7 @@ void updateDocument_DocumentWidget(iDocumentWidget *d,
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
                     if (!localPath || !fileExists_FileInfo(localPath)) {
                         iString *key = collectNew_String();
-                        toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+                        toString_Sym(SDLK_S, KMOD_PRIMARY, key);
                         appendFormat_String(&str, "%s\n\n",
                                             format_CStr(cstr_Lang("error.unsupported.suggestsave"),
                                                         cstr_String(key),
@@ -3176,9 +3176,9 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
         pos = latestPosition_Touch();
     }
     else {
-        int x, y;
+        float x, y;
         SDL_GetMouseState(&x, &y);
-        pos = coord_Window(win, x, y);
+        pos = coord_Window(win, (int) x, (int) y);
     }
     return hitChild_Window(win, pos) == d; /* over the document, so we can scroll */
 }
@@ -3198,7 +3198,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     iDocumentView *view = d->view;
     /* Check if a swipe interaction has ended without inertia. */
     if (isMobile_Platform() && wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState &&
-        ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
         finishWheelSwipe_DocumentSwipe(d->swipe, iFalse);
     }
     if (isMetricsChange_UserEvent(ev)) {
@@ -3207,7 +3207,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (processEvent_SmoothScroll(&d->view->scrollY, ev)) {
         return iTrue;
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    else if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
         if (isCommand_Widget(w, ev, "pullaction")) {
             postCommand_Widget(w, "navigate.reload");
             return iTrue;
@@ -3218,8 +3218,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         return iTrue;
     }
-    if (ev->type == SDL_KEYDOWN) {
-        const int key = ev->key.keysym.sym;
+    if (ev->type == SDL_EVENT_KEY_DOWN) {
+        const int key = ev->key.key;
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
             const size_t ord = linkOrdinalFromKey_DocumentWidget_(d, key) + d->ordinalBase;
@@ -3295,13 +3295,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (isNavigable_DocumentSwipe(d->swipe) &&
-             ev->type == SDL_MOUSEWHEEL &&
+             ev->type == SDL_EVENT_MOUSE_WHEEL &&
              ev->wheel.y == 0 &&
              wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState &&
              handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel)) {
         return iTrue;
     }
-    else if (ev->type == SDL_MOUSEWHEEL && isScrollableWithWheel_DocumentWidget_(d)) {
+    else if (ev->type == SDL_EVENT_MOUSE_WHEEL && isScrollableWithWheel_DocumentWidget_(d)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
@@ -3320,7 +3320,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 postCommandf_App("zoom.delta arg:%d", amount.y > 0 ? 10 : -10);
                 return iTrue;
             }
-            if (!isApple_Platform() && kmods == KMOD_SHIFT) {
+            if (!isApple_Platform() && kmods == SDL_KMOD_SHIFT) {
                 /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
                 iSwap(int, amount.x, amount.y);
             }
@@ -3338,20 +3338,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
     }
-    else if (ev->type == SDL_MOUSEMOTION) {
+    else if (ev->type == SDL_EVENT_MOUSE_MOTION) {
         if (ev->motion.which != SDL_TOUCH_MOUSEID) {
             iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
         }
         const iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
         if (isVisible_Widget(d->menu)) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_DEFAULT);
         }
         else if (d->midClick.isActive) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_SIZENS);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_NS_RESIZE);
         }
 #if 0
         else if (contains_Rect(siteBannerRect_DocumentWidget_(d), mpos)) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_POINTER);
         }
 #endif
         else {
@@ -3361,7 +3361,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             updateHover_DocumentView(view, mpos);
         }
     }
-    if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
+    if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTapBegins_UserEventCode) {
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
         return iTrue;
     }
@@ -3377,7 +3377,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d,
                     view->hoverLink->linkId,
                     (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
-                        (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag
+                        (modState_Keys() & SDL_KMOD_SHIFT ? new_OpenTabFlag
                                                       : newBackground_OpenTabFlag));
                 return iTrue;
             }
@@ -3385,7 +3385,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         default:
             break;
     }
-    if (ev->type == SDL_MOUSEBUTTONDOWN) {
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (ev->button.button == SDL_BUTTON_X1) {
             postCommand_Root(w->root, "navigate.back");
             return iTrue;
@@ -3475,7 +3475,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 &items,
                                 (iMenuItem[]){
                                     { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                    { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                                    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" } },
                                 2);
                         }
                     }

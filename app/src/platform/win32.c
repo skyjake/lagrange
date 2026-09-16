@@ -38,15 +38,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/prefs.h>
 #include "app.h"
 
-#include <SDL_syswm.h>
+#include <SDL3/SDL_properties.h>
 
 static HWND windowHandle_(SDL_Window *win) {
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    if (SDL_GetWindowWMInfo(win, &wmInfo)) {
-        return wmInfo.info.win.window;
-    }
-    return NULL;
+    return (HWND) SDL_GetPointerProperty(
+        SDL_GetWindowProperties(win), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 }
 
 /* Windows 10 Dark Mode Support
@@ -255,10 +251,7 @@ static LRESULT CALLBACK darkModeWndProc_(HWND hwnd, UINT msg, WPARAM wParam, LPA
 }
 
 void init_Win32(void) {
-#if !SDL_VERSION_ATLEAST(2, 24, 0)
-    /* New SDL versions configure DPI awareness for us. */
-    SetProcessDPIAware();
-#endif
+    /* SDL configures DPI awareness for us. */
     enableDarkMode_Win32();
     RegisterApplicationRestart(L"", ~RESTART_NO_PATCH);
 }
@@ -341,12 +334,21 @@ void handleCommand_Win32(const char *cmd) {
 }
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
+static bool SDLCALL windowsMessageHook_(void *userdata, MSG *msg) {
+    processNativeEvent_Win32(msg, userdata);
+    return true; /* let SDL continue processing the message normally */
+}
+
+void enableCustomFrameMessageHook_Win32(iWindow *window) {
+    SDL_SetWindowsMessageHook(windowsMessageHook_, window);
+}
+
+void processNativeEvent_Win32(const MSG *msg, iWindow *window) {
     static int winDown_[2] = { 0, 0 };
-    HWND hwnd = msg->msg.win.hwnd;
-    //printf("[syswm] %x\n", msg->msg.win.msg); fflush(stdout);
-    const WPARAM wp = msg->msg.win.wParam;
-    switch (msg->msg.win.msg) {
+    HWND hwnd = msg->hwnd;
+    //printf("[syswm] %x\n", msg->message); fflush(stdout);
+    const WPARAM wp = msg->wParam;
+    switch (msg->message) {
         case WM_ACTIVATE: {
             //LONG style = GetWindowLong(hwnd, GWL_STYLE);
             //SetWindowLog(hwnd, GWL_STYLE, style);
@@ -415,8 +417,8 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         }
         case WM_NCLBUTTONDBLCLK: {
             iMainWindow *mw = as_MainWindow(window);
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam),
-                            GET_Y_LPARAM(msg->msg.win.lParam) };
+            POINT point = { GET_X_LPARAM(msg->lParam),
+                            GET_Y_LPARAM(msg->lParam) };
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
             switch (hitTest_MainWindow(mw, pos)) {
@@ -439,8 +441,8 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         }
 #if 0
         case WM_NCLBUTTONUP: {
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam),
-                            GET_Y_LPARAM(msg->msg.win.lParam) };
+            POINT point = { GET_X_LPARAM(msg->lParam),
+                            GET_Y_LPARAM(msg->lParam) };
             printf("%d,%d\n", point.x, point.y); fflush(stdout);
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
@@ -455,8 +457,8 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
            However, the only useful function in the menu would be moving-via-keyboard,
            but that doesn't work with a custom frame. We could show a custom system menu? */
         case WM_NCRBUTTONUP: {
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam),
-                            GET_Y_LPARAM(msg->msg.win.lParam) };
+            POINT point = { GET_X_LPARAM(msg->lParam),
+                            GET_Y_LPARAM(msg->lParam) };
             HMENU menu = GetSystemMenu(hwnd, FALSE);
             printf("menu at %d,%d menu:%p\n", point.x, point.y, menu); fflush(stdout);
             TrackPopupMenu(menu, TPM_RIGHTBUTTON, point.x, point.y, 0, hwnd, NULL);

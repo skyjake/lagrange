@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/array.h>
-#include <SDL_version.h>
+#include <SDL3/SDL_version.h>
 
 iInt2 origin_Paint;
 
@@ -69,7 +69,7 @@ static iRect rootClip_Paint_(const iPaint *d, iRect rect) {
     iRect        targetRect = zero_Rect();
     SDL_Texture *target     = SDL_GetRenderTarget(renderer_Paint_(d));
     if (target) {
-        SDL_QueryTexture(target, NULL, NULL, &targetRect.size.x, &targetRect.size.y);
+        targetRect.size = init_I2(target->w, target->h);
         rect = intersect_Rect(rect, targetRect);
     }
     /* The origin is non-zero when drawing into a widget's own buffer. */
@@ -85,15 +85,15 @@ static void applyRootClip_Paint_(const iPaint *d) {
         if (isEmpty_Rect(rect)) {
             rect = init_Rect(0, 0, 1, 1);
         }
-        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+        SDL_SetRenderClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
         return;
     }
 #if SDL_VERSION_ATLEAST(2, 0, 12)
-    SDL_RenderSetClipRect(renderer_Paint_(d), NULL);
+    SDL_SetRenderClipRect(renderer_Paint_(d), NULL);
 #else
     const iRect rect =
         current_Root() ? rect_Root(get_Root()) : (iRect) { zero_I2(), get_Window()->size };
-    SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+    SDL_SetRenderClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 #endif
 }
 
@@ -146,7 +146,7 @@ void setClip_Paint(iPaint *d, iRect rect) {
         rect = init_Rect(0, 0, 1, 1);
     }
     pushBack_Array(&clipStack_, &(iClipEntry){ rect, target });
-    SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+    SDL_SetRenderClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
 void unsetClip_Paint(iPaint *d) {
@@ -158,7 +158,7 @@ void unsetClip_Paint(iPaint *d) {
     }
     iRect active;
     if (activeClip_(target, &active)) {
-        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &active);
+        SDL_SetRenderClipRect(renderer_Paint_(d), (const SDL_Rect *) &active);
     }
     else {
         applyRootClip_Paint_(d);
@@ -171,21 +171,21 @@ void drawRect_Paint(const iPaint *d, iRect rect, int color) {
     /* Keep the right/bottom edge visible in the window. */
     if (br.x == d->dst->size.x) br.x--;
     if (br.y == d->dst->size.y) br.y--;
-    SDL_Point edges[] = {
+    SDL_FPoint edges[] = {
         { left_Rect(rect),  top_Rect(rect) },
         { br.x,             top_Rect(rect) },
         { br.x,             br.y },
         { left_Rect(rect),  br.y },
         { left_Rect(rect),  top_Rect(rect) }
     };
-#if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
+#if SDL_VERSION == SDL_VERSIONNUM(2, 0, 16)
     if (isOpenGLRenderer_Window()) {
         /* A very curious regression in SDL 2.0.16. */
         edges[3].y--;
     }
 #endif
     setColor_Paint_(d, color);
-    SDL_RenderDrawLines(renderer_Paint_(d), edges, iElemCount(edges));
+    SDL_RenderLines(renderer_Paint_(d), edges, iElemCount(edges));
 }
 
 void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int color) {
@@ -202,8 +202,8 @@ void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int col
 void fillRect_Paint(const iPaint *d, iRect rect, int color) {
     addv_I2(&rect.pos, origin_Paint);
     setColor_Paint_(d, color);
-//    printf("fillRect_Paint: %d,%d %dx%d (%d)\n", rect.pos.x, rect.pos.y, rect.size.x, rect.size.y, color);
-    SDL_RenderFillRect(renderer_Paint_(d), (SDL_Rect *) &rect);
+    const SDL_FRect frect = { rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
+    SDL_RenderFillRect(renderer_Paint_(d), &frect);
 }
 
 void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
@@ -219,31 +219,32 @@ void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color
     SDL_SetTextureColorMod(shadow, clr.r, clr.g, clr.b);
     SDL_SetTextureAlphaMod(shadow, alpha);
     /* Classic stretched segmented border. */
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ 0, 0, size.x / 2, size.y / 2},
-                   &(SDL_Rect){ outer.pos.x, outer.pos.y, thickness, thickness });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, 0, 1, size.y / 2},
-                   &(SDL_Rect){ inner.pos.x, outer.pos.y, inner.size.x, thickness });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, 0, size.x / 2, size.y / 2},
-                   &(SDL_Rect){ right_Rect(outer) - thickness, outer.pos.y, thickness, thickness });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, size.y / 2, size.x / 2, 1 },
-                   &(SDL_Rect){ right_Rect(inner), inner.pos.y, thickness, inner.size.y });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, size.y / 2, size.x / 2, size.y / 2},
-                   &(SDL_Rect){ right_Rect(inner), bottom_Rect(inner), thickness, thickness });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, size.y / 2, 1, size.y / 2},
-                   &(SDL_Rect){ inner.pos.x, bottom_Rect(inner), inner.size.x, thickness });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ 0, size.y / 2, size.x / 2, size.y / 2},
-                   &(SDL_Rect){ outer.pos.x, bottom_Rect(inner), thickness, thickness });
-    SDL_RenderCopy(render, shadow, &(SDL_Rect){ 0, size.y / 2, size.x / 2, 1 },
-                   &(SDL_Rect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ 0, 0, size.x / 2, size.y / 2},
+                   &(SDL_FRect){ outer.pos.x, outer.pos.y, thickness, thickness });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ size.x / 2, 0, 1, size.y / 2},
+                   &(SDL_FRect){ inner.pos.x, outer.pos.y, inner.size.x, thickness });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ size.x / 2, 0, size.x / 2, size.y / 2},
+                   &(SDL_FRect){ right_Rect(outer) - thickness, outer.pos.y, thickness, thickness });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ size.x / 2, size.y / 2, size.x / 2, 1 },
+                   &(SDL_FRect){ right_Rect(inner), inner.pos.y, thickness, inner.size.y });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ size.x / 2, size.y / 2, size.x / 2, size.y / 2},
+                   &(SDL_FRect){ right_Rect(inner), bottom_Rect(inner), thickness, thickness });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ size.x / 2, size.y / 2, 1, size.y / 2},
+                   &(SDL_FRect){ inner.pos.x, bottom_Rect(inner), inner.size.x, thickness });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ 0, size.y / 2, size.x / 2, size.y / 2},
+                   &(SDL_FRect){ outer.pos.x, bottom_Rect(inner), thickness, thickness });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ 0, size.y / 2, size.x / 2, 1 },
+                   &(SDL_FRect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
 }
 
 void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) {
     setColor_Paint_(d, color);
-    iInt2 *offsetPoints = malloc(sizeof(iInt2) * n);
+    SDL_FPoint *offsetPoints = malloc(sizeof(SDL_FPoint) * n);
     for (size_t i = 0; i < n; i++) {
-        offsetPoints[i] = add_I2(points[i], origin_Paint);
+        const iInt2 p = add_I2(points[i], origin_Paint);
+        offsetPoints[i] = (SDL_FPoint){ p.x, p.y };
     }
-    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, (int) n);
+    SDL_RenderLines(renderer_Paint_(d), offsetPoints, (int) n);
     free(offsetPoints);
 }
 
@@ -256,7 +257,7 @@ void drawEmbossedFrame_Paint(iPaint *p, iRect rect, int color1, int color2, iBoo
         bottomRight_Rect(rect),
         bottomLeft_Rect(rect)
     };
-#if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
+#if SDL_VERSION == SDL_VERSIONNUM(2, 0, 16)
     if (isOpenGLRenderer_Window()) {
         /* A very curious regression in SDL 2.0.16. */
         points[3].x--;
@@ -289,7 +290,5 @@ void drawPin_Paint(iPaint *d, iRect rangeRect, int dir, int pinColor) {
 }
 
 iInt2 size_SDLTexture(SDL_Texture *d) {
-    iInt2 size;
-    SDL_QueryTexture(d, NULL, NULL, &size.x, &size.y);
-    return size;
+    return init_I2(d->w, d->h);
 }

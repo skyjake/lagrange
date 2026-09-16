@@ -27,8 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/string.h>
 #include <the_Foundation/thread.h>
-#include <SDL_events.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_timer.h>
 
 iDeclareType(PeriodicCommand)
 
@@ -64,9 +64,9 @@ iDefineTypeConstructionArgs(PeriodicCommand,
 
 /*----------------------------------------------------------------------------------------------*/
 
-static uint32_t postEvent_Periodic_(uint32_t interval, void *context) {
-    iUnused(context);
-    SDL_UserEvent ev = { .type      = SDL_USEREVENT,
+static uint32_t postEvent_Periodic_(void *context, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(context, timerID);
+    SDL_UserEvent ev = { .type      = SDL_EVENT_USER,
                          .timestamp = SDL_GetTicks(),
                          .code      = periodic_UserEventCode };
     SDL_PushEvent((SDL_Event *) &ev);
@@ -127,7 +127,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
         if (root && now >= pc->dueTime) {
             pc->dueTime = iMax(now, pc->dueTime + pc->delay);
             const SDL_UserEvent ev = {
-                .type     = SDL_USEREVENT,
+                .type     = SDL_EVENT_USER,
                 .code     = command_UserEventCode,
                 .data1    = (void *) cstr_String(&pc->command),
                 .data2    = root,

@@ -267,7 +267,7 @@ void init_DownloadUI(iDownloadUI *d, const iMedia *media, uint16_t mediaId, iRec
 }
 
 iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
-    if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) {
         const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
         if (!contains_Rect(d->bounds, mouse)) {
             return iFalse;
@@ -278,7 +278,7 @@ iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
         downloadStats_Media(d->media, (iMediaId){ download_MediaType, d->mediaId },
                             &path, &bytesPerSecond, &isFinished);
         if (isFinished) {
-            if (ev->button.button == SDL_BUTTON_RIGHT && ev->type == SDL_MOUSEBUTTONDOWN) {
+            if (ev->button.button == SDL_BUTTON_RIGHT && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 const iMenuItem items[] = {
                     /* Items related to the file */
                     { openTab_Icon " ${menu.opentab}",
@@ -312,7 +312,7 @@ iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
                                 mouse);
                 return iTrue;
             }
-            else if (ev->button.button == SDL_BUTTON_LEFT && ev->type == SDL_MOUSEBUTTONUP) {
+            else if (ev->button.button == SDL_BUTTON_LEFT && ev->type == SDL_EVENT_MOUSE_BUTTON_UP) {
                 iGmMediaInfo mediaInfo;
                 info_Media(d->media, (iMediaId){ download_MediaType, d->mediaId }, &mediaInfo);
                 postCommandf_App("open default:1 mime:%s url:%s", mediaInfo.type,

@@ -45,8 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include <lagrange/visited.h>
 
-#include <SDL_clipboard.h>
-#include <SDL_mouse.h>
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_mouse.h>
 #include <the_Foundation/intset.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
@@ -294,7 +294,7 @@ static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) 
 }
 
 static const iMenuItem bookmarkModeMenuItems_[] = {
-    { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { bookmark_Icon " ${menu.page.bookmark}", SDLK_D, KMOD_PRIMARY, "bookmark.add" },
     { "---" },
     { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
     { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
@@ -656,11 +656,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                              frameless_WidgetFlag | tight_WidgetFlag));
                     const iMenuItem items[] = {
                         { page_Icon " ${sidebar.action.feeds.showall}",
-                          SDLK_u,
-                          KMOD_SHIFT,
+                          SDLK_U,
+                          SDL_KMOD_SHIFT,
                           "feeds.mode arg:0" },
                         { circle_Icon " ${sidebar.action.feeds.showunread}",
-                          SDLK_u,
+                          SDLK_U,
                           0,
                           "feeds.mode arg:1" },
                     };
@@ -718,14 +718,14 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                   0,
                   "feed.entry.unsubscribe" },
                 { "---", 0, 0, NULL },
-                { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
+                { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "feeds.markallread" },
                 { reload_Icon " ${feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" }
             };
             d->menu     = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]) {
-                    { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
+                    { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "feeds.markallread" },
                     { reload_Icon " ${feeds.refresh}",
                       refreshFeeds_KeyShortcut,
                       "feeds.refresh" } },
@@ -1609,7 +1609,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                                        int mouseButton) {
     const int mouseTabMode =
         mouseButton == SDL_BUTTON_MIDDLE
-            ? (keyMods_Sym(modState_Keys()) & KMOD_SHIFT ? new_OpenTabFlag
+            ? (keyMods_Sym(modState_Keys()) & SDL_KMOD_SHIFT ? new_OpenTabFlag
                                                          : newBackground_OpenTabFlag)
             : 0;
     iString *setIdentArg = NULL;
@@ -2880,19 +2880,19 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
 #endif
     }
-    if (ev->type == SDL_MOUSEMOTION &&
+    if (ev->type == SDL_EVENT_MOUSE_MOTION &&
         (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         if (contains_Widget(d->resizer, mouse)) {
-            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_SIZEWE);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_EW_RESIZE);
         }
         /* Update cursor. */
         else if (contains_Widget(w, mouse)) {
             const iSidebarItem *item = constHoverItem_ListWidget(d->list);
             setCursor_Window(get_Window(),
-                             item ? (item->listItem.flags.isSeparator ? SDL_SYSTEM_CURSOR_ARROW
-                                                                      : SDL_SYSTEM_CURSOR_HAND)
-                                  : SDL_SYSTEM_CURSOR_ARROW);
+                             item ? (item->listItem.flags.isSeparator ? SDL_SYSTEM_CURSOR_DEFAULT
+                                                                      : SDL_SYSTEM_CURSOR_POINTER)
+                                  : SDL_SYSTEM_CURSOR_DEFAULT);
         }
         if (d->contextIndex != iInvalidPos) {
             invalidateItem_ListWidget(d->list, d->contextIndex);
@@ -2900,7 +2900,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     /* Update context menu items. */
-    if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
+    if (d->menu && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (isSlidingSheet_SidebarWidget_(d) && ev->button.button == SDL_BUTTON_LEFT &&
             isVisible_Widget(d) && !contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
             setSlidingSheetPos_SidebarWidget_(d, bottom_SlidingSheetPos);
@@ -2957,9 +2957,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
         }
     }
-    if (ev->type == SDL_KEYDOWN) {
-        const int key   = ev->key.keysym.sym;
-        const int kmods = keyMods_Sym(ev->key.keysym.mod);
+    if (ev->type == SDL_EVENT_KEY_DOWN) {
+        const int key   = ev->key.key;
+        const int kmods = keyMods_Sym(ev->key.mod);
         /* Hide the sidebar when Escape is pressed. */
         if (kmods == 0 && key == SDLK_ESCAPE && isVisible_Widget(d)) {
             postCommand_Widget(d, "%s.toggle", cstr_String(id_Widget(w)));
@@ -2967,7 +2967,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     if (isEdgeSwipable_SidebarWidget_(d)) {
-        if (ev->type == SDL_MOUSEWHEEL && isPerPixel_MouseWheelEvent(&ev->wheel)) {
+        if (ev->type == SDL_EVENT_MOUSE_WHEEL && isPerPixel_MouseWheelEvent(&ev->wheel)) {
             if (d->side == left_SidebarSide && ev->wheel.x < 0 && isVisible_Widget(w)) {
                 postCommand_Widget(w, "sidebar.toggle");
                 return iTrue;
@@ -2975,7 +2975,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     else if (isSlidingSheet_SidebarWidget_(d)) {
-        if (ev->type == SDL_MOUSEWHEEL) {
+        if (ev->type == SDL_EVENT_MOUSE_WHEEL) {
             enum iWidgetTouchMode touchMode = widgetMode_Touch(w);
             if (touchMode == momentum_WidgetTouchMode) {
                 /* We don't do momentum. */
@@ -3030,13 +3030,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode &&
+        if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode &&
             widgetMode_Touch(w) != momentum_WidgetTouchMode) {
             gotoNearestSlidingSheetPos_SidebarWidget_(d);
             return iTrue;
         }
     }
-    if (ev->type == SDL_MOUSEBUTTONDOWN &&
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
         contains_Widget(as_Widget(d->list), init_I2(ev->button.x, ev->button.y))) {
         if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu) ||
             isVisible_Widget(d->folderMenu)) {

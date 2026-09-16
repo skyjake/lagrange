@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrset.h>
-#include <SDL_keyboard.h>
+#include <SDL3/SDL_keyboard.h>
 
 enum iModMap {
     none_ModMap,
@@ -80,23 +80,23 @@ static void init_ModMap_(void) {
 int mapMods_Keys(int modFlags) {
     static const int bits[max_ModMap] = {
         0,
-        KMOD_LSHIFT,
-        KMOD_LCTRL,
-        KMOD_LALT,
-        KMOD_LGUI,
-        KMOD_RSHIFT,
-        KMOD_RCTRL,
-        KMOD_RALT,
-        KMOD_RGUI,
-        KMOD_CAPS,
+        SDL_KMOD_LSHIFT,
+        SDL_KMOD_LCTRL,
+        SDL_KMOD_LALT,
+        SDL_KMOD_LGUI,
+        SDL_KMOD_RSHIFT,
+        SDL_KMOD_RCTRL,
+        SDL_KMOD_RALT,
+        SDL_KMOD_RGUI,
+        SDL_KMOD_CAPS,
     };
     int mapped = 0;
     if (prefs_App()->capsLockKeyModifier) {
         /* Treat capslock as a modifier key. */
-        modFlags |= (capsLockDown_ ? KMOD_CAPS : 0);
+        modFlags |= (capsLockDown_ ? SDL_KMOD_CAPS : 0);
     }
     else {
-        modFlags &= ~KMOD_CAPS;
+        modFlags &= ~SDL_KMOD_CAPS;
     }
     for (int i = 0; i < max_ModMap; ++i) {
         if (modFlags & bits[i]) {
@@ -107,10 +107,10 @@ int mapMods_Keys(int modFlags) {
 }
 
 int modState_Keys(void) {
-    int state = SDL_GetModState() & ~(KMOD_NUM | KMOD_MODE | KMOD_CAPS);
+    int state = SDL_GetModState() & ~(SDL_KMOD_NUM | SDL_KMOD_MODE | SDL_KMOD_CAPS);
     state |= modState_Gamepad(gamepad_App());
     /* Treat capslock as a modifier key. */
-    if (capsLockDown_) state |= KMOD_CAPS;
+    if (capsLockDown_) state |= SDL_KMOD_CAPS;
     return mapMods_Keys(state);
 }
 
@@ -205,7 +205,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 2,  { "${LC:keys.bottom}",            SDLK_END, 0,                    "scroll.bottom"                     }, 0 },
     { 10, { "${keys.scroll.up}",            SDLK_UP, 0,                     "scroll.step arg:-1"                }, argRepeat_BindFlag },
     { 11, { "${keys.scroll.down}",          SDLK_DOWN, 0,                   "scroll.step arg:1"                 }, argRepeat_BindFlag },
-    { 22, { "${keys.scroll.halfpage.up}",   SDLK_SPACE, KMOD_SHIFT,         "scroll.page arg:-1"                }, argRepeat_BindFlag },
+    { 22, { "${keys.scroll.halfpage.up}",   SDLK_SPACE, SDL_KMOD_SHIFT,         "scroll.page arg:-1"                }, argRepeat_BindFlag },
     { 23, { "${keys.scroll.halfpage.down}", SDLK_SPACE, 0,                  "scroll.page arg:1"                 }, argRepeat_BindFlag },
     { 24, { "${keys.scroll.page.up}",       SDLK_PAGEUP, 0,                 "scroll.page arg:-1 full:1"         }, argRepeat_BindFlag },
     { 25, { "${keys.scroll.page.down}",     SDLK_PAGEDOWN, 0,               "scroll.page arg:1 full:1"          }, argRepeat_BindFlag },
@@ -214,20 +214,20 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 32, { "${keys.parent}",               navigateParent_KeyShortcut,     "navigate.parent"                   }, 0 },
     { 33, { "${keys.root}",                 navigateRoot_KeyShortcut,       "navigate.root"                     }, 0 },
     { 35, { "${keys.reload}",               reload_KeyShortcut,             "document.reload"                   }, 0 },
-    { 36, { "${LC:menu.openlocation}",      SDLK_l, KMOD_PRIMARY,           "navigate.focus"                    }, 0 },
+    { 36, { "${LC:menu.openlocation}",      SDLK_L, KMOD_PRIMARY,           "navigate.focus"                    }, 0 },
     { 37, { "${keys.bang}",                 bang_KeyShortcut,               "navigate.focus text:!"             }, 0 },
     { 41, { "${keys.link.modkey}",          SDLK_LALT, 0,                   "document.linkkeys arg:0"           }, argRelease_BindFlag },
     { 42, { "${keys.link.homerow}",         'f', 0,                         "document.linkkeys arg:1"           }, 0 },
-    { 45, { "${keys.link.homerow.newtab}",  'f', KMOD_SHIFT,                "document.linkkeys arg:1 newtab:1"  }, 0 },
+    { 45, { "${keys.link.homerow.newtab}",  'f', SDL_KMOD_SHIFT,                "document.linkkeys arg:1 newtab:1"  }, 0 },
     { 46, { "${keys.link.homerow.hover}",   'h', 0,                         "document.linkkeys arg:1 hover:1"   }, 0 },
     { 47, { "${keys.link.homerow.next}",    '.', 0,                         "document.linkkeys more:1"          }, 0 },
     { 50, { "${keys.bookmark.add}",         bookmarkPage_KeyShortcut,       "bookmark.add"                      }, 0 },
-    { 51, { "${keys.bookmark.addfolder}",   'n', KMOD_SHIFT,                "bookmarks.addfolder"               }, 0 },
+    { 51, { "${keys.bookmark.addfolder}",   'n', SDL_KMOD_SHIFT,                "bookmarks.addfolder"               }, 0 },
     { 55, { "${keys.subscribe}",            subscribeToPage_KeyShortcut,    "feeds.subscribe"                   }, 0 },
-    { 56, { "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
-    { 57, { "${keys.feeds.showunread}",     SDLK_u, 0,                      "feeds.mode arg:1"                  }, 0 },
+    { 56, { "${keys.feeds.showall}",        SDLK_U, SDL_KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
+    { 57, { "${keys.feeds.showunread}",     SDLK_U, 0,                      "feeds.mode arg:1"                  }, 0 },
     { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input id2:filter.bookmark.input"           }, 0 },
-    { 65, { "${LC:menu.viewformat.plain}",  SDLK_y, KMOD_PRIMARY,           "document.viewformat"               }, 0 },
+    { 65, { "${LC:menu.viewformat.plain}",  SDLK_Y, KMOD_PRIMARY,           "document.viewformat"               }, 0 },
     { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_ZOOM,         "zoom.delta arg:10"                 }, 0 },
     { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_ZOOM,          "zoom.delta arg:-10"                }, 0 },
     { 72, { "${keys.zoom.reset}",           SDLK_0, KMOD_ZOOM,              "zoom.set arg:100"                  }, 0 },
@@ -236,31 +236,31 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #endif
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new append:1"                 }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
-    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
-    { 79, { "${LC:menu.reopentab}",         SDLK_t, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },
+    { 78, { "${keys.tab.close.other}",      SDLK_W, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
+    { 79, { "${LC:menu.reopentab}",         SDLK_T, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
     { 85, { "${LC:menu.movetab.right}",     moveTabRight_KeyShortcut,       "tabs.move arg:1"                   }, 0 },
-    { 86, { "${LC:menu.movetab.newwindow}", SDLK_t, KMOD_PRIMARY | KMOD_ALT, "tabs.swap newwindow:1"            }, 0 },
-    { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
-    { 91, { "${keys.split.next}",           SDLK_TAB, KMOD_CTRL,            "keyroot.next",                     }, 0 },
+    { 86, { "${LC:menu.movetab.newwindow}", SDLK_T, KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1"            }, 0 },
+    { 90, { "${keys.split.menu}",           SDLK_J, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
+    { 91, { "${keys.split.next}",           SDLK_TAB, SDL_KMOD_CTRL,            "keyroot.next",                     }, 0 },
     { 92, { "${keys.split.item} ${menu.split.merge}",           '1', 0,     "ui.split arg:0",                   }, noDirectTrigger_BindFlag },
-    { 93, { "${keys.split.item} ${menu.split.swap}",            SDLK_x, 0,  "ui.split swap:1",                  }, noDirectTrigger_BindFlag },
+    { 93, { "${keys.split.item} ${menu.split.swap}",            SDLK_X, 0,  "ui.split swap:1",                  }, noDirectTrigger_BindFlag },
     { 94, { "${keys.split.item} ${menu.split.horizontal}",      '3', 0,     "ui.split arg:3 axis:0",            }, noDirectTrigger_BindFlag },
-    { 95, { "${keys.split.item} ${menu.split.horizontal} 1:2",  SDLK_d, 0,  "ui.split arg:1 axis:0",            }, noDirectTrigger_BindFlag },
-    { 96, { "${keys.split.item} ${menu.split.horizontal} 2:1",  SDLK_e, 0,  "ui.split arg:2 axis:0",            }, noDirectTrigger_BindFlag },
+    { 95, { "${keys.split.item} ${menu.split.horizontal} 1:2",  SDLK_D, 0,  "ui.split arg:1 axis:0",            }, noDirectTrigger_BindFlag },
+    { 96, { "${keys.split.item} ${menu.split.horizontal} 2:1",  SDLK_E, 0,  "ui.split arg:2 axis:0",            }, noDirectTrigger_BindFlag },
     { 97, { "${keys.split.item} ${menu.split.vertical}",        '2', 0,     "ui.split arg:3 axis:1",            }, noDirectTrigger_BindFlag },
-    { 98, { "${keys.split.item} ${menu.split.vertical} 1:2",    SDLK_f, 0,  "ui.split arg:1 axis:1",            }, noDirectTrigger_BindFlag },
-    { 99, { "${keys.split.item} ${menu.split.vertical} 2:1",    SDLK_r, 0,  "ui.split arg:2 axis:1",            }, noDirectTrigger_BindFlag },
+    { 98, { "${keys.split.item} ${menu.split.vertical} 1:2",    SDLK_F, 0,  "ui.split arg:1 axis:1",            }, noDirectTrigger_BindFlag },
+    { 99, { "${keys.split.item} ${menu.split.vertical} 2:1",    SDLK_R, 0,  "ui.split arg:2 axis:1",            }, noDirectTrigger_BindFlag },
     { 100,{ "${keys.hoverurl}",             '/', KMOD_PRIMARY,              "prefs.hoverlink.toggle"            }, 0 },
-    { 110,{ "${menu.save.downloads}",       SDLK_s, KMOD_PRIMARY,           "document.save"                     }, 0 },
-    { 115,{ "${LC:menu.page.translate}",    SDLK_x, KMOD_PRIMARY | KMOD_SHIFT, "document.translate"             }, 0 },
-    { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
-    { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
+    { 110,{ "${menu.save.downloads}",       SDLK_S, KMOD_PRIMARY,           "document.save"                     }, 0 },
+    { 115,{ "${LC:menu.page.translate}",    SDLK_X, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.translate"             }, 0 },
+    { 120,{ "${keys.upload}",               SDLK_U, KMOD_PRIMARY,           "document.upload"                   }, 0 },
+    { 121,{ "${keys.upload.edit}",          SDLK_E, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
     { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY,            "document.sitespec"                 }, 0 },
-    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_SECONDARY,         "input.precedingline"               }, 0 },
+    { 130,{ "${keys.input.precedingline}",  SDLK_V, KMOD_SECONDARY,         "input.precedingline"               }, 0 },
     { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },
     { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
     { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
@@ -277,7 +277,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #if defined (iPlatformApple)
     { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
     { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,             "navigate.forward"     }, 0 },
-    { 1100, { NULL, SDLK_SPACE,        KMOD_PRIMARY | KMOD_CTRL, "emojipicker"          }, 0 },
+    { 1100, { NULL, SDLK_SPACE,        KMOD_PRIMARY | SDL_KMOD_CTRL, "emojipicker"          }, 0 },
 #endif
     { 1004, { NULL, SDLK_F5, 0,                         "document.reload"               }, 0 },
     /* Media keys. */
@@ -419,11 +419,11 @@ void load_Keys(const char *saveDir) {
                 bind->mods = 0;
                 const char *m = modBits;
                 for (int i = 0; i < 4 && *m; i++, m++) {
-                    if (*m == 's') bind->mods |= KMOD_SHIFT;
-                    if (*m == 'a') bind->mods |= KMOD_ALT;
-                    if (*m == 'c') bind->mods |= KMOD_CTRL;
-                    if (*m == 'g') bind->mods |= KMOD_GUI;
-                    if (*m == 'k') bind->mods |= KMOD_CAPS;
+                    if (*m == 's') bind->mods |= SDL_KMOD_SHIFT;
+                    if (*m == 'a') bind->mods |= SDL_KMOD_ALT;
+                    if (*m == 'c') bind->mods |= SDL_KMOD_CTRL;
+                    if (*m == 'g') bind->mods |= SDL_KMOD_GUI;
+                    if (*m == 'k') bind->mods |= SDL_KMOD_CAPS;
                 }
             }
         }
@@ -443,11 +443,11 @@ void save_Keys(const char *saveDir) {
                 appendCStr_String(line, "0");
             }
             else {
-                if (bind->mods & KMOD_SHIFT) appendChar_String(line, 's');
-                if (bind->mods & KMOD_ALT) appendChar_String(line, 'a');
-                if (bind->mods & KMOD_CTRL) appendChar_String(line, 'c');
-                if (bind->mods & KMOD_GUI) appendChar_String(line, 'g');
-                if (bind->mods & KMOD_CAPS) appendChar_String(line, 'k');
+                if (bind->mods & SDL_KMOD_SHIFT) appendChar_String(line, 's');
+                if (bind->mods & SDL_KMOD_ALT) appendChar_String(line, 'a');
+                if (bind->mods & SDL_KMOD_CTRL) appendChar_String(line, 'c');
+                if (bind->mods & SDL_KMOD_GUI) appendChar_String(line, 'g');
+                if (bind->mods & SDL_KMOD_CAPS) appendChar_String(line, 'k');
             }
             appendChar_String(line, '\n');
             write_File(f, &line->chars);
@@ -482,10 +482,10 @@ void setLabel_Keys(int id, const char *label) {
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
     iRoot *root = get_Window() ? get_Window()->keyRoot : NULL;
-    if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
-        const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
+    if (ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_KEY_UP) {
+        const iBinding *bind = find_Keys_(d, ev->key.key, keyMods_Sym(ev->key.mod));
         if (bind) {
-            if (ev->type == SDL_KEYUP) {
+            if (ev->type == SDL_EVENT_KEY_UP) {
                 if (bind->flags & argRelease_BindFlag) {
                     postCommandf_Root(root, "%s release:1", cstr_String(&bind->command));
                     return iTrue;
@@ -522,8 +522,8 @@ iBool isDown_Keys(const iBinding *binding) {
     return iFalse;
 #else
     int numKeys = 0;
-    const uint8_t *keys = SDL_GetKeyboardState(&numKeys);
-    const int scancode = SDL_GetScancodeFromKey(binding->key);
+    const bool *keys = SDL_GetKeyboardState(&numKeys);
+    const int scancode = SDL_GetScancodeFromKey(binding->key, NULL);
     const int scancode2 = (scancode == SDL_SCANCODE_RALT ? SDL_SCANCODE_LALT :
                            scancode == SDL_SCANCODE_LALT ? SDL_SCANCODE_RALT : scancode);
     return (scancode < numKeys && keys[scancode]) || (scancode2 < numKeys && keys[scancode2]);

@@ -198,7 +198,7 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         updateItems_BindingsWidget_(d);
         return iFalse;
     }
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (!isVisible_Widget(d->menu)) {
             d->contextPos = hoverItemIndex_ListWidget(d->list);
         }
@@ -210,16 +210,16 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
     }
     /* Waiting for a keypress? */
     if (d->activePos != iInvalidPos) {
-        if (ev->type == SDL_KEYDOWN && !isMod_Sym(ev->key.keysym.sym)) {
+        if (ev->type == SDL_EVENT_KEY_DOWN && !isMod_Sym(ev->key.key)) {
             setKey_BindingItem_(item_ListWidget(d->list, d->activePos),
-                                ev->key.keysym.sym,
-                                keyMods_Sym(ev->key.keysym.mod));
+                                ev->key.key,
+                                keyMods_Sym(ev->key.mod));
             setActiveItem_BindingsWidget_(d, iInvalidPos);
             postCommand_App("bindings.changed");
             return iTrue;
         }
-        else if (ev->type == SDL_KEYUP && isMod_Sym(ev->key.keysym.sym)) {
-            setKey_BindingItem_(item_ListWidget(d->list, d->activePos), ev->key.keysym.sym, 0);
+        else if (ev->type == SDL_EVENT_KEY_UP && isMod_Sym(ev->key.key)) {
+            setKey_BindingItem_(item_ListWidget(d->list, d->activePos), ev->key.key, 0);
             setActiveItem_BindingsWidget_(d, iInvalidPos);
             postCommand_App("bindings.changed");
             return iTrue;

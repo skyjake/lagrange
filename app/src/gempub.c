@@ -345,7 +345,7 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     }
     else {
         iString *key = collectNew_String(); /* TODO: add a helper for this */
-        toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+        toString_Sym(SDLK_S, KMOD_PRIMARY, key);
         appendCStr_String(out, "\n${gempub.cover.viewlocal}\n");
 //        appendFormat_String(out,
 //                            cstr_Lang("error.unsupported.suggestsave"),

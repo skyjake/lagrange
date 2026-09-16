@@ -482,7 +482,7 @@ void cancelDrag_ListWidget(iListWidget *d) {
 
 static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event *ev) {
     int dir = 0;
-    if (ev->type == SDL_MOUSEWHEEL) {
+    if (ev->type == SDL_EVENT_MOUSE_WHEEL) {
         dir = iSign(ev->wheel.y);
     }
     switch (d->scrollMode) {
@@ -554,12 +554,12 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             return iFalse;
         }
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
+    else if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTapBegins_UserEventCode) {
         d->noHoverWhileScrolling = iFalse;
     }
-    if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
-        if (ev->key.keysym.mod == 0) {
-            const int key = ev->key.keysym.sym;
+    if (ev->type == SDL_EVENT_KEY_DOWN && isFocused_Widget(w)) {
+        if (ev->key.mod == 0) {
+            const int key = ev->key.key;
             switch (key) {
                 case SDLK_UP:
                 case SDLK_DOWN:
@@ -600,7 +600,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             }
         }
     }
-    if (ev->type == SDL_MOUSEMOTION) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION) {
         const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
         if (ev->motion.state == 0 /* not dragging */) {
             if (ev->motion.which != SDL_TOUCH_MOUSEID) {
@@ -632,7 +632,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             }
         }
     }
-    if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w) && ev->wheel.x == 0) {
+    if (ev->type == SDL_EVENT_MOUSE_WHEEL && isHover_Widget(w) && ev->wheel.x == 0) {
         if (d->dragHandleWidth) {
             if (d->dragItem == iInvalidPos) {
                 const iInt2 wpos = coord_MouseWheelEvent(&ev->wheel);
@@ -673,7 +673,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         }
         return iTrue;
     }
-    if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w) && ev->wheel.y == 0 &&
+    if (ev->type == SDL_EVENT_MOUSE_WHEEL && isHover_Widget(w) && ev->wheel.y == 0 &&
         isPerPixel_MouseWheelEvent(&ev->wheel) && !isInertia_MouseWheelEvent(&ev->wheel)) {
         iInt2 coord = mouseCoord_SDLEvent(ev);
         postCommand_Widget(w, "listswipe.moved arg:%d coord:%d %d", ev->wheel.x, coord.x, coord.y);

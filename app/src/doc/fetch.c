@@ -52,7 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 iDefineTypeConstruction(DocumentFetch)
 
@@ -211,11 +211,11 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                     makeFooterButtons_DocumentWidget(
                         d->owner,
                         (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
-                                         SDLK_s,
-                                         KMOD_PRIMARY | KMOD_SHIFT,
+                                         SDLK_S,
+                                         KMOD_PRIMARY | SDL_KMOD_SHIFT,
                                          "document.save open:1" },
                                        { download_Icon " " saveToDownloads_Label,
-                                         SDLK_s,
+                                         SDLK_S,
                                          KMOD_PRIMARY,
                                          "document.save" } },
                         2);

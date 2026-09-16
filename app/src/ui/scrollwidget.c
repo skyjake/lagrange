@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "touch.h"
 #include "app.h"
 
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 iDefineObjectConstruction(ScrollWidget)
 
@@ -193,7 +193,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
     if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_ScrollWidget_(d);
     }
-    if (ev->type == SDL_MOUSEMOTION) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         const iBool isNearby = containsExpanded_Widget(&d->widget, mouse, 4 * gap_UI);
         const iBool isOver = isNearby && contains_Rect(thumbRect_ScrollWidget_(d), mouse);
@@ -217,11 +217,11 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
     if (isMobile_Platform()) {
-        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
             setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
             return iFalse;
         }
-        else if (w->flags & ~touchDrag_WidgetFlag && ev->type == SDL_MOUSEBUTTONDOWN) {
+        else if (w->flags & ~touchDrag_WidgetFlag && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             const SDL_MouseButtonEvent *mb = (const SDL_MouseButtonEvent *) ev;
             /* A long press on the scrollbar activates direct drag mode. */
             if (contains_Widget(w, mouseCoord_SDLEvent(ev)) && mb->button == SDL_BUTTON_RIGHT) {

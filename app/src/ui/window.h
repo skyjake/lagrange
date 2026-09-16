@@ -25,10 +25,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 
 #include <the_Foundation/rect.h>
-#include <SDL_events.h>
-#include <SDL_render.h>
-#include <SDL_mouse.h>
-#include <SDL_video.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_video.h>
 
 extern const iMenuItem topLevelMenus_Window[7];
 size_t numWindowMenuItems_Window(void); /* number of items in an empty window menu */
@@ -108,7 +108,7 @@ struct Impl_Window {
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
     uint32_t      frameTime;
-    SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
+    SDL_Cursor *  cursors[SDL_SYSTEM_CURSOR_COUNT];
     SDL_Cursor *  pendingCursor;
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */

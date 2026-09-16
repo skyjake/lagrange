@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <lagrange/defs.h>
 #include <lagrange/prefs.h>
-#include <SDL_hints.h>
+#include <SDL3/SDL_hints.h>
 
 static iText *current_Text_;
 
@@ -440,13 +440,13 @@ iDefineTypeConstructionArgs(TextBuf, (iWrapText *wrapText, int font, int color),
 void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
     SDL_Renderer *render = current_Text()->render;
     d->size = measure_WrapText(wrapText, font).bounds.size;
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
                                        SDL_PIXELFORMAT_RGBA4444,
                                        SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                        d->size.x,
                                        d->size.y);
+        SDL_SetTextureScaleMode(d->texture, SDL_SCALEMODE_NEAREST);
     }
     else {
         d->texture = NULL;
@@ -480,8 +480,8 @@ void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {
     addv_I2(&pos, origin_Paint);
     const iColor clr = get_Color(color);
     SDL_SetTextureColorMod(d->texture, clr.r, clr.g, clr.b);
-    SDL_RenderCopy(current_Text()->render,
+    SDL_RenderTexture(current_Text()->render,
                    d->texture,
-                   &(SDL_Rect){ 0, 0, d->size.x, d->size.y },
-                   &(SDL_Rect){ pos.x, pos.y, d->size.x, d->size.y });
+                   &(SDL_FRect){ 0, 0, d->size.x, d->size.y },
+                   &(SDL_FRect){ pos.x, pos.y, d->size.x, d->size.y });
 }

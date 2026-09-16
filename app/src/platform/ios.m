@@ -33,9 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
-#include <SDL_events.h>
-#include <SDL_syswm.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_properties.h>
+#include <SDL3/SDL_timer.h>
 
 #import <AVFAudio/AVFAudio.h>
 #import <CoreHaptics/CoreHaptics.h>
@@ -50,13 +50,10 @@ static iBool isRemoteCenterInited_  = iFalse;
 static const uint32_t inputSpillOverDelay_ = 500;
 
 static UIWindow *uiWindow_(const iWindow *window) {
-    SDL_SysWMinfo wm;
-    SDL_VERSION(&wm.version);
-    if (SDL_GetWindowWMInfo(window->win, &wm)) {
-        return wm.info.uikit.window;
-    }
-    iAssert(false);
-    return NULL;
+    UIWindow *win = (__bridge UIWindow *) SDL_GetPointerProperty(
+        SDL_GetWindowProperties(window->win), SDL_PROP_WINDOW_UIKIT_WINDOW_POINTER, NULL);
+    iAssert(win != nil);
+    return win;
 }
 
 static UIViewController *viewController_(iWindow *window) {
@@ -351,14 +348,14 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
 }
 
 static void sendReturnKeyPress_(int kmods) {
-    SDL_Event ev = { .type = SDL_KEYDOWN };
+    SDL_Event ev = { .type = SDL_EVENT_KEY_DOWN };
     ev.key.timestamp = SDL_GetTicks();
-    ev.key.keysym.sym = SDLK_RETURN;
-    ev.key.keysym.mod = kmods;
-    ev.key.state = SDL_PRESSED;
+    ev.key.key = SDLK_RETURN;
+    ev.key.mod = kmods;
+    ev.key.down = true;
     SDL_PushEvent(&ev);
-    ev.type = SDL_KEYUP;
-    ev.key.state = SDL_RELEASED;
+    ev.type = SDL_EVENT_KEY_UP;
+    ev.key.down = false;
     SDL_PushEvent(&ev);
 }
 
@@ -458,9 +455,9 @@ replacementString:(NSString *)string {
 /*----------------------------------------------------------------------------------------------*/
 
 static void enableMouse_(iBool yes) {
-    SDL_EventState(SDL_MOUSEBUTTONDOWN, yes);
-    SDL_EventState(SDL_MOUSEMOTION, yes);
-    SDL_EventState(SDL_MOUSEBUTTONUP, yes);
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_BUTTON_DOWN, yes);
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_MOTION, yes);
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_BUTTON_UP, yes);
 }
 
 static void setupRemoteCommandCenter_(void) {
@@ -641,7 +638,7 @@ static void callVoidMethodWithIntArgument(id target, NSString *selectorName, int
 }
 
 iBool processEvent_iOS(const SDL_Event *ev) {
-    if (ev->type == SDL_DISPLAYEVENT) {
+    if (ev->type == SDL_EVENT_DISPLAY_ORIENTATION) {
         if (deviceType_App() == phone_AppDeviceType) {
             [statusBarTapper_ setHidden:(ev->display.data1 == SDL_ORIENTATION_LANDSCAPE ||
                                      ev->display.data1 == SDL_ORIENTATION_LANDSCAPE_FLIPPED)];
@@ -649,16 +646,14 @@ iBool processEvent_iOS(const SDL_Event *ev) {
         [statusBarTapper_ setFrame:[UIApplication sharedApplication].statusBarFrame];
         return iFalse;
     }
-    if (ev->type == SDL_WINDOWEVENT) {
-        if (ev->window.event == SDL_WINDOWEVENT_RESTORED) {
-            const iBool isDark = isDarkMode_(get_Window());
-            if (isDark != isSystemDarkMode_) {
-                isSystemDarkMode_ = isDark;
-                postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
-            }
+    if (ev->type == SDL_EVENT_WINDOW_RESTORED) {
+        const iBool isDark = isDarkMode_(get_Window());
+        if (isDark != isSystemDarkMode_) {
+            isSystemDarkMode_ = isDark;
+            postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
         }
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    else if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
         //NSLog(@"%s", cmd);
         if (equal_Command(cmd, "window.unfreeze")) {
@@ -677,7 +672,7 @@ iBool processEvent_iOS(const SDL_Event *ev) {
                 dlg = [UIApplication sharedApplication].delegate;
             }
             callVoidMethod(dlg, @"hideLaunchScreen");
-            /* When the application is launching, it is too early to post a SDL_DROPFILE
+            /* When the application is launching, it is too early to post a SDL_EVENT_DROP_FILE
                event. The customized SDL application delegate saves the launch URL, so
                we can use it now to */
             static iBool didCheckLaunchURL = iFalse;

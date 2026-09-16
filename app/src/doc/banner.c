@@ -281,10 +281,10 @@ size_t itemAtCoord_Banner(const iBanner *d, iInt2 coord) {
 }
 
 static iBool isInside_Banner_(const iBanner *d, const SDL_Event *ev) {
-    if (ev->type == SDL_MOUSEMOTION || ev->type == SDL_MOUSEBUTTONDOWN ||
-        ev->type == SDL_MOUSEBUTTONDOWN) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION || ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+        ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         iInt2 coord;
-        if (ev->type == SDL_MOUSEMOTION) {
+        if (ev->type == SDL_EVENT_MOUSE_MOTION) {
             coord = init_I2(ev->motion.x, ev->motion.y);
         }
         else {
@@ -301,11 +301,11 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
         return iFalse;
     }
     switch (ev->type) {
-        case SDL_MOUSEMOTION: {
+        case SDL_EVENT_MOUSE_MOTION: {
             const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
             const iBool isInside = contains_Rect(d->rect, coord);
             if (isInside) {
-                setCursor_Window(window_Widget(w), SDL_SYSTEM_CURSOR_HAND);
+                setCursor_Window(window_Widget(w), SDL_SYSTEM_CURSOR_POINTER);
             }
             if (isInside ^ d->isHover) {
                 d->isHover = isInside;
@@ -317,13 +317,13 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
             }
             break;
         }
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP: {
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
             /* Clicking on the top/side banner navigates to site root. */
             const iInt2 coord    = init_I2(ev->button.x, ev->button.y);
             const iBool isInside = contains_Rect(d->rect, coord);
             if (isInside && ev->button.button == SDL_BUTTON_RIGHT &&
-                ev->button.state == SDL_RELEASED) {
+                !ev->button.down) {
                 const size_t index = itemAtCoord_Banner(d, coord);
                 if (index < iInvalidPos) {
                     //const iBannerItem *item = constAt_Array(&d->items, index);
@@ -337,11 +337,11 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                 }
             }
             else if (ev->button.button == SDL_BUTTON_LEFT) {
-                if (isInside && ev->button.state == SDL_PRESSED) {
+                if (isInside && ev->button.down) {
                     d->isClick = iTrue;
                     return iTrue;
                 }
-                else if (ev->button.state == SDL_RELEASED) {
+                else if (!ev->button.down) {
                     if (d->isClick && isInside) {
                         const size_t index = itemAtCoord_Banner(d, coord);
                         if (index == iInvalidPos) {

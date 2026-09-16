@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "text.h"
 #include "defs.h"
-#include <SDL_version.h>
+#include <SDL3/SDL_version.h>
 
 iLocalDef iBool isWrapPunct_(iChar c) {
     /* Punctuation that participates in word-wrapping. */
@@ -362,10 +362,13 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (args->mode & fillBackground_RunMode) {
                 /* Alpha blending looks much better if the RGB components don't change in
                    the partially transparent pixels. */
-                SDL_RenderFillRect(render, &dst);
+                SDL_RenderFillRect(render, &(SDL_FRect){ dst.x, dst.y, dst.w, dst.h });
             }
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE) || defined (LAGRANGE_ENABLE_FREETYPE)
-            SDL_RenderCopy(render, cache, &src, &dst);
+            SDL_RenderTexture(render,
+                              cache,
+                              &(SDL_FRect){ src.x, src.y, src.w, src.h },
+                              &(SDL_FRect){ dst.x, dst.y, dst.w, dst.h });
 #endif
 #if defined (SDL_SEAL_CURSES)
             SDL_RenderDrawUnicode(render, dst.x, dst.y, ch);

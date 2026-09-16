@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "the_Foundation/block.h"
 #include "the_Foundation/mutex.h"
 
-#include <SDL_audio.h>
+#include <SDL3/SDL_audio.h>
 
 iDeclareType(InputBuf)
 iDeclareType(SampleBuf)

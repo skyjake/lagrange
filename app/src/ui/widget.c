@@ -36,8 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_timer.h>
 #include <stdarg.h>
 
 #if defined (iPlatformAppleMobile)
@@ -1249,16 +1249,16 @@ static iBool isClippedAway_Widget_(const iWidget *d, iInt2 windowCoord) {
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
-    return (ev->type == SDL_KEYUP || ev->type == SDL_KEYDOWN || ev->type == SDL_TEXTINPUT
+    return (ev->type == SDL_EVENT_KEY_UP || ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_TEXT_INPUT
 #if defined (LAGRANGE_HAVE_SDL_TEXTEDITING)
-            || ev->type == SDL_TEXTEDITING || ev->type == SDL_TEXTEDITING_EXT
+            || ev->type == SDL_EVENT_TEXT_EDITING || ev->type == SDL_EVENT_TEXT_EDITING_CANDIDATES
 #endif
         );
 }
 
 iLocalDef iBool isMouseEvent_(const SDL_Event *ev) {
-    return (ev->type == SDL_MOUSEWHEEL || ev->type == SDL_MOUSEMOTION ||
-            ev->type == SDL_MOUSEBUTTONUP || ev->type == SDL_MOUSEBUTTONDOWN);
+    return (ev->type == SDL_EVENT_MOUSE_WHEEL || ev->type == SDL_EVENT_MOUSE_MOTION ||
+            ev->type == SDL_EVENT_MOUSE_BUTTON_UP || ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN);
 }
 
 iBool isSelfHidden_Widget(const iAnyObject *obj) {
@@ -1315,7 +1315,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
     iAssert(child != d); /* cannot be child of self */
     iAssert(child->root == d->root);
     if (child == window_Widget(d)->focus &&
-        (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
+        (isKeyboardEvent_(ev) || ev->type == SDL_EVENT_USER)) {
         return iFalse; /* Already dispatched. */
     }
     if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
@@ -1323,7 +1323,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
     }
     if (dispatchEvent_Widget(child, ev)) {
 #if 0
-        if (ev->type == SDL_TEXTINPUT) {
+        if (ev->type == SDL_EVENT_TEXT_INPUT) {
             printf("[%p] %s:'%s' ate text input\n",
                    child, class_Widget(child)->name,
                    cstr_String(id_Widget(child)));
@@ -1331,7 +1331,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
         }
 #endif
 #if 0
-        if (ev->type == SDL_KEYDOWN) {
+        if (ev->type == SDL_EVENT_KEY_DOWN) {
             printf("[%p] %s:'%s' ate the key\n",
                    child, class_Widget(child)->name,
                    cstr_String(id_Widget(child)));
@@ -1340,7 +1340,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
         }
 #endif
 #if 0
-        if (ev->type == SDL_MOUSEMOTION) {
+        if (ev->type == SDL_EVENT_MOUSE_MOTION) {
             printf("[%p] %s:'%s' ate the motion\n",
                    child, class_Widget(child)->name,
                    cstr_String(id_Widget(child)));
@@ -1348,7 +1348,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
         }
 #endif
 #if 0
-        if (ev->type == SDL_MOUSEWHEEL) {
+        if (ev->type == SDL_EVENT_MOUSE_WHEEL) {
             printf("[%p] %s:'%s' ate the wheel\n",
                    child, class_Widget(child)->name,
                    cstr_String(id_Widget(child)));
@@ -1356,7 +1356,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
         }
 #endif
 #if 0
-        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
                    child, cstr_String(id_Widget(child)),
                    class_Widget(child)->name,
@@ -1372,7 +1372,7 @@ static iBool dispatchToChild_Widget_(iWidget *d, iWidget *child, const SDL_Event
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
         if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root &&
-            (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
+            (isKeyboardEvent_(ev) || ev->type == SDL_EVENT_USER)) {
             /* Root dispatches keyboard events directly to the focused widget. */
             if (redispatchEvent_Widget_(d, window_Widget(d)->focus, ev)) {
                 return iTrue;
@@ -1383,7 +1383,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             iWidget *widget = *i.value;
             if (isVisible_Widget(widget) && redispatchEvent_Widget_(d, widget, ev)) {
 #if 0
-                if (ev->type == SDL_TEXTINPUT) {
+                if (ev->type == SDL_EVENT_TEXT_INPUT) {
                     printf("[%p] %s:'%s' (on top) ate text input\n",
                            widget, class_Widget(widget)->name,
                            cstr_String(id_Widget(widget)));
@@ -1391,7 +1391,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 }
 #endif
 #if 0
-                if (ev->type == SDL_KEYDOWN) {
+                if (ev->type == SDL_EVENT_KEY_DOWN) {
                     printf("[%p] %s:'%s' (on top) ate the key\n",
                            widget, class_Widget(widget)->name,
                            cstr_String(id_Widget(widget)));
@@ -1399,7 +1399,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 }
 #endif
 #if 0
-                if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                     printf("[%p] %s:'%s' (on top) ate the button\n",
                            widget, class_Widget(widget)->name,
                            cstr_String(id_Widget(widget)));
@@ -1407,7 +1407,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 }
 #endif
 #if 0
-                if (ev->type == SDL_MOUSEMOTION) {
+                if (ev->type == SDL_EVENT_MOUSE_MOTION) {
                     printf("[%p] %s:'%s' (on top) ate the motion\n",
                            widget, class_Widget(widget)->name,
                            cstr_String(id_Widget(widget)));
@@ -1415,7 +1415,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 }
 #endif
 #if 0
-                if (ev->type == SDL_MOUSEWHEEL) {
+                if (ev->type == SDL_EVENT_MOUSE_WHEEL) {
                     printf("[%p] %s:'%s' (on top) ate the wheel\n",
                            widget,
                            class_Widget(widget)->name,
@@ -1427,7 +1427,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
     }
-    else if (ev->type == SDL_MOUSEMOTION &&
+    else if (ev->type == SDL_EVENT_MOUSE_MOTION &&
              ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
              isHoverable_Widget(d)) {
@@ -1578,7 +1578,7 @@ static void overflowHoverAnimation_(iAny *widget) {
     iInt2 coord = mouseCoord_Window(win, 0);
     /* A motion event will cause an overflow window to scroll. */
     SDL_MouseMotionEvent ev = {
-        .type     = SDL_MOUSEMOTION,
+        .type     = SDL_EVENT_MOUSE_MOTION,
         .windowID = SDL_GetWindowID(win->win),
         .x        = coord.x / win->pixelRatio,
         .y        = coord.y / win->pixelRatio,
@@ -1604,7 +1604,7 @@ void applyInteractiveResize_Widget(iWidget *d, int width) {
     refresh_Widget(d);
     /* Also notify the widget directly for additional handling. */
     const SDL_UserEvent notif = {
-        .type      = SDL_USEREVENT,
+        .type      = SDL_EVENT_USER,
         .timestamp = SDL_GetTicks(),
         .code      = command_UserEventCode,
         .data1     = "widget.resized",
@@ -1615,11 +1615,11 @@ void applyInteractiveResize_Widget(iWidget *d, int width) {
 
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (d->flags & commandOnClick_WidgetFlag &&
-             (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+             (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
              (mouseGrab_Widget() == d || contains_Widget(d, init_I2(ev->button.x, ev->button.y)))) {
         postCommand_Widget(d,
                            "mouse.clicked arg:%d button:%d coord:%d %d id:%s",
-                           ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                           ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1 : 0,
                            ev->button.button,
                            ev->button.x,
                            ev->button.y,
@@ -1627,12 +1627,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     else if (d->flags & commandOnClick_WidgetFlag &&
-             mouseGrab_Widget() == d && ev->type == SDL_MOUSEMOTION) {
+             mouseGrab_Widget() == d && ev->type == SDL_EVENT_MOUSE_MOTION) {
         postCommand_Widget(d, "mouse.moved coord:%d %d", ev->motion.x, ev->motion.y);
         return iTrue;
     }
     else if (d->flags & overflowScrollable_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
-        if (ev->type == SDL_MOUSEWHEEL && !ev->wheel.x) {
+        if (ev->type == SDL_EVENT_MOUSE_WHEEL && !ev->wheel.x) {
             int step = ev->wheel.y;
             if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
                 step *= lineHeight_Text(uiLabel_FontId);
@@ -1642,7 +1642,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
         }
-        else if (ev->type == SDL_MOUSEMOTION && ev->motion.which != SDL_TOUCH_MOUSEID &&
+        else if (ev->type == SDL_EVENT_MOUSE_MOTION && ev->motion.which != SDL_TOUCH_MOUSEID &&
                  ev->motion.which != mouseId_Gamepad && ev->motion.y >= 0) {
             /* TODO: Motion events occur frequently. Maybe it would help if these were handled
                via audiences that specifically register to listen for motion, to minimize the
@@ -1685,12 +1685,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         if (!(d->flags2 & (leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2))) {
             iAssert(d->flags & centerHorizontal_WidgetFlag);
             const iRect bounds = boundsWithoutVisualOffset_Widget(d);
-            if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+            if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_MOTION) {
                 iRect edge = bounds;
                 edge.size.x = 2 * gap_UI; /* left edge */
                 if (contains_Rect(edge, buttonPos)) {
-                    setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
-                    if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                    setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_EW_RESIZE);
+                    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                         startPos_ = buttonPos;
                         startWidth_ = width_Rect(bounds);
                         d->flags2 |= leftEdgeResizing_WidgetFlag2;
@@ -1701,8 +1701,8 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 else {
                     edge.pos.x = right_Rect(bounds_Widget(d)) - edge.size.x; /* right edge */
                     if (contains_Rect(edge, buttonPos)) {
-                        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
-                        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_EW_RESIZE);
+                        if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                             startPos_ = buttonPos;
                             startWidth_ = width_Rect(bounds);
                             d->flags2 |= rightEdgeResizing_WidgetFlag2;
@@ -1715,7 +1715,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
         else if (d->flags2 & (leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2)) {
             iAssert(d->flags & centerHorizontal_WidgetFlag);
-            if (ev->type == SDL_MOUSEMOTION) {
+            if (ev->type == SDL_EVENT_MOUSE_MOTION) {
                 const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
                 int newWidth;
                 if (d->flags2 & rightEdgeResizing_WidgetFlag2) {
@@ -1725,10 +1725,10 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     newWidth = startWidth_ + 2 * (startPos_.x - mousePos.x);
                 }
                 applyInteractiveResize_Widget(d, newWidth);
-                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_EW_RESIZE);
                 return iTrue;
             }
-            else if (ev->type == SDL_MOUSEBUTTONUP) {
+            else if (ev->type == SDL_EVENT_MOUSE_BUTTON_UP) {
                 setMouseGrab_Widget(NULL);
                 iChangeFlags(d->flags2,
                              leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2,
@@ -1743,7 +1743,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     switch (ev->type) {
-        case SDL_USEREVENT: {
+        case SDL_EVENT_USER: {
             if (d->flags & overflowScrollable_WidgetFlag &&
                 ~d->flags & visualOffset_WidgetFlag &&
                 isCommand_UserEvent(ev, "widget.overflow")) {
@@ -1804,28 +1804,28 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             break;
         }
     }
-    if (d->flags & commandOnMouseMiss_WidgetFlag && ev->type == SDL_MOUSEBUTTONDOWN &&
+    if (d->flags & commandOnMouseMiss_WidgetFlag && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
         !contains_Widget(d, init_I2(ev->button.x, ev->button.y))) {
         postCommand_Widget(d,
                            "mouse.missed arg:%d button:%d coord:%d %d",
-                           ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                           ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1 : 0,
                            ev->button.button,
                            ev->button.x,
                            ev->button.y);
         return isMobile_Platform(); /* on mobile, consume missed taps to prevent accidental input */
     }
-    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) && ev->type != SDL_MOUSEWHEEL &&
+    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) && ev->type != SDL_EVENT_MOUSE_WHEEL &&
         contains_Rect(rect_Root(d->root), mouseCoord_SDLEvent(ev))) {
-        if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+        if ((ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) &&
             d->flags & commandOnClick_WidgetFlag) {
             postCommand_Widget(d,
                                "mouse.clicked arg:%d button:%d coord:%d %d",
-                               ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                               ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? 1 : 0,
                                ev->button.button,
                                ev->button.x,
                                ev->button.y);
         }
-        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_ARROW);
+        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_DEFAULT);
         return iTrue;
     }
     return iFalse;
@@ -2150,8 +2150,8 @@ void drawClipped_Widget(const iWidget *d, iRect clipRect /* may be empty */) {
         iPaint p;
         init_Paint(&p);
         setClip_Paint(&p, isEmpty_Rect(clipRect) ? rect_Root(d->root) : clipRect);
-        SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
-                       &(SDL_Rect){ bounds.pos.x, bounds.pos.y,
+        SDL_RenderTexture(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
+                       &(SDL_FRect){ bounds.pos.x, bounds.pos.y,
                                     d->drawBuf->size.x, d->drawBuf->size.y });
         unsetClip_Paint(&p);
     }
@@ -2507,7 +2507,7 @@ iBool equalWidget_Command(const char *cmd, const iWidget *widget, const char *ch
 }
 
 iBool isCommand_Widget(const iWidget *d, const SDL_Event *ev, const char *cmd) {
-    if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
         return equalWidget_Command(command_UserEvent(ev), d, cmd);
     }
     return iFalse;

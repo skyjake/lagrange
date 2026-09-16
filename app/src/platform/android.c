@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -94,11 +94,11 @@ JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
 }
 
 static const char *monospaceFontPath_(void) {
-    return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "IosevkaTerm-Extended.ttf");
+    return concatPath_CStr(SDL_GetAndroidExternalStoragePath(), "IosevkaTerm-Extended.ttf");
 }
 
 static const char *cachePath_(void) {
-    return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Cache");
+    return concatPath_CStr(SDL_GetAndroidExternalStoragePath(), "Cache");
 }
 
 static void clearCachedFiles_(void) {
@@ -151,9 +151,9 @@ void setupApplication_Android(void) {
     init_Mutex(&saveMutex_);
     /* Cache the JavaVM pointer and activity global ref for use from non-SDL threads. */
     if (!javaVm_) {
-        JNIEnv *env = (JNIEnv *) SDL_AndroidGetJNIEnv();
+        JNIEnv *env = (JNIEnv *) SDL_GetAndroidJNIEnv();
         (*env)->GetJavaVM(env, &javaVm_);
-        jobject localActivity = (jobject) SDL_AndroidGetActivity();
+        jobject localActivity = (jobject) SDL_GetAndroidActivity();
         cachedActivity_ = (*env)->NewGlobalRef(env, localActivity);
         (*env)->DeleteLocalRef(env, localActivity);
     }
@@ -217,8 +217,8 @@ void javaCommand_Android(const char *format, ...) {
     vprintf_Block(&cmd.chars, format, args);
     va_end(args);
     /* Do the call into Java virtual machine. */
-    JNIEnv *  env       = (JNIEnv *) SDL_AndroidGetJNIEnv();
-    jobject   activity  = (jobject) SDL_AndroidGetActivity();
+    JNIEnv *  env       = (JNIEnv *) SDL_GetAndroidJNIEnv();
+    jobject   activity  = (jobject) SDL_GetAndroidActivity();
     jclass    class     = (*env)->GetObjectClass(env, activity);
     jmethodID methodId  = (*env)->GetMethodID(env, class,
                                               "handleJavaCommand",
@@ -355,9 +355,9 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 
 static int userBackupTimer_;
 
-static uint32_t backupUserData_Android_(uint32_t interval, void *data) {
+static uint32_t backupUserData_Android_(void *data, SDL_TimerID timerID, uint32_t interval) {
     userBackupTimer_ = 0;
-    iUnused(interval, data);
+    iUnused(interval, data, timerID);
     /* This runs in a background thread. We don't want to block the UI thread for saving. */
     iExport *backup = new_Export();
     generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag |
@@ -409,13 +409,13 @@ iBool handleCommand_Android(const char *cmd) {
         if (!currentInput_ || currentInput_->id != id) {
             return iTrue; /* obsolete notification */
         }
-        SDL_Event ev = { .type = SDL_KEYDOWN };
+        SDL_Event ev = { .type = SDL_EVENT_KEY_DOWN };
         ev.key.timestamp = SDL_GetTicks();
-        ev.key.keysym.sym = SDLK_RETURN;
-        ev.key.state = SDL_PRESSED;
+        ev.key.key = SDLK_RETURN;
+        ev.key.down = true;
         SDL_PushEvent(&ev);
-        ev.type = SDL_KEYUP;
-        ev.key.state = SDL_RELEASED;
+        ev.type = SDL_EVENT_KEY_UP;
+        ev.key.down = false;
         SDL_PushEvent(&ev);
         return iTrue;
     }

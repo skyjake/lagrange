@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/vec2.h>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 iDeclareType(Widget)
 

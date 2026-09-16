@@ -54,24 +54,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "platform/win32.h"
 #endif
 
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 #include "render/text.h"
 
 static const iMenuItem desktopNavMenuItems_[] = {
-    { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
-    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
-    { close_Icon " ${menu.closetab}", SDLK_w, KMOD_PRIMARY, "tabs.close" },
-    { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
+    { openWindow_Icon " ${menu.newwindow}", SDLK_N, KMOD_PRIMARY, "window.new" },
+    { add_Icon " ${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
+    { close_Icon " ${menu.closetab}", SDLK_W, KMOD_PRIMARY, "tabs.close" },
+    { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
-    { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
-    { "${menu.page.copysource}", SDLK_c, KMOD_PRIMARY, "copy" },
+    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
+    { "${menu.page.copysource}", SDLK_C, KMOD_PRIMARY, "copy" },
     { "---" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
+    { "${menu.view.split}", SDLK_J, KMOD_PRIMARY, "submenu id:splitmenu" },
     { "---" },
     { package_Icon " ${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
     { "---" },
@@ -100,30 +100,30 @@ static const iMenuItem userDataMenuItems_[] = {
 };
 
 static const iMenuItem tabletNavMenuItems_[] = {
-    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
+    { add_Icon " ${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
+    { folder_Icon " ${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
     { "---" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
-    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { "${menu.reopentab}", SDLK_T, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
     { "${menu.page.copyurl}", 0, 0, "document.copylink" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
+    { "${menu.view.split}", SDLK_J, KMOD_PRIMARY, "splitmenu.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
 static const iMenuItem phoneNavMenuItems_[] = {
-    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
+    { add_Icon " ${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
+    { folder_Icon " ${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
     { "---" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
-    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { "${menu.reopentab}", SDLK_T, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
     { "${menu.page.copyurl}", 0, 0, "document.copylink" },
@@ -398,7 +398,7 @@ static iWidget *makeIdentityMenu_(iWidget *parent) {
               0, 0,
               isGemini ? "ident.new scope:1"
                        : "ident.new" },
-            { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
+            { "${menu.identity.import}", SDLK_M, KMOD_SECONDARY, "ident.import" },
             { "---" } }, 3);
     if (deviceType_App() == desktop_AppDeviceType) {
         pushBack_Array(&items,
@@ -469,7 +469,7 @@ static void updateTerminalStatus_(iLabelWidget *term) {
     formatShortcut_(str, maxLen, "${term.menu}", bind->key, bind->mods);
     bind = findCommand_Keys("menubar.focus");
     formatShortcut_(str, maxLen, "${term.menubar}", bind->key, bind->mods);
-    formatShortcut_(str, maxLen, "${cancel}", 'g', KMOD_CTRL);
+    formatShortcut_(str, maxLen, "${cancel}", 'g', SDL_KMOD_CTRL);
     formatShortcut_(str, maxLen, "${term.focus}", SDLK_TAB, 0);
     formatShortcut_(str, maxLen, "${term.sidebar}", leftSidebar_KeyShortcut);
     bind = findCommand_Keys("tabs.new append:1");
@@ -643,7 +643,6 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         iWindow *window = pointer_Command(cmd);
         SDL_RestoreWindow(window->win);
         SDL_RaiseWindow(window->win);
-        SDL_SetWindowInputFocus(window->win);
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
@@ -685,7 +684,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "window.close")) {
         if (!isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
-            SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+            SDL_PushEvent(&(SDL_Event){ .type = SDL_EVENT_QUIT });
         }
         else {
             closeWindow_App(get_Window());
@@ -879,7 +878,8 @@ static const char *loadAnimationCStr_Root_(const iRoot *d) {
     return stopSeqCStr_[d->loadAnimIndex % iElemCount(stopSeqCStr_)];
 }
 
-static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
+static uint32_t updateReloadAnimation_Root_(void *root, SDL_TimerID timerID, uint32_t interval) {
+    iUnused(timerID);
     iRoot *d = root;
     d->loadAnimIndex++;
     notifyf_App("window.reload.update root:%p", root);
@@ -1295,7 +1295,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         /* Emulate a Backspace keypress. */
         class_InputWidget(url)->processEvent(
             as_Widget(url),
-            (SDL_Event *) &(SDL_KeyboardEvent){ .type      = SDL_KEYDOWN,
+            (SDL_Event *) &(SDL_KeyboardEvent){ .type      = SDL_EVENT_KEY_DOWN,
                                                 .timestamp = SDL_GetTicks(),
                                                 .state     = SDL_PRESSED,
                                                 .keysym    = { .sym = SDLK_BACKSPACE } });
@@ -1780,7 +1780,7 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
         { "---" },
-        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
+        { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
         { isSourceTextView_DocumentWidget(document_App())
             ? "${menu.viewformat.gemini}"
@@ -1829,15 +1829,15 @@ void createClipMenu_Root(iRoot *d) {
 void createSplitMenu_Root(iRoot *d, iBool withShortcuts) {
     iMenuItem items[] = {
         { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
-        { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
+        { "${menu.split.swap}", SDLK_X, 0, "ui.split swap:1" },
         { "---" },
         { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
-        { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
-        { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
+        { "${menu.split.horizontal} 1:2", SDLK_D, 0, "ui.split arg:1 axis:0" },
+        { "${menu.split.horizontal} 2:1", SDLK_E, 0, "ui.split arg:2 axis:0" },
         { "---" },
         { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
-        { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
-        { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
+        { "${menu.split.vertical} 1:2", SDLK_F, 0, "ui.split arg:1 axis:1" },
+        { "${menu.split.vertical} 2:1", SDLK_R, 0, "ui.split arg:2 axis:1" },
     };
     if (!withShortcuts) {
         iForIndices(i, items) {
@@ -2008,7 +2008,7 @@ void createUserInterface_Root(iRoot *d) {
             /* Page information/certificate warning. */ {
                 iLabelWidget *lock = addChildFlags_Widget(
                     as_Widget(url),
-                    iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
+                    iClob(newIcon_LabelWidget("\U0001f513", SDLK_I, KMOD_PRIMARY, "document.info")),
                     embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
                // setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
@@ -2250,7 +2250,7 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9f  ", 'g', KMOD_PRIMARY, "find.next")));
-        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
+        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | SDL_KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget(close_Icon, SDLK_ESCAPE, 0, "find.close")));
     }
 #if defined (iPlatformMobile)
@@ -2381,7 +2381,7 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(toolsMenu, "toolsmenu");
     }
     /* Global keyboard shortcuts. */ {
-        addAction_Widget(root, 'h', KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
+        addAction_Widget(root, 'h', KMOD_PRIMARY | SDL_KMOD_SHIFT, "navigate.home");
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input id2:filter.bookmark.input");
         addAction_Widget(root, '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1");
@@ -2402,7 +2402,7 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, '8', rightSidebarTab_KeyModifier, "sidebar2.mode arg:7 toggle:1");
         addAction_Widget(root, 'j', KMOD_PRIMARY, "splitmenu.open");
         addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
-        addAction_Widget(root, 't', KMOD_PRIMARY | KMOD_ALT, "tabs.swap newwindow:1");
+        addAction_Widget(root, 't', KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1");
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);
@@ -2646,7 +2646,7 @@ iRect visibleRect_Root(const iRoot *d) {
        returned here seem incorrect sometimes (infrequently). */
     if (iFalse) {
         const float ratio = d->window->pixelRatio;
-        SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->window->win), &usable);
+        SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(d->window->win), &usable);
         iInt2 winPos;
         SDL_GetWindowPosition(d->window->win, &winPos.x, &winPos.y);
         mulfv_I2(&winPos, ratio);

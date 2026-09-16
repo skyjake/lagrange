@@ -625,41 +625,21 @@ if (ENABLE_GUI)
     if (VCPKG_TOOLCHAIN)
         target_link_libraries (app
             PRIVATE
-            $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-            $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+            $<TARGET_NAME_IF_EXISTS:SDL3::SDL3main>
+            $<IF:$<TARGET_EXISTS:SDL3::SDL3>,SDL3::SDL3,SDL3::SDL3-static>
         )
     else ()
-        if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
-            target_link_libraries (app PUBLIC SDL2::SDL2-static)
+        if (TARGET SDL3::SDL3-static AND ENABLE_STATIC)
+            target_link_libraries (app PUBLIC SDL3::SDL3-static)
         else ()
-            target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
-            target_compile_options (app PUBLIC ${SDL2_CFLAGS})
-            target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+            target_include_directories (app PUBLIC ${SDL3_INCLUDE_DIRS})
+            target_compile_options (app PUBLIC ${SDL3_CFLAGS})
+            target_link_libraries (app PUBLIC ${SDL3_LDFLAGS})
         endif ()
     endif ()
 
-    # Check for SDL_TEXTEDITING support.
-    cmake_push_check_state (RESET)
-    if (TARGET SDL2::SDL2-static AND ENABLE_STATIC)
-        get_target_property (_sdl2_incdirs SDL2::SDL2-static INTERFACE_INCLUDE_DIRECTORIES)
-    else ()
-        set (_sdl2_incdirs ${SDL2_INCLUDE_DIRS})
-    endif ()
-    set (CMAKE_REQUIRED_INCLUDES ${_sdl2_incdirs})
-    check_c_source_compiles (
-        "#include <SDL.h>
-        int main(void) {
-            int a = SDL_TEXTEDITING;
-            int b = SDL_TEXTEDITING_EXT;
-            return a + b;
-        }"
-        HAVE_SDL_TEXTEDITING
-    )
-    cmake_pop_check_state ()
-
-    if (HAVE_SDL_TEXTEDITING)
-        target_compile_definitions (app PUBLIC LAGRANGE_HAVE_SDL_TEXTEDITING=1)
-    endif ()
+    # SDL3 always supports extended text editing (candidate list) events.
+    target_compile_definitions (app PUBLIC LAGRANGE_HAVE_SDL_TEXTEDITING=1)
     if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
         if (VCPKG_TOOLCHAIN)
             target_link_libraries (app PRIVATE harfbuzz::harfbuzz-subset)

@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h" /* origin_Paint */
 #include "app.h"
 
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 #include <the_Foundation/regexp.h>
 
 iDeclareType(Font)
