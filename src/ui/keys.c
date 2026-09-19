@@ -283,7 +283,12 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     /* Media keys. */
     { 1005, { NULL, SDLK_AC_SEARCH, 0,                  "focus.set id:find.input id2:filter.bookmark.input"       }, 0 },
     { 1006, { NULL, SDLK_AC_HOME, 0,                    "navigate.home"                 }, 0 },
+#if defined (iPlatformAndroidMobile)
+    /* The system Back button/gesture. */
+    { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back backbutton:1"    }, 0 },
+#else
     { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back"                 }, 0 },
+#endif
     { 1008, { NULL, SDLK_AC_FORWARD, 0,                 "navigate.forward"              }, 0 },
     { 1009, { NULL, SDLK_AC_STOP, 0,                    "document.stop"                 }, 0 },
     { 1010, { NULL, SDLK_AC_REFRESH, 0,                 "document.reload"               }, 0 },

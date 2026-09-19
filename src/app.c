@@ -152,8 +152,11 @@ static const char *tempPrefsFileName_App_   = PREFS_NAME ".cfg.tmp";
 static const char *oldStateFileName_App_    = STATE_NAME ".binary";
 static const char *stateFileName_App_       = STATE_NAME ".lgr";
 static const char *tempStateFileName_App_   = STATE_NAME ".lgr.tmp";
-static const char *backupStateFileName_App_ = STATE_NAME ".lgr.old"; /* non-POSIX only */
+static const char *backupStateFileName_App_ = STATE_NAME ".lgr.old"; /* Windows, Android */
 static const char *defaultDownloadDir_App_ = "~/Downloads";
+
+/* Only one thread can write the state/prefs files at a time. */
+static iMutex *saveMutex_App_;
 
 static const int    idleThreshold_App_             = 1000; /* ms */
 static const size_t maxRecentlySubmittedInput_App_ = 10;
@@ -796,6 +799,7 @@ static void savePrefs_App_(const iApp *d) {
     }
 #endif
     iString *cfg = serializePrefs_App_(d);
+    lock_Mutex(saveMutex_App_);
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), tempPrefsFileName_App_));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         write_File(f, &cfg->chars);
@@ -809,6 +813,7 @@ static void savePrefs_App_(const iApp *d) {
         iRelease(f);
         fprintf(stderr, "[App] failed to save prefs: %s\n", strerror(errno));
     }
+    unlock_Mutex(saveMutex_App_);
     delete_String(cfg);
 }
 
@@ -863,19 +868,32 @@ static size_t nextWindowPlacementIndex_App_(const iApp *d) {
     return index;
 }
 
+static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnly);
+
 static iBool loadState_App_(iApp *d) {
-    iUnused(d);
     const char *oldPath    = concatPath_CStr(dataDir_App_(), oldStateFileName_App_);
     const char *path       = concatPath_CStr(dataDir_App_(), stateFileName_App_);
     const char *backupPath = concatPath_CStr(dataDir_App_(), backupStateFileName_App_);
-    const char *usedPath   = fileExistsCStr_FileInfo(path)       ? path :
-                             fileExistsCStr_FileInfo(backupPath) ? backupPath :
-                                                                   oldPath;
+    if (fileExistsCStr_FileInfo(path)) {
+        /* If loading fails partway, the windows and tabs restored until then are left behind,
+           so check the file first when there is a backup to use instead. */
+        if (fileExistsCStr_FileInfo(backupPath) && !loadStateFile_App_(d, path, iTrue) &&
+            loadStateFile_App_(d, backupPath, iTrue)) {
+            fprintf(stderr, "[App] %s is damaged, loading the backup instead\n", path);
+            return loadStateFile_App_(d, backupPath, iFalse);
+        }
+        return loadStateFile_App_(d, path, iFalse);
+    }
+    return loadStateFile_App_(d, fileExistsCStr_FileInfo(backupPath) ? backupPath : oldPath,
+                              iFalse);
+}
+
+static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnly) {
+    /* When validating, the entire file is parsed but nothing is actually applied. */
     iFile *f = iClob(newCStr_File(usedPath));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
-        readData_File(f, 4, magic);
-        if (memcmp(magic, magicState_App_, 4)) {
+        if (readData_File(f, 4, magic) != 4 || memcmp(magic, magicState_App_, 4)) {
             printf("%s: format not recognized\n", cstr_String(path_File(f)));
             return iFalse;
         }
@@ -899,17 +917,30 @@ static iBool loadState_App_(iApp *d) {
         uint32_t         maxWindowSerial = 0;
         currentTabs = collectNew_Array(sizeof(iCurrentTabs));
         while (!atEnd_File(f)) {
-            readData_File(f, 4, magic);
+            if (readData_File(f, 4, magic) != 4) {
+                printf("%s: truncated\n", cstr_String(path_File(f)));
+                setCurrent_Root(NULL);
+                return iFalse;
+            }
             if (!memcmp(magic, magicInput_App_, 4)) {
-                deserialize_StringArray(d->recentlySubmittedInput, stream_File(f));
+                deserialize_StringArray(validateOnly ? iClob(new_StringArray())
+                                                     : d->recentlySubmittedInput,
+                                        stream_File(f));
             }
             else if (!memcmp(magic, magicWindow_App_, 4)) {
                 numWins++;
-                const int   splitMode = read32_File(f);
-                const int   winState  = read32_File(f);
-                const int   keyRoot   = (winState & 1);
-                const iBool isCurrent = (winState & current_WindowStateFlag) != 0;
+                const int      splitMode  = read32_File(f);
+                const int      winState   = read32_File(f);
+                const int      keyRoot    = (winState & 1);
+                const iBool    isCurrent  = (winState & current_WindowStateFlag) != 0;
+                const uint32_t serial     = (version >= persistentWindowSerial_FileVersion
+                                                 ? readU32_File(f) : 0);
+                const size_t   placeIndex = (version >= windowPlacementIndex_FileVersion
+                                                 ? readU32_File(f) : 0);
 //                printf("[State] '%.4s' split:%d state:%x\n", magic, splitMode, winState);
+                if (validateOnly) {
+                    continue;
+                }
 #if defined (iPlatformTerminal)
                 /* Terminal only supports one window. */
                 win = as_MainWindow(d->window);
@@ -925,15 +956,15 @@ static iBool loadState_App_(iApp *d) {
 #endif
                 if (version >= persistentWindowSerial_FileVersion) {
                     /* Restore the window's persistent identity. */
-                    const uint32_t serial = readU32_File(f);
                     setSerial_Window(as_Window(win), serial);
                     maxWindowSerial = iMax(maxWindowSerial, serial);
                 }
                 if (version >= windowPlacementIndex_FileVersion) {
                     /* Window placement uses its own logical indexing that allows multi-window
                        arrangements where individual windows can be closed and opened. */
-                    const size_t placeIndex = readU32_File(f);
-#if !defined (iPlatformTerminal)
+#if defined (iPlatformTerminal)
+                    iUnused(placeIndex);
+#else
                     if (placeIndex != win->place.placementIndex) {
                         win->place.placementIndex = placeIndex;
                         const iRect rect = initialWindowRect_App_(d, placeIndex);
@@ -958,7 +989,7 @@ static iBool loadState_App_(iApp *d) {
                 win->base.keyRoot = win->base.roots[keyRoot];
             }
             else if (!memcmp(magic, magicSidebar_App_, 4)) {
-                if (!win) {
+                if (numWins == 0) {
                     printf("%s: missing window\n", cstr_String(path_File(f)));
                     setCurrent_Root(NULL);
                     return iFalse;
@@ -976,6 +1007,9 @@ static iBool loadState_App_(iApp *d) {
                 if (version >= bookmarkFolderState_FileVersion) {
                     deserialize_IntSet(closedFolders[0], stream_File(f));
                     deserialize_IntSet(closedFolders[1], stream_File(f));
+                }
+                if (validateOnly) {
+                    continue;
                 }
                 const uint8_t rootIndex = bits & 0xff;
                 const uint8_t flags     = bits >> 8;
@@ -1002,12 +1036,16 @@ static iBool loadState_App_(iApp *d) {
                 }
             }
             else if (!memcmp(magic, magicTabDocument_App_, 4)) {
-                if (!win) {
+                if (numWins == 0) {
                     printf("%s: missing window\n", cstr_String(path_File(f)));
                     setCurrent_Root(NULL);
                     return iFalse;
                 }
                 const int8_t flags = read8_File(f);
+                if (validateOnly) {
+                    deserializeState_DocumentWidget(NULL, stream_File(f)); /* just skip it */
+                    continue;
+                }
                 int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
                 if (rootIndex > numRoots_Window(as_Window(win)) - 1) {
                     rootIndex = 0;
@@ -1035,6 +1073,9 @@ static iBool loadState_App_(iApp *d) {
                 setCurrent_Root(NULL);
                 return iFalse;
             }
+        }
+        if (validateOnly) {
+            return iTrue;
         }
         /* Avoid collisions with restored windows' serials. */
         advanceSerialCounter_Window(maxWindowSerial);
@@ -1091,10 +1132,13 @@ static iBool loadState_App_(iApp *d) {
     return iFalse;
 }
 
+static void syncFile_App_(const char *path);
+
 static void saveState_App_(const iApp *d, iBool withContent) {
     if (isAppleDesktop_Platform() && isEmpty_PtrArray(&d->mainWindows)) {
         return; /* nothing to save; keep what was saved earlier */
     }
+    lock_Mutex(saveMutex_App_);
     if (withContent) {
         trimCache_App();
     }
@@ -1102,7 +1146,9 @@ static void saveState_App_(const iApp *d, iBool withContent) {
        navigation history, cached content) and depends closely on the widget
        tree. The data is largely not reorderable and should not be modified
        by the user manually. */
-    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), tempStateFileName_App_));
+    const char *path     = concatPath_CStr(dataDir_App_(), stateFileName_App_);
+    const char *tempPath = concatPath_CStr(dataDir_App_(), tempStateFileName_App_);
+    iFile      *f        = newCStr_File(tempPath);
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
@@ -1159,26 +1205,35 @@ static void saveState_App_(const iApp *d, iBool withContent) {
     else {
         iRelease(f);
         fprintf(stderr, "[App] failed to save state: %s\n", strerror(errno));
+        unlock_Mutex(saveMutex_App_);
         return;
     }
+#if defined (iPlatformAndroidMobile)
+    syncFile_App_(tempPath);
+    /* The old state is used as a backup copy. */
+    renamePath_CStr(path, concatPath_CStr(dataDir_App_(), backupStateFileName_App_));
+#endif
     /* Copy it over to the real file. This avoids truncation if the app for any reason crashes
        before the state file is fully written. */
-    commitFile_App(concatPath_CStr(dataDir_App_(), stateFileName_App_),
-                   concatPath_CStr(dataDir_App_(), tempStateFileName_App_));
+    commitFile_App(path, tempPath);
+    unlock_Mutex(saveMutex_App_);
+}
+
+static void syncFile_App_(const char *path) {
+#if defined (iPlatformAndroidMobile)
+    /* Ensure new file contents are flushed to disk. */
+    const int fd = open(path, O_WRONLY);
+    if (fd >= 0) {
+        fsync(fd);
+        close(fd);
+    }
+#else
+    iUnused(path);
+#endif
 }
 
 void commitFile_App(const char *path, const char *tempPathWithNewContents) {
-#if defined (iPlatformAndroidMobile)
-    /* Make sure the new content is durable on disk before it replaces the old file: a
-       rename() is atomic but not durable by itself, and Android is more likely to kill
-       the process (or the whole device may lose power) right after this. */ {
-        const int fd = open(tempPathWithNewContents, O_WRONLY);
-        if (fd >= 0) {
-            fsync(fd);
-            close(fd);
-        }
-    }
-#endif
+    syncFile_App_(tempPathWithNewContents); /* no-op if already synced */
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
     iString *oldPath = collectNewCStr_String(path);
     appendCStr_String(oldPath, ".old");
@@ -1387,6 +1442,9 @@ static void postQuitOnSigTerm_(int sig) {
 
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
+    if (!saveMutex_App_) {
+        saveMutex_App_ = new_Mutex();
+    }
 #if defined (iPlatformAndroid)
     /* Internal storage may be limited in size. */
     migrateInternalUserDirToExternalStorage_App_(d);
@@ -2451,6 +2509,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAndroidMobile)
                 /* Use the system Back button to close panels, if they're open. */
                 if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_AC_BACK) {
+                    if (ev.key.repeat) {
+                        /* Holding down the Back button should not keep going back in history. */
+                        continue;
+                    }
                     const uint32_t now = SDL_GetTicks();
                     if (now - d->lastBackButtonTime < 100) {
                         /* Suspiciously rapid, must be a double-posted event. The behavior of
@@ -2733,17 +2795,24 @@ backToMainLoop:;
 static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
     switch (ev->type) {
         case SDL_APP_TERMINATING: {
+#if defined (iPlatformAndroidMobile)
+            /* Sent from the Java UI thread (SDLActivity.onDestroy()): app and widget
+               state must not be touched. App state was already saved on the SDL main
+               thread when the app went to the background, and will be saved again by
+               deinit_App(). */
+#else
             iForEach(PtrArray, i, &d->mainWindows) {
                 setFreezeDraw_MainWindow(*i.value, iTrue);
             }
-#if defined (iPlatformAppleMobile)
+#  if defined (iPlatformAppleMobile)
             /* SDL docs warn that we may not get any execution time after this event,
                so deinitialize everything immediately. */
             deinit_App(d);
             d->isRunning = iFalse; /* stop the main loop; no further event processing */
-#else
+#  else
             savePrefs_App_(d);
             saveState_App_(d, iTrue);
+#  endif
 #endif
             break;
         }

@@ -53,6 +53,7 @@ static jobject cachedActivity_ = NULL; /* JNI global ref to activity; valid from
    loop blocks on a condition variable to avoid spinning. The mutex protects all access to the
    condition variable, ensuring correct memory visibility across CPU cores. */
 static iAtomicInt  isAppInBackground_;
+static iAtomicInt  isAppDestroyed_; /* the SDL main loop must run to handle SDL_QUIT */
 static iCondition  blockCond_;
 static iMutex      blockMutex_;
 
@@ -145,6 +146,7 @@ static int startLogOutputThread_(void) {
 }
 
 void setupApplication_Android(void) {
+    set_Atomic(&isAppDestroyed_, 0); /* the process may be reused for a new activity */
     init_Condition(&blockCond_);
     init_Mutex(&blockMutex_);
     init_Condition(&saveCond_);
@@ -513,10 +515,11 @@ void blockWhileAppInBackground_Android(void) {
     if (!isAppInBackground_Android() || numActiveSDLAudio_Player() > 0) return;
     iGuardMutex(&blockMutex_,
         /* We will block here until the app returns to the foreground, there is audio
-           playing, or a state/prefs save has been requested (e.g., the app is being
-           stopped and needs this thread to run the save). */
+           playing, a state/prefs save has been requested (e.g., the app is being
+           stopped and needs this thread to run the save), or the activity is being
+           destroyed and SDLActivity.onDestroy() is waiting for this thread to quit. */
         while (isAppInBackground_Android() && numActiveSDLAudio_Player() == 0 &&
-               !saveRequested_) {
+               !saveRequested_ && !value_Atomic(&isAppDestroyed_)) {
             iTime timeout;
             initSeconds_Time(&timeout, 1.0);
             waitTimeout_Condition(&blockCond_, &blockMutex_, &timeout);
@@ -561,6 +564,18 @@ JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppStoppi
                 break;
             }
         }
+    });
+}
+
+JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_notifyAppDestroying(
+        JNIEnv *env, jclass jcls) {
+    iUnused(env, jcls);
+    /* Called from Java onDestroy() before SDL posts SDL_QUIT and waits for the SDL main
+       thread to exit. If that thread were left blocked in the background, it would never
+       see SDL_QUIT, and onDestroy() would hang until the system kills the process. */
+    iGuardMutex(&blockMutex_, {
+        set_Atomic(&isAppDestroyed_, 1);
+        signal_Condition(&blockCond_);
     });
 }
 
