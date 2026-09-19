@@ -2616,11 +2616,20 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
-        cancel_DocumentFetch(d->fetch, iFalse);
+        const iBool wasCancelled = cancel_DocumentFetch(d->fetch, iFalse);
         if (!goBack_History(d->mod.history)) {
             /* No document will be arriving, so nothing would ever end the animation or
                replace the swiped-away view. */
             abort_DocumentSwipe(d->swipe);
+#if defined (iPlatformAndroidMobile)
+            if (argLabel_Command(cmd, "backbutton") && !wasCancelled) {
+                /* The system Back button was not used by anything else and there is nothing
+                   to go back to; exit out of the app. */
+                javaCommand_Android("app.background");
+            }
+#else
+            iUnused(wasCancelled);
+#endif
             return iTrue;
         }
         if (argLabel_Command(cmd, "swipe")) {
