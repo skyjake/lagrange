@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.21 (Beta 59)
+* The system Back button at the end of history leaves the app.
+* Ensure UI state saving does not corrupt the file (prevent interruptions, concurrent writes).
+* Check saved UI state for validity before loading it.
+* Fixed potential hang when quitting the app that would force the system to eventually kill the process.
+
 ## 1.21 (Beta 58)
 * Fixed: Auto-opened input prompt dialog was duplicated when opening the same link again without first dismissing the first prompt.
 
