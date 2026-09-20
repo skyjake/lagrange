@@ -2101,9 +2101,13 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
     else if (!isEmpty_String(d->mod.url)) {
         /* IssueID #573: Crash when launching the app on Android. It appears that the TlsRequest
            thread crashes when it does something too early during app launch. As a workaround,
-           do not automatically reload the page during app launch if it isn't in the cache. */
+           the fetch is deferred until the launch has finished. Without this, a restored tab
+           whose content wasn't in the cache would be left blank until manually reloaded. */
         if (!isAndroid_Platform() || isFinishedLaunching_App()) {
             fetch_DocumentWidget_(d);
+        }
+        else {
+            postCommand_Widget(d, "~document.fetch");
         }
     }
     if (recent) {
@@ -4024,6 +4028,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     }
                 }
             }
+        }
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, w, "document.fetch")) {
+        /* This is used for deferred content fetches. */
+        if (!isRequestOngoing_DocumentWidget(d) && !isEmpty_String(d->mod.url)) {
+            fetch_DocumentWidget_(d);
         }
         return iTrue;
     }
