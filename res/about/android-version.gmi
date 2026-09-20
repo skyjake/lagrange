@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.21 (Beta 60)
+* The system Back button at the end of history leaves the app if the tab was opened from an external app. Otherwise, the tab is closed.
+
 ## 1.21 (Beta 59)
 * The system Back button at the end of history leaves the app.
 * Ensure UI state saving does not corrupt the file (prevent interruptions, concurrent writes).
