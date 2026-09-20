@@ -280,22 +280,34 @@ set (SOURCES
     src/doc/swipe.c
     src/doc/swipe.h
     # User interface:
+    src/ui/bookmarkdialogs.c
+    src/ui/bookmarkdialogs.h
     src/ui/command.c
     src/ui/command.h
+    src/ui/dialog.c
+    src/ui/dialog.h
     src/ui/gamepad.c
     src/ui/gamepad.h
+    src/ui/importdialogs.c
+    src/ui/importdialogs.h
     src/ui/keys.c
     src/ui/keys.h
+    src/ui/menu.c
+    src/ui/menu.h
     src/ui/metrics.c
     src/ui/metrics.h
     src/ui/root.c
     src/ui/root.h
     src/ui/mediaui.c
     src/ui/mediaui.h
+    src/ui/miscdialogs.c
+    src/ui/miscdialogs.h
     src/ui/mobile.c
     src/ui/mobile.h
     src/ui/prefsdialog.c
     src/ui/prefsdialog.h
+    src/ui/tabs.c
+    src/ui/tabs.h
     src/ui/touch.c
     src/ui/touch.h
     src/ui/translation.c

@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "defs.h"
 #include "gmdocument.h"
+#include "ui/command.h"
+#include "ui/dialog.h"
 #include "ui/documentwidget.h"
 #include "ui/labelwidget.h"
 #include "ui/util.h"
@@ -160,6 +162,169 @@ iBeginDefineSubclass(TranslationProgressWidget, Widget)
 
 /*----------------------------------------------------------------------------------------------*/
 
+static const iMenuItem languages[] = {
+    { "${lang.auto}", 0, 0, "xlt.lang id:auto" },
+    { "${lang.ar} - ar", 0, 0, "xlt.lang id:ar" },
+    { "${lang.az} - az", 0, 0, "xlt.lang id:az" },
+    { "${lang.ca} - ca", 0, 0, "xlt.lang id:ca" },
+    { "${lang.cs} - cs", 0, 0, "xlt.lang id:cs" },
+    { "${lang.da} - da", 0, 0, "xlt.lang id:da" },
+    { "${lang.de} - de", 0, 0, "xlt.lang id:de" },
+    { "${lang.el} - el", 0, 0, "xlt.lang id:el" },
+    { "${lang.en} - en", 0, 0, "xlt.lang id:en" },
+    { "${lang.eo} - eo", 0, 0, "xlt.lang id:eo" },
+    { "${lang.es} - es", 0, 0, "xlt.lang id:es" },
+    { "${lang.fa} - fa", 0, 0, "xlt.lang id:fa" },
+    { "${lang.fi} - fi", 0, 0, "xlt.lang id:fi" },
+    { "${lang.fr} - fr", 0, 0, "xlt.lang id:fr" },
+    { "${lang.ga} - ga", 0, 0, "xlt.lang id:ga" },
+    { "${lang.he} - he", 0, 0, "xlt.lang id:he" },
+    { "${lang.hi} - hi", 0, 0, "xlt.lang id:hi" },
+    { "${lang.hu} - hu", 0, 0, "xlt.lang id:hu" },
+    { "${lang.id} - id", 0, 0, "xlt.lang id:id" },
+    { "${lang.it} - it", 0, 0, "xlt.lang id:it" },
+    { "${lang.ja} - ja", 0, 0, "xlt.lang id:ja" },
+    { "${lang.ko} - ko", 0, 0, "xlt.lang id:ko" },
+    { "${lang.nl} - nl", 0, 0, "xlt.lang id:nl" },
+    { "${lang.pl} - pl", 0, 0, "xlt.lang id:pl" },
+    { "${lang.pt} - pt", 0, 0, "xlt.lang id:pt" },
+    { "${lang.ru} - ru", 0, 0, "xlt.lang id:ru" },
+    { "${lang.sk} - sk", 0, 0, "xlt.lang id:sk" },
+    { "${lang.sv} - sv", 0, 0, "xlt.lang id:sv" },
+    { "${lang.tr} - tr", 0, 0, "xlt.lang id:tr" },
+    { "${lang.uk} - uk", 0, 0, "xlt.lang id:uk" },
+    { "${lang.zh} - zh", 0, 0, "xlt.lang id:zh" },
+    { NULL }
+};
+
+static const char *languageId_String_(const iString *menuItemLabel) {
+    iForIndices(i, languages) {
+        if (!languages[i].label) break;
+        if (!cmp_String(menuItemLabel, translateCStr_Lang(languages[i].label))) {
+            return cstr_Command(languages[i].command, "id");
+        }
+    }
+    return "";
+}
+
+static int languageIndex_CStr_(const char *langId) {
+    iForIndices(i, languages) {
+        if (!languages[i].label) break;
+        if (equal_Rangecc(range_Command(languages[i].command, "id"), langId)) {
+            return (int) i;
+        }
+    }
+    return -1;
+}
+
+static iBool translationHandler_(iWidget *dlg, const char *cmd) {
+    iUnused(dlg);
+    if (equal_Command(cmd, "xlt.lang")) {
+        const iMenuItem *langItem = &languages[languageIndex_CStr_(cstr_Command(cmd, "id"))];
+        iWidget *widget = pointer_Command(cmd);
+        iLabelWidget *drop;
+        /* TODO: Add a utility to find the menu button of a dropdown. */
+        /* This is a bit convoluted because finding the menu button of a particular menu item
+           depends on whether the menu is native or not, and if it was shown in a popup window
+           or in the same window. */
+        if (flags_Widget(widget) & nativeMenu_WidgetFlag) {
+            drop = (iLabelWidget *) parent_Widget(widget);
+        }
+        else if (isInstance_Object(widget, &Class_LabelWidget) &&
+                 !cmp_String(command_LabelWidget((iLabelWidget *) widget), "menu.open")) {
+            /* When a selection is made via a detached popup menu, the command is re-sent
+               as if it was from the menu button itself, so it gets handled in the
+               correct root.  */
+            drop = (iLabelWidget *) widget;
+        }
+        else {
+            iWidget *menu = parent_Widget(widget);
+            iAssert(!cmp_String(id_Widget(menu), "menu"));
+            drop = (iLabelWidget *) parent_Widget(menu);
+        }
+        iAssert(isInstance_Object(drop, &Class_LabelWidget));
+        updateDropdownSelection_LabelWidget(drop, langItem->command);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+static iWidget *makeTranslation_Widget_(iWidget *parent) {
+    const iMenuItem actions[] = {
+        { "${cancel}", SDLK_ESCAPE, 0, "translation.cancel" },
+        { uiTextAction_ColorEscape "${dlg.translate}", SDLK_RETURN, 0, "translation.submit" }
+    };
+    iWidget *dlg;
+    if (isUsingPanelLayout_Mobile()) {
+        dlg = makePanelsParent_Mobile(parent, "xlt", (iMenuItem[]){
+            { "title id:heading.translate" },
+            { "dropdown id:xlt.from text:${dlg.translate.from}", 0, 0, (const void *) languages },
+            { "dropdown id:xlt.to text:${dlg.translate.to}",     0, 0, (const void *) languages },
+            { "padding" },
+            { "toggle id:xlt.preskip text:${dlg.translate.pre}" },
+            //{ "padding arg:3" },
+            { NULL }
+        }, actions, iElemCount(actions));
+        setFlags_Widget(dlg, keepOnTop_WidgetFlag, iTrue);
+        arrange_Widget(dlg);
+    }
+    else {
+        dlg = makeSheet_Widget("xlt");
+        setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
+        dlg->minSize.x = 70 * gap_UI;
+        addDialogTitle_Widget(dlg, "${heading.translate}", NULL);
+        addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
+        iWidget *headings, *values;
+        iWidget *page;
+        addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
+        setId_Widget(page, "xlt.langs");
+        iLabelWidget *fromLang, *toLang;
+        const size_t numLangs = iElemCount(languages) - 1;
+        const char *widestLabel = languages[findWidestLabel_MenuItem(languages, numLangs)].label;
+        /* Source language. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.from}")));
+            setId_Widget(addChildFlags_Widget(values,
+                                              iClob(fromLang = makeMenuButton_LabelWidget(
+                                                        widestLabel, languages, numLangs)),
+                                              alignLeft_WidgetFlag),
+                         "xlt.from");
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(fromLang), "menu"),
+                                      uiBackgroundMenu_ColorId);
+        }
+        /* Target language. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.to}")));
+            setId_Widget(addChildFlags_Widget(values,
+                                              iClob(toLang = makeMenuButton_LabelWidget(
+                                                        widestLabel, languages, numLangs)),
+                                              alignLeft_WidgetFlag),
+                         "xlt.to");
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
+                                      uiBackgroundMenu_ColorId);
+        }
+        /* Options. */ {
+            //addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
+            addDialogPadding_Widget(headings, values);
+            addDialogToggle_Widget(headings, values, "${dlg.translate.pre}", "xlt.preskip");
+        }
+        addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(parent, iClob(dlg));
+        arrange_Widget(dlg);
+        arrange_Widget(dlg); /* TODO: Augh, another layout bug: two arranges required. */
+    }
+    /* Update choices. */
+    setToggle_Widget(findChild_Widget(dlg, "xlt.preskip"), prefs_App()->translationIgnorePre);
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.from"),
+                                        languages[prefs_App()->langFrom].command);
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),
+                                        languages[prefs_App()->langTo].command);
+    setCommandHandler_Widget(dlg, translationHandler_);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    return dlg;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 iDefineTypeConstructionArgs(Translation, (iDocumentWidget *doc), doc)
 
 static const char *   translationServiceHost = "xlt.skyjake.fi";
@@ -272,7 +437,7 @@ static void finished_Translation_(iTlsRequest *d, iTlsRequest *req) {
 }
 
 void init_Translation(iTranslation *d, iDocumentWidget *doc) {
-    d->dlg       = makeTranslation_Widget(as_Widget(doc));
+    d->dlg       = makeTranslation_Widget_(as_Widget(doc));
     d->startTime = 0;
     d->doc       = doc; /* owner */
     d->request   = new_TlsRequest();
@@ -305,12 +470,12 @@ static uint32_t animate_Translation_(iAny *ptr, SDL_TimerID timerID, uint32_t in
 void submit_Translation(iTranslation *d) {
     iAssert(status_TlsRequest(d->request) != submitted_TlsRequestStatus);
     /* Check the selected languages from the dialog. */
-    const char *idFrom = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.from")));
-    const char *idTo   = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.to")));
+    const char *idFrom = languageId_String_(text_LabelWidget(findChild_Widget(d->dlg, "xlt.from")));
+    const char *idTo   = languageId_String_(text_LabelWidget(findChild_Widget(d->dlg, "xlt.to")));
     /* Remember these in Preferences. */
     postCommandf_App("translation.languages from:%d to:%d pre:%d",
-                     languageIndex_CStr(idFrom),
-                     languageIndex_CStr(idTo),
+                     languageIndex_CStr_(idFrom),
+                     languageIndex_CStr_(idTo),
                      d->includingPreformatted);
     iBlock * json   = collect_Block(new_Block(0));
     iString *docSrc = collectNew_String();
