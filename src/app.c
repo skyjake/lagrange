@@ -152,7 +152,8 @@ static const char *tempPrefsFileName_App_   = PREFS_NAME ".cfg.tmp";
 static const char *oldStateFileName_App_    = STATE_NAME ".binary";
 static const char *stateFileName_App_       = STATE_NAME ".lgr";
 static const char *tempStateFileName_App_   = STATE_NAME ".lgr.tmp";
-static const char *backupStateFileName_App_ = STATE_NAME ".lgr.old"; /* Windows, Android */
+static const char *backupStateFileName_App_ = STATE_NAME ".lgr.old";   /* Windows, Android */
+static const char *quickStateFileName_App_  = STATE_NAME "-quick.lgr"; /* no cached content */
 static const char *defaultDownloadDir_App_ = "~/Downloads";
 
 /* Only one thread can write the state/prefs files at a time. */
@@ -874,6 +875,16 @@ static iBool loadState_App_(iApp *d) {
     const char *oldPath    = concatPath_CStr(dataDir_App_(), oldStateFileName_App_);
     const char *path       = concatPath_CStr(dataDir_App_(), stateFileName_App_);
     const char *backupPath = concatPath_CStr(dataDir_App_(), backupStateFileName_App_);
+    const char *quickPath  = concatPath_CStr(dataDir_App_(), quickStateFileName_App_);
+    if (fileExistsCStr_FileInfo(quickPath)) {
+        /* A quick save is left behind only when the app did not get to save the full state,
+           so this is the most recent set of open tabs. There is no cached content in it; the
+           documents are refetched after the launch has finished. */
+        if (loadStateFile_App_(d, quickPath, iTrue)) {
+            return loadStateFile_App_(d, quickPath, iFalse);
+        }
+        fprintf(stderr, "[App] %s is damaged, loading the full state instead\n", quickPath);
+    }
     if (fileExistsCStr_FileInfo(path)) {
         /* If loading fails partway, the windows and tabs restored until then are left behind,
            so check the file first when there is a backup to use instead. */
@@ -1145,6 +1156,10 @@ static void saveState_App_(const iApp *d, iBool withContent) {
         return; /* nothing to save; keep what was saved earlier */
     }
     lock_Mutex(saveMutex_App_);
+    /* A quick save omits the cached content, so it is written to a file of its own. The full
+       state file must not be overwritten with a copy that has no content in it. */
+    const char *fullPath  = concatPath_CStr(dataDir_App_(), stateFileName_App_);
+    const char *quickPath = concatPath_CStr(dataDir_App_(), quickStateFileName_App_);
     if (withContent) {
         trimCache_App();
     }
@@ -1152,7 +1167,7 @@ static void saveState_App_(const iApp *d, iBool withContent) {
        navigation history, cached content) and depends closely on the widget
        tree. The data is largely not reorderable and should not be modified
        by the user manually. */
-    const char *path     = concatPath_CStr(dataDir_App_(), stateFileName_App_);
+    const char *path     = withContent ? fullPath : quickPath;
     const char *tempPath = concatPath_CStr(dataDir_App_(), tempStateFileName_App_);
     iFile      *f        = newCStr_File(tempPath);
     if (open_File(f, writeOnly_FileMode)) {
@@ -1216,12 +1231,19 @@ static void saveState_App_(const iApp *d, iBool withContent) {
     }
 #if defined (iPlatformAndroidMobile)
     syncFile_App_(tempPath);
-    /* The old state is used as a backup copy. */
-    renamePath_CStr(path, concatPath_CStr(dataDir_App_(), backupStateFileName_App_));
+    if (withContent) {
+        /* The old state is used as a backup copy. A quick save has no backup of its own; the
+           full state file is the fallback. */
+        renamePath_CStr(path, concatPath_CStr(dataDir_App_(), backupStateFileName_App_));
+    }
 #endif
     /* Copy it over to the real file. This avoids truncation if the app for any reason crashes
        before the state file is fully written. */
     commitFile_App(path, tempPath);
+    if (withContent) {
+        /* State saved fully so discard the partial quick save. */
+        removePath_CStr(quickPath);
+    }
     unlock_Mutex(saveMutex_App_);
 }
 
