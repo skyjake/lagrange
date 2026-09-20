@@ -101,6 +101,7 @@ void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, 
                                          const iBlock *source, float normScrollY);
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
+void    setOpenedExternally_DocumentWidget (iDocumentWidget *, iBool openedExternally);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
 
 void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */

@@ -5256,6 +5256,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         /* `newtab:2` to open in background */
         doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0 ? switchTo_NewTabFlag : 0);
     }
+    setOpenedExternally_DocumentWidget(doc, argLabel_Command(cmd, "external") != 0);
     iHistory   *history       = history_DocumentWidget(doc);
     const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
     int         redirectCount = argLabel_Command(cmd, "redirect");

@@ -207,6 +207,7 @@ enum iDocumentWidgetFlag {
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
     setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
     newTabViaHomeKeys_DocumentWidgetFlag     = iBit(5),
+    openedExternally_DocumentWidgetFlag      = iBit(6), /* opened via an external URL event */
     selectWords_DocumentWidgetFlag           = iBit(7),
     selectLines_DocumentWidgetFlag           = iBit(8),
     pinchZoom_DocumentWidgetFlag             = iBit(9),
@@ -4085,8 +4086,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
 #if defined (iPlatformAndroidMobile)
             if (argLabel_Command(cmd, "backbutton") && !wasCancelled) {
                 /* The system Back button was not used by anything else and there is nothing
-                   to go back to; exit out of the app. */
-                javaCommand_Android("app.background");
+                   to go back to. */
+                if (d->flags & openedExternally_DocumentWidgetFlag) {
+                    javaCommand_Android("app.background"); /* back to external app */
+                }
+                else {
+                    postCommand_App("tabs.close"); /* back to originating tab, perhaps */
+                }
             }
 #else
             iUnused(wasCancelled);
@@ -6372,6 +6378,10 @@ void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
 
 void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
     d->redirectCount = count;
+}
+
+void setOpenedExternally_DocumentWidget(iDocumentWidget *d, iBool openedExternally) {
+    iChangeFlags(d->flags, openedExternally_DocumentWidgetFlag, openedExternally);
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
