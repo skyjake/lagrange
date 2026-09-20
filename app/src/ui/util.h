@@ -388,6 +388,14 @@ int           dialogTransitionDir_Widget(const iWidget *);
 iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
 iWidget      *addDialogToggle_Widget    (iWidget *headings, iWidget *values,
                                          const char *heading, const char *toggleId);
+void          addDialogPadding_Widget   (iWidget *headings, iWidget *values);
+void          makeTwoColumnHeading_Widget(const char *title, iWidget *headings, iWidget *values);
+void          addRadioButton_Widget     (iWidget *parent, const char *id, const char *label,
+                                         const char *cmd);
+void          addPrefsInputWithHeading_Widget(iWidget *headings, iWidget *values, const char *id,
+                                         iInputWidget *input);
+iLabelWidget *addDialogDropMenu_Widget  (iWidget *headings, iWidget *values, const char *title,
+                                         const iMenuItem *items, size_t numItems, const char *id);
 iLabelWidget *addWrappedLabel_Widget    (iWidget *, const char *text, const char *idOrNull);
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,
@@ -411,9 +419,6 @@ iWidget *   makeMessage_Widget      (const char *title, const char *msg,
                                      const iMenuItem *items, size_t numItems);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
                                      const iMenuItem *items, size_t numItems);
-
-iWidget *   makePreferences_Widget          (void);
-void        updatePreferencesLayout_Widget  (iWidget *prefs);
 
 iWidget *   makeBookmarkEditor_Widget       (uint32_t folderId, iBool withDup);
 void        setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folderId);

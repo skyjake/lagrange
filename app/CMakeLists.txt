@@ -211,6 +211,14 @@ set (SOURCES
     src/main.c
     src/app.c
     src/app.h
+    src/app/commands.c
+    src/app/events.c
+    src/app/impl.h
+    src/app/paths.c
+    src/app/prefs.c
+    src/app/startup.c
+    src/app/state.c
+    src/app/windows.c
     src/bookmarks.c
     src/bookmarks.h
     src/color.c
@@ -286,6 +294,8 @@ set (SOURCES
     src/ui/mediaui.h
     src/ui/mobile.c
     src/ui/mobile.h
+    src/ui/prefsdialog.c
+    src/ui/prefsdialog.h
     src/ui/touch.c
     src/ui/touch.h
     src/ui/translation.c

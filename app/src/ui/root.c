@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "lookupwidget.h"
+#include "prefsdialog.h"
 #include "keyboardwidget.h"
 #include "sidebarwidget.h"
 #include <lagrange/snippets.h>

@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "touch.h"
 #include "gamepad.h"
+#include "prefsdialog.h"
 #include "util.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
