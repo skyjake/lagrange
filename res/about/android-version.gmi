@@ -8,6 +8,8 @@
 
 ## 1.21 (Beta 60)
 * The system Back button at the end of history leaves the app if the tab was opened from an external app. Otherwise, the tab is closed.
+* Fixed restoring cached tab contents at launch.
+* Fixed restoring active tab at launch.
 
 ## 1.21 (Beta 59)
 * The system Back button at the end of history leaves the app.
