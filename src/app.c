@@ -1083,7 +1083,13 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
             const iCurrentTabs *cur = i.value;
             win = at_PtrArray(&d->mainWindows, index_ArrayIterator(&i));
             for (size_t j = 0; j < 2; ++j) {
-                postCommandf_Root(win->base.roots[j], "tabs.switch page:%p", cur->currentTab[j]);
+                /* A root that isn't in use has no current tab. Posting the switch anyway would
+                   send a rootless command with a null page to every root, overriding the tab
+                   that was just restored. */
+                if (win->base.roots[j] && cur->currentTab[j]) {
+                    postCommandf_Root(win->base.roots[j], "tabs.switch page:%p",
+                                      cur->currentTab[j]);
+                }
             }
             if (win->splitMode) {
                 /* Update root placement. */
