@@ -88,6 +88,12 @@ void    updateTrust_DocumentFetch       (iDocumentFetch *, const iGmResponse *);
 void    cleanupRedirected_DocumentFetch (iDocumentFetch *);
 void    restoreAddressBarAndHistory_DocumentFetch(iDocumentFetch *, const iString *fetchedUrl);
 
+void    updateDocument_DocumentFetch    (iDocumentFetch *, const iGmResponse *response,
+                                         iGmDocument *cachedDoc, iBool isInitialUpdate);
+void    showErrorPage_DocumentFetch     (iDocumentFetch *, enum iGmStatusCode code,
+                                         const iString *meta);
+void    addBannerWarnings_DocumentFetch (iDocumentFetch *);
+
 void    requestUpdated_DocumentFetch (iAnyObject *); /* GmRequest audience */
 void    requestFinished_DocumentFetch(iAnyObject *);
 

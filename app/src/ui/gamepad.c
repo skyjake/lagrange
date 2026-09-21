@@ -187,7 +187,7 @@ static void ticker_Gamepad_(void *context) {
                 .type      = SDL_EVENT_MOUSE_WHEEL,
                 .which     = mouseId_Gamepad,
                 .windowID  = id_Window(d->window),
-                .direction = perPixel_MouseWheelFlag,
+                .direction = (SDL_MouseWheelDirection) perPixel_MouseWheelFlag,
                 .y         = -pixels,
                 .mouse_x   = d->pointer.x,
                 .mouse_y   = d->pointer.y,

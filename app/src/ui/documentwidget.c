@@ -31,10 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "doc/documentview.h"
 #include "doc/fetch.h"
 #include "doc/inlinemedia.h"
-#include "doc/inputprompts.h"
+#include "doc/query.h"
 #include "doc/swipe.h"
 #include "doc/persistentstate.h"
-#include "export.h"
 #include "gempub.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
@@ -73,7 +72,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "platform/android.h"
 #endif
 
-#include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/intset.h>
@@ -81,7 +79,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
-#include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
 #include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_timer.h>
@@ -162,7 +159,7 @@ struct Impl_DocumentWidget {
     iDocumentView *view;
     iBanner *      banner;
     iInlineMedia * media;
-    iInputPrompts *inputPrompts;
+    iQuery *       query;
     iDocumentSwipe *swipe;
     iLinkInfo *    linkInfo;
 
@@ -400,7 +397,7 @@ void animate_DocumentWidget(void *ticker) {
     refresh_Widget(d);
     maybeFinish_DocumentSwipe(d->swipe);
     repositionInlinePrompts_DocumentWidget(d, d->view);
-    repositionOutgoing_InputPrompts(d->inputPrompts);
+    repositionOutgoing_Query(d->query);
     if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
         !isFinished_Anim(offset_DocumentSwipe(d->swipe)) || swipeView_DocumentWidget(d) ||
         (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity))) {
@@ -611,7 +608,7 @@ static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
+void updateBanner_DocumentWidget(iDocumentWidget *d) {
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view->doc));
 }
 
@@ -622,7 +619,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     updateVisitedLinks_GmDocument(d->view->doc);
     documentRunsInvalidated_DocumentWidget(d);
     updateWindowTitle_DocumentWidget_(d);
-    updateBanner_DocumentWidget_(d);
+    updateBanner_DocumentWidget(d);
     updateVisible_DocumentView(d->view);
     updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
     invalidate_DocumentWidget(d);
@@ -666,14 +663,14 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->view == swipeView_DocumentWidget(d)) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
-        deferOutgoing_InputPrompts(d->inputPrompts);
+        deferOutgoing_Query(d->query);
         takeOutgoing_DocumentSwipe(d->swipe, d->view, d->banner);
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
         setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
         allocView_DocumentWidget_(d);
     }
-    destroyAll_InputPrompts(d->inputPrompts);
+    destroyAll_Query(d->query);
     cancelInputPrompt_DocumentWidget_(d);
     iRelease(d->view->doc);
     d->view->doc = NULL;
@@ -693,7 +690,7 @@ void updateTheme_DocumentWidget(iDocumentWidget *d) {
         return;
     }
     updateDrawBufs_DocumentView(d->view, updateTimestampBuf_DrawBufsFlag);
-    updateBanner_DocumentWidget_(d);
+    updateBanner_DocumentWidget(d);
 }
 
 void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items, size_t count) {
@@ -726,470 +723,6 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
     updateVisible_DocumentView(d->view); /* final placement for the buttons */
 }
 
-void showErrorPage_DocumentWidget(iDocumentWidget *d, enum iGmStatusCode code,
-                                          const iString *meta) {
-    iString        *src = collectNew_String();
-    const iGmError *msg = get_GmError(code);
-    destroy_Widget(d->footerButtons);
-    d->footerButtons = NULL;
-    const iString *serverErrorMsg = NULL;
-    if (meta) {
-        switch (code) {
-            case schemeChangeRedirect_GmStatusCode:
-            case tooManyRedirects_GmStatusCode:
-                appendFormat_String(src, "=> %s\n", cstr_String(meta));
-                break;
-            case tlsServerCertificateExpired_GmStatusCode:
-                makeFooterButtons_DocumentWidget(
-                    d,
-                    (iMenuItem[]){ { rightArrowhead_Icon " ${menu.unexpire}",
-                                       SDLK_RETURN, 0, "server.unexpire"
-                                   },
-                                   { info_Icon " ${menu.pageinfo}",
-                                     SDLK_I,
-                                     KMOD_PRIMARY,
-                                     "document.info" } },
-                    2);
-                break;
-            case tlsServerCertificateNotVerified_GmStatusCode:
-            case proxyCertificateNotVerified_GmStatusCode:
-                makeFooterButtons_DocumentWidget(
-                    d,
-                    (iMenuItem[]){ { info_Icon " ${menu.pageinfo}",
-                                     SDLK_I,
-                                     KMOD_PRIMARY,
-                                     "document.info" } },
-                    1);
-                break;
-            case failedToOpenFile_GmStatusCode:
-            case certificateNotValid_GmStatusCode:
-//                appendFormat_String(src, "%s", cstr_String(meta));
-                break;
-            case unsupportedMimeType_GmStatusCode: {
-                iString *key = collectNew_String();
-                toString_Sym(SDLK_S, KMOD_PRIMARY, key);
-//                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
-                const char *mtype = mediaTypeFromFileExtension_String(d->mod.url);
-                iArray items;
-                init_Array(&items, sizeof(iMenuItem));
-                if (iCmpStr(mtype, "application/octet-stream")) {
-                    pushBack_Array(
-                        &items,
-                        &(iMenuItem){ translateCStr_Lang(format_CStr("View as \"%s\"", mtype)),
-                                      SDLK_RETURN,
-                                      0,
-                                      format_CStr("document.setmediatype mime:%s", mtype) });
-                }
-                pushBack_Array(&items,
-                               &(iMenuItem){ export_Icon " ${menu.open.external}",
-                                             SDLK_RETURN,
-                                             KMOD_PRIMARY,
-                                             "document.save extview:1" });
-                pushBack_Array(
-                    &items,
-                    &(iMenuItem){ translateCStr_Lang(download_Icon " " saveToDownloads_Label),
-                                  0,
-                                  0,
-                                  "document.save" });
-                makeFooterButtons_DocumentWidget(d, data_Array(&items), size_Array(&items));
-                deinit_Array(&items);
-                serverErrorMsg = collectNewFormat_String("%s (%s)", msg->title, cstr_String(meta));
-                break;
-            }
-            default:
-                if (!isEmpty_String(meta)) {
-                    serverErrorMsg = meta;
-                }
-                break;
-        }
-    }
-    if (category_GmStatusCode(code) == categoryClientCertificate_GmStatus) {
-        makeFooterButtons_DocumentWidget(
-            d,
-            (iMenuItem[]){
-                { person_Icon " ${menu.identity.newdomain}", SDLK_N, 0, "ident.new scope:1" },
-                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-                { leftHalf_Icon " ${menu.show.identities}", showIdentities_KeyShortcut,
-                  deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
-                                                            : "preferences idents:1" } },
-            3);
-    }
-    /* Make a new document for the error page.*/
-    iGmDocument *errorDoc = new_GmDocument();
-    setMode_GmDocument(errorDoc, coverPage_GmDocumentMode); /* UI content */
-    setWidth_GmDocument(errorDoc,
-                        documentWidth_DocumentView(d->view),
-                        width_Widget(d),
-                        maxDocumentWidth_DocumentView(d->view));
-    setUrl_GmDocument(errorDoc, d->mod.url);
-    setFormat_GmDocument(errorDoc, gemini_SourceFormat);
-    replaceDocument_DocumentWidget(d, errorDoc);
-    iRelease(errorDoc);
-    clear_Banner(d->banner);
-    add_Banner(d->banner, error_BannerType, code, serverErrorMsg, NULL);
-    d->fetch->state = ready_RequestState;
-    setSource_DocumentWidget(d, src);
-    updateTheme_DocumentWidget(d);
-    resetScroll_DocumentView(d->view);
-}
-
-static const char *zipPageHeading_(const iRangecc mime) {
-    if (equalCase_Rangecc(mime, "application/gpub+zip")) {
-        return book_Icon " Gempub";
-    }
-    else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
-        return fontpack_Icon " Fontpack";
-    }
-    else if (equalCase_Rangecc(mime, mimeType_Export)) {
-        return package_Icon " ${heading.archive.userdata}";
-    }
-    iRangecc type = iNullRange;
-    nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
-    nextSplit_Rangecc(mime, "/", &type);
-    if (startsWithCase_Rangecc(type, "x-")) {
-        type.start += 2;
-    }
-    iString *heading = upper_String(collectNewRange_String(type));
-    appendCStr_String(heading, " Archive");
-    prependCStr_String(heading, folder_Icon " ");
-    return cstrCollect_String(heading);
-}
-
-void updateDocument_DocumentWidget(iDocumentWidget *d,
-                                           const iGmResponse *response,
-                                           iGmDocument *cachedDoc,
-                                           const iBool isInitialUpdate) {
-    if (d->fetch->state == ready_RequestState) {
-        return;
-    }
-    const iBool isRequestFinished = isFinished_GmRequest(d->fetch->request);
-    /* TODO: Do document update in the background. However, that requires a text metrics calculator
-       that does not try to cache the glyph bitmaps. */
-    const enum iGmStatusCode statusCode = response->statusCode;
-    if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
-        iBool setSource = iTrue;
-        iString str;
-        invalidate_DocumentWidget(d);
-        if (document_App() == d) {
-            updateTheme_DocumentWidget(d);
-        }
-        clear_String(&d->fetch->sourceMime);
-        d->fetch->sourceTime = response->when;
-        updateDrawBufs_DocumentView(d->view, updateTimestampBuf_DrawBufsFlag);
-        initBlock_String(&str, &response->body); /* Note: Body may be megabytes in size. */
-        if (isSuccess_GmStatusCode(statusCode)) {
-            /* Check the MIME type. */
-            iRangecc           charset     = range_CStr("utf-8");
-            enum iSourceFormat docFormat   = undefined_SourceFormat;
-            iBool              isCoverPage = iFalse;
-            const iString     *mimeStr =
-                collect_String(lower_String(&response->meta)); /* for convenience */
-            set_String(&d->fetch->sourceMime, mimeStr);
-            iRangecc mime = range_String(mimeStr);
-            iRangecc seg = iNullRange;
-            while (nextSplit_Rangecc(mime, ";", &seg)) {
-                iRangecc param = seg;
-                trim_Rangecc(&param);
-                if (isRequestFinished) {
-                    /* Format autodetection. */
-                    if (equal_Rangecc(param, "application/octet-stream")) {
-                        /* Detect fontpacks even if the server doesn't use the right media type. */
-                        if (detect_FontPack(&response->body)) {
-                            param = range_CStr(mimeType_FontPack);
-                            isCoverPage = iTrue;
-                        }
-                        else if (isUtf8_Rangecc(range_Block(&response->body))) {
-                            param = range_CStr("text/plain");
-                        }
-                    }
-                    if (equal_Rangecc(param, "text/plain")) {
-                        iUrl parts;
-                        init_Url(&parts, d->mod.url);
-                        const iRangecc fileName = baseNameSep_Path(collectNewRange_String(parts.path), "/");
-                        if (endsWithCase_Rangecc(fileName, ".md") ||
-                            endsWithCase_Rangecc(fileName, ".mdown") ||
-                            endsWithCase_Rangecc(fileName, ".markdown")) {
-                            param = range_CStr("text/markdown");
-                        }
-#if 0
-                        else if ((endsWithCase_Rangecc(fileName, ".gmi") ||
-                                  endsWithCase_Rangecc(fileName, ".gemini")) &&
-                                 isEmpty_Range(&parts.query)) {
-                            /* The server _probably_ sent us the wrong media type, so assume
-                               they meant this is a Gemtext document based on the file extension.
-                               However, if the query string is present, the server likely knows
-                               what it's doing so only "fix" the type when a query component
-                               was not present. */
-                            param = range_CStr("text/gemini");
-                            /* TODO: A better way to do this would be to preserve the original
-                               media type and force a Gemtext view mode on the document.
-                               (https://github.com/skyjake/lagrange/issues/359) */
-                        }
-#endif
-                    }
-                }
-                if (equal_Rangecc(param, "text/gemini") ||
-                    equal_Rangecc(param, "text/gophermenu")) {
-                    docFormat = gemini_SourceFormat;
-                    setRange_String(&d->fetch->sourceMime, param);
-                }
-                else if (equal_Rangecc(param, "text/markdown")) {
-                    docFormat = markdown_SourceFormat;
-                    setRange_String(&d->fetch->sourceMime, param);
-                    postCommand_Widget(
-                        d, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
-                }
-                else if (startsWith_Rangecc(param, "text/") ||
-                         equal_Rangecc(param, "application/json") ||
-                         equal_Rangecc(param, "application/x-pem-file") ||
-                         equal_Rangecc(param, "application/pem-certificate-chain")) {
-                    docFormat = plainText_SourceFormat;
-                    setRange_String(&d->fetch->sourceMime, param);
-                }
-                else if (isRequestFinished && equal_Rangecc(param, "font/ttf")) {
-                    clear_String(&str);
-                    isCoverPage = iTrue;
-                    docFormat = gemini_SourceFormat;
-                    setRange_String(&d->fetch->sourceMime, param);
-                    format_String(&str, "# TrueType Font\n");
-                    iString *decUrl      = collect_String(urlDecode_String(d->mod.url));
-                    iRangecc name        = baseNameSep_Path(decUrl, "/");
-                    iBool    isInstalled = iFalse;
-                    if (startsWith_String(collect_String(localFilePathFromUrl_String(d->mod.url)),
-                                          cstr_String(fontsDir_App()))) {
-                        isInstalled = iTrue;
-                    }
-                    appendCStr_String(&str, "## ");
-                    appendRange_String(&str, name);
-                    appendCStr_String(&str, "\n\n");
-                    appendCStr_String(
-                        &str, cstr_Lang(isInstalled ? "truetype.help.installed" : "truetype.help"));
-                    appendCStr_String(&str, "\n");
-                    if (!isInstalled) {
-                        makeFooterButtons_DocumentWidget(
-                            d,
-                            (iMenuItem[]){
-                                { add_Icon " ${fontpack.install.ttf}",
-                                  SDLK_RETURN,
-                                  0,
-                                  format_CStr("!fontpack.install ttf:1 name:%s",
-                                              cstr_Rangecc(name)) },
-                                { folder_Icon " ${fontpack.open.fontsdir}",
-                                  SDLK_D,
-                                  0,
-                                  format_CStr("!open url:%s/fonts",
-                                              cstrCollect_String(makeFileUrl_String(dataDir_App())))
-                                }
-                            }, 2);
-                    }
-                }
-                else if (isRequestFinished &&
-                         (equal_Rangecc(param, "application/zip") ||
-                         (startsWith_Rangecc(param, "application/") &&
-                          endsWithCase_Rangecc(param, "+zip")))) {
-                    iArray *footerItems = collectNew_Array(sizeof(iMenuItem));
-                    clear_String(&str);
-                    isCoverPage = iTrue;
-                    docFormat = gemini_SourceFormat;
-                    setRange_String(&d->fetch->sourceMime, param);
-                    iArchive *zip = new_Archive();
-                    openData_Archive(zip, &response->body);
-                    if (equal_Rangecc(param, mimeType_FontPack)) {
-                        /* Show some information about fontpacks, and set up footer actions. */
-                        if (isOpen_Archive(zip)) {
-                            iFontPack *fp = new_FontPack();
-                            setUrl_FontPack(fp, d->mod.url);
-                            setStandalone_FontPack(fp, iTrue);
-                            if (loadArchive_FontPack(fp, zip)) {
-                                appendFormat_String(&str, "# " fontpack_Icon "%s\n%s",
-                                                    cstr_String(id_FontPack(fp).id),
-                                                    cstrCollect_String(infoText_FontPack(fp, iTrue)));
-                            }
-                            appendCStr_String(&str, "\n");
-                            appendCStr_String(&str, cstr_Lang("fontpack.help"));
-                            appendCStr_String(&str, "\n");
-                            iConstForEach(Array, a, actions_FontPack(fp, iTrue)) {
-                                pushBack_Array(footerItems, a.value);
-                            }
-                            delete_FontPack(fp);
-                        }
-                    }
-                    else {
-                        if (detect_Export(zip)) {
-                            setCStr_String(&d->fetch->sourceMime, mimeType_Export);
-                            if (!isMobile_Platform()) {
-                                pushBack_Array(footerItems,
-                                               &(iMenuItem){ openExt_Icon " ${menu.open.external}",
-                                                             SDLK_RETURN,
-                                                             KMOD_PRIMARY,
-                                                             "document.save extview:1" });
-                            }
-                        }
-                        format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->fetch->sourceMime)));
-                        appendFormat_String(
-                            &str,
-                            cstr_Lang("doc.archive"),
-                            cstr_Rangecc(baseNameSep_Path(collect_String(urlDecode_String(
-                                                              urlQueryStripped_String(d->mod.url))),
-                                                          "/")));
-                        appendCStr_String(&str, "\n");
-                    }
-                    iRelease(zip);
-                    appendCStr_String(&str, "\n");
-                    iString *localPath = localFilePathFromUrl_String(d->mod.url);
-                    if (!localPath || !fileExists_FileInfo(localPath)) {
-                        iString *key = collectNew_String();
-                        toString_Sym(SDLK_S, KMOD_PRIMARY, key);
-                        appendFormat_String(&str, "%s\n\n",
-                                            format_CStr(cstr_Lang("error.unsupported.suggestsave"),
-                                                        cstr_String(key),
-                                                        saveToDownloads_Label));
-                        if (findCommand_MenuItem(data_Array(footerItems),
-                                                 size_Array(footerItems),
-                                                 "document.save") == iInvalidPos) {
-                            pushBack_Array(
-                                footerItems,
-                                &(iMenuItem){
-                                    translateCStr_Lang(download_Icon " " saveToDownloads_Label),
-                                    0,
-                                    0,
-                                    "document.save" });
-                        }
-                    }
-                    if (!cmp_String(&d->fetch->sourceMime, mimeType_Export)) {
-                        appendFormat_String(&str, "%s\n", cstr_Lang("userdata.help"));
-                    }
-                    if (localPath && fileExists_FileInfo(localPath)) {
-                        if (!cmp_String(&d->fetch->sourceMime, mimeType_Export)) {
-                            pushFront_Array(footerItems,
-                                            &(iMenuItem){ import_Icon " " uiTextAction_ColorEscape
-                                                                      "\x1b[1m${menu.import}",
-                                                          SDLK_RETURN,
-                                                          0,
-                                                          format_CStr("!import path:%s",
-                                                                      cstr_String(localPath)) });
-                        }
-                        appendFormat_String(&str,
-                                            "=> %s/ " folder_Icon " ${doc.archive.view}\n",
-                                            cstr_String(withSpacesEncoded_String(d->mod.url)));
-                    }
-                    delete_String(localPath);
-                    translate_Lang(&str);
-                    makeFooterButtons_DocumentWidget(
-                        d, constData_Array(footerItems), size_Array(footerItems));
-                }
-                else if (!isTerminal_Platform() && (startsWith_Rangecc(param, "image/") ||
-                                                    startsWith_Rangecc(param, "audio/"))) {
-                    const iBool isAudio = startsWith_Rangecc(param, "audio/");
-                    /* Make a simple document with an image or audio player. */
-                    clear_String(&str);
-                    isCoverPage = iTrue;
-                    docFormat = gemini_SourceFormat;
-                    setRange_String(&d->fetch->sourceMime, param);
-                    const iGmLinkId imgLinkId = 1; /* there's only the one link */
-                    /* TODO: Do the image loading in `postProcessRequestContent_DocumentWidget_()` */
-                    if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
-                        const char *linkTitle = cstr_Lang(
-                            startsWith_String(mimeStr, "image/") ? "media.untitled.image"
-                                                                 : "media.untitled.audio");
-                        iUrl parts;
-                        init_Url(&parts, d->mod.url);
-                        if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data")) {
-                            linkTitle =
-                                baseName_Path(collect_String(newRange_String(parts.path))).start;
-                        }
-                        format_String(&str, "=> %s %s\n",
-                                      cstr_String(canonicalUrl_String(d->mod.url)),
-                                      linkTitle);
-                        setData_Media(media_GmDocument(d->view->doc),
-                                      imgLinkId,
-                                      mimeStr,
-                                      &response->body,
-                                      !isRequestFinished ? partialData_MediaFlag : 0);
-                        redoLayout_GmDocument(d->view->doc);
-                    }
-                    else if (isAudio && !isInitialUpdate) {
-                        /* Update the audio content. */
-                        setData_Media(media_GmDocument(d->view->doc),
-                                      imgLinkId,
-                                      mimeStr,
-                                      &response->body,
-                                      !isRequestFinished ? partialData_MediaFlag : 0);
-                        refresh_Widget(d);
-                        setSource = iFalse;
-                    }
-                    else {
-                        clear_String(&str);
-                    }
-                }
-                else if (startsWith_Rangecc(param, "charset=")) {
-                    charset = (iRangecc){ param.start + 8, param.end };
-                    /* Remove whitespace and quotes. */
-                    trim_Rangecc(&charset);
-                    if (*charset.start == '"' && *charset.end == '"') {
-                        charset.start++;
-                        charset.end--;
-                    }
-                }
-            }
-            if (docFormat == undefined_SourceFormat) {
-                if (isRequestFinished) {
-                    d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
-                    if (isUtf8_Rangecc(range_Block(&response->body))) {
-                        docFormat = plainText_SourceFormat;
-                        charset = range_CStr("utf-8");
-                        setWarning_GmDocument(
-                            d->view->doc, unsupportedMediaTypeShownAsUtf8_GmDocumentWarning, iTrue);
-                    }
-                    else {
-                        showErrorPage_DocumentWidget(d, unsupportedMimeType_GmStatusCode, &response->meta);
-                        deinit_String(&str);
-                        return;
-                    }
-                }
-                else {
-                    d->flags |= drawDownloadCounter_DocumentWidgetFlag;
-                    clear_PtrSet(d->view->invalidRuns);
-                    documentRunsInvalidated_DocumentWidget(d);
-                    deinit_String(&str);
-                    return;
-                }
-            }
-            if (isCoverPage) {
-                /* Cover pages are not considered normal content (e.g., error message, overview). */
-                setMode_GmDocument(d->view->doc, coverPage_GmDocumentMode);
-            }
-            setFormat_GmDocument(d->view->doc, docFormat);
-            /* Convert the source to UTF-8 if needed. */
-            if (equalCase_Rangecc(charset, "utf-8")) {
-                /* Verify that it actually is valid UTF-8. */
-                if (!isUtf8_Rangecc(range_String(&str))) {
-                    if (strstr(cstr_String(&str), "\x1b[")) {
-                        charset = range_CStr("cp437"); /* An educated guess. */
-                    }
-                    else {
-                        charset = range_CStr("latin1");
-                    }
-                }
-            }
-            if (!equalCase_Rangecc(charset, "utf-8")) {
-                set_String(&str,
-                           collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
-            }
-        }
-        if (cachedDoc) {
-            replaceDocument_DocumentWidget(d, cachedDoc);
-            if (updateWidth_DocumentView(d->view)) {
-                documentRunsInvalidated_DocumentWidget(d); /* GmRuns reallocated */
-            }
-        }
-        else if (setSource) {
-            setSource_DocumentWidget(d, &str);
-        }
-        deinit_String(&str);
-    }
-}
-
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     const iRangecc scheme = urlScheme_String(d->mod.url);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
@@ -1216,81 +749,6 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
             maxY = size_GmDocument(d->view->doc).y;
         }
         render_GmDocument(d->view->doc, (iRangei){ 0, maxY }, cacheRunGlyphs_, NULL);
-    }
-}
-
-static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
-    updateBanner_DocumentWidget_(d);
-    /* Warnings are not shown on internal pages. */
-    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "about")) {
-        clear_Banner(d->banner);
-        return;
-    }
-    /* Warnings related to certificates and trust. */
-    const int req = timeVerified_GmCertFlag | domainVerified_GmCertFlag | trusted_GmCertFlag;
-    int certFlags = d->fetch->certFlags;
-    if (prefs_App()->warnTlsSecurity && certFlags & available_GmCertFlag &&
-        (certFlags & req) != req && numItems_Banner(d->banner) == 0) {
-        iString *title = collectNewCStr_String(cstr_Lang("dlg.certwarn.title"));
-        iString *str   = collectNew_String();
-        if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
-            iUrl parts;
-            init_Url(&parts, d->mod.url);
-            const iTime oldUntil =
-                domainValidUntil_GmCerts(certs_App(), parts.host, port_Url(&parts));
-            iDate exp;
-            init_Date(&exp, &oldUntil);
-            iTime now;
-            initCurrent_Time(&now);
-            const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
-            if (days <= 30) {
-                appendCStr_String(str,
-                                  format_CStr(cstrCount_Lang("dlg.certwarn.mayberenewed.n", days),
-                                              cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
-                                              days));
-            }
-            else {
-                appendCStr_String(str, cstr_Lang("dlg.certwarn.different"));
-            }
-        }
-        else if (certFlags & domainVerified_GmCertFlag) {
-            setCStr_String(title, get_GmError(tlsServerCertificateExpired_GmStatusCode)->title);
-            appendFormat_String(str, cstr_Lang("dlg.certwarn.expired"),
-                                cstrCollect_String(format_Date(&d->fetch->certExpiry, "%Y-%m-%d")));
-        }
-        else if (certFlags & timeVerified_GmCertFlag) {
-            const iString *proxy = schemeProxy_Prefs(get_Prefs(), urlScheme_String(d->mod.url));
-            appendFormat_String(str, cstr_Lang("dlg.certwarn.domain"),
-                                cstr_Rangecc(urlHost_String(proxy
-                                    ? collectNewFormat_String("gemini://%s", cstr_String(proxy))
-                                    : d->mod.url)),
-                                cstr_String(d->fetch->certSubject));
-        }
-        else {
-            appendCStr_String(str, cstr_Lang("dlg.certwarn.domain.expired"));
-        }
-        add_Banner(d->banner, warning_BannerType, none_GmStatusCode, title, str);
-    }
-    /* Warnings related to page contents. */
-    int dismissed =
-        value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
-                       dismissWarnings_SiteSpecKey) |
-        (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
-    /* File pages don't allow dismissing warnings, so skip it. */
-    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
-        dismissed |= ansiEscapes_GmDocumentWarning;
-    }
-    const int warnings = warnings_GmDocument(d->view->doc) & ~dismissed;
-    if (warnings & missingGlyphs_GmDocumentWarning) {
-        add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL, NULL);
-        /* TODO: List one or more of the missing characters and/or their Unicode blocks? */
-    }
-    if (warnings & ansiEscapes_GmDocumentWarning) {
-        add_Banner(d->banner, warning_BannerType, ansiEscapes_GmStatusCode, NULL, NULL);
-    }
-    if (warnings & unsupportedMediaTypeShownAsUtf8_GmDocumentWarning) {
-        add_Banner(d->banner, warning_BannerType, unsupportedMimeTypeShownAsUtf8_GmStatusCode,
-                   NULL, NULL);
     }
 }
 
@@ -1329,10 +787,10 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         if (!cachedDoc) {
             updateWidthAndRedoLayout_DocumentWidget_(d);
         }
-        updateDocument_DocumentWidget(d, resp, cachedDoc, iTrue);
+        updateDocument_DocumentFetch(d->fetch, resp, cachedDoc, iTrue);
         clear_Banner(d->banner);
-        updateBanner_DocumentWidget_(d);
-        addBannerWarnings_DocumentWidget_(d);
+        updateBanner_DocumentWidget(d);
+        addBannerWarnings_DocumentFetch(d->fetch);
     }
     d->fetch->state = ready_RequestState;
     postProcessContent_DocumentFetch(d->fetch, iTrue);
@@ -1521,53 +979,6 @@ static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
     refresh_Widget(as_Widget(d));
 }
 
-static iString *makeQueryUrl_DocumentWidget_(const iDocumentWidget *d,
-                                             const iString *queryUrl,
-                                             const iString *userEnteredText) {
-    iString *url = copy_String(queryUrl);
-    /* Remove the existing query string. */
-    const size_t qPos = indexOfCStr_String(url, "?");
-    if (qPos != iInvalidPos) {
-        remove_Block(&url->chars, qPos, iInvalidSize);
-    }
-    appendCStr_String(url, "?");
-    iString *cleaned = copy_String(userEnteredText);
-    if (deviceType_App() != desktop_AppDeviceType) {
-        trimEnd_String(cleaned); /* autocorrect may insert an extra space */
-        if (isEmpty_String(cleaned)) {
-            set_String(cleaned, userEnteredText); /* user wanted just spaces? */
-        }
-    }
-    append_String(url, collect_String(urlEncode_String(cleaned)));
-    delete_String(cleaned);
-    return url;
-}
-
-static void inputQueryValidator_(iInputWidget *input, void *context) {
-    iDocumentWidget *d = context;
-    iString *url = makeQueryUrl_DocumentWidget_(d, d->mod.url, text_InputWidget(input));
-    iWidget *dlg = parent_Widget(input);
-    iLabelWidget *counter = findChild_Widget(dlg, "valueinput.counter");
-    iAssert(counter);
-    int avail = 1024 - (int) size_String(url);
-    setFlags_Widget(findChild_Widget(dlg, "default"), disabled_WidgetFlag, avail < 0);
-    setEnterKeyEnabled_InputWidget(input, avail >= 0);
-    int len = length_String(text_InputWidget(input));
-    if (len > 1024) {
-        iString *trunc = copy_String(text_InputWidget(input));
-        truncate_String(trunc, 1024);
-        setText_InputWidget(input, trunc);
-        delete_String(trunc);
-    }
-    setTextCStr_LabelWidget(counter, format_CStr("%d", avail)); /* Gemini URL maxlen */
-    setTextColor_LabelWidget(counter,
-                             avail < 0   ? uiTextCaution_ColorId :
-                             avail < 128 ? uiTextStrong_ColorId
-                                         : uiTextDim_ColorId);
-    delete_String(url);
-    arrange_Widget(findChild_Widget(dlg, "dialogbuttons"));
-}
-
 iBool isSetIdentityRetained_DocumentWidget(const iDocumentWidget *d, const iString *dstUrl) {
     /* The overriding tab identity is implicitly affecting the entire URL root. */
     return equalRangeCase_Rangecc(urlRoot_String(d->mod.url), urlRoot_String(dstUrl));
@@ -1585,181 +996,6 @@ iBool setDocumentUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
         return iTrue;
     }
     return iFalse;
-}
-
-static void makePastePrecedingLineMenuItem_(iMenuItem *item_out, const iWidget *buttons,
-                                            const char *precedingLine) {
-    const iBinding *bind = findCommand_Keys("input.precedingline");
-    *item_out = (iMenuItem){
-        "${menu.input.precedingline}",
-         bind->key,
-         bind->mods,
-         format_CStr("!valueinput.set ptr:%p text:%s", buttons, precedingLine)
-    };
-}
-
-static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
-    const char     *context       = cstr_String(&menu->data);
-    const iWidget  *buttons       = pointerLabel_Command(context, "buttons");
-    const iLabelWidget *prompt    = findChild_Widget(parent_Widget(buttons), "valueinput.prompt");
-    const iString  *url           = string_Command(context, "url");
-    const char     *precedingLine = suffixPtr_Command(context, "preceding");
-    /* Compose new menu items. */
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
-    iMenuItem pasteItem;
-    makePastePrecedingLineMenuItem_(&pasteItem, buttons, precedingLine);
-    pushBack_Array(items, &pasteItem);
-    pushBack_Array(items,
-                   &(iMenuItem) { "${menu.input.pasteprompt}",
-                                  0,
-                                  0,
-                                  format_CStr("!valueinput.set ptr:%p text:%s",
-                                              buttons,
-                                              cstr_String(text_LabelWidget(prompt))) });
-    pushBack_Array(items, &(iMenuItem){ "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" });
-    /* An inline prompt is always docked under its link, so only a modal sheet needs this. */
-    const iBool isSheetPrompt = (flags_Widget(parent_Widget(buttons)) & mouseModal_WidgetFlag) != 0;
-    if (isDesktop_Platform() && isSheetPrompt) {
-        /* Location of the prompt. */
-        const iBool isBottom = prefs_App()->promptPosition == bottom_InputPromptPosition;
-        pushBackN_Array(
-            items,
-            (iMenuItem[]) {
-                { "---" },
-                { isBottom ? "${menu.input.showtop}" : "${menu.input.showbottom}",
-                  0,
-                  0,
-                  format_CStr("!valueinput.togglebottom ptr:%p", buttons) } },
-            2);
-    }
-    pushBackN_Array(
-        items,
-        (iMenuItem[]){
-            { "---" },
-            { !isPromptUrl_SiteSpec(url) ? "${menu.input.setprompt}" : "${menu.input.unsetprompt}",
-              0,
-              0,
-              format_CStr("!prompturl.toggle url:%s", cstr_String(url)) } },
-        2);
-    /* Recently submitted input texts can be restored. */ {
-        const iStringArray *recentInput = recentlySubmittedInput_App();
-        if (!isEmpty_StringArray(recentInput)) {
-            pushBack_Array(items, &(iMenuItem){ "---" });
-            pushBack_Array(items, &(iMenuItem){
-                isMobile_Platform() ? "---${ST:menu.input.restore}" : "```${menu.input.restore}"
-            });
-            iReverseConstForEach(StringArray, i, recentInput) {
-                iString *label = collect_String(copy_String(i.value));
-                replace_String(label, "\n\n", " ");
-                replace_String(label, "\n", " ");
-                trim_String(label);
-                const size_t maxLen = 45;
-                if (length_String(label) > maxLen) {
-                    truncate_String(label, maxLen);
-                    trim_String(label);
-                    appendCStr_String(label, "...");
-                }
-                pushBack_Array(items,
-                               &(iMenuItem){ cstr_String(label),
-                                             0,
-                                             0,
-                                             format_CStr("!valueinput.set ptr:%p text:%s",
-                                                         buttons,
-                                                         cstr_String(i.value)) });
-            }
-            pushBackN_Array(
-                items,
-                (iMenuItem[]) { { "---" }, { "${menu.input.clear}", 0, 0, "!recentinput.clear" } },
-                2);
-        }
-    }
-    return items;
-}
-
-void setupPromptDialog_DocumentWidget(iDocumentWidget *d, iWidget *dlg, const iString *url,
-                                      iBool isSensitive) {
-    iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
-    iLabelWidget *lineBreak = NULL;
-    if (!isSensitive) {
-        /* The line break and URL length counters are positioned differently on mobile.
-           There is no line breaks in sensitive input. */
-        if (deviceType_App() == desktop_AppDeviceType) {
-            iString *keyStr = collectNew_String();
-            toString_Sym(SDLK_RETURN,
-                         lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
-                         keyStr);
-            lineBreak = new_LabelWidget(
-                format_CStr("${dlg.input.linebreak}" uiTextAction_ColorEscape "  %s",
-                            cstr_String(keyStr)),
-                NULL);
-            insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
-        }
-        if (lineBreak) {
-            setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
-            setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
-        }
-    }
-    iWidget *counter = (iWidget *) new_LabelWidget("", NULL);
-    setId_Widget(counter, "valueinput.counter");
-    setFlags_Widget(counter, frameless_WidgetFlag | resizeToParentHeight_WidgetFlag, iTrue);
-    if (deviceType_App() == desktop_AppDeviceType) {
-        addChildPos_Widget(buttons, iClob(counter), front_WidgetAddPos);
-    }
-    else {
-        insertChildAfter_Widget(buttons, iClob(counter), 1);
-    }
-    if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
-        addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
-    }
-    /* Shortcut for the Paste Preceding Line. The menu is dynamic so it won't listen
-       for the keys as usual. */ {
-        iMenuItem pasteItem;
-        makePastePrecedingLineMenuItem_(&pasteItem, buttons, cstr_String(&d->linePrecedingLink));
-        addAction_Widget(dlg, pasteItem.key, pasteItem.kmods, pasteItem.command);
-    }
-    /* Menu for additional actions, past entries. */ {
-        iLabelWidget *ellipsisButton =
-            makeMenuButton_LabelWidget(midEllipsis_Icon, NULL, 0);
-        iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
-        /* When opening, update the items to reflect the site-specific settings. */
-        setMenuUpdateItemsFunc_Widget(menu, updateInputPromptMenuItems_);
-        set_String(&menu->data,
-                   collectNewFormat_String("context buttons:%p url:%s preceding:%s",
-                                           buttons,
-                                           cstr_String(canonicalUrl_String(url)),
-                                           cstr_String(&d->linePrecedingLink)));
-        if (deviceType_App() == desktop_AppDeviceType) {
-            addChildPos_Widget(buttons, iClob(ellipsisButton), front_WidgetAddPos);
-        }
-        else {
-            insertChildAfterFlags_Widget(buttons, iClob(ellipsisButton), 0,
-                                         frameless_WidgetFlag | noBackground_WidgetFlag);
-            setFont_LabelWidget(ellipsisButton, font_LabelWidget((iLabelWidget *) lastChild_Widget(buttons)));
-            setTextColor_LabelWidget(ellipsisButton, uiTextAction_ColorId);
-        }
-    }
-    iInputWidget *input = findChild_Widget(dlg, "input");
-    setValidator_InputWidget(input, inputQueryValidator_, d);
-    setBackupFileName_InputWidget(input, "inputbackup");
-    setSelectAllOnFocus_InputWidget(input, iTrue);
-    setSensitiveContent_InputWidget(input, isSensitive);
-    setArrowFocusNavigable_InputWidget(input, iFalse);
-}
-
-iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
-                                        const char *promptLabel, const char *acceptCommand) {
-    iUrl parts;
-    init_Url(&parts, url);
-    iWidget *dlg = makeValueInput_Widget(
-        as_Widget(d),
-        NULL,
-        format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
-        promptLabel ? promptLabel
-                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
-        uiTextAction_ColorEscape "${dlg.input.send}",
-        acceptCommand);
-    setupPromptDialog_DocumentWidget(d, dlg, url, isSensitive);
-    return dlg;
 }
 
 static iBool saveToFile_(const iString *savePath, const iBlock *content, const iString *mime,
@@ -1847,6 +1083,9 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
+    if (handleCommand_Query(d->query, cmd)) {
+        return iTrue;
+    }
     if (equal_Command(cmd, "document.openurls.changed")) {
         /* When any tab changes its document URL, update the open link indicators. */
         updateLinkStatus_DocumentWidget_(d, open_LinkUpdateFlag);
@@ -2295,79 +1534,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
-        const iString *url = d->mod.url;
-        if (hasLabel_Command(cmd, "link")) {
-            /* Use the stored base URL (document URL may change). */
-            const iGmLinkId linkId = argU32Label_Command(cmd, "link");
-            iBool isSensitive;
-            const iString *label, *baseUrl;
-            int heightPx;
-            inputPromptInfo_Media(media_GmDocument(d->view->doc),
-                                  findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId),
-                                  &isSensitive, &label, &baseUrl, &heightPx);
-            if (baseUrl) {
-                url = baseUrl;
-            }
-        }
-        else if (hasLabel_Command(cmd, "prompturl")) {
-            url = string_Command(cmd, "prompturl");
-        }
-        const iString *userEnteredText = collect_String(suffix_Command(cmd, "value"));
-        saveSubmittedInput_App(userEnteredText);
-        const char *queryUrl = cstrCollect_String(makeQueryUrl_DocumentWidget_(d, url, userEnteredText));
-        if (hasLabel_Command(cmd, "link")) {
-            postCommandf_Root(w->root, "open url:%s", queryUrl);
-            /* Don't dismiss the inline prompt yet. The request may be cancelled before a
-               response arrives, in which case the prompt remain as is for another request
-               attempt. */
-            setEnabled_InputPrompts(d->inputPrompts, argU32Label_Command(cmd, "link"), iFalse);
-        }
-        else {
-            postCommandf_Root(w->root, "open redirect:1 url:%s", queryUrl);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "valueinput.cancelled") &&
-             equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") &&
-             !hasLabel_Command(cmd, "prompturl") && !hasLabel_Command(cmd, "link") &&
-             document_App() == d) {
-        postCommand_Root(get_Root(), "navigate.back");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "valueinput.cancelled") && hasLabel_Command(cmd, "link") &&
-             document_Command(cmd) == d) {
-        /* No back-navigation: the original page is still visible underneath. */
-        destroy_InputPrompts(d->inputPrompts, argU32Label_Command(cmd, "link"));
-        return iTrue;
-    }
-    else if (equalWidget_Command(cmd, w, "valueinput.resized")) {
-        iWidget *bar = as_Widget(pointer_Command(cmd));
-        if (bar && startsWith_String(id_Widget(bar), "inputprompt")) {
-            const iGmLinkId linkId = (iGmLinkId) atoi(cstr_String(id_Widget(bar)) + 11);
-            iMediaId mediaId = findLinkInputPrompt_Media(media_GmDocument(d->view->doc), linkId);
-            if (mediaId.type) {
-                setInputPromptHeight_Media(media_GmDocument(d->view->doc), mediaId, height_Widget(bar));
-                refreshAfterChange_InputPrompts(d->inputPrompts);
-                if (document_App() == d) {
-                    /* The prompt just resized and may now extend past the viewport. */
-                    ensureVisible_InputPrompts(d->inputPrompts, linkId);
-                }
-            }
-        }
-        return iFalse; /* let it also reach the bar's own handler for its internal re-arrange */
-    }
-    else if (equalWidget_Command(cmd, w, "focus.gained")) {
-        iWidget *bar = pointer_Command(cmd);
-        while (bar && !startsWith_String(id_Widget(bar), "inputprompt")) {
-            bar = bar->parent;
-        }
-        if (bar && document_App() == d) {
-            /* Focus should never be (partially or fully) outside the viewable area. */
-            ensureVisible_InputPrompts(d->inputPrompts, (iGmLinkId) atoi(cstr_String(id_Widget(bar)) + 11));
-        }
-        return iFalse;
-    }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->fetch->request) == argU32Label_Command(cmd, "reqid")) {
         if (document_App() == d) {
@@ -2395,7 +1561,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             !d->view->userHasScrolled) {
             init_Anim(&d->view->scrollY.pos, d->initNormScrollY * pageHeight_DocumentView(d->view));
         }
-        addBannerWarnings_DocumentWidget_(d);
+        addBannerWarnings_DocumentFetch(d->fetch);
         iChangeFlags(d->flags,
                      urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
                      iFalse);
@@ -3149,8 +2315,8 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
                     setFocus_Widget(findChild_Widget(dlg, "input")); /* focus the existing prompt */
                 }
                 else {
-                    dlg = makeInputPrompt_DocumentWidget(
-                        d,
+                    dlg = makeModal_Query(
+                        d->query,
                         linkUrl,
                         iFalse,
                         NULL,
@@ -3162,13 +2328,13 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
             }
             else {
                 /* Prompt may already exist if pre-populated at page load. */
-                iWidget *bar = findBar_InputPrompts(d->inputPrompts, linkId);
+                iWidget *bar = findBar_Query(d->query, linkId);
                 if (!bar) {
-                    bar = create_InputPrompts(d->inputPrompts, linkId, linkUrl, iFalse, NULL);
-                    refreshAfterChange_InputPrompts(d->inputPrompts);
+                    bar = create_Query(d->query, linkId, linkUrl, iFalse, NULL);
+                    refreshAfterChange_Query(d->query);
                 }
                 setFocus_Widget(findChild_Widget(bar, "input"));
-                ensureVisible_InputPrompts(d->inputPrompts, linkId);
+                ensureVisible_Query(d->query, linkId);
             }
             return;
         }
@@ -3906,10 +3072,10 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         drawViewOrBlank_DocumentWidget_(d, under, underlayOffset, iFalse);
         if (under == swipeView) {
-            drawOutgoing_InputPrompts(d->inputPrompts, &clipBounds);
+            drawOutgoing_Query(d->query, &clipBounds);
         }
         else if (under == d->view) {
-            drawCovered_InputPrompts(d->inputPrompts, &clipBounds);
+            drawCovered_Query(d->query, &clipBounds);
         }
         if (overlayOffset > 0) {
             /* Dim the occluded view with a soft shadow. */
@@ -3935,7 +3101,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         drawViewOrBlank_DocumentWidget_(d, over, overlayOffset, iFalse);
         if (over == swipeView) {
-            drawOutgoing_InputPrompts(d->inputPrompts, &clipBounds);
+            drawOutgoing_Query(d->query, &clipBounds);
         }
     }
     else {
@@ -3950,7 +3116,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                         wasViewSwipedAway_DocumentSwipe(d->swipe));
         if (offset) {
             /* Due to offset, inline prompts may shift outside the document area. */
-            drawCovered_InputPrompts(d->inputPrompts, &clipBounds);
+            drawCovered_Query(d->query, &clipBounds);
         }
     }
     if (colorTheme_App() == pureWhite_ColorTheme &&
@@ -4077,8 +3243,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setOwner_DocumentFetch(d->fetch, d);
     d->media = new_InlineMedia();
     setOwner_InlineMedia(d->media, d);
-    d->inputPrompts = new_InputPrompts();
-    setOwner_InputPrompts(d->inputPrompts, d);
+    d->query = new_Query();
+    setOwner_Query(d->query, d);
     d->swipe = new_DocumentSwipe();
     setOwner_DocumentSwipe(d->swipe, d);
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
@@ -4140,7 +3306,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_Translation(d->translation);
     reset_DocumentSwipe(d->swipe); /* touches d->view; must run before it's deleted */
     delete_DocumentView(d->view);
-    delete_InputPrompts(d->inputPrompts);
+    delete_Query(d->query);
     delete_DocumentSwipe(d->swipe);
     delete_LinkInfo(d->linkInfo);
     delete_InlineMedia(d->media);
@@ -4183,7 +3349,7 @@ iMediaRequest *findMediaRequest_DocumentWidget(const iDocumentWidget *d, iGmLink
     return findRequest_InlineMedia(d->media, linkId);
 }
 
-iPersistentDocumentState *mod_DocumentWidget(iDocumentWidget *d) {
+iPersistentDocumentState *state_DocumentWidget(iDocumentWidget *d) {
     return &d->mod;
 }
 
@@ -4209,6 +3375,10 @@ iBool isUrlChanged_DocumentWidget(const iDocumentWidget *d) {
 
 void setDrawDownloadCounter_DocumentWidget(iDocumentWidget *d, iBool show) {
     iChangeFlags(d->flags, drawDownloadCounter_DocumentWidgetFlag, show);
+}
+
+const iString *linePrecedingLink_DocumentWidget(const iDocumentWidget *d) {
+    return &d->linePrecedingLink;
 }
 
 const iString *originId_DocumentWidget(const iDocumentWidget *d) {
@@ -4259,12 +3429,12 @@ int swipeOffsetOfView_DocumentWidget(const iDocumentWidget *d, const iDocumentVi
     return offsetOfView_DocumentSwipe(d->swipe, view);
 }
 
-iInputPrompts *inputPrompts_DocumentWidget(iDocumentWidget *d) {
-    return d->inputPrompts;
+iQuery *query_DocumentWidget(iDocumentWidget *d) {
+    return d->query;
 }
 
 void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *view) {
-    reposition_InputPrompts(d->inputPrompts, view);
+    reposition_Query(d->query, view);
 }
 
 const iGmIdentity *overrideIdentity_DocumentWidget(const iDocumentWidget *d) {
@@ -4408,7 +3578,7 @@ void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, cons
     set_String(&resp->meta, mime);
     set_Block(&resp->body, source);
     updateFromCachedResponse_DocumentWidget_(d, normScrollY, resp, NULL);
-    updateBanner_DocumentWidget_(d);
+    updateBanner_DocumentWidget(d);
     delete_GmResponse(resp);
 }
 

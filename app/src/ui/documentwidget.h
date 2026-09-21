@@ -36,7 +36,7 @@ iDeclareType(Banner)
 iDeclareType(ScrollWidget)
 iDeclareType(DocumentView)
 iDeclareType(Click)
-iDeclareType(InputPrompts)
+iDeclareType(Query)
 iDeclareType(InlineMedia)
 iDeclareType(DocumentFetch)
 iDeclareType(PersistentDocumentState)
@@ -55,8 +55,8 @@ iHistory *          history_DocumentWidget          (iDocumentWidget *);
 iDocumentView *     view_DocumentWidget             (iDocumentWidget *);
 iClick *            click_DocumentWidget            (iDocumentWidget *);
 iDocumentView *     swipeView_DocumentWidget        (iDocumentWidget *);
-iInputPrompts *     inputPrompts_DocumentWidget     (iDocumentWidget *);
-iPersistentDocumentState *mod_DocumentWidget (iDocumentWidget *);
+iQuery *            query_DocumentWidget            (iDocumentWidget *);
+iPersistentDocumentState *state_DocumentWidget      (iDocumentWidget *);
 iBanner *           banner_DocumentWidget           (iDocumentWidget *);
 iInlineMedia *      media_DocumentWidget            (iDocumentWidget *);
 iDocumentFetch *    fetch_DocumentWidget            (iDocumentWidget *);
@@ -67,16 +67,11 @@ const iString *     originId_DocumentWidget         (const iDocumentWidget *);
 iBool               isOriginToNewTab_DocumentWidget (const iDocumentWidget *);
 void                setFooterButtons_DocumentWidget (iDocumentWidget *, iWidget *buttons);
 iBool               setDocumentUrl_DocumentWidget   (iDocumentWidget *, const iString *url);
-iWidget *           makeInputPrompt_DocumentWidget  (iDocumentWidget *, const iString *url,
-                                                     iBool isSensitive, const char *promptLabel,
-                                                     const char *acceptCommand);
+const iString *     linePrecedingLink_DocumentWidget(const iDocumentWidget *);
 
-void    updateDocument_DocumentWidget   (iDocumentWidget *, const iGmResponse *response,
-                                         iGmDocument *cachedDoc, iBool isInitialUpdate);
 void    replaceDocument_DocumentWidget  (iDocumentWidget *, iGmDocument *newDoc);
-void    showErrorPage_DocumentWidget    (iDocumentWidget *, enum iGmStatusCode code,
-                                         const iString *meta);
 void    makeFooterButtons_DocumentWidget(iDocumentWidget *, const iMenuItem *items, size_t count);
+void    updateBanner_DocumentWidget     (iDocumentWidget *);
 void    setLinkNumberMode_DocumentWidget(iDocumentWidget *, iBool set);
 void    updateTheme_DocumentWidget      (iDocumentWidget *);
 iBool               isSwipeOverlay_DocumentWidget   (const iDocumentWidget *);
@@ -142,9 +137,6 @@ void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); 
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setOpenedExternally_DocumentWidget (iDocumentWidget *, iBool openedExternally);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
-
-void    setupPromptDialog_DocumentWidget(iDocumentWidget *, iWidget *dlg, const iString *url,
-                                         iBool isSensitive); /* shared by modal and inline prompts */
 
 void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 

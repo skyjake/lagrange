@@ -1150,6 +1150,8 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 notify_App("window.mouse.entered");
             }
             return iTrue;
+        default:
+            break;
     }
     return iFalse;
 }

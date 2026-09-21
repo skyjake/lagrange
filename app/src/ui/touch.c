@@ -321,7 +321,7 @@ static void postPendingScroll_TouchState_(iTouchState *d, iTouch *touch) {
                 .timestamp = SDL_GetTicksNS(),
                 .x = pixels.x,
                 .y = pixels.y,
-                .direction = perPixel_MouseWheelFlag,
+                .direction = (SDL_MouseWheelDirection) perPixel_MouseWheelFlag,
             });
             /* TODO: Keep increasing movement if the direction is the same. */
             clearWidgetMomentum_TouchState_(d, touch->affinity);

@@ -269,8 +269,8 @@ set (SOURCES
     src/doc/fetch.h
     src/doc/inlinemedia.c
     src/doc/inlinemedia.h
-    src/doc/inputprompts.c
-    src/doc/inputprompts.h
+    src/doc/query.c
+    src/doc/query.h
     src/doc/linkcontextmenu.c
     src/doc/linkcontextmenu.h
     src/doc/linkinfo.c

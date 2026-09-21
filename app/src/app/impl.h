@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-/* Private declarations shared by the app/*.c sources. */
+/* Private declarations shared by the sources under app. */
 
 #include "app.h"
 #include "defs.h"

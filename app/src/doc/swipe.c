@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../history.h"
 #include "banner.h"
 #include "documentview.h"
-#include "inputprompts.h"
+#include "query.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
 #include "ui/touch.h"
@@ -112,7 +112,7 @@ void reset_DocumentSwipe(iDocumentSwipe *d) {
         delete_DocumentView(d->view);
     }
     d->view = NULL;
-    resetAfterSwipe_InputPrompts(inputPrompts_DocumentWidget(d->owner));
+    resetAfterSwipe_Query(query_DocumentWidget(d->owner));
     setValue_Anim(&d->offset, 0, 0);
     iChangeFlags(d->flags,
                  viewOverlay_DocumentSwipeFlag | aborted_DocumentSwipeFlag |

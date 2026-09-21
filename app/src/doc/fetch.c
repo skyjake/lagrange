@@ -33,11 +33,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "banner.h"
 #include "documentview.h"
 #include "inlinemedia.h"
-#include "inputprompts.h"
+#include "query.h"
 #include "persistentstate.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
 #include "ui/indicatorwidget.h"
+#include "ui/keys.h"
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/util.h"
@@ -92,8 +93,20 @@ void setOwner_DocumentFetch(iDocumentFetch *d, iDocumentWidget *owner) {
     d->owner = owner;
 }
 
+static iDocumentView *view_DocumentFetch_(const iDocumentFetch *d) {
+    return view_DocumentWidget(d->owner);
+}
+
 static iGmDocument *doc_DocumentFetch_(const iDocumentFetch *d) {
     return view_DocumentWidget(d->owner)->doc;
+}
+
+static iBanner *banner_DocumentFetch_(const iDocumentFetch *d) {
+    return banner_DocumentWidget(d->owner);
+}
+
+static const iString *url_DocumentFetch_(const iDocumentFetch *d) {
+    return state_DocumentWidget(d->owner)->url;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -170,21 +183,21 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             }
         }
     }
-    showForPromptUrls_InputPrompts(inputPrompts_DocumentWidget(d->owner));
+    showForPromptUrls_Query(query_DocumentWidget(d->owner));
     /* Gempub page behavior and footer actions. */ {
         delete_Gempub(d->sourceGempub);
         d->sourceGempub = NULL;
         iBool isInsideArchive = iFalse;
-        d->sourceGempub = openForContent_Gempub(&d->sourceContent, &d->sourceMime, mod_DocumentWidget(d->owner)->url);
+        d->sourceGempub = openForContent_Gempub(&d->sourceContent, &d->sourceMime, url_DocumentFetch_(d));
         if (!d->sourceGempub) {
-            d->sourceGempub = openForLocalUrl_Gempub(mod_DocumentWidget(d->owner)->url, &isInsideArchive);
+            d->sourceGempub = openForLocalUrl_Gempub(url_DocumentFetch_(d), &isInsideArchive);
         }
         if (d->sourceGempub && !isInsideArchive) {
             setSource_DocumentWidget(d->owner, collect_String(coverPageSource_Gempub(d->sourceGempub)));
             setCStr_String(&d->sourceMime, mimeType_Gempub);
         }
         if (d->sourceGempub) {
-            if (equal_String(mod_DocumentWidget(d->owner)->url, coverPageUrl_Gempub(d->sourceGempub))) {
+            if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub))) {
                 if (!isRemote_Gempub(d->sourceGempub)) {
                     iArray *items = collectNew_Array(sizeof(iMenuItem));
                     pushBack_Array(
@@ -222,11 +235,11 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 }
                 if (preloadCoverImage_Gempub(d->sourceGempub, doc_DocumentFetch_(d))) {
                     redoLayout_GmDocument(doc_DocumentFetch_(d));
-                    updateVisible_DocumentView(view_DocumentWidget(d->owner));
+                    updateVisible_DocumentView(view_DocumentFetch_(d));
                     invalidate_DocumentWidget(d->owner);
                 }
             }
-            else if (equal_String(mod_DocumentWidget(d->owner)->url, indexPageUrl_Gempub(d->sourceGempub))) {
+            else if (equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
                 makeFooterButtons_DocumentWidget(
                     d->owner,
                     (iMenuItem[]){ { format_CStr(book_Icon " %s",
@@ -241,7 +254,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             else {
                 /* Navigation buttons. */
                 iArray *items = collectNew_Array(sizeof(iMenuItem));
-                const size_t navIndex = navIndex_Gempub(d->sourceGempub, mod_DocumentWidget(d->owner)->url);
+                const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
                 if (navIndex != iInvalidPos) {
                     if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
                         pushBack_Array(
@@ -265,7 +278,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                                 format_CStr("!open url:%s",
                                             cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
                     }
-                    else if (!equalCase_String(mod_DocumentWidget(d->owner)->url, indexPageUrl_Gempub(d->sourceGempub))) {
+                    else if (!equalCase_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
                         pushBack_Array(
                             items,
                             &(iMenuItem){
@@ -282,7 +295,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 }
             }
             if (!isCached && prefs_App()->pinSplit &&
-                equal_String(mod_DocumentWidget(d->owner)->url, indexPageUrl_Gempub(d->sourceGempub))) {
+                equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
                 const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
                 if (navStart) {
                     iWindow *win = get_Window();
@@ -320,21 +333,21 @@ iBool fetch_DocumentFetch(iDocumentFetch *d) {
         iRelease(d->request);
         d->request = NULL;
     }
-    if (isTitanUrl_String(mod_DocumentWidget(d->owner)->url)) {
+    if (isTitanUrl_String(url_DocumentFetch_(d))) {
         return iFalse; /* don't fetch Titan URLs from here, only through UploadWidget */
     }
     releasePlayers_Media(media_GmDocument(doc_DocumentFetch_(d)));
     notifyf_Root(as_Widget(d->owner)->root,
                  "document.request.started doc:%p url:%s",
                  d->owner,
-                 cstr_String(mod_DocumentWidget(d->owner)->url));
+                 cstr_String(url_DocumentFetch_(d)));
     setLinkNumberMode_DocumentWidget(d->owner, iFalse);
     setDrawDownloadCounter_DocumentWidget(d->owner, iFalse);
     d->flags &= ~pendingRedirect_DocumentFetchFlag;
     d->state = fetching_RequestState;
     d->lastRequestUpdateAt = 0;
     d->request = new_GmRequest(certs_App());
-    setUrl_GmRequest(d->request, mod_DocumentWidget(d->owner)->url);
+    setUrl_GmRequest(d->request, url_DocumentFetch_(d));
     /* Overriding identity. */
     if (isIdentityPinned_DocumentWidget(d->owner)) {
         const iGmIdentity *ident = identity_DocumentWidget(d->owner);
@@ -391,12 +404,12 @@ void restoreAddressBarAndHistory_DocumentFetch(iDocumentFetch *d, const iString 
     /* The displayed page hasn't changed (e.g., a media/prompt response was inlined into the
        existing document instead of replacing it), so restore the address bar and history to
        match rather than leaving them pointed at the new request's URL. `fetchedUrl` is what the
-       just-finished request was for, which may not equal mod_DocumentWidget(d->owner)->url yet at the call site. */
-    if (equal_String(&mostRecentUrl_History(mod_DocumentWidget(d->owner)->history)->url, fetchedUrl)) {
-        undo_History(mod_DocumentWidget(d->owner)->history);
+       just-finished request was for, which may not equal the document's URL yet. */
+    if (equal_String(&mostRecentUrl_History(state_DocumentWidget(d->owner)->history)->url, fetchedUrl)) {
+        undo_History(state_DocumentWidget(d->owner)->history);
     }
     if (setDocumentUrl_DocumentWidget(d->owner, url_GmDocument(doc_DocumentFetch_(d)))) {
-        notify_Widget(d->owner, "!document.changed doc:%p url:%s", d->owner, cstr_String(mod_DocumentWidget(d->owner)->url));
+        notify_Widget(d->owner, "!document.changed doc:%p url:%s", d->owner, cstr_String(url_DocumentFetch_(d)));
     }
 }
 
@@ -405,7 +418,7 @@ void cleanupRedirected_DocumentFetch(iDocumentFetch *d) {
     /* This is called in the special case where an input prompt becomes inlined
        (response does not contain a document body) so the previous document of
        the tab is retained. */
-    restoreAddressBarAndHistory_DocumentFetch(d, mod_DocumentWidget(d->owner)->url);
+    restoreAddressBarAndHistory_DocumentFetch(d, url_DocumentFetch_(d));
 }
 
 void checkResponse_DocumentFetch(iDocumentFetch *d) {
@@ -454,13 +467,13 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
         updateTrust_DocumentFetch(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
-            (equalCase_Rangecc(urlScheme_String(mod_DocumentWidget(d->owner)->url), "gemini") ||
-             equalCase_Rangecc(urlScheme_String(mod_DocumentWidget(d->owner)->url), "gophers")) &&
+            (equalCase_Rangecc(urlScheme_String(url_DocumentFetch_(d)), "gemini") ||
+             equalCase_Rangecc(urlScheme_String(url_DocumentFetch_(d)), "gophers")) &&
             prefs_App()->warnTlsSecurity) {
             statusCode = tlsServerCertificateNotVerified_GmStatusCode;
         }
-        init_Anim(&view_DocumentWidget(d->owner)->sideOpacity, 0);
-        init_Anim(&view_DocumentWidget(d->owner)->altTextOpacity, 0);
+        init_Anim(&view_DocumentFetch_(d)->sideOpacity, 0);
+        init_Anim(&view_DocumentFetch_(d)->altTextOpacity, 0);
         format_String(&d->sourceHeader,
                       "%s%s",
                       humanReadableStatusCode_DocumentFetch(statusCode),
@@ -472,7 +485,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
             case categoryInput_GmStatusCode: {
                 /* Let the navigation history know that we have been to this URL even though
                    it is only displayed as an input dialog. */
-                visitUrl_Visited(visited_App(), mod_DocumentWidget(d->owner)->url, transient_VisitedUrlFlag);
+                visitUrl_Visited(visited_App(), url_DocumentFetch_(d), transient_VisitedUrlFlag);
                 /* Split-pinning may route this fetch to a different document than the link
                    lives on. If this one has no anchor but knows its origin, show the prompt
                    there instead of a modal. A deliberately opened new tab is left alone
@@ -490,9 +503,9 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                                        prefs_App()->promptPosition != inline_InputPromptPosition ||
                                        !requestLinkId_DocumentWidget(target);
                 if (useModal) {
-                    makeInputPrompt_DocumentWidget(
-                        d->owner,
-                        mod_DocumentWidget(d->owner)->url,
+                    makeModal_Query(
+                        query_DocumentWidget(d->owner),
+                        url_DocumentFetch_(d),
                         statusCode == sensitiveInput_GmStatusCode,
                         isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
                         format_CStr("!document.input.submit doc:%p", d->owner));
@@ -502,19 +515,19 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                     }
                 }
                 else if (target == d->owner) {
-                    show_InputPrompts(inputPrompts_DocumentWidget(d->owner), d->requestLinkId, mod_DocumentWidget(d->owner)->url, resp,
+                    show_Query(query_DocumentWidget(d->owner), d->requestLinkId, url_DocumentFetch_(d), resp,
                                                           statusCode);
                     /* Same as the inline-image handling above. */
-                    restoreAddressBarAndHistory_DocumentFetch(d, mod_DocumentWidget(d->owner)->url);
+                    restoreAddressBarAndHistory_DocumentFetch(d, url_DocumentFetch_(d));
                 }
                 else {
                     /* Widget construction targets whatever root is "current", which must
                        match target's root here (possibly a different split). */
                     iRoot *oldRoot = current_Root();
                     setCurrent_Root(as_Widget(target)->root);
-                    show_InputPrompts(inputPrompts_DocumentWidget(target),
+                    show_Query(query_DocumentWidget(target),
                                       requestLinkId_DocumentWidget(target),
-                                      mod_DocumentWidget(d->owner)->url,
+                                      url_DocumentFetch_(d),
                                                           resp, statusCode);
                     setCurrent_Root(oldRoot);
                     cleanupRedirected_DocumentFetch(d);
@@ -525,37 +538,37 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                 break;
             }
             case categorySuccess_GmStatusCode: {
-                visitUrl_Visited(visited_App(), mod_DocumentWidget(d->owner)->url, 0);
+                visitUrl_Visited(visited_App(), url_DocumentFetch_(d), 0);
                 iGmDocument *newDoc = new_GmDocument();
                 replaceDocument_DocumentWidget(d->owner, newDoc /* keeps ref */);
                 iRelease(newDoc);
-                clear_Banner(banner_DocumentWidget(d->owner));
+                clear_Banner(banner_DocumentFetch_(d));
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
                 destroy_Widget(footerButtons_DocumentWidget(d->owner));
                 setFooterButtons_DocumentWidget(d->owner, NULL);
                 if (isUrlChanged_DocumentWidget(d->owner)) {
                     /* Keep scroll position when reloading the same page. */
-                    resetScroll_DocumentView(view_DocumentWidget(d->owner));
+                    resetScroll_DocumentView(view_DocumentFetch_(d));
                 }
-                view_DocumentWidget(d->owner)->scrollY.pullActionTriggered = 0;
+                view_DocumentFetch_(d)->scrollY.pullActionTriggered = 0;
                 updateTheme_DocumentWidget(d->owner);
-                updateDocument_DocumentWidget(d->owner, resp, NULL, iTrue);
-                resetWideRuns_DocumentView(view_DocumentWidget(d->owner));
+                updateDocument_DocumentFetch(d, resp, NULL, iTrue);
+                resetWideRuns_DocumentView(view_DocumentFetch_(d));
                 break;
             }
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(&resp->meta)) {
-                    showErrorPage_DocumentWidget(d->owner, invalidRedirect_GmStatusCode, NULL);
+                    showErrorPage_DocumentFetch(d, invalidRedirect_GmStatusCode, NULL);
                 }
                 else {
                     /* Only accept redirects that use gemini scheme. */
-                    const iString *dstUrl    = absoluteUrl_String(mod_DocumentWidget(d->owner)->url, &resp->meta);
-                    const iRangecc srcScheme = urlScheme_String(mod_DocumentWidget(d->owner)->url);
+                    const iString *dstUrl    = absoluteUrl_String(url_DocumentFetch_(d), &resp->meta);
+                    const iRangecc srcScheme = urlScheme_String(url_DocumentFetch_(d));
                     const iRangecc dstScheme = urlScheme_String(dstUrl);
                     /* Update bookmarks automatically to reflect the permanent redirection. */
                     if (statusCode == redirectPermanent_GmStatusCode) {
-                        if (updateUrls_Bookmark(bookmarks_App(), mod_DocumentWidget(d->owner)->url, dstUrl)) {
+                        if (updateUrls_Bookmark(bookmarks_App(), url_DocumentFetch_(d), dstUrl)) {
                             notify_App("bookmarks.changed");
                         }
                     }
@@ -563,7 +576,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                        Titan uploads are discrete, user-initiated actions rather than an
                        automatic redirect chain, so the limit does not apply to them. */
                     if (equalCase_Rangecc(srcScheme, "gemini") && d->redirectCount >= 5) {
-                        showErrorPage_DocumentWidget(d->owner, tooManyRedirects_GmStatusCode, dstUrl);
+                        showErrorPage_DocumentFetch(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
                     /* Redirects with the same scheme are automatic, and switching automatically
                        between "gemini" and "titan" is allowed. */
@@ -573,7 +586,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                               equalCase_Rangecc(dstScheme, "gemini")) ||
                              (equalCase_Rangecc(srcScheme, "gemini") &&
                               equalCase_Rangecc(dstScheme, "titan"))) {
-                        visitUrl_Visited(visited_App(), mod_DocumentWidget(d->owner)->url, transient_VisitedUrlFlag);
+                        visitUrl_Visited(visited_App(), url_DocumentFetch_(d), transient_VisitedUrlFlag);
                         postCommandf_Root(as_Widget(d->owner)->root,
                                           "open doc:%p redirect:%d url:%s",
                                           d->owner,
@@ -590,7 +603,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                     }
                     else {
                         /* Scheme changes must be manually approved. */
-                        showErrorPage_DocumentWidget(d->owner, schemeChangeRedirect_GmStatusCode, dstUrl);
+                        showErrorPage_DocumentFetch(d, schemeChangeRedirect_GmStatusCode, dstUrl);
                     }
                     unlockResponse_GmRequest(d->request);
                     iReleasePtr(&d->request);
@@ -598,18 +611,18 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                 break;
             default:
                 if (isDefined_GmError(statusCode)) {
-                    showErrorPage_DocumentWidget(d->owner, statusCode, &resp->meta);
+                    showErrorPage_DocumentFetch(d, statusCode, &resp->meta);
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryTemporaryFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget(d->owner, temporaryFailure_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentFetch(d, temporaryFailure_GmStatusCode, &resp->meta);
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryPermanentFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget(d->owner, permanentFailure_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentFetch(d, permanentFailure_GmStatusCode, &resp->meta);
                 }
                 else {
-                    showErrorPage_DocumentWidget(d->owner, unknownStatusCode_GmStatusCode, &resp->meta);
+                    showErrorPage_DocumentFetch(d, unknownStatusCode_GmStatusCode, &resp->meta);
                 }
                 break;
         }
@@ -619,7 +632,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
-                updateDocument_DocumentWidget(d->owner, resp, NULL, iFalse);
+                updateDocument_DocumentFetch(d, resp, NULL, iFalse);
                 break;
             default:
                 break;
@@ -634,7 +647,7 @@ iBool cancel_DocumentFetch(iDocumentFetch *d, iBool postBack) {
         iWidget *w = as_Widget(d->owner);
         postCommandf_Root(w->root,
                           "document.request.cancelled doc:%p url:%s", d->owner,
-                      cstr_String(mod_DocumentWidget(d->owner)->url));
+                      cstr_String(url_DocumentFetch_(d)));
         iReleasePtr(&d->request);
         if (d->state != ready_RequestState) {
             d->state = ready_RequestState;
@@ -642,7 +655,7 @@ iBool cancel_DocumentFetch(iDocumentFetch *d, iBool postBack) {
                 postCommand_Root(w->root, "navigate.back");
             }
         }
-        reenableAll_InputPrompts(inputPrompts_DocumentWidget(d->owner));
+        reenableAll_Query(query_DocumentWidget(d->owner));
         updateProgress_DocumentFetch(d);
         return iTrue;
     }
@@ -682,7 +695,7 @@ void take_DocumentFetch(iDocumentFetch *d, iGmRequest *finishedRequest) {
     cancel_DocumentFetch(d, iFalse /* don't post anything */);
     const iString *url = url_GmRequest(finishedRequest);
 
-    add_History(mod_DocumentWidget(d->owner)->history, url);
+    add_History(state_DocumentWidget(d->owner)->history, url);
     setDocumentUrl_DocumentWidget(d->owner, url);
     d->state = fetching_RequestState;
     iAssert(d->request == NULL);
@@ -692,4 +705,548 @@ void take_DocumentFetch(iDocumentFetch *d, iGmRequest *finishedRequest) {
                   d->owner,
                   id_GmRequest(d->request),
                   d->request);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void showErrorPage_DocumentFetch(iDocumentFetch *d, enum iGmStatusCode code,
+                                 const iString *meta) {
+    iString        *src = collectNew_String();
+    const iGmError *msg = get_GmError(code);
+    makeFooterButtons_DocumentWidget(d->owner, NULL, 0);
+    const iString *serverErrorMsg = NULL;
+    if (meta) {
+        switch (code) {
+            case schemeChangeRedirect_GmStatusCode:
+            case tooManyRedirects_GmStatusCode:
+                appendFormat_String(src, "=> %s\n", cstr_String(meta));
+                break;
+            case tlsServerCertificateExpired_GmStatusCode:
+                makeFooterButtons_DocumentWidget(
+                    d->owner,
+                    (iMenuItem[]){ { rightArrowhead_Icon " ${menu.unexpire}",
+                                       SDLK_RETURN, 0, "server.unexpire"
+                                   },
+                                   { info_Icon " ${menu.pageinfo}",
+                                     SDLK_I,
+                                     KMOD_PRIMARY,
+                                     "document.info" } },
+                    2);
+                break;
+            case tlsServerCertificateNotVerified_GmStatusCode:
+            case proxyCertificateNotVerified_GmStatusCode:
+                makeFooterButtons_DocumentWidget(
+                    d->owner,
+                    (iMenuItem[]){ { info_Icon " ${menu.pageinfo}",
+                                     SDLK_I,
+                                     KMOD_PRIMARY,
+                                     "document.info" } },
+                    1);
+                break;
+            case failedToOpenFile_GmStatusCode:
+            case certificateNotValid_GmStatusCode:
+//                appendFormat_String(src, "%s", cstr_String(meta));
+                break;
+            case unsupportedMimeType_GmStatusCode: {
+                iString *key = collectNew_String();
+                toString_Sym(SDLK_S, KMOD_PRIMARY, key);
+//                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
+                const char *mtype = mediaTypeFromFileExtension_String(url_DocumentFetch_(d));
+                iArray items;
+                init_Array(&items, sizeof(iMenuItem));
+                if (iCmpStr(mtype, "application/octet-stream")) {
+                    pushBack_Array(
+                        &items,
+                        &(iMenuItem){ translateCStr_Lang(format_CStr("View as \"%s\"", mtype)),
+                                      SDLK_RETURN,
+                                      0,
+                                      format_CStr("document.setmediatype mime:%s", mtype) });
+                }
+                pushBack_Array(&items,
+                               &(iMenuItem){ export_Icon " ${menu.open.external}",
+                                             SDLK_RETURN,
+                                             KMOD_PRIMARY,
+                                             "document.save extview:1" });
+                pushBack_Array(
+                    &items,
+                    &(iMenuItem){ translateCStr_Lang(download_Icon " " saveToDownloads_Label),
+                                  0,
+                                  0,
+                                  "document.save" });
+                makeFooterButtons_DocumentWidget(d->owner, data_Array(&items), size_Array(&items));
+                deinit_Array(&items);
+                serverErrorMsg = collectNewFormat_String("%s (%s)", msg->title, cstr_String(meta));
+                break;
+            }
+            default:
+                if (!isEmpty_String(meta)) {
+                    serverErrorMsg = meta;
+                }
+                break;
+        }
+    }
+    if (category_GmStatusCode(code) == categoryClientCertificate_GmStatus) {
+        makeFooterButtons_DocumentWidget(
+            d->owner,
+            (iMenuItem[]){
+                { person_Icon " ${menu.identity.newdomain}", SDLK_N, 0, "ident.new scope:1" },
+                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+                { leftHalf_Icon " ${menu.show.identities}", showIdentities_KeyShortcut,
+                  deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
+                                                            : "preferences idents:1" } },
+            3);
+    }
+    /* Make a new document for the error page.*/
+    iGmDocument *errorDoc = new_GmDocument();
+    setMode_GmDocument(errorDoc, coverPage_GmDocumentMode); /* UI content */
+    setWidth_GmDocument(errorDoc,
+                        documentWidth_DocumentView(view_DocumentFetch_(d)),
+                        width_Widget(d->owner),
+                        maxDocumentWidth_DocumentView(view_DocumentFetch_(d)));
+    setUrl_GmDocument(errorDoc, url_DocumentFetch_(d));
+    setFormat_GmDocument(errorDoc, gemini_SourceFormat);
+    replaceDocument_DocumentWidget(d->owner, errorDoc);
+    iRelease(errorDoc);
+    clear_Banner(banner_DocumentFetch_(d));
+    add_Banner(banner_DocumentFetch_(d), error_BannerType, code, serverErrorMsg, NULL);
+    d->state = ready_RequestState;
+    setSource_DocumentWidget(d->owner, src);
+    updateTheme_DocumentWidget(d->owner);
+    resetScroll_DocumentView(view_DocumentFetch_(d));
+}
+
+static const char *zipPageHeading_(const iRangecc mime) {
+    if (equalCase_Rangecc(mime, "application/gpub+zip")) {
+        return book_Icon " Gempub";
+    }
+    else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
+        return fontpack_Icon " Fontpack";
+    }
+    else if (equalCase_Rangecc(mime, mimeType_Export)) {
+        return package_Icon " ${heading.archive.userdata}";
+    }
+    iRangecc type = iNullRange;
+    nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
+    nextSplit_Rangecc(mime, "/", &type);
+    if (startsWithCase_Rangecc(type, "x-")) {
+        type.start += 2;
+    }
+    iString *heading = upper_String(collectNewRange_String(type));
+    appendCStr_String(heading, " Archive");
+    prependCStr_String(heading, folder_Icon " ");
+    return cstrCollect_String(heading);
+}
+
+void updateDocument_DocumentFetch(iDocumentFetch *d,
+                                  const iGmResponse *response,
+                                  iGmDocument *cachedDoc,
+                                  const iBool isInitialUpdate) {
+    if (d->state == ready_RequestState) {
+        return;
+    }
+    const iBool isRequestFinished = isFinished_GmRequest(d->request);
+    /* TODO: Do document update in the background. However, that requires a text metrics calculator
+       that does not try to cache the glyph bitmaps. */
+    const enum iGmStatusCode statusCode = response->statusCode;
+    if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
+        iBool setSource = iTrue;
+        iString str;
+        invalidate_DocumentWidget(d->owner);
+        if (document_App() == d->owner) {
+            updateTheme_DocumentWidget(d->owner);
+        }
+        clear_String(&d->sourceMime);
+        d->sourceTime = response->when;
+        updateDrawBufs_DocumentView(view_DocumentFetch_(d), updateTimestampBuf_DrawBufsFlag);
+        initBlock_String(&str, &response->body); /* Note: Body may be megabytes in size. */
+        if (isSuccess_GmStatusCode(statusCode)) {
+            /* Check the MIME type. */
+            iRangecc           charset     = range_CStr("utf-8");
+            enum iSourceFormat docFormat   = undefined_SourceFormat;
+            iBool              isCoverPage = iFalse;
+            const iString     *mimeStr =
+                collect_String(lower_String(&response->meta)); /* for convenience */
+            set_String(&d->sourceMime, mimeStr);
+            iRangecc mime = range_String(mimeStr);
+            iRangecc seg = iNullRange;
+            while (nextSplit_Rangecc(mime, ";", &seg)) {
+                iRangecc param = seg;
+                trim_Rangecc(&param);
+                if (isRequestFinished) {
+                    /* Format autodetection. */
+                    if (equal_Rangecc(param, "application/octet-stream")) {
+                        /* Detect fontpacks even if the server doesn't use the right media type. */
+                        if (detect_FontPack(&response->body)) {
+                            param = range_CStr(mimeType_FontPack);
+                            isCoverPage = iTrue;
+                        }
+                        else if (isUtf8_Rangecc(range_Block(&response->body))) {
+                            param = range_CStr("text/plain");
+                        }
+                    }
+                    if (equal_Rangecc(param, "text/plain")) {
+                        iUrl parts;
+                        init_Url(&parts, url_DocumentFetch_(d));
+                        const iRangecc fileName = baseNameSep_Path(collectNewRange_String(parts.path), "/");
+                        if (endsWithCase_Rangecc(fileName, ".md") ||
+                            endsWithCase_Rangecc(fileName, ".mdown") ||
+                            endsWithCase_Rangecc(fileName, ".markdown")) {
+                            param = range_CStr("text/markdown");
+                        }
+#if 0
+                        else if ((endsWithCase_Rangecc(fileName, ".gmi") ||
+                                  endsWithCase_Rangecc(fileName, ".gemini")) &&
+                                 isEmpty_Range(&parts.query)) {
+                            /* The server _probably_ sent us the wrong media type, so assume
+                               they meant this is a Gemtext document based on the file extension.
+                               However, if the query string is present, the server likely knows
+                               what it's doing so only "fix" the type when a query component
+                               was not present. */
+                            param = range_CStr("text/gemini");
+                            /* TODO: A better way to do this would be to preserve the original
+                               media type and force a Gemtext view mode on the document.
+                               (https://github.com/skyjake/lagrange/issues/359) */
+                        }
+#endif
+                    }
+                }
+                if (equal_Rangecc(param, "text/gemini") ||
+                    equal_Rangecc(param, "text/gophermenu")) {
+                    docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                }
+                else if (equal_Rangecc(param, "text/markdown")) {
+                    docFormat = markdown_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                    postCommand_Widget(
+                        d->owner, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
+                }
+                else if (startsWith_Rangecc(param, "text/") ||
+                         equal_Rangecc(param, "application/json") ||
+                         equal_Rangecc(param, "application/x-pem-file") ||
+                         equal_Rangecc(param, "application/pem-certificate-chain")) {
+                    docFormat = plainText_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                }
+                else if (isRequestFinished && equal_Rangecc(param, "font/ttf")) {
+                    clear_String(&str);
+                    isCoverPage = iTrue;
+                    docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                    format_String(&str, "# TrueType Font\n");
+                    iString *decUrl      = collect_String(urlDecode_String(url_DocumentFetch_(d)));
+                    iRangecc name        = baseNameSep_Path(decUrl, "/");
+                    iBool    isInstalled = iFalse;
+                    if (startsWith_String(
+                            collect_String(localFilePathFromUrl_String(url_DocumentFetch_(d))),
+                            cstr_String(fontsDir_App()))) {
+                        isInstalled = iTrue;
+                    }
+                    appendCStr_String(&str, "## ");
+                    appendRange_String(&str, name);
+                    appendCStr_String(&str, "\n\n");
+                    appendCStr_String(
+                        &str, cstr_Lang(isInstalled ? "truetype.help.installed" : "truetype.help"));
+                    appendCStr_String(&str, "\n");
+                    if (!isInstalled) {
+                        makeFooterButtons_DocumentWidget(
+                            d->owner,
+                            (iMenuItem[]){
+                                { add_Icon " ${fontpack.install.ttf}",
+                                  SDLK_RETURN,
+                                  0,
+                                  format_CStr("!fontpack.install ttf:1 name:%s",
+                                              cstr_Rangecc(name)) },
+                                { folder_Icon " ${fontpack.open.fontsdir}",
+                                  SDLK_D,
+                                  0,
+                                  format_CStr("!open url:%s/fonts",
+                                              cstrCollect_String(makeFileUrl_String(dataDir_App())))
+                                }
+                            }, 2);
+                    }
+                }
+                else if (isRequestFinished &&
+                         (equal_Rangecc(param, "application/zip") ||
+                         (startsWith_Rangecc(param, "application/") &&
+                          endsWithCase_Rangecc(param, "+zip")))) {
+                    iArray *footerItems = collectNew_Array(sizeof(iMenuItem));
+                    clear_String(&str);
+                    isCoverPage = iTrue;
+                    docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                    iArchive *zip = new_Archive();
+                    openData_Archive(zip, &response->body);
+                    if (equal_Rangecc(param, mimeType_FontPack)) {
+                        /* Show some information about fontpacks, and set up footer actions. */
+                        if (isOpen_Archive(zip)) {
+                            iFontPack *fp = new_FontPack();
+                            setUrl_FontPack(fp, url_DocumentFetch_(d));
+                            setStandalone_FontPack(fp, iTrue);
+                            if (loadArchive_FontPack(fp, zip)) {
+                                appendFormat_String(&str, "# " fontpack_Icon "%s\n%s",
+                                                    cstr_String(id_FontPack(fp).id),
+                                                    cstrCollect_String(infoText_FontPack(fp, iTrue)));
+                            }
+                            appendCStr_String(&str, "\n");
+                            appendCStr_String(&str, cstr_Lang("fontpack.help"));
+                            appendCStr_String(&str, "\n");
+                            iConstForEach(Array, a, actions_FontPack(fp, iTrue)) {
+                                pushBack_Array(footerItems, a.value);
+                            }
+                            delete_FontPack(fp);
+                        }
+                    }
+                    else {
+                        if (detect_Export(zip)) {
+                            setCStr_String(&d->sourceMime, mimeType_Export);
+                            if (!isMobile_Platform()) {
+                                pushBack_Array(footerItems,
+                                               &(iMenuItem){ openExt_Icon " ${menu.open.external}",
+                                                             SDLK_RETURN,
+                                                             KMOD_PRIMARY,
+                                                             "document.save extview:1" });
+                            }
+                        }
+                        format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
+                        appendFormat_String(
+                            &str,
+                            cstr_Lang("doc.archive"),
+                            cstr_Rangecc(baseNameSep_Path(
+                                collect_String(urlDecode_String(
+                                    urlQueryStripped_String(url_DocumentFetch_(d)))),
+                                "/")));
+                        appendCStr_String(&str, "\n");
+                    }
+                    iRelease(zip);
+                    appendCStr_String(&str, "\n");
+                    iString *localPath = localFilePathFromUrl_String(url_DocumentFetch_(d));
+                    if (!localPath || !fileExists_FileInfo(localPath)) {
+                        iString *key = collectNew_String();
+                        toString_Sym(SDLK_S, KMOD_PRIMARY, key);
+                        appendFormat_String(&str, "%s\n\n",
+                                            format_CStr(cstr_Lang("error.unsupported.suggestsave"),
+                                                        cstr_String(key),
+                                                        saveToDownloads_Label));
+                        if (findCommand_MenuItem(data_Array(footerItems),
+                                                 size_Array(footerItems),
+                                                 "document.save") == iInvalidPos) {
+                            pushBack_Array(
+                                footerItems,
+                                &(iMenuItem){
+                                    translateCStr_Lang(download_Icon " " saveToDownloads_Label),
+                                    0,
+                                    0,
+                                    "document.save" });
+                        }
+                    }
+                    if (!cmp_String(&d->sourceMime, mimeType_Export)) {
+                        appendFormat_String(&str, "%s\n", cstr_Lang("userdata.help"));
+                    }
+                    if (localPath && fileExists_FileInfo(localPath)) {
+                        if (!cmp_String(&d->sourceMime, mimeType_Export)) {
+                            pushFront_Array(footerItems,
+                                            &(iMenuItem){ import_Icon " " uiTextAction_ColorEscape
+                                                                      "\x1b[1m${menu.import}",
+                                                          SDLK_RETURN,
+                                                          0,
+                                                          format_CStr("!import path:%s",
+                                                                      cstr_String(localPath)) });
+                        }
+                        appendFormat_String(
+                            &str,
+                            "=> %s/ " folder_Icon " ${doc.archive.view}\n",
+                            cstr_String(withSpacesEncoded_String(url_DocumentFetch_(d))));
+                    }
+                    delete_String(localPath);
+                    translate_Lang(&str);
+                    makeFooterButtons_DocumentWidget(
+                        d->owner, constData_Array(footerItems), size_Array(footerItems));
+                }
+                else if (!isTerminal_Platform() && (startsWith_Rangecc(param, "image/") ||
+                                                    startsWith_Rangecc(param, "audio/"))) {
+                    const iBool isAudio = startsWith_Rangecc(param, "audio/");
+                    /* Make a simple document with an image or audio player. */
+                    clear_String(&str);
+                    isCoverPage = iTrue;
+                    docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                    const iGmLinkId imgLinkId = 1; /* there's only the one link */
+                    /* TODO: Do the image loading in `postProcessRequestContent_DocumentWidget_()` */
+                    if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
+                        const char *linkTitle = cstr_Lang(
+                            startsWith_String(mimeStr, "image/") ? "media.untitled.image"
+                                                                 : "media.untitled.audio");
+                        iUrl parts;
+                        init_Url(&parts, url_DocumentFetch_(d));
+                        if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data")) {
+                            linkTitle =
+                                baseName_Path(collect_String(newRange_String(parts.path))).start;
+                        }
+                        format_String(&str, "=> %s %s\n",
+                                      cstr_String(canonicalUrl_String(url_DocumentFetch_(d))),
+                                      linkTitle);
+                        setData_Media(media_GmDocument(doc_DocumentFetch_(d)),
+                                      imgLinkId,
+                                      mimeStr,
+                                      &response->body,
+                                      !isRequestFinished ? partialData_MediaFlag : 0);
+                        redoLayout_GmDocument(doc_DocumentFetch_(d));
+                    }
+                    else if (isAudio && !isInitialUpdate) {
+                        /* Update the audio content. */
+                        setData_Media(media_GmDocument(doc_DocumentFetch_(d)),
+                                      imgLinkId,
+                                      mimeStr,
+                                      &response->body,
+                                      !isRequestFinished ? partialData_MediaFlag : 0);
+                        refresh_Widget(d->owner);
+                        setSource = iFalse;
+                    }
+                    else {
+                        clear_String(&str);
+                    }
+                }
+                else if (startsWith_Rangecc(param, "charset=")) {
+                    charset = (iRangecc){ param.start + 8, param.end };
+                    /* Remove whitespace and quotes. */
+                    trim_Rangecc(&charset);
+                    if (*charset.start == '"' && *charset.end == '"') {
+                        charset.start++;
+                        charset.end--;
+                    }
+                }
+            }
+            if (docFormat == undefined_SourceFormat) {
+                if (isRequestFinished) {
+                    setDrawDownloadCounter_DocumentWidget(d->owner, iFalse);
+                    if (isUtf8_Rangecc(range_Block(&response->body))) {
+                        docFormat = plainText_SourceFormat;
+                        charset = range_CStr("utf-8");
+                        setWarning_GmDocument(
+                            doc_DocumentFetch_(d), unsupportedMediaTypeShownAsUtf8_GmDocumentWarning, iTrue);
+                    }
+                    else {
+                        showErrorPage_DocumentFetch(d, unsupportedMimeType_GmStatusCode, &response->meta);
+                        deinit_String(&str);
+                        return;
+                    }
+                }
+                else {
+                    setDrawDownloadCounter_DocumentWidget(d->owner, iTrue);
+                    clear_PtrSet(view_DocumentFetch_(d)->invalidRuns);
+                    documentRunsInvalidated_DocumentWidget(d->owner);
+                    deinit_String(&str);
+                    return;
+                }
+            }
+            if (isCoverPage) {
+                /* Cover pages are not considered normal content (e.g., error message, overview). */
+                setMode_GmDocument(doc_DocumentFetch_(d), coverPage_GmDocumentMode);
+            }
+            setFormat_GmDocument(doc_DocumentFetch_(d), docFormat);
+            /* Convert the source to UTF-8 if needed. */
+            if (equalCase_Rangecc(charset, "utf-8")) {
+                /* Verify that it actually is valid UTF-8. */
+                if (!isUtf8_Rangecc(range_String(&str))) {
+                    if (strstr(cstr_String(&str), "\x1b[")) {
+                        charset = range_CStr("cp437"); /* An educated guess. */
+                    }
+                    else {
+                        charset = range_CStr("latin1");
+                    }
+                }
+            }
+            if (!equalCase_Rangecc(charset, "utf-8")) {
+                set_String(&str,
+                           collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
+            }
+        }
+        if (cachedDoc) {
+            replaceDocument_DocumentWidget(d->owner, cachedDoc);
+            if (updateWidth_DocumentView(view_DocumentFetch_(d))) {
+                documentRunsInvalidated_DocumentWidget(d->owner); /* GmRuns reallocated */
+            }
+        }
+        else if (setSource) {
+            setSource_DocumentWidget(d->owner, &str);
+        }
+        deinit_String(&str);
+    }
+}
+
+void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
+    updateBanner_DocumentWidget(d->owner);
+    /* Warnings are not shown on internal pages. */
+    if (equalCase_Rangecc(urlScheme_String(url_DocumentFetch_(d)), "about")) {
+        clear_Banner(banner_DocumentFetch_(d));
+        return;
+    }
+    /* Warnings related to certificates and trust. */
+    const int req = timeVerified_GmCertFlag | domainVerified_GmCertFlag | trusted_GmCertFlag;
+    int certFlags = d->certFlags;
+    if (prefs_App()->warnTlsSecurity && certFlags & available_GmCertFlag &&
+        (certFlags & req) != req && numItems_Banner(banner_DocumentFetch_(d)) == 0) {
+        iString *title = collectNewCStr_String(cstr_Lang("dlg.certwarn.title"));
+        iString *str   = collectNew_String();
+        if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
+            iUrl parts;
+            init_Url(&parts, url_DocumentFetch_(d));
+            const iTime oldUntil =
+                domainValidUntil_GmCerts(certs_App(), parts.host, port_Url(&parts));
+            iDate exp;
+            init_Date(&exp, &oldUntil);
+            iTime now;
+            initCurrent_Time(&now);
+            const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
+            if (days <= 30) {
+                appendCStr_String(str,
+                                  format_CStr(cstrCount_Lang("dlg.certwarn.mayberenewed.n", days),
+                                              cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
+                                              days));
+            }
+            else {
+                appendCStr_String(str, cstr_Lang("dlg.certwarn.different"));
+            }
+        }
+        else if (certFlags & domainVerified_GmCertFlag) {
+            setCStr_String(title, get_GmError(tlsServerCertificateExpired_GmStatusCode)->title);
+            appendFormat_String(str, cstr_Lang("dlg.certwarn.expired"),
+                                cstrCollect_String(format_Date(&d->certExpiry, "%Y-%m-%d")));
+        }
+        else if (certFlags & timeVerified_GmCertFlag) {
+            const iString *proxy =
+                schemeProxy_Prefs(get_Prefs(), urlScheme_String(url_DocumentFetch_(d)));
+            appendFormat_String(str, cstr_Lang("dlg.certwarn.domain"),
+                                cstr_Rangecc(urlHost_String(proxy
+                                    ? collectNewFormat_String("gemini://%s", cstr_String(proxy))
+                                    : url_DocumentFetch_(d))),
+                                cstr_String(d->certSubject));
+        }
+        else {
+            appendCStr_String(str, cstr_Lang("dlg.certwarn.domain.expired"));
+        }
+        add_Banner(banner_DocumentFetch_(d), warning_BannerType, none_GmStatusCode, title, str);
+    }
+    /* Warnings related to page contents. */
+    int dismissed =
+        value_SiteSpec(collectNewRange_String(urlRoot_String(url_DocumentFetch_(d))),
+                       dismissWarnings_SiteSpecKey) |
+        (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
+    /* File pages don't allow dismissing warnings, so skip it. */
+    if (equalCase_Rangecc(urlScheme_String(url_DocumentFetch_(d)), "file")) {
+        dismissed |= ansiEscapes_GmDocumentWarning;
+    }
+    const int warnings = warnings_GmDocument(doc_DocumentFetch_(d)) & ~dismissed;
+    if (warnings & missingGlyphs_GmDocumentWarning) {
+        add_Banner(banner_DocumentFetch_(d), warning_BannerType, missingGlyphs_GmStatusCode, NULL, NULL);
+        /* TODO: List one or more of the missing characters and/or their Unicode blocks? */
+    }
+    if (warnings & ansiEscapes_GmDocumentWarning) {
+        add_Banner(banner_DocumentFetch_(d), warning_BannerType, ansiEscapes_GmStatusCode, NULL, NULL);
+    }
+    if (warnings & unsupportedMediaTypeShownAsUtf8_GmDocumentWarning) {
+        add_Banner(banner_DocumentFetch_(d), warning_BannerType, unsupportedMimeTypeShownAsUtf8_GmStatusCode,
+                   NULL, NULL);
+    }
 }
