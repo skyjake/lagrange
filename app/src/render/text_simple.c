@@ -284,8 +284,9 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                     wrap->hitPoint.x < x2 ? (wrap->hitPoint.x - x1) / glyph->advance : 1.0f;
             }
         }
-        /* Out of the allotted space on the line? */
-        if (xposLimit > 0 && x2 > xposLimit) {
+        /* Out of the allotted space on the line? A glyph that doesn't fit even on an empty
+           line is not wrapped, or no progress would be made. */
+        if (xposLimit > 0 && x2 > xposLimit && x1 > orig.x) {
             iAssert(wrap);
             const char *wrapPos = currentPos;
             int advance = x1 - orig.x;
