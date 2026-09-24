@@ -371,8 +371,10 @@ void init_Font(iRasterFont *d, const iFontSpec *fontSpec, const iFontFile *fontF
     }
     d->emAdvance     = fontFile->emAdvance * d->xScale;
     d->font.baseline = (int) roundf(fontFile->ascent * d->yScale);
-    if (d->font.baseline >= d->font.height) {
-        d->font.baseline = d->font.height - 1;
+    /* Enlarged glyphs (glyphScale > 1) may have their baseline below the line box. */
+    const int scaledHeight = (int) (d->font.height * iMax(1.0f, glyphScale));
+    if (d->font.baseline >= scaledHeight) {
+        d->font.baseline = scaledHeight - 1;
     }
     d->vertOffset    = d->font.height * (1.0f - glyphScale) / 2 *
                        fontSpec->vertOffsetScale[scaleType];
