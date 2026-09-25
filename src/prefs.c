@@ -84,12 +84,12 @@ void init_Prefs(iPrefs *d) {
     else {
         d->sidebarModeEnabled[0][bookmarks_SidebarMode] = iTrue;
         d->sidebarModeEnabled[0][feedEntries_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[0][subscriptions_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[1][subscriptions_SidebarMode] = iTrue;
         d->sidebarModeEnabled[0][identities_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[1][documentOutline_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[0][documentOutline_SidebarMode] = iTrue;
         d->sidebarModeEnabled[1][siteStructure_SidebarMode] = iTrue;
         d->sidebarModeEnabled[1][openDocuments_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[1][history_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[0][history_SidebarMode] = iTrue;
     }
     d->sideIcon            = iTrue;
     d->hideToolbarOnScroll = iTrue;
