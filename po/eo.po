@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-19 04:46+0000\n"
-"PO-Revision-Date: 2025-10-03 04:25+0000\n"
+"PO-Revision-Date: 2026-09-26 12:55+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -1382,3 +1382,20 @@ msgstr "Eksporti"
 #, fuzzy
 msgid "menu.import"
 msgstr "Importi…"
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+msgstr "Bazita sur SDL 2, OpenSSL kaj ☕️"
+
+msgid "menu.sort.alpha"
+msgstr "Ordigi laŭ alfabeto"
+
+msgid "menu.pageinfo"
+msgstr "Montri informojn pri paĝo"
+
+msgid "heading.archive.userdata"
+msgstr "Arkivo de uzantaj datumoj"
+
+msgid "macos.menu.showall"
+msgstr "Montri ĉiujn"
