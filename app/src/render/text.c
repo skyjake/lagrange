@@ -458,12 +458,19 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
         setBaseAttributes_Text(font, color);
         SDL_SetRenderTarget(render, d->texture);
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+        /* Glyphs are composited as premultiplied color. */
+        const SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND_PREMULTIPLIED;
+        SDL_SetRenderDrawColor(render, 0, 0, 0, 0);
+#else
+        const SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND;
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
+#endif
         SDL_RenderClear(render);
         draw_WrapText(wrapText, font, zero_I2(), color | fillBackground_ColorId);
         SDL_SetRenderTarget(render, oldTarget);
         origin_Paint = oldOrigin;
-        SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureBlendMode(d->texture, blendMode);
         setBaseAttributes_Text(-1, -1);
     }
 }
