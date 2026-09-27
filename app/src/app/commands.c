@@ -515,6 +515,11 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     iDocumentWidget *doc = document_Command(cmd);
+    if (doc && as_Widget(doc)->root != get_Root()) {
+        /* Command may originate from a window without documents (e.g., Preferences). */
+        setCurrent_Window(as_Widget(doc)->root->window);
+        setCurrent_Root(as_Widget(doc)->root);
+    }
     if (equalCase_Rangecc(parts.scheme, "titan")) {
         if (!isHistory) {
             setRedirectCount_DocumentWidget(doc, 0);
@@ -573,8 +578,8 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     iRoot *root = get_Root();
     iRoot *oldRoot = root;
     if (newTab & otherRoot_OpenTabFlag) {
-        root = otherRoot_Window(as_Window(d->window), root);
-        setKeyRoot_Window(as_Window(d->window), root);
+        root = otherRoot_Window(get_Window(), root);
+        setKeyRoot_Window(get_Window(), root);
         setCurrent_Root(root); /* need to change for widget creation */
         doc = document_Command(cmd); /* may be different */
     }
