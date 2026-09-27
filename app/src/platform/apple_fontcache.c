@@ -402,6 +402,89 @@ void enumerateSystemFonts_FontPack_(iFontPack *pack) {
     CFRelease(families);
 }
 
+/*- System UI font -----------------------------------------------------------------------------*/
+
+/* Core Text substitutes another font when the system UI font is looked up by PostScript name. */
+static const char *systemUIFontIds_[max_FontStyle] = {
+    "system-ui/regular", "system-ui/italic", "system-ui/light", "system-ui/semibold", "system-ui/bold",
+};
+
+CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
+    static const CGFloat weights_[max_FontStyle] = { 0.2, 0.2, -0.6, 0.4, 0.56 };
+    int style = -1;
+    for (int s = 0; s < max_FontStyle; s++) {
+        if (!cmp_String(fontFileId, systemUIFontIds_[s])) {
+            style = s;
+            break;
+        }
+    }
+    if (style < 0) {
+        return NULL;
+    }
+    CTFontRef base = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 12.0, NULL);
+    if (!base) {
+        return NULL;
+    }
+    CTFontRef font = NULL;
+    /* Apply the weight. */ {
+        CFNumberRef weight =
+            CFNumberCreate(kCFAllocatorDefault, kCFNumberCGFloatType, &weights_[style]);
+        CFMutableDictionaryRef traits = CFDictionaryCreateMutable(
+            kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        CFDictionarySetValue(traits, kCTFontWeightTrait, weight);
+        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
+            kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        CFDictionarySetValue(attrs, kCTFontTraitsAttribute, traits);
+        CTFontDescriptorRef baseDesc = CTFontCopyFontDescriptor(base);
+        CTFontDescriptorRef desc     = CTFontDescriptorCreateCopyWithAttributes(baseDesc, attrs);
+        font = CTFontCreateWithFontDescriptor(desc, 12.0, NULL);
+        CFRelease(desc);
+        CFRelease(baseDesc);
+        CFRelease(attrs);
+        CFRelease(traits);
+        CFRelease(weight);
+    }
+    if (!font) {
+        return base;
+    }
+    CFRelease(base);
+    if (style == italic_FontStyle) {
+        CTFontRef italic = CTFontCreateCopyWithSymbolicTraits(
+            font, 0.0, NULL, kCTFontTraitItalic, kCTFontTraitItalic);
+        if (italic) {
+            CFRelease(font);
+            font = italic;
+        }
+    }
+    return font;
+}
+
+iFontSpec *newSystemUIFontSpec_AppleText(void) {
+    iFontFile *files[max_FontStyle];
+    for (int s = 0; s < max_FontStyle; s++) {
+        files[s] = new_FontFile();
+        setCStr_String(&files[s]->id, systemUIFontIds_[s]);
+        allocData_FontFile(files[s]);
+        if (!files[s]->data) {
+            iReleasePtr(&files[s]);
+        }
+    }
+    if (!files[regular_FontStyle]) {
+        for (int s = 0; s < max_FontStyle; s++) {
+            iRelease(files[s]);
+        }
+        return NULL;
+    }
+    iFontSpec *spec = new_FontSpec();
+    setCStr_String(&spec->name, "System UI");
+    spec->glyphScale[0]  = 0.79f;
+    spec->glyphScale[1]  = 0.825f;
+    for (int s = 0; s < max_FontStyle; s++) {
+        spec->styles[s] = files[s] ? files[s] : ref_Object(files[regular_FontStyle]);
+    }
+    return spec;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(FontWorker)

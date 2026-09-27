@@ -639,11 +639,27 @@ void init_Fonts(const char *userDir) {
         /* Cache the system fonts because there might be lots of them and they don't
            change that often. */
         extern void loadCachedFontPack_AppleText(const iString *cacheFile, iFontPack *pack);
+        extern iFontSpec *newSystemUIFontSpec_AppleText(void);
+        /* The system UI font is used as the default font. */
+        iFontSpec *sysUI = newSystemUIFontSpec_AppleText();
+        if (sysUI) {
+            iForEach(PtrArray, i, &pack->fonts) {
+                iFontSpec *spec = i.ptr;
+                if (!cmp_String(&spec->id, "default")) {
+                    setCStr_String(&spec->id, "default-lgr"); /* being replaced */
+                    break;
+                }
+            }
+            setCStr_String(&sysUI->id, "default");
+        }
         pack = new_FontPack();
         setReadOnly_FontPack(pack, iTrue);
         setCStr_String(&pack->id, "system-fonts");
         loadCachedFontPack_AppleText(
             collect_String(concatCStr_Path(&d->userDir, "system-fonts.lgr")), pack);
+        if (sysUI) {
+            addSpec_FontPack(pack, sysUI);
+        }
         if (!isEmpty_PtrArray(&pack->fonts)) {
             /* Apply overrides/tweaks from the curated metadata. */
             applyIniTweaks_FontPack(

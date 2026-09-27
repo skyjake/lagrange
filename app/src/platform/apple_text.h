@@ -72,6 +72,7 @@ iAppleFont *appleFont_AppleText_        (iAppleText *, int fontId);
 const char *sfSymbolName_AppleText_     (iChar iconChar); /* NULL if not in table */
 
 void        allocData_FontFile          (iFontFile *); /* backend-implemented */
+CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if not a system UI font */
 
 /* Render an SF Symbol glyph as a tinted CGImage (caller must CGImageRelease).
    `slotPixels`: height of the square slot in screen pixels in which to place the glyph. */
