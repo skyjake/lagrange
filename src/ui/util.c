@@ -2537,7 +2537,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                                       prefs_App()->promptPosition == bottom_InputPromptPosition
                                   ? bottom_TransitionDir
                                   : dialogTransitionDir_Widget(dlg);
-    iWidget *ptr = as_Widget(pointer_Command(cmd));
+    /* Every command passes through here, so the pointer may refer to any widget, including one
+       already deleted while the command was queued. It is only compared, not validated. */
+    iWidget *ptr = pointer_Command(cmd);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "keyboard.changed")) {
         if (isVisible_Widget(dlg)) {
             updateValueInputSizing_(dlg);
