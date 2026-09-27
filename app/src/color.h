@@ -59,7 +59,7 @@ enum iColorId {
     uiTextSelected_ColorId,
     uiTextDisabled_ColorId,
     uiTextFramelessHover_ColorId,
-    uiTextFramelessSelected_ColorId,
+    uiTextSelectedDim_ColorId,
     uiTextStrong_ColorId,
     uiTextShortcut_ColorId,
     uiTextAction_ColorId,

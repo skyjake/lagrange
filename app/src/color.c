@@ -114,15 +114,14 @@ int accent_Color(iBool isBright) {
 
 void setThemePalette_Color(enum iColorTheme theme) {
     const iPrefs *prefs = prefs_App();
-    memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
     /* Update the system accent color. */ {
-        const iBool isMediumDark = prefs_App()->theme == dark_ColorTheme;
         iColor system = systemAccent_Color();
         darkPalette_[systemHigh_ColorId]  = system;
         darkPalette_[systemLow_ColorId]   = rgb_HSLColor(addSatLum_HSLColor(hsl_Color(system), 0, -0.25f));
         lightPalette_[systemHigh_ColorId] = rgb_HSLColor(addSatLum_HSLColor(hsl_Color(system), 0, 0.3f));
         lightPalette_[systemLow_ColorId]  = rgb_HSLColor(addSatLum_HSLColor(hsl_Color(system), 0, -0.1f));
     }
+    memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
     const int accentHi = color_ColorAccent(prefs->accent, iTrue /* bright */);
     const int accentLo = color_ColorAccent(prefs->accent, iFalse /* dim */);
     switch (theme) {
@@ -358,6 +357,15 @@ void setThemePalette_Color(enum iColorTheme theme) {
         /* Increase visibility of the hover highlight. */
         copy_(uiBackgroundFramelessHover_ColorId, isDark_ColorTheme(theme) ? accentLo : accentHi);
     }
+    if (prefs->accent == system_ColorAccent) {
+        /* Native selections use the unmodified accent with white text. */
+        set_Color(uiBackgroundSelected_ColorId, darkPalette_[systemHigh_ColorId]);
+        copy_(uiTextSelected_ColorId, white_ColorId);
+    }
+    set_Color(uiTextSelectedDim_ColorId,
+              mix_Color(get_Color(uiTextSelected_ColorId),
+                        get_Color(uiBackgroundSelected_ColorId),
+                        0.25f));
     uiPalette_[uiMarked_ColorId  ].a = 128;
     uiPalette_[uiMatching_ColorId].a = 128;
     if (deviceType_App() != desktop_AppDeviceType) {

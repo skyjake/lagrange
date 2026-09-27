@@ -456,7 +456,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     /* Take away parts if it doesn't fit. */
     const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI;
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
-    const int font      = uiLabel_FontId;
+    const int font      = fontWithStyle_Text(font_LabelWidget(tabButton), semiBold_FontStyle);
     for (;;) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {

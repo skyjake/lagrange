@@ -404,31 +404,35 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     const iBool isMenuVisible = isVisible_Widget(certList->menu);
     const iBool isDragging   = constDragItem_ListWidget(list) == d;
     const iBool isPressing   = isMouseDown_ListWidget(list) && !isDragging;
-    const iBool isHover      =
+    const iBool isHoverItem  =
             (!isMenuVisible &&
             isHover_Widget(constAs_Widget(list)) &&
             constHoverItem_ListWidget(list) == d) ||
             (isMenuVisible && certList->contextItem == d) ||
             (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
             isDragging;
+    const iBool isPressed    = isHoverItem && isPressing;
+    const iBool isSel        = d->listItem.flags.isSelected || isPressed;
+    const iBool isHover      = isHoverItem && !isSel;
     const int itemHeight     = height_Rect(itemRect);
-    const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
-                                       : uiIcon_ColorId;
-    const int altIconColor   = isPressing ? uiTextPressed_ColorId : uiTextCaution_ColorId;
+    const int iconColor      = isSel     ? uiTextSelected_ColorId
+                               : isHover ? uiIconHover_ColorId
+                                         : uiIcon_ColorId;
+    const int altIconColor   = isSel ? uiTextSelected_ColorId : uiTextCaution_ColorId;
     const int font = certList->itemFonts[d->isBold ? 1 : 0];
     int bg         = uiBackgroundSidebar_ColorId;
-    if (isHover) {
-        bg = isPressing ? uiBackgroundPressed_ColorId
-                        : uiBackgroundFramelessHover_ColorId;
+    if (isSel) {
+        bg = uiBackgroundSelected_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
-    else if (d->listItem.flags.isSelected) {
-        bg = uiBackgroundUnfocusedSelection_ColorId;
+    else if (isHover) {
+        bg = uiBackgroundFramelessHover_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
 //    iInt2 pos = itemRect.pos;
-    const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                           : uiTextStrong_ColorId;
+    const int fg = isSel     ? uiTextSelected_ColorId
+                   : isHover ? uiTextFramelessHover_ColorId
+                             : uiTextStrong_ColorId;
     const iBool isUsedOnDomain = (d->indent != 0);
     iString icon;
     initUnicodeN_String(&icon, &d->icon, 1);
@@ -438,9 +442,9 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
             init_I2(3 * gap_UI * aspect_UI,
                     (itemHeight - lineHeight_Text(uiLabel_FontId) * 2 - lineHeight_Text(font)) /
                         2));
-    const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
-                                                                 : uiTextFramelessHover_ColorId)
-                               : uiTextDim_ColorId;
+    const int metaFg = isSel     ? permanent_ColorId | uiTextSelectedDim_ColorId
+                       : isHover ? permanent_ColorId | uiTextFramelessHover_ColorId
+                                 : uiTextDim_ColorId;
     if (!d->listItem.flags.isSelected && !isUsedOnDomain) {
         drawOutline_Text(font, cPos, metaFg, none_ColorId, range_String(&icon));
     }
@@ -448,7 +452,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
                    cPos,
                    d->listItem.flags.isSelected ? iconColor
                    : isUsedOnDomain       ? altIconColor
-                                          : uiBackgroundSidebar_ColorId,
+                                          : bg,
                    range_String(&icon));
     deinit_String(&icon);
     drawRange_Text(d->listItem.flags.isSelected ? certList->itemFonts[1] : font,

@@ -298,6 +298,10 @@ static iBool areTabButtonsThemeColored_(void) {
             (docTheme == oceanic_GmDocumentTheme && !isDarkUI));
 }
 
+static iBool isDocTabButton_(const iWidget *d) {
+    return isTabButton_Widget(d) && !cmp_String(id_Widget(d->parent->parent), "doctabs");
+}
+
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2,
                                    int *icon, int *meta) {
     const iWidget *w           = constAs_Widget(d);
@@ -330,24 +334,23 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
     iBool isThemeBackground = iFalse;
     if (isSel) {
+        *fg = uiTextStrong_ColorId;
         if (!d->flags.checkMark) {
             if (isMenuItem) {
                 *bg = uiBackgroundUnfocusedSelection_ColorId;
             }
             else {
                 const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
-                if (areTabButtonsThemeColored_() &&
-                    !cmp_String(&d->widget.parent->id, "tabs.buttons")) {
+                if (areTabButtonsThemeColored_() && isDocTabButton_(w)) {
                     *bg = (docTheme == oceanic_GmDocumentTheme ||
                                    (docTheme == sepia_GmDocumentTheme &&
                                     colorTheme_App() == pureWhite_ColorTheme)
                                ? tmBackground_ColorId
                                : tmBannerBackground_ColorId);
                     isThemeBackground = iTrue;
-                    /* Ensure visibility in case the background matches UI background. */
+                    /* Use the page background if the banner blends into the tab bar. */
                     if (delta_Color(get_Color(*bg), get_Color(uiBackground_ColorId)) < 30) {
-                        *bg = uiBackgroundSelected_ColorId;
-                        isThemeBackground = iFalse;
+                        *bg = tmBackground_ColorId;
                     }
                 }
                 else {
@@ -358,8 +361,13 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
                                                           : uiMarked_ColorId;
             }
+            if (*bg == uiBackgroundSelected_ColorId) {
+                *fg = uiTextSelected_ColorId;
+                if (isTabButton_Widget(w)) {
+                    *fg |= permanent_ColorId; /* site icon has a color escape */
+                }
+            }
         }
-        *fg = uiTextSelected_ColorId;
         if (isThemeBackground) {
             *fg = tmParagraph_ColorId;
         }
@@ -388,15 +396,19 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             (*icon)--; /* make it darker */
         }
     }
+    if (*bg == uiBackgroundSelected_ColorId && prefs_App()->accent == system_ColorAccent) {
+        *icon = *meta = uiTextSelected_ColorId;
+    }
     if (isHover) {
         if (isFrameless) {
             if (prefs_App()->accent == gray_ColorAccent && prefs_App()->theme >= light_ColorTheme) {
                 *bg = gray75_ColorId;
+                *fg = uiTextFramelessHover_ColorId;
             }
             else if (!isSel) {
                 *bg = uiBackgroundFramelessHover_ColorId;
+                *fg = uiTextFramelessHover_ColorId;
             }
-            *fg = uiTextFramelessHover_ColorId;
         }
         else {
             /* Frames matching color escaped text. */
@@ -475,11 +487,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
+    const int font = (bg == uiBackgroundSelected_ColorId && isTabButton_Widget(w))
+                         ? fontWithStyle_Text(d->font, semiBold_FontStyle)
+                         : d->font;
     /* Indicate focused label with an underline attribute. */
     if (isTerminal_Platform() && isFocused_Widget(w)) {
         fg |= underline_ColorId;
     }
-    setBaseAttributes_Text(d->font, fg);
+    setBaseAttributes_Text(font, fg);
     /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
     setDisableColorEmoji_Text(!isTabButton_Widget(w));
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
@@ -539,21 +554,21 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             .maxWidth = width_Rect(cont),
             .mode = word_WrapTextMode,
         };
-        draw_WrapText(&wt, d->font, topLeft_Rect(cont), fg);
+        draw_WrapText(&wt, font, topLeft_Rect(cont), fg);
     }
     else if (flags & alignLeft_WidgetFlag) {
         const iInt2 topLeft = add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad));
         if (d->flags.truncateToFit) {
             const char *endPos;
-            tryAdvanceNoWrap_Text(d->font,
+            tryAdvanceNoWrap_Text(font,
                                   range_String(&d->label),
                                   width_Rect(rect) - padding_LabelWidget_(d, 0).x -
                                       padding_LabelWidget_(d, 1).x - iconPad,
                                   &endPos);
-            drawRange_Text(d->font, topLeft, fg, (iRangecc){ constBegin_String(&d->label), endPos });
+            drawRange_Text(font, topLeft, fg, (iRangecc){ constBegin_String(&d->label), endPos });
         }
         else {
-            draw_Text(d->font, topLeft, fg, "%s", cstr_String(&d->label));
+            draw_Text(font, topLeft, fg, "%s", cstr_String(&d->label));
         }
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
@@ -572,7 +587,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     else if (flags & alignRight_WidgetFlag) {
         drawAlign_Text(
-            d->font,
+            font,
             add_I2(topRight_Rect(bounds), negX_I2(padding_LabelWidget_(d, 1))),
             fg,
             right_Alignment,
@@ -581,7 +596,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     else {
         drawCenteredOutline_Text(
-            d->font,
+            font,
             moved_Rect(
                 adjusted_Rect(bounds,
                               init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
@@ -653,7 +668,10 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     }
     iInt2 size;
     if (!d->flags.noLabel) {
-        size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
+        /* Selected tabs use a heavier font. */
+        const int font =
+            isTabButton_Widget(w) ? fontWithStyle_Text(d->font, semiBold_FontStyle) : d->font;
+        size = add_I2(measure_Text(font, cstr_String(&d->label)).bounds.size,
                       add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
     }
     else {
