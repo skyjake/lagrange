@@ -428,7 +428,8 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     for (int i = 0; i < maxRunCache_AppleText_; i++) {
         iAppleTextRun *r = d->runCache[i];
         if (r && r->hash == hash && r->fontId == fontId &&
-            equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen) {
+            equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen &&
+            (r->colorId & permanent_ColorId) == (colorId & permanent_ColorId)) {
             r->lastUsed = ++d->runCacheSerial;
 #if !defined(NDEBUG)
             d->cacheHits++;
@@ -630,7 +631,11 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
     /* Get or create the CTTypesetter run from the cache. Font and color attributes are
        resolved inside the run constructor (textrun_apple.c). */
     const int fontId = fontId_Text(d) & (int) mask_FontId;
-    iAppleTextRun *run = maybeMakeRun_AppleText_(tx, text, fontId, args->color);
+    iAppleTextRun *run = maybeMakeRun_AppleText_(
+        tx,
+        text,
+        fontId,
+        args->color | (args->mode & permanentColorFlag_RunMode ? permanent_ColorId : 0));
     if (!run) {
         if (args->metrics_out) {
             args->metrics_out->bounds  = init_Rect(0, 0, 0, d->height);

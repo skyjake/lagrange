@@ -139,6 +139,9 @@ static iBool prepare_AppleTextRun_(
     size_t  segCount  = 0;
     CFIndex segStartUtf16 = 0;
 
+    /* Escapes cannot change a permanent color. */
+    const iBool isPermanent = (baseColorId & permanent_ColorId) != 0;
+    baseColorId &= mask_ColorId;
     /* Current styling state. */
     int    curFontId    = baseFontId;
     int    curFgColorId = baseColorId;
@@ -173,6 +176,9 @@ static iBool prepare_AppleTextRun_(
             else { /* normal color index */
                 curFgColorId = (int) esc - asciiBase_ColorEscape;
                 curFgColor.a = 0;
+            }
+            if (isPermanent) {
+                curFgColorId = baseColorId;
             }
             segStartUtf16 = utf16Idx;
             continue;
@@ -230,10 +236,10 @@ static iBool prepare_AppleTextRun_(
                                              (ansi & allowBg_AnsiFlag) ? &bgColor : NULL,
                                              &seqEnd);
                             argEnd = (char *) seqEnd;
-                            if (fgColor.a > 0) {
+                            if (fgColor.a > 0 && !isPermanent) {
                                 curFgColor = fgColor;
                             }
-                            if (bgColor.a > 0) {
+                            if (bgColor.a > 0 && !isPermanent) {
                                 curBgColor = bgColor;
                             }
                         }
