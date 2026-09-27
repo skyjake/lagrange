@@ -127,6 +127,22 @@ static float glyphScaleFromMetrics_(const iFontFile *reg) {
     return iMax(gs, 0.8f); /* floor: don't over-shrink fonts with very large Win metrics */
 }
 
+/* The UI has been designed assuming the metrics of the built-in Roboto font: hhea ascent
+   of 1900 and descent of -500 design units, with `ui.glyphscale = 0.775` (see fontpack.ini). */
+#define robotoAscentRatio_  (1900.0f / 2400.0f)
+#define robotoUIGlyphScale_ 0.775f
+
+static float uiGlyphScaleFromMetrics_(const iFontFile *reg) {
+    /* Scale the glyphs so the ascent matches Roboto's in the UI. The baseline is placed at
+       `height * glyphScale * ascent / (ascent - descent)`. */
+    const int total = reg ? reg->ascent - reg->descent : 0;
+    if (!reg || reg->ascent <= 0 || total <= 0) {
+        return glyphScaleFromMetrics_(reg);
+    }
+    const float gs = robotoUIGlyphScale_ * robotoAscentRatio_ * (float) total / (float) reg->ascent;
+    return iMin(gs, 1.0f);
+}
+
 static iBool addEntryToFontPack_(const iFontCacheEntry *e, iFontPack *pack) {
     if (isEmpty_String(&e->styles[regular_FontStyle].identifier)) return iFalse;
     iFontFile *files[max_FontStyle];
@@ -146,7 +162,8 @@ static iBool addEntryToFontPack_(const iFontCacheEntry *e, iFontPack *pack) {
         spec->styles[s] = ref_Object(files[s]);
     }
     /* Default scaling based on metrics. */
-    spec->glyphScale[0] = spec->glyphScale[1] = glyphScaleFromMetrics_(spec->styles[0]);
+    spec->glyphScale[0] = uiGlyphScaleFromMetrics_(spec->styles[0]);
+    spec->glyphScale[1] = glyphScaleFromMetrics_(spec->styles[0]);
     addSpec_FontPack(pack, spec);
     for (int s = 0; s < max_FontStyle; s++) {
         iRelease(files[s]);
