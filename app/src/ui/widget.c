@@ -967,9 +967,8 @@ static void arrange_Widget_(iWidget *d) {
         d->flags2 & centerChildrenVertical_WidgetFlag2 &&
         ~d->flags & arrangeHeight_WidgetFlag) {
         /* Move children down to be in the center. */
-        const int top    = d->padding[1];
         const int bottom = pos.y;
-        const int extra  = bottom_Rect(innerRect_Widget_(d)) - bottom - top;
+        const int extra  = bottom_Rect(innerRect_Widget_(d)) - bottom;
         iForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
             if (isCollapsed_Widget_(child) || !isArrangedPos_Widget_(child)) {

@@ -273,6 +273,22 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
     iForEach(ObjectList, k, children_Widget(pages)) {
         setMinSize_Widget(k.object, largest);
     }
+    /* The content area may have other children besides the pages. */
+    const iWidget *content = findChild_Widget(tabs, "tabs.content");
+    iInt2 extra = init_I2(content->padding[0] + content->padding[2],
+                          content->padding[1] + content->padding[3]);
+    iConstForEach(ObjectList, c, content->children) {
+        const iWidget *child = constAs_Widget(c.object);
+        if (child != pages && ~flags_Widget(child) & hidden_WidgetFlag) {
+            if (flags_Widget(content) & arrangeVertical_WidgetFlag) {
+                extra.y += height_Widget(child);
+            }
+            else {
+                extra.x += width_Widget(child);
+            }
+        }
+    }
+    largest = add_I2(largest, extra);
     const iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
     setFixedSize_Widget(tabs,
                         isVerticalTabBar_Widget(tabs) ? addX_I2(largest, width_Widget(buttons))

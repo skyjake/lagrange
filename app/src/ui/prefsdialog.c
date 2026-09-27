@@ -749,12 +749,21 @@ iWidget *makePreferences_Widget(void) {
         setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
         return dlg;
     }
-    iWidget *dlg = makeSheet_Widget("prefs");
-    addDialogTitle_Widget(dlg, "${heading.prefs}", NULL);
+    iWidget *dlg  = makeSheet_Widget("prefs");
     iWidget *tabs = makeTabs_Widget(dlg);
-    setVerticalTabBar_Widget(tabs);
-    setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
-    setId_Widget(tabs, "prefs.tabs");
+    iWidget *content;
+    /* Set up the tabs list with full-bleed borders. */ {
+        setPadding1_Widget(dlg, 0);
+        setVerticalTabBar_Widget(tabs);
+        iWidget *tabButtons = findChild_Widget(tabs, "tabs.buttons");
+        setBackgroundColor_Widget(tabButtons, uiBackgroundSidebar_ColorId);
+        setPadding_Widget(tabButtons, 3 * gap_UI, 3 * gap_UI, 0, 3 * gap_UI);
+        setId_Widget(tabs, "prefs.tabs");
+        /* Title and dialog buttons go right of the full-height tab bar. */
+        content = findChild_Widget(tabs, "tabs.content");
+        setPadding1_Widget(content, 3 * gap_UI);
+        changeChildIndex_Widget(content, addDialogTitle_Widget(content, "${heading.prefs}", "prefs.title"), 0);
+    }
     iWidget *headings, *values;
     /* General settings. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -1216,15 +1225,15 @@ iWidget *makePreferences_Widget(void) {
         setSensitiveContent_InputWidget(field, iTrue);
         setHint_InputWidget(field, "${hint.optional}");
     }
-    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    updatePreferencesLayout_Widget(dlg);
+    addChild_Widget(content, iClob(makePadding_Widget(gap_UI)));
     const iMenuItem actions[] = { { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
                                 { "---" },
                                 { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } };
     const size_t actOffset = (isTerminal_Platform() ? 2 : 0);
     iWidget *buttons = addChild_Widget(
-        dlg, iClob(makeDialogButtons_Widget(actions + actOffset, iElemCount(actions) - actOffset)));
+        content, iClob(makeDialogButtons_Widget(actions + actOffset, iElemCount(actions) - actOffset)));
     setId_Widget(child_Widget(buttons, 0), "prefs.aboutfonts");
+    updatePreferencesLayout_Widget(dlg);
     addChild_Widget(dlg->root->widget, iClob(dlg));
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     return dlg;
@@ -1561,7 +1570,10 @@ void showPreferences_Widget(const char *cmd) {
     setCommandHandler_Widget(dlg, handlePrefsCommands_);
     if (prefs_App()->detachedPrefs && (!isWindows_Platform() || !prefs_App()->customFrame) &&
         deviceType_App() == desktop_AppDeviceType && !isTerminal_Platform()) {
-        /* Detach into a window. */
+        /* Detach into a window. The heading must be the first child to become the title. */
+        iWidget *title = findChild_Widget(dlg, "prefs.title");
+        addChildPos_Widget(dlg, iClob(removeChild_Widget(title->parent, title)), front_WidgetAddPos);
+        updatePreferencesLayout_Widget(dlg);
         promoteDialogToWindow_Widget(dlg);
     }
     if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
