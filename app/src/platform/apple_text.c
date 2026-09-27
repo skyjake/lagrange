@@ -105,20 +105,25 @@ void ensureCtFont_AppleFont_(iAppleFont *d, CFArrayRef cascadeList) {
         }
     }
     CTFontRef ref = (CTFontRef) (uintptr_t) d->font.file->data;
+    CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
+                                                             2,
+                                                             &kCFTypeDictionaryKeyCallBacks,
+                                                             &kCFTypeDictionaryValueCallBacks);
     if (cascadeList) {
-        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
-                                                                 1,
-                                                                 &kCFTypeDictionaryKeyCallBacks,
-                                                                 &kCFTypeDictionaryValueCallBacks);
         CFDictionarySetValue(attrs, kCTFontCascadeListAttribute, cascadeList);
-        CTFontDescriptorRef desc = CTFontDescriptorCreateWithAttributes(attrs);
-        CFRelease(attrs);
-        d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) d->pointSize, NULL, desc);
-        CFRelease(desc);
     }
-    else {
-        d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) d->pointSize, NULL, NULL);
+    /* Point size is in pixels. Optical size and tracking must use the size in points. */ {
+        const iWindow *win = get_Window();
+        const CGFloat opticalSize =
+            d->pointSize / (win && win->pixelRatio > 0.0f ? win->pixelRatio : 1.0f);
+        CFNumberRef num = CFNumberCreate(kCFAllocatorDefault, kCFNumberCGFloatType, &opticalSize);
+        CFDictionarySetValue(attrs, kCTFontOpticalSizeAttribute, num);
+        CFRelease(num);
     }
+    CTFontDescriptorRef desc = CTFontDescriptorCreateWithAttributes(attrs);
+    CFRelease(attrs);
+    d->ctFont = CTFontCreateCopyWithAttributes(ref, (CGFloat) d->pointSize, NULL, desc);
+    CFRelease(desc);
 }
 
 static void deinit_AppleFont_(iAppleFont *d) {
@@ -831,10 +836,13 @@ void allocData_FontFile(iFontFile *d) {
     }
     else if (!isEmpty_String(&d->id)) {
         /* Named system font: look up by PostScript name. */
-        CFStringRef psName = CFStringCreateWithCString(
-            kCFAllocatorDefault, cstr_String(&d->id), kCFStringEncodingUTF8);
-        font = CTFontCreateWithName(psName, 12.0, NULL);
-        CFRelease(psName);
+        font = newSystemUIFont_AppleText(&d->id);
+        if (!font) {
+            CFStringRef psName = CFStringCreateWithCString(
+                kCFAllocatorDefault, cstr_String(&d->id), kCFStringEncodingUTF8);
+            font = CTFontCreateWithName(psName, 12.0, NULL);
+            CFRelease(psName);
+        }
         if (!font) return;
         /* Read design-unit metrics via CGFont. */
         CGFontRef cgFont = CTFontCopyGraphicsFont(font, NULL);
