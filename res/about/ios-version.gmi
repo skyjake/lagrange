@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.21 (3)
+* Fixed: Incorrect selection range shown after focusing the navbar URL input field.
+
 ## 1.21 (2)
 * Fixed: Auto-opened input prompt dialog was duplicated when opening the same link again without first dismissing the first prompt.
 * Fixed: Sidebar tab buttons lack a background color in the second split (clipping issue).
