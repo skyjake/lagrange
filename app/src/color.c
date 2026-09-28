@@ -243,7 +243,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
             copy_(uiTextDisabled_ColorId, gray50_ColorId);
-            copy_(uiTextFramelessHover_ColorId, black_ColorId);
+            copy_(uiTextFramelessHover_ColorId, uiText_ColorId);
             copy_(uiTextShortcut_ColorId, accentLo);
             copy_(uiTextAction_ColorId, accentLo);
             copy_(uiTextCaution_ColorId, black_ColorId);
@@ -296,7 +296,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextStrong_ColorId, black_ColorId);
             copy_(uiTextDim_ColorId, gray25_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
-            copy_(uiTextFramelessHover_ColorId, black_ColorId);
+            copy_(uiTextFramelessHover_ColorId, uiText_ColorId);
             copy_(uiTextShortcut_ColorId, accentLo);
             copy_(uiTextAction_ColorId, accentLo);
             copy_(uiTextCaution_ColorId, black_ColorId);
@@ -339,10 +339,18 @@ void setThemePalette_Color(enum iColorTheme theme) {
               mix_Color(get_Color(uiBackground_ColorId),
                         get_Color(uiBackgroundSelected_ColorId),
                         theme == pureBlack_ColorTheme ? 0.5f : isDark_ColorTheme(theme) ? 0.25f : 0.66f));
-    set_Color(uiBackgroundFramelessHover_ColorId,
-              mix_Color(get_Color(uiBackground_ColorId),
-                        get_Color(uiBackgroundSelected_ColorId),
-                        isDark_ColorTheme(theme) ? 0.66f : 0.375f));
+    if (isDark_ColorTheme(theme)) {
+        set_Color(uiBackgroundFramelessHover_ColorId,
+                  mix_Color(get_Color(uiBackground_ColorId),
+                            get_Color(uiBackgroundSelected_ColorId),
+                            0.66f));
+    }
+    else {
+        set_Color(uiBackgroundFramelessHover_ColorId,
+                  mix_Color(get_Color(gray75_ColorId),
+                            get_Color(gray50_ColorId),
+                            theme == light_ColorTheme ? 0.2f : 0.12f));
+    }
     setHsl_Color(uiBackgroundFolder_ColorId,
                  addSatLum_HSLColor(get_HSLColor(uiBackgroundSidebar_ColorId),
                                     0,
@@ -353,9 +361,9 @@ void setThemePalette_Color(enum iColorTheme theme) {
     set_Color(uiTextShortcut_ColorId, mix_Color(get_Color(uiTextShortcut_ColorId),
                                                 get_Color(uiBackground_ColorId),
                                                 0.4f));
-    if (prefs->accent == gray_ColorAccent) {
+    if (prefs->accent == gray_ColorAccent && isDark_ColorTheme(theme)) {
         /* Increase visibility of the hover highlight. */
-        copy_(uiBackgroundFramelessHover_ColorId, isDark_ColorTheme(theme) ? accentLo : accentHi);
+        copy_(uiBackgroundFramelessHover_ColorId, accentLo);
     }
     if (prefs->accent == system_ColorAccent) {
         /* Native selections use the unmodified accent with white text. */

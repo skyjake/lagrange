@@ -401,11 +401,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
     if (isHover) {
         if (isFrameless) {
-            if (prefs_App()->accent == gray_ColorAccent && prefs_App()->theme >= light_ColorTheme) {
-                *bg = gray75_ColorId;
-                *fg = uiTextFramelessHover_ColorId;
-            }
-            else if (!isSel) {
+            if (!isSel) {
                 *bg = uiBackgroundFramelessHover_ColorId;
                 *fg = uiTextFramelessHover_ColorId;
             }

@@ -3265,10 +3265,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
-        const int fg = isSel                            ? uiTextSelected_ColorId
-                       : isHover                        ? uiTextFramelessHover_ColorId
-                       : d->listItem.flags.isDropTarget ? uiHeading_ColorId
-                                                        : uiText_ColorId;
+        const iBool isFolder = d->listItem.flags.isDropTarget;
+        const int   fg = isSel ? uiTextSelected_ColorId
+                         : isHover && (!isFolder || isDark_ColorTheme(prefs_App()->theme))
+                             ? uiTextFramelessHover_ColorId
+                         : isFolder ? uiHeading_ColorId
+                                    : uiText_ColorId;
         /* The icon. */
         iString str;
         init_String(&str);
