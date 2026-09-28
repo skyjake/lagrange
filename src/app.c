@@ -2858,6 +2858,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             d->lastEventTime = SDL_GetTicks();
 #endif
             postRefreshAllWindows_App();
+            setRefreshInterval_Feeds(d->prefs.feedInterval);
             if (d->isTextInputActive) {
                 SDL_StartTextInput();
             }
