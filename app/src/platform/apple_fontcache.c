@@ -410,7 +410,7 @@ static const char *systemUIFontIds_[max_FontStyle] = {
 };
 
 CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
-    static const CGFloat weights_[max_FontStyle] = { 0.2, 0.2, -0.6, 0.4, 0.56 };
+    static const CGFloat weights_[max_FontStyle] = { 0, 0, -0.6, 0.3, 0.56 };
     int style = -1;
     for (int s = 0; s < max_FontStyle; s++) {
         if (!cmp_String(fontFileId, systemUIFontIds_[s])) {
