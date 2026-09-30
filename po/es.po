@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2026-03-14 00:26+0000\n"
+"PO-Revision-Date: 2026-09-17 05:30+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -3039,3 +3039,39 @@ msgstr "hostname:1080"
 
 msgid "prefs.socks.password"
 msgstr "Contraseña:"
+
+msgid "prefs.promptposition"
+msgstr "Posición del indicador de entrada:"
+
+msgid "prefs.promptposition.inline"
+msgstr "En línea"
+
+msgid "prefs.promptposition.top"
+msgstr "Arriba"
+
+msgid "prefs.promptposition.bottom"
+msgstr "Abajo"
+
+msgid "prefs.thickscroll"
+msgstr "Barras de desplazamiento gruesas:"
+
+msgid "link.copy.gemtext"
+msgstr "Copiar Enlace como Gemtext"
+
+msgid "macos.menu.hide"
+msgstr "Ocultar Lagrange"
+
+msgid "macos.menu.hideothers"
+msgstr "Ocultar Otros"
+
+msgid "macos.menu.showall"
+msgstr "Mostrar Todo"
+
+msgid "macos.menu.services"
+msgstr "Servicios"
+
+msgid "ident.use.domain"
+msgstr "Usar en Este Dominio"
+
+msgid "prefs.socks"
+msgstr "Proxy activado:"
