@@ -48,7 +48,7 @@ struct Impl_Font {
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     int w = SDL_UnicodeWidth(get_Window()->render, ch);
-    w = iMin(3, w);
+    w = iClamp(w, 0, 3); /* negative for control characters */
     return &d->glyphs[w];
 }
 

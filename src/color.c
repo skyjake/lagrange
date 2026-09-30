@@ -409,6 +409,15 @@ int delta_Color(iColor c1, iColor c2) {
     return iAbs(c1.r - c2.r) + iAbs(c1.g - c2.g) + iAbs(c1.b - c2.b);
 }
 
+int perceptualDelta_Color(iColor c1, iColor c2) {
+    /* Weighted RGB distance ("redmean"). */
+    const int rm = (c1.r + c2.r) / 2;
+    const int dr = c1.r - c2.r;
+    const int dg = c1.g - c2.g;
+    const int db = c1.b - c2.b;
+    return (int) sqrtf(((512 + rm) * dr * dr + 1024 * dg * dg + (767 - rm) * db * db) / 256.0f);
+}
+
 iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
     return memcmp(x, y, sizeof(iColor)) == 0;
 }

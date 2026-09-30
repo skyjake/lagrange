@@ -578,7 +578,7 @@ static iBool startWorker_Feeds_(iFeeds *d) {
 static uint32_t refresh_Feeds_(uint32_t interval, void *data) {
     /* Called in the SDL timer thread, so let's start a worker thread for running the refresh. */
     startWorker_Feeds_(&feeds_);
-    return feeds_.refreshInterval;
+    return 0;
 }
 
 static void removeRefreshTimer_Feeds_(iFeeds *d) {
@@ -775,15 +775,16 @@ void setRefreshInterval_Feeds(enum iFeedInterval feedInterval) {
         removeRefreshTimer_Feeds_(d);
         d->refreshInterval = feedInterval * 1000;
         if (d->refreshInterval && isValid_Time(&d->lastRefreshedAt)) {
-            const int elapsedMs  = (int) (elapsedSeconds_Time(&d->lastRefreshedAt) * 1000);
-            const int intervalMs = iMax(1000, d->refreshInterval - elapsedMs);
-            d->refreshTimer = SDL_AddTimer(intervalMs, refresh_Feeds_, NULL);
+            const double remaining = (double) feedInterval - elapsedSeconds_Time(&d->lastRefreshedAt);
+            d->refreshTimer =
+                SDL_AddTimer((uint32_t) (iMax(1.0, remaining) * 1000), refresh_Feeds_, NULL);
         }
     }
 }
 
 void refreshFinished_Feeds(void) {
     stopWorker_Feeds_(&feeds_);
+    setRefreshInterval_Feeds(prefs_App()->feedInterval); /* restart the timer */
 }
 
 void removeEntries_Feeds(uint32_t feedBookmarkId) {

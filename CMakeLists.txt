@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.15)
 
 project (Lagrange
-    VERSION 1.21.1
+    VERSION 1.21.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
     set (PROJECT_VERSION 1.21)
-    set (IOS_BUNDLE_VERSION 1)
-    set (IOS_BUILD_DATE "2026-08-29")
+    set (IOS_BUNDLE_VERSION 3)
+    set (IOS_BUILD_DATE "2026-09-27")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.21)
-    set (ANDROID_BUILD_VERSION b57)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-08-29")
+    set (ANDROID_BUILD_VERSION b60)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2026-09-20")
 endif ()
 
 # Load modules from the source tree
@@ -178,7 +178,7 @@ add_custom_target (resources DEPENDS ${EMB_BIN})
 if (IOS)
     set (EMB_FONTS
         res/fonts/Roboto-Regular.ttf
-        res/fonts/IosevkaTerm-Extended.ttf
+        res/fonts/IosevkaFixed-Extended.ttf
     )
     set_source_files_properties (${EMB_FONTS}
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources

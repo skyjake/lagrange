@@ -962,6 +962,7 @@ struct Impl_SystemTextInput {
     int flags;
     void *field; /* single-line text field */
     void *view;  /* multi-line text view */
+    iBool pendingSelectAll;
     void (*textChangedFunc)(iSystemTextInput *, void *);
     void *textChangedContext;
 };
@@ -1013,6 +1014,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->flags = flags;
     d->field = NULL;
     d->view  = NULL;
+    d->pendingSelectAll = iFalse;
     CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
     if (flags & multiLine_SystemTextInputFlags) {
         d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
@@ -1095,13 +1097,22 @@ void deinit_SystemTextInput(iSystemTextInput *d) {
     }
 }
 
+static UIView<UITextInput> *textInput_SystemTextInput_(const iSystemTextInput *d) {
+    return d->field ? (UIView<UITextInput> *) REF_d_field : (UIView<UITextInput> *) REF_d_view;
+}
+
 void selectAll_SystemTextInput(iSystemTextInput *d) {
-    if (d->field) {
-        [REF_d_field selectAll:nil];
-    }
-    if (d->view) {
-        [REF_d_view selectAll:nil];
-    }
+    [textInput_SystemTextInput_(d) selectAll:nil];
+    /* The frame may still change, leaving the selection highlight out of date. */
+    d->pendingSelectAll = iTrue;
+}
+
+static iBool isAllSelected_SystemTextInput_(const iSystemTextInput *d) {
+    UIView<UITextInput> *input = textInput_SystemTextInput_(d);
+    UITextRange *sel = [input selectedTextRange];
+    return sel && !sel.empty &&
+           [input comparePosition:sel.start toPosition:input.beginningOfDocument] == NSOrderedSame &&
+           [input comparePosition:sel.end toPosition:input.endOfDocument] == NSOrderedSame;
 }
 
 void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool allowUndo) {
@@ -1109,7 +1120,7 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
     if (d->field) {
         [REF_d_field setText:str];
         if (d->flags & selectAll_SystemTextInputFlags) {
-            [REF_d_field selectAll:nil];
+            selectAll_SystemTextInput(d);
         }
     }
     else {
@@ -1128,7 +1139,7 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
         [view setText:str];
 //        }
         if (d->flags & selectAll_SystemTextInputFlags) {
-            [view selectAll:nil];
+            selectAll_SystemTextInput(d);
         }
     }
 }
@@ -1164,10 +1175,10 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
 //            }
     if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
 //        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
-//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Term"]) {
+//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Fixed"]) {
 //            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
 //        }
-        font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.82f];
+        font = [UIFont fontWithName:@"Iosevka-Fixed-Extended" size:height * 0.82f];
         [appState_ setSystemTextLineSpacing:0.0f];
     }
     else {
@@ -1194,11 +1205,18 @@ const iString *text_SystemTextInput(const iSystemTextInput *d) {
 
 void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
     CGRect frame = convertToCGRect_(&rect, (d->flags & multiLine_SystemTextInputFlags) != 0);
-    if (d->field) {
-        [REF_d_field setFrame:frame];
+    UIView<UITextInput> *input = textInput_SystemTextInput_(d);
+    if (CGRectEqualToRect([input frame], frame)) {
+        return;
     }
-    else {
-        [REF_d_view setFrame:frame];
+    [input setFrame:frame];
+    if (d->pendingSelectAll) {
+        d->pendingSelectAll = iFalse;
+        if (isAllSelected_SystemTextInput_(d)) {
+            [input setSelectedTextRange:[input textRangeFromPosition:input.endOfDocument
+                                                          toPosition:input.endOfDocument]];
+            [input selectAll:nil];
+        }
     }
 }
 

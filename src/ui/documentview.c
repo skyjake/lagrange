@@ -838,6 +838,31 @@ iRect runRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
 
 iDeclareType(DrawContext)
 
+iDeclareType(MarkStyle)
+
+struct Impl_MarkStyle {
+    int           color;
+    int           alpha;
+    SDL_BlendMode blend;
+};
+
+static iMarkStyle markStyle_(int color, SDL_BlendMode blend) {
+    const iColor bg   = get_Color(tmBackground_ColorId);
+    const iColor mark = get_Color(color);
+    const iColor marked =
+        blend == SDL_BLENDMODE_ADD
+            ? (iColor){ iMin(255, bg.r + mark.r * mark.a / 255),
+                        iMin(255, bg.g + mark.g * mark.a / 255),
+                        iMin(255, bg.b + mark.b * mark.a / 255),
+                        255 }
+            : mix_Color(bg, mark, mark.a / 255.0f);
+    if (perceptualDelta_Color(bg, marked) >= 64) {
+        return (iMarkStyle){ color, 255, blend };
+    }
+    /* Not enough contrast against the background. */
+    return (iMarkStyle){ tmParagraph_ColorId, mark.a / 2, SDL_BLENDMODE_BLEND };
+}
+
 struct Impl_DrawContext {
     const iDocumentView *view;
     iRect       widgetBounds;
@@ -848,6 +873,8 @@ struct Impl_DrawContext {
     iPaint      paint;
     iBool       inSelectMark;
     iBool       inFoundMark;
+    iMarkStyle  selectMarkStyle;
+    iMarkStyle  foundMarkStyle;
     iBool       showLinkNumbers;
     iRect       firstMarkRect;
     iRect       lastMarkRect;
@@ -865,7 +892,15 @@ static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
     return wt.hitAdvance_out.x;
 }
 
-static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
+static void fillMark_DrawContext_(iDrawContext *d, iRect rect, const iMarkStyle *style) {
+    const int oldAlpha = d->paint.alpha;
+    SDL_SetRenderDrawBlendMode(d->paint.dst->render, style->blend);
+    d->paint.alpha = style->alpha;
+    fillRect_Paint(&d->paint, rect, style->color);
+    d->paint.alpha = oldAlpha;
+}
+
+static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, const iMarkStyle *style,
                                    iRangecc mark, iBool *isInside) {
     if (mark.start > mark.end) {
         /* Selection may be done in either direction. */
@@ -898,7 +933,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
                 add_I2(run->bounds.pos, addY_I2(d->viewPos, viewPos_DocumentView(d->view)));
             const iRect rangeRect = { addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) };
             if (rangeRect.size.x) {
-                fillRect_Paint(&d->paint, rangeRect, color);
+                fillMark_DrawContext_(d, rangeRect, style);
                 /* Keep track of the first and last marked rects. */
                 if (d->firstMarkRect.size.x == 0) {
                     d->firstMarkRect = rangeRect;
@@ -913,10 +948,10 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         const iRangecc url = linkUrlRange_GmDocument(d->view->doc, run->linkId);
         if (contains_Range(&url, mark.start) &&
             (contains_Range(&url, mark.end) || url.end == mark.end)) {
-            fillRect_Paint(
-                &d->paint,
+            fillMark_DrawContext_(
+                d,
                 moved_Rect(run->visBounds, addY_I2(d->viewPos, viewPos_DocumentView(d->view))),
-                color);
+                style);
         }
     }
 }
@@ -924,8 +959,8 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
     if (!isMedia_GmRun(run)) {
-        fillRange_DrawContext_(d, run, uiMatching_ColorId, *d->view->foundMark, &d->inFoundMark);
-        fillRange_DrawContext_(d, run, uiMarked_ColorId, *d->view->selectMark, &d->inSelectMark);
+        fillRange_DrawContext_(d, run, &d->foundMarkStyle, *d->view->foundMark, &d->inFoundMark);
+        fillRange_DrawContext_(d, run, &d->selectMarkStyle, *d->view->selectMark, &d->inSelectMark);
     }
 }
 
@@ -1692,9 +1727,10 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
             SDL_Renderer *render = renderer_Window(get_Window());
             ctx.firstMarkRect = zero_Rect();
             ctx.lastMarkRect = zero_Rect();
-            SDL_SetRenderDrawBlendMode(render,
-                                       isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
-                                                                           : SDL_BLENDMODE_BLEND);
+            const SDL_BlendMode blend =
+                isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_BLEND;
+            ctx.foundMarkStyle  = markStyle_(uiMatching_ColorId, blend);
+            ctx.selectMarkStyle = markStyle_(uiMarked_ColorId, blend);
             ctx.viewPos = topLeft_Rect(docBounds);
             /* Marker starting outside the visible range? */
             if (d->visibleRuns.start) {

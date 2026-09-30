@@ -684,7 +684,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "window.close")) {
         if (!isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
-            SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+            postCommand_App("quit");
         }
         else {
             closeWindow_App(get_Window());

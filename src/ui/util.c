@@ -2046,7 +2046,8 @@ static void setFocusInsideTabPage_(iWidget *page) {
 static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
     if (equal_Command(cmd, "tabs.switch")) {
         iWidget *target = pointerLabel_Command(cmd, "page");
-        if (!target) {
+        if (!target && hasLabel_Command(cmd, "id")) {
+            /* Note that an empty ID would match the first child without an ID. */
             target = findChild_Widget(tabs, cstr_Command(cmd, "id"));
         }
         if (!target) return iFalse;
@@ -2536,7 +2537,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                                       prefs_App()->promptPosition == bottom_InputPromptPosition
                                   ? bottom_TransitionDir
                                   : dialogTransitionDir_Widget(dlg);
-    iWidget *ptr = as_Widget(pointer_Command(cmd));
+    /* Every command passes through here, so the pointer may refer to any widget, including one
+       already deleted while the command was queued. It is only compared, not validated. */
+    iWidget *ptr = pointer_Command(cmd);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "keyboard.changed")) {
         if (isVisible_Widget(dlg)) {
             updateValueInputSizing_(dlg);

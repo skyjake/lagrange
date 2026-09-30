@@ -207,6 +207,7 @@ enum iDocumentWidgetFlag {
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
     setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
     newTabViaHomeKeys_DocumentWidgetFlag     = iBit(5),
+    openedExternally_DocumentWidgetFlag      = iBit(6), /* opened via an external URL event */
     selectWords_DocumentWidgetFlag           = iBit(7),
     selectLines_DocumentWidgetFlag           = iBit(8),
     pinchZoom_DocumentWidgetFlag             = iBit(9),
@@ -2100,9 +2101,13 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
     else if (!isEmpty_String(d->mod.url)) {
         /* IssueID #573: Crash when launching the app on Android. It appears that the TlsRequest
            thread crashes when it does something too early during app launch. As a workaround,
-           do not automatically reload the page during app launch if it isn't in the cache. */
+           the fetch is deferred until the launch has finished. Without this, a restored tab
+           whose content wasn't in the cache would be left blank until manually reloaded. */
         if (!isAndroid_Platform() || isFinishedLaunching_App()) {
             fetch_DocumentWidget_(d);
+        }
+        else {
+            postCommand_Widget(d, "~document.fetch");
         }
     }
     if (recent) {
@@ -4026,6 +4031,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, w, "document.fetch")) {
+        /* This is used for deferred content fetches. */
+        if (!isRequestOngoing_DocumentWidget(d) && !isEmpty_String(d->mod.url)) {
+            fetch_DocumentWidget_(d);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "document.reload") && document_Command(cmd) == d) {
         d->view->userHasScrolled = iFalse; /* respect the current scroll position */
         d->initNormScrollY = normScrollPos_DocumentView(d->view);
@@ -4077,11 +4089,25 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
-        cancelRequest_DocumentWidget_(d, iFalse);
+        const iBool wasCancelled = cancelRequest_DocumentWidget_(d, iFalse);
         if (!goBack_History(d->mod.history)) {
             /* No document will be arriving, so nothing would ever end the animation or
                replace the swiped-away view. */
             abortSwipeAnimation_DocumentWidget_(d);
+#if defined (iPlatformAndroidMobile)
+            if (argLabel_Command(cmd, "backbutton") && !wasCancelled) {
+                /* The system Back button was not used by anything else and there is nothing
+                   to go back to. */
+                if (d->flags & openedExternally_DocumentWidgetFlag) {
+                    javaCommand_Android("app.background"); /* back to external app */
+                }
+                else {
+                    postCommand_App("tabs.close"); /* back to originating tab, perhaps */
+                }
+            }
+#else
+            iUnused(wasCancelled);
+#endif
             return iTrue;
         }
         if (argLabel_Command(cmd, "swipe")) {
@@ -6363,6 +6389,10 @@ void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
 
 void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
     d->redirectCount = count;
+}
+
+void setOpenedExternally_DocumentWidget(iDocumentWidget *d, iBool openedExternally) {
+    iChangeFlags(d->flags, openedExternally_DocumentWidgetFlag, openedExternally);
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
