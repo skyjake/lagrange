@@ -95,7 +95,7 @@ JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
 }
 
 static const char *monospaceFontPath_(void) {
-    return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "IosevkaTerm-Extended.ttf");
+    return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "IosevkaFixed-Extended.ttf");
 }
 
 static const char *cachePath_(void) {
@@ -164,7 +164,7 @@ void setupApplication_Android(void) {
 #endif
     /* Cache the monospace font into a file where it can be loaded directly by the Java code. */
     const char *path = monospaceFontPath_();
-    const iBlock *iosevka = dataCStr_Archive(archive_Resources(), "fonts/IosevkaTerm-Extended.ttf");
+    const iBlock *iosevka = dataCStr_Archive(archive_Resources(), "fonts/IosevkaFixed-Extended.ttf");
     if (!fileExistsCStr_FileInfo(path) || fileSizeCStr_FileInfo(path) != size_Block(iosevka)) {
         iFile *f = newCStr_File(path);
         if (open_File(f, writeOnly_FileMode)) {

@@ -178,7 +178,7 @@ add_custom_target (resources DEPENDS ${EMB_BIN})
 if (IOS)
     set (EMB_FONTS
         res/fonts/Roboto-Regular.ttf
-        res/fonts/IosevkaTerm-Extended.ttf
+        res/fonts/IosevkaFixed-Extended.ttf
     )
     set_source_files_properties (${EMB_FONTS}
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources

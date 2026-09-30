@@ -1175,10 +1175,10 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
 //            }
     if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
 //        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
-//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Term"]) {
+//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Fixed"]) {
 //            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
 //        }
-        font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.82f];
+        font = [UIFont fontWithName:@"Iosevka-Fixed-Extended" size:height * 0.82f];
         [appState_ setSystemTextLineSpacing:0.0f];
     }
     else {
