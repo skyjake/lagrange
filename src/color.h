@@ -269,6 +269,7 @@ void            set_Color       (int color, iColor rgba);
 iColor          mix_Color       (iColor c1, iColor c2, float t);
 iColor          getMixed_Color  (int color1, int color2, float t);
 int             delta_Color     (iColor c1, iColor c2);
+int             perceptualDelta_Color (iColor c1, iColor c2);
 iColor          default_Color   (int color); /* affected by dark/light mode */
 
 iLocalDef iHSLColor get_HSLColor(int color) {

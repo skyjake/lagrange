@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.21.2
+* Fixed visibility of selected text against different backgrounds.
 * Fixed feed refresh not getting triggered when due.
 * Fixed potential crash when an inline prompt is immediately visible at launch.
 * TUI: Fixed potential hang in the text renderer.
