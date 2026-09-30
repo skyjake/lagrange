@@ -78,7 +78,7 @@
 		<string>LaunchScreen</string>
 		<key>UIAppFonts</key>
 		<array>
-			<string>IosevkaTerm-Extended.ttf</string>
+			<string>IosevkaFixed-Extended.ttf</string>
 			<string>Roboto-Regular.ttf</string>
 		</array>
 		<key>UIBackgroundModes</key>
