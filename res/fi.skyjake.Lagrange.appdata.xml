@@ -38,6 +38,21 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="1.21.2" date="2026-09-30">
+            <description>
+                <ul>
+                    <li>Updated the bundled monospace font (Iosevka): no ligatures, 4% wider.</li>
+                    <li>Quitting the app is disabled while the Titan upload dialog is open. (The contents are autosaved in case of a crash.)</li>
+                    <li>Fixed visibility of selected text against different backgrounds.</li>
+                    <li>Fixed feed refresh not getting triggered when due.</li>
+                    <li>Fixed potential crash when an inline prompt is immediately visible at launch.</li>
+                    <li>TUI: Fixed potential hang in the text renderer.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.21.2</url>
+        </release>
         <release version="1.21.1" date="2026-09-03">
             <description>
                 <ul>
@@ -186,18 +201,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.3</url>
-        </release>
-        <release version="1.20.2" date="2026-03-21">
-            <description>
-                <ul>
-                    <li>Fixed a crash during event handling when no gamepad is connected.</li>
-                    <li>Fixed a crash when there are cached feed entries belonging to a subscription whose bookmark has been deleted.</li>
-                    <li>Fixed build issue with glibc 2.43+.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.2</url>
         </release>
     </releases>
 </component>
