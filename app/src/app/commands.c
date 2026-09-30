@@ -422,6 +422,9 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
     else if (equal_Command(cmd, "quit")) {
+        if (findWidget_App("upload")) {
+            return iTrue; /* avoid losing unsent content */
+        }
         SDL_Event ev;
         ev.type = SDL_EVENT_QUIT;
         SDL_PushEvent(&ev);
