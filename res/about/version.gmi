@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.21.2
+* Quitting the app is disabled while the Titan upload dialog is open. (The contents are autosaved in case of a crash.)
 * Fixed visibility of selected text against different backgrounds.
 * Fixed feed refresh not getting triggered when due.
 * Fixed potential crash when an inline prompt is immediately visible at launch.
