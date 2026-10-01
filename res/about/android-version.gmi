@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.21 (Beta 61)
+* Updated the bundled monospace font (Iosevka): no ligatures, 4% wider.
+* Fixed: Visibility of selected text against different backgrounds.
+* Fixed: Feed refresh not triggered when due.
+* Fixed: Potential crash when an inline prompt is immediately visible at launch.
+
 ## 1.21 (Beta 60)
 * The system Back button at the end of history leaves the app if the tab was opened from an external app. Otherwise, the tab is closed.
 * Fixed restoring cached tab contents at launch.
