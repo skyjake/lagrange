@@ -212,6 +212,7 @@ void init_Prefs(iPrefs *d) {
     }
     setCStr_String(&d->strings[keyboardLayout_PrefsString], "us-english"); /* KeyboardWidget */
     d->dialogTab                    = 0;
+    d->siteDialogTab                = 0;
     d->langFrom                     = 0; /* auto-detect */
     d->langTo                       = 8; /* en */
     d->translationIgnorePre         = iTrue;

@@ -131,6 +131,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
     }
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
+    appendFormat_String(str, "sitespec.dialogtab arg:%d\n", d->prefs.siteDialogTab);
     appendFormat_String(str, "font.set ui:%s\n", cstr_String(&d->prefs.strings[uiFont_PrefsString]));
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "uploadzoom.set arg:%d\n", d->prefs.editorZoomLevel);
@@ -785,6 +786,10 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "recentinput.clear")) {
         clearSubmittedInput_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "sitespec.dialogtab")) {
+        d->prefs.siteDialogTab = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {

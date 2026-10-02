@@ -338,19 +338,15 @@ static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
     iWidget *        toggle    = makeToggle_Widget(format_CStr("%s.toggle", id));
     iLabelWidget *   label     = makeHeading_Widget("");
     iWidget *        bar       = new_Widget();
+    const size_t     count     = count_MenuItem(protocols);
     setId_Widget(as_Widget(label), format_CStr("%s.label", id));
-    if (protocols) {
-        const size_t  count = count_MenuItem(protocols);
-        iLabelWidget *drop  = makeMenuButton_LabelWidget(
-            protocols[findWidestLabel_MenuItem(protocols, count)].label, protocols, count);
-        setBackgroundColor_Widget(findChild_Widget(as_Widget(drop), "menu"),
-                                  uiBackgroundMenu_ColorId);
-        setId_Widget(as_Widget(drop), id);
-        /* The toggle must not shift when the selection changes. */
-        setFixedSize_Widget(as_Widget(drop), init_I2(width_Widget(drop), -1));
-        addChild_Widget(bar, iClob(makeHeading_Widget("${prefs.scope}")));
-        addChildFlags_Widget(bar, iClob(drop), alignLeft_WidgetFlag);
-    }
+    iLabelWidget *drop = makeMenuButton_LabelWidget(
+        protocols[findWidestLabel_MenuItem(protocols, count)].label, protocols, count);
+    setBackgroundColor_Widget(findChild_Widget(as_Widget(drop), "menu"), uiBackgroundMenu_ColorId);
+    setId_Widget(as_Widget(drop), id);
+    setFixedSize_Widget(as_Widget(drop), init_I2(width_Widget(drop), -1));
+    addChild_Widget(bar, iClob(makeHeading_Widget("${prefs.scope}")));
+    addChildFlags_Widget(bar, iClob(drop), alignLeft_WidgetFlag);
     /* The toggle stays at the right edge regardless of the label. */
     addChildFlags_Widget(bar, iClob(new_Widget()), expand_WidgetFlag);
     addChild_Widget(bar, iClob(label));
@@ -359,6 +355,16 @@ static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
                          iClob(bar),
                          arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
                              resizeToParentWidth_WidgetFlag | resizeWidthOfChildren_WidgetFlag);
+}
+
+/* Without protocols to choose from, the toggle is the first row of the page. */
+static void makeScopeToggleRow_(iWidget *headings, iWidget *values, const iMenuItem *item) {
+    const char *  id    = cstr_Command(item->label, "id");
+    iLabelWidget *label = makeHeading_Widget("");
+    setId_Widget(as_Widget(label), format_CStr("%s.label", id));
+    addChild_Widget(headings, iClob(label));
+    addChild_Widget(values, iClob(makeToggle_Widget(format_CStr("%s.toggle", id))));
+    addDialogPadding_Widget(headings, values);
 }
 
 void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColor,
@@ -374,11 +380,16 @@ void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColo
         setId_Widget(page, pages_[i].pageId);
         setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
-        makeScopeBar_(page, &items[0]);
+        if (withProtocols) {
+            makeScopeBar_(page, &items[0]);
+        }
         addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
         iWidget *headings, *values;
         addChild_Widget(page, iClob(makeTwoColumns_Widget(&headings, &values)));
         addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+        if (!withProtocols) {
+            makeScopeToggleRow_(headings, values, &items[0]);
+        }
         makeTwoColumnItems_Widget(headings, values, items);
         appendFramelessTabPage_Widget(tabs,
                                       iClob(page),

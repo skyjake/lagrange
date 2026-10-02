@@ -75,6 +75,11 @@ static void commitSiteSpecificInputs_(iWidget *dlg) {
 static void closeSiteSpecific_(iWidget *dlg) {
     commitSiteSpecificInputs_(dlg);
     saveDirty_ScopeRules();
+    const iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
+    if (tabs) {
+        postCommandf_App("sitespec.dialogtab arg:%u",
+                         tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
+    }
     setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
     deinit_ScopedPrefs(dlg);
     destroy_Widget(dlg);
@@ -85,7 +90,10 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
         return iTrue;
     }
     const iString *siteRoot = siteSpecificRoot_(dlg);
-    if (equal_Command(cmd, "cancel")) {
+    /* Dropdown menus also post "cancel" commands. */
+    if (equal_Command(cmd, "sitespec.close") ||
+        (isUsingPanelLayout_Mobile() && equalWidget_Command(cmd, dlg, "cancel") &&
+         !hasLabel_Command(cmd, "menu"))) {
         /* Note: The active DocumentWidget may actually be different than when opening the dialog. */
         closeSiteSpecific_(dlg);
         return iTrue;
@@ -125,7 +133,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
                                  equalCase_Rangecc(scheme, "titan");
     const iMenuItem actions[] = { { "${sitespec.reset}", 0, 0, "sitespec.reset" },
                                   { "---" },
-                                  { "${close}", SDLK_ESCAPE, 0, "cancel" } };
+                                  { "${close}", SDLK_ESCAPE, 0, "sitespec.close" } };
     if (isUsingPanelLayout_Mobile()) {
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         pushBackN_Array(items, (iMenuItem[]){
@@ -192,6 +200,10 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
             }
         }
         init_ScopedPrefs(dlg, format_CStr("root:%s", cstr_String(site)));
+        iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
+        if (tabs && (size_t) prefs_App()->siteDialogTab < tabCount_Widget(tabs)) {
+            showTabPage_Widget(tabs, tabPage_Widget(tabs, prefs_App()->siteDialogTab));
+        }
         if (!isUsingPanelLayout_Mobile()) {
             setValidator_InputWidget(palSeed, updateSiteSpecificTheme_, dlg);
         }

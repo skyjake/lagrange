@@ -222,6 +222,7 @@ struct Impl_Prefs {
 
     /* UI state (belongs to state.lgr...) */
     int   dialogTab;
+    int   siteDialogTab;
     int   langFrom;
     int   langTo;
     iBool translationIgnorePre;
