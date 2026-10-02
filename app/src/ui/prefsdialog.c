@@ -564,6 +564,38 @@ iWidget *makePreferences_Widget(void) {
         setUrlContent_InputWidget(searchUrl, iTrue);
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.retaintabs}", "prefs.retaintabs");
+        if (!isTerminal_Platform()) {
+            addDialogToggle_Widget(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
+        }
+        addDialogPadding_Widget(headings, values);
+        addDialogToggleGroup_(
+            headings,
+            values,
+            "${prefs.uilayout}",
+            (const char *[]) {
+#if defined (LAGRANGE_MAC_MENUBAR) || defined (iPlatformTerminal)
+                "prefs.bottomnavbar", "prefs.bottomtabbar", NULL
+#else
+                "prefs.bottomnavbar", "prefs.bottomtabbar", "prefs.menubar", NULL
+#endif
+            },
+            iInvalidSize);
+        addDialogToggle_Widget(headings, values, "${prefs.hidetabs}", "prefs.hidetabs");
+        if (isDesktop_Platform()) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.promptposition}")));
+            iWidget *promptPos = new_Widget();
+            /* Input prompt position: inline under the link, or always modal top/bottom. */ {
+                addRadioButton_Widget(promptPos, "prefs.promptposition.0", "${prefs.promptposition.inline}",
+                                "promptposition.set arg:0");
+                addRadioButton_Widget(promptPos, "prefs.promptposition.1", "${prefs.promptposition.top}",
+                                "promptposition.set arg:1");
+                addRadioButton_Widget(promptPos, "prefs.promptposition.2", "${prefs.promptposition.bottom}",
+                                "promptposition.set arg:2");
+            }
+            addChildFlags_Widget(values, iClob(promptPos),
+                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
+        addDialogPadding_Widget(headings, values);
         if (deviceType_App() != phone_AppDeviceType) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
             iWidget *pinSplit = new_Widget();
@@ -574,6 +606,7 @@ iWidget *makePreferences_Widget(void) {
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
+        addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         /* Feed refresh interval. */
         addDialogPadding_Widget(headings, values);
         addDialogDropMenu_Widget(headings,
@@ -672,40 +705,11 @@ iWidget *makePreferences_Widget(void) {
             }
         }
         addDialogPadding_Widget(headings, values);
-        addDialogToggleGroup_(
-            headings,
-            values,
-            "${prefs.uilayout}",
-            (const char *[]) {
-#if defined (LAGRANGE_MAC_MENUBAR) || defined (iPlatformTerminal)
-                "prefs.bottomnavbar", "prefs.bottomtabbar", NULL
-#else
-                "prefs.bottomnavbar", "prefs.bottomtabbar", "prefs.menubar", NULL
-#endif
-            },
-            iInvalidSize);
-        if (isDesktop_Platform()) {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.promptposition}")));
-            iWidget *promptPos = new_Widget();
-            /* Input prompt position: inline under the link, or always modal top/bottom. */ {
-                addRadioButton_Widget(promptPos, "prefs.promptposition.0", "${prefs.promptposition.inline}",
-                                "promptposition.set arg:0");
-                addRadioButton_Widget(promptPos, "prefs.promptposition.1", "${prefs.promptposition.top}",
-                                "promptposition.set arg:1");
-                addRadioButton_Widget(promptPos, "prefs.promptposition.2", "${prefs.promptposition.bottom}",
-                                "promptposition.set arg:2");
-            }
-            addChildFlags_Widget(values, iClob(promptPos),
-                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        }
         addDialogToggle_Widget(headings, values, "${prefs.thickscroll}", "prefs.thickscroll");
-        addDialogToggle_Widget(headings, values, "${prefs.hidetabs}", "prefs.hidetabs");
-        addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         if (!isTerminal_Platform()) {
             addDialogPadding_Widget(headings, values);
             // makeTwoColumnHeading_Widget("${heading.prefs.sizing}", headings, values);
             addPrefsInputWithHeading_Widget(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
-            addDialogToggle_Widget(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
             addDialogToggle_Widget(headings, values, "${prefs.customframe}", "prefs.customframe");
 #endif

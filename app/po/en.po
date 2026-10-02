@@ -2005,7 +2005,7 @@ msgstr "Wide Layout"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Style"
+msgstr "Page Style"
 
 msgid "heading.prefs.typography"
 msgstr "Typography"

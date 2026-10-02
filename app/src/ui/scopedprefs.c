@@ -139,9 +139,9 @@ const iArray *fontItems_ScopedPrefs(const char *id) {
 static const iMenuItem protocolItems_[] = {
     { "${prefs.scope.all}", 0, 0, "prefs.scope.set scope:base" },
     { "Gemini", 0, 0, "prefs.scope.set scope:scheme:gemini" },
+    { "Spartan", 0, 0, "prefs.scope.set scope:scheme:spartan" },
     { "Gopher", 0, 0, "prefs.scope.set scope:scheme:gopher" },
     { "Finger", 0, 0, "prefs.scope.set scope:scheme:finger" },
-    { "Spartan", 0, 0, "prefs.scope.set scope:scheme:spartan" },
     { NULL }
 };
 
@@ -268,14 +268,14 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("padding");
             add_("toggle id:prefs.expandline");
             add_("toggle id:prefs.centershort");
-            add_("padding");
+            add_("padding id:prefs.pad.collapsepre except:finger");
             add_("dropdown id:prefs.collapsepre except:finger", 0, 0, menu_(collapseItems_()));
             break;
         case style_DocPrefsGroup:
             add_("radio horizontal:1 id:prefs.quoteicon except:finger", 0, 0, (const void *) quoteItems_);
             add_("toggle id:prefs.quote.italic except:finger");
             add_("buttons id:prefs.boldlink except:finger", 0, 0, (const void *) boldLinkItems_);
-            add_("padding");
+            add_("padding id:prefs.pad.sideicon except:finger");
             add_("toggle id:prefs.sideicon");
             break;
         case theme_DocPrefsGroup:
@@ -283,7 +283,7 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("dropdown id:prefs.doctheme.light", 0, 0, menu_(docThemeItems_("light")));
             add_("padding");
             add_("radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems_);
-            add_("padding");
+            add_("padding id:prefs.pad.imagestyle except:finger");
             add_("dropdown id:prefs.imagestyle except:finger", 0, 0, menu_(imageStyleItems_()));
             break;
         case behavior_DocPrefsGroup:
@@ -374,6 +374,9 @@ static void makeTwoColumnItems_(iWidget *headings, iWidget *values, const iMenuI
         }
         else if (equal_Command(spec, "padding")) {
             addDialogPadding_Widget(headings, values);
+            if (hasLabel_Command(spec, "id")) {
+                setId_Widget(lastChild_Widget(values), id); /* can be collapsed */
+            }
         }
         else if (equal_Command(spec, "toggle")) {
             addDialogToggle_Widget(headings, values, label, id);
@@ -471,6 +474,13 @@ void deinit_ScopedPrefs(iWidget *dlg) {
     setUserData_Object(dlg, NULL);
 }
 
+static void showOrCollapse_(iWidget *d, iBool show) {
+    if (d) {
+        setFlags_Widget(d, collapse_WidgetFlag, iTrue); /* no space taken when hidden */
+        showCollapsed_Widget(d, show);
+    }
+}
+
 /* A row has the control and its heading. */
 static void showRow_(iWidget *control, iBool show) {
     if (!control) {
@@ -482,17 +492,17 @@ static void showRow_(iWidget *control, iBool show) {
             /* A group of buttons is directly in the panel, preceded by its heading. */
             const size_t index = indexOfChild_Widget(parent, control);
             if (index > 0) {
-                showCollapsed_Widget(child_Widget(parent, index - 1), show);
+                showOrCollapse_(child_Widget(parent, index - 1), show);
             }
-            showCollapsed_Widget(control, show);
+            showOrCollapse_(control, show);
             return;
         }
-        showCollapsed_Widget(parent, show);
+        showOrCollapse_(parent, show);
         return;
     }
     iWidget *headings = child_Widget(parent_Widget(parent), 0);
-    showCollapsed_Widget(child_Widget(headings, indexOfChild_Widget(parent, control)), show);
-    showCollapsed_Widget(control, show);
+    showOrCollapse_(child_Widget(headings, indexOfChild_Widget(parent, control)), show);
+    showOrCollapse_(control, show);
 }
 
 static void setDisabled_(iWidget *dlg, const iMenuItem *items, iBool disable) {
@@ -629,11 +639,11 @@ void update_ScopedPrefs(iWidget *dlg) {
             /* Nothing to enable if no fields apply to the scheme. */
             const iBool showToggle = !isBase && numShown > 0;
             if (isUsingPanelLayout_Mobile()) {
-                showCollapsed_Widget(toggle ? parent_Widget(toggle) : NULL, showToggle);
+                showOrCollapse_(toggle ? parent_Widget(toggle) : NULL, showToggle);
             }
             else {
-                showCollapsed_Widget(toggle, showToggle);
-                showCollapsed_Widget(label, showToggle);
+                showOrCollapse_(toggle, showToggle);
+                showOrCollapse_(label, showToggle);
             }
         }
         setDisabled_(dlg, items, !isEnabled);
