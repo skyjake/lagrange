@@ -181,6 +181,7 @@ struct Impl_App {
     iPtrArray    mainWindows;
     iPtrArray    extraWindows;
     iPtrArray    popupWindows;
+    iPtrArray    closedWindows; /* deleted after garbage has been recycled */
     iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
@@ -1757,6 +1758,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_PtrArray(&d->mainWindows);
     init_PtrArray(&d->extraWindows);
     init_PtrArray(&d->popupWindows);
+    init_PtrArray(&d->closedWindows);
     load_Bookmarks(d->bookmarks, dataDir_App_());
     d->window = (iWindow *) new_MainWindow(*winRect0); /* first window is always created */
     as_MainWindow(d->window)->place.placementIndex = 0;
@@ -1897,6 +1899,7 @@ static void deinit_App(iApp *d) {
     }
     iAssert(isEmpty_PtrArray(&d->mainWindows));
     deinit_PtrArray(&d->mainWindows);
+    deinit_PtrArray(&d->closedWindows);
     d->window = NULL;
     deinit_Feeds();
     save_Keys(dataDir_App_());
@@ -2993,6 +2996,20 @@ iLocalDef iBool isResizeDrawEnabled_(void) {
 #endif
 }
 
+static void deleteClosedWindows_App_(iApp *d) {
+    /* Collected widgets may still refer to the roots, so the garbage must be gone first. */
+    iForEach(PtrArray, i, &d->closedWindows) {
+        iWindow *win = i.ptr;
+        if (win->type == main_WindowType) {
+            delete_MainWindow(as_MainWindow(win));
+        }
+        else {
+            delete_Window(win);
+        }
+    }
+    clear_PtrArray(&d->closedWindows);
+}
+
 static int run_App_(iApp *d) {
     /* Initial arrangement. */
     iForIndices(i, d->window->roots) {
@@ -3019,6 +3036,7 @@ static int run_App_(iApp *d) {
             checkPendingSplit_MainWindow(as_MainWindow(d->window));
         }
         recycle_Garbage();
+        deleteClosedWindows_App_(d);
     }
     SDL_DelEventWatch(resizeWatcher_, d);
     SDL_DelEventWatch(lifecycleWatcher_App_, d);
@@ -3977,6 +3995,9 @@ void closeWindow_App(iWindow *win) {
     iAssert(win->type == main_WindowType || win->type == extra_WindowType);
     const iBool isMain = (win->type == main_WindowType);
     iWindow *activeWindow = d->window;
+    if (indexOf_PtrArray(&d->closedWindows, win) != iInvalidPos) {
+        return;
+    }
     /* Unlike a full app quit, this window won't be restored, so its backups can go too. */
     eraseBackupsForWindowSerial_App_(serial_Window(win));
     /* Preferences needs to be dismissed properly. */
@@ -3990,14 +4011,6 @@ void closeWindow_App(iWindow *win) {
             prefs->commandHandler(prefs, "prefs.dismiss");
         }
     }
-    iForIndices(r, win->roots) {
-        if (win->roots[r]) {
-            setTreeFlags_Widget(win->roots[r]->widget, destroyPending_WidgetFlag, iTrue);
-        }
-    }
-    collect_Garbage(win, isMain ? (iDeleteFunc) delete_MainWindow
-                                : (iDeleteFunc) delete_Window);
-    postRefresh_Window(NULL);
     if (isMain) {
         /* Remember this window's last placement. */
         iArray *rects = &d->initialWindowRects;
@@ -4007,11 +4020,19 @@ void closeWindow_App(iWindow *win) {
         }
         set_Array(rects, idx, &as_MainWindow(win)->place.normalRect);
         if (isAppleDesktop_Platform() && size_PtrArray(&d->mainWindows) == 1) {
-            /* App keeps running; Quit may not happen at all. */
+            /* App keeps running; Quit may not happen at all. Must be saved before the
+               widgets are flagged, or they would be omitted from the state. */
             saveState_App_(d, iTrue);
             savePrefs_App_(d);
         }
     }
+    iForIndices(r, win->roots) {
+        if (win->roots[r]) {
+            setTreeFlags_Widget(win->roots[r]->widget, destroyPending_WidgetFlag, iTrue);
+        }
+    }
+    pushBack_PtrArray(&d->closedWindows, win);
+    postRefresh_Window(NULL);
     if (activeWindow == win) {
         d->window = NULL;
         /* Activate another window. */
