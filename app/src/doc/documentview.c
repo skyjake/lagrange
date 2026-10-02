@@ -818,10 +818,16 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     const iGmRun *run     = keepCenter ? middleRun_DocumentView_(d) : d->visibleRuns.start;
     const char *  runLoc  = (run ? run->text.start : NULL);
     int           voffset = 0;
+    float         midPos  = 0.5f; /* normalized position of view center inside the run */
     if (!keepCenter && run) {
         /* Keep the first visible run visible at the same position. */
         /* TODO: First *fully* visible run? */
         voffset = visibleRange_DocumentView(d).start - top_Rect(run->visBounds);
+    }
+    else if (run) {
+        const iRangei visRange = visibleRange_DocumentView(d);
+        midPos = (float) ((visRange.start + visRange.end) / 2 - top_Rect(run->bounds)) /
+                 (float) height_Rect(run->bounds);
     }
     run = NULL;
     setWidth_GmDocument(d->doc,
@@ -840,7 +846,11 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     else if (runLoc && keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
         if (run) {
-            scrollTo_DocumentView(d, mid_Rect(run->bounds).y, iTrue);
+            const int midY = top_Rect(run->bounds) + (int) (midPos * height_Rect(run->bounds));
+            scrollTo_DocumentView(d,
+                                  midY - height_Rect(bounds_Widget(constAs_Widget(d->owner))) / 2 +
+                                      lineHeight_Text(paragraph_FontId),
+                                  iFalse);
         }
     }
     return iTrue;
