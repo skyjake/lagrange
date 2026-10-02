@@ -214,6 +214,9 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (d->flags.isCoverPage) {
         return iFalse;
     }
+    if (equalCase_Rangecc(urlScheme_String(&d->url), "finger")) {
+        return iTrue;
+    }
     return d->docPrefs.monospaceDocument.value;
 }
 

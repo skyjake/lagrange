@@ -249,12 +249,12 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
         case typography_DocPrefsGroup:
             if (!isTerminal_Platform()) {
                 add_("dropdown id:prefs.font.heading except:finger", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("heading"))));
-                add_("dropdown id:prefs.font.body", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("body"))));
+                add_("dropdown id:prefs.font.body except:finger", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("body"))));
                 add_("dropdown id:prefs.font.mono except:finger", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("mono"))));
                 add_("heading id:heading.prefs.monodoc");
                 add_("dropdown id:prefs.font.monodoc", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("monodoc"))));
             }
-            add_("toggle id:prefs.mono.doc");
+            add_("toggle id:prefs.mono.doc except:finger");
             break;
         case layout_DocPrefsGroup:
             add_("radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems_);
