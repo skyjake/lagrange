@@ -151,6 +151,7 @@ struct Impl_App {
     iArray       initialWindowDesktops;
     iPrefs       prefs;
     iDocPrefs    activeDocPrefs; /* of the front document */
+    uint32_t     fontKey;        /* identifies the fonts currently set up for documents */
 };
 
 iDeclareClass(SavedWidth);

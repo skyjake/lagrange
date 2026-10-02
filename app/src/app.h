@@ -101,6 +101,7 @@ iBool               isTextInputActive_App       (void);
 
 const iPrefs *      prefs_App                   (void);
 const iDocPrefs *   activeDocPrefs_App          (void); /* of the front document */
+uint32_t            fontKey_App                 (void); /* layouts are specific to this */
 void                updateActiveDocPrefs_App    (void);
 void                docPrefsChanged_App         (void); /* call after a scoped edit */
 iBool               forceSoftwareRender_App     (void);

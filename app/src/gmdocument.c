@@ -177,6 +177,7 @@ struct Impl_GmDocument {
     iArray    preMeta; /* metadata about preformatted blocks */
     iGmTheme  theme;
     uint32_t  themeSeed;
+    uint32_t  layoutFontKey; /* fonts used for the current layout */
     iChar     siteIcon;
     iMedia *  media;
     iStringSet *openURLs; /* currently open URLs for highlighting links */
@@ -843,6 +844,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
 
     initTheme_GmDocument_(d);
     d->flags.isLayoutInvalidated = iFalse;
+    d->layoutFontKey = fontKey_App();
     /* TODO: Collect these parameters into a GmTheme. */
     float indents[max_GmLineType] = { 5, 10, 5, isNarrow ? 5 : 10, 0, 0, 5, 5 };
     if (isExtremelyNarrow) {
@@ -1411,7 +1413,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     /// XXX: Don't use window pixel ratio, use the UI scaling factor on Window.s
                     const iInt2 maxSize = mulf_I2(
                         imgSize,
-                        gap_UI / 2 * prefs->zoomPercent.value / 100.0f);
+                        gap_UI / 2 * activeDocPrefs_App()->zoomPercent.value / 100.0f);
                     if (width_Rect(run.visBounds) > maxSize.x) {
                         /* Don't scale the image up too much. */
                         run.visBounds.size.y =
@@ -1568,6 +1570,7 @@ void init_GmDocument(iGmDocument *d) {
     init_Array(&d->headings, sizeof(iGmHeading));
     init_Array(&d->preMeta, sizeof(iGmPreMeta));
     d->themeSeed = 0;
+    d->layoutFontKey = 0;
     d->siteIcon = 0;
     d->media = new_Media();
     d->openURLs = NULL;
@@ -2298,7 +2301,7 @@ static uint32_t applyDocPrefs_GmDocument_(iGmDocument *d, const iDocPrefs *prefs
         if (diff & palette_DocPrefsSpecFlag) {
             invalidatePalette_GmDocument(d);
         }
-        if (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag | font_DocPrefsSpecFlag)) {
+        if (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag)) {
             d->wrapWidth = 0;
             invalidateLayout_GmDocument(d);
         }
@@ -2360,7 +2363,7 @@ void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth, int maxCont
 
 iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth, int maxContentWidth) {
     if (d->size.x != width || d->maxContentWidth != maxContentWidth ||
-        d->flags.isLayoutInvalidated) {
+        isLayoutOutdated_GmDocument(d)) {
         setWidth_GmDocument(d, width, canvasWidth, maxContentWidth);
         return iTrue;
     }
@@ -2377,6 +2380,10 @@ void redoLayout_GmDocument(iGmDocument *d) {
 
 void invalidateLayout_GmDocument(iGmDocument *d) {
     d->flags.isLayoutInvalidated = iTrue;
+}
+
+iBool isLayoutOutdated_GmDocument(const iGmDocument *d) {
+    return d->flags.isLayoutInvalidated || d->layoutFontKey != fontKey_App();
 }
 
 static void markLinkRunsVisited_GmDocument_(iGmDocument *d, const iIntSet *linkIds) {

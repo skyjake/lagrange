@@ -1225,16 +1225,26 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed") ||
              equal_Command(cmd, "keyroot.changed")) {
-        if (equal_Command(cmd, "font.changed")) {
-            invalidateCachedLayout_History(d->mod.history);
+        const iBool isFontChange = equal_Command(cmd, "font.changed");
+        if (isFontChange) {
+            if (!argLabel_Command(cmd, "active")) {
+                /* Fonts were reloaded, so no existing layout is valid. */
+                invalidateCachedLayout_History(d->mod.history);
+                invalidateLayout_GmDocument(d->view->doc);
+            }
         }
-        /* Splitting moves documents between roots without a tab switch. */
-        applyPendingLinkUpdates_DocumentWidget_(d);
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget(d, iFalse);
         d->phoneToolbar = findWidget_App("bottombar");
-        const iBool keepCenter = equal_Command(cmd, "font.changed");
-        updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, keepCenter);
+        if (document_Root(w->root) != d) {
+            return iFalse; /* background tabs are updated when shown */
+        }
+        /* Splitting moves documents between roots without a tab switch. */
+        applyPendingLinkUpdates_DocumentWidget_(d);
+        /* A layout made with the current fonts only needs to be redrawn. */
+        if (!isFontChange || isLayoutOutdated_GmDocument(d->view->doc)) {
+            updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, isFontChange);
+        }
         resetWideRuns_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
         updateVisible_DocumentView(d->view);
@@ -1268,6 +1278,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
     }
     else if (equalWidget_Command(cmd, w, "document.prefs.changed")) {
+        if (document_Root(w->root) != d) {
+            return iFalse; /* background tabs are updated when shown */
+        }
         if (argLabel_Command(cmd, "palette")) {
             if (document_App() == d) {
                 updateTheme_DocumentWidget(d);
@@ -1307,6 +1320,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* Set palette for our document. */
             updateTheme_DocumentWidget(d);
             updateTrust_DocumentFetch(d->fetch, NULL);
+            /* Fonts follow the front document. */
+            updateActiveDocPrefs_App();
+            if (isLayoutOutdated_GmDocument(d->view->doc)) {
+                updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, iTrue);
+                dealloc_VisBuf(d->view->visBuf);
+            }
             updateSize_DocumentWidget(d);
             showOrHideIndicators_DocumentWidget_(d);
             updateProgress_DocumentFetch(d->fetch);
@@ -2538,7 +2557,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         finishWheelSwipe_DocumentSwipe(d->swipe, iFalse);
     }
     if (isMetricsChange_UserEvent(ev)) {
-        updateSize_DocumentWidget(d);
+        if (document_Root(w->root) == d) {
+            updateSize_DocumentWidget(d);
+        }
+        else {
+            invalidateLayout_GmDocument(d->view->doc); /* updated when shown */
+        }
     }
     else if (processEvent_SmoothScroll(&d->view->scrollY, ev)) {
         return iTrue;
@@ -3468,6 +3492,9 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->view->doc, d->mod.url);
+    if (document_App() == d) {
+        updateActiveDocPrefs_App(); /* lay out with the right fonts */
+    }
     const int docWidth = documentWidth_DocumentView(d->view);
     setSource_GmDocument(d->view->doc,
                          source,
@@ -3814,6 +3841,9 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
 }
 
 static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
+    if (document_Root(constAs_Widget(d)->root) != d) {
+        return; /* background tabs are updated when shown */
+    }
     updateSize_DocumentWidget(d);
 }
 

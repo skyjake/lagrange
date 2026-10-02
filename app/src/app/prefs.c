@@ -232,6 +232,22 @@ const iDocPrefs *activeDocPrefs_App(void) {
     return &app_.activeDocPrefs;
 }
 
+uint32_t fontKey_App(void) {
+    return app_.fontKey;
+}
+
+static uint32_t fontKey_DocPrefs_(const iDocPrefs *d) {
+    iString str;
+    init_String(&str);
+    format_String(&str, "%s\n%s\n%s\n%s\n%d",
+                  cstr_String(d->headingFont), cstr_String(d->bodyFont),
+                  cstr_String(d->monospaceFont), cstr_String(d->monospaceDocumentFont),
+                  d->zoomPercent.value);
+    const uint32_t key = crc32_Block(&str.chars);
+    deinit_String(&str);
+    return key;
+}
+
 void updateActiveDocPrefs_App(void) {
     iApp *d = &app_;
     iDocPrefs prefs;
@@ -249,26 +265,30 @@ void updateActiveDocPrefs_App(void) {
     const uint32_t diff = diff_DocPrefs(&d->activeDocPrefs, &prefs);
     set_DocPrefs(&d->activeDocPrefs, &prefs);
     deinit_DocPrefs(&prefs);
+    d->fontKey = fontKey_DocPrefs_(&d->activeDocPrefs);
     if (diff & palette_DocPrefsSpecFlag) {
         iConstForEach(PtrArray, wind, &d->mainWindows) {
             invalidate_Window(wind.ptr); /* UI uses some of the document colors */
         }
     }
     if (diff & font_DocPrefsSpecFlag && !isEmpty_PtrArray(&d->mainWindows)) {
-        /* Text rendering has no document context, so the fonts follow the front document. */
-        iForEach(ObjectList, i, iClob(listAllDocuments_App())) {
-            invalidateCachedLayout_History(history_DocumentWidget(i.object));
-        }
+        /* Text rendering has no document context, so the fonts follow the front document.
+           Layouts made with other fonts are kept, and redone only when shown with the
+           wrong fonts. */
         const float fontSize = (float) d->activeDocPrefs.zoomPercent.value / 100.0f;
+        /* Windows may be sharing Text instances. */
+        iConstForEach(PtrArray, pre, &d->mainWindows) {
+            text_Window(pre.ptr)->needRefresh = iTrue;
+        }
         iConstForEach(PtrArray, wind, &d->mainWindows) {
             if (isFinishedLaunching_App()) {
                 setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws */
             }
             setDocumentFontSize_Text(text_Window(wind.ptr), fontSize);
-            resetFonts_Text(text_Window(wind.ptr));
+            resetFontsIfNeeded_Text(text_Window(wind.ptr));
         }
         if (isFinishedLaunching_App()) {
-            postCommand_App("font.changed");
+            postCommand_App("font.changed active:1");
             postCommand_App("window.unfreeze");
         }
     }

@@ -207,6 +207,7 @@ void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth, int 
 iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth, int maxContentWidth);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
+iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
