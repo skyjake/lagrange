@@ -524,7 +524,6 @@ int updateScrollMax_DocumentView(iDocumentView *d) {
 void updateVisible_DocumentView(iDocumentView *d) {
     const int scrollMax = updateScrollMax_DocumentView(d);
     aboutToScrollView_DocumentWidget(d->owner, scrollMax); /* TODO: A widget may have many views. */
-    unhover_DocumentView_(d);
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
     clear_PtrArray(&d->visiblePre);
@@ -535,6 +534,8 @@ void updateVisible_DocumentView(iDocumentView *d) {
         iZap(d->visibleRuns);
         render_GmDocument(d->doc, visRange, addVisible_DocumentView_, d);
     }
+    /* Must come after the scan: this may reposition inline prompts using `visibleMedia`. */
+    unhover_DocumentView_(d);
     repositionInlinePrompts_DocumentWidget(d->owner, d); /* uses the visibleMedia scan above */
     const iRangecc newHeading = currentHeading_DocumentView_(d);
     if (memcmp(&oldHeading, &newHeading, sizeof(oldHeading))) {
