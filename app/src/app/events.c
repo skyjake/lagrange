@@ -752,6 +752,20 @@ iLocalDef iBool isResizeDrawEnabled_(void) {
 #endif
 }
 
+static void deleteClosedWindows_App_(iApp *d) {
+    /* Collected widgets may still refer to the roots, so the garbage must be gone first. */
+    iForEach(PtrArray, i, &d->closedWindows) {
+        iWindow *win = i.ptr;
+        if (win->type == main_WindowType) {
+            delete_MainWindow(as_MainWindow(win));
+        }
+        else {
+            delete_Window(win);
+        }
+    }
+    clear_PtrArray(&d->closedWindows);
+}
+
 int run_App_(iApp *d) {
     /* Initial arrangement. */
     iForIndices(i, d->window->roots) {
@@ -778,6 +792,7 @@ int run_App_(iApp *d) {
             checkPendingSplit_MainWindow(as_MainWindow(d->window));
         }
         recycle_Garbage();
+        deleteClosedWindows_App_(d);
     }
     SDL_RemoveEventWatch(resizeWatcher_, d);
     SDL_RemoveEventWatch(lifecycleWatcher_App_, d);

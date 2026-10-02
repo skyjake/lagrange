@@ -572,6 +572,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_PtrArray(&d->mainWindows);
     init_PtrArray(&d->extraWindows);
     init_PtrArray(&d->popupWindows);
+    init_PtrArray(&d->closedWindows);
     load_Bookmarks(d->bookmarks, dataDir_App_());
     d->window = (iWindow *) new_MainWindow(*winRect0); /* first window is always created */
     as_MainWindow(d->window)->place.placementIndex = 0;
@@ -714,6 +715,7 @@ static void deinit_App(iApp *d) {
     }
     iAssert(isEmpty_PtrArray(&d->mainWindows));
     deinit_PtrArray(&d->mainWindows);
+    deinit_PtrArray(&d->closedWindows);
     d->window = NULL;
     deinit_Feeds();
     save_Keys(dataDir_App_());

@@ -111,6 +111,7 @@ struct Impl_App {
     iPtrArray    mainWindows;
     iPtrArray    extraWindows;
     iPtrArray    popupWindows;
+    iPtrArray    closedWindows; /* deleted after garbage has been recycled */
     iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;

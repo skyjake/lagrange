@@ -279,6 +279,9 @@ void closeWindow_App(iWindow *win) {
     iAssert(win->type == main_WindowType || win->type == extra_WindowType);
     const iBool isMain = (win->type == main_WindowType);
     iWindow *activeWindow = d->window;
+    if (indexOf_PtrArray(&d->closedWindows, win) != iInvalidPos) {
+        return;
+    }
     /* Unlike a full app quit, this window won't be restored, so its backups can go too. */
     eraseBackupsForWindowSerial_App_(serial_Window(win));
     /* Preferences needs to be dismissed properly. */
@@ -292,14 +295,6 @@ void closeWindow_App(iWindow *win) {
             prefs->commandHandler(prefs, "prefs.dismiss");
         }
     }
-    iForIndices(r, win->roots) {
-        if (win->roots[r]) {
-            setTreeFlags_Widget(win->roots[r]->widget, destroyPending_WidgetFlag, iTrue);
-        }
-    }
-    collect_Garbage(win, isMain ? (iDeleteFunc) delete_MainWindow
-                                : (iDeleteFunc) delete_Window);
-    postRefresh_Window(NULL);
     if (isMain) {
         /* Remember this window's last placement. */
         iArray *rects = &d->initialWindowRects;
@@ -309,11 +304,19 @@ void closeWindow_App(iWindow *win) {
         }
         set_Array(rects, idx, &as_MainWindow(win)->place.normalRect);
         if (isAppleDesktop_Platform() && size_PtrArray(&d->mainWindows) == 1) {
-            /* App keeps running; Quit may not happen at all. */
+            /* App keeps running; Quit may not happen at all. Must be saved before the
+               widgets are flagged, or they would be omitted from the state. */
             saveState_App_(d, iTrue);
             savePrefs_App_(d);
         }
     }
+    iForIndices(r, win->roots) {
+        if (win->roots[r]) {
+            setTreeFlags_Widget(win->roots[r]->widget, destroyPending_WidgetFlag, iTrue);
+        }
+    }
+    pushBack_PtrArray(&d->closedWindows, win);
+    postRefresh_Window(NULL);
     if (activeWindow == win) {
         d->window = NULL;
         /* Activate another window. */
