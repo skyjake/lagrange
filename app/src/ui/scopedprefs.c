@@ -324,12 +324,6 @@ static const struct {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *label_MenuItem_(const iMenuItem *item) {
-    return hasLabel_Command(item->label, "text")
-               ? suffixPtr_Command(item->label, "text")
-               : format_CStr("${%s}", cstr_Command(item->label, "id"));
-}
-
 /* A row at the top of a page. */
 static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
     const char *     id        = cstr_Command(item->label, "id");
@@ -360,63 +354,6 @@ static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
                              resizeToParentWidth_WidgetFlag | resizeWidthOfChildren_WidgetFlag);
 }
 
-/* Desktop counterpart of makePanelItems_Mobile(), for the kinds of items used here. */
-static void makeTwoColumnItems_(iWidget *headings, iWidget *values, const iMenuItem *items) {
-    for (const iMenuItem *item = items; item->label; item++) {
-        const char *spec  = item->label;
-        const char *id    = cstr_Command(spec, "id");
-        const char *label = label_MenuItem_(item);
-        if (equal_Command(spec, "scopebar")) {
-            continue; /* not in the columns */
-        }
-        if (equal_Command(spec, "heading")) {
-            makeTwoColumnHeading_Widget(label, headings, values);
-        }
-        else if (equal_Command(spec, "padding")) {
-            addDialogPadding_Widget(headings, values);
-            if (hasLabel_Command(spec, "id")) {
-                setId_Widget(lastChild_Widget(values), id); /* can be collapsed */
-            }
-        }
-        else if (equal_Command(spec, "toggle")) {
-            addDialogToggle_Widget(headings, values, label, id);
-        }
-        else if (equal_Command(spec, "dropdown")) {
-            addDialogDropMenu_Widget(headings, values, label, item->data,
-                                     count_MenuItem(item->data), id);
-        }
-        else if (equal_Command(spec, "input")) {
-            addPrefsInputWithHeading_Widget(
-                headings, values, id, iClob(new_InputWidget(argU32Label_Command(spec, "maxlen"))));
-        }
-        else if (isContainer_MenuItem_(item)) {
-            const iBool isRadio = equal_Command(spec, "radio");
-            addChild_Widget(headings, iClob(makeHeading_Widget(label)));
-            iWidget *group = new_Widget();
-            setId_Widget(group, id);
-            for (const iMenuItem *sub = item->data; sub->label; sub++) {
-                const char *subId = cstr_Command(sub->label, "id");
-                if (isRadio) {
-                    addRadioButton_Widget(group,
-                                          subId,
-                                          hasLabel_Command(sub->label, "label")
-                                              ? cstr_Lang(cstr_Command(sub->label, "label"))
-                                              : suffixPtr_Command(sub->label, "text"),
-                                          sub->command);
-                }
-                else {
-                    iWidget *tog = addChild_Widget(group, iClob(makeToggle_Widget(subId)));
-                    setTextCStr_LabelWidget((iLabelWidget *) tog, format_CStr("${%s}", subId));
-                    setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                    updateSize_LabelWidget((iLabelWidget *) tog);
-                }
-            }
-            addChildFlags_Widget(values, iClob(group),
-                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        }
-    }
-}
-
 void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColor,
                                 int firstShortcut) {
     iForIndices(i, pages_) {
@@ -432,7 +369,7 @@ void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColo
         iWidget *headings, *values;
         addChild_Widget(page, iClob(makeTwoColumns_Widget(&headings, &values)));
         addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-        makeTwoColumnItems_(headings, values, items);
+        makeTwoColumnItems_Widget(headings, values, items);
         appendFramelessTabPage_Widget(tabs,
                                       iClob(page),
                                       format_CStr("%s ${%s}", pages_[i].icon, pages_[i].title),

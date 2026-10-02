@@ -39,6 +39,8 @@ iWidget *   makeDialog_Widget           (const char *id, const iMenuItem *itemsN
                                          const iMenuItem *actions, size_t numActions);
 iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
 iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
+void        makeTwoColumnItems_Widget   (iWidget *headings, iWidget *values,
+                                         const iMenuItem *itemsNullTerminated);
 
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
 int           dialogTransitionDir_Widget(const iWidget *);

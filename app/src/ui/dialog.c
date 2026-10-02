@@ -758,6 +758,66 @@ void addDialogPadding_Widget(iWidget *headings, iWidget *values) {
     addDialogPaddingSize_(headings, values, iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4));
 }
 
+static const char *label_MenuItem_(const iMenuItem *item) {
+    return hasLabel_Command(item->label, "text")
+               ? suffixPtr_Command(item->label, "text")
+               : format_CStr("${%s}", cstr_Command(item->label, "id"));
+}
+
+/* Desktop counterpart of makePanelItems_Mobile(). Unknown kinds of items are skipped. */
+void makeTwoColumnItems_Widget(iWidget *headings, iWidget *values, const iMenuItem *items) {
+    for (const iMenuItem *item = items; item->label; item++) {
+        const char *spec  = item->label;
+        const char *id    = cstr_Command(spec, "id");
+        const char *label = label_MenuItem_(item);
+        if (equal_Command(spec, "heading")) {
+            makeTwoColumnHeading_Widget(label, headings, values);
+        }
+        else if (equal_Command(spec, "padding")) {
+            addDialogPadding_Widget(headings, values);
+            if (hasLabel_Command(spec, "id")) {
+                setId_Widget(lastChild_Widget(values), id); /* can be collapsed */
+            }
+        }
+        else if (equal_Command(spec, "toggle")) {
+            addDialogToggle_Widget(headings, values, label, id);
+        }
+        else if (equal_Command(spec, "dropdown")) {
+            addDialogDropMenu_Widget(headings, values, label, item->data,
+                                     count_MenuItem(item->data), id);
+        }
+        else if (equal_Command(spec, "input")) {
+            addPrefsInputWithHeading_Widget(
+                headings, values, id, iClob(new_InputWidget(argU32Label_Command(spec, "maxlen"))));
+        }
+        else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
+            const iBool isRadio = equal_Command(spec, "radio");
+            addChild_Widget(headings, iClob(makeHeading_Widget(label)));
+            iWidget *group = new_Widget();
+            setId_Widget(group, id);
+            for (const iMenuItem *sub = item->data; sub->label; sub++) {
+                const char *subId = cstr_Command(sub->label, "id");
+                if (isRadio) {
+                    addRadioButton_Widget(group,
+                                          subId,
+                                          hasLabel_Command(sub->label, "label")
+                                              ? cstr_Lang(cstr_Command(sub->label, "label"))
+                                              : suffixPtr_Command(sub->label, "text"),
+                                          sub->command);
+                }
+                else {
+                    iWidget *tog = addChild_Widget(group, iClob(makeToggle_Widget(subId)));
+                    setTextCStr_LabelWidget((iLabelWidget *) tog, format_CStr("${%s}", subId));
+                    setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                    updateSize_LabelWidget((iLabelWidget *) tog);
+                }
+            }
+            addChildFlags_Widget(values, iClob(group),
+                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
+    }
+}
+
 /* Full-height tab bar on the left. Title and dialog buttons go in `content`. */
 iWidget *makeDialogVerticalTabs_Widget(iWidget *dlg, const char *tabsId, const char *title,
                                        const char *titleId, iWidget **content) {
