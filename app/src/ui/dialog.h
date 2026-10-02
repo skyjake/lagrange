@@ -43,6 +43,8 @@ iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
 int           dialogTransitionDir_Widget(const iWidget *);
 iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
+iWidget      *makeDialogVerticalTabs_Widget(iWidget *dlg, const char *tabsId, const char *title,
+                                            const char *titleId, iWidget **content);
 iWidget      *addDialogToggle_Widget    (iWidget *headings, iWidget *values,
                                          const char *heading, const char *toggleId);
 void          addDialogPadding_Widget   (iWidget *headings, iWidget *values);

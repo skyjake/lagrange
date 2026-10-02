@@ -329,11 +329,14 @@ static const char *label_MenuItem_(const iMenuItem *item) {
                : format_CStr("${%s}", cstr_Command(item->label, "id"));
 }
 
-static void makeScopeBar_(iWidget *headings, iWidget *values, const iMenuItem *item) {
-    const char *     id       = cstr_Command(item->label, "id");
+/* A row at the top of a page. */
+static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
+    const char *     id        = cstr_Command(item->label, "id");
     const iMenuItem *protocols = item->data;
-    iWidget *        toggle   = makeToggle_Widget(format_CStr("%s.toggle", id));
-    const char *     labelId  = format_CStr("%s.label", id);
+    iWidget *        toggle    = makeToggle_Widget(format_CStr("%s.toggle", id));
+    iLabelWidget *   label     = makeHeading_Widget("");
+    iWidget *        bar       = new_Widget();
+    setId_Widget(as_Widget(label), format_CStr("%s.label", id));
     if (protocols) {
         const size_t  count = count_MenuItem(protocols);
         iLabelWidget *drop  = makeMenuButton_LabelWidget(
@@ -343,19 +346,17 @@ static void makeScopeBar_(iWidget *headings, iWidget *values, const iMenuItem *i
         setId_Widget(as_Widget(drop), id);
         /* The toggle must not shift when the selection changes. */
         setFixedSize_Widget(as_Widget(drop), init_I2(width_Widget(drop), -1));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.scope}")));
-        iWidget *bar = new_Widget();
+        addChild_Widget(bar, iClob(makeHeading_Widget("${prefs.scope}")));
         addChildFlags_Widget(bar, iClob(drop), alignLeft_WidgetFlag);
         addChild_Widget(bar, iClob(makePadding_Widget(2 * gap_UI)));
         addChild_Widget(bar, iClob(toggle));
-        setId_Widget(addChild_Widget(bar, iClob(makeHeading_Widget(""))), labelId);
-        addChildFlags_Widget(values, iClob(bar), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(bar, iClob(label));
     }
     else {
-        setId_Widget(addChild_Widget(headings, iClob(makeHeading_Widget(""))), labelId);
-        addChild_Widget(values, iClob(toggle));
+        addChild_Widget(bar, iClob(label));
+        addChild_Widget(bar, iClob(toggle));
     }
-    addDialogPadding_Widget(headings, values);
+    addChildFlags_Widget(page, iClob(bar), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
 }
 
 /* Desktop counterpart of makePanelItems_Mobile(), for the kinds of items used here. */
@@ -365,9 +366,9 @@ static void makeTwoColumnItems_(iWidget *headings, iWidget *values, const iMenuI
         const char *id    = cstr_Command(spec, "id");
         const char *label = label_MenuItem_(item);
         if (equal_Command(spec, "scopebar")) {
-            makeScopeBar_(headings, values, item);
+            continue; /* not in the columns */
         }
-        else if (equal_Command(spec, "heading")) {
+        if (equal_Command(spec, "heading")) {
             makeTwoColumnHeading_Widget(label, headings, values);
         }
         else if (equal_Command(spec, "padding")) {
@@ -412,18 +413,28 @@ static void makeTwoColumnItems_(iWidget *headings, iWidget *values, const iMenuI
     }
 }
 
-void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int firstShortcut) {
+void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColor,
+                                int firstShortcut) {
     iForIndices(i, pages_) {
+        const iMenuItem *items    = items_ScopedPrefs(pages_[i].group, withProtocols);
+        const int        shortcut = firstShortcut ? firstShortcut + (int) i : 0;
+        /* The scope bar is at the top and the rest is centered vertically. */
+        iWidget *page = new_Widget();
+        setId_Widget(page, pages_[i].pageId);
+        setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
+        makeScopeBar_(page, &items[0]);
+        addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
         iWidget *headings, *values;
-        setId_Widget(appendTwoColumnTabPage_Widget(
-                         tabs,
-                         format_CStr("%s ${%s}", pages_[i].icon, pages_[i].title),
-                         orange_ColorId,
-                         firstShortcut ? firstShortcut + (int) i : 0,
-                         &headings,
-                         &values),
-                     pages_[i].pageId);
-        makeTwoColumnItems_(headings, values, items_ScopedPrefs(pages_[i].group, withProtocols));
+        addChild_Widget(page, iClob(makeTwoColumns_Widget(&headings, &values)));
+        addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+        makeTwoColumnItems_(headings, values, items);
+        appendFramelessTabPage_Widget(tabs,
+                                      iClob(page),
+                                      format_CStr("%s ${%s}", pages_[i].icon, pages_[i].title),
+                                      iconColor,
+                                      shortcut,
+                                      shortcut ? KMOD_PRIMARY : 0);
     }
 }
 
@@ -587,8 +598,8 @@ void update_ScopedPrefs(iWidget *dlg) {
                                                 format_CStr(" scope:%s", scope));
             setToggle_Widget(toggle, isEnabled);
             if (label) {
-                updateTextCStr_LabelWidget((iLabelWidget *) label,
-                                           isBase ? "" : toggleLabel_(group, scope));
+                setTextCStr_LabelWidget((iLabelWidget *) label,
+                                        isBase ? "" : toggleLabel_(group, scope));
             }
             if (isUsingPanelLayout_Mobile()) {
                 showCollapsed_Widget(toggle ? parent_Widget(toggle) : NULL, !isBase);
@@ -603,7 +614,7 @@ void update_ScopedPrefs(iWidget *dlg) {
         for (const iMenuItem *item = items; item->label; item++) {
             if (hasLabel_Command(item->label, "scheme")) {
                 showRow_(findChild_Widget(dlg, cstr_Command(item->label, "id")),
-                         isBase || checkScheme_MenuItem(item, cstr_String(&key.scheme)));
+                         checkScheme_MenuItem(item, cstr_String(&key.scheme)));
             }
         }
     }

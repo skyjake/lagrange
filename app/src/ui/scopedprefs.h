@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 const iArray *  fontItems_ScopedPrefs       (const char *id);
 const iMenuItem *items_ScopedPrefs          (enum iDocPrefsGroup, iBool withProtocols); /* NULL-terminated */
 
-void            appendTabPages_ScopedPrefs  (iWidget *tabs, iBool withProtocols, int firstShortcut);
+void            appendTabPages_ScopedPrefs  (iWidget *tabs, iBool withProtocols, int iconColor,
+                                             int firstShortcut);
 void            appendPanels_ScopedPrefs    (iArray *panelItems, iBool withProtocols);
 
 void            init_ScopedPrefs            (iWidget *dlg, const char *scope);

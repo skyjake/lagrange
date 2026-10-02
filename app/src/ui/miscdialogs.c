@@ -123,7 +123,9 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     const iRangecc scheme     = urlScheme_String(site);
     const iBool    isTitanSite = equalCase_Rangecc(scheme, "gemini") ||
                                  equalCase_Rangecc(scheme, "titan");
-    const iMenuItem actions[] = { { "${close}", SDLK_ESCAPE, 0, "cancel" } };
+    const iMenuItem actions[] = { { "${sitespec.reset}", 0, 0, "sitespec.reset" },
+                                  { "---" },
+                                  { "${close}", SDLK_ESCAPE, 0, "cancel" } };
     if (isUsingPanelLayout_Mobile()) {
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         pushBackN_Array(items, (iMenuItem[]){
@@ -139,24 +141,21 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         }
         pushBack_Array(items, &(iMenuItem){ "padding" });
         appendPanels_ScopedPrefs(items, iFalse);
-        pushBackN_Array(items, (iMenuItem[]){
-            { "padding" },
-            { "button text:" uiTextCaution_ColorEscape "${sitespec.reset}", 0, 0, "sitespec.reset" },
-            { "padding" },
-            { NULL }
-        }, 4);
+        pushBack_Array(items, &(iMenuItem){ NULL });
         dlg = makePanels_Mobile(sheetId, constData_Array(items), actions, iElemCount(actions));
     }
     else {
-        iWidget *headings, *values;
+        iWidget *headings, *values, *content;
         dlg = makeSheet_Widget(sheetId);
-        addDialogTitle_Widget(dlg, "${heading.sitespec}", "heading.sitespec");
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(cstr_String(site), NULL)),
-                             frameless_WidgetFlag);
-        iWidget *tabs = makeTabs_Widget(dlg);
-        setId_Widget(tabs, "sitespec.tabs");
+        iWidget *tabs = makeDialogVerticalTabs_Widget(dlg, "sitespec.tabs", "${heading.sitespec}",
+                                                      "heading.sitespec", &content);
+        changeChildIndex_Widget(
+            content,
+            addChildFlags_Widget(content, iClob(new_LabelWidget(cstr_String(site), NULL)),
+                                 frameless_WidgetFlag | alignLeft_WidgetFlag),
+            1);
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, globe_Icon " ${heading.sitespec.site}",
-                                                   orange_ColorId, 0, &headings, &values),
+                                                   uiIcon_ColorId, 0, &headings, &values),
                      "sitespec.page.site");
         iInputWidget *palSeed = new_InputWidget(0);
         addPrefsInputWithHeading_Widget(headings, values, "sitespec.palette", iClob(palSeed));
@@ -169,15 +168,9 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
             addPrefsInputWithHeading_Widget(headings, values, "sitespec.titantoken", iClob(token));
             as_Widget(token)->rect.size.x = aspect_UI * 60 * gap_UI;
         }
-        addDialogPadding_Widget(headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("")));
-        addChildFlags_Widget(values,
-                             iClob(new_LabelWidget(uiTextCaution_ColorEscape "${sitespec.reset}",
-                                                   "sitespec.reset")),
-                             alignLeft_WidgetFlag);
-        appendTabPages_ScopedPrefs(tabs, iFalse, 0);
-        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        appendTabPages_ScopedPrefs(tabs, iFalse, uiIcon_ColorId, 0);
+        addChild_Widget(content, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(content, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
         resizeToLargestPage_Widget(tabs);
         arrange_Widget(dlg);

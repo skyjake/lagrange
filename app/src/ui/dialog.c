@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "render/text.h"
 #include "root.h"
+#include "tabs.h"
 #include "uploadwidget.h"
 #include "util.h"
 #include "widget.h"
@@ -755,6 +756,22 @@ static void addDialogPaddingSize_(iWidget *headings, iWidget *values, int size) 
 
 void addDialogPadding_Widget(iWidget *headings, iWidget *values) {
     addDialogPaddingSize_(headings, values, iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4));
+}
+
+/* Full-height tab bar on the left. Title and dialog buttons go in `content`. */
+iWidget *makeDialogVerticalTabs_Widget(iWidget *dlg, const char *tabsId, const char *title,
+                                       const char *titleId, iWidget **content) {
+    iWidget *tabs = makeTabs_Widget(dlg);
+    setPadding1_Widget(dlg, gap_UI / 4); /* sheet frame remains visible */
+    setVerticalTabBar_Widget(tabs);
+    iWidget *tabButtons = findChild_Widget(tabs, "tabs.buttons");
+    setBackgroundColor_Widget(tabButtons, uiBackgroundSidebar_ColorId);
+    setPadding_Widget(tabButtons, 3 * gap_UI, 3 * gap_UI, 0, 3 * gap_UI);
+    setId_Widget(tabs, tabsId);
+    *content = findChild_Widget(tabs, "tabs.content");
+    setPadding1_Widget(*content, 3 * gap_UI);
+    changeChildIndex_Widget(*content, addDialogTitle_Widget(*content, title, titleId), 0);
+    return tabs;
 }
 
 void makeTwoColumnHeading_Widget(const char *title, iWidget *headings, iWidget *values) {

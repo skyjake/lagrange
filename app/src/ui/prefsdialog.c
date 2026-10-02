@@ -544,20 +544,9 @@ iWidget *makePreferences_Widget(void) {
         return dlg;
     }
     iWidget *dlg  = makeSheet_Widget("prefs");
-    iWidget *tabs = makeTabs_Widget(dlg);
     iWidget *content;
-    /* Set up the tabs list with full-bleed borders. */ {
-        setPadding1_Widget(dlg, 0);
-        setVerticalTabBar_Widget(tabs);
-        iWidget *tabButtons = findChild_Widget(tabs, "tabs.buttons");
-        setBackgroundColor_Widget(tabButtons, uiBackgroundSidebar_ColorId);
-        setPadding_Widget(tabButtons, 3 * gap_UI, 3 * gap_UI, 0, 3 * gap_UI);
-        setId_Widget(tabs, "prefs.tabs");
-        /* Title and dialog buttons go right of the full-height tab bar. */
-        content = findChild_Widget(tabs, "tabs.content");
-        setPadding1_Widget(content, 3 * gap_UI);
-        changeChildIndex_Widget(content, addDialogTitle_Widget(content, "${heading.prefs}", "prefs.title"), 0);
-    }
+    iWidget *tabs = makeDialogVerticalTabs_Widget(dlg, "prefs.tabs", "${heading.prefs}",
+                                                  "prefs.title", &content);
     iWidget *headings, *values;
     /* General settings. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -736,7 +725,7 @@ iWidget *makePreferences_Widget(void) {
     #endif
     }
     /* Document preferences. */
-    appendTabPages_ScopedPrefs(tabs, iTrue, '4');
+    appendTabPages_ScopedPrefs(tabs, iTrue, orange_ColorId, '4');
     /* Content. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
                                                    green_ColorId, '9', &headings, &values),
@@ -989,9 +978,6 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         }
         postCommandf_App("font.user path:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.userfont")));
-        postCommandf_App("tabwidth.set arg:%d scope:%s",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.tabwidth"))),
-                         scope_ScopedPrefs(d));
         postCommandf_App("cachesize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("memorysize.set arg:%d",
@@ -1168,6 +1154,7 @@ void showPreferences_Widget(const char *cmd) {
         /* Detach into a window. The heading must be the first child to become the title. */
         iWidget *title = findChild_Widget(dlg, "prefs.title");
         addChildPos_Widget(dlg, iClob(removeChild_Widget(title->parent, title)), front_WidgetAddPos);
+        setPadding1_Widget(dlg, 0); /* no sheet frame in a window */
         updatePreferencesLayout_Widget(dlg);
         promoteDialogToWindow_Widget(dlg);
     }
