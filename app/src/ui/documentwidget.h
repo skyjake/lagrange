@@ -87,6 +87,7 @@ iTime               sourceTime_DocumentWidget       (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
+const iString *     feedEntryUrl_DocumentWidget     (const iDocumentWidget *);
 uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 int                 documentWidth_DocumentWidget        (const iDocumentWidget *);
@@ -108,6 +109,7 @@ iBool               noHoverWhileScrolling_DocumentWidget(const iDocumentWidget *
 iBool               isShowingLinkNumbers_DocumentWidget (const iDocumentWidget *);
 iBool               isBlank_DocumentWidget              (const iDocumentWidget *);
 iBool               isUnseen_DocumentWidget             (const iDocumentWidget *);
+iBool               isReader_DocumentWidget             (const iDocumentWidget *);
 iMediaRequest *     findMediaRequest_DocumentWidget     (const iDocumentWidget *, iGmLinkId linkId);
 
 const char *        setIdentArg_DocumentWidget          (const iDocumentWidget *, const iString *dstUrl);
@@ -137,6 +139,7 @@ void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); 
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setOpenedExternally_DocumentWidget (iDocumentWidget *, iBool openedExternally);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
+void    setReaderEntry_DocumentWidget   (iDocumentWidget *, const iString *entryUrl);
 
 void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 

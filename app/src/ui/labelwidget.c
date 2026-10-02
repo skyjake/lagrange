@@ -61,6 +61,7 @@ struct Impl_LabelWidget {
 
         uint16_t noLabel             : 1;
         uint16_t untranslated        : 1;
+        uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected */
     } flags;
 };
 
@@ -432,6 +433,11 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     if (d->forceFg >= 0) {
         *fg = *meta = d->forceFg;
     }
+    if (d->flags.parentTextColor && isSelected_Widget(w->parent)) {
+        int other[5];
+        getColors_LabelWidget_((const iLabelWidget *) w->parent, &other[0], fg, &other[1],
+                               &other[2], &other[3], &other[4]);
+    }
     if (isPress) {
         if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {
             *bg = colorEscape;
@@ -797,6 +803,10 @@ void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
 
 void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
     d->flags.alignVisual = alignVisual;
+}
+
+void setParentTextColor_LabelWidget(iLabelWidget *d, iBool parentTextColor) {
+    d->flags.parentTextColor = parentTextColor;
 }
 
 void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {

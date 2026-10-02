@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "defs.h"
 #include "doc/documentview.h"
+#include "feeds.h"
 #include "doc/fetch.h"
 #include "doc/inlinemedia.h"
 #include "doc/query.h"
@@ -53,6 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
+#include "sidebarwidget.h"
 #include <lagrange/sitespec.h>
 #include "touch.h"
 #include "translation.h"
@@ -183,6 +185,7 @@ struct Impl_DocumentWidget {
     iString        linePrecedingLink;
     iString        originId;       /* origin document's widget ID, if opened via cross-split nav */
     iBool          originToNewTab; /* ...whether that navigation created a fresh tab */
+    iString        readerEntryUrl; /* feed entry being viewed (may have a fragment) */
 
     /* Widget structure: */
     iScrollWidget *scroll;
@@ -413,6 +416,27 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         return;
     }
     setTranslation_LabelWidget(tabButton, iFalse); /* using content from page */
+    iLabelWidget *readerIcon = findChild_Widget(as_Widget(tabButton), "tabs.reader");
+    if (d->mod.isReader) {
+        if (!readerIcon) {
+            readerIcon = addChildFlags_Widget(as_Widget(tabButton),
+                                              iClob(new_LabelWidget(star_Icon, NULL)),
+                                              fixedPosition_WidgetFlag | tight_WidgetFlag |
+                                                  frameless_WidgetFlag | noBackground_WidgetFlag |
+                                                  unhittable_WidgetFlag);
+            setId_Widget(as_Widget(readerIcon), "tabs.reader");
+            setTextColor_LabelWidget(readerIcon, uiIcon_ColorId);
+            setParentTextColor_LabelWidget(readerIcon, iTrue);
+        }
+        iWidget *icon = as_Widget(readerIcon);
+        /* Opposite edge from the close button. */
+#if defined (iPlatformApple)
+        const int x = width_Widget(tabButton) - width_Widget(icon);
+#else
+        const int x = 0;
+#endif
+        icon->rect.pos = init_I2(x, (height_Widget(tabButton) - height_Widget(icon)) / 2);
+    }
     if (d->fetch->flags & waitForIdle_DocumentFetchFlag) {
         updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
         return;
@@ -454,7 +478,8 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         }
     }
     /* Take away parts if it doesn't fit. */
-    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI;
+    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI -
+                          width_Widget(readerIcon);
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
     const int font      = fontWithStyle_Text(font_LabelWidget(tabButton), semiBold_FontStyle);
     for (;;) {
@@ -484,6 +509,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         const int ellipsisWidth = measure_Text(font, "...").advance.x;
         setTextColor_LabelWidget(tabButton, none_ColorId);
         iWidget    *tabCloseButton  = child_Widget(as_Widget(tabButton), 0);
+        if (tabCloseButton == constAs_Widget(readerIcon)) {
+            tabCloseButton = NULL; /* phone tabs have no close button */
+        }
         const iBool tabCloseVisible = avail > width_Widget(tabCloseButton);
         if (deviceType_App() == tablet_AppDeviceType && tabCloseButton) {
             iChangeFlags(as_Widget(tabCloseButton)->flags2, visibleOnParentSelected_WidgetFlag2,
@@ -697,6 +725,21 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
     iWidget *w = as_Widget(d);
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
+    if (d->mod.isReader) {
+        iArray *all = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(
+            all,
+            (iMenuItem[]){ { forwardArrow_Icon " ${reader.next}", SDLK_RIGHT, 0, "reader.next" },
+                           { backArrow_Icon " ${reader.prev}", SDLK_LEFT, 0, "reader.prev" },
+                           { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "reader.markallread" },
+                           { close_Icon " ${reader.exit}", 0, 0, "reader.exit" } },
+            deviceType_App() != desktop_AppDeviceType ? 4 : 3);
+        if (count) {
+            pushBackN_Array(all, items, count);
+        }
+        items = constData_Array(all);
+        count = size_Array(all);
+    }
     if (count == 0) {
         return;
     }
@@ -721,6 +764,48 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
     updateVisible_DocumentView(d->view); /* final placement for the buttons */
+}
+
+static iBool openAdjacentFeedEntry_DocumentWidget_(iDocumentWidget *d, int dir) {
+    const iWidget *root = root_Widget(as_Widget(d));
+    const iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
+    if (mode_SidebarWidget(sidebar) != feedEntries_SidebarMode) {
+        const iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
+        if (sidebar2 && mode_SidebarWidget(sidebar2) == feedEntries_SidebarMode) {
+            sidebar = sidebar2;
+        }
+    }
+    const iString   *openUrl = feedEntryUrl_DocumentWidget(d);
+    const iPtrArray *entries = listVisibleEntries_Feeds(
+        feedsMode_SidebarWidget(sidebar) == unread_FeedsMode, openUrl);
+    size_t pos = iInvalidPos;
+    iConstForEach(PtrArray, i, entries) {
+        const iFeedEntry *entry = i.ptr;
+        if (equal_String(&entry->url, openUrl)) {
+            pos = index_PtrArrayConstIterator(&i);
+            break;
+        }
+    }
+    if (pos == iInvalidPos) {
+        /* Current entry is no longer listed, so start from the top. */
+        if (dir < 0) {
+            return iFalse;
+        }
+        pos = 0;
+    }
+    else if (dir < 0 && pos == 0) {
+        return iFalse;
+    }
+    else {
+        pos += dir;
+    }
+    if (pos >= size_PtrArray(entries)) {
+        return iFalse;
+    }
+    const iFeedEntry *entry = constAt_PtrArray(entries, pos);
+    postCommandString_Root(as_Widget(d)->root,
+                           feedEntryOpenCommand_String(&entry->url, 0, 0, iTrue));
+    return iTrue;
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
@@ -768,11 +853,10 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     delete_Gempub(d->fetch->sourceGempub);
     d->fetch->sourceGempub = NULL;
     releasePlayers_Media(media_GmDocument(d->view->doc));
-    destroy_Widget(d->footerButtons);
-    d->footerButtons = NULL;
     releaseViewDocument_DocumentWidget_(d);
     invalidate_DocumentView(d->view);
     d->view->doc = new_GmDocument();
+    makeFooterButtons_DocumentWidget(d, NULL, 0);
     d->fetch->state = fetching_RequestState;
     d->fetch->flags &= ~pendingRedirect_DocumentFetchFlag;
     d->fetch->flags |= fromCache_DocumentFetchFlag;
@@ -1918,6 +2002,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             fetchNextUnfetchedImage_InlineMedia(d->media)) {
             return iTrue;
         }
+        if (d->mod.isReader && dir > 0 && !argLabel_Command(cmd, "repeat") &&
+            !argLabel_Command(cmd, "full") && !isRequestOngoing_DocumentFetch(d->fetch) &&
+            pos_SmoothScroll(&d->view->scrollY) >= d->view->scrollY.max) {
+            openAdjacentFeedEntry_DocumentWidget_(d, +1);
+            return iTrue;
+        }
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
         int height = (isTerminal_Platform() ? height_Rect(bounds_Widget(w)) - 1
                                             : height_Rect(documentBounds_DocumentView(d->view)));
@@ -1925,6 +2015,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                   dir * amount * height,
                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
+    }
+    else if (startsWith_CStr(cmd, "reader.") && d->mod.isReader && document_Command(cmd) == d) {
+        if (equal_Command(cmd, "reader.next") || equal_Command(cmd, "reader.prev")) {
+            openAdjacentFeedEntry_DocumentWidget_(d, equal_Command(cmd, "reader.next") ? +1 : -1);
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "reader.markallread")) {
+            markAllEntriesAsRead_Feeds();
+            notify_App("visited.changed");
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "reader.exit")) {
+            postCommand_Root(w->root, "sidebar.mode arg:1 show:1");
+            return iTrue;
+        }
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
         if (argLabel_Command(cmd, "smooth")) {
@@ -3265,6 +3370,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_String(&d->linePrecedingLink);
     init_String(&d->originId);
     d->originToNewTab = iFalse;
+    init_String(&d->readerEntryUrl);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Click(&d->midClick, d, SDL_BUTTON_MIDDLE);
     d->linkInfo = (deviceType_App() == desktop_AppDeviceType ? new_LinkInfo() : NULL);
@@ -3312,6 +3418,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_InlineMedia(d->media);
     delete_DocumentFetch(d->fetch);
     deinit_String(&d->linePrecedingLink);
+    deinit_String(&d->readerEntryUrl);
     deinit_String(&d->originId);
     deinit_String(&d->pendingGotoHeading);
     delete_Banner(d->banner);
@@ -3480,6 +3587,22 @@ int generation_DocumentWidget(const iDocumentWidget *d) {
 
 iBool isIdentityPinned_DocumentWidget(const iDocumentWidget *d) {
     return !isEmpty_Block(d->mod.setIdentity);
+}
+
+iBool isReader_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.isReader;
+}
+
+void setReaderEntry_DocumentWidget(iDocumentWidget *d, const iString *entryUrl) {
+    d->mod.isReader = iTrue;
+    set_String(&d->readerEntryUrl, entryUrl);
+}
+
+const iString *feedEntryUrl_DocumentWidget(const iDocumentWidget *d) {
+    if (d->mod.isReader && !isEmpty_String(&d->readerEntryUrl)) {
+        return &d->readerEntryUrl;
+    }
+    return canonicalUrl_String(d->mod.url);
 }
 
 const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {

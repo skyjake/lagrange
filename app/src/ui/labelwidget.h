@@ -39,6 +39,7 @@ void    setIconColor_LabelWidget    (iLabelWidget *, int color);
 void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
 void    setMenuCanceling_LabelWidget(iLabelWidget *, iBool menuCanceling);
 void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
+void    setParentTextColor_LabelWidget(iLabelWidget *, iBool parentTextColor);
 void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
 void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);

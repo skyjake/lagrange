@@ -893,6 +893,40 @@ const iPtrArray *listMatchingEntries_Feeds(const char *urlPrefix) {
     return list;
 }
 
+const iPtrArray *listVisibleEntries_Feeds(iBool unreadOnly, const iString *openUrl) {
+    iPtrArray *list = collectNew_PtrArray();
+    iTime now;
+    initCurrent_Time(&now);
+    iConstForEach(PtrArray, i, listEntries_Feeds()) {
+        const iFeedEntry *entry = i.ptr;
+        if (isHidden_FeedEntry(entry)) {
+            continue;
+        }
+        /* Don't show entries in the far future. */
+        if (secondsSince_Time(&now, &entry->posted) < -24 * 60 * 60) {
+            continue;
+        }
+        if (unreadOnly && !isUnread_FeedEntry(entry) &&
+            !(openUrl && equal_String(openUrl, &entry->url))) {
+            continue;
+        }
+        pushBack_PtrArray(list, entry);
+        if (size_PtrArray(list) == 100) {
+            /* For more items, one can always see "about:feeds". A large number of items
+               is a bit difficult to navigate in the sidebar. */
+            break;
+        }
+    }
+    return list;
+}
+
+void markAllEntriesAsRead_Feeds(void) {
+    iConstForEach(PtrArray, i, listEntries_Feeds()) {
+        const iFeedEntry *entry = i.ptr;
+        markEntryAsRead_Feeds(entry->bookmarkId, &entry->url, iTrue);
+    }
+}
+
 size_t numSubscribed_Feeds(void) {
     return size_PtrArray(listSubscriptions_());
 }

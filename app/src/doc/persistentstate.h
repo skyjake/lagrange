@@ -54,6 +54,7 @@ struct Impl_PersistentDocumentState {
     iBlock *setIdentity; /* identity (fingerprint) to use for requests, overriding default one */
     enum iReloadInterval reloadInterval;
     int generation;
+    iBool isReader; /* dedicated to viewing feed entries */
 };
 
 void    serializeWithContent_PersistentDocumentState    (const iPersistentDocumentState *,

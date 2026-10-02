@@ -575,30 +575,20 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     iBool isEmpty = iFalse; /* show blank? */
     switch (d->mode) {
         case feedEntries_SidebarMode: {
-            const iString *docUrl = canonicalUrl_String(url_DocumentWidget(document_App()));
+            const iString *docUrl = feedEntryUrl_DocumentWidget(document_App());
             iTime          now;
             iDate          on;
             initCurrent_Time(&now);
             init_Date(&on, &now);
             const iDate today = on;
             iZap(on);
-            size_t numItems              = 0;
             isEmpty                      = iTrue;
             const iPtrArray *feedEntries = listFeedEntries_SidebarWidget_(d);
-            iConstForEach(PtrArray, i, feedEntries) {
+            iConstForEach(PtrArray, i,
+                          listVisibleEntries_Feeds(d->feedsMode == unread_FeedsMode, docUrl)) {
                 const iFeedEntry *entry = i.ptr;
-                if (isHidden_FeedEntry(entry)) {
-                    continue; /* A hidden entry. */
-                }
-                /* Don't show entries in the far future. */
-                if (secondsSince_Time(&now, &entry->posted) < -24 * 60 * 60) {
-                    continue;
-                }
                 const iBool isOpen   = equal_String(docUrl, &entry->url);
                 const iBool isUnread = isUnread_FeedEntry(entry);
-                if (d->feedsMode == unread_FeedsMode && !isUnread && !isOpen) {
-                    continue;
-                }
                 isEmpty = iFalse;
                 /* Insert date separators. */ {
                     iDate entryDate;
@@ -636,11 +626,6 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
-                if (++numItems == 100) {
-                    /* For more items, one can always see "about:feeds". A large number of items
-                       is a bit difficult to navigate in the sidebar. */
-                    break;
-                }
             }
             /* Actions. */
             if (!isMobile) {
@@ -699,6 +684,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                        d->feedsMode != unread_FeedsMode);
             }
             const iMenuItem menuItems[] = {
+                { rightArrowhead_Icon " ${menu.opencurrent}", 0, 0, "feed.entry.open" },
                 { openTab_Icon " ${menu.opentab}", 0, 0, "feed.entry.open newtab:1" },
                 { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "feed.entry.open newtab:2" },
                 { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "feed.entry.open newwindow:1" },
@@ -1145,7 +1131,8 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 item->isBold = isUnseen_DocumentWidget(doc);
                 item->indent = isVisible_Widget(doc) ? 1 : 0;
                 item->id     = (isRequestOngoing_DocumentWidget(doc) ? 1 : 0) |
-                               (isAutoReloading_DocumentWidget(doc) ? 4 : 0);
+                               (isAutoReloading_DocumentWidget(doc) ? 4 : 0) |
+                               (isReader_DocumentWidget(doc) ? 8 : 0);
                 if (numActivePlayers_Media(constMedia_GmDocument(document_DocumentWidget(doc)))) {
                     item->id |= 2;
                 }
@@ -1634,10 +1621,9 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             break;
         }
         case feedEntries_SidebarMode: {
+            const int tabMode = mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys());
             postCommandString_Root(
-                get_Root(),
-                feedEntryOpenCommand_String(
-                    &item->url, mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()), 0));
+                get_Root(), feedEntryOpenCommand_String(&item->url, tabMode, 0, !tabMode));
             setFocus_Widget(NULL);
             break;
         }
@@ -2624,10 +2610,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 openMenu_Widget(menu, topLeft_Rect(bounds_Widget(d->actions)));
                 return iTrue;
             }
-            iConstForEach(PtrArray, i, listFeedEntries_SidebarWidget_(d)) {
-                const iFeedEntry *entry = i.ptr;
-                markEntryAsRead_Feeds(entry->bookmarkId, &entry->url, iTrue);
-            }
+            markAllEntriesAsRead_Feeds();
             notify_App("visited.changed");
             return iTrue;
         }
@@ -2642,7 +2625,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         get_Root(),
                         feedEntryOpenCommand_String(&item->url,
                                                     argLabel_Command(cmd, "newtab"),
-                                                    argLabel_Command(cmd, "newwindow")));
+                                                    argLabel_Command(cmd, "newwindow"),
+                                                    isReader_DocumentWidget(document_App())));
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
@@ -3463,7 +3447,15 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             init_I2(right_Rect(itemRect) - metaIconWidth + 0.5f * gap_UI * aspect_UI, textPos.y);
         iRect metaIconRect = initCorners_Rect(addX_I2(topRight_Rect(itemRect), -metaIconWidth),
                                               bottomRight_Rect(itemRect));
-        if (d->id) { /* used for status flags */
+        if (d->id & 8) { /* Reader tab */
+            const int offset = (d->id & 7 ? -metaIconWidth : 0);
+            fillRect_Paint(p, moved_Rect(metaIconRect, init_I2(offset, 0)), bg);
+            drawRange_Text(font,
+                           addX_I2(metaIconPos, offset),
+                           isSel ? uiTextSelected_ColorId : uiIcon_ColorId,
+                           range_CStr(star_Icon));
+        }
+        if (d->id & 7) { /* used for status flags */
             const int statusFg = isSel ? uiTextSelected_ColorId : uiTextAction_ColorId;
             fillRect_Paint(p, metaIconRect, bg);
             if (d->id & 4) {

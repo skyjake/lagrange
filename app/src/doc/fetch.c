@@ -545,8 +545,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                 clear_Banner(banner_DocumentFetch_(d));
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
-                destroy_Widget(footerButtons_DocumentWidget(d->owner));
-                setFooterButtons_DocumentWidget(d->owner, NULL);
+                makeFooterButtons_DocumentWidget(d->owner, NULL, 0);
                 if (isUrlChanged_DocumentWidget(d->owner)) {
                     /* Keep scroll position when reloading the same page. */
                     resetScroll_DocumentView(view_DocumentFetch_(d));

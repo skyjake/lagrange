@@ -765,7 +765,8 @@ iBool equalMediaType_String(const iString *d, const char *mediaType) {
     return equal_Rangecc(mediaTypeWithoutParameters_Rangecc(range_String(d)), mediaType);
 }
 
-const iString *feedEntryOpenCommand_String(const iString *url, int newTab, int newWindow) {
+const iString *feedEntryOpenCommand_String(const iString *url, int newTab, int newWindow,
+                                           iBool isReader) {
     if (!isEmpty_String(url)) {
         iString *cmd = collectNew_String();
         const size_t fragPos = indexOf_String(url, '#');
@@ -773,7 +774,8 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab, int n
             iString *head = newRange_String(
                 (iRangecc){ constBegin_String(url) + fragPos + 1, constEnd_String(url) });
             format_String(cmd,
-                          "open fromsidebar:1 newtab:%d newwindow:%d gotourlheading:%s url:%s",
+                          "open fromsidebar:1 reader:%d newtab:%d newwindow:%d gotourlheading:%s url:%s",
+                          isReader,
                           newTab,
                           newWindow,
                           cstr_String(head),
@@ -782,8 +784,8 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab, int n
             delete_String(head);
         }
         else {
-            format_String(cmd, "open fromsidebar:1 newtab:%d newwindow:%d url:%s",
-                          newTab, newWindow, cstr_String(url));
+            format_String(cmd, "open fromsidebar:1 reader:%d newtab:%d newwindow:%d url:%s",
+                          isReader, newTab, newWindow, cstr_String(url));
         }
         return cmd;
     }

@@ -586,8 +586,43 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setCurrent_Root(root); /* need to change for widget creation */
         doc = document_Command(cmd); /* may be different */
     }
+    const iBool isReaderOpen =
+        argLabel_Command(cmd, "reader") && (newTab & newTabMask_OpenTabFlag) == 0;
+    if (isReaderOpen) {
+        /* Feed entries are viewed in the root's Reader tab. */
+        iDocumentWidget *reader = NULL;
+        iForEach(ObjectList, i, iClob(listDocuments_App(root))) {
+            if (isReader_DocumentWidget(i.object)) {
+                reader = i.object;
+                break;
+            }
+        }
+        if (reader) {
+            doc = reader;
+            showTabPage_Widget(findWidget_Root("doctabs"), doc);
+        }
+        else {
+            doc = newTab_App(NULL, switchTo_NewTabFlag);
+            iWidget *tabs = findWidget_Root("doctabs");
+            moveTabPage_Widget(tabs, tabPageIndex_Widget(tabs, doc), 0);
+        }
+        iString *entryUrl = copy_String(url);
+        const iRangecc fragment = range_Command(cmd, "gotourlheading");
+        if (!isEmpty_Range(&fragment)) {
+            appendCStr_String(entryUrl, "#");
+            appendRange_String(entryUrl, fragment);
+        }
+        setReaderEntry_DocumentWidget(doc, entryUrl);
+        delete_String(entryUrl);
+    }
+    else if (!isHistory && isReader_DocumentWidget(doc) &&
+             (newTab & newTabMask_OpenTabFlag) == 0 && !argLabel_Command(cmd, "redirect") &&
+             !equal_String(url, url_DocumentWidget(doc))) {
+        /* Only feed entries are viewed in the Reader tab. */
+        newTab = new_OpenTabFlag;
+    }
     /* If not opening in a new tab, we must not domains/roots accidentally. */
-    if (!isHistory &&
+    if (!isHistory && !isReaderOpen &&
         isIdentityPinned_DocumentWidget(doc) &&
         (newTab & newTabMask_OpenTabFlag) == 0 &&
         !isSetIdentityRetained_DocumentWidget(doc, url)) {

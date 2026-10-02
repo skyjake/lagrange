@@ -681,6 +681,21 @@ msgstr "%b. %d, %Y"
 msgid "feeds.today"
 msgstr "Today"
 
+msgid "menu.opencurrent"
+msgstr "Open in Current Tab"
+
+# Button at the bottom of the Reader tab for viewing the next feed entry.
+msgid "reader.next"
+msgstr "Next Entry"
+
+# Button at the bottom of the Reader tab for viewing the previous feed entry.
+msgid "reader.prev"
+msgstr "Previous Entry"
+
+# Button at the bottom of the Reader tab (mobile). Returns to the Feeds list.
+msgid "reader.exit"
+msgstr "Exit Reader"
+
 msgid "feeds.entry.markread"
 msgstr "Mark as Read"
 

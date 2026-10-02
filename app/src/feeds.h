@@ -56,9 +56,11 @@ void    refreshFinished_Feeds   (void); /* called on "feeds.refresh.finished" */
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);
 void    markEntryAsRead_Feeds   (uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead);
 iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUrl);
+void    markAllEntriesAsRead_Feeds(void);
 void    resetKnownEntries_Feeds (void);
 
 const iPtrArray *   listEntries_Feeds   (void);
 const iPtrArray *   listMatchingEntries_Feeds(const char *urlPrefix);
+const iPtrArray *   listVisibleEntries_Feeds(iBool unreadOnly, const iString *openUrl);
 size_t              numSubscribed_Feeds (void);
 size_t              numUnread_Feeds     (void);

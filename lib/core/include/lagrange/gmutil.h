@@ -163,6 +163,7 @@ iBool           equalMediaType_String               (const iString *, const char
 
 const iString * findContainerArchive_Path           (const iString *path);
 
-const iString * feedEntryOpenCommand_String (const iString *url, int newTab, int newWindow); /* checks fragment */
+const iString * feedEntryOpenCommand_String (const iString *url, int newTab, int newWindow,
+                                             iBool isReader); /* checks fragment */
 
 const iBlock *  urlPaletteSeed_String       (const iString *);

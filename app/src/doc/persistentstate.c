@@ -54,6 +54,7 @@ void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->setIdentity    = NULL;
     d->reloadInterval = 0;
     d->generation     = 0;
+    d->isReader       = iFalse;
 }
 
 void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
@@ -69,7 +70,8 @@ void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStrea
 void serializeWithContent_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs,
                                                  iBool withContent) {
     serialize_String(d->url, outs);
-    uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4);
+    uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4) |
+                      (d->isReader ? 0x100 : 0);
     writeU16_Stream(outs, params);
     /* Identity override. */ {
         iBlock empty;
@@ -88,7 +90,8 @@ void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *i
     }
     const uint16_t params = readU16_Stream(ins);
     d->reloadInterval = params & 7;
-    d->generation     = params >> 4;
+    d->generation     = (params >> 4) & 15;
+    d->isReader       = (params & 0x100) != 0;
     if (version_Stream(ins) >= documentSetIdentity_FileVersion) {
         iBlock fp;
         init_Block(&fp, 0);
