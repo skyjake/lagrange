@@ -22,8 +22,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/core.h"
 
+#include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/string.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #if defined (iPlatformAndroidMobile)
 #   include <fcntl.h>
@@ -55,18 +61,41 @@ iBool isPhone_Core(void) {
     return core_.isPhone;
 }
 
-void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
+static void syncFile_Core_(const char *path) {
 #if defined (iPlatformAndroidMobile)
     /* Make sure the new content is durable on disk before it replaces the old file: a
        rename() is atomic but not durable by itself, and Android is more likely to kill
-       the process (or the whole device may lose power) right after this. */ {
-        const int fd = open(tempPathWithNewContents, O_WRONLY);
-        if (fd >= 0) {
-            fsync(fd);
-            close(fd);
-        }
+       the process (or the whole device may lose power) right after this. */
+    const int fd = open(path, O_WRONLY);
+    if (fd >= 0) {
+        fsync(fd);
+        close(fd);
     }
+#else
+    iUnused(path);
 #endif
+}
+
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+static iBool copyFile_Core_(const char *fromPath, const char *toPath) {
+    iBool ok = iFalse;
+    iFile *src = newCStr_File(fromPath);
+    if (open_File(src, readOnly_FileMode)) {
+        iBlock *data = readAll_File(src);
+        iFile *dst = newCStr_File(toPath);
+        if (open_File(dst, writeOnly_FileMode)) {
+            ok = write_File(dst, data) == size_Block(data);
+        }
+        iRelease(dst);
+        delete_Block(data);
+    }
+    iRelease(src);
+    return ok;
+}
+#endif
+
+void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
+    syncFile_Core_(tempPathWithNewContents);
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
     iString *oldPath = collectNewCStr_String(path);
     appendCStr_String(oldPath, ".old");
@@ -74,6 +103,19 @@ void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
     renamePath_CStr(tempPathWithNewContents, path);
     removePath_CStr(cstr_String(oldPath));
 #else
-    renamePath_CStr(tempPathWithNewContents, path); /* atomic; replaces destination file */
+    /* Symlinks are kept by replacing the file they point to. */
+    char *target = realpath(path, NULL);
+    const char *dest = target ? target : path;
+    if (rename(tempPathWithNewContents, dest) != 0) { /* atomic; replaces destination file */
+        /* Destination may be on a different file system. */
+        if (copyFile_Core_(tempPathWithNewContents, dest)) {
+            syncFile_Core_(dest);
+            removePath_CStr(tempPathWithNewContents);
+        }
+        else {
+            fprintf(stderr, "[Core] failed to write \"%s\": %s\n", dest, strerror(errno));
+        }
+    }
+    free(target);
 #endif
 }
