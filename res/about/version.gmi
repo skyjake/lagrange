@@ -8,6 +8,7 @@
 
 ## 1.21.3
 * Bookmark folders are not all folded in the default state (e.g., a new window).
+* Fixed: Don't overwrite symlinks when writing user data files (e.g, bookmarks.ini).
 * Fixed: Sidebars restored to minimum width instead of default width.
 * Fixed: Potential crash when closing windows.
 * Fixed: Inline prompt sometimes fails to get input focus.

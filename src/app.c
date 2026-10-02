@@ -1262,6 +1262,24 @@ static void syncFile_App_(const char *path) {
 #endif
 }
 
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+static iBool copyFile_App_(const char *fromPath, const char *toPath) {
+    iBool ok = iFalse;
+    iFile *src = newCStr_File(fromPath);
+    if (open_File(src, readOnly_FileMode)) {
+        iBlock *data = readAll_File(src);
+        iFile *dst = newCStr_File(toPath);
+        if (open_File(dst, writeOnly_FileMode)) {
+            ok = write_File(dst, data) == size_Block(data);
+        }
+        iRelease(dst);
+        delete_Block(data);
+    }
+    iRelease(src);
+    return ok;
+}
+#endif
+
 void commitFile_App(const char *path, const char *tempPathWithNewContents) {
     syncFile_App_(tempPathWithNewContents); /* no-op if already synced */
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
@@ -1271,7 +1289,20 @@ void commitFile_App(const char *path, const char *tempPathWithNewContents) {
     renamePath_CStr(tempPathWithNewContents, path);
     removePath_CStr(cstr_String(oldPath));
 #else
-    renamePath_CStr(tempPathWithNewContents, path); /* atomic; replaces destination file */
+    /* Symlinks are kept by replacing the file they point to. */
+    char *target = realpath(path, NULL);
+    const char *dest = target ? target : path;
+    if (rename(tempPathWithNewContents, dest) != 0) { /* atomic; replaces destination file */
+        /* Destination may be on a different file system. */
+        if (copyFile_App_(tempPathWithNewContents, dest)) {
+            syncFile_App_(dest);
+            removePath_CStr(tempPathWithNewContents);
+        }
+        else {
+            fprintf(stderr, "[App] failed to write \"%s\": %s\n", dest, strerror(errno));
+        }
+    }
+    free(target);
 #endif
 }
 
