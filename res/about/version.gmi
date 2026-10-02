@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.21.3
+* Bookmark folders are not all folded in the default state (e.g., a new window).
+* Fixed: Sidebars restored to minimum width instead of default width.
+* Fixed: Potential crash when closing windows.
+* Fixed: Inline prompt sometimes fails to get input focus.
+
 ## 1.21.2
 * Updated the bundled monospace font (Iosevka): no ligatures, 4% wider.
 * Quitting the app is disabled while the Titan upload dialog is open. (The contents are autosaved in case of a crash.)
