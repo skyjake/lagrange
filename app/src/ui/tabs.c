@@ -290,6 +290,14 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
     }
     largest = add_I2(largest, extra);
     const iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    if (isVerticalTabBar_Widget(tabs)) {
+        /* The buttons must fit with their padding. */
+        int buttonsHeight = buttons->padding[1] + buttons->padding[3];
+        iConstForEach(ObjectList, b, buttons->children) {
+            buttonsHeight += height_Widget(b.object);
+        }
+        largest.y = iMax(largest.y, buttonsHeight);
+    }
     setFixedSize_Widget(tabs,
                         isVerticalTabBar_Widget(tabs) ? addX_I2(largest, width_Widget(buttons))
                                                       : addY_I2(largest, height_Widget(buttons)));

@@ -51,7 +51,7 @@ enum iDocPrefsGroup {
     layout_DocPrefsGroup,
     style_DocPrefsGroup,
     theme_DocPrefsGroup,
-    behavior_DocPrefsGroup,
+    content_DocPrefsGroup,
     max_DocPrefsGroup
 };
 
@@ -79,7 +79,7 @@ enum iDocPrefsBool {
     boldLinkVisited_DocPrefsBool,
     boldLinkDark_DocPrefsBool,
     boldLinkLight_DocPrefsBool,
-    /* Behavior */
+    /* Content */
     geminiStyledGopher_DocPrefsBool,
     markdownAsSource_DocPrefsBool,
     max_DocPrefsBool
@@ -94,7 +94,7 @@ enum iDocPrefsInt {
     docThemeDark_DocPrefsInt,  /* enum iGmDocumentTheme */
     docThemeLight_DocPrefsInt, /* enum iGmDocumentTheme */
     imageStyle_DocPrefsInt,    /* enum iImageStyle */
-    /* Behavior */
+    /* Content */
     ansiEscapes_DocPrefsInt, /* enum iAnsiFlag */
     /* Ungrouped */
     zoomPercent_DocPrefsInt,

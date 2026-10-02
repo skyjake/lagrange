@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 const iArray *  fontItems_ScopedPrefs       (const char *id);
 const iMenuItem *items_ScopedPrefs          (enum iDocPrefsGroup, iBool withProtocols); /* NULL-terminated */
+const iMenuItem *globalContentItems_ScopedPrefs(void); /* content settings are not scoped in Preferences */
 
 void            appendTabPages_ScopedPrefs  (iWidget *tabs, iBool withProtocols, int iconColor,
                                              int firstShortcut);

@@ -2010,9 +2010,6 @@ msgstr "Page Style"
 msgid "heading.prefs.typography"
 msgstr "Typography"
 
-msgid "heading.prefs.behavior"
-msgstr "Behavior"
-
 msgid "prefs.scope"
 msgstr "Applies to:"
 
@@ -2032,9 +2029,6 @@ msgstr "Use %s-specific style:"
 msgid "prefs.scope.custom.theme"
 msgstr "Use %s-specific theme:"
 
-msgid "prefs.scope.custom.behavior"
-msgstr "Use %s-specific behavior:"
-
 msgid "prefs.scope.site.typography"
 msgstr "Use site-specific typography:"
 
@@ -2047,8 +2041,8 @@ msgstr "Use site-specific style:"
 msgid "prefs.scope.site.theme"
 msgstr "Use site-specific theme:"
 
-msgid "prefs.scope.site.behavior"
-msgstr "Use site-specific behavior:"
+msgid "prefs.scope.site.content"
+msgstr "Use site-specific content settings:"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -2384,6 +2378,9 @@ msgstr "Font glyph warnings:"
 
 msgid "prefs.font.smooth"
 msgstr "Font smoothing:"
+
+msgid "prefs.font.coloremoji"
+msgstr "Color Emoji:"
 
 msgid "prefs.editor.highlight"
 msgstr "Syntax highlighting:"

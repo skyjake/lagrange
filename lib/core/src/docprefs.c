@@ -82,9 +82,9 @@ static const iDocPrefsSpec specs_[] = {
       reparse_DocPrefsSpecFlag },
     { I_(tabWidth), layout_DocPrefsGroup, "tabWidth", "prefs.tabwidth", "tabwidth.set",
       reparse_DocPrefsSpecFlag }, /* spaces need renormalizing */
-    { B_(justifyParagraph), layout_DocPrefsGroup, "justifyParagraph", "prefs.justify", NULL,
+    { B_(justifyParagraph), style_DocPrefsGroup, "justifyParagraph", "prefs.justify", NULL,
       relayout_DocPrefsSpecFlag },
-    { B_(bigFirstParagraph), layout_DocPrefsGroup, "bigFirstParagraph", "prefs.biglede", NULL,
+    { B_(bigFirstParagraph), style_DocPrefsGroup, "bigFirstParagraph", "prefs.biglede", NULL,
       relayout_DocPrefsSpecFlag },
     { B_(plainTextWrap), layout_DocPrefsGroup, "plainTextWrap", "prefs.plaintext.wrap", NULL,
       relayout_DocPrefsSpecFlag },
@@ -112,11 +112,11 @@ static const iDocPrefsSpec specs_[] = {
     { F_(saturation), theme_DocPrefsGroup, "saturation", "prefs.saturation", "saturation.set",
       palette_DocPrefsSpecFlag | manual_DocPrefsSpecFlag }, /* argument is a percentage */
     { I_(imageStyle), theme_DocPrefsGroup, "imageStyle", "prefs.imagestyle", "imagestyle.set" },
-    /* Behavior */
-    { I_(ansiEscapes), behavior_DocPrefsGroup, "ansiEscapes", NULL, "ansiescape",
+    /* Content */
+    { I_(ansiEscapes), content_DocPrefsGroup, "ansiEscapes", NULL, "ansiescape",
       reparse_DocPrefsSpecFlag | manual_DocPrefsSpecFlag }, /* separate toggle for each flag */
-    { B_(geminiStyledGopher), behavior_DocPrefsGroup, "geminiStyledGopher", "prefs.gopher.gemstyle" },
-    { B_(markdownAsSource), behavior_DocPrefsGroup, "markdownAsSource", "prefs.markdown.viewsource" },
+    { B_(geminiStyledGopher), content_DocPrefsGroup, "geminiStyledGopher", "prefs.gopher.gemstyle" },
+    { B_(markdownAsSource), content_DocPrefsGroup, "markdownAsSource", "prefs.markdown.viewsource" },
     /* Ungrouped */
     { S_(paletteSeed), none_DocPrefsGroup, "paletteSeed", NULL, NULL,
       palette_DocPrefsSpecFlag | manual_DocPrefsSpecFlag },
@@ -125,7 +125,7 @@ static const iDocPrefsSpec specs_[] = {
 };
 
 static const char *groupIds_[max_DocPrefsGroup] = {
-    "", "typography", "layout", "style", "theme", "behavior",
+    "", "typography", "layout", "style", "theme", "content",
 };
 
 size_t numSpecs_DocPrefs(void) {

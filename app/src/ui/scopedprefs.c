@@ -260,10 +260,6 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems_);
             add_("input id:prefs.linespacing maxlen:5");
             add_("input id:prefs.tabwidth maxlen:3");
-#if defined (LAGRANGE_ENABLE_HARFBUZZ) || defined (LAGRANGE_ENABLE_CORETEXT)
-            add_("toggle id:prefs.justify except:finger");
-#endif
-            add_("toggle id:prefs.biglede except:finger");
             add_("toggle id:prefs.plaintext.wrap");
             add_("padding");
             add_("toggle id:prefs.expandline");
@@ -272,8 +268,14 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("dropdown id:prefs.collapsepre except:finger", 0, 0, menu_(collapseItems_()));
             break;
         case style_DocPrefsGroup:
+#if defined (LAGRANGE_ENABLE_HARFBUZZ) || defined (LAGRANGE_ENABLE_CORETEXT)
+            add_("toggle id:prefs.justify except:finger");
+#endif
+            add_("toggle id:prefs.biglede except:finger");
+            add_("padding id:prefs.pad.quoteicon except:finger");
             add_("radio horizontal:1 id:prefs.quoteicon except:finger", 0, 0, (const void *) quoteItems_);
             add_("toggle id:prefs.quote.italic except:finger");
+            add_("padding");
             add_("buttons id:prefs.boldlink except:finger", 0, 0, (const void *) boldLinkItems_);
             add_("padding id:prefs.pad.sideicon except:finger");
             add_("toggle id:prefs.sideicon");
@@ -286,7 +288,7 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("padding id:prefs.pad.imagestyle except:finger");
             add_("dropdown id:prefs.imagestyle except:finger", 0, 0, menu_(imageStyleItems_()));
             break;
-        case behavior_DocPrefsGroup:
+        case content_DocPrefsGroup:
             add_("buttons id:prefs.gemtext.ansi except:finger", 0, 0, (const void *) ansiItems_);
             add_("toggle id:prefs.gopher.gemstyle scheme:gopher");
             add_("toggle id:prefs.markdown.viewsource except:finger");
@@ -319,8 +321,13 @@ static const struct {
     { layout_DocPrefsGroup, pageLayout_Icon, 0x1f4c4, "heading.prefs.layout", "prefs.page.layout" },
     { style_DocPrefsGroup, edit_Icon, 0x1f660, "heading.prefs.style", "prefs.page.style" },
     { theme_DocPrefsGroup, palette_Icon, 0x1f3a8, "heading.prefs.theme", "prefs.page.theme" },
-    { behavior_DocPrefsGroup, check_Icon, 0x2714, "heading.prefs.behavior", "prefs.page.behavior" },
+    /* Global in Preferences; can only be overridden for a site. */
+    { content_DocPrefsGroup, photo_Icon, 0x1f5bc, "heading.prefs.content", "sitespec.page.content" },
 };
+
+static iBool isPageUsed_(size_t index, iBool withProtocols) {
+    return !(withProtocols && pages_[index].group == content_DocPrefsGroup);
+}
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -357,6 +364,9 @@ static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
 void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColor,
                                 int firstShortcut) {
     iForIndices(i, pages_) {
+        if (!isPageUsed_(i, withProtocols)) {
+            continue;
+        }
         const iMenuItem *items    = items_ScopedPrefs(pages_[i].group, withProtocols);
         const int        shortcut = firstShortcut ? firstShortcut + (int) i : 0;
         /* The scope bar is at the top and the rest is centered vertically. */
@@ -381,6 +391,9 @@ void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColo
 
 void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols) {
     iForIndices(i, pages_) {
+        if (!isPageUsed_(i, withProtocols)) {
+            continue;
+        }
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         pushBack_Array(items, &(iMenuItem){ format_CStr("title id:%s", pages_[i].title) });
         const iMenuItem *groupItems = items_ScopedPrefs(pages_[i].group, withProtocols);
@@ -394,11 +407,21 @@ void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols) {
     }
 }
 
+const iMenuItem *globalContentItems_ScopedPrefs(void) {
+    return items_ScopedPrefs(content_DocPrefsGroup, iFalse) + 1; /* without the scope bar */
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 const char *scope_ScopedPrefs(const iWidget *dlg) {
     const iString *scope = userData_Object(dlg);
     return scope ? cstr_String(scope) : "base";
+}
+
+/* Content settings are scoped only in Site Settings. */
+static const char *groupScope_(const iWidget *dlg, enum iDocPrefsGroup group) {
+    const char *scope = scope_ScopedPrefs(dlg);
+    return group == content_DocPrefsGroup && !startsWith_CStr(scope, "root:") ? "base" : scope;
 }
 
 void init_ScopedPrefs(iWidget *dlg, const char *scope) {
@@ -521,14 +544,15 @@ static const char *toggleLabel_(enum iDocPrefsGroup group, const char *scope) {
 
 void update_ScopedPrefs(iWidget *dlg) {
     iBeginCollect();
-    const char *      scope  = scope_ScopedPrefs(dlg);
-    const iBool       isBase = !iCmpStr(scope, "base");
-    const iScopeRule *rule   = constRule_ScopeRules(scope);
-    iScopeKey key;
-    initScope_ScopeKey(&key, scope);
+    const iBool isSite = startsWith_CStr(scope_ScopedPrefs(dlg), "root:");
     iDocPrefs shown; /* values of this scope, or the inherited ones */
     initCopy_DocPrefs(&shown, &constRule_ScopeRules("base")->prefs);
     for (int group = 1; group < max_DocPrefsGroup; group++) {
+        const char *      scope  = groupScope_(dlg, group);
+        const iBool       isBase = !iCmpStr(scope, "base");
+        const iScopeRule *rule   = constRule_ScopeRules(scope);
+        iScopeKey key;
+        initScope_ScopeKey(&key, scope);
         const iBool      isEnabled = isBase || (rule && isGroupEnabled_ScopeRule(rule, group));
         const iMenuItem *items     = makeItems_(group, iFalse, iFalse);
         if (!isBase) {
@@ -556,7 +580,9 @@ void update_ScopedPrefs(iWidget *dlg) {
             if (!control || equal_Command(item->label, "scopebar")) {
                 continue;
             }
-            const iBool show = checkScheme_MenuItem(item, cstr_String(&key.scheme));
+            /* Global settings are always shown. */
+            const iBool show = (group == content_DocPrefsGroup && !isSite) ||
+                               checkScheme_MenuItem(item, cstr_String(&key.scheme));
             if (hasLabel_Command(item->label, "scheme") || hasLabel_Command(item->label, "except")) {
                 showRow_(control, show);
             }
@@ -584,10 +610,10 @@ void update_ScopedPrefs(iWidget *dlg) {
             }
         }
         setDisabled_(dlg, items, !isEnabled);
+        deinit_ScopeKey(&key);
     }
     applyValues_(dlg, &shown);
     deinit_DocPrefs(&shown);
-    deinit_ScopeKey(&key);
     /* Rows may have been shown or hidden. */
     if (!cmp_String(id_Widget(dlg), "prefs")) {
         updatePreferencesLayout_Widget(dlg);
@@ -613,6 +639,15 @@ static iBool isDocPrefsCommand_(const char *cmd) {
            equal_Command(cmd, "saturation.set") || startsWith_Command(cmd, "prefs.gemtext.ansi.");
 }
 
+static enum iDocPrefsGroup commandGroup_(const char *cmd) {
+    const iDocPrefsSpec *spec = findCommandSpec_DocPrefs(name_Command(cmd));
+    if (spec) {
+        return spec->group;
+    }
+    return startsWith_Command(cmd, "prefs.gemtext.ansi.") ? content_DocPrefsGroup
+                                                          : none_DocPrefsGroup;
+}
+
 iBool handleCommand_ScopedPrefs(iWidget *dlg, const char *cmd) {
     const char *scope = scope_ScopedPrefs(dlg);
     if (equal_Command(cmd, "prefs.scope.set")) {
@@ -628,7 +663,8 @@ iBool handleCommand_ScopedPrefs(iWidget *dlg, const char *cmd) {
         for (int group = 1; group < max_DocPrefsGroup; group++) {
             if (equal_Command(cmd, format_CStr("%s.toggle.changed", scopeBarId_(group)))) {
                 postCommandf_App("docprefs.group arg:%d group:%s scope:%s",
-                                 arg_Command(cmd), groupId_DocPrefs(group), scope);
+                                 arg_Command(cmd), groupId_DocPrefs(group),
+                                 groupScope_(dlg, group));
                 postCommand_Widget(dlg, "prefs.scope.update");
                 return iTrue;
             }
@@ -650,7 +686,7 @@ iBool handleCommand_ScopedPrefs(iWidget *dlg, const char *cmd) {
     }
     /* The scope is added to the commands of the controls. */
     if (isDocPrefsCommand_(cmd) && !hasLabel_Command(cmd, "scope")) {
-        postCommandf_App("%s scope:%s", cmd, scope);
+        postCommandf_App("%s scope:%s", cmd, groupScope_(dlg, commandGroup_(cmd)));
         postCommand_Widget(dlg, "prefs.scope.update");
         return iTrue;
     }
