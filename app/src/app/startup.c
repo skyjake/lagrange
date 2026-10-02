@@ -474,7 +474,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Prefs(&d->prefs);
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
+    init_ScopeRules(dataDir_App_());
     init_SiteSpec(dataDir_App_());
+    initCopy_DocPrefs(&d->activeDocPrefs, &constRule_ScopeRules("base")->prefs);
     init_Snippets(dataDir_App_());
     init_Misfin(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
@@ -725,6 +727,8 @@ static void deinit_App(iApp *d) {
     deinit_Misfin();
     deinit_Snippets();
     deinit_SiteSpec();
+    deinit_ScopeRules();
+    deinit_DocPrefs(&d->activeDocPrefs);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_());
     delete_Bookmarks(d->bookmarks);

@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "defs.h"
+#include "docprefs.h"
 #include <the_Foundation/stringset.h>
 
 /* User preferences */
@@ -52,10 +53,6 @@ enum iPrefsString {
 
     /* Style */
     uiFont_PrefsString,
-    headingFont_PrefsString,
-    bodyFont_PrefsString,
-    monospaceFont_PrefsString,
-    monospaceDocumentFont_PrefsString,
 
     /* Meta */
     max_PrefsString
@@ -83,11 +80,8 @@ enum iPrefsBool {
 
     useGamepad_PrefsBool,
     thickScrollBar_PrefsBool,
-
-    /* Document presentation */
-    italicQuote_PrefsBool,
-    sideIcon_PrefsBool,
     time24h_PrefsBool,
+
 
     /* Behavior */
     retainTabs_PrefsBool,
@@ -99,7 +93,6 @@ enum iPrefsBool {
     openArchiveIndexPages_PrefsBool,
     addBookmarksToBottom_PrefsBool,
     warnAboutMissingGlyphs_PrefsBool,
-    markdownAsSource_PrefsBool,
     skipIndexPageOnParentNavigation_PrefsBool,
 
     edgeSwipe_PrefsBool,
@@ -115,21 +108,7 @@ enum iPrefsBool {
     useProxy_PrefsBool,
 
     /* Style */
-    monospaceGemini_PrefsBool,
-    monospaceGopher_PrefsBool,
-    boldLinkVisited_PrefsBool,
-    boldLinkDark_PrefsBool,
-    boldLinkLight_PrefsBool,
-
     fontSmoothing_PrefsBool,
-    bigFirstParagraph_PrefsBool,
-    justifyParagraph_PrefsBool,
-    quoteIcon_PrefsBool,
-    centerShortDocs_PrefsBool,
-
-    plainTextWrap_PrefsBool,
-    expandToLongLines_PrefsBool,
-    geminiStyledGopher_PrefsBool,
     colorEmoji_PrefsBool,
 
     /* Meta */
@@ -171,13 +150,6 @@ struct Impl_PrefsStringSpec {
 const iPrefsStringSpec *stringSpec_Prefs      (enum iPrefsString);
 void                    serializeStrings_Prefs(const iPrefs *, iString *out);
 
-enum iCollapse {
-    never_Collapse,
-    notByDefault_Collapse,
-    byDefault_Collapse,
-    always_Collapse,
-};
-
 enum iInputPromptPosition {
     inline_InputPromptPosition = 0, /* embedded under the link when possible, otherwise modal */
     top_InputPromptPosition    = 1, /* always modal, docked at the top */
@@ -215,11 +187,8 @@ struct Impl_Prefs {
 
             iBool useGamepad;
             iBool thickScrollBar;
-
-            /* Document presentation */
-            iBool italicQuote;
-            iBool sideIcon;
             iBool time24h;
+
 
             /* Behavior */
             iBool retainTabs;
@@ -231,7 +200,6 @@ struct Impl_Prefs {
             iBool openArchiveIndexPages;
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
-            iBool markdownAsSource;
             iBool skipIndexPageOnParentNavigation;
 
             iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
@@ -247,21 +215,7 @@ struct Impl_Prefs {
             iBool useProxy;
 
             /* Style */
-            iBool monospaceGemini;
-            iBool monospaceGopher;
-            iBool boldLinkVisited;
-            iBool boldLinkDark;
-            iBool boldLinkLight;
-
             iBool fontSmoothing;
-            iBool bigFirstParagraph;
-            iBool justifyParagraph;
-            iBool quoteIcon;
-            iBool centerShortDocs;
-
-            iBool plainTextWrap;
-            iBool expandToLongLines;
-            iBool geminiStyledGopher;
             iBool colorEmoji; /* macOS only: prefer Apple Color Emoji over bundled B&W fonts */
         };
     };
@@ -285,16 +239,12 @@ struct Impl_Prefs {
     int                 inputZoomLevel;
     int                 editorZoomLevel;
 
-    /* Document presentation */
-    int zoomPercent;
-
     /* Behavior */
     int                        pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     enum iInputPromptPosition  promptPosition; /* desktop only */
     enum iFeedInterval         feedInterval;
     int                returnKey;
     int                smoothScrollSpeed[max_ScrollType];
-    enum iCollapse     collapsePre;
 
     /* Network */
     int maxCacheSize;  /* MB */
@@ -303,16 +253,6 @@ struct Impl_Prefs {
 
     /* Style */
     iStringSet      *disabledFontPacks;
-    int              gemtextAnsiEscapes;
-    int              lineWidth;
-    float            lineSpacing;
-    int              tabWidth;
-    enum iImageStyle imageStyle;
-
-    /* Colors */
-    enum iGmDocumentTheme docThemeDark;
-    enum iGmDocumentTheme docThemeLight;
-    float                 saturation;
 };
 
 iDeclareTypeConstruction(Prefs);
@@ -323,8 +263,4 @@ iBool           schemeProxyHostAndPort_Prefs (const iPrefs *, iRangecc scheme, c
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);
     return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);
-}
-
-iLocalDef enum iGmDocumentTheme docTheme_Prefs(const iPrefs *d) {
-    return isDark_ColorTheme(d->theme) ? d->docThemeDark : d->docThemeLight;
 }

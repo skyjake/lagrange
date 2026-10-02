@@ -213,13 +213,17 @@ int maxDocumentWidth_DocumentView(const iDocumentView *d) {
     return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2);
 }
 
+static const iDocPrefs *docPrefs_DocumentView_(const iDocumentView *d) {
+    return d->doc ? docPrefs_GmDocument(d->doc) : activeDocPrefs_App();
+}
+
 int documentWidth_DocumentView(const iDocumentView *d) {
-    const iPrefs *prefs = prefs_App();
-    int prefsWidth = prefs->lineWidth;
+    int prefsWidth = docPrefs_DocumentView_(d)->lineWidth.value;
     if (isTerminal_Platform()) {
         prefsWidth /= aspect_UI * 0.8f;
     }
-    return iMini(fontSize_UI * prefsWidth * prefs->zoomPercent / 100,
+    /* The zoom level follows the fonts in use. */
+    return iMini(fontSize_UI * prefsWidth * activeDocPrefs_App()->zoomPercent.value / 100,
                  maxDocumentWidth_DocumentView(d));
 }
 
@@ -244,7 +248,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     iBool       wasCentered = iFalse;
     rect.size.x = documentWidth_DocumentView(d);
     /* Content may not be always wrappable, so let it extend to window width if needed. */
-    if (prefs_App()->expandToLongLines &&
+    if (docPrefs_DocumentView_(d)->expandToLongLines.value &&
         contentWidth_GmDocument(d->doc) > size_GmDocument(d->doc).x &&
         (/* TODO: compare to maxContentWidth! */
          /* Do we allow content to expand? On regular Gemtext pages, expanding too much
@@ -809,7 +813,8 @@ size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId)
 iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, iBool keepCenter) {
     const int newWidth = documentWidth_DocumentView(d);
     if (newWidth == size_GmDocument(d->doc).x && !keepCenter /* not a font change */ &&
-        !(prefs_App()->expandToLongLines && prefs_App()->plainTextWrap &&
+        !(docPrefs_DocumentView_(d)->expandToLongLines.value &&
+          docPrefs_DocumentView_(d)->plainTextWrap.value &&
           format_GmDocument(d->doc) == plainText_SourceFormat)) {
         return iFalse;
     }
@@ -1421,7 +1426,7 @@ static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffs
     init_Paint(&p);
     setClip_Paint(&p, boundsWithoutVisualOffset_Widget(w));
     /* Side icon and current heading. */
-    if (prefs_App()->sideIcon && opacity > 0 && dbuf->sideIconBuf) {
+    if (docPrefs_DocumentView_(d)->sideIcon.value && opacity > 0 && dbuf->sideIconBuf) {
         const iInt2 texSize = size_SDLTexture(dbuf->sideIconBuf);
         if (avail > texSize.x) {
             const int minBannerSize = lineHeight_Text(banner_FontId) * 2;

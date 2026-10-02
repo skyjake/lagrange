@@ -291,7 +291,7 @@ static iBool areTabButtonsThemeColored_(void) {
         /* Only the main window has themes available, since it has DocumentWidgets. */
         return iFalse;
     }
-    const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
+    const enum iGmDocumentTheme docTheme = docTheme_DocPrefs(activeDocPrefs_App(), isDark_ColorTheme(colorTheme_App()));
     const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
     return (docTheme == colorfulLight_GmDocumentTheme ||
             docTheme == vibrantLight_GmDocumentTheme ||
@@ -341,7 +341,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *bg = uiBackgroundUnfocusedSelection_ColorId;
             }
             else {
-                const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
+                const enum iGmDocumentTheme docTheme = docTheme_DocPrefs(activeDocPrefs_App(), isDark_ColorTheme(colorTheme_App()));
                 if (areTabButtonsThemeColored_() && isDocTabButton_(w)) {
                     *bg = (docTheme == oceanic_GmDocumentTheme ||
                                    (docTheme == sepia_GmDocumentTheme &&

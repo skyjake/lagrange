@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/gopher.h"
-#include "lagrange/prefs.h"
+#include "lagrange/defs.h"
 
 #include <ctype.h>
 
@@ -43,8 +43,7 @@ iLocalDef iBool isBoxDrawing_Char(iChar c) {
     return (c >= 0x2500 && c <= 0x257f);
 }
 
-static iBool isPreformatted_(iRangecc text) {
-    const iBool geminiStyled = get_Prefs()->geminiStyledGopher;
+static iBool isPreformatted_(iRangecc text, iBool geminiStyled) {
     int  numDiag   = 0;
     int  numSpace  = 0;
     int  numRepeat = 0;
@@ -143,7 +142,7 @@ static iBool convertSource_Gopher_(iGopher *d) {
             iString *buf = new_String();
             switch (lineType) {
                 case 'i': {
-                    setPre_Gopher_(d, isPreformatted_(text));
+                    setPre_Gopher_(d, isPreformatted_(text, d->isGeminiStyled));
                     appendEscapedLineToOutput_Gopher_(d, text, size_Range(&text));
                     break;
                 }
@@ -241,6 +240,7 @@ void init_Gopher(iGopher *d) {
     d->type          = 0;
     d->needQueryArgs = iFalse;
     d->isPre         = iFalse;
+    d->isGeminiStyled = iFalse;
     d->meta          = NULL;
     d->output        = NULL;
     init_Block(&d->source, 0);

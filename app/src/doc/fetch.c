@@ -917,8 +917,13 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                 else if (equal_Rangecc(param, "text/markdown")) {
                     docFormat = markdown_SourceFormat;
                     setRange_String(&d->sourceMime, param);
+                    /* The document's snapshot has not been resolved yet. */
+                    iDocPrefs prefs;
+                    init_DocPrefs(&prefs);
+                    resolveUrl_DocPrefs(&prefs, url_DocumentFetch_(d), &d->sourceMime);
                     postCommand_Widget(
-                        d->owner, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
+                        d->owner, "document.viewformat arg:%d", !prefs.markdownAsSource.value);
+                    deinit_DocPrefs(&prefs);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
                          equal_Rangecc(param, "application/json") ||
@@ -1144,6 +1149,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                 setMode_GmDocument(doc_DocumentFetch_(d), coverPage_GmDocumentMode);
             }
             setFormat_GmDocument(doc_DocumentFetch_(d), docFormat);
+            setMimeType_GmDocument(doc_DocumentFetch_(d), &d->sourceMime);
             /* Convert the source to UTF-8 if needed. */
             if (equalCase_Rangecc(charset, "utf-8")) {
                 /* Verify that it actually is valid UTF-8. */

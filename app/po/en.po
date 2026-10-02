@@ -21,7 +21,7 @@ msgid "heading.archive.userdata"
 msgstr "User Data Archive"
 
 msgid "userdata.help"
-msgstr "User data archives contain exported browsing history, identities, bookmarks, text snippets, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
+msgstr "User data archives contain exported browsing history, identities, bookmarks, text snippets, document and site-specific settings (including any Titan upload tokens as plain text), and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
 
 msgid "doc.archive.view"
 msgstr "View archive contents"
@@ -982,8 +982,14 @@ msgstr "Theme palette seed:"
 msgid "sitespec.tlscache"
 msgstr "Resume TLS session:"
 
-msgid "sitespec.accept"
-msgstr "Save Settings"
+msgid "heading.sitespec.site"
+msgstr "Site"
+
+msgid "sitespec.titantoken"
+msgstr "Titan upload token:"
+
+msgid "sitespec.reset"
+msgstr "Reset This Site to Defaults"
 
 msgid "keys.pageinfo"
 msgstr "Show page information"
@@ -1939,7 +1945,7 @@ msgid "heading.prefs.ui"
 msgstr "User Interface"
 
 msgid "heading.prefs.theme"
-msgstr "Theme"
+msgstr "Page Theme"
 
 msgid "heading.prefs.sidebars"
 msgstr "Sidebars"
@@ -1999,7 +2005,50 @@ msgstr "Wide Layout"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Page Style"
+msgstr "Style"
+
+msgid "heading.prefs.typography"
+msgstr "Typography"
+
+msgid "heading.prefs.behavior"
+msgstr "Behavior"
+
+msgid "prefs.scope"
+msgstr "Applies to:"
+
+msgid "prefs.scope.all"
+msgstr "All protocols"
+
+# The placeholder is the name of a protocol, for example "Gemini".
+msgid "prefs.scope.custom.typography"
+msgstr "Use %s-specific typography"
+
+msgid "prefs.scope.custom.layout"
+msgstr "Use %s-specific layout"
+
+msgid "prefs.scope.custom.style"
+msgstr "Use %s-specific style"
+
+msgid "prefs.scope.custom.theme"
+msgstr "Use %s-specific theme"
+
+msgid "prefs.scope.custom.behavior"
+msgstr "Use %s-specific behavior"
+
+msgid "prefs.scope.site.typography"
+msgstr "Use site-specific typography:"
+
+msgid "prefs.scope.site.layout"
+msgstr "Use site-specific layout:"
+
+msgid "prefs.scope.site.style"
+msgstr "Use site-specific style:"
+
+msgid "prefs.scope.site.theme"
+msgstr "Use site-specific theme:"
+
+msgid "prefs.scope.site.behavior"
+msgstr "Use site-specific behavior:"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -2296,14 +2345,8 @@ msgid "prefs.font.monodoc"
 msgstr "Monospace font:"
 
 # Which protocols should the monospace body font by applied with.
-msgid "prefs.mono"
-msgstr "Use with protocols:"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
+msgid "prefs.mono.doc"
+msgstr "Monospace body:"
 
 msgid "prefs.gopher.gemstyle"
 msgstr "Autodetect Gopher menu styling:"

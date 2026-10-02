@@ -181,7 +181,7 @@ int offsetOfView_DocumentSwipe(const iDocumentSwipe *d, const iDocumentView *vie
 
 iBool handlePinch_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
     if (equal_Command(cmd, "pinch.began")) {
-        d->pinchZoomInitial = d->pinchZoomPosted = prefs_App()->zoomPercent;
+        d->pinchZoomInitial = d->pinchZoomPosted = activeDocPrefs_App()->zoomPercent.value;
         d->flags |= pinchZoom_DocumentSwipeFlag;
         refresh_Widget(d->owner);
     }

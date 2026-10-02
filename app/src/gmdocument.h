@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <lagrange/docprefs.h>
 #include "defs.h"
 #include "gmutil.h"
 #include "media/media.h"
@@ -195,6 +196,9 @@ enum iGmDocumentMode {
 void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *paletteSeed,
                                  const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
+void    setDocPrefs_GmDocument  (iGmDocument *, const iDocPrefs *pinned); /* not resolved again */
+uint32_t updateDocPrefs_GmDocument(iGmDocument *); /* resolves again; returns DocPrefsSpecFlags of changes */
+void    setMimeType_GmDocument  (iGmDocument *, const iString *mimeType); /* before setting the URL */
 void    setMode_GmDocument      (iGmDocument *, enum iGmDocumentMode mode);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat sourceFormat);
 iBool   setViewFormat_GmDocument(iGmDocument *, enum iSourceFormat viewFormat); /* returns True if changed */
@@ -220,6 +224,7 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 iMedia *        media_GmDocument            (iGmDocument *);
 const iMedia *  constMedia_GmDocument       (const iGmDocument *);
 const iString * url_GmDocument              (const iGmDocument *);
+const iDocPrefs *docPrefs_GmDocument        (const iGmDocument *);
 
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
                                              iGmDocumentRenderFunc render, void *); /* includes partial overlaps */

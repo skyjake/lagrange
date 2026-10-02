@@ -150,6 +150,7 @@ struct Impl_App {
     iArray       initialWindowRects;  /* one per window, indexed by placementIndex */
     iArray       initialWindowDesktops;
     iPrefs       prefs;
+    iDocPrefs    activeDocPrefs; /* of the front document */
 };
 
 iDeclareClass(SavedWidth);
@@ -196,6 +197,7 @@ void            prefsBoolValueChanged_App_(iApp *, enum iPrefsBool, iBool isFroz
 
 /* windows.c */
 iPtrArray *     listWindows_App_        (const iApp *, iPtrArray *windows);
+iObjectList *   listAllDocuments_App    (void); /* all windows */
 void            clearCache_App_         (void);
 
 /* events.c */

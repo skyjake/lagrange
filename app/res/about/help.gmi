@@ -837,8 +837,25 @@ Persistent configuration variables. The file is rewritten when the application i
 ### state.lgr
 A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
 
-### sitespec.ini
-Site-specific settings.
+### prefs/document.ini
+Document preferences that apply to all protocols. Only the values that differ from the defaults are stored. Deleting this file resets document preferences to defaults.
+
+### prefs/protocols.ini
+Document preferences customized for specific protocols. Deleting this file removes all protocol-specific customization.
+
+### prefs/sitespec.ini
+Site-specific settings. In addition to document preferences customized for a site, this includes the Titan upload settings (port, identity, and token), identities used on the site, and input prompt paths. Deleting this file forgets all of these. Note that Titan upload tokens are stored as plain text.
+
+### prefs/custom.ini
+Optional user-written rules for document preferences. The application never writes this file. Each `[[scope]]` table sets values for URLs and/or media types matching a regular expression:
+```
+[[scope]]
+mime = "^text/markdown"
+order = 50
+markdownAsSource = false
+```
+* "uri" and "mime" are regular expressions. If both are given, both must match unless "matchMode" is set to "either".
+* "order" is required and must be less than 900. Lower numbers take precedence. Site-specific settings have order 100 and protocol-specific settings have order 500.
 
 ### trusted.2.txt
 Trusted server certificates. Each line specifies the certificate fingerprint of one server:
@@ -849,9 +866,6 @@ Trusted server certificates. Each line specifies the certificate fingerprint of 
 
 ### uploadbackup.txt
 Backup of the text entered into the Upload with Titan dialog.
-
-### uploadtoken.txt
-Backup of the server token.
 
 ### visited.2.txt
 The combined navigation history of all tabs. Each line specifies one URL:

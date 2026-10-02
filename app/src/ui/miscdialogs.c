@@ -32,68 +32,85 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "render/text.h"
 #include "root.h"
+#include "scopedprefs.h"
+#include "tabs.h"
+#include "uploadwidget.h"
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
 #include "util.h"
 #include "widget.h"
 
-static void siteSpecificThemeChanged_(const iWidget *dlg) {
-    iDocumentWidget *doc = document_App();
-    setThemeSeed_GmDocument((iGmDocument *) document_DocumentWidget(doc),
-                            urlPaletteSeed_String(url_DocumentWidget(doc)),
-                            urlThemeSeed_String(url_DocumentWidget(doc)));
-    postCommand_App("theme.changed");
-}
-
 static const iString *siteSpecificRoot_(const iWidget *dlg) {
     return collect_String(suffix_Command(cstr_String(id_Widget(dlg)), "site"));
 }
 
+static const iString *siteSpecificPaletteSeed_(const iString *siteRoot) {
+    const iScopeRule *rule = constRule_SiteSpec(siteRoot);
+    return rule && rule->prefs.paletteSeed ? rule->prefs.paletteSeed : collectNew_String();
+}
+
+static void setSiteSpecificPaletteSeed_(const iWidget *dlg, const iString *seed) {
+    if (setString_ScopeRules(scope_ScopedPrefs(dlg), paletteSeed_DocPrefsString, seed)) {
+        docPrefsChanged_App();
+    }
+}
+
 static void updateSiteSpecificTheme_(iInputWidget *palSeed, void *context) {
-    iWidget *dlg = context;
-    const iString *siteRoot = siteSpecificRoot_(dlg);
-    setValueString_SiteSpec(siteRoot, paletteSeed_SiteSpecKey, text_InputWidget(palSeed));
-    siteSpecificThemeChanged_(dlg);
-    /* Allow seeing the new theme. */
-    setFlags_Widget(dlg, noFadeBackground_WidgetFlag, iTrue);
+    setSiteSpecificPaletteSeed_(context, text_InputWidget(palSeed));
+}
+
+static void commitSiteSpecificInputs_(iWidget *dlg) {
+    const iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
+    const iInputWidget *token   = findChild_Widget(dlg, "sitespec.titantoken");
+    if (palSeed) {
+        setSiteSpecificPaletteSeed_(dlg, text_InputWidget(palSeed));
+    }
+    if (token) {
+        setValueString_SiteSpec(titanSiteRoot_UploadWidget(siteSpecificRoot_(dlg)),
+                                titanToken_SiteSpecKey,
+                                text_InputWidget(token));
+    }
 }
 
 static void closeSiteSpecific_(iWidget *dlg) {
+    commitSiteSpecificInputs_(dlg);
+    saveDirty_ScopeRules();
     setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
-    delete_String(userData_Object(dlg)); /* saved original palette seed */
+    deinit_ScopedPrefs(dlg);
     destroy_Widget(dlg);
 }
 
 static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
+    if (handleCommand_ScopedPrefs(dlg, cmd)) {
+        return iTrue;
+    }
+    const iString *siteRoot = siteSpecificRoot_(dlg);
     if (equal_Command(cmd, "cancel")) {
-        const iBool wasNoFade = (flags_Widget(dlg) & noFadeBackground_WidgetFlag) != 0;
-        iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
-        setText_InputWidget(palSeed, userData_Object(dlg));
-        updateSiteSpecificTheme_(palSeed, dlg);
-        setFlags_Widget(dlg, noFadeBackground_WidgetFlag, wasNoFade);
-        closeSiteSpecific_(dlg);
-        return iTrue;
-    }
-    if (equalArg_Command(cmd, "input.ended", "id", "sitespec.palette")) {
-        setFlags_Widget(dlg, noFadeBackground_WidgetFlag, iFalse);
-        refresh_Widget(dlg);
-        siteSpecificThemeChanged_(dlg);
-        return iTrue;
-    }
-    if (equal_Command(cmd, "sitespec.accept")) {
-        const iInputWidget *palSeed   = findChild_Widget(dlg, "sitespec.palette");
-        const iBool         warnAnsi  = isSelected_Widget(findChild_Widget(dlg, "sitespec.ansi"));
-        const iString      *siteRoot  = siteSpecificRoot_(dlg);
-        int                 dismissed = value_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey);
-        iChangeFlags(dismissed, ansiEscapes_GmDocumentWarning, !warnAnsi);
-        setValue_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey, dismissed);
-        setValue_SiteSpec(siteRoot,
-                          tlsSessionCache_SiteSpeckey,
-                          isSelected_Widget(findChild_Widget(dlg, "sitespec.tlscache")));
-        setValueString_SiteSpec(siteRoot, paletteSeed_SiteSpecKey, text_InputWidget(palSeed));
-        siteSpecificThemeChanged_(dlg);
         /* Note: The active DocumentWidget may actually be different than when opening the dialog. */
         closeSiteSpecific_(dlg);
+        return iTrue;
+    }
+    if (equalArg_Command(cmd, "input.ended", "id", "sitespec.palette") ||
+        equalArg_Command(cmd, "input.ended", "id", "sitespec.titantoken")) {
+        commitSiteSpecificInputs_(dlg);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.ansi.changed")) {
+        int dismissed = value_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey);
+        iChangeFlags(dismissed, ansiEscapes_GmDocumentWarning, !arg_Command(cmd));
+        setValue_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey, dismissed);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.tlscache.changed")) {
+        setValue_SiteSpec(siteRoot, tlsSessionCache_SiteSpeckey, arg_Command(cmd) != 0);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.reset")) {
+        /* Titan settings, identities, prompts, and warning flags are kept. */
+        reset_ScopeRules(scope_ScopedPrefs(dlg));
+        docPrefsChanged_App();
+        setTextCStr_InputWidget(findChild_Widget(dlg, "sitespec.palette"), "");
+        update_ScopedPrefs(dlg);
         return iTrue;
     }
     return iFalse;
@@ -101,56 +118,95 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
 
 iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     iWidget *dlg;
-    const char *sheetId = format_CStr("sitespec site:%s", cstr_Rangecc(urlRoot_String(url)));
-    const iMenuItem actions[] = {
-        { "${cancel}" },
-        { uiTextAction_ColorEscape "${sitespec.accept}", SDLK_RETURN, KMOD_ACCEPT, "sitespec.accept" }
-    };
+    const iString *site       = collectNewRange_String(urlRoot_String(url));
+    const char *   sheetId    = format_CStr("sitespec site:%s", cstr_String(site));
+    const iRangecc scheme     = urlScheme_String(site);
+    const iBool    isTitanSite = equalCase_Rangecc(scheme, "gemini") ||
+                                 equalCase_Rangecc(scheme, "titan");
+    const iMenuItem actions[] = { { "${close}", SDLK_ESCAPE, 0, "cancel" } };
     if (isUsingPanelLayout_Mobile()) {
-        dlg = makePanels_Mobile(sheetId, (iMenuItem[]){
+        iArray *items = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(items, (iMenuItem[]){
             { "title id:heading.sitespec" },
+            { format_CStr("heading text:%s", cstr_String(site)) },
             { "input id:sitespec.palette" },
             { "padding" },
             { "toggle id:sitespec.ansi" },
             { "toggle id:sitespec.tlscache" },
+        }, 6);
+        if (isTitanSite) {
+            pushBack_Array(items, &(iMenuItem){ "input id:sitespec.titantoken sensitive:1" });
+        }
+        pushBack_Array(items, &(iMenuItem){ "padding" });
+        appendPanels_ScopedPrefs(items, iFalse);
+        pushBackN_Array(items, (iMenuItem[]){
+            { "padding" },
+            { "button text:" uiTextCaution_ColorEscape "${sitespec.reset}", 0, 0, "sitespec.reset" },
             { "padding" },
             { NULL }
-        }, actions, iElemCount(actions));
+        }, 4);
+        dlg = makePanels_Mobile(sheetId, constData_Array(items), actions, iElemCount(actions));
     }
     else {
         iWidget *headings, *values;
         dlg = makeSheet_Widget(sheetId);
         addDialogTitle_Widget(dlg, "${heading.sitespec}", "heading.sitespec");
-        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(cstr_String(site), NULL)),
+                             frameless_WidgetFlag);
+        iWidget *tabs = makeTabs_Widget(dlg);
+        setId_Widget(tabs, "sitespec.tabs");
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, globe_Icon " ${heading.sitespec.site}",
+                                                   orange_ColorId, 0, &headings, &values),
+                     "sitespec.page.site");
         iInputWidget *palSeed = new_InputWidget(0);
-        setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
         addPrefsInputWithHeading_Widget(headings, values, "sitespec.palette", iClob(palSeed));
+        as_Widget(palSeed)->rect.size.x = aspect_UI * 60 * gap_UI;
         addDialogToggle_Widget(headings, values, "${sitespec.ansi}", "sitespec.ansi");
         addDialogToggle_Widget(headings, values, "${sitespec.tlscache}", "sitespec.tlscache");
+        if (isTitanSite) {
+            iInputWidget *token = new_InputWidget(0);
+            setSensitiveContent_InputWidget(token, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "sitespec.titantoken", iClob(token));
+            as_Widget(token)->rect.size.x = aspect_UI * 60 * gap_UI;
+        }
+        addDialogPadding_Widget(headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChildFlags_Widget(values,
+                             iClob(new_LabelWidget(uiTextCaution_ColorEscape "${sitespec.reset}",
+                                                   "sitespec.reset")),
+                             alignLeft_WidgetFlag);
+        appendTabPages_ScopedPrefs(tabs, iFalse, 0);
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
-        as_Widget(palSeed)->rect.size.x = aspect_UI * 60 * gap_UI;
+        resizeToLargestPage_Widget(tabs);
         arrange_Widget(dlg);
     }
     /* Initialize. */ {
-        const iString *site = collectNewRange_String(urlRoot_String(url));
         setToggle_Widget(findChild_Widget(dlg, "sitespec.ansi"),
                          ~value_SiteSpec(site, dismissWarnings_SiteSpecKey) & ansiEscapes_GmDocumentWarning);
         setToggle_Widget(findChild_Widget(dlg, "sitespec.tlscache"),
                          value_SiteSpec(site, tlsSessionCache_SiteSpeckey));
         iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
-        setText_InputWidget(palSeed, valueString_SiteSpec(site, paletteSeed_SiteSpecKey));
+        setText_InputWidget(palSeed, siteSpecificPaletteSeed_(site));
         setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
-        /* Keep a copy of the original palette seed for restoring on cancel. */
-        setUserData_Object(dlg, copy_String(valueString_SiteSpec(site, paletteSeed_SiteSpecKey)));
+        iInputWidget *token = findChild_Widget(dlg, "sitespec.titantoken");
+        if (token) {
+            const iString *value =
+                valueString_SiteSpec(titanSiteRoot_UploadWidget(site), titanToken_SiteSpecKey);
+            if (value) {
+                setText_InputWidget(token, value);
+            }
+        }
+        init_ScopedPrefs(dlg, format_CStr("root:%s", cstr_String(site)));
         if (!isUsingPanelLayout_Mobile()) {
-            setValidator_InputWidget(findChild_Widget(dlg, "sitespec.palette"),
-                                     updateSiteSpecificTheme_, dlg);
+            setValidator_InputWidget(palSeed, updateSiteSpecificTheme_, dlg);
         }
     }
+    /* Changes apply immediately, so allow seeing the document behind the dialog. */
+    setFlags_Widget(dlg, noFadeBackground_WidgetFlag, iTrue);
     setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
-    setFocus_Widget(findChild_Widget(dlg, "sitespec.palette"));
     return dlg;
 }
 

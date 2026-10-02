@@ -38,6 +38,7 @@ void init_RecentUrl(iRecentUrl *d) {
     d->cachedResponse = NULL;
     d->cachedDoc      = NULL;
     d->flags          = 0;
+    d->prefsCacheKey  = 0;
     init_Block(&d->setIdentity, 0);
 }
 
@@ -57,6 +58,7 @@ iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
     copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
     copy->cachedDoc      = ref_Object(d->cachedDoc);
     copy->flags          = d->flags;
+    copy->prefsCacheKey  = d->prefsCacheKey;
     set_Block(&copy->setIdentity, &d->setIdentity);
     return copy;
 }
@@ -197,6 +199,7 @@ void serializeWithContent_History(const iHistory *d, iStream *outs, iBool withCo
             write8_Stream(outs, 0);
         }
         serialize_Block(&item->setIdentity, outs);
+        writeU32_Stream(outs, item->prefsCacheKey);
     }
     unlock_Mutex(d->mtx);
 }
@@ -221,6 +224,9 @@ void deserialize_History(iHistory *d, iStream *ins) {
         }
         if (version_Stream(ins) >= recentUrlSetIdentity_FileVersion) {
             deserialize_Block(&item.setIdentity, ins);
+        }
+        if (version_Stream(ins) >= recentUrlPrefsCacheKey_FileVersion) {
+            item.prefsCacheKey = readU32_Stream(ins);
         }
         pushBack_Array(&d->recent, &item);
     }
@@ -459,6 +465,7 @@ void setCachedDocument_History(iHistory *d, iGmDocument *doc) {
             iRelease(item->cachedDoc);
             item->cachedDoc = ref_Object(doc);
         }
+        item->prefsCacheKey = hash_DocPrefs(docPrefs_GmDocument(doc));
     }
     unlock_Mutex(d->mtx);
 }
@@ -504,6 +511,22 @@ void invalidateCachedLayout_History(iHistory *d) {
         iRecentUrl *url = i.value;
         if (url->cachedDoc) {
             invalidateLayout_GmDocument(url->cachedDoc);
+        }
+    }
+    unlock_Mutex(d->mtx);
+}
+
+void updateDocPrefs_History(iHistory *d) {
+    lock_Mutex(d->mtx);
+    iForEach(Array, i, &d->recent) {
+        iRecentUrl *url = i.value;
+        if (url->cachedDoc) {
+            updateDocPrefs_GmDocument(url->cachedDoc);
+            const uint32_t key = hash_DocPrefs(docPrefs_GmDocument(url->cachedDoc));
+            if (key != url->prefsCacheKey) {
+                invalidateLayout_GmDocument(url->cachedDoc);
+                url->prefsCacheKey = key;
+            }
         }
     }
     unlock_Mutex(d->mtx);

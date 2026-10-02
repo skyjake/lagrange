@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "defs.h"
+#include "docprefs.h"
 #include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringset.h>
 
@@ -31,9 +32,9 @@ iDeclareType(SiteSpec)
 enum iSiteSpecKey {
     titanPort_SiteSpecKey,       /* int */
     titanIdentity_SiteSpecKey,   /* String */
+    titanToken_SiteSpecKey,      /* String */
     dismissWarnings_SiteSpecKey, /* int */
     usedIdentities_SiteSpecKey,  /* StringArray */
-    paletteSeed_SiteSpecKey,     /* String */
     tlsSessionCache_SiteSpeckey, /* int */
     promptPaths_SiteSpecKey,     /* StringSet */
 };
@@ -54,5 +55,10 @@ int                 value_SiteSpec          (const iString *site, enum iSiteSpec
 const iString *     valueString_SiteSpec    (const iString *site, enum iSiteSpecKey key);
 const iStringArray *strings_SiteSpec        (const iString *site, enum iSiteSpecKey key);
 const iStringSet *  stringSet_SiteSpec      (const iString *site, enum iSiteSpecKey key);
+
+/* document preferences of the site */
+const iScopeRule *  constRule_SiteSpec      (const iString *site); /* NULL if the site is unknown */
+iScopeRule *        rule_SiteSpec           (const iString *site);
+void                save_SiteSpec           (void);
 
 iBool   isPromptUrl_SiteSpec   (const iString *url);

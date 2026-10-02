@@ -85,6 +85,7 @@ const iString *     url_DocumentWidget              (const iDocumentWidget *);
 const iBlock *      sourceContent_DocumentWidget    (const iDocumentWidget *);
 iTime               sourceTime_DocumentWidget       (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
+void                updateDocPrefs_DocumentWidget   (iDocumentWidget *); /* resolves again */
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 const iString *     feedEntryUrl_DocumentWidget     (const iDocumentWidget *);

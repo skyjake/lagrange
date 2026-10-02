@@ -111,6 +111,17 @@ void generatePartial_Export(iExport *d, int dataFlags) {
         serialize_SiteSpec(stream_Buffer(buf));
         setDataCStr_Archive(d->arch, "sitespec.ini", data_Buffer(buf));
         close_Buffer(buf);
+        /* Document preferences of the other scopes. */
+        iString *rules = collectNew_String();
+        serialize_ScopeRules(base_ScopeRuleKind, rules);
+        setDataCStr_Archive(d->arch, "document.ini", utf8_String(rules));
+        clear_String(rules);
+        serialize_ScopeRules(scheme_ScopeRuleKind, rules);
+        setDataCStr_Archive(d->arch, "protocols.ini", utf8_String(rules));
+        iFile *custom = iClob(new_File(customPath_ScopeRules()));
+        if (open_File(custom, readOnly_FileMode)) {
+            setDataCStr_Archive(d->arch, "custom.ini", collect_Block(readAll_File(custom)));
+        }
     }
     /* History of visited URLs. */
     if (dataFlags & visited_ExportFlag) {
@@ -209,6 +220,34 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
             deserialize_SiteSpec(stream_Buffer(buf), siteSpec);
             iRelease(buf);
         }
+        /* The custom rules are imported first because they affect inherited values. */
+        const iString *customPath = customPath_ScopeRules();
+        const iBlock  *custom     = dataCStr_Archive(d->arch, "custom.ini");
+        if (custom && (siteSpec == all_ImportMethod || !fileExists_FileInfo(customPath))) {
+            makeDirs_Path(prefsDir_ScopeRules());
+            iFile *f = iClob(new_File(customPath));
+            if (open_File(f, writeOnly_FileMode)) {
+                write_File(f, custom);
+                close_File(f);
+            }
+            reloadCustom_ScopeRules();
+        }
+        static const struct {
+            const char *name;
+            enum iScopeRuleKind kind;
+        } entries[] = {
+            { "document.ini", base_ScopeRuleKind },
+            { "protocols.ini", scheme_ScopeRuleKind },
+        };
+        iForIndices(i, entries) {
+            const iBlock *data = dataCStr_Archive(d->arch, entries[i].name);
+            if (data) {
+                deserialize_ScopeRules(entries[i].kind, collect_String(newBlock_String(data)), siteSpec);
+            }
+        }
+        save_SiteSpec();
+        saveDirty_ScopeRules();
+        docPrefsChanged_App();
     }
     if (snippets) {
         iBuffer *buf = openEntryBuffer_Export_(d, "snippets.ini");

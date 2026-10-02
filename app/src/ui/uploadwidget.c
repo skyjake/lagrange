@@ -759,7 +759,6 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     switch (d->protocol) {
         case titan_UploadProtocol: {
             setBackupFileName_InputWidget(d->input, "uploadbackup");
-            setBackupFileName_InputWidget(d->token, "uploadtoken"); /* TODO: site-specific config? */
             break;
         }
         case misfin_UploadProtocol: {
@@ -838,6 +837,19 @@ static uint16_t titanPortForUrl_(const iString *url) {
         port = atoi(cstr_Rangecc(parts.port));
     }
     return port ? port : GEMINI_DEFAULT_PORT;
+}
+
+const iString *titanSiteRoot_UploadWidget(const iString *url) {
+    iUrl parts;
+    init_Url(&parts, url);
+    iString *titan = collectNewCStr_String("titan");
+    appendRange_String(titan, (iRangecc){ parts.scheme.end, parts.host.end });
+    appendFormat_String(titan, ":%u", titanPortForUrl_(url));
+    appendRange_String(titan, (iRangecc){ parts.path.start, constEnd_String(url) });
+    if (isEmpty_Range(&parts.path)) {
+        appendCStr_String(titan, "/");
+    }
+    return collectNewRange_String(urlRoot_String(titan));
 }
 
 static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
@@ -1113,6 +1125,13 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
             appendCStr_String(&d->url, "/"); /* help parsers understand the URL with params */
         }
         const iRangecc siteRoot = urlRoot_String(&d->url);
+        /* The token is remembered for each site. */ {
+            const iString *token =
+                valueString_SiteSpec(collectNewRange_String(siteRoot), titanToken_SiteSpecKey);
+            if (token && !isEmpty_String(token)) {
+                setText_InputWidget(d->token, token);
+            }
+        }
         iUrl parts;
         init_Url(&parts, &d->url);
         setTextCStr_LabelWidget(d->info,
@@ -1249,6 +1268,9 @@ static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText) {
     setUrl_GmRequest(d->request, requestUrl_UploadWidget_(d));
     if (d->protocol == titan_UploadProtocol) {
         setupRequest_UploadWidget_(d, NULL, d->request);
+        setValueString_SiteSpec(collectNewRange_String(urlRoot_String(url_GmRequest(d->request))),
+                                titanToken_SiteSpecKey,
+                                text_InputWidget(d->token));
     }
     else if (d->protocol == misfin_UploadProtocol) {
         iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);

@@ -199,7 +199,7 @@ static iChar nextChar_(const char **chPos, const char *end) {
 }
 
 static float nextTabStop_Font_(const iFont *d, float x) {
-    const float stop = prefs_App()->tabWidth;
+    const float stop = activeDocPrefs_App()->tabWidth.value;
     return floorf(x / stop) * stop + stop;
 }
 

@@ -173,6 +173,7 @@ int main(int argc, char *argv[]) {
     }
     /* Now we can set up the Lagrange core. */
     init_Core();
+    init_ScopeRules(cstr_String(dataDir));
     init_SiteSpec(cstr_String(dataDir));
     iPrefs   *prefs = new_Prefs();
     iGmCerts *certs = new_GmCerts(cstr_String(dataDir));
@@ -213,6 +214,7 @@ int main(int argc, char *argv[]) {
     delete_GmCerts(certs);
     delete_Prefs(prefs);
     deinit_SiteSpec();
+    deinit_ScopeRules();
     deinit_Core();
     deinit_CommandLine(&cl);
     deinit_Foundation();

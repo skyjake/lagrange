@@ -48,7 +48,7 @@ assertBoolLayout_(useSystemTheme);
 assertBoolLayout_(retainTabs);
 assertBoolLayout_(useProxy);
 assertBoolLayout_(warnTlsSecurity);
-assertBoolLayout_(geminiStyledGopher);
+assertBoolLayout_(fontSmoothing);
 assertBoolLayout_(colorEmoji);
 
 /* Note: No ID and no config command means the value is not serialized automatically. */
@@ -77,9 +77,6 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [editorSyntaxHighlighting_PrefsBool] = { "prefs.editor.highlight" },
     [useGamepad_PrefsBool]              = { "prefs.gamepad" },
     [thickScrollBar_PrefsBool]          = { "prefs.thickscroll" },
-    /* Document presentation */
-    [italicQuote_PrefsBool]             = { "prefs.quote.italic" },
-    [sideIcon_PrefsBool]                = { "prefs.sideicon", NULL, NULL, refresh_PrefsSpecFlag },
     [time24h_PrefsBool]                 = { "prefs.time.24h" },
     /* Behavior */
     [retainTabs_PrefsBool]              = { "prefs.retaintabs" },
@@ -90,7 +87,6 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [openArchiveIndexPages_PrefsBool]   = { "prefs.archive.openindex" },
     [addBookmarksToBottom_PrefsBool]    = { "prefs.bookmarks.addbottom" },
     [warnAboutMissingGlyphs_PrefsBool]  = { "prefs.font.warnmissing" },
-    [markdownAsSource_PrefsBool]        = { "prefs.markdown.viewsource" },
     [skipIndexPageOnParentNavigation_PrefsBool] = { NULL, "parentnavskipindex" },
     [edgeSwipe_PrefsBool]               = { "prefs.swipe.edge" },
     [pageSwipe_PrefsBool]               = { "prefs.swipe.page" },
@@ -104,21 +100,7 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [preferIPv6_PrefsBool]              = { "prefs.ipv6" },
     [useProxy_PrefsBool]                = { "prefs.socks" },
     /* Style */
-    [monospaceGemini_PrefsBool]         = { "prefs.mono.gemini" },
-    [monospaceGopher_PrefsBool]         = { "prefs.mono.gopher" },
-    [boldLinkVisited_PrefsBool]         = { "prefs.boldlink.visited", NULL, "font.changed" },
-    [boldLinkDark_PrefsBool]            = { "prefs.boldlink.dark",    NULL, "font.changed" },
-    [boldLinkLight_PrefsBool]           = { "prefs.boldlink.light",   NULL, "font.changed" },
     [fontSmoothing_PrefsBool]           = { "prefs.font.smooth" },
-    [bigFirstParagraph_PrefsBool]       = { "prefs.biglede", NULL, "document.layout.changed" },
-    [justifyParagraph_PrefsBool]        = { "prefs.justify", NULL, "document.layout.changed" },
-    [quoteIcon_PrefsBool]               = { NULL, "quoteicon.set",
-                                            "document.layout.changed redo:1" },
-    [centerShortDocs_PrefsBool]         = { "prefs.centershort", NULL, NULL,
-                                            invalidate_PrefsSpecFlag },
-    [plainTextWrap_PrefsBool]           = { "prefs.plaintext.wrap", NULL, "document.layout.changed" },
-    [expandToLongLines_PrefsBool]       = { "prefs.expandline",    NULL, "document.layout.changed" },
-    [geminiStyledGopher_PrefsBool]      = { "prefs.gopher.gemstyle" },
     [colorEmoji_PrefsBool]              = { "prefs.font.coloremoji" },
 };
 
@@ -174,7 +156,7 @@ void serializeBools_Prefs(const iPrefs *d, iString *out) {
     }
 }
 
-/* Note: Fonts and the download directory are serialized by hand. */
+/* Note: The UI font and the download directory are serialized by hand. */
 static const iPrefsStringSpec stringSpecs_[max_PrefsString] = {
     /* General */
     [uiLanguage_PrefsString]     = { "uilang", "id" },
@@ -194,10 +176,6 @@ static const iPrefsStringSpec stringSpecs_[max_PrefsString] = {
     [socksPassword_PrefsString]  = { "proxy.socks", "password", NULL, "prefs.socks.password" },
     /* Style */
     [uiFont_PrefsString]         = { "font.set", "ui", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
-    [headingFont_PrefsString]    = { "font.set", "heading", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
-    [bodyFont_PrefsString]       = { "font.set", "body", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
-    [monospaceFont_PrefsString]  = { "font.set", "mono", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
-    [monospaceDocumentFont_PrefsString] = { "font.set", "monodoc", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
 };
 
 const iPrefsStringSpec *stringSpec_Prefs(enum iPrefsString id) {
@@ -251,7 +229,6 @@ void init_Prefs(iPrefs *d) {
     d->editorSyntaxHighlighting = iTrue;
     d->useGamepad               = isDesktop_Platform(); /* enabled by default on desktop */
     d->thickScrollBar           = iFalse;
-    d->zoomPercent              = 100;
     d->navbarActions[0]         = back_ToolbarAction;
     d->navbarActions[1]         = forward_ToolbarAction;
     d->navbarActions[2]         = leftSidebar_ToolbarAction;
@@ -282,7 +259,6 @@ void init_Prefs(iPrefs *d) {
         d->sidebarModeEnabled[1][openDocuments_SidebarMode] = iTrue;
         d->sidebarModeEnabled[1][history_SidebarMode] = iTrue;
     }
-    d->sideIcon            = iTrue;
     d->hideToolbarOnScroll = iTrue;
     d->hideTabBar          = iFalse;
     d->blinkingCursor      = iTrue;
@@ -305,7 +281,6 @@ void init_Prefs(iPrefs *d) {
     d->pinSplit                               = 1;
     d->promptPosition                         = inline_InputPromptPosition;
     d->feedInterval                           = fourHours_FeedInterval;
-    d->italicQuote                            = iTrue;
     d->time24h                                = iTrue;
     d->returnKey                              = default_ReturnKeyBehavior;
     d->retainTabs                             = iTrue;
@@ -315,11 +290,9 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling            = iFalse;
     d->openDataUrlImagesOnLoad                = iFalse;
-    d->collapsePre                            = notByDefault_Collapse;
     d->openArchiveIndexPages                  = iTrue;
     d->addBookmarksToBottom                   = iTrue;
     d->warnAboutMissingGlyphs                 = iTrue;
-    d->markdownAsSource                       = iTrue;
     d->skipIndexPageOnParentNavigation        = iTrue;
     d->edgeSwipe                              = !isAndroid_Platform(); /* conflict with system */
     d->pageSwipe                              = iTrue;
@@ -334,33 +307,9 @@ void init_Prefs(iPrefs *d) {
     d->maxMemorySize                          = 200;
     d->maxUrlSize                             = 8192;
     setCStr_String(&d->strings[uiFont_PrefsString], "default");
-    setCStr_String(&d->strings[headingFont_PrefsString], "default");
-    setCStr_String(&d->strings[bodyFont_PrefsString], "default");
-    setCStr_String(&d->strings[monospaceFont_PrefsString], "iosevka");
-    setCStr_String(&d->strings[monospaceDocumentFont_PrefsString], "iosevka-body");
     d->disabledFontPacks  = new_StringSet();
     d->fontSmoothing      = iTrue;
-    d->gemtextAnsiEscapes = allowFg_AnsiFlag;
-    d->monospaceGemini    = iFalse;
-    d->monospaceGopher    = iTrue;
-    d->boldLinkVisited    = iFalse;
-    d->boldLinkDark       = iTrue;
-    d->boldLinkLight      = iTrue;
-    d->lineWidth          = deviceType_App() == phone_AppDeviceType ? 1000 /* fill */ : 38;
-    d->lineSpacing        = 1.0f;
-    d->tabWidth           = 8;
-    d->bigFirstParagraph  = iTrue;
-    d->justifyParagraph   = iFalse;
-    d->quoteIcon          = iTrue;
-    d->centerShortDocs    = iTrue;
-    d->plainTextWrap      = iTrue;
-    d->expandToLongLines  = iTrue;
-    d->geminiStyledGopher = iFalse;
     d->colorEmoji         = iFalse;
-    d->imageStyle         = original_ImageStyle;
-    d->docThemeDark       = colorfulDark_GmDocumentTheme;
-    d->docThemeLight      = white_GmDocumentTheme;
-    d->saturation         = 1.0f;
     setCStr_String(&d->strings[uiLanguage_PrefsString], "en");
     /* TODO: Add some platform-specific common locations? */
     if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */

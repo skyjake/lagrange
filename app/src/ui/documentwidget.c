@@ -665,6 +665,9 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     if (~d->fetch->flags & fromCache_DocumentFetchFlag) {
         setCachedDocument_History(d->mod.history, d->view->doc /* keeps a ref */);
     }
+    if (document_App() == d) {
+        updateActiveDocPrefs_App();
+    }
 }
 
 static void allocView_DocumentWidget_(iDocumentWidget *d) {
@@ -703,6 +706,23 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     iRelease(d->view->doc);
     d->view->doc = NULL;
     setViewSwipedAway_DocumentSwipe(d->swipe, iFalse);
+}
+
+void updateDocPrefs_DocumentWidget(iDocumentWidget *d) {
+    const uint32_t diff = updateDocPrefs_GmDocument(d->view->doc);
+    /* Cached documents, too. */
+    updateDocPrefs_History(d->mod.history);
+    iDocumentView *swipeView = swipeView_DocumentWidget(d);
+    if (swipeView && swipeView != d->view && swipeView->doc) {
+        updateDocPrefs_GmDocument(swipeView->doc);
+    }
+    if (diff) {
+        postCommand_Widget(
+            d,
+            "*document.prefs.changed redo:%d palette:%d",
+            (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag)) != 0,
+            (diff & palette_DocPrefsSpecFlag) != 0);
+    }
 }
 
 void replaceDocument_DocumentWidget(iDocumentWidget *d, iGmDocument *newDoc) {
@@ -887,6 +907,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCachedDoc) {
+    updateDocPrefs_History(d->mod.history);
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
     setIdentity_DocumentWidget(d, recent ? &recent->setIdentity : NULL);
     if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
@@ -1047,7 +1068,7 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
 }
 
 static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
-    const enum iCollapse mode = prefs_App()->collapsePre;
+    const enum iCollapse mode = docPrefs_GmDocument(d->view->doc)->collapsePre.value;
     if (mode == always_Collapse || mode == never_Collapse) {
         return;
     }
@@ -1245,6 +1266,24 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             invalidate_DocumentWidget(d);
             refresh_Widget(w);
         }
+    }
+    else if (equalWidget_Command(cmd, w, "document.prefs.changed")) {
+        if (argLabel_Command(cmd, "palette")) {
+            if (document_App() == d) {
+                updateTheme_DocumentWidget(d);
+                updateTrust_DocumentFetch(d->fetch, NULL);
+            }
+        }
+        if (argLabel_Command(cmd, "redo")) {
+            updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, iTrue);
+            resetWideRuns_DocumentView(d->view);
+            dealloc_VisBuf(d->view->visBuf);
+        }
+        updateVisible_DocumentView(d->view);
+        updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
+        invalidate_DocumentWidget(d);
+        refresh_Widget(w);
+        return iFalse;
     }
     else if (equal_Command(cmd, "document.layout.changed") && document_Root(get_Root()) == d) {
         if (argLabel_Command(cmd, "redo")) {
@@ -2852,8 +2891,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && view->hoverPre &&
-                prefs_App()->collapsePre != always_Collapse &&
-                prefs_App()->collapsePre != never_Collapse &&
+                docPrefs_GmDocument(view->doc)->collapsePre.value != always_Collapse &&
+                docPrefs_GmDocument(view->doc)->collapsePre.value != never_Collapse &&
                 preIsFolded_GmDocument(view->doc, preId_GmRun(view->hoverPre))) {
                 return iTrue;
             }
@@ -3082,7 +3121,8 @@ void updateHoverLinkInfo_DocumentWidget(iDocumentWidget *d, iGmLinkId linkId) {
 void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     iChangeFlags(d->view->flags,
                  centerVertically_DocumentViewFlag,
-                 prefs_App()->centerShortDocs || startsWithCase_String(d->mod.url, "about:") ||
+                 docPrefs_GmDocument(d->view->doc)->centerShortDocs.value ||
+                     startsWithCase_String(d->mod.url, "about:") ||
                      !isSuccess_GmStatusCode(d->fetch->sourceStatus));
     iScrollWidget *scrollBar = d->scroll;
     const iRangei visRange  = visibleRange_DocumentView(d->view);

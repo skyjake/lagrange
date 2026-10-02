@@ -31,7 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/resources.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
+#include "gmdocument.h"
 #include "gmutil.h"
+#include "history.h"
 #include "render/text.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
@@ -129,14 +131,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
     }
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
-    appendFormat_String(str,
-                        "font.set ui:%s heading:%s body:%s mono:%s monodoc:%s\n",
-                        cstr_String(&d->prefs.strings[uiFont_PrefsString]),
-                        cstr_String(&d->prefs.strings[headingFont_PrefsString]),
-                        cstr_String(&d->prefs.strings[bodyFont_PrefsString]),
-                        cstr_String(&d->prefs.strings[monospaceFont_PrefsString]),
-                        cstr_String(&d->prefs.strings[monospaceDocumentFont_PrefsString]));
-    appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "font.set ui:%s\n", cstr_String(&d->prefs.strings[uiFont_PrefsString]));
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "uploadzoom.set arg:%d\n", d->prefs.editorZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
@@ -147,11 +142,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "urlsize.set arg:%d\n", d->prefs.maxUrlSize);
-    appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
-    appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
-    appendFormat_String(str, "tabwidth.set arg:%d\n", d->prefs.tabWidth);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
-    appendFormat_String(str, "collapsepre.set arg:%d\n", d->prefs.collapsePre);
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
@@ -183,7 +174,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
         appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
     }
-    appendFormat_String(str, "ansiescape arg:%d\n", d->prefs.gemtextAnsiEscapes);
     serializeBools_Prefs(&d->prefs, str);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -191,10 +181,6 @@ static iString *serializePrefs_App_(const iApp *d) {
                         d->prefs.useSystemTheme,
                         d->prefs.systemPreferredColorTheme[0],
                         d->prefs.systemPreferredColorTheme[1]);
-    appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
-    appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
-    appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
-    appendFormat_String(str, "imagestyle.set arg:%d\n", d->prefs.imageStyle);
     serializeStrings_Prefs(&d->prefs, str);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.strings[downloadDir_PrefsString]));
@@ -239,6 +225,158 @@ void updateCACertificates_App(void) {
                                      &d->prefs.strings[caPath_PrefsString]);
     }
 }
+
+/*----------------------------------------------------------------------------------------------*/
+
+const iDocPrefs *activeDocPrefs_App(void) {
+    return &app_.activeDocPrefs;
+}
+
+void updateActiveDocPrefs_App(void) {
+    iApp *d = &app_;
+    iDocPrefs prefs;
+    const iDocumentWidget *doc = !isEmpty_PtrArray(&d->mainWindows) ? document_App() : NULL;
+    if (doc) {
+        initCopy_DocPrefs(&prefs, docPrefs_GmDocument(document_DocumentWidget(doc)));
+    }
+    else {
+        iScopeKey key;
+        init_ScopeKey(&key);
+        init_DocPrefs(&prefs);
+        resolve_DocPrefs(&prefs, &key, NULL, NULL);
+        deinit_ScopeKey(&key);
+    }
+    const uint32_t diff = diff_DocPrefs(&d->activeDocPrefs, &prefs);
+    set_DocPrefs(&d->activeDocPrefs, &prefs);
+    deinit_DocPrefs(&prefs);
+    if (diff & palette_DocPrefsSpecFlag) {
+        iConstForEach(PtrArray, wind, &d->mainWindows) {
+            invalidate_Window(wind.ptr); /* UI uses some of the document colors */
+        }
+    }
+    if (diff & font_DocPrefsSpecFlag && !isEmpty_PtrArray(&d->mainWindows)) {
+        /* Text rendering has no document context, so the fonts follow the front document. */
+        iForEach(ObjectList, i, iClob(listAllDocuments_App())) {
+            invalidateCachedLayout_History(history_DocumentWidget(i.object));
+        }
+        const float fontSize = (float) d->activeDocPrefs.zoomPercent.value / 100.0f;
+        iConstForEach(PtrArray, wind, &d->mainWindows) {
+            if (isFinishedLaunching_App()) {
+                setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws */
+            }
+            setDocumentFontSize_Text(text_Window(wind.ptr), fontSize);
+            resetFonts_Text(text_Window(wind.ptr));
+        }
+        if (isFinishedLaunching_App()) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
+    }
+}
+
+void docPrefsChanged_App(void) {
+    iApp *d = &app_;
+    if (d->isLoadingPrefs) {
+        return;
+    }
+    if (!isEmpty_PtrArray(&d->mainWindows)) {
+        iForEach(ObjectList, i, iClob(listAllDocuments_App())) {
+            updateDocPrefs_DocumentWidget(i.object);
+        }
+    }
+    updateActiveDocPrefs_App();
+}
+
+static const char *scope_Command_(const char *cmd) {
+    return hasLabel_Command(cmd, "scope") ? cstr_String(string_Command(cmd, "scope")) : "base";
+}
+
+static iBool setFromCommand_DocPrefs_(const iDocPrefsSpec *spec, const char *scope, const char *cmd) {
+    switch (spec->type) {
+        case bool_DocPrefsType:
+            return setBool_ScopeRules(scope, spec->index, arg_Command(cmd) != 0);
+        case int_DocPrefsType:
+            return setInt_ScopeRules(scope, spec->index, arg_Command(cmd));
+        case float_DocPrefsType:
+            return setFloat_ScopeRules(scope, spec->index, argf_Command(cmd));
+        default:
+            break;
+    }
+    return iFalse;
+}
+
+static int ansiEscapes_ScopeRules_(const char *scope) {
+    const iScopeRule *rule = constRule_ScopeRules(scope);
+    if (rule && rule->prefs.ansiEscapes.isDefined) {
+        return rule->prefs.ansiEscapes.value;
+    }
+    return constRule_ScopeRules("base")->prefs.ansiEscapes.value;
+}
+
+static iBool handleDocPrefsCommand_App_(const char *cmd) {
+    static const struct {
+        const char *label;
+        enum iDocPrefsString id;
+    } fonts[] = {
+        { "mono",    monospaceFont_DocPrefsString },
+        { "heading", headingFont_DocPrefsString },
+        { "body",    bodyFont_DocPrefsString },
+        { "monodoc", monospaceDocumentFont_DocPrefsString },
+    };
+    static const struct {
+        const char *cmd;
+        int flag;
+    } ansiToggles[] = {
+        { "prefs.gemtext.ansi.fg.changed",        allowFg_AnsiFlag },
+        { "prefs.gemtext.ansi.bg.changed",        allowBg_AnsiFlag },
+        { "prefs.gemtext.ansi.fontstyle.changed", allowFontStyle_AnsiFlag },
+    };
+    const char *scope      = scope_Command_(cmd);
+    iBool       wasChanged = iFalse;
+    iBool       wasHandled = iTrue;
+    const iDocPrefsSpec *spec = findCommandSpec_DocPrefs(name_Command(cmd));
+    if (spec) {
+        wasChanged = setFromCommand_DocPrefs_(spec, scope, cmd);
+    }
+    else if (equal_Command(cmd, "font.set")) {
+        iForIndices(i, fonts) {
+            if (hasLabel_Command(cmd, fonts[i].label)) {
+                wasChanged |= setString_ScopeRules(scope, fonts[i].id,
+                                                   string_Command(cmd, fonts[i].label));
+            }
+        }
+        wasHandled = iFalse; /* may also set the UI font */
+    }
+    else if (equal_Command(cmd, "ansiescape")) {
+        wasChanged = setInt_ScopeRules(scope, ansiEscapes_DocPrefsInt, arg_Command(cmd));
+    }
+    else if (equal_Command(cmd, "saturation.set")) {
+        wasChanged = setFloat_ScopeRules(scope, saturation_DocPrefsFloat,
+                                         (float) arg_Command(cmd) / 100.0f);
+    }
+    else if (equal_Command(cmd, "docprefs.group")) {
+        wasChanged = setGroupEnabled_ScopeRules(
+            scope, findGroup_DocPrefs(range_Command(cmd, "group")), arg_Command(cmd) != 0);
+    }
+    else {
+        wasHandled = iFalse;
+        iForIndices(i, ansiToggles) {
+            if (equal_Command(cmd, ansiToggles[i].cmd)) {
+                int flags = ansiEscapes_ScopeRules_(scope);
+                iChangeFlags(flags, ansiToggles[i].flag, arg_Command(cmd) != 0);
+                wasChanged = setInt_ScopeRules(scope, ansiEscapes_DocPrefsInt, flags);
+                wasHandled = iTrue;
+                break;
+            }
+        }
+    }
+    if (wasChanged) {
+        docPrefsChanged_App();
+    }
+    return wasHandled;
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 void loadPrefs_App_(iApp *d) {
     iUnused(d);
@@ -372,9 +510,11 @@ void loadPrefs_App_(iApp *d) {
         d->prefs.menuBar = iFalse; /* not optional on mobile */
     }
     d->isLoadingPrefs = iFalse;
+    updateActiveDocPrefs_App();
 }
 
 void savePrefs_App_(const iApp *d) {
+    saveDirty_ScopeRules();
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
     /* Update current workspace for all windows before saving. */ {
         iConstForEach(PtrArray, it, &app_.mainWindows) {
@@ -520,16 +660,11 @@ void prefsBoolValueChanged_App_(iApp *d, enum iPrefsBool id, iBool isFrozen) {
             resetFonts_App();
             postCommand_App("font.changed");
             break;
-        case italicQuote_PrefsBool:
-        case monospaceGemini_PrefsBool:
-        case monospaceGopher_PrefsBool:
         case fontSmoothing_PrefsBool:
             /* The glyphs must be redrawn, so hide the intermediate state. */
             if (!isFrozen && get_MainWindow()) {
                 setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-                if (id == fontSmoothing_PrefsBool) {
-                    resetFontCache_Text(text_Window(get_MainWindow()));
-                }
+                resetFontCache_Text(text_Window(get_MainWindow()));
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
             }
@@ -555,6 +690,9 @@ void prefsBoolValueChanged_App_(iApp *d, enum iPrefsBool id, iBool isFrozen) {
 iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
     const iBool isFrozen = !d->window ||
         (d->window->type == main_WindowType && as_MainWindow(d->window)->isDrawFrozen);
+    if (handleDocPrefsCommand_App_(cmd)) {
+        return iTrue;
+    }
     /* Boolean preferences. */ {
         const enum iPrefsBool boolPref = findBool_Prefs(name_Command(cmd));
         if (boolPref < max_PrefsBool) {
@@ -587,7 +725,12 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         }
     }
     /* Commands related to preferences. */
-    if (equal_Command(cmd, "prefs.changed")) {
+    if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "keyroot.changed") ||
+        equal_Command(cmd, "document.changed")) {
+        updateActiveDocPrefs_App(); /* front document may be different now */
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
         return iTrue;
     }
@@ -702,26 +845,14 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         if (!isFrozen && get_MainWindow()) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
-        struct {
-            const char *label;
-            enum iPrefsString ps;
-            int fontId;
-        } params[] = {
-            { "ui",      uiFont_PrefsString,                default_FontId },
-            { "mono",    monospaceFont_PrefsString,         monospace_FontId },
-            { "heading", headingFont_PrefsString,           documentHeading_FontId },
-            { "body",    bodyFont_PrefsString,              documentBody_FontId },
-            { "monodoc", monospaceDocumentFont_PrefsString, documentMonospace_FontId },
-        };
+        /* Document fonts have been set already. */
         iBool wasChanged = iFalse;
-        iForIndices(i, params) {
-            if (hasLabel_Command(cmd, params[i].label)) {
-                iString *ps = &d->prefs.strings[params[i].ps];
-                const iString *newFont = string_Command(cmd, params[i].label);
-                if (!equal_String(ps, newFont)) {
-                    set_String(ps, newFont);
-                    wasChanged = iTrue;
-                }
+        if (hasLabel_Command(cmd, "ui")) {
+            iString *ps = &d->prefs.strings[uiFont_PrefsString];
+            const iString *newFont = string_Command(cmd, "ui");
+            if (!equal_String(ps, newFont)) {
+                set_String(ps, newFont);
+                wasChanged = iTrue;
             }
         }
         if (wasChanged) {
@@ -733,22 +864,6 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         if (!isFrozen) {
             postCommand_App("window.unfreeze");
         }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
-        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.bg.changed")) {
-        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowBg_AnsiFlag, arg_Command(cmd));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
-        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "collapsepre.set")) {
-        d->prefs.collapsePre = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
@@ -838,59 +953,6 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         }
         if (hasLabel_Command(cmd, "preferlight")) {
             d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "doctheme.dark.set")) {
-        d->prefs.docThemeDark = arg_Command(cmd);
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "doctheme.light.set")) {
-        d->prefs.docThemeLight = arg_Command(cmd);
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "imagestyle.set")) {
-        d->prefs.imageStyle = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "linewidth.set")) {
-        const int lineWidth = iMax(20, arg_Command(cmd));
-        if (lineWidth != d->prefs.lineWidth) {
-            d->prefs.lineWidth = lineWidth;
-            postCommand_App("document.layout.changed redo:1");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "linespacing.set")) {
-        const float spacing = iMax(0.5f, argf_Command(cmd));
-        if (spacing != d->prefs.lineSpacing) {
-            d->prefs.lineSpacing = spacing;
-            postCommand_App("document.layout.changed redo:1");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "tabwidth.set")) {
-        const int tabWidth = iMax(1, arg_Command(cmd));;
-        if (tabWidth != d->prefs.tabWidth) {
-            d->prefs.tabWidth = tabWidth;
-            postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ansiescape")) {
-        d->prefs.gemtextAnsiEscapes = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "saturation.set")) {
-        d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
-        if (!isFrozen) {
-            invalidate_Window(d->window);
         }
         return iTrue;
     }

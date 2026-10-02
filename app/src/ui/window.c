@@ -709,7 +709,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
         updateMetrics_Window_(d);
     }
     setCurrent_Window(d); /* Text assumes global state is up-to-date */
-    d->text = new_Text(d->render, (float) prefs_App()->zoomPercent / 100.0f);
+    d->text = new_Text(d->render, (float) activeDocPrefs_App()->zoomPercent.value / 100.0f);
     makeTextCurrent_Window(d);
 }
 

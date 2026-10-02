@@ -21,9 +21,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/sitespec.h"
+#include "lagrange/core.h"
 #include "lagrange/gmutil.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringhash.h>
 #include <the_Foundation/stringarray.h>
@@ -36,28 +38,30 @@ struct Impl_SiteParams {
     iObject  object;
     uint16_t titanPort;
     iString  titanIdentity; /* fingerprint */
+    iString  titanToken;
     int      dismissWarnings;
     int      tlsSessionCache;
     iStringArray usedIdentities; /* fingerprints; latest ones at the end */
-    iString  paletteSeed;
     iStringSet promptPaths;
-    /* TODO: style settings */
+    iScopeRule rule; /* document preferences */
 };
 
 void init_SiteParams(iSiteParams *d) {
     d->titanPort = 0; /* undefined */
     init_String(&d->titanIdentity);
+    init_String(&d->titanToken);
     d->dismissWarnings = 0;
     d->tlsSessionCache = iTrue;
     init_StringArray(&d->usedIdentities);
-    init_String(&d->paletteSeed);
     init_StringSet(&d->promptPaths);
+    init_ScopeRule(&d->rule, site_ScopeRuleKind);
 }
 
 void deinit_SiteParams(iSiteParams *d) {
+    deinit_ScopeRule(&d->rule);
     deinit_StringSet(&d->promptPaths);
-    deinit_String(&d->paletteSeed);
     deinit_StringArray(&d->usedIdentities);
+    deinit_String(&d->titanToken);
     deinit_String(&d->titanIdentity);
 }
 
@@ -76,7 +80,8 @@ iDefineObjectConstruction(SiteParams)
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_SiteSpec {
-    iString     saveDir;
+    iString     saveDir; /* prefs directory */
+    iString     oldSaveDir;
     iStringHash sites;
     iSiteParams *loadParams;
     enum iImportMethod loadMethod;
@@ -87,7 +92,7 @@ static const char *fileName_SiteSpec_ = "sitespec.ini";
 
 static void loadOldFormat_SiteSpec_(iSiteSpec *d) {
     clear_StringHash(&d->sites);
-    iFile *f = iClob(new_File(collect_String(concatCStr_Path(&d->saveDir, "sitespec.txt"))));
+    iFile *f = iClob(new_File(collect_String(concatCStr_Path(&d->oldSaveDir, "sitespec.txt"))));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iString *src = collect_String(readString_File(f));
         iRangecc split = iNullRange;
@@ -134,6 +139,8 @@ static void handleIniTable_SiteSpec_(void *context, const iString *table, iBool 
         iAssert(d->loadParams != NULL);
         if (d->loadMethod == all_ImportMethod ||
             (d->loadMethod == ifMissing_ImportMethod && !contains_StringHash(&d->sites, table))) {
+            set_String(&d->loadParams->rule.key, table);
+            fillMissing_ScopeRules(&d->loadParams->rule);
             insert_StringHash(&d->sites, table, d->loadParams);
         }
         iReleasePtr(&d->loadParams);
@@ -153,6 +160,9 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
     else if (!cmp_String(key, "titanIdentity") && value->type == string_TomlType) {
         set_String(&d->loadParams->titanIdentity, value->value.string);
     }
+    else if (!cmp_String(key, "titanToken") && value->type == string_TomlType) {
+        set_String(&d->loadParams->titanToken, value->value.string);
+    }
     else if (!cmp_String(key, "dismissWarnings") && value->type == int64_TomlType) {
         d->loadParams->dismissWarnings = (int) value->value.int64;
     }
@@ -165,20 +175,20 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
             pushBack_StringArray(&d->loadParams->usedIdentities, collectNewRange_String(seg));
         }
     }
-    else if (!cmp_String(key, "paletteSeed") && value->type == string_TomlType) {
-        set_String(&d->loadParams->paletteSeed, value->value.string);
-    }
     else if (!cmp_String(key, "promptPaths") && value->type == string_TomlType) {
         iRangecc seg = iNullRange;
         while (nextSplit_Rangecc(range_String(value->value.string), " ", &seg)) {
             insert_StringSet(&d->loadParams->promptPaths, collectNewRange_String(seg));
         }
     }
+    else {
+        parseKey_ScopeRule(&d->loadParams->rule, key, value);
+    }
 }
 
-static iBool load_SiteSpec_(iSiteSpec *d) {
+static iBool load_SiteSpec_(iSiteSpec *d, const iString *dir) {
     iBool ok = iFalse;
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
+    iFile *f = new_File(collect_String(concatCStr_Path(dir, fileName_SiteSpec_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         ok = deserialize_SiteSpec(stream_File(f), all_ImportMethod);
     }
@@ -212,6 +222,12 @@ void serialize_SiteSpec(iStream *out) {
             appendFormat_String(
                 buf, "titanIdentity = \"%s\"\n", cstr_String(&params->titanIdentity));
         }
+        if (!isEmpty_String(&params->titanToken)) {
+            appendFormat_String(
+                buf,
+                "titanToken = \"%s\"\n",
+                cstrCollect_String(quote_String(&params->titanToken, iFalse)));
+        }
         if (params->dismissWarnings) {
             appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
         }
@@ -229,11 +245,7 @@ void serialize_SiteSpec(iStream *out) {
                                 "promptPaths = \"%s\"\n",
                                 cstrCollect_String(joinCStr_StringSet(&params->promptPaths, " ")));
         }
-        if (!isEmpty_String(&params->paletteSeed)) {
-            appendCStr_String(buf, "paletteSeed = \"");
-            append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
-            appendCStr_String(buf, "\"\n");
-        }
+        serialize_ScopeRule(&params->rule, buf);
         if (!isEmpty_String(buf)) {
             writeData_Stream(out, "[", 1);
             writeData_Stream(out, constData_Block(key), size_Block(key));
@@ -247,19 +259,39 @@ void serialize_SiteSpec(iStream *out) {
 }
 
 static void save_SiteSpec_(iSiteSpec *d) {
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
+    makeDirs_Path(&d->saveDir);
+    const iString *path     = collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_));
+    const iString *tempPath = collect_String(concatCStr_Path(&d->saveDir, "sitespec.ini.tmp"));
+    iFile *f = new_File(tempPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         serialize_SiteSpec(stream_File(f));
+        close_File(f);
+        commitFile_Core(cstr_String(path), cstr_String(tempPath));
     }
     iRelease(f);
+}
+
+void save_SiteSpec(void) {
+    save_SiteSpec_(&siteSpec_);
 }
 
 void init_SiteSpec(const char *saveDir) {
     iSiteSpec *d = &siteSpec_;
     d->loadParams = NULL;
     init_StringHash(&d->sites);
-    initCStr_String(&d->saveDir, saveDir);
-    if (!load_SiteSpec_(d)) {
+    initCStr_String(&d->oldSaveDir, saveDir);
+    initCStr_String(&d->saveDir, concatPath_CStr(saveDir, "prefs"));
+    const iString *path    = collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_));
+    const iString *oldPath = collect_String(concatCStr_Path(&d->oldSaveDir, fileName_SiteSpec_));
+    if (!fileExists_FileInfo(&d->saveDir) && fileExists_FileInfo(oldPath)) {
+        /* The file was in the parent directory before v2.0. */
+        makeDirs_Path(&d->saveDir);
+        renamePath_CStr(cstr_String(oldPath), cstr_String(path));
+    }
+    if (fileExists_FileInfo(path)) {
+        load_SiteSpec_(d, &d->saveDir);
+    }
+    else if (!load_SiteSpec_(d, &d->oldSaveDir)) { /* e.g., restored from an old backup */
         loadOldFormat_SiteSpec_(d);
     }
 }
@@ -268,6 +300,7 @@ void deinit_SiteSpec(void) {
     iSiteSpec *d = &siteSpec_;
     deinit_StringHash(&d->sites);
     deinit_String(&d->saveDir);
+    deinit_String(&d->oldSaveDir);
 }
 
 static iSiteParams *findParams_SiteSpec_(iSiteSpec *d, const iString *site) {
@@ -275,9 +308,21 @@ static iSiteParams *findParams_SiteSpec_(iSiteSpec *d, const iString *site) {
     iSiteParams *params = value_StringHash(&d->sites, hashKey);
     if (!params) {
         params = new_SiteParams();
+        set_String(&params->rule.key, hashKey);
         insert_StringHash(&d->sites, hashKey, params);
+        iRelease(params); /* kept by the hash */
     }
     return params;
+}
+
+const iScopeRule *constRule_SiteSpec(const iString *site) {
+    const iSiteParams *params =
+        constValue_StringHash(&siteSpec_.sites, collect_String(lower_String(site)));
+    return params ? &params->rule : NULL;
+}
+
+iScopeRule *rule_SiteSpec(const iString *site) {
+    return &findParams_SiteSpec_(&siteSpec_, site)->rule;
 }
 
 void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
@@ -318,10 +363,10 @@ void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const i
                 set_String(&params->titanIdentity, value);
             }
             break;
-        case paletteSeed_SiteSpecKey:
-            if (!equal_String(&params->paletteSeed, value)) {
+        case titanToken_SiteSpecKey:
+            if (!equal_String(&params->titanToken, value)) {
                 needSave = iTrue;
-                set_String(&params->paletteSeed, value);
+                set_String(&params->titanToken, value);
             }
             break;
         default:
@@ -427,8 +472,8 @@ const iString *valueString_SiteSpec(const iString *site, enum iSiteSpecKey key) 
     switch (key) {
         case titanIdentity_SiteSpecKey:
             return &params->titanIdentity;
-        case paletteSeed_SiteSpecKey:
-            return &params->paletteSeed;
+        case titanToken_SiteSpecKey:
+            return &params->titanToken;
         default:
             return collectNew_String();
     }

@@ -41,6 +41,7 @@ struct Impl_RecentUrl {
     iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
     iBlock       setIdentity;    /* fingerprint of identity that was pinned*/
     uint16_t     flags;
+    uint32_t     prefsCacheKey;  /* hash of the document preferences used for the cached layout */
 };
 
 iDeclareType(MemInfo)
@@ -81,6 +82,7 @@ size_t      pruneLeastImportant_History         (iHistory *);
 size_t      pruneLeastImportantMemory_History   (iHistory *);
 void        invalidateTheme_History             (iHistory *); /* theme has changed, cached contents need updating */
 void        invalidateCachedLayout_History      (iHistory *);
+void        updateDocPrefs_History              (iHistory *); /* cached layouts invalidated if prefs differ */
 
 iBool       atNewest_History            (const iHistory *);
 iBool       atOldest_History            (const iHistory *);

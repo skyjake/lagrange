@@ -187,6 +187,7 @@ struct Impl_GmRequest {
     const iGmIdentity *  identity;
     enum iGmRequestState state;
     iString              url;
+    iDocPrefs            docPrefs; /* resolved when the URL is set */
     iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
@@ -549,6 +550,7 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     d->gopher.meta   = &resp->meta;
     d->gopher.output = &resp->body;
     d->gopher.isTls  = useTls;
+    d->gopher.isGeminiStyled = d->docPrefs.geminiStyledGopher.value;
     d->state         = receivingBody_GmRequestState;
     open_Gopher(&d->gopher, &d->url);
     if (d->gopher.needQueryArgs) {
@@ -786,6 +788,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->isRespFiltered  = iFalse;
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
+    initCopy_DocPrefs(&d->docPrefs, defaults_DocPrefs());
     init_Gopher(&d->gopher);
     d->guppy        = NULL;
     d->plainSocket  = NULL;
@@ -824,6 +827,7 @@ void deinit_GmRequest(iGmRequest *d) {
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     delete_GmResponse(d->resp);
+    deinit_DocPrefs(&d->docPrefs);
     deinit_String(&d->url);
     delete_Mutex(d->mtx);
 }
@@ -853,6 +857,7 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     }
     set_String(&d->url, enc);
     delete_String(enc);
+    resolveUrl_DocPrefs(&d->docPrefs, &d->url, NULL); /* not accessed later in background */
     d->identity = identityForUrl_GmCerts(d->certs, &d->url);
 }
 

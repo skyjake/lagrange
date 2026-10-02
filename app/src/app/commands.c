@@ -221,12 +221,6 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
-static void invalidateCachedDocuments_App_(void) {
-    iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
-        invalidateCachedLayout_History(history_DocumentWidget(i.object));
-    }
-}
-
 static void pushClosedTabUrl_App_(iApp *d, const iString *url) {
     pushBack_StringList(d->recentlyClosedTabUrls, url);
     if (size_StringList(d->recentlyClosedTabUrls) > 50) { /* not an infinite number */
@@ -696,7 +690,6 @@ static iBool shouldCreateWindowForCommand_App_(const char *cmd) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    const iBool isFrozen   = isDrawFrozen_Window(d->window);
     const iBool isHeadless = numWindows_App() == 0;
     const iBool isMainWin  = d->window && d->window->type == main_WindowType;
     if (handleNonWindowRelatedCommand_App_(d, cmd)) {
@@ -832,42 +825,19 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.editorZoomLevel = iClamp(d->prefs.editorZoomLevel, 0, 3);
         return iTrue;
     }
-    else if (equal_Command(cmd, "zoom.set")) {
-        if (arg_Command(cmd) != d->prefs.zoomPercent) {
-            d->prefs.zoomPercent = arg_Command(cmd);
-            invalidateCachedDocuments_App_();
-            iConstForEach(PtrArray, wind, mainWindows_App()) {
-                if (!isFrozen) {
-                    setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws before docs updated */
-                }
-                setDocumentFontSize_Text(text_Window(wind.ptr), (float) d->prefs.zoomPercent / 100.0f);
+    else if (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta")) {
+        /* Zoom is written to the base layer. */
+        const int oldZoom = constRule_ScopeRules("base")->prefs.zoomPercent.value;
+        int zoom = arg_Command(cmd);
+        if (equal_Command(cmd, "zoom.delta")) {
+            int delta = zoom;
+            if (oldZoom < 100 || (delta < 0 && oldZoom == 100)) {
+                delta /= 2;
             }
-            if (!isFrozen) {
-                postCommand_App("font.changed");
-                postCommand_App("window.unfreeze");
-            }
+            zoom = oldZoom + delta;
         }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "zoom.delta")) {
-        int delta = arg_Command(cmd);
-        if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
-            delta /= 2;
-        }
-        const int oldZoom = d->prefs.zoomPercent;
-        d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
-        if (oldZoom != d->prefs.zoomPercent) {
-            invalidateCachedDocuments_App_();
-            iConstForEach(PtrArray, wind, mainWindows_App()) {
-                if (!isFrozen) {
-                    setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws before docs updated */
-                }
-                setDocumentFontSize_Text(text_Window(wind.ptr), (float) d->prefs.zoomPercent / 100.0f);
-            }
-            if (!isFrozen) {
-                postCommand_App("font.changed");
-                postCommand_App("window.unfreeze");
-            }
+        if (setInt_ScopeRules("base", zoomPercent_DocPrefsInt, zoom)) {
+            docPrefsChanged_App();
         }
         return iTrue;
     }

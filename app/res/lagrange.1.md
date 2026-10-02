@@ -129,8 +129,11 @@ The directory contains:
 **state.lgr**
 :   Serialized UI state, specifying open tabs and sidebar state.
 
-**sitespec.ini**
-:   Site-specific preferences in TOML format.
+**prefs/document.ini**, **prefs/protocols.ini**, **prefs/sitespec.ini**
+:   Document preferences for all protocols, specific protocols, and specific sites, in TOML format. The site-specific file also contains Titan upload settings.
+
+**prefs/custom.ini**
+:   Optional user-written rules for document preferences. Never written by the application.
 
 **trusted.2.txt**
 :   Fingerprints of trusted server certificates.

@@ -179,7 +179,7 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
         d->texture = NULL;
     }
     else {
-        applyImageStyle_(prefs_App()->imageStyle, d->size, imgData);
+        applyImageStyle_(activeDocPrefs_App()->imageStyle.value, d->size, imgData);
         /* TODO: Save some memory by checking if the alpha channel is actually in use. */
         iWindow *window  = get_Window();
         iInt2    texSize = d->size;

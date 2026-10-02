@@ -306,6 +306,8 @@ set (SOURCES
     src/ui/mobile.h
     src/ui/prefsdialog.c
     src/ui/prefsdialog.h
+    src/ui/scopedprefs.c
+    src/ui/scopedprefs.h
     src/ui/tabs.c
     src/ui/tabs.h
     src/ui/touch.c

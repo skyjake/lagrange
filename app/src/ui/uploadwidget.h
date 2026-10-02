@@ -37,6 +37,8 @@ iDeclareType(DocumentWidget);
 iDeclareType(GmIdentity);
 
 void    setUrl_UploadWidget             (iUploadWidget *, const iString *url);
+
+const iString * titanSiteRoot_UploadWidget  (const iString *url); /* site of the Titan settings */
 void    setIdentity_UploadWidget        (iUploadWidget *, const iGmIdentity *ident);
 void    setResponseViewer_UploadWidget  (iUploadWidget *, iDocumentWidget *doc);
 void    setText_UploadWidget            (iUploadWidget *, const iString *text);

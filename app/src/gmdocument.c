@@ -160,7 +160,10 @@ struct Impl_GmDocument {
     iString   origSource; /* original (unnormalized) source */
     iString   source;     /* normalized (possibly converted) source */
     iString   url;        /* for resolving relative links */
+    iString   mimeType;
     iString   localHost;
+    iScopeKey scopeKey;
+    iDocPrefs docPrefs;   /* resolved for the URL and MIME type */
     iInt2     size;
     int       contentWidth; /* some runs may extend past the requested width */
     int       maxContentWidth;
@@ -188,12 +191,17 @@ struct Impl_GmDocument {
         iBool isGopherMenu : 1;
         iBool isConvertedMarkdown : 1;
         iBool isCoverPage : 1;
+        iBool isDocPrefsPinned : 1;
     } flags;
 };
 
 iDefineObjectConstruction(GmDocument)
 
 static void import_GmDocument_(iGmDocument *);
+
+static enum iGmDocumentTheme currentTheme_GmDocument_(const iGmDocument *d) {
+    return docTheme_DocPrefs(&d->docPrefs, isDark_ColorTheme(colorTheme_App()));
+}
 
 static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (d->flags.isNex) {
@@ -205,14 +213,7 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (d->flags.isCoverPage) {
         return iFalse;
     }
-    const iRangecc scheme = urlScheme_String(&d->url);
-    if (equalCase_Rangecc(scheme, "gemini")) {
-        return prefs_App()->monospaceGemini;
-    }
-    if (isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "finger")) {
-        return prefs_App()->monospaceGopher;
-    }
-    return iFalse;
+    return d->docPrefs.monospaceDocument.value;
 }
 
 static iBool isGopher_GmDocument_(const iGmDocument *d) {
@@ -233,12 +234,11 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     };
     iGmTheme *theme = &d->theme;
     memcpy(theme->colors, defaultColors, sizeof(theme->colors));
-    const iPrefs *prefs    = prefs_App();
+    const iDocPrefs *prefs = &d->docPrefs;
     const iBool   isMono   = isForcedMonospace_GmDocument_(d);
     const iBool   isGopher = isGopher_GmDocument_(d);
     const iBool   isMonoGopher = isMono && isGopher;
-    const iBool   isDarkBg = isDark_GmDocumentTheme(
-        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+    const iBool   isDarkBg = isDark_GmDocumentTheme(currentTheme_GmDocument_(d));
     const enum iFontId headingFont = isMono ? documentMonospace_FontId : documentHeading_FontId;
     const enum iFontId bodyFont    = isMono ? documentMonospace_FontId : documentBody_FontId;
     const int          bodySize    = isMonoGopher ? contentSmall_FontSize : contentRegular_FontSize;
@@ -246,14 +246,14 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     theme->fonts[bullet_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, bodySize);
     theme->fonts[preformatted_GmLineType] = preformatted_FontId;
     theme->fonts[quote_GmLineType] = isMono               ? monospaceParagraph_FontId
-                                     : prefs->italicQuote ? quote_FontId
+                                     : prefs->italicQuote.value ? quote_FontId
                                                           : paragraph_FontId;
     theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
     theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentLarge_FontSize);
     theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentBig_FontSize);
     theme->fonts[link_GmLineType] =
         FONT_ID(bodyFont,
-                ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
+                ((isDarkBg && prefs->boldLinkDark.value) || (!isDarkBg && prefs->boldLinkLight.value))
                     ? semiBold_FontStyle
                     : regular_FontStyle,
                 bodySize);
@@ -319,7 +319,7 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
         if (isEmpty_Range(&run->text)) {
             continue;
         }
-        return top_Rect(run->bounds) + height_Rect(run->bounds) * prefs_App()->lineSpacing;
+        return top_Rect(run->bounds) + height_Rect(run->bounds) * d->docPrefs.lineSpacing.value;
     }
     return 0;
 }
@@ -599,25 +599,20 @@ static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo
 }
 
 static iBool shouldBeNormalized_GmDocument_(const iGmDocument *d) {
-    const iPrefs *prefs = prefs_App();
+    const iDocPrefs *prefs = &d->docPrefs;
     if (d->format == plainText_SourceFormat) {
         return iFalse; /* plain text is always shown as-is */
     }
     if (d->flags.isNex) {
         return iFalse;
     }
-    if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
+    if (prefs->monospaceDocument.value) {
         return iFalse;
     }
-    if ((startsWithCase_String(&d->url, "gopher:") || startsWithCase_String(&d->url, "gophers:")) &&
-        (prefs->monospaceGopher || !prefs->geminiStyledGopher)) {
+    if (isGopherScheme_Rangecc(urlScheme_String(&d->url)) && !prefs->geminiStyledGopher.value) {
         return iFalse;
     }
     return iTrue;
-}
-
-static enum iGmDocumentTheme currentTheme_(void) {
-    return docTheme_Prefs(prefs_App());
 }
 
 static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
@@ -666,6 +661,7 @@ struct Impl_RunTypesetter {
     iBool  isPreformat;
     int    baseFont;
     int    baseColor;
+    float  lineSpacing;
 };
 
 static void init_RunTypesetter_(iRunTypesetter *d) {
@@ -748,7 +744,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
 //    printf("origin:%d isRTL:%d\n{%s}\n", origin, attrib.isBaseRTL, cstr_Rangecc(wrapRange));
     pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
-    d->pos.y += lineHeight_Text(d->baseFont) * prefs_App()->lineSpacing;
+    d->pos.y += lineHeight_Text(d->baseFont) * d->lineSpacing;
     return iTrue; /* continue to next wrapped line */
 }
 
@@ -783,13 +779,13 @@ static iBool isHardWrapped_GmDocument_(const iGmDocument *d) {
 }
 
 static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
-    const iPrefs *prefs = prefs_App();
+    const iDocPrefs *prefs = &d->docPrefs;
     /* Only do this once (and whenever font size changes). */
     if (d->wrapWidth) return;
     /* For plain text with word wrap and expand-to-long-lines, measure all lines first to
        find the widest one and potentially increase the layout width up to the full canvas
        width, so that long lines don't have to be wrapped unnecessarily. */
-    if (isHardWrapped_GmDocument_(d) && prefs->plainTextWrap && prefs->expandToLongLines) {
+    if (isHardWrapped_GmDocument_(d) && prefs->plainTextWrap.value && prefs->expandToLongLines.value) {
         iRegExp *linkPattern = d->format == gemini_SourceFormat ? newGemtextLink_RegExp() : NULL;
         int      maxLine = 0;
         iRangecc seg     = iNullRange;
@@ -836,7 +832,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         ansiPattern_ = makeAnsiEscapePattern_Text(iTrue /* with ESC */);
     }
 
-    const iPrefs *prefs             = prefs_App();
+    const iDocPrefs *prefs          = &d->docPrefs;
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
     const iBool   isGopher          = isGopher_GmDocument_(d);
     const iBool   isGopherMenu      = isGopherMenu_GmDocument(d);
@@ -895,21 +891,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iBool            isFirstText   = prefs->bigFirstParagraph && !isMono && !isTerminal_Platform();
-    iBool            addQuoteIcon  = prefs->quoteIcon;
+    iBool            isFirstText   = prefs->bigFirstParagraph.value && !isMono && !isTerminal_Platform();
+    iBool            addQuoteIcon  = prefs->quoteIcon.value;
     iBool            isPreformat   = iFalse;
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
     const iBool      isNormalized  = shouldBeNormalized_GmDocument_(d);
-    const iBool      isJustified   = prefs->justifyParagraph;
+    const iBool      isJustified   = prefs->justifyParagraph.value;
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = undefined_GmLineType;
     iBool            followsBlank  = iFalse;
     iBool            prevWrapParagraph = iFalse; /* previous line was a wrapped paragraph */
     iString          firstContentLine; /* may be used as a title if one isn't specified */
     init_String(&firstContentLine);
-    if (isGopher && !prefs->geminiStyledGopher) {
+    if (isGopher && !prefs->geminiStyledGopher.value) {
         isFirstText = iFalse;
     }
     if (d->format == plainText_SourceFormat) {
@@ -989,7 +985,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
                                  folded_GmPreMetaFlag;
                 }
-                else if (prefs->collapsePre >= byDefault_Collapse && !isGopher) {
+                else if (prefs->collapsePre.value >= byDefault_Collapse && !isGopher) {
                     meta.flags |= folded_GmPreMetaFlag;
                 }
                 pushBack_Array(&d->preMeta, &meta);
@@ -1040,7 +1036,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.text = line;
                 pushBack_Array(&d->layout, &run);
             }
-            else if (type == quote_GmLineType && !prefs->quoteIcon) {
+            else if (type == quote_GmLineType && !prefs->quoteIcon.value) {
                 /* For quote indicators we still need to produce a run. */
                 run.visBounds.pos  = addX_I2(pos, indents[type] * gap_Text);
                 run.visBounds.size = init_I2(lineHeight_Text(run.font), lineHeight_Text(run.font));
@@ -1049,10 +1045,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.flags          = ruler_GmRunFlag | decoration_GmRunFlag;
                 pushBack_Array(&d->layout, &run);
             }
-            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing.value;
             prevType = type;
             if (type != quote_GmLineType) {
-                addQuoteIcon = prefs->quoteIcon;
+                addQuoteIcon = prefs->quoteIcon.value;
             }
             followsBlank = iTrue;
             continue;
@@ -1082,7 +1078,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (isEmpty_Array(&d->layout)) {
                 required = 0; /* top of document */
             }
-            required *= prefs->lineSpacing;
+            required *= prefs->lineSpacing.value;
             int delta = pos.y - lastVisibleRunBottom_GmDocument_(d);
             if (delta < required) {
                 pos.y += (required - delta);
@@ -1165,7 +1161,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &quoteRun);
         }
         else if (type != quote_GmLineType) {
-            addQuoteIcon = prefs->quoteIcon;
+            addQuoteIcon = prefs->quoteIcon.value;
         }
         /* Link icon. */
         if (type == link_GmLineType) {
@@ -1254,8 +1250,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             init_RunTypesetter_(&rts);
             rts.run           = run;
             rts.pos           = pos;
+            rts.lineSpacing   = prefs->lineSpacing.value;
             rts.isWordWrapped = (d->flags.isNex                 ? iFalse
-                                 : isHardWrapped_GmDocument_(d) ? prefs->plainTextWrap
+                                 : isHardWrapped_GmDocument_(d) ? prefs->plainTextWrap.value
                                                                 : !isPreformat);
             rts.isPreformat   = isPreformat;
             rts.layoutWidth   = d->size.x;
@@ -1270,12 +1267,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             if (!isMono) {
                 /* Visited links are never bold. */
-                if (run.linkId && !prefs->boldLinkVisited &&
+                if (run.linkId && !prefs->boldLinkVisited.value &&
                     linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
                     rts.run.font = d->theme.fonts[text_GmLineType];
                 }
             }
-            if (!prefs->quoteIcon && type == quote_GmLineType) {
+            if (!prefs->quoteIcon.value && type == quote_GmLineType) {
                 rts.run.flags |= ruler_GmRunFlag;
             }
             /* Determine the maximum width of wrapped lines. */
@@ -1322,7 +1319,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                             prun->visBounds.pos.x += offset;
                         }
                         if (type == bullet_GmLineType || type == link_GmLineType ||
-                            (type == quote_GmLineType && prefs->quoteIcon)) {
+                            (type == quote_GmLineType && prefs->quoteIcon.value)) {
                             iGmRun *decor = back_Array(&d->layout);
                             iAssert(decor->flags & decoration_GmRunFlag);
                             decor->visBounds.pos.x = d->size.x - width_Rect(decor->visBounds) -
@@ -1347,7 +1344,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Flag the end of line, too. */
         if (numRunsAdded == 0) {
-            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing.value;
             followsBlank = iTrue;
             continue;
         }
@@ -1414,7 +1411,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     /// XXX: Don't use window pixel ratio, use the UI scaling factor on Window.s
                     const iInt2 maxSize = mulf_I2(
                         imgSize,
-                        gap_UI / 2 * prefs_App()->zoomPercent / 100.0f);
+                        gap_UI / 2 * prefs->zoomPercent.value / 100.0f);
                     if (width_Rect(run.visBounds) > maxSize.x) {
                         /* Don't scale the image up too much. */
                         run.visBounds.size.y =
@@ -1500,6 +1497,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         followsBlank = iFalse;
     }
     d->size.y = pos.y;
+    if (!isJustified) {
+        iForEach(Array, r, &d->layout) {
+            ((iGmRun *) r.value)->flags |= notJustified_GmRunFlag;
+        }
+    }
     d->contentWidth += indents[text_GmLineType] * gap_Text; /* indent not included in run widths */
     if (checkMissing_Text()) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
@@ -1551,7 +1553,10 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->origSource);
     init_String(&d->source);
     init_String(&d->url);
+    init_String(&d->mimeType);
     init_String(&d->localHost);
+    init_ScopeKey(&d->scopeKey);
+    initCopy_DocPrefs(&d->docPrefs, activeDocPrefs_App());
     d->outsideMargin = 0;
     d->maxContentWidth = 0;
     d->wrapWidth = 0;
@@ -1575,6 +1580,7 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isPaletteValid = iFalse;
     d->flags.isConvertedMarkdown = iFalse;
     d->flags.isCoverPage = iFalse;
+    d->flags.isDocPrefsPinned = iFalse;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -1587,7 +1593,10 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_Array(&d->headings);
     deinit_StringArray(&d->auxText);
     deinit_Array(&d->layout);
+    deinit_DocPrefs(&d->docPrefs);
+    deinit_ScopeKey(&d->scopeKey);
     deinit_String(&d->localHost);
+    deinit_String(&d->mimeType);
     deinit_String(&d->url);
     deinit_String(&d->source);
     deinit_String(&d->origSource);
@@ -1620,7 +1629,7 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
         set_Color(tmBannerItemText_ColorId, get_Color(tmBannerTitle_ColorId));
     }
     else {
-        const int bannerItemFg = isDark_GmDocumentTheme(currentTheme_()) ? white_ColorId : black_ColorId;
+        const int bannerItemFg = isDark_GmDocumentTheme(theme) ? white_ColorId : black_ColorId;
         set_Color(tmBannerItemBackground_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
                                                             get_Color(tmBannerTitle_ColorId), 0.1f));
         set_Color(tmBannerItemFrame_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
@@ -1657,8 +1666,8 @@ static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iBlock *iconSeed) {
-    const iPrefs *        prefs = prefs_App();
-    enum iGmDocumentTheme theme = currentTheme_();
+    const iDocPrefs *     prefs = &d->docPrefs;
+    enum iGmDocumentTheme theme = currentTheme_GmDocument_(d);
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -1876,7 +1885,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             if (!isLink_ColorId(i)) {
                 iHSLColor color = get_HSLColor(i);
-                color.sat *= prefs->saturation;
+                color.sat *= prefs->saturation.value;
                 setHsl_Color(i, color);
             }
         }
@@ -2226,7 +2235,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             }
             /* Modify overall saturation. */
             if (!isLink_ColorId(i)) {
-                color.sat *= prefs->saturation;
+                color.sat *= prefs->saturation.value;
             }
             setHsl_Color(i, color);
         }
@@ -2256,11 +2265,19 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
     d->flags.isPaletteValid = iTrue;
 }
 
+static const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
+    const iString *seed = d->docPrefs.paletteSeed;
+    if (!isEmpty_String(seed) && !equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
+        return utf8_String(seed);
+    }
+    return urlThemeSeed_String(&d->url);
+}
+
 void makePaletteGlobal_GmDocument(const iGmDocument *d) {
     if (!d->flags.isPaletteValid) {
         /* Recompute the palette since it's needed now. */
         setThemeSeed_GmDocument(
-            (iGmDocument *) d, urlPaletteSeed_String(&d->url), urlThemeSeed_String(&d->url));
+            (iGmDocument *) d, paletteSeed_GmDocument_(d), urlThemeSeed_String(&d->url));
     }
     iAssert(d->flags.isPaletteValid);
     memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
@@ -2268,6 +2285,47 @@ void makePaletteGlobal_GmDocument(const iGmDocument *d) {
 
 void invalidatePalette_GmDocument(iGmDocument *d) {
     d->flags.isPaletteValid = iFalse;
+}
+
+const iDocPrefs *docPrefs_GmDocument(const iGmDocument *d) {
+    return &d->docPrefs;
+}
+
+static uint32_t applyDocPrefs_GmDocument_(iGmDocument *d, const iDocPrefs *prefs) {
+    const uint32_t diff = diff_DocPrefs(&d->docPrefs, prefs);
+    if (diff) {
+        set_DocPrefs(&d->docPrefs, prefs);
+        if (diff & palette_DocPrefsSpecFlag) {
+            invalidatePalette_GmDocument(d);
+        }
+        if (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag | font_DocPrefsSpecFlag)) {
+            d->wrapWidth = 0;
+            invalidateLayout_GmDocument(d);
+        }
+    }
+    return diff;
+}
+
+void setDocPrefs_GmDocument(iGmDocument *d, const iDocPrefs *pinned) {
+    d->flags.isDocPrefsPinned = iTrue;
+    applyDocPrefs_GmDocument_(d, pinned);
+}
+
+uint32_t updateDocPrefs_GmDocument(iGmDocument *d) {
+    if (d->flags.isDocPrefsPinned) {
+        return 0;
+    }
+    iDocPrefs resolved;
+    init_DocPrefs(&resolved);
+    resolve_DocPrefs(&resolved, &d->scopeKey, &d->url,
+                     !isEmpty_String(&d->mimeType) ? &d->mimeType : NULL);
+    const uint32_t diff = applyDocPrefs_GmDocument_(d, &resolved);
+    deinit_DocPrefs(&resolved);
+    return diff;
+}
+
+void setMimeType_GmDocument(iGmDocument *d, const iString *mimeType) {
+    set_String(&d->mimeType, mimeType);
 }
 
 void setMode_GmDocument(iGmDocument *d, enum iGmDocumentMode mode) {
@@ -2465,7 +2523,10 @@ static void normalize_GmDocument(iGmDocument *d) {
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     url = canonicalUrl_String(url);
     set_String(&d->url, url);
-    setThemeSeed_GmDocument(d, urlPaletteSeed_String(url), urlThemeSeed_String(url));
+    deinit_ScopeKey(&d->scopeKey);
+    initUrl_ScopeKey(&d->scopeKey, url);
+    updateDocPrefs_GmDocument(d);
+    setThemeSeed_GmDocument(d, paletteSeed_GmDocument_(d), urlThemeSeed_String(url));
     iUrl parts;
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);
@@ -2672,7 +2733,7 @@ static void import_GmDocument_(iGmDocument *d) {
     /* Do an internal format conversion to Gemtext. */
     iAssert(d->viewFormat == gemini_SourceFormat);
     if (d->format == gemini_SourceFormat) {
-        d->theme.ansiEscapes = prefs_App()->gemtextAnsiEscapes;
+        d->theme.ansiEscapes = d->docPrefs.ansiEscapes.value;
     }
     else if (d->format == markdown_SourceFormat) {
         convertMarkdownToGemtext_GmDocument_(d);
@@ -3084,8 +3145,7 @@ void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *
 }
 
 iBool isJustified_GmRun(const iGmRun *d) {
-    return prefs_App()->justifyParagraph &&
-           (d->flags & (notJustified_GmRunFlag | endOfLine_GmRunFlag)) == 0;
+    return (d->flags & (notJustified_GmRunFlag | endOfLine_GmRunFlag)) == 0;
 }
 
 int drawBoundWidth_GmRun(const iGmRun *d) {

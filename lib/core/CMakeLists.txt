@@ -5,6 +5,7 @@ project (lagrange-core)
 
 add_library (core STATIC
     src/core.c
+    src/docprefs.c
     src/gmcerts.c
     src/gmrequest.c
     src/mimehooks.c

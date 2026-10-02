@@ -36,6 +36,7 @@ struct Impl_Gopher {
     iBlock   source;
     iBlock   request; /* composed request bytes; caller sends these via the active transport */
     iBool    isPre;
+    iBool    isGeminiStyled; /* set by the owner before processing a response */
     iBool    needQueryArgs;
     iString *meta;
     iBlock * output;

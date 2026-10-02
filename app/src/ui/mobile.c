@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "mobile.h"
+#include "gmutil.h"
 
 #include "app.h"
 #include "certlistwidget.h"
@@ -525,6 +526,15 @@ iBool checkDevice_MenuItem(const iMenuItem *d) {
     return iTrue;
 }
 
+iBool checkScheme_MenuItem(const iMenuItem *d, const char *scheme) {
+    if (!hasLabel_Command(d->label, "scheme")) {
+        return iTrue;
+    }
+    const iRangecc required = range_Command(d->label, "scheme");
+    return equalCase_Rangecc(required, scheme) ||
+           (isGopherScheme_Rangecc(required) && isGopherScheme_Rangecc(range_CStr(scheme)));
+}
+
 static iBool dropdownHeadingHandler_(iWidget *d, const char *cmd) {
     if (isVisible_Widget(d) &&
         equal_Command(cmd, "mouse.clicked") && contains_Widget(d, coord_Command(cmd)) &&
@@ -598,6 +608,18 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setFont_LabelWidget(toggle, labelFont_());
         widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label),
                                               as_Widget(toggle));
+    }
+    else if (equal_Command(spec, "scopebar")) {
+        /* Protocol dropdown, and a toggle for enabling the page in the selected scope. */
+        if (item->data) {
+            makePanelItem_Mobile(panel,
+                                 &(iMenuItem){ format_CStr("dropdown id:%s text:${prefs.scope}", id),
+                                               0, 0, item->data });
+        }
+        iLabelWidget *toggle = (iLabelWidget *) makeToggle_Widget(format_CStr("%s.toggle", id));
+        setFont_LabelWidget(toggle, labelFont_());
+        widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(""), as_Widget(toggle));
+        setId_Widget(as_Widget(heading), format_CStr("%s.label", id));
     }
     else if (equal_Command(spec, "dropdown")) {
         const iMenuItem *dropItems = item->data;

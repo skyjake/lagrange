@@ -105,8 +105,8 @@ static int cmp_PrioMapItem_(const void *a, const void *b) {
     return -iCmp(i->priority, j->priority); /* descending */
 }
 
-static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback) {
-    const iFontSpec *spec = findSpec_Fonts(cstr_String(&prefs_App()->strings[ps]));
+static const iFontSpec *tryFindSpec_(const iString *name, const char *fallback) {
+    const iFontSpec *spec = findSpec_Fonts(cstr_String(name));
     return spec ? spec : findSpec_Fonts(fallback);
 }
 
@@ -150,12 +150,13 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
         *colorEmojiFontId = -1;
     }
     clear_Array(fontPriorityOrder);
+    const iDocPrefs *docPrefs = activeDocPrefs_App(); /* no document context here */
     /* Mandatory fonts (must match the fixed slot IDs in font.h). */
-    cb->setupSpec(d, tryFindSpec_(uiFont_PrefsString,               "default"),      default_FontId,           uiSize, textSize);
-    cb->setupSpec(d, tryFindSpec_(monospaceFont_PrefsString,        "iosevka"),      monospace_FontId,         uiSize, textSize);
-    cb->setupSpec(d, tryFindSpec_(headingFont_PrefsString,          "default"),      documentHeading_FontId,   uiSize, textSize);
-    cb->setupSpec(d, tryFindSpec_(bodyFont_PrefsString,             "default"),      documentBody_FontId,      uiSize, textSize);
-    cb->setupSpec(d, tryFindSpec_(monospaceDocumentFont_PrefsString,"iosevka-body"), documentMonospace_FontId, uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(&prefs_App()->strings[uiFont_PrefsString], "default"),      default_FontId,           uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->monospaceFont,         "iosevka"),      monospace_FontId,         uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->headingFont,           "default"),      documentHeading_FontId,   uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->bodyFont,              "default"),      documentBody_FontId,      uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->monospaceDocumentFont, "iosevka-body"), documentMonospace_FontId, uiSize, textSize);
     /* Auxiliary and user-installed fonts. */
     iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
         const iFontSpec *spec = s.ptr;

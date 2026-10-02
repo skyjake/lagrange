@@ -517,7 +517,7 @@ float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
         x += d->font->xScale * d->glyphPos[i].x_advance;
         if (d->logicalText[logPos] == '\t') {
             /* Tab stop: snap to next multiple of tabWidth em-advances. */
-            const float stop = prefs_App()->tabWidth * d->font->emAdvance;
+            const float stop = activeDocPrefs_App()->tabWidth.value * d->font->emAdvance;
             x = floorf(x / stop) * stop + stop;
         }
     }
@@ -938,7 +938,7 @@ void cache_Text(int fontId, iRangecc text) {
 /* nextTabStop_Font_ is called by both run_Font_ (HarfBuzz) and text_simple.c (no HarfBuzz). */
 
 float nextTabStop_Font_(const iRasterFont *d, float x) {
-    const float stop = prefs_App()->tabWidth * d->emAdvance;
+    const float stop = activeDocPrefs_App()->tabWidth.value * d->emAdvance;
     return floorf(x / stop) * stop + stop;
 }
 
