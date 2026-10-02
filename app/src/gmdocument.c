@@ -323,7 +323,7 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
         if (isEmpty_Range(&run->text)) {
             continue;
         }
-        return top_Rect(run->bounds) + height_Rect(run->bounds) * d->docPrefs.lineSpacing.value;
+        return top_Rect(run->visBounds) + height_Rect(run->visBounds) * d->docPrefs.lineSpacing.value;
     }
     return 0;
 }
@@ -745,10 +745,16 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
     d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;
     d->run.isRTL            = attrib.isBaseRTL;
+    /* Hit testing covers the extra line spacing, split evenly above and below the text. */
+    const int pitch = dims.y * d->lineSpacing;
+    if (pitch > dims.y) {
+        d->run.bounds.pos.y -= (pitch - dims.y) / 2;
+        d->run.bounds.size.y = pitch;
+    }
 //    printf("origin:%d isRTL:%d\n{%s}\n", origin, attrib.isBaseRTL, cstr_Rangecc(wrapRange));
     pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
-    d->pos.y += lineHeight_Text(d->baseFont) * d->lineSpacing;
+    d->pos.y += pitch;
     return iTrue; /* continue to next wrapped line */
 }
 
@@ -1034,10 +1040,16 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
             prevWrapParagraph = iFalse;
+            const int lineHeight = lineHeight_Text(run.font);
+            const int pitch      = lineHeight * prefs->lineSpacing.value;
             if (type == preformatted_GmLineType) {
                 /* Empty lines in a preformatted blocks should functionally be part of the block. */
-                run.bounds = (iRect){ pos, init_I2(1, lineHeight_Text(run.font)) };
+                run.bounds = (iRect){ pos, init_I2(1, lineHeight) };
                 run.visBounds = run.bounds;
+                if (pitch > lineHeight) {
+                    run.bounds.pos.y -= (pitch - lineHeight) / 2;
+                    run.bounds.size.y = pitch;
+                }
                 run.text = line;
                 pushBack_Array(&d->layout, &run);
             }
@@ -1050,7 +1062,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.flags          = ruler_GmRunFlag | decoration_GmRunFlag;
                 pushBack_Array(&d->layout, &run);
             }
-            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing.value;
+            pos.y += pitch;
             prevType = type;
             if (type != quote_GmLineType) {
                 addQuoteIcon = prefs->quoteIcon.value;

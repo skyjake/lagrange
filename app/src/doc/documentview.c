@@ -1275,13 +1275,14 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
             const iInt2 size = measureRange_Text(metaFont, range_String(&text)).bounds.size;
             if (size.x) {
+                const iInt2 topRight = init_I2(right_Rect(run->bounds), top_Rect(run->visBounds));
                 fillRect_Paint(
                     &d->paint,
-                    (iRect){ add_I2(origin, addX_I2(topRight_Rect(run->bounds), -size.x - gap_UI)),
+                    (iRect){ add_I2(origin, addX_I2(topRight, -size.x - gap_UI)),
                             addX_I2(size, 2 * gap_UI) },
                     tmBackground_ColorId);
                 drawAlign_Text(metaFont,
-                               add_I2(topRight_Rect(run->bounds), origin),
+                               add_I2(topRight, origin),
                                fg,
                                right_Alignment,
                                "%s", cstr_String(&text));
