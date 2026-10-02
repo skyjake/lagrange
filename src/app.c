@@ -1040,8 +1040,9 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                         postCommand_Widget(sidebar2, "feeds.mode arg:%d", unread_FeedsMode);
                     }
                     if (deviceType_App() == desktop_AppDeviceType) {
-                        setWidth_SidebarWidget(sidebar,  widths[0]);
-                        setWidth_SidebarWidget(sidebar2, widths[1]);
+                        /* Zero means the width was not available when saving. */
+                        if (widths[0] > 0) setWidth_SidebarWidget(sidebar,  widths[0]);
+                        if (widths[1] > 0) setWidth_SidebarWidget(sidebar2, widths[1]);
                         if (flags & 1) postCommand_Root(root, "sidebar.toggle noanim:1");
                         if (flags & 2) postCommand_Root(root, "sidebar2.toggle noanim:1");
                     }
