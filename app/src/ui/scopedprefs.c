@@ -242,14 +242,15 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
     iArray *items = collectNew_Array(sizeof(iMenuItem));
 #define menu_(expr)     (withMenus ? (const void *) (expr) : NULL)
 #define add_(...)       pushBack_Array(items, &(iMenuItem){ __VA_ARGS__ })
+    /* Finger is always unstyled plain text, so many of the settings do not apply to it. */
     add_(format_CStr("scopebar id:%s", scopeBarId_(group)), 0, 0,
          (const void *) (withProtocols ? protocolItems_ : NULL));
     switch (group) {
         case typography_DocPrefsGroup:
             if (!isTerminal_Platform()) {
-                add_("dropdown id:prefs.font.heading", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("heading"))));
+                add_("dropdown id:prefs.font.heading except:finger", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("heading"))));
                 add_("dropdown id:prefs.font.body", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("body"))));
-                add_("dropdown id:prefs.font.mono", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("mono"))));
+                add_("dropdown id:prefs.font.mono except:finger", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("mono"))));
                 add_("heading id:heading.prefs.monodoc");
                 add_("dropdown id:prefs.font.monodoc", 0, 0, menu_(constData_Array(fontItems_ScopedPrefs("monodoc"))));
             }
@@ -260,20 +261,20 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("input id:prefs.linespacing maxlen:5");
             add_("input id:prefs.tabwidth maxlen:3");
 #if defined (LAGRANGE_ENABLE_HARFBUZZ) || defined (LAGRANGE_ENABLE_CORETEXT)
-            add_("toggle id:prefs.justify");
+            add_("toggle id:prefs.justify except:finger");
 #endif
-            add_("toggle id:prefs.biglede");
+            add_("toggle id:prefs.biglede except:finger");
             add_("toggle id:prefs.plaintext.wrap");
             add_("padding");
             add_("toggle id:prefs.expandline");
             add_("toggle id:prefs.centershort");
             add_("padding");
-            add_("dropdown id:prefs.collapsepre", 0, 0, menu_(collapseItems_()));
+            add_("dropdown id:prefs.collapsepre except:finger", 0, 0, menu_(collapseItems_()));
             break;
         case style_DocPrefsGroup:
-            add_("radio horizontal:1 id:prefs.quoteicon", 0, 0, (const void *) quoteItems_);
-            add_("toggle id:prefs.quote.italic");
-            add_("buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems_);
+            add_("radio horizontal:1 id:prefs.quoteicon except:finger", 0, 0, (const void *) quoteItems_);
+            add_("toggle id:prefs.quote.italic except:finger");
+            add_("buttons id:prefs.boldlink except:finger", 0, 0, (const void *) boldLinkItems_);
             add_("padding");
             add_("toggle id:prefs.sideicon");
             break;
@@ -283,12 +284,12 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("padding");
             add_("radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems_);
             add_("padding");
-            add_("dropdown id:prefs.imagestyle", 0, 0, menu_(imageStyleItems_()));
+            add_("dropdown id:prefs.imagestyle except:finger", 0, 0, menu_(imageStyleItems_()));
             break;
         case behavior_DocPrefsGroup:
-            add_("buttons id:prefs.gemtext.ansi", 0, 0, (const void *) ansiItems_);
+            add_("buttons id:prefs.gemtext.ansi except:finger", 0, 0, (const void *) ansiItems_);
             add_("toggle id:prefs.gopher.gemstyle scheme:gopher");
-            add_("toggle id:prefs.markdown.viewsource");
+            add_("toggle id:prefs.markdown.viewsource except:finger");
             break;
         default:
             break;
@@ -348,15 +349,15 @@ static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
         setFixedSize_Widget(as_Widget(drop), init_I2(width_Widget(drop), -1));
         addChild_Widget(bar, iClob(makeHeading_Widget("${prefs.scope}")));
         addChildFlags_Widget(bar, iClob(drop), alignLeft_WidgetFlag);
-        addChild_Widget(bar, iClob(makePadding_Widget(2 * gap_UI)));
-        addChild_Widget(bar, iClob(toggle));
-        addChild_Widget(bar, iClob(label));
     }
-    else {
-        addChild_Widget(bar, iClob(label));
-        addChild_Widget(bar, iClob(toggle));
-    }
-    addChildFlags_Widget(page, iClob(bar), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    /* The toggle stays at the right edge regardless of the label. */
+    addChildFlags_Widget(bar, iClob(new_Widget()), expand_WidgetFlag);
+    addChild_Widget(bar, iClob(label));
+    addChild_Widget(bar, iClob(toggle));
+    addChildFlags_Widget(page,
+                         iClob(bar),
+                         arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                             resizeToParentWidth_WidgetFlag | resizeWidthOfChildren_WidgetFlag);
 }
 
 /* Desktop counterpart of makePanelItems_Mobile(), for the kinds of items used here. */
@@ -477,6 +478,15 @@ static void showRow_(iWidget *control, iBool show) {
     }
     iWidget *parent = parent_Widget(control);
     if (isUsingPanelLayout_Mobile()) {
+        if (!cmp_String(id_Widget(parent), "panel")) {
+            /* A group of buttons is directly in the panel, preceded by its heading. */
+            const size_t index = indexOfChild_Widget(parent, control);
+            if (index > 0) {
+                showCollapsed_Widget(child_Widget(parent, index - 1), show);
+            }
+            showCollapsed_Widget(control, show);
+            return;
+        }
         showCollapsed_Widget(parent, show);
         return;
     }
@@ -590,6 +600,21 @@ void update_ScopedPrefs(iWidget *dlg) {
             }
             deinit_DocPrefs(&inherited);
         }
+        /* Some fields apply only to certain schemes. */
+        int numShown = 0;
+        for (const iMenuItem *item = items; item->label; item++) {
+            iWidget *control = hasLabel_Command(item->label, "id")
+                                   ? findChild_Widget(dlg, cstr_Command(item->label, "id"))
+                                   : NULL;
+            if (!control || equal_Command(item->label, "scopebar")) {
+                continue;
+            }
+            const iBool show = checkScheme_MenuItem(item, cstr_String(&key.scheme));
+            if (hasLabel_Command(item->label, "scheme") || hasLabel_Command(item->label, "except")) {
+                showRow_(control, show);
+            }
+            numShown += show ? 1 : 0;
+        }
         /* The scope bar. All instances of the dropdown show the same scope. */ {
             const char *barId  = scopeBarId_(group);
             iWidget *   toggle = findChild_Widget(dlg, format_CStr("%s.toggle", barId));
@@ -601,22 +626,17 @@ void update_ScopedPrefs(iWidget *dlg) {
                 setTextCStr_LabelWidget((iLabelWidget *) label,
                                         isBase ? "" : toggleLabel_(group, scope));
             }
+            /* Nothing to enable if no fields apply to the scheme. */
+            const iBool showToggle = !isBase && numShown > 0;
             if (isUsingPanelLayout_Mobile()) {
-                showCollapsed_Widget(toggle ? parent_Widget(toggle) : NULL, !isBase);
+                showCollapsed_Widget(toggle ? parent_Widget(toggle) : NULL, showToggle);
             }
             else {
-                showCollapsed_Widget(toggle, !isBase);
-                showCollapsed_Widget(label, !isBase);
+                showCollapsed_Widget(toggle, showToggle);
+                showCollapsed_Widget(label, showToggle);
             }
         }
         setDisabled_(dlg, items, !isEnabled);
-        /* Some fields apply to one scheme only. */
-        for (const iMenuItem *item = items; item->label; item++) {
-            if (hasLabel_Command(item->label, "scheme")) {
-                showRow_(findChild_Widget(dlg, cstr_Command(item->label, "id")),
-                         checkScheme_MenuItem(item, cstr_String(&key.scheme)));
-            }
-        }
     }
     applyValues_(dlg, &shown);
     deinit_DocPrefs(&shown);

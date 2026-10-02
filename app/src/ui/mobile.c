@@ -527,6 +527,10 @@ iBool checkDevice_MenuItem(const iMenuItem *d) {
 }
 
 iBool checkScheme_MenuItem(const iMenuItem *d, const char *scheme) {
+    if (hasLabel_Command(d->label, "except") &&
+        equalCase_Rangecc(range_Command(d->label, "except"), scheme)) {
+        return iFalse;
+    }
     if (!hasLabel_Command(d->label, "scheme")) {
         return iTrue;
     }

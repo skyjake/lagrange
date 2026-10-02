@@ -2021,19 +2021,19 @@ msgstr "All protocols"
 
 # The placeholder is the name of a protocol, for example "Gemini".
 msgid "prefs.scope.custom.typography"
-msgstr "Use %s-specific typography"
+msgstr "Use %s-specific typography:"
 
 msgid "prefs.scope.custom.layout"
-msgstr "Use %s-specific layout"
+msgstr "Use %s-specific layout:"
 
 msgid "prefs.scope.custom.style"
-msgstr "Use %s-specific style"
+msgstr "Use %s-specific style:"
 
 msgid "prefs.scope.custom.theme"
-msgstr "Use %s-specific theme"
+msgstr "Use %s-specific theme:"
 
 msgid "prefs.scope.custom.behavior"
-msgstr "Use %s-specific behavior"
+msgstr "Use %s-specific behavior:"
 
 msgid "prefs.scope.site.typography"
 msgstr "Use site-specific typography:"

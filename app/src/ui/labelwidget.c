@@ -380,6 +380,15 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
     }
+    if (isSel && flags & disabled_WidgetFlag && isButton) {
+        /* Dimmed, but still distinct from an unselected disabled button. */
+        *fg = *icon = *meta = uiTextDim_ColorId;
+        if (!d->flags.checkMark && !isThemeBackground) {
+            *bg = isDarkTheme ? uiBackgroundUnfocusedSelection_ColorId : uiMarked_ColorId;
+        }
+        *frame1 = uiEmboss1_ColorId;
+        *frame2 = uiEmboss2_ColorId;
+    }
     if (isFocus) {
         *frame1 = *frame2 = (isSel ? uiText_ColorId : uiInputFrameFocused_ColorId);
     }
