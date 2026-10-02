@@ -1389,6 +1389,11 @@ static void updateSlidingSheetHeight_SidebarWidget_(iSidebarWidget *sidebar, iRo
     //           newSize);
 }
 
+static iBool isFolder_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return isFolder_Bookmark(bm);
+}
+
 void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -1432,6 +1437,10 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->certList      = NULL;
     d->actions       = NULL;
     d->closedFolders = new_IntSet();
+    /* Folders are folded by default. */
+    iConstForEach(PtrArray, bf, list_Bookmarks(bookmarks_App(), NULL, isFolder_, NULL)) {
+        insert_IntSet(d->closedFolders, id_Bookmark(bf.ptr));
+    }
     init_String(&d->bookmarkFilter);
     init_String(&d->structureHost);
     d->structureUrls    = new_StringSet();
@@ -2109,11 +2118,6 @@ static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
                                       pos < midRegion.start ? top_SlidingSheetPos
                                       : pos > midRegion.end ? bottom_SlidingSheetPos
                                                             : middle_SlidingSheetPos);
-}
-
-static iBool isFolder_(void *context, const iBookmark *bm) {
-    iUnused(context);
-    return isFolder_Bookmark(bm);
 }
 
 static void handleFeedUnsubscribeCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd,
