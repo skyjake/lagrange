@@ -229,6 +229,7 @@ static void     updateNavBarSize_           (iWidget *navBar);
 static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 static void     hideReadingBarsIfIdle_Root_ (iRoot *);
 static void     finishHidingReadingBars_Root_(void *);
+static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
 static void     updateReadingBarsOnTop_Root_(iRoot *);
 
 iDefineTypeConstruction(Root)
@@ -2509,6 +2510,12 @@ static void setupMovableElements_Root_(iRoot *d) {
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
     updateReadingBarsOnTop_Root_(d);
     arrange_Widget(d->widget);
+    if (d->isReading) {
+        /* Offsets of the previous placement do not apply. */
+        iZap(d->readingBarsRest);
+        slideReadingBars_Root_(d, iFalse, iFalse);
+        showReadingBars_Root(d, iTrue);
+    }
     refresh_Widget(d->widget);
     postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
 }
