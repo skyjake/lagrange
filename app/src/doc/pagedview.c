@@ -230,7 +230,8 @@ iBool turnPage_DocumentView(iDocumentView *d, int dir) {
         postCommand_Widget(d->owner, "document.page.overflow arg:%d", dir);
         return iFalse;
     }
-    showPage_DocumentView(d, target, iTrue);
+    /* Swipes animate regardless, but other turns follow the smooth scrolling setting. */
+    showPage_DocumentView(d, target, prefs_App()->smoothScrolling);
     return iTrue;
 }
 
