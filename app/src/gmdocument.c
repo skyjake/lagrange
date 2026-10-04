@@ -888,6 +888,17 @@ static iBool isHeadingGroup_GmDocument_(const iArray *runs, size_t start, size_t
     return iFalse;
 }
 
+static iBool isChapterGroup_GmDocument_(const iArray *runs, size_t start, size_t end) {
+    /* The first line of a level 1 heading. */
+    for (size_t i = start; i < end; i++) {
+        const iGmRun *run = constAt_Array(runs, i);
+        if (~run->flags & decoration_GmRunFlag) {
+            return run->lineType == heading1_GmLineType && run->flags & startOfLine_GmRunFlag;
+        }
+    }
+    return iFalse;
+}
+
 static void addPageBand_GmDocument_(iGmDocument *d, int top, iRangecc text) {
     const int font = pageFont_GmDocument_(d);
     const int band = pageBandHeight_GmDocument_(d);
@@ -973,30 +984,47 @@ static void paginate_GmDocument_(iGmDocument *d) {
     size_t   pageStart  = 0;           /* layout index of the first run on the page */
     uint16_t lastPreId  = 0;
     uint16_t pagePreId  = 1;           /* first preformatted block that may begin on the page */
+    int      srcBottom  = 0;           /* bottom of the placed runs in the continuous layout */
+    iBool    hasTitle   = iFalse;      /* the first level 1 heading is a title, not a chapter */
     for (size_t i = 0; i < numSrc;) {
-        size_t        end  = groupEnd_GmDocument_(src, i);
-        const iRangei span = groupSpan_GmDocument_(src, i, end);
-        if (i != firstGroup && span.end + offset > content.end) {
+        size_t        end       = groupEnd_GmDocument_(src, i);
+        const iRangei span      = groupSpan_GmDocument_(src, i, end);
+        const iBool   isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || page > 0);
+        if (i != firstGroup && (isChapter || span.end + offset > content.end)) {
             /* Continue on the next page. A heading is kept with the group that follows it. */
-            if (prevGroup != iInvalidPos && prevGroup != firstGroup &&
+            if (!isChapter && prevGroup != iInvalidPos && prevGroup != firstGroup &&
                 isHeadingGroup_GmDocument_(src, prevGroup, i)) {
                 i = prevGroup;
                 resize_Array(&d->layout, prevDest);
             }
-            /* The first page is aligned to the bottom, others are centered. */
+            /* The first page is aligned to the bottom, others are centered. A chapter's last
+               page is aligned to the top. */
             alignPage_GmDocument_(d, pageStart, content,
-                                  page == 0 ? bottom_PageAlign : center_PageAlign,
+                                  page == 0   ? bottom_PageAlign
+                                  : isChapter ? top_PageAlign
+                                              : center_PageAlign,
                                   pagePreId, lastPreId);
             breakPage_GmDocument_(d, &page, &footers, header);
             pageStart  = size_Array(&d->layout);
             pagePreId  = lastPreId + 1;
             content    = pageContentRange_GmDocument(d, page);
             end        = groupEnd_GmDocument_(src, i);
-            offset     = content.start - groupSpan_GmDocument_(src, i, end).start;
+            const iRangei newSpan = groupSpan_GmDocument_(src, i, end);
+            offset     = content.start - newSpan.start;
+            if (isChapter) {
+                /* The margin above the heading remains at the top of the page. */
+                const int gap = iMax(0, newSpan.start - srcBottom);
+                if (newSpan.end + offset + gap <= content.end) {
+                    offset += gap;
+                }
+            }
             lastBottom = content.start;
             firstGroup = i;
             prevGroup  = iInvalidPos;
             continue;
+        }
+        if (isChapterGroup_GmDocument_(src, i, end)) {
+            hasTitle = iTrue;
         }
         prevGroup = i;
         prevDest  = size_Array(&d->layout);
@@ -1014,6 +1042,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
                 lastPreId = preId;
             }
             lastBottom = iMax(lastBottom, bottom_Rect(run.visBounds));
+            srcBottom  = iMax(srcBottom, bottom_Rect(run.visBounds) - offset);
             pushBack_Array(&d->layout, &run);
         }
     }
@@ -1316,7 +1345,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Check the margin vs. previous run. */
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
-            int required = iMax(topMargin[type], bottomMargin[prevType]) *
+            /* Paginated level 1 headings begin a new page lower down. */
+            const float top = topMargin[type] * (isPaged && type == heading1_GmLineType ? 3 : 1);
+            int required = iMax(top, bottomMargin[prevType]) *
                            lineHeight_Text(d->theme.fonts[text_GmLineType]);
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
                 required = 1.25f * lineHeight_Text(d->theme.fonts[text_GmLineType]);
