@@ -191,7 +191,15 @@ enum iGmDocumentMode {
                                  directly presented */
 };
 
-/* TODO: Add `GmDocumentMetrics` struct for width, maxContentWidth, canvasWidth */
+iDeclareType(GmDocumentMetrics)
+
+struct Impl_GmDocumentMetrics {
+    int width;           /* layout width */
+    int canvasWidth;     /* width of the view; content may extend past the margins */
+    int maxContentWidth; /* unwrappable lines may extend up to this */
+};
+
+iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
 
 void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *paletteSeed,
@@ -203,16 +211,16 @@ void    setMode_GmDocument      (iGmDocument *, enum iGmDocumentMode mode);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat sourceFormat);
 iBool   setViewFormat_GmDocument(iGmDocument *, enum iSourceFormat viewFormat); /* returns True if changed */
 enum iSourceFormat viewFormat_GmDocument(const iGmDocument *);
-void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth, int maxContentWidth);
-iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth, int maxContentWidth);
+void    setMetrics_GmDocument   (iGmDocument *, const iGmDocumentMetrics *metrics); /* redoes layout */
+iBool   updateMetrics_GmDocument(iGmDocument *, const iGmDocumentMetrics *metrics); /* returns True if layout redone */
 void    redoLayout_GmDocument   (iGmDocument *);
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int canvasWidth,
-                                 int maxContentWidth, enum iGmDocumentUpdate updateType);
+void    setSource_GmDocument    (iGmDocument *, const iString *source,
+                                 const iGmDocumentMetrics *metrics, enum iGmDocumentUpdate updateType);
 void    setWarning_GmDocument   (iGmDocument *, int warning, iBool set);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 

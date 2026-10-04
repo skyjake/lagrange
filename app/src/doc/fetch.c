@@ -798,10 +798,8 @@ void showErrorPage_DocumentFetch(iDocumentFetch *d, enum iGmStatusCode code,
     /* Make a new document for the error page.*/
     iGmDocument *errorDoc = new_GmDocument();
     setMode_GmDocument(errorDoc, coverPage_GmDocumentMode); /* UI content */
-    setWidth_GmDocument(errorDoc,
-                        documentWidth_DocumentView(view_DocumentFetch_(d)),
-                        width_Widget(d->owner),
-                        maxDocumentWidth_DocumentView(view_DocumentFetch_(d)));
+    const iGmDocumentMetrics metrics = metrics_DocumentView(view_DocumentFetch_(d));
+    setMetrics_GmDocument(errorDoc, &metrics);
     setUrl_GmDocument(errorDoc, url_DocumentFetch_(d));
     setFormat_GmDocument(errorDoc, gemini_SourceFormat);
     replaceDocument_DocumentWidget(d->owner, errorDoc);

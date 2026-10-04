@@ -166,9 +166,8 @@ struct Impl_GmDocument {
     iDocPrefs docPrefs;   /* resolved for the URL and MIME type */
     iInt2     size;
     int       contentWidth; /* some runs may extend past the requested width */
-    int       maxContentWidth;
+    iGmDocumentMetrics metrics;
     int       wrapWidth;    /* if non-zero, overrides the line wrap width */
-    int       outsideMargin;
     iArray    layout;     /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
@@ -814,9 +813,14 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
             }
             maxLine = iMaxi(maxLine, measureRange_Text(preformatted_FontId, visLine).advance.x);
         }
-        d->wrapWidth = iMin(maxLine, d->maxContentWidth);
+        d->wrapWidth = iMin(maxLine, d->metrics.maxContentWidth);
         iRelease(linkPattern);
     }
+}
+
+static int outsideMargin_GmDocument_(const iGmDocument *d) {
+    /* Distance to the edge of the canvas. */
+    return iMax(0, (d->metrics.canvasWidth - d->size.x) / 2);
 }
 
 static iBool isLineIndentable_(iRangecc line) {
@@ -849,7 +853,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isNarrow          = d->size.x < 90 * gap_Text * aspect_UI;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text * aspect_UI;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text * aspect_UI;
-    const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI * aspect_UI);
+    const int     outsideMargin     = outsideMargin_GmDocument_(d);
+    const iBool   isFullWidthImages = (outsideMargin < 5 * gap_UI * aspect_UI);
 
     initTheme_GmDocument_(d);
     d->flags.isLayoutInvalidated = iFalse;
@@ -986,7 +991,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 /*
                 int overrun = meta.pixelRect.size.x - d->size.x;
                 if (prevNonBlankType == undefined_GmLineType && overrun > 0) {
-                    meta.initialOffset = iMin(overrun / 2, d->outsideMargin - 5 * gap_UI);
+                    meta.initialOffset = iMin(overrun / 2, outsideMargin - 5 * gap_UI);
                 }
                 */
                 trimLine_Rangecc(&line, type, isNormalized);
@@ -1420,9 +1425,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     /* Extend the image to full width, including outside margin, if the viewport
                        is narrow enough. */
                     if (isFullWidthImages) {
-                        run.bounds.size.x += d->outsideMargin * 2;
-                        run.bounds.size.y += d->outsideMargin * 2 * aspect;
-                        run.bounds.pos.x  -= d->outsideMargin;
+                        run.bounds.size.x += outsideMargin * 2;
+                        run.bounds.size.y += outsideMargin * 2 * aspect;
+                        run.bounds.pos.x  -= outsideMargin;
                     }
                     run.visBounds = run.bounds;
                     /// XXX: Don't use window pixel ratio, use the UI scaling factor on Window.s
@@ -1574,8 +1579,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->localHost);
     init_ScopeKey(&d->scopeKey);
     initCopy_DocPrefs(&d->docPrefs, activeDocPrefs_App());
-    d->outsideMargin = 0;
-    d->maxContentWidth = 0;
+    iZap(d->metrics);
     d->wrapWidth = 0;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
@@ -2368,18 +2372,21 @@ enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
     return d->viewFormat;
 }
 
-void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth, int maxContentWidth) {
-    d->size.x          = width;
-    d->maxContentWidth = maxContentWidth;
-    d->outsideMargin   = iMax(0, (canvasWidth - width) / 2); /* distance to edge of the canvas */
-    d->wrapWidth       = 0;
+iBool equal_GmDocumentMetrics(const iGmDocumentMetrics *d, const iGmDocumentMetrics *other) {
+    return d->width == other->width && d->canvasWidth == other->canvasWidth &&
+           d->maxContentWidth == other->maxContentWidth;
+}
+
+void setMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics) {
+    d->metrics   = *metrics;
+    d->size.x    = metrics->width;
+    d->wrapWidth = 0;
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
 
-iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth, int maxContentWidth) {
-    if (d->size.x != width || d->maxContentWidth != maxContentWidth ||
-        isLayoutOutdated_GmDocument(d)) {
-        setWidth_GmDocument(d, width, canvasWidth, maxContentWidth);
+iBool updateMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics) {
+    if (!equal_GmDocumentMetrics(&d->metrics, metrics) || isLayoutOutdated_GmDocument(d)) {
+        setMetrics_GmDocument(d, metrics);
         return iTrue;
     }
     return iFalse;
@@ -2770,8 +2777,8 @@ static void import_GmDocument_(iGmDocument *d) {
     }
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int canvasWidth,
-                          int maxContentWidth, enum iGmDocumentUpdate updateType) {
+void setSource_GmDocument(iGmDocument *d, const iString *source,
+                          const iGmDocumentMetrics *metrics, enum iGmDocumentUpdate updateType) {
     /* TODO: This API has been set up to allow partial/progressive updating of the content.
        Currently the entire source is replaced every time, though. */
 //    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
@@ -2779,13 +2786,13 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     if (size_String(source) == size_String(&d->origSource)) {
         iAssert(equal_String(source, &d->origSource));
 //        printf("[GmDocument] source is unchanged!\n");
-        updateWidth_GmDocument(d, width, canvasWidth, maxContentWidth);
+        updateMetrics_GmDocument(d, metrics);
         return; /* Nothing to do. */
     }
     /* Normalize and convert to Gemtext if needed. */
     set_String(&d->origSource, source);
     import_GmDocument_(d);
-    setWidth_GmDocument(d, width, canvasWidth, maxContentWidth); /* re-do layout */
+    setMetrics_GmDocument(d, metrics); /* re-do layout */
 }
 
 void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {

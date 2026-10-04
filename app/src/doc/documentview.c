@@ -227,6 +227,14 @@ int documentWidth_DocumentView(const iDocumentView *d) {
                  maxDocumentWidth_DocumentView(d));
 }
 
+iGmDocumentMetrics metrics_DocumentView(const iDocumentView *d) {
+    return (iGmDocumentMetrics){
+        .width           = documentWidth_DocumentView(d),
+        .canvasWidth     = width_Widget(d->owner),
+        .maxContentWidth = maxDocumentWidth_DocumentView(d),
+    };
+}
+
 int documentTopPad_DocumentView(const iDocumentView *d) {
     /* Amount of space between banner and top of the document. */
     return isEmpty_Banner(d->banner) ? 0 : lineHeight_Text(paragraph_FontId);
@@ -625,10 +633,8 @@ void resetScroll_DocumentView(iDocumentView *d) {
 }
 
 iBool updateWidth_DocumentView(iDocumentView *d) {
-    if (updateWidth_GmDocument(d->doc,
-                               documentWidth_DocumentView(d),
-                               width_Widget(d->owner),
-                               maxDocumentWidth_DocumentView(d))) {
+    const iGmDocumentMetrics metrics = metrics_DocumentView(d);
+    if (updateMetrics_GmDocument(d->doc, &metrics)) {
         documentRunsInvalidated_DocumentView(d); /* GmRuns reallocated */
         return iTrue;
     }
@@ -811,7 +817,8 @@ size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId)
 }
 
 iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, iBool keepCenter) {
-    const int newWidth = documentWidth_DocumentView(d);
+    const iGmDocumentMetrics metrics  = metrics_DocumentView(d);
+    const int                newWidth = metrics.width;
     if (newWidth == size_GmDocument(d->doc).x && !keepCenter /* not a font change */ &&
         !(docPrefs_DocumentView_(d)->expandToLongLines.value &&
           docPrefs_DocumentView_(d)->plainTextWrap.value &&
@@ -835,10 +842,7 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
                  (float) height_Rect(run->bounds);
     }
     run = NULL;
-    setWidth_GmDocument(d->doc,
-                        newWidth,
-                        width_Widget(d->owner),
-                        maxDocumentWidth_DocumentView(d));
+    setMetrics_GmDocument(d->doc, &metrics);
     setWidth_Banner(d->banner, newWidth);
     documentRunsInvalidated_DocumentWidget(d->owner);
     if (runLoc && !keepCenter) {

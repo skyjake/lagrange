@@ -858,10 +858,8 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void updateWidthAndRedoLayout_DocumentWidget_(iDocumentWidget *d) {
-    setWidth_GmDocument(d->view->doc,
-                        documentWidth_DocumentView(d->view),
-                        width_Widget(d),
-                        maxDocumentWidth_DocumentView(d->view));
+    const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
+    setMetrics_GmDocument(d->view->doc, &metrics);
     documentRunsInvalidated_DocumentWidget(d); /* GmRuns reallocated */
 }
 
@@ -3495,15 +3493,13 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     if (document_App() == d) {
         updateActiveDocPrefs_App(); /* lay out with the right fonts */
     }
-    const int docWidth = documentWidth_DocumentView(d->view);
+    const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
     setSource_GmDocument(d->view->doc,
                          source,
-                         docWidth,
-                         width_Widget(d),
-                         maxDocumentWidth_DocumentView(d->view),
+                         &metrics,
                          isFinished_GmRequest(d->fetch->request) ? final_GmDocumentUpdate
                                                           : partial_GmDocumentUpdate);
-    setWidth_Banner(d->banner, docWidth);
+    setWidth_Banner(d->banner, metrics.width);
     documentWasChanged_DocumentWidget_(d);
 }
 
