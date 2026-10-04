@@ -105,8 +105,12 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
                 }
             }
         }
-        else if (isVisible_Widget(child_Widget(buttons, tabIndex + dir))) {
-            showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
+        else {
+            /* The button bar itself may be hidden. */
+            const iWidget *button = child_Widget(buttons, tabIndex + dir);
+            if (button && ~flags_Widget(button) & hidden_WidgetFlag) {
+                showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
+            }
         }
         if (argLabel_Command(cmd, "keydown")) {
             setFocusInsideTabPage_((iWidget *) currentTabPage_Widget(tabs));
