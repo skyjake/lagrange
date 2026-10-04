@@ -117,8 +117,6 @@ void    resetWideRuns_DocumentView      (iDocumentView *);
 void    invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *);
 
 int     maxDocumentWidth_DocumentView   (const iDocumentView *);
-int     maxDocumentWidthIn_DocumentView (const iDocumentView *, int availableWidth);
-int     preferredDocumentWidth_DocumentView(const iDocumentView *); /* line width in prefs */
 int     documentWidth_DocumentView      (const iDocumentView *);
 iGmDocumentMetrics metrics_DocumentView (const iDocumentView *);
 iRect   documentBounds_DocumentView     (const iDocumentView *);

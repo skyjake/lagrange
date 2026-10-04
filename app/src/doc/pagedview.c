@@ -56,15 +56,23 @@ iRect pageViewport_DocumentView(const iDocumentView *d) {
     return rect;
 }
 
-static int preferredWidth_DocumentView_(const iDocumentView *d) {
-    /* Lines are shorter in two columns than when scrolling. */
-    return preferredDocumentWidth_DocumentView(d) * 0.8f;
+static int preferredWidth_DocumentView_(const iDocumentView *d, int columns) {
+    /* Not zoomed: the zoom level only affects the text size. Lines are shorter in two
+       columns than when scrolling. */
+    const int width = fontSize_UI * docPrefs_GmDocument(d->doc)->lineWidth.value;
+    return columns == 2 ? width * 0.8f : width;
+}
+
+static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidth) {
+    /* Margins are relative to the page size. */
+    const int pageSize = iMin(columnWidth, height_Rect(pageViewport_DocumentView(d)));
+    return columnWidth - 2 * iMax(2 * gap_UI, pageSize / 14);
 }
 
 static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
     /* Two columns when both fit at the preferred width. */
-    return preferredWidth_DocumentView_(d) <=
-                   maxDocumentWidthIn_DocumentView(d, viewportWidth / 2)
+    return preferredWidth_DocumentView_(d, 2) <=
+                   maxWidthInColumn_DocumentView_(d, viewportWidth / 2)
                ? 2
                : 1;
 }
@@ -72,10 +80,8 @@ static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
 int pagedDocumentWidth_DocumentView(const iDocumentView *d) {
     const int width   = width_Rect(pageViewport_DocumentView(d));
     const int columns = columnsFor_DocumentView_(d, width);
-    /* A single column has room for the full line width. */
-    return iMin(columns == 1 ? preferredDocumentWidth_DocumentView(d)
-                             : preferredWidth_DocumentView_(d),
-                maxDocumentWidthIn_DocumentView(d, width / columns));
+    return iMin(preferredWidth_DocumentView_(d, columns),
+                maxWidthInColumn_DocumentView_(d, width / columns));
 }
 
 void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metrics) {

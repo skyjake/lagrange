@@ -206,37 +206,32 @@ void invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *d) 
     resetWideRuns_DocumentView(d);
 }
 
-int maxDocumentWidthIn_DocumentView(const iDocumentView *d, int availableWidth) {
-    const int   minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
-    const float adjust =
-        iClamp((float) availableWidth / gap_UI / 11 - 12,
+int maxDocumentWidth_DocumentView(const iDocumentView *d) {
+    const iWidget *w        = constAs_Widget(d->owner);
+    const iRect    bounds   = bounds_Widget(w);
+    const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
+    const float    adjust =
+        iClamp((float) bounds.size.x / gap_UI / 11 - 12,
                isDesktop_Platform() && !isTerminal_Platform() ? 2.0f /* no contraction */ : -1.0f,
                10.0f); /* adapt to width */
-    return iMax(minWidth, availableWidth - gap_UI * (d->pageMargin + adjust) * 2);
-}
-
-int maxDocumentWidth_DocumentView(const iDocumentView *d) {
-    return maxDocumentWidthIn_DocumentView(d, width_Widget(d->owner));
+    return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2);
 }
 
 static const iDocPrefs *docPrefs_DocumentView_(const iDocumentView *d) {
     return d->doc ? docPrefs_GmDocument(d->doc) : activeDocPrefs_App();
 }
 
-int preferredDocumentWidth_DocumentView(const iDocumentView *d) {
+int documentWidth_DocumentView(const iDocumentView *d) {
+    if (wantsPaged_DocumentView(d)) {
+        return pagedDocumentWidth_DocumentView(d);
+    }
     int prefsWidth = docPrefs_DocumentView_(d)->lineWidth.value;
     if (isTerminal_Platform()) {
         prefsWidth /= aspect_UI * 0.8f;
     }
     /* The zoom level follows the fonts in use. */
-    return fontSize_UI * prefsWidth * activeDocPrefs_App()->zoomPercent.value / 100;
-}
-
-int documentWidth_DocumentView(const iDocumentView *d) {
-    if (wantsPaged_DocumentView(d)) {
-        return pagedDocumentWidth_DocumentView(d);
-    }
-    return iMini(preferredDocumentWidth_DocumentView(d), maxDocumentWidth_DocumentView(d));
+    return iMini(fontSize_UI * prefsWidth * activeDocPrefs_App()->zoomPercent.value / 100,
+                 maxDocumentWidth_DocumentView(d));
 }
 
 static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force);
