@@ -118,6 +118,7 @@ enum iDocumentWidgetFlag {
     proxyRequest_DocumentWidgetFlag          = iBit(14),
     unseen_DocumentWidgetFlag                = iBit(15), /* user has not seen the contents */
     openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
+    historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
 };
 
 /* Note the following about swipes and keeping inline input prompts positioned:
@@ -1185,6 +1186,21 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
         iSwap(const char *, mark.start, mark.end);
     }
     return collect_String(newRange_String(mark));
+}
+
+static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
+    /* Swiping past the first or last page follows the scrolling mode settings. */
+    const iDocumentView *view = d->view;
+    const int            side = argLabel_Command(cmd, "side");
+    const size_t         page = currentPage_DocumentView(view);
+    if (!((side == 1 && page == 0) ||
+          (side == 2 && page + numColumns_DocumentView(view) >= numPages_GmDocument(view->doc)))) {
+        return iFalse;
+    }
+    if (argLabel_Command(cmd, "edge")) {
+        return prefs_App()->edgeSwipe;
+    }
+    return prefs_App()->pageSwipe && d->swipe->flags & navigable_DocumentSwipeFlag;
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -2375,7 +2391,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
              isPaged_DocumentView(d->view)) {
-        /* Swipes turn pages instead of navigating. */
+        /* Swipes turn pages, but past the first or last page they navigate history. */
+        if (equal_Command(cmd, "edgeswipe.moved") &&
+            ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging &&
+            isHistorySwipe_DocumentWidget_(d, cmd)) {
+            d->flags |= historySwipe_DocumentWidgetFlag;
+        }
+        if (d->flags & historySwipe_DocumentWidgetFlag) {
+            if (equal_Command(cmd, "edgeswipe.ended")) {
+                d->flags &= ~historySwipe_DocumentWidgetFlag;
+            }
+            return handleEdgeSwipe_DocumentSwipe(d->swipe, cmd);
+        }
         if (equal_Command(cmd, "edgeswipe.moved") &&
             !handleSidebarSwipe_DocumentSwipe(d->swipe, cmd)) {
             dragPage_DocumentView(d->view, arg_Command(cmd));
