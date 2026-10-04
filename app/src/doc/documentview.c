@@ -1664,8 +1664,10 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                     }
                 }
             }
-            /* Progressively draw the rest of the buffer if it isn't fully valid. */
-            if (prerenderExtra && !equal_Rangei(bufRange, buf->validRange)) {
+            /* Progressively draw the rest of the buffer if it isn't fully valid. Buffers
+               past the end of the document (e.g., pages of the last spread) have nothing. */
+            if (prerenderExtra && !isEmpty_Range(&bufRange) &&
+                !equal_Rangei(bufRange, buf->validRange)) {
                 const iGmRun *next;
                 //                printf("%zu: prerenderExtra (start:%p end:%p)\n", i, meta->runsDrawn.start, meta->runsDrawn.end);
                 if (meta->runsDrawn.start == NULL) {
