@@ -257,6 +257,8 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("toggle id:prefs.mono.doc except:finger");
             break;
         case layout_DocPrefsGroup:
+            add_("toggle id:prefs.pageview");
+            add_("padding");
             add_("radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems_);
             add_("input id:prefs.linespacing maxlen:5");
             add_("input id:prefs.tabwidth maxlen:3");

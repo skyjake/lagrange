@@ -2075,6 +2075,9 @@ msgstr "Bottom"
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
 
+msgid "prefs.pageview"
+msgstr "Paginated:"
+
 msgid "prefs.collapsepre"
 msgstr "Collapse preformatted:"
 
