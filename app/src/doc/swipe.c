@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "swipe.h"
+#include "pagedview.h"
 
 #include "../app.h"
 #include "../history.h"
@@ -211,6 +212,26 @@ int sidebarAreaHeight_DocumentSwipe(const iDocumentSwipe *d) {
     return iMin(win->size.x, win->size.y) / 4;
 }
 
+iBool handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
+    /* Edge swipes can also be used to show the sidebars. */
+    const int edge = argLabel_Command(cmd, "edge");
+    if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
+        edge &&
+        checkTabletVerticalPosition_DocumentSwipe_(d, argLabel_Command(cmd, "y"), edge)) {
+        /* This is an actual swipe from the edge of the device, we should let the sidebars
+           handle it. */
+        if (edge == 1) {
+            transferAffinity_Touch(NULL, findWidget_App("sidebar"));
+            return iTrue;
+        }
+        else if (edge == 2 && deviceType_App() == tablet_AppDeviceType) {
+            transferAffinity_Touch(NULL, findWidget_App("sidebar2"));
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
     iWidget *w = as_Widget(d->owner);
     if (!prefs_App()->edgeSwipe &&
@@ -218,23 +239,8 @@ iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
         return iFalse;
     }
     if (equal_Command(cmd, "edgeswipe.moved")) {
-        /* Edge swipes can also be used to show the sidebars. */
-        const int edge = argLabel_Command(cmd, "edge");
-        if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
-            edge &&
-            checkTabletVerticalPosition_DocumentSwipe_(d,
-                                                             argLabel_Command(cmd, "y"),
-                                                             edge)) {
-            /* This is an actual swipe from the edge of the device, we should let the sidebars
-               handle it. */
-            if (edge == 1) {
-                transferAffinity_Touch(NULL, findWidget_App("sidebar"));
-                return iTrue;
-            }
-            else if (edge == 2 && deviceType_App() == tablet_AppDeviceType) {
-                transferAffinity_Touch(NULL, findWidget_App("sidebar2"));
-                return iTrue;
-            }
+        if (handleSidebarSwipe_DocumentSwipe(d, cmd)) {
+            return iTrue;
         }
         const int side = argLabel_Command(cmd, "side");
         int offset = arg_Command(cmd);
@@ -349,8 +355,9 @@ void finishWheelSwipe_DocumentSwipe(iDocumentSwipe *d, iBool aborted) {
 
 iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEvent *ev) {
     iWidget *w = as_Widget(d->owner);
-    if (~d->flags & navigable_DocumentSwipeFlag || !prefs_App()->pageSwipe) {
-        return iFalse;
+    if (!isPaged_DocumentView(ownerView_(d)) &&
+        (~d->flags & navigable_DocumentSwipeFlag || !prefs_App()->pageSwipe)) {
+        return iFalse; /* paginated documents always turn pages */
     }
 //    printf("STATE:%d wheel x:%d inert:%d end:%d\n", d->wheelState,
 //           ev->x, isInertia_MouseWheelEvent(ev),

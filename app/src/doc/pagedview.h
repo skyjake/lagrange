@@ -48,3 +48,6 @@ void    showPage_DocumentView           (iDocumentView *, size_t page, iBool isA
 void    showDocumentY_DocumentView      (iDocumentView *, int documentY); /* page that contains the point */
 iBool   turnPage_DocumentView           (iDocumentView *, int dir); /* false if no more pages */
 int     pageTurnZone_DocumentView       (const iDocumentView *, iInt2 windowPos); /* -1, 0, +1 */
+void    dragPage_DocumentView           (iDocumentView *, int offset); /* from the start of the gesture */
+void    endPageDrag_DocumentView        (iDocumentView *, iBool isCancelled);
+void    wheelPage_DocumentView          (iDocumentView *, float amount); /* positive: backward */

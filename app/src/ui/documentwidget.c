@@ -2360,6 +2360,19 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (startsWith_Command(cmd, "pinch.") && document_Command(cmd) == d) {
         return handlePinch_DocumentSwipe(d->swipe, cmd);
     }
+    else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
+             isPaged_DocumentView(d->view)) {
+        /* Swipes turn pages instead of navigating. */
+        if (equal_Command(cmd, "edgeswipe.moved") &&
+            !handleSidebarSwipe_DocumentSwipe(d->swipe, cmd)) {
+            dragPage_DocumentView(d->view, arg_Command(cmd));
+        }
+        else if (equal_Command(cmd, "edgeswipe.ended")) {
+            endPageDrag_DocumentView(d->view, argLabel_Command(cmd, "abort"));
+            stopWidgetMomentum_Touch(w);
+        }
+        return iTrue;
+    }
     else if ((startsWith_Command(cmd, "edgeswipe.") || startsWith_Command(cmd, "swipe.")) &&
              document_App() == d) {
         return handleEdgeSwipe_DocumentSwipe(d->swipe, cmd);
@@ -2680,8 +2693,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (ev->type == SDL_EVENT_MOUSE_WHEEL && isPaged_DocumentView(view) &&
              isScrollableWithWheel_DocumentWidget_(d)) {
-        if (!isPerPixel_MouseWheelEvent(&ev->wheel) && ev->wheel.y) {
-            turnPage_DocumentView(view, ev->wheel.y > 0 ? -1 : +1);
+        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            /* Horizontal swipes drag the pages; vertical movement is ignored. */
+            if (ev->wheel.x || wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState) {
+                handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel);
+            }
+        }
+        else {
+            wheelPage_DocumentView(view, ev->wheel.y ? ev->wheel.y : ev->wheel.x);
         }
         return iTrue;
     }

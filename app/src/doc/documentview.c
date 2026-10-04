@@ -133,8 +133,7 @@ void init_DocumentView(iDocumentView *d) {
     init_Array(&d->wideRunOffsets, sizeof(int));
     init_PtrArray(&d->visibleMedia);
     d->userHasScrolled = iFalse;
-    d->paged.page      = 0;
-    d->paged.turnFrom  = 0;
+    iZap(d->paged);
     init_Anim(&d->paged.turnOffset, 0);
 }
 

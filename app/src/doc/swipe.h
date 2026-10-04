@@ -82,6 +82,7 @@ iBool   isSwipingBack_DocumentSwipe (const iDocumentSwipe *);
 int     offsetOfView_DocumentSwipe  (const iDocumentSwipe *, const iDocumentView *);
 
 iBool   handlePinch_DocumentSwipe   (iDocumentSwipe *, const char *cmd);
+iBool   handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *, const char *cmd); /* true if a sidebar takes it */
 iBool   handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *, const char *cmd);
 iBool   handleWheelSwipe_DocumentSwipe(iDocumentSwipe *, const SDL_MouseWheelEvent *);
 

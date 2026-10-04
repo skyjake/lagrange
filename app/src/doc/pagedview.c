@@ -29,6 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/root.h"
 #include "ui/visbuf.h"
 
+#include <SDL3/SDL_timer.h>
+#include <math.h>
+
 static const uint32_t turnDuration_PagedView_ = 250;
 
 iBool wantsPaged_DocumentView(const iDocumentView *d) {
@@ -90,7 +93,7 @@ size_t currentPage_DocumentView(const iDocumentView *d) {
 iRangei visiblePages_DocumentView(const iDocumentView *d) {
     const int n     = numColumns_DocumentView(d);
     iRangei   pages = { (int) d->paged.page, (int) d->paged.page + n };
-    if (!isFinished_Anim(&d->paged.turnOffset)) {
+    if (d->paged.isDragging || !isFinished_Anim(&d->paged.turnOffset)) {
         pages.start = iMin(pages.start, (int) d->paged.turnFrom);
         pages.end   = iMax(pages.end, (int) d->paged.turnFrom + n);
     }
@@ -139,8 +142,10 @@ void allocPagedVisBuffer_DocumentView(const iDocumentView *d) {
 
 void resetPage_DocumentView(iDocumentView *d) {
     removeTicker_App(animatePageTurn_DocumentView, d);
-    d->paged.page     = 0;
-    d->paged.turnFrom = 0;
+    d->paged.page        = 0;
+    d->paged.turnFrom    = 0;
+    d->paged.isDragging  = iFalse;
+    d->paged.isReverting = iFalse;
     init_Anim(&d->paged.turnOffset, 0);
 }
 
@@ -152,19 +157,27 @@ void animatePageTurn_DocumentView(iAny *context) {
     refresh_Widget(d->owner);
     if (!isFinished_Anim(&d->paged.turnOffset)) {
         addTicker_App(animatePageTurn_DocumentView, d);
+        return;
     }
-    else {
-        updateVisible_DocumentView(d); /* buffers move on to the next spread */
+    if (d->paged.isReverting) {
+        d->paged.isReverting = iFalse;
+        d->paged.page        = d->paged.turnFrom;
+        init_Anim(&d->paged.turnOffset, 0);
     }
+    updateVisible_DocumentView(d); /* buffers move on to the next spread */
 }
 
 void showPage_DocumentView(iDocumentView *d, size_t page, iBool isAnimated) {
+    if (d->paged.isDragging) {
+        return;
+    }
     const size_t n = numColumns_DocumentView(d);
     page = iMin(page, numPages_GmDocument(d->doc) - 1);
     page -= page % n;
     if (page == d->paged.page) {
         return;
     }
+    d->paged.isReverting = iFalse;
     const int spreads = ((int) page - (int) d->paged.page) / (int) n;
     if (isAnimated && iAbs(spreads) == 1) {
         /* The old spread slides out as the new one slides in. */
@@ -213,4 +226,83 @@ int pageTurnZone_DocumentView(const iDocumentView *d, iInt2 windowPos) {
         right = pageOrigin_DocumentView(d, last).x + size_GmDocument(d->doc).x;
     }
     return windowPos.x < left ? -1 : windowPos.x >= right ? +1 : 0;
+}
+
+void dragPage_DocumentView(iDocumentView *d, int offset) {
+    const int n      = numColumns_DocumentView(d);
+    const int spread = n * columnWidth_DocumentView_(d);
+    if (!d->paged.isDragging) {
+        if (d->paged.isReverting) {
+            d->paged.page = d->paged.turnFrom;
+        }
+        d->paged.isDragging  = iTrue;
+        d->paged.isReverting = iFalse;
+        d->paged.dragFrom    = d->paged.page;
+        d->paged.dragDir     = 0;
+    }
+    const size_t oldPage = d->paged.page;
+    const int    dir     = offset < 0 ? +1 : offset > 0 ? -1 : 0;
+    const int    target  = (int) d->paged.dragFrom + dir * n;
+    d->paged.dragDir     = dir;
+    d->paged.turnFrom    = d->paged.dragFrom;
+    if (!dir || target < 0 || target >= (int) numPages_GmDocument(d->doc)) {
+        /* Nothing to turn to, so the pages resist. */
+        d->paged.page = d->paged.dragFrom;
+        init_Anim(&d->paged.turnOffset, offset / 6);
+    }
+    else {
+        d->paged.page = target;
+        init_Anim(&d->paged.turnOffset, offset + dir * spread);
+    }
+    if (d->paged.page != oldPage) {
+        updateVisible_DocumentView(d);
+    }
+    refresh_Widget(d->owner);
+}
+
+void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
+    if (!d->paged.isDragging) {
+        return;
+    }
+    d->paged.isDragging = iFalse;
+    if (d->paged.page == d->paged.turnFrom) {
+        if (!isCancelled && d->paged.dragDir) {
+            postCommand_Widget(d->owner, "document.page.overflow arg:%d", d->paged.dragDir);
+        }
+        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
+    }
+    else if (isCancelled) {
+        /* Slide back to where the drag began. */
+        const int dir = d->paged.page > d->paged.turnFrom ? +1 : -1;
+        d->paged.isReverting = iTrue;
+        setValueEased_Anim(&d->paged.turnOffset,
+                           dir * numColumns_DocumentView(d) * columnWidth_DocumentView_(d),
+                           turnDuration_PagedView_);
+    }
+    else {
+        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
+    }
+    addTicker_App(animatePageTurn_DocumentView, d);
+}
+
+void wheelPage_DocumentView(iDocumentView *d, float amount) {
+    if (fabsf(amount) >= 1.0f) {
+        /* Mouse wheel notch. */
+        turnPage_DocumentView(d, amount > 0 ? -1 : +1);
+        return;
+    }
+    /* Fine-grained wheels (e.g., trackpads) turn one page per gesture. */
+    const uint32_t now = SDL_GetTicks();
+    if (now - d->paged.wheelTime > 300) {
+        d->paged.wheelAccum    = 0;
+        d->paged.isWheelLocked = iFalse;
+    }
+    d->paged.wheelTime = now;
+    if (!d->paged.isWheelLocked) {
+        d->paged.wheelAccum += amount;
+        if (fabsf(d->paged.wheelAccum) >= 1.0f) {
+            d->paged.isWheelLocked = iTrue;
+            turnPage_DocumentView(d, d->paged.wheelAccum > 0 ? -1 : +1);
+        }
+    }
 }
