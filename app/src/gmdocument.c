@@ -242,12 +242,15 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     const iBool   isGopher = isGopher_GmDocument_(d);
     const iBool   isMonoGopher = isMono && isGopher;
     const iBool   isDarkBg = isDark_GmDocumentTheme(currentTheme_GmDocument_(d));
+    const iBool   isPaged  = isPaged_GmDocument(d); /* narrower lines, so smaller monospace */
     const enum iFontId headingFont = isMono ? documentMonospace_FontId : documentHeading_FontId;
     const enum iFontId bodyFont    = isMono ? documentMonospace_FontId : documentBody_FontId;
-    const int          bodySize    = isMonoGopher ? contentSmall_FontSize : contentRegular_FontSize;
+    const int          bodySize    = isMonoGopher ? (isPaged ? contentTiny_FontSize : contentSmall_FontSize)
+                                     : isMono && isPaged ? contentSmall_FontSize
+                                                         : contentRegular_FontSize;
     theme->fonts[text_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, bodySize);
     theme->fonts[bullet_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, bodySize);
-    theme->fonts[preformatted_GmLineType] = preformatted_FontId;
+    theme->fonts[preformatted_GmLineType] = isPaged ? preformattedSmall_FontId : preformatted_FontId;
     theme->fonts[quote_GmLineType] = isMono               ? monospaceParagraph_FontId
                                      : prefs->italicQuote.value ? quote_FontId
                                                           : paragraph_FontId;
@@ -1083,7 +1086,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iBool            isFirstText   = prefs->bigFirstParagraph.value && !isMono && !isTerminal_Platform();
     iBool            addQuoteIcon  = prefs->quoteIcon.value;
     iBool            isPreformat   = iFalse;
-    int              preFont       = preformatted_FontId;
+    int              preFont       = d->theme.fonts[preformatted_GmLineType];
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
     const iBool      isNormalized  = shouldBeNormalized_GmDocument_(d);
@@ -1156,7 +1159,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 isPreformat = iTrue;
                 /* Begin a new preformatted block. */
                 const size_t preIndex = preId++;
-                preFont               = preformatted_FontId;
+                preFont               = d->theme.fonts[preformatted_GmLineType];
                 /* Use a smaller font if the block contents are wide. */
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
