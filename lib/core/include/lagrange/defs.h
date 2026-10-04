@@ -269,6 +269,7 @@ enum iColorAccent {
 };
 
 enum iGmDocumentTheme {
+    none_GmDocumentTheme = -1,
     colorfulDark_GmDocumentTheme,
     colorfulLight_GmDocumentTheme,
     black_GmDocumentTheme,

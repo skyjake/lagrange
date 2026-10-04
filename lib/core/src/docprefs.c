@@ -93,7 +93,7 @@ static const iDocPrefsSpec specs_[] = {
       relayout_DocPrefsSpecFlag },
     { B_(centerShortDocs), layout_DocPrefsGroup, "centerShortDocs", "prefs.centershort" },
     { B_(pageView), layout_DocPrefsGroup, "pageView", "prefs.pageview", NULL,
-      relayout_DocPrefsSpecFlag },
+      relayout_DocPrefsSpecFlag | palette_DocPrefsSpecFlag }, /* may have its own theme */
     { I_(collapsePre), layout_DocPrefsGroup, "collapsePre", "prefs.collapsepre", "collapsepre.set" },
     /* Style */
     { B_(italicQuote), style_DocPrefsGroup, "italicQuote", "prefs.quote.italic", NULL,
@@ -112,6 +112,10 @@ static const iDocPrefsSpec specs_[] = {
       "doctheme.dark.set", palette_DocPrefsSpecFlag },
     { I_(docThemeLight), theme_DocPrefsGroup, "docThemeLight", "prefs.doctheme.light",
       "doctheme.light.set", palette_DocPrefsSpecFlag },
+    { I_(pageThemeDark), theme_DocPrefsGroup, "pageThemeDark", "prefs.pagetheme.dark",
+      "pagetheme.dark.set", palette_DocPrefsSpecFlag },
+    { I_(pageThemeLight), theme_DocPrefsGroup, "pageThemeLight", "prefs.pagetheme.light",
+      "pagetheme.light.set", palette_DocPrefsSpecFlag },
     { F_(saturation), theme_DocPrefsGroup, "saturation", "prefs.saturation", "saturation.set",
       palette_DocPrefsSpecFlag | manual_DocPrefsSpecFlag }, /* argument is a percentage */
     { I_(imageStyle), theme_DocPrefsGroup, "imageStyle", "prefs.imagestyle", "imagestyle.set" },
@@ -385,6 +389,10 @@ iBool setInt_DocPrefs(iDocPrefs *d, enum iDocPrefsInt id, int value) {
         case docThemeLight_DocPrefsInt:
             value = iClamp(value, 0, max_GmDocumentTheme - 1);
             break;
+        case pageThemeDark_DocPrefsInt:
+        case pageThemeLight_DocPrefsInt:
+            value = iClamp(value, none_GmDocumentTheme, max_GmDocumentTheme - 1);
+            break;
         default:
             break;
     }
@@ -466,6 +474,8 @@ const iDocPrefs *defaults_DocPrefs(void) {
         d->boldLinkLight.value      = iTrue;
         d->docThemeDark.value       = colorfulDark_GmDocumentTheme;
         d->docThemeLight.value      = white_GmDocumentTheme;
+        d->pageThemeDark.value      = gray_GmDocumentTheme;
+        d->pageThemeLight.value     = white_GmDocumentTheme;
         d->saturation.value         = 1.0f;
         d->imageStyle.value         = original_ImageStyle;
         d->ansiEscapes.value        = allowFg_AnsiFlag;

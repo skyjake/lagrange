@@ -2275,6 +2275,16 @@ msgstr "Dark theme:"
 msgid "prefs.doctheme.light"
 msgstr "Light theme:"
 
+msgid "prefs.pagetheme.dark"
+msgstr "Paginated dark:"
+
+msgid "prefs.pagetheme.light"
+msgstr "Paginated light:"
+
+# Paginated mode uses the regular document theme.
+msgid "prefs.doctheme.name.none"
+msgstr "None"
+
 msgid "prefs.doctheme.name.colorfuldark"
 msgstr "Colorful Dark"
 

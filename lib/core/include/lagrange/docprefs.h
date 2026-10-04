@@ -94,6 +94,8 @@ enum iDocPrefsInt {
     /* Theme */
     docThemeDark_DocPrefsInt,  /* enum iGmDocumentTheme */
     docThemeLight_DocPrefsInt, /* enum iGmDocumentTheme */
+    pageThemeDark_DocPrefsInt, /* enum iGmDocumentTheme; none: same as `docThemeDark` */
+    pageThemeLight_DocPrefsInt,
     imageStyle_DocPrefsInt,    /* enum iImageStyle */
     /* Content */
     ansiEscapes_DocPrefsInt, /* enum iAnsiFlag */
@@ -150,6 +152,8 @@ struct Impl_DocPrefs {
             iOptInt collapsePre;
             iOptInt docThemeDark;
             iOptInt docThemeLight;
+            iOptInt pageThemeDark;
+            iOptInt pageThemeLight;
             iOptInt imageStyle;
             iOptInt ansiEscapes;
             iOptInt zoomPercent;
@@ -184,6 +188,13 @@ uint32_t    hash_DocPrefs       (const iDocPrefs *);
 const iDocPrefs *   defaults_DocPrefs   (void); /* built-in; everything defined */
 
 iLocalDef enum iGmDocumentTheme docTheme_DocPrefs(const iDocPrefs *d, iBool isDark) {
+    if (d->pageView.value && !isTerminal_Platform()) {
+        /* Paginated documents may have themes of their own. */
+        const int pageTheme = isDark ? d->pageThemeDark.value : d->pageThemeLight.value;
+        if (pageTheme != none_GmDocumentTheme) {
+            return pageTheme;
+        }
+    }
     return isDark ? d->docThemeDark.value : d->docThemeLight.value;
 }
 

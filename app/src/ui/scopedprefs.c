@@ -195,7 +195,7 @@ static const iMenuItem *collapseItems_(void) {
     return constData_Array(items);
 }
 
-static const iMenuItem *docThemeItems_(const char *mode) {
+static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
     static const struct {
         const char *label;
         enum iGmDocumentTheme theme;
@@ -211,10 +211,15 @@ static const iMenuItem *docThemeItems_(const char *mode) {
         { "${prefs.doctheme.name.highcontrast}", highContrast_GmDocumentTheme },
     };
     iArray *items = collectNew_Array(sizeof(iMenuItem));
+    if (withNone) {
+        pushBack_Array(items,
+                       &(iMenuItem){ "${prefs.doctheme.name.none}", 0, 0,
+                                     format_CStr("%s.set arg:%d", cmd, none_GmDocumentTheme) });
+    }
     iForIndices(i, themes) {
         pushBack_Array(items,
                        &(iMenuItem){ themes[i].label, 0, 0,
-                                     format_CStr("doctheme.%s.set arg:%d", mode, themes[i].theme) });
+                                     format_CStr("%s.set arg:%d", cmd, themes[i].theme) });
     }
     pushBack_Array(items, &(iMenuItem){ NULL });
     return constData_Array(items);
@@ -283,8 +288,11 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("toggle id:prefs.sideicon");
             break;
         case theme_DocPrefsGroup:
-            add_("dropdown id:prefs.doctheme.dark", 0, 0, menu_(docThemeItems_("dark")));
-            add_("dropdown id:prefs.doctheme.light", 0, 0, menu_(docThemeItems_("light")));
+            add_("dropdown id:prefs.doctheme.dark", 0, 0, menu_(docThemeItems_("doctheme.dark", iFalse)));
+            add_("dropdown id:prefs.doctheme.light", 0, 0, menu_(docThemeItems_("doctheme.light", iFalse)));
+            add_("padding");
+            add_("dropdown id:prefs.pagetheme.dark", 0, 0, menu_(docThemeItems_("pagetheme.dark", iTrue)));
+            add_("dropdown id:prefs.pagetheme.light", 0, 0, menu_(docThemeItems_("pagetheme.light", iTrue)));
             add_("padding");
             add_("radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems_);
             add_("padding id:prefs.pad.imagestyle except:finger");
@@ -526,6 +534,10 @@ static void applyValues_(iWidget *dlg, const iDocPrefs *prefs) {
                                         format_CStr(".set arg:%d", prefs->docThemeDark.value));
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.doctheme.light"),
                                         format_CStr(".set arg:%d", prefs->docThemeLight.value));
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.pagetheme.dark"),
+                                        format_CStr(".set arg:%d", prefs->pageThemeDark.value));
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.pagetheme.light"),
+                                        format_CStr(".set arg:%d", prefs->pageThemeLight.value));
     for (int i = 0; i < 4; i++) {
         setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.saturation.%d", i)),
                         selected_WidgetFlag,
