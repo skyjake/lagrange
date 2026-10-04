@@ -2075,7 +2075,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
-        showPage_DocumentView(d->view, arg_Command(cmd) / pageProgressUnit_DocumentWidget_, iFalse);
+        showPage_DocumentView(d->view,
+                              (arg_Command(cmd) + pageProgressUnit_DocumentWidget_ / 2) /
+                                  pageProgressUnit_DocumentWidget_,
+                              iFalse);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {

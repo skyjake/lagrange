@@ -229,7 +229,10 @@ static iBool processProgressEvent_ScrollWidget_(iScrollWidget *d, const SDL_Even
         const int   total  = (int) size_Range(&d->range);
         const float pos    = (float) (pos_Click(&d->click).x - left_Rect(bounds)) /
                              (float) iMax(1, width_Rect(bounds));
-        const int   thumb  = iClamp((int) (pos * total), d->range.start, d->range.end - 1);
+        /* The end of the filled part follows the mouse. */
+        const int   thumb  = iClamp((int) (pos * total) - d->thumbSize,
+                                    d->range.start,
+                                    iMax(d->range.start, d->range.end - d->thumbSize));
         setFlags_Widget(w, pressed_WidgetFlag, iTrue);
         if (thumb != d->thumb) {
             d->thumb = thumb;
