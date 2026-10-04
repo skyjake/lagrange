@@ -57,7 +57,7 @@ iRect pageViewport_DocumentView(const iDocumentView *d) {
 }
 
 static int preferredWidth_DocumentView_(const iDocumentView *d) {
-    /* Lines are shorter on a page than when scrolling. */
+    /* Lines are shorter in two columns than when scrolling. */
     return preferredDocumentWidth_DocumentView(d) * 0.8f;
 }
 
@@ -70,9 +70,12 @@ static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
 }
 
 int pagedDocumentWidth_DocumentView(const iDocumentView *d) {
-    const int width = width_Rect(pageViewport_DocumentView(d));
-    return iMin(preferredWidth_DocumentView_(d),
-                maxDocumentWidthIn_DocumentView(d, width / columnsFor_DocumentView_(d, width)));
+    const int width   = width_Rect(pageViewport_DocumentView(d));
+    const int columns = columnsFor_DocumentView_(d, width);
+    /* A single column has room for the full line width. */
+    return iMin(columns == 1 ? preferredDocumentWidth_DocumentView(d)
+                             : preferredWidth_DocumentView_(d),
+                maxDocumentWidthIn_DocumentView(d, width / columns));
 }
 
 void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metrics) {
