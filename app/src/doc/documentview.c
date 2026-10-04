@@ -1888,15 +1888,9 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     drawMedia_DocumentView_(d, p);
     /* The banner is at the top of the first page. */
     if (pages.start == 0 && !isEmpty_Banner(d->banner)) {
-        const int band = pageBandHeight_GmDocument(d->doc);
-        fillRect_Paint(p,
-                       init_Rect(pageLeft_DocumentView(d, 0),
-                                 top_Rect(viewport),
-                                 metrics_GmDocument(d->doc)->canvasWidth,
-                                 band + height_Banner(d->banner)),
-                       tmBannerBackground_ColorId);
         setPos_Banner(d->banner,
-                      init_I2(pageOrigin_DocumentView(d, 0).x, top_Rect(viewport) + band));
+                      init_I2(pageOrigin_DocumentView(d, 0).x,
+                              top_Rect(viewport) + pageBandHeight_GmDocument(d->doc)));
         draw_Banner(d->banner);
     }
     /* Crease between the pages of a spread, and slight curvature at the outer edges. */

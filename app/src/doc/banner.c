@@ -239,6 +239,9 @@ void draw_Banner(const iBanner *d) {
     iPaint p;
     init_Paint(&p);
 //    drawRect_Paint(&p, bounds, red_ColorId);
+    if (d->isCentered) {
+        setOpacity_Text(0.5f);
+    }
     /* Draw the icon. */
     if (!isEmpty_String(&d->icon)) {
         const int   font     = iconFont_Banner_(d);
@@ -267,6 +270,7 @@ void draw_Banner(const iBanner *d) {
     else {
         pos.y = top_Rect(bounds) + noSiteTopPad_Banner_;
     }
+    setOpacity_Text(1.0f);
 //    const int innerPad = gap_UI;
     pos.x = left_Rect(bounds);
     iConstForEach(Array, i, &d->items) {
