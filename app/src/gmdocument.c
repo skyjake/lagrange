@@ -981,23 +981,35 @@ static void setPageBandTexts_GmDocument_(iGmDocument *d, const iArray *headers,
             auxText_GmDocument_(
                 d, collectNewFormat_String(cstr_Lang("doc.page.number"), (int) i + 1, (int) numPages)));
     }
-    /* Headers show the last level 1 heading on or before the page. */
+    /* Headers show the last level 1 heading on or before the page, except on a page that
+       begins with one. */
     iRangecc title   = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
     size_t   runPos  = 0;
     for (size_t page = 1; page < numPages && page - 1 < size_Array(headers); page++) {
-        const int pageEnd = (int) (page + 1) * d->metrics.pageHeight;
+        const int pageEnd        = (int) (page + 1) * d->metrics.pageHeight;
+        iBool     isFirstRun     = iTrue;
+        iBool     isChapterStart = iFalse;
         for (; runPos < size_Array(&d->layout); runPos++) {
             const iGmRun *run = constAt_Array(&d->layout, runPos);
             if (top_Rect(run->visBounds) >= pageEnd) {
                 break;
             }
-            if (~run->flags & decoration_GmRunFlag && run->lineType == heading1_GmLineType &&
-                run->flags & startOfLine_GmRunFlag) {
+            if (run->flags & decoration_GmRunFlag) {
+                continue;
+            }
+            const iBool isHeading =
+                run->lineType == heading1_GmLineType && run->flags & startOfLine_GmRunFlag;
+            if (isFirstRun) {
+                isChapterStart = isHeading;
+                isFirstRun     = iFalse;
+            }
+            if (isHeading) {
                 iString *text = collectNewRange_String(headingText_GmDocument_(d, run));
                 title = auxText_GmDocument_(d, collect_String(upper_String(text)));
             }
         }
-        setPageBandText_GmDocument_(d, *(const size_t *) constAt_Array(headers, page - 1), title);
+        setPageBandText_GmDocument_(
+            d, *(const size_t *) constAt_Array(headers, page - 1), isChapterStart ? iNullRange : title);
     }
 }
 
@@ -1403,10 +1415,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Check the margin vs. previous run. */
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             /* Paginated level 1 headings begin a new page lower down, with more space
-               below them. */
+               below them (even if followed by blank lines). */
             const float top    = topMargin[type] * (isPaged && type == heading1_GmLineType ? 3 : 1);
-            const float bottom = bottomMargin[prevType] *
-                                 (isPaged && prevType == heading1_GmLineType ? 2 : 1);
+            const float bottom = isPaged && prevNonBlankType == heading1_GmLineType
+                                     ? 2 * bottomMargin[heading1_GmLineType]
+                                     : bottomMargin[prevType];
             int required = iMax(top, bottom) *
                            lineHeight_Text(d->theme.fonts[text_GmLineType]);
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
