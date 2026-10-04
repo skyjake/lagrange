@@ -1858,13 +1858,6 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
             drawBuffer_VisBuf(visBuf, i, init_I2(pageLeft_DocumentView(d, page), top_Rect(viewport)));
         }
     }
-    /* Crease between the pages of a spread. */
-    if (numColumns_DocumentView(d) == 2) {
-        for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
-            drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan_Rect(viewport),
-                                 12 * gap_UI, black_ColorId, 20);
-        }
-    }
     /* Text markers. */
     if (!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark)) {
         initMarks_DrawContext_(ctx);
@@ -1894,6 +1887,13 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
                        tmBannerBackground_ColorId);
         setPos_Banner(d->banner, init_I2(pageOrigin_DocumentView(d, 0).x, top_Rect(viewport)));
         draw_Banner(d->banner);
+    }
+    /* Crease between the pages of a spread. */
+    if (numColumns_DocumentView(d) == 2) {
+        for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
+            drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan_Rect(viewport),
+                                 12 * gap_UI, black_ColorId, 20);
+        }
     }
     origin_Paint = zero_I2();
     unsetClip_Paint(p);
