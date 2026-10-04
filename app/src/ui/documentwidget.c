@@ -1188,6 +1188,8 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
     return collect_String(newRange_String(mark));
 }
 
+static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page, for turns */
+
 static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
     /* Swiping past the first or last page follows the scrolling mode settings. */
     const iDocumentView *view = d->view;
@@ -2073,7 +2075,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
-        showPage_DocumentView(d->view, arg_Command(cmd), iFalse);
+        showPage_DocumentView(d->view, arg_Command(cmd) / pageProgressUnit_DocumentWidget_, iFalse);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -3285,11 +3287,21 @@ static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
     const iRect    viewport = pageViewport_DocumentView(d->view);
     setProgressMode_ScrollWidget(bar, iTrue);
     setThumbColor_ScrollWidget(bar, tmQuoteIcon_ColorId); /* same as page header and footer */
-    barWidget->rect.pos  = init_I2(left_Rect(viewport) - left_Rect(bounds),
-                                   bottom_Rect(viewport) - top_Rect(bounds) - height_Widget(bar));
-    barWidget->rect.size.x = width_Rect(viewport);
-    setRange_ScrollWidget(bar, (iRangei){ 0, numPages_GmDocument(d->view->doc) });
-    setThumb_ScrollWidget(bar, currentPage_DocumentView(d->view), numColumns_DocumentView(d->view));
+    /* Reacts to the mouse up to the middle of the page footer. */
+    barWidget->rect.size   = init_I2(width_Rect(viewport),
+                                     iMax(3 * gap_UI,
+                                          pageBandHeight_GmDocument(d->view->doc) / 2 + gap_UI));
+    barWidget->rect.pos    = init_I2(left_Rect(viewport) - left_Rect(bounds),
+                                     bottom_Rect(viewport) - top_Rect(bounds) - height_Widget(bar));
+    updatePageProgress_DocumentWidget(d);
+}
+
+void updatePageProgress_DocumentWidget(iDocumentWidget *d) {
+    const int unit = pageProgressUnit_DocumentWidget_;
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numPages_GmDocument(d->view->doc) * unit });
+    setThumb_ScrollWidget(d->scroll,
+                          (int) (pagePosition_DocumentView(d->view) * unit),
+                          numColumns_DocumentView(d->view) * unit);
 }
 
 void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {

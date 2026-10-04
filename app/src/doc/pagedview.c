@@ -135,6 +135,14 @@ static int spreadStride_DocumentView_(const iDocumentView *d) {
     return spreadWidth_DocumentView(d) + 3 * gap_UI;
 }
 
+float pagePosition_DocumentView(const iDocumentView *d) {
+    const int   n      = numColumns_DocumentView(d);
+    const int   stride = spreadStride_DocumentView_(d);
+    const float pos    = (float) d->paged.page -
+                      (stride > 0 ? value_Anim(&d->paged.turnOffset) * n / stride : 0.0f);
+    return iClamp(pos, 0.0f, (float) iMax(0, (int) numPages_GmDocument(d->doc) - n));
+}
+
 int pageLeft_DocumentView(const iDocumentView *d, size_t page) {
     const int n      = numColumns_DocumentView(d);
     const int rel    = (int) page - (int) d->paged.page;
@@ -193,6 +201,7 @@ void animatePageTurn_DocumentView(iAny *context) {
         return; /* pending destruction */
     }
     refresh_Widget(d->owner);
+    updatePageProgress_DocumentWidget(d->owner);
     if (!isFinished_Anim(&d->paged.turnOffset)) {
         addTicker_App(animatePageTurn_DocumentView, d);
         return;
@@ -310,6 +319,7 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     if (d->paged.page != oldPage) {
         updateVisible_DocumentView(d);
     }
+    updatePageProgress_DocumentWidget(d->owner);
     refresh_Widget(d->owner);
 }
 

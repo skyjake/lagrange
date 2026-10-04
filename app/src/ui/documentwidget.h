@@ -149,6 +149,7 @@ void    updateSize_DocumentWidget               (iDocumentWidget *);
 void    updateHoverLinkInfo_DocumentWidget      (iDocumentWidget *, uint16_t linkId);
 void    scrollBegan_DocumentWidget              (iAnyObject *, int, uint32_t); /* SmoothScroll callback */
 void    aboutToScrollView_DocumentWidget        (iDocumentWidget *, int scrollMax);
+void    updatePageProgress_DocumentWidget       (iDocumentWidget *);
 void    repositionInlinePrompts_DocumentWidget  (iDocumentWidget *, iDocumentView *);
 void    didScrollView_DocumentWidget            (iDocumentWidget *);
 

@@ -36,6 +36,7 @@ void    pagedMetrics_DocumentView       (const iDocumentView *, iGmDocumentMetri
 int     numColumns_DocumentView         (const iDocumentView *);
 int     spreadWidth_DocumentView        (const iDocumentView *);
 size_t  currentPage_DocumentView        (const iDocumentView *);
+float   pagePosition_DocumentView       (const iDocumentView *); /* fractional during turns */
 iRangei visiblePages_DocumentView       (const iDocumentView *); /* includes an ongoing turn */
 int     pageLeft_DocumentView           (const iDocumentView *, size_t page); /* window X of the page's left edge */
 iInt2   pageOrigin_DocumentView         (const iDocumentView *, size_t page); /* window coords of the page's document top left */
