@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "banner.h"
 #include "documentview.h"
 #include "inlinemedia.h"
+#include "pagedview.h"
 #include "query.h"
 #include "persistentstate.h"
 #include "ui/command.h"
@@ -498,10 +499,12 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                         target = origin;
                     }
                 }
-                /* Falls back to the modal if inline isn't possible. */
+                /* Falls back to the modal if inline isn't possible. Pages are not laid out
+                   again just to insert a prompt. */
                 const iBool useModal = deviceType_App() != desktop_AppDeviceType ||
                                        prefs_App()->promptPosition != inline_InputPromptPosition ||
-                                       !requestLinkId_DocumentWidget(target);
+                                       !requestLinkId_DocumentWidget(target) ||
+                                       isPaged_DocumentView(view_DocumentWidget(target));
                 if (useModal) {
                     makeModal_Query(
                         query_DocumentWidget(d->owner),
