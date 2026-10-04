@@ -278,6 +278,20 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
         d->paged.isReverting = iFalse;
         d->paged.dragFrom    = d->paged.page;
         d->paged.dragDir     = 0;
+        d->paged.dragOffset  = offset;
+        d->paged.dragTime    = SDL_GetTicks();
+        d->paged.dragSpeed   = 0.0f;
+    }
+    else {
+        const uint32_t now = SDL_GetTicks();
+        const uint32_t dt  = now - d->paged.dragTime;
+        if (dt > 0) {
+            const float speed = (offset - d->paged.dragOffset) * 1000.0f / dt;
+            /* After a pause, only the latest movement counts. */
+            d->paged.dragSpeed  = dt > 100 ? speed : (d->paged.dragSpeed + speed) / 2;
+            d->paged.dragOffset = offset;
+            d->paged.dragTime   = now;
+        }
     }
     const size_t oldPage = d->paged.page;
     const int    dir     = offset < 0 ? +1 : offset > 0 ? -1 : 0;
@@ -299,6 +313,23 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     refresh_Widget(d->owner);
 }
 
+static void finishDrag_DocumentView_(iDocumentView *d, float to, iBool followGesture) {
+    /* The turn starts at least as fast as the gesture, but no slower than usual. */
+    iAnim         *anim      = &d->paged.turnOffset;
+    const float    remaining = to - value_Anim(anim);
+    uint32_t       span      = turnDuration_PagedView_;
+    if (followGesture && SDL_GetTicks() - d->paged.dragTime < 100) {
+        const float speed = d->paged.dragSpeed * (remaining < 0 ? -1 : 1);
+        if (speed > 0) {
+            /* Ease out starts at twice the average speed. */
+            span = iClamp(2000.0f * fabsf(remaining) / speed, 1, turnDuration_PagedView_);
+        }
+    }
+    setFlags_Anim(anim, easeBoth_AnimFlag, iFalse);
+    setFlags_Anim(anim, easeOut_AnimFlag, iTrue);
+    setValue_Anim(anim, to, span);
+}
+
 void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
     if (!d->paged.isDragging) {
         return;
@@ -308,18 +339,16 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
         if (!isCancelled && d->paged.dragDir) {
             postCommand_Widget(d->owner, "document.page.overflow arg:%d", d->paged.dragDir);
         }
-        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
+        finishDrag_DocumentView_(d, 0, iFalse); /* resisting pages spring back */
     }
     else if (isCancelled) {
         /* Slide back to where the drag began. */
         const int dir = d->paged.page > d->paged.turnFrom ? +1 : -1;
         d->paged.isReverting = iTrue;
-        setValueEased_Anim(&d->paged.turnOffset,
-                           dir * spreadStride_DocumentView_(d),
-                           turnDuration_PagedView_);
+        finishDrag_DocumentView_(d, dir * spreadStride_DocumentView_(d), iTrue);
     }
     else {
-        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
+        finishDrag_DocumentView_(d, 0, iTrue);
     }
     addTicker_App(animatePageTurn_DocumentView, d);
 }

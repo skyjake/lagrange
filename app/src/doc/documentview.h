@@ -78,6 +78,9 @@ struct Impl_DocumentView {
         iAnim       turnOffset; /* horizontal offset of the pages during a turn */
         size_t      dragFrom;   /* first page of the spread where a drag began */
         int         dragDir;
+        int         dragOffset;
+        uint32_t    dragTime;
+        float       dragSpeed;  /* pixels per second */
         iBool       isDragging;
         iBool       isReverting; /* turn is animating back to `turnFrom` */
         float       wheelAccum;
