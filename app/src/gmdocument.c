@@ -827,13 +827,16 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
    height. Each page has a header and a footer. */
 
 static int pageFont_GmDocument_(const iGmDocument *d) {
-    iUnused(d);
-    return FONT_ID(documentBody_FontId, regular_FontStyle, contentSmall_FontSize);
+    /* Same family as the document's headings. */
+    return FONT_ID(isForcedMonospace_GmDocument_(d) ? documentMonospace_FontId
+                                                    : documentHeading_FontId,
+                   regular_FontStyle,
+                   contentSmall_FontSize);
 }
 
 static int pageBandHeight_GmDocument_(const iGmDocument *d) {
     /* Height of the header and footer areas. */
-    return 2 * lineHeight_Text(pageFont_GmDocument_(d));
+    return iMax(2 * lineHeight_Text(pageFont_GmDocument_(d)), d->metrics.pageHeight / 14);
 }
 
 iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
@@ -899,35 +902,82 @@ static iBool isChapterGroup_GmDocument_(const iArray *runs, size_t start, size_t
     return iFalse;
 }
 
-static void addPageBand_GmDocument_(iGmDocument *d, int top, iRangecc text) {
+static void addPageBand_GmDocument_(iGmDocument *d, int top, iArray *bands) {
+    /* The text is set when pagination is complete. */
     const int font = pageFont_GmDocument_(d);
-    const int band = pageBandHeight_GmDocument_(d);
     iGmRun    run  = { .font = font, .color = tmQuoteIcon_ColorId, .flags = decoration_GmRunFlag };
-    if (!isEmpty_Range(&text)) {
-        const char *end;
-        tryAdvance_Text(font, text, d->size.x, &end);
-        run.text = (iRangecc){ text.start, end };
-    }
-    run.visBounds.size = init_I2(measureRange_Text(font, run.text).bounds.size.x,
-                                 lineHeight_Text(font));
-    run.visBounds.pos  = init_I2((d->size.x - run.visBounds.size.x) / 2,
-                                 top + (band - run.visBounds.size.y) / 2);
+    run.visBounds.size.y = lineHeight_Text(font);
+    run.visBounds.pos.y  = top + (pageBandHeight_GmDocument_(d) - run.visBounds.size.y) / 2;
+    pushBack_Array(bands, &(size_t){ size_Array(&d->layout) });
     pushBack_Array(&d->layout, &run);
 }
 
-static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
-    /* Footer text is set when the number of pages is known. */
-    pushBack_Array(footers, &(size_t){ size_Array(&d->layout) });
-    addPageBand_GmDocument_(d,
-                            (int) (page + 1) * d->metrics.pageHeight - pageBandHeight_GmDocument_(d),
-                            iNullRange);
+static void setPageBandText_GmDocument_(iGmDocument *d, size_t index, iRangecc text) {
+    iGmRun *run = at_Array(&d->layout, index);
+    run->text   = iNullRange;
+    if (!isEmpty_Range(&text)) {
+        const char *end;
+        tryAdvance_Text(run->font, text, d->size.x, &end);
+        run->text = (iRangecc){ text.start, end };
+    }
+    run->visBounds.size.x = measureRange_Text(run->font, run->text).bounds.size.x;
+    run->visBounds.pos.x  = (d->size.x - run->visBounds.size.x) / 2;
 }
 
-static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iRangecc header) {
+static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text) {
+    pushBack_StringArray(&d->auxText, text);
+    return range_String(constAt_StringArray(&d->auxText, size_StringArray(&d->auxText) - 1));
+}
+
+static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
+    addPageBand_GmDocument_(
+        d, (int) (page + 1) * d->metrics.pageHeight - pageBandHeight_GmDocument_(d), footers);
+}
+
+static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iArray *headers) {
     addPageFooter_GmDocument_(d, *page, footers);
     (*page)++;
-    if (!isEmpty_Range(&header)) {
-        addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight, header);
+    addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight, headers);
+}
+
+static iRangecc headingText_GmDocument_(const iGmDocument *d, const iGmRun *run) {
+    /* Full text of a heading that begins with `run`. */
+    iConstForEach(Array, i, &d->headings) {
+        const iGmHeading *head = i.value;
+        if (head->text.start == run->text.start) {
+            return head->text;
+        }
+    }
+    return run->text;
+}
+
+static void setPageBandTexts_GmDocument_(iGmDocument *d, const iArray *headers,
+                                         const iArray *footers) {
+    const size_t numPages = size_Array(footers);
+    /* Page numbers. */
+    for (size_t i = 0; i < numPages; i++) {
+        setPageBandText_GmDocument_(
+            d,
+            *(const size_t *) constAt_Array(footers, i),
+            auxText_GmDocument_(d, collectNewFormat_String("%zu / %zu", i + 1, numPages)));
+    }
+    /* Headers show the last level 1 heading on or before the page. */
+    iRangecc title   = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
+    size_t   runPos  = 0;
+    for (size_t page = 1; page < numPages && page - 1 < size_Array(headers); page++) {
+        const int pageEnd = (int) (page + 1) * d->metrics.pageHeight;
+        for (; runPos < size_Array(&d->layout); runPos++) {
+            const iGmRun *run = constAt_Array(&d->layout, runPos);
+            if (top_Rect(run->visBounds) >= pageEnd) {
+                break;
+            }
+            if (~run->flags & decoration_GmRunFlag && run->lineType == heading1_GmLineType &&
+                run->flags & startOfLine_GmRunFlag) {
+                iString *text = collectNewRange_String(headingText_GmDocument_(d, run));
+                title = auxText_GmDocument_(d, collect_String(upper_String(text)));
+            }
+        }
+        setPageBandText_GmDocument_(d, *(const size_t *) constAt_Array(headers, page - 1), title);
     }
 }
 
@@ -968,11 +1018,10 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
 static void paginate_GmDocument_(iGmDocument *d) {
     const iArray *src        = collect_Array(copy_Array(&d->layout));
     const size_t  numSrc     = size_Array(src);
-    pushBack_StringArray(&d->auxText, collect_String(upper_String(&d->title)));
-    const iRangecc header    = range_String(constAt_StringArray(&d->auxText,
-                                                                size_StringArray(&d->auxText) - 1));
     iArray        footers; /* layout indices of the page footers */
+    iArray        headers; /* layout indices of the page headers, from the second page */
     init_Array(&footers, sizeof(size_t));
+    init_Array(&headers, sizeof(size_t));
     clear_Array(&d->layout);
     size_t   page       = 0;
     iRangei  content    = pageContentRange_GmDocument(d, page);
@@ -1004,7 +1053,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
                                   : isChapter ? top_PageAlign
                                               : center_PageAlign,
                                   pagePreId, lastPreId);
-            breakPage_GmDocument_(d, &page, &footers, header);
+            breakPage_GmDocument_(d, &page, &footers, &headers);
             pageStart  = size_Array(&d->layout);
             pagePreId  = lastPreId + 1;
             content    = pageContentRange_GmDocument(d, page);
@@ -1054,21 +1103,13 @@ static void paginate_GmDocument_(iGmDocument *d) {
     alignPage_GmDocument_(d, pageStart, content,
                           page == 0 ? center_PageAlign : top_PageAlign, pagePreId, lastPreId);
     if (needsInsetPage) {
-        breakPage_GmDocument_(d, &page, &footers, header);
+        breakPage_GmDocument_(d, &page, &footers, &headers);
     }
     addPageFooter_GmDocument_(d, page, &footers);
     const size_t numPages = page + 1;
     d->size.y = (int) numPages * d->metrics.pageHeight;
-    /* Page numbers. */
-    const int font = pageFont_GmDocument_(d);
-    for (size_t i = 0; i < size_Array(&footers); i++) {
-        iGmRun *run = at_Array(&d->layout, value_Array(&footers, i, size_t));
-        pushBack_StringArray(&d->auxText,
-                             collectNewFormat_String("%zu / %zu", i + 1, numPages));
-        run->text = range_String(constAt_StringArray(&d->auxText, size_StringArray(&d->auxText) - 1));
-        run->visBounds.size.x = measureRange_Text(font, run->text).bounds.size.x;
-        run->visBounds.pos.x  = (d->size.x - run->visBounds.size.x) / 2;
-    }
+    setPageBandTexts_GmDocument_(d, &headers, &footers);
+    deinit_Array(&headers);
     deinit_Array(&footers);
 }
 
