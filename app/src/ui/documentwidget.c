@@ -745,6 +745,18 @@ void updateTheme_DocumentWidget(iDocumentWidget *d) {
     updateBanner_DocumentWidget(d);
 }
 
+static iBool triggerFooterKey_DocumentWidget_(iDocumentWidget *d, int key) {
+    if (d->footerButtons) {
+        iForEach(ObjectList, i, children_Widget(d->footerButtons)) {
+            if (isInstance_Object(i.object, &Class_LabelWidget) &&
+                triggerKey_LabelWidget(i.object, key, 0)) {
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
+}
+
 void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items, size_t count) {
     iWidget *w = as_Widget(d);
     destroy_Widget(d->footerButtons);
@@ -780,6 +792,10 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
                 items[i].label, items[i].key, items[i].kmods, items[i].command)),
             alignLeft_WidgetFlag | drawKey_WidgetFlag | extraPadding_WidgetFlag);
         setPadding1_Widget(as_Widget(button), gap_UI / 2);
+        if (items[i].kmods == 0 && (items[i].key == SDLK_LEFT || items[i].key == SDLK_RIGHT)) {
+            /* Page turns take precedence (see `triggerFooterKey_DocumentWidget_`). */
+            setKeyTrigger_LabelWidget(button, iFalse);
+        }
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
         setBackgroundColor_Widget(as_Widget(button), uiBackgroundSidebar_ColorId);
@@ -2697,10 +2713,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
             }
         }
-        if ((key == SDLK_LEFT || key == SDLK_RIGHT) && isPaged_DocumentView(view) &&
-            keyMods_Sym(modState_Keys()) == 0 && document_App() == d) {
-            turnPage_DocumentView(view, key == SDLK_LEFT ? -1 : +1);
-            return iTrue;
+        if ((key == SDLK_LEFT || key == SDLK_RIGHT) && keyMods_Sym(modState_Keys()) == 0 &&
+            document_App() == d) {
+            /* Footer actions apply only when there is no page to turn to. */
+            if (isPaged_DocumentView(view) && turnPage_DocumentView(view, key == SDLK_LEFT ? -1 : +1)) {
+                return iTrue;
+            }
+            if (triggerFooterKey_DocumentWidget_(d, key) || isPaged_DocumentView(view)) {
+                return iTrue;
+            }
         }
         switch (key) {
             case SDLK_ESCAPE:

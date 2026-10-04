@@ -37,6 +37,7 @@ void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setIconColor_LabelWidget    (iLabelWidget *, int color);
 void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
+void    setKeyTrigger_LabelWidget   (iLabelWidget *, iBool keyTrigger); /* false: owner calls `triggerKey` */
 void    setMenuCanceling_LabelWidget(iLabelWidget *, iBool menuCanceling);
 void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
 void    setParentTextColor_LabelWidget(iLabelWidget *, iBool parentTextColor);
@@ -53,6 +54,7 @@ void    setTruncateToFit_LabelWidget(iLabelWidget *, iBool truncateToFit);
 void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
 
 iBool   checkIcon_LabelWidget       (iLabelWidget *);
+iBool   triggerKey_LabelWidget      (iLabelWidget *, int key, int kmods); /* true if the key matches */
 void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
 void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */

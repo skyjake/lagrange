@@ -62,6 +62,7 @@ struct Impl_LabelWidget {
         uint16_t noLabel             : 1;
         uint16_t untranslated        : 1;
         uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected */
+        uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
     } flags;
 };
 
@@ -265,7 +266,8 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
             case SDL_EVENT_KEY_DOWN: {
                 const int mods = ev->key.mod;
                 const int sym  = ev->key.key;
-                if (d->key && sym == d->key && checkModifiers_(mods, d->kmods)) {
+                if (d->key && !d->flags.noKeyTrigger && sym == d->key &&
+                    checkModifiers_(mods, d->kmods)) {
                     trigger_LabelWidget_(d);
                     return iTrue;
                 }
@@ -872,6 +874,20 @@ void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingCol
         d->flags.removeTrailingColon = removeTrailingColon;
         replaceVariables_LabelWidget_(d);
     }
+}
+
+void setKeyTrigger_LabelWidget(iLabelWidget *d, iBool keyTrigger) {
+    if (d) {
+        d->flags.noKeyTrigger = !keyTrigger;
+    }
+}
+
+iBool triggerKey_LabelWidget(iLabelWidget *d, int key, int kmods) {
+    if (d && d->key && key == d->key && checkModifiers_(kmods, d->kmods)) {
+        trigger_LabelWidget_(d);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 void setMenuCanceling_LabelWidget(iLabelWidget *d, iBool menuCanceling) {
