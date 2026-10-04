@@ -3294,9 +3294,12 @@ static void positionPagedProgress_DocumentWidget_(iDocumentWidget *d) {
         bottom = iMin(bottom, edge);
     }
     /* Reacts to the mouse up to the middle of the page footer. */
+    const iGmDocument *doc = d->view->doc;
     barWidget->rect.size = init_I2(width_Rect(viewport),
                                    iMax(3 * gap_UI,
-                                        pageBandHeight_GmDocument(d->view->doc) / 2 + gap_UI));
+                                        pageFooterHeight_GmDocument(doc) -
+                                            metrics_GmDocument(doc)->bottomInset -
+                                            pageBandHeight_GmDocument(doc) / 2));
     barWidget->rect.pos  = init_I2(left_Rect(viewport) - left_Rect(bounds),
                                    bottom - top_Rect(bounds) - height_Widget(barWidget));
 }

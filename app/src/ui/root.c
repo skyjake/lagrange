@@ -2730,17 +2730,17 @@ static void updateReadingBarsOnTop_Root_(iRoot *d) {
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
     iWidget *lookup = findChild_Widget(d->widget, "lookup");
-    iWidget *order[3] = { navBar, tabBar, lookup };
+    iWidget *order[4] = { navBar, tabBar, findChild_Widget(d->widget, "search"), lookup };
     if (prefs_App()->bottomTabBar) {
         order[0] = tabBar;
         order[1] = navBar;
     }
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         if (order[i]) {
             setFlags_Widget(order[i], keepOnTop_WidgetFlag, iFalse);
         }
     }
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         if (order[i]) {
             /* The document draws the shadows of the bars. */
             setFlags_Widget(order[i], noShadowBorder_WidgetFlag, d->isReading);
@@ -2940,9 +2940,10 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
             return; /* in use; check again later */
         }
     }
+    const iWidget *searchBar = findChild_Widget(d->widget, "search");
     iConstForEach(PtrArray, i, d->onTop) {
         const iWidget *top = i.ptr;
-        if (top != navBar && top != tabBar && isVisible_Widget(top)) {
+        if (top != navBar && top != tabBar && top != searchBar && isVisible_Widget(top)) {
             return; /* a menu or popup is open */
         }
     }
@@ -2995,10 +2996,12 @@ iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *o
 iRect readingRect_Root(const iRoot *d, iRect docBounds) {
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
+    /* The find bar is also drawn over the page, so it does not change the page height. */
+    const iWidget *searchBar = findChild_Widget(d->widget, "search");
     int top    = top_Rect(docBounds);
     int bottom = bottom_Rect(docBounds);
-    for (int i = 0; i < 2; i++) {
-        const iWidget *bar = i == 0 ? navBar : tabBar;
+    for (int i = 0; i < 3; i++) {
+        const iWidget *bar = i == 0 ? navBar : i == 1 ? tabBar : searchBar;
         if (bar && isVisible_Widget(bar)) {
             const iRect rect = boundsWithoutVisualOffset_Widget(bar);
             if (bottom_Rect(rect) <= top_Rect(docBounds)) {

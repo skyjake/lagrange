@@ -843,8 +843,8 @@ int pageHeaderHeight_GmDocument(const iGmDocument *d) {
 }
 
 int pageFooterHeight_GmDocument(const iGmDocument *d) {
-    /* The reading progress bar is below the footer. */
-    return pageBandHeight_GmDocument(d) + gap_UI + d->metrics.bottomInset;
+    /* The reading progress bar and the find bar are below the footer. */
+    return pageBandHeight_GmDocument(d) + 3 * gap_UI + d->metrics.bottomInset;
 }
 
 iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
