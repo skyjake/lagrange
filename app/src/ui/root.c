@@ -2729,9 +2729,11 @@ static void updateReadingBarsOnTop_Root_(iRoot *d) {
             setFlags_Widget(order[i], keepOnTop_WidgetFlag, iFalse);
         }
     }
-    if (d->isReading) {
-        for (int i = 0; i < 3; i++) {
-            if (order[i]) {
+    for (int i = 0; i < 3; i++) {
+        if (order[i]) {
+            /* The document draws the shadows of the bars. */
+            setFlags_Widget(order[i], noShadowBorder_WidgetFlag, d->isReading);
+            if (d->isReading) {
                 setFlags_Widget(order[i], keepOnTop_WidgetFlag, iTrue);
             }
         }
@@ -2758,10 +2760,6 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
     /* Hidden bars give their space to the document. */
     if (navBar) {
         setFlags_Widget(navBar, collapse_WidgetFlag, reading);
-    }
-    iWidget *lookup = findChild_Widget(d->widget, "lookup");
-    if (lookup) {
-        setFlags_Widget(lookup, noShadowBorder_WidgetFlag, reading);
     }
     updateReadingBarsOnTop_Root_(d);
     if (reading) {
@@ -2821,7 +2819,8 @@ static void slideReadingBars_Root_(iRoot *d, iBool out, iBool animate) {
     const uint32_t span = animate ? readingBarsSlideSpan_Root_ : 0;
     for (int i = 0; i < 2; i++) {
         iWidget *bar = i == 0 ? navBar : tabBar;
-        if (bar) {
+        /* A hidden bar with a visual offset would still be drawn. */
+        if (bar && (isVisible_Widget(bar) || (!out && !animate))) {
             const int rest = d->readingBarsRest[i];
             setVisualOffset_Widget(bar,
                                    !out                       ? rest
@@ -2943,6 +2942,25 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
         return; /* e.g., selecting text */
     }
     showReadingBars_Root(d, iFalse);
+}
+
+iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out) {
+    if (!d->isReading) {
+        return iFalse;
+    }
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    iBool found = iFalse;
+    for (int i = 0; i < 2; i++) {
+        const iWidget *bar = i == 0 ? navBar : tabBar;
+        if (bar && isVisible_Widget(bar) && isAtBottom_Root_(d, bar) == bottom) {
+            const iRect rect = bounds_Widget(bar);
+            const int   edge = bottom ? top_Rect(rect) : bottom_Rect(rect);
+            *edge_out = !found ? edge : bottom ? iMin(*edge_out, edge) : iMax(*edge_out, edge);
+            found = iTrue;
+        }
+    }
+    return found;
 }
 
 iRect readingRect_Root(const iRoot *d, iRect docBounds) {

@@ -260,6 +260,28 @@ void drawSoftEdge_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, in
                                     size_Range(&ySpan) });
 }
 
+void drawSoftHorizontalEdge_Paint(const iPaint *d, int y, iRangei xSpan, int thickness, int color,
+                                  int alpha) {
+    SDL_Texture *shadow = get_Window()->borderShadow;
+    if (!shadow || thickness == 0) {
+        return;
+    }
+    y += origin_Paint.y;
+    xSpan.start += origin_Paint.x;
+    xSpan.end   += origin_Paint.x;
+    const iInt2  size = size_SDLTexture(shadow);
+    const iColor clr  = get_Color(color);
+    SDL_SetTextureColorMod(shadow, clr.r, clr.g, clr.b);
+    SDL_SetTextureAlphaMod(shadow, alpha);
+    SDL_RenderTexture(renderer_Paint_(d),
+                      shadow,
+                      &(SDL_FRect){ size.x / 2, thickness > 0 ? size.y / 2 : 0, 1, size.y / 2 },
+                      &(SDL_FRect){ xSpan.start,
+                                    thickness > 0 ? y : y + thickness,
+                                    size_Range(&xSpan),
+                                    iAbs(thickness) });
+}
+
 void drawSoftCrease_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, int color,
                           int alpha) {
     drawSoftEdge_Paint(d, x, ySpan, -thickness, color, alpha);

@@ -3424,8 +3424,18 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             drawCovered_Query(d->query, &clipBounds);
         }
     }
-    if (colorTheme_App() == pureWhite_ColorTheme &&
-        !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar)) {
+    if (isReadingMode_Root(w->root)) {
+        /* Shadows of the bars floating over the page. */
+        int edge;
+        for (int i = 0; i < 2; i++) {
+            if (readingBarsEdge_Root(w->root, i == 1, &edge)) {
+                drawSoftHorizontalEdge_Paint(&p, edge, xSpan_Rect(bounds),
+                                             (i == 0 ? 12 : -12) * gap_UI, black_ColorId, 30);
+            }
+        }
+    }
+    else if (colorTheme_App() == pureWhite_ColorTheme &&
+             !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar)) {
         /* A subtle separator between UI and content. */
         drawHLine_Paint(&p, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
