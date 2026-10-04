@@ -1888,11 +1888,16 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
         setPos_Banner(d->banner, init_I2(pageOrigin_DocumentView(d, 0).x, top_Rect(viewport)));
         draw_Banner(d->banner);
     }
-    /* Crease between the pages of a spread. */
+    /* Crease between the pages of a spread, and slight curvature at the outer edges. */
     if (numColumns_DocumentView(d) == 2) {
+        const iRangei ySpan = ySpan_Rect(viewport);
         for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
-            drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan_Rect(viewport),
+            drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan,
                                  width_Rect(bounds) / 20, black_ColorId, 20);
+            drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page), ySpan,
+                               width_Rect(bounds) / 30, black_ColorId, 10);
+            drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page + 2), ySpan,
+                               -width_Rect(bounds) / 30, black_ColorId, 10);
         }
     }
     origin_Paint = zero_I2();
