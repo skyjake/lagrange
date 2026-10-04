@@ -258,6 +258,11 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
                                       width_Rect(bounds), height);
     iPaint p;
     init_Paint(&p);
+    /* Backing for contrast on light pages. */
+    fillRect_Paint(&p,
+                   init_Rect(left_Rect(track), top_Rect(track) - gap_UI / 2,
+                             width_Rect(track), height + gap_UI / 2),
+                   black_ColorId);
     fillRect_Paint(&p, track, uiSeparator_ColorId);
     fillRect_Paint(&p,
                    init_Rect(left_Rect(track), top_Rect(track),
