@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gamepad.h"
 #include "window.h"
 #include "../history.h"
+#include "../periodic.h"
 #include <lagrange/gmcerts.h>
 #include "../gmutil.h"
 
@@ -226,6 +227,7 @@ static iRoot *   activeRoot_         = NULL;
 static void     setupMovableElements_Root_  (iRoot *);
 static void     updateNavBarSize_           (iWidget *navBar);
 static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
+static void     hideReadingBarsIfIdle_Root_ (iRoot *);
 
 iDefineTypeConstruction(Root)
 iDefineAudienceGetter(Root, arrangementChanged)
@@ -484,7 +486,10 @@ static void updateTerminalStatus_(iLabelWidget *term) {
 }
 
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
-    iUnused(root);
+    if (equal_Command(cmd, "root.reading")) {
+        setReadingMode_Root(root->root, arg_Command(cmd) != 0);
+        return iTrue;
+    }
     if (equal_Command(cmd, "menu.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *menu = argLabel_Command(cmd, "self") ? button : findChild_Widget(button, "menu");
@@ -1219,6 +1224,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         return iFalse;
     }
+    else if (equal_Command(cmd, "readingbars.hide")) {
+        hideReadingBarsIfIdle_Root_(navBar->root);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "navbar.actions.changed")) {
         updateNavBarActions_(navBar);
         return iTrue;
@@ -1249,6 +1258,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "navigate.focus")) {
+        if (isReadingMode_Root(navBar->root)) {
+            showReadingBars_Root(navBar->root, iTrue);
+        }
         /* FIXME: This should respect the current focus root. */
         /* The upload dialog has its own path field. */
         if (findChild_Widget(root_Widget(navBar), "upload")) {
@@ -2668,4 +2680,139 @@ iRect visibleRect_Root(const iRoot *d) {
         }
     }
     return visRect;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static const uint32_t readingBarsDelay_Root_ = 2500;
+
+static iWidget *readingBarsTimer_Root_(const iRoot *d) {
+    /* Periodic context for hiding the bars. */
+    return findChild_Widget(d->widget, "navbar");
+}
+
+static void readingBars_Root_(const iRoot *d, iWidget **navBar, iWidget **tabBar) {
+    /* Bars in the phone's bottom bar are hidden along with the toolbar. */
+    const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+    *navBar = findChild_Widget(d->widget, "navbar");
+    *tabBar = findChild_Widget(findChild_Widget(d->widget, "doctabs"), "tabs.buttons");
+    if (*navBar && parent_Widget(*navBar) != findChild_Widget(d->widget, "navdiv")) {
+        *navBar = NULL;
+    }
+    if (isPhone && prefs_App()->bottomTabBar) {
+        *tabBar = NULL;
+    }
+}
+
+static iBool isTabBarWanted_Root_(const iRoot *d) {
+    return !prefs_App()->hideTabBar &&
+           tabCount_Widget(findChild_Widget(d->widget, "doctabs")) > 1;
+}
+
+iBool isReadingMode_Root(const iRoot *d) {
+    return d && d->isReading;
+}
+
+void setReadingMode_Root(iRoot *d, iBool reading) {
+    if (d->isReading == reading) {
+        return;
+    }
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    if (!reading) {
+        showReadingBars_Root(d, iTrue);
+        if (readingBarsTimer_Root_(d)) {
+            remove_Periodic(periodic_App(), readingBarsTimer_Root_(d));
+        }
+    }
+    d->isReading = reading;
+    /* Visible bars are drawn over the document. Hidden ones give their space to it. */
+    if (navBar) {
+        setFlags_Widget(navBar, keepOnTop_WidgetFlag | collapse_WidgetFlag, reading);
+    }
+    if (tabBar) {
+        setFlags_Widget(tabBar, keepOnTop_WidgetFlag, reading);
+    }
+    if (reading) {
+        showReadingBars_Root(d, iTrue);
+    }
+    arrange_Widget(d->widget);
+    refresh_Widget(d->widget);
+}
+
+void showReadingBars_Root(iRoot *d, iBool show) {
+    if (!d->isReading) {
+        return;
+    }
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    d->areReadingBarsHidden = !show;
+    if (navBar) {
+        setFlags_Widget(navBar, hidden_WidgetFlag, !show);
+    }
+    if (tabBar) {
+        setFlags_Widget(tabBar, hidden_WidgetFlag, !show || !isTabBarWanted_Root_(d));
+    }
+    if (deviceType_App() == phone_AppDeviceType) {
+        showToolbar_Root(d, show);
+    }
+    iWidget *timer = readingBarsTimer_Root_(d);
+    if (timer) {
+        if (show) {
+            addDelay_Periodic(periodic_App(), readingBarsDelay_Root_, timer, "readingbars.hide");
+        }
+        else {
+            remove_Periodic(periodic_App(), timer);
+        }
+    }
+    arrange_Widget(d->widget);
+    refresh_Widget(d->widget);
+}
+
+void toggleReadingBars_Root(iRoot *d) {
+    showReadingBars_Root(d, d->areReadingBarsHidden);
+}
+
+static void hideReadingBarsIfIdle_Root_(iRoot *d) {
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    iWindow       *win     = window_Widget(d->widget);
+    const iBool    isMouse = win->isMouseInside;
+    const iInt2    mouse   = mouseCoord_Window(win, 0);
+    const iWidget *focus   = focus_Widget();
+    for (int i = 0; i < 2; i++) {
+        const iWidget *bar = i == 0 ? navBar : tabBar;
+        if (bar && ((isMouse && contains_Widget(bar, mouse)) ||
+                    (focus && (focus == bar || hasParent_Widget(focus, bar))))) {
+            return; /* in use; check again later */
+        }
+    }
+    iConstForEach(PtrArray, i, d->onTop) {
+        const iWidget *top = i.ptr;
+        if (top != navBar && top != tabBar && isVisible_Widget(top)) {
+            return; /* a menu or popup is open */
+        }
+    }
+    showReadingBars_Root(d, iFalse);
+}
+
+iRect readingRect_Root(const iRoot *d, iRect docBounds) {
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    int top    = top_Rect(docBounds);
+    int bottom = bottom_Rect(docBounds);
+    for (int i = 0; i < 2; i++) {
+        const iWidget *bar = i == 0 ? navBar : tabBar;
+        if (bar && isVisible_Widget(bar)) {
+            const iRect rect = boundsWithoutVisualOffset_Widget(bar);
+            if (bottom_Rect(rect) <= top_Rect(docBounds)) {
+                top = iMin(top, top_Rect(rect));
+            }
+            else if (top_Rect(rect) >= bottom_Rect(docBounds)) {
+                bottom = iMax(bottom, bottom_Rect(rect));
+            }
+        }
+    }
+    bottom = iMin(bottom, bottom_Rect(safeRect_Root(d)));
+    return (iRect){ init_I2(left_Rect(docBounds), top), init_I2(width_Rect(docBounds), bottom - top) };
 }

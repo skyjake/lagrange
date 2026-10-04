@@ -3063,8 +3063,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     const int zone = pageTurnZone_DocumentView(view, pos_Click(&d->click));
                     if (zone) {
                         turnPage_DocumentView(view, zone);
-                        return iTrue;
                     }
+                    else {
+                        toggleReadingBars_Root(w->root);
+                    }
+                    return iTrue;
                 }
                 if (view->hoverLink) {
                     /* TODO: Move this to a method. */
@@ -3242,6 +3245,11 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
                      startsWithCase_String(d->mod.url, "about:") ||
                      !isSuccess_GmStatusCode(d->fetch->sourceStatus));
     iScrollWidget *scrollBar = d->scroll;
+    iRoot         *root      = as_Widget(d)->root;
+    if (document_Root(root) == d &&
+        isReadingMode_Root(root) != isPaged_DocumentView(d->view)) {
+        postCommand_Root(root, format_CStr("root.reading arg:%d", isPaged_DocumentView(d->view)));
+    }
     if (isPaged_DocumentView(d->view)) {
         positionPagedFooterButtons_DocumentWidget_(d);
         updatePagedProgress_DocumentWidget_(d);

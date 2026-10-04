@@ -28,6 +28,8 @@ struct Impl_Root {
     iAudience *visualOffsetsChanged; /* called after running tickers */
     iColor     tmPalette[tmMax_ColorId]; /* theme-specific palette */
     iString    tabInsertId; /* place new tab next to this one */
+    iBool      isReading;   /* bars float over a paginated document */
+    iBool      areReadingBarsHidden;
 };
 
 iDeclareTypeConstruction(Root)
@@ -57,6 +59,14 @@ void        enableToolbar_Root                  (iRoot *, iBool enable);
 void        updateToolbarColors_Root            (iRoot *);
 void        updateNavBarSize_Root               (iRoot *);
 void        showOrHideNewTabButton_Root         (iRoot *);
+
+/* Reading mode: the navbar and tab bar float over a paginated document and hide
+   automatically, so the document has a fixed area whether or not they are shown. */
+void        setReadingMode_Root                 (iRoot *, iBool reading);
+iBool       isReadingMode_Root                  (const iRoot *);
+void        showReadingBars_Root                (iRoot *, iBool show);
+void        toggleReadingBars_Root              (iRoot *);
+iRect       readingRect_Root                    (const iRoot *, iRect docBounds); /* area under the bars */
 
 void        notifyVisualOffsetChange_Root       (iRoot *);
 

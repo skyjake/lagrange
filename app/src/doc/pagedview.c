@@ -44,7 +44,11 @@ iBool isPaged_DocumentView(const iDocumentView *d) {
 }
 
 iRect pageViewport_DocumentView(const iDocumentView *d) {
-    iRect rect = bounds_Widget(constAs_Widget(d->owner));
+    const iWidget *w    = constAs_Widget(d->owner);
+    iRect          rect = bounds_Widget(w);
+    if (isReadingMode_Root(w->root) && document_Root(w->root) == d->owner) {
+        return readingRect_Root(w->root, rect);
+    }
     adjustEdges_Rect(&rect, 0, 0,
                      -(phoneToolbarHeight_DocumentWidget(d->owner) +
                        phoneBottomNavbarHeight_DocumentWidget(d->owner)), 0);

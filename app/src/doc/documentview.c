@@ -1846,10 +1846,12 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     const iBool    isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     const iVisBuf *visBuf           = d->visBuf;
     iPaint        *p                = &ctx->paint;
-    setClip_Paint(p, bounds);
+    /* In reading mode, the pages extend under the bars. */
+    const iRect    area             = union_Rect(bounds, viewport);
+    setClip_Paint(p, area);
     iAssert(isEqual_I2(origin_Paint, zero_I2()));
     origin_Paint = init_I2(horizOffset, 0);
-    fillRect_Paint(p, bounds, tmBackground_ColorId);
+    fillRect_Paint(p, area, tmBackground_ColorId);
     for (size_t i = 0; i < visBuf->numBuffers; i++) {
         const int page = visBuf->buffers[i].origin / pageHeight;
         if (page >= pages.start && page < pages.end && page < numPages) {
