@@ -228,6 +228,8 @@ static void     setupMovableElements_Root_  (iRoot *);
 static void     updateNavBarSize_           (iWidget *navBar);
 static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 static void     hideReadingBarsIfIdle_Root_ (iRoot *);
+static void     finishHidingReadingBars_Root_(void *);
+static void     updateReadingBarsOnTop_Root_(iRoot *);
 
 iDefineTypeConstruction(Root)
 iDefineAudienceGetter(Root, arrangementChanged)
@@ -246,6 +248,7 @@ void deinit_Root(iRoot *d) {
     delete_Audience(d->visualOffsetsChanged);
     delete_Audience(d->arrangementChanged);
     deinit_String(&d->tabInsertId);
+    removeTicker_App(finishHidingReadingBars_Root_, d);
     if (d->loadAnimTimer) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
@@ -2500,6 +2503,7 @@ static void setupMovableElements_Root_(iRoot *d) {
                         prefs->hideTabBar || tabCount_Widget(docTabs) <= 1);
     }
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
+    updateReadingBarsOnTop_Root_(d);
     arrange_Widget(d->widget);
     refresh_Widget(d->widget);
     postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
@@ -2709,6 +2713,31 @@ static iBool isTabBarWanted_Root_(const iRoot *d) {
            tabCount_Widget(findChild_Widget(d->widget, "doctabs")) > 1;
 }
 
+static void updateReadingBarsOnTop_Root_(iRoot *d) {
+    /* Visible bars are drawn over the document. The bar nearer to the window edge is drawn
+       last, and lookup results are over the navbar's shadow. */
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *lookup = findChild_Widget(d->widget, "lookup");
+    iWidget *order[3] = { navBar, tabBar, lookup };
+    if (prefs_App()->bottomTabBar) {
+        order[0] = tabBar;
+        order[1] = navBar;
+    }
+    for (int i = 0; i < 3; i++) {
+        if (order[i]) {
+            setFlags_Widget(order[i], keepOnTop_WidgetFlag, iFalse);
+        }
+    }
+    if (d->isReading) {
+        for (int i = 0; i < 3; i++) {
+            if (order[i]) {
+                setFlags_Widget(order[i], keepOnTop_WidgetFlag, iTrue);
+            }
+        }
+    }
+}
+
 iBool isReadingMode_Root(const iRoot *d) {
     return d && d->isReading;
 }
@@ -2726,18 +2755,15 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
         }
     }
     d->isReading = reading;
-    /* Visible bars are drawn over the document. Hidden ones give their space to it. */
+    /* Hidden bars give their space to the document. */
     if (navBar) {
-        setFlags_Widget(navBar, keepOnTop_WidgetFlag | collapse_WidgetFlag, reading);
+        setFlags_Widget(navBar, collapse_WidgetFlag, reading);
     }
-    if (tabBar) {
-        setFlags_Widget(tabBar, keepOnTop_WidgetFlag, reading);
-    }
-    /* Lookup results are on the same level as the navbar, over its shadow. */
     iWidget *lookup = findChild_Widget(d->widget, "lookup");
     if (lookup) {
-        setFlags_Widget(lookup, keepOnTop_WidgetFlag | noShadowBorder_WidgetFlag, reading);
+        setFlags_Widget(lookup, noShadowBorder_WidgetFlag, reading);
     }
+    updateReadingBarsOnTop_Root_(d);
     if (reading) {
         showReadingBars_Root(d, iTrue);
     }
@@ -2745,23 +2771,131 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
     refresh_Widget(d->widget);
 }
 
-void showReadingBars_Root(iRoot *d, iBool show) {
-    if (!d->isReading) {
-        return;
-    }
+static const uint32_t readingBarsSlideSpan_Root_ = 200;
+
+static void setReadingBarsVisible_Root_(iRoot *d, iBool show) {
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
-    d->areReadingBarsHidden = !show;
     if (navBar) {
         setFlags_Widget(navBar, hidden_WidgetFlag, !show);
     }
     if (tabBar) {
         setFlags_Widget(tabBar, hidden_WidgetFlag, !show || !isTabBarWanted_Root_(d));
     }
+    arrange_Widget(d->widget);
+}
+
+static iBool isAtBottom_Root_(const iRoot *d, const iWidget *bar) {
+    return mid_Rect(boundsWithoutVisualOffset_Widget(bar)).y >
+           mid_Rect(bounds_Widget(d->widget)).y;
+}
+
+static void readingBarsSlideDistances_Root_(const iRoot *d, int *top, int *bottom) {
+    /* Bars slide off their edge until they and their shadow are out of view. Bars on the
+       same edge move together. */
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    const iRect rootRect = bounds_Widget(d->widget);
+    int topEdge = top_Rect(rootRect), bottomEdge = bottom_Rect(rootRect);
+    for (int i = 0; i < 2; i++) {
+        const iWidget *bar = i == 0 ? navBar : tabBar;
+        if (bar && isVisible_Widget(bar)) {
+            const iRect rect = boundsWithoutVisualOffset_Widget(bar);
+            if (isAtBottom_Root_(d, bar)) {
+                bottomEdge = iMin(bottomEdge, top_Rect(rect));
+            }
+            else {
+                topEdge = iMax(topEdge, bottom_Rect(rect));
+            }
+        }
+    }
+    *top    = topEdge - top_Rect(rootRect) + 2 * gap_UI;
+    *bottom = bottom_Rect(rootRect) - bottomEdge + 2 * gap_UI;
+}
+
+static void slideReadingBars_Root_(iRoot *d, iBool out, iBool animate) {
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    int top, bottom;
+    readingBarsSlideDistances_Root_(d, &top, &bottom);
+    const uint32_t span = animate ? readingBarsSlideSpan_Root_ : 0;
+    for (int i = 0; i < 2; i++) {
+        iWidget *bar = i == 0 ? navBar : tabBar;
+        if (bar) {
+            const int rest = d->readingBarsRest[i];
+            setVisualOffset_Widget(bar,
+                                   !out                       ? rest
+                                   : isAtBottom_Root_(d, bar) ? rest + bottom
+                                                              : rest - top,
+                                   span,
+                                   easeOut_AnimFlag);
+        }
+    }
+}
+
+static void keepReadingBarsRest_Root_(iRoot *d) {
+    /* Bars may have a visual offset of their own while shown (e.g., moved for the keyboard). */
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    for (int i = 0; i < 2; i++) {
+        const iWidget *bar = i == 0 ? navBar : tabBar;
+        if (bar && isVisible_Widget(bar) && isFinished_Anim(&bar->visualOffset)) {
+            d->readingBarsRest[i] =
+                bar->flags & visualOffset_WidgetFlag || bar->flags2 & permanentVisualOffset_WidgetFlag2
+                    ? iRound(targetValue_Anim(&bar->visualOffset))
+                    : 0;
+        }
+    }
+}
+
+static void finishHidingReadingBars_Root_(void *ptr) {
+    iRoot *d = ptr;
+    if (!d->isReading || !d->areReadingBarsHidden) {
+        return;
+    }
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    if ((navBar && !isFinished_Anim(&navBar->visualOffset)) ||
+        (tabBar && !isFinished_Anim(&tabBar->visualOffset))) {
+        addTickerRoot_App(finishHidingReadingBars_Root_, d, d);
+        return;
+    }
+    slideReadingBars_Root_(d, iFalse, iFalse);
+    setReadingBarsVisible_Root_(d, iFalse);
+    refresh_Widget(d->widget);
+}
+
+void showReadingBars_Root(iRoot *d, iBool show) {
+    if (!d->isReading) {
+        return;
+    }
+    const iBool animate = prefs_App()->uiAnimations && d->areReadingBarsHidden == show;
+    d->areReadingBarsHidden = !show;
     if (deviceType_App() == phone_AppDeviceType) {
         showToolbar_Root(d, show);
     }
-    arrange_Widget(d->widget);
+    if (show) {
+        iWidget *navBar, *tabBar;
+        readingBars_Root_(d, &navBar, &tabBar);
+        const iBool wasHidden = navBar ? !isVisible_Widget(navBar) : (tabBar && !isVisible_Widget(tabBar));
+        setReadingBarsVisible_Root_(d, iTrue);
+        if (animate && wasHidden) {
+            slideReadingBars_Root_(d, iTrue, iFalse);
+        }
+        if (animate || wasHidden) {
+            /* If still sliding out, turns back from the current position. */
+            slideReadingBars_Root_(d, iFalse, animate);
+        }
+    }
+    else if (animate) {
+        keepReadingBarsRest_Root_(d);
+        slideReadingBars_Root_(d, iTrue, iTrue);
+        addTickerRoot_App(finishHidingReadingBars_Root_, d, d);
+    }
+    else {
+        slideReadingBars_Root_(d, iFalse, iFalse);
+        setReadingBarsVisible_Root_(d, iFalse);
+    }
     if (show) {
         /* The lookup popup may have been positioned while the navbar was hidden. */
         updateNavBarSize_Root(d);

@@ -30,6 +30,7 @@ struct Impl_Root {
     iString    tabInsertId; /* place new tab next to this one */
     iBool      isReading;   /* bars float over a paginated document */
     iBool      areReadingBarsHidden;
+    int        readingBarsRest[2]; /* visual offsets of the shown navbar and tab bar */
 };
 
 iDeclareTypeConstruction(Root)
