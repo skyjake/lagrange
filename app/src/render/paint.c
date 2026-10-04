@@ -206,6 +206,13 @@ void fillRect_Paint(const iPaint *d, iRect rect, int color) {
     SDL_RenderFillRect(renderer_Paint_(d), &frect);
 }
 
+void fillRectColor_Paint(const iPaint *d, iRect rect, iColor color) {
+    addv_I2(&rect.pos, origin_Paint);
+    SDL_SetRenderDrawColor(renderer_Paint_(d), color.r, color.g, color.b, color.a * d->alpha / 255);
+    const SDL_FRect frect = { rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
+    SDL_RenderFillRect(renderer_Paint_(d), &frect);
+}
+
 void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
     addv_I2(&inner.pos, origin_Paint);
     SDL_Renderer *render = renderer_Paint_(d);
@@ -237,7 +244,7 @@ void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color
                    &(SDL_FRect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
 }
 
-void drawSoftEdge_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, int color,
+void drawSoftEdge_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, iColor color,
                         int alpha) {
     SDL_Texture *shadow = get_Window()->borderShadow;
     if (!shadow || thickness == 0) {
@@ -247,8 +254,7 @@ void drawSoftEdge_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, in
     ySpan.start += origin_Paint.y;
     ySpan.end   += origin_Paint.y;
     const iInt2  size   = size_SDLTexture(shadow);
-    const iColor clr    = get_Color(color);
-    SDL_SetTextureColorMod(shadow, clr.r, clr.g, clr.b);
+    SDL_SetTextureColorMod(shadow, color.r, color.g, color.b);
     SDL_SetTextureAlphaMod(shadow, alpha);
     /* The middle row of the shadow fades out from the center towards both edges. */
     SDL_RenderTexture(renderer_Paint_(d),
@@ -282,7 +288,7 @@ void drawSoftHorizontalEdge_Paint(const iPaint *d, int y, iRangei xSpan, int thi
                                     iAbs(thickness) });
 }
 
-void drawSoftCrease_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, int color,
+void drawSoftCrease_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, iColor color,
                           int alpha) {
     drawSoftEdge_Paint(d, x, ySpan, -thickness, color, alpha);
     drawSoftEdge_Paint(d, x, ySpan, thickness, color, alpha);

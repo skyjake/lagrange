@@ -50,9 +50,10 @@ void    unsetClip_Paint     (iPaint *); /* must be paired with the `setClip` cal
 void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
 void    fillRect_Paint          (const iPaint *, iRect rect, int color);
+void    fillRectColor_Paint     (const iPaint *, iRect rect, iColor color);
 void    drawSoftShadow_Paint    (const iPaint *, iRect rect, int thickness, int color, int alpha);
-void    drawSoftEdge_Paint      (const iPaint *, int x, iRangei ySpan, int thickness, int color, int alpha); /* vertical; darkest at `x`, negative thickness extends left */
-void    drawSoftCrease_Paint    (const iPaint *, int x, iRangei ySpan, int thickness, int color, int alpha); /* vertical */
+void    drawSoftEdge_Paint      (const iPaint *, int x, iRangei ySpan, int thickness, iColor color, int alpha); /* vertical; darkest at `x`, negative thickness extends left */
+void    drawSoftCrease_Paint    (const iPaint *, int x, iRangei ySpan, int thickness, iColor color, int alpha); /* vertical */
 void    drawSoftHorizontalEdge_Paint(const iPaint *, int y, iRangei xSpan, int thickness, int color, int alpha); /* darkest at `y`, negative thickness extends up */
 
 void    drawLines_Paint (const iPaint *, const iInt2 *points, size_t count, int color);

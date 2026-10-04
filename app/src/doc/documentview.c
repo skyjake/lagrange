@@ -1893,15 +1893,31 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     /* Crease between the pages of a spread, and slight curvature at the outer edges. */
     if (numColumns_DocumentView(d) == 2) {
         const iRangei ySpan = ySpan_Rect(viewport);
+        /* The shading is a darker shade of the page itself. */
+        const iBool isDarkPage = isDark_GmDocumentTheme(docTheme_DocPrefs(
+            docPrefs_GmDocument(d->doc), isDark_ColorTheme(colorTheme_App())));
+        iHSLColor   shade      = get_HSLColor(tmBackground_ColorId);
+        shade                  = setLum_HSLColor(shade, shade.lum * (isDarkPage ? 0.55f : 0.82f));
+        const iColor shadeColor = rgb_HSLColor(shade);
+        const int    shadeAlpha = isDarkPage ? 90 : 110;
         for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
-            drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan,
-                                 width_Rect(bounds) / 20, black_ColorId,
-                                 isDark_ColorTheme(get_Prefs()->theme) ? 40 : 20);
+            const int crease = pageLeft_DocumentView(d, page + 1);
+            drawSoftCrease_Paint(p, crease, ySpan, width_Rect(bounds) / 20, shadeColor, shadeAlpha);
+            /* The two sheets meet at a thin seam. */
+            const int seamWidth = iMax(1, gap_UI / 4);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            p->alpha = shadeAlpha;
+            fillRectColor_Paint(p,
+                                init_Rect(crease - seamWidth / 2, ySpan.start, seamWidth,
+                                          size_Range(&ySpan)),
+                                shadeColor);
+            p->alpha = 255;
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
             /* Better without?
             drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page), ySpan,
-                               width_Rect(bounds) / 10, black_ColorId, 10);
+                               width_Rect(bounds) / 10, shadeColor, 10);
             drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page + 2), ySpan,
-                               -width_Rect(bounds) / 10, black_ColorId, 10);
+                               -width_Rect(bounds) / 10, shadeColor, 10);
             */
         }
     }
