@@ -1003,7 +1003,6 @@ static void setPageBandTexts_GmDocument_(iGmDocument *d, const iArray *headers,
 enum iPageAlign {
     top_PageAlign,
     center_PageAlign,
-    bottom_PageAlign,
 };
 
 static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
@@ -1021,7 +1020,7 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
     if (space <= 0) {
         return;
     }
-    const int offset = align == bottom_PageAlign ? space : space / 2;
+    const int offset = space / 2;
     for (size_t i = start; i < size_Array(&d->layout); i++) {
         iGmRun *run = at_Array(&d->layout, i);
         run->visBounds.pos.y += offset;
@@ -1065,12 +1064,9 @@ static void paginate_GmDocument_(iGmDocument *d) {
                 i = prevGroup;
                 resize_Array(&d->layout, prevDest);
             }
-            /* The first page is aligned to the bottom, others are centered. A chapter's last
-               page is aligned to the top. */
+            /* Pages are centered, but a chapter's last page is aligned to the top. */
             alignPage_GmDocument_(d, pageStart, content,
-                                  page == 0   ? bottom_PageAlign
-                                  : isChapter ? top_PageAlign
-                                              : center_PageAlign,
+                                  isChapter ? top_PageAlign : center_PageAlign,
                                   pagePreId, lastPreId);
             breakPage_GmDocument_(d, &page, &footers, &headers);
             pageStart  = size_Array(&d->layout);
@@ -1405,9 +1401,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Check the margin vs. previous run. */
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
-            /* Paginated level 1 headings begin a new page lower down. */
-            const float top = topMargin[type] * (isPaged && type == heading1_GmLineType ? 3 : 1);
-            int required = iMax(top, bottomMargin[prevType]) *
+            /* Paginated level 1 headings begin a new page lower down, with more space
+               below them. */
+            const float top    = topMargin[type] * (isPaged && type == heading1_GmLineType ? 3 : 1);
+            const float bottom = bottomMargin[prevType] *
+                                 (isPaged && prevType == heading1_GmLineType ? 2 : 1);
+            int required = iMax(top, bottom) *
                            lineHeight_Text(d->theme.fonts[text_GmLineType]);
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
                 required = 1.25f * lineHeight_Text(d->theme.fonts[text_GmLineType]);
