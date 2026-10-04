@@ -26,6 +26,11 @@ msgstr "User data archives contain exported browsing history, identities, bookma
 msgid "doc.archive.view"
 msgstr "View archive contents"
 
+# Page footer in paginated view mode: current page and number of pages.
+#, c-format
+msgid "doc.page.number"
+msgstr "Page %d of %d"
+
 msgid "media.untitled.image"
 msgstr "Image"
 

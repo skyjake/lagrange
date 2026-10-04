@@ -978,7 +978,8 @@ static void setPageBandTexts_GmDocument_(iGmDocument *d, const iArray *headers,
         setPageBandText_GmDocument_(
             d,
             *(const size_t *) constAt_Array(footers, i),
-            auxText_GmDocument_(d, collectNewFormat_String("%zu / %zu", i + 1, numPages)));
+            auxText_GmDocument_(
+                d, collectNewFormat_String(cstr_Lang("doc.page.number"), (int) i + 1, (int) numPages)));
     }
     /* Headers show the last level 1 heading on or before the page. */
     iRangecc title   = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
