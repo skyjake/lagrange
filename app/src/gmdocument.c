@@ -830,7 +830,7 @@ static int pageFont_GmDocument_(const iGmDocument *d) {
     /* Same family as the document's headings. */
     return FONT_ID(isForcedMonospace_GmDocument_(d) ? documentMonospace_FontId
                                                     : documentHeading_FontId,
-                   regular_FontStyle,
+                   semiBold_FontStyle,
                    contentSmall_FontSize);
 }
 
