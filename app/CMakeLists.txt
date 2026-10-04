@@ -275,6 +275,8 @@ set (SOURCES
     src/doc/linkcontextmenu.h
     src/doc/linkinfo.c
     src/doc/linkinfo.h
+    src/doc/pagedview.c
+    src/doc/pagedview.h
     src/doc/persistentstate.c
     src/doc/persistentstate.h
     src/doc/swipe.c

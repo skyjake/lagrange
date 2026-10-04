@@ -833,7 +833,7 @@ static int pageBandHeight_GmDocument_(const iGmDocument *d) {
     return 2 * lineHeight_Text(pageFont_GmDocument_(d));
 }
 
-static iRangei pageContentRange_GmDocument_(const iGmDocument *d, size_t page) {
+iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
     const int top  = (int) page * d->metrics.pageHeight;
     const int band = pageBandHeight_GmDocument_(d);
     return (iRangei){ top + (page == 0 ? d->metrics.firstPageInset : band),
@@ -924,7 +924,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
     init_Array(&footers, sizeof(size_t));
     clear_Array(&d->layout);
     size_t   page       = 0;
-    iRangei  content    = pageContentRange_GmDocument_(d, page);
+    iRangei  content    = pageContentRange_GmDocument(d, page);
     int      offset     = content.start; /* the continuous layout begins at zero */
     int      lastBottom = content.start;
     size_t   firstGroup = 0;
@@ -942,7 +942,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
                 resize_Array(&d->layout, prevDest);
             }
             breakPage_GmDocument_(d, &page, &footers);
-            content    = pageContentRange_GmDocument_(d, page);
+            content    = pageContentRange_GmDocument(d, page);
             end        = groupEnd_GmDocument_(src, i);
             offset     = content.start - groupSpan_GmDocument_(src, i, end).start;
             lastBottom = content.start;
@@ -2585,6 +2585,14 @@ iBool updateMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics
 
 int contentWidth_GmDocument(const iGmDocument *d) {
     return d->contentWidth;
+}
+
+const iGmDocumentMetrics *metrics_GmDocument(const iGmDocument *d) {
+    return &d->metrics;
+}
+
+iBool isCoverPage_GmDocument(const iGmDocument *d) {
+    return d->flags.isCoverPage;
 }
 
 iBool isPaged_GmDocument(const iGmDocument *d) {

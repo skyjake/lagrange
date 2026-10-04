@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "documentview.h"
+#include "pagedview.h"
 
 #include "app.h"
 #include "media/player.h"
@@ -117,10 +118,10 @@ void init_DocumentView(iDocumentView *d) {
     iZap(d->renderRuns);
     iZap(d->visibleRuns);
     d->visBuf = new_VisBuf(); {
-        d->visBufMeta = malloc(sizeof(iVisBufMeta) * numBuffers_VisBuf);
+        d->visBufMeta = malloc(sizeof(iVisBufMeta) * maxBuffers_VisBuf);
         /* Additional metadata for each buffer. */
         d->visBuf->bufferInvalidated = visBufInvalidated_;
-        for (size_t i = 0; i < numBuffers_VisBuf; i++) {
+        for (size_t i = 0; i < maxBuffers_VisBuf; i++) {
             d->visBuf->buffers[i].user = d->visBufMeta + i;
         }
     }
@@ -132,10 +133,14 @@ void init_DocumentView(iDocumentView *d) {
     init_Array(&d->wideRunOffsets, sizeof(int));
     init_PtrArray(&d->visibleMedia);
     d->userHasScrolled = iFalse;
+    d->paged.page      = 0;
+    d->paged.turnFrom  = 0;
+    init_Anim(&d->paged.turnOffset, 0);
 }
 
 void deinit_DocumentView(iDocumentView *d) {
     removeTicker_App(prerender_DocumentView, d);
+    removeTicker_App(animatePageTurn_DocumentView, d);
     delete_DrawBufs(d->drawBufs);
     delete_VisBuf(d->visBuf);
     free(d->visBufMeta);
@@ -202,37 +207,53 @@ void invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *d) 
     resetWideRuns_DocumentView(d);
 }
 
-int maxDocumentWidth_DocumentView(const iDocumentView *d) {
-    const iWidget *w        = constAs_Widget(d->owner);
-    const iRect    bounds   = bounds_Widget(w);
-    const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
-    const float    adjust =
-        iClamp((float) bounds.size.x / gap_UI / 11 - 12,
+int maxDocumentWidthIn_DocumentView(const iDocumentView *d, int availableWidth) {
+    const int   minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
+    const float adjust =
+        iClamp((float) availableWidth / gap_UI / 11 - 12,
                isDesktop_Platform() && !isTerminal_Platform() ? 2.0f /* no contraction */ : -1.0f,
                10.0f); /* adapt to width */
-    return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2);
+    return iMax(minWidth, availableWidth - gap_UI * (d->pageMargin + adjust) * 2);
+}
+
+int maxDocumentWidth_DocumentView(const iDocumentView *d) {
+    return maxDocumentWidthIn_DocumentView(d, width_Widget(d->owner));
 }
 
 static const iDocPrefs *docPrefs_DocumentView_(const iDocumentView *d) {
     return d->doc ? docPrefs_GmDocument(d->doc) : activeDocPrefs_App();
 }
 
-int documentWidth_DocumentView(const iDocumentView *d) {
+int preferredDocumentWidth_DocumentView(const iDocumentView *d) {
     int prefsWidth = docPrefs_DocumentView_(d)->lineWidth.value;
     if (isTerminal_Platform()) {
         prefsWidth /= aspect_UI * 0.8f;
     }
     /* The zoom level follows the fonts in use. */
-    return iMini(fontSize_UI * prefsWidth * activeDocPrefs_App()->zoomPercent.value / 100,
-                 maxDocumentWidth_DocumentView(d));
+    return fontSize_UI * prefsWidth * activeDocPrefs_App()->zoomPercent.value / 100;
 }
 
+int documentWidth_DocumentView(const iDocumentView *d) {
+    if (wantsPaged_DocumentView(d)) {
+        return pagedDocumentWidth_DocumentView(d);
+    }
+    return iMini(preferredDocumentWidth_DocumentView(d), maxDocumentWidth_DocumentView(d));
+}
+
+static int documentTopMargin_DocumentView_(const iDocumentView *d);
+static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force);
+
 iGmDocumentMetrics metrics_DocumentView(const iDocumentView *d) {
-    return (iGmDocumentMetrics){
+    iGmDocumentMetrics metrics = {
         .width           = documentWidth_DocumentView(d),
         .canvasWidth     = width_Widget(d->owner),
         .maxContentWidth = maxDocumentWidth_DocumentView(d),
     };
+    if (wantsPaged_DocumentView(d)) {
+        pagedMetrics_DocumentView(d, &metrics);
+        metrics.firstPageInset = documentTopMargin_DocumentView_(d);
+    }
+    return metrics;
 }
 
 int documentTopPad_DocumentView(const iDocumentView *d) {
@@ -250,6 +271,12 @@ int pageHeight_DocumentView(const iDocumentView *d) {
 }
 
 iRect documentBounds_DocumentView(const iDocumentView *d) {
+    if (isPaged_DocumentView(d)) {
+        /* Document area of the first page of the spread. */
+        const iRect viewport = pageViewport_DocumentView(d);
+        return (iRect){ init_I2(pageOrigin_DocumentView(d, d->paged.page).x, top_Rect(viewport)),
+                        init_I2(size_GmDocument(d->doc).x, height_Rect(viewport)) };
+    }
     const iRect bounds = bounds_Widget(constAs_Widget(d->owner));
     const int   margin = gap_UI * d->pageMargin;
     iRect       rect;
@@ -317,11 +344,19 @@ int viewPos_DocumentView(const iDocumentView *d) {
 }
 
 static iInt2 documentPos_DocumentView_(const iDocumentView *d, iInt2 pos) {
+    if (isPaged_DocumentView(d)) {
+        return pagedDocumentPos_DocumentView(d, pos);
+    }
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentView(d))),
                    -viewPos_DocumentView(d));
 }
 
 iRangei visibleRange_DocumentView(const iDocumentView *d) {
+    if (isPaged_DocumentView(d)) {
+        const iRangei pages      = visiblePages_DocumentView(d);
+        const int     pageHeight = pageHeight_GmDocument(d->doc);
+        return (iRangei){ pages.start * pageHeight, pages.end * pageHeight };
+    }
     int top = pos_SmoothScroll(&d->scrollY) - height_Banner(d->banner) -
               documentTopPad_DocumentView(d);
     if (isEmpty_Banner(d->banner)) {
@@ -366,6 +401,9 @@ const iGmRun *lastVisibleLink_DocumentView(const iDocumentView *d) {
 }
 
 static int scrollMax_DocumentView_(const iDocumentView *d) {
+    if (isPaged_DocumentView(d)) {
+        return 0; /* pages are turned instead */
+    }
     const iWidget *w = constAs_Widget(d->owner);
     int sm = pageHeight_DocumentView(d) +
              (isEmpty_Banner(d->banner) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
@@ -374,6 +412,9 @@ static int scrollMax_DocumentView_(const iDocumentView *d) {
 }
 
 float normScrollPos_DocumentView(const iDocumentView *d) {
+    if (isPaged_DocumentView(d)) {
+        return (float) d->paged.page / (float) numPages_GmDocument(d->doc);
+    }
     const int height = pageHeight_DocumentView(d);
     if (height > 0) {
         float pos = pos_SmoothScroll(&d->scrollY) / (float) height;
@@ -420,8 +461,7 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     const iGmRun * oldHoverLink = d->hoverLink;
     d->hoverPre          = NULL;
     d->hoverLink         = NULL;
-    const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)),
-                                   -viewPos_DocumentView(d));
+    const iInt2 hoverPos = documentPos_DocumentView_(d, mouse);
     const iGmRun *selectableRun = NULL;
     if (isHoverAllowed_DocumentWidget(d->owner)) {
         /* Look for any selectable text run. */
@@ -464,7 +504,8 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
         iConstForEach(PtrArray, j, &d->visiblePre) {
             const iGmRun *run = j.ptr;
             if (contains_Rangei(ySpan_Rect(run->bounds), hoverPos.y) &&
-                (run->flags & wide_GmRunFlag || contains_Rangei(xSpan_Rect(docBounds), mouse.x))) {
+                (run->flags & wide_GmRunFlag ||
+                 contains_Rangei((iRangei){ 0, width_Rect(docBounds) }, hoverPos.x))) {
                 d->hoverPre    = run;
                 d->hoverAltPre = run;
                 break;
@@ -500,7 +541,7 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
 
 void updateSideOpacity_DocumentView(iDocumentView *d, iBool isAnimated) {
     float opacity = 0.0f;
-    if (!isEmpty_Banner(d->banner) &&
+    if (!isPaged_DocumentView(d) && !isEmpty_Banner(d->banner) &&
         height_Banner(d->banner) < pos_SmoothScroll(&d->scrollY)) {
         opacity = 1.0f;
     }
@@ -534,6 +575,9 @@ int updateScrollMax_DocumentView(iDocumentView *d) {
 }
 
 void updateVisible_DocumentView(iDocumentView *d) {
+    if (isPaged_DocumentView(d) && updatePagedLayout_DocumentView_(d, iFalse)) {
+        return; /* e.g., banner height changed */
+    }
     const int scrollMax = updateScrollMax_DocumentView(d);
     aboutToScrollView_DocumentWidget(d->owner, scrollMax); /* TODO: A widget may have many views. */
     clear_PtrArray(&d->visibleLinks);
@@ -626,6 +670,7 @@ void documentRunsInvalidated_DocumentView(iDocumentView *d) {
 
 void resetScroll_DocumentView(iDocumentView *d) {
     reset_SmoothScroll(&d->scrollY);
+    resetPage_DocumentView(d);
     d->userHasScrolled = iFalse;
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->altTextOpacity, 0);
@@ -656,6 +701,10 @@ void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
 }
 
 void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
+    if (isPaged_DocumentView(d)) {
+        showDocumentY_DocumentView(d, documentY);
+        return;
+    }
     if (!isEmpty_Banner(d->banner)) {
         documentY += height_Banner(d->banner) + documentTopPad_DocumentView(d);
     }
@@ -788,6 +837,10 @@ static const iGmRun *middleRun_DocumentView_(const iDocumentView *d) {
 }
 
 void allocVisBuffer_DocumentView(const iDocumentView *d) {
+    if (isPaged_DocumentView(d)) {
+        allocPagedVisBuffer_DocumentView(d);
+        return;
+    }
     const iWidget *w         = constAs_Widget(d->owner);
     const iBool    isVisible = isVisible_Widget(w);
     const iInt2    size      = bounds_Widget(w).size;
@@ -816,7 +869,37 @@ size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId)
     return iInvalidPos;
 }
 
+static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
+    /* Pagination changes, so the position follows the source location at the top of the
+       visible area. */
+    setWidth_Banner(d->banner, documentWidth_DocumentView(d)); /* affects the first page */
+    const iGmDocumentMetrics metrics = metrics_DocumentView(d);
+    if (!force && equal_GmDocumentMetrics(&metrics, metrics_GmDocument(d->doc)) &&
+        !isLayoutOutdated_GmDocument(d->doc)) {
+        return iFalse;
+    }
+    const char *runLoc = d->visibleRuns.start ? d->visibleRuns.start->text.start : NULL;
+    setMetrics_GmDocument(d->doc, &metrics);
+    documentRunsInvalidated_DocumentWidget(d->owner);
+    resetPage_DocumentView(d);
+    init_Anim(&d->scrollY.pos, 0);
+    const iGmRun *run = runLoc ? findRunAtLoc_GmDocument(d->doc, runLoc) : NULL;
+    if (isPaged_DocumentView(d)) {
+        if (run) {
+            showDocumentY_DocumentView(d, top_Rect(run->visBounds));
+        }
+        updateVisible_DocumentView(d);
+    }
+    else if (run) {
+        scrollTo_DocumentView(d, top_Rect(run->visBounds) + lineHeight_Text(paragraph_FontId), iFalse);
+    }
+    return iTrue;
+}
+
 iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, iBool keepCenter) {
+    if (isPaged_DocumentView(d) || wantsPaged_DocumentView(d)) {
+        return updatePagedLayout_DocumentView_(d, keepCenter);
+    }
     const iGmDocumentMetrics metrics  = metrics_DocumentView(d);
     const int                newWidth = metrics.width;
     if (newWidth == size_GmDocument(d->doc).x && !keepCenter /* not a font change */ &&
@@ -866,6 +949,9 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
 }
 
 iRect runRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
+    if (isPaged_DocumentView(d)) {
+        return pagedRunRect_DocumentView(d, run);
+    }
     const iRect docBounds = documentBounds_DocumentView(d);
     return moved_Rect(run->bounds, addY_I2(topLeft_Rect(docBounds), viewPos_DocumentView(d)));
 }
@@ -963,8 +1049,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, const iMa
             w = boundWidth - x;
         }
         if (~run->flags & decoration_GmRunFlag) {
-            const iInt2 visPos =
-                add_I2(run->bounds.pos, addY_I2(d->viewPos, viewPos_DocumentView(d->view)));
+            const iInt2 visPos = add_I2(run->bounds.pos, d->viewPos);
             const iRect rangeRect = { addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) };
             if (rangeRect.size.x) {
                 fillMark_DrawContext_(d, rangeRect, style);
@@ -982,10 +1067,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, const iMa
         const iRangecc url = linkUrlRange_GmDocument(d->view->doc, run->linkId);
         if (contains_Range(&url, mark.start) &&
             (contains_Range(&url, mark.end) || url.end == mark.end)) {
-            fillMark_DrawContext_(
-                d,
-                moved_Rect(run->visBounds, addY_I2(d->viewPos, viewPos_DocumentView(d->view))),
-                style);
+            fillMark_DrawContext_(d, moved_Rect(run->visBounds, d->viewPos), style);
         }
     }
 }
@@ -1508,18 +1590,24 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
     d->drawBufs->lastRenderTime = SDL_GetTicks();
     /* Swap buffers around to have room available both before and after the visible region. */
     allocVisBuffer_DocumentView(d);
-    reposition_VisBuf(visBuf, vis);
+    if (!isPaged_DocumentView(d)) {
+        reposition_VisBuf(visBuf, vis);
+    }
+    /* Pages are centered in their buffers. */
+    const int docLeft = isPaged_DocumentView(d)
+                            ? (visBuf->texSize.x - size_GmDocument(d->doc).x) / 2
+                            : left_Rect(ctx->docBounds) - left_Rect(bounds);
     /* Redraw the invalid ranges. */
     if (~flags_Widget(constAs_Widget(d->owner)) & destroyPending_WidgetFlag) {
         iPaint *p = &ctx->paint;
         init_Paint(p);
-        iForIndices(i, visBuf->buffers) {
+        for (size_t i = 0; i < visBuf->numBuffers; i++) {
             iVisBufTexture *buf         = &visBuf->buffers[i];
             iVisBufMeta    *meta        = buf->user;
             const iRangei   bufRange    = intersect_Rangei(bufferRange_VisBuf(visBuf, i), full);
             const iRangei   bufVisRange = intersect_Rangei(bufRange, vis);
             ctx->widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
-            ctx->viewPos      = init_I2(left_Rect(ctx->docBounds) - left_Rect(bounds), -buf->origin);
+            ctx->viewPos      = init_I2(docLeft, -buf->origin);
             //            printf("  buffer %zu: buf vis range %d...%d\n", i, bufVisRange.start, bufVisRange.end);
             if (!prerenderExtra && !isEmpty_Range(&bufVisRange)) {
                 if (isEmpty_Rangei(buf->validRange)) {
@@ -1587,7 +1675,7 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                 if (meta->runsDrawn.start == NULL) {
                     /* Haven't drawn anything yet in this buffer, so let's try seeding it. */
                     const int rh = lineHeight_Text(paragraph_FontId);
-                    const int y = i >= iElemCount(visBuf->buffers) / 2 ? bufRange.start : (bufRange.end - rh);
+                    const int y = i >= visBuf->numBuffers / 2 ? bufRange.start : (bufRange.end - rh);
                     beginTarget_Paint(p, buf->texture);
                     fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
                     buf->validRange = (iRangei){ y, y + rh };
@@ -1717,6 +1805,96 @@ iBool isCoveringTopSafeArea_DocumentView(const iDocumentView *d) {
                                       prefs_App()->bottomTabBar));
 }
 
+static void initMarks_DrawContext_(iDrawContext *d) {
+    const SDL_BlendMode blend =
+        isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_BLEND;
+    d->firstMarkRect   = zero_Rect();
+    d->lastMarkRect    = zero_Rect();
+    d->foundMarkStyle  = markStyle_(uiMatching_ColorId, blend);
+    d->selectMarkStyle = markStyle_(uiMarked_ColorId, blend);
+}
+
+static void drawTouchSelectionIndicator_DocumentView_(const iDocumentView *d, iPaint *p) {
+    const iRect bounds = bounds_Widget(constAs_Widget(d->owner));
+    iRect rect = { topLeft_Rect(bounds),
+                   init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId)) };
+    fillRect_Paint(p, rect, uiTextAction_ColorId);
+    const iRangecc mark = selectionMark_DocumentWidget(d->owner);
+    drawCentered_Text(uiLabelBold_FontId,
+                      rect,
+                      iFalse,
+                      uiBackground_ColorId,
+                      "%zu bytes selected", /* TODO: i18n */
+                      size_Range(&mark));
+}
+
+static void fillTopSafeArea_DocumentView_(const iDocumentView *d, iPaint *p, int horizOffset,
+                                          int color) {
+    if (isCoveringTopSafeArea_DocumentView(d) && topSafeInset_Mobile() > 0) {
+        const iRect topSafeArea =
+            initCorners_Rect(zero_I2(), topRight_Rect(safeRect_Root(constAs_Widget(d->owner)->root)));
+        fillRect_Paint(p, moved_Rect(topSafeArea, init_I2(horizOffset, 0)), color);
+    }
+}
+
+static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, int horizOffset) {
+    const iWidget *w                = constAs_Widget(d->owner);
+    const iRect    bounds           = bounds_Widget(w);
+    const iRect    viewport         = pageViewport_DocumentView(d);
+    const iRangei  pages            = visiblePages_DocumentView(d);
+    const int      pageHeight       = pageHeight_GmDocument(d->doc);
+    const int      numPages         = (int) numPages_GmDocument(d->doc);
+    const iBool    isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
+    const iVisBuf *visBuf           = d->visBuf;
+    iPaint        *p                = &ctx->paint;
+    setClip_Paint(p, bounds);
+    iAssert(isEqual_I2(origin_Paint, zero_I2()));
+    origin_Paint = init_I2(horizOffset, 0);
+    fillRect_Paint(p, bounds, tmBackground_ColorId);
+    for (size_t i = 0; i < visBuf->numBuffers; i++) {
+        const int page = visBuf->buffers[i].origin / pageHeight;
+        if (page >= pages.start && page < pages.end && page < numPages) {
+            drawBuffer_VisBuf(visBuf, i, init_I2(pageLeft_DocumentView(d, page), top_Rect(viewport)));
+        }
+    }
+    /* Text markers. */
+    if (!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark)) {
+        initMarks_DrawContext_(ctx);
+        for (int page = pages.start; page < pages.end && page < numPages; page++) {
+            ctx->viewPos      = pageOrigin_DocumentView(d, page);
+            ctx->inSelectMark = iFalse;
+            ctx->inFoundMark  = iFalse;
+            render_GmDocument(d->doc,
+                              (iRangei){ page * pageHeight, (page + 1) * pageHeight },
+                              drawMark_DrawContext_,
+                              ctx);
+        }
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        if (isTouchSelecting) {
+            drawPin_Paint(p, ctx->firstMarkRect, 0, tmQuote_ColorId);
+            drawPin_Paint(p, ctx->lastMarkRect,  1, tmQuote_ColorId);
+        }
+    }
+    drawMedia_DocumentView_(d, p);
+    /* The banner is at the top of the first page. */
+    if (pages.start == 0 && !isEmpty_Banner(d->banner)) {
+        fillRect_Paint(p,
+                       init_Rect(pageLeft_DocumentView(d, 0),
+                                 top_Rect(viewport),
+                                 metrics_GmDocument(d->doc)->canvasWidth,
+                                 height_Banner(d->banner)),
+                       tmBannerBackground_ColorId);
+        setPos_Banner(d->banner, init_I2(pageOrigin_DocumentView(d, 0).x, top_Rect(viewport)));
+        draw_Banner(d->banner);
+    }
+    origin_Paint = zero_I2();
+    unsetClip_Paint(p);
+    if (isTouchSelecting) {
+        drawTouchSelectionIndicator_DocumentView_(d, p);
+    }
+    fillTopSafeArea_DocumentView_(d, p, horizOffset, tmBackground_ColorId);
+}
+
 void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     const iWidget *w          = constAs_Widget(d->owner);
     const iRect    bounds     = bounds_Widget(w);
@@ -1742,6 +1920,12 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                                 .drawDir         = +1,
                               };
     init_Paint(&ctx.paint);
+    if (isPaged_DocumentView(d)) {
+        ctx.widgetFullWidth = metrics_GmDocument(d->doc)->canvasWidth;
+        render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
+        drawPaged_DocumentView_(d, &ctx, horizOffset);
+        return;
+    }
     render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
     iBanner    *banner           = d->banner;
     int         yTop             = docBounds.pos.y + viewPos_DocumentView(d);
@@ -1760,13 +1944,8 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
         /* Text markers. */
         if ((!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark))) {
             SDL_Renderer *render = renderer_Window(get_Window());
-            ctx.firstMarkRect = zero_Rect();
-            ctx.lastMarkRect = zero_Rect();
-            const SDL_BlendMode blend =
-                isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_BLEND;
-            ctx.foundMarkStyle  = markStyle_(uiMatching_ColorId, blend);
-            ctx.selectMarkStyle = markStyle_(uiMarked_ColorId, blend);
-            ctx.viewPos = topLeft_Rect(docBounds);
+            initMarks_DrawContext_(&ctx);
+            ctx.viewPos = addY_I2(topLeft_Rect(docBounds), viewPos_DocumentView(d));
             /* Marker starting outside the visible range? */
             if (d->visibleRuns.start) {
                 if (!isEmpty_Range(d->selectMark) &&
@@ -1848,18 +2027,8 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                 setOpacity_Text(1.0f);
             }
         }
-        /* Touch selection indicator. */
         if (isTouchSelecting) {
-            iRect rect = { topLeft_Rect(bounds),
-                          init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId)) };
-            fillRect_Paint(&ctx.paint, rect, uiTextAction_ColorId);
-            const iRangecc mark = selectionMark_DocumentWidget(d->owner);
-            drawCentered_Text(uiLabelBold_FontId,
-                              rect,
-                              iFalse,
-                              uiBackground_ColorId,
-                              "%zu bytes selected", /* TODO: i18n */
-                              size_Range(&mark));
+            drawTouchSelectionIndicator_DocumentView_(d, &ctx.paint);
         }
     }
     else {
@@ -1869,24 +2038,21 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
             drawLogo_MainWindow(get_MainWindow(), boundsWithOffset);
         }
     }
-    /* Fill the top safe area above the view, if there is one. */
-    if (isCoveringTopSafeArea_DocumentView(d)) {
-        if (topSafeInset_Mobile() > 0) {
-            const iRect topSafeArea = initCorners_Rect(zero_I2(),
-                                                       topRight_Rect(safeRect_Root(w->root)));
-            fillRect_Paint(&ctx.paint,
-                           moved_Rect(topSafeArea, init_I2(horizOffset, 0)),
-                           !didDraw ? uiBackground_ColorId :
-                           !isEmpty_Banner(d->banner) && docBounds.pos.y + viewPos_DocumentView(d) -
-                                documentTopPad_DocumentView(d) > bounds.pos.y ?
-                           tmBannerBackground_ColorId : tmBackground_ColorId);
-        }
-    }
+    fillTopSafeArea_DocumentView_(d, &ctx.paint, horizOffset,
+                                  !didDraw ? uiBackground_ColorId :
+                                  !isEmpty_Banner(d->banner) && docBounds.pos.y + viewPos_DocumentView(d) -
+                                       documentTopPad_DocumentView(d) > bounds.pos.y ?
+                                  tmBannerBackground_ColorId : tmBackground_ColorId);
 }
 
 void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY) {
     resetScroll_DocumentView(d);
-    init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));
+    if (isPaged_DocumentView(d)) {
+        showPage_DocumentView(d, normScrollY * numPages_GmDocument(d->doc) + 0.5f, iFalse);
+    }
+    else {
+        init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));
+    }
     updateVisible_DocumentView(d);
     clampScroll_DocumentView(d);
     updateSideOpacity_DocumentView(d, iFalse);

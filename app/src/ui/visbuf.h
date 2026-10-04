@@ -36,12 +36,13 @@ struct Impl_VisBufTexture {
     void *user; /* user provided data pointer for additional per-buffer data */
 };
 
-#define numBuffers_VisBuf   ((size_t) 4)
+#define maxBuffers_VisBuf   ((size_t) 4)
 
 struct Impl_VisBuf {
     iInt2 texSize;
     iRangei vis;
-    iVisBufTexture buffers[numBuffers_VisBuf];
+    size_t numBuffers;
+    iVisBufTexture buffers[maxBuffers_VisBuf];
     void (*bufferInvalidated)(iVisBuf *, size_t index);
 };
 
@@ -57,3 +58,8 @@ iRangei allocRange_VisBuf       (const iVisBuf *);
 iRangei bufferRange_VisBuf      (const iVisBuf *, size_t index);
 void    invalidRanges_VisBuf    (const iVisBuf *, const iRangei full, iRangei *out_invalidRanges);
 void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft, iRangei yClipBounds);
+
+/* Paged mode: each buffer holds one page, and the pages are consecutive. */
+iBool   allocPages_VisBuf       (iVisBuf *, const iInt2 pageSize, size_t numPages);
+void    setPages_VisBuf         (iVisBuf *, int firstPageTop); /* reuses buffers with matching pages */
+void    drawBuffer_VisBuf       (const iVisBuf *, size_t index, iInt2 topLeft);

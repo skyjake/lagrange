@@ -220,10 +220,13 @@ void    redoLayout_GmDocument   (iGmDocument *);
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
+const iGmDocumentMetrics *metrics_GmDocument(const iGmDocument *);
+iBool   isCoverPage_GmDocument  (const iGmDocument *);
 iBool   isPaged_GmDocument      (const iGmDocument *);
 int     pageHeight_GmDocument   (const iGmDocument *); /* zero if not paginated */
 size_t  numPages_GmDocument     (const iGmDocument *);
 size_t  pageAt_GmDocument       (const iGmDocument *, int documentY);
+iRangei pageContentRange_GmDocument(const iGmDocument *, size_t page); /* between header and footer */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source,

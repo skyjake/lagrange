@@ -29,6 +29,7 @@ iDefineTypeConstruction(VisBuf)
 
 void init_VisBuf(iVisBuf *d) {
     d->texSize = zero_I2();
+    d->numBuffers = maxBuffers_VisBuf;
     iZap(d->buffers);
     iZap(d->vis);
     d->bufferInvalidated = NULL;
@@ -40,7 +41,7 @@ void deinit_VisBuf(iVisBuf *d) {
 
 void invalidate_VisBuf(iVisBuf *d) {
     int origin = iMax(0, d->vis.start - d->texSize.y);
-    iForIndices(i, d->buffers) {
+    for (size_t i = 0; i < d->numBuffers; i++) {
         d->buffers[i].origin = origin;
         origin += d->texSize.y;
         iZap(d->buffers[i].validRange);
@@ -50,15 +51,14 @@ void invalidate_VisBuf(iVisBuf *d) {
     }
 }
 
-iBool alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
-    const iInt2 texSize = init_I2(size.x, (size.y / 2 / granularity + 1) * granularity);
-    if (!d->buffers[0].texture || !isEqual_I2(texSize, d->texSize)) {
-        d->texSize = texSize;
-        iForIndices(i, d->buffers) {
+static iBool allocTextures_VisBuf_(iVisBuf *d, const iInt2 texSize, size_t numBuffers) {
+    if (!d->buffers[0].texture || !isEqual_I2(texSize, d->texSize) ||
+        numBuffers != d->numBuffers) {
+        dealloc_VisBuf(d);
+        d->texSize    = texSize;
+        d->numBuffers = numBuffers;
+        for (size_t i = 0; i < d->numBuffers; i++) {
             iVisBufTexture *tex = &d->buffers[i];
-            if (tex->texture) {
-                SDL_DestroyTexture(tex->texture);
-            }
             SDL_Renderer *rend = renderer_Window(get_Window());
             tex->texture =
                 SDL_CreateTexture(rend,
@@ -74,16 +74,23 @@ iBool alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
     return iFalse;
 }
 
+iBool alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
+    return allocTextures_VisBuf_(
+        d, init_I2(size.x, (size.y / 2 / granularity + 1) * granularity), maxBuffers_VisBuf);
+}
+
 void dealloc_VisBuf(iVisBuf *d) {
     d->texSize = zero_I2();
     iForIndices(i, d->buffers) {
-        SDL_DestroyTexture(d->buffers[i].texture);
-        d->buffers[i].texture = NULL;
+        if (d->buffers[i].texture) {
+            SDL_DestroyTexture(d->buffers[i].texture);
+            d->buffers[i].texture = NULL;
+        }
     }
 }
 
 static void roll_VisBuf_(iVisBuf *d, int dir) {
-    const size_t lastPos = iElemCount(d->buffers) - 1;
+    const size_t lastPos = d->numBuffers - 1;
     if (dir < 0) {
         /* Last buffer is moved to the beginning. */
         SDL_Texture *last = d->buffers[lastPos].texture;
@@ -119,7 +126,7 @@ iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
     const int moveDir = vis.end > d->vis.end ? +1 : -1;
     d->vis = vis;
     iBool wasChanged = iFalse;
-    const size_t lastPos = iElemCount(d->buffers) - 1;
+    const size_t lastPos = d->numBuffers - 1;
     if (d->buffers[0].origin > vis.end || d->buffers[lastPos].origin + d->texSize.y <= vis.start) {
         /* All buffers outside the visible region. */
         invalidate_VisBuf(d);
@@ -151,7 +158,7 @@ iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
 #if 0
     if (wasChanged) {
         printf("\nVISIBLE RANGE: %d ... %d\n", vis.start, vis.end);
-        iForIndices(i, d->buffers) {
+        for (size_t i = 0; i < d->numBuffers; i++) {
             const iVisBufTexture *bt = &d->buffers[i];
             printf(" %zu: buf %5d ... %5d  valid %5d ... %5d\n", i, bt->origin,
                    bt->origin + d->texSize.y,
@@ -163,9 +170,9 @@ iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
 #endif
 #if !defined (NDEBUG)
     /* Buffers must not overlap. */
-    iForIndices(m, d->buffers) {
+    for (size_t m = 0; m < d->numBuffers; m++) {
         const iRangei M = { d->buffers[m].origin, d->buffers[m].origin + d->texSize.y };
-        iForIndices(n, d->buffers) {
+        for (size_t n = 0; n < d->numBuffers; n++) {
             if (m == n) continue;
             const iRangei N = { d->buffers[n].origin, d->buffers[n].origin + d->texSize.y };
             const iRangei is = intersect_Rangei(M, N);
@@ -183,7 +190,7 @@ iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
 
 iRangei allocRange_VisBuf(const iVisBuf *d) {
     return (iRangei){ d->buffers[0].origin,
-                      d->buffers[iElemCount(d->buffers) - 1].origin + d->texSize.y };
+                      d->buffers[d->numBuffers - 1].origin + d->texSize.y };
 }
 
 iRangei bufferRange_VisBuf(const iVisBuf *d, size_t index) {
@@ -191,7 +198,7 @@ iRangei bufferRange_VisBuf(const iVisBuf *d, size_t index) {
 }
 
 void invalidRanges_VisBuf(const iVisBuf *d, const iRangei full, iRangei *out_invalidRanges) {
-    iForIndices(i, d->buffers) {
+    for (size_t i = 0; i < d->numBuffers; i++) {
         const iVisBufTexture *buf = d->buffers + i;
         const iRangei before = { full.start, buf->validRange.start };
         const iRangei after  = { buf->validRange.end, full.end };
@@ -205,7 +212,7 @@ void invalidRanges_VisBuf(const iVisBuf *d, const iRangei full, iRangei *out_inv
 }
 
 void validate_VisBuf(iVisBuf *d) {
-    iForIndices(i, d->buffers) {
+    for (size_t i = 0; i < d->numBuffers; i++) {
         iVisBufTexture *buf = &d->buffers[i];
         buf->validRange =
             intersect_Rangei(d->vis, (iRangei){ buf->origin, buf->origin + d->texSize.y });
@@ -216,7 +223,7 @@ void validate_VisBuf(iVisBuf *d) {
 
 void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBounds) {
     SDL_Renderer *render = renderer_Window(get_Window());
-    iForIndices(i, d->buffers) {
+    for (size_t i = 0; i < d->numBuffers; i++) {
         const iVisBufTexture *buf = d->buffers + i;
         SDL_FRect dst = { (float) topLeft.x,
                           (float) (topLeft.y + buf->origin),
@@ -254,4 +261,58 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
     SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
     SDL_RenderRect(render, &dst);
 #endif
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iBool allocPages_VisBuf(iVisBuf *d, const iInt2 pageSize, size_t numPages) {
+    iAssert(numPages > 0 && numPages <= maxBuffers_VisBuf);
+    return allocTextures_VisBuf_(d, pageSize, numPages);
+}
+
+void setPages_VisBuf(iVisBuf *d, int firstPageTop) {
+    const int      pageHeight = d->texSize.y;
+    iVisBufTexture old[maxBuffers_VisBuf];
+    iBool          isUsed[maxBuffers_VisBuf] = { iFalse };
+    iBool          isReused[maxBuffers_VisBuf] = { iFalse };
+    memcpy(old, d->buffers, sizeof(old));
+    d->vis = (iRangei){ firstPageTop, firstPageTop + pageHeight * (int) d->numBuffers };
+    /* Keep the buffers whose page remains in view. */
+    for (size_t i = 0; i < d->numBuffers; i++) {
+        for (size_t j = 0; j < d->numBuffers; j++) {
+            if (!isUsed[j] && old[j].origin == firstPageTop + (int) i * pageHeight) {
+                d->buffers[i] = old[j];
+                isUsed[j]     = iTrue;
+                isReused[i]   = iTrue;
+                break;
+            }
+        }
+    }
+    /* The rest get the remaining textures. */
+    for (size_t i = 0, j = 0; i < d->numBuffers; i++) {
+        if (isReused[i]) {
+            continue;
+        }
+        while (isUsed[j]) {
+            j++;
+        }
+        isUsed[j]            = iTrue;
+        d->buffers[i]        = old[j];
+        d->buffers[i].origin = firstPageTop + (int) i * pageHeight;
+        iZap(d->buffers[i].validRange);
+        if (d->bufferInvalidated) {
+            d->bufferInvalidated(d, i);
+        }
+    }
+}
+
+void drawBuffer_VisBuf(const iVisBuf *d, size_t index, iInt2 topLeft) {
+    const iVisBufTexture *buf = d->buffers + index;
+    SDL_RenderTexture(renderer_Window(get_Window()),
+                      buf->texture,
+                      NULL,
+                      &(SDL_FRect){ topLeft.x + origin_Paint.x,
+                                    topLeft.y + origin_Paint.y,
+                                    d->texSize.x,
+                                    d->texSize.y });
 }

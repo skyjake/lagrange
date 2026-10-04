@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "doc/fetch.h"
 #include "doc/inlinemedia.h"
 #include "doc/query.h"
+#include "doc/pagedview.h"
 #include "doc/swipe.h"
 #include "doc/persistentstate.h"
 #include "gempub.h"
@@ -2051,6 +2052,19 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateVisible_DocumentView(d->view);
         return iTrue;
     }
+    else if ((equal_Command(cmd, "scroll.page") || equal_Command(cmd, "scroll.step")) &&
+             document_App() == d && isPaged_DocumentView(d->view)) {
+        turnPage_DocumentView(d->view, arg_Command(cmd));
+        return iTrue;
+    }
+    else if ((equal_Command(cmd, "scroll.top") || equal_Command(cmd, "scroll.bottom")) &&
+             document_App() == d && isPaged_DocumentView(d->view)) {
+        showPage_DocumentView(d->view,
+                              equal_Command(cmd, "scroll.top") ? 0
+                                                               : numPages_GmDocument(d->view->doc) - 1,
+                              iFalse);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "scroll.page") && document_App() == d) {
         const int dir = arg_Command(cmd);
         if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
@@ -2606,6 +2620,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
             }
         }
+        if ((key == SDLK_LEFT || key == SDLK_RIGHT) && isPaged_DocumentView(view) &&
+            keyMods_Sym(modState_Keys()) == 0 && document_App() == d) {
+            turnPage_DocumentView(view, key == SDLK_LEFT ? -1 : +1);
+            return iTrue;
+        }
         switch (key) {
             case SDLK_ESCAPE:
                 if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
@@ -2657,6 +2676,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
              ev->wheel.y == 0 &&
              wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState &&
              handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel)) {
+        return iTrue;
+    }
+    else if (ev->type == SDL_EVENT_MOUSE_WHEEL && isPaged_DocumentView(view) &&
+             isScrollableWithWheel_DocumentWidget_(d)) {
+        if (!isPerPixel_MouseWheelEvent(&ev->wheel) && ev->wheel.y) {
+            turnPage_DocumentView(view, ev->wheel.y > 0 ? -1 : +1);
+        }
         return iTrue;
     }
     else if (ev->type == SDL_EVENT_MOUSE_WHEEL && isScrollableWithWheel_DocumentWidget_(d)) {
@@ -3010,6 +3036,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     togglePreFold_DocumentWidget_(d, preId_GmRun(view->hoverPre));
                     return iTrue;
                 }
+                if (!view->hoverLink && isPaged_DocumentView(view)) {
+                    const int zone = pageTurnZone_DocumentView(view, pos_Click(&d->click));
+                    if (zone) {
+                        turnPage_DocumentView(view, zone);
+                        return iTrue;
+                    }
+                }
                 if (view->hoverLink) {
                     /* TODO: Move this to a method. */
                     const iGmLinkId linkId    = view->hoverLink->linkId;
@@ -3140,6 +3173,31 @@ void updateHoverLinkInfo_DocumentWidget(iDocumentWidget *d, iGmLinkId linkId) {
     }
 }
 
+static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
+    /* Footer buttons are at the bottom of the last page, if it is visible. */
+    if (!d->footerButtons) {
+        return;
+    }
+    const iDocumentView *view     = d->view;
+    const size_t         lastPage = numPages_GmDocument(view->doc) - 1;
+    const iRangei        pages    = visiblePages_DocumentView(view);
+    const iBool          isShown  = (int) lastPage >= pages.start && (int) lastPage < pages.end;
+    setFlags_Widget(d->footerButtons, hidden_WidgetFlag, !isShown);
+    if (isShown) {
+        const iRect   bounds   = bounds_Widget(as_Widget(d));
+        const int     colWidth = metrics_GmDocument(view->doc)->canvasWidth;
+        const int     left     = pageLeft_DocumentView(view, lastPage) - left_Rect(bounds);
+        const int     hPad     = (colWidth - iMin(120 * gap_UI, size_GmDocument(view->doc).x)) / 2;
+        const iRangei content  = pageContentRange_GmDocument(view->doc, lastPage);
+        setPadding_Widget(d->footerButtons,
+                          left + hPad, 0, width_Rect(bounds) - left - colWidth + hPad, 3 * gap_UI);
+        arrange_Widget(d->footerButtons);
+        d->footerButtons->rect.pos.y = top_Rect(pageViewport_DocumentView(view)) - top_Rect(bounds) +
+                                       content.end - (int) lastPage * pageHeight_GmDocument(view->doc) -
+                                       height_Widget(d->footerButtons);
+    }
+}
+
 void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     iChangeFlags(d->view->flags,
                  centerVertically_DocumentViewFlag,
@@ -3147,6 +3205,14 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
                      startsWithCase_String(d->mod.url, "about:") ||
                      !isSuccess_GmStatusCode(d->fetch->sourceStatus));
     iScrollWidget *scrollBar = d->scroll;
+    if (isPaged_DocumentView(d->view)) {
+        positionPagedFooterButtons_DocumentWidget_(d);
+        setRange_ScrollWidget(scrollBar, (iRangei){ 0, 0 });
+        return;
+    }
+    if (d->footerButtons) {
+        setFlags_Widget(d->footerButtons, hidden_WidgetFlag, iFalse);
+    }
     const iRangei visRange  = visibleRange_DocumentView(d->view);
     //    printf("visRange: %d...%d\n", visRange.start, visRange.end);
     const iRect   bounds    = bounds_Widget(as_Widget(d));

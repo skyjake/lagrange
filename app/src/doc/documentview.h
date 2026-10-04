@@ -72,6 +72,11 @@ struct Impl_DocumentView {
     iVisBufMeta *   visBufMeta;
     iGmRunRange     renderRuns;
     iPtrSet *       invalidRuns;
+    struct {
+        size_t      page;       /* first page of the current spread */
+        size_t      turnFrom;   /* first page of the previous spread during a turn */
+        iAnim       turnOffset; /* horizontal offset of the pages during a turn */
+    } paged;
 };
 
 iDeclareTypeConstruction(DocumentView)
@@ -105,6 +110,8 @@ void    resetWideRuns_DocumentView      (iDocumentView *);
 void    invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *);
 
 int     maxDocumentWidth_DocumentView   (const iDocumentView *);
+int     maxDocumentWidthIn_DocumentView (const iDocumentView *, int availableWidth);
+int     preferredDocumentWidth_DocumentView(const iDocumentView *); /* line width in prefs */
 int     documentWidth_DocumentView      (const iDocumentView *);
 iGmDocumentMetrics metrics_DocumentView (const iDocumentView *);
 iRect   documentBounds_DocumentView     (const iDocumentView *);
