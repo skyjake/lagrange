@@ -838,11 +838,16 @@ int pageBandHeight_GmDocument(const iGmDocument *d) {
     return iMax(2 * lineHeight_Text(pageFont_GmDocument_(d)), d->metrics.pageHeight / 14);
 }
 
+static int footerHeight_GmDocument_(const iGmDocument *d) {
+    /* The reading progress bar is below the footer. */
+    return pageBandHeight_GmDocument(d) + gap_UI;
+}
+
 iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
     const int top  = (int) page * d->metrics.pageHeight;
     const int band = pageBandHeight_GmDocument(d);
     return (iRangei){ top + band + (page == 0 ? d->metrics.firstPageInset : 0),
-                      top + d->metrics.pageHeight - band };
+                      top + d->metrics.pageHeight - footerHeight_GmDocument_(d) };
 }
 
 static iBool isAttachedDecoration_GmRun_(const iGmRun *d) {
@@ -945,7 +950,7 @@ static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text) {
 
 static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
     addPageBand_GmDocument_(
-        d, (int) (page + 1) * d->metrics.pageHeight - pageBandHeight_GmDocument(d), footers);
+        d, (int) (page + 1) * d->metrics.pageHeight - footerHeight_GmDocument_(d), footers);
 }
 
 static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iArray *headers) {
@@ -1775,7 +1780,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     }
                     if (isPaged) {
                         /* Must fit on a page, with the caption. */
-                        const int maxHeight = d->metrics.pageHeight - 2 * pageBandHeight_GmDocument(d) -
+                        const int maxHeight = d->metrics.pageHeight - pageBandHeight_GmDocument(d) -
+                                              footerHeight_GmDocument_(d) -
                                               2 * lineHeight_Text(paragraph_FontId);
                         if (height_Rect(run.visBounds) > maxHeight && maxHeight > 0) {
                             run.visBounds.size.x =
