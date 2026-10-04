@@ -1892,7 +1892,7 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     if (numColumns_DocumentView(d) == 2) {
         for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
             drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan_Rect(viewport),
-                                 12 * gap_UI, black_ColorId, 20);
+                                 width_Rect(bounds) / 20, black_ColorId, 20);
         }
     }
     origin_Paint = zero_I2();
