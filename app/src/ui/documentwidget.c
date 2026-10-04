@@ -3247,8 +3247,8 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     iScrollWidget *scrollBar = d->scroll;
     iRoot         *root      = as_Widget(d)->root;
     if (document_Root(root) == d &&
-        isReadingMode_Root(root) != isPaged_DocumentView(d->view)) {
-        postCommand_Root(root, format_CStr("root.reading arg:%d", isPaged_DocumentView(d->view)));
+        isReadingMode_Root(root) != wantsPaged_DocumentView(d->view)) {
+        postCommand_Root(root, format_CStr("root.reading arg:%d", wantsPaged_DocumentView(d->view)));
     }
     if (isPaged_DocumentView(d->view)) {
         positionPagedFooterButtons_DocumentWidget_(d);

@@ -46,7 +46,8 @@ iBool isPaged_DocumentView(const iDocumentView *d) {
 iRect pageViewport_DocumentView(const iDocumentView *d) {
     const iWidget *w    = constAs_Widget(d->owner);
     iRect          rect = bounds_Widget(w);
-    if (isReadingMode_Root(w->root) && document_Root(w->root) == d->owner) {
+    if (wantsPaged_DocumentView(d) && document_Root(w->root) == d->owner) {
+        /* Pages extend under the bars, so their visibility does not affect the layout. */
         return readingRect_Root(w->root, rect);
     }
     adjustEdges_Rect(&rect, 0, 0,
