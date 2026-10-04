@@ -63,10 +63,14 @@ static int preferredWidth_DocumentView_(const iDocumentView *d, int columns) {
     return columns == 2 ? width * 0.8f : width;
 }
 
-static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidth) {
+static int pageMargin_DocumentView_(const iDocumentView *d, int columnWidth) {
     /* Margins are relative to the page size. */
     const int pageSize = iMin(columnWidth, height_Rect(pageViewport_DocumentView(d)));
-    return columnWidth - 2 * iMax(2 * gap_UI, pageSize / 14);
+    return iMax(2 * gap_UI, pageSize / 14);
+}
+
+static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidth) {
+    return columnWidth - 2 * pageMargin_DocumentView_(d, columnWidth);
 }
 
 static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
@@ -89,7 +93,10 @@ void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metri
     const iWidget *footer = footerButtons_DocumentWidget(d->owner);
     metrics->width           = pagedDocumentWidth_DocumentView(d);
     metrics->canvasWidth     = width_Rect(viewport) / columnsFor_DocumentView_(d, width_Rect(viewport));
-    metrics->maxContentWidth = metrics->width;
+    /* Preformatted blocks may use half of the margins. */
+    metrics->maxContentWidth = iMax(metrics->width,
+                                    metrics->canvasWidth -
+                                        pageMargin_DocumentView_(d, metrics->canvasWidth));
     metrics->pageHeight      = height_Rect(viewport);
     metrics->lastPageInset   = footer ? height_Widget(footer) : 0;
 }

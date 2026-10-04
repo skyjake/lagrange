@@ -1552,11 +1552,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         else if (type != heading1_GmLineType) {
             isFirstText = iFalse;
         }
+        int preWidth = 0;
+        if (isPaged && isPreformat && d->format != plainText_SourceFormat) {
+            /* A wide block may extend past the margins, centered on the column. */
+            const int blockWidth = constValue_Array(&d->preMeta, preId - 1, iGmPreMeta).pixelRect.size.x;
+            if (blockWidth > d->size.x) {
+                preWidth = iMin(blockWidth, iMax(d->size.x, d->metrics.maxContentWidth));
+            }
+        }
+        const int layoutWidth = preWidth ? preWidth : d->size.x;
+        const int preShift    = (layoutWidth - d->size.x) / 2;
         if (isPreformat && d->format != plainText_SourceFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
             if (~meta->flags & topLeft_GmPreMetaFlag) {
-                meta->pixelRect.pos = pos;
+                meta->pixelRect.pos = addX_I2(pos, -preShift);
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
         }
@@ -1570,14 +1580,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
             rts.run           = run;
-            rts.pos           = pos;
+            rts.pos           = addX_I2(pos, -preShift);
             rts.lineSpacing   = prefs->lineSpacing.value;
             rts.isWordWrapped = (isPaged                        ? iTrue /* no wide runs */
                                  : d->flags.isNex               ? iFalse
                                  : isHardWrapped_GmDocument_(d) ? prefs->plainTextWrap.value
                                                                 : !isPreformat);
             rts.isPreformat   = isPreformat;
-            rts.layoutWidth   = d->size.x;
+            rts.layoutWidth   = layoutWidth;
             rts.indent        = indent * gap_Text;
             /* The right margin is used for balancing lines horizontally. */
             if (isVeryNarrow || isFullWidthImages) {
@@ -1602,7 +1612,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 rts.isWordWrapped
                     ? d->wrapWidth > 0
                           ? d->wrapWidth
-                          : (d->size.x - run.bounds.pos.x - rts.indent - rts.rightMargin)
+                          : (layoutWidth - run.bounds.pos.x - rts.indent - rts.rightMargin)
                     : 0 /* unlimited */;
             const iBool indentParagraphFirstLine = isLineIndentable_(line);
             int firstLineIndent = 0;
@@ -1667,7 +1677,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 rts.run.color   = rts.baseColor = d->theme.colors[text_GmLineType];
                 rts.run.isLede  = iFalse;
             }
-            pos = rts.pos;
+            pos = addX_I2(rts.pos, preShift);
             deinit_RunTypesetter_(&rts);
         }
         /* Flag the end of line, too. */
