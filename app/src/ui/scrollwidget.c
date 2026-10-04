@@ -253,7 +253,7 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     const iRect    bounds = bounds_Widget(w);
     const iBool    isHot  = (flags_Widget(w) & pressed_WidgetFlag) || isHover_Widget(w);
-    const int      height = isHot ? gap_UI : gap_UI / 2;
+    const int      height = isHot ? 2 * gap_UI : gap_UI;
     const iRect    track  = init_Rect(left_Rect(bounds), bottom_Rect(bounds) - height,
                                       width_Rect(bounds), height);
     iPaint p;
