@@ -3284,6 +3284,7 @@ static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
     const iRect    bounds   = bounds_Widget(as_Widget(d));
     const iRect    viewport = pageViewport_DocumentView(d->view);
     setProgressMode_ScrollWidget(bar, iTrue);
+    setThumbColor_ScrollWidget(bar, tmQuoteIcon_ColorId); /* same as page header and footer */
     barWidget->rect.pos  = init_I2(left_Rect(viewport) - left_Rect(bounds),
                                    bottom_Rect(viewport) - top_Rect(bounds) - height_Widget(bar));
     barWidget->rect.size.x = width_Rect(viewport);
@@ -3312,6 +3313,7 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         setFlags_Widget(d->footerButtons, hidden_WidgetFlag, iFalse);
     }
     setProgressMode_ScrollWidget(scrollBar, iFalse);
+    setThumbColor_ScrollWidget(scrollBar, tmQuote_ColorId);
     const iRangei visRange  = visibleRange_DocumentView(d->view);
     //    printf("visRange: %d...%d\n", visRange.start, visRange.end);
     const iRect   bounds    = bounds_Widget(as_Widget(d));
