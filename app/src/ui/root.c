@@ -1438,6 +1438,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
             updateNavDirButtons_(navBar);
+            if (isReadingMode_Root(navBar->root) &&
+                !cmp_String(id_Widget(as_Widget(doc)), suffixPtr_Command(cmd, "id"))) {
+                showReadingBars_Root(navBar->root, iTrue);
+            }
         }
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
