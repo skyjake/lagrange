@@ -273,7 +273,7 @@ void updateActiveDocPrefs_App(void) {
         }
     }
     if (diff & font_DocPrefsSpecFlag && !isEmpty_PtrArray(&d->mainWindows)) {
-        /* Text rendering has no document context, so the fonts follow the front document.
+        /* Text rendering only uses one set of active fonts (from the front document).
            Layouts made with other fonts are kept, and redone only when shown with the
            wrong fonts. */
         const float fontSize = (float) d->activeDocPrefs.zoomPercent.value / 100.0f;
