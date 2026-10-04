@@ -1900,11 +1900,14 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
         const iRangei ySpan = ySpan_Rect(viewport);
         for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
             drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan,
-                                 width_Rect(bounds) / 20, black_ColorId, 20);
+                                 width_Rect(bounds) / 20, black_ColorId,
+                                 isDark_ColorTheme(get_Prefs()->theme) ? 40 : 20);
+            /* Better without?
             drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page), ySpan,
                                width_Rect(bounds) / 10, black_ColorId, 10);
             drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page + 2), ySpan,
                                -width_Rect(bounds) / 10, black_ColorId, 10);
+            */
         }
     }
     origin_Paint = zero_I2();
