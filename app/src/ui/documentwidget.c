@@ -806,6 +806,18 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
     updateVisible_DocumentView(d->view); /* final placement for the buttons */
 }
 
+static iBool isFeedsSidebarVisible_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *root = root_Widget(constAs_Widget(d));
+    for (int i = 0; i < 2; i++) {
+        const iSidebarWidget *sidebar = findChild_Widget(root, i == 0 ? "sidebar" : "sidebar2");
+        if (sidebar && isVisible_Widget(sidebar) &&
+            mode_SidebarWidget(sidebar) == feedEntries_SidebarMode) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static iBool openAdjacentFeedEntry_DocumentWidget_(iDocumentWidget *d, int dir) {
     const iWidget *root = root_Widget(as_Widget(d));
     const iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
@@ -2143,7 +2155,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (startsWith_CStr(cmd, "reader.") && d->mod.isReader && document_Command(cmd) == d) {
         if (equal_Command(cmd, "reader.next") || equal_Command(cmd, "reader.prev")) {
-            openAdjacentFeedEntry_DocumentWidget_(d, equal_Command(cmd, "reader.next") ? +1 : -1);
+            if (!openAdjacentFeedEntry_DocumentWidget_(d, equal_Command(cmd, "reader.next") ? +1 : -1) &&
+                !isFeedsSidebarVisible_DocumentWidget_(d)) {
+                /* No more entries this way; the list shows where we are. */
+                postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", feedEntries_SidebarMode);
+            }
             return iTrue;
         }
         else if (equal_Command(cmd, "reader.markallread")) {
