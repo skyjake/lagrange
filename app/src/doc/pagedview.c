@@ -60,7 +60,7 @@ static int preferredWidth_DocumentView_(const iDocumentView *d, int columns) {
     /* Not zoomed: the zoom level only affects the text size. Lines are shorter in two
        columns than when scrolling. */
     const int width = fontSize_UI * docPrefs_GmDocument(d->doc)->lineWidth.value;
-    return columns == 2 ? width * 0.8f : width;
+    return columns == 2 ? width * 0.85f : width;
 }
 
 static int pageMargin_DocumentView_(const iDocumentView *d, int columnWidth) {
