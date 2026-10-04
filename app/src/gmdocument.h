@@ -197,6 +197,9 @@ struct Impl_GmDocumentMetrics {
     int width;           /* layout width */
     int canvasWidth;     /* width of the view; content may extend past the margins */
     int maxContentWidth; /* unwrappable lines may extend up to this */
+    int pageHeight;      /* non-zero for a paginated layout */
+    int firstPageInset;  /* space reserved at the top of the first page */
+    int lastPageInset;   /* space reserved at the bottom of the last page */
 };
 
 iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
@@ -217,6 +220,10 @@ void    redoLayout_GmDocument   (iGmDocument *);
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
+iBool   isPaged_GmDocument      (const iGmDocument *);
+int     pageHeight_GmDocument   (const iGmDocument *); /* zero if not paginated */
+size_t  numPages_GmDocument     (const iGmDocument *);
+size_t  pageAt_GmDocument       (const iGmDocument *, int documentY);
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source,

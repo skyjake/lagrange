@@ -49,6 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
                    "memory layout mismatch (needs struct packing?)")
 
 assertBoolLayout_(monospaceDocument);
+assertBoolLayout_(pageView);
 assertBoolLayout_(italicQuote);
 assertBoolLayout_(markdownAsSource);
 assertIntLayout_(lineWidth);
@@ -91,6 +92,8 @@ static const iDocPrefsSpec specs_[] = {
     { B_(expandToLongLines), layout_DocPrefsGroup, "expandToLongLines", "prefs.expandline", NULL,
       relayout_DocPrefsSpecFlag },
     { B_(centerShortDocs), layout_DocPrefsGroup, "centerShortDocs", "prefs.centershort" },
+    { B_(pageView), layout_DocPrefsGroup, "pageView", "prefs.pageview", NULL,
+      relayout_DocPrefsSpecFlag },
     { I_(collapsePre), layout_DocPrefsGroup, "collapsePre", "prefs.collapsepre", "collapsepre.set" },
     /* Style */
     { B_(italicQuote), style_DocPrefsGroup, "italicQuote", "prefs.quote.italic", NULL,
@@ -453,6 +456,7 @@ const iDocPrefs *defaults_DocPrefs(void) {
         d->plainTextWrap.value      = iTrue;
         d->expandToLongLines.value  = iTrue;
         d->centerShortDocs.value    = iTrue;
+        d->pageView.value           = iFalse;
         d->collapsePre.value        = notByDefault_Collapse;
         d->italicQuote.value        = iTrue;
         d->quoteIcon.value          = iTrue;

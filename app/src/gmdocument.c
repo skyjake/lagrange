@@ -794,7 +794,8 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
     /* For plain text with word wrap and expand-to-long-lines, measure all lines first to
        find the widest one and potentially increase the layout width up to the full canvas
        width, so that long lines don't have to be wrapped unnecessarily. */
-    if (isHardWrapped_GmDocument_(d) && prefs->plainTextWrap.value && prefs->expandToLongLines.value) {
+    if (!isPaged_GmDocument(d) && isHardWrapped_GmDocument_(d) && prefs->plainTextWrap.value &&
+        prefs->expandToLongLines.value) {
         iRegExp *linkPattern = d->format == gemini_SourceFormat ? newGemtextLink_RegExp() : NULL;
         int      maxLine = 0;
         iRangecc seg     = iNullRange;
@@ -817,6 +818,177 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
         iRelease(linkPattern);
     }
 }
+
+/*----------------------------------------------------------------------------------------------*/
+/* Pagination: the continuous layout is cut into pages that begin at multiples of the page
+   height. Each page has a header and a footer. */
+
+static int pageFont_GmDocument_(const iGmDocument *d) {
+    iUnused(d);
+    return FONT_ID(documentBody_FontId, regular_FontStyle, contentSmall_FontSize);
+}
+
+static int pageBandHeight_GmDocument_(const iGmDocument *d) {
+    /* Height of the header and footer areas. */
+    return 2 * lineHeight_Text(pageFont_GmDocument_(d));
+}
+
+static iRangei pageContentRange_GmDocument_(const iGmDocument *d, size_t page) {
+    const int top  = (int) page * d->metrics.pageHeight;
+    const int band = pageBandHeight_GmDocument_(d);
+    return (iRangei){ top + (page == 0 ? d->metrics.firstPageInset : band),
+                      top + d->metrics.pageHeight - band };
+}
+
+static iBool isAttachedDecoration_GmRun_(const iGmRun *d) {
+    return d->flags & decoration_GmRunFlag && ~d->flags & caption_GmRunFlag;
+}
+
+static size_t groupEnd_GmDocument_(const iArray *runs, size_t start) {
+    /* A group of runs is kept on the same page. Decorations belong to the run that follows
+       them, and captions to the run that precedes them. */
+    const size_t n = size_Array(runs);
+    size_t       i = start;
+    while (i < n && isAttachedDecoration_GmRun_(constAt_Array(runs, i))) {
+        i++;
+    }
+    if (i < n) {
+        const int top = top_Rect(((const iGmRun *) constAt_Array(runs, i))->visBounds);
+        for (i++; i < n; i++) {
+            const iGmRun *run = constAt_Array(runs, i);
+            if (~run->flags & caption_GmRunFlag &&
+                (isAttachedDecoration_GmRun_(run) || top_Rect(run->visBounds) != top)) {
+                break;
+            }
+        }
+    }
+    return i;
+}
+
+static iRangei groupSpan_GmDocument_(const iArray *runs, size_t start, size_t end) {
+    iRangei span = { INT_MAX, INT_MIN };
+    for (size_t i = start; i < end; i++) {
+        const iRangei y = ySpan_Rect(((const iGmRun *) constAt_Array(runs, i))->visBounds);
+        span.start = iMin(span.start, y.start);
+        span.end   = iMax(span.end, y.end);
+    }
+    return span;
+}
+
+static iBool isHeadingGroup_GmDocument_(const iArray *runs, size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+        const iGmRun *run = constAt_Array(runs, i);
+        if (~run->flags & decoration_GmRunFlag) {
+            return run->lineType >= heading1_GmLineType && run->lineType <= heading3_GmLineType;
+        }
+    }
+    return iFalse;
+}
+
+static void addPageBand_GmDocument_(iGmDocument *d, int top, iRangecc text) {
+    const int font = pageFont_GmDocument_(d);
+    const int band = pageBandHeight_GmDocument_(d);
+    iGmRun    run  = { .font = font, .color = tmQuoteIcon_ColorId, .flags = decoration_GmRunFlag };
+    if (!isEmpty_Range(&text)) {
+        const char *end;
+        tryAdvance_Text(font, text, d->size.x, &end);
+        run.text = (iRangecc){ text.start, end };
+    }
+    run.visBounds.size = init_I2(measureRange_Text(font, run.text).bounds.size.x,
+                                 lineHeight_Text(font));
+    run.visBounds.pos  = init_I2((d->size.x - run.visBounds.size.x) / 2,
+                                 top + (band - run.visBounds.size.y) / 2);
+    pushBack_Array(&d->layout, &run);
+}
+
+static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
+    /* Footer text is set when the number of pages is known. */
+    pushBack_Array(footers, &(size_t){ size_Array(&d->layout) });
+    addPageBand_GmDocument_(d,
+                            (int) (page + 1) * d->metrics.pageHeight - pageBandHeight_GmDocument_(d),
+                            iNullRange);
+}
+
+static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers) {
+    addPageFooter_GmDocument_(d, *page, footers);
+    (*page)++;
+    if (!isEmpty_String(&d->title)) {
+        addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight, range_String(&d->title));
+    }
+}
+
+static void paginate_GmDocument_(iGmDocument *d) {
+    const iArray *src        = collect_Array(copy_Array(&d->layout));
+    const size_t  numSrc     = size_Array(src);
+    iArray        footers; /* layout indices of the page footers */
+    init_Array(&footers, sizeof(size_t));
+    clear_Array(&d->layout);
+    size_t   page       = 0;
+    iRangei  content    = pageContentRange_GmDocument_(d, page);
+    int      offset     = content.start; /* the continuous layout begins at zero */
+    int      lastBottom = content.start;
+    size_t   firstGroup = 0;
+    size_t   prevGroup  = iInvalidPos; /* source index */
+    size_t   prevDest   = 0;           /* layout index of the previous group */
+    uint16_t lastPreId  = 0;
+    for (size_t i = 0; i < numSrc;) {
+        size_t        end  = groupEnd_GmDocument_(src, i);
+        const iRangei span = groupSpan_GmDocument_(src, i, end);
+        if (i != firstGroup && span.end + offset > content.end) {
+            /* Continue on the next page. A heading is kept with the group that follows it. */
+            if (prevGroup != iInvalidPos && prevGroup != firstGroup &&
+                isHeadingGroup_GmDocument_(src, prevGroup, i)) {
+                i = prevGroup;
+                resize_Array(&d->layout, prevDest);
+            }
+            breakPage_GmDocument_(d, &page, &footers);
+            content    = pageContentRange_GmDocument_(d, page);
+            end        = groupEnd_GmDocument_(src, i);
+            offset     = content.start - groupSpan_GmDocument_(src, i, end).start;
+            lastBottom = content.start;
+            firstGroup = i;
+            prevGroup  = iInvalidPos;
+            continue;
+        }
+        prevGroup = i;
+        prevDest  = size_Array(&d->layout);
+        for (; i < end; i++) {
+            iGmRun run = *(const iGmRun *) constAt_Array(src, i);
+            run.visBounds.pos.y += offset;
+            if (!isEmpty_Rect(run.bounds)) {
+                run.bounds.pos.y += offset;
+            }
+            const uint16_t preId = preId_GmRun(&run);
+            if (preId > lastPreId) {
+                /* First run of a preformatted block. */
+                iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
+                meta->pixelRect.pos.y += offset;
+                lastPreId = preId;
+            }
+            lastBottom = iMax(lastBottom, bottom_Rect(run.visBounds));
+            pushBack_Array(&d->layout, &run);
+        }
+    }
+    if (content.end - lastBottom < d->metrics.lastPageInset) {
+        breakPage_GmDocument_(d, &page, &footers);
+    }
+    addPageFooter_GmDocument_(d, page, &footers);
+    const size_t numPages = page + 1;
+    d->size.y = (int) numPages * d->metrics.pageHeight;
+    /* Page numbers. */
+    const int font = pageFont_GmDocument_(d);
+    for (size_t i = 0; i < size_Array(&footers); i++) {
+        iGmRun *run = at_Array(&d->layout, value_Array(&footers, i, size_t));
+        pushBack_StringArray(&d->auxText,
+                             collectNewFormat_String("%zu / %zu", i + 1, numPages));
+        run->text = range_String(constAt_StringArray(&d->auxText, size_StringArray(&d->auxText) - 1));
+        run->visBounds.size.x = measureRange_Text(font, run->text).bounds.size.x;
+        run->visBounds.pos.x  = (d->size.x - run->visBounds.size.x) / 2;
+    }
+    deinit_Array(&footers);
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 static int outsideMargin_GmDocument_(const iGmDocument *d) {
     /* Distance to the edge of the canvas. */
@@ -853,8 +1025,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isNarrow          = d->size.x < 90 * gap_Text * aspect_UI;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text * aspect_UI;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text * aspect_UI;
+    const iBool   isPaged           = isPaged_GmDocument(d);
     const int     outsideMargin     = outsideMargin_GmDocument_(d);
-    const iBool   isFullWidthImages = (outsideMargin < 5 * gap_UI * aspect_UI);
+    const iBool   isFullWidthImages = !isPaged && (outsideMargin < 5 * gap_UI * aspect_UI);
 
     initTheme_GmDocument_(d);
     d->flags.isLayoutInvalidated = iFalse;
@@ -1273,7 +1446,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rts.run           = run;
             rts.pos           = pos;
             rts.lineSpacing   = prefs->lineSpacing.value;
-            rts.isWordWrapped = (d->flags.isNex                 ? iFalse
+            rts.isWordWrapped = (isPaged                        ? iTrue /* no wide runs */
+                                 : d->flags.isNex               ? iFalse
                                  : isHardWrapped_GmDocument_(d) ? prefs->plainTextWrap.value
                                                                 : !isPreformat);
             rts.isPreformat   = isPreformat;
@@ -1442,6 +1616,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                         run.visBounds.pos.x  = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
                         run.bounds.size.y    = run.visBounds.size.y;
                     }
+                    if (isPaged) {
+                        /* Must fit on a page, with the caption. */
+                        const int maxHeight = d->metrics.pageHeight - 2 * pageBandHeight_GmDocument_(d) -
+                                              2 * lineHeight_Text(paragraph_FontId);
+                        if (height_Rect(run.visBounds) > maxHeight && maxHeight > 0) {
+                            run.visBounds.size.x =
+                                width_Rect(run.visBounds) * maxHeight / height_Rect(run.visBounds);
+                            run.visBounds.size.y = maxHeight;
+                            run.visBounds.pos.x  = run.bounds.pos.x + width_Rect(run.bounds) / 2 -
+                                                  width_Rect(run.visBounds) / 2;
+                            run.bounds.size.y    = maxHeight;
+                        }
+                    }
                     pushBack_Array(&d->layout, &run);
                     pos.y += run.bounds.size.y + margin / 2;
                     /* Image metadata caption */
@@ -1528,6 +1715,22 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     if (checkMissing_Text()) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
     }
+    /* If a title wasn't found, use the first content line but truncate it if it's long. */
+    if (isEmpty_String(&d->title)) {
+        set_String(&d->title, &firstContentLine);
+        if (length_String(&d->title) > 40) {
+            truncate_String(&d->title, 40);
+            /* Find a word boundary. */
+            while (size_String(&d->title) > 10 && isAlpha_Char(last_String(&d->title))) {
+                removeEnd_String(&d->title, 1);
+            }
+        }
+        trim_String(&d->title);
+    }
+    deinit_String(&firstContentLine);
+    if (isPaged) {
+        paginate_GmDocument_(d);
+    }
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
         iForEach(Array, i, &d->layout) {
             iGmRun *run = i.value;
@@ -1546,19 +1749,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
     }
     setAnsiFlags_Text(allowAll_AnsiFlag);
-    /* If a title wasn't found, use the first content line but truncate it if it's long. */
-    if (isEmpty_String(&d->title)) {
-        set_String(&d->title, &firstContentLine);
-        if (length_String(&d->title) > 40) {
-            truncate_String(&d->title, 40);
-            /* Find a word boundary. */
-            while (size_String(&d->title) > 10 && isAlpha_Char(last_String(&d->title))) {
-                removeEnd_String(&d->title, 1);
-            }
-        }
-        trim_String(&d->title);
-    }
-    deinit_String(&firstContentLine);
 #if  0
     printf("[GmDocument] layout size: %zu runs (%zu bytes), layout width: %d, content width: %d\n",
            size_Array(&d->layout),
@@ -2374,7 +2564,8 @@ enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
 
 iBool equal_GmDocumentMetrics(const iGmDocumentMetrics *d, const iGmDocumentMetrics *other) {
     return d->width == other->width && d->canvasWidth == other->canvasWidth &&
-           d->maxContentWidth == other->maxContentWidth;
+           d->maxContentWidth == other->maxContentWidth && d->pageHeight == other->pageHeight &&
+           d->firstPageInset == other->firstPageInset && d->lastPageInset == other->lastPageInset;
 }
 
 void setMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics) {
@@ -2394,6 +2585,28 @@ iBool updateMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics
 
 int contentWidth_GmDocument(const iGmDocument *d) {
     return d->contentWidth;
+}
+
+iBool isPaged_GmDocument(const iGmDocument *d) {
+    return d->metrics.pageHeight > 0;
+}
+
+int pageHeight_GmDocument(const iGmDocument *d) {
+    return d->metrics.pageHeight;
+}
+
+size_t numPages_GmDocument(const iGmDocument *d) {
+    if (!isPaged_GmDocument(d)) {
+        return 1;
+    }
+    return iMax(1, d->size.y / d->metrics.pageHeight);
+}
+
+size_t pageAt_GmDocument(const iGmDocument *d, int documentY) {
+    if (!isPaged_GmDocument(d) || documentY < 0) {
+        return 0;
+    }
+    return iMin((size_t) (documentY / d->metrics.pageHeight), numPages_GmDocument(d) - 1);
 }
 
 void redoLayout_GmDocument(iGmDocument *d) {
