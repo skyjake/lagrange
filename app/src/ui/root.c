@@ -3009,6 +3009,10 @@ iRect readingRect_Root(const iRoot *d, iRect docBounds) {
             }
         }
     }
-    bottom = iMin(bottom, bottom_Rect(safeRect_Root(d)));
+    if (isMobile_Platform()) {
+        /* Pages extend to the screen edges; the header and footer cover the safe area insets. */
+        top    = iMin(top, top_Rect(rect_Root(d)));
+        bottom = iMax(bottom, bottom_Rect(rect_Root(d)));
+    }
     return (iRect){ init_I2(left_Rect(docBounds), top), init_I2(width_Rect(docBounds), bottom - top) };
 }

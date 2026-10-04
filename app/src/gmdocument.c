@@ -838,16 +838,20 @@ int pageBandHeight_GmDocument(const iGmDocument *d) {
     return iMax(2 * lineHeight_Text(pageFont_GmDocument_(d)), d->metrics.pageHeight / 14);
 }
 
-static int footerHeight_GmDocument_(const iGmDocument *d) {
+int pageHeaderHeight_GmDocument(const iGmDocument *d) {
+    return pageBandHeight_GmDocument(d) + d->metrics.topInset;
+}
+
+int pageFooterHeight_GmDocument(const iGmDocument *d) {
     /* The reading progress bar is below the footer. */
-    return pageBandHeight_GmDocument(d) + gap_UI;
+    return pageBandHeight_GmDocument(d) + gap_UI + d->metrics.bottomInset;
 }
 
 iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
     const int top  = (int) page * d->metrics.pageHeight;
-    const int band = pageBandHeight_GmDocument(d);
-    return (iRangei){ top + band + (page == 0 ? d->metrics.firstPageInset : 0),
-                      top + d->metrics.pageHeight - footerHeight_GmDocument_(d) };
+    return (iRangei){ top + pageHeaderHeight_GmDocument(d) +
+                          (page == 0 ? d->metrics.firstPageInset : 0),
+                      top + d->metrics.pageHeight - pageFooterHeight_GmDocument(d) };
 }
 
 static iBool isAttachedDecoration_GmRun_(const iGmRun *d) {
@@ -950,13 +954,13 @@ static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text) {
 
 static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
     addPageBand_GmDocument_(
-        d, (int) (page + 1) * d->metrics.pageHeight - footerHeight_GmDocument_(d), footers);
+        d, (int) (page + 1) * d->metrics.pageHeight - pageFooterHeight_GmDocument(d), footers);
 }
 
 static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iArray *headers) {
     addPageFooter_GmDocument_(d, *page, footers);
     (*page)++;
-    addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight, headers);
+    addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight + d->metrics.topInset, headers);
 }
 
 static iRangecc headingText_GmDocument_(const iGmDocument *d, const iGmRun *run) {
@@ -1793,8 +1797,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     }
                     if (isPaged) {
                         /* Must fit on a page, with the caption. */
-                        const int maxHeight = d->metrics.pageHeight - pageBandHeight_GmDocument(d) -
-                                              footerHeight_GmDocument_(d) -
+                        const int maxHeight = d->metrics.pageHeight - pageHeaderHeight_GmDocument(d) -
+                                              pageFooterHeight_GmDocument(d) -
                                               2 * lineHeight_Text(paragraph_FontId);
                         if (height_Rect(run.visBounds) > maxHeight && maxHeight > 0) {
                             run.visBounds.size.x =
@@ -2741,7 +2745,8 @@ enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
 iBool equal_GmDocumentMetrics(const iGmDocumentMetrics *d, const iGmDocumentMetrics *other) {
     return d->width == other->width && d->canvasWidth == other->canvasWidth &&
            d->maxContentWidth == other->maxContentWidth && d->pageHeight == other->pageHeight &&
-           d->firstPageInset == other->firstPageInset && d->lastPageInset == other->lastPageInset;
+           d->firstPageInset == other->firstPageInset && d->lastPageInset == other->lastPageInset &&
+           d->topInset == other->topInset && d->bottomInset == other->bottomInset;
 }
 
 void setMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics) {

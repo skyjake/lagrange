@@ -3286,7 +3286,7 @@ static void positionPagedProgress_DocumentWidget_(iDocumentWidget *d) {
     iWidget    *barWidget = as_Widget(d->scroll);
     const iRect bounds    = bounds_Widget(as_Widget(d));
     const iRect viewport  = pageViewport_DocumentView(d->view);
-    int         bottom    = bottom_Rect(viewport);
+    int         bottom    = bottom_Rect(viewport) - metrics_GmDocument(d->view->doc)->bottomInset;
     int         edge;
     float       opacity;
     if (readingBarsEdge_Root(as_Widget(d)->root, iTrue, &edge, &opacity)) {

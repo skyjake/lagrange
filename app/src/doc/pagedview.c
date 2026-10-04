@@ -99,6 +99,10 @@ void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metri
                                         pageMargin_DocumentView_(d, metrics->canvasWidth));
     metrics->pageHeight      = height_Rect(viewport);
     metrics->lastPageInset   = footer ? height_Widget(footer) : 0;
+    /* The header and footer extend into the safe area insets. */
+    const iRect safe         = safeRect_Root(constAs_Widget(d->owner)->root);
+    metrics->topInset        = iMax(0, top_Rect(safe) - top_Rect(viewport));
+    metrics->bottomInset     = iMax(0, bottom_Rect(viewport) - bottom_Rect(safe));
 }
 
 static int columnWidth_DocumentView_(const iDocumentView *d) {

@@ -200,6 +200,8 @@ struct Impl_GmDocumentMetrics {
     int pageHeight;      /* non-zero for a paginated layout */
     int firstPageInset;  /* space reserved at the top of the first page */
     int lastPageInset;   /* space reserved at the bottom of the last page */
+    int topInset;        /* safe area above the page header */
+    int bottomInset;     /* safe area below the page footer */
 };
 
 iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
@@ -226,7 +228,9 @@ iBool   isPaged_GmDocument      (const iGmDocument *);
 int     pageHeight_GmDocument   (const iGmDocument *); /* zero if not paginated */
 size_t  numPages_GmDocument     (const iGmDocument *);
 size_t  pageAt_GmDocument       (const iGmDocument *, int documentY);
-int     pageBandHeight_GmDocument(const iGmDocument *); /* header and footer */
+int     pageBandHeight_GmDocument(const iGmDocument *); /* header and footer text area */
+int     pageHeaderHeight_GmDocument(const iGmDocument *);
+int     pageFooterHeight_GmDocument(const iGmDocument *);
 iRangei pageContentRange_GmDocument(const iGmDocument *, size_t page); /* between header and footer */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);

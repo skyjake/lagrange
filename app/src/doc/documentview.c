@@ -1887,7 +1887,7 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     if (pages.start == 0 && !isEmpty_Banner(d->banner)) {
         setPos_Banner(d->banner,
                       init_I2(pageOrigin_DocumentView(d, 0).x,
-                              top_Rect(viewport) + pageBandHeight_GmDocument(d->doc)));
+                              top_Rect(viewport) + pageHeaderHeight_GmDocument(d->doc)));
         draw_Banner(d->banner);
     }
     /* Crease between the pages of a spread, and slight curvature at the outer edges. */
@@ -1910,7 +1910,6 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     if (isTouchSelecting) {
         drawTouchSelectionIndicator_DocumentView_(d, p);
     }
-    fillTopSafeArea_DocumentView_(d, p, horizOffset, tmBackground_ColorId);
 }
 
 void draw_DocumentView(const iDocumentView *d, int horizOffset) {
