@@ -2756,6 +2756,11 @@ void showReadingBars_Root(iRoot *d, iBool show) {
     if (deviceType_App() == phone_AppDeviceType) {
         showToolbar_Root(d, show);
     }
+    arrange_Widget(d->widget);
+    if (show) {
+        /* The lookup popup may have been positioned while the navbar was hidden. */
+        updateNavBarSize_Root(d);
+    }
     iWidget *timer = readingBarsTimer_Root_(d);
     if (timer) {
         if (show) {
@@ -2765,7 +2770,6 @@ void showReadingBars_Root(iRoot *d, iBool show) {
             remove_Periodic(periodic_App(), timer);
         }
     }
-    arrange_Widget(d->widget);
     refresh_Widget(d->widget);
 }
 
@@ -2792,6 +2796,9 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
         if (top != navBar && top != tabBar && isVisible_Widget(top)) {
             return; /* a menu or popup is open */
         }
+    }
+    if (isVisible_Widget(findChild_Widget(d->widget, "lookup"))) {
+        return; /* lookup results are open below the navbar */
     }
     showReadingBars_Root(d, iFalse);
 }
