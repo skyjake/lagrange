@@ -3282,20 +3282,32 @@ static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void positionPagedProgress_DocumentWidget_(iDocumentWidget *d) {
+    iWidget    *barWidget = as_Widget(d->scroll);
+    const iRect bounds    = bounds_Widget(as_Widget(d));
+    const iRect viewport  = pageViewport_DocumentView(d->view);
+    int         bottom    = bottom_Rect(viewport);
+    int         edge;
+    float       opacity;
+    if (readingBarsEdge_Root(as_Widget(d)->root, iTrue, &edge, &opacity)) {
+        /* Stays visible above the bars at the bottom, also while they slide. */
+        bottom = iMin(bottom, edge);
+    }
+    /* Reacts to the mouse up to the middle of the page footer. */
+    barWidget->rect.size = init_I2(width_Rect(viewport),
+                                   iMax(3 * gap_UI,
+                                        pageBandHeight_GmDocument(d->view->doc) / 2 + gap_UI));
+    barWidget->rect.pos  = init_I2(left_Rect(viewport) - left_Rect(bounds),
+                                   bottom - top_Rect(bounds) - height_Widget(barWidget));
+}
+
 static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
     /* The scroll bar becomes a reading progress bar along the bottom. */
-    iScrollWidget *bar      = d->scroll;
-    iWidget       *barWidget = as_Widget(bar);
-    const iRect    bounds   = bounds_Widget(as_Widget(d));
-    const iRect    viewport = pageViewport_DocumentView(d->view);
-    setProgressMode_ScrollWidget(bar, iTrue);
-    setThumbColor_ScrollWidget(bar, tmQuoteIcon_ColorId); /* same as page header and footer */
-    /* Reacts to the mouse up to the middle of the page footer. */
-    barWidget->rect.size   = init_I2(width_Rect(viewport),
-                                     iMax(3 * gap_UI,
-                                          pageBandHeight_GmDocument(d->view->doc) / 2 + gap_UI));
-    barWidget->rect.pos    = init_I2(left_Rect(viewport) - left_Rect(bounds),
-                                     bottom_Rect(viewport) - top_Rect(bounds) - height_Widget(bar));
+    setProgressMode_ScrollWidget(d->scroll, iTrue);
+    /* Children are clipped to the page area that extends under the bars (see draw). */
+    as_Widget(d)->flags2 &= ~clipChildren_WidgetFlag2;
+    setThumbColor_ScrollWidget(d->scroll, tmQuoteIcon_ColorId); /* same as page header and footer */
+    positionPagedProgress_DocumentWidget_(d);
     updatePageProgress_DocumentWidget(d);
 }
 
@@ -3328,6 +3340,7 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         setFlags_Widget(d->footerButtons, hidden_WidgetFlag, iFalse);
     }
     setProgressMode_ScrollWidget(scrollBar, iFalse);
+    as_Widget(d)->flags2 |= clipChildren_WidgetFlag2;
     setThumbColor_ScrollWidget(scrollBar, tmQuote_ColorId);
     const iRangei visRange  = visibleRange_DocumentView(d->view);
     //    printf("visRange: %d...%d\n", visRange.start, visRange.end);
@@ -3540,7 +3553,16 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         unsetClip_Paint(&p);
     }
     /* Scroll bar. */
-    drawChildren_Widget(w);
+    if (isProgressMode_ScrollWidget(d->scroll)) {
+        /* The bars at the bottom may be sliding. */
+        positionPagedProgress_DocumentWidget_(iConstCast(iDocumentWidget *, d));
+        setClip_Paint(&p, union_Rect(bounds, pageViewport_DocumentView(d->view)));
+        drawChildren_Widget(w);
+        unsetClip_Paint(&p);
+    }
+    else {
+        drawChildren_Widget(w);
+    }
     /* Information about the hovered link. */
     if (deviceType_App() == desktop_AppDeviceType && prefs_App()->hoverLink && d->linkInfo) {
         const int pad = 0; /*gap_UI;*/
