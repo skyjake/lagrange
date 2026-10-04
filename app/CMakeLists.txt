@@ -234,6 +234,13 @@ set (SOURCES
     src/gempub.h
     src/gmdocument.c
     src/gmdocument.h
+    src/gmdoc/documentstyle.c
+    src/gmdoc/documentstyle.h
+    src/gmdoc/impl.h
+    src/gmdoc/palette.c
+    src/gmdoc/palette.h
+    src/gmdoc/typesetter.c
+    src/gmdoc/typesetter.h
     src/gmutil.c
     src/gmutil.h
     src/history.c
