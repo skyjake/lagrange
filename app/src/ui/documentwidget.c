@@ -2074,6 +2074,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, w, "document.page.overflow")) {
+        /* There is nothing more to turn to, so offer the navigation controls. */
+        showReadingBars_Root(w->root, iTrue);
+        return iFalse;
+    }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
         showPage_DocumentView(d->view,
                               (arg_Command(cmd) + pageProgressUnit_DocumentWidget_ / 2) /
