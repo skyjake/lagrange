@@ -263,7 +263,7 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
                    init_Rect(left_Rect(track), top_Rect(track) - gap_UI / 2,
                              width_Rect(track), height + gap_UI / 2),
                    black_ColorId);
-    fillRect_Paint(&p, track, isDark_ColorTheme(colorTheme_App()) ? black_ColorId : uiSeparator_ColorId);
+    fillRect_Paint(&p, track, isDark_ColorTheme(colorTheme_App()) ? black_ColorId : gray25_ColorId);
     fillRect_Paint(&p,
                    init_Rect(left_Rect(track), top_Rect(track),
                              width_Rect(track) * progress_ScrollWidget_(d), height),
