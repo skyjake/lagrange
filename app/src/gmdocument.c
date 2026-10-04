@@ -911,13 +911,28 @@ static void addPageBand_GmDocument_(iGmDocument *d, int top, iArray *bands) {
     pushBack_Array(&d->layout, &run);
 }
 
+static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text);
+
 static void setPageBandText_GmDocument_(iGmDocument *d, size_t index, iRangecc text) {
     iGmRun *run = at_Array(&d->layout, index);
     run->text   = iNullRange;
     if (!isEmpty_Range(&text)) {
         const char *end;
         tryAdvance_Text(run->font, text, d->size.x, &end);
-        run->text = (iRangecc){ text.start, end };
+        if (end < text.end) {
+            /* Shortened to fit, with an ellipsis. */
+            const char *ellipsis = "\u2026";
+            tryAdvance_Text(run->font,
+                            text,
+                            d->size.x - measure_Text(run->font, ellipsis).advance.x,
+                            &end);
+            iString *str = newRange_String((iRangecc){ text.start, end });
+            trimEnd_String(str);
+            appendCStr_String(str, ellipsis);
+            text = auxText_GmDocument_(d, str);
+            delete_String(str);
+        }
+        run->text = text;
     }
     run->visBounds.size.x = measureRange_Text(run->font, run->text).bounds.size.x;
     run->visBounds.pos.x  = (d->size.x - run->visBounds.size.x) / 2;
