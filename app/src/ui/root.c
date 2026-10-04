@@ -2944,21 +2944,39 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
     showReadingBars_Root(d, iFalse);
 }
 
-iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out) {
+iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *opacity_out) {
     if (!d->isReading) {
         return iFalse;
     }
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
-    iBool found = iFalse;
+    iBool found    = iFalse;
+    int   restEdge = 0;
     for (int i = 0; i < 2; i++) {
         const iWidget *bar = i == 0 ? navBar : tabBar;
         if (bar && isVisible_Widget(bar) && isAtBottom_Root_(d, bar) == bottom) {
             const iRect rect = bounds_Widget(bar);
+            const iRect rest = moved_Rect(boundsWithoutVisualOffset_Widget(bar),
+                                          init_I2(0, d->readingBarsRest[i]));
             const int   edge = bottom ? top_Rect(rect) : bottom_Rect(rect);
-            *edge_out = !found ? edge : bottom ? iMin(*edge_out, edge) : iMax(*edge_out, edge);
+            const int   rEdge = bottom ? top_Rect(rest) : bottom_Rect(rest);
+            if (!found) {
+                *edge_out = edge;
+                restEdge  = rEdge;
+            }
+            else {
+                *edge_out = bottom ? iMin(*edge_out, edge) : iMax(*edge_out, edge);
+                restEdge  = bottom ? iMin(restEdge, rEdge) : iMax(restEdge, rEdge);
+            }
             found = iTrue;
         }
+    }
+    if (found) {
+        /* Fades out as the bars slide out of view. */
+        const iRect rootRect = bounds_Widget(d->widget);
+        const int   avail    = bottom ? bottom_Rect(rootRect) - restEdge : restEdge - top_Rect(rootRect);
+        const int   left     = bottom ? bottom_Rect(rootRect) - *edge_out : *edge_out - top_Rect(rootRect);
+        *opacity_out = avail > 0 ? iClamp((float) left / avail, 0.0f, 1.0f) : 1.0f;
     }
     return found;
 }

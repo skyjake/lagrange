@@ -3426,11 +3426,13 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     if (isReadingMode_Root(w->root)) {
         /* Shadows of the bars floating over the page. */
-        int edge;
+        int   edge;
+        float opacity;
         for (int i = 0; i < 2; i++) {
-            if (readingBarsEdge_Root(w->root, i == 1, &edge)) {
+            if (readingBarsEdge_Root(w->root, i == 1, &edge, &opacity) && opacity > 0.0f) {
                 drawSoftHorizontalEdge_Paint(&p, edge, xSpan_Rect(bounds),
-                                             (i == 0 ? 12 : -12) * gap_UI, black_ColorId, 30);
+                                             (i == 0 ? 12 : -12) * gap_UI, black_ColorId,
+                                             (int) (30 * opacity));
             }
         }
     }
