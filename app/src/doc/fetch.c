@@ -543,6 +543,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                 replaceDocument_DocumentWidget(d->owner, newDoc /* keeps ref */);
                 iRelease(newDoc);
                 clear_Banner(banner_DocumentFetch_(d));
+                addBannerWarnings_DocumentFetch(d); /* before layout */
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
                 makeFooterButtons_DocumentWidget(d->owner, NULL, 0);

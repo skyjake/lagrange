@@ -639,6 +639,7 @@ static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
 }
 
 void updateBanner_DocumentWidget(iDocumentWidget *d) {
+    setCentered_Banner(d->banner, wantsPaged_DocumentView(d->view));
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view->doc));
 }
 
@@ -888,12 +889,12 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         d->fetch->sourceStatus = success_GmStatusCode;
         format_String(&d->fetch->sourceHeader, cstr_Lang("pageinfo.header.cached"));
         set_Block(&d->fetch->sourceContent, &resp->body);
+        clear_Banner(d->banner);
+        addBannerWarnings_DocumentFetch(d->fetch);
         if (!cachedDoc) {
             updateWidthAndRedoLayout_DocumentWidget_(d);
         }
         updateDocument_DocumentFetch(d->fetch, resp, cachedDoc, iTrue);
-        clear_Banner(d->banner);
-        updateBanner_DocumentWidget(d);
         addBannerWarnings_DocumentFetch(d->fetch);
     }
     d->fetch->state = ready_RequestState;
@@ -3632,6 +3633,9 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     if (document_App() == d) {
         updateActiveDocPrefs_App(); /* lay out with the right fonts */
     }
+    /* The banner is part of the first page. */
+    updateBanner_DocumentWidget(d);
+    setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
     const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
     setSource_GmDocument(d->view->doc,
                          source,
