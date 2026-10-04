@@ -109,9 +109,21 @@ iRangei visiblePages_DocumentView(const iDocumentView *d) {
     return pages;
 }
 
+int spreadWidth_DocumentView(const iDocumentView *d) {
+    return numColumns_DocumentView(d) * columnWidth_DocumentView_(d);
+}
+
+static int spreadStride_DocumentView_(const iDocumentView *d) {
+    /* Adjacent spreads are separated by a gap during turns. */
+    return spreadWidth_DocumentView(d) + 3 * gap_UI;
+}
+
 int pageLeft_DocumentView(const iDocumentView *d, size_t page) {
-    return left_Rect(pageViewport_DocumentView(d)) +
-           ((int) page - (int) d->paged.page) * columnWidth_DocumentView_(d) +
+    const int n      = numColumns_DocumentView(d);
+    const int rel    = (int) page - (int) d->paged.page;
+    const int spread = rel >= 0 ? rel / n : -((n - 1 - rel) / n);
+    return left_Rect(pageViewport_DocumentView(d)) + spread * spreadStride_DocumentView_(d) +
+           (rel - spread * n) * columnWidth_DocumentView_(d) +
            (int) value_Anim(&d->paged.turnOffset);
 }
 
@@ -191,7 +203,7 @@ void showPage_DocumentView(iDocumentView *d, size_t page, iBool isAnimated) {
     if (isAnimated && iAbs(spreads) == 1) {
         /* The old spread slides out as the new one slides in. */
         d->paged.turnFrom = d->paged.page;
-        init_Anim(&d->paged.turnOffset, spreads * (int) n * columnWidth_DocumentView_(d));
+        init_Anim(&d->paged.turnOffset, spreads * spreadStride_DocumentView_(d));
         setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
         addTicker_App(animatePageTurn_DocumentView, d);
     }
@@ -239,7 +251,7 @@ int pageTurnZone_DocumentView(const iDocumentView *d, iInt2 windowPos) {
 
 void dragPage_DocumentView(iDocumentView *d, int offset) {
     const int n      = numColumns_DocumentView(d);
-    const int spread = n * columnWidth_DocumentView_(d);
+    const int spread = spreadStride_DocumentView_(d);
     if (!d->paged.isDragging) {
         if (d->paged.isReverting) {
             d->paged.page = d->paged.turnFrom;
@@ -285,7 +297,7 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
         const int dir = d->paged.page > d->paged.turnFrom ? +1 : -1;
         d->paged.isReverting = iTrue;
         setValueEased_Anim(&d->paged.turnOffset,
-                           dir * numColumns_DocumentView(d) * columnWidth_DocumentView_(d),
+                           dir * spreadStride_DocumentView_(d),
                            turnDuration_PagedView_);
     }
     else {

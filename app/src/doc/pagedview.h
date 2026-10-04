@@ -34,6 +34,7 @@ iRect   pageViewport_DocumentView       (const iDocumentView *); /* where the pa
 int     pagedDocumentWidth_DocumentView (const iDocumentView *);
 void    pagedMetrics_DocumentView       (const iDocumentView *, iGmDocumentMetrics *metrics);
 int     numColumns_DocumentView         (const iDocumentView *);
+int     spreadWidth_DocumentView        (const iDocumentView *);
 size_t  currentPage_DocumentView        (const iDocumentView *);
 iRangei visiblePages_DocumentView       (const iDocumentView *); /* includes an ongoing turn */
 int     pageLeft_DocumentView           (const iDocumentView *, size_t page); /* window X of the page's left edge */

@@ -1851,7 +1851,14 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     setClip_Paint(p, area);
     iAssert(isEqual_I2(origin_Paint, zero_I2()));
     origin_Paint = init_I2(horizOffset, 0);
-    fillRect_Paint(p, area, tmBackground_ColorId);
+    /* Spreads have a gap between them during a turn. */
+    fillRect_Paint(p, area, uiBackgroundSidebar_ColorId);
+    for (int page = pages.start; page < pages.end; page += numColumns_DocumentView(d)) {
+        fillRect_Paint(p,
+                       init_Rect(pageLeft_DocumentView(d, page), top_Rect(area),
+                                 width_Rect(viewport), height_Rect(area)),
+                       tmBackground_ColorId);
+    }
     for (size_t i = 0; i < visBuf->numBuffers; i++) {
         const int page = visBuf->buffers[i].origin / pageHeight;
         if (page >= pages.start && page < pages.end && page < numPages) {
@@ -1895,9 +1902,9 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
             drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan,
                                  width_Rect(bounds) / 20, black_ColorId, 20);
             drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page), ySpan,
-                               width_Rect(bounds) / 30, black_ColorId, 10);
+                               width_Rect(bounds) / 10, black_ColorId, 10);
             drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page + 2), ySpan,
-                               -width_Rect(bounds) / 30, black_ColorId, 10);
+                               -width_Rect(bounds) / 10, black_ColorId, 10);
         }
     }
     origin_Paint = zero_I2();
