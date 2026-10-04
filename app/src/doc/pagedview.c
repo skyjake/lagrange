@@ -205,7 +205,7 @@ void animatePageTurn_DocumentView(iAny *context) {
         return; /* pending destruction */
     }
     refresh_Widget(d->owner);
-    updatePageProgress_DocumentWidget(d->owner);
+    pagesMoved_DocumentWidget(d->owner);
     if (!isFinished_Anim(&d->paged.turnOffset)) {
         addTicker_App(animatePageTurn_DocumentView, d);
         return;
@@ -323,7 +323,7 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     if (d->paged.page != oldPage) {
         updateVisible_DocumentView(d);
     }
-    updatePageProgress_DocumentWidget(d->owner);
+    pagesMoved_DocumentWidget(d->owner);
     refresh_Widget(d->owner);
 }
 

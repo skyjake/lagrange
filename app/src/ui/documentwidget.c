@@ -3337,10 +3337,12 @@ static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
     as_Widget(d)->flags2 &= ~clipChildren_WidgetFlag2;
     setThumbColor_ScrollWidget(d->scroll, tmQuoteIcon_ColorId); /* same as page header and footer */
     positionPagedProgress_DocumentWidget_(d);
-    updatePageProgress_DocumentWidget(d);
+    pagesMoved_DocumentWidget(d);
 }
 
-void updatePageProgress_DocumentWidget(iDocumentWidget *d) {
+void pagesMoved_DocumentWidget(iDocumentWidget *d) {
+    /* The footer buttons and the progress bar follow page turns. */
+    positionPagedFooterButtons_DocumentWidget_(d);
     const int unit = pageProgressUnit_DocumentWidget_;
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numPages_GmDocument(d->view->doc) * unit });
     setThumb_ScrollWidget(d->scroll,
@@ -3361,7 +3363,6 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         postCommand_Root(root, format_CStr("root.reading arg:%d", wantsPaged_DocumentView(d->view)));
     }
     if (isPaged_DocumentView(d->view)) {
-        positionPagedFooterButtons_DocumentWidget_(d);
         updatePagedProgress_DocumentWidget_(d);
         return;
     }
