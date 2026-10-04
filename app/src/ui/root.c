@@ -2733,6 +2733,11 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
     if (tabBar) {
         setFlags_Widget(tabBar, keepOnTop_WidgetFlag, reading);
     }
+    /* Lookup results are on the same level as the navbar, over its shadow. */
+    iWidget *lookup = findChild_Widget(d->widget, "lookup");
+    if (lookup) {
+        setFlags_Widget(lookup, keepOnTop_WidgetFlag | noShadowBorder_WidgetFlag, reading);
+    }
     if (reading) {
         showReadingBars_Root(d, iTrue);
     }
