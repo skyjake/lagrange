@@ -61,9 +61,18 @@ struct Impl_ScrollWidget {
     iBool fadeEnabled;
     uint32_t fadeStart;
     iBool willCheckFade;
+    iBool isProgress;
 };
 
+static const int64_t verticalFlags_ScrollWidget_ =
+    fixedWidth_WidgetFlag | resizeToParentHeight_WidgetFlag | moveToParentRightEdge_WidgetFlag;
+
 static void updateMetrics_ScrollWidget_(iScrollWidget *d) {
+    if (d->isProgress) {
+        /* Taller than the bar, for easier grabbing. */
+        d->widget.rect.size.y = (isMobile_Platform() ? 5.0f : 3.0f) * gap_UI;
+        return;
+    }
     d->widget.rect.size.x = (isMobile_Platform()           ? 6.0f
                              : prefs_App()->thickScrollBar ? 4.5f
                                                            : 3.0f) *
@@ -82,16 +91,14 @@ void init_ScrollWidget(iScrollWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "scroll");
-    setFlags_Widget(w,
-                    fixedWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
-                        moveToParentRightEdge_WidgetFlag, //| touchDrag_WidgetFlag,
-                    iTrue);
+    setFlags_Widget(w, verticalFlags_ScrollWidget_, iTrue);
     /* TODO: Enable touchdrag on long press. */
     updateMetrics_ScrollWidget_(d);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Anim(&d->opacity, minOpacity_());
     d->willCheckFade = iFalse;
     d->fadeEnabled = iTrue;
+    d->isProgress = iFalse;
     d->thumbColor = uiTextAction_ColorId;
 }
 
@@ -149,9 +156,16 @@ static void unfade_ScrollWidget_(iScrollWidget *d, float opacity) {
     refresh_Widget(d);
 }
 
+static float progress_ScrollWidget_(const iScrollWidget *d) {
+    const int total = (int) size_Range(&d->range);
+    return total > 0 ? iClamp((float) (d->thumb + d->thumbSize) / (float) total, 0, 1) : 0;
+}
+
 static void checkVisible_ScrollWidget_(iScrollWidget *d) {
     const iBool wasHidden = !isVisible_Widget(d);
-    const iBool isHidden = d->thumbSize != 0 ? height_Rect(thumbRect_ScrollWidget_(d)) == 0 : iTrue;
+    const iBool isHidden  = d->isProgress ? d->thumbSize >= (int) size_Range(&d->range)
+                            : d->thumbSize != 0 ? height_Rect(thumbRect_ScrollWidget_(d)) == 0
+                                                : iTrue;
     setFlags_Widget(as_Widget(d), hidden_WidgetFlag, isHidden);
     if (wasHidden && !isHidden) {
         unfade_ScrollWidget_(d, 1.0f);
@@ -183,6 +197,74 @@ void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
     }
 }
 
+void setProgressMode_ScrollWidget(iScrollWidget *d, iBool progressMode) {
+    if (d->isProgress != progressMode) {
+        iWidget *w    = as_Widget(d);
+        d->isProgress = progressMode;
+        setFlags_Widget(w, verticalFlags_ScrollWidget_, !progressMode);
+        setFlags_Widget(w, fixedHeight_WidgetFlag, progressMode);
+        /* Touches go directly to the bar. */
+        setFlags_Widget(w, touchDrag_WidgetFlag, progressMode && isMobile_Platform());
+        if (progressMode) {
+            removeTicker_App(animateOpacity_ScrollWidget_, d);
+            init_Anim(&d->opacity, 1.0f);
+        }
+        else {
+            setValue_Anim(&d->opacity, minOpacity_(), 0);
+        }
+        updateMetrics_ScrollWidget_(d);
+        refresh_Widget(w);
+    }
+}
+
+iBool isProgressMode_ScrollWidget(const iScrollWidget *d) {
+    return d->isProgress;
+}
+
+static iBool processProgressEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
+    iWidget *w = as_Widget(d);
+    const enum iClickResult result = processEvent_Click(&d->click, ev);
+    if (result == started_ClickResult || result == drag_ClickResult) {
+        const iRect bounds = bounds_Widget(w);
+        const int   total  = (int) size_Range(&d->range);
+        const float pos    = (float) (pos_Click(&d->click).x - left_Rect(bounds)) /
+                             (float) iMax(1, width_Rect(bounds));
+        const int   thumb  = iClamp((int) (pos * total), d->range.start, d->range.end - 1);
+        setFlags_Widget(w, pressed_WidgetFlag, iTrue);
+        if (thumb != d->thumb) {
+            d->thumb = thumb;
+            postCommand_Widget(w, "scroll.moved arg:%d", d->thumb);
+        }
+        refresh_Widget(w);
+        return iTrue;
+    }
+    if (result == finished_ClickResult || result == aborted_ClickResult) {
+        setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+        refresh_Widget(w);
+        return iTrue;
+    }
+    if (ev->type == SDL_EVENT_MOUSE_MOTION) {
+        refresh_Widget(w); /* hover highlight */
+    }
+    return processEvent_Widget(w, ev);
+}
+
+static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
+    const iWidget *w      = constAs_Widget(d);
+    const iRect    bounds = bounds_Widget(w);
+    const iBool    isHot  = (flags_Widget(w) & pressed_WidgetFlag) || isHover_Widget(w);
+    const int      height = isHot ? gap_UI : gap_UI / 2;
+    const iRect    track  = init_Rect(left_Rect(bounds), bottom_Rect(bounds) - height,
+                                      width_Rect(bounds), height);
+    iPaint p;
+    init_Paint(&p);
+    fillRect_Paint(&p, track, uiSeparator_ColorId);
+    fillRect_Paint(&p,
+                   init_Rect(left_Rect(track), top_Rect(track),
+                             width_Rect(track) * progress_ScrollWidget_(d), height),
+                   isHot ? uiTextStrong_ColorId : d->thumbColor);
+}
+
 void setFadeEnabled_ScrollWidget(iScrollWidget *d, iBool fadeEnabled) {
     d->fadeEnabled = fadeEnabled;
     unfade_ScrollWidget_(d, 1.0f);
@@ -200,6 +282,9 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
         if (isNearby) {
             unfade_ScrollWidget_(d, isOver ? 1.0f : 0.4f);
         }
+    }
+    if (d->isProgress && !isCommand_UserEvent(ev, "scrollbar.metrics")) {
+        return processProgressEvent_ScrollWidget_(d, ev);
     }
     if (isCommand_UserEvent(ev, "scrollbar.fade")) {
         if (d->fadeEnabled && d->willCheckFade && SDL_GetTicks() > d->fadeStart) {
@@ -276,6 +361,10 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
 }
 
 static void draw_ScrollWidget_(const iScrollWidget *d) {
+    if (d->isProgress) {
+        drawProgress_ScrollWidget_(d);
+        return;
+    }
     const iWidget *w         = constAs_Widget(d);
     const iRect    bounds    = bounds_ScrollWidget_(d);
     const iBool    isPressed = (flags_Widget(w) & pressed_WidgetFlag) != 0;

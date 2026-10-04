@@ -33,3 +33,8 @@ void    setThumbColor_ScrollWidget  (iScrollWidget *, int thumbColor);
 void    setThumb_ScrollWidget       (iScrollWidget *, int thumb, int thumbSize);
 
 void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);
+
+/* Progress mode: a horizontal bar that fills from the left. The thumb is the position and
+   the thumb size is the visible amount. Owner positions the widget. */
+void    setProgressMode_ScrollWidget(iScrollWidget *, iBool progressMode);
+iBool   isProgressMode_ScrollWidget (const iScrollWidget *);

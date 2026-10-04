@@ -2047,6 +2047,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                           cstr_String(rootUrl));
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
+        showPage_DocumentView(d->view, arg_Command(cmd), iFalse);
+        return iTrue;
+    }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
         init_Anim(&d->view->scrollY.pos, arg_Command(cmd));
         updateVisible_DocumentView(d->view);
@@ -3217,6 +3221,20 @@ static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
+    /* The scroll bar becomes a reading progress bar along the bottom. */
+    iScrollWidget *bar      = d->scroll;
+    iWidget       *barWidget = as_Widget(bar);
+    const iRect    bounds   = bounds_Widget(as_Widget(d));
+    const iRect    viewport = pageViewport_DocumentView(d->view);
+    setProgressMode_ScrollWidget(bar, iTrue);
+    barWidget->rect.pos  = init_I2(left_Rect(viewport) - left_Rect(bounds),
+                                   bottom_Rect(viewport) - top_Rect(bounds) - height_Widget(bar));
+    barWidget->rect.size.x = width_Rect(viewport);
+    setRange_ScrollWidget(bar, (iRangei){ 0, numPages_GmDocument(d->view->doc) });
+    setThumb_ScrollWidget(bar, currentPage_DocumentView(d->view), numColumns_DocumentView(d->view));
+}
+
 void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     iChangeFlags(d->view->flags,
                  centerVertically_DocumentViewFlag,
@@ -3226,12 +3244,13 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     iScrollWidget *scrollBar = d->scroll;
     if (isPaged_DocumentView(d->view)) {
         positionPagedFooterButtons_DocumentWidget_(d);
-        setRange_ScrollWidget(scrollBar, (iRangei){ 0, 0 });
+        updatePagedProgress_DocumentWidget_(d);
         return;
     }
     if (d->footerButtons) {
         setFlags_Widget(d->footerButtons, hidden_WidgetFlag, iFalse);
     }
+    setProgressMode_ScrollWidget(scrollBar, iFalse);
     const iRangei visRange  = visibleRange_DocumentView(d->view);
     //    printf("visRange: %d...%d\n", visRange.start, visRange.end);
     const iRect   bounds    = bounds_Widget(as_Widget(d));
