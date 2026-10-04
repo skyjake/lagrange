@@ -239,7 +239,6 @@ int documentWidth_DocumentView(const iDocumentView *d) {
     return iMini(preferredDocumentWidth_DocumentView(d), maxDocumentWidth_DocumentView(d));
 }
 
-static int documentTopMargin_DocumentView_(const iDocumentView *d);
 static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force);
 
 iGmDocumentMetrics metrics_DocumentView(const iDocumentView *d) {
@@ -250,7 +249,9 @@ iGmDocumentMetrics metrics_DocumentView(const iDocumentView *d) {
     };
     if (wantsPaged_DocumentView(d)) {
         pagedMetrics_DocumentView(d, &metrics);
-        metrics.firstPageInset = documentTopMargin_DocumentView_(d);
+        if (!isEmpty_Banner(d->banner)) {
+            metrics.firstPageInset = height_Banner(d->banner) + documentTopPad_DocumentView(d);
+        }
     }
     return metrics;
 }
@@ -896,6 +897,7 @@ static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
 }
 
 iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, iBool keepCenter) {
+    setCentered_Banner(d->banner, wantsPaged_DocumentView(d));
     if (isPaged_DocumentView(d) || wantsPaged_DocumentView(d)) {
         return updatePagedLayout_DocumentView_(d, keepCenter);
     }
@@ -1886,13 +1888,15 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     drawMedia_DocumentView_(d, p);
     /* The banner is at the top of the first page. */
     if (pages.start == 0 && !isEmpty_Banner(d->banner)) {
+        const int band = pageBandHeight_GmDocument(d->doc);
         fillRect_Paint(p,
                        init_Rect(pageLeft_DocumentView(d, 0),
                                  top_Rect(viewport),
                                  metrics_GmDocument(d->doc)->canvasWidth,
-                                 height_Banner(d->banner)),
+                                 band + height_Banner(d->banner)),
                        tmBannerBackground_ColorId);
-        setPos_Banner(d->banner, init_I2(pageOrigin_DocumentView(d, 0).x, top_Rect(viewport)));
+        setPos_Banner(d->banner,
+                      init_I2(pageOrigin_DocumentView(d, 0).x, top_Rect(viewport) + band));
         draw_Banner(d->banner);
     }
     /* Crease between the pages of a spread, and slight curvature at the outer edges. */

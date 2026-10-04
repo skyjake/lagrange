@@ -834,15 +834,14 @@ static int pageFont_GmDocument_(const iGmDocument *d) {
                    contentSmall_FontSize);
 }
 
-static int pageBandHeight_GmDocument_(const iGmDocument *d) {
-    /* Height of the header and footer areas. */
+int pageBandHeight_GmDocument(const iGmDocument *d) {
     return iMax(2 * lineHeight_Text(pageFont_GmDocument_(d)), d->metrics.pageHeight / 14);
 }
 
 iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
     const int top  = (int) page * d->metrics.pageHeight;
-    const int band = pageBandHeight_GmDocument_(d);
-    return (iRangei){ top + (page == 0 ? d->metrics.firstPageInset : band),
+    const int band = pageBandHeight_GmDocument(d);
+    return (iRangei){ top + band + (page == 0 ? d->metrics.firstPageInset : 0),
                       top + d->metrics.pageHeight - band };
 }
 
@@ -907,7 +906,7 @@ static void addPageBand_GmDocument_(iGmDocument *d, int top, iArray *bands) {
     const int font = pageFont_GmDocument_(d);
     iGmRun    run  = { .font = font, .color = tmQuoteIcon_ColorId, .flags = decoration_GmRunFlag };
     run.visBounds.size.y = lineHeight_Text(font);
-    run.visBounds.pos.y  = top + (pageBandHeight_GmDocument_(d) - run.visBounds.size.y) / 2;
+    run.visBounds.pos.y  = top + (pageBandHeight_GmDocument(d) - run.visBounds.size.y) / 2;
     pushBack_Array(bands, &(size_t){ size_Array(&d->layout) });
     pushBack_Array(&d->layout, &run);
 }
@@ -931,7 +930,7 @@ static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text) {
 
 static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
     addPageBand_GmDocument_(
-        d, (int) (page + 1) * d->metrics.pageHeight - pageBandHeight_GmDocument_(d), footers);
+        d, (int) (page + 1) * d->metrics.pageHeight - pageBandHeight_GmDocument(d), footers);
 }
 
 static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iArray *headers) {
@@ -1652,6 +1651,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                                                             : 1.0f);
                         }
                     }
+                    if (isPaged && type == heading1_GmLineType) {
+                        iForEach(Array, hr, &rts.layout) {
+                            iGmRun *hrun = hr.value;
+                            hrun->visBounds.pos.x = (d->size.x - width_Rect(hrun->visBounds)) / 2;
+                        }
+                    }
                     numRunsAdded = commit_RunTypesetter_(&rts, d);
                     break;
                 }
@@ -1745,7 +1750,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     }
                     if (isPaged) {
                         /* Must fit on a page, with the caption. */
-                        const int maxHeight = d->metrics.pageHeight - 2 * pageBandHeight_GmDocument_(d) -
+                        const int maxHeight = d->metrics.pageHeight - 2 * pageBandHeight_GmDocument(d) -
                                               2 * lineHeight_Text(paragraph_FontId);
                         if (height_Rect(run.visBounds) > maxHeight && maxHeight > 0) {
                             run.visBounds.size.x =

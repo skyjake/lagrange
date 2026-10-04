@@ -39,6 +39,7 @@ enum iBannerType {
 
 void    setOwner_Banner     (iBanner *, iDocumentWidget *owner);
 void    setWidth_Banner     (iBanner *, int width);
+void    setCentered_Banner  (iBanner *, iBool isCentered);
 void    setPos_Banner       (iBanner *, iInt2 pos);
 
 int     height_Banner       (const iBanner *);

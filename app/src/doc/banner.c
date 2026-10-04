@@ -59,6 +59,7 @@ struct Impl_Banner {
     iBool isHover;
     size_t hoverIndex;
     iBool isClick;
+    iBool isCentered;
 };
 
 iDefineTypeConstruction(Banner)
@@ -76,10 +77,17 @@ iDefineTypeConstruction(Banner)
 #endif
 #define noSiteTopPad_Banner_   bottomPad_Banner_
 
+static int iconFont_Banner_(const iBanner *d) {
+    return d->isCentered ? fontWithSize_Text(banner_FontId, contentHuge_FontSize) : banner_FontId;
+}
+
 static void updateHeight_Banner_(iBanner *d) {
     d->rect.size.y = 0;
     if (!isEmpty_String(&d->site)) {
         d->siteHeight = iMax(3, lineHeight_Text(banner_FontId) * 2);
+        if (d->isCentered) {
+            d->siteHeight += lineHeight_Text(iconFont_Banner_(d));
+        }
         d->rect.size.y += d->siteHeight;
     }
     const size_t numItems = size_Array(&d->items);
@@ -105,6 +113,7 @@ void init_Banner(iBanner *d) {
     d->isClick = iFalse;
     d->isHover = iFalse;
     d->hoverIndex = iInvalidPos;
+    d->isCentered = iFalse;
 }
 
 void deinit_Banner(iBanner *d) {
@@ -131,6 +140,13 @@ void setWidth_Banner(iBanner *d, int width) {
         updateItemHeight_Banner_(d, i.value);
     }
     updateHeight_Banner_(d);
+}
+
+void setCentered_Banner(iBanner *d, iBool isCentered) {
+    if (d->isCentered != isCentered) {
+        d->isCentered = isCentered;
+        updateHeight_Banner_(d);
+    }
 }
 
 void setPos_Banner(iBanner *d, iInt2 pos) {
@@ -225,16 +241,26 @@ void draw_Banner(const iBanner *d) {
 //    drawRect_Paint(&p, bounds, red_ColorId);
     /* Draw the icon. */
     if (!isEmpty_String(&d->icon)) {
-        const int   font     = banner_FontId;
+        const int   font     = iconFont_Banner_(d);
         const iRect iconRect = visualBounds_Text(font, range_String(&d->icon));
-        drawRange_Text(font,
-                       addY_I2(pos, -mid_Rect(iconRect).y + lineHeight_Text(font) / 2),
-                       tmBannerIcon_ColorId,
-                       range_String(&d->icon));
-        pos.x += right_Rect(iconRect) + 3 * gap_Text;
+        iInt2       iconPos  = addY_I2(pos, -mid_Rect(iconRect).y + lineHeight_Text(font) / 2);
+        if (d->isCentered) {
+            iconPos.x = mid_Rect(bounds).x - mid_Rect(iconRect).x;
+        }
+        drawRange_Text(font, iconPos, tmBannerIcon_ColorId, range_String(&d->icon));
+        if (d->isCentered) {
+            pos.y += lineHeight_Text(font);
+        }
+        else {
+            pos.x += right_Rect(iconRect) + 3 * gap_Text;
+        }
     }
     /* Draw the site name. */
     if (!isEmpty_String(&d->site)) {
+        if (d->isCentered) {
+            pos.x = mid_Rect(bounds).x -
+                    measureRange_Text(banner_FontId, range_String(&d->site)).advance.x / 2;
+        }
         drawRange_Text(banner_FontId, pos, tmBannerTitle_ColorId, range_String(&d->site));
         pos.y += (int) ceilf(lineHeight_Text(banner_FontId) * 3.0f / 2.0f);
     }
@@ -268,8 +294,7 @@ void draw_Banner(const iBanner *d) {
 
 size_t itemAtCoord_Banner(const iBanner *d, iInt2 coord) {
     iInt2 pos = addY_I2(topLeft_Rect(d->rect),
-                        isEmpty_String(&d->site) ? noSiteTopPad_Banner_
-                                                 : (lineHeight_Text(banner_FontId) * 2));
+                        isEmpty_String(&d->site) ? noSiteTopPad_Banner_ : d->siteHeight);
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;
         if (contains_Rect((iRect){ pos, init_I2(d->rect.size.x, item->height)}, coord)) {

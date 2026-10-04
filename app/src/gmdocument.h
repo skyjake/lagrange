@@ -226,6 +226,7 @@ iBool   isPaged_GmDocument      (const iGmDocument *);
 int     pageHeight_GmDocument   (const iGmDocument *); /* zero if not paginated */
 size_t  numPages_GmDocument     (const iGmDocument *);
 size_t  pageAt_GmDocument       (const iGmDocument *, int documentY);
+int     pageBandHeight_GmDocument(const iGmDocument *); /* header and footer */
 iRangei pageContentRange_GmDocument(const iGmDocument *, size_t page); /* between header and footer */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
