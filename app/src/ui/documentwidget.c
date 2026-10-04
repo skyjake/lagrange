@@ -164,6 +164,7 @@ struct Impl_DocumentWidget {
     iInlineMedia * media;
     iQuery *       query;
     iDocumentSwipe *swipe;
+    SDL_TimerID     readingBarsTimer; /* toggle unless the click becomes a double click */
     iLinkInfo *    linkInfo;
 
     /* Document: */
@@ -2047,6 +2048,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                           cstr_String(rootUrl));
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, w, "document.readingbars.toggle")) {
+        if (d->readingBarsTimer) {
+            d->readingBarsTimer = 0;
+            toggleReadingBars_Root(w->root);
+        }
+        return iTrue;
+    }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
         showPage_DocumentView(d->view, arg_Command(cmd), iFalse);
         return iTrue;
@@ -2577,6 +2585,20 @@ static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return iTrue;
 }
 
+static uint32_t postReadingBarsToggle_DocumentWidget_(void *context, SDL_TimerID timerId,
+                                                      uint32_t interval) {
+    iUnused(timerId, interval);
+    postCommand_Widget(context, "document.readingbars.toggle");
+    return 0;
+}
+
+static void cancelReadingBarsToggle_DocumentWidget_(iDocumentWidget *d) {
+    if (d->readingBarsTimer) {
+        SDL_RemoveTimer(d->readingBarsTimer);
+        d->readingBarsTimer = 0;
+    }
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -2924,6 +2946,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     /* The left mouse button. */
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
+            cancelReadingBarsToggle_DocumentWidget_(d);
             if (isGrabbedPlayer_InlineMedia(d->media)) {
                 return iTrue;
             }
@@ -3063,11 +3086,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     const int zone = pageTurnZone_DocumentView(view, pos_Click(&d->click));
                     if (zone) {
                         turnPage_DocumentView(view, zone);
+                        return iTrue;
                     }
-                    else {
-                        toggleReadingBars_Root(w->root);
+                    if (!d->selectMark.start && d->click.count <= 1) {
+                        /* A click that clears the selection does not toggle the bars. */
+                        d->readingBarsTimer =
+                            SDL_AddTimer(350, postReadingBarsToggle_DocumentWidget_, d);
                     }
-                    return iTrue;
                 }
                 if (view->hoverLink) {
                     /* TODO: Move this to a method. */
@@ -3526,6 +3551,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setOwner_Query(d->query, d);
     d->swipe = new_DocumentSwipe();
     setOwner_DocumentSwipe(d->swipe, d);
+    d->readingBarsTimer = 0;
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
         setNavigable_DocumentSwipe(d->swipe, iTrue);
     }
@@ -3577,6 +3603,7 @@ void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    cancelReadingBarsToggle_DocumentWidget_(d);
     cancelAllRequests_DocumentWidget(d);
     releasePlayers_Media(media_GmDocument(d->view->doc));
     removeTicker_App(animate_DocumentWidget, d);

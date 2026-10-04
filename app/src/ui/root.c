@@ -2805,6 +2805,9 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
     if (isVisible_Widget(findChild_Widget(d->widget, "lookup"))) {
         return; /* lookup results are open below the navbar */
     }
+    if (mouseGrab_Widget()) {
+        return; /* e.g., selecting text */
+    }
     showReadingBars_Root(d, iFalse);
 }
 
