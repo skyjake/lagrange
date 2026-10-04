@@ -912,17 +912,54 @@ static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *foote
                             iNullRange);
 }
 
-static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers) {
+static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iRangecc header) {
     addPageFooter_GmDocument_(d, *page, footers);
     (*page)++;
-    if (!isEmpty_String(&d->title)) {
-        addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight, range_String(&d->title));
+    if (!isEmpty_Range(&header)) {
+        addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight, header);
+    }
+}
+
+enum iPageAlign {
+    top_PageAlign,
+    center_PageAlign,
+    bottom_PageAlign,
+};
+
+static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
+                                  enum iPageAlign align, uint16_t firstPreId, uint16_t lastPreId) {
+    /* Runs from `start` onwards are on the page and begin at the top of `content`. */
+    if (align == top_PageAlign || !d->docPrefs.centerShortDocs.value ||
+        start >= size_Array(&d->layout)) {
+        return;
+    }
+    int bottom = content.start;
+    for (size_t i = start; i < size_Array(&d->layout); i++) {
+        bottom = iMax(bottom, bottom_Rect(((const iGmRun *) constAt_Array(&d->layout, i))->visBounds));
+    }
+    const int space = content.end - bottom;
+    if (space <= 0) {
+        return;
+    }
+    const int offset = align == bottom_PageAlign ? space : space / 2;
+    for (size_t i = start; i < size_Array(&d->layout); i++) {
+        iGmRun *run = at_Array(&d->layout, i);
+        run->visBounds.pos.y += offset;
+        if (!isEmpty_Rect(run->bounds)) {
+            run->bounds.pos.y += offset;
+        }
+    }
+    for (uint16_t preId = firstPreId; preId && preId <= lastPreId; preId++) {
+        ((iGmPreMeta *) at_Array(&d->preMeta, preId - 1))->pixelRect.pos.y += offset;
     }
 }
 
 static void paginate_GmDocument_(iGmDocument *d) {
     const iArray *src        = collect_Array(copy_Array(&d->layout));
     const size_t  numSrc     = size_Array(src);
+    pushBack_StringArray(&d->auxText, collect_String(upper_String(&d->title)));
+    const iRangecc header    = range_String(constAt_StringArray(&d->auxText,
+                                                                size_StringArray(&d->auxText) - 1));
     iArray        footers; /* layout indices of the page footers */
     init_Array(&footers, sizeof(size_t));
     clear_Array(&d->layout);
@@ -933,7 +970,9 @@ static void paginate_GmDocument_(iGmDocument *d) {
     size_t   firstGroup = 0;
     size_t   prevGroup  = iInvalidPos; /* source index */
     size_t   prevDest   = 0;           /* layout index of the previous group */
+    size_t   pageStart  = 0;           /* layout index of the first run on the page */
     uint16_t lastPreId  = 0;
+    uint16_t pagePreId  = 1;           /* first preformatted block that may begin on the page */
     for (size_t i = 0; i < numSrc;) {
         size_t        end  = groupEnd_GmDocument_(src, i);
         const iRangei span = groupSpan_GmDocument_(src, i, end);
@@ -944,7 +983,13 @@ static void paginate_GmDocument_(iGmDocument *d) {
                 i = prevGroup;
                 resize_Array(&d->layout, prevDest);
             }
-            breakPage_GmDocument_(d, &page, &footers);
+            /* The first page is aligned to the bottom, others are centered. */
+            alignPage_GmDocument_(d, pageStart, content,
+                                  page == 0 ? bottom_PageAlign : center_PageAlign,
+                                  pagePreId, lastPreId);
+            breakPage_GmDocument_(d, &page, &footers, header);
+            pageStart  = size_Array(&d->layout);
+            pagePreId  = lastPreId + 1;
             content    = pageContentRange_GmDocument(d, page);
             end        = groupEnd_GmDocument_(src, i);
             offset     = content.start - groupSpan_GmDocument_(src, i, end).start;
@@ -972,8 +1017,15 @@ static void paginate_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &run);
         }
     }
-    if (content.end - lastBottom < d->metrics.lastPageInset) {
-        breakPage_GmDocument_(d, &page, &footers);
+    /* The last page with content is aligned to the top, unless it is the only one. */
+    const iBool needsInsetPage = content.end - lastBottom < d->metrics.lastPageInset;
+    if (!needsInsetPage) {
+        content.end -= d->metrics.lastPageInset;
+    }
+    alignPage_GmDocument_(d, pageStart, content,
+                          page == 0 ? center_PageAlign : top_PageAlign, pagePreId, lastPreId);
+    if (needsInsetPage) {
+        breakPage_GmDocument_(d, &page, &footers, header);
     }
     addPageFooter_GmDocument_(d, page, &footers);
     const size_t numPages = page + 1;
