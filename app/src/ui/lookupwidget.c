@@ -741,7 +741,16 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
             if (urlWidth < minWidth) {
                 extraWidth = minWidth - urlWidth;
             }
-            const iRect navBarBounds = bounds_Widget(findChild_Widget(root->widget, "navbar"));
+            const iWidget *navBar       = findChild_Widget(root->widget, "navbar");
+            iRect          navBarBounds = bounds_Widget(navBar);
+            iRect          urlBounds    = bounds_Widget(url);
+            if (isReadingMode_Root(root)) {
+                /* The bar may be sliding. Place the results where it comes to rest. */
+                const int slide = iRound(targetValue_Anim(&navBar->visualOffset) -
+                                         value_Anim(&navBar->visualOffset));
+                navBarBounds.pos.y += slide;
+                urlBounds.pos.y    += slide;
+            }
             const iBool atBottom = prefs_App()->bottomNavBar;
             setFixedSize_Widget(
                 w,
@@ -749,9 +758,8 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                         (atBottom ? top_Rect(navBarBounds)
                                   : (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds))) /
                             2));
-            const iInt2 topLeft = atBottom
-                                      ? addY_I2(topLeft_Rect(bounds_Widget(url)), -w->rect.size.y)
-                                      : bottomLeft_Rect(bounds_Widget(url));
+            const iInt2 topLeft = atBottom ? addY_I2(topLeft_Rect(urlBounds), -w->rect.size.y)
+                                           : bottomLeft_Rect(urlBounds);
             setPos_Widget(
                 w, windowToLocal_Widget(w, max_I2(zero_I2(), addX_I2(topLeft, -extraWidth / 2))));
             if (isMobile_Platform()) {
