@@ -1858,6 +1858,13 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
             drawBuffer_VisBuf(visBuf, i, init_I2(pageLeft_DocumentView(d, page), top_Rect(viewport)));
         }
     }
+    /* Crease between the pages of a spread. */
+    if (numColumns_DocumentView(d) == 2) {
+        for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
+            drawSoftCrease_Paint(p, pageLeft_DocumentView(d, page + 1), ySpan_Rect(viewport),
+                                 6 * gap_UI, black_ColorId, 32);
+        }
+    }
     /* Text markers. */
     if (!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark)) {
         initMarks_DrawContext_(ctx);

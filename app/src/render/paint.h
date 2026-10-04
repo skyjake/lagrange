@@ -51,6 +51,7 @@ void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
 void    fillRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawSoftShadow_Paint    (const iPaint *, iRect rect, int thickness, int color, int alpha);
+void    drawSoftCrease_Paint    (const iPaint *, int x, iRangei ySpan, int thickness, int color, int alpha); /* vertical */
 
 void    drawLines_Paint (const iPaint *, const iInt2 *points, size_t count, int color);
 

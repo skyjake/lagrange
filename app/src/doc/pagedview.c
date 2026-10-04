@@ -55,9 +55,14 @@ iRect pageViewport_DocumentView(const iDocumentView *d) {
     return rect;
 }
 
+static int preferredWidth_DocumentView_(const iDocumentView *d) {
+    /* Lines are shorter on a page than when scrolling. */
+    return preferredDocumentWidth_DocumentView(d) * 0.8f;
+}
+
 static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
     /* Two columns when both fit at the preferred width. */
-    return preferredDocumentWidth_DocumentView(d) <=
+    return preferredWidth_DocumentView_(d) <=
                    maxDocumentWidthIn_DocumentView(d, viewportWidth / 2)
                ? 2
                : 1;
@@ -65,7 +70,7 @@ static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
 
 int pagedDocumentWidth_DocumentView(const iDocumentView *d) {
     const int width = width_Rect(pageViewport_DocumentView(d));
-    return iMin(preferredDocumentWidth_DocumentView(d),
+    return iMin(preferredWidth_DocumentView_(d),
                 maxDocumentWidthIn_DocumentView(d, width / columnsFor_DocumentView_(d, width)));
 }
 
