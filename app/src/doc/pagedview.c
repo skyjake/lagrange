@@ -32,8 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_timer.h>
 #include <math.h>
 
-uint32_t pageTurnDuration_DocumentView(void) {
-    return prefs_App()->pageTurn == curl_PageTurnAnimation ? 400 : 250;
+uint32_t pageTurnDuration_DocumentView(const iDocumentView *d) {
+    /* Narrow pages turn faster, though not in proportion to the distance. The full duration
+       is for a width of about 1000 points. */
+    const float full  = prefs_App()->pageTurn == curl_PageTurnAnimation ? 400 : 250;
+    const float width = width_Rect(pageViewport_DocumentView(d)) / (250.0f * gap_UI);
+    return full * iClamp(sqrtf(width), 0.5f, 1.0f);
 }
 
 static iBool isAlwaysScrolled_(const iString *url) {
@@ -386,7 +390,7 @@ void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) 
         /* The old spread slides out as the new one slides in. */
         d->paged.turnFrom = d->paged.column;
         init_Anim(&d->paged.turnOffset, spreads * spreadStride_DocumentView_(d));
-        setValueEased_Anim(&d->paged.turnOffset, 0, pageTurnDuration_DocumentView());
+        setValueEased_Anim(&d->paged.turnOffset, 0, pageTurnDuration_DocumentView(d));
         addTicker_App(animatePageTurn_DocumentView, d);
     }
     else {
@@ -483,10 +487,10 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     refresh_Widget(d->owner);
 }
 
-void finishPageTurn_Anim(iAnim *anim, float to, float gestureSpeed, uint32_t lastMoveTime) {
+void finishPageTurn_Anim(iAnim *anim, float to, float gestureSpeed, uint32_t lastMoveTime,
+                         uint32_t maxSpan) {
     /* The turn starts at least as fast as the gesture, but no slower than usual. */
     const float    remaining = to - value_Anim(anim);
-    const uint32_t maxSpan   = pageTurnDuration_DocumentView();
     uint32_t       span      = maxSpan;
     if (SDL_GetTicks() - lastMoveTime < 100) {
         const float speed = gestureSpeed * (remaining < 0 ? -1 : 1);
@@ -501,8 +505,11 @@ void finishPageTurn_Anim(iAnim *anim, float to, float gestureSpeed, uint32_t las
 }
 
 static void finishDrag_DocumentView_(iDocumentView *d, float to, iBool followGesture) {
-    finishPageTurn_Anim(
-        &d->paged.turnOffset, to, followGesture ? d->paged.dragSpeed : 0.0f, d->paged.dragTime);
+    finishPageTurn_Anim(&d->paged.turnOffset,
+                        to,
+                        followGesture ? d->paged.dragSpeed : 0.0f,
+                        d->paged.dragTime,
+                        pageTurnDuration_DocumentView(d));
 }
 
 void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {

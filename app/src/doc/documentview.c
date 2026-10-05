@@ -2177,13 +2177,16 @@ static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
         makePaletteGlobal_GmDocument(laterCtx->view->doc);
         drawSpreads_DocumentView_(laterCtx->view, laterCtx, area, later);
         makePaletteGlobal_GmDocument(d->doc);
-        /* The curling page casts a shadow on the revealed spread. */
+        /* The curling page casts a shadow on the revealed spread. On narrow pages the
+           shadow is also narrow, so it is lighter to keep it soft. */
+        const float widthFactor = iClamp((right - left) / (250.0f * gap_UI), 0.3f, 1.0f);
         drawSoftEdge_Paint(p,
                            strip.end,
                            ySpan_Rect(area),
                            (right - pageLeft) / 6,
                            shadow,
-                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.75f);
+                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.75f *
+                               widthFactor);
         unsetClip_Paint(p);
     }
     if (isEmpty_Range(&strip)) {

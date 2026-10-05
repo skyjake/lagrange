@@ -37,7 +37,7 @@ void    pagedMetrics_DocumentView       (const iDocumentView *, iGmDocumentMetri
 int     numColumns_DocumentView         (const iDocumentView *); /* in a spread */
 int     numPages_DocumentView           (const iDocumentView *); /* in a spread */
 int     spreadWidth_DocumentView        (const iDocumentView *);
-uint32_t pageTurnDuration_DocumentView (void); /* depends on the animation style */
+uint32_t pageTurnDuration_DocumentView (const iDocumentView *); /* depends on the animation style and width */
 iBool   isCurling_DocumentView          (const iDocumentView *); /* curl animation is ongoing */
 float   curlProgress_DocumentView       (const iDocumentView *); /* from the earlier spread to the later one */
 size_t  currentColumn_DocumentView      (const iDocumentView *); /* first of the spread */
@@ -66,4 +66,4 @@ iBool   isEdgeArmed_DocumentView        (const iDocumentView *, int dir); /* swi
 void    disarmEdge_DocumentView         (iDocumentView *);
 void    wheelPage_DocumentView          (iDocumentView *, float amount); /* positive: backward */
 
-void    finishPageTurn_Anim             (iAnim *, float to, float gestureSpeed, uint32_t lastMoveTime); /* after a gesture */
+void    finishPageTurn_Anim             (iAnim *, float to, float gestureSpeed, uint32_t lastMoveTime, uint32_t maxSpan); /* after a gesture */

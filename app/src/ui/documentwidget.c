@@ -2014,7 +2014,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             d->swipe->flags &= ~begun_DocumentSwipeFlag;
             const int to = isSwipingBack_DocumentSwipe(d->swipe) ? width_Widget(d) : 0;
             if (d->swipe->flags & pageCurl_DocumentSwipeFlag) {
-                setValueEased_Anim(&d->swipe->offset, to, pageTurnDuration_DocumentView());
+                setValueEased_Anim(&d->swipe->offset, to, pageTurnDuration_DocumentView(d->view));
             }
             else {
                 setFlags_Anim(&d->swipe->offset, easeOut_AnimFlag, iTrue);
@@ -3718,7 +3718,7 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
         const uint32_t now  = SDL_GetTicks();
         if (d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
             ~flags_Widget(as_Widget(d->scroll)) & pressed_WidgetFlag) {
-            d->progressAnimEnd = now + pageTurnDuration_DocumentView();
+            d->progressAnimEnd = now + pageTurnDuration_DocumentView(d->view);
         }
         d->progressChapter = chapter;
         setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numChapters * unit });

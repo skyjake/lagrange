@@ -237,7 +237,11 @@ iBool handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
 static iBool finishCurl_DocumentSwipe_(iDocumentSwipe *d, int to) {
     /* A page curl finishes like a page turn. */
     if (d->flags & pageCurl_DocumentSwipeFlag) {
-        finishPageTurn_Anim(&d->offset, to, d->curlSpeed, d->lastTime);
+        finishPageTurn_Anim(&d->offset,
+                            to,
+                            d->curlSpeed,
+                            d->lastTime,
+                            pageTurnDuration_DocumentView(ownerView_(d)));
         return iTrue;
     }
     return iFalse;
