@@ -470,6 +470,10 @@ iBool isEdgeArmed_DocumentView(const iDocumentView *d, int dir) {
     return dir && d->paged.armedEdge == dir;
 }
 
+void disarmEdge_DocumentView(iDocumentView *d) {
+    d->paged.armedEdge = 0;
+}
+
 void wheelPage_DocumentView(iDocumentView *d, float amount) {
     if (fabsf(amount) >= 1.0f) {
         /* Mouse wheel notch. */

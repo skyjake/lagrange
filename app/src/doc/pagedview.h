@@ -60,4 +60,5 @@ int     pageTurnZone_DocumentView       (const iDocumentView *, iInt2 windowPos)
 void    dragPage_DocumentView           (iDocumentView *, int offset); /* from the start of the gesture */
 void    endPageDrag_DocumentView        (iDocumentView *, iBool isCancelled);
 iBool   isEdgeArmed_DocumentView        (const iDocumentView *, int dir); /* swiped past the edge before */
+void    disarmEdge_DocumentView         (iDocumentView *);
 void    wheelPage_DocumentView          (iDocumentView *, float amount); /* positive: backward */

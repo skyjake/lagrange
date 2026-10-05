@@ -2743,6 +2743,10 @@ static void cancelReadingBarsToggle_DocumentWidget_(iDocumentWidget *d) {
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_KEY_DOWN) {
+        /* Swiping past the first or last page counts as a repeat only with nothing between. */
+        disarmEdge_DocumentView(view);
+    }
     /* Check if a swipe interaction has ended without inertia. */
     if (isMobile_Platform() && wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState &&
         ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
