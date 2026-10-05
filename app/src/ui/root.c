@@ -2998,7 +2998,7 @@ static const uint32_t cursorIdleCheckInterval_Root_ = 500;
 static void startCursorIdleCheck_Root_(iRoot *d) {
     /* The mouse cursor is hidden along with the bars when the mouse is not moved. */
     if (d->isReading && d->areReadingBarsHidden && !isMobile_Platform()) {
-        addDelay_Periodic(periodic_App(), cursorIdleCheckInterval_Root_, d->widget, "root.cursor.idle");
+        addDelay_Periodic(periodic_App(), cursorIdleCheckInterval_Root_, d->widget, "*root.cursor.idle");
     }
 }
 
