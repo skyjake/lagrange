@@ -424,6 +424,8 @@ void init_GmDocument(iGmDocument *d) {
     init_ScopeKey(&d->scopeKey);
     initCopy_DocPrefs(&d->docPrefs, activeDocPrefs_App());
     iZap(d->metrics);
+    iZap(d->requestedMetrics);
+    d->numFilledColumns = 0;
     iZap(d->style);
     d->wrapWidth = 0;
     d->size = zero_I2();
@@ -560,18 +562,19 @@ iBool equal_GmDocumentMetrics(const iGmDocumentMetrics *d, const iGmDocumentMetr
            d->maxContentWidth == other->maxContentWidth && d->pageHeight == other->pageHeight &&
            d->columnsPerPage == other->columnsPerPage &&
            d->firstPageInset == other->firstPageInset && d->lastPageInset == other->lastPageInset &&
-           d->topInset == other->topInset && d->bottomInset == other->bottomInset;
+           d->topInset == other->topInset && d->bottomInset == other->bottomInset &&
+           d->singleColumnWidth == other->singleColumnWidth &&
+           d->singleColumnMaxContentWidth == other->singleColumnMaxContentWidth;
 }
 
 void setMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics) {
-    d->metrics   = *metrics;
-    d->size.x    = metrics->width;
-    d->wrapWidth = 0;
+    d->requestedMetrics = *metrics;
+    d->wrapWidth        = 0;
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
 
 iBool updateMetrics_GmDocument(iGmDocument *d, const iGmDocumentMetrics *metrics) {
-    if (!equal_GmDocumentMetrics(&d->metrics, metrics) || isLayoutOutdated_GmDocument(d)) {
+    if (!equal_GmDocumentMetrics(&d->requestedMetrics, metrics) || isLayoutOutdated_GmDocument(d)) {
         setMetrics_GmDocument(d, metrics);
         return iTrue;
     }
@@ -584,6 +587,10 @@ int contentWidth_GmDocument(const iGmDocument *d) {
 
 const iGmDocumentMetrics *metrics_GmDocument(const iGmDocument *d) {
     return &d->metrics;
+}
+
+const iGmDocumentMetrics *requestedMetrics_GmDocument(const iGmDocument *d) {
+    return &d->requestedMetrics;
 }
 
 iBool isCoverPage_GmDocument(const iGmDocument *d) {

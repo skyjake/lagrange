@@ -1009,7 +1009,7 @@ static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
        visible area. */
     setWidth_Banner(d->banner, documentWidth_DocumentView(d)); /* affects the first page */
     const iGmDocumentMetrics metrics = metrics_DocumentView(d);
-    if (!force && equal_GmDocumentMetrics(&metrics, metrics_GmDocument(d->doc)) &&
+    if (!force && equal_GmDocumentMetrics(&metrics, requestedMetrics_GmDocument(d->doc)) &&
         !isLayoutOutdated_GmDocument(d->doc)) {
         return iFalse;
     }

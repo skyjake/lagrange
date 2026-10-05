@@ -66,7 +66,9 @@ struct Impl_GmDocument {
     iDocPrefs docPrefs;   /* resolved for the URL and MIME type */
     iInt2     size;
     int       contentWidth; /* some runs may extend past the requested width */
-    iGmDocumentMetrics metrics;
+    iGmDocumentMetrics metrics;   /* in effect for the current layout */
+    iGmDocumentMetrics requestedMetrics;
+    size_t    numFilledColumns; /* columns with content in a paginated layout */
     int       wrapWidth;    /* if non-zero, overrides the line wrap width */
     iArray    layout;     /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on page but is not part of the source */

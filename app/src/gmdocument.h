@@ -204,6 +204,8 @@ struct Impl_GmDocumentMetrics {
     int lastPageInset;   /* space reserved at the bottom of the last page */
     int topInset;        /* safe area above the page header */
     int bottomInset;     /* safe area below the page footer */
+    int singleColumnWidth;           /* used when the content fits in the first of two columns */
+    int singleColumnMaxContentWidth;
 };
 
 iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
@@ -225,6 +227,7 @@ void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone la
 iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
 const iGmDocumentMetrics *metrics_GmDocument(const iGmDocument *);
+const iGmDocumentMetrics *requestedMetrics_GmDocument(const iGmDocument *);
 iBool   isCoverPage_GmDocument  (const iGmDocument *);
 iBool   isPaged_GmDocument      (const iGmDocument *);
 int     pageHeight_GmDocument   (const iGmDocument *); /* zero if not paginated */

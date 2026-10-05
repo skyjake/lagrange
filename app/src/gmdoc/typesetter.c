@@ -628,6 +628,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
         breakColumn_GmDocument_(d, &column, iFalse);
     }
     /* The final page is complete, even if some of its columns are empty. */
+    d->numFilledColumns = column + 1;
     const size_t numColumns = (column + perPage) / perPage * perPage;
     d->size.y = (int) numColumns * d->metrics.pageHeight;
     setPageBands_GmDocument_(d);
@@ -1543,7 +1544,7 @@ static void finish_Typesetter_(iTypesetter *d) {
 #endif
 }
 
-void doLayout_GmDocument_(iGmDocument *d) {
+static void typeset_GmDocument_(iGmDocument *d) {
     iTypesetter ts;
     init_Typesetter_(&ts, d);
     if (begin_Typesetter_(&ts)) {
@@ -1553,4 +1554,29 @@ void doLayout_GmDocument_(iGmDocument *d) {
         finish_Typesetter_(&ts);
     }
     deinit_Typesetter_(&ts);
+}
+
+static void applyMetrics_GmDocument_(iGmDocument *d, const iGmDocumentMetrics *metrics) {
+    if (d->metrics.maxContentWidth != metrics->maxContentWidth) {
+        d->wrapWidth = 0;
+    }
+    d->metrics = *metrics;
+    d->size.x  = metrics->width;
+}
+
+void doLayout_GmDocument_(iGmDocument *d) {
+    applyMetrics_GmDocument_(d, &d->requestedMetrics);
+    d->numFilledColumns = 0;
+    typeset_GmDocument_(d);
+    if (columnsPerPage_GmDocument(d) == 2 && d->numFilledColumns == 1 &&
+        d->metrics.singleColumnWidth > 0) {
+        /* The page has a single column if all the content fits in the first one. */
+        iGmDocumentMetrics single = d->metrics;
+        single.width              = single.singleColumnWidth;
+        single.maxContentWidth    = single.singleColumnMaxContentWidth;
+        single.canvasWidth       *= 2;
+        single.columnsPerPage     = 1;
+        applyMetrics_GmDocument_(d, &single);
+        typeset_GmDocument_(d);
+    }
 }
