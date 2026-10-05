@@ -31,10 +31,10 @@ msgstr "View archive contents"
 msgid "doc.page.number"
 msgstr "Page %d of %d"
 
-# Page footer in a book: current chapter, number of chapters, current page, number of pages.
+# Page footer in a book: current page, number of pages, current chapter, number of chapters.
 #, c-format
 msgid "doc.page.chapter"
-msgstr "Chapter %d of %d · Page %d of %d"
+msgstr "Page %d of %d · Chapter %d of %d"
 
 msgid "media.untitled.image"
 msgstr "Image"

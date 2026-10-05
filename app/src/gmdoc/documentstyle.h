@@ -54,6 +54,7 @@ struct Impl_DocumentStyle {
     float topMargins[max_GmLineType];
     float bottomMargins[max_GmLineType];
     float linkGroupMargin;  /* between links separated by a blank line */
+    float verticalPad;      /* above and below the document */
     float ruleIndent;
     iBool hasLede;          /* first paragraph emphasized */
     int   ledeFont;

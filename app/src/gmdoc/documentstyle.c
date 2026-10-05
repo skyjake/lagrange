@@ -138,5 +138,6 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         iZap(d->topMargins);
         iZap(d->bottomMargins);
         d->linkGroupMargin = 0;
+        d->verticalPad     = 1;
     }
 }

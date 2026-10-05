@@ -431,8 +431,8 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
                 d,
                 d->chapter > 0
                     ? collectNewFormat_String(cstr_Lang("doc.page.chapter"),
-                                              d->chapter, d->numChapters,
-                                              (int) page + 1, (int) numPages)
+                                              (int) page + 1, (int) numPages,
+                                              d->chapter, d->numChapters)
                     : collectNewFormat_String(cstr_Lang("doc.page.number"),
                                               (int) page + 1, (int) numPages)));
         pushBack_Array(&d->pageBands, &bands);
@@ -721,6 +721,10 @@ static void deinit_Typesetter_(iTypesetter *d) {
     deinit_String(&d->firstContentLine);
 }
 
+static int verticalPad_Typesetter_(const iTypesetter *d) {
+    return d->style->verticalPad * lineHeight_Text(d->style->fonts[text_GmLineType]);
+}
+
 static iBool begin_Typesetter_(iTypesetter *d) {
     iGmDocument *doc = d->doc;
     init_DocumentStyle(&doc->style,
@@ -751,7 +755,7 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     updateOpenURLs_GmDocument_(doc);
     d->content           = range_String(&doc->source);
     d->contentLine       = iNullRange;
-    d->pos               = zero_I2();
+    d->pos               = init_I2(0, verticalPad_Typesetter_(d));
     d->isFirstText       = d->style->hasLede;
     d->addQuoteIcon      = d->prefs->quoteIcon.value;
     d->isPreformat       = iFalse;
@@ -1503,7 +1507,7 @@ static void markWidePreformatted_Typesetter_(iTypesetter *d) {
 
 static void finish_Typesetter_(iTypesetter *d) {
     iGmDocument *doc = d->doc;
-    doc->size.y = d->pos.y;
+    doc->size.y = d->pos.y + verticalPad_Typesetter_(d);
     if (!d->isJustified) {
         iForEach(Array, r, &doc->layout) {
             ((iGmRun *) r.value)->flags |= notJustified_GmRunFlag;
