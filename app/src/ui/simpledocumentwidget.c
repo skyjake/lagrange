@@ -27,13 +27,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "doc/banner.h"
 #include "doc/documentview.h"
+#include "doc/linkcontextmenu.h"
 #include "gmutil.h"
 #include "keys.h"
+#include "menu.h"
 #include "render/text.h"
 #include "root.h"
 #include "scrollwidget.h"
 #include "util.h"
 #include "window.h"
+
+#include <SDL3/SDL_clipboard.h>
 
 struct Impl_SimpleDocumentWidget {
     iWidget        widget;
@@ -43,6 +47,8 @@ struct Impl_SimpleDocumentWidget {
     iRangecc       foundMark;
     iClick         click;
     iScrollWidget *scroll;
+    iWidget       *menu;
+    iGmLinkId      contextLink;
 };
 
 iDefineObjectConstruction(SimpleDocumentWidget)
@@ -116,6 +122,8 @@ void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     d->view   = new_DocumentView();
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
+    d->menu             = NULL;
+    d->contextLink      = 0;
     d->view->banner     = d->banner;
     d->view->selectMark = &d->selectMark;
     d->view->foundMark  = &d->foundMark;
@@ -222,6 +230,21 @@ static void openLink_SimpleDocumentWidget_(iSimpleDocumentWidget *d, iGmLinkId l
     }
 }
 
+static void copyLink_SimpleDocumentWidget_(const iSimpleDocumentWidget *d, const char *cmd) {
+    const iGmDocument *doc = d->view->doc;
+    const iString     *url = linkUrl_GmDocument(doc, d->contextLink);
+    if (!url) {
+        return;
+    }
+    if (argLabel_Command(cmd, "label")) {
+        SDL_SetClipboardText(cstr_Rangecc(linkLabel_GmDocument(doc, d->contextLink)));
+    }
+    else {
+        SDL_SetClipboardText(cstr_String(
+            canonicalUrl_String(absoluteUrl_String(url_GmDocument(doc), url))));
+    }
+}
+
 static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -243,6 +266,10 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         invalidatePalette_GmDocument(d->view->doc);
         redoLayout_SimpleDocumentWidget(d);
+    }
+    else if (isCommand_Widget(w, ev, "simpledoc.copylink")) {
+        copyLink_SimpleDocumentWidget_(d, command_UserEvent(ev));
+        return iTrue;
     }
     if (ev->type == SDL_EVENT_MOUSE_WHEEL && isHover_Widget(w)) {
         /* Wide preformatted blocks scroll horizontally. */
@@ -268,6 +295,20 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
     if (ev->type == SDL_EVENT_MOUSE_MOTION) {
         updateHover_DocumentView(d->view, init_I2(ev->motion.x, ev->motion.y));
     }
+    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev->button.button == SDL_BUTTON_RIGHT &&
+        contains_Widget(w, init_I2(ev->button.x, ev->button.y)) && !isVisible_Widget(d->menu)) {
+        if (d->menu) {
+            destroy_Widget(d->menu);
+            d->menu = NULL;
+        }
+        const iGmRun *link = d->view->hoverLink;
+        d->contextLink = link ? link->linkId : 0;
+        if (link) {
+            setFocus_Widget(NULL);
+            d->menu = makeLinkContextMenu_SimpleDocumentWidget(d, link);
+        }
+    }
+    processContextMenuEvent_Widget(d->menu, ev, {});
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             return iTrue;

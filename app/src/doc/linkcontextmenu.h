@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../media/media.h"
 
 iDeclareType(DocumentWidget)
+iDeclareType(SimpleDocumentWidget)
 iDeclareType(Widget)
 
 iWidget *makeLinkContextMenu_DocumentWidget              (iDocumentWidget *, const iGmRun *link);
@@ -33,3 +34,4 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *, con
                                                           const iString  *linkLabel,
                                                           iGmLinkId       linkId,
                                                           enum iMediaType linkMediaType);
+iWidget *makeLinkContextMenu_SimpleDocumentWidget        (iSimpleDocumentWidget *, const iGmRun *link);

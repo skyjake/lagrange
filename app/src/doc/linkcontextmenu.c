@@ -27,22 +27,55 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 #include "linkinfo.h"
 #include "ui/documentwidget.h"
+#include "ui/simpledocumentwidget.h"
 #include "ui/util.h"
 #include "ui/widget.h"
 
 #include <lagrange/gmrequest.h>
+
+static iBool isNativeScheme_(iRangecc scheme) {
+    return equalCase_Rangecc(scheme, "gemini") || willUseProxy_App(scheme) ||
+           equalCase_Rangecc(scheme, "data") || equalCase_Rangecc(scheme, "file") ||
+           equalCase_Rangecc(scheme, "finger") || isGopherScheme_Rangecc(scheme) ||
+           equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "nex");
+}
+
+static void appendOpenItems_(iArray *items, const iString *linkUrl, const char *openArgs) {
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { openTab_Icon " ${link.newtab}",
+              0,
+              0,
+              format_CStr("!open%s newtab:1 url:%s", openArgs, cstr_String(linkUrl)) },
+            { openTabBg_Icon " ${link.newtab.background}",
+              0,
+              0,
+              format_CStr("!open%s newtab:2 url:%s", openArgs, cstr_String(linkUrl)) },
+            { openWindow_Icon " ${link.newwindow}",
+              0,
+              KMOD_DESKTOP,
+              format_CStr("!open%s newwindow:1 url:%s", openArgs, cstr_String(linkUrl)) },
+            { "${link.side}",
+              0,
+              KMOD_DESKTOP | KMOD_TABLET,
+              format_CStr("!open%s newtab:4 url:%s", openArgs, cstr_String(linkUrl)) },
+            { "${link.side.newtab}",
+              0,
+              KMOD_DESKTOP | KMOD_TABLET,
+              format_CStr("!open%s newtab:5 url:%s", openArgs, cstr_String(linkUrl)) },
+        },
+        5);
+}
 
 iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
                                                           const iString   *linkUrl,
                                                           const iString   *linkLabel,
                                                           iGmLinkId        linkId,
                                                           enum iMediaType  linkMediaType) {
-    iWidget       *w            = as_Widget(d);
-    iArray        *items        = collectNew_Array(sizeof(iMenuItem));
-    const iBool    spartanQuery = isSpartanQueryLink_DocumentWidget(d, linkId);
-    const iRangecc scheme       = urlScheme_String(linkUrl);
-    const iBool    isGemini     = equalCase_Rangecc(scheme, "gemini");
-    iBool          isNative     = iFalse;
+    iWidget       *w      = as_Widget(d);
+    iArray        *items  = collectNew_Array(sizeof(iMenuItem));
+    const iRangecc scheme = urlScheme_String(linkUrl);
     if (deviceType_App() != desktop_AppDeviceType && linkId) {
         /* Show the link as the first, non-interactive item. */
         iString *infoText = collectNew_String();
@@ -50,56 +83,16 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
         pushBack_Array(items,
                        &(iMenuItem){ format_CStr("```%s", cstr_String(infoText)), 0, 0, NULL });
     }
-    if (isGemini || willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "data") ||
-        equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "finger") ||
-        isGopherScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "spartan") ||
-        equalCase_Rangecc(scheme, "nex")) {
-        isNative = iTrue;
+    const char *originArg = format_CStr(" origin:%s", cstr_String(id_Widget(w)));
+    const iBool isGemini  = equalCase_Rangecc(scheme, "gemini");
+    if (isNativeScheme_(scheme)) {
         /* Regular links that we can open. */
-        pushBackN_Array(items,
-                        (iMenuItem[]){
-                            { openTab_Icon " ${link.newtab}",
-                              0,
-                              0,
-                              format_CStr("!open query:%d newtab:1 origin:%s%s url:%s",
-                                          spartanQuery,
-                                          cstr_String(id_Widget(w)),
-                                          setIdentArg_DocumentWidget(d, linkUrl),
-                                          cstr_String(linkUrl)) },
-                            { openTabBg_Icon " ${link.newtab.background}",
-                              0,
-                              0,
-                              format_CStr("!open query:%d newtab:2 origin:%s%s url:%s",
-                                          spartanQuery,
-                                          cstr_String(id_Widget(w)),
-                                          setIdentArg_DocumentWidget(d, linkUrl),
-                                          cstr_String(linkUrl)) },
-                            { openWindow_Icon " ${link.newwindow}",
-                              0,
-                              KMOD_DESKTOP,
-                              format_CStr("!open query:%d newwindow:1 origin:%s%s url:%s",
-                                          spartanQuery,
-                                          cstr_String(id_Widget(w)),
-                                          setIdentArg_DocumentWidget(d, linkUrl),
-                                          cstr_String(linkUrl)) },
-                            { "${link.side}",
-                              0,
-                              KMOD_DESKTOP | KMOD_TABLET,
-                              format_CStr("!open query:%d newtab:4 origin:%s%s url:%s",
-                                          spartanQuery,
-                                          cstr_String(id_Widget(w)),
-                                          setIdentArg_DocumentWidget(d, linkUrl),
-                                          cstr_String(linkUrl)) },
-                            { "${link.side.newtab}",
-                              0,
-                              KMOD_DESKTOP | KMOD_TABLET,
-                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",
-                                          spartanQuery,
-                                          cstr_String(id_Widget(w)),
-                                          setIdentArg_DocumentWidget(d, linkUrl),
-                                          cstr_String(linkUrl)) },
-                        },
-                        5);
+        appendOpenItems_(items,
+                         linkUrl,
+                         format_CStr(" query:%d%s%s",
+                                     isSpartanQueryLink_DocumentWidget(d, linkId),
+                                     originArg,
+                                     setIdentArg_DocumentWidget(d, linkUrl)));
         if (equalCase_Rangecc(scheme, "file")) {
             pushBack_Array(items, &(iMenuItem){ "---" });
             pushBack_Array(
@@ -138,8 +131,8 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
                            { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
                              0,
                              0,
-                             format_CStr("!open origin:%s noproxy:1 url:%s",
-                                         cstr_String(id_Widget(w)),
+                             format_CStr("!open%s noproxy:1 url:%s",
+                                         originArg,
                                          cstr_String(linkUrl)) } },
             2);
     }
@@ -163,7 +156,7 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
         },
         9);
     delete_String(encLabel);
-    if (isNative && linkId && linkMediaType != download_MediaType &&
+    if (isNativeScheme_(scheme) && linkId && linkMediaType != download_MediaType &&
         !equalCase_Rangecc(scheme, "file")) {
         pushBackN_Array(items,
                         (iMenuItem[]){
@@ -215,4 +208,29 @@ iWidget *makeLinkContextMenu_DocumentWidget(iDocumentWidget *d, const iGmRun *li
         collectNewRange_String(linkLabel_GmDocument(document_DocumentWidget(d), link->linkId)),
         link->linkId,
         link->mediaType);
+}
+
+iWidget *makeLinkContextMenu_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iGmRun *link) {
+    /* Only the actions that make sense for the pages of a book. */
+    const iGmDocument *doc   = document_SimpleDocumentWidget(d);
+    const iString     *url   = linkUrl_GmDocument(doc, link->linkId);
+    iArray            *items = collectNew_Array(sizeof(iMenuItem));
+    if (isNativeScheme_(urlScheme_String(url))) {
+        appendOpenItems_(items, url, "");
+        pushBack_Array(items, &(iMenuItem){ "---" });
+    }
+    iString *encLabel = newRange_String(linkLabel_GmDocument(doc, link->linkId));
+    urlEncodeSpaces_String(encLabel);
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { copy_Icon " ${link.copy}", 0, 0, "simpledoc.copylink" },
+            { "${link.copy.label}", 0, 0, "simpledoc.copylink label:1" },
+            { "---" },
+            { bookmark_Icon " ${link.bookmark}", 0, 0,
+              format_CStr("!bookmark.add title:%s url:%s", cstr_String(encLabel), cstr_String(url)) },
+        },
+        4);
+    delete_String(encLabel);
+    return makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));
 }
