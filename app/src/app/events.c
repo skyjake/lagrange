@@ -171,6 +171,13 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
        seems to work better. */
 #if !defined (iPlatformTerminal) && defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
     return SDL_WaitEventTimeout(event, 1);
+#elif !defined (iPlatformTerminal)
+    if (SDL_PollEvent(event)) {
+        return iTrue;
+    }
+    /* Events posted during processing are queued after SDL's poll sentinel. They must be
+       handled before the next draw. */
+    return SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST) > 0;
 #else
     return SDL_PollEvent(event);
 #endif
