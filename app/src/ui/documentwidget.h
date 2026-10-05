@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "doc/swipe.h"
 #include <the_Foundation/stream.h>
 
+iDeclareType(Gempub)
 iDeclareType(GmDocument)
 iDeclareType(GmIdentity)
 iDeclareType(GmRequest)
@@ -89,6 +90,8 @@ void                updateDocPrefs_DocumentWidget   (iDocumentWidget *); /* reso
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 const iString *     feedEntryUrl_DocumentWidget     (const iDocumentWidget *);
+const iGempub *     gempub_DocumentWidget           (const iDocumentWidget *); /* NULL if not a book */
+iBool               isReadingOn_DocumentWidget      (const iDocumentWidget *); /* adjacent chapter opening */
 uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 int                 documentWidth_DocumentWidget        (const iDocumentWidget *);

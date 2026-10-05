@@ -295,6 +295,11 @@ iWidget *makePreferences_Widget(void) {
             { "button id:prefs.pinsplit.2 label:prefs.pinsplit.right", 0, 0, "pinsplit.set arg:2" },
             { NULL }
         };
+        const iMenuItem gempubSidebarItems[] = {
+            { "button id:prefs.gempubsidebar.0 label:prefs.sidebar.left",  0, 0, "gempubsidebar.set arg:0" },
+            { "button id:prefs.gempubsidebar.1 label:prefs.sidebar.right", 0, 0, "gempubsidebar.set arg:1" },
+            { NULL }
+        };
         const iMenuItem themeItems[] = {
             { "button id:prefs.theme.0 label:prefs.theme.black", 0, 0, "theme.set arg:0" },
             { "button id:prefs.theme.1 label:prefs.theme.dark",  0, 0, "theme.set arg:1" },
@@ -360,6 +365,7 @@ iWidget *makePreferences_Widget(void) {
             { "toggle device:1 id:prefs.sidebar2.enabled.5 text:${LC:sidebar.structure}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.6 text:${LC:sidebar.documents}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.7 text:${LC:sidebar.history}" },
+            { "radio device:1 id:prefs.gempubsidebar", 0, 0, (const void *) gempubSidebarItems },
             { "heading id:heading.prefs.sizing" },
             { "input id:prefs.uiscale maxlen:5" },
             { "padding" },
@@ -761,6 +767,13 @@ iWidget *makePreferences_Widget(void) {
                 (const char *[]) { "${prefs.sidebar.left}", "${prefs.sidebar.right}" },
                 2);
         }
+        /* The Book mode is on one side only. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${sidebar.gempub}:")));
+            iWidget *sides = new_Widget();
+            addRadioButton_Widget(sides, "prefs.gempubsidebar.0", "${prefs.sidebar.left}", "gempubsidebar.set arg:0");
+            addRadioButton_Widget(sides, "prefs.gempubsidebar.1", "${prefs.sidebar.right}", "gempubsidebar.set arg:1");
+            addChildFlags_Widget(values, iClob(sides), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
     }
     /* Snippets. */ {
         iSnippetWidget *sniped = new_SnippetWidget();
@@ -916,6 +929,14 @@ static void updatePrefsThemeButtons_(iWidget *d) {
                                         format_CStr(" arg:%u", prefs_App()->accent));
 }
 
+static void updatePrefsGempubSidebarButtons_(iWidget *d, int value) {
+    for (int i = 0; i < 2; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.gempubsidebar.%d", i)),
+                        selected_WidgetFlag,
+                        i == value);
+    }
+}
+
 static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     for (int i = 0; i < 3; i++) {
         setFlags_Widget(findChild_Widget(d, format_CStr("prefs.pinsplit.%d", i)),
@@ -1055,6 +1076,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
         return iFalse;
     }
+    else if (equal_Command(cmd, "gempubsidebar.set")) {
+        updatePrefsGempubSidebarButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "promptposition.set")) {
         updatePrefsPromptPositionButtons_(d, arg_Command(cmd));
         return iFalse;
@@ -1125,6 +1150,7 @@ void showPreferences_Widget(const char *cmd) {
         }
     }
     updatePrefsPinSplitButtons_(dlg, prefs->pinSplit);
+    updatePrefsGempubSidebarButtons_(dlg, prefs->gempubSidebar);
     updatePrefsPromptPositionButtons_(dlg, prefs->promptPosition);
     updateScrollSpeedButtons_(dlg, mouse_ScrollType, prefs->smoothScrollSpeed[mouse_ScrollType]);
     updateScrollSpeedButtons_(dlg, keyboard_ScrollType, prefs->smoothScrollSpeed[keyboard_ScrollType]);

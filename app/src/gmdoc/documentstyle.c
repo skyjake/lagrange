@@ -133,4 +133,10 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         d->bottomMargins[heading1_GmLineType] *= 2;
         d->flags[heading1_GmLineType] |= centered_DocumentStyleFlag | keepBottomMargin_DocumentStyleFlag;
     }
+    if (params->isUiTheme) {
+        /* Only the empty lines of the source separate the lines. */
+        iZap(d->topMargins);
+        iZap(d->bottomMargins);
+        d->linkGroupMargin = 0;
+    }
 }

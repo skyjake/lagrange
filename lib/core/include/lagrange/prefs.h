@@ -242,6 +242,7 @@ struct Impl_Prefs {
 
     /* Behavior */
     int                        pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
+    int                        gempubSidebar; /* side of the Book sidebar: 0 left, 1 right */
     enum iInputPromptPosition  promptPosition; /* desktop only */
     enum iFeedInterval         feedInterval;
     int                returnKey;

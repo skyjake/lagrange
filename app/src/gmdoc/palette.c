@@ -172,15 +172,15 @@ static void setUiThemeColors_(void) {
         { tmBadLink_ColorId, uiTextCaution_ColorId },
         { tmLinkIcon_ColorId, uiIcon_ColorId },
         { tmLinkIconVisited_ColorId, uiIcon_ColorId },
-        { tmLinkText_ColorId, uiText_ColorId },
+        { tmLinkText_ColorId, uiTextStrong_ColorId },
         { tmLinkTextHover_ColorId, uiTextAction_ColorId },
         { tmHypertextLinkIcon_ColorId, uiIcon_ColorId },
         { tmHypertextLinkIconVisited_ColorId, uiIcon_ColorId },
-        { tmHypertextLinkText_ColorId, uiText_ColorId },
+        { tmHypertextLinkText_ColorId, uiTextStrong_ColorId },
         { tmHypertextLinkTextHover_ColorId, uiTextAction_ColorId },
         { tmGopherLinkIcon_ColorId, uiIcon_ColorId },
         { tmGopherLinkIconVisited_ColorId, uiIcon_ColorId },
-        { tmGopherLinkText_ColorId, uiText_ColorId },
+        { tmGopherLinkText_ColorId, uiTextStrong_ColorId },
         { tmGopherLinkTextHover_ColorId, uiTextAction_ColorId },
     };
     iForIndices(i, map) {

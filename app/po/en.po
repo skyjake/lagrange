@@ -587,6 +587,23 @@ msgstr "Tabs"
 msgid "sidebar.subscriptions"
 msgstr "Subscriptions"
 
+# Sidebar mode that shows the cover and the index page of the current GemPub book.
+msgid "sidebar.gempub"
+msgstr "Book"
+
+msgid "sidebar.gempub.cover"
+msgstr "Cover"
+
+msgid "sidebar.gempub.index"
+msgstr "Contents"
+
+msgid "sidebar.empty.gempub"
+msgstr "The current page is not part of a book."
+
+# Preferences: on which sidebar the Book mode is shown.
+msgid "prefs.gempubsidebar"
+msgstr "Book"
+
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "New Folder"
 

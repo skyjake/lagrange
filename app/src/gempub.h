@@ -60,6 +60,7 @@ void        setBaseUrl_Gempub       (iGempub *, const iString *baseUrl);
 iBool       isOpen_Gempub           (const iGempub *);
 iBool       isRemote_Gempub         (const iGempub *);
 iString *   coverPageSource_Gempub  (const iGempub *);
+iString *   indexPageSource_Gempub  (const iGempub *);
 iBool       preloadCoverImage_Gempub(const iGempub *, iGmDocument *doc);
 
 const iString * property_Gempub         (const iGempub *, enum iGempubProperty);

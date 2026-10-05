@@ -311,6 +311,7 @@ enum iSidebarMode {
     siteStructure_SidebarMode,
     openDocuments_SidebarMode,
     history_SidebarMode,
+    gempub_SidebarMode, /* only when the current document is part of a book */
     max_SidebarMode
 };
 
@@ -330,6 +331,7 @@ enum iAnsiFlag {
 #define barLeftArrow_Icon   "\u21a4"
 #define barRightArrow_Icon  "\u21a6"
 #define book_Icon           "\U0001f56e"
+#define openBook_Icon       "\U0001f4d6"
 #define bookmark_Icon       "\U0001f516"
 #define bug_Icon            "\U0001f41e"
 #define bullet_Icon         "\u2022"

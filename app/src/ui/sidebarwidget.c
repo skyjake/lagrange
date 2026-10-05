@@ -41,6 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/paint.h"
 #include "root.h"
 #include "scrollwidget.h"
+#include "simpledocumentwidget.h"
+#include "gempub.h"
 #include "touch.h"
 #include "util.h"
 #include <lagrange/visited.h>
@@ -104,6 +106,7 @@ static const char *normalModeLabels_[max_SidebarMode] = {
     hierarchy_Icon " ${sidebar.structure}",
     openTabBg_Icon " ${sidebar.documents}",
     clock_Icon " ${sidebar.history}",
+    openBook_Icon " ${sidebar.gempub}",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
@@ -115,6 +118,7 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     hierarchy_Icon,
     openTabBg_Icon,
     clock_Icon,
+    openBook_Icon,
 };
 
 struct Impl_SidebarWidget {
@@ -126,6 +130,11 @@ struct Impl_SidebarWidget {
     iWidget          *blank;
     iListWidget      *list;
     iCertListWidget  *certList;
+    iWidget          *gempubArea;   /* tabs and a document for the current book */
+    iLabelWidget     *gempubTabs[2];
+    iSimpleDocumentWidget *gempubDoc;
+    int               gempubPage;   /* 0: cover, 1: index */
+    iString           gempubUrl;    /* page shown in `gempubDoc` */
     iWidget          *actions;      /* below the list, area for buttons */
     int               midHeight;    /* on portrait phone, the height for the middle state */
     iBool             isEditing;    /* mobile edit mode */
@@ -152,6 +161,23 @@ struct Impl_SidebarWidget {
 };
 
 iDefineObjectConstructionArgs(SidebarWidget, (enum iSidebarSide side), side);
+
+static const iGempub *gempub_SidebarWidget_(const iSidebarWidget *d) {
+    /* The book that the root's current document belongs to. */
+    const iDocumentWidget *doc    = document_Root(constAs_Widget(d)->root);
+    const iGempub         *gempub = doc ? gempub_DocumentWidget(doc) : NULL;
+    return gempub && !isRemote_Gempub(gempub) ? gempub : NULL;
+}
+
+static iBool isModeEnabled_SidebarWidget_(const iSidebarWidget *d, int side,
+                                          enum iSidebarMode mode) {
+    if (mode == gempub_SidebarMode) {
+        const int bookSide =
+            deviceType_App() == phone_AppDeviceType ? left_SidebarSide : prefs_App()->gempubSidebar;
+        return side == bookSide && gempub_SidebarWidget_(d) != NULL;
+    }
+    return prefs_App()->sidebarModeEnabled[side][mode];
+}
 
 iLocalDef iListWidget *list_SidebarWidget_(iSidebarWidget *d) {
     return d->mode == identities_SidebarMode ? (iListWidget *) d->certList : d->list;
@@ -551,6 +577,34 @@ static iSidebarItem *addStructureItem_SidebarWidget_(iSidebarWidget *d, const iS
         item->count++; /* counts as a folded child */
         return NULL;
     }
+}
+
+static iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
+    /* Shows the cover or the index of the current book. Returns False if there is none. */
+    const iGempub *gempub = gempub_SidebarWidget_(d);
+    for (int i = 0; i < 2; i++) {
+        setFlags_Widget(as_Widget(d->gempubTabs[i]), selected_WidgetFlag, i == d->gempubPage);
+    }
+    if (!gempub) {
+        clear_String(&d->gempubUrl);
+        clear_SimpleDocumentWidget(d->gempubDoc);
+        return iFalse;
+    }
+    const iString *url = d->gempubPage == 0 ? coverPageUrl_Gempub(gempub)
+                                            : indexPageUrl_Gempub(gempub);
+    if (equal_String(&d->gempubUrl, url)) {
+        return iTrue;
+    }
+    set_String(&d->gempubUrl, url);
+    iString *src = d->gempubPage == 0 ? coverPageSource_Gempub(gempub)
+                                      : indexPageSource_Gempub(gempub);
+    setSource_SimpleDocumentWidget(d->gempubDoc, url, src);
+    delete_String(src);
+    if (d->gempubPage == 0 &&
+        preloadCoverImage_Gempub(gempub, document_SimpleDocumentWidget(d->gempubDoc))) {
+        redoLayout_SimpleDocumentWidget(d->gempubDoc);
+    }
+    return iTrue;
 }
 
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
@@ -1163,11 +1217,17 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             }
             break;
         }
+        case gempub_SidebarMode:
+            isEmpty = !updateGempub_SidebarWidget_(d);
+            break;
         default:
             break;
     }
-    setFlags_Widget(as_Widget(d->list), hidden_WidgetFlag, d->mode == identities_SidebarMode);
+    setFlags_Widget(as_Widget(d->list),
+                    hidden_WidgetFlag,
+                    d->mode == identities_SidebarMode || d->mode == gempub_SidebarMode);
     setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);
+    setFlags_Widget(d->gempubArea, hidden_WidgetFlag, d->mode != gempub_SidebarMode || isEmpty);
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
     updateVisible_ListWidget(list_SidebarWidget_(d));
     invalidate_ListWidget(list_SidebarWidget_(d));
@@ -1196,6 +1256,17 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 arrange_Widget(d->actions);
                 div->padding[3] = height_Widget(d->actions);
             }
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addChild_Widget(d->blank, iClob(div));
+        }
+        else if (d->mode == gempub_SidebarMode) {
+            iWidget *div = makeVDiv_Widget();
+            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            iLabelWidget *msg = new_LabelWidget("${sidebar.empty.gempub}", NULL);
+            setFont_LabelWidget(msg, uiLabelLarge_FontId);
+            setWrap_LabelWidget(msg, iTrue);
+            addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag | fixedHeight_WidgetFlag);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChild_Widget(d->blank, iClob(div));
         }
@@ -1260,9 +1331,9 @@ static size_t findItemUrl_SidebarWidget_(const iSidebarWidget *d, const iString 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     /* Note: identity item height is defined by CertListWidget */
 #if !defined(iPlatformTerminal)
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 2.5f, 0, 1.2f, 1.2f, 1.333f, 1.333f };
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 2.5f, 0, 1.2f, 1.2f, 1.333f, 1.333f, 1.333f };
 #else
-    const float heights[max_SidebarMode] = { 1, 3, 3, 0, 1, 1, 1, 1 };
+    const float heights[max_SidebarMode] = { 1, 3, 3, 0, 1, 1, 1, 1, 1 };
 #endif
     if (d->list) {
         setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
@@ -1463,7 +1534,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
             /* On mobile, identities are managed via Settings. */
             continue;
         }
-        const iBool isEnabled = prefs_App()->sidebarModeEnabled[d->side][i];
+        const iBool isEnabled = isModeEnabled_SidebarWidget_(d, d->side, i);
         d->modeButtons[i] = addChildFlags_Widget(
             buttons,
             iClob(new_LabelWidget(tightModeLabels_[i],
@@ -1491,6 +1562,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
             { "---" },
             { normalModeLabels_[6], 0, 0, format_CStr("%s.mode force:1 arg:6", barId) },
             { normalModeLabels_[7], 0, 0, format_CStr("%s.mode force:1 arg:7", barId) },
+            { "---" },
+            { normalModeLabels_[8], 0, 0, format_CStr("%s.mode force:1 arg:8", barId) },
             { "---" },
             { gear_Icon " ${menu.sidebar.configure}", 0, 0, "preferences sidecfg:1" },
             { close_Icon " ${close}", 0, 0, format_CStr("%s.toggle", barId) },
@@ -1520,6 +1593,29 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         d->certList = new_CertListWidget();
         setPadding_Widget(as_Widget(d->certList), 0, gap_UI, 0, gap_UI);
         addChild_Widget(listArea, iClob(d->certList));
+    }
+    /* The current book: cover and index pages. */ {
+        d->gempubArea = makeVDiv_Widget();
+        iWidget *tabs = new_Widget();
+        setPadding1_Widget(tabs, gap_UI);
+        static const char *tabLabels[2] = { "${sidebar.gempub.cover}", "${sidebar.gempub.index}" };
+        for (int i = 0; i < 2; i++) {
+            d->gempubTabs[i] = addChildFlags_Widget(
+                tabs,
+                iClob(new_LabelWidget(tabLabels[i],
+                                      format_CStr("%s.gempub.page arg:%d", cstr_String(id_Widget(w)), i))),
+                expand_WidgetFlag);
+        }
+        addChildFlags_Widget(d->gempubArea,
+                             iClob(tabs),
+                             arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                                 arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
+        d->gempubDoc = new_SimpleDocumentWidget();
+        addChildFlags_Widget(d->gempubArea, iClob(d->gempubDoc), expand_WidgetFlag);
+        setBackgroundColor_Widget(d->gempubArea, uiBackgroundSidebar_ColorId);
+        addChildFlags_Widget(listArea, iClob(d->gempubArea), hidden_WidgetFlag);
+        d->gempubPage = 1;
+        init_String(&d->gempubUrl);
     }
     addChildFlags_Widget(listAndActions, iClob(listArea), expand_WidgetFlag);
     setId_Widget(addChildPosFlags_Widget(listAndActions,
@@ -1565,6 +1661,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
+    deinit_String(&d->gempubUrl);
     iRelease(d->structureUnfolds);
     iRelease(d->structureUrls);
     deinit_String(&d->structureHost);
@@ -1722,7 +1819,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
         iLabelWidget *button = d->modeButtons[i];
         if (!button) continue;
         setFlags_Widget(
-            as_Widget(button), hidden_WidgetFlag, !prefs_App()->sidebarModeEnabled[d->side][i]);
+            as_Widget(button), hidden_WidgetFlag, !isModeEnabled_SidebarWidget_(d, d->side, i));
         setAlignVisually_LabelWidget(button, isTight);
         setFlags_Widget(as_Widget(button), tight_WidgetFlag, isTight);
         if (i == feedEntries_SidebarMode && d->numUnreadEntries) {
@@ -1890,11 +1987,18 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             d, arg_Command(cmd) * (argLabel_Command(cmd, "gaps") ? 1.0f : (1.0f / gap_UI)));
         return iTrue;
     }
+    else if (equal_Command(cmd, "gempub.page")) {
+        d->gempubPage = iClamp(arg_Command(cmd), 0, 1);
+        if (d->mode == gempub_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "cycle")) {
         const int dir  = arg_Command(cmd);
         int       mode = (d->mode + dir) % max_SidebarMode;
         for (int i = 0; i < max_SidebarMode; i++, mode = (mode + dir) % max_SidebarMode) {
-            if (prefs_App()->sidebarModeEnabled[d->side][mode]) {
+            if (isModeEnabled_SidebarWidget_(d, d->side, mode)) {
                 postCommand_Widget(w, "%s.mode arg:%d", d->side == 0 ? "sidebar" : "sidebar2", mode);
                 break;
             }
@@ -1904,8 +2008,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     else if (equal_Command(cmd, "mode")) {
         const int mode = arg_Command(cmd);
         if (!isSlidingSheet_SidebarWidget_(d) && !argLabel_Command(cmd, "force") &&
-            !prefs_App()->sidebarModeEnabled[d->side][mode] &&
-            prefs_App()->sidebarModeEnabled[d->side ^ 1][mode]) {
+            !isModeEnabled_SidebarWidget_(d, d->side, mode) &&
+            isModeEnabled_SidebarWidget_(d, d->side ^ 1, mode)) {
             /* Make it affect the other side instead. */
             postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d",
                                d->side == 0 ? "sidebar2" : "sidebar",
@@ -2028,7 +2132,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (isDesktop_Platform() && prefs_App()->evenSplit) {
             resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
         }
-        if (!isHiding && (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App()))) {
+        if (!isHiding && d->mode != gempub_SidebarMode /* keys are for turning pages */ &&
+            (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App()))) {
             setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
         else {
@@ -2205,6 +2310,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         if ((equal_Command(cmd, "tabs.changed") &&
              startsWith_Rangecc(range_Command(cmd, "id"), "doc")) ||
             equal_Command(cmd, "document.changed")) {
+            /* The Book mode is only available for books. */
+            checkModeButtonLayout_SidebarWidget_(d);
+            arrange_Widget(parent_Widget(d->modeButtons[0]));
             if (d->mode != bookmarks_SidebarMode) {
                 updateItems_SidebarWidget_(d);
             }

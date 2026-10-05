@@ -170,6 +170,9 @@ void updateProgress_DocumentFetch(const iDocumentFetch *d) {
 
 static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
     makeFooterButtons_DocumentWidget(d->owner, NULL, 0);
+    if (!isRemote_Gempub(d->sourceGempub) && wantsPaged_DocumentView(view_DocumentFetch_(d))) {
+        return; /* pages turn to the adjacent chapters */
+    }
     if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub))) {
         if (!isRemote_Gempub(d->sourceGempub)) {
             iArray *items = collectNew_Array(sizeof(iMenuItem));
@@ -219,8 +222,8 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
                                          cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
             1);
     }
-    else if (!wantsPaged_DocumentView(view_DocumentFetch_(d))) {
-        /* Navigation buttons. Paginated chapters continue on page turns instead. */
+    else {
+        /* Navigation buttons. */
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
         if (navIndex != iInvalidPos) {
@@ -323,25 +326,18 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 updateVisible_DocumentView(view_DocumentFetch_(d));
                 invalidate_DocumentWidget(d->owner);
             }
-            if (!isCached && prefs_App()->pinSplit &&
-                equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
-                const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
-                if (navStart) {
-                    iWindow *win = get_Window();
-                    /* Auto-split to show index and the first navigation link. */
-                    if (numRoots_Window(win) == 2) {
-                        /* This document is showing the index page. */
-                        iRoot *other = otherRoot_Window(win, w->root);
-                        postCommandf_Root(other, "open url:%s", cstr_String(navStart));
-                        if (prefs_App()->pinSplit == 1 && w->root == win->roots[1]) {
-                            /* On the wrong side. */
-                            postCommand_App("ui.split swap:1");
-                        }
-                    }
-                    else {
-                        postCommandf_App(
-                            "open splitmode:1 newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
-                    }
+            const iBool isCover = equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub));
+            if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentWidget(d->owner) &&
+                (isCover || equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub)))) {
+                /* Opening a book: the cover is in the sidebar and the contents in the document. */
+                postCommandf_Root(w->root,
+                                  "%s.gempub.page arg:0",
+                                  prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType
+                                      ? "sidebar2"
+                                      : "sidebar");
+                postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
+                if (isCover) {
+                    postCommandf_Root(w->root, "open url:%s", cstr_String(indexPageUrl_Gempub(d->sourceGempub)));
                 }
             }
         }

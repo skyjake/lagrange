@@ -120,6 +120,8 @@ enum iDocumentWidgetFlag {
     openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
     historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
     showLastPage_DocumentWidgetFlag          = iBit(18), /* new document opens at its last page */
+    readingOn_DocumentWidgetFlag             = iBit(19), /* next chapter of a book is opening */
+    animateChapterSwipe_DocumentWidgetFlag   = iBit(20), /* chapter slides in when loaded */
 };
 
 /* Note the following about swipes and keeping inline input prompts positioned:
@@ -814,22 +816,74 @@ static size_t sourceOffset_DocumentWidget_(const iString *text, iInt2 linePos) {
     return iMin(ch + linePos.x, eol) - start;
 }
 
-static iBool openAdjacentChapter_DocumentWidget_(iDocumentWidget *d, int dir) {
-    /* Turning past the first or last page continues in the previous or next chapter. */
+static const iString *adjacentChapterUrl_DocumentWidget_(const iDocumentWidget *d, int dir) {
+    /* The reading order of a book is the cover, the contents, and the chapters. */
     const iGempub *gempub = d->fetch->sourceGempub;
-    if (!gempub || isRemote_Gempub(gempub)) {
+    if (!gempub || isRemote_Gempub(gempub) || !dir) {
+        return NULL;
+    }
+    size_t pos;
+    if (equal_String(d->mod.url, coverPageUrl_Gempub(gempub))) {
+        pos = 0;
+    }
+    else if (equal_String(d->mod.url, indexPageUrl_Gempub(gempub))) {
+        pos = 1;
+    }
+    else {
+        const size_t index = navIndex_Gempub(gempub, d->mod.url);
+        if (index == iInvalidPos) {
+            return NULL;
+        }
+        pos = index + 2;
+    }
+    if ((dir < 0 && pos == 0) || (dir > 0 && pos + 1 >= navSize_Gempub(gempub) + 2)) {
+        return NULL;
+    }
+    pos = dir < 0 ? pos - 1 : pos + 1;
+    return pos == 0   ? coverPageUrl_Gempub(gempub)
+           : pos == 1 ? indexPageUrl_Gempub(gempub)
+                      : navLinkUrl_Gempub(gempub, pos - 2);
+}
+
+static iBool openAdjacentChapter_DocumentWidget_(iDocumentWidget *d, int dir, iBool isGesture) {
+    /* Turning past the first or last page continues in the previous or next chapter. The
+       current view slides away like in a history swipe. A gesture moves the views itself. */
+    const iString *url = adjacentChapterUrl_DocumentWidget_(d, dir);
+    if (!url) {
         return iFalse;
     }
-    const size_t index = navIndex_Gempub(gempub, d->mod.url);
-    if (index == iInvalidPos || (dir < 0 && index == 0) ||
-        (dir > 0 && index + 1 >= navSize_Gempub(gempub))) {
-        return iFalse;
+    reset_DocumentSwipe(d->swipe);
+    setViewSwipedAway_DocumentSwipe(d->swipe, iTrue);
+    if (dir < 0) {
+        setOverlay_DocumentSwipe(d->swipe, iTrue);
     }
+    else {
+        setOffset_DocumentSwipe(d->swipe, width_Widget(d));
+    }
+    setOutgoingView_DocumentSwipe(d->swipe, d->view);
+    d->swipe->flags |= begun_DocumentSwipeFlag; /* until the chapter has been loaded */
     iChangeFlags(d->flags, showLastPage_DocumentWidgetFlag, dir < 0);
-    postCommandf_Root(as_Widget(d)->root,
-                      "open url:%s",
-                      cstr_String(navLinkUrl_Gempub(gempub, index + (dir < 0 ? -1 : +1))));
+    iChangeFlags(d->flags, animateChapterSwipe_DocumentWidgetFlag, !isGesture);
+    d->flags |= readingOn_DocumentWidgetFlag;
+    postCommandf_Root(as_Widget(d)->root, "open url:%s", cstr_String(url));
     return iTrue;
+}
+
+static int chapterSwipeDir_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
+    /* A swipe past the first or last page goes to the adjacent chapter, if there is one. */
+    const iDocumentView *view   = d->view;
+    const int            side   = argLabel_Command(cmd, "side");
+    const size_t         column = currentColumn_DocumentView(view);
+    const int dir = side == 1 && column == 0 ? -1
+                    : side == 2 && column + numColumns_DocumentView(view) >=
+                                       numColumns_GmDocument(view->doc)
+                        ? +1
+                        : 0;
+    return dir && adjacentChapterUrl_DocumentWidget_(d, dir) ? dir : 0;
+}
+
+iBool isReadingOn_DocumentWidget(const iDocumentWidget *d) {
+    return (d->flags & readingOn_DocumentWidgetFlag) != 0;
 }
 
 static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
@@ -1853,12 +1907,23 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                      iFalse);
         d->fetch->state = ready_RequestState;
         postProcessContent_DocumentFetch(d->fetch, iFalse);
+        d->flags &= ~readingOn_DocumentWidgetFlag;
         if (d->flags & showLastPage_DocumentWidgetFlag) {
             /* Going backward from the next chapter. */
             d->flags &= ~showLastPage_DocumentWidgetFlag;
             if (isPaged_DocumentView(d->view)) {
                 showColumn_DocumentView(d->view, numColumns_GmDocument(d->view->doc) - 1, iFalse);
             }
+        }
+        if (d->flags & animateChapterSwipe_DocumentWidgetFlag) {
+            /* The new chapter has arrived, so the views can slide. */
+            d->flags &= ~animateChapterSwipe_DocumentWidgetFlag;
+            d->swipe->flags &= ~begun_DocumentSwipeFlag;
+            setFlags_Anim(&d->swipe->offset, easeOut_AnimFlag, iTrue);
+            setValue_Anim(&d->swipe->offset,
+                          isSwipingBack_DocumentSwipe(d->swipe) ? width_Widget(d) : 0,
+                          250);
+            animate_DocumentWidget(d);
         }
         /* The response may be cached. */
         if (d->fetch->request) {
@@ -2207,7 +2272,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.page.overflow")) {
-        if (openAdjacentChapter_DocumentWidget_(d, arg_Command(cmd))) {
+        if (openAdjacentChapter_DocumentWidget_(d, arg_Command(cmd), iFalse)) {
             return iTrue;
         }
         /* There is nothing more to turn to, so offer the navigation controls. */
@@ -2541,11 +2606,19 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
              isPaged_DocumentView(d->view)) {
-        /* Swipes turn pages, but past the first or last page they navigate history. */
+        /* Swipes turn pages, but past the first or last page they go to the adjacent chapter
+           or navigate history. */
         if (equal_Command(cmd, "edgeswipe.moved") &&
-            ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging &&
-            isHistorySwipe_DocumentWidget_(d, cmd)) {
-            d->flags |= historySwipe_DocumentWidgetFlag;
+            ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging) {
+            const int chapterDir = chapterSwipeDir_DocumentWidget_(d, cmd);
+            if (chapterDir && openAdjacentChapter_DocumentWidget_(d, chapterDir, iTrue)) {
+                /* The rest of the gesture moves the views like in a history swipe. */
+                d->flags |= historySwipe_DocumentWidgetFlag;
+                return iTrue;
+            }
+            if (isHistorySwipe_DocumentWidget_(d, cmd)) {
+                d->flags |= historySwipe_DocumentWidgetFlag;
+            }
         }
         if (d->flags & historySwipe_DocumentWidgetFlag) {
             if (equal_Command(cmd, "edgeswipe.ended")) {
@@ -4060,6 +4133,10 @@ iBool isReader_DocumentWidget(const iDocumentWidget *d) {
 void setReaderEntry_DocumentWidget(iDocumentWidget *d, const iString *entryUrl) {
     d->mod.isReader = iTrue;
     set_String(&d->readerEntryUrl, entryUrl);
+}
+
+const iGempub *gempub_DocumentWidget(const iDocumentWidget *d) {
+    return d->fetch->sourceGempub;
 }
 
 const iString *feedEntryUrl_DocumentWidget(const iDocumentWidget *d) {

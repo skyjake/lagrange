@@ -356,6 +356,8 @@ set (SOURCES
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
     src/ui/sidebarwidget.h
+    src/ui/simpledocumentwidget.c
+    src/ui/simpledocumentwidget.h
     src/ui/snippetwidget.c
     src/ui/snippetwidget.h
     src/ui/uploadwidget.c

@@ -280,6 +280,7 @@ void init_Prefs(iPrefs *d) {
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
     d->detachedPrefs                          = iTrue;
     d->pinSplit                               = 1;
+    d->gempubSidebar                          = 0;
     d->promptPosition                         = inline_InputPromptPosition;
     d->feedInterval                           = fourHours_FeedInterval;
     d->time24h                                = iTrue;

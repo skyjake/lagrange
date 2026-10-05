@@ -388,6 +388,11 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     return out;
 }
 
+iString *indexPageSource_Gempub(const iGempub *d) {
+    const iBlock *data = d->arch ? data_Archive(d->arch, &d->props[index_GempubProperty]) : NULL;
+    return data ? newBlock_String(data) : new_String();
+}
+
 iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
     iBool haveImage = iFalse;
     for (size_t linkId = 1; ; linkId++) {
