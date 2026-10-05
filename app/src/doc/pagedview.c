@@ -114,12 +114,12 @@ void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metri
     metrics->width           = pagedDocumentWidth_DocumentView(d);
     metrics->canvasWidth     = width_Rect(viewport) /
                            columnsFor_DocumentView_(d, width_Rect(viewport), &metrics->columnsPerPage);
-    /* Preformatted blocks may use half of the margins, but adjacent columns of a page may
-       have only a third of the space between them (see `columnShift_DocumentView`). */
+    /* Preformatted blocks may use half of the margins, but the columns of a page have only
+       half of the usual space between them (see `columnShift_DocumentView`). */
     metrics->maxContentWidth =
         iMax(metrics->width,
              metrics->columnsPerPage == 2
-                 ? metrics->width + (metrics->canvasWidth - metrics->width) * 2 / 3
+                 ? metrics->width + (metrics->canvasWidth - metrics->width) / 2
                  : metrics->canvasWidth - pageMargin_DocumentView_(d, metrics->canvasWidth));
     metrics->pageHeight      = height_Rect(viewport);
     metrics->lastPageInset   = footer ? height_Widget(footer) : 0;
@@ -185,13 +185,18 @@ int columnLeft_DocumentView(const iDocumentView *d, size_t column) {
 }
 
 int columnShift_DocumentView(const iDocumentView *d, size_t column) {
-    /* On facing pages of two columns, the columns next to the crease are moved away from it,
-       a third of the way toward the adjacent column. */
-    if (numPages_DocumentView(d) != 2 || columnsPerPage_GmDocument(d->doc) != 2) {
+    /* The two columns of a page are closer to each other than to the edges of the page. */
+    if (columnsPerPage_GmDocument(d->doc) != 2) {
         return 0;
     }
-    const int shift = (columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x) / 2;
-    return column % 4 == 1 ? -shift : column % 4 == 2 ? shift : 0;
+    const int gap = columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x;
+    if (numPages_DocumentView(d) == 2) {
+        /* On facing pages, the columns next to the crease are moved away from it, halfway
+           toward the adjacent column. */
+        return column % 4 == 1 ? -gap / 2 : column % 4 == 2 ? gap / 2 : 0;
+    }
+    /* On a single page, both move toward the center, leaving the same gap between them. */
+    return column % 2 == 0 ? gap / 4 : -gap / 4;
 }
 
 iInt2 columnOrigin_DocumentView(const iDocumentView *d, size_t column) {
