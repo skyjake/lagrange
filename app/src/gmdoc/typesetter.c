@@ -516,6 +516,7 @@ static size_t keptWithHeadingEnd_GmDocument_(const iArray *src, size_t start) {
 enum iPageAlign {
     top_PageAlign,
     center_PageAlign,
+    centerContent_PageAlign, /* the margin above the first run is not kept */
 };
 
 static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
@@ -525,15 +526,21 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
         start >= size_Array(&d->layout)) {
         return;
     }
+    int top    = content.end;
     int bottom = content.start;
     for (size_t i = start; i < size_Array(&d->layout); i++) {
-        bottom = iMax(bottom, bottom_Rect(((const iGmRun *) constAt_Array(&d->layout, i))->visBounds));
+        const iRect vis = ((const iGmRun *) constAt_Array(&d->layout, i))->visBounds;
+        top    = iMin(top, top_Rect(vis));
+        bottom = iMax(bottom, bottom_Rect(vis));
     }
-    const int space = content.end - bottom;
+    if (align != centerContent_PageAlign) {
+        top = content.start;
+    }
+    const int space = size_Range(&content) - (bottom - top);
     if (space <= 0) {
         return;
     }
-    const int offset = space / 2;
+    const int offset = content.start - top + space / 2;
     for (size_t i = start; i < size_Array(&d->layout); i++) {
         iGmRun *run = at_Array(&d->layout, i);
         run->visBounds.pos.y += offset;
@@ -636,7 +643,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
         content.end -= d->metrics.lastPageInset;
     }
     alignPage_GmDocument_(d, colStart, content,
-                          column == 0 ? center_PageAlign : top_PageAlign, colPreId, lastPreId);
+                          column == 0 ? centerContent_PageAlign : top_PageAlign, colPreId, lastPreId);
     if (needsInsetPage) {
         breakColumn_GmDocument_(d, &column, iFalse);
     }
@@ -969,8 +976,9 @@ static void addTopMargin_Typesetter_(iTypesetter *d) {
         /* No margin between consecutive quote lines. */
         required = 0;
     }
-    if (isEmpty_Array(&d->doc->layout)) {
-        required = 0; /* top of document */
+    if (isEmpty_Array(&d->doc->layout) &&
+        !(d->isPaged && d->type == heading1_GmLineType && d->doc->metrics.firstPageInset == 0)) {
+        required = 0; /* top of document; without a banner, pages begin a chapter lower down */
     }
     required *= d->prefs->lineSpacing.value;
     int delta = d->pos.y - lastVisibleRunBottom_GmDocument_(d->doc);
