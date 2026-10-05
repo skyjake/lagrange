@@ -394,7 +394,9 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     const size_t numPages = numPages_GmDocument(d);
     const int    pageSpan = columnsPerPage_GmDocument(d) * d->metrics.pageHeight;
     /* Headers show the last level 1 heading on or before the page, except on the first page
-       and on a page that begins with one. */
+       and on a page that begins with one. The first page of a book's chapter has it unless the
+       heading is on the page. */
+    const iBool isBook = !isEmpty_String(&d->bookTitle);
     iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
     const iRangecc bookTitle =
         auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
@@ -404,6 +406,7 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
         const int pageEnd        = (int) (page + 1) * pageSpan;
         iBool     isFirstRun     = iTrue;
         iBool     isChapterStart = iFalse;
+        iBool     hasHeading     = iFalse;
         for (; runPos < size_Array(&d->layout); runPos++) {
             const iGmRun *run = constAt_Array(&d->layout, runPos);
             if (top_Rect(run->visBounds) >= pageEnd) {
@@ -419,16 +422,20 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
                 isFirstRun     = iFalse;
             }
             if (isHeading) {
+                hasHeading = iTrue;
                 iString *text = collectNewRange_String(headingText_GmDocument_(d, run));
                 title = auxText_GmDocument_(d, collect_String(upper_String(text)));
             }
         }
         iGmPageBands bands = { iNullRange, iNullRange, iNullRange };
-        if (page > 0 && !isChapterStart && !isEmpty_Range(&title)) {
+        const iBool isCoverStart = d->flags.isBookCover && page == 0;
+        const iBool hasHeader    = page > 0 ? !isChapterStart
+                                            : isBook && !isCoverStart && !hasHeading;
+        if (hasHeader && !isEmpty_Range(&title)) {
             bands.header = fitPageBandText_GmDocument_(d, title);
         }
         /* The book's title is shown also where the chapter title is. */
-        if (!isEmpty_Range(&bookTitle)) {
+        if (!isEmpty_Range(&bookTitle) && !isCoverStart) {
             bands.bookHeader = fitPageBandText_GmDocument_(d, bookTitle);
         }
         bands.footer = fitPageBandText_GmDocument_(

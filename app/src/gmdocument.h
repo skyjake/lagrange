@@ -193,6 +193,7 @@ enum iGmDocumentMode {
 };
 
 iDeclareType(GmDocumentMetrics)
+iDeclareType(GmBookPosition)
 
 struct Impl_GmDocumentMetrics {
     int width;           /* layout width */
@@ -209,6 +210,14 @@ struct Impl_GmDocumentMetrics {
 };
 
 iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
+
+struct Impl_GmBookPosition {
+    const iString *title;        /* of the book */
+    const iString *chapterTitle; /* level 1 heading in effect where the document begins */
+    int            chapter;      /* zero if not a chapter */
+    int            numChapters;
+    iBool          isCover;
+};
 
 void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *paletteSeed,
@@ -242,8 +251,7 @@ iRangei columnContentRange_GmDocument(const iGmDocument *, size_t column); /* be
 int     pageBandFont_GmDocument (const iGmDocument *);
 iRangecc pageHeader_GmDocument  (const iGmDocument *, size_t page, iBool isLeftPage);
 iRangecc pageFooter_GmDocument  (const iGmDocument *, size_t page);
-iBool   setBook_GmDocument      (iGmDocument *, const iString *bookTitle, const iString *chapterTitle,
-                                 int chapter, int numChapters); /* returns True if changed */
+iBool   setBook_GmDocument      (iGmDocument *, const iGmBookPosition *); /* returns True if changed */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source,

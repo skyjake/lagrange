@@ -302,20 +302,19 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             setSource_DocumentWidget(d->owner, collect_String(coverPageSource_Gempub(d->sourceGempub)));
             setCStr_String(&d->sourceMime, mimeType_Gempub);
         }
-        const iString *bookTitle    = collectNew_String();
-        const iString *chapterTitle = collectNew_String();
-        int            chapter = 0, numChapters = 0;
+        iGmBookPosition book = { .title = collectNew_String(), .chapterTitle = collectNew_String() };
         if (d->sourceGempub) {
-            bookTitle = property_Gempub(d->sourceGempub, title_GempubProperty);
+            book.title   = property_Gempub(d->sourceGempub, title_GempubProperty);
+            book.isCover = equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub));
             const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (navIndex != iInvalidPos) {
-                chapter      = (int) navIndex + 1;
-                numChapters  = (int) navSize_Gempub(d->sourceGempub);
-                chapterTitle = chapterTitle_Gempub(d->sourceGempub, navIndex);
+                book.chapter      = (int) navIndex + 1;
+                book.numChapters  = (int) navSize_Gempub(d->sourceGempub);
+                book.chapterTitle = chapterTitle_Gempub(d->sourceGempub, navIndex);
             }
         }
         /* Book pages show the title in the page header and the chapter in the footer. */
-        if (setBook_GmDocument(doc_DocumentFetch_(d), bookTitle, chapterTitle, chapter, numChapters) &&
+        if (setBook_GmDocument(doc_DocumentFetch_(d), &book) &&
             isPaged_DocumentView(view_DocumentFetch_(d))) {
             redoLayout_GmDocument(doc_DocumentFetch_(d));
             documentRunsInvalidated_DocumentWidget(d->owner);

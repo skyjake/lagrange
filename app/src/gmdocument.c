@@ -624,16 +624,17 @@ size_t numPages_GmDocument(const iGmDocument *d) {
     return iMax(1, numColumns_GmDocument(d) / columnsPerPage_GmDocument(d));
 }
 
-iBool setBook_GmDocument(iGmDocument *d, const iString *bookTitle, const iString *chapterTitle,
-                         int chapter, int numChapters) {
-    if (equal_String(&d->bookTitle, bookTitle) && equal_String(&d->chapterTitle, chapterTitle) &&
-        d->chapter == chapter && d->numChapters == numChapters) {
+iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
+    if (equal_String(&d->bookTitle, pos->title) &&
+        equal_String(&d->chapterTitle, pos->chapterTitle) && d->chapter == pos->chapter &&
+        d->numChapters == pos->numChapters && d->flags.isBookCover == pos->isCover) {
         return iFalse;
     }
-    set_String(&d->bookTitle, bookTitle);
-    set_String(&d->chapterTitle, chapterTitle);
-    d->chapter     = chapter;
-    d->numChapters = numChapters;
+    set_String(&d->bookTitle, pos->title);
+    set_String(&d->chapterTitle, pos->chapterTitle);
+    d->chapter            = pos->chapter;
+    d->numChapters        = pos->numChapters;
+    d->flags.isBookCover  = pos->isCover;
     return iTrue;
 }
 

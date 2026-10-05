@@ -100,6 +100,7 @@ struct Impl_GmDocument {
         iBool isGopherMenu : 1;
         iBool isConvertedMarkdown : 1;
         iBool isCoverPage : 1;
+        iBool isBookCover : 1;
         iBool isUiTheme : 1;
         iBool isDocPrefsPinned : 1;
     } flags;
