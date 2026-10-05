@@ -206,16 +206,23 @@ int columnLeft_DocumentView(const iDocumentView *d, size_t column) {
 }
 
 int columnShift_DocumentView(const iDocumentView *d, size_t column) {
-    /* The two columns of a page are closer to each other than to the edges of the page. */
-    if (columnsPerPage_GmDocument(d->doc) != 2) {
+    const int numPages    = numPages_DocumentView(d);
+    const int colsPerPage = columnsPerPage_GmDocument(d->doc);
+    if (colsPerPage == 1 && numPages == 1) {
         return 0;
     }
     const int gap = columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x;
-    if (numPages_DocumentView(d) == 2) {
+    if (numPages == 2) {
         /* On facing pages, the columns next to the crease are moved away from it, halfway
            toward the adjacent column. */
         const float amount = 0.66f;
-        return (column % 4 == 1 ? -1 : column % 4 == 2 ? 1 : 0) * gap * amount;
+        /* The two columns of a page are closer to each other than to the edges of the page. */
+        if (colsPerPage == 2) {
+            return (column % 4 == 1 ? -1 : column % 4 == 2 ? 1 : 0) * gap * amount;
+        }
+        else {
+            return (column % 2 == 0 ? -1 : 1) * gap * 0.1f; /* away from the crease */
+        }
     }
     /* On a single page, both move toward the center, leaving the same gap between them. */
     return column % 2 == 0 ? gap / 4 : -gap / 4;
