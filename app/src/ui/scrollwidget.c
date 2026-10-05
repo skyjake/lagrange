@@ -213,6 +213,11 @@ void setProgressMode_ScrollWidget(iScrollWidget *d, iBool progressMode) {
             setValue_Anim(&d->opacity, minOpacity_(), 0);
         }
         updateMetrics_ScrollWidget_(d);
+        if (!progressMode) {
+            /* Arranging does not reset the progress bar position. */
+            w->rect.pos = zero_I2();
+            arrange_Widget(w);
+        }
         refresh_Widget(w);
     }
 }
