@@ -1364,7 +1364,8 @@ static void centerLinkLines_Typesetter_(iTypesetter *d, iGmLinkId linkId) {
         }
         pos--;
     }
-    /* Decorations belong to the line that follows them. */
+    /* Decorations belong to the line that follows them. The link icon is centered along
+       with the text, measured from the visible glyph. */
     while (pos < size_Array(layout)) {
         size_t  end  = pos;
         int     top  = INT_MIN;
@@ -1374,7 +1375,12 @@ static void centerLinkLines_Typesetter_(iTypesetter *d, iGmLinkId linkId) {
             if (top != INT_MIN && top_Rect(run->visBounds) != top) {
                 break;
             }
-            if (~run->flags & decoration_GmRunFlag) {
+            if (run->flags & decoration_GmRunFlag) {
+                span.start = iMin(span.start,
+                                  left_Rect(run->visBounds) +
+                                      left_Rect(visualBounds_Text(run->font, run->text)));
+            }
+            else {
                 top        = top_Rect(run->visBounds);
                 span.start = iMin(span.start, left_Rect(run->visBounds));
                 span.end   = iMax(span.end, right_Rect(run->visBounds));
