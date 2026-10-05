@@ -109,6 +109,7 @@ void init_DocumentView(iDocumentView *d) {
     d->invalidRuns   = new_PtrSet();
     d->drawBufs      = new_DrawBufs();
     d->pageMargin    = 5;
+    d->sideMargin    = 0;
     d->hoverPre      = NULL;
     d->hoverAltPre   = NULL;
     d->hoverLink     = NULL;
@@ -353,7 +354,7 @@ int maxDocumentWidth_DocumentView(const iDocumentView *d) {
         iClamp((float) bounds.size.x / gap_UI / 11 - 12,
                isDesktop_Platform() && !isTerminal_Platform() ? 2.0f /* no contraction */ : -1.0f,
                10.0f); /* adapt to width */
-    return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2);
+    return iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + d->sideMargin + adjust) * 2);
 }
 
 static const iDocPrefs *docPrefs_DocumentView_(const iDocumentView *d) {

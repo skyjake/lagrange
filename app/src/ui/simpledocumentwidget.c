@@ -119,6 +119,7 @@ void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     d->view->selectMark = &d->selectMark;
     d->view->foundMark  = &d->foundMark;
     d->view->pageMargin = 1;
+    d->view->sideMargin = 2;
     setOwner_DocumentView(d->view, d, &viewHost_SimpleDocumentWidget_);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));

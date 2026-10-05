@@ -98,7 +98,7 @@ iBeginDefineSubclass(SidebarItem, ListItem).draw = (iAny *) draw_SidebarItem_,
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    book_Icon " ${sidebar.bookmarks}",
+    bookmark_Icon " ${sidebar.bookmarks}",
     star_Icon " ${sidebar.feeds}",
     whiteStar_Icon " ${sidebar.subscriptions}",
     person_Icon " ${sidebar.identities}",
@@ -106,11 +106,11 @@ static const char *normalModeLabels_[max_SidebarMode] = {
     hierarchy_Icon " ${sidebar.structure}",
     openTabBg_Icon " ${sidebar.documents}",
     clock_Icon " ${sidebar.history}",
-    openBook_Icon " ${sidebar.gempub}",
+    book_Icon " ${sidebar.gempub}",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    book_Icon,
+    bookmark_Icon,
     star_Icon,
     whiteStar_Icon,
     person_Icon,
@@ -118,7 +118,7 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     hierarchy_Icon,
     openTabBg_Icon,
     clock_Icon,
-    openBook_Icon,
+    book_Icon,
 };
 
 struct Impl_SidebarWidget {
@@ -1597,7 +1597,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     /* The current book: cover and index pages. */ {
         d->gempubArea = makeVDiv_Widget();
         iWidget *tabs = new_Widget();
-        setPadding1_Widget(tabs, gap_UI);
+        setPadding_Widget(tabs, 3 * gap_UI, 2 * gap_UI, 3 * gap_UI, gap_UI);
         static const char *tabLabels[2] = { "${sidebar.gempub.cover}", "${sidebar.gempub.index}" };
         for (int i = 0; i < 2; i++) {
             d->gempubTabs[i] = addChildFlags_Widget(

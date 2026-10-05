@@ -85,6 +85,7 @@ struct Impl_DocumentView {
     int             flags;
     iGmDocument *   doc;
     int             pageMargin;
+    int             sideMargin;     /* additional horizontal margin, in gap_UI units */
     iSmoothScroll   scrollY;
     iBool           userHasScrolled;
     iAnim           sideOpacity;
