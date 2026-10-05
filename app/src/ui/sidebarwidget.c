@@ -135,6 +135,7 @@ struct Impl_SidebarWidget {
     iSimpleDocumentWidget *gempubDoc;
     int               gempubPage;   /* 0: cover, 1: index */
     iString           gempubUrl;    /* page shown in `gempubDoc` */
+    iString           gempubCentered; /* document whose link was centered in the index */
     iWidget          *actions;      /* below the list, area for buttons */
     int               midHeight;    /* on portrait phone, the height for the middle state */
     iBool             isEditing;    /* mobile edit mode */
@@ -592,17 +593,26 @@ static iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
     }
     const iString *url = d->gempubPage == 0 ? coverPageUrl_Gempub(gempub)
                                             : indexPageUrl_Gempub(gempub);
-    if (equal_String(&d->gempubUrl, url)) {
-        return iTrue;
+    const iBool wasShown = equal_String(&d->gempubUrl, url) && isVisible_Widget(d->gempubDoc);
+    if (!equal_String(&d->gempubUrl, url)) {
+        set_String(&d->gempubUrl, url);
+        clear_String(&d->gempubCentered);
+        iString *src = d->gempubPage == 0 ? coverPageSource_Gempub(gempub)
+                                          : indexPageSource_Gempub(gempub);
+        setSource_SimpleDocumentWidget(d->gempubDoc, url, src);
+        delete_String(src);
+        if (d->gempubPage == 0 &&
+            preloadCoverImage_Gempub(gempub, document_SimpleDocumentWidget(d->gempubDoc))) {
+            redoLayout_SimpleDocumentWidget(d->gempubDoc);
+        }
     }
-    set_String(&d->gempubUrl, url);
-    iString *src = d->gempubPage == 0 ? coverPageSource_Gempub(gempub)
-                                      : indexPageSource_Gempub(gempub);
-    setSource_SimpleDocumentWidget(d->gempubDoc, url, src);
-    delete_String(src);
-    if (d->gempubPage == 0 &&
-        preloadCoverImage_Gempub(gempub, document_SimpleDocumentWidget(d->gempubDoc))) {
-        redoLayout_SimpleDocumentWidget(d->gempubDoc);
+    if (d->gempubPage == 1) {
+        /* The index follows the current page. */
+        const iString *docUrl = url_DocumentWidget(document_Root(as_Widget(d)->root));
+        if (!equal_String(&d->gempubCentered, docUrl)) {
+            set_String(&d->gempubCentered, docUrl);
+            scrollToLink_SimpleDocumentWidget(d->gempubDoc, docUrl, wasShown);
+        }
     }
     return iTrue;
 }
@@ -1616,6 +1626,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         addChildFlags_Widget(listArea, iClob(d->gempubArea), hidden_WidgetFlag);
         d->gempubPage = 1;
         init_String(&d->gempubUrl);
+        init_String(&d->gempubCentered);
     }
     addChildFlags_Widget(listAndActions, iClob(listArea), expand_WidgetFlag);
     setId_Widget(addChildPosFlags_Widget(listAndActions,
@@ -1661,6 +1672,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
+    deinit_String(&d->gempubCentered);
     deinit_String(&d->gempubUrl);
     iRelease(d->structureUnfolds);
     iRelease(d->structureUrls);

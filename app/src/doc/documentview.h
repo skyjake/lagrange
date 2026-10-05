@@ -149,6 +149,7 @@ void    clampScroll_DocumentView        (iDocumentView *);
 void    immediateScroll_DocumentView    (iDocumentView *, int offset);
 void    smoothScroll_DocumentView       (iDocumentView *, int offset, int duration);
 void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool centered);
+void    smoothScrollTo_DocumentView     (iDocumentView *, int documentY, iBool centered, int duration);
 void    scrollToHeading_DocumentView    (iDocumentView *, const char *heading);
 void    resetScroll_DocumentView        (iDocumentView *);
 void    resetScrollPosition_DocumentView(iDocumentView *, float normScrollY);

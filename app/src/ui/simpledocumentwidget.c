@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "doc/banner.h"
 #include "doc/documentview.h"
+#include "gmutil.h"
 #include "keys.h"
 #include "render/text.h"
 #include "root.h"
@@ -172,6 +173,26 @@ void setSource_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iString *url
 
 void clear_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     setSource_SimpleDocumentWidget(d, collectNew_String(), collectNew_String());
+}
+
+void scrollToLink_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iString *url,
+                                       iBool isSmooth) {
+    const iGmDocument *doc      = d->view->doc;
+    const iString     *canonUrl = canonicalUrl_String(url);
+    const iGmRunRange  runs     = runRange_GmDocument(doc);
+    for (const iGmRun *run = runs.start; run != runs.end; run++) {
+        if (run->linkId && ~run->flags & decoration_GmRunFlag &&
+            equal_String(linkUrl_GmDocument(doc, run->linkId), canonUrl)) {
+            if (isSmooth) {
+                smoothScrollTo_DocumentView(d->view, mid_Rect(run->visBounds).y, iTrue, 400);
+            }
+            else {
+                scrollTo_DocumentView(d->view, mid_Rect(run->visBounds).y, iTrue);
+                refresh_Widget(d);
+            }
+            return;
+        }
+    }
 }
 
 void redoLayout_SimpleDocumentWidget(iSimpleDocumentWidget *d) {

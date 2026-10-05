@@ -835,22 +835,36 @@ void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
     d->userHasScrolled = iTrue;
 }
 
-void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
-    if (isPaged_DocumentView(d)) {
-        showDocumentY_DocumentView(d, documentY);
-        return;
-    }
+static int scrollPos_DocumentView_(const iDocumentView *d, int documentY, iBool centered) {
     if (!isEmpty_Banner(d->banner)) {
         documentY += height_Banner(d->banner) + documentTopPad_DocumentView(d);
     }
     else {
         documentY += documentTopPad_DocumentView(d) + d->pageMargin * gap_UI;
     }
-    init_Anim(&d->scrollY.pos,
-              documentY - (centered ? documentBounds_DocumentView(d).size.y / 2
-                                    : lineHeight_Text(paragraph_FontId)));
+    return documentY - (centered ? documentBounds_DocumentView(d).size.y / 2
+                                 : lineHeight_Text(paragraph_FontId));
+}
+
+void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
+    if (isPaged_DocumentView(d)) {
+        showDocumentY_DocumentView(d, documentY);
+        return;
+    }
+    init_Anim(&d->scrollY.pos, scrollPos_DocumentView_(d, documentY, centered));
     clampScroll_DocumentView(d);
     updateVisible_DocumentView(d);
+}
+
+void smoothScrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered, int duration) {
+    if (isPaged_DocumentView(d)) {
+        showDocumentY_DocumentView(d, documentY);
+        return;
+    }
+    smoothScroll_DocumentView(d,
+                              scrollPos_DocumentView_(d, documentY, centered) -
+                                  iRound(targetValue_Anim(&d->scrollY.pos)),
+                              duration);
 }
 
 void scrollToHeading_DocumentView(iDocumentView *d, const char *heading) {

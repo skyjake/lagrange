@@ -37,3 +37,5 @@ void            setSource_SimpleDocumentWidget  (iSimpleDocumentWidget *, const 
 void            clear_SimpleDocumentWidget      (iSimpleDocumentWidget *);
 void            redoLayout_SimpleDocumentWidget (iSimpleDocumentWidget *);
 iGmDocument *   document_SimpleDocumentWidget   (iSimpleDocumentWidget *);
+void            scrollToLink_SimpleDocumentWidget(iSimpleDocumentWidget *, const iString *url,
+                                                  iBool isSmooth); /* centered */
