@@ -295,6 +295,8 @@ set (SOURCES
     src/ui/command.h
     src/ui/dialog.c
     src/ui/dialog.h
+    src/ui/filedialog.c
+    src/ui/filedialog.h
     src/ui/gamepad.c
     src/ui/gamepad.h
     src/ui/importdialogs.c

@@ -92,13 +92,21 @@ static const iMenuItem fileMenuItems_[] = {
     { "${menu.newwindow}", SDLK_N, KMOD_PRIMARY, "window.new" },
 #endif
     { "${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
-    { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
     { "${menu.reopentab}", SDLK_T, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { "---" },
+#if defined (LAGRANGE_FILE_DIALOGS)
+    { "${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
+    { "${menu.openfolder}", 0, 0, "file.open folder:1" },
+#endif
+    { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
     { "${menu.closetab}", 0, 0, "tabs.close" },
     { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
     { "---" },
     { saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
+#if defined (LAGRANGE_FILE_DIALOGS)
+    { "${menu.save.as}", 0, 0, "document.save saveas:1" },
+#endif
     { "---" },
     { "${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
 #if defined (LAGRANGE_PC_MENUS)

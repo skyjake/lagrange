@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/certimportwidget.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
+#include "ui/filedialog.h"
 #include "ui/gamepad.h"
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
@@ -864,16 +865,23 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "file.open")) {
         const char *path = suffixPtr_Command(cmd, "path");
         if (path) {
-            postCommandf_App("open temp:%d url:%s",
+            postCommandf_App("open temp:%d newtab:%d url:%s",
                              argLabel_Command(cmd, "temp"),
+                             argLabel_Command(cmd, "newtab"),
                              makeFileUrl_CStr(path));
             return iTrue;
         }
 #if defined (iPlatformAppleMobile)
         pickFile_iOS("file.open");
-#endif
-#if defined (iPlatformAndroidMobile)
+#elif defined (iPlatformAndroidMobile)
         pickFile_Android("file.open");
+#else
+        const iBool isFolder = argLabel_Command(cmd, "folder") != 0;
+        open_FileDialog("file.open newtab:1",
+                        isFolder ? "${menu.openfolder}" : "${menu.openfile}",
+                        NULL,
+                        NULL,
+                        multiple_FileDialogFlag | (isFolder ? folders_FileDialogFlag : 0));
 #endif
         return iTrue;
     }
@@ -1264,6 +1272,10 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "import")) {
+        if (!hasLabel_Command(cmd, "path")) {
+            open_FileDialog("import", "${heading.import.userdata}", "${filter.zip}", "zip", 0);
+            return iTrue;
+        }
         const iString *path = collect_String(suffix_Command(cmd, "path"));
         iArchive *zip = iClob(new_Archive());
         if (openFile_Archive(zip, path)) {

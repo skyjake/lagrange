@@ -24,7 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "command.h"
+#include "defs.h"
 #include <lagrange/gmcerts.h>
+#include "filedialog.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "render/text.h"
@@ -123,6 +125,9 @@ void init_CertImportWidget(iCertImportWidget *d) {
         { "---" },
 #elif defined (iPlatformMobile)
         { "${dlg.certimport.paste}", 0, 0, "certimport.paste" },
+        { "---" },
+#elif defined (LAGRANGE_FILE_DIALOGS)
+        { "${dlg.upload.pickfile}", 0, 0, "certimport.pickfile" },
         { "---" },
 #endif
         { "${cancel}" },
@@ -292,20 +297,24 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         }
         return iTrue;
     }
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
     if (isCommand_UserEvent(ev, "certimport.pickfile")) {
         const char *cmd = command_UserEvent(ev);
         if (hasLabel_Command(cmd, "path")) {
             const iString *path = collect_String(suffix_Command(cmd, "path"));
             tryImportFromFile_CertImportWidget_(d, path);
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
             remove(cstr_String(path)); /* it is a temporary copy */
+#endif
         }
         else {
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
             pickFile_Mobile("certimport.pickfile");
+#else
+            open_FileDialog("certimport.pickfile", "${heading.certimport}", NULL, NULL, 0);
+#endif
         }
         return iTrue;
     }
-#endif
     if (ev->type == SDL_EVENT_DROP_FILE) {
         tryImportFromFile_CertImportWidget_(d, collectNewCStr_String(ev->drop.data));
         return iTrue;

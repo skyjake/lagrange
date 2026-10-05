@@ -52,6 +52,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 
 #if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
 #   define LAGRANGE_MULTIPLE_WINDOWS
+#   define LAGRANGE_FILE_DIALOGS
 #endif
 
 /* UI labels that depend on the platform */

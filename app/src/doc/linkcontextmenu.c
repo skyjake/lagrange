@@ -182,6 +182,14 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
                               0,
                               0,
                               format_CStr("document.media.save link:%u", linkId) });
+#if defined (LAGRANGE_FILE_DIALOGS)
+            pushBack_Array(
+                items,
+                &(iMenuItem){ "${menu.save.as}",
+                              0,
+                              0,
+                              format_CStr("document.media.save link:%u saveas:1", linkId) });
+#endif
         }
     }
     if (equalCase_Rangecc(scheme, "file")) {

@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "doc/swipe.h"
 #include "doc/persistentstate.h"
 #include "gempub.h"
+#include "filedialog.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
 #include <lagrange/gmrequest.h>
@@ -1353,6 +1354,10 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
     return savePath;
 }
 
+static const iString *saveAsPath_(const iString *url, const iString *mime) {
+    return collect_String(concat_Path(downloadDir_App(), fileNameForUrl_App(url, mime)));
+}
+
 static const int smoothDuration_DocumentWidget_(enum iScrollType type) {
     return 600 /* milliseconds */ * scrollSpeedFactor_Prefs(prefs_App(), type);
 }
@@ -2121,7 +2126,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.media.save")) {
         const iGmLinkId      linkId = argLabel_Command(cmd, "link");
         const iMediaRequest *media  = findRequest_InlineMedia(d->media, linkId);
-        if (media) {
+        if (media && hasLabel_Command(cmd, "path")) {
+            saveToFile_(collect_String(suffix_Command(cmd, "path")),
+                        body_GmRequest(media->req),
+                        meta_GmRequest(media->req),
+                        iFalse);
+        }
+        else if (media && argLabel_Command(cmd, "saveas")) {
+            save_FileDialog(format_CStr("document.media.save link:%u ptr:%p", linkId, d),
+                            "${menu.save.as}",
+                            saveAsPath_(url_GmRequest(media->req), meta_GmRequest(media->req)));
+        }
+        else if (media) {
             const iString *savePath;
             if (!isEmpty_String(savePath = saveToDownloads_(url_GmRequest(media->req),
                                                             meta_GmRequest(media->req),
@@ -2133,13 +2149,25 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
     }
-    else if (equal_Command(cmd, "document.save") && document_App() == d) {
+    else if (equal_Command(cmd, "document.save") &&
+             (hasLabel_Command(cmd, "path") ? pointer_Command(cmd) == d : document_App() == d)) {
         if (d->fetch->request) {
             makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.incomplete}",
                                      "${dlg.save.incomplete}");
         }
         else if (!isEmpty_Block(&d->fetch->sourceContent)) {
-            if (argLabel_Command(cmd, "extview")) {
+            if (hasLabel_Command(cmd, "path")) {
+                saveToFile_(collect_String(suffix_Command(cmd, "path")),
+                            &d->fetch->sourceContent,
+                            &d->fetch->sourceMime,
+                            iFalse);
+            }
+            else if (argLabel_Command(cmd, "saveas")) {
+                save_FileDialog(format_CStr("document.save ptr:%p", d),
+                                "${menu.save.as}",
+                                saveAsPath_(d->mod.url, &d->fetch->sourceMime));
+            }
+            else if (argLabel_Command(cmd, "extview")) {
                 if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file") &&
                     fileExists_FileInfo(collect_String(localFilePathFromUrl_String(d->mod.url)))) {
                     /* Already a file so just open it directly. */
@@ -3268,6 +3296,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                                     { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" } },
                                 2);
+#if defined (LAGRANGE_FILE_DIALOGS)
+                            pushBack_Array(
+                                &items, &(iMenuItem){ "${menu.save.as}", 0, 0, "document.save saveas:1" });
+#endif
                         }
                     }
                     else {

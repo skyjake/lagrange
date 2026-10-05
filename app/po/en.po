@@ -290,6 +290,10 @@ msgstr "Save to Downloads"
 msgid "menu.save.downloads.open"
 msgstr "Save to Downloads and Open File"
 
+# Opens a dialog for choosing where to save the file.
+msgid "menu.save.as"
+msgstr "Save As…"
+
 msgid "menu.sidebar"
 msgstr "Toggle Sidebar"
 
@@ -773,6 +777,9 @@ msgstr "Open in New Tabs"
 
 msgid "menu.openfile"
 msgstr "Open File…"
+
+msgid "menu.openfolder"
+msgstr "Open Folder…"
 
 msgid "menu.edit"
 msgstr "Edit…"
@@ -1593,9 +1600,12 @@ msgstr "Enter text to upload"
 msgid "dlg.upload.file"
 msgstr "No file selected"
 
-# used on mobile
 msgid "dlg.upload.pickfile"
 msgstr "Select File…"
+
+# File type filter in the Import User Data file dialog.
+msgid "filter.zip"
+msgstr "ZIP Archive"
 
 msgid "heading.translate"
 msgstr "Translate Page"

@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "root.h"
 #include "command.h"
+#include "defs.h"
+#include "filedialog.h"
 #include <lagrange/gmrequest.h>
 #include <lagrange/sitespec.h>
 #include "misfin.h"
@@ -687,6 +689,12 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                 setHint_InputWidget(d->filePathInput, "${upload.file.drophere}");
             }
             setValidator_InputWidget(d->filePathInput, filePathValidator_UploadWidget_, d);
+#if defined (LAGRANGE_FILE_DIALOGS)
+            iLabelWidget *pickButton = new_LabelWidget("${dlg.upload.pickfile}", "upload.pickfile");
+            iWidget *pickHeading = addChild_Widget(headings, iClob(makeHeading_Widget("")));
+            pickHeading->sizeRef = as_Widget(pickButton);
+            addChild_Widget(values, iClob(pickButton));
+#endif
             addChildFlags_Widget(headings,
                                  iClob(new_LabelWidget("${upload.file.size}", NULL)),
                                  frameless_WidgetFlag);
@@ -1260,6 +1268,18 @@ static void filePathValidator_UploadWidget_(iInputWidget *input, void *context) 
     iRelease(info);
 }
 
+static void setFilePath_UploadWidget_(iUploadWidget *d, const char *path) {
+    releaseFile_UploadWidget_(d);
+    setCStr_String(&d->filePath, path);
+    if (d->filePathInput) {
+        setTextCStr_InputWidget(d->filePathInput, path);
+        filePathValidator_UploadWidget_(d->filePathInput, d);
+    }
+    else {
+        updateFileInfo_UploadWidget_(d);
+    }
+}
+
 static iBool createRequest_UploadWidget_(iUploadWidget *d, iBool isText) {
     iAssert(d->request == NULL);
     d->request = new_GmRequest(certs_App());
@@ -1584,16 +1604,17 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
     else if (isCommand_Widget(w, ev, "upload.pickfile")) {
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
         if (hasLabel_Command(cmd, "path")) {
-            releaseFile_UploadWidget_(d);
-            set_String(&d->filePath, collect_String(suffix_Command(cmd, "path")));
-            updateFileInfo_UploadWidget_(d);
+            setFilePath_UploadWidget_(d, suffixPtr_Command(cmd, "path"));
         }
         else {
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
             pickFile_Mobile(format_CStr("upload.pickfile ptr:%p", d));
-        }
+#else
+            open_FileDialog(format_CStr("upload.pickfile ptr:%p", d),
+                            "${heading.upload.file}", NULL, NULL, 0);
 #endif
+        }
         return iTrue;
     }
     if (ev->type == SDL_EVENT_DROP_FILE) {
@@ -1607,15 +1628,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         else {
             postCommand_Widget(w, "upload.settype arg:1");
         }
-        releaseFile_UploadWidget_(d);
-        setCStr_String(&d->filePath, ev->drop.data);
-        if (d->filePathInput) {
-            setTextCStr_InputWidget(d->filePathInput, ev->drop.data);
-            filePathValidator_UploadWidget_(d->filePathInput, d);
-        }
-        else {
-            updateFileInfo_UploadWidget_(d);
-        }
+        setFilePath_UploadWidget_(d, ev->drop.data);
         return iTrue;
     }
     return processEvent_Widget(w, ev);

@@ -1142,3 +1142,18 @@ void init_Updater(void) {}
 
 void deinit_Updater(void) {}
 void checkNow_Updater(void) {}
+
+void restoreKeyAfterSheet_MacOS(iWindow *window) {
+    NSWindow *parent = nsWindow_(window->win);
+    /* After a sheet is dismissed with a click, no window is left as key. */
+    __block id observer = [[NSNotificationCenter defaultCenter]
+        addObserverForName:NSWindowDidEndSheetNotification
+                    object:parent
+                     queue:nil
+                usingBlock:^(NSNotification *note) {
+                    [[NSNotificationCenter defaultCenter] removeObserver:observer];
+                    if (![NSApp keyWindow]) {
+                        [parent makeKeyWindow];
+                    }
+                }];
+}

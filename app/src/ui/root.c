@@ -64,8 +64,15 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { add_Icon " ${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
     { close_Icon " ${menu.closetab}", SDLK_W, KMOD_PRIMARY, "tabs.close" },
     { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
+#if defined (LAGRANGE_FILE_DIALOGS)
+    { folder_Icon " ${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
+    { "${menu.openfolder}", 0, 0, "file.open folder:1" },
+#endif
     { "---" },
     { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
+#if defined (LAGRANGE_FILE_DIALOGS)
+    { "${menu.save.as}", 0, 0, "document.save saveas:1" },
+#endif
     { "${menu.page.copysource}", SDLK_C, KMOD_PRIMARY, "copy" },
     { "---" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
@@ -90,6 +97,9 @@ static const iMenuItem desktopNavMenuItems_[] = {
 
 static const iMenuItem userDataMenuItems_[] = {
     { "${menu.export}", 0, 0, "export" },
+#if defined (LAGRANGE_FILE_DIALOGS)
+    { "${menu.import}", 0, 0, "import" },
+#endif
     { "---" },
     { "${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },

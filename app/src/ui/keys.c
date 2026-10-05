@@ -216,6 +216,9 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 35, { "${keys.reload}",               reload_KeyShortcut,             "document.reload"                   }, 0 },
     { 36, { "${LC:menu.openlocation}",      SDLK_L, KMOD_PRIMARY,           "navigate.focus"                    }, 0 },
     { 37, { "${keys.bang}",                 bang_KeyShortcut,               "navigate.focus text:!"             }, 0 },
+#if !defined (iPlatformTerminal)
+    { 38, { "${LC:menu.openfile}",          SDLK_O, KMOD_PRIMARY,           "file.open"                         }, 0 },
+#endif
     { 41, { "${keys.link.modkey}",          SDLK_LALT, 0,                   "document.linkkeys arg:0"           }, argRelease_BindFlag },
     { 42, { "${keys.link.homerow}",         'f', 0,                         "document.linkkeys arg:1"           }, 0 },
     { 45, { "${keys.link.homerow.newtab}",  'f', SDL_KMOD_SHIFT,                "document.linkkeys arg:1 newtab:1"  }, 0 },
