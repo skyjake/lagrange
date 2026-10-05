@@ -434,6 +434,52 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     }
 }
 
+static iBool isContinuationGroup_GmDocument_(const iArray *runs, size_t start, size_t end) {
+    /* A wrapped line that continues a paragraph. */
+    for (size_t i = start; i < end; i++) {
+        const iGmRun *run = constAt_Array(runs, i);
+        if (~run->flags & decoration_GmRunFlag) {
+            return ~run->flags & startOfLine_GmRunFlag;
+        }
+    }
+    return iFalse;
+}
+
+iDeclareType(ColumnGroup)
+
+struct Impl_ColumnGroup {
+    size_t   src;       /* index of the first run in the continuous layout */
+    size_t   dest;      /* index of the first run in the paginated layout */
+    uint16_t lastPreId; /* before the group was placed */
+};
+
+static size_t groupSrcEnd_(const iArray *groups, size_t index, size_t breakPos) {
+    return index + 1 < size_Array(groups)
+               ? ((const iColumnGroup *) constAt_Array(groups, index + 1))->src
+               : breakPos;
+}
+
+static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *groups, size_t breakPos) {
+    /* Index of the first group in the column that continues in the next column along with
+       the group at `breakPos`. Headings are not left at the end of a column, not even with
+       only the first line of the following paragraph. */
+    const size_t n = size_Array(groups);
+    size_t       moved = n;
+    if (n >= 2 && isContinuationGroup_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos)) &&
+        !isContinuationGroup_GmDocument_(
+            src, ((const iColumnGroup *) constAt_Array(groups, n - 1))->src, breakPos)) {
+        moved = n - 1;
+    }
+    size_t first = moved;
+    while (first > 1 &&
+           isHeadingGroup_GmDocument_(src,
+                                      ((const iColumnGroup *) constAt_Array(groups, first - 1))->src,
+                                      groupSrcEnd_(groups, first - 1, breakPos))) {
+        first--;
+    }
+    return first < moved ? first : n;
+}
+
 enum iPageAlign {
     top_PageAlign,
     center_PageAlign,
@@ -477,23 +523,29 @@ static void paginate_GmDocument_(iGmDocument *d) {
     int      offset     = content.start; /* the continuous layout begins at zero */
     int      lastBottom = content.start;
     size_t   firstGroup = 0;
-    size_t   prevGroup  = iInvalidPos; /* source index */
-    size_t   prevDest   = 0;           /* layout index of the previous group */
+    iArray   colGroups;                /* groups placed in the column */
     size_t   colStart   = 0;           /* layout index of the first run in the column */
     uint16_t lastPreId  = 0;
     uint16_t colPreId   = 1;           /* first preformatted block that may begin in the column */
     int      srcBottom  = 0;           /* bottom of the placed runs in the continuous layout */
     iBool    hasTitle   = iFalse;      /* the first level 1 heading is a title, not a chapter */
+    init_Array(&colGroups, sizeof(iColumnGroup));
     for (size_t i = 0; i < numSrc;) {
         size_t        end       = groupEnd_GmDocument_(src, i);
         const iRangei span      = groupSpan_GmDocument_(src, i, end);
         const iBool   isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || column > 0);
         if (i != firstGroup && (isChapter || span.end + offset > content.end)) {
-            /* Continue in the next column. A heading is kept with the group that follows it. */
-            if (!isChapter && prevGroup != iInvalidPos && prevGroup != firstGroup &&
-                isHeadingGroup_GmDocument_(src, prevGroup, i)) {
-                i = prevGroup;
-                resize_Array(&d->layout, prevDest);
+            /* Continue in the next column. Some of the placed groups may move along. */
+            const size_t moved = isChapter ? size_Array(&colGroups)
+                                           : firstMovedGroup_GmDocument_(src, &colGroups, i);
+            if (moved < size_Array(&colGroups)) {
+                const iColumnGroup *group = constAt_Array(&colGroups, moved);
+                i = group->src;
+                resize_Array(&d->layout, group->dest);
+                for (uint16_t preId = group->lastPreId + 1; preId <= lastPreId; preId++) {
+                    ((iGmPreMeta *) at_Array(&d->preMeta, preId - 1))->pixelRect.pos.y -= offset;
+                }
+                lastPreId = group->lastPreId;
             }
             /* Columns are centered, but a chapter's last column is aligned to the top. */
             alignPage_GmDocument_(d, colStart, content,
@@ -516,14 +568,14 @@ static void paginate_GmDocument_(iGmDocument *d) {
             }
             lastBottom = content.start;
             firstGroup = i;
-            prevGroup  = iInvalidPos;
+            clear_Array(&colGroups);
             continue;
         }
         if (isChapterGroup_GmDocument_(src, i, end)) {
             hasTitle = iTrue;
         }
-        prevGroup = i;
-        prevDest  = size_Array(&d->layout);
+        pushBack_Array(&colGroups,
+                       &(iColumnGroup){ .src = i, .dest = size_Array(&d->layout), .lastPreId = lastPreId });
         for (; i < end; i++) {
             iGmRun run = *(const iGmRun *) constAt_Array(src, i);
             run.visBounds.pos.y += offset;
@@ -558,6 +610,7 @@ static void paginate_GmDocument_(iGmDocument *d) {
     const size_t numColumns = (column + perPage) / perPage * perPage;
     d->size.y = (int) numColumns * d->metrics.pageHeight;
     setPageBands_GmDocument_(d);
+    deinit_Array(&colGroups);
 }
 
 /*----------------------------------------------------------------------------------------------*/
