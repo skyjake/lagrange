@@ -337,7 +337,10 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                                       : "sidebar");
                 postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
                 if (isCover) {
-                    postCommandf_Root(w->root, "open url:%s", cstr_String(indexPageUrl_Gempub(d->sourceGempub)));
+                    postCommandf_Root(w->root,
+                                      "open doc:%p url:%s",
+                                      d->owner,
+                                      cstr_String(indexPageUrl_Gempub(d->sourceGempub)));
                 }
             }
         }
