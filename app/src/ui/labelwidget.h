@@ -52,6 +52,7 @@ void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* re
 void    setTranslation_LabelWidget  (iLabelWidget *, iBool translationEnabled);
 void    setTruncateToFit_LabelWidget(iLabelWidget *, iBool truncateToFit);
 void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
+void    setCenterWrapped_LabelWidget(iLabelWidget *, iBool centerWrapped); /* each wrapped line is centered */
 
 iBool   checkIcon_LabelWidget       (iLabelWidget *);
 iBool   triggerKey_LabelWidget      (iLabelWidget *, int key, int kmods); /* true if the key matches */

@@ -63,8 +63,31 @@ struct Impl_LabelWidget {
         uint16_t untranslated        : 1;
         uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected */
         uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
+
+        uint16_t centerWrapped       : 1;
     } flags;
 };
+
+iDeclareType(CenteredLines)
+
+struct Impl_CenteredLines {
+    int   font;
+    int   color;
+    iRect rect;
+};
+
+static iBool drawCenteredLine_LabelWidget_(iWrapText *wt, iRangecc text, iTextAttrib attrib,
+                                           int origin, int advance) {
+    iUnused(attrib, origin);
+    iCenteredLines *lines = wt->context;
+    drawRange_Text(lines->font,
+                   init_I2(left_Rect(lines->rect) + (width_Rect(lines->rect) - advance) / 2,
+                           top_Rect(lines->rect)),
+                   lines->color,
+                   text);
+    lines->rect.pos.y += lineHeight_Text(lines->font);
+    return iTrue;
+}
 
 static iBool isHover_LabelWidget_(const iLabelWidget *d) {
     if (isMobile_Platform() && !isHovering_Touch()) {
@@ -567,7 +590,15 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             .maxWidth = width_Rect(cont),
             .mode = word_WrapTextMode,
         };
-        draw_WrapText(&wt, font, topLeft_Rect(cont), fg);
+        if (d->flags.centerWrapped) {
+            iCenteredLines lines = { font, fg, cont };
+            wt.wrapFunc = drawCenteredLine_LabelWidget_;
+            wt.context  = &lines;
+            measure_WrapText(&wt, font);
+        }
+        else {
+            draw_WrapText(&wt, font, topLeft_Rect(cont), fg);
+        }
     }
     else if (flags & alignLeft_WidgetFlag) {
         const iInt2 topLeft = add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad));
@@ -846,6 +877,10 @@ void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
     d->flags.wrap = wrap;
+}
+
+void setCenterWrapped_LabelWidget(iLabelWidget *d, iBool centerWrapped) {
+    d->flags.centerWrapped = centerWrapped;
 }
 
 void setTranslation_LabelWidget(iLabelWidget *d, iBool translation) {

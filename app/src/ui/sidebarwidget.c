@@ -1277,6 +1277,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             iLabelWidget *msg = new_LabelWidget("${sidebar.empty.gempub}", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
             setWrap_LabelWidget(msg, iTrue);
+            setCenterWrapped_LabelWidget(msg, iTrue);
             addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag | fixedHeight_WidgetFlag);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChild_Widget(d->blank, iClob(div));
