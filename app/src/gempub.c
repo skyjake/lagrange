@@ -46,16 +46,19 @@ iDeclareType(GempubNavLink)
 struct Impl_GempubNavLink {
     iString url;
     iString label;
+    iString heading; /* level 1 or 2 heading above the link on the index page */
 };
 
 static void init_GempubNavLink(iGempubNavLink *d) {
     init_String(&d->url);
     init_String(&d->label);
+    init_String(&d->heading);
 }
 
 static void deinit_GempubNavLink(iGempubNavLink *d) {
     deinit_String(&d->url);
     deinit_String(&d->label);
+    deinit_String(&d->heading);
 }
 
 iDefineTypeConstruction(GempubNavLink)
@@ -79,11 +82,31 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
     setUrl_GmRequest(index, indexPageUrl_Gempub(d));
     submit_GmRequest(index); /* this is just a local file read */
     iAssert(isFinished_GmRequest(index));
-    iRangecc src = iNullRange;
+    iRangecc src     = iNullRange;
+    iRangecc heading = iNullRange;
+    iBool    isPre   = iFalse;
     iRegExp *linkPattern = iClob(newGemtextLink_RegExp());
     while (nextSplit_Rangecc(range_Block(body_GmRequest(index)), "\n", &src)) {
         iRangecc line = src;
         trim_Rangecc(&line);
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+            continue;
+        }
+        if (isPre) {
+            continue;
+        }
+        if (startsWith_Rangecc(line, "#") && !startsWith_Rangecc(line, "###")) {
+            iRangecc text = line;
+            while (text.start < text.end && *text.start == '#') {
+                text.start++;
+            }
+            trim_Rangecc(&text);
+            if (!isEmpty_Range(&text)) {
+                heading = text;
+            }
+            continue;
+        }
         iRegExpMatch m;
         init_RegExpMatch(&m);
         if (matchRange_RegExp(linkPattern, line, &m)) {
@@ -100,6 +123,7 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
                 if (isEmpty_String(&link.label)) {
                     setRange_String(&link.label, url);
                 }
+                setRange_String(&link.heading, heading);
                 pushBack_Array(d->navLinks, &link);
             }
             iEndCollect();
@@ -357,7 +381,8 @@ static iRangecc lastHeading1_(iRangecc source) {
 }
 
 const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
-    /* The last level 1 heading on the preceding pages. */
+    /* The last level 1 heading on the preceding pages, or else the heading above the link on
+       the index page. */
     parseNavigationLinks_Gempub_(d);
     for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
         const iBlock *data = archiveData_Gempub_(d, navLinkUrl_Gempub(d, i));
@@ -367,6 +392,9 @@ const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
                 return collectNewRange_String(heading);
             }
         }
+    }
+    if (navIndex < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, navIndex, iGempubNavLink).heading;
     }
     return collectNew_String();
 }
