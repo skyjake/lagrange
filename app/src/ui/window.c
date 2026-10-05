@@ -135,16 +135,18 @@ static const iMenuItem editMenuItems_[] = {
     { NULL }
 };
 
+static const char *showSidebarModeLabels_[maxSidebarModes_Prefs] = {
+    "${menu.show.bookmarks}",
+    "${menu.show.feeds}",
+    "${menu.show.subscriptions}",
+    "${menu.show.identities}",
+    "${menu.show.outline}",
+    "${menu.show.structure}",
+    "${menu.show.opendocs}",
+    "${menu.show.history}",
+};
+
 static const iMenuItem viewMenuItems_[] = {
-    { "${menu.show.bookmarks}", '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1" },
-    { "${menu.show.feeds}", '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1" },
-    { "${menu.show.subscriptions}", '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1" },
-    { "${menu.show.identities}", '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1" },
-    { "${menu.show.outline}", '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1" },
-    { "${menu.show.structure}", '6', leftSidebarTab_KeyModifier, "sidebar.mode arg:5 toggle:1" },
-    { "${menu.show.opendocs}", '7', leftSidebarTab_KeyModifier, "sidebar.mode arg:6 toggle:1" },
-    { "${menu.show.history}", '8', leftSidebarTab_KeyModifier, "sidebar.mode arg:7 toggle:1" },
-    { "---" },
     { "${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { "${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "---" },
@@ -161,6 +163,29 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.view.split}", SDLK_J, KMOD_PRIMARY, "submenu id:splitmenu" },
     { NULL }
 };
+
+const iArray *updateViewMenu_Widget(iWidget *menu) {
+    iUnused(menu);
+    iArray           *items = collectNew_Array(sizeof(iMenuItem));
+    enum iSidebarSide side, prevSide = left_SidebarSide;
+    enum iSidebarMode mode;
+    for (size_t i = 0; tab_SidebarMode(i, &side, &mode); i++) {
+        if (side != prevSide) {
+            pushBack_Array(items, &(iMenuItem){ "---" });
+            prevSide = side;
+        }
+        pushBack_Array(items,
+                       &(iMenuItem){ showSidebarModeLabels_[mode],
+                                     i < 9 ? '1' + (int) i : 0,
+                                     i < 9 ? leftSidebarTab_KeyModifier : 0,
+                                     format_CStr("sidebar.tab arg:%zu toggle:1", i) });
+    }
+    if (!isEmpty_Array(items)) {
+        pushBack_Array(items, &(iMenuItem){ "---" });
+    }
+    pushBackN_Array(items, viewMenuItems_, count_MenuItem(viewMenuItems_));
+    return items;
+}
 
 iMenuItem bookmarksMenuItems_Window[] = {
     { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
@@ -244,7 +269,10 @@ static void insertMacMenus_(void) {
     /* Create the needed bookmarks submenus. */
     insertMenuItems_MacOS("${menu.title.file}", 1, 0, fileMenuItems_, iElemCount(fileMenuItems_));
     insertMenuItems_MacOS("${menu.title.edit}", 2, 0, editMenuItems_, iElemCount(editMenuItems_));
-    insertMenuItems_MacOS("${menu.title.view}", 3, 0, viewMenuItems_, iElemCount(viewMenuItems_));
+    /* View menu contents depend on the sidebar tabs. */ {
+        const iArray *items = updateViewMenu_Widget(NULL);
+        insertMenuItems_MacOS("${menu.title.view}", 3, 0, constData_Array(items), size_Array(items));
+    }
     /* Bookmarks menu contents are dynamic. */ {
         const iArray *items = updateBookmarksMenu_Widget(NULL);
         insertMenuItems_MacOS("${menu.title.bookmarks}", 4, 0, constData_Array(items), size_Array(items));

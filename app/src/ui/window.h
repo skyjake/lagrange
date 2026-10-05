@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 extern const iMenuItem topLevelMenus_Window[7];
 size_t numWindowMenuItems_Window(void); /* number of items in an empty window menu */
+const iArray *updateViewMenu_Widget(iWidget *menu);
 
 enum iWindowType {
     main_WindowType,

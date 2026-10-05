@@ -1040,6 +1040,10 @@ msgstr "Open Identity menu"
 msgid "keys.contextmenu"
 msgstr "Open context menu"
 
+# Followed by a number: the position of the tab, counting from the left sidebar to the right one.
+msgid "keys.sidebar.tab"
+msgstr "Sidebar tab"
+
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Enter input for %s:"

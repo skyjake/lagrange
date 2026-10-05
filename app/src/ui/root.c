@@ -1985,6 +1985,10 @@ void createUserInterface_Root(iRoot *d) {
             bookmarksMenu->updateMenuItems = updateBookmarksMenu_Widget;
             bookmarksMenu->menuClosed      = cleanupBookmarksMenu_Widget;
         }
+        /* View menu lists the sidebar tabs in their current order. */ {
+            iWidget *viewMenu = findChild_Widget(child_Widget(menuBar, 2), "menu");
+            viewMenu->updateMenuItems = updateViewMenu_Widget;
+        }
         /* The window menu needs to be dynamically updated with the list of open windows. */
         /* TODO: Use Widget's `updateMenuItems` callback. */
         setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);
@@ -2425,23 +2429,24 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, 'h', KMOD_PRIMARY | SDL_KMOD_SHIFT, "navigate.home");
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input id2:filter.bookmark.input");
-        addAction_Widget(root, '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1");
-        addAction_Widget(root, '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1");
-        addAction_Widget(root, '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1");
-        addAction_Widget(root, '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1");
-        addAction_Widget(root, '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1");
-        addAction_Widget(root, '6', leftSidebarTab_KeyModifier, "sidebar.mode arg:5 toggle:1");
-        addAction_Widget(root, '7', leftSidebarTab_KeyModifier, "sidebar.mode arg:6 toggle:1");
-        addAction_Widget(root, '8', leftSidebarTab_KeyModifier, "sidebar.mode arg:7 toggle:1");
-        addAction_Widget(root, '9', leftSidebarTab_KeyModifier, "sidebar.mode arg:8 toggle:1");
-        addAction_Widget(root, '1', rightSidebarTab_KeyModifier, "sidebar2.mode arg:0 toggle:1");
-        addAction_Widget(root, '2', rightSidebarTab_KeyModifier, "sidebar2.mode arg:1 toggle:1");
-        addAction_Widget(root, '3', rightSidebarTab_KeyModifier, "sidebar2.mode arg:2 toggle:1");
-        addAction_Widget(root, '4', rightSidebarTab_KeyModifier, "sidebar2.mode arg:3 toggle:1");
-        addAction_Widget(root, '5', rightSidebarTab_KeyModifier, "sidebar2.mode arg:4 toggle:1");
-        addAction_Widget(root, '6', rightSidebarTab_KeyModifier, "sidebar2.mode arg:5 toggle:1");
-        addAction_Widget(root, '7', rightSidebarTab_KeyModifier, "sidebar2.mode arg:6 toggle:1");
-        addAction_Widget(root, '8', rightSidebarTab_KeyModifier, "sidebar2.mode arg:7 toggle:1");
+        addAction_Widget(root, '1', leftSidebarTab_KeyModifier, "sidebar.tab arg:0 toggle:1");
+        addAction_Widget(root, '2', leftSidebarTab_KeyModifier, "sidebar.tab arg:1 toggle:1");
+        addAction_Widget(root, '3', leftSidebarTab_KeyModifier, "sidebar.tab arg:2 toggle:1");
+        addAction_Widget(root, '4', leftSidebarTab_KeyModifier, "sidebar.tab arg:3 toggle:1");
+        addAction_Widget(root, '5', leftSidebarTab_KeyModifier, "sidebar.tab arg:4 toggle:1");
+        addAction_Widget(root, '6', leftSidebarTab_KeyModifier, "sidebar.tab arg:5 toggle:1");
+        addAction_Widget(root, '7', leftSidebarTab_KeyModifier, "sidebar.tab arg:6 toggle:1");
+        addAction_Widget(root, '8', leftSidebarTab_KeyModifier, "sidebar.tab arg:7 toggle:1");
+        addAction_Widget(root, '9', leftSidebarTab_KeyModifier, "sidebar.tab arg:8 toggle:1");
+        addAction_Widget(root, '1', rightSidebarTab_KeyModifier, "sidebar2.tab arg:0 toggle:1");
+        addAction_Widget(root, '2', rightSidebarTab_KeyModifier, "sidebar2.tab arg:1 toggle:1");
+        addAction_Widget(root, '3', rightSidebarTab_KeyModifier, "sidebar2.tab arg:2 toggle:1");
+        addAction_Widget(root, '4', rightSidebarTab_KeyModifier, "sidebar2.tab arg:3 toggle:1");
+        addAction_Widget(root, '5', rightSidebarTab_KeyModifier, "sidebar2.tab arg:4 toggle:1");
+        addAction_Widget(root, '6', rightSidebarTab_KeyModifier, "sidebar2.tab arg:5 toggle:1");
+        addAction_Widget(root, '7', rightSidebarTab_KeyModifier, "sidebar2.tab arg:6 toggle:1");
+        addAction_Widget(root, '8', rightSidebarTab_KeyModifier, "sidebar2.tab arg:7 toggle:1");
+        addAction_Widget(root, '9', rightSidebarTab_KeyModifier, "sidebar2.tab arg:8 toggle:1");
         addAction_Widget(root, 'j', KMOD_PRIMARY, "splitmenu.open");
         addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
         addAction_Widget(root, 't', KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1");

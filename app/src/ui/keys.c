@@ -267,14 +267,15 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },
     { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
     { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
-    { 250,{ "${LC:menu.show.bookmarks}",    '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1" }, 0 },
-    { 251,{ "${LC:menu.show.feeds}",        '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1" }, 0 },
-    { 252,{ "${LC:menu.show.subscriptions}", '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1" }, 0 },
-    { 253,{ "${LC:menu.show.identities}",   '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1" }, 0 },
-    { 254,{ "${LC:menu.show.outline}",      '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1" }, 0 },
-    { 255,{ "${LC:menu.show.structure}",    '6', leftSidebarTab_KeyModifier, "sidebar.mode arg:5 toggle:1" }, 0 },
-    { 256,{ "${LC:menu.show.opendocs}",     '7', leftSidebarTab_KeyModifier, "sidebar.mode arg:6 toggle:1" }, 0 },
-    { 257,{ "${LC:menu.show.history}",      '8', leftSidebarTab_KeyModifier, "sidebar.mode arg:7 toggle:1" }, 0 },
+    { 250,{ "${keys.sidebar.tab} 1",       '1', leftSidebarTab_KeyModifier, "sidebar.tab arg:0 toggle:1" }, 0 },
+    { 251,{ "${keys.sidebar.tab} 2",       '2', leftSidebarTab_KeyModifier, "sidebar.tab arg:1 toggle:1" }, 0 },
+    { 252,{ "${keys.sidebar.tab} 3",       '3', leftSidebarTab_KeyModifier, "sidebar.tab arg:2 toggle:1" }, 0 },
+    { 253,{ "${keys.sidebar.tab} 4",       '4', leftSidebarTab_KeyModifier, "sidebar.tab arg:3 toggle:1" }, 0 },
+    { 254,{ "${keys.sidebar.tab} 5",       '5', leftSidebarTab_KeyModifier, "sidebar.tab arg:4 toggle:1" }, 0 },
+    { 255,{ "${keys.sidebar.tab} 6",       '6', leftSidebarTab_KeyModifier, "sidebar.tab arg:5 toggle:1" }, 0 },
+    { 256,{ "${keys.sidebar.tab} 7",       '7', leftSidebarTab_KeyModifier, "sidebar.tab arg:6 toggle:1" }, 0 },
+    { 257,{ "${keys.sidebar.tab} 8",       '8', leftSidebarTab_KeyModifier, "sidebar.tab arg:7 toggle:1" }, 0 },
+    { 258,{ "${keys.sidebar.tab} 9",       '9', leftSidebarTab_KeyModifier, "sidebar.tab arg:8 toggle:1" }, 0 },
 
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)

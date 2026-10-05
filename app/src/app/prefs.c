@@ -476,6 +476,10 @@ void loadPrefs_App_(iApp *d) {
             else if (equal_Command(cmd, "prefs.menubar.changed")) {
                 handleCommand_App(cmd);
             }
+            else if (equal_Command(cmd, "sidebar.modes.set")) {
+                /* Application menus are created with the first window. */
+                handleNonWindowRelatedCommand_App_(d, cmd);
+            }
             else if (equal_Command(cmd, "feedinterval.set")) {
                 handleNonWindowRelatedCommand_App_(d, cmd);
             }

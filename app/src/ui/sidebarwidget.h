@@ -35,6 +35,9 @@ enum iSidebarSide {
     right_SidebarSide,
 };
 
+/* Configured tabs in visible order, left sidebar first. */
+iBool           tab_SidebarMode     (size_t index, enum iSidebarSide *side, enum iSidebarMode *mode);
+
 enum iFeedsMode {
     all_FeedsMode,
     unread_FeedsMode

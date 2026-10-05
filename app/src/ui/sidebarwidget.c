@@ -170,14 +170,47 @@ static const iGempub *gempub_SidebarWidget_(const iSidebarWidget *d) {
     return gempub && !isRemote_Gempub(gempub) ? gempub : NULL;
 }
 
+static int bookSide_SidebarWidget_(void) {
+    return deviceType_App() == phone_AppDeviceType ? left_SidebarSide : prefs_App()->gempubSidebar;
+}
+
 static iBool isModeEnabled_SidebarWidget_(const iSidebarWidget *d, int side,
                                           enum iSidebarMode mode) {
     if (mode == gempub_SidebarMode) {
-        const int bookSide =
-            deviceType_App() == phone_AppDeviceType ? left_SidebarSide : prefs_App()->gempubSidebar;
-        return side == bookSide && gempub_SidebarWidget_(d) != NULL;
+        return side == bookSide_SidebarWidget_() && gempub_SidebarWidget_(d) != NULL;
     }
     return prefs_App()->sidebarModeEnabled[side][mode];
+}
+
+static iBool isTab_SidebarMode_(int side, enum iSidebarMode mode) {
+    if (side == right_SidebarSide && deviceType_App() == phone_AppDeviceType) {
+        return iFalse;
+    }
+    if (mode == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
+        return iFalse;
+    }
+    return prefs_App()->sidebarModeEnabled[side][mode];
+}
+
+static size_t numTabs_SidebarMode_(int side) {
+    size_t count = 0;
+    for (int mode = 0; mode < maxSidebarModes_Prefs; mode++) {
+        count += isTab_SidebarMode_(side, mode);
+    }
+    return count;
+}
+
+iBool tab_SidebarMode(size_t index, enum iSidebarSide *side, enum iSidebarMode *mode) {
+    for (int s = 0; s < 2; s++) {
+        for (int m = 0; m < maxSidebarModes_Prefs; m++) {
+            if (isTab_SidebarMode_(s, m) && index-- == 0) {
+                *side = s;
+                *mode = m;
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
 }
 
 iLocalDef iListWidget *list_SidebarWidget_(iSidebarWidget *d) {
@@ -2017,6 +2050,31 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                 break;
             }
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "tab")) {
+        /* Left sidebar indices span both sidebars; right sidebar indices are its own.
+           The Book tab follows the configured tabs. */
+        const size_t      numLeft  = numTabs_SidebarMode_(left_SidebarSide);
+        const size_t      numRight = numTabs_SidebarMode_(right_SidebarSide);
+        const size_t      index    = arg_Command(cmd) + (d->side == right_SidebarSide ? numLeft : 0);
+        enum iSidebarSide side;
+        enum iSidebarMode mode;
+        if (!tab_SidebarMode(index, &side, &mode)) {
+            side = bookSide_SidebarWidget_();
+            mode = gempub_SidebarMode;
+            if (index != numLeft + numRight || !isModeEnabled_SidebarWidget_(d, side, mode)) {
+                return iTrue;
+            }
+        }
+        if (d->side == right_SidebarSide && side != right_SidebarSide) {
+            return iTrue;
+        }
+        postCommand_Widget(w,
+                           "%s.mode force:1 arg:%d toggle:%d",
+                           side == left_SidebarSide ? "sidebar" : "sidebar2",
+                           mode,
+                           argLabel_Command(cmd, "toggle"));
         return iTrue;
     }
     else if (equal_Command(cmd, "mode")) {

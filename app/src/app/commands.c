@@ -308,6 +308,16 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
 #endif
         return iFalse;
     }
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
+    else if (equal_Command(cmd, "sidebar.modes.changed")) {
+        iRoot *oldRoot = current_Root();
+        setCurrent_Root(d->submenuRoot);
+        const iArray *items = updateViewMenu_Widget(NULL);
+        updateMenuItems_MacOS(3, constData_Array(items), size_Array(items));
+        setCurrent_Root(oldRoot);
+        return iFalse;
+    }
+#endif
     else if (equal_Command(cmd, "bookmarks.sort")) {
         sort_Bookmarks(d->bookmarks, arg_Command(cmd), cmpTitleAscending_Bookmark);
         notify_App("bookmarks.changed");
