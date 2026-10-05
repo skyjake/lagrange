@@ -168,6 +168,108 @@ void updateProgress_DocumentFetch(const iDocumentFetch *d) {
     }
 }
 
+static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
+    makeFooterButtons_DocumentWidget(d->owner, NULL, 0);
+    if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub))) {
+        if (!isRemote_Gempub(d->sourceGempub)) {
+            iArray *items = collectNew_Array(sizeof(iMenuItem));
+            pushBack_Array(
+                items,
+                &(iMenuItem){ book_Icon " ${gempub.cover.view}",
+                              0,
+                              0,
+                              format_CStr("!open url:%s",
+                                          cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
+            if (navSize_Gempub(d->sourceGempub) > 0) {
+                pushBack_Array(
+                    items,
+                    &(iMenuItem){
+                        format_CStr(forwardArrow_Icon " %s",
+                                    cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
+                        SDLK_RIGHT,
+                        0,
+                        format_CStr("!open url:%s",
+                                    cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
+            }
+            makeFooterButtons_DocumentWidget(d->owner, constData_Array(items), size_Array(items));
+        }
+        else {
+            makeFooterButtons_DocumentWidget(
+                d->owner,
+                (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
+                                 SDLK_S,
+                                 KMOD_PRIMARY | SDL_KMOD_SHIFT,
+                                 "document.save open:1" },
+                               { download_Icon " " saveToDownloads_Label,
+                                 SDLK_S,
+                                 KMOD_PRIMARY,
+                                 "document.save" } },
+                2);
+        }
+    }
+    else if (equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
+        makeFooterButtons_DocumentWidget(
+            d->owner,
+            (iMenuItem[]){ { format_CStr(book_Icon " %s",
+                                         cstr_String(property_Gempub(d->sourceGempub,
+                                                                     title_GempubProperty))),
+                             SDLK_LEFT,
+                             0,
+                             format_CStr("!open url:%s",
+                                         cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
+            1);
+    }
+    else if (!wantsPaged_DocumentView(view_DocumentFetch_(d))) {
+        /* Navigation buttons. Paginated chapters continue on page turns instead. */
+        iArray *items = collectNew_Array(sizeof(iMenuItem));
+        const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
+        if (navIndex != iInvalidPos) {
+            if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
+                pushBack_Array(
+                    items,
+                    &(iMenuItem){
+                        format_CStr(forwardArrow_Icon " %s",
+                                    cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
+                        SDLK_RIGHT,
+                        0,
+                        format_CStr("!open url:%s",
+                                    cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
+            }
+            if (navIndex > 0) {
+                pushBack_Array(
+                    items,
+                    &(iMenuItem){
+                        format_CStr(backArrow_Icon " %s",
+                                    cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
+                        SDLK_LEFT,
+                        0,
+                        format_CStr("!open url:%s",
+                                    cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
+            }
+            else if (!equalCase_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
+                pushBack_Array(
+                    items,
+                    &(iMenuItem){
+                        format_CStr(book_Icon " %s",
+                                    cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
+                        SDLK_LEFT,
+                        0,
+                        format_CStr("!open url:%s",
+                                    cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
+            }
+        }
+        if (!isEmpty_Array(items)) {
+            makeFooterButtons_DocumentWidget(d->owner, constData_Array(items), size_Array(items));
+        }
+    }
+}
+
+void updateGempubFooterButtons_DocumentFetch(iDocumentFetch *d) {
+    if (d->sourceGempub) {
+        makeGempubFooterButtons_DocumentFetch_(d);
+    }
+}
+
 void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
     iWidget *w = as_Widget(d->owner);
     /* Embedded images in data links can be shown immediately as they are already fetched
@@ -197,103 +299,29 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             setSource_DocumentWidget(d->owner, collect_String(coverPageSource_Gempub(d->sourceGempub)));
             setCStr_String(&d->sourceMime, mimeType_Gempub);
         }
+        int chapter = 0, numChapters = 0;
         if (d->sourceGempub) {
-            if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub))) {
-                if (!isRemote_Gempub(d->sourceGempub)) {
-                    iArray *items = collectNew_Array(sizeof(iMenuItem));
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){ book_Icon " ${gempub.cover.view}",
-                                      0,
-                                      0,
-                                      format_CStr("!open url:%s",
-                                                  cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
-                    if (navSize_Gempub(d->sourceGempub) > 0) {
-                        pushBack_Array(
-                            items,
-                            &(iMenuItem){
-                                format_CStr(forwardArrow_Icon " %s",
-                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
-                                SDLK_RIGHT,
-                                0,
-                                format_CStr("!open url:%s",
-                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
-                    }
-                    makeFooterButtons_DocumentWidget(d->owner, constData_Array(items), size_Array(items));
-                }
-                else {
-                    makeFooterButtons_DocumentWidget(
-                        d->owner,
-                        (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
-                                         SDLK_S,
-                                         KMOD_PRIMARY | SDL_KMOD_SHIFT,
-                                         "document.save open:1" },
-                                       { download_Icon " " saveToDownloads_Label,
-                                         SDLK_S,
-                                         KMOD_PRIMARY,
-                                         "document.save" } },
-                        2);
-                }
-                if (preloadCoverImage_Gempub(d->sourceGempub, doc_DocumentFetch_(d))) {
-                    redoLayout_GmDocument(doc_DocumentFetch_(d));
-                    updateVisible_DocumentView(view_DocumentFetch_(d));
-                    invalidate_DocumentWidget(d->owner);
-                }
+            const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
+            if (navIndex != iInvalidPos) {
+                chapter     = (int) navIndex + 1;
+                numChapters = (int) navSize_Gempub(d->sourceGempub);
             }
-            else if (equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
-                makeFooterButtons_DocumentWidget(
-                    d->owner,
-                    (iMenuItem[]){ { format_CStr(book_Icon " %s",
-                                                 cstr_String(property_Gempub(d->sourceGempub,
-                                                                             title_GempubProperty))),
-                                     SDLK_LEFT,
-                                     0,
-                                     format_CStr("!open url:%s",
-                                                 cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
-                    1);
-            }
-            else {
-                /* Navigation buttons. */
-                iArray *items = collectNew_Array(sizeof(iMenuItem));
-                const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
-                if (navIndex != iInvalidPos) {
-                    if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
-                        pushBack_Array(
-                            items,
-                            &(iMenuItem){
-                                format_CStr(forwardArrow_Icon " %s",
-                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
-                                SDLK_RIGHT,
-                                0,
-                                format_CStr("!open url:%s",
-                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
-                    }
-                    if (navIndex > 0) {
-                        pushBack_Array(
-                            items,
-                            &(iMenuItem){
-                                format_CStr(backArrow_Icon " %s",
-                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
-                                SDLK_LEFT,
-                                0,
-                                format_CStr("!open url:%s",
-                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
-                    }
-                    else if (!equalCase_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
-                        pushBack_Array(
-                            items,
-                            &(iMenuItem){
-                                format_CStr(book_Icon " %s",
-                                            cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
-                                SDLK_LEFT,
-                                0,
-                                format_CStr("!open url:%s",
-                                            cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
-                    }
-                }
-                if (!isEmpty_Array(items)) {
-                    makeFooterButtons_DocumentWidget(d->owner, constData_Array(items), size_Array(items));
-                }
+        }
+        /* Chapters show their position in the page footer. */
+        if (setChapter_GmDocument(doc_DocumentFetch_(d), chapter, numChapters) &&
+            isPaged_DocumentView(view_DocumentFetch_(d))) {
+            redoLayout_GmDocument(doc_DocumentFetch_(d));
+            documentRunsInvalidated_DocumentWidget(d->owner);
+            updateVisible_DocumentView(view_DocumentFetch_(d));
+            invalidate_DocumentWidget(d->owner);
+        }
+        if (d->sourceGempub) {
+            makeGempubFooterButtons_DocumentFetch_(d);
+            if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub)) &&
+                preloadCoverImage_Gempub(d->sourceGempub, doc_DocumentFetch_(d))) {
+                redoLayout_GmDocument(doc_DocumentFetch_(d));
+                updateVisible_DocumentView(view_DocumentFetch_(d));
+                invalidate_DocumentWidget(d->owner);
             }
             if (!isCached && prefs_App()->pinSplit &&
                 equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {

@@ -74,6 +74,8 @@ struct Impl_GmDocument {
     iString   title; /* the first top-level title */
     iArray    headings;
     iArray    pageBands; /* GmPageBands of each page in a paginated layout */
+    int       chapter;   /* position in a book, shown in the page footer; zero if none */
+    int       numChapters;
     iArray    preMeta; /* metadata about preformatted blocks */
     iDocumentStyle style; /* set up for the current layout */
     int       ansiEscapes;

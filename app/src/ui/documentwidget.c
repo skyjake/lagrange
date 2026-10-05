@@ -119,6 +119,7 @@ enum iDocumentWidgetFlag {
     unseen_DocumentWidgetFlag                = iBit(15), /* user has not seen the contents */
     openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
     historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
+    showLastPage_DocumentWidgetFlag          = iBit(18), /* new document opens at its last page */
 };
 
 /* Note the following about swipes and keeping inline input prompts positioned:
@@ -785,6 +786,24 @@ static size_t sourceOffset_DocumentWidget_(const iString *text, iInt2 linePos) {
     return iMin(ch + linePos.x, eol) - start;
 }
 
+static iBool openAdjacentChapter_DocumentWidget_(iDocumentWidget *d, int dir) {
+    /* Turning past the first or last page continues in the previous or next chapter. */
+    const iGempub *gempub = d->fetch->sourceGempub;
+    if (!gempub || isRemote_Gempub(gempub)) {
+        return iFalse;
+    }
+    const size_t index = navIndex_Gempub(gempub, d->mod.url);
+    if (index == iInvalidPos || (dir < 0 && index == 0) ||
+        (dir > 0 && index + 1 >= navSize_Gempub(gempub))) {
+        return iFalse;
+    }
+    iChangeFlags(d->flags, showLastPage_DocumentWidgetFlag, dir < 0);
+    postCommandf_Root(as_Widget(d)->root,
+                      "open url:%s",
+                      cstr_String(navLinkUrl_Gempub(gempub, index + (dir < 0 ? -1 : +1))));
+    return iTrue;
+}
+
 static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
     /* When paginated, the banner is only on the first page. */
     return !isPaged_DocumentView(d->view) || visibleColumns_DocumentView(d->view).start == 0;
@@ -1384,6 +1403,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         if (argLabel_Command(cmd, "redo")) {
+            updateGempubFooterButtons_DocumentFetch(d->fetch); /* the view mode may change */
             updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, iTrue);
             resetWideRuns_DocumentView(d->view);
             dealloc_VisBuf(d->view->visBuf);
@@ -1805,6 +1825,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                      iFalse);
         d->fetch->state = ready_RequestState;
         postProcessContent_DocumentFetch(d->fetch, iFalse);
+        if (d->flags & showLastPage_DocumentWidgetFlag) {
+            /* Going backward from the next chapter. */
+            d->flags &= ~showLastPage_DocumentWidgetFlag;
+            if (isPaged_DocumentView(d->view)) {
+                showColumn_DocumentView(d->view, numColumns_GmDocument(d->view->doc) - 1, iFalse);
+            }
+        }
         /* The response may be cached. */
         if (d->fetch->request) {
             iAssert(~d->fetch->flags & fromCache_DocumentFetchFlag);
@@ -2152,6 +2179,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.page.overflow")) {
+        if (openAdjacentChapter_DocumentWidget_(d, arg_Command(cmd))) {
+            return iTrue;
+        }
         /* There is nothing more to turn to, so offer the navigation controls. */
         showReadingBars_Root(w->root, iTrue);
         return iFalse;

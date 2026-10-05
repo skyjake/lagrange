@@ -433,6 +433,8 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_Array(&d->pageBands, sizeof(iGmPageBands));
+    d->chapter     = 0;
+    d->numChapters = 0;
     init_Array(&d->preMeta, sizeof(iGmPreMeta));
     d->themeSeed = 0;
     d->layoutFontKey = 0;
@@ -606,6 +608,15 @@ int columnsPerPage_GmDocument(const iGmDocument *d) {
 
 size_t numPages_GmDocument(const iGmDocument *d) {
     return iMax(1, numColumns_GmDocument(d) / columnsPerPage_GmDocument(d));
+}
+
+iBool setChapter_GmDocument(iGmDocument *d, int chapter, int numChapters) {
+    if (d->chapter == chapter && d->numChapters == numChapters) {
+        return iFalse;
+    }
+    d->chapter     = chapter;
+    d->numChapters = numChapters;
+    return iTrue;
 }
 
 iRangecc pageHeader_GmDocument(const iGmDocument *d, size_t page) {

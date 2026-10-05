@@ -83,6 +83,7 @@ iBool   tryWaiting_DocumentFetch        (iDocumentFetch *);
 void    take_DocumentFetch              (iDocumentFetch *, iGmRequest *finishedRequest);
 void    checkResponse_DocumentFetch     (iDocumentFetch *);
 void    postProcessContent_DocumentFetch(iDocumentFetch *, iBool isCached);
+void    updateGempubFooterButtons_DocumentFetch(iDocumentFetch *); /* after a view mode change */
 void    updateProgress_DocumentFetch    (const iDocumentFetch *);
 void    updateTrust_DocumentFetch       (iDocumentFetch *, const iGmResponse *);
 void    cleanupRedirected_DocumentFetch (iDocumentFetch *);

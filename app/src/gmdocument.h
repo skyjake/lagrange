@@ -238,6 +238,7 @@ iRangei columnContentRange_GmDocument(const iGmDocument *, size_t column); /* be
 int     pageBandFont_GmDocument (const iGmDocument *);
 iRangecc pageHeader_GmDocument  (const iGmDocument *, size_t page);
 iRangecc pageFooter_GmDocument  (const iGmDocument *, size_t page);
+iBool   setChapter_GmDocument   (iGmDocument *, int chapter, int numChapters); /* returns True if changed */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source,

@@ -427,9 +427,14 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
         }
         bands.footer = fitPageBandText_GmDocument_(
             d,
-            auxText_GmDocument_(d,
-                                collectNewFormat_String(
-                                    cstr_Lang("doc.page.number"), (int) page + 1, (int) numPages)));
+            auxText_GmDocument_(
+                d,
+                d->chapter > 0
+                    ? collectNewFormat_String(cstr_Lang("doc.page.chapter"),
+                                              d->chapter, d->numChapters,
+                                              (int) page + 1, (int) numPages)
+                    : collectNewFormat_String(cstr_Lang("doc.page.number"),
+                                              (int) page + 1, (int) numPages)));
         pushBack_Array(&d->pageBands, &bands);
     }
 }
