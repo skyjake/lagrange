@@ -2109,9 +2109,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
         showColumn_DocumentView(d->view,
-                              (arg_Command(cmd) + pageProgressUnit_DocumentWidget_ / 2) /
-                                  pageProgressUnit_DocumentWidget_,
-                              iFalse);
+                                (arg_Command(cmd) + pageProgressUnit_DocumentWidget_ / 2) /
+                                    pageProgressUnit_DocumentWidget_,
+                                iFalse);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -2127,9 +2127,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if ((equal_Command(cmd, "scroll.top") || equal_Command(cmd, "scroll.bottom")) &&
              document_App() == d && isPaged_DocumentView(d->view)) {
         showColumn_DocumentView(d->view,
-                              equal_Command(cmd, "scroll.top") ? 0
-                                                               : numColumns_GmDocument(d->view->doc) - 1,
-                              iFalse);
+                                equal_Command(cmd, "scroll.top")
+                                    ? 0
+                                    : numColumns_GmDocument(d->view->doc) - 1,
+                                iFalse);
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.page") && document_App() == d) {

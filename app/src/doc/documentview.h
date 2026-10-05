@@ -74,6 +74,7 @@ struct Impl_DocumentView {
     iPtrSet *       invalidRuns;
     struct {
         size_t      column;     /* first column of the current spread */
+        size_t      anchor;     /* source offset of the reading position, kept over relayouts */
         size_t      turnFrom;   /* first column of the previous spread during a turn */
         iAnim       turnOffset; /* horizontal offset of the pages during a turn */
         size_t      dragFrom;   /* first column of the spread where a drag began */

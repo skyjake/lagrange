@@ -134,6 +134,7 @@ void init_DocumentView(iDocumentView *d) {
     init_PtrArray(&d->visibleMedia);
     d->userHasScrolled = iFalse;
     iZap(d->paged);
+    d->paged.anchor = iInvalidPos;
     init_Anim(&d->paged.turnOffset, 0);
 }
 
@@ -873,19 +874,32 @@ static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
         !isLayoutOutdated_GmDocument(d->doc)) {
         return iFalse;
     }
-    const char *runLoc = d->visibleRuns.start ? d->visibleRuns.start->text.start : NULL;
+    const char    *runLoc = d->visibleRuns.start ? d->visibleRuns.start->text.start : NULL;
+    const iString *source = source_GmDocument(d->doc);
+    /* The reading position stays the same until the user turns the page. Otherwise, each
+       relayout would move it to the beginning of a spread. */
+    size_t anchor = d->paged.anchor;
+    if (anchor == iInvalidPos && runLoc && runLoc >= cstr_String(source) &&
+        runLoc < constEnd_String(source)) {
+        anchor = runLoc - cstr_String(source);
+    }
     setMetrics_GmDocument(d->doc, &metrics);
     documentRunsInvalidated_DocumentWidget(d->owner);
     resetPage_DocumentView(d);
     init_Anim(&d->scrollY.pos, 0);
-    const iGmRun *run = runLoc ? findRunAtLoc_GmDocument(d->doc, runLoc) : NULL;
     if (isPaged_DocumentView(d)) {
+        const iGmRun *run = anchor < size_String(source)
+                                ? findRunAtLoc_GmDocument(d->doc, cstr_String(source) + anchor)
+                                : NULL;
         if (run) {
             showDocumentY_DocumentView(d, top_Rect(run->visBounds));
+            d->paged.anchor = anchor;
         }
         updateVisible_DocumentView(d);
+        return iTrue;
     }
-    else if (run) {
+    const iGmRun *run = runLoc ? findRunAtLoc_GmDocument(d->doc, runLoc) : NULL;
+    if (run) {
         scrollTo_DocumentView(d, top_Rect(run->visBounds) + lineHeight_Text(paragraph_FontId), iFalse);
     }
     return iTrue;

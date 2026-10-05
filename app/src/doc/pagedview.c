@@ -260,6 +260,7 @@ void allocPagedVisBuffer_DocumentView(const iDocumentView *d) {
 void resetPage_DocumentView(iDocumentView *d) {
     removeTicker_App(animatePageTurn_DocumentView, d);
     d->paged.column      = 0;
+    d->paged.anchor      = iInvalidPos;
     d->paged.turnFrom    = 0;
     d->paged.isDragging  = iFalse;
     d->paged.isReverting = iFalse;
@@ -280,6 +281,7 @@ void animatePageTurn_DocumentView(iAny *context) {
     if (d->paged.isReverting) {
         d->paged.isReverting = iFalse;
         d->paged.column      = d->paged.turnFrom;
+        d->paged.anchor      = iInvalidPos;
         init_Anim(&d->paged.turnOffset, 0);
     }
     updateVisible_DocumentView(d); /* buffers move on to the next spread */
@@ -308,6 +310,7 @@ void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) 
         init_Anim(&d->paged.turnOffset, 0);
     }
     d->paged.column = column;
+    d->paged.anchor = iInvalidPos;
     updateVisible_DocumentView(d);
     refresh_Widget(d->owner);
 }
@@ -388,6 +391,7 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
         init_Anim(&d->paged.turnOffset, offset + dir * spread);
     }
     if (d->paged.column != oldCol) {
+        d->paged.anchor = iInvalidPos;
         updateVisible_DocumentView(d);
     }
     pagesMoved_DocumentWidget(d->owner);
