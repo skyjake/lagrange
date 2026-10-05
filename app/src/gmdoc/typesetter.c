@@ -396,6 +396,8 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     /* Headers show the last level 1 heading on or before the page, except on the first page
        and on a page that begins with one. */
     iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
+    const iRangecc bookTitle =
+        auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
     size_t   runPos = 0;
     clear_Array(&d->pageBands);
     for (size_t page = 0; page < numPages; page++) {
@@ -421,9 +423,14 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
                 title = auxText_GmDocument_(d, collect_String(upper_String(text)));
             }
         }
-        iGmPageBands bands = { iNullRange, iNullRange };
-        if (page > 0 && !isChapterStart && !isEmpty_Range(&title)) {
-            bands.header = fitPageBandText_GmDocument_(d, title);
+        iGmPageBands bands = { iNullRange, iNullRange, iNullRange };
+        if (page > 0 && !isChapterStart) {
+            if (!isEmpty_Range(&title)) {
+                bands.header = fitPageBandText_GmDocument_(d, title);
+            }
+            if (!isEmpty_Range(&bookTitle)) {
+                bands.bookHeader = fitPageBandText_GmDocument_(d, bookTitle);
+            }
         }
         bands.footer = fitPageBandText_GmDocument_(
             d,

@@ -49,6 +49,7 @@ iDeclareType(GmPageBands)
 
 struct Impl_GmPageBands {
     iRangecc header;
+    iRangecc bookHeader; /* for the left page of a two-page spread */
     iRangecc footer;
 };
 
@@ -76,6 +77,7 @@ struct Impl_GmDocument {
     iString   title; /* the first top-level title */
     iArray    headings;
     iArray    pageBands; /* GmPageBands of each page in a paginated layout */
+    iString   bookTitle; /* shown in the page header */
     int       chapter;   /* position in a book, shown in the page footer; zero if none */
     int       numChapters;
     iArray    preMeta; /* metadata about preformatted blocks */

@@ -302,16 +302,18 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             setSource_DocumentWidget(d->owner, collect_String(coverPageSource_Gempub(d->sourceGempub)));
             setCStr_String(&d->sourceMime, mimeType_Gempub);
         }
-        int chapter = 0, numChapters = 0;
+        const iString *bookTitle = collectNew_String();
+        int            chapter = 0, numChapters = 0;
         if (d->sourceGempub) {
+            bookTitle = property_Gempub(d->sourceGempub, title_GempubProperty);
             const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (navIndex != iInvalidPos) {
                 chapter     = (int) navIndex + 1;
                 numChapters = (int) navSize_Gempub(d->sourceGempub);
             }
         }
-        /* Chapters show their position in the page footer. */
-        if (setChapter_GmDocument(doc_DocumentFetch_(d), chapter, numChapters) &&
+        /* Book pages show the title in the page header and the chapter in the footer. */
+        if (setBook_GmDocument(doc_DocumentFetch_(d), bookTitle, chapter, numChapters) &&
             isPaged_DocumentView(view_DocumentFetch_(d))) {
             redoLayout_GmDocument(doc_DocumentFetch_(d));
             documentRunsInvalidated_DocumentWidget(d->owner);
