@@ -134,9 +134,12 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         d->flags[heading1_GmLineType] |= centered_DocumentStyleFlag | keepBottomMargin_DocumentStyleFlag;
     }
     if (params->isUiTheme) {
-        /* Only the empty lines of the source separate the lines. */
+        /* Only the empty lines of the source separate the lines, except for links that need
+           room for the open link highlight. */
         iZap(d->topMargins);
         iZap(d->bottomMargins);
+        d->topMargins[link_GmLineType]    = topMargins[link_GmLineType];
+        d->bottomMargins[link_GmLineType] = bottomMargins[link_GmLineType];
         d->linkGroupMargin = 0;
         d->verticalPad     = 1;
     }
