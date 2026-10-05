@@ -1272,6 +1272,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         else if (d->mode == gempub_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
+            setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId); /* the list is hidden */
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             iLabelWidget *msg = new_LabelWidget("${sidebar.empty.gempub}", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
