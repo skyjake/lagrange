@@ -1354,6 +1354,42 @@ static void markEndOfLine_Typesetter_(iTypesetter *d, size_t numRunsAdded) {
     }
 }
 
+static void centerLinkLines_Typesetter_(iTypesetter *d, iGmLinkId linkId) {
+    iArray *layout = &d->doc->layout;
+    size_t  pos    = size_Array(layout);
+    while (pos > 0) {
+        const iGmRun *run = constAt_Array(layout, pos - 1);
+        if (run->linkId != linkId || isMedia_GmRun(run)) {
+            break;
+        }
+        pos--;
+    }
+    /* Decorations belong to the line that follows them. */
+    while (pos < size_Array(layout)) {
+        size_t  end  = pos;
+        int     top  = INT_MIN;
+        iRangei span = { INT_MAX, INT_MIN };
+        for (; end < size_Array(layout); end++) {
+            const iGmRun *run = constAt_Array(layout, end);
+            if (top != INT_MIN && top_Rect(run->visBounds) != top) {
+                break;
+            }
+            if (~run->flags & decoration_GmRunFlag) {
+                top        = top_Rect(run->visBounds);
+                span.start = iMin(span.start, left_Rect(run->visBounds));
+                span.end   = iMax(span.end, right_Rect(run->visBounds));
+            }
+        }
+        if (top != INT_MIN) {
+            const int shift = (d->doc->size.x - size_Range(&span)) / 2 - span.start;
+            for (size_t i = pos; i < end; i++) {
+                ((iGmRun *) at_Array(layout, i))->visBounds.pos.x += shift;
+            }
+        }
+        pos = end;
+    }
+}
+
 static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaInfo *info,
                                  int margin) {
     iGmDocument *doc = d->doc;
@@ -1405,6 +1441,7 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
                                     width_Rect(run->visBounds) / 2;
             run->bounds.size.y    = maxHeight;
         }
+        centerLinkLines_Typesetter_(d, run->linkId);
     }
     pushBack_Array(&doc->layout, run);
     d->pos.y += run->bounds.size.y + margin / 2;
