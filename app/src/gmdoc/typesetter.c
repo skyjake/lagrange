@@ -471,13 +471,28 @@ static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *group
         moved = n - 1;
     }
     size_t first = moved;
-    while (first > 1 &&
+    while (first > 0 &&
            isHeadingGroup_GmDocument_(src,
                                       ((const iColumnGroup *) constAt_Array(groups, first - 1))->src,
                                       groupSrcEnd_(groups, first - 1, breakPos))) {
         first--;
     }
-    return first < moved ? first : n;
+    /* A heading at the top of the column stays, so it is not split either. */
+    return first > 0 && first < moved ? first : n;
+}
+
+static size_t keptWithHeadingEnd_GmDocument_(const iArray *src, size_t start) {
+    /* End of the headings beginning at `start`, and the first two lines of what follows. */
+    const size_t numSrc = size_Array(src);
+    size_t       end    = groupEnd_GmDocument_(src, start);
+    while (end < numSrc && isHeadingGroup_GmDocument_(src, start, end)) {
+        start = end;
+        end   = groupEnd_GmDocument_(src, start);
+    }
+    if (end < numSrc && isContinuationGroup_GmDocument_(src, end, groupEnd_GmDocument_(src, end))) {
+        end = groupEnd_GmDocument_(src, end);
+    }
+    return end;
 }
 
 enum iPageAlign {
@@ -560,11 +575,12 @@ static void paginate_GmDocument_(iGmDocument *d) {
             const iRangei newSpan = groupSpan_GmDocument_(src, i, end);
             offset     = content.start - newSpan.start;
             if (isChapter) {
-                /* The margin above the heading remains at the top of the page. */
-                const int gap = iMax(0, newSpan.start - srcBottom);
-                if (newSpan.end + offset + gap <= content.end) {
-                    offset += gap;
-                }
+                /* The margin above the heading remains at the top of the page, as far as the
+                   heading and the line following it fit. */
+                const iRangei block =
+                    groupSpan_GmDocument_(src, i, keptWithHeadingEnd_GmDocument_(src, i));
+                offset += iClamp(content.end - (block.end + offset), 0,
+                                 iMax(0, newSpan.start - srcBottom));
             }
             lastBottom = content.start;
             firstGroup = i;
