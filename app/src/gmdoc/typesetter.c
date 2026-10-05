@@ -1532,7 +1532,8 @@ static void finish_Typesetter_(iTypesetter *d) {
         doc->warnings |= missingGlyphs_GmDocumentWarning;
     }
     /* If a title wasn't found, use the first content line but truncate it if it's long. */
-    if (isEmpty_String(&doc->title)) {
+    const iBool isHeadingTitle = !isEmpty_String(&doc->title);
+    if (!isHeadingTitle) {
         set_String(&doc->title, &d->firstContentLine);
         if (length_String(&doc->title) > 40) {
             truncate_String(&doc->title, 40);
@@ -1542,6 +1543,17 @@ static void finish_Typesetter_(iTypesetter *d) {
             }
         }
         trim_String(&doc->title);
+    }
+    if (!isEmpty_String(&doc->bookTitle)) {
+        /* Book pages are titled by the book and the chapter. */
+        const iString *chapter = isHeadingTitle ? &doc->title : &doc->chapterTitle;
+        if (isEmpty_String(chapter) || equalCase_String(chapter, &doc->bookTitle)) {
+            set_String(&doc->title, &doc->bookTitle);
+        }
+        else {
+            set_String(&doc->title, collectNewFormat_String("%s: %s", cstr_String(&doc->bookTitle),
+                                                            cstr_String(chapter)));
+        }
     }
     if (d->isPaged) {
         paginate_GmDocument_(doc);

@@ -414,7 +414,7 @@ void animate_DocumentWidget(void *ticker) {
     }
 }
 
-static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
+void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
     iLabelWidget *tabButton = tabPageButton_Widget(findChild_Widget(root_Widget(constAs_Widget(d)),
                                                                     "doctabs"), d);
     if (!tabButton) {
@@ -653,7 +653,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     d->fetch->requestLinkId = 0;
     updateVisitedLinks_GmDocument(d->view->doc);
     documentRunsInvalidated_DocumentWidget(d);
-    updateWindowTitle_DocumentWidget_(d);
+    updateWindowTitle_DocumentWidget(d);
     updateBanner_DocumentWidget(d);
     updateVisible_DocumentView(d->view);
     updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
@@ -1447,7 +1447,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateVisible_DocumentView(d->view);
         invalidate_DocumentWidget(d);
         dealloc_VisBuf(d->view->visBuf);
-        updateWindowTitle_DocumentWidget_(d);
+        updateWindowTitle_DocumentWidget(d);
         showOrHideIndicators_DocumentWidget_(d);
         refresh_Widget(w);
     }
@@ -1535,7 +1535,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         init_Anim(&d->view->sideOpacity, 0);
         init_Anim(&d->view->altTextOpacity, 0);
         updateSideOpacity_DocumentView(d->view, iFalse);
-        updateWindowTitle_DocumentWidget_(d);
+        updateWindowTitle_DocumentWidget(d);
         allocVisBuffer_DocumentView(d->view);
         animate_InlineMedia(d->media);
         remove_Periodic(periodic_App(), d);
@@ -1605,7 +1605,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "tab.created")) {
         /* Space for tab buttons has changed. */
-        updateWindowTitle_DocumentWidget_(d);
+        updateWindowTitle_DocumentWidget(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "document.visitlinks") && d == document_App()) {

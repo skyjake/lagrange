@@ -314,12 +314,12 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             }
         }
         /* Book pages show the title in the page header and the chapter in the footer. */
-        if (setBook_GmDocument(doc_DocumentFetch_(d), &book) &&
-            isPaged_DocumentView(view_DocumentFetch_(d))) {
+        if (setBook_GmDocument(doc_DocumentFetch_(d), &book)) {
             redoLayout_GmDocument(doc_DocumentFetch_(d));
             documentRunsInvalidated_DocumentWidget(d->owner);
             updateVisible_DocumentView(view_DocumentFetch_(d));
             invalidate_DocumentWidget(d->owner);
+            updateWindowTitle_DocumentWidget(d->owner);
         }
         if (d->sourceGempub) {
             makeGempubFooterButtons_DocumentFetch_(d);
