@@ -178,6 +178,7 @@ struct Impl_DocumentWidget {
     enum iLinkUpdateFlags pendingLinkUpdates;
     size_t         pendingChapter;    /* being opened via the progress bar */
     size_t         progressChapter;   /* shown in the progress bar */
+    uint32_t       progressAnimEnd;   /* moving to another chapter until this time */
     float          pendingChapterPos; /* where the visible pages end; negative if none */
 
     /* User interface: */
@@ -1384,8 +1385,11 @@ static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page
 static const int bookProgressUnit_DocumentWidget_ = 10000; /* fractions of a chapter */
 
 static int bookProgressThumbSize_DocumentWidget_(const iDocumentWidget *d) {
-    return bookProgressUnit_DocumentWidget_ * numColumns_DocumentView(d->view) /
-           (int) numColumns_GmDocument(d->view->doc);
+    /* A spread may extend past the last column of the chapter. */
+    const float numCols = numColumns_GmDocument(d->view->doc);
+    const float visible = iMin((float) numColumns_DocumentView(d->view),
+                               numCols - columnPosition_DocumentView(d->view));
+    return (int) (bookProgressUnit_DocumentWidget_ * iMax(0.0f, visible) / numCols);
 }
 
 static size_t columnEndingAt_DocumentWidget_(const iDocumentWidget *d, float pos) {
@@ -3652,17 +3656,21 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
     if (chapter != iInvalidPos) {
         /* Each chapter is an equal part of a book's progress. The bar moves to another
            chapter like the pages slide in, unless it is being dragged. */
-        const int   unit       = bookProgressUnit_DocumentWidget_;
-        const iBool isAnimated = d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
-                                 ~flags_Widget(as_Widget(d->scroll)) & pressed_WidgetFlag;
+        const int      unit = bookProgressUnit_DocumentWidget_;
+        const uint32_t now  = SDL_GetTicks();
+        if (d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
+            ~flags_Widget(as_Widget(d->scroll)) & pressed_WidgetFlag) {
+            d->progressAnimEnd = now + 250;
+        }
         d->progressChapter = chapter;
         setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numChapters * unit });
+        /* The pages of the new chapter may still be turned (e.g., to the last one). */
         setThumbAnimated_ScrollWidget(d->scroll,
                                       (int) chapter * unit +
                                           (int) (columnPosition_DocumentView(d->view) * unit /
                                                  numColumns_GmDocument(d->view->doc)),
                                       bookProgressThumbSize_DocumentWidget_(d),
-                                      isAnimated ? 250 : 0);
+                                      d->progressAnimEnd > now ? d->progressAnimEnd - now : 0);
         return;
     }
     d->progressChapter = iInvalidPos;
@@ -3998,6 +4006,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->initNormScrollY    = 0;
     d->pendingChapter     = iInvalidPos;
     d->progressChapter    = iInvalidPos;
+    d->progressAnimEnd    = 0;
     d->pendingChapterPos  = -1.0f;
     d->pendingLinkUpdates = 0;
     setOwner_Banner(d->banner, d);
