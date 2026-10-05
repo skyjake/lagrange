@@ -333,12 +333,11 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentWidget(d->owner) &&
                 (isCover || equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub)))) {
                 /* Opening a book: the cover is in the sidebar and the contents in the document. */
-                postCommandf_Root(w->root,
-                                  "%s.gempub.page arg:0",
-                                  prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType
-                                      ? "sidebar2"
-                                      : "sidebar");
+                const iBool isRight =
+                    prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType;
+                postCommandf_Root(w->root, "%s.gempub.page arg:0", isRight ? "sidebar2" : "sidebar");
                 postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
+                postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");
                 if (isCover) {
                     postCommandf_Root(w->root,
                                       "open doc:%p url:%s",
