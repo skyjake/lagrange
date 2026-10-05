@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "banner.h"
+#include "gmutil.h"
 #include "ui/metrics.h"
 #include "ui/root.h"
 #include "ui/visbuf.h"
@@ -33,9 +34,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const uint32_t turnDuration_PagedView_ = 250;
 
+static iBool isAlwaysScrolled_(const iString *url) {
+    iUrl parts;
+    init_Url(&parts, url);
+    return equalCase_Rangecc(parts.scheme, "about") &&
+           (equalCase_Rangecc(parts.path, "lagrange") || equalCase_Rangecc(parts.path, "debug"));
+}
+
 iBool wantsPaged_DocumentView(const iDocumentView *d) {
     return !isTerminal_Platform() && docPrefs_GmDocument(d->doc)->pageView.value &&
-           !isCoverPage_GmDocument(d->doc);
+           !isCoverPage_GmDocument(d->doc) && !isAlwaysScrolled_(url_GmDocument(d->doc));
 }
 
 iBool isPaged_DocumentView(const iDocumentView *d) {
