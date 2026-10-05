@@ -450,6 +450,7 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isPaletteValid = iFalse;
     d->flags.isConvertedMarkdown = iFalse;
     d->flags.isCoverPage = iFalse;
+    d->flags.isUiTheme   = iFalse;
     d->flags.isDocPrefsPinned = iFalse;
 }
 
@@ -532,6 +533,8 @@ void setMimeType_GmDocument(iGmDocument *d, const iString *mimeType) {
 
 void setMode_GmDocument(iGmDocument *d, enum iGmDocumentMode mode) {
     d->flags.isCoverPage = (mode == coverPage_GmDocumentMode);
+    d->flags.isUiTheme   = (mode == uiTheme_GmDocumentMode);
+    invalidatePalette_GmDocument(d);
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {

@@ -154,7 +154,51 @@ void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
     }
 }
 
+static void setUiThemeColors_(void) {
+    /* Documents shown as part of the UI use UI colors. */
+    static const int map[][2] = {
+        { tmBackground_ColorId, uiBackgroundSidebar_ColorId },
+        { tmParagraph_ColorId, uiText_ColorId },
+        { tmFirstParagraph_ColorId, uiText_ColorId },
+        { tmQuote_ColorId, uiTextDim_ColorId },
+        { tmPreformatted_ColorId, uiTextDim_ColorId },
+        { tmHeading1_ColorId, uiHeading_ColorId },
+        { tmHeading2_ColorId, uiHeading_ColorId },
+        { tmHeading3_ColorId, uiSubheading_ColorId },
+        { tmBannerBackground_ColorId, uiBackgroundSidebar_ColorId },
+        { tmBannerTitle_ColorId, uiTextStrong_ColorId },
+        { tmBannerIcon_ColorId, uiIcon_ColorId },
+        { tmInlineContentMetadata_ColorId, uiAnnotation_ColorId },
+        { tmBadLink_ColorId, uiTextCaution_ColorId },
+        { tmLinkIcon_ColorId, uiIcon_ColorId },
+        { tmLinkIconVisited_ColorId, uiIcon_ColorId },
+        { tmLinkText_ColorId, uiText_ColorId },
+        { tmLinkTextHover_ColorId, uiTextAction_ColorId },
+        { tmHypertextLinkIcon_ColorId, uiIcon_ColorId },
+        { tmHypertextLinkIconVisited_ColorId, uiIcon_ColorId },
+        { tmHypertextLinkText_ColorId, uiText_ColorId },
+        { tmHypertextLinkTextHover_ColorId, uiTextAction_ColorId },
+        { tmGopherLinkIcon_ColorId, uiIcon_ColorId },
+        { tmGopherLinkIconVisited_ColorId, uiIcon_ColorId },
+        { tmGopherLinkText_ColorId, uiText_ColorId },
+        { tmGopherLinkTextHover_ColorId, uiTextAction_ColorId },
+    };
+    iForIndices(i, map) {
+        set_Color(map[i][0], get_Color(map[i][1]));
+    }
+    setDerivedThemeColors_(isDark_ColorTheme(colorTheme_App()) ? black_GmDocumentTheme
+                                                               : white_GmDocumentTheme);
+}
+
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iBlock *iconSeed) {
+    if (d->flags.isUiTheme) {
+        /* No seed is used for a document that is part of the UI. */
+        d->siteIcon = 0;
+        setUiThemeColors_();
+        memcpy(d->palette, get_Root()->tmPalette, sizeof(d->palette));
+        d->flags.isPaletteValid = iTrue;
+        return;
+    }
     const iDocPrefs *     prefs = &d->docPrefs;
     enum iGmDocumentTheme theme = currentTheme_GmDocument_(d);
     static const iChar siteIcons[] = {

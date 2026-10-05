@@ -41,6 +41,7 @@ struct Impl_DocumentStyleParams {
     iBool            isPaged;
     iBool            isPlainText;
     iBool            isDarkBackground;
+    iBool            isUiTheme;     /* UI fonts */
 };
 
 /* Indents and margins are in units of gap_Text, vertical margins in body text lines. */

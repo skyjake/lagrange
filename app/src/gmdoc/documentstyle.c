@@ -76,6 +76,18 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
     d->hasLede = prefs->bigFirstParagraph.value && !isMono && !isTerminal_Platform() &&
                  (!params->isGopher || prefs->geminiStyledGopher.value);
     d->ledeFont     = firstParagraph_FontId;
+    if (params->isUiTheme) {
+        /* Shown as part of the UI. */
+        d->fonts[text_GmLineType]         = uiContent_FontId;
+        d->fonts[bullet_GmLineType]       = uiContent_FontId;
+        d->fonts[preformatted_GmLineType] = FONT_ID(monospace_FontId, regular_FontStyle, uiSmall_FontSize);
+        d->fonts[quote_GmLineType]        = uiContent_FontId;
+        d->fonts[heading1_GmLineType]     = uiLabelLargeBold_FontId;
+        d->fonts[heading2_GmLineType]     = uiLabelBigBold_FontId;
+        d->fonts[heading3_GmLineType]     = uiContentBold_FontId;
+        d->fonts[link_GmLineType]         = uiContent_FontId;
+        d->hasLede                        = iFalse;
+    }
     d->ledeColor    = tmFirstParagraph_ColorId;
     d->maxLedeLines = 10;
     /* Indents. */ {

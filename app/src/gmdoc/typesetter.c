@@ -732,7 +732,8 @@ static iBool begin_Typesetter_(iTypesetter *d) {
                            .isGopher         = d->isGopher,
                            .isPaged          = d->isPaged,
                            .isPlainText      = doc->viewFormat == plainText_SourceFormat,
-                           .isDarkBackground = isDark_GmDocumentTheme(currentTheme_GmDocument_(doc)) });
+                           .isDarkBackground = isDark_GmDocumentTheme(currentTheme_GmDocument_(doc)),
+                           .isUiTheme        = doc->flags.isUiTheme });
     doc->flags.isLayoutInvalidated = iFalse;
     doc->layoutFontKey = fontKey_App();
     clear_Array(&doc->layout);
