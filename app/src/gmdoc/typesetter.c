@@ -1180,6 +1180,16 @@ static void setRunStyle_Typesetter_(iTypesetter *d) {
     }
 }
 
+static iBool isTitleLayout_GmDocument_(const iGmDocument *d) {
+    iConstForEach(Array, i, &d->layout) {
+        const iGmRun *run = i.value;
+        if (run->lineType != heading1_GmLineType && run->lineType != heading2_GmLineType) {
+            return iFalse;
+        }
+    }
+    return iTrue;
+}
+
 static size_t typesetParagraph_Typesetter_(iTypesetter *d) {
     /* Returns the number of runs added. */
     iGmDocument          *doc   = d->doc;
@@ -1289,9 +1299,9 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d) {
                                                                                     : 1.0f);
                 }
             }
-            /* A level 2 heading that begins the page is a title, too. */
+            /* Level 2 headings that begin the page are titles, too. */
             if (style->flags[type] & centered_DocumentStyleFlag ||
-                (d->isPaged && type == heading2_GmLineType && isEmpty_Array(&doc->layout))) {
+                (d->isPaged && type == heading2_GmLineType && isTitleLayout_GmDocument_(doc))) {
                 iForEach(Array, hr, &rts.layout) {
                     iGmRun *hrun = hr.value;
                     hrun->visBounds.pos.x = (doc->size.x - width_Rect(hrun->visBounds)) / 2;
