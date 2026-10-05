@@ -85,7 +85,7 @@ static int columnsPerPageFor_DocumentView_(const iDocumentView *d, int pageWidth
     /* Two columns when both fit at the preferred width of the actual text size, so small
        text is set in narrower columns. */
     const float zoom = activeDocPrefs_App()->zoomPercent.value / 100.0f; /* follows the fonts */
-    return preferredWidth_DocumentView_(d, 2) * zoom <=
+    return preferredWidth_DocumentView_(d, 2) * zoom * 0.75f <=
                    maxWidthInColumn_DocumentView_(d, pageWidth / 2)
                ? 2
                : 1;
@@ -190,7 +190,7 @@ int columnShift_DocumentView(const iDocumentView *d, size_t column) {
     if (numPages_DocumentView(d) != 2 || columnsPerPage_GmDocument(d->doc) != 2) {
         return 0;
     }
-    const int shift = (columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x) / 3;
+    const int shift = (columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x) / 2;
     return column % 4 == 1 ? -shift : column % 4 == 2 ? shift : 0;
 }
 
