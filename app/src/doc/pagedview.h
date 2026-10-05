@@ -41,8 +41,10 @@ size_t  currentColumn_DocumentView      (const iDocumentView *); /* first of the
 float   columnPosition_DocumentView     (const iDocumentView *); /* fractional during turns */
 iRangei visibleColumns_DocumentView     (const iDocumentView *); /* includes an ongoing turn */
 int     columnLeft_DocumentView         (const iDocumentView *, size_t column); /* window X of the column's left edge */
+int     columnShift_DocumentView        (const iDocumentView *, size_t column); /* of the content from the column's left edge */
 iInt2   columnOrigin_DocumentView       (const iDocumentView *, size_t column); /* window coords of the column's document top left */
-iRect   pageRect_DocumentView           (const iDocumentView *, size_t page); /* window rect of all the page's columns */
+iRangei columnSpan_DocumentView         (const iDocumentView *, size_t column); /* window X range the column covers */
+iRect   pageTextRect_DocumentView       (const iDocumentView *, size_t page); /* window rect of the page's text */
 iInt2   pagedDocumentPos_DocumentView   (const iDocumentView *, iInt2 windowPos);
 iRect   pagedRunRect_DocumentView       (const iDocumentView *, const iGmRun *run);
 void    allocPagedVisBuffer_DocumentView(const iDocumentView *);

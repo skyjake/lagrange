@@ -1845,7 +1845,7 @@ static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
     const size_t       numPages = numPages_GmDocument(doc);
     for (size_t page = cols.start / perPage; page < numPages && (int) (page * perPage) < cols.end;
          page++) {
-        const iRect    rect   = pageRect_DocumentView(d, page);
+        const iRect    rect   = pageTextRect_DocumentView(d, page);
         const iRangecc header = pageHeader_GmDocument(doc, page);
         const iRangecc footer = pageFooter_GmDocument(doc, page);
         if (!isEmpty_Range(&header)) {
@@ -1892,7 +1892,14 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     for (size_t i = 0; i < visBuf->numBuffers; i++) {
         const int col = visBuf->buffers[i].origin / pageHeight;
         if (col >= cols.start && col < cols.end && col < numCols) {
-            drawBuffer_VisBuf(visBuf, i, init_I2(columnLeft_DocumentView(d, col), top_Rect(viewport)));
+            /* Adjacent columns may be closer than the buffer width. */
+            const iRangei span = columnSpan_DocumentView(d, col);
+            setClip_Paint(p, init_Rect(span.start, top_Rect(area), size_Range(&span), height_Rect(area)));
+            drawBuffer_VisBuf(visBuf,
+                              i,
+                              init_I2(columnLeft_DocumentView(d, col) + columnShift_DocumentView(d, col),
+                                      top_Rect(viewport)));
+            unsetClip_Paint(p);
         }
     }
     drawPageBands_DocumentView_(d, cols);
@@ -1918,7 +1925,7 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     /* The banner is at the top of the first page. */
     if (cols.start == 0 && !isEmpty_Banner(d->banner)) {
         setPos_Banner(d->banner,
-                      init_I2(mid_Rect(pageRect_DocumentView(d, 0)).x - size_GmDocument(d->doc).x / 2,
+                      init_I2(mid_Rect(pageTextRect_DocumentView(d, 0)).x - size_GmDocument(d->doc).x / 2,
                               top_Rect(viewport) + pageHeaderHeight_GmDocument(d->doc)));
         draw_Banner(d->banner);
     }

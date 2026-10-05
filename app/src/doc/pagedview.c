@@ -114,10 +114,13 @@ void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metri
     metrics->width           = pagedDocumentWidth_DocumentView(d);
     metrics->canvasWidth     = width_Rect(viewport) /
                            columnsFor_DocumentView_(d, width_Rect(viewport), &metrics->columnsPerPage);
-    /* Preformatted blocks may use half of the margins. */
-    metrics->maxContentWidth = iMax(metrics->width,
-                                    metrics->canvasWidth -
-                                        pageMargin_DocumentView_(d, metrics->canvasWidth));
+    /* Preformatted blocks may use half of the margins, but adjacent columns of a page may
+       have only a third of the space between them (see `columnShift_DocumentView`). */
+    metrics->maxContentWidth =
+        iMax(metrics->width,
+             metrics->columnsPerPage == 2
+                 ? metrics->width + (metrics->canvasWidth - metrics->width) * 2 / 3
+                 : metrics->canvasWidth - pageMargin_DocumentView_(d, metrics->canvasWidth));
     metrics->pageHeight      = height_Rect(viewport);
     metrics->lastPageInset   = footer ? height_Widget(footer) : 0;
     /* The header and footer extend into the safe area insets. */
@@ -181,25 +184,57 @@ int columnLeft_DocumentView(const iDocumentView *d, size_t column) {
            (int) value_Anim(&d->paged.turnOffset);
 }
 
+int columnShift_DocumentView(const iDocumentView *d, size_t column) {
+    /* On facing pages of two columns, the columns next to the crease are moved away from it,
+       a third of the way toward the adjacent column. */
+    if (numPages_DocumentView(d) != 2 || columnsPerPage_GmDocument(d->doc) != 2) {
+        return 0;
+    }
+    const int shift = (columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x) / 3;
+    return column % 4 == 1 ? -shift : column % 4 == 2 ? shift : 0;
+}
+
 iInt2 columnOrigin_DocumentView(const iDocumentView *d, size_t column) {
-    return init_I2(columnLeft_DocumentView(d, column) +
+    return init_I2(columnLeft_DocumentView(d, column) + columnShift_DocumentView(d, column) +
                        (columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x) / 2,
                    top_Rect(pageViewport_DocumentView(d)) -
                        (int) column * pageHeight_GmDocument(d->doc));
 }
 
-iRect pageRect_DocumentView(const iDocumentView *d, size_t page) {
-    const int   perPage  = columnsPerPage_GmDocument(d->doc);
-    const iRect viewport = pageViewport_DocumentView(d);
-    return init_Rect(columnLeft_DocumentView(d, page * perPage), top_Rect(viewport),
-                     perPage * columnWidth_DocumentView_(d), height_Rect(viewport));
+iRangei columnSpan_DocumentView(const iDocumentView *d, size_t column) {
+    /* The column extends halfway to the adjacent columns of the spread. */
+    const int n     = numColumns_DocumentView(d);
+    const int width = size_GmDocument(d->doc).x;
+    const int left  = columnLeft_DocumentView(d, column);
+    iRangei   span  = { left, left + columnWidth_DocumentView_(d) };
+    if (column % n) {
+        span.start = (columnOrigin_DocumentView(d, column - 1).x + width +
+                      columnOrigin_DocumentView(d, column).x) / 2;
+    }
+    if ((column + 1) % n) {
+        span.end = (columnOrigin_DocumentView(d, column).x + width +
+                    columnOrigin_DocumentView(d, column + 1).x) / 2;
+    }
+    return span;
+}
+
+iRect pageTextRect_DocumentView(const iDocumentView *d, size_t page) {
+    const size_t first    = page * columnsPerPage_GmDocument(d->doc);
+    const size_t last     = first + columnsPerPage_GmDocument(d->doc) - 1;
+    const iRect  viewport = pageViewport_DocumentView(d);
+    const int    left     = columnOrigin_DocumentView(d, first).x;
+    const int    right    = columnOrigin_DocumentView(d, last).x + size_GmDocument(d->doc).x;
+    return init_Rect(left, top_Rect(viewport), right - left, height_Rect(viewport));
 }
 
 iInt2 pagedDocumentPos_DocumentView(const iDocumentView *d, iInt2 windowPos) {
-    const int colWidth = iMax(1, columnWidth_DocumentView_(d));
-    const int x        = windowPos.x - columnLeft_DocumentView(d, d->paged.column);
-    const int column   = iClamp(x < 0 ? -1 : x / colWidth, 0, numColumns_DocumentView(d) - 1);
-    return sub_I2(windowPos, columnOrigin_DocumentView(d, d->paged.column + column));
+    const int n      = numColumns_DocumentView(d);
+    size_t    column = d->paged.column;
+    while (column + 1 < d->paged.column + n &&
+           windowPos.x >= columnSpan_DocumentView(d, column).end) {
+        column++;
+    }
+    return sub_I2(windowPos, columnOrigin_DocumentView(d, column));
 }
 
 iRect pagedRunRect_DocumentView(const iDocumentView *d, const iGmRun *run) {

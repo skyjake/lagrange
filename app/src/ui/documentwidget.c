@@ -3312,7 +3312,8 @@ static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
     if (isShown) {
         const iRect   bounds   = bounds_Widget(as_Widget(d));
         const int     colWidth = metrics_GmDocument(view->doc)->canvasWidth;
-        const int     left     = columnLeft_DocumentView(view, lastCol) - left_Rect(bounds);
+        const int     left     = columnLeft_DocumentView(view, lastCol) +
+                             columnShift_DocumentView(view, lastCol) - left_Rect(bounds);
         const int     hPad     = (colWidth - iMin(120 * gap_UI, size_GmDocument(view->doc).x)) / 2;
         const iRangei content  = columnContentRange_GmDocument(view->doc, lastCol);
         setPadding_Widget(d->footerButtons,
