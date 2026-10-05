@@ -221,7 +221,7 @@ int columnShift_DocumentView(const iDocumentView *d, size_t column) {
             return (column % 4 == 1 ? -1 : column % 4 == 2 ? 1 : 0) * gap * amount;
         }
         else {
-            return (column % 2 == 0 ? -1 : 1) * gap * 0.1f; /* away from the crease */
+            return (column % 2 == 0 ? -1 : 1) * gap * 0.05f; /* away from the crease */
         }
     }
     /* On a single page, both move toward the center, leaving the same gap between them. */
