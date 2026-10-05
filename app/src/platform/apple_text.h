@@ -52,6 +52,7 @@ struct Impl_AppleTextRun {
     int             colorId;      /* base fg color ID; used for drawing */
     iColor          resolvedColor; /* actual RGBA at creation time; part of cache key */
     int             baseDir;      /* requested paragraph direction; 0: natural */
+    iChar           overrideChar; /* replaces all characters, if nonzero */
     iBool           isBaseRTL;    /* resolved paragraph direction */
     char           *text;         /* clean UTF-8 (escape-stripped); owned */
     size_t          textLen;
@@ -63,7 +64,7 @@ struct Impl_AppleTextRun {
 
 iDeclareTypeConstructionArgs(AppleTextRun,
     const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor, int baseDir,
-    iAppleText *tx)
+    iChar overrideChar, iAppleText *tx)
 
 /*----------------------------------------------------------------------------------------------*/
 

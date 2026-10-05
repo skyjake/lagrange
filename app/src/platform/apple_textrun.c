@@ -98,8 +98,8 @@ static CGColorRef cgColorFromColor_(const iColor c) {
 
 iDefineTypeConstructionArgs(AppleTextRun,
     (const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor,
-     int baseDir, iAppleText *tx),
-    rawText, rawLen, fontId, colorId, resolvedColor, baseDir, tx)
+     int baseDir, iChar overrideChar, iAppleText *tx),
+    rawText, rawLen, fontId, colorId, resolvedColor, baseDir, overrideChar, tx)
 
 static iBool prepare_AppleTextRun_(
     iAppleText                   *tx,
@@ -108,6 +108,7 @@ static iBool prepare_AppleTextRun_(
     int                           baseFontId,
     int                           baseColorId,
     int                           baseDir,
+    iChar                         overrideChar,
     char                        **clean_out,
     size_t                       *cleanLen_out,
     size_t                      **utf16ToSrc_out,
@@ -266,6 +267,9 @@ static iBool prepare_AppleTextRun_(
         if (nbytes <= 0) {
             p++; /* skip unrecognized byte */
             continue;
+        }
+        if (overrideChar) {
+            ch = overrideChar;
         }
         /* SF Symbol substitution: replace UI icon chars with inline images (U+FFFC placeholder).
            Only applies for UI-sized fonts; document fonts pass through unchanged. */
@@ -475,7 +479,7 @@ static iBool isNaturalRTL_(CTTypesetterRef typesetter) {
 
 void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
                        int fontId, int colorId, iColor resolvedColor, int baseDir,
-                       iAppleText *tx) {
+                       iChar overrideChar, iAppleText *tx) {
     iZap(*d);
     uint32_t colorPacked;
     memcpy(&colorPacked, &resolvedColor, 4);
@@ -487,6 +491,7 @@ void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
     d->colorId       = colorId;
     d->resolvedColor = resolvedColor;
     d->baseDir       = baseDir;
+    d->overrideChar  = overrideChar;
     CFMutableAttributedStringRef mAttrStr = NULL;
     if (!prepare_AppleTextRun_(tx,
                                rawText,
@@ -494,6 +499,7 @@ void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
                                fontId,
                                colorId,
                                baseDir,
+                               overrideChar,
                                &d->text,
                                &d->textLen,
                                &d->utf16ToSrc,

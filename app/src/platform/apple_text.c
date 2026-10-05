@@ -414,7 +414,7 @@ static void clearRunCache_AppleText_(iAppleText *d) {
 }
 
 static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int fontId,
-                                              int colorId, int baseDir) {
+                                              int colorId, int baseDir, iChar overrideChar) {
     /* Find or create a run cache entry for the given raw text, font, and base color.
        The resolved RGBA is part of the key so palette changes cause cache misses. */
     const size_t   rawLen        = (size_t) (text.end - text.start);
@@ -428,7 +428,7 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     for (int i = 0; i < maxRunCache_AppleText_; i++) {
         iAppleTextRun *r = d->runCache[i];
         if (r && r->hash == hash && r->fontId == fontId && r->baseDir == baseDir &&
-            equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen &&
+            r->overrideChar == overrideChar && equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen &&
             (r->colorId & permanent_ColorId) == (colorId & permanent_ColorId)) {
             r->lastUsed = ++d->runCacheSerial;
 #if !defined(NDEBUG)
@@ -471,8 +471,8 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     }
 #endif
     /* Create a new run. */
-    iAppleTextRun *r =
-        new_AppleTextRun(text.start, rawLen, fontId, colorId, resolvedColor, baseDir, d);
+    iAppleTextRun *r = new_AppleTextRun(
+        text.start, rawLen, fontId, colorId, resolvedColor, baseDir, overrideChar, d);
     if (r) {
         r->lastUsed          = ++d->runCacheSerial;
         d->runCache[lruSlot] = r;
@@ -637,7 +637,8 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         text,
         fontId,
         args->color | (args->mode & permanentColorFlag_RunMode ? permanent_ColorId : 0),
-        iSign(args->baseDir));
+        iSign(args->baseDir),
+        args->wrap ? args->wrap->overrideChar : 0);
     if (!run) {
         if (args->metrics_out) {
             args->metrics_out->bounds  = init_Rect(0, 0, 0, d->height);
