@@ -347,7 +347,7 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     iAssert(!isEmpty_String(&d->baseUrl));
     const iString *baseUrl = withSpacesEncoded_String(&d->baseUrl);
     iString *out = new_String();
-    format_String(out, "# %s\n",
+    format_String(out, "# %s\n\n",
                   cstr_String(&d->props[title_GempubProperty]));
     if (!isEmpty_String(&d->props[description_GempubProperty])) {
         appendFormat_String(out, "%s\n", cstr_String(&d->props[description_GempubProperty]));
