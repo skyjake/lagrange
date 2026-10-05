@@ -117,6 +117,7 @@ struct Impl_Window {
     unsigned int  frameCount;
     iClick        midDrag;      /* middle mouse button drag-to-scroll gesture */
     uint32_t      midDragTime;  /* timestamp of last scroll drag event */
+    uint32_t      mouseMotionTime; /* timestamp of last actual mouse movement */
     float         midDragAccum;
     iBool         midClickScroll; /* click-to-scroll active (button released) */
 };
@@ -171,6 +172,8 @@ void        invalidate_Window       (iAnyWindow *); /* discard all cached graphi
 void        draw_Window             (iWindow *);
 void        setUiScale_Window       (iWindow *, float uiScale);
 void        setCursor_Window        (iWindow *, int cursor);
+void        hideCursor_Window       (iBool hide); /* shown again by mouse movement */
+iBool       isCursorHidden_Window   (void);
 iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
 void        updateHover_Window      (iWindow *);

@@ -679,6 +679,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->frameCount    = 0;
     init_Click(&d->midDrag, NULL, SDL_BUTTON_MIDDLE);
     d->midDragTime   = 0;
+    d->mouseMotionTime = 0;
     d->midDragAccum  = 0.0f;
     d->midClickScroll = iFalse;
     iZap(d->roots);
@@ -1502,6 +1503,13 @@ static iBool handleMouse_Window_(iWindow *d, SDL_Event *event, iBool *wasUsed,
     }
     /* Map mouse pointer coordinate to our coordinate system. */
     if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        if (event->motion.xrel != 0 || event->motion.yrel != 0) {
+            d->mouseMotionTime = SDL_GetTicks();
+            if (isCursorHidden_Window()) {
+                hideCursor_Window(iFalse);
+                notify_App("window.mouse.active");
+            }
+        }
         setCursor_Window(d, SDL_SYSTEM_CURSOR_DEFAULT); /* default cursor */
         const iInt2 pos = coord_Window(d, event->motion.x, event->motion.y);
         event->motion.x = pos.x;
@@ -2087,6 +2095,27 @@ void setUiScale_Window(iWindow *d, float uiScale) {
 
 void setFreezeDraw_MainWindow(iMainWindow *d, iBool freezeDraw) {
     d->isDrawFrozen = freezeDraw;
+}
+
+void hideCursor_Window(iBool hide) {
+#if !defined (iPlatformTerminal)
+    if (hide) {
+        SDL_HideCursor();
+    }
+    else {
+        SDL_ShowCursor();
+    }
+#else
+    iUnused(hide);
+#endif
+}
+
+iBool isCursorHidden_Window(void) {
+#if !defined (iPlatformTerminal)
+    return !SDL_CursorVisible();
+#else
+    return iFalse;
+#endif
 }
 
 void setCursor_Window(iWindow *d, int cursor) {

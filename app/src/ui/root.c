@@ -228,6 +228,8 @@ static void     setupMovableElements_Root_  (iRoot *);
 static void     updateNavBarSize_           (iWidget *navBar);
 static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 static void     hideReadingBarsIfIdle_Root_ (iRoot *);
+static void     hideCursorIfIdle_Root_      (iRoot *);
+static void     startCursorIdleCheck_Root_  (iRoot *);
 static void     finishHidingReadingBars_Root_(void *);
 static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
 static void     updateReadingBarsOnTop_Root_(iRoot *);
@@ -492,6 +494,14 @@ static void updateTerminalStatus_(iLabelWidget *term) {
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     if (equal_Command(cmd, "root.reading")) {
         setReadingMode_Root(root->root, arg_Command(cmd) != 0);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "window.mouse.active") || equal_Command(cmd, "window.mouse.entered")) {
+        startCursorIdleCheck_Root_(root->root);
+        return iFalse;
+    }
+    if (equal_Command(cmd, "root.cursor.idle")) {
+        hideCursorIfIdle_Root_(root->root);
         return iTrue;
     }
     if (equal_Command(cmd, "menu.open")) {
@@ -2767,6 +2777,9 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
         if (readingBarsTimer_Root_(d)) {
             remove_Periodic(periodic_App(), readingBarsTimer_Root_(d));
         }
+        if (isCursorHidden_Window()) {
+            hideCursor_Window(iFalse);
+        }
     }
     d->isReading = reading;
     /* Hidden bars give their space to the document. */
@@ -2918,6 +2931,7 @@ void showReadingBars_Root(iRoot *d, iBool show) {
         }
         else {
             remove_Periodic(periodic_App(), timer);
+            startCursorIdleCheck_Root_(d);
         }
     }
     refresh_Widget(d->widget);
@@ -2925,6 +2939,20 @@ void showReadingBars_Root(iRoot *d, iBool show) {
 
 void toggleReadingBars_Root(iRoot *d) {
     showReadingBars_Root(d, d->areReadingBarsHidden);
+}
+
+static iBool isPopupOpen_Root_(const iRoot *d) {
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    const iWidget *searchBar = findChild_Widget(d->widget, "search");
+    iConstForEach(PtrArray, i, d->onTop) {
+        const iWidget *top = i.ptr;
+        if (top != navBar && top != tabBar && top != searchBar && isVisible_Widget(top)) {
+            return iTrue; /* a menu or popup */
+        }
+    }
+    /* Lookup results are open below the navbar. */
+    return isVisible_Widget(findChild_Widget(d->widget, "lookup"));
 }
 
 static void hideReadingBarsIfIdle_Root_(iRoot *d) {
@@ -2941,20 +2969,37 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
             return; /* in use; check again later */
         }
     }
-    const iWidget *searchBar = findChild_Widget(d->widget, "search");
-    iConstForEach(PtrArray, i, d->onTop) {
-        const iWidget *top = i.ptr;
-        if (top != navBar && top != tabBar && top != searchBar && isVisible_Widget(top)) {
-            return; /* a menu or popup is open */
-        }
-    }
-    if (isVisible_Widget(findChild_Widget(d->widget, "lookup"))) {
-        return; /* lookup results are open below the navbar */
+    if (isPopupOpen_Root_(d)) {
+        return;
     }
     if (mouseGrab_Widget()) {
         return; /* e.g., selecting text */
     }
     showReadingBars_Root(d, iFalse);
+}
+
+static const uint32_t cursorIdleCheckInterval_Root_ = 500;
+
+static void startCursorIdleCheck_Root_(iRoot *d) {
+    /* The mouse cursor is hidden along with the bars when the mouse is not moved. */
+    if (d->isReading && d->areReadingBarsHidden && !isMobile_Platform()) {
+        addDelay_Periodic(periodic_App(), cursorIdleCheckInterval_Root_, d->widget, "root.cursor.idle");
+    }
+}
+
+static void hideCursorIfIdle_Root_(iRoot *d) {
+    iWindow *win = window_Widget(d->widget);
+    if (!d->isReading || !d->areReadingBarsHidden || !win->isMouseInside || isCursorHidden_Window()) {
+        remove_Periodic(periodic_App(), d->widget);
+        return;
+    }
+    if (SDL_GetTicks() - win->mouseMotionTime < readingBarsDelay_Root_ ||
+        SDL_GetMouseState(NULL, NULL) || mouseGrab_Widget() || isPopupOpen_Root_(d) ||
+        !contains_Widget(d->widget, mouseCoord_Window(win, 0))) {
+        return; /* check again later */
+    }
+    hideCursor_Window(iTrue);
+    remove_Periodic(periodic_App(), d->widget);
 }
 
 iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *opacity_out) {
