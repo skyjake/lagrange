@@ -56,6 +56,7 @@ enum iFontId {
     uiLabelBigBold_FontId     = FONT_ID(default_FontId,   bold_FontStyle,     uiBig_FontSize),
     uiLabelLarge_FontId       = FONT_ID(default_FontId,   regular_FontStyle,  uiLarge_FontSize),
     uiLabelLargeBold_FontId   = FONT_ID(default_FontId,   bold_FontStyle,     uiLarge_FontSize),
+    uiLabelHuge_FontId        = FONT_ID(default_FontId,   regular_FontStyle,  uiHuge_FontSize),
     uiLabelSymbols_FontId     = FONT_ID(auxiliary_FontId, regular_FontStyle,  uiNormal_FontSize),
     uiShortcuts_FontId        = FONT_ID(default_FontId,   regular_FontStyle,  uiNormal_FontSize),
     uiInput_FontId            = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),

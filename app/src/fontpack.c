@@ -52,6 +52,7 @@ float scale_FontSize(enum iFontSize size) {
         1.666,
         0.800,
         0.900,
+        2.500,
         1.000, /* document sizes */
         1.200,
         1.333,

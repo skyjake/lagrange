@@ -247,7 +247,8 @@ void deinit_RasterText(iRasterText *d) {
 }
 
 int maxGlyphHeight_Text_(const iText *d) {
-    return 4 * d->contentFontSize * fontSize_UI; /* max is huge = 2x contentFontSize */
+    /* Content huge is 2x contentFontSize, but UI huge does not follow document zoom. */
+    return iMax(4 * d->contentFontSize, 2 * scale_FontSize(uiHuge_FontSize)) * fontSize_UI;
 }
 
 void initGrayscaleCache_RasterText_(iRasterText *d) {
