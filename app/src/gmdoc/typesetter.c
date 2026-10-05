@@ -1263,7 +1263,9 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d) {
                                                                                     : 1.0f);
                 }
             }
-            if (style->flags[type] & centered_DocumentStyleFlag) {
+            /* A level 2 heading that begins the page is a title, too. */
+            if (style->flags[type] & centered_DocumentStyleFlag ||
+                (d->isPaged && type == heading2_GmLineType && isEmpty_Array(&doc->layout))) {
                 iForEach(Array, hr, &rts.layout) {
                     iGmRun *hrun = hr.value;
                     hrun->visBounds.pos.x = (doc->size.x - width_Rect(hrun->visBounds)) / 2;
