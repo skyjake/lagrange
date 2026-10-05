@@ -424,13 +424,12 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
             }
         }
         iGmPageBands bands = { iNullRange, iNullRange, iNullRange };
-        if (page > 0 && !isChapterStart) {
-            if (!isEmpty_Range(&title)) {
-                bands.header = fitPageBandText_GmDocument_(d, title);
-            }
-            if (!isEmpty_Range(&bookTitle)) {
-                bands.bookHeader = fitPageBandText_GmDocument_(d, bookTitle);
-            }
+        if (page > 0 && !isChapterStart && !isEmpty_Range(&title)) {
+            bands.header = fitPageBandText_GmDocument_(d, title);
+        }
+        /* The book's title is shown also where the chapter title is. */
+        if (!isEmpty_Range(&bookTitle)) {
+            bands.bookHeader = fitPageBandText_GmDocument_(d, bookTitle);
         }
         bands.footer = fitPageBandText_GmDocument_(
             d,
