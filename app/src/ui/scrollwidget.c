@@ -58,6 +58,7 @@ struct Impl_ScrollWidget {
     iClick click;
     int startThumb;
     iAnim opacity;
+    iAnim progress; /* drawn amount in progress mode */
     iBool fadeEnabled;
     uint32_t fadeStart;
     iBool willCheckFade;
@@ -96,6 +97,7 @@ void init_ScrollWidget(iScrollWidget *d) {
     updateMetrics_ScrollWidget_(d);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Anim(&d->opacity, minOpacity_());
+    init_Anim(&d->progress, 0.0f);
     d->willCheckFade = iFalse;
     d->fadeEnabled = iTrue;
     d->isProgress = iFalse;
@@ -187,7 +189,15 @@ void setThumbColor_ScrollWidget(iScrollWidget *d, int thumbColor) {
     d->thumbColor = thumbColor;
 }
 
-void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
+static void animateProgress_ScrollWidget_(void *ptr) {
+    iScrollWidget *d = ptr;
+    if (!isFinished_Anim(&d->progress)) {
+        addTicker_App(animateProgress_ScrollWidget_, ptr);
+    }
+    refresh_Widget(ptr);
+}
+
+void setThumbAnimated_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize, uint32_t span) {
     const int oldThumb = d->thumb;
     d->thumb     = thumb;
     d->thumbSize = thumbSize;
@@ -195,6 +205,21 @@ void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
     if (oldThumb != d->thumb && thumbSize) {
         unfade_ScrollWidget_(d, 1.0f);
     }
+    if (!d->isProgress) {
+        return; /* the progress is kept for animating from it */
+    }
+    const float progress = progress_ScrollWidget_(d);
+    if (span) {
+        setValue_Anim(&d->progress, progress, span);
+        animateProgress_ScrollWidget_(d);
+    }
+    else if (progress != targetValue_Anim(&d->progress)) {
+        init_Anim(&d->progress, progress);
+    }
+}
+
+void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
+    setThumbAnimated_ScrollWidget(d, thumb, thumbSize, 0);
 }
 
 void setProgressMode_ScrollWidget(iScrollWidget *d, iBool progressMode) {
@@ -241,6 +266,7 @@ static iBool processProgressEvent_ScrollWidget_(iScrollWidget *d, const SDL_Even
         setFlags_Widget(w, pressed_WidgetFlag, iTrue);
         if (thumb != d->thumb) {
             d->thumb = thumb;
+            init_Anim(&d->progress, progress_ScrollWidget_(d));
             postCommand_Widget(w, "scroll.moved arg:%d", d->thumb);
         }
         refresh_Widget(w);
@@ -277,7 +303,7 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
     fillRect_Paint(&p, track, backing);
     fillRect_Paint(&p,
                    init_Rect(left_Rect(track), top_Rect(track),
-                             width_Rect(track) * progress_ScrollWidget_(d), height),
+                             width_Rect(track) * value_Anim(&d->progress), height),
                    bar);
 }
 

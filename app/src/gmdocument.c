@@ -638,6 +638,13 @@ iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
     return iTrue;
 }
 
+int chapter_GmDocument(const iGmDocument *d, int *numChapters_out) {
+    if (numChapters_out) {
+        *numChapters_out = d->numChapters;
+    }
+    return d->chapter;
+}
+
 iRangecc pageHeader_GmDocument(const iGmDocument *d, size_t page, iBool isLeftPage) {
     if (page >= size_Array(&d->pageBands)) {
         return iNullRange;

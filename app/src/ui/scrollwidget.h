@@ -31,6 +31,7 @@ iDeclareObjectConstruction(ScrollWidget)
 void    setRange_ScrollWidget       (iScrollWidget *, iRangei range);
 void    setThumbColor_ScrollWidget  (iScrollWidget *, int thumbColor);
 void    setThumb_ScrollWidget       (iScrollWidget *, int thumb, int thumbSize);
+void    setThumbAnimated_ScrollWidget(iScrollWidget *, int thumb, int thumbSize, uint32_t span); /* progress mode */
 
 void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);
 

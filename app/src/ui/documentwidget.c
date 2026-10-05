@@ -176,6 +176,9 @@ struct Impl_DocumentWidget {
     iString *      titleUser;
     float          initNormScrollY;
     enum iLinkUpdateFlags pendingLinkUpdates;
+    size_t         pendingChapter;    /* being opened via the progress bar */
+    size_t         progressChapter;   /* shown in the progress bar */
+    float          pendingChapterPos; /* where the visible pages end; negative if none */
 
     /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
@@ -845,6 +848,18 @@ static const iString *adjacentChapterUrl_DocumentWidget_(const iDocumentWidget *
                       : navLinkUrl_Gempub(gempub, pos - 2);
 }
 
+static size_t bookChapter_DocumentWidget_(const iDocumentWidget *d, size_t *numChapters_out) {
+    /* Index of the shown chapter in the book's navigation links. */
+    const iGempub *gempub = d->fetch->sourceGempub;
+    int            numChapters;
+    const int      chapter = chapter_GmDocument(d->view->doc, &numChapters);
+    if (!gempub || isRemote_Gempub(gempub) || chapter <= 0) {
+        return iInvalidPos;
+    }
+    *numChapters_out = numChapters;
+    return chapter - 1;
+}
+
 static iBool openAdjacentChapter_DocumentWidget_(iDocumentWidget *d, int dir, iBool isGesture) {
     /* Turning past the first or last page continues in the previous or next chapter. The
        current view slides away like in a history swipe. A gesture moves the views itself. */
@@ -1075,6 +1090,9 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     d->fetch->state = ready_RequestState;
     postProcessContent_DocumentFetch(d->fetch, iTrue);
     resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
+    if (isPaged_DocumentView(d->view)) {
+        pagesMoved_DocumentWidget(d);
+    }
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->flags &= ~(urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag |
                   unseen_DocumentWidgetFlag);
@@ -1363,6 +1381,47 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page, for turns */
+static const int bookProgressUnit_DocumentWidget_ = 10000; /* fractions of a chapter */
+
+static int bookProgressThumbSize_DocumentWidget_(const iDocumentWidget *d) {
+    return bookProgressUnit_DocumentWidget_ * numColumns_DocumentView(d->view) /
+           (int) numColumns_GmDocument(d->view->doc);
+}
+
+static size_t columnEndingAt_DocumentWidget_(const iDocumentWidget *d, float pos) {
+    /* The spread that ends at a position in the document (0...1). */
+    const int numCols = (int) numColumns_GmDocument(d->view->doc);
+    const int column  = (int) ceilf(pos * numCols) - numColumns_DocumentView(d->view);
+    return (size_t) iClamp(column, 0, numCols - 1);
+}
+
+static iBool moveInBook_DocumentWidget_(iDocumentWidget *d, int thumb) {
+    /* The progress bar of a book's chapter spans the whole book, so it may be dragged to
+       another chapter. The opened chapter shows the pages at the dragged position. */
+    size_t       numChapters;
+    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
+    if (chapter == iInvalidPos || numChapters == 0) {
+        return iFalse;
+    }
+    const int unit   = bookProgressUnit_DocumentWidget_;
+    const int end    = thumb + bookProgressThumbSize_DocumentWidget_(d); /* follows the mouse */
+    const int target = iClamp((end + unit - 1) / unit - 1, 0, (int) numChapters - 1);
+    const float pos  = iClamp((float) (end - target * unit) / unit, 0.0f, 1.0f);
+    const iBool isPending = d->pendingChapterPos >= 0.0f;
+    if (isPending || (size_t) target != chapter) {
+        if ((size_t) target != (isPending ? d->pendingChapter : chapter)) {
+            d->pendingChapter = target;
+            d->flags |= readingOn_DocumentWidgetFlag;
+            postCommandf_Root(as_Widget(d)->root,
+                              "open url:%s",
+                              cstr_String(navLinkUrl_Gempub(d->fetch->sourceGempub, target)));
+        }
+        d->pendingChapterPos = pos;
+        return iTrue;
+    }
+    showColumn_DocumentView(d->view, columnEndingAt_DocumentWidget_(d, pos), iFalse);
+    return iTrue;
+}
 
 static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
     /* Swiping past the first or last page follows the scrolling mode settings. The first
@@ -1908,12 +1967,26 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->fetch->state = ready_RequestState;
         postProcessContent_DocumentFetch(d->fetch, iFalse);
         d->flags &= ~readingOn_DocumentWidgetFlag;
+        if (d->pendingChapterPos >= 0.0f) {
+            /* Arrived via the progress bar. */
+            size_t numChapters;
+            if (bookChapter_DocumentWidget_(d, &numChapters) == d->pendingChapter) {
+                if (isPaged_DocumentView(d->view)) {
+                    showColumn_DocumentView(
+                        d->view, columnEndingAt_DocumentWidget_(d, d->pendingChapterPos), iFalse);
+                }
+                d->pendingChapterPos = -1.0f;
+            }
+        }
         if (d->flags & showLastPage_DocumentWidgetFlag) {
             /* Going backward from the next chapter. */
             d->flags &= ~showLastPage_DocumentWidgetFlag;
             if (isPaged_DocumentView(d->view)) {
                 showColumn_DocumentView(d->view, numColumns_GmDocument(d->view->doc) - 1, iFalse);
             }
+        }
+        if (isPaged_DocumentView(d->view)) {
+            pagesMoved_DocumentWidget(d);
         }
         if (d->flags & animateChapterSwipe_DocumentWidgetFlag) {
             /* The new chapter has arrived, so the views can slide. */
@@ -2278,6 +2351,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         /* There is nothing more to turn to, so offer the navigation controls. */
         showReadingBars_Root(w->root, iTrue);
         return iFalse;
+    }
+    else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view) &&
+             moveInBook_DocumentWidget_(d, arg_Command(cmd))) {
+        return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
         showColumn_DocumentView(d->view,
@@ -3566,6 +3643,29 @@ static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
 void pagesMoved_DocumentWidget(iDocumentWidget *d) {
     /* The footer buttons and the progress bar follow page turns. */
     positionPagedFooterButtons_DocumentWidget_(d);
+    if (d->fetch->state == fetching_RequestState ||
+        d->fetch->state == receivedPartialResponse_RequestState) {
+        return; /* the progress continues from where it was when the new page is ready */
+    }
+    size_t       numChapters;
+    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
+    if (chapter != iInvalidPos) {
+        /* Each chapter is an equal part of a book's progress. The bar moves to another
+           chapter like the pages slide in, unless it is being dragged. */
+        const int   unit       = bookProgressUnit_DocumentWidget_;
+        const iBool isAnimated = d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
+                                 ~flags_Widget(as_Widget(d->scroll)) & pressed_WidgetFlag;
+        d->progressChapter = chapter;
+        setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numChapters * unit });
+        setThumbAnimated_ScrollWidget(d->scroll,
+                                      (int) chapter * unit +
+                                          (int) (columnPosition_DocumentView(d->view) * unit /
+                                                 numColumns_GmDocument(d->view->doc)),
+                                      bookProgressThumbSize_DocumentWidget_(d),
+                                      isAnimated ? 250 : 0);
+        return;
+    }
+    d->progressChapter = iInvalidPos;
     const int unit = pageProgressUnit_DocumentWidget_;
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numColumns_GmDocument(d->view->doc) * unit });
     setThumb_ScrollWidget(d->scroll,
@@ -3896,6 +3996,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->foundMark          = iNullRange;
     d->contextLink        = NULL;
     d->initNormScrollY    = 0;
+    d->pendingChapter     = iInvalidPos;
+    d->progressChapter    = iInvalidPos;
+    d->pendingChapterPos  = -1.0f;
     d->pendingLinkUpdates = 0;
     setOwner_Banner(d->banner, d);
     init_String(&d->pendingGotoHeading);
