@@ -745,6 +745,46 @@ void updateTheme_DocumentWidget(iDocumentWidget *d) {
     updateBanner_DocumentWidget(d);
 }
 
+static iInt2 linePos_DocumentWidget_(const iString *text, size_t offset, int *numLines_out) {
+    /* Column (x) and line (y) of a byte offset; also counts the lines up to the end. */
+    iInt2       pos   = zero_I2();
+    const char *start = cstr_String(text);
+    const char *end   = constEnd_String(text);
+    const char *at    = start + iMin(offset, size_String(text));
+    const char *line  = start;
+    int         count = 0;
+    for (const char *ch = start; ch < end; ch++) {
+        if (*ch == '\n') {
+            if (ch < at) {
+                pos.y++;
+                line = ch + 1;
+            }
+            count++;
+        }
+    }
+    pos.x = (int) (at - line);
+    if (numLines_out) {
+        *numLines_out = count;
+    }
+    return pos;
+}
+
+static size_t sourceOffset_DocumentWidget_(const iString *text, iInt2 linePos) {
+    const char *start = cstr_String(text);
+    const char *end   = constEnd_String(text);
+    const char *ch    = start;
+    for (int line = 0; line < linePos.y && ch < end; ch++) {
+        if (*ch == '\n') {
+            line++;
+        }
+    }
+    const char *eol = ch;
+    while (eol < end && *eol != '\n') {
+        eol++;
+    }
+    return iMin(ch + linePos.x, eol) - start;
+}
+
 static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
     /* When paginated, the banner is only on the first page. */
     return !isPaged_DocumentView(d->view) || visibleColumns_DocumentView(d->view).start == 0;
@@ -2480,10 +2520,31 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                   ? arg_Command(cmd) != 0 /* set to value */
                                   : (d->flags & viewSource_DocumentWidgetFlag) != 0; /* toggle */
         iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
+        /* The source text changes, so the reading position is kept by line. */
+        const size_t anchor    = isPaged_DocumentView(d->view) ? anchor_DocumentView(d->view)
+                                                               : iInvalidPos;
+        iInt2        anchorPos = zero_I2();
+        int          numLines  = 0;
+        if (anchor != iInvalidPos) {
+            anchorPos = linePos_DocumentWidget_(source_GmDocument(d->view->doc), anchor, &numLines);
+        }
         if (setViewFormat_GmDocument(
                 d->view->doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
             documentRunsInvalidated_DocumentWidget(d);
-            updateWidthAndRedoLayout_DocumentWidget_(d);
+            if (anchor != iInvalidPos) {
+                const iString *source = source_GmDocument(d->view->doc);
+                int            newLines;
+                linePos_DocumentWidget_(source, size_String(source), &newLines);
+                if (newLines != numLines) {
+                    /* Converted, so lines do not match. */
+                    anchorPos = init_I2(anchorPos.y * newLines / iMax(1, numLines), 0);
+                }
+                setAnchor_DocumentView(d->view, sourceOffset_DocumentWidget_(source, anchorPos));
+                updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, iTrue);
+            }
+            else {
+                updateWidthAndRedoLayout_DocumentWidget_(d);
+            }
             updateSize_DocumentWidget(d);
         }
         return iTrue;

@@ -878,11 +878,7 @@ static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
     const iString *source = source_GmDocument(d->doc);
     /* The reading position stays the same until the user turns the page. Otherwise, each
        relayout would move it to the beginning of a spread. */
-    size_t anchor = d->paged.anchor;
-    if (anchor == iInvalidPos && runLoc && runLoc >= cstr_String(source) &&
-        runLoc < constEnd_String(source)) {
-        anchor = runLoc - cstr_String(source);
-    }
+    const size_t anchor = anchor_DocumentView(d);
     setMetrics_GmDocument(d->doc, &metrics);
     documentRunsInvalidated_DocumentWidget(d->owner);
     resetPage_DocumentView(d);

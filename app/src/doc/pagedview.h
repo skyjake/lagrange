@@ -49,6 +49,8 @@ iInt2   pagedDocumentPos_DocumentView   (const iDocumentView *, iInt2 windowPos)
 iRect   pagedRunRect_DocumentView       (const iDocumentView *, const iGmRun *run);
 void    allocPagedVisBuffer_DocumentView(const iDocumentView *);
 
+size_t  anchor_DocumentView             (const iDocumentView *); /* source offset of the reading position */
+void    setAnchor_DocumentView          (iDocumentView *, size_t sourceOffset); /* for the next relayout */
 void    resetPage_DocumentView          (iDocumentView *);
 void    animatePageTurn_DocumentView    (iAny *); /* ticker */
 void    showColumn_DocumentView         (iDocumentView *, size_t column, iBool isAnimated); /* animated if adjacent */

@@ -193,7 +193,8 @@ int columnShift_DocumentView(const iDocumentView *d, size_t column) {
     if (numPages_DocumentView(d) == 2) {
         /* On facing pages, the columns next to the crease are moved away from it, halfway
            toward the adjacent column. */
-        return column % 4 == 1 ? -gap / 2 : column % 4 == 2 ? gap / 2 : 0;
+        const float amount = 0.66f;
+        return (column % 4 == 1 ? -1 : column % 4 == 2 ? 1 : 0) * gap * amount;
     }
     /* On a single page, both move toward the center, leaving the same gap between them. */
     return column % 2 == 0 ? gap / 4 : -gap / 4;
@@ -261,6 +262,23 @@ void allocPagedVisBuffer_DocumentView(const iDocumentView *d) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
+
+size_t anchor_DocumentView(const iDocumentView *d) {
+    if (d->paged.anchor != iInvalidPos) {
+        return d->paged.anchor;
+    }
+    /* The first text of the spread. */
+    const iString *source = source_GmDocument(d->doc);
+    const char    *loc    = d->visibleRuns.start ? d->visibleRuns.start->text.start : NULL;
+    if (loc && loc >= cstr_String(source) && loc < constEnd_String(source)) {
+        return loc - cstr_String(source);
+    }
+    return iInvalidPos;
+}
+
+void setAnchor_DocumentView(iDocumentView *d, size_t sourceOffset) {
+    d->paged.anchor = sourceOffset;
+}
 
 void resetPage_DocumentView(iDocumentView *d) {
     removeTicker_App(animatePageTurn_DocumentView, d);
