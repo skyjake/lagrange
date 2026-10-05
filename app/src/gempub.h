@@ -71,6 +71,7 @@ size_t          navSize_Gempub          (const iGempub *);
 size_t          navIndex_Gempub         (const iGempub *, const iString *url);
 const iString * navLinkUrl_Gempub       (const iGempub *, size_t index);
 const iString * navLinkLabel_Gempub     (const iGempub *, size_t index);
+const iString * chapterTitle_Gempub     (const iGempub *, size_t navIndex); /* level 1 heading in effect where the page begins */
 
 void        setup_Gempub            (void); /* one-time setup at launch */
 

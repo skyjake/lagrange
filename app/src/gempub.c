@@ -328,6 +328,49 @@ const iString *navLinkLabel_Gempub(const iGempub *d, size_t index) {
     return NULL;
 }
 
+static const iBlock *archiveData_Gempub_(const iGempub *d, const iString *url) {
+    const iString *path   = collect_String(urlDecodeExclude_String(url, "/:"));
+    const iString *prefix = collectNewFormat_String("%s/", cstr_String(&d->baseUrl));
+    if (!d->arch || !startsWith_String(path, cstr_String(prefix))) {
+        return NULL;
+    }
+    return dataCStr_Archive(d->arch, cstr_String(path) + size_String(prefix));
+}
+
+static iRangecc lastHeading1_(iRangecc source) {
+    iRangecc heading = iNullRange;
+    iRangecc line    = iNullRange;
+    iBool    isPre   = iFalse;
+    while (nextSplit_Rangecc(source, "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+        }
+        else if (!isPre && startsWith_Rangecc(line, "#") && !startsWith_Rangecc(line, "##")) {
+            iRangecc text = { line.start + 1, line.end };
+            trim_Rangecc(&text);
+            if (!isEmpty_Range(&text)) {
+                heading = text;
+            }
+        }
+    }
+    return heading;
+}
+
+const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
+    /* The last level 1 heading on the preceding pages. */
+    parseNavigationLinks_Gempub_(d);
+    for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
+        const iBlock *data = archiveData_Gempub_(d, navLinkUrl_Gempub(d, i));
+        if (data) {
+            const iRangecc heading = lastHeading1_(range_Block(data));
+            if (!isEmpty_Range(&heading)) {
+                return collectNewRange_String(heading);
+            }
+        }
+    }
+    return collectNew_String();
+}
+
 static iBool hasProperty_Gempub_(const iGempub *d, enum iGempubProperty prop) {
     return !isEmpty_String(&d->props[prop]);
 }

@@ -395,7 +395,7 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     const int    pageSpan = columnsPerPage_GmDocument(d) * d->metrics.pageHeight;
     /* Headers show the last level 1 heading on or before the page, except on the first page
        and on a page that begins with one. */
-    iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
+    iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
     const iRangecc bookTitle =
         auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
     size_t   runPos = 0;

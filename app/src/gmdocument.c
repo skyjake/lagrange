@@ -434,6 +434,7 @@ void init_GmDocument(iGmDocument *d) {
     init_PtrArray(&d->links);
     init_String(&d->title);
     init_String(&d->bookTitle);
+    init_String(&d->chapterTitle);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_Array(&d->pageBands, sizeof(iGmPageBands));
     d->chapter     = 0;
@@ -460,6 +461,7 @@ void init_GmDocument(iGmDocument *d) {
 void deinit_GmDocument(iGmDocument *d) {
     iReleasePtr(&d->openURLs);
     delete_Media(d->media);
+    deinit_String(&d->chapterTitle);
     deinit_String(&d->bookTitle);
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
@@ -622,12 +624,14 @@ size_t numPages_GmDocument(const iGmDocument *d) {
     return iMax(1, numColumns_GmDocument(d) / columnsPerPage_GmDocument(d));
 }
 
-iBool setBook_GmDocument(iGmDocument *d, const iString *bookTitle, int chapter, int numChapters) {
-    if (equal_String(&d->bookTitle, bookTitle) && d->chapter == chapter &&
-        d->numChapters == numChapters) {
+iBool setBook_GmDocument(iGmDocument *d, const iString *bookTitle, const iString *chapterTitle,
+                         int chapter, int numChapters) {
+    if (equal_String(&d->bookTitle, bookTitle) && equal_String(&d->chapterTitle, chapterTitle) &&
+        d->chapter == chapter && d->numChapters == numChapters) {
         return iFalse;
     }
     set_String(&d->bookTitle, bookTitle);
+    set_String(&d->chapterTitle, chapterTitle);
     d->chapter     = chapter;
     d->numChapters = numChapters;
     return iTrue;
