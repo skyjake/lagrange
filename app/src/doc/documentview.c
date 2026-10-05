@@ -2137,21 +2137,20 @@ static void drawSpreads_DocumentView_(const iDocumentView *d, iDrawContext *ctx,
     }
 }
 
-static void drawCurl_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iRect area) {
+static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
+                                   iDrawContext *laterCtx, iRangei later, float t, iRect area) {
     /* The last page of the earlier spread slides left over the later spread, its left side
-       curling under until nothing is left. */
-    iPaint       *p        = &ctx->paint;
-    const int     n        = numColumns_DocumentView(d);
-    const int     first    = (int) iMin(d->paged.column, d->paged.turnFrom);
-    const iRangei earlier  = { first, first + n };
-    const iRangei later    = { first + n, first + 2 * n };
-    const float   t        = curlProgress_DocumentView(d);
-    const int     left     = columnLeft_DocumentView(d, first);
+       curling under until nothing is left. The spreads may be in different views. */
+    const iDocumentView *d = earlierCtx->view;
+    iPaint       *p        = &earlierCtx->paint;
+    const int     left     = columnLeft_DocumentView(d, earlier.start);
     const int     right    = left + spreadWidth_DocumentView(d);
-    const int     pageLeft = columnLeft_DocumentView(d, first + n - columnsPerPage_GmDocument(d->doc));
+    const int     pageLeft = columnLeft_DocumentView(
+        d, earlier.start + numColumns_DocumentView(d) - columnsPerPage_GmDocument(d->doc));
     const int     shift    = (int) (t * (right - left));
     const iRangei strip    = { pageLeft - (int) (t * (pageLeft - left)), right - shift };
     /* Shadows fade in as the curl begins and out as the page disappears. */
+    makePaletteGlobal_GmDocument(d->doc);
     iBool         isDarkPage;
     const iColor  shade    = pageShade_DocumentView_(d, &isDarkPage);
     const int     maxAlpha = isDarkPage ? 180 : 220;
@@ -2159,7 +2158,7 @@ static void drawCurl_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iR
     if (strip.start > left_Rect(area)) {
         setClip_Paint(p, init_Rect(left_Rect(area), top_Rect(area),
                                    strip.start - left_Rect(area), height_Rect(area)));
-        drawSpreads_DocumentView_(d, ctx, area, earlier);
+        drawSpreads_DocumentView_(d, earlierCtx, area, earlier);
         /* The curling edge shadows the page it is advancing over. */
         drawFalloffShadow_Paint(p,
                                 strip.start,
@@ -2172,7 +2171,9 @@ static void drawCurl_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iR
     if (strip.end < right_Rect(area)) {
         setClip_Paint(p, init_Rect(strip.end, top_Rect(area),
                                    right_Rect(area) - strip.end, height_Rect(area)));
-        drawSpreads_DocumentView_(d, ctx, area, later);
+        makePaletteGlobal_GmDocument(laterCtx->view->doc);
+        drawSpreads_DocumentView_(laterCtx->view, laterCtx, area, later);
+        makePaletteGlobal_GmDocument(d->doc);
         /* The curling page casts a shadow on the revealed spread. */
         drawSoftEdge_Paint(p,
                            strip.end,
@@ -2187,7 +2188,7 @@ static void drawCurl_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iR
     }
     setClip_Paint(p, init_Rect(strip.start, top_Rect(area), size_Range(&strip), height_Rect(area)));
     origin_Paint.x -= shift;
-    drawSpreads_DocumentView_(d, ctx, area, earlier);
+    drawSpreads_DocumentView_(d, earlierCtx, area, earlier);
     origin_Paint.x += shift;
     /* The page darkens toward the curl. */
     drawFalloffShadow_Paint(p,
@@ -2208,7 +2209,11 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     iAssert(isEqual_I2(origin_Paint, zero_I2()));
     origin_Paint = init_I2(horizOffset, 0);
     if (isCurling_DocumentView(d)) {
-        drawCurl_DocumentView_(d, ctx, area);
+        const int first = (int) iMin(d->paged.column, d->paged.turnFrom);
+        const int n     = numColumns_DocumentView(d);
+        drawCurl_DocumentView_(ctx, (iRangei){ first, first + n },
+                               ctx, (iRangei){ first + n, first + 2 * n },
+                               curlProgress_DocumentView(d), area);
     }
     else {
         drawSpreads_DocumentView_(d, ctx, area, visibleColumns_DocumentView(d));
@@ -2220,10 +2225,7 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     }
 }
 
-void draw_DocumentView(const iDocumentView *d, int horizOffset) {
-    const iWidget *w          = constAs_Widget(d->owner);
-    const iRect    bounds     = bounds_Widget(w);
-    const iRect    clipBounds = bounds;
+static void beginDraw_DocumentView_(const iDocumentView *d, iDrawContext *ctx) {
     /* Each document has its own palette, but the drawing routines rely on a global one.
        As we're now drawing a document, ensure that the right palette is in effect.
        Document theme colors can be used elsewhere, too, but first a document's palette
@@ -2235,23 +2237,53 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     if (d->drawBufs->flags & updateSideBuf_DrawBufsFlag) {
         updateSideIconBuf_DocumentView_(d);
     }
-    const iRect   docBounds = documentBounds_DocumentView(d);
-    const iRangei vis       = visibleRange_DocumentView(d);
-    iDrawContext  ctx       = { .widgetFullWidth = width_Rect(bounds),
-                                .view            = d,
-                                .docBounds       = docBounds,
-                                .vis             = vis,
-                                .showLinkNumbers = hostIsShowingLinkNumbers_DocumentView_(d),
-                                .drawDir         = +1,
-                              };
-    init_Paint(&ctx.paint);
+    *ctx = (iDrawContext){ .widgetFullWidth = width_Rect(bounds_Widget(constAs_Widget(d->owner))),
+                           .view            = d,
+                           .docBounds       = documentBounds_DocumentView(d),
+                           .vis             = visibleRange_DocumentView(d),
+                           .showLinkNumbers = hostIsShowingLinkNumbers_DocumentView_(d),
+                           .drawDir         = +1,
+                         };
+    init_Paint(&ctx->paint);
     if (isPaged_DocumentView(d)) {
-        ctx.widgetFullWidth = metrics_GmDocument(d->doc)->canvasWidth;
-        render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
+        ctx->widgetFullWidth = metrics_GmDocument(d->doc)->canvasWidth;
+    }
+    render_DocumentView_(d, ctx, iFalse /* just the mandatory parts */);
+}
+
+void drawCurlBetween_DocumentView(const iDocumentView *earlier, const iDocumentView *later,
+                                  float progress) {
+    iAssert(isPaged_DocumentView(earlier) && isPaged_DocumentView(later));
+    iDrawContext laterCtx, earlierCtx;
+    beginDraw_DocumentView_(later, &laterCtx);
+    beginDraw_DocumentView_(earlier, &earlierCtx);
+    const iRect area = union_Rect(bounds_Widget(constAs_Widget(earlier->owner)),
+                                  pageViewport_DocumentView(earlier));
+    iAssert(isEqual_I2(origin_Paint, zero_I2()));
+    setClip_Paint(&earlierCtx.paint, area);
+    const int earlierCol = (int) currentColumn_DocumentView(earlier);
+    const int laterCol   = (int) currentColumn_DocumentView(later);
+    drawCurl_DocumentView_(&earlierCtx,
+                           (iRangei){ earlierCol, earlierCol + numColumns_DocumentView(earlier) },
+                           &laterCtx,
+                           (iRangei){ laterCol, laterCol + numColumns_DocumentView(later) },
+                           iClamp(progress, 0.0f, 1.0f),
+                           area);
+    unsetClip_Paint(&earlierCtx.paint);
+}
+
+void draw_DocumentView(const iDocumentView *d, int horizOffset) {
+    const iWidget *w          = constAs_Widget(d->owner);
+    const iRect    bounds     = bounds_Widget(w);
+    const iRect    clipBounds = bounds;
+    iDrawContext   ctx;
+    beginDraw_DocumentView_(d, &ctx);
+    if (isPaged_DocumentView(d)) {
         drawPaged_DocumentView_(d, &ctx, horizOffset);
         return;
     }
-    render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
+    const iRect   docBounds = ctx.docBounds;
+    const iRangei vis       = ctx.vis;
     iBanner    *banner           = d->banner;
     int         yTop             = docBounds.pos.y + viewPos_DocumentView(d);
     const iBool isDocEmpty       = size_GmDocument(d->doc).y == 0;

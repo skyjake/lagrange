@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_timer.h>
 #include <math.h>
 
-static uint32_t turnDuration_PagedView_(void) {
+uint32_t pageTurnDuration_DocumentView(void) {
     return prefs_App()->pageTurn == curl_PageTurnAnimation ? 400 : 250;
 }
 
@@ -386,7 +386,7 @@ void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) 
         /* The old spread slides out as the new one slides in. */
         d->paged.turnFrom = d->paged.column;
         init_Anim(&d->paged.turnOffset, spreads * spreadStride_DocumentView_(d));
-        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_());
+        setValueEased_Anim(&d->paged.turnOffset, 0, pageTurnDuration_DocumentView());
         addTicker_App(animatePageTurn_DocumentView, d);
     }
     else {
@@ -483,14 +483,13 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     refresh_Widget(d->owner);
 }
 
-static void finishDrag_DocumentView_(iDocumentView *d, float to, iBool followGesture) {
+void finishPageTurn_Anim(iAnim *anim, float to, float gestureSpeed, uint32_t lastMoveTime) {
     /* The turn starts at least as fast as the gesture, but no slower than usual. */
-    iAnim         *anim      = &d->paged.turnOffset;
     const float    remaining = to - value_Anim(anim);
-    const uint32_t maxSpan   = turnDuration_PagedView_();
+    const uint32_t maxSpan   = pageTurnDuration_DocumentView();
     uint32_t       span      = maxSpan;
-    if (followGesture && SDL_GetTicks() - d->paged.dragTime < 100) {
-        const float speed = d->paged.dragSpeed * (remaining < 0 ? -1 : 1);
+    if (SDL_GetTicks() - lastMoveTime < 100) {
+        const float speed = gestureSpeed * (remaining < 0 ? -1 : 1);
         if (speed > 0) {
             /* Ease out starts at twice the average speed. */
             span = iClamp(2000.0f * fabsf(remaining) / speed, 1, maxSpan);
@@ -499,6 +498,11 @@ static void finishDrag_DocumentView_(iDocumentView *d, float to, iBool followGes
     setFlags_Anim(anim, easeBoth_AnimFlag, iFalse);
     setFlags_Anim(anim, easeOut_AnimFlag, iTrue);
     setValue_Anim(anim, to, span);
+}
+
+static void finishDrag_DocumentView_(iDocumentView *d, float to, iBool followGesture) {
+    finishPageTurn_Anim(
+        &d->paged.turnOffset, to, followGesture ? d->paged.dragSpeed : 0.0f, d->paged.dragTime);
 }
 
 void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {

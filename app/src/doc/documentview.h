@@ -180,3 +180,4 @@ int     hostPhoneBarsHeight_DocumentView    (const iDocumentView *); /* toolbar 
 void    hostPagesMoved_DocumentView         (iDocumentView *);
 void    prerender_DocumentView          (iAny *); /* ticker */
 void    draw_DocumentView               (const iDocumentView *, int horizOffset);
+void    drawCurlBetween_DocumentView    (const iDocumentView *earlier, const iDocumentView *later, float progress); /* both paged */

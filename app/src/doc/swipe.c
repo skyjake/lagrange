@@ -81,6 +81,7 @@ void init_DocumentSwipe(iDocumentSwipe *d) {
     d->pinchZoomPosted  = 0;
     d->speed            = 0.0f;
     d->lastTime         = 0;
+    d->curlSpeed        = 0.0f;
     d->wheelDistance    = 0;
     d->wheelState       = none_WheelSwipeState;
     init_Anim(&d->offset, 0);
@@ -117,7 +118,8 @@ void reset_DocumentSwipe(iDocumentSwipe *d) {
     setValue_Anim(&d->offset, 0, 0);
     iChangeFlags(d->flags,
                  viewOverlay_DocumentSwipeFlag | aborted_DocumentSwipeFlag |
-                     deferredFinish_DocumentSwipeFlag | rubberband_DocumentSwipeFlag,
+                     deferredFinish_DocumentSwipeFlag | rubberband_DocumentSwipeFlag |
+                     pageCurl_DocumentSwipeFlag,
                  iFalse);
     /* Final positioning. */
     repositionInlinePrompts_DocumentWidget(d->owner, ownerView_(d));
@@ -232,6 +234,15 @@ iBool handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
     return iFalse;
 }
 
+static iBool finishCurl_DocumentSwipe_(iDocumentSwipe *d, int to) {
+    /* A page curl finishes like a page turn. */
+    if (d->flags & pageCurl_DocumentSwipeFlag) {
+        finishPageTurn_Anim(&d->offset, to, d->curlSpeed, d->lastTime);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
     iWidget *w = as_Widget(d->owner);
     if (!prefs_App()->edgeSwipe &&
@@ -274,6 +285,16 @@ iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
             if (!isSwipingBack_DocumentSwipe(d)) {
                 offset = width_Widget(w) + offset;
             }
+            if (d->flags & pageCurl_DocumentSwipeFlag) {
+                const uint32_t now = SDL_GetTicks();
+                const uint32_t dt  = now - d->lastTime;
+                if (dt > 0) {
+                    const float speed = (offset - targetValue_Anim(&d->offset)) * 1000.0f / dt;
+                    /* After a pause, only the latest movement counts. */
+                    d->curlSpeed = dt > 100 ? speed : (d->curlSpeed + speed) / 2;
+                    d->lastTime  = now;
+                }
+            }
             setFlags_Anim(&d->offset, easeOut_AnimFlag, iFalse);
             setValue_Anim(&d->offset, offset, 10);
             animate_DocumentWidget(d->owner);
@@ -301,13 +322,17 @@ iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
             if (argLabel_Command(cmd, "abort")) {
                 if (d->view) {
                     d->flags |= aborted_DocumentSwipeFlag;
-                    setValue_Anim(&d->offset, width_Widget(w), 100);
+                    if (!finishCurl_DocumentSwipe_(d, width_Widget(w))) {
+                        setValue_Anim(&d->offset, width_Widget(w), 100);
+                    }
                     animate_DocumentWidget(d->owner);
                     return iTrue;
                 }
             }
-            setFlags_Anim(&d->offset, easeOut_AnimFlag, iTrue);
-            setValue_Anim(&d->offset, 0, 150);
+            if (!finishCurl_DocumentSwipe_(d, 0)) {
+                setFlags_Anim(&d->offset, easeOut_AnimFlag, iTrue);
+                setValue_Anim(&d->offset, 0, 150);
+            }
     //        float speed = currentSwipeSpeed_DocumentWidget_(d);
     //        speed = iClamp(speed, minSpeed, maxSpeed);
     //        setValueSpeed_Anim(&d->offset, 0, speed);
@@ -321,12 +346,16 @@ iBool handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
                 /* Without an outgoing view there is nothing to slide the current view away
                    for, so it must return to its normal position. */
                 iChangeFlags(d->flags, aborted_DocumentSwipeFlag, d->view != NULL);
-                setValue_Anim(&d->offset, 0, 100);
+                if (!finishCurl_DocumentSwipe_(d, 0)) {
+                    setValue_Anim(&d->offset, 0, 100);
+                }
                 animate_DocumentWidget(d->owner);
                 return iTrue;
             }
-            setFlags_Anim(&d->offset, easeOut_AnimFlag, iTrue);
-            setValue_Anim(&d->offset, width_Widget(w), 150);
+            if (!finishCurl_DocumentSwipe_(d, width_Widget(w))) {
+                setFlags_Anim(&d->offset, easeOut_AnimFlag, iTrue);
+                setValue_Anim(&d->offset, width_Widget(w), 150);
+            }
     //        float speed = currentSwipeSpeed_DocumentWidget_(d);
     //        speed = iClamp(speed, minSpeed, maxSpeed);
     //        setValueSpeed_Anim(&d->offset, width_Widget(w), speed);

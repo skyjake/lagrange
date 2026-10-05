@@ -405,11 +405,19 @@ void setLinkNumberMode_DocumentWidget(iDocumentWidget *d, iBool set) {
     }
 }
 
+static iBool isChapterCurling_DocumentWidget_(const iDocumentWidget *d) {
+    return view_DocumentSwipe(d->swipe) && d->swipe->flags & pageCurl_DocumentSwipeFlag;
+}
+
 void animate_DocumentWidget(void *ticker) {
     iDocumentWidget *d = ticker;
     iAssert(isInstance_Object(d, &Class_DocumentWidget));
     refresh_Widget(d);
+    const iBool wasCurling = isChapterCurling_DocumentWidget_(d);
     maybeFinish_DocumentSwipe(d->swipe);
+    if (wasCurling && !isChapterCurling_DocumentWidget_(d) && isPaged_DocumentView(d->view)) {
+        pagesMoved_DocumentWidget(d); /* footer buttons are back */
+    }
     repositionInlinePrompts_DocumentWidget(d, d->view);
     repositionOutgoing_Query(d->query);
     if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
@@ -870,6 +878,9 @@ static iBool openAdjacentChapter_DocumentWidget_(iDocumentWidget *d, int dir, iB
         return iFalse;
     }
     reset_DocumentSwipe(d->swipe);
+    if (prefs_App()->pageTurn == curl_PageTurnAnimation && isPaged_DocumentView(d->view)) {
+        d->swipe->flags |= pageCurl_DocumentSwipeFlag;
+    }
     setViewSwipedAway_DocumentSwipe(d->swipe, iTrue);
     if (dir < 0) {
         setOverlay_DocumentSwipe(d->swipe, iTrue);
@@ -2001,10 +2012,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* The new chapter has arrived, so the views can slide. */
             d->flags &= ~animateChapterSwipe_DocumentWidgetFlag;
             d->swipe->flags &= ~begun_DocumentSwipeFlag;
-            setFlags_Anim(&d->swipe->offset, easeOut_AnimFlag, iTrue);
-            setValue_Anim(&d->swipe->offset,
-                          isSwipingBack_DocumentSwipe(d->swipe) ? width_Widget(d) : 0,
-                          250);
+            const int to = isSwipingBack_DocumentSwipe(d->swipe) ? width_Widget(d) : 0;
+            if (d->swipe->flags & pageCurl_DocumentSwipeFlag) {
+                setValueEased_Anim(&d->swipe->offset, to, pageTurnDuration_DocumentView());
+            }
+            else {
+                setFlags_Anim(&d->swipe->offset, easeOut_AnimFlag, iTrue);
+                setValue_Anim(&d->swipe->offset, to, 250);
+            }
             animate_DocumentWidget(d);
         }
         /* The response may be cached. */
@@ -2719,6 +2734,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
            or navigate history. */
         if (equal_Command(cmd, "edgeswipe.moved") &&
             ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging) {
+            if (isBegun_DocumentSwipe(d->swipe)) {
+                /* The swipe began on another page, which was replaced by this one. */
+                d->flags |= historySwipe_DocumentWidgetFlag;
+                return handleEdgeSwipe_DocumentSwipe(d->swipe, cmd);
+            }
             const int chapterDir = chapterSwipeDir_DocumentWidget_(d, cmd);
             if (chapterDir && openAdjacentChapter_DocumentWidget_(d, chapterDir, iTrue)) {
                 /* The rest of the gesture moves the views like in a history swipe. */
@@ -2747,6 +2767,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if ((startsWith_Command(cmd, "edgeswipe.") || startsWith_Command(cmd, "swipe.")) &&
              document_App() == d) {
+        if (equal_Command(cmd, "edgeswipe.ended")) {
+            d->flags &= ~historySwipe_DocumentWidgetFlag; /* may have begun in a book */
+        }
         return handleEdgeSwipe_DocumentSwipe(d->swipe, cmd);
     }
     else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
@@ -3628,7 +3651,8 @@ static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
     const iRangei        cols    = visibleColumns_DocumentView(view);
     /* Not drawn as part of a curling page. */
     const iBool          isShown = (int) lastCol >= cols.start && (int) lastCol < cols.end &&
-                                   !isCurling_DocumentView(view);
+                                   !isCurling_DocumentView(view) &&
+                                   !isChapterCurling_DocumentWidget_(d);
     setFlags_Widget(d->footerButtons, hidden_WidgetFlag, !isShown);
     if (isShown) {
         const iRect   bounds   = bounds_Widget(as_Widget(d));
@@ -3694,7 +3718,7 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
         const uint32_t now  = SDL_GetTicks();
         if (d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
             ~flags_Widget(as_Widget(d->scroll)) & pressed_WidgetFlag) {
-            d->progressAnimEnd = now + 250;
+            d->progressAnimEnd = now + pageTurnDuration_DocumentView();
         }
         d->progressChapter = chapter;
         setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numChapters * unit });
@@ -3797,6 +3821,30 @@ static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDoc
     }
 }
 
+static iBool drawChapterCurl_DocumentWidget_(const iDocumentWidget *d) {
+    /* The outgoing and the incoming chapter are both paginated. */
+    if (!isChapterCurling_DocumentWidget_(d)) {
+        return iFalse;
+    }
+    const iDocumentView *outgoing = view_DocumentSwipe(d->swipe);
+    if (outgoing == d->view) {
+        draw_DocumentView(outgoing, 0); /* the next chapter is still loading */
+        return iTrue;
+    }
+    const iBool          isBack  = isOverlay_DocumentSwipe(d->swipe);
+    const iDocumentView *earlier = isBack ? d->view : outgoing;
+    const iDocumentView *later   = isBack ? outgoing : d->view;
+    if (!isPaged_DocumentView(earlier) || !isPaged_DocumentView(later)) {
+        return iFalse;
+    }
+    drawCurlBetween_DocumentView(
+        earlier,
+        later,
+        1.0f - value_Anim(offset_DocumentSwipe(d->swipe)) / (float) width_Widget(d));
+    makePaletteGlobal_GmDocument(d->view->doc);
+    return iTrue;
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w          = constAs_Widget(d);
     const iRect    bounds     = bounds_Widget(w);
@@ -3808,7 +3856,10 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     init_Paint(&p);
     /* Views. */
     const iDocumentView *swipeView = view_DocumentSwipe(d->swipe);
-    if (swipeView) {
+    if (drawChapterCurl_DocumentWidget_(d)) {
+        /* Drawn as a page turn. */
+    }
+    else if (swipeView) {
         const int swipeOffset    = value_Anim(offset_DocumentSwipe(d->swipe));
         const int underlayOffset = 0.25f * (swipeOffset - width_Rect(bounds));
         const int overlayOffset  = swipeOffset;

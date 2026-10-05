@@ -52,6 +52,7 @@ enum iDocumentSwipeFlag {
     eitherWheel_DocumentSwipeFlag       = leftWheel_DocumentSwipeFlag |
                                           rightWheel_DocumentSwipeFlag,
     pinchZoom_DocumentSwipeFlag         = iBit(10),
+    pageCurl_DocumentSwipeFlag          = iBit(11), /* views are drawn as a page curl */
 };
 
 iDeclareType(DocumentSwipe)
@@ -65,7 +66,8 @@ struct Impl_DocumentSwipe {
     int                   pinchZoomInitial;
     int                   pinchZoomPosted;
     float                 speed; /* points/sec */
-    uint32_t              lastTime;
+    uint32_t              lastTime; /* of the latest curl gesture movement */
+    float                 curlSpeed; /* pixels per second */
     int                   wheelDistance;
     enum iWheelSwipeState wheelState;
     iAnim                 offset; /* applies to both views */
