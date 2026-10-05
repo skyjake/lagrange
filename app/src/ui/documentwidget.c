@@ -745,6 +745,11 @@ void updateTheme_DocumentWidget(iDocumentWidget *d) {
     updateBanner_DocumentWidget(d);
 }
 
+static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
+    /* When paginated, the banner is only on the first page. */
+    return !isPaged_DocumentView(d->view) || visibleColumns_DocumentView(d->view).start == 0;
+}
+
 static iBool triggerFooterKey_DocumentWidget_(iDocumentWidget *d, int key) {
     if (d->footerButtons) {
         iForEach(ObjectList, i, children_Widget(d->footerButtons)) {
@@ -2916,7 +2921,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (d->contextLink) {
                     d->menu = makeLinkContextMenu_DocumentWidget(d, d->contextLink);
                 }
-                else if (contains_Banner(d->banner, mousePos)) {
+                else if (isBannerVisible_DocumentWidget_(d) && contains_Banner(d->banner, mousePos)) {
                     if (itemAtCoord_Banner(d->banner, mousePos) == iInvalidPos) {
                         const iString *urlRoot = collectNewRange_String(urlRoot_String(d->mod.url));
                         d->menu = makeLinkContextMenuWithParameters_DocumentWidget(
@@ -3016,7 +3021,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             processContextMenuEvent_Widget(d->menu, ev, {});
         }
     }
-    if (processEvent_Banner(d->banner, ev)) {
+    if (isBannerVisible_DocumentWidget_(d) && processEvent_Banner(d->banner, ev)) {
         return iTrue;
     }
     /* The left mouse button. */
