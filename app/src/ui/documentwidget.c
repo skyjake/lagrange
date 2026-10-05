@@ -1264,12 +1264,16 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
 static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page, for turns */
 
 static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
-    /* Swiping past the first or last page follows the scrolling mode settings. */
-    const iDocumentView *view = d->view;
-    const int            side = argLabel_Command(cmd, "side");
+    /* Swiping past the first or last page follows the scrolling mode settings. The first
+       attempt only bounces back, so the history is not navigated by accident. */
+    const iDocumentView *view   = d->view;
+    const int            side   = argLabel_Command(cmd, "side");
     const size_t         column = currentColumn_DocumentView(view);
     if (!((side == 1 && column == 0) ||
           (side == 2 && column + numColumns_DocumentView(view) >= numColumns_GmDocument(view->doc)))) {
+        return iFalse;
+    }
+    if (!isEdgeArmed_DocumentView(view, side == 1 ? -1 : +1)) {
         return iFalse;
     }
     if (argLabel_Command(cmd, "edge")) {
