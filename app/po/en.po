@@ -934,6 +934,18 @@ msgstr "No Identities"
 msgid "sidebar.empty.unread"
 msgstr "No Unread Entries"
 
+msgid "sidebar.empty.bookmarks"
+msgstr "No Bookmarks"
+
+msgid "sidebar.empty.feeds"
+msgstr "No Feeds"
+
+msgid "sidebar.empty.subs"
+msgstr "No Subscriptions"
+
+msgid "sidebar.empty.links"
+msgstr "No Links"
+
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
 msgid "ident.gotohelp"

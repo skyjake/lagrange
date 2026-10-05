@@ -650,6 +650,16 @@ static iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
     return iTrue;
 }
 
+static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
+    if (isMobile_Platform() || isTerminal_Platform()) {
+        return;
+    }
+    iLabelWidget *icon = new_LabelWidget(tightModeLabels_[d->mode], NULL);
+    setFont_LabelWidget(icon, uiLabelHuge_FontId);
+    setTextColor_LabelWidget(icon, uiTextDim_ColorId);
+    addChildFlags_Widget(div, iClob(icon), frameless_WidgetFlag);
+}
+
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
@@ -884,6 +894,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                     appendCStr_String(&item->meta, cstr_Lang("sidebar.sub.empty"));
                 }
             }
+            isEmpty = isEmpty_PtrArray(items);
             delete_PtrArray(items);
             iForEach(Hash, h, &hash) {
                 free(remove_HashIterator(&h));
@@ -929,6 +940,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                    looking at the structure tab. */
                 break;
             }
+            isEmpty = iTrue;
             const iString *docUrl =
                 urlDefaultPortStripped_String(url_DocumentWidget(document_App()));
             /* We look for the protocol in addition to the domain. */
@@ -1051,6 +1063,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             }
             deinit_Array(&stack);
             deinit_String(&label);
+            isEmpty = numItems_ListWidget(d->list) <= 1; /* just the root */
             /* Context menu. */
             const iMenuItem menuItems[] = {
                 { "${menu.fold}", 0, 0, "structure.fold" },
@@ -1074,6 +1087,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             else {
                 updateBookmarkItems_SidebarWidget_(d);
             }
+            isEmpty = isEmpty_String(&d->bookmarkFilter) && isEmpty_ListWidget(d->list);
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d), bookmarkModeMenuItems_, iElemCount(bookmarkModeMenuItems_));
             if (keepActions) {
@@ -1286,7 +1300,16 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addBlankIcon_SidebarWidget_(d, div);
             if (d->feedsMode == all_FeedsMode) {
+                if (numSubscribed_Feeds() == 0) {
+                    iLabelWidget *msg =
+                        addChildFlags_Widget(div,
+                                             iClob(new_LabelWidget("${sidebar.empty.feeds}", NULL)),
+                                             frameless_WidgetFlag);
+                    setFont_LabelWidget(msg, uiLabelLarge_FontId);
+                    addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
+                }
                 addChild_Widget(div,
                                 iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
             }
@@ -1302,11 +1325,33 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChild_Widget(d->blank, iClob(div));
         }
+        else if (d->mode == subscriptions_SidebarMode || d->mode == siteStructure_SidebarMode ||
+                 d->mode == bookmarks_SidebarMode) {
+            iWidget *div = makeVDiv_Widget();
+            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addBlankIcon_SidebarWidget_(d, div);
+            iLabelWidget *msg = new_LabelWidget(d->mode == subscriptions_SidebarMode
+                                                    ? "${sidebar.empty.subs}"
+                                                : d->mode == bookmarks_SidebarMode
+                                                    ? "${sidebar.empty.bookmarks}"
+                                                    : "${sidebar.empty.links}",
+                                                NULL);
+            setFont_LabelWidget(msg, uiLabelLarge_FontId);
+            addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            if (d->mode == bookmarks_SidebarMode) {
+                arrange_Widget(d->actions);
+                div->padding[3] = height_Widget(d->actions);
+            }
+            addChild_Widget(d->blank, iClob(div));
+        }
         else if (d->mode == gempub_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
             setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId); /* the list is hidden */
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addBlankIcon_SidebarWidget_(d, div);
             iLabelWidget *msg = new_LabelWidget("${sidebar.empty.gempub}", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
             setWrap_LabelWidget(msg, iTrue);
@@ -1319,6 +1364,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addBlankIcon_SidebarWidget_(d, div);
             iLabelWidget *msg = new_LabelWidget("${sidebar.empty.idents}", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
             addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
