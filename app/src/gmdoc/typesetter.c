@@ -457,7 +457,7 @@ static iBool isContinuationGroup_GmDocument_(const iArray *runs, size_t start, s
     for (size_t i = start; i < end; i++) {
         const iGmRun *run = constAt_Array(runs, i);
         if (~run->flags & decoration_GmRunFlag) {
-            return ~run->flags & startOfLine_GmRunFlag;
+            return !isMedia_GmRun(run) && ~run->flags & startOfLine_GmRunFlag;
         }
     }
     return iFalse;
@@ -477,16 +477,42 @@ static size_t groupSrcEnd_(const iArray *groups, size_t index, size_t breakPos) 
                : breakPos;
 }
 
+static const iGmRun *firstContentRun_GmDocument_(const iArray *runs, size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+        const iGmRun *run = constAt_Array(runs, i);
+        if (~run->flags & decoration_GmRunFlag) {
+            return run;
+        }
+    }
+    return NULL;
+}
+
 static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *groups, size_t breakPos) {
     /* Index of the first group in the column that continues in the next column along with
        the group at `breakPos`. Headings are not left at the end of a column, not even with
-       only the first line of the following paragraph. */
+       only the first line of the following paragraph. An image is not separated from the
+       link above it. */
     const size_t n = size_Array(groups);
     size_t       moved = n;
     if (n >= 2 && isContinuationGroup_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos)) &&
         !isContinuationGroup_GmDocument_(
             src, ((const iColumnGroup *) constAt_Array(groups, n - 1))->src, breakPos)) {
         moved = n - 1;
+    }
+    iBool         isCaptionMoved = iFalse;
+    const iGmRun *image = firstContentRun_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos));
+    if (image && image->linkId && image->mediaType == image_MediaType) {
+        while (moved > 0) {
+            const iGmRun *caption = firstContentRun_GmDocument_(
+                src,
+                ((const iColumnGroup *) constAt_Array(groups, moved - 1))->src,
+                groupSrcEnd_(groups, moved - 1, breakPos));
+            if (!caption || isMedia_GmRun(caption) || caption->linkId != image->linkId) {
+                break;
+            }
+            moved--;
+            isCaptionMoved = iTrue;
+        }
     }
     size_t first = moved;
     while (first > 0 &&
@@ -496,7 +522,7 @@ static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *group
         first--;
     }
     /* A heading at the top of the column stays, so it is not split either. */
-    return first > 0 && first < moved ? first : n;
+    return first > 0 && (first < moved || isCaptionMoved) ? first : n;
 }
 
 static size_t keptWithHeadingEnd_GmDocument_(const iArray *src, size_t start) {
@@ -1349,10 +1375,18 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
         run->bounds.size.y    = run->visBounds.size.y;
     }
     if (d->isPaged) {
-        /* Must fit on a page, with the caption. */
+        /* Must fit on a page, with the link above it and the caption. */
+        int linkHeight = 0;
+        for (size_t i = size_Array(&doc->layout); i-- > 0;) {
+            const iGmRun *prev = constAt_Array(&doc->layout, i);
+            if (prev->linkId != run->linkId || isMedia_GmRun(prev)) {
+                break;
+            }
+            linkHeight = iMax(linkHeight, d->pos.y - top_Rect(prev->visBounds));
+        }
         const int maxHeight = doc->metrics.pageHeight - pageHeaderHeight_GmDocument(doc) -
                               pageFooterHeight_GmDocument(doc) -
-                              2 * lineHeight_Text(paragraph_FontId);
+                              2 * lineHeight_Text(paragraph_FontId) - linkHeight;
         if (height_Rect(run->visBounds) > maxHeight && maxHeight > 0) {
             run->visBounds.size.x =
                 width_Rect(run->visBounds) * maxHeight / height_Rect(run->visBounds);
