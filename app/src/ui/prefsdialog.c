@@ -686,8 +686,44 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.thickscroll}", "prefs.thickscroll");
     }
+    /* Document preferences. */
+    appendTabPages_ScopedPrefs(tabs, iTrue, orange_ColorId, '3');
+    /* Content. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
+                                                   green_ColorId, '7', &headings, &values),
+                     "prefs.page.content");
+        /* Cache size. */ {
+            iInputWidget *cache = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(cache, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.cachesize", iClob(cache));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(cache),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        /* Memory size. */ {
+            iInputWidget *mem = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(mem, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.memorysize", iClob(mem));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(mem),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        addDialogPadding_Widget(headings, values);
+        makeTwoColumnItems_Widget(headings, values, globalContentItems_ScopedPrefs());
+        addDialogPadding_Widget(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
+        addDialogToggle_Widget(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
+        addDialogPadding_Widget(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
+    }
     /* UI behavior. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", red_ColorId, '3', &headings, &values),
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", green_ColorId, '8', &headings, &values),
                      "prefs.page.ui");
         /* Feed refresh interval. */
         addDialogDropMenu_Widget(headings,
@@ -738,11 +774,65 @@ iWidget *makePreferences_Widget(void) {
             }
         }
     }
+    /* Network. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   network_Icon " ${heading.prefs.network}",
+                                                   cyan_ColorId,
+                                                   '9',
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.network");
+        addDialogToggle_Widget(headings, values, "${prefs.ipv6}", "prefs.ipv6");
+        addDialogToggle_Widget(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
+        addDialogToggle_Widget(headings, values, "${prefs.warn.security}", "prefs.warn.security");
+        addDialogPadding_Widget(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
+        makeTwoColumnHeading_Widget("${heading.prefs.certs}", headings, values);
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
+    }
+    /* Proxy configuration. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   networkProxy_Icon " ${heading.prefs.proxy}",
+                                                   cyan_ColorId,
+                                                   0,
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.proxy");
+        /* Gemini proxies. */
+        makeTwoColumnHeading_Widget("${heading.prefs.proxies}", headings, values);
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
+        /* SOCKS configuration. */
+        makeTwoColumnHeading_Widget("${heading.prefs.socks}", headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.socks}", "prefs.socks");
+        addDialogPadding_Widget(headings, values);
+        iInputWidget *field = new_InputWidget(0);
+        setHint_InputWidget(field, "${hint.socks.server}");
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.server", iClob(field));
+        addDialogPadding_Widget(headings, values);
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.user", iClob(field = new_InputWidget(0)));
+        setHint_InputWidget(field, "${hint.optional}");
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.password", iClob(field = new_InputWidget(0)));
+        setSensitiveContent_InputWidget(field, iTrue);
+        setHint_InputWidget(field, "${hint.optional}");
+    }
+    /* Snippets. */ {
+        iSnippetWidget *sniped = new_SnippetWidget();
+        appendFramelessTabPage_Widget(tabs,
+                                      iClob(sniped),
+                                      clipboard_Icon " ${heading.prefs.snip}",
+                                      blue_ColorId,
+                                      0,
+                                      0);
+    }
     /* Sidebars. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    leftHalf_Icon " ${heading.prefs.sidebars}",
-                                                   orange_ColorId,
-                                                   '4',
+                                                   blue_ColorId,
+                                                   0,
                                                    &headings,
                                                    &values),
                      "sidecfg");
@@ -775,25 +865,16 @@ iWidget *makePreferences_Widget(void) {
             addChildFlags_Widget(values, iClob(sides), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
     }
-    /* Snippets. */ {
-        iSnippetWidget *sniped = new_SnippetWidget();
-        appendFramelessTabPage_Widget(tabs,
-                                      iClob(sniped),
-                                      clipboard_Icon " ${heading.prefs.snip}",
-                                      orange_ColorId,
-                                      '5',
-                                      KMOD_PRIMARY);
-    }
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
         appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}",
-                                      orange_ColorId, '6', KMOD_PRIMARY);
+                                      blue_ColorId, 0, 0);
     }
 #if defined (LAGRANGE_USE_GAMEPAD)
     /* Gamepad. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    gamepad_Icon " ${heading.prefs.gamepad}",
-                                                   orange_ColorId,
+                                                   blue_ColorId,
                                                    0,
                                                    &headings,
                                                    &values),
@@ -819,87 +900,6 @@ iWidget *makePreferences_Widget(void) {
         }
     }
 #endif /* LAGRANGE_USE_GAMEPAD */
-    /* Network. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
-                                                   network_Icon " ${heading.prefs.network}",
-                                                   green_ColorId,
-                                                   '7',
-                                                   &headings,
-                                                   &values),
-                     "prefs.page.network");
-        addDialogToggle_Widget(headings, values, "${prefs.ipv6}", "prefs.ipv6");
-        addDialogToggle_Widget(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
-        addDialogToggle_Widget(headings, values, "${prefs.warn.security}", "prefs.warn.security");
-        addDialogPadding_Widget(headings, values);
-        addDialogToggle_Widget(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
-        makeTwoColumnHeading_Widget("${heading.prefs.certs}", headings, values);
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
-    }
-    /* Proxy configuration. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
-                                                   networkProxy_Icon " ${heading.prefs.proxy}",
-                                                   green_ColorId,
-                                                   '8',
-                                                   &headings,
-                                                   &values),
-                     "prefs.page.proxy");
-        /* Gemini proxies. */
-        makeTwoColumnHeading_Widget("${heading.prefs.proxies}", headings, values);
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
-        /* SOCKS configuration. */
-        makeTwoColumnHeading_Widget("${heading.prefs.socks}", headings, values);
-        addDialogToggle_Widget(headings, values, "${prefs.socks}", "prefs.socks");
-        addDialogPadding_Widget(headings, values);
-        iInputWidget *field = new_InputWidget(0);
-        setHint_InputWidget(field, "${hint.socks.server}");
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.server", iClob(field));
-        addDialogPadding_Widget(headings, values);
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.user", iClob(field = new_InputWidget(0)));
-        setHint_InputWidget(field, "${hint.optional}");
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.password", iClob(field = new_InputWidget(0)));
-        setSensitiveContent_InputWidget(field, iTrue);
-        setHint_InputWidget(field, "${hint.optional}");
-    }
-    /* Content. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
-                                                   cyan_ColorId, '9', &headings, &values),
-                     "prefs.page.content");
-        /* Cache size. */ {
-            iInputWidget *cache = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(cache, iTrue);
-            addPrefsInputWithHeading_Widget(headings, values, "prefs.cachesize", iClob(cache));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(cache),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        /* Memory size. */ {
-            iInputWidget *mem = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(mem, iTrue);
-            addPrefsInputWithHeading_Widget(headings, values, "prefs.memorysize", iClob(mem));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(mem),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        addDialogPadding_Widget(headings, values);
-        makeTwoColumnItems_Widget(headings, values, globalContentItems_ScopedPrefs());
-        addDialogPadding_Widget(headings, values);
-        addDialogToggle_Widget(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
-        addDialogToggle_Widget(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
-        addDialogPadding_Widget(headings, values);
-        addDialogToggle_Widget(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
-    }
-    /* Document preferences. */
-    appendTabPages_ScopedPrefs(tabs, iTrue, blue_ColorId, 0);
     addChild_Widget(content, iClob(makePadding_Widget(gap_UI)));
     const iMenuItem actions[] = { { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
                                 { "---" },

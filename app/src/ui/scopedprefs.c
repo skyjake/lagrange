@@ -329,9 +329,9 @@ static const struct {
     const char *pageId;
 } pages_[] = {
     { typography_DocPrefsGroup, fonts_Icon, 0x1f5da, "heading.prefs.typography", "prefs.page.fonts" },
-    { layout_DocPrefsGroup, pageLayout_Icon, 0x1f4c4, "heading.prefs.layout", "prefs.page.layout" },
-    { style_DocPrefsGroup, edit_Icon, 0x1f660, "heading.prefs.style", "prefs.page.style" },
     { theme_DocPrefsGroup, palette_Icon, 0x1f3a8, "heading.prefs.theme", "prefs.page.theme" },
+    { style_DocPrefsGroup, pageStyle_Icon, 0x1f660, "heading.prefs.style", "prefs.page.style" },
+    { layout_DocPrefsGroup, pageLayout_Icon, 0x1f4c4, "heading.prefs.layout", "prefs.page.layout" },
     /* Global in Preferences; can only be overridden for a site. */
     { content_DocPrefsGroup, photo_Icon, 0x1f5bc, "heading.prefs.content", "sitespec.page.content" },
 };

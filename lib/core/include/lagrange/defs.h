@@ -389,6 +389,7 @@ enum iAnsiFlag {
 #define package_Icon        "\U0001f4e6"
 #define page_Icon           "\U00010117"
 #define pageLayout_Icon     page_Icon //"\u21b9" //"\U0001F5B9"
+#define pageStyle_Icon      "\U0001f660"
 #define palette_Icon        "\U0001f3a8"
 #define paperclip_Icon      "\U0001f4ce"
 #define person_Icon         "\U0001f464"

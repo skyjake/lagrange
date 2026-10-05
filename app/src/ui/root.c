@@ -56,6 +56,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "platform/win32.h"
 #endif
 
+#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_timer.h>
 #include "render/text.h"
 
@@ -3002,9 +3003,20 @@ static void startCursorIdleCheck_Root_(iRoot *d) {
     }
 }
 
+static iBool hasMouseFocus_(const iWindow *win) {
+#if defined (iPlatformTerminal)
+    iUnused(win);
+    return iTrue;
+#else
+    /* The cursor may be over another window, like a detached Preferences. */
+    return SDL_GetMouseFocus() == win->win;
+#endif
+}
+
 static void hideCursorIfIdle_Root_(iRoot *d) {
     iWindow *win = window_Widget(d->widget);
-    if (!d->isReading || !d->areReadingBarsHidden || !win->isMouseInside || isCursorHidden_Window()) {
+    if (!d->isReading || !d->areReadingBarsHidden || !win->isMouseInside || !hasMouseFocus_(win) ||
+        isCursorHidden_Window()) {
         remove_Periodic(periodic_App(), d->widget);
         return;
     }

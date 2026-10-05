@@ -2020,7 +2020,7 @@ msgid "heading.prefs.gamepad"
 msgstr "Gamepad"
 
 msgid "heading.prefs.layout"
-msgstr "Page Layout"
+msgstr "Layout"
 
 msgid "heading.prefs.content"
 msgstr "Content"
