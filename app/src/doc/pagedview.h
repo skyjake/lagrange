@@ -25,28 +25,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentview.h"
 
 /* Paginated mode of DocumentView. The document is still a vertical strip of runs, but cut
-   into pages of the view's height. A spread of one or two consecutive pages is shown side
-   by side, so the visible document range remains contiguous. */
+   into columns of the view's height. A page has one or two columns, and a spread of one or
+   two consecutive pages is shown side by side, so the visible document range remains
+   contiguous. */
 
 iBool   wantsPaged_DocumentView         (const iDocumentView *); /* prefs and content call for pages */
 iBool   isPaged_DocumentView            (const iDocumentView *); /* current layout is paginated */
 iRect   pageViewport_DocumentView       (const iDocumentView *); /* where the pages are shown */
 int     pagedDocumentWidth_DocumentView (const iDocumentView *);
 void    pagedMetrics_DocumentView       (const iDocumentView *, iGmDocumentMetrics *metrics);
-int     numColumns_DocumentView         (const iDocumentView *);
+int     numColumns_DocumentView         (const iDocumentView *); /* in a spread */
+int     numPages_DocumentView           (const iDocumentView *); /* in a spread */
 int     spreadWidth_DocumentView        (const iDocumentView *);
-size_t  currentPage_DocumentView        (const iDocumentView *);
-float   pagePosition_DocumentView       (const iDocumentView *); /* fractional during turns */
-iRangei visiblePages_DocumentView       (const iDocumentView *); /* includes an ongoing turn */
-int     pageLeft_DocumentView           (const iDocumentView *, size_t page); /* window X of the page's left edge */
-iInt2   pageOrigin_DocumentView         (const iDocumentView *, size_t page); /* window coords of the page's document top left */
+size_t  currentColumn_DocumentView      (const iDocumentView *); /* first of the spread */
+float   columnPosition_DocumentView     (const iDocumentView *); /* fractional during turns */
+iRangei visibleColumns_DocumentView     (const iDocumentView *); /* includes an ongoing turn */
+int     columnLeft_DocumentView         (const iDocumentView *, size_t column); /* window X of the column's left edge */
+iInt2   columnOrigin_DocumentView       (const iDocumentView *, size_t column); /* window coords of the column's document top left */
+iRect   pageRect_DocumentView           (const iDocumentView *, size_t page); /* window rect of all the page's columns */
 iInt2   pagedDocumentPos_DocumentView   (const iDocumentView *, iInt2 windowPos);
 iRect   pagedRunRect_DocumentView       (const iDocumentView *, const iGmRun *run);
 void    allocPagedVisBuffer_DocumentView(const iDocumentView *);
 
 void    resetPage_DocumentView          (iDocumentView *);
 void    animatePageTurn_DocumentView    (iAny *); /* ticker */
-void    showPage_DocumentView           (iDocumentView *, size_t page, iBool isAnimated); /* animated if adjacent */
+void    showColumn_DocumentView         (iDocumentView *, size_t column, iBool isAnimated); /* animated if adjacent */
 void    showDocumentY_DocumentView      (iDocumentView *, int documentY); /* page that contains the point */
 iBool   turnPage_DocumentView           (iDocumentView *, int dir); /* false if no more pages */
 int     pageTurnZone_DocumentView       (const iDocumentView *, iInt2 windowPos); /* -1, 0, +1 */

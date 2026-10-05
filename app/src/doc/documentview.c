@@ -118,10 +118,10 @@ void init_DocumentView(iDocumentView *d) {
     iZap(d->renderRuns);
     iZap(d->visibleRuns);
     d->visBuf = new_VisBuf(); {
-        d->visBufMeta = malloc(sizeof(iVisBufMeta) * maxBuffers_VisBuf);
+        d->visBufMeta = malloc(sizeof(iVisBufMeta) * maxPages_VisBuf);
         /* Additional metadata for each buffer. */
         d->visBuf->bufferInvalidated = visBufInvalidated_;
-        for (size_t i = 0; i < maxBuffers_VisBuf; i++) {
+        for (size_t i = 0; i < maxPages_VisBuf; i++) {
             d->visBuf->buffers[i].user = d->visBufMeta + i;
         }
     }
@@ -269,7 +269,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     if (isPaged_DocumentView(d)) {
         /* Document area of the first page of the spread. */
         const iRect viewport = pageViewport_DocumentView(d);
-        return (iRect){ init_I2(pageOrigin_DocumentView(d, d->paged.page).x, top_Rect(viewport)),
+        return (iRect){ init_I2(columnOrigin_DocumentView(d, d->paged.column).x, top_Rect(viewport)),
                         init_I2(size_GmDocument(d->doc).x, height_Rect(viewport)) };
     }
     const iRect bounds = bounds_Widget(constAs_Widget(d->owner));
@@ -348,9 +348,9 @@ static iInt2 documentPos_DocumentView_(const iDocumentView *d, iInt2 pos) {
 
 iRangei visibleRange_DocumentView(const iDocumentView *d) {
     if (isPaged_DocumentView(d)) {
-        const iRangei pages      = visiblePages_DocumentView(d);
+        const iRangei cols       = visibleColumns_DocumentView(d);
         const int     pageHeight = pageHeight_GmDocument(d->doc);
-        return (iRangei){ pages.start * pageHeight, pages.end * pageHeight };
+        return (iRangei){ cols.start * pageHeight, cols.end * pageHeight };
     }
     int top = pos_SmoothScroll(&d->scrollY) - height_Banner(d->banner) -
               documentTopPad_DocumentView(d);
@@ -408,7 +408,7 @@ static int scrollMax_DocumentView_(const iDocumentView *d) {
 
 float normScrollPos_DocumentView(const iDocumentView *d) {
     if (isPaged_DocumentView(d)) {
-        return (float) d->paged.page / (float) numPages_GmDocument(d->doc);
+        return (float) d->paged.column / (float) numColumns_GmDocument(d->doc);
     }
     const int height = pageHeight_DocumentView(d);
     if (height > 0) {
@@ -1835,13 +1835,44 @@ static void fillTopSafeArea_DocumentView_(const iDocumentView *d, iPaint *p, int
     }
 }
 
+static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
+    /* Each page has a header and a footer that span all of its columns. */
+    const iGmDocument *doc      = d->doc;
+    const int          perPage  = columnsPerPage_GmDocument(doc);
+    const int          font     = pageBandFont_GmDocument(doc);
+    const int          band     = pageBandHeight_GmDocument(doc);
+    const int          textPad  = (band - lineHeight_Text(font)) / 2;
+    const size_t       numPages = numPages_GmDocument(doc);
+    for (size_t page = cols.start / perPage; page < numPages && (int) (page * perPage) < cols.end;
+         page++) {
+        const iRect    rect   = pageRect_DocumentView(d, page);
+        const iRangecc header = pageHeader_GmDocument(doc, page);
+        const iRangecc footer = pageFooter_GmDocument(doc, page);
+        if (!isEmpty_Range(&header)) {
+            drawRange_Text(font,
+                           init_I2(mid_Rect(rect).x - measureRange_Text(font, header).bounds.size.x / 2,
+                                   top_Rect(rect) + metrics_GmDocument(doc)->topInset + textPad),
+                           tmQuoteIcon_ColorId,
+                           header);
+        }
+        if (!isEmpty_Range(&footer)) {
+            drawRange_Text(font,
+                           init_I2(mid_Rect(rect).x - measureRange_Text(font, footer).bounds.size.x / 2,
+                                   bottom_Rect(rect) - pageFooterHeight_GmDocument(doc) + textPad),
+                           tmQuoteIcon_ColorId,
+                           footer);
+        }
+    }
+}
+
 static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, int horizOffset) {
     const iWidget *w                = constAs_Widget(d->owner);
     const iRect    bounds           = bounds_Widget(w);
     const iRect    viewport         = pageViewport_DocumentView(d);
-    const iRangei  pages            = visiblePages_DocumentView(d);
+    const iRangei  cols             = visibleColumns_DocumentView(d);
     const int      pageHeight       = pageHeight_GmDocument(d->doc);
-    const int      numPages         = (int) numPages_GmDocument(d->doc);
+    const int      numCols          = (int) numColumns_GmDocument(d->doc);
+    const int      perPage          = columnsPerPage_GmDocument(d->doc);
     const iBool    isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     const iVisBuf *visBuf           = d->visBuf;
     iPaint        *p                = &ctx->paint;
@@ -1852,27 +1883,28 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     origin_Paint = init_I2(horizOffset, 0);
     /* Spreads have a gap between them during a turn. */
     fillRect_Paint(p, area, uiBackgroundSidebar_ColorId);
-    for (int page = pages.start; page < pages.end; page += numColumns_DocumentView(d)) {
+    for (int col = cols.start; col < cols.end; col += numColumns_DocumentView(d)) {
         fillRect_Paint(p,
-                       init_Rect(pageLeft_DocumentView(d, page), top_Rect(area),
+                       init_Rect(columnLeft_DocumentView(d, col), top_Rect(area),
                                  width_Rect(viewport), height_Rect(area)),
                        tmBackground_ColorId);
     }
     for (size_t i = 0; i < visBuf->numBuffers; i++) {
-        const int page = visBuf->buffers[i].origin / pageHeight;
-        if (page >= pages.start && page < pages.end && page < numPages) {
-            drawBuffer_VisBuf(visBuf, i, init_I2(pageLeft_DocumentView(d, page), top_Rect(viewport)));
+        const int col = visBuf->buffers[i].origin / pageHeight;
+        if (col >= cols.start && col < cols.end && col < numCols) {
+            drawBuffer_VisBuf(visBuf, i, init_I2(columnLeft_DocumentView(d, col), top_Rect(viewport)));
         }
     }
+    drawPageBands_DocumentView_(d, cols);
     /* Text markers. */
     if (!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark)) {
         initMarks_DrawContext_(ctx);
-        for (int page = pages.start; page < pages.end && page < numPages; page++) {
-            ctx->viewPos      = pageOrigin_DocumentView(d, page);
+        for (int col = cols.start; col < cols.end && col < numCols; col++) {
+            ctx->viewPos      = columnOrigin_DocumentView(d, col);
             ctx->inSelectMark = iFalse;
             ctx->inFoundMark  = iFalse;
             render_GmDocument(d->doc,
-                              (iRangei){ page * pageHeight, (page + 1) * pageHeight },
+                              (iRangei){ col * pageHeight, (col + 1) * pageHeight },
                               drawMark_DrawContext_,
                               ctx);
         }
@@ -1884,14 +1916,14 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     }
     drawMedia_DocumentView_(d, p);
     /* The banner is at the top of the first page. */
-    if (pages.start == 0 && !isEmpty_Banner(d->banner)) {
+    if (cols.start == 0 && !isEmpty_Banner(d->banner)) {
         setPos_Banner(d->banner,
-                      init_I2(pageOrigin_DocumentView(d, 0).x,
+                      init_I2(mid_Rect(pageRect_DocumentView(d, 0)).x - size_GmDocument(d->doc).x / 2,
                               top_Rect(viewport) + pageHeaderHeight_GmDocument(d->doc)));
         draw_Banner(d->banner);
     }
     /* Crease between the pages of a spread, and slight curvature at the outer edges. */
-    if (numColumns_DocumentView(d) == 2) {
+    if (numPages_DocumentView(d) == 2) {
         const iRangei ySpan = ySpan_Rect(viewport);
         /* The shading is a darker shade of the page itself. */
         const iBool isDarkPage = isDark_GmDocumentTheme(docTheme_DocPrefs(
@@ -1900,8 +1932,8 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
         shade                  = setLum_HSLColor(shade, shade.lum * (isDarkPage ? 0.55f : 0.82f));
         const iColor shadeColor = rgb_HSLColor(shade);
         const int    shadeAlpha = isDarkPage ? 90 : 110;
-        for (int page = pages.start; page < pages.end && page < numPages; page += 2) {
-            const int crease = pageLeft_DocumentView(d, page + 1);
+        for (int col = cols.start; col < cols.end && col < numCols; col += 2 * perPage) {
+            const int crease = columnLeft_DocumentView(d, col + perPage);
             drawSoftCrease_Paint(p, crease, ySpan, width_Rect(bounds) / 20, shadeColor, shadeAlpha);
             /* The two sheets meet at a thin seam. */
             const int seamWidth = iMax(1, gap_UI / 4);
@@ -1914,9 +1946,9 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
             p->alpha = 255;
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
             /* Better without?
-            drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page), ySpan,
+            drawSoftEdge_Paint(p, columnLeft_DocumentView(d, col), ySpan,
                                width_Rect(bounds) / 10, shadeColor, 10);
-            drawSoftEdge_Paint(p, pageLeft_DocumentView(d, page + 2), ySpan,
+            drawSoftEdge_Paint(p, columnLeft_DocumentView(d, col + 2 * perPage), ySpan,
                                -width_Rect(bounds) / 10, shadeColor, 10);
             */
         }
@@ -2081,7 +2113,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
 void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY) {
     resetScroll_DocumentView(d);
     if (isPaged_DocumentView(d)) {
-        showPage_DocumentView(d, normScrollY * numPages_GmDocument(d->doc) + 0.5f, iFalse);
+        showColumn_DocumentView(d, normScrollY * numColumns_GmDocument(d->doc) + 0.5f, iFalse);
     }
     else {
         init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));

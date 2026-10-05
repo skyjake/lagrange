@@ -37,12 +37,13 @@ struct Impl_VisBufTexture {
 };
 
 #define maxBuffers_VisBuf   ((size_t) 4)
+#define maxPages_VisBuf     ((size_t) 8) /* paged mode */
 
 struct Impl_VisBuf {
     iInt2 texSize;
     iRangei vis;
     size_t numBuffers;
-    iVisBufTexture buffers[maxBuffers_VisBuf];
+    iVisBufTexture buffers[maxPages_VisBuf];
     void (*bufferInvalidated)(iVisBuf *, size_t index);
 };
 

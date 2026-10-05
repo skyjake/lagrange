@@ -266,15 +266,15 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
 /*----------------------------------------------------------------------------------------------*/
 
 iBool allocPages_VisBuf(iVisBuf *d, const iInt2 pageSize, size_t numPages) {
-    iAssert(numPages > 0 && numPages <= maxBuffers_VisBuf);
+    iAssert(numPages > 0 && numPages <= maxPages_VisBuf);
     return allocTextures_VisBuf_(d, pageSize, numPages);
 }
 
 void setPages_VisBuf(iVisBuf *d, int firstPageTop) {
     const int      pageHeight = d->texSize.y;
-    iVisBufTexture old[maxBuffers_VisBuf];
-    iBool          isUsed[maxBuffers_VisBuf] = { iFalse };
-    iBool          isReused[maxBuffers_VisBuf] = { iFalse };
+    iVisBufTexture old[maxPages_VisBuf];
+    iBool          isUsed[maxPages_VisBuf] = { iFalse };
+    iBool          isReused[maxPages_VisBuf] = { iFalse };
     memcpy(old, d->buffers, sizeof(old));
     d->vis = (iRangei){ firstPageTop, firstPageTop + pageHeight * (int) d->numBuffers };
     /* Keep the buffers whose page remains in view. */

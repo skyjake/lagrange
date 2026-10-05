@@ -1222,9 +1222,9 @@ static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char
     /* Swiping past the first or last page follows the scrolling mode settings. */
     const iDocumentView *view = d->view;
     const int            side = argLabel_Command(cmd, "side");
-    const size_t         page = currentPage_DocumentView(view);
-    if (!((side == 1 && page == 0) ||
-          (side == 2 && page + numColumns_DocumentView(view) >= numPages_GmDocument(view->doc)))) {
+    const size_t         column = currentColumn_DocumentView(view);
+    if (!((side == 1 && column == 0) ||
+          (side == 2 && column + numColumns_DocumentView(view) >= numColumns_GmDocument(view->doc)))) {
         return iFalse;
     }
     if (argLabel_Command(cmd, "edge")) {
@@ -2108,7 +2108,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
-        showPage_DocumentView(d->view,
+        showColumn_DocumentView(d->view,
                               (arg_Command(cmd) + pageProgressUnit_DocumentWidget_ / 2) /
                                   pageProgressUnit_DocumentWidget_,
                               iFalse);
@@ -2126,9 +2126,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if ((equal_Command(cmd, "scroll.top") || equal_Command(cmd, "scroll.bottom")) &&
              document_App() == d && isPaged_DocumentView(d->view)) {
-        showPage_DocumentView(d->view,
+        showColumn_DocumentView(d->view,
                               equal_Command(cmd, "scroll.top") ? 0
-                                                               : numPages_GmDocument(d->view->doc) - 1,
+                                                               : numColumns_GmDocument(d->view->doc) - 1,
                               iFalse);
         return iTrue;
     }
@@ -3300,26 +3300,26 @@ void updateHoverLinkInfo_DocumentWidget(iDocumentWidget *d, iGmLinkId linkId) {
 }
 
 static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
-    /* Footer buttons are at the bottom of the last page, if it is visible. */
+    /* Footer buttons are at the bottom of the last column, if it is visible. */
     if (!d->footerButtons) {
         return;
     }
-    const iDocumentView *view     = d->view;
-    const size_t         lastPage = numPages_GmDocument(view->doc) - 1;
-    const iRangei        pages    = visiblePages_DocumentView(view);
-    const iBool          isShown  = (int) lastPage >= pages.start && (int) lastPage < pages.end;
+    const iDocumentView *view    = d->view;
+    const size_t         lastCol = numColumns_GmDocument(view->doc) - 1;
+    const iRangei        cols    = visibleColumns_DocumentView(view);
+    const iBool          isShown = (int) lastCol >= cols.start && (int) lastCol < cols.end;
     setFlags_Widget(d->footerButtons, hidden_WidgetFlag, !isShown);
     if (isShown) {
         const iRect   bounds   = bounds_Widget(as_Widget(d));
         const int     colWidth = metrics_GmDocument(view->doc)->canvasWidth;
-        const int     left     = pageLeft_DocumentView(view, lastPage) - left_Rect(bounds);
+        const int     left     = columnLeft_DocumentView(view, lastCol) - left_Rect(bounds);
         const int     hPad     = (colWidth - iMin(120 * gap_UI, size_GmDocument(view->doc).x)) / 2;
-        const iRangei content  = pageContentRange_GmDocument(view->doc, lastPage);
+        const iRangei content  = columnContentRange_GmDocument(view->doc, lastCol);
         setPadding_Widget(d->footerButtons,
                           left + hPad, 0, width_Rect(bounds) - left - colWidth + hPad, 3 * gap_UI);
         arrange_Widget(d->footerButtons);
         d->footerButtons->rect.pos.y = top_Rect(pageViewport_DocumentView(view)) - top_Rect(bounds) +
-                                       content.end - (int) lastPage * pageHeight_GmDocument(view->doc) -
+                                       content.end - (int) lastCol * pageHeight_GmDocument(view->doc) -
                                        height_Widget(d->footerButtons);
     }
 }
@@ -3360,9 +3360,9 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
     /* The footer buttons and the progress bar follow page turns. */
     positionPagedFooterButtons_DocumentWidget_(d);
     const int unit = pageProgressUnit_DocumentWidget_;
-    setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numPages_GmDocument(d->view->doc) * unit });
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numColumns_GmDocument(d->view->doc) * unit });
     setThumb_ScrollWidget(d->scroll,
-                          (int) (pagePosition_DocumentView(d->view) * unit),
+                          (int) (columnPosition_DocumentView(d->view) * unit),
                           numColumns_DocumentView(d->view) * unit);
 }
 

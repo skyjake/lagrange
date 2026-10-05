@@ -45,6 +45,13 @@ struct Impl_GmLink {
 
 iDeclareTypeConstruction(GmLink)
 
+iDeclareType(GmPageBands)
+
+struct Impl_GmPageBands {
+    iRangecc header;
+    iRangecc footer;
+};
+
 struct Impl_GmDocument {
     iObject object;
     enum iSourceFormat origFormat;
@@ -66,6 +73,7 @@ struct Impl_GmDocument {
     iPtrArray links;
     iString   title; /* the first top-level title */
     iArray    headings;
+    iArray    pageBands; /* GmPageBands of each page in a paginated layout */
     iArray    preMeta; /* metadata about preformatted blocks */
     iDocumentStyle style; /* set up for the current layout */
     int       ansiEscapes;

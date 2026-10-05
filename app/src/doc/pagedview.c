@@ -60,7 +60,7 @@ static int preferredWidth_DocumentView_(const iDocumentView *d, int columns) {
     /* Not zoomed: the zoom level only affects the text size. Lines are shorter in two
        columns than when scrolling. */
     const int width = fontSize_UI * docPrefs_GmDocument(d->doc)->lineWidth.value;
-    return columns == 2 ? width * 0.85f : width;
+    return columns > 1 ? width * 0.85f : width;
 }
 
 static int pageMargin_DocumentView_(const iDocumentView *d, int columnWidth) {
@@ -73,17 +73,37 @@ static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidt
     return columnWidth - 2 * pageMargin_DocumentView_(d, columnWidth);
 }
 
-static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
-    /* Two columns when both fit at the preferred width. */
+static int pagesFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
+    /* Two pages when both fit at the preferred width. */
     return preferredWidth_DocumentView_(d, 2) <=
                    maxWidthInColumn_DocumentView_(d, viewportWidth / 2)
                ? 2
                : 1;
 }
 
+static int columnsPerPageFor_DocumentView_(const iDocumentView *d, int pageWidth) {
+    /* Two columns when both fit at the preferred width of the actual text size, so small
+       text is set in narrower columns. */
+    const float zoom = activeDocPrefs_App()->zoomPercent.value / 100.0f; /* follows the fonts */
+    return preferredWidth_DocumentView_(d, 2) * zoom <=
+                   maxWidthInColumn_DocumentView_(d, pageWidth / 2)
+               ? 2
+               : 1;
+}
+
+static int columnsFor_DocumentView_(const iDocumentView *d, int viewportWidth, int *perPage) {
+    /* All columns of the spread. */
+    const int pages = pagesFor_DocumentView_(d, viewportWidth);
+    const int cols  = columnsPerPageFor_DocumentView_(d, viewportWidth / pages);
+    if (perPage) {
+        *perPage = cols;
+    }
+    return pages * cols;
+}
+
 int pagedDocumentWidth_DocumentView(const iDocumentView *d) {
     const int width   = width_Rect(pageViewport_DocumentView(d));
-    const int columns = columnsFor_DocumentView_(d, width);
+    const int columns = columnsFor_DocumentView_(d, width, NULL);
     return iMin(preferredWidth_DocumentView_(d, columns),
                 maxWidthInColumn_DocumentView_(d, width / columns));
 }
@@ -92,7 +112,8 @@ void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metri
     const iRect viewport  = pageViewport_DocumentView(d);
     const iWidget *footer = footerButtons_DocumentWidget(d->owner);
     metrics->width           = pagedDocumentWidth_DocumentView(d);
-    metrics->canvasWidth     = width_Rect(viewport) / columnsFor_DocumentView_(d, width_Rect(viewport));
+    metrics->canvasWidth     = width_Rect(viewport) /
+                           columnsFor_DocumentView_(d, width_Rect(viewport), &metrics->columnsPerPage);
     /* Preformatted blocks may use half of the margins. */
     metrics->maxContentWidth = iMax(metrics->width,
                                     metrics->canvasWidth -
@@ -113,21 +134,25 @@ int numColumns_DocumentView(const iDocumentView *d) {
     if (!isPaged_DocumentView(d) || columnWidth_DocumentView_(d) <= 0) {
         return 1;
     }
-    return iClamp(width_Rect(pageViewport_DocumentView(d)) / columnWidth_DocumentView_(d), 1, 2);
+    return iClamp(width_Rect(pageViewport_DocumentView(d)) / columnWidth_DocumentView_(d), 1, 4);
 }
 
-size_t currentPage_DocumentView(const iDocumentView *d) {
-    return d->paged.page;
+int numPages_DocumentView(const iDocumentView *d) {
+    return iMax(1, numColumns_DocumentView(d) / columnsPerPage_GmDocument(d->doc));
 }
 
-iRangei visiblePages_DocumentView(const iDocumentView *d) {
-    const int n     = numColumns_DocumentView(d);
-    iRangei   pages = { (int) d->paged.page, (int) d->paged.page + n };
+size_t currentColumn_DocumentView(const iDocumentView *d) {
+    return d->paged.column;
+}
+
+iRangei visibleColumns_DocumentView(const iDocumentView *d) {
+    const int n    = numColumns_DocumentView(d);
+    iRangei   cols = { (int) d->paged.column, (int) d->paged.column + n };
     if (d->paged.isDragging || !isFinished_Anim(&d->paged.turnOffset)) {
-        pages.start = iMin(pages.start, (int) d->paged.turnFrom);
-        pages.end   = iMax(pages.end, (int) d->paged.turnFrom + n);
+        cols.start = iMin(cols.start, (int) d->paged.turnFrom);
+        cols.end   = iMax(cols.end, (int) d->paged.turnFrom + n);
     }
-    return pages;
+    return cols;
 }
 
 int spreadWidth_DocumentView(const iDocumentView *d) {
@@ -139,40 +164,47 @@ static int spreadStride_DocumentView_(const iDocumentView *d) {
     return spreadWidth_DocumentView(d) + 3 * gap_UI;
 }
 
-float pagePosition_DocumentView(const iDocumentView *d) {
+float columnPosition_DocumentView(const iDocumentView *d) {
     const int   n      = numColumns_DocumentView(d);
     const int   stride = spreadStride_DocumentView_(d);
-    const float pos    = (float) d->paged.page -
+    const float pos    = (float) d->paged.column -
                       (stride > 0 ? value_Anim(&d->paged.turnOffset) * n / stride : 0.0f);
-    return iClamp(pos, 0.0f, (float) iMax(0, (int) numPages_GmDocument(d->doc) - n));
+    return iClamp(pos, 0.0f, (float) iMax(0, (int) numColumns_GmDocument(d->doc) - n));
 }
 
-int pageLeft_DocumentView(const iDocumentView *d, size_t page) {
+int columnLeft_DocumentView(const iDocumentView *d, size_t column) {
     const int n      = numColumns_DocumentView(d);
-    const int rel    = (int) page - (int) d->paged.page;
+    const int rel    = (int) column - (int) d->paged.column;
     const int spread = rel >= 0 ? rel / n : -((n - 1 - rel) / n);
     return left_Rect(pageViewport_DocumentView(d)) + spread * spreadStride_DocumentView_(d) +
            (rel - spread * n) * columnWidth_DocumentView_(d) +
            (int) value_Anim(&d->paged.turnOffset);
 }
 
-iInt2 pageOrigin_DocumentView(const iDocumentView *d, size_t page) {
-    return init_I2(pageLeft_DocumentView(d, page) +
+iInt2 columnOrigin_DocumentView(const iDocumentView *d, size_t column) {
+    return init_I2(columnLeft_DocumentView(d, column) +
                        (columnWidth_DocumentView_(d) - size_GmDocument(d->doc).x) / 2,
                    top_Rect(pageViewport_DocumentView(d)) -
-                       (int) page * pageHeight_GmDocument(d->doc));
+                       (int) column * pageHeight_GmDocument(d->doc));
+}
+
+iRect pageRect_DocumentView(const iDocumentView *d, size_t page) {
+    const int   perPage  = columnsPerPage_GmDocument(d->doc);
+    const iRect viewport = pageViewport_DocumentView(d);
+    return init_Rect(columnLeft_DocumentView(d, page * perPage), top_Rect(viewport),
+                     perPage * columnWidth_DocumentView_(d), height_Rect(viewport));
 }
 
 iInt2 pagedDocumentPos_DocumentView(const iDocumentView *d, iInt2 windowPos) {
     const int colWidth = iMax(1, columnWidth_DocumentView_(d));
-    const int x        = windowPos.x - pageLeft_DocumentView(d, d->paged.page);
+    const int x        = windowPos.x - columnLeft_DocumentView(d, d->paged.column);
     const int column   = iClamp(x < 0 ? -1 : x / colWidth, 0, numColumns_DocumentView(d) - 1);
-    return sub_I2(windowPos, pageOrigin_DocumentView(d, d->paged.page + column));
+    return sub_I2(windowPos, columnOrigin_DocumentView(d, d->paged.column + column));
 }
 
 iRect pagedRunRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
-    const size_t page = pageAt_GmDocument(d->doc, top_Rect(run->visBounds));
-    return moved_Rect(run->bounds, pageOrigin_DocumentView(d, page));
+    const size_t column = columnAt_GmDocument(d->doc, top_Rect(run->visBounds));
+    return moved_Rect(run->bounds, columnOrigin_DocumentView(d, column));
 }
 
 void allocPagedVisBuffer_DocumentView(const iDocumentView *d) {
@@ -185,14 +217,14 @@ void allocPagedVisBuffer_DocumentView(const iDocumentView *d) {
     /* The current spread and the next one, which can be prerendered. During a turn, the
        previous and the current spread. */
     allocPages_VisBuf(d->visBuf, init_I2(columnWidth_DocumentView_(d), pageHeight), 2 * n);
-    setPages_VisBuf(d->visBuf, visiblePages_DocumentView(d).start * pageHeight);
+    setPages_VisBuf(d->visBuf, visibleColumns_DocumentView(d).start * pageHeight);
 }
 
 /*----------------------------------------------------------------------------------------------*/
 
 void resetPage_DocumentView(iDocumentView *d) {
     removeTicker_App(animatePageTurn_DocumentView, d);
-    d->paged.page        = 0;
+    d->paged.column      = 0;
     d->paged.turnFrom    = 0;
     d->paged.isDragging  = iFalse;
     d->paged.isReverting = iFalse;
@@ -212,27 +244,27 @@ void animatePageTurn_DocumentView(iAny *context) {
     }
     if (d->paged.isReverting) {
         d->paged.isReverting = iFalse;
-        d->paged.page        = d->paged.turnFrom;
+        d->paged.column      = d->paged.turnFrom;
         init_Anim(&d->paged.turnOffset, 0);
     }
     updateVisible_DocumentView(d); /* buffers move on to the next spread */
 }
 
-void showPage_DocumentView(iDocumentView *d, size_t page, iBool isAnimated) {
+void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) {
     if (d->paged.isDragging) {
         return;
     }
     const size_t n = numColumns_DocumentView(d);
-    page = iMin(page, numPages_GmDocument(d->doc) - 1);
-    page -= page % n;
-    if (page == d->paged.page) {
+    column = iMin(column, numColumns_GmDocument(d->doc) - 1);
+    column -= column % n;
+    if (column == d->paged.column) {
         return;
     }
     d->paged.isReverting = iFalse;
-    const int spreads = ((int) page - (int) d->paged.page) / (int) n;
+    const int spreads = ((int) column - (int) d->paged.column) / (int) n;
     if (isAnimated && iAbs(spreads) == 1) {
         /* The old spread slides out as the new one slides in. */
-        d->paged.turnFrom = d->paged.page;
+        d->paged.turnFrom = d->paged.column;
         init_Anim(&d->paged.turnOffset, spreads * spreadStride_DocumentView_(d));
         setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
         addTicker_App(animatePageTurn_DocumentView, d);
@@ -240,24 +272,24 @@ void showPage_DocumentView(iDocumentView *d, size_t page, iBool isAnimated) {
     else {
         init_Anim(&d->paged.turnOffset, 0);
     }
-    d->paged.page = page;
+    d->paged.column = column;
     updateVisible_DocumentView(d);
     refresh_Widget(d->owner);
 }
 
 void showDocumentY_DocumentView(iDocumentView *d, int documentY) {
-    showPage_DocumentView(d, pageAt_GmDocument(d->doc, documentY), iFalse);
+    showColumn_DocumentView(d, columnAt_GmDocument(d->doc, documentY), iFalse);
 }
 
 iBool turnPage_DocumentView(iDocumentView *d, int dir) {
     const int n      = numColumns_DocumentView(d);
-    const int target = (int) d->paged.page + dir * n;
-    if (target < 0 || target >= (int) numPages_GmDocument(d->doc)) {
+    const int target = (int) d->paged.column + dir * n;
+    if (target < 0 || target >= (int) numColumns_GmDocument(d->doc)) {
         postCommand_Widget(d->owner, "document.page.overflow arg:%d", dir);
         return iFalse;
     }
     /* Swipes animate regardless, but other turns follow the smooth scrolling setting. */
-    showPage_DocumentView(d, target, prefs_App()->smoothScrolling);
+    showColumn_DocumentView(d, target, prefs_App()->smoothScrolling);
     return iTrue;
 }
 
@@ -273,9 +305,9 @@ int pageTurnZone_DocumentView(const iDocumentView *d, iInt2 windowPos) {
         right = right_Rect(viewport) - width_Rect(viewport) / 4;
     }
     else {
-        const size_t last = d->paged.page + numColumns_DocumentView(d) - 1;
-        left  = pageOrigin_DocumentView(d, d->paged.page).x;
-        right = pageOrigin_DocumentView(d, last).x + size_GmDocument(d->doc).x;
+        const size_t last = d->paged.column + numColumns_DocumentView(d) - 1;
+        left  = columnOrigin_DocumentView(d, d->paged.column).x;
+        right = columnOrigin_DocumentView(d, last).x + size_GmDocument(d->doc).x;
     }
     return windowPos.x < left ? -1 : windowPos.x >= right ? +1 : 0;
 }
@@ -285,11 +317,11 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     const int spread = spreadStride_DocumentView_(d);
     if (!d->paged.isDragging) {
         if (d->paged.isReverting) {
-            d->paged.page = d->paged.turnFrom;
+            d->paged.column = d->paged.turnFrom;
         }
         d->paged.isDragging  = iTrue;
         d->paged.isReverting = iFalse;
-        d->paged.dragFrom    = d->paged.page;
+        d->paged.dragFrom    = d->paged.column;
         d->paged.dragDir     = 0;
         d->paged.dragOffset  = offset;
         d->paged.dragTime    = SDL_GetTicks();
@@ -306,21 +338,21 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
             d->paged.dragTime   = now;
         }
     }
-    const size_t oldPage = d->paged.page;
+    const size_t oldCol  = d->paged.column;
     const int    dir     = offset < 0 ? +1 : offset > 0 ? -1 : 0;
     const int    target  = (int) d->paged.dragFrom + dir * n;
     d->paged.dragDir     = dir;
     d->paged.turnFrom    = d->paged.dragFrom;
-    if (!dir || target < 0 || target >= (int) numPages_GmDocument(d->doc)) {
+    if (!dir || target < 0 || target >= (int) numColumns_GmDocument(d->doc)) {
         /* Nothing to turn to, so the pages resist. */
-        d->paged.page = d->paged.dragFrom;
+        d->paged.column = d->paged.dragFrom;
         init_Anim(&d->paged.turnOffset, offset / 6);
     }
     else {
-        d->paged.page = target;
+        d->paged.column = target;
         init_Anim(&d->paged.turnOffset, offset + dir * spread);
     }
-    if (d->paged.page != oldPage) {
+    if (d->paged.column != oldCol) {
         updateVisible_DocumentView(d);
     }
     pagesMoved_DocumentWidget(d->owner);
@@ -349,7 +381,7 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
         return;
     }
     d->paged.isDragging = iFalse;
-    if (d->paged.page == d->paged.turnFrom) {
+    if (d->paged.column == d->paged.turnFrom) {
         if (!isCancelled && d->paged.dragDir) {
             postCommand_Widget(d->owner, "document.page.overflow arg:%d", d->paged.dragDir);
         }
@@ -357,7 +389,7 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
     }
     else if (isCancelled) {
         /* Slide back to where the drag began. */
-        const int dir = d->paged.page > d->paged.turnFrom ? +1 : -1;
+        const int dir = d->paged.column > d->paged.turnFrom ? +1 : -1;
         d->paged.isReverting = iTrue;
         finishDrag_DocumentView_(d, dir * spreadStride_DocumentView_(d), iTrue);
     }

@@ -198,6 +198,7 @@ struct Impl_GmDocumentMetrics {
     int canvasWidth;     /* width of the view; content may extend past the margins */
     int maxContentWidth; /* unwrappable lines may extend up to this */
     int pageHeight;      /* non-zero for a paginated layout */
+    int columnsPerPage;  /* paginated layout is cut into columns of the page height */
     int firstPageInset;  /* space reserved at the top of the first page */
     int lastPageInset;   /* space reserved at the bottom of the last page */
     int topInset;        /* safe area above the page header */
@@ -226,12 +227,17 @@ const iGmDocumentMetrics *metrics_GmDocument(const iGmDocument *);
 iBool   isCoverPage_GmDocument  (const iGmDocument *);
 iBool   isPaged_GmDocument      (const iGmDocument *);
 int     pageHeight_GmDocument   (const iGmDocument *); /* zero if not paginated */
+size_t  numColumns_GmDocument   (const iGmDocument *);
+size_t  columnAt_GmDocument     (const iGmDocument *, int documentY);
+int     columnsPerPage_GmDocument(const iGmDocument *);
 size_t  numPages_GmDocument     (const iGmDocument *);
-size_t  pageAt_GmDocument       (const iGmDocument *, int documentY);
 int     pageBandHeight_GmDocument(const iGmDocument *); /* header and footer text area */
 int     pageHeaderHeight_GmDocument(const iGmDocument *);
 int     pageFooterHeight_GmDocument(const iGmDocument *);
-iRangei pageContentRange_GmDocument(const iGmDocument *, size_t page); /* between header and footer */
+iRangei columnContentRange_GmDocument(const iGmDocument *, size_t column); /* between header and footer */
+int     pageBandFont_GmDocument (const iGmDocument *);
+iRangecc pageHeader_GmDocument  (const iGmDocument *, size_t page);
+iRangecc pageFooter_GmDocument  (const iGmDocument *, size_t page);
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source,

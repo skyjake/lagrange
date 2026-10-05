@@ -261,10 +261,10 @@ static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
-/* Pagination: the continuous layout is cut into pages that begin at multiples of the page
-   height. Each page has a header and a footer. */
+/* Pagination: the continuous layout is cut into columns that begin at multiples of the page
+   height. A page has one or more columns, and a header and a footer. */
 
-static int pageFont_GmDocument_(const iGmDocument *d) {
+int pageBandFont_GmDocument(const iGmDocument *d) {
     /* Same family as the document's headings. */
     return FONT_ID(isForcedMonospace_GmDocument_(d) ? documentMonospace_FontId
                                                     : documentHeading_FontId,
@@ -273,7 +273,7 @@ static int pageFont_GmDocument_(const iGmDocument *d) {
 }
 
 int pageBandHeight_GmDocument(const iGmDocument *d) {
-    return iMax(2 * lineHeight_Text(pageFont_GmDocument_(d)), d->metrics.pageHeight / 14);
+    return iMax(2 * lineHeight_Text(pageBandFont_GmDocument(d)), d->metrics.pageHeight / 14);
 }
 
 int pageHeaderHeight_GmDocument(const iGmDocument *d) {
@@ -285,10 +285,10 @@ int pageFooterHeight_GmDocument(const iGmDocument *d) {
     return pageBandHeight_GmDocument(d) + 3 * gap_UI + d->metrics.bottomInset;
 }
 
-iRangei pageContentRange_GmDocument(const iGmDocument *d, size_t page) {
-    const int top  = (int) page * d->metrics.pageHeight;
+iRangei columnContentRange_GmDocument(const iGmDocument *d, size_t column) {
+    const int top = (int) column * d->metrics.pageHeight;
     return (iRangei){ top + pageHeaderHeight_GmDocument(d) +
-                          (page == 0 ? d->metrics.firstPageInset : 0),
+                          ((int) column < columnsPerPage_GmDocument(d) ? d->metrics.firstPageInset : 0),
                       top + d->metrics.pageHeight - pageFooterHeight_GmDocument(d) };
 }
 
@@ -348,57 +348,35 @@ static iBool isChapterGroup_GmDocument_(const iArray *runs, size_t start, size_t
     return iFalse;
 }
 
-static void addPageBand_GmDocument_(iGmDocument *d, int top, iArray *bands) {
-    /* The text is set when pagination is complete. */
-    const int font = pageFont_GmDocument_(d);
-    iGmRun    run  = { .font = font, .color = tmQuoteIcon_ColorId, .flags = decoration_GmRunFlag };
-    run.visBounds.size.y = lineHeight_Text(font);
-    run.visBounds.pos.y  = top + (pageBandHeight_GmDocument(d) - run.visBounds.size.y) / 2;
-    pushBack_Array(bands, &(size_t){ size_Array(&d->layout) });
-    pushBack_Array(&d->layout, &run);
-}
-
-static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text);
-
-static void setPageBandText_GmDocument_(iGmDocument *d, size_t index, iRangecc text) {
-    iGmRun *run = at_Array(&d->layout, index);
-    run->text   = iNullRange;
-    if (!isEmpty_Range(&text)) {
-        const char *end;
-        tryAdvance_Text(run->font, text, d->size.x, &end);
-        if (end < text.end) {
-            /* Shortened to fit, with an ellipsis. */
-            const char *ellipsis = "\u2026";
-            tryAdvance_Text(run->font,
-                            text,
-                            d->size.x - measure_Text(run->font, ellipsis).advance.x,
-                            &end);
-            iString *str = newRange_String((iRangecc){ text.start, end });
-            trimEnd_String(str);
-            appendCStr_String(str, ellipsis);
-            text = auxText_GmDocument_(d, str);
-            delete_String(str);
-        }
-        run->text = text;
-    }
-    run->visBounds.size.x = measureRange_Text(run->font, run->text).bounds.size.x;
-    run->visBounds.pos.x  = (d->size.x - run->visBounds.size.x) / 2;
-}
-
 static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text) {
     pushBack_StringArray(&d->auxText, text);
     return range_String(constAt_StringArray(&d->auxText, size_StringArray(&d->auxText) - 1));
 }
 
-static void addPageFooter_GmDocument_(iGmDocument *d, size_t page, iArray *footers) {
-    addPageBand_GmDocument_(
-        d, (int) (page + 1) * d->metrics.pageHeight - pageFooterHeight_GmDocument(d), footers);
+static iRangecc fitPageBandText_GmDocument_(iGmDocument *d, iRangecc text) {
+    /* Shortened to fit between the outer margins of the page, with an ellipsis. */
+    const int font     = pageBandFont_GmDocument(d);
+    const int maxWidth = (columnsPerPage_GmDocument(d) - 1) * d->metrics.canvasWidth + d->size.x;
+    const char *end;
+    tryAdvance_Text(font, text, maxWidth, &end);
+    if (end < text.end) {
+        const char *ellipsis = "\u2026";
+        tryAdvance_Text(font, text, maxWidth - measure_Text(font, ellipsis).advance.x, &end);
+        iString *str = newRange_String((iRangecc){ text.start, end });
+        trimEnd_String(str);
+        appendCStr_String(str, ellipsis);
+        text = auxText_GmDocument_(d, str);
+        delete_String(str);
+    }
+    return text;
 }
 
-static void breakPage_GmDocument_(iGmDocument *d, size_t *page, iArray *footers, iArray *headers) {
-    addPageFooter_GmDocument_(d, *page, footers);
-    (*page)++;
-    addPageBand_GmDocument_(d, (int) *page * d->metrics.pageHeight + d->metrics.topInset, headers);
+static void breakColumn_GmDocument_(const iGmDocument *d, size_t *column, iBool isNewPage) {
+    (*column)++;
+    if (isNewPage) {
+        const size_t perPage = columnsPerPage_GmDocument(d);
+        *column = (*column + perPage - 1) / perPage * perPage;
+    }
 }
 
 static iRangecc headingText_GmDocument_(const iGmDocument *d, const iGmRun *run) {
@@ -412,23 +390,16 @@ static iRangecc headingText_GmDocument_(const iGmDocument *d, const iGmRun *run)
     return run->text;
 }
 
-static void setPageBandTexts_GmDocument_(iGmDocument *d, const iArray *headers,
-                                         const iArray *footers) {
-    const size_t numPages = size_Array(footers);
-    /* Page numbers. */
-    for (size_t i = 0; i < numPages; i++) {
-        setPageBandText_GmDocument_(
-            d,
-            *(const size_t *) constAt_Array(footers, i),
-            auxText_GmDocument_(
-                d, collectNewFormat_String(cstr_Lang("doc.page.number"), (int) i + 1, (int) numPages)));
-    }
-    /* Headers show the last level 1 heading on or before the page, except on a page that
-       begins with one. */
-    iRangecc title   = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
-    size_t   runPos  = 0;
-    for (size_t page = 1; page < numPages && page - 1 < size_Array(headers); page++) {
-        const int pageEnd        = (int) (page + 1) * d->metrics.pageHeight;
+static void setPageBands_GmDocument_(iGmDocument *d) {
+    const size_t numPages = numPages_GmDocument(d);
+    const int    pageSpan = columnsPerPage_GmDocument(d) * d->metrics.pageHeight;
+    /* Headers show the last level 1 heading on or before the page, except on the first page
+       and on a page that begins with one. */
+    iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->title)));
+    size_t   runPos = 0;
+    clear_Array(&d->pageBands);
+    for (size_t page = 0; page < numPages; page++) {
+        const int pageEnd        = (int) (page + 1) * pageSpan;
         iBool     isFirstRun     = iTrue;
         iBool     isChapterStart = iFalse;
         for (; runPos < size_Array(&d->layout); runPos++) {
@@ -450,8 +421,16 @@ static void setPageBandTexts_GmDocument_(iGmDocument *d, const iArray *headers,
                 title = auxText_GmDocument_(d, collect_String(upper_String(text)));
             }
         }
-        setPageBandText_GmDocument_(
-            d, *(const size_t *) constAt_Array(headers, page - 1), isChapterStart ? iNullRange : title);
+        iGmPageBands bands = { iNullRange, iNullRange };
+        if (page > 0 && !isChapterStart && !isEmpty_Range(&title)) {
+            bands.header = fitPageBandText_GmDocument_(d, title);
+        }
+        bands.footer = fitPageBandText_GmDocument_(
+            d,
+            auxText_GmDocument_(d,
+                                collectNewFormat_String(
+                                    cstr_Lang("doc.page.number"), (int) page + 1, (int) numPages)));
+        pushBack_Array(&d->pageBands, &bands);
     }
 }
 
@@ -491,42 +470,40 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
 static void paginate_GmDocument_(iGmDocument *d) {
     const iArray *src        = collect_Array(copy_Array(&d->layout));
     const size_t  numSrc     = size_Array(src);
-    iArray        footers; /* layout indices of the page footers */
-    iArray        headers; /* layout indices of the page headers, from the second page */
-    init_Array(&footers, sizeof(size_t));
-    init_Array(&headers, sizeof(size_t));
+    const size_t  perPage    = columnsPerPage_GmDocument(d);
     clear_Array(&d->layout);
-    size_t   page       = 0;
-    iRangei  content    = pageContentRange_GmDocument(d, page);
+    size_t   column     = 0;
+    iRangei  content    = columnContentRange_GmDocument(d, column);
     int      offset     = content.start; /* the continuous layout begins at zero */
     int      lastBottom = content.start;
     size_t   firstGroup = 0;
     size_t   prevGroup  = iInvalidPos; /* source index */
     size_t   prevDest   = 0;           /* layout index of the previous group */
-    size_t   pageStart  = 0;           /* layout index of the first run on the page */
+    size_t   colStart   = 0;           /* layout index of the first run in the column */
     uint16_t lastPreId  = 0;
-    uint16_t pagePreId  = 1;           /* first preformatted block that may begin on the page */
+    uint16_t colPreId   = 1;           /* first preformatted block that may begin in the column */
     int      srcBottom  = 0;           /* bottom of the placed runs in the continuous layout */
     iBool    hasTitle   = iFalse;      /* the first level 1 heading is a title, not a chapter */
     for (size_t i = 0; i < numSrc;) {
         size_t        end       = groupEnd_GmDocument_(src, i);
         const iRangei span      = groupSpan_GmDocument_(src, i, end);
-        const iBool   isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || page > 0);
+        const iBool   isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || column > 0);
         if (i != firstGroup && (isChapter || span.end + offset > content.end)) {
-            /* Continue on the next page. A heading is kept with the group that follows it. */
+            /* Continue in the next column. A heading is kept with the group that follows it. */
             if (!isChapter && prevGroup != iInvalidPos && prevGroup != firstGroup &&
                 isHeadingGroup_GmDocument_(src, prevGroup, i)) {
                 i = prevGroup;
                 resize_Array(&d->layout, prevDest);
             }
-            /* Pages are centered, but a chapter's last page is aligned to the top. */
-            alignPage_GmDocument_(d, pageStart, content,
+            /* Columns are centered, but a chapter's last column is aligned to the top. */
+            alignPage_GmDocument_(d, colStart, content,
                                   isChapter ? top_PageAlign : center_PageAlign,
-                                  pagePreId, lastPreId);
-            breakPage_GmDocument_(d, &page, &footers, &headers);
-            pageStart  = size_Array(&d->layout);
-            pagePreId  = lastPreId + 1;
-            content    = pageContentRange_GmDocument(d, page);
+                                  colPreId, lastPreId);
+            /* Chapters begin on a new page. */
+            breakColumn_GmDocument_(d, &column, isChapter);
+            colStart   = size_Array(&d->layout);
+            colPreId   = lastPreId + 1;
+            content    = columnContentRange_GmDocument(d, column);
             end        = groupEnd_GmDocument_(src, i);
             const iRangei newSpan = groupSpan_GmDocument_(src, i, end);
             offset     = content.start - newSpan.start;
@@ -565,22 +542,22 @@ static void paginate_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &run);
         }
     }
-    /* The last page with content is aligned to the top, unless it is the only one. */
-    const iBool needsInsetPage = content.end - lastBottom < d->metrics.lastPageInset;
-    if (!needsInsetPage) {
+    /* The last column with content is aligned to the top, unless it is the only one. The inset
+       at the bottom of the page's last column is needed only if the content reaches it. */
+    const iBool isLastOnPage   = (column + 1) % perPage == 0;
+    const iBool needsInsetPage = isLastOnPage && content.end - lastBottom < d->metrics.lastPageInset;
+    if (isLastOnPage && !needsInsetPage) {
         content.end -= d->metrics.lastPageInset;
     }
-    alignPage_GmDocument_(d, pageStart, content,
-                          page == 0 ? center_PageAlign : top_PageAlign, pagePreId, lastPreId);
+    alignPage_GmDocument_(d, colStart, content,
+                          column == 0 ? center_PageAlign : top_PageAlign, colPreId, lastPreId);
     if (needsInsetPage) {
-        breakPage_GmDocument_(d, &page, &footers, &headers);
+        breakColumn_GmDocument_(d, &column, iFalse);
     }
-    addPageFooter_GmDocument_(d, page, &footers);
-    const size_t numPages = page + 1;
-    d->size.y = (int) numPages * d->metrics.pageHeight;
-    setPageBandTexts_GmDocument_(d, &headers, &footers);
-    deinit_Array(&headers);
-    deinit_Array(&footers);
+    /* The final page is complete, even if some of its columns are empty. */
+    const size_t numColumns = (column + perPage) / perPage * perPage;
+    d->size.y = (int) numColumns * d->metrics.pageHeight;
+    setPageBands_GmDocument_(d);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -686,6 +663,7 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     doc->layoutFontKey = fontKey_App();
     clear_Array(&doc->layout);
     clear_StringArray(&doc->auxText);
+    clear_Array(&doc->pageBands);
     clearLinks_GmDocument_(doc);
     clear_Array(&doc->headings);
     d->oldPreMeta = collect_Array(copy_Array(&doc->preMeta));

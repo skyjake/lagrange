@@ -73,10 +73,10 @@ struct Impl_DocumentView {
     iGmRunRange     renderRuns;
     iPtrSet *       invalidRuns;
     struct {
-        size_t      page;       /* first page of the current spread */
-        size_t      turnFrom;   /* first page of the previous spread during a turn */
+        size_t      column;     /* first column of the current spread */
+        size_t      turnFrom;   /* first column of the previous spread during a turn */
         iAnim       turnOffset; /* horizontal offset of the pages during a turn */
-        size_t      dragFrom;   /* first page of the spread where a drag began */
+        size_t      dragFrom;   /* first column of the spread where a drag began */
         int         dragDir;
         int         dragOffset;
         uint32_t    dragTime;

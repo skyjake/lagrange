@@ -776,10 +776,10 @@ static void draw_ListWidget_(const iListWidget *d) {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
            one should be enough. Probably an off-by-one error in the calculation of the
            invalid range. */
-        iForIndices(i, d->visBuf->buffers) {
+        for (size_t i = 0; i < d->visBuf->numBuffers; i++) {
             iAssert(d->visBuf->buffers[i].texture);
         }
-        const int bg[iElemCount(d->visBuf->buffers)] = {
+        const int bg[maxBuffers_VisBuf] = {
             w->bgColor, w->bgColor, w->bgColor, w->bgColor /* Debug: Separate BG color for buffers. */
         };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
@@ -787,9 +787,9 @@ static void draw_ListWidget_(const iListWidget *d) {
                              ((scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
         reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
-        iRangei invalidRange[iElemCount(d->visBuf->buffers)];
+        iRangei invalidRange[maxBuffers_VisBuf];
         invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);
-        iForIndices(i, d->visBuf->buffers) {
+        for (size_t i = 0; i < d->visBuf->numBuffers; i++) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
                                   iMax(0, buf->origin + d->visBuf->texSize.y) / d->itemHeight };

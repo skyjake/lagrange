@@ -431,6 +431,7 @@ void init_GmDocument(iGmDocument *d) {
     init_PtrArray(&d->links);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
+    init_Array(&d->pageBands, sizeof(iGmPageBands));
     init_Array(&d->preMeta, sizeof(iGmPreMeta));
     d->themeSeed = 0;
     d->layoutFontKey = 0;
@@ -456,6 +457,7 @@ void deinit_GmDocument(iGmDocument *d) {
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
     deinit_Array(&d->preMeta);
+    deinit_Array(&d->pageBands);
     deinit_Array(&d->headings);
     deinit_StringArray(&d->auxText);
     deinit_Array(&d->layout);
@@ -546,6 +548,7 @@ enum iSourceFormat viewFormat_GmDocument(const iGmDocument *d) {
 iBool equal_GmDocumentMetrics(const iGmDocumentMetrics *d, const iGmDocumentMetrics *other) {
     return d->width == other->width && d->canvasWidth == other->canvasWidth &&
            d->maxContentWidth == other->maxContentWidth && d->pageHeight == other->pageHeight &&
+           d->columnsPerPage == other->columnsPerPage &&
            d->firstPageInset == other->firstPageInset && d->lastPageInset == other->lastPageInset &&
            d->topInset == other->topInset && d->bottomInset == other->bottomInset;
 }
@@ -585,18 +588,38 @@ int pageHeight_GmDocument(const iGmDocument *d) {
     return d->metrics.pageHeight;
 }
 
-size_t numPages_GmDocument(const iGmDocument *d) {
+size_t numColumns_GmDocument(const iGmDocument *d) {
     if (!isPaged_GmDocument(d)) {
         return 1;
     }
     return iMax(1, d->size.y / d->metrics.pageHeight);
 }
 
-size_t pageAt_GmDocument(const iGmDocument *d, int documentY) {
+int columnsPerPage_GmDocument(const iGmDocument *d) {
+    return isPaged_GmDocument(d) ? iMax(1, d->metrics.columnsPerPage) : 1;
+}
+
+size_t numPages_GmDocument(const iGmDocument *d) {
+    return iMax(1, numColumns_GmDocument(d) / columnsPerPage_GmDocument(d));
+}
+
+iRangecc pageHeader_GmDocument(const iGmDocument *d, size_t page) {
+    return page < size_Array(&d->pageBands)
+               ? ((const iGmPageBands *) constAt_Array(&d->pageBands, page))->header
+               : iNullRange;
+}
+
+iRangecc pageFooter_GmDocument(const iGmDocument *d, size_t page) {
+    return page < size_Array(&d->pageBands)
+               ? ((const iGmPageBands *) constAt_Array(&d->pageBands, page))->footer
+               : iNullRange;
+}
+
+size_t columnAt_GmDocument(const iGmDocument *d, int documentY) {
     if (!isPaged_GmDocument(d) || documentY < 0) {
         return 0;
     }
-    return iMin((size_t) (documentY / d->metrics.pageHeight), numPages_GmDocument(d) - 1);
+    return iMin((size_t) (documentY / d->metrics.pageHeight), numColumns_GmDocument(d) - 1);
 }
 
 void redoLayout_GmDocument(iGmDocument *d) {
