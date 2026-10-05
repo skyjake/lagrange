@@ -24,7 +24,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "banner.h"
-#include "ui/documentwidget.h"
 #include "ui/metrics.h"
 #include "ui/root.h"
 #include "ui/visbuf.h"
@@ -46,13 +45,12 @@ iBool isPaged_DocumentView(const iDocumentView *d) {
 iRect pageViewport_DocumentView(const iDocumentView *d) {
     const iWidget *w    = constAs_Widget(d->owner);
     iRect          rect = bounds_Widget(w);
-    if (wantsPaged_DocumentView(d) && document_Root(w->root) == d->owner) {
+    if (wantsPaged_DocumentView(d) && constAs_Widget(document_Root(w->root)) == w) {
         /* Pages extend under the bars, so their visibility does not affect the layout. */
         return readingRect_Root(w->root, rect);
     }
     adjustEdges_Rect(&rect, 0, 0,
-                     -(phoneToolbarHeight_DocumentWidget(d->owner) +
-                       phoneBottomNavbarHeight_DocumentWidget(d->owner)), 0);
+                     -hostPhoneBarsHeight_DocumentView(d), 0);
     return rect;
 }
 
@@ -110,7 +108,7 @@ int pagedDocumentWidth_DocumentView(const iDocumentView *d) {
 
 void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metrics) {
     const iRect viewport  = pageViewport_DocumentView(d);
-    const iWidget *footer = footerButtons_DocumentWidget(d->owner);
+    const iWidget *footer = hostFooterButtons_DocumentView(d);
     metrics->width           = pagedDocumentWidth_DocumentView(d);
     metrics->canvasWidth     = width_Rect(viewport) /
                            columnsFor_DocumentView_(d, width_Rect(viewport), &metrics->columnsPerPage);
@@ -297,7 +295,7 @@ void animatePageTurn_DocumentView(iAny *context) {
         return; /* pending destruction */
     }
     refresh_Widget(d->owner);
-    pagesMoved_DocumentWidget(d->owner);
+    hostPagesMoved_DocumentView(d);
     if (!isFinished_Anim(&d->paged.turnOffset)) {
         addTicker_App(animatePageTurn_DocumentView, d);
         return;
@@ -420,7 +418,7 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
         d->paged.armedEdge = 0;
         updateVisible_DocumentView(d);
     }
-    pagesMoved_DocumentWidget(d->owner);
+    hostPagesMoved_DocumentView(d);
     refresh_Widget(d->owner);
 }
 

@@ -674,10 +674,38 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
         updateActiveDocPrefs_App();
     }
 }
+static const iDocumentViewHost viewHost_DocumentWidget_ = {
+    .footerButtons           = (iAny *) footerButtons_DocumentWidget,
+    .footerHeight            = (iAny *) footerHeight_DocumentWidget,
+    .phoneToolbarHeight      = (iAny *) phoneToolbarHeight_DocumentWidget,
+    .phoneBottomNavbarHeight = (iAny *) phoneBottomNavbarHeight_DocumentWidget,
+    .scrollBar               = (iAny *) scrollBar_DocumentWidget,
+    .isBlank                 = (iAny *) isBlank_DocumentWidget,
+    .isHoverAllowed          = (iAny *) isHoverAllowed_DocumentWidget,
+    .noHoverWhileScrolling   = (iAny *) noHoverWhileScrolling_DocumentWidget,
+    .isPrerenderingAllowed   = (iAny *) isPrerenderingAllowed_DocumentWidget,
+    .isShowingLinkNumbers    = (iAny *) isShowingLinkNumbers_DocumentWidget,
+    .ordinalBase             = (iAny *) ordinalBase_DocumentWidget,
+    .linkOrdinalChar         = (iAny *) linkOrdinalChar_DocumentWidget,
+    .selectionMark           = (iAny *) selectionMark_DocumentWidget,
+    .sourceTime              = (iAny *) sourceTime_DocumentWidget,
+    .findMediaRequest        = (iAny *) findMediaRequest_DocumentWidget,
+    .wheelSwipeState         = (iAny *) wheelSwipeState_DocumentWidget,
+    .animate                 = animate_DocumentWidget,
+    .refreshWhileScrolling   = refreshWhileScrolling_DocumentWidget,
+    .scrollBegan             = scrollBegan_DocumentWidget,
+    .aboutToScrollView       = (iAny *) aboutToScrollView_DocumentWidget,
+    .didScrollView           = (iAny *) didScrollView_DocumentWidget,
+    .documentRunsInvalidated = (iAny *) documentRunsInvalidated_DocumentWidget,
+    .repositionInlinePrompts = (iAny *) repositionInlinePrompts_DocumentWidget,
+    .updateHoverLinkInfo     = (iAny *) updateHoverLinkInfo_DocumentWidget,
+    .pagesMoved              = (iAny *) pagesMoved_DocumentWidget,
+};
+
 
 static void allocView_DocumentWidget_(iDocumentWidget *d) {
     d->view = new_DocumentView();
-    setOwner_DocumentView(d->view, d);
+    setOwner_DocumentView(d->view, d, &viewHost_DocumentWidget_);
     d->view->banner     = d->banner;
     d->view->selectMark = &d->selectMark;
     d->view->foundMark  = &d->foundMark;

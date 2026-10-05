@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "banner.h"
 #include "bookmarks.h"
 #include "defs.h"
-#include "ui/documentwidget.h"
 #include "gempub.h"
 #include <lagrange/gmrequest.h>
 #include "gmutil.h"
@@ -105,6 +104,7 @@ iDefineTypeConstruction(DocumentView)
 
 void init_DocumentView(iDocumentView *d) {
     d->owner         = NULL;
+    d->host          = NULL;
     d->doc           = new_GmDocument();
     d->invalidRuns   = new_PtrSet();
     d->drawBufs      = new_DrawBufs();
@@ -153,10 +153,148 @@ void deinit_DocumentView(iDocumentView *d) {
     iReleasePtr(&d->doc);
 }
 
-void setOwner_DocumentView(iDocumentView *d, iDocumentWidget *doc) {
-    d->owner = doc;
+/*----------------------------------------------------------------------------------------------*/
+/* Calls to the host widget. */
+
+iWidget *hostFooterButtons_DocumentView(const iDocumentView *d) {
+    return d->host && d->host->footerButtons ? d->host->footerButtons(d->owner) : NULL;
+}
+
+static int hostFooterHeight_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->footerHeight ? d->host->footerHeight(d->owner) : 0;
+}
+
+static int hostPhoneToolbarHeight_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->phoneToolbarHeight ? d->host->phoneToolbarHeight(d->owner) : 0;
+}
+
+int hostPhoneBarsHeight_DocumentView(const iDocumentView *d) {
+    return hostPhoneToolbarHeight_DocumentView_(d) +
+           (d->host && d->host->phoneBottomNavbarHeight ? d->host->phoneBottomNavbarHeight(d->owner)
+                                                        : 0);
+}
+
+static iScrollWidget *hostScrollBar_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->scrollBar ? d->host->scrollBar(d->owner) : NULL;
+}
+
+static iBool hostIsBlank_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->isBlank ? d->host->isBlank(d->owner) : iFalse;
+}
+
+static iBool hostIsHoverAllowed_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->isHoverAllowed ? d->host->isHoverAllowed(d->owner) : iTrue;
+}
+
+static iBool hostNoHoverWhileScrolling_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->noHoverWhileScrolling ? d->host->noHoverWhileScrolling(d->owner)
+                                                     : iFalse;
+}
+
+static iBool hostIsPrerenderingAllowed_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->isPrerenderingAllowed ? d->host->isPrerenderingAllowed(d->owner)
+                                                     : iTrue;
+}
+
+static iBool hostIsShowingLinkNumbers_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->isShowingLinkNumbers ? d->host->isShowingLinkNumbers(d->owner)
+                                                    : iFalse;
+}
+
+static size_t hostOrdinalBase_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->ordinalBase ? d->host->ordinalBase(d->owner) : 0;
+}
+
+static iChar hostLinkOrdinalChar_DocumentView_(const iDocumentView *d, size_t ord) {
+    return d->host && d->host->linkOrdinalChar ? d->host->linkOrdinalChar(d->owner, ord) : 0;
+}
+
+static iRangecc hostSelectionMark_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->selectionMark ? d->host->selectionMark(d->owner) : iNullRange;
+}
+
+static iTime hostSourceTime_DocumentView_(const iDocumentView *d) {
+    if (d->host && d->host->sourceTime) {
+        return d->host->sourceTime(d->owner);
+    }
+    iTime none;
+    iZap(none);
+    return none;
+}
+
+static iMediaRequest *hostFindMediaRequest_DocumentView_(const iDocumentView *d, iGmLinkId linkId) {
+    return d->host && d->host->findMediaRequest ? d->host->findMediaRequest(d->owner, linkId) : NULL;
+}
+
+static enum iWheelSwipeState hostWheelSwipeState_DocumentView_(const iDocumentView *d) {
+    return d->host && d->host->wheelSwipeState ? d->host->wheelSwipeState(d->owner)
+                                               : none_WheelSwipeState;
+}
+
+static void hostAnimate_DocumentView_(iDocumentView *d) {
+    if (d->host && d->host->animate) {
+        d->host->animate(d->owner);
+    }
+    else {
+        refresh_Widget(d->owner);
+    }
+}
+
+static void hostRefreshWhileScrolling_DocumentView_(iDocumentView *d) {
+    if (d->host && d->host->refreshWhileScrolling) {
+        addTicker_App(d->host->refreshWhileScrolling, d->owner);
+    }
+    else {
+        refresh_Widget(d->owner);
+    }
+}
+
+static void hostAboutToScrollView_DocumentView_(iDocumentView *d, int scrollMax) {
+    if (d->host && d->host->aboutToScrollView) {
+        d->host->aboutToScrollView(d->owner, scrollMax);
+    }
+}
+
+static void hostDidScrollView_DocumentView_(iDocumentView *d) {
+    if (d->host && d->host->didScrollView) {
+        d->host->didScrollView(d->owner);
+    }
+}
+
+static void hostDocumentRunsInvalidated_DocumentView_(iDocumentView *d) {
+    if (d->host && d->host->documentRunsInvalidated) {
+        d->host->documentRunsInvalidated(d->owner);
+    }
+    else {
+        documentRunsInvalidated_DocumentView(d);
+    }
+}
+
+static void hostRepositionInlinePrompts_DocumentView_(iDocumentView *d) {
+    if (d->host && d->host->repositionInlinePrompts) {
+        d->host->repositionInlinePrompts(d->owner, d);
+    }
+}
+
+static void hostUpdateHoverLinkInfo_DocumentView_(iDocumentView *d, uint16_t linkId) {
+    if (d->host && d->host->updateHoverLinkInfo) {
+        d->host->updateHoverLinkInfo(d->owner, linkId);
+    }
+}
+
+void hostPagesMoved_DocumentView(iDocumentView *d) {
+    if (d->host && d->host->pagesMoved) {
+        d->host->pagesMoved(d->owner);
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void setOwner_DocumentView(iDocumentView *d, iAnyObject *owner, const iDocumentViewHost *host) {
+    d->owner = owner;
+    d->host  = host;
     d->userHasScrolled = iFalse;
-    init_SmoothScroll(&d->scrollY, as_Widget(doc), scrollBegan_DocumentWidget);
+    init_SmoothScroll(&d->scrollY, owner, host ? host->scrollBegan : NULL);
     if (deviceType_App() != desktop_AppDeviceType) {
         d->scrollY.flags |= pullDownAction_SmoothScrollFlag; /* pull to refresh */
     }
@@ -295,7 +433,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     rect.pos.x  = mid_Rect(bounds).x - rect.size.x / 2;
     rect.pos.y  = top_Rect(bounds) + margin;
     rect.size.y = height_Rect(bounds) - margin;
-    const iWidget *footerButtons = footerButtons_DocumentWidget(d->owner);
+    const iWidget *footerButtons = hostFooterButtons_DocumentView(d);
     /* TODO: Further separation of View and Widget: configure header and footer heights
        without involving the widget here. */
     if (d->flags & centerVertically_DocumentViewFlag) {
@@ -307,11 +445,11 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
             rect.size.y = 0;
             wasCentered = iTrue;
         }
-        else if (docSize + height_Widget(footerButtons_DocumentWidget(d->owner)) < rect.size.y) {
+        else if (docSize + height_Widget(hostFooterButtons_DocumentView(d)) < rect.size.y) {
             /* Center vertically when the document is short. */
             const int relMidY   = (height_Rect(bounds) -
                                    height_Widget(footerButtons) -
-                                   phoneToolbarHeight_DocumentWidget(d->owner)) / 2;
+                                   hostPhoneToolbarHeight_DocumentView_(d)) / 2;
             const int visHeight = size_GmDocument(d->doc).y +
                                   height_Widget(footerButtons);
             const int offset    = -height_Banner(d->banner) -
@@ -403,7 +541,7 @@ static int scrollMax_DocumentView_(const iDocumentView *d) {
     const iWidget *w = constAs_Widget(d->owner);
     int sm = pageHeight_DocumentView(d) +
              (isEmpty_Banner(d->banner) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
-             footerHeight_DocumentWidget(d->owner) - height_Rect(bounds_Widget(w));
+             hostFooterHeight_DocumentView_(d) - height_Rect(bounds_Widget(w));
     return iMax(0, sm);
 }
 
@@ -439,7 +577,7 @@ void invalidateVisibleLinks_DocumentView(iDocumentView *d) {
 }
 
 void updateHoverLinkInfo_DocumentView(iDocumentView *d) {
-    updateHoverLinkInfo_DocumentWidget(d->owner, d->hoverLink ? d->hoverLink->linkId : 0);
+    hostUpdateHoverLinkInfo_DocumentView_(d, d->hoverLink ? d->hoverLink->linkId : 0);
 }
 
 static void unhover_DocumentView_(iDocumentView *d) {
@@ -459,7 +597,7 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     d->hoverLink         = NULL;
     const iInt2 hoverPos = documentPos_DocumentView_(d, mouse);
     const iGmRun *selectableRun = NULL;
-    if (isHoverAllowed_DocumentWidget(d->owner)) {
+    if (hostIsHoverAllowed_DocumentView_(d)) {
         /* Look for any selectable text run. */
         for (const iGmRun *v = d->visibleRuns.start; v && v != d->visibleRuns.end; v++) {
             if (~v->flags & decoration_GmRunFlag && !isEmpty_Range(&v->text) &&
@@ -496,7 +634,7 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
         refresh_Widget(w);
     }
     /* Hovering over preformatted blocks. */
-    if (isHoverAllowed_DocumentWidget(d->owner) && contains_Widget(w, mouse)) {
+    if (hostIsHoverAllowed_DocumentView_(d) && contains_Widget(w, mouse)) {
         iConstForEach(PtrArray, j, &d->visiblePre) {
             const iGmRun *run = j.ptr;
             if (contains_Rangei(ySpan_Rect(run->bounds), hoverPos.y) &&
@@ -511,19 +649,19 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     if (!d->hoverPre) {
         setValueSpeed_Anim(&d->altTextOpacity, 0.0f, 1.5f);
         if (!isFinished_Anim(&d->altTextOpacity)) {
-            animate_DocumentWidget(d->owner);
+            hostAnimate_DocumentView_(d);
         }
     }
     else if (d->hoverPre &&
              preHasAltText_GmDocument(d->doc, preId_GmRun(d->hoverPre)) &&
-             !noHoverWhileScrolling_DocumentWidget(d->owner)) {
+             !hostNoHoverWhileScrolling_DocumentView_(d)) {
         setValueSpeed_Anim(&d->altTextOpacity, 1.0f, 1.5f);
         if (!isFinished_Anim(&d->altTextOpacity)) {
-            animate_DocumentWidget(d->owner);
+            hostAnimate_DocumentView_(d);
         }
     }
-    if (isHover_Widget(w) &&
-        !contains_Widget(constAs_Widget(scrollBar_DocumentWidget(d->owner)), mouse)) {
+    const iScrollWidget *scrollBar = hostScrollBar_DocumentView_(d);
+    if (isHover_Widget(w) && !(scrollBar && contains_Widget(constAs_Widget(scrollBar), mouse))) {
         setCursor_Window(get_Window(),
                          d->hoverLink || d->hoverPre ? SDL_SYSTEM_CURSOR_POINTER
                          : selectableRun             ? SDL_SYSTEM_CURSOR_TEXT
@@ -542,7 +680,7 @@ void updateSideOpacity_DocumentView(iDocumentView *d, iBool isAnimated) {
         opacity = 1.0f;
     }
     setValue_Anim(&d->sideOpacity, opacity, isAnimated ? (opacity < 0.5f ? 100 : 200) : 0);
-    animate_DocumentWidget(d->owner);
+    hostAnimate_DocumentView_(d);
 }
 
 static iRangecc currentHeading_DocumentView_(const iDocumentView *d) {
@@ -564,7 +702,7 @@ static iRangecc currentHeading_DocumentView_(const iDocumentView *d) {
 }
 
 int updateScrollMax_DocumentView(iDocumentView *d) {
-    arrange_Widget(footerButtons_DocumentWidget(d->owner)); /* scrollMax depends on footer height */
+    arrange_Widget(hostFooterButtons_DocumentView(d)); /* scrollMax depends on footer height */
     const int scrollMax = scrollMax_DocumentView_(d);
     setMax_SmoothScroll(&d->scrollY, scrollMax);
     return scrollMax;
@@ -575,7 +713,7 @@ void updateVisible_DocumentView(iDocumentView *d) {
         return; /* e.g., banner height changed */
     }
     const int scrollMax = updateScrollMax_DocumentView(d);
-    aboutToScrollView_DocumentWidget(d->owner, scrollMax); /* TODO: A widget may have many views. */
+    hostAboutToScrollView_DocumentView_(d, scrollMax); /* TODO: A widget may have many views. */
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
     clear_PtrArray(&d->visiblePre);
@@ -588,14 +726,14 @@ void updateVisible_DocumentView(iDocumentView *d) {
     }
     /* Must come after the scan: this may reposition inline prompts using `visibleMedia`. */
     unhover_DocumentView_(d);
-    repositionInlinePrompts_DocumentWidget(d->owner, d); /* uses the visibleMedia scan above */
+    hostRepositionInlinePrompts_DocumentView_(d); /* uses the visibleMedia scan above */
     const iRangecc newHeading = currentHeading_DocumentView_(d);
     if (memcmp(&oldHeading, &newHeading, sizeof(oldHeading))) {
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     }
     updateHover_DocumentView(d, mouseCoord_Window(get_Window(), 0));
     updateSideOpacity_DocumentView(d, iTrue);
-    didScrollView_DocumentWidget(d->owner);
+    hostDidScrollView_DocumentView_(d);
 }
 
 void updateDrawBufs_DocumentView(iDocumentView *d, int drawBufsFlags) {
@@ -635,7 +773,7 @@ static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
         delete_TextBuf(d->drawBufs->timestampBuf);
         d->drawBufs->timestampBuf = NULL;
     }
-    iTime sourceTime = sourceTime_DocumentWidget(d->owner);
+    iTime sourceTime = hostSourceTime_DocumentView_(d);
     if (isValid_Time(&sourceTime)) {
         iString *fmt = timeFormatHourPreference_Lang("page.timestamp");
         replace_String(fmt, "\n", " "); /* TODO: update original lang strings */
@@ -742,7 +880,7 @@ iBool isWideBlockScrollable_DocumentView(const iDocumentView *d, const iRect doc
 
 iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, int duration,
                                    iBool *isAtEnd_out) {
-    if (delta == 0 || wheelSwipeState_DocumentWidget(d->owner) == direct_WheelSwipeState) {
+    if (delta == 0 || hostWheelSwipeState_DocumentView_(d) == direct_WheelSwipeState) {
         return iFalse;
     }
     const int docWidth = documentWidth_DocumentView(d);
@@ -780,7 +918,7 @@ iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, 
                     }
                     setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
                     d->animWideRunRange = range;
-                    addTicker_App(refreshWhileScrolling_DocumentWidget, d->owner);
+                    hostRefreshWhileScrolling_DocumentView_(d);
                 }
                 else {
                     d->animWideRunId = 0;
@@ -880,7 +1018,7 @@ static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
        relayout would move it to the beginning of a spread. */
     const size_t anchor = anchor_DocumentView(d);
     setMetrics_GmDocument(d->doc, &metrics);
-    documentRunsInvalidated_DocumentWidget(d->owner);
+    hostDocumentRunsInvalidated_DocumentView_(d);
     resetPage_DocumentView(d);
     init_Anim(&d->scrollY.pos, 0);
     if (isPaged_DocumentView(d)) {
@@ -933,7 +1071,7 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     run = NULL;
     setMetrics_GmDocument(d->doc, &metrics);
     setWidth_Banner(d->banner, newWidth);
-    documentRunsInvalidated_DocumentWidget(d->owner);
+    hostDocumentRunsInvalidated_DocumentView_(d);
     if (runLoc && !keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
         if (run) {
@@ -1233,10 +1371,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag &&
             ~run->flags & caption_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentView(d->view, run->linkId);
-            if (ord >= ordinalBase_DocumentWidget(d->view->owner)) {
+            if (ord >= hostOrdinalBase_DocumentView_(d->view)) {
                 const iChar ordChar =
-                    linkOrdinalChar_DocumentWidget(d->view->owner,
-                                                   ord - ordinalBase_DocumentWidget(d->view->owner));
+                    hostLinkOrdinalChar_DocumentView_(d->view,
+                                                   ord - hostOrdinalBase_DocumentView_(d->view));
                 if (ordChar) {
                     const enum iFontSize fontSize =
                         size_FontId(font_GmDocument(doc, link_GmLineType));
@@ -1361,7 +1499,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
             if (linkMedia.type != download_MediaType && /* can't cancel downloads currently */
                 linkMedia.type != image_MediaType &&
-                findMediaRequest_DocumentWidget(d->view->owner, run->linkId)) {
+                hostFindMediaRequest_DocumentView_(d->view, run->linkId)) {
                 appendFormat_String(
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
@@ -1383,7 +1521,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         else if ((run->flags & endOfLine_GmRunFlag ||
                   run->mediaType == image_MediaType) && // show download progress for images that are incomplete
-                 (mr = findMediaRequest_DocumentWidget(d->view->owner, run->linkId)) != NULL) {
+                 (mr = hostFindMediaRequest_DocumentView_(d->view, run->linkId)) != NULL) {
             if (!isFinished_GmRequest(mr->req)) {
                 fillRect_Paint(&d->paint,
                                (iRect){ topRight_Rect(linkRect),
@@ -1545,8 +1683,7 @@ static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffs
                         (deviceType_App() != phone_AppDeviceType
                              ? -margin + -dbuf->timestampBuf->size.y : 0) +
                             -(!prefs_App()->hideToolbarOnScroll
-                                  ? phoneToolbarHeight_DocumentWidget(d->owner) +
-                                        phoneBottomNavbarHeight_DocumentWidget(d->owner) : 0) +
+                                  ? hostPhoneBarsHeight_DocumentView(d) : 0) +
                             d->scrollY.max - pos_SmoothScroll(&d->scrollY))),
             tmQuoteIcon_ColorId);
     }
@@ -1585,7 +1722,9 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
     const iRect ctxWidgetBounds =
         init_Rect(0,
                   0,
-                  width_Rect(bounds) - constAs_Widget(scrollBar_DocumentWidget(d->owner))->rect.size.x,
+                  width_Rect(bounds) - (hostScrollBar_DocumentView_(d)
+                                            ? constAs_Widget(hostScrollBar_DocumentView_(d))->rect.size.x
+                                            : 0),
                   height_Rect(bounds));
     const iRangei full          = { 0, size_GmDocument(d->doc).y };
     const iRangei vis           = ctx->vis;
@@ -1793,11 +1932,11 @@ void prerender_DocumentView(iAny *context) {
         .view            = d,
         .docBounds       = documentBounds_DocumentView(d),
         .vis             = visibleRange_DocumentView(d),
-        .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner),
+        .showLinkNumbers = hostIsShowingLinkNumbers_DocumentView_(d),
         .drawDir         = +1,
     };
     //    printf("%u prerendering\n", SDL_GetTicks());
-    if (isPrerenderingAllowed_DocumentWidget(d->owner)) {
+    if (hostIsPrerenderingAllowed_DocumentView_(d)) {
         makePaletteGlobal_GmDocument(d->doc);
         if (render_DocumentView_(d, &ctx, iTrue /* just fill up progressively */)) {
             /* Something was drawn, should check later if there is still more to do. */
@@ -1827,7 +1966,7 @@ static void drawTouchSelectionIndicator_DocumentView_(const iDocumentView *d, iP
     iRect rect = { topLeft_Rect(bounds),
                    init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId)) };
     fillRect_Paint(p, rect, uiTextAction_ColorId);
-    const iRangecc mark = selectionMark_DocumentWidget(d->owner);
+    const iRangecc mark = hostSelectionMark_DocumentView_(d);
     drawCentered_Text(uiLabelBold_FontId,
                       rect,
                       iFalse,
@@ -1998,7 +2137,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                                 .view            = d,
                                 .docBounds       = docBounds,
                                 .vis             = vis,
-                                .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner),
+                                .showLinkNumbers = hostIsShowingLinkNumbers_DocumentView_(d),
                                 .drawDir         = +1,
                               };
     init_Paint(&ctx.paint);
@@ -2116,7 +2255,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     else {
         iRect boundsWithOffset = moved_Rect(bounds, init_I2(horizOffset, 0));
         fillRect_Paint(&ctx.paint, intersect_Rect(boundsWithOffset, clipBounds), uiBackground_ColorId);
-        if (isBlank_DocumentWidget(d->owner)) {
+        if (hostIsBlank_DocumentView_(d)) {
             drawLogo_MainWindow(get_MainWindow(), boundsWithOffset);
         }
     }

@@ -23,14 +23,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "../gmdocument.h"
+#include "swipe.h"
 #include "ui/util.h"
 #include "ui/visbuf.h"
 #include <the_Foundation/ptrset.h>
 
 iDeclareType(Banner)
 iDeclareType(DocumentView)
-iDeclareType(DocumentWidget)
+iDeclareType(DocumentViewHost)
 iDeclareType(DrawBufs)
+iDeclareType(ScrollWidget)
 iDeclareType(VisBufMeta)
 
 enum iDocumentViewFlags {
@@ -42,8 +44,41 @@ enum iDrawBufsFlag {
     updateTimestampBuf_DrawBufsFlag = iBit(2),
 };
 
+/* The widget showing a DocumentView provides these. Missing ones have default behavior. */
+struct Impl_DocumentViewHost {
+    /* Layout. */
+    iWidget *       (*footerButtons)        (const iAnyObject *);
+    int             (*footerHeight)         (const iAnyObject *);
+    int             (*phoneToolbarHeight)   (const iAnyObject *);
+    int             (*phoneBottomNavbarHeight)(const iAnyObject *);
+    iScrollWidget * (*scrollBar)            (const iAnyObject *);
+    /* State. */
+    iBool           (*isBlank)              (const iAnyObject *);
+    iBool           (*isHoverAllowed)       (const iAnyObject *);
+    iBool           (*noHoverWhileScrolling)(const iAnyObject *);
+    iBool           (*isPrerenderingAllowed)(const iAnyObject *);
+    iBool           (*isShowingLinkNumbers) (const iAnyObject *);
+    size_t          (*ordinalBase)          (const iAnyObject *);
+    iChar           (*linkOrdinalChar)      (const iAnyObject *, size_t ord);
+    iRangecc        (*selectionMark)        (const iAnyObject *);
+    iTime           (*sourceTime)           (const iAnyObject *);
+    iMediaRequest * (*findMediaRequest)     (const iAnyObject *, iGmLinkId linkId);
+    enum iWheelSwipeState (*wheelSwipeState)(const iAnyObject *);
+    /* Notifications. */
+    void            (*animate)              (iAny *); /* ticker */
+    void            (*refreshWhileScrolling)(iAny *); /* ticker */
+    void            (*scrollBegan)          (iAnyObject *, int offset, uint32_t duration);
+    void            (*aboutToScrollView)    (iAnyObject *, int scrollMax);
+    void            (*didScrollView)        (iAnyObject *);
+    void            (*documentRunsInvalidated)(iAnyObject *);
+    void            (*repositionInlinePrompts)(iAnyObject *, iDocumentView *);
+    void            (*updateHoverLinkInfo)  (iAnyObject *, uint16_t linkId);
+    void            (*pagesMoved)           (iAnyObject *);
+};
+
 struct Impl_DocumentView {
-    iDocumentWidget *owner;         /* TODO: Convert to an abstract provider of metrics? */
+    iWidget *       owner;
+    const iDocumentViewHost *host;
     iBanner *       banner;
     iRangecc *      selectMark;     /* TODO: Should View own these? */
     iRangecc *      foundMark;
@@ -93,7 +128,7 @@ struct Impl_DocumentView {
 
 iDeclareTypeConstruction(DocumentView)
 
-void    setOwner_DocumentView           (iDocumentView *, iDocumentWidget *doc);
+void    setOwner_DocumentView           (iDocumentView *, iAnyObject *owner, const iDocumentViewHost *host);
 void    swap_DocumentView               (iDocumentView *, iDocumentView *swapBuffersWith); /* TODO: Remove this! */
 void    allocVisBuffer_DocumentView     (const iDocumentView *);
 
@@ -137,5 +172,9 @@ const iGmRun *lastVisibleLink_DocumentView(const iDocumentView *);
 size_t  visibleLinkOrdinal_DocumentView (const iDocumentView *, iGmLinkId linkId);
 
 uint32_t lastRenderTime_DocumentView    (const iDocumentView *);
+
+iWidget *hostFooterButtons_DocumentView     (const iDocumentView *);
+int     hostPhoneBarsHeight_DocumentView    (const iDocumentView *); /* toolbar and bottom navbar */
+void    hostPagesMoved_DocumentView         (iDocumentView *);
 void    prerender_DocumentView          (iAny *); /* ticker */
 void    draw_DocumentView               (const iDocumentView *, int horizOffset);
