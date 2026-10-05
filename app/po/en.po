@@ -34,7 +34,7 @@ msgstr "Page %d of %d"
 # Page footer in a book: current page, number of pages, current chapter, number of chapters.
 #, c-format
 msgid "doc.page.chapter"
-msgstr "Page %d of %d · Chapter %d of %d"
+msgstr "Page %d of %d   •   Chapter %d of %d"
 
 msgid "media.untitled.image"
 msgstr "Image"
