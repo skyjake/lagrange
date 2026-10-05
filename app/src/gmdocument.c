@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdoc/palette.h"
 #include "gmdoc/typesetter.h"
 #include "gmutil.h"
+#include "gempub.h"
 #include <lagrange/lang.h>
 #include "color.h"
 #include "render/text.h"
@@ -486,6 +487,10 @@ const iDocPrefs *docPrefs_GmDocument(const iGmDocument *d) {
     return &d->docPrefs;
 }
 
+const iScopeKey *scopeKey_GmDocument(const iGmDocument *d) {
+    return &d->scopeKey;
+}
+
 static uint32_t applyDocPrefs_GmDocument_(iGmDocument *d, const iDocPrefs *prefs) {
     const uint32_t diff = diff_DocPrefs(&d->docPrefs, prefs);
     if (diff) {
@@ -780,6 +785,13 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     set_String(&d->url, url);
     deinit_ScopeKey(&d->scopeKey);
     initUrl_ScopeKey(&d->scopeKey, url);
+    /* Pages of a local GemPub have a scope of their own, and each book is a site. */ {
+        const iString *archive = localArchiveUrl_Gempub(url);
+        if (archive) {
+            setCStr_String(&d->scopeKey.scheme, "gempub");
+            set_String(&d->scopeKey.site, archive);
+        }
+    }
     updateDocPrefs_GmDocument(d);
     setThemeSeed_GmDocument(d, paletteSeed_GmDocument_(d), urlThemeSeed_String(url));
     iUrl parts;

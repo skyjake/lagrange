@@ -214,6 +214,25 @@ iGempub *openForLocalUrl_Gempub(const iString *url, iBool *isInsideArchive_out) 
     return NULL;
 }
 
+const iString *localArchiveUrl_Gempub(const iString *url) {
+    /* Only the file system is checked; the archive is not read. */
+    if (!equalCase_Rangecc(urlScheme_String(url), "file")) {
+        return NULL;
+    }
+    iString *localPath = localFilePathFromUrl_String(url);
+    if (!localPath) {
+        return NULL;
+    }
+    const iString *path = collect_String(localPath);
+    if (!fileExists_FileInfo(path)) {
+        path = findContainerArchive_Path(path);
+    }
+    if (!path || !equal_CStr(mediaType_Path(path), mimeType_Gempub)) {
+        return NULL;
+    }
+    return collect_String(makeFileUrl_String(path));
+}
+
 iBool openFile_Gempub(iGempub *d, const iString *path) {
     close_Gempub(d);
     iFile *f = new_File(path);

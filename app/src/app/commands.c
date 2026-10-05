@@ -826,8 +826,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta")) {
-        /* Zoom is written to the base layer. */
-        const int oldZoom = constRule_ScopeRules("base")->prefs.zoomPercent.value;
+        /* Zoom is written to the base layer, but books have a text size of their own. */
+        const iDocumentWidget *front = document_App();
+        const iBool isGempub =
+            front && !cmp_String(&scopeKey_GmDocument(document_DocumentWidget(front))->scheme, "gempub");
+        const char *scope   = isGempub ? "scheme:gempub" : "base";
+        const int   oldZoom = isGempub ? activeDocPrefs_App()->zoomPercent.value
+                                       : constRule_ScopeRules("base")->prefs.zoomPercent.value;
         int zoom = arg_Command(cmd);
         if (equal_Command(cmd, "zoom.delta")) {
             int delta = zoom;
@@ -836,7 +841,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             zoom = oldZoom + delta;
         }
-        if (setInt_ScopeRules("base", zoomPercent_DocPrefsInt, zoom)) {
+        if (setInt_ScopeRules(scope, zoomPercent_DocPrefsInt, zoom)) {
             docPrefsChanged_App();
         }
         return iTrue;

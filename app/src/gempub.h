@@ -50,6 +50,7 @@ iBool       open_Gempub             (iGempub *, const iBlock *data);
 iGempub *   openForContent_Gempub   (const iBlock *content, const iString *mime,
                                      const iString *url);
 iGempub *   openForLocalUrl_Gempub  (const iString *url, iBool *isInsideArchive_out);
+const iString *localArchiveUrl_Gempub(const iString *url); /* NULL if not in a local GemPub */
 iBool       openFile_Gempub         (iGempub *, const iString *path);
 iBool       openUrl_Gempub          (iGempub *, const iString *url);
 void        close_Gempub            (iGempub *);

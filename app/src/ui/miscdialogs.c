@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "miscdialogs.h"
+#include "gempub.h"
 
 #include "app.h"
 #include "command.h"
@@ -126,7 +127,8 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
 
 iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     iWidget *dlg;
-    const iString *site       = collectNewRange_String(urlRoot_String(url));
+    const iString *archive    = localArchiveUrl_Gempub(url); /* each book is a site */
+    const iString *site       = archive ? archive : collectNewRange_String(urlRoot_String(url));
     const char *   sheetId    = format_CStr("sitespec site:%s", cstr_String(site));
     const iRangecc scheme     = urlScheme_String(site);
     const iBool    isTitanSite = equalCase_Rangecc(scheme, "gemini") ||

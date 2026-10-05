@@ -1227,6 +1227,7 @@ void init_ScopeRules(const char *saveDir) {
     d->loadRule   = NULL;
     d->loadMethod = all_ImportMethod;
     addBuiltIn_ScopeRules_(d, "gopher", monospaceDocument_DocPrefsBool, iTrue);
+    addBuiltIn_ScopeRules_(d, "gempub", pageView_DocPrefsBool, iTrue);
     /* A missing file counts as empty. Custom rules affect what the others inherit. */
     loadFile_ScopeRules_(d, custom_ScopeRuleKind, customFileName_ScopeRules_);
     loadFile_ScopeRules_(d, base_ScopeRuleKind, baseFileName_ScopeRules_);
