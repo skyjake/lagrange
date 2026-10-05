@@ -97,8 +97,9 @@ static CGColorRef cgColorFromColor_(const iColor c) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstructionArgs(AppleTextRun,
-    (const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor, iAppleText *tx),
-    rawText, rawLen, fontId, colorId, resolvedColor, tx)
+    (const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor,
+     int baseDir, iAppleText *tx),
+    rawText, rawLen, fontId, colorId, resolvedColor, baseDir, tx)
 
 static iBool prepare_AppleTextRun_(
     iAppleText                   *tx,
@@ -106,6 +107,7 @@ static iBool prepare_AppleTextRun_(
     size_t                        rawLen,
     int                           baseFontId,
     int                           baseColorId,
+    int                           baseDir,
     char                        **clean_out,
     size_t                       *cleanLen_out,
     size_t                      **utf16ToSrc_out,
@@ -426,6 +428,19 @@ static iBool prepare_AppleTextRun_(
         CFRelease(clr);
     }
     free(sfInfos);
+    if (baseDir) {
+        const CTWritingDirection wd = (baseDir < 0 ? kCTWritingDirectionRightToLeft
+                                                   : kCTWritingDirectionLeftToRight);
+        const CTParagraphStyleSetting setting = {
+            kCTParagraphStyleSpecifierBaseWritingDirection, sizeof(wd), &wd
+        };
+        CTParagraphStyleRef paraStyle = CTParagraphStyleCreate(&setting, 1);
+        CFAttributedStringSetAttribute(mAttrStr,
+                                       CFRangeMake(0, CFAttributedStringGetLength(mAttrStr)),
+                                       kCTParagraphStyleAttributeName,
+                                       paraStyle);
+        CFRelease(paraStyle);
+    }
     *clean_out      = cleanBuf;
     *cleanLen_out   = cleanLen;
     *utf16ToSrc_out = utf16Map;
@@ -434,8 +449,33 @@ static iBool prepare_AppleTextRun_(
     return iTrue;
 }
 
+static iBool isNaturalRTL_(CTTypesetterRef typesetter) {
+    /* Glyph runs are in visual order. In an RTL paragraph, the logically first run ends up
+       last because the whole line is reversed at the paragraph level. */
+    const CFIndex len = CTTypesetterSuggestLineBreak(typesetter, 0, 1e9);
+    if (len <= 0) {
+        return iFalse;
+    }
+    CTLineRef     line     = CTTypesetterCreateLine(typesetter, CFRangeMake(0, len));
+    CFArrayRef    runs     = CTLineGetGlyphRuns(line);
+    const CFIndex runCount = CFArrayGetCount(runs);
+    iBool         isRTL    = iFalse;
+    if (runCount > 0) {
+        CTRunRef lastRun = CFArrayGetValueAtIndex(runs, runCount - 1);
+        if (runCount == 1) {
+            isRTL = (CTRunGetStatus(lastRun) & kCTRunStatusRightToLeft) != 0;
+        }
+        else {
+            isRTL = (CTRunGetStringRange(lastRun).location == 0);
+        }
+    }
+    CFRelease(line);
+    return isRTL;
+}
+
 void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
-                       int fontId, int colorId, iColor resolvedColor, iAppleText *tx) {
+                       int fontId, int colorId, iColor resolvedColor, int baseDir,
+                       iAppleText *tx) {
     iZap(*d);
     uint32_t colorPacked;
     memcpy(&colorPacked, &resolvedColor, 4);
@@ -446,12 +486,14 @@ void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
     d->fontId        = fontId;
     d->colorId       = colorId;
     d->resolvedColor = resolvedColor;
+    d->baseDir       = baseDir;
     CFMutableAttributedStringRef mAttrStr = NULL;
     if (!prepare_AppleTextRun_(tx,
                                rawText,
                                rawLen,
                                fontId,
                                colorId,
+                               baseDir,
                                &d->text,
                                &d->textLen,
                                &d->utf16ToSrc,
@@ -461,7 +503,11 @@ void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
     }
     d->typesetter = CTTypesetterCreateWithAttributedString(mAttrStr);
     CFRelease(mAttrStr);
-    if (!d->typesetter) deinit_AppleTextRun(d);
+    if (!d->typesetter) {
+        deinit_AppleTextRun(d);
+        return;
+    }
+    d->isBaseRTL = (baseDir ? baseDir < 0 : isNaturalRTL_(d->typesetter));
 }
 
 void deinit_AppleTextRun(iAppleTextRun *d) {

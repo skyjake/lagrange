@@ -414,7 +414,7 @@ static void clearRunCache_AppleText_(iAppleText *d) {
 }
 
 static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int fontId,
-                                              int colorId) {
+                                              int colorId, int baseDir) {
     /* Find or create a run cache entry for the given raw text, font, and base color.
        The resolved RGBA is part of the key so palette changes cause cache misses. */
     const size_t   rawLen        = (size_t) (text.end - text.start);
@@ -427,7 +427,7 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     /* Search for an existing entry. */
     for (int i = 0; i < maxRunCache_AppleText_; i++) {
         iAppleTextRun *r = d->runCache[i];
-        if (r && r->hash == hash && r->fontId == fontId &&
+        if (r && r->hash == hash && r->fontId == fontId && r->baseDir == baseDir &&
             equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen &&
             (r->colorId & permanent_ColorId) == (colorId & permanent_ColorId)) {
             r->lastUsed = ++d->runCacheSerial;
@@ -471,7 +471,8 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
     }
 #endif
     /* Create a new run. */
-    iAppleTextRun *r = new_AppleTextRun(text.start, rawLen, fontId, colorId, resolvedColor, d);
+    iAppleTextRun *r =
+        new_AppleTextRun(text.start, rawLen, fontId, colorId, resolvedColor, baseDir, d);
     if (r) {
         r->lastUsed          = ++d->runCacheSerial;
         d->runCache[lruSlot] = r;
@@ -635,7 +636,8 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         tx,
         text,
         fontId,
-        args->color | (args->mode & permanentColorFlag_RunMode ? permanent_ColorId : 0));
+        args->color | (args->mode & permanentColorFlag_RunMode ? permanent_ColorId : 0),
+        iSign(args->baseDir));
     if (!run) {
         if (args->metrics_out) {
             args->metrics_out->bounds  = init_Rect(0, 0, 0, d->height);
@@ -647,7 +649,9 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
     iWrapText *wrap = args->wrap;
     if (wrap) {
         wrap->wrapRange_ = (iRangecc) { text.start, text.start };
+        wrap->baseDir    = run->isBaseRTL ? -1 : +1;
     }
+    const int layoutBound = (wrap ? wrap->maxWidth : args->layoutBound);
 
     const iBool isVisual = (args->mode & visualFlag_RunMode) != 0;
 
@@ -681,12 +685,30 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         double ascentD, descentD, leadingD;
         double lineWidth = CTLineGetTypographicBounds(line, &ascentD, &descentD, &leadingD);
         lastLineW        = (int) ceilf((float) lineWidth);
+        /* Create a justified version of the line when justification is requested.
+           This must be used for both drawing and offset/hit queries so that
+           CTLineGetOffsetForStringIndex returns positions matching the drawn glyphs. */
+        CTLineRef justifiedLine = NULL;
+        if (args->justify && args->layoutBound > 0) {
+            justifiedLine = CTLineCreateJustifiedLine(line, 1.0, (double) args->layoutBound);
+        }
+        CTLineRef activeLine = justifiedLine ? justifiedLine : line;
+        /* RTL lines are aligned to the right edge of the layout bounds. */
+        int origin = lineIndent;
+        if (run->isBaseRTL && layoutBound > 0) {
+            const int activeW =
+                justifiedLine
+                    ? (int) ceil(CTLineGetTypographicBounds(justifiedLine, NULL, NULL, NULL))
+                    : lastLineW;
+            origin = layoutBound - activeW - lineIndent;
+        }
+        const iInt2 linePos = addX_I2(pos, origin);
         /* Visual (ink) bounds: tight glyph path box, converted to screen coords (y-down). */
         if (isVisual && args->metrics_out) {
             CGRect vb = CTLineGetBoundsWithOptions(line, kCTLineBoundsUseGlyphPathBounds);
             /* CoreText coords: origin.y = descent below baseline (negative); y increases up.
                Screen coords: y increases down, baseline at pos.y + af->font.baseline. */
-            int vx = pos.x + (int) floor(vb.origin.x);
+            int vx = linePos.x + (int) floor(vb.origin.x);
             int vy = pos.y + af->font.baseline + af->vertOffset
                      - (int) ceil(vb.origin.y + vb.size.height);
             int vw = (int) ceil(vb.size.width);
@@ -714,7 +736,7 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
                        Y-up, which maps to screen top = pos.y + ceil((h-drawH)/2). */
                     CGFloat drawW = (CGFloat) CGImageGetWidth(sfImg);
                     CGFloat drawH = (CGFloat) CGImageGetHeight(sfImg);
-                    int sfx = pos.x + (int) floor(sx + ((CGFloat)sW - drawW) * 0.5f);
+                    int sfx = linePos.x + (int) floor(sx + ((CGFloat)sW - drawW) * 0.5f);
                     int sfy = pos.y + (int) ceil(((float)af->font.height - drawH) * 0.5f);
                     iRect sfRect = init_Rect(sfx, sfy, (int) ceil(drawW), (int) ceil(drawH));
                     visualBounds = isEmpty_Rect(visualBounds) ? sfRect
@@ -727,27 +749,19 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         const char   *lineStart = srcPtr_(startIdx);
         const char   *lineEnd   = (endIdx <= run->utf16Len) ? srcPtr_(endIdx) : text.end;
         if (wrap && wrap->wrapRange_.start) {
-            iTextAttrib attrib = { .fgColorId = args->color };
-            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, lineIndent, lastLineW);
+            iTextAttrib attrib = { .fgColorId = args->color, .isBaseRTL = run->isBaseRTL };
+            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, origin, lastLineW);
         }
-        /* Create a justified version of the line when justification is requested.
-           This must be used for both drawing and offset/hit queries so that
-           CTLineGetOffsetForStringIndex returns positions matching the drawn glyphs. */
-        CTLineRef justifiedLine = NULL;
-        if (args->justify && args->layoutBound > 0) {
-            justifiedLine = CTLineCreateJustifiedLine(line, 1.0, (double) args->layoutBound);
-        }
-        CTLineRef activeLine = justifiedLine ? justifiedLine : line;
         /* Draw the line (only when in draw mode). */
         if (isDraw) {
-            drawLine_AppleText_(tx, activeLine, af, pos, args->color, args->mode);
+            drawLine_AppleText_(tx, activeLine, af, linePos, args->color, args->mode);
         }
         /* Hit testing: find the character at hitPoint (screen coordinate -> source pointer). */
         if (wrap && !wrap->hitChar_out) {
             const int lineTop    = pos.y;
             const int lineBottom = pos.y + d->height;
             if (wrap->hitPoint.y >= lineTop && wrap->hitPoint.y < lineBottom) {
-                int localX = wrap->hitPoint.x - pos.x;
+                int localX = wrap->hitPoint.x - linePos.x;
                 if (localX < 0) localX = 0;
                 CFIndex idx =
                     CTLineGetStringIndexForPosition(activeLine, CGPointMake((CGFloat) localX, 0.0));
@@ -781,7 +795,8 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
                 }
             }
             CGFloat off          = CTLineGetOffsetForStringIndex(activeLine, hitIdx, NULL);
-            wrap->hitAdvance_out = init_I2((int) (pos.x - args->pos.x + off), pos.y - args->pos.y);
+            wrap->hitAdvance_out =
+                init_I2((int) (linePos.x - args->pos.x + off), pos.y - args->pos.y);
             wrap->hitChar        = NULL; /* mark as found */
         }
         /* Update running metrics. */
