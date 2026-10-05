@@ -114,6 +114,7 @@ struct Impl_Window {
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     SDL_Texture * borderShadow;
+    SDL_Texture * falloffShadow; /* horizontal; exponential decay from the center to both edges */
     iText *       text;
     unsigned int  frameCount;
     iClick        midDrag;      /* middle mouse button drag-to-scroll gesture */

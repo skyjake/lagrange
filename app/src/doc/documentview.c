@@ -1705,9 +1705,15 @@ static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffs
     unsetClip_Paint(&p);
 }
 
-static void drawMedia_DocumentView_(const iDocumentView *d, iPaint *p) {
+static void drawMedia_DocumentView_(const iDocumentView *d, iPaint *p, const iRangei *columns) {
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun * run = i.ptr;
+        if (columns) {
+            const int col = (int) columnAt_GmDocument(d->doc, top_Rect(run->visBounds));
+            if (col < columns->start || col >= columns->end) {
+                continue;
+            }
+        }
         if (run->mediaType == audio_MediaType) {
             iPlayerUI ui;
             init_PlayerUI(&ui,
@@ -2031,22 +2037,29 @@ static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
     }
 }
 
-static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, int horizOffset) {
+static iColor pageShade_DocumentView_(const iDocumentView *d, iBool *isDarkPage_out) {
+    /* A darker shade of the page itself. */
+    const iBool isDarkPage = isDark_GmDocumentTheme(docTheme_DocPrefs(
+        docPrefs_GmDocument(d->doc), isDark_ColorTheme(colorTheme_App())));
+    iHSLColor   shade      = get_HSLColor(tmBackground_ColorId);
+    shade                  = setLum_HSLColor(shade, shade.lum * (isDarkPage ? 0.55f : 0.82f));
+    if (isDarkPage_out) {
+        *isDarkPage_out = isDarkPage;
+    }
+    return rgb_HSLColor(shade);
+}
+
+static void drawSpreads_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iRect area,
+                                      iRangei cols) {
     const iWidget *w                = constAs_Widget(d->owner);
     const iRect    bounds           = bounds_Widget(w);
     const iRect    viewport         = pageViewport_DocumentView(d);
-    const iRangei  cols             = visibleColumns_DocumentView(d);
     const int      pageHeight       = pageHeight_GmDocument(d->doc);
     const int      numCols          = (int) numColumns_GmDocument(d->doc);
     const int      perPage          = columnsPerPage_GmDocument(d->doc);
     const iBool    isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     const iVisBuf *visBuf           = d->visBuf;
     iPaint        *p                = &ctx->paint;
-    /* In reading mode, the pages extend under the bars. */
-    const iRect    area             = union_Rect(bounds, viewport);
-    setClip_Paint(p, area);
-    iAssert(isEqual_I2(origin_Paint, zero_I2()));
-    origin_Paint = init_I2(horizOffset, 0);
     /* Spreads have a gap between them during a turn. */
     fillRect_Paint(p, area, uiBackgroundSidebar_ColorId);
     for (int col = cols.start; col < cols.end; col += numColumns_DocumentView(d)) {
@@ -2087,7 +2100,7 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
             drawPin_Paint(p, ctx->lastMarkRect,  1, tmQuote_ColorId);
         }
     }
-    drawMedia_DocumentView_(d, p);
+    drawMedia_DocumentView_(d, p, &cols);
     /* The banner is at the top of the first page. */
     if (cols.start == 0 && !isEmpty_Banner(d->banner)) {
         setPos_Banner(d->banner,
@@ -2098,13 +2111,9 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
     /* Crease between the pages of a spread, and slight curvature at the outer edges. */
     if (numPages_DocumentView(d) == 2) {
         const iRangei ySpan = ySpan_Rect(viewport);
-        /* The shading is a darker shade of the page itself. */
-        const iBool isDarkPage = isDark_GmDocumentTheme(docTheme_DocPrefs(
-            docPrefs_GmDocument(d->doc), isDark_ColorTheme(colorTheme_App())));
-        iHSLColor   shade      = get_HSLColor(tmBackground_ColorId);
-        shade                  = setLum_HSLColor(shade, shade.lum * (isDarkPage ? 0.55f : 0.82f));
-        const iColor shadeColor = rgb_HSLColor(shade);
-        const int    shadeAlpha = isDarkPage ? 90 : 110;
+        iBool         isDarkPage;
+        const iColor  shadeColor = pageShade_DocumentView_(d, &isDarkPage);
+        const int     shadeAlpha = isDarkPage ? 90 : 110;
         for (int col = cols.start; col < cols.end && col < numCols; col += 2 * perPage) {
             const int crease = columnLeft_DocumentView(d, col + perPage);
             drawSoftCrease_Paint(p, crease, ySpan, width_Rect(bounds) / 20, shadeColor, shadeAlpha);
@@ -2126,9 +2135,87 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
             */
         }
     }
+}
+
+static void drawCurl_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iRect area) {
+    /* The last page of the earlier spread slides left over the later spread, its left side
+       curling under until nothing is left. */
+    iPaint       *p        = &ctx->paint;
+    const int     n        = numColumns_DocumentView(d);
+    const int     first    = (int) iMin(d->paged.column, d->paged.turnFrom);
+    const iRangei earlier  = { first, first + n };
+    const iRangei later    = { first + n, first + 2 * n };
+    const float   t        = curlProgress_DocumentView(d);
+    const int     left     = columnLeft_DocumentView(d, first);
+    const int     right    = left + spreadWidth_DocumentView(d);
+    const int     pageLeft = columnLeft_DocumentView(d, first + n - columnsPerPage_GmDocument(d->doc));
+    const int     shift    = (int) (t * (right - left));
+    const iRangei strip    = { pageLeft - (int) (t * (pageLeft - left)), right - shift };
+    /* Shadows fade in as the curl begins and out as the page disappears. */
+    iBool         isDarkPage;
+    const iColor  shade    = pageShade_DocumentView_(d, &isDarkPage);
+    const int     maxAlpha = isDarkPage ? 180 : 220;
+    const float   fadeIn   = iMin(1.0f, t / 0.15f);
+    if (strip.start > left_Rect(area)) {
+        setClip_Paint(p, init_Rect(left_Rect(area), top_Rect(area),
+                                   strip.start - left_Rect(area), height_Rect(area)));
+        drawSpreads_DocumentView_(d, ctx, area, earlier);
+        /* The curling edge shadows the page it is advancing over. */
+        drawFalloffShadow_Paint(p,
+                                strip.start,
+                                ySpan_Rect(area),
+                                -(right - pageLeft) / 5,
+                                shade,
+                                maxAlpha * fadeIn);
+        unsetClip_Paint(p);
+    }
+    if (strip.end < right_Rect(area)) {
+        setClip_Paint(p, init_Rect(strip.end, top_Rect(area),
+                                   right_Rect(area) - strip.end, height_Rect(area)));
+        drawSpreads_DocumentView_(d, ctx, area, later);
+        /* The curling page casts a shadow on the revealed spread. */
+        drawSoftEdge_Paint(p,
+                           strip.end,
+                           ySpan_Rect(area),
+                           (right - pageLeft) / 6,
+                           shade,
+                           maxAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f));
+        unsetClip_Paint(p);
+    }
+    if (isEmpty_Range(&strip)) {
+        return;
+    }
+    setClip_Paint(p, init_Rect(strip.start, top_Rect(area), size_Range(&strip), height_Rect(area)));
+    origin_Paint.x -= shift;
+    drawSpreads_DocumentView_(d, ctx, area, earlier);
+    origin_Paint.x += shift;
+    /* The page darkens toward the curl. */
+    drawFalloffShadow_Paint(p,
+                            strip.start,
+                            ySpan_Rect(area),
+                            iMin(size_Range(&strip), (right - pageLeft) / 8),
+                            shade,
+                            maxAlpha * fadeIn / 2);
+    unsetClip_Paint(p);
+}
+
+static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, int horizOffset) {
+    const iWidget *w        = constAs_Widget(d->owner);
+    iPaint        *p        = &ctx->paint;
+    /* In reading mode, the pages extend under the bars. */
+    const iRect    area     = union_Rect(bounds_Widget(w), pageViewport_DocumentView(d));
+    setClip_Paint(p, area);
+    iAssert(isEqual_I2(origin_Paint, zero_I2()));
+    origin_Paint = init_I2(horizOffset, 0);
+    if (isCurling_DocumentView(d)) {
+        drawCurl_DocumentView_(d, ctx, area);
+    }
+    else {
+        drawSpreads_DocumentView_(d, ctx, area, visibleColumns_DocumentView(d));
+    }
     origin_Paint = zero_I2();
     unsetClip_Paint(p);
-    if (isTouchSelecting) {
+    if (flags_Widget(w) & touchDrag_WidgetFlag) {
         drawTouchSelectionIndicator_DocumentView_(d, p);
     }
 }
@@ -2205,7 +2292,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                 drawPin_Paint(&ctx.paint, ctx.lastMarkRect,  1, tmQuote_ColorId);
             }
         }
-        drawMedia_DocumentView_(d, &ctx.paint);
+        drawMedia_DocumentView_(d, &ctx.paint, NULL);
         /* Fill the top and bottom, in case the document is short. */
         if (yTop > top_Rect(bounds)) {
             fillRect_Paint(&ctx.paint,

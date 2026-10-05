@@ -282,6 +282,7 @@ void init_Prefs(iPrefs *d) {
     d->pinSplit                               = 1;
     d->gempubSidebar                          = 1;
     d->promptPosition                         = inline_InputPromptPosition;
+    d->pageTurn                               = scroll_PageTurnAnimation;
     d->feedInterval                           = fourHours_FeedInterval;
     d->time24h                                = iTrue;
     d->returnKey                              = default_ReturnKeyBehavior;

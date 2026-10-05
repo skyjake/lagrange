@@ -2125,6 +2125,18 @@ msgstr "Top"
 msgid "prefs.promptposition.bottom"
 msgstr "Bottom"
 
+msgid "prefs.pageturn"
+msgstr "Page turning:"
+
+msgid "prefs.pageturn.none"
+msgstr "None"
+
+msgid "prefs.pageturn.scroll"
+msgstr "Scroll"
+
+msgid "prefs.pageturn.curl"
+msgstr "Curl"
+
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
 

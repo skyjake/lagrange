@@ -156,6 +156,12 @@ enum iInputPromptPosition {
     bottom_InputPromptPosition = 2, /* always modal, docked at the bottom */
 };
 
+enum iPageTurnAnimation {
+    none_PageTurnAnimation   = 0,
+    scroll_PageTurnAnimation = 1,
+    curl_PageTurnAnimation   = 2,
+};
+
 #define maxNavbarActions_Prefs  4
 #define maxSidebarModes_Prefs   8
 
@@ -244,6 +250,7 @@ struct Impl_Prefs {
     int                        pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     int                        gempubSidebar; /* side of the Book sidebar: 0 left, 1 right */
     enum iInputPromptPosition  promptPosition; /* desktop only */
+    enum iPageTurnAnimation    pageTurn;
     enum iFeedInterval         feedInterval;
     int                returnKey;
     int                smoothScrollSpeed[max_ScrollType];

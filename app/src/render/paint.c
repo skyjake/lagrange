@@ -294,6 +294,27 @@ void drawSoftCrease_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, 
     drawSoftEdge_Paint(d, x, ySpan, thickness, color, alpha);
 }
 
+void drawFalloffShadow_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, iColor color,
+                            int alpha) {
+    SDL_Texture *shadow = get_Window()->falloffShadow;
+    if (!shadow || thickness == 0) {
+        return;
+    }
+    x += origin_Paint.x;
+    ySpan.start += origin_Paint.y;
+    ySpan.end   += origin_Paint.y;
+    const iInt2 size = size_SDLTexture(shadow);
+    SDL_SetTextureColorMod(shadow, color.r, color.g, color.b);
+    SDL_SetTextureAlphaMod(shadow, alpha);
+    SDL_RenderTexture(renderer_Paint_(d),
+                      shadow,
+                      &(SDL_FRect){ thickness > 0 ? size.x / 2 : 0, 0, size.x / 2, 1 },
+                      &(SDL_FRect){ thickness > 0 ? x : x + thickness,
+                                    ySpan.start,
+                                    iAbs(thickness),
+                                    size_Range(&ySpan) });
+}
+
 void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) {
     setColor_Paint_(d, color);
     SDL_FPoint *offsetPoints = malloc(sizeof(SDL_FPoint) * n);

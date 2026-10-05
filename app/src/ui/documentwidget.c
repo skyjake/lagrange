@@ -3626,7 +3626,9 @@ static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
     const iDocumentView *view    = d->view;
     const size_t         lastCol = numColumns_GmDocument(view->doc) - 1;
     const iRangei        cols    = visibleColumns_DocumentView(view);
-    const iBool          isShown = (int) lastCol >= cols.start && (int) lastCol < cols.end;
+    /* Not drawn as part of a curling page. */
+    const iBool          isShown = (int) lastCol >= cols.start && (int) lastCol < cols.end &&
+                                   !isCurling_DocumentView(view);
     setFlags_Widget(d->footerButtons, hidden_WidgetFlag, !isShown);
     if (isShown) {
         const iRect   bounds   = bounds_Widget(as_Widget(d));

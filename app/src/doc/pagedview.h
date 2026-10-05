@@ -37,6 +37,8 @@ void    pagedMetrics_DocumentView       (const iDocumentView *, iGmDocumentMetri
 int     numColumns_DocumentView         (const iDocumentView *); /* in a spread */
 int     numPages_DocumentView           (const iDocumentView *); /* in a spread */
 int     spreadWidth_DocumentView        (const iDocumentView *);
+iBool   isCurling_DocumentView          (const iDocumentView *); /* curl animation is ongoing */
+float   curlProgress_DocumentView       (const iDocumentView *); /* from the earlier spread to the later one */
 size_t  currentColumn_DocumentView      (const iDocumentView *); /* first of the spread */
 float   columnPosition_DocumentView     (const iDocumentView *); /* fractional during turns */
 iRangei visibleColumns_DocumentView     (const iDocumentView *); /* includes an ongoing turn */

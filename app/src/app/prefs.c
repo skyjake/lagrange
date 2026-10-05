@@ -138,6 +138,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
     appendFormat_String(str, "gempubsidebar.set arg:%d\n", d->prefs.gempubSidebar);
     appendFormat_String(str, "promptposition.set arg:%d\n", d->prefs.promptPosition);
+    appendFormat_String(str, "pageturn.set arg:%d\n", d->prefs.pageTurn);
     appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
@@ -953,6 +954,10 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "promptposition.set")) {
         d->prefs.promptPosition = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "pageturn.set")) {
+        d->prefs.pageTurn = iClamp(arg_Command(cmd), none_PageTurnAnimation, curl_PageTurnAnimation);
         return iTrue;
     }
     else if (equal_Command(cmd, "feedinterval.set")) {

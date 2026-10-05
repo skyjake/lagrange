@@ -32,7 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_timer.h>
 #include <math.h>
 
-static const uint32_t turnDuration_PagedView_ = 250;
+static uint32_t turnDuration_PagedView_(void) {
+    return prefs_App()->pageTurn == curl_PageTurnAnimation ? 400 : 250;
+}
 
 static iBool isAlwaysScrolled_(const iString *url) {
     iUrl parts;
@@ -188,6 +190,15 @@ iRangei visibleColumns_DocumentView(const iDocumentView *d) {
     return cols;
 }
 
+static iBool isTurning_DocumentView_(const iDocumentView *d) {
+    return d->paged.turnFrom != d->paged.column &&
+           (d->paged.isDragging || !isFinished_Anim(&d->paged.turnOffset));
+}
+
+iBool isCurling_DocumentView(const iDocumentView *d) {
+    return prefs_App()->pageTurn == curl_PageTurnAnimation && isTurning_DocumentView_(d);
+}
+
 int spreadWidth_DocumentView(const iDocumentView *d) {
     return numColumns_DocumentView(d) * columnWidth_DocumentView_(d);
 }
@@ -195,6 +206,12 @@ int spreadWidth_DocumentView(const iDocumentView *d) {
 static int spreadStride_DocumentView_(const iDocumentView *d) {
     /* Adjacent spreads are separated by a gap during turns. */
     return spreadWidth_DocumentView(d) + 3 * gap_UI;
+}
+
+float curlProgress_DocumentView(const iDocumentView *d) {
+    const int   stride = spreadStride_DocumentView_(d);
+    const float offset = stride > 0 ? value_Anim(&d->paged.turnOffset) / stride : 0.0f;
+    return iClamp((d->paged.column > d->paged.turnFrom ? 1.0f : 0.0f) - offset, 0.0f, 1.0f);
 }
 
 float columnPosition_DocumentView(const iDocumentView *d) {
@@ -209,6 +226,11 @@ int columnLeft_DocumentView(const iDocumentView *d, size_t column) {
     const int n      = numColumns_DocumentView(d);
     const int rel    = (int) column - (int) d->paged.column;
     const int spread = rel >= 0 ? rel / n : -((n - 1 - rel) / n);
+    if (isCurling_DocumentView(d)) {
+        /* Both spreads stay in place. */
+        return left_Rect(pageViewport_DocumentView(d)) +
+               (rel - spread * n) * columnWidth_DocumentView_(d);
+    }
     return left_Rect(pageViewport_DocumentView(d)) + spread * spreadStride_DocumentView_(d) +
            (rel - spread * n) * columnWidth_DocumentView_(d) +
            (int) value_Anim(&d->paged.turnOffset);
@@ -364,7 +386,7 @@ void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) 
         /* The old spread slides out as the new one slides in. */
         d->paged.turnFrom = d->paged.column;
         init_Anim(&d->paged.turnOffset, spreads * spreadStride_DocumentView_(d));
-        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_);
+        setValueEased_Anim(&d->paged.turnOffset, 0, turnDuration_PagedView_());
         addTicker_App(animatePageTurn_DocumentView, d);
     }
     else {
@@ -388,8 +410,8 @@ iBool turnPage_DocumentView(iDocumentView *d, int dir) {
         postCommand_Widget(d->owner, "document.page.overflow arg:%d", dir);
         return iFalse;
     }
-    /* Swipes animate regardless, but other turns follow the smooth scrolling setting. */
-    showColumn_DocumentView(d, target, prefs_App()->smoothScrolling);
+    /* Swipes animate regardless of the setting. */
+    showColumn_DocumentView(d, target, prefs_App()->pageTurn != none_PageTurnAnimation);
     return iTrue;
 }
 
@@ -465,12 +487,13 @@ static void finishDrag_DocumentView_(iDocumentView *d, float to, iBool followGes
     /* The turn starts at least as fast as the gesture, but no slower than usual. */
     iAnim         *anim      = &d->paged.turnOffset;
     const float    remaining = to - value_Anim(anim);
-    uint32_t       span      = turnDuration_PagedView_;
+    const uint32_t maxSpan   = turnDuration_PagedView_();
+    uint32_t       span      = maxSpan;
     if (followGesture && SDL_GetTicks() - d->paged.dragTime < 100) {
         const float speed = d->paged.dragSpeed * (remaining < 0 ? -1 : 1);
         if (speed > 0) {
             /* Ease out starts at twice the average speed. */
-            span = iClamp(2000.0f * fabsf(remaining) / speed, 1, turnDuration_PagedView_);
+            span = iClamp(2000.0f * fabsf(remaining) / speed, 1, maxSpan);
         }
     }
     setFlags_Anim(anim, easeBoth_AnimFlag, iFalse);

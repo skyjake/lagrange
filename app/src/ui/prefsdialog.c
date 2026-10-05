@@ -300,6 +300,12 @@ iWidget *makePreferences_Widget(void) {
             { "button id:prefs.gempubsidebar.1 label:prefs.sidebar.right", 0, 0, "gempubsidebar.set arg:1" },
             { NULL }
         };
+        const iMenuItem pageTurnItems[] = {
+            { "button id:prefs.pageturn.0 label:prefs.pageturn.none",   0, 0, "pageturn.set arg:0" },
+            { "button id:prefs.pageturn.1 label:prefs.pageturn.scroll", 0, 0, "pageturn.set arg:1" },
+            { "button id:prefs.pageturn.2 label:prefs.pageturn.curl",   0, 0, "pageturn.set arg:2" },
+            { NULL }
+        };
         const iMenuItem themeItems[] = {
             { "button id:prefs.theme.0 label:prefs.theme.black", 0, 0, "theme.set arg:0" },
             { "button id:prefs.theme.1 label:prefs.theme.dark",  0, 0, "theme.set arg:1" },
@@ -345,6 +351,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "toggle id:prefs.swipe.edge" },
             { "toggle id:prefs.swipe.page" },
+            { "radio id:prefs.pageturn", 0, 0, (const void *) pageTurnItems },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
@@ -747,6 +754,14 @@ iWidget *makePreferences_Widget(void) {
         }
         addDialogToggle_Widget(headings, values, "${prefs.time.24h}", "prefs.time.24h");
         addDialogPadding_Widget(headings, values);
+        if (!isTerminal_Platform()) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pageturn}")));
+            iWidget *turns = new_Widget();
+            addRadioButton_Widget(turns, "prefs.pageturn.0", "${prefs.pageturn.none}", "pageturn.set arg:0");
+            addRadioButton_Widget(turns, "prefs.pageturn.1", "${prefs.pageturn.scroll}", "pageturn.set arg:1");
+            addRadioButton_Widget(turns, "prefs.pageturn.2", "${prefs.pageturn.curl}", "pageturn.set arg:2");
+            addChildFlags_Widget(values, iClob(turns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
         addDialogToggle_Widget(headings, values, "${prefs.animate}", "prefs.animate");
         if (!isTerminal_Platform()) {
             addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
@@ -945,6 +960,14 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updatePrefsPageTurnButtons_(iWidget *d, int value) {
+    for (int i = 0; i < 3; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.pageturn.%d", i)),
+                        selected_WidgetFlag,
+                        i == value);
+    }
+}
+
 static void updatePrefsPromptPositionButtons_(iWidget *d, int value) {
     for (int i = 0; i < 3; i++) {
         setFlags_Widget(findChild_Widget(d, format_CStr("prefs.promptposition.%d", i)),
@@ -1084,6 +1107,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updatePrefsPromptPositionButtons_(d, arg_Command(cmd));
         return iFalse;
     }
+    else if (equal_Command(cmd, "pageturn.set")) {
+        updatePrefsPageTurnButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "feedinterval.set")) {
         updateFeedIntervalButton_(findChild_Widget(d, "prefs.feedinterval"), arg_Command(cmd));
         return iFalse;
@@ -1152,6 +1179,7 @@ void showPreferences_Widget(const char *cmd) {
     updatePrefsPinSplitButtons_(dlg, prefs->pinSplit);
     updatePrefsGempubSidebarButtons_(dlg, prefs->gempubSidebar);
     updatePrefsPromptPositionButtons_(dlg, prefs->promptPosition);
+    updatePrefsPageTurnButtons_(dlg, prefs->pageTurn);
     updateScrollSpeedButtons_(dlg, mouse_ScrollType, prefs->smoothScrollSpeed[mouse_ScrollType]);
     updateScrollSpeedButtons_(dlg, keyboard_ScrollType, prefs->smoothScrollSpeed[keyboard_ScrollType]);
     updateFeedIntervalButton_(findChild_Widget(dlg, "prefs.feedinterval"), prefs->feedInterval);

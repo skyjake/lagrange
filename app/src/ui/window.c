@@ -712,6 +712,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->frameTime     = SDL_GetTicks();
     d->keyRoot       = NULL;
     d->borderShadow  = NULL;
+    d->falloffShadow = NULL;
     d->frameCount    = 0;
     init_Click(&d->midDrag, NULL, SDL_BUTTON_MIDDLE);
     d->midDragTime   = 0;
@@ -898,6 +899,25 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         d->base.borderShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->base.borderShadow, SDL_BLENDMODE_BLEND);
         free(surf->pixels);
+        SDL_DestroySurface(surf);
+    }
+    /* Exponential falloff shadow, normalized to reach zero at the edges. */ {
+        enum { halfWidth = 64 };
+        const float k = 4.0f;
+        uint8_t pixels[4 * 2 * halfWidth];
+        for (int i = 0; i < halfWidth; i++) {
+            const float t     = (float) i / (halfWidth - 1);
+            const float alpha = (expf(-k * t) - expf(-k)) / (1.0f - expf(-k));
+            uint8_t    *right = pixels + 4 * (halfWidth + i);
+            uint8_t    *left  = pixels + 4 * (halfWidth - 1 - i);
+            right[0] = right[1] = right[2] = 255;
+            right[3] = (uint8_t) (255.0f * alpha + 0.5f);
+            memcpy(left, right, 4);
+        }
+        SDL_Surface *surf = SDL_CreateSurfaceFrom(
+            2 * halfWidth, 1, SDL_PIXELFORMAT_RGBA32, pixels, 4 * 2 * halfWidth);
+        d->base.falloffShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
+        SDL_SetTextureBlendMode(d->base.falloffShadow, SDL_BLENDMODE_BLEND);
         SDL_DestroySurface(surf);
     }
     /* Load the emboss graphic. */ {
