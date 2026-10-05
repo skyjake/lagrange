@@ -2149,12 +2149,15 @@ static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
         d, earlier.start + numColumns_DocumentView(d) - columnsPerPage_GmDocument(d->doc));
     const int     shift    = (int) (t * (right - left));
     const iRangei strip    = { pageLeft - (int) (t * (pageLeft - left)), right - shift };
-    /* Shadows fade in as the curl begins and out as the page disappears. */
+    /* Shadows fade in as the curl begins and out as the page disappears. The curved part
+       is shaded like the crease, but the pages on either side are in shadow. */
     makePaletteGlobal_GmDocument(d->doc);
     iBool         isDarkPage;
-    const iColor  shade    = pageShade_DocumentView_(d, &isDarkPage);
-    const int     maxAlpha = isDarkPage ? 180 : 220;
-    const float   fadeIn   = iMin(1.0f, t / 0.15f);
+    const iColor  shade       = pageShade_DocumentView_(d, &isDarkPage);
+    const int     shadeAlpha  = isDarkPage ? 90 : 110;
+    const iColor  shadow      = { 0, 0, 0, 255 };
+    const int     shadowAlpha = isDarkPage ? 140 : 90;
+    const float   fadeIn      = iMin(1.0f, t / 0.15f);
     if (strip.start > left_Rect(area)) {
         setClip_Paint(p, init_Rect(left_Rect(area), top_Rect(area),
                                    strip.start - left_Rect(area), height_Rect(area)));
@@ -2164,8 +2167,8 @@ static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
                                 strip.start,
                                 ySpan_Rect(area),
                                 -(right - pageLeft) / 5,
-                                shade,
-                                maxAlpha * fadeIn);
+                                shadow,
+                                shadowAlpha * fadeIn * 0.5f);
         unsetClip_Paint(p);
     }
     if (strip.end < right_Rect(area)) {
@@ -2179,8 +2182,8 @@ static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
                            strip.end,
                            ySpan_Rect(area),
                            (right - pageLeft) / 6,
-                           shade,
-                           maxAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f));
+                           shadow,
+                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.75f);
         unsetClip_Paint(p);
     }
     if (isEmpty_Range(&strip)) {
@@ -2196,7 +2199,7 @@ static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
                             ySpan_Rect(area),
                             iMin(size_Range(&strip), (right - pageLeft) / 8),
                             shade,
-                            maxAlpha * fadeIn / 2);
+                            shadeAlpha * fadeIn);
     unsetClip_Paint(p);
 }
 
