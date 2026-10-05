@@ -2035,7 +2035,7 @@ msgid "heading.prefs.style"
 msgstr "Page Style"
 
 msgid "heading.prefs.typography"
-msgstr "Typography"
+msgstr "Fonts"
 
 msgid "prefs.scope"
 msgstr "Applies to:"
@@ -2045,7 +2045,7 @@ msgstr "All protocols"
 
 # The placeholder is the name of a protocol, for example "Gemini".
 msgid "prefs.scope.custom.typography"
-msgstr "Use %s-specific typography:"
+msgstr "Use %s-specific fonts:"
 
 msgid "prefs.scope.custom.layout"
 msgstr "Use %s-specific layout:"
@@ -2057,7 +2057,7 @@ msgid "prefs.scope.custom.theme"
 msgstr "Use %s-specific theme:"
 
 msgid "prefs.scope.site.typography"
-msgstr "Use site-specific typography:"
+msgstr "Use site-specific fonts:"
 
 msgid "prefs.scope.site.layout"
 msgstr "Use site-specific layout:"
