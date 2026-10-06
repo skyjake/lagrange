@@ -914,7 +914,7 @@ msgid "hint.filter.bookmark"
 msgstr "filter bookmarks"
 
 msgid "hint.filter.bindings"
-msgstr "filter key bindings"
+msgstr "filter keys"
 
 msgid "ident.using"
 msgstr "Using on this page"
