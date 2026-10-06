@@ -61,6 +61,7 @@ struct Impl_GmDocument {
     iString   origSource; /* original (unnormalized) source */
     iString   source;     /* normalized (possibly converted) source */
     iString   url;        /* for resolving relative links */
+    iString   themeUrl;   /* remote source of a book on the shelf, if any */
     iString   mimeType;
     iString   localHost;
     iScopeKey scopeKey;

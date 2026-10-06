@@ -798,7 +798,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
     d->flags.isPaletteValid = iTrue;
 }
 
+const iString *themeUrl_GmDocument_(const iGmDocument *d) {
+    return isEmpty_String(&d->themeUrl) ? &d->url : &d->themeUrl;
+}
+
 const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
+    if (!isEmpty_String(&d->themeUrl)) {
+        return urlPaletteSeed_String(&d->themeUrl);
+    }
     const iString *seed = d->docPrefs.paletteSeed;
     if (!isEmpty_String(seed) && !equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
         return utf8_String(seed);
@@ -809,8 +816,9 @@ const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
 void makePaletteGlobal_GmDocument(const iGmDocument *d) {
     if (!d->flags.isPaletteValid) {
         /* Recompute the palette since it's needed now. */
-        setThemeSeed_GmDocument(
-            (iGmDocument *) d, paletteSeed_GmDocument_(d), urlThemeSeed_String(&d->url));
+        setThemeSeed_GmDocument((iGmDocument *) d,
+                                paletteSeed_GmDocument_(d),
+                                urlThemeSeed_String(themeUrl_GmDocument_(d)));
     }
     iAssert(d->flags.isPaletteValid);
     memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));

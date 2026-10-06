@@ -373,6 +373,22 @@ iBool isOnShelf_Books(const iString *path) {
     return iFalse;
 }
 
+const iString *sourceUrl_Books(const iString *path) {
+    if (!isOnShelf_Books(path)) {
+        return NULL;
+    }
+    iBooks        *d   = books_;
+    const iString *url = NULL;
+    lock_Mutex(d->mtx);
+    const iShelfFile *file =
+        constValue_StringHash(d->files, collectNewRange_String(baseName_Path(path)));
+    if (file && !isEmpty_String(&file->book->url)) {
+        url = collect_String(copy_String(&file->book->url));
+    }
+    unlock_Mutex(d->mtx);
+    return url;
+}
+
 static iBook *bookForGempub_Books_(iBooks *d, const iGempub *gempub) {
     const iString *id   = id_Books(gempub);
     iBook         *book = value_StringHash(d->books, id);

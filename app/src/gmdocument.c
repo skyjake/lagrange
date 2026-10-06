@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/window.h"
 #include <lagrange/visited.h>
 #include "bookmarks.h"
+#include "books.h"
 #include "app.h"
 #include "defs.h"
 
@@ -419,6 +420,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->origSource);
     init_String(&d->source);
     init_String(&d->url);
+    init_String(&d->themeUrl);
     init_String(&d->mimeType);
     init_String(&d->localHost);
     init_ScopeKey(&d->scopeKey);
@@ -475,6 +477,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_ScopeKey(&d->scopeKey);
     deinit_String(&d->localHost);
     deinit_String(&d->mimeType);
+    deinit_String(&d->themeUrl);
     deinit_String(&d->url);
     deinit_String(&d->source);
     deinit_String(&d->origSource);
@@ -824,15 +827,22 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     set_String(&d->url, url);
     deinit_ScopeKey(&d->scopeKey);
     initUrl_ScopeKey(&d->scopeKey, url);
+    clear_String(&d->themeUrl);
     /* Pages of a local GemPub have a scope of their own, and each book is a site. */ {
         const iString *archive = localArchiveUrl_Gempub(url);
         if (archive) {
             setCStr_String(&d->scopeKey.scheme, "gempub");
             set_String(&d->scopeKey.site, archive);
+            const iString *source =
+                sourceUrl_Books(collect_String(localFilePathFromUrl_String(archive)));
+            if (source && !equalCase_Rangecc(urlScheme_String(source), "file")) {
+                set_String(&d->themeUrl, source);
+            }
         }
     }
     updateDocPrefs_GmDocument(d);
-    setThemeSeed_GmDocument(d, paletteSeed_GmDocument_(d), urlThemeSeed_String(url));
+    setThemeSeed_GmDocument(
+        d, paletteSeed_GmDocument_(d), urlThemeSeed_String(themeUrl_GmDocument_(d)));
     iUrl parts;
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);
