@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "books.h"
 #include "gempub.h"
+#include "gmutil.h"
 
 #include <lagrange/lang.h>
 
@@ -29,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringhash.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/toml.h>
@@ -67,6 +69,15 @@ float progress_Book(const iBook *d) {
         return 0.0f;
     }
     return iClamp((d->chapter + d->chapterPos) / d->numChapters, 0.0f, 1.0f);
+}
+
+iBool isDownloadable_Book(const iBook *d) {
+    if (isEmpty_String(&d->url)) {
+        return iFalse;
+    }
+    /* Local sources may be missing, e.g., on other devices. */
+    const iString *localPath = collect_String(localFilePathFromUrl_String(&d->url));
+    return !localPath || fileExists_FileInfo(localPath);
 }
 
 const iString *path_Book(const iBook *d) {
@@ -464,8 +475,8 @@ const iPtrArray *list_Books(void) {
             }
             changed = iTrue;
         }
-        if (isEmpty_String(&book->fileName) && !isEmpty_String(&book->url)) {
-            pushBack_PtrArray(shelf, book); /* can be downloaded */
+        if (isEmpty_String(&book->fileName) && isDownloadable_Book(book)) {
+            pushBack_PtrArray(shelf, book);
         }
     }
     unlock_Mutex(d->mtx);
@@ -506,6 +517,25 @@ void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, floa
     if (isChanged) {
         save_Books();
     }
+}
+
+static void setSource_Book_(iBook *d, const iString *url) {
+    /* A local file does not replace a remote source. */
+    if (isEmpty_String(&d->url) || !equalCase_Rangecc(urlScheme_String(url), "file") ||
+        equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
+        set_String(&d->url, url);
+    }
+}
+
+void setSource_Books(const iString *id, const iString *url) {
+    iBooks *d = books_;
+    lock_Mutex(d->mtx);
+    iBook *book = value_StringHash(d->books, id);
+    if (book) {
+        setSource_Book_(book, url);
+    }
+    unlock_Mutex(d->mtx);
+    save_Books();
 }
 
 static iString *cleanFileName_Books_(const iString *fileName) {
@@ -566,7 +596,7 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
     if (ok) {
         if (sourceUrl) {
             lock_Mutex(books_->mtx);
-            set_String(&bookForGempub_Books_(books_, gempub)->url, sourceUrl);
+            setSource_Book_(bookForGempub_Books_(books_, gempub), sourceUrl);
             unlock_Mutex(books_->mtx);
         }
         update_Books(gempub, path);
@@ -579,18 +609,37 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
     return collect_String(path);
 }
 
+void removeDownload_Books(const iString *id) {
+    iBooks       *d     = books_;
+    iStringArray *paths = new_StringArray();
+    lock_Mutex(d->mtx);
+    const iBook *book = constValue_StringHash(d->books, id);
+    if (book) {
+        /* All copies of the book are removed. */
+        iConstForEach(StringHash, i, d->files) {
+            const iShelfFile *file = value_StringHashNode(i.value);
+            if (file->book == book) {
+                pushBack_StringArray(
+                    paths, collect_String(concat_Path(&d->dir, key_StringHashConstIterator(&i))));
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    iConstForEach(StringArray, j, paths) {
+        removePath_CStr(cstr_String(j.value));
+    }
+    iRelease(paths);
+    list_Books(); /* forgets the files */
+}
+
 void remove_Books(const iString *id) {
     iBooks *d = books_;
     lock_Mutex(d->mtx);
-    iBook         *book = value_StringHash(d->books, id);
-    const iString *path = book ? path_Book(book) : NULL;
+    iBook *book = value_StringHash(d->books, id);
     if (book) {
         clear_String(&book->url);
     }
     unlock_Mutex(d->mtx);
-    if (path && isOnShelf_Books(path)) {
-        removePath_CStr(cstr_String(path));
-    }
-    list_Books(); /* forgets the file */
+    removeDownload_Books(id);
     save_Books();
 }

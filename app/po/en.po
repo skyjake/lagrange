@@ -612,10 +612,6 @@ msgstr "Shelf"
 msgid "sidebar.empty.books"
 msgstr "No Books"
 
-# Shown on the bookshelf instead of the file size when a book has not been downloaded on this device.
-msgid "sidebar.gempub.download"
-msgstr "Download"
-
 msgid "book.delete"
 msgstr "Delete Book"
 
@@ -627,6 +623,19 @@ msgstr "Do you want to delete \"%s\" from the bookshelf? The reading position is
 
 msgid "dlg.book.delete"
 msgstr "Delete"
+
+# Deletes the local copy of a book but keeps it on the shelf so it can be downloaded again.
+msgid "book.removedownload"
+msgstr "Remove Download"
+
+msgid "heading.book.removedownload"
+msgstr "Remove Download"
+
+msgid "dlg.confirm.book.removedownload"
+msgstr "Do you want to delete the local copy of \"%s\"? The book stays on the shelf and can be downloaded again."
+
+msgid "dlg.book.removedownload"
+msgstr "Remove"
 
 # Preferences: on which sidebar the Book mode is shown.
 msgid "prefs.gempubsidebar"

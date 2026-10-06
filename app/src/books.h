@@ -47,6 +47,7 @@ struct Impl_Book {
 };
 
 float           progress_Book       (const iBook *); /* 0...1 of the whole book */
+iBool           isDownloadable_Book (const iBook *); /* source URL is available */
 const iString * path_Book           (const iBook *); /* NULL if not on the shelf */
 
 /*----------------------------------------------------------------------------------------------*/
@@ -67,7 +68,9 @@ const iPtrArray*list_Books          (void); /* downloaded or downloadable, most 
 
 void            update_Books        (const iGempub *, const iString *path);
 void            setPosition_Books   (const iGempub *, int chapter, int numChapters, float pos);
+void            setSource_Books     (const iString *id, const iString *url);
 const iString * add_Books           (const iBlock *gempubData, const iString *fileName,
                                      const iString *replacePath,
                                      const iString *sourceUrl); /* returns the saved path */
+void            removeDownload_Books(const iString *id); /* stays on the shelf if downloadable */
 void            remove_Books        (const iString *id); /* the reading position is kept */

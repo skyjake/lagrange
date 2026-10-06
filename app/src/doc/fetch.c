@@ -359,7 +359,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 /* Opening a book: the cover is in the sidebar and the contents in the document. */
                 const iBool isRight =
                     prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType;
-                postCommandf_Root(w->root, "%s.gempub.page arg:0", isRight ? "sidebar2" : "sidebar");
+                postCommandf_Root(w->root, "%s.gempub.page arg:0 keepshelf:1", isRight ? "sidebar2" : "sidebar");
                 postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
                 postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");
                 if (isCover) {

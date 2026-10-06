@@ -1493,8 +1493,7 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
             if (!open_File(f, readOnly_FileMode)) {
                 return;
             }
-            data      = readAll_File(f);
-            sourceUrl = NULL;
+            data = readAll_File(f);
         }
     }
     else if (format_GmDocument(d->view->doc) == gemini_SourceFormat &&
@@ -1518,6 +1517,9 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
     const iString *existingPath = existing ? path_Book(existing) : NULL;
     if (existingPath && !overwrite && isEqualToFileContents_(existingPath, data)) {
         delete_Block(data);
+        if (sourceUrl) {
+            setSource_Books(id, sourceUrl);
+        }
         postCommandf_Root(w->root,
                           "!open doc:%p url:%s",
                           d,

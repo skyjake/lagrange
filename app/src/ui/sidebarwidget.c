@@ -662,10 +662,8 @@ static iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
 
 static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
     /* Lists the books on the shelf. Returns False if there are none. */
-    const iGempub *current     = gempub_SidebarWidget_(d);
-    const iString *currentPath = current ? collect_String(localFilePathFromUrl_String(
-                                               coverPageUrl_Gempub(current)))
-                                         : NULL;
+    const iGempub *current   = gempub_SidebarWidget_(d);
+    const iString *currentId = current ? id_Books(current) : NULL;
     const iPtrArray *books = list_Books();
     iConstForEach(PtrArray, i, books) {
         const iBook   *book = i.ptr;
@@ -681,7 +679,8 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
         item->progress = book->chapter >= 0 ? progress_Book(book) : -1.0f;
         item->size     = path ? book->size : 0;
         item->icon     = path ? 0x1f56e /* book */ : 0x2ba7 /* download */;
-        item->listItem.flags.isSelected = currentPath && path && equal_String(currentPath, path);
+        item->isBold   = currentId && equal_String(currentId, &book->id);
+        item->listItem.flags.isSelected = item->isBold;
         addItem_ListWidget(d->list, item);
         iRelease(item);
     }
@@ -698,6 +697,7 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
         { magnifyingGlass_Icon " ${menu.reveal.filemgr}", 0, 0, "book.reveal" },
 #endif
         { "---" },
+        { "${book.removedownload}", 0, 0, "book.removedownload" },
         { delete_Icon " " uiTextCaution_ColorEscape "${book.delete}", 0, 0, "book.delete" },
     };
     d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
@@ -1493,7 +1493,9 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     const float heights[max_SidebarMode] = { 1, 3, 3, 0, 1, 1, 1, 1, 2 };
 #endif
     if (d->list) {
-        setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
+        const int padding = d->mode == gempub_SidebarMode && !isTerminal_Platform() ? 2 * gap_UI : 0;
+        setItemHeight_ListWidget(d->list,
+                                 heights[d->mode] * lineHeight_Text(d->itemFonts[0]) + padding);
     }
     if (d->certList) {
         updateItemHeight_CertListWidget(d->certList);
@@ -1955,6 +1957,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         }
         case gempub_SidebarMode:
             if (!isEmpty_String(&item->url)) {
+                d->gempubPage = 2; /* stays on the shelf */
                 postCommandf_Root(get_Root(),
                                   "open newtab:%d url:%s",
                                   mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
@@ -2163,6 +2166,10 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         return iTrue;
     }
     else if (equal_Command(cmd, "gempub.page")) {
+        if (argLabel_Command(cmd, "keepshelf") && d->gempubPage == 2 && isVisible_Widget(w) &&
+            d->mode == gempub_SidebarMode) {
+            return iTrue;
+        }
         d->gempubPage = iClamp(arg_Command(cmd), 0, 2);
         if (d->mode == gempub_SidebarMode) {
             updateItems_SidebarWidget_(d);
@@ -2518,6 +2525,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             if (d->mode != siteStructure_SidebarMode) {
                 scrollOffset_ListWidget(d->list, 0);
+            }
+        }
+        else if (equal_Command(cmd, "books.removedownload")) {
+            if (d->side == bookSide_SidebarWidget_()) {
+                removeDownload_Books(collect_String(suffix_Command(cmd, "id")));
+                postCommand_App("books.changed");
             }
         }
         else if (equal_Command(cmd, "books.delete")) {
@@ -3067,6 +3080,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "book.removedownload")) {
+            const iSidebarItem *item = d->contextItem;
+            if (item && !isEmpty_String(&item->bookId)) {
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "${heading.book.removedownload}",
+                    format_Lang("${dlg.confirm.book.removedownload}", cstr_String(&item->label)),
+                    (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                                   { uiTextCaution_ColorEscape "${dlg.book.removedownload}",
+                                     0,
+                                     0,
+                                     format_CStr("!books.removedownload id:%s",
+                                                 cstr_String(&item->bookId)) } },
+                    2);
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "book.delete")) {
             const iSidebarItem *item = d->contextItem;
             if (item && !isEmpty_String(&item->url)) {
@@ -3287,6 +3316,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                     : downArrowBar_Icon " ${bookmark.tag.remote}",
                                                 0);
                     }
+                }
+                else if (d->mode == gempub_SidebarMode && d->contextItem) {
+                    /* Without a source URL, the book would disappear from the shelf. */
+                    const iBook *book = find_Books(&d->contextItem->bookId);
+                    setMenuItemDisabled_Widget(d->menu,
+                                               "book.removedownload",
+                                               !book || !path_Book(book) ||
+                                                   !isDownloadable_Book(book));
+                    setMenuItemDisabled_Widget(d->menu,
+                                               "book.reveal",
+                                               !book || !path_Book(book));
                 }
                 else if (d->mode == feedEntries_SidebarMode && d->contextItem) {
                     const iBool isRead = d->contextItem->indent == 0;
@@ -3609,7 +3649,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     }
     else if (sidebar->mode == gempub_SidebarMode) {
         /* Title and author on the left, reading progress and size on the right. */
-        const int iconPad = (isTerminal_Platform() ? 3 : 9) * gap_UI;
+        const int iconPad = 12 * gap_UI; /* same as feed entries */
         const int h1      = lineHeight_Text(uiLabel_FontId);
         const int h2      = lineHeight_Text(font);
         const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiAnnotation_ColorId;
@@ -3618,10 +3658,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                             : isHover ? uiTextFramelessHover_ColorId
                             : isDownloaded ? uiTextStrong_ColorId
                                            : uiTextDim_ColorId;
+        const iRect iconArea = { pos, init_I2(iconPad * aspect_UI, itemHeight) };
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
         drawCentered_Text(uiLabelLarge_FontId,
-                          (iRect){ pos, init_I2(iconPad * aspect_UI, itemHeight) },
+                          adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
                           iTrue,
                           iconColor,
                           "%s",
@@ -3631,10 +3672,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         if (d->progress >= 0.0f) {
             format_String(progress, "%d%%", (int) (d->progress * 100.0f + 0.5f));
         }
-        iString *size = isDownloaded ? collectNewFormat_String("%.1f ${mb}", d->size / 1.0e6)
-                                     : collectNewCStr_String("${sidebar.gempub.download}");
-        translate_Lang(size);
-        const int rightEdge = right_Rect(itemRect) - 3 * gap_UI * aspect_UI - blankWidth;
+        iString *size = collectNew_String();
+        if (isDownloaded) {
+            format_String(size, "%.1f ${mb}", d->size / 1.0e6);
+            translate_Lang(size);
+        }
+        /* Aligned like the meta icons of bookmarks. */
+        const int rightEdge = right_Rect(itemRect) - 2 * gap_UI -
+                              (blankWidth ? blankWidth - 1.5f * gap_UI : (gap_UI / 2));
         const int colWidth  = iMax(measureRange_Text(uiLabel_FontId, range_String(progress)).advance.x,
                                    measureRange_Text(uiLabel_FontId, range_String(size)).advance.x);
         const int top = pos.y + (itemHeight - h1 - h2) / 2;
