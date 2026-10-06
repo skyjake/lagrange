@@ -438,17 +438,21 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
         if (!isEmpty_Range(&bookTitle) && !isCoverStart) {
             bands.bookHeader = fitPageBandText_GmDocument_(d, bookTitle);
         }
-        if (!d->flags.isBookCover) {
+        const iBool hasPages    = numPages > 1;
+        const iBool hasChapters = d->chapter > 0 && d->numChapters > 1;
+        if (!d->flags.isBookCover && (hasPages || hasChapters)) {
             bands.footer = fitPageBandText_GmDocument_(
                 d,
                 auxText_GmDocument_(
                     d,
-                    d->chapter > 0
+                    hasPages && hasChapters
                         ? collectNewFormat_String(cstr_Lang("doc.page.chapter"),
                                                   (int) page + 1, (int) numPages,
                                                   d->chapter, d->numChapters)
-                        : collectNewFormat_String(cstr_Lang("doc.page.number"),
-                                                  (int) page + 1, (int) numPages)));
+                    : hasPages ? collectNewFormat_String(cstr_Lang("doc.page.number"),
+                                                         (int) page + 1, (int) numPages)
+                               : collectNewFormat_String(cstr_Lang("doc.chapter.number"),
+                                                         d->chapter, d->numChapters)));
         }
         pushBack_Array(&d->pageBands, &bands);
     }
