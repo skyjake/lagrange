@@ -69,6 +69,7 @@ struct Impl_SidebarItem {
     iTime     ts;
     float     progress; /* of a book; negative if not started */
     uint64_t  size;
+    iString   bookId;
 };
 
 void init_SidebarItem(iSidebarItem *d) {
@@ -84,9 +85,11 @@ void init_SidebarItem(iSidebarItem *d) {
     iZap(d->ts);
     d->progress = -1.0f;
     d->size     = 0;
+    init_String(&d->bookId);
 }
 
 void deinit_SidebarItem(iSidebarItem *d) {
+    deinit_String(&d->bookId);
     deinit_String(&d->url);
     deinit_String(&d->meta);
     deinit_String(&d->label);
@@ -673,11 +676,12 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
             set_String(&item->label, &book->fileName);
         }
         set_String(&item->meta, &book->author);
-        set_String(&item->url, collect_String(makeFileUrl_String(path)));
+        set_String(&item->url, path ? collect_String(makeFileUrl_String(path)) : &book->url);
+        set_String(&item->bookId, &book->id);
         item->progress = book->chapter >= 0 ? progress_Book(book) : -1.0f;
-        item->size     = book->size;
-        item->icon     = 0x1f56e; /* book */
-        item->listItem.flags.isSelected = currentPath && equal_String(currentPath, path);
+        item->size     = path ? book->size : 0;
+        item->icon     = path ? 0x1f56e /* book */ : 0x2ba7 /* download */;
+        item->listItem.flags.isSelected = currentPath && path && equal_String(currentPath, path);
         addItem_ListWidget(d->list, item);
         iRelease(item);
     }
@@ -2518,7 +2522,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "books.delete")) {
             if (d->side == bookSide_SidebarWidget_()) {
-                remove_Books(collect_String(suffix_Command(cmd, "path")));
+                remove_Books(collect_String(suffix_Command(cmd, "id")));
                 postCommand_App("books.changed");
             }
         }
@@ -3057,9 +3061,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "book.reveal")) {
             const iSidebarItem *item = d->contextItem;
-            if (item && !isEmpty_String(&item->url)) {
-                postCommandf_App("reveal path:%s",
-                                 cstrCollect_String(localFilePathFromUrl_String(&item->url)));
+            const iString *path = item ? collect_String(localFilePathFromUrl_String(&item->url)) : NULL;
+            if (path) {
+                postCommandf_App("reveal path:%s", cstr_String(path));
             }
             return iTrue;
         }
@@ -3073,9 +3077,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                    { uiTextCaution_ColorEscape "${dlg.book.delete}",
                                      0,
                                      0,
-                                     format_CStr("!books.delete path:%s",
-                                                 cstrCollect_String(
-                                                     localFilePathFromUrl_String(&item->url))) } },
+                                     format_CStr("!books.delete id:%s",
+                                                 cstr_String(&item->bookId)) } },
                     2);
             }
             return iTrue;
@@ -3610,8 +3613,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int h1      = lineHeight_Text(uiLabel_FontId);
         const int h2      = lineHeight_Text(font);
         const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiAnnotation_ColorId;
-        const int labelFg = isSel ? uiTextSelected_ColorId : isHover ? uiTextFramelessHover_ColorId
-                                                                    : uiTextStrong_ColorId;
+        const iBool isDownloaded = startsWithCase_String(&d->url, "file:");
+        const int labelFg = isSel     ? uiTextSelected_ColorId
+                            : isHover ? uiTextFramelessHover_ColorId
+                            : isDownloaded ? uiTextStrong_ColorId
+                                           : uiTextDim_ColorId;
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
         drawCentered_Text(uiLabelLarge_FontId,
@@ -3625,7 +3631,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         if (d->progress >= 0.0f) {
             format_String(progress, "%d%%", (int) (d->progress * 100.0f + 0.5f));
         }
-        iString *size = collectNewFormat_String("%.1f ${mb}", d->size / 1.0e6);
+        iString *size = isDownloaded ? collectNewFormat_String("%.1f ${mb}", d->size / 1.0e6)
+                                     : collectNewCStr_String("${sidebar.gempub.download}");
         translate_Lang(size);
         const int rightEdge = right_Rect(itemRect) - 3 * gap_UI * aspect_UI - blankWidth;
         const int colWidth  = iMax(measureRange_Text(uiLabel_FontId, range_String(progress)).advance.x,

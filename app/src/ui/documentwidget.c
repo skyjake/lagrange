@@ -1447,6 +1447,7 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
     const iString *id;
     const iString *fileName;
     const iString *title;
+    const iString *sourceUrl = d->mod.url;
     iBlock        *data;
     if (gempub) {
         id       = id_Books(gempub);
@@ -1468,7 +1469,8 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
             if (!open_File(f, readOnly_FileMode)) {
                 return;
             }
-            data = readAll_File(f);
+            data      = readAll_File(f);
+            sourceUrl = NULL;
         }
     }
     else if (format_GmDocument(d->view->doc) == gemini_SourceFormat &&
@@ -1508,7 +1510,7 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
         delete_Block(data);
         return;
     }
-    const iString *savedPath = add_Books(data, fileName, existingPath);
+    const iString *savedPath = add_Books(data, fileName, existingPath, sourceUrl);
     delete_Block(data);
     if (!savedPath) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",

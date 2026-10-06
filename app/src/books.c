@@ -39,6 +39,7 @@ static void init_Book(iBook *d) {
     init_String(&d->title);
     init_String(&d->author);
     init_String(&d->fileName);
+    init_String(&d->url);
     d->size        = 0;
     d->chapter     = -1;
     d->numChapters = 0;
@@ -47,6 +48,7 @@ static void init_Book(iBook *d) {
 }
 
 static void deinit_Book(iBook *d) {
+    deinit_String(&d->url);
     deinit_String(&d->fileName);
     deinit_String(&d->author);
     deinit_String(&d->title);
@@ -151,6 +153,11 @@ void serialize_Books(iStream *outs) {
                                 cstrCollect_String(quote_String(&book->fileName, iFalse)),
                                 (unsigned long long) book->size);
         }
+        if (!isEmpty_String(&book->url)) {
+            appendFormat_String(str,
+                                "url = \"%s\"\n",
+                                cstrCollect_String(quote_String(&book->url, iFalse)));
+        }
         appendFormat_String(str,
                             "chapter = %d\nchapters = %d\npos = %f\ntimestamp = %lld\n\n",
                             book->chapter,
@@ -199,9 +206,14 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
     if (!old) {
         insert_StringHash(d->books->books, &book->id, book);
         insertFile_Books_(d->books, book);
+        iReleasePtr(&d->book);
+        return;
     }
-    else if (d->method == all_ImportMethod &&
-             integralSeconds_Time(&book->timestamp) > integralSeconds_Time(&old->timestamp)) {
+    if (isEmpty_String(&old->url)) {
+        set_String(&old->url, &book->url);
+    }
+    if (d->method == all_ImportMethod &&
+        integralSeconds_Time(&book->timestamp) > integralSeconds_Time(&old->timestamp)) {
         /* The newer position is kept. */
         set_String(&old->title, &book->title);
         set_String(&old->author, &book->author);
@@ -230,6 +242,9 @@ static void handleKeyValue_BooksLoader_(void *context, const iString *table, con
         }
         else if (!cmp_String(key, "file")) {
             set_String(&book->fileName, value->value.string);
+        }
+        else if (!cmp_String(key, "url")) {
+            set_String(&book->url, value->value.string);
         }
         return;
     }
@@ -432,6 +447,9 @@ const iPtrArray *list_Books(void) {
             }
             changed = iTrue;
         }
+        if (isEmpty_String(&book->fileName) && !isEmpty_String(&book->url)) {
+            pushBack_PtrArray(shelf, book); /* can be downloaded */
+        }
     }
     unlock_Mutex(d->mtx);
     sort_Array(shelf, cmpTimestamp_Book_);
@@ -512,7 +530,7 @@ static iString *uniquePath_Books_(const iString *fileName) {
 }
 
 const iString *add_Books(const iBlock *gempubData, const iString *fileName,
-                         const iString *replacePath) {
+                         const iString *replacePath, const iString *sourceUrl) {
     iGempub *gempub = new_Gempub();
     if (!open_Gempub(gempub, gempubData)) {
         delete_Gempub(gempub);
@@ -529,6 +547,11 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
     }
     iRelease(f);
     if (ok) {
+        if (sourceUrl) {
+            lock_Mutex(books_->mtx);
+            set_String(&bookForGempub_Books_(books_, gempub)->url, sourceUrl);
+            unlock_Mutex(books_->mtx);
+        }
         update_Books(gempub, path);
     }
     delete_Gempub(gempub);
@@ -539,10 +562,18 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
     return collect_String(path);
 }
 
-void remove_Books(const iString *path) {
-    if (!isOnShelf_Books(path)) {
-        return;
+void remove_Books(const iString *id) {
+    iBooks *d = books_;
+    lock_Mutex(d->mtx);
+    iBook         *book = value_StringHash(d->books, id);
+    const iString *path = book ? path_Book(book) : NULL;
+    if (book) {
+        clear_String(&book->url);
     }
-    removePath_CStr(cstr_String(path));
-    list_Books(); /* the reading position is kept */
+    unlock_Mutex(d->mtx);
+    if (path && isOnShelf_Books(path)) {
+        removePath_CStr(cstr_String(path));
+    }
+    list_Books(); /* forgets the file */
+    save_Books();
 }

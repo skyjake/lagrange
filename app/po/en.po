@@ -612,6 +612,10 @@ msgstr "Shelf"
 msgid "sidebar.empty.books"
 msgstr "No Books"
 
+# Shown on the bookshelf instead of the file size when a book has not been downloaded on this device.
+msgid "sidebar.gempub.download"
+msgstr "Download"
+
 msgid "book.delete"
 msgstr "Delete Book"
 

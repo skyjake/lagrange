@@ -37,7 +37,8 @@ struct Impl_Book {
     iString  id;          /* from the title and author */
     iString  title;
     iString  author;
-    iString  fileName;    /* in the books directory; empty if not on the shelf */
+    iString  fileName;    /* in the books directory; empty if not downloaded */
+    iString  url;         /* where the book can be downloaded from */
     uint64_t size;
     int      chapter;     /* negative if not read yet */
     int      numChapters;
@@ -62,10 +63,11 @@ iString *       makeId_Books        (const iString *title, const iString *author
 const iString * id_Books            (const iGempub *);
 const iBook *   find_Books          (const iString *id);
 iBool           isOnShelf_Books     (const iString *path);
-const iPtrArray*list_Books          (void); /* books on the shelf, most recently read first */
+const iPtrArray*list_Books          (void); /* downloaded or downloadable, most recently read first */
 
 void            update_Books        (const iGempub *, const iString *path);
 void            setPosition_Books   (const iGempub *, int chapter, int numChapters, float pos);
 const iString * add_Books           (const iBlock *gempubData, const iString *fileName,
-                                     const iString *replacePath); /* returns the saved path */
-void            remove_Books        (const iString *path);
+                                     const iString *replacePath,
+                                     const iString *sourceUrl); /* returns the saved path */
+void            remove_Books        (const iString *id); /* the reading position is kept */
