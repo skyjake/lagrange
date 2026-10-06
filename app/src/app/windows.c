@@ -191,7 +191,7 @@ iBool isLandscape_App(void) {
 }
 
 iDocumentWidget *document_Root(iRoot *d) {
-    return iConstCast(iDocumentWidget *, currentTabPage_Widget(findChild_Widget(d->widget, "doctabs")));
+    return iConstCast(iDocumentWidget *, currentTabPage_Widget(d->bars.docTabs));
 }
 
 iDocumentWidget *document_App(void) {

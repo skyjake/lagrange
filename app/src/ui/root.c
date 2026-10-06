@@ -1929,6 +1929,7 @@ void createUserInterface_Root(iRoot *d) {
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(root, iClob(div));
+    d->bars.navDiv = div;
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Window title bar. */
     if (prefs_App()->customFrame) {
@@ -2013,6 +2014,7 @@ void createUserInterface_Root(iRoot *d) {
     /* Navigation bar. */ {
         navBar = new_Widget();
         setId_Widget(navBar, "navbar");
+        d->bars.navBar = navBar;
         setDrawBufferEnabled_Widget(navBar, iTrue);
         setFlags_Widget(navBar,
                         hittable_WidgetFlag | /* context menu */
@@ -2229,6 +2231,8 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *docTabs = makeTabs_Widget(mainStack);
         setId_Widget(docTabs, "doctabs");
         setFlags_Widget(docTabs, expand_WidgetFlag, iTrue);
+        d->bars.docTabs    = docTabs;
+        d->bars.tabButtons = findChild_Widget(docTabs, "tabs.buttons");
         if (isDesktop_Platform()) {
             setBackgroundColor_Widget(findChild_Widget(docTabs, "tabs.buttons"),
                                       uiBackground_ColorId);
@@ -2272,6 +2276,7 @@ void createUserInterface_Root(iRoot *d) {
     /* Search bar. */ {
         iWidget *searchBar = new_Widget();
         setId_Widget(searchBar, "search");
+        d->bars.searchBar = searchBar;
         setFlags_Widget(searchBar,
                         hidden_WidgetFlag | disabledWhenHidden_WidgetFlag | collapse_WidgetFlag |
                             arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
@@ -2738,9 +2743,9 @@ static iWidget *readingBarsTimer_Root_(const iRoot *d) {
 static void readingBars_Root_(const iRoot *d, iWidget **navBar, iWidget **tabBar) {
     /* Bars in the phone's bottom bar are hidden along with the toolbar. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-    *navBar = findChild_Widget(d->widget, "navbar");
-    *tabBar = findChild_Widget(findChild_Widget(d->widget, "doctabs"), "tabs.buttons");
-    if (*navBar && parent_Widget(*navBar) != findChild_Widget(d->widget, "navdiv")) {
+    *navBar = d->bars.navBar;
+    *tabBar = d->bars.tabButtons;
+    if (*navBar && parent_Widget(*navBar) != d->bars.navDiv) {
         *navBar = NULL;
     }
     if (isPhone && prefs_App()->bottomTabBar) {
@@ -3072,7 +3077,7 @@ iRect readingRect_Root(const iRoot *d, iRect docBounds) {
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
     /* The find bar is also drawn over the page, so it does not change the page height. */
-    const iWidget *searchBar = findChild_Widget(d->widget, "search");
+    const iWidget *searchBar = d->bars.searchBar;
     int top    = top_Rect(docBounds);
     int bottom = bottom_Rect(docBounds);
     for (int i = 0; i < 3; i++) {

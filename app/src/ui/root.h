@@ -31,6 +31,13 @@ struct Impl_Root {
     iBool      isReading;   /* bars float over a paginated document */
     iBool      areReadingBarsHidden;
     int        readingBarsRest[2]; /* visual offsets of the shown navbar and tab bar */
+    struct {
+        iWidget *navDiv;
+        iWidget *navBar;
+        iWidget *docTabs;
+        iWidget *tabButtons;
+        iWidget *searchBar;
+    } bars; /* looked up often (e.g., the page viewport), so not searched for by ID */
 };
 
 iDeclareTypeConstruction(Root)

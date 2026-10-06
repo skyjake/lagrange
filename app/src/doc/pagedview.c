@@ -41,10 +41,17 @@ uint32_t pageTurnDuration_DocumentView(const iDocumentView *d) {
 }
 
 static iBool isAlwaysScrolled_(const iString *url) {
-    iUrl parts;
-    init_Url(&parts, url);
-    return equalCase_Rangecc(parts.scheme, "about") &&
-           (equalCase_Rangecc(parts.path, "lagrange") || equalCase_Rangecc(parts.path, "debug"));
+    /* Checked whenever the page viewport is needed, so the URL is not fully parsed. */
+    static const char *pages_[] = { "about:lagrange", "about:debug" };
+    iForIndices(i, pages_) {
+        if (startsWithCase_String(url, pages_[i])) {
+            const char next = cstr_String(url)[strlen(pages_[i])];
+            if (!next || next == '?' || next == '#') {
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
 }
 
 iBool wantsPaged_DocumentView(const iDocumentView *d) {
