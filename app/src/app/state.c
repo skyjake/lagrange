@@ -243,13 +243,18 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                     readf_Stream(stream_File(f)),
                     readf_Stream(stream_File(f))
                 };
-                iIntSet *closedFolders[2] = {
+                iIntSet *openFolders[2] = {
                     collectNew_IntSet(),
                     collectNew_IntSet()
                 };
                 if (version >= bookmarkFolderState_FileVersion) {
-                    deserialize_IntSet(closedFolders[0], stream_File(f));
-                    deserialize_IntSet(closedFolders[1], stream_File(f));
+                    deserialize_IntSet(openFolders[0], stream_File(f));
+                    deserialize_IntSet(openFolders[1], stream_File(f));
+                    if (version < openBookmarkFolders_FileVersion) {
+                        /* Old format has closed folders; fold everything. */
+                        clear_IntSet(openFolders[0]);
+                        clear_IntSet(openFolders[1]);
+                    }
                 }
                 if (validateOnly) {
                     continue;
@@ -260,8 +265,8 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                 if (root) {
                     iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
-                    setClosedFolders_SidebarWidget(sidebar, closedFolders[0]);
-                    setClosedFolders_SidebarWidget(sidebar2, closedFolders[1]);
+                    setOpenFolders_SidebarWidget(sidebar, openFolders[0]);
+                    setOpenFolders_SidebarWidget(sidebar2, openFolders[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
                     postCommandf_Root(root, "sidebar2.mode arg:%u", (modes >> 4) & 0xf);
                     if (flags & 4) {
@@ -453,8 +458,8 @@ void saveState_App_(const iApp *d, iBool withContent) {
                                      (mode_SidebarWidget(sidebar2) << 4));
                         writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
                         writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
-                        serialize_IntSet(closedFolders_SidebarWidget(sidebar), stream_File(f));
-                        serialize_IntSet(closedFolders_SidebarWidget(sidebar2), stream_File(f));
+                        serialize_IntSet(openFolders_SidebarWidget(sidebar), stream_File(f));
+                        serialize_IntSet(openFolders_SidebarWidget(sidebar2), stream_File(f));
                     }
                 }
             }

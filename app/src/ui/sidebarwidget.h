@@ -49,13 +49,13 @@ iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
 void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
 iBool               setButtonFont_SidebarWidget (iSidebarWidget *, int font);
-void                setClosedFolders_SidebarWidget  (iSidebarWidget *, const iIntSet *closedFolders);
+void                setOpenFolders_SidebarWidget    (iSidebarWidget *, const iIntSet *openFolders);
 void                setMidHeight_SidebarWidget  (iSidebarWidget *, int midHeight); /* phone layout */
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
 int                 shelfSort_SidebarWidget     (const iSidebarWidget *); /* enum iBooksSortOrder */
 float               width_SidebarWidget         (const iSidebarWidget *);
-const iIntSet *     closedFolders_SidebarWidget (const iSidebarWidget *);
+const iIntSet *     openFolders_SidebarWidget   (const iSidebarWidget *);
 
 iListWidget *       list_SidebarWidget          (iSidebarWidget *);

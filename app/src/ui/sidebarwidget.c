@@ -167,7 +167,7 @@ struct Impl_SidebarWidget {
     iWidget          *folderMenu;    /* context menu for bookmark folders */
     iSidebarItem     *contextItem;   /* list item accessed in the context menu */
     size_t            contextIndex;  /* index of list item accessed in the context menu */
-    iIntSet          *closedFolders; /* otherwise open */
+    iIntSet          *openFolders;   /* otherwise folded */
     iString           bookmarkFilter;
     iStringSet       *structureUrls;
     iString           structureHost;
@@ -329,7 +329,7 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
 
 static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBookmark *bm) {
     while (bm->parentId) {
-        if (contains_IntSet(d->closedFolders, bm->parentId)) {
+        if (!contains_IntSet(d->openFolders, bm->parentId)) {
             return iTrue;
         }
         bm = get_Bookmarks(bookmarks_App(), bm->parentId);
@@ -435,7 +435,7 @@ static void updateBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
         item->listItem.flags.isDraggable = iTrue;
         item->isBold = item->listItem.flags.isDropTarget = isFolder_Bookmark(bm);
         if (isFolder_Bookmark(bm)) {
-            item->icon = contains_IntSet(d->closedFolders, item->id) ? 0x27e9 : 0xfe40;
+            item->icon = contains_IntSet(d->openFolders, item->id) ? 0xfe40 : 0x27e9;
         }
         if (bm->flags & remote_BookmarkFlag) {
             item->listItem.flags.isDraggable = iFalse;
@@ -1597,10 +1597,10 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     return iTrue;
 }
 
-void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFolders) {
+void setOpenFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *openFolders) {
     if (d) {
-        delete_IntSet(d->closedFolders);
-        d->closedFolders = copy_IntSet(closedFolders);
+        delete_IntSet(d->openFolders);
+        d->openFolders = copy_IntSet(openFolders);
     }
 }
 
@@ -1624,8 +1624,8 @@ float width_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->widthAsGaps : 0;
 }
 
-const iIntSet *closedFolders_SidebarWidget(const iSidebarWidget *d) {
-    return d ? d->closedFolders : collect_IntSet(new_IntSet());
+const iIntSet *openFolders_SidebarWidget(const iSidebarWidget *d) {
+    return d ? d->openFolders : collect_IntSet(new_IntSet());
 }
 
 iListWidget *list_SidebarWidget(iSidebarWidget *d) {
@@ -1721,11 +1721,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->list          = NULL;
     d->certList      = NULL;
     d->actions       = NULL;
-    d->closedFolders = new_IntSet();
-    /* Folders are folded by default. */
-    iConstForEach(PtrArray, bf, list_Bookmarks(bookmarks_App(), NULL, isFolder_, NULL)) {
-        insert_IntSet(d->closedFolders, id_Bookmark(bf.ptr));
-    }
+    d->openFolders   = new_IntSet();
     init_String(&d->bookmarkFilter);
     init_String(&d->structureHost);
     d->structureUrls    = new_StringSet();
@@ -1912,7 +1908,7 @@ void deinit_SidebarWidget(iSidebarWidget *d) {
     iRelease(d->structureUrls);
     deinit_String(&d->structureHost);
     deinit_String(&d->bookmarkFilter);
-    delete_IntSet(d->closedFolders);
+    delete_IntSet(d->openFolders);
     deinit_String(&d->cmdPrefix);
 }
 
@@ -1996,13 +1992,13 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         case bookmarks_SidebarMode:
             /* Bookmark folder folding is toggled when clicking. */
             if (isEmpty_String(&item->url) /* is a folder */) {
-                if (contains_IntSet(d->closedFolders, item->id)) {
-                    remove_IntSet(d->closedFolders, item->id);
-                    setRecentFolder_Bookmarks(bookmarks_App(), item->id);
+                if (contains_IntSet(d->openFolders, item->id)) {
+                    remove_IntSet(d->openFolders, item->id);
+                    setRecentFolder_Bookmarks(bookmarks_App(), 0);
                 }
                 else {
-                    insert_IntSet(d->closedFolders, item->id);
-                    setRecentFolder_Bookmarks(bookmarks_App(), 0);
+                    insert_IntSet(d->openFolders, item->id);
+                    setRecentFolder_Bookmarks(bookmarks_App(), item->id);
                 }
                 updateItems_SidebarWidget_(d);
                 break;
@@ -2988,10 +2984,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "bookmark.foldall")) {
-            clear_IntSet(d->closedFolders);
-            if (arg_Command(cmd)) {
+            clear_IntSet(d->openFolders);
+            if (!arg_Command(cmd)) {
                 iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, isFolder_, NULL)) {
-                    insert_IntSet(d->closedFolders, id_Bookmark(i.ptr));
+                    insert_IntSet(d->openFolders, id_Bookmark(i.ptr));
                 }
             }
             if (d->mode == bookmarks_SidebarMode) {

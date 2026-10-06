@@ -2400,9 +2400,9 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             /* Bookmark folder state will match the old root's state. */ {
                 for (int sb = 0; sb < 2; sb++) {
                     const char *sbId = (sb == 0 ? "sidebar" : "sidebar2");
-                    setClosedFolders_SidebarWidget(
+                    setOpenFolders_SidebarWidget(
                         findChild_Widget(w->roots[newRootIndex]->widget, sbId),
-                        closedFolders_SidebarWidget(
+                        openFolders_SidebarWidget(
                             findChild_Widget(w->roots[newRootIndex ^ 1]->widget, sbId)));
                 }
             }
