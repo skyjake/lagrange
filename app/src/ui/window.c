@@ -2153,14 +2153,20 @@ void setTitle_Window(iWindow *d, const iString *title) {
     }
 }
 
+iRangef uiScaleRange_Window(void) {
+    return (iRangef){ 0.5f,
+                      deviceType_App() == phone_AppDeviceType ? 1.5f
+                      : deviceType_App() == tablet_AppDeviceType || isAppleDesktop_Platform()
+                          ? 2.0f
+                          : 4.0f };
+}
+
 void setUiScale_Window(iWindow *d, float uiScale) {
     if (uiScale <= 0.0f) {
         uiScale = 1.0f;
     }
-    uiScale = iClamp(uiScale,
-                     0.5f,
-                     deviceType_App() == phone_AppDeviceType ? 1.5f :
-                     deviceType_App() == tablet_AppDeviceType ? 2.0f : 4.0f);
+    const iRangef range = uiScaleRange_Window();
+    uiScale = iClamp(uiScale, range.start, range.end);
     if (d) {
         if (iAbs(d->uiScale - uiScale) > 0.0001f) {
             d->uiScale = uiScale;

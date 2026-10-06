@@ -346,6 +346,8 @@ set (SOURCES
     src/ui/sidebarwidget.h
     src/ui/simpledocumentwidget.c
     src/ui/simpledocumentwidget.h
+    src/ui/sliderwidget.c
+    src/ui/sliderwidget.h
     src/ui/snippetwidget.c
     src/ui/snippetwidget.h
     src/ui/uploadwidget.c

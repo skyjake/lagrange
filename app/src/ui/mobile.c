@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "root.h"
+#include "sliderwidget.h"
 #include "snippetwidget.h"
 #include "render/text.h"
 #include "widget.h"
@@ -461,7 +462,8 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     setPadding1_Widget(as_Widget(heading), 0);
     setFont_LabelWidget(heading, labelFont_());
     setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
-    if (isInput && ~value->flags & fixedWidth_WidgetFlag) {
+    if ((isInput && ~value->flags & fixedWidth_WidgetFlag) ||
+        isInstance_Object(value, &Class_SliderWidget)) {
         addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
     }
     else if (isInstance_Object(value, &Class_LabelWidget) &&
@@ -774,6 +776,12 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setCommandHandler_Widget(widget, inputHeadingHandler_);
             setUserData_Object(widget, input);
         }
+    }
+    else if (equal_Command(spec, "slider")) {
+        iSliderWidget *slider = newMenuItem_SliderWidget(item);
+        setFont_SliderWidget(slider, labelFont_());
+        value  = as_Widget(slider);
+        widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), value);
     }
     else if (equal_Command(spec, "certlist")) {
         iCertListWidget *certList = new_CertListWidget();

@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "render/text.h"
 #include "root.h"
+#include "sliderwidget.h"
 #include "tabs.h"
 #include "uploadwidget.h"
 #include "util.h"
@@ -792,6 +793,12 @@ void makeTwoColumnItems_Widget(iWidget *headings, iWidget *values, const iMenuIt
         else if (equal_Command(spec, "input")) {
             addPrefsInputWithHeading_Widget(
                 headings, values, id, iClob(new_InputWidget(argU32Label_Command(spec, "maxlen"))));
+        }
+        else if (equal_Command(spec, "slider")) {
+            iLabelWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget(label)));
+            iWidget *slider = addChildFlags_Widget(values, iClob(newMenuItem_SliderWidget(item)),
+                                                   resizeToParentWidth_WidgetFlag);
+            as_Widget(head)->sizeRef = slider;
         }
         else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
             const iBool isRadio = equal_Command(spec, "radio");

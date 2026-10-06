@@ -31,11 +31,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "mobile.h"
 #include "prefsdialog.h"
+#include "sliderwidget.h"
 #include "tabs.h"
 #include "util.h"
 #include "widget.h"
 
 #include <lagrange/lang.h>
+#include <math.h>
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -146,23 +148,22 @@ static const iMenuItem protocolItems_[] = {
     { NULL }
 };
 
-static const int lineWidths_[] = { 30, 34, 38, 43, 48, 1000 };
+/* Line width slider uses a relative scale where each unit is a factor of 1.12. */
+static const float lineWidthFill_ = 3.0f;
+
+static int lineWidthChars_(float rel) {
+    return rel >= lineWidthFill_ ? 1000 : (int) lroundf(38 * powf(1.12f, rel));
+}
+
+static float lineWidthRel_(int chars) {
+    return chars >= 1000 ? lineWidthFill_
+                         : iMin(lineWidthFill_ - 0.5f, logf(chars / 38.0f) / logf(1.12f));
+}
 
 /* clang-format off */
-static const iMenuItem lineWidthItems_[] = {
-    { "button id:prefs.linewidth.30 text:–2",                 0, 0, "linewidth.set arg:30" },
-    { "button id:prefs.linewidth.34 text:–1",                 0, 0, "linewidth.set arg:34" },
-    { "button id:prefs.linewidth.38 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:38" },
-    { "button id:prefs.linewidth.43 text:+1",                      0, 0, "linewidth.set arg:43" },
-    { "button id:prefs.linewidth.48 text:+2",                      0, 0, "linewidth.set arg:48" },
-    { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
-    { NULL }
-};
-static const iMenuItem satItems_[] = {
-    { "button id:prefs.saturation.3 text:100 %", 0, 0, "saturation.set arg:100" },
-    { "button id:prefs.saturation.2 text:66 %", 0, 0, "saturation.set arg:66" },
-    { "button id:prefs.saturation.1 text:33 %", 0, 0, "saturation.set arg:33" },
-    { "button id:prefs.saturation.0 text:0 %", 0, 0, "saturation.set arg:0" },
+static const iMenuItem lineWidthTicks_[] = {
+    { "tick value:0 label:prefs.linewidth.normal" },
+    { "tick value:3 label:prefs.linewidth.fill" },
     { NULL }
 };
 static const iMenuItem boldLinkItems_[] = {
@@ -265,9 +266,11 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
         case layout_DocPrefsGroup:
             add_("toggle id:prefs.pageview");
             add_("padding");
-            add_("radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems_);
-            add_("input id:prefs.linespacing maxlen:5");
-            add_("input id:prefs.tabwidth maxlen:3");
+            add_("slider id:prefs.linewidth cmd:linewidth.slider min:-2 max:3 step:0.5 bigstep:1 "
+                 "prec:1 sign:1", 0, 0, (const void *) lineWidthTicks_);
+            add_("slider id:prefs.linespacing cmd:linespacing.set min:0.95 max:2 step:0.01 "
+                 "bigstep:0.1 prec:2");
+            add_("slider id:prefs.tabwidth cmd:tabwidth.set min:1 max:16 step:1 bigstep:2");
             add_("toggle id:prefs.plaintext.wrap");
             add_("padding");
             add_("toggle id:prefs.expandline");
@@ -295,7 +298,8 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("dropdown id:prefs.pagetheme.dark", 0, 0, menu_(docThemeItems_("pagetheme.dark", iTrue)));
             add_("dropdown id:prefs.pagetheme.light", 0, 0, menu_(docThemeItems_("pagetheme.light", iTrue)));
             add_("padding");
-            add_("radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems_);
+            add_("slider id:prefs.saturation cmd:saturation.set min:0 max:100 step:10 bigstep:30 "
+                 "unit:percent");
             add_("padding id:prefs.pad.imagestyle except:finger");
             add_("dropdown id:prefs.imagestyle except:finger", 0, 0, menu_(imageStyleItems_()));
             break;
@@ -515,15 +519,10 @@ static void applyValues_(iWidget *dlg, const iDocPrefs *prefs) {
                                         format_CStr(":%s", cstr_String(prefs->monospaceFont)));
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.font.monodoc"),
                                         format_CStr(":%s", cstr_String(prefs->monospaceDocumentFont)));
-    iForIndices(i, lineWidths_) {
-        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", lineWidths_[i])),
-                        selected_WidgetFlag,
-                        lineWidths_[i] == prefs->lineWidth.value);
-    }
-    setText_InputWidget(findChild_Widget(dlg, "prefs.linespacing"),
-                        collectNewFormat_String("%.2f", prefs->lineSpacing.value));
-    setText_InputWidget(findChild_Widget(dlg, "prefs.tabwidth"),
-                        collectNewFormat_String("%d", prefs->tabWidth.value));
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.linewidth"),
+                          lineWidthRel_(prefs->lineWidth.value));
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.linespacing"), prefs->lineSpacing.value);
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.tabwidth"), prefs->tabWidth.value);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.collapsepre"),
                                         format_CStr(" arg:%d", prefs->collapsePre.value));
     for (int i = 0; i < 2; i++) {
@@ -539,11 +538,8 @@ static void applyValues_(iWidget *dlg, const iDocPrefs *prefs) {
                                         format_CStr(".set arg:%d", prefs->pageThemeDark.value));
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.pagetheme.light"),
                                         format_CStr(".set arg:%d", prefs->pageThemeLight.value));
-    for (int i = 0; i < 4; i++) {
-        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.saturation.%d", i)),
-                        selected_WidgetFlag,
-                        i == (int) (prefs->saturation.value * 3.99f));
-    }
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.saturation"),
+                          prefs->saturation.value * 100.0f);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.imagestyle"),
                                         format_CStr(".set arg:%d", prefs->imageStyle.value));
     setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fg"),
@@ -675,7 +671,6 @@ static enum iDocPrefsGroup commandGroup_(const char *cmd) {
 }
 
 iBool handleCommand_ScopedPrefs(iWidget *dlg, const char *cmd) {
-    const char *scope = scope_ScopedPrefs(dlg);
     if (equal_Command(cmd, "prefs.scope.set")) {
         set_String(userData_Object(dlg), string_Command(cmd, "scope"));
         update_ScopedPrefs(dlg);
@@ -697,17 +692,8 @@ iBool handleCommand_ScopedPrefs(iWidget *dlg, const char *cmd) {
         }
         return iFalse;
     }
-    /* Text fields are applied immediately. */
-    if (equalArg_Command(cmd, "input.ended", "id", "prefs.linespacing")) {
-        postCommandf_App("linespacing.set arg:%f scope:%s",
-                         toFloat_String(text_InputWidget(findChild_Widget(dlg, "prefs.linespacing"))),
-                         scope);
-        return iTrue;
-    }
-    if (equalArg_Command(cmd, "input.ended", "id", "prefs.tabwidth")) {
-        postCommandf_App("tabwidth.set arg:%d scope:%s",
-                         toInt_String(text_InputWidget(findChild_Widget(dlg, "prefs.tabwidth"))),
-                         scope);
+    if (equal_Command(cmd, "linewidth.slider")) {
+        postCommand_Widget(dlg, "linewidth.set arg:%d", lineWidthChars_(argf_Command(cmd)));
         return iTrue;
     }
     /* The scope is added to the commands of the controls. */

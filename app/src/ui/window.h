@@ -181,6 +181,7 @@ iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
 void        invalidate_Window       (iAnyWindow *); /* discard all cached graphics */
 void        draw_Window             (iWindow *);
 void        setUiScale_Window       (iWindow *, float uiScale);
+iRangef     uiScaleRange_Window     (void); /* depends on device type */
 void        setCursor_Window        (iWindow *, int cursor);
 void        hideCursor_Window       (iBool hide); /* shown again by mouse movement */
 iBool       isCursorHidden_Window   (void);

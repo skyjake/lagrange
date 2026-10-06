@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/listwidget.h"
 #include "ui/lookupwidget.h"
 #include "ui/sidebarwidget.h"
+#include "ui/sliderwidget.h"
 #include "ui/documentwidget.h"
 #include "ui/keys.h"
 #include "ui/root.h"
@@ -425,7 +426,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                                     !isInstance_Object(focus_Widget(), &Class_DocumentWidget) &&
                                     !isInstance_Object(focus_Widget(), &Class_ListWidget) &&
                                     !isInstance_Object(focus_Widget(), &Class_InputWidget) &&
-                                    !isInstance_Object(focus_Widget(), &Class_LookupWidget)) {
+                                    !isInstance_Object(focus_Widget(), &Class_LookupWidget) &&
+                                    !(isInstance_Object(focus_Widget(), &Class_SliderWidget) &&
+                                      (key == SDLK_LEFT || key == SDLK_RIGHT))) {
                                     wasUsed = moveFocusWithArrows_App(&ev);
                                 }
                             }

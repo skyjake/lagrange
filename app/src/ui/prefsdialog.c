@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "snippetwidget.h"
 #include "touch.h"
 #include "scopedprefs.h"
+#include "sliderwidget.h"
 #include "util.h"
 #include "widget.h"
 #include "window.h"
@@ -48,6 +49,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
+
+static const char *urlSizeSliderSpec_ =
+    "slider id:prefs.urlsize min:1 max:32 step:0.5 bigstep:4 prec:1 unit:kb";
+
+static const char *uiScaleSliderSpec_(void) {
+    const iRangef range = uiScaleRange_Window();
+    return format_CStr("slider id:prefs.uiscale min:%g max:%g step:0.01 bigstep:0.1 prec:2 unit:x",
+                       range.start, range.end);
+}
 
 static void expandInputFieldWidth_(iInputWidget *input) {
     if (!input) return;
@@ -406,7 +416,7 @@ iWidget *makePreferences_Widget(void) {
             { "toggle device:1 id:prefs.sidebar2.enabled.7 text:${LC:sidebar.history}" },
             { "radio device:1 id:prefs.gempubsidebar", 0, 0, (const void *) gempubSidebarItems },
             { "heading id:heading.prefs.sizing" },
-            { "input id:prefs.uiscale maxlen:5" },
+            { uiScaleSliderSpec_() },
             { "padding" },
             { NULL }
         };
@@ -437,7 +447,7 @@ iWidget *makePreferences_Widget(void) {
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
             { "padding" },
             { "toggle id:prefs.decodeurls" },
-            { "input id:prefs.urlsize maxlen:7 selectall:1" },
+            { urlSizeSliderSpec_ },
             { "padding" },
             { "toggle id:prefs.ipv6" },
             { "toggle id:prefs.redirect.allowscheme" },
@@ -703,7 +713,8 @@ iWidget *makePreferences_Widget(void) {
         }
         if (!isTerminal_Platform()) {
             addDialogPadding_Widget(headings, values);
-            addPrefsInputWithHeading_Widget(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
+            makeTwoColumnItems_Widget(headings, values,
+                                      (iMenuItem[]){ { uiScaleSliderSpec_() }, { NULL } });
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
             addDialogToggle_Widget(headings, values, "${prefs.customframe}", "prefs.customframe");
 #endif
@@ -831,7 +842,7 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_Widget(headings, values, "${prefs.warn.security}", "prefs.warn.security");
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
+        makeTwoColumnItems_Widget(headings, values, (iMenuItem[]){ { urlSizeSliderSpec_ }, { NULL } });
         makeTwoColumnHeading_Widget("${heading.prefs.certs}", headings, values);
         addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
@@ -1040,8 +1051,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         setupSheetTransition_Mobile(d, dialogTransitionDir_Widget(d));
         enableToolbar_Root(get_Root(), iTrue);
         /* Apply the new UI scaling factor to all non-popup windows. */ {
-            const float uiScale =
-                toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale")));
+            const float uiScale = value_SliderWidget(findChild_Widget(d, "prefs.uiscale"));
             iConstForEach(PtrArray, i, regularWindows_App()) {
                 setUiScale_Window(i.ptr, uiScale);
             }
@@ -1066,7 +1076,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("memorysize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
         postCommandf_App("urlsize.set arg:%d",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.urlsize"))));
+                         (int) lroundf(value_SliderWidget(findChild_Widget(d, "prefs.urlsize")) *
+                                       1024));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
         if (tabs) {
             postCommandf_App("prefs.dialogtab arg:%u",
@@ -1227,16 +1238,15 @@ void showPreferences_Widget(const char *cmd) {
                              prefs->sidebarModeEnabled[side][barMode]);
         }
     }
-    setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
-                        collectNewFormat_String("%g", uiScale_Window(activeWindow_App())));
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.uiscale"),
+                          uiScale_Window(activeWindow_App()));
     updateFontButton_(findChild_Widget(dlg, "prefs.font.ui"), &prefs->strings[uiFont_PrefsString]);
     init_ScopedPrefs(dlg, "base"); /* the selection is not saved */
     setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
                         collectNewFormat_String("%d", prefs->maxCacheSize));
     setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
                         collectNewFormat_String("%d", prefs->maxMemorySize));
-    setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
-                        collectNewFormat_String("%d", prefs->maxUrlSize));
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.urlsize"), prefs->maxUrlSize / 1024.0f);
     iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
     if (tabs) {
         showTabPage_Widget(tabs, tabPage_Widget(tabs, prefs->dialogTab));
