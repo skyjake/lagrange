@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "command.h"
 #include "defs.h"
+#include "inputwidget.h"
 #include "labelwidget.h"
 #include "touch.h"
 #include "widget.h"
@@ -750,6 +751,41 @@ iBool isAction_Widget(const iWidget *d) {
 
 iBool isButton_Widget(const iAnyObject *d) {
     return isInstance_Object(d, &Class_LabelWidget) && !isEmpty_String(command_LabelWidget(d));
+}
+
+iInputWidget *makeFilterBar_Widget(const char *id, const char *hint, int clearKey,
+                                   const char *clearCommand) {
+    iInputWidget *input = new_InputWidget(0);
+    setId_Widget(as_Widget(input), id);
+    setFlags_Widget(as_Widget(input), frameless_WidgetFlag, iTrue);
+    setHint_InputWidget(input, hint);
+    setEatEscape_InputWidget(input, iFalse);
+    setSelectAllOnFocus_InputWidget(input, iTrue);
+    setNotifyEdits_InputWidget(input, iTrue);
+    setLineBreaksEnabled_InputWidget(input, iFalse);
+    const int64_t embedFlags = noBackground_WidgetFlag | frameless_WidgetFlag | tight_WidgetFlag |
+                               resizeToParentHeight_WidgetFlag;
+    iLabelWidget *magnifier = addChildFlags_Widget(as_Widget(input),
+                                                   iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
+                                                   embedFlags | unhittable_WidgetFlag |
+                                                       moveToParentLeftEdge_WidgetFlag);
+    iLabelWidget *clear = addChildFlags_Widget(
+        as_Widget(input),
+        iClob(newIcon_LabelWidget(close_Icon, clearKey, 0, clearCommand)),
+        embedFlags | disabled_WidgetFlag | moveToParentRightEdge_WidgetFlag);
+    setId_Widget(as_Widget(clear), "filter.clear");
+    updateSize_LabelWidget(magnifier);
+    updateSize_LabelWidget(clear);
+    setContentPadding_InputWidget(input,
+                                  width_Widget(magnifier) - 2 * gap_UI,
+                                  width_Widget(clear) - 2 * gap_UI);
+    return input;
+}
+
+void updateFilterBar_Widget(iInputWidget *d) {
+    setFlags_Widget(findChild_Widget(as_Widget(d), "filter.clear"),
+                    disabled_WidgetFlag,
+                    isEmpty_String(text_InputWidget(d)));
 }
 
 /*-----------------------------------------------------------------------------------------------*/

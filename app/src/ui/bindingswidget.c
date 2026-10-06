@@ -83,7 +83,6 @@ struct Impl_BindingsWidget {
     iWidget widget;
     iListWidget *list;
     iInputWidget *filter;
-    iWidget *filterClear;
     size_t activePos;
     size_t contextPos;
     iWidget *menu;
@@ -194,30 +193,9 @@ void init_BindingsWidget(iBindingsWidget *d) {
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiLabel_FontId) * 1.5f);
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChildFlags_Widget(w, iClob(d->list), expand_WidgetFlag);
-    /* Filter field. */ {
-        iWidget *row = new_Widget();
-        setBackgroundColor_Widget(row, uiInputBackground_ColorId);
-        row->flags2 |= alwaysRound_WidgetFlag2;
-        addChildFlags_Widget(row,
-                             iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
-                             frameless_WidgetFlag | noBackground_WidgetFlag);
-        d->filter = new_InputWidget(0);
-        setId_Widget(as_Widget(d->filter), "bindings.filter");
-        setHint_InputWidget(d->filter, "${hint.filter.bindings}");
-        setEatEscape_InputWidget(d->filter, iFalse);
-        setSelectAllOnFocus_InputWidget(d->filter, iTrue);
-        setNotifyEdits_InputWidget(d->filter, iTrue);
-        setLineBreaksEnabled_InputWidget(d->filter, iFalse);
-        addChildFlags_Widget(row, iClob(d->filter), expand_WidgetFlag | frameless_WidgetFlag);
-        d->filterClear = addChildFlags_Widget(
-            row,
-            iClob(newIcon_LabelWidget(close_Icon, 0, 0, "bindings.filter.clear")),
-            noBackground_WidgetFlag | frameless_WidgetFlag | disabled_WidgetFlag);
-        addChildFlags_Widget(w,
-                             iClob(row),
-                             arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
-                                 resizeWidthOfChildren_WidgetFlag);
-    }
+    d->filter = makeFilterBar_Widget(
+        "bindings.filter", "${hint.filter.bindings}", 0, "bindings.filter.clear");
+    addChild_Widget(w, iClob(d->filter));
     updateItems_BindingsWidget_(d);
     d->menu = makeMenu_Widget(
         w,
@@ -272,14 +250,13 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
     else if (equal_Command(cmd, "input.edited") && pointer_Command(cmd) == d->filter) {
         setActiveItem_BindingsWidget_(d, iInvalidPos);
         d->contextPos = iInvalidPos;
-        setFlags_Widget(
-            d->filterClear, disabled_WidgetFlag, isEmpty_String(text_InputWidget(d->filter)));
+        updateFilterBar_Widget(d->filter);
         updateItems_BindingsWidget_(d);
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "bindings.filter.clear")) {
         setTextCStr_InputWidget(d->filter, "");
-        setFlags_Widget(d->filterClear, disabled_WidgetFlag, iTrue);
+        updateFilterBar_Widget(d->filter);
         setActiveItem_BindingsWidget_(d, iInvalidPos);
         d->contextPos = iInvalidPos;
         updateItems_BindingsWidget_(d);

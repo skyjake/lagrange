@@ -586,7 +586,7 @@ static int flushCorners_LabelWidget_(const iLabelWidget *d) {
     }
     for (const iWidget *p = w->parent; p; p = p->parent) {
         if (isInstance_Object(p, &Class_InputWidget)) {
-            if (p->flags & frameless_WidgetFlag || p->flags2 & noRound_WidgetFlag2) {
+            if (p->flags2 & noRound_WidgetFlag2) {
                 return 0;
             }
             const iRect own   = bounds_Widget(w);

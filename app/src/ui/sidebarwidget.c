@@ -1307,29 +1307,14 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             if (!isMobile) {
                 /* Filter/search field. */
                 /* TODO: Where to put this on mobile? */
-                iLabelWidget *magnifier =
-                    addChildFlags_Widget(d->actions,
-                                         iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
-                                         frameless_WidgetFlag | noBackground_WidgetFlag);
-                iInputWidget *filter = new_InputWidget(0);
+                iInputWidget *filter = makeFilterBar_Widget("filter.bookmark.input",
+                                                            "${hint.filter.bookmark}",
+                                                            SDLK_ESCAPE,
+                                                            "filter.bookmark.clear");
                 setBackgroundColor_Widget(as_Widget(filter), uiBackgroundSidebar_ColorId);
                 setText_InputWidget(filter, &d->bookmarkFilter);
-                setId_Widget(as_Widget(filter), "filter.bookmark.input");
-                setHint_InputWidget(filter, "${hint.filter.bookmark}");
-                setEatEscape_InputWidget(filter, iFalse);
-                setSelectAllOnFocus_InputWidget(filter, iTrue);
-                setNotifyEdits_InputWidget(filter, iTrue);
-                setLineBreaksEnabled_InputWidget(filter, iFalse);
-                addChildFlags_Widget(
-                    d->actions, iClob(filter), expand_WidgetFlag | frameless_WidgetFlag);
-                setId_Widget(
-                    addChildFlags_Widget(
-                        d->actions,
-                        iClob(newIcon_LabelWidget(
-                            close_Icon, SDLK_ESCAPE, 0, "filter.bookmark.clear")),
-                        noBackground_WidgetFlag | frameless_WidgetFlag |
-                            (isEmpty_String(&d->bookmarkFilter) ? disabled_WidgetFlag : 0)),
-                    "filter.bookmark.clear");
+                updateFilterBar_Widget(filter);
+                addChildFlags_Widget(d->actions, iClob(filter), expand_WidgetFlag);
             }
             else {
                 /* On mobile, we need to show buttons for edit actions. */
@@ -2747,9 +2732,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                  equalArg_Command(cmd, "input.edited", "id", "filter.bookmark.input") &&
                  hasParent_Widget(constAs_Widget(pointer_Command(cmd)), w)) {
             set_String(&d->bookmarkFilter, text_InputWidget(pointer_Command(cmd)));
-            setFlags_Widget(findChild_Widget(d->actions, "filter.bookmark.clear"),
-                            disabled_WidgetFlag,
-                            isEmpty_String(&d->bookmarkFilter));
+            updateFilterBar_Widget(pointer_Command(cmd));
             updateItemsWithFlags_SidebarWidget_(d, iTrue);
             return iTrue;
         }
@@ -2757,7 +2740,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                  equalWidget_Command(cmd, w, "filter.bookmark.clear")) {
             iInputWidget *filter = findChild_Widget(w, "filter.bookmark.input");
             setTextCStr_InputWidget(filter, "");
-            setFlags_Widget(pointer_Command(cmd), disabled_WidgetFlag, iTrue);
+            updateFilterBar_Widget(filter);
             clear_String(&d->bookmarkFilter);
             updateItemsWithFlags_SidebarWidget_(d, iTrue);
             setFocus_Widget(as_Widget(filter));

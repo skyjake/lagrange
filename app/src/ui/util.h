@@ -273,6 +273,10 @@ iWidget *       addAction_Widget    (iWidget *parent, int key, int kmods, const 
 iBool           isAction_Widget     (const iWidget *);
 iBool           isButton_Widget     (const iAnyObject *);
 
+iInputWidget *  makeFilterBar_Widget    (const char *id, const char *hint, int clearKey,
+                                         const char *clearCommand);
+void            updateFilterBar_Widget  (iInputWidget *); /* enables/disables the clear button */
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *       makeToggle_Widget       (const char *id);
