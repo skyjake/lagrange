@@ -782,6 +782,11 @@ msgstr "Previous Entry"
 msgid "reader.exit"
 msgstr "Exit Reader"
 
+# strftime() format string. Date of the feed entry shown in the Reader tab banner.
+# %d is the day of month without zero padding.
+msgid "banner.feedentry.date"
+msgstr "%B %d, %Y"
+
 msgid "feeds.entry.markread"
 msgstr "Mark as Read"
 

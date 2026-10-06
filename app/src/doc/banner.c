@@ -35,15 +35,18 @@ struct Impl_BannerItem {
     enum iBannerType type;
     enum iGmStatusCode code;
     iString text; /* Entire message in presentation form. */
+    iString command; /* posted when clicked */
     int height;
 };
 
 static void init_BannerItem(iBannerItem *d) {
     init_String(&d->text);
+    init_String(&d->command);
     d->height = 0;
 }
 
 static void deinit_BannerItem(iBannerItem *d) {
+    deinit_String(&d->command);
     deinit_String(&d->text);
 }
 
@@ -189,6 +192,28 @@ void setSite_Banner(iBanner *d, iRangecc site, iChar icon) {
     updateHeight_Banner_(d);
 }
 
+static void setText_BannerItem_(iBannerItem *d, iChar icon, const char *title,
+                                const char *details, iBool isTitleBold) {
+    clear_String(&d->text);
+    appendCStr_String(&d->text, escape_Color(tmBannerIcon_ColorId));
+    appendChar_String(&d->text, icon);
+    appendCStr_String(&d->text, restore_ColorEscape);
+    appendFormat_String(&d->text, "  %s%s%s%s \u2014 %s%s",
+                        isTitleBold ? "\x1b[1m" : "",
+                        escape_Color(isTitleBold ? tmBannerItemTitle_ColorId
+                                                 : tmBannerItemText_ColorId),
+                        title,
+                        isTitleBold ? "\x1b[0m" : "",
+                        escape_Color(tmBannerItemText_ColorId),
+                        details);
+}
+
+static void insertItem_Banner_(iBanner *d, size_t pos, iBannerItem *item) {
+    updateItemHeight_Banner_(d, item);
+    insert_Array(&d->items, pos, item);
+    updateHeight_Banner_(d);
+}
+
 void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code,
                 const iString *message, const iString *details) {
     /* If there already is a matching item, don't add a second one. */
@@ -203,19 +228,36 @@ void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code,
     item.type = type;
     item.code = code;
     const iGmError *error = get_GmError(code);
-    iChar icon = code && error->icon ? error->icon : 0x26a0; /* /!\ */
-    appendCStr_String(&item.text, escape_Color(tmBannerIcon_ColorId));
-    appendChar_String(&item.text, icon);
-    appendCStr_String(&item.text, restore_ColorEscape);
-    appendFormat_String(&item.text, "  \x1b[1m%s%s\x1b[0m \u2014 %s%s",
-                        escape_Color(tmBannerItemTitle_ColorId),
+    setText_BannerItem_(&item,
+                        code && error->icon ? error->icon : 0x26a0, /* /!\ */
                         !isEmpty_String(message) ? cstr_String(message) : error->title,
-                        escape_Color(tmBannerItemText_ColorId),
-                        !isEmpty_String(details) ? cstr_String(details) : error->info);
+                        !isEmpty_String(details) ? cstr_String(details) : error->info,
+                        iTrue);
     translate_Lang(&item.text);
-    updateItemHeight_Banner_(d, &item);
-    pushBack_Array(&d->items, &item);
-    updateHeight_Banner_(d);
+    insertItem_Banner_(d, size_Array(&d->items), &item);
+}
+
+void addNotice_Banner(iBanner *d, iChar icon, const iString *title, const iString *details,
+                      const char *command) {
+    size_t pos = 0;
+    iConstForEach(Array, i, &d->items) {
+        const iBannerItem *item = i.value;
+        if (item->type != notice_BannerType) {
+            break;
+        }
+        if (!cmp_String(&item->command, command)) {
+            return;
+        }
+        pos++;
+    }
+    /* Notices are placed before other items. */
+    iBannerItem item;
+    init_BannerItem(&item);
+    item.type = notice_BannerType;
+    item.code = none_GmStatusCode;
+    setCStr_String(&item.command, command);
+    setText_BannerItem_(&item, icon, cstr_String(title), cstr_String(details), iFalse);
+    insertItem_Banner_(d, pos, &item);
 }
 
 void remove_Banner(iBanner *d, enum iGmStatusCode code) {
@@ -279,7 +321,7 @@ void draw_Banner(const iBanner *d) {
         fillRect_Paint(&p, itemRect, tmBannerItemBackground_ColorId);
         drawRect_Paint(&p,
                        itemRect,
-                       item->type == warning_BannerType && d->isHover &&
+                       item->type != error_BannerType && d->isHover &&
                                d->hoverIndex == index_ArrayConstIterator(&i)
                            ? tmBannerItemText_ColorId
                            : tmBannerItemFrame_ColorId);
@@ -383,6 +425,11 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                             d->isHover = iFalse;
                             if (item->type == error_BannerType) {
                                 postCommand_Widget(d->doc, "document.info");
+                            }
+                            else if (item->type == notice_BannerType) {
+                                if (!isEmpty_String(&item->command)) {
+                                    postCommandString_Root(w->root, &item->command);
+                                }
                             }
                             else {
                                 switch (item->code) {

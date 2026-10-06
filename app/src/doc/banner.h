@@ -35,6 +35,7 @@ iDeclareType(DocumentWidget)
 enum iBannerType {
     warning_BannerType,
     error_BannerType,
+    notice_BannerType,
 };
 
 void    setOwner_Banner     (iBanner *, iDocumentWidget *owner);
@@ -57,6 +58,8 @@ void    setSite_Banner      (iBanner *, iRangecc site, iChar icon);
 void    add_Banner          (iBanner *, enum iBannerType type, enum iGmStatusCode code,
                              const iString *message,
                              const iString *details);
+void    addNotice_Banner    (iBanner *, iChar icon, const iString *title,
+                             const iString *details, const char *command);
 void    remove_Banner       (iBanner *, enum iGmStatusCode code);
 
 iBool   processEvent_Banner (iBanner *, const SDL_Event *ev);
