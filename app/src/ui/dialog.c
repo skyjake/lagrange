@@ -585,6 +585,7 @@ iWidget *makeEmbeddedValueInput_Widget(iWidget *container, const iString *initia
     iWidget *dlg = new_Widget();
     setBackgroundColor_Widget(dlg, uiBackground_ColorId);
     setFrameColor_Widget(dlg, uiSeparator_ColorId);
+    dlg->flags2 |= roundFreeEdges_WidgetFlag2;
     if (isTerminal_Platform()) {
         const int vPad = gap_UI / aspect_UI;
         const int hPad = 2 * gap_UI / aspect_UI;

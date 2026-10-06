@@ -197,6 +197,7 @@ void init_BindingsWidget(iBindingsWidget *d) {
     /* Filter field. */ {
         iWidget *row = new_Widget();
         setBackgroundColor_Widget(row, uiInputBackground_ColorId);
+        row->flags2 |= alwaysRound_WidgetFlag2;
         addChildFlags_Widget(row,
                              iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
                              frameless_WidgetFlag | noBackground_WidgetFlag);

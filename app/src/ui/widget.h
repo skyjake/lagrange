@@ -147,7 +147,8 @@ enum iWidgetFlag2 {
                                                            bounds for drawing, hit-testing, and
                                                            mouse dispatch */
     noRound_WidgetFlag2                     = iBit(16), /* button drawn with sharp corners */
-    alwaysRound_WidgetFlag2                 = iBit(17), /* not joined with adjacent buttons */
+    alwaysRound_WidgetFlag2                 = iBit(17), /* not joined with adjacent buttons;
+                                                           background has rounded corners */
     roundFreeEdges_WidgetFlag2              = iBit(18), /* background has rounded corners except
                                                            along the edges of the root's area */
 };
@@ -255,6 +256,7 @@ void    draw_Widget                     (const iWidget *);
 void    drawClipped_Widget              (const iWidget *, iRect clipRect); /* empty rect = unclipped */
 void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
+int     roundCorners_Widget             (const iWidget *, int *radius); /* of the background */
 void    drawBorders_Widget              (const iWidget *); /* called by `drawBackground` */
 void    drawChildren_Widget             (const iWidget *);
 void    drawRoot_Widget                 (const iWidget *); /* root only */

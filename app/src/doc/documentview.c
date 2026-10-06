@@ -1298,6 +1298,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         if (run->linkId && (linkFlags & isOpen_GmLinkFlag || isInlineImageCaption || isMobileHover)) {
             const int pad = gap_Text;
             int       bg  = tmBackgroundOpenLink_ColorId;
+            int       corners = all_RoundCorner;
             iRect     wideRect;
             /* Open links get a highlighted background. */
             if (isMobileHover && !isPartOfHover) {
@@ -1317,13 +1318,30 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                    only draw half of the background. */
                 if (run->flags & decoration_GmRunFlag) {
                     wideRect.size.x = right_Rect(visRect) - left_Rect(wideRect);
+                    corners &= ~(topRight_RoundCorner | bottomRight_RoundCorner);
                 }
                 else if (run->flags & startOfLine_GmRunFlag) {
                     wideRect.size.x = right_Rect(wideRect) - left_Rect(visRect);
                     wideRect.pos.x  = left_Rect(visRect);
+                    corners &= ~(topLeft_RoundCorner | bottomLeft_RoundCorner);
+                }
+                /* Only the outer corners of the whole link are rounded. */
+                if (~run->flags & startOfLine_GmRunFlag) {
+                    corners &= ~(topLeft_RoundCorner | topRight_RoundCorner);
+                }
+                if (~run->flags & endOfLine_GmRunFlag) {
+                    corners &= ~(bottomLeft_RoundCorner | bottomRight_RoundCorner);
                 }
             }
-            fillRect_Paint(&d->paint, wideRect, bg);
+            if (bg != tmBackground_ColorId) {
+                /* Clear first so repeated draws don't accumulate on the antialiased edges. */
+                fillRect_Paint(&d->paint, wideRect, tmBackground_ColorId);
+                drawRoundRect_Paint(
+                    &d->paint, wideRect, corners, 1, bg, none_ColorId, none_ColorId);
+            }
+            else {
+                fillRect_Paint(&d->paint, wideRect, bg);
+            }
         }
         else if (run->flags & wide_GmRunFlag) {
             /* Wide runs may move any amount horizontally. */

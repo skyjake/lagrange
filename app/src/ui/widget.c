@@ -2026,6 +2026,19 @@ static int innerCorners_Widget_(const iWidget *d, int *radius) {
     return 0;
 }
 
+int roundCorners_Widget(const iWidget *d, int *radius) {
+    *radius     = freeEdgeRadius_Widget_();
+    int corners = freeCorners_Widget_(d);
+    if (!corners && d->flags2 & alwaysRound_WidgetFlag2 && !isTerminal_Platform()) {
+        *radius = gap_UI;
+        corners = all_RoundCorner;
+    }
+    if (!corners) {
+        corners = innerCorners_Widget_(d, radius);
+    }
+    return corners;
+}
+
 void drawBackground_Widget(const iWidget *d) {
     if (d->flags & noBackground_WidgetFlag) {
         return;
@@ -2041,11 +2054,8 @@ void drawBackground_Widget(const iWidget *d) {
         }
         iPaint p;
         init_Paint(&p);
-        int radius  = freeEdgeRadius_Widget_();
-        int corners = freeCorners_Widget_(d);
-        if (!corners) {
-            corners = innerCorners_Widget_(d, &radius);
-        }
+        int radius;
+        const int corners = roundCorners_Widget(d, &radius);
         if (corners) {
             drawRoundRectRadius_Paint(&p,
                                       rect,

@@ -429,6 +429,11 @@ iDefineObjectConstruction(LookupWidget)
 
 static void updateMetrics_LookupWidget_(iLookupWidget *d) {
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.333f);
+    if (!isTerminal_Platform()) {
+        /* The list is clipped to its bounds, which are kept inside the rounded corners. */
+        setPadding1_Widget(as_Widget(d), gap_UI);
+        as_Widget(d->list)->rect.pos = init1_I2(gap_UI);
+    }
 }
 
 void init_LookupWidget(iLookupWidget *d) {
@@ -437,6 +442,10 @@ void init_LookupWidget(iLookupWidget *d) {
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag, iTrue);
     setFlags_Widget(w, unhittable_WidgetFlag, isMobile_Platform());
+    w->flags2 |= roundFreeEdges_WidgetFlag2;
+    if (!isTerminal_Platform()) {
+        setBackgroundColor_Widget(w, uiBackground_ColorId); /* matches the list */
+    }
     d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),
                                    resizeToParentWidth_WidgetFlag |
                                    resizeToParentHeight_WidgetFlag);
@@ -492,11 +501,18 @@ static void draw_LookupWidget_(const iLookupWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
     /* Draw a frame. */ {
-        iPaint p;
+        iPaint    p;
+        int       radius;
+        const int corners = roundCorners_Widget(w, &radius);
+        const int frame = isFocused_Widget(w) ? uiInputFrameFocused_ColorId : uiSeparator_ColorId;
         init_Paint(&p);
-        drawRect_Paint(&p,
-                       bounds_Widget(w),
-                       isFocused_Widget(w) ? uiInputFrameFocused_ColorId : uiSeparator_ColorId);
+        if (isTerminal_Platform()) {
+            drawRect_Paint(&p, bounds_Widget(w), frame);
+        }
+        else {
+            drawRoundRectRadius_Paint(
+                &p, bounds_Widget(w), radius, corners, 1, none_ColorId, frame, frame);
+        }
     }
 }
 

@@ -3137,14 +3137,14 @@ static void draw_InputWidget_(const iInputWidget *d) {
                              : isFocused ? uiInputFrameFocused_ColorId
                              : isHover   ? uiInputFrameHover_ColorId
                                          : uiInputFrame_ColorId;
-    if (isFramed && ~w->flags2 & noRound_WidgetFlag2) {
+    if (!isTerminal_Platform() && ~w->flags2 & noRound_WidgetFlag2) {
         drawRoundRect_Paint(&p,
                             bounds,
                             all_RoundCorner,
                             isFocused ? gap_UI / 4 : 1,
                             bgColor,
-                            frameColor,
-                            frameColor);
+                            isFramed ? frameColor : none_ColorId,
+                            isFramed ? frameColor : none_ColorId);
     }
     else {
         fillRect_Paint(&p, bounds, bgColor);
