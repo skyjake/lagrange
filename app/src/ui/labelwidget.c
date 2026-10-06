@@ -604,6 +604,15 @@ static int flushCorners_LabelWidget_(const iLabelWidget *d) {
     return 0;
 }
 
+/* The focus frame must stand out from the button background (e.g., system accent). */
+static int focusColor_LabelWidget_(int bg) {
+    if (bg >= 0 && perceptualDelta_Color(get_Color(bg & mask_ColorId),
+                                         get_Color(uiTextAction_ColorId)) < 100) {
+        return uiTextStrong_ColorId;
+    }
+    return uiTextAction_ColorId;
+}
+
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     drawBackground_Widget(w);
@@ -643,6 +652,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         p.alpha = 0x70;
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
     }
+    const int focusColor = focusColor_LabelWidget_(bg);
     if (isRound) {
         const iBool isFocus = isFocused_Widget(w);
         drawRoundRect_Paint(&p,
@@ -650,8 +660,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                             corners,
                             !isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4,
                             bg,
-                            isFocus ? uiTextAction_ColorId : isFramedRound ? frame : none_ColorId,
-                            isFocus ? uiTextAction_ColorId : isFramedRound ? frame2 : none_ColorId);
+                            isFocus ? focusColor : isFramedRound ? frame : none_ColorId,
+                            isFocus ? focusColor : isFramedRound ? frame2 : none_ColorId);
     }
     else if (bg >= 0) {
         fillRect_Paint(&p, rect, bg);
@@ -664,7 +674,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawRectThickness_Paint(&p,
                                 frameRect,
                                 isHover ? gap_UI / 2 : (gap_UI / 4),
-                                uiTextAction_ColorId /*frame*/);
+                                focusColor);
     }
     else if (!isRound && ~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
