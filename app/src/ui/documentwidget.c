@@ -1539,7 +1539,7 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
                            { uiTextCaution_ColorEscape "${dlg.book.overwrite}",
                              0,
                              0,
-                             format_CStr("document.savebook overwrite:1 ptr:%p", d) } },
+                             format_CStr("document.savebook overwrite:1 doc:%p", d) } },
             2);
         delete_Block(data);
         return;
@@ -1559,7 +1559,15 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
                           cstrCollect_String(makeFileUrl_String(savedPath)));
     }
     else {
-        makeSimpleMessage_Widget("${heading.book.saved}", format_Lang("${dlg.book.saved}", cstr_String(title)));
+        const iMenuItem items[2] = {
+            { "${dlg.book.open}", 0, 0,
+              format_CStr("!open doc:%p url:%s", d, cstrCollect_String(makeFileUrl_String(savedPath))) },
+            { "${dlg.message.ok}", 0, 0, "message.ok" },
+        };
+        makeMessage_Widget("${heading.book.saved}",
+                           format_Lang("${dlg.book.saved}", cstr_String(title)),
+                           items,
+                           iElemCount(items));
     }
 }
 
@@ -2416,7 +2424,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.savebook") &&
-             (hasLabel_Command(cmd, "ptr") ? pointer_Command(cmd) == d : document_App() == d)) {
+             (hasLabel_Command(cmd, "doc") ? pointerLabel_Command(cmd, "doc") == d
+                                           : document_App() == d)) {
         if (d->fetch->request) {
             makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.incomplete}",
                                      "${dlg.save.incomplete}");
@@ -3530,13 +3539,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 (iMenuItem[]){
                                     { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                                     { "---" },
-                                    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
-                                    { book_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" } },
-                                4);
+                                    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" } },
+                                3);
 #if defined (LAGRANGE_FILE_DIALOGS)
                             pushBack_Array(
                                 &items, &(iMenuItem){ "${menu.save.as}", 0, 0, "document.save saveas:1" });
 #endif
+                            pushBack_Array(
+                                &items,
+                                &(iMenuItem){ book_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" });
                         }
                     }
                     else {

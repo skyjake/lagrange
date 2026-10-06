@@ -341,14 +341,14 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             const iBool isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (!isCached && isRemote_Gempub(d->sourceGempub) && isCover) {
                 /* Downloaded books go on the shelf. */
-                postCommandf_Root(w->root, "document.savebook ptr:%p", d->owner);
+                postCommandf_Root(w->root, "document.savebook doc:%p", d->owner);
             }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && isCover && !isInsideArchive) {
                 const iString *path =
                     collect_String(localFilePathFromUrl_String(url_DocumentFetch_(d)));
                 if (!isOnShelf_Books(path)) {
                     /* Local books are read from a copy on the shelf. */
-                    postCommandf_Root(w->root, "document.savebook ptr:%p", d->owner);
+                    postCommandf_Root(w->root, "document.savebook doc:%p", d->owner);
                     return;
                 }
                 update_Books(d->sourceGempub, path);

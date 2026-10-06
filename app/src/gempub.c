@@ -452,7 +452,7 @@ iString *coverPageSource_Gempub(const iGempub *d) {
         toString_Sym(SDLK_S, KMOD_PRIMARY, key);
         appendCStr_String(out, "\n${gempub.cover.viewlocal}\n");
     }
-    appendCStr_String(out, "\n## ${gempub.cover.aboutbook}\n");
+    appendCStr_String(out, "\n### ${gempub.cover.aboutbook}\n");
     appendProperty_Gempub_(d, "${gempub.meta.version}:", version_GempubProperty, out);
     appendProperty_Gempub_(d, "${gempub.meta.revdate}:", revisionDate_GempubProperty, out);
     if (hasProperty_Gempub_(d, publishDate_GempubProperty)) {
@@ -542,7 +542,7 @@ iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iS
     format_String(str,
                   "# %s\n\n=> page.gmi %s\n\n## %s\n=> %s\n",
                   cstr_String(title),
-                  cstr_String(title),
+                  cstr_Lang("gempub.page.view"),
                   cstr_Lang("gempub.page.source"),
                   cstr_String(url));
     setDataCStr_Archive(arch, "index.gmi", utf8_String(str));

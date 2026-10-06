@@ -1179,6 +1179,9 @@ msgstr "Saved to Bookshelf"
 msgid "dlg.book.saved"
 msgstr "\"%s\" is now on the bookshelf."
 
+msgid "dlg.book.open"
+msgstr "Open Book"
+
 msgid "heading.book.exists"
 msgstr "Book Already Saved"
 
@@ -3035,6 +3038,9 @@ msgstr "Open from Bookshelf"
 # Heading on the contents page of a book made from a single page. Followed by a link to the page's original URL.
 msgid "gempub.page.source"
 msgstr "Source"
+
+msgid "gempub.page.view"
+msgstr "Read archived page"
 
 msgid "gempub.cover.aboutbook"
 msgstr "About this book"
