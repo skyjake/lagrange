@@ -174,7 +174,7 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
     if (!isRemote_Gempub(d->sourceGempub) && wantsPaged_DocumentView(view_DocumentFetch_(d))) {
         return; /* pages turn to the adjacent chapters */
     }
-    if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub))) {
+    if (isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d))) {
         if (!isRemote_Gempub(d->sourceGempub)) {
             iArray *items = collectNew_Array(sizeof(iMenuItem));
             pushBack_Array(
@@ -219,7 +219,7 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
                 2);
         }
     }
-    else if (equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
+    else if (isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d))) {
         makeFooterButtons_DocumentWidget(
             d->owner,
             (iMenuItem[]){ { format_CStr(book_Icon " %s",
@@ -258,7 +258,7 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
                         format_CStr("!open url:%s",
                                     cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
             }
-            else if (!equalCase_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub))) {
+            else if (!isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d))) {
                 pushBack_Array(
                     items,
                     &(iMenuItem){
@@ -314,7 +314,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
         iGmBookPosition book = { .title = collectNew_String(), .chapterTitle = collectNew_String() };
         if (d->sourceGempub) {
             book.title   = property_Gempub(d->sourceGempub, title_GempubProperty);
-            book.isCover = equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub));
+            book.isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (navIndex != iInvalidPos) {
                 book.chapter      = (int) navIndex + 1;
@@ -332,24 +332,30 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
         }
         if (d->sourceGempub) {
             makeGempubFooterButtons_DocumentFetch_(d);
-            if (equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub)) &&
+            if (isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d)) &&
                 preloadCoverImage_Gempub(d->sourceGempub, doc_DocumentFetch_(d))) {
                 redoLayout_GmDocument(doc_DocumentFetch_(d));
                 updateVisible_DocumentView(view_DocumentFetch_(d));
                 invalidate_DocumentWidget(d->owner);
             }
-            const iBool isCover = equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub));
+            const iBool isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (!isCached && isRemote_Gempub(d->sourceGempub) && isCover) {
                 /* Downloaded books go on the shelf. */
                 postCommandf_Root(w->root, "document.savebook ptr:%p", d->owner);
             }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && isCover && !isInsideArchive) {
-                update_Books(d->sourceGempub,
-                             collect_String(localFilePathFromUrl_String(url_DocumentFetch_(d))));
+                const iString *path =
+                    collect_String(localFilePathFromUrl_String(url_DocumentFetch_(d)));
+                if (!isOnShelf_Books(path)) {
+                    /* Local books are read from a copy on the shelf. */
+                    postCommandf_Root(w->root, "document.savebook ptr:%p", d->owner);
+                    return;
+                }
+                update_Books(d->sourceGempub, path);
                 postCommand_App("books.changed");
             }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentWidget(d->owner) &&
-                (isCover || equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub)))) {
+                (isCover || isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d)))) {
                 /* Opening a book: the cover is in the sidebar and the contents in the document. */
                 const iBool isRight =
                     prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType;

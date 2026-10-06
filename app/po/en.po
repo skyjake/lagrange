@@ -1158,7 +1158,7 @@ msgid "heading.book.exists"
 msgstr "Book Already Saved"
 
 msgid "dlg.book.exists"
-msgstr "\"%s\" is already on the bookshelf. Do you want to overwrite the saved copy with the downloaded one?"
+msgstr "A different copy of \"%s\" is already on the bookshelf. Do you want to overwrite it with this one?"
 
 msgid "dlg.book.overwrite"
 msgstr "Overwrite"

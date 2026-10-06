@@ -314,6 +314,20 @@ const iString *indexPageUrl_Gempub(const iGempub *d) {
     return absoluteUrl_String(dir, &d->props[index_GempubProperty]);
 }
 
+static iBool isSameUrl_(const iString *a, const iString *b) {
+    /* File URLs may or may not be percent-encoded. */
+    return equalCase_String(collect_String(urlDecodeExclude_String(a, "/:")),
+                            collect_String(urlDecodeExclude_String(b, "/:")));
+}
+
+iBool isCoverPageUrl_Gempub(const iGempub *d, const iString *url) {
+    return isSameUrl_(url, &d->baseUrl);
+}
+
+iBool isIndexPageUrl_Gempub(const iGempub *d, const iString *url) {
+    return isSameUrl_(url, indexPageUrl_Gempub(d));
+}
+
 const iString *navStartLinkUrl_Gempub(const iGempub *d) {
     parseNavigationLinks_Gempub_(d);
     if (isEmpty_Array(d->navLinks)) {
@@ -329,10 +343,9 @@ size_t navSize_Gempub(const iGempub *d) {
 
 size_t navIndex_Gempub(const iGempub *d, const iString *url) {
     parseNavigationLinks_Gempub_(d);
-    const iString *canonUrl = withSpacesEncoded_String(url);
     iConstForEach(Array, i, d->navLinks) {
         const iGempubNavLink *nav = i.value;
-        if (equalCase_String(&nav->url, canonUrl)) {
+        if (isSameUrl_(&nav->url, url)) {
             return index_ArrayConstIterator(&i);
         }
     }
@@ -469,14 +482,15 @@ iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
             continue; /* got this already */
         }
         if (linkFlags_GmDocument(doc, linkId) & imageFileExtension_GmLinkFlag) {
-            iString *imgEntryPath = collect_String(copy_String(linkUrl));
-            remove_Block(&imgEntryPath->chars, 0, size_String(&d->baseUrl) + 1 /* slash, too */);
-            setData_Media(media_GmDocument(doc),
-                          linkId,
-                          collectNewCStr_String(mediaType_Path(linkUrl)),
-                          data_Archive(d->arch, imgEntryPath),
-                          0);
-            haveImage = iTrue;
+            const iBlock *data = archiveData_Gempub_(d, linkUrl);
+            if (data) {
+                setData_Media(media_GmDocument(doc),
+                              linkId,
+                              collectNewCStr_String(mediaType_Path(linkUrl)),
+                              data,
+                              0);
+                haveImage = iTrue;
+            }
         }
     }
     return haveImage;

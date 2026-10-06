@@ -66,6 +66,8 @@ iBool       preloadCoverImage_Gempub(const iGempub *, iGmDocument *doc);
 const iString * property_Gempub         (const iGempub *, enum iGempubProperty);
 const iString * coverPageUrl_Gempub     (const iGempub *);
 const iString * indexPageUrl_Gempub     (const iGempub *);
+iBool           isCoverPageUrl_Gempub   (const iGempub *, const iString *url);
+iBool           isIndexPageUrl_Gempub   (const iGempub *, const iString *url);
 const iString * navStartLinkUrl_Gempub  (const iGempub *); /* for convenience */
 size_t          navSize_Gempub          (const iGempub *);
 size_t          navIndex_Gempub         (const iGempub *, const iString *url);

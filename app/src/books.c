@@ -33,6 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/toml.h>
 #include <math.h>
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+#   include <limits.h>
+#   include <stdlib.h>
+#endif
 
 static void init_Book(iBook *d) {
     init_String(&d->id);
@@ -337,12 +341,25 @@ const iBook *find_Books(const iString *id) {
     return book;
 }
 
+static iBool isInDir_(const iString *path, const iString *dir) {
+    return size_String(path) > size_String(dir) + 1 && startsWith_String(path, cstr_String(dir)) &&
+           cstr_String(path)[size_String(dir)] == iPathSeparator[0] &&
+           indexOfCStrFrom_String(path, iPathSeparator, size_String(dir) + 1) == iInvalidPos;
+}
+
 iBool isOnShelf_Books(const iString *path) {
     const iString *clean = collect_String(cleaned_Path(path));
-    const iString *dir   = dir_Books();
-    return size_String(clean) > size_String(dir) + 1 && startsWith_String(clean, cstr_String(dir)) &&
-           cstr_String(clean)[size_String(dir)] == iPathSeparator[0] &&
-           indexOfCStrFrom_String(clean, iPathSeparator, size_String(dir) + 1) == iInvalidPos;
+    if (isInDir_(clean, dir_Books())) {
+        return iTrue;
+    }
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+    /* Symbolic links may lead to the same directory. */
+    char realDir[PATH_MAX], realFile[PATH_MAX];
+    if (realpath(cstr_String(dir_Books()), realDir) && realpath(cstr_String(clean), realFile)) {
+        return isInDir_(collectNewCStr_String(realFile), collectNewCStr_String(realDir));
+    }
+#endif
+    return iFalse;
 }
 
 static iBook *bookForGempub_Books_(iBooks *d, const iGempub *gempub) {

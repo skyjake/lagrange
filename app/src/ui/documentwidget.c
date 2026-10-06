@@ -840,10 +840,10 @@ static const iString *adjacentChapterUrl_DocumentWidget_(const iDocumentWidget *
         return NULL;
     }
     size_t pos;
-    if (equal_String(d->mod.url, coverPageUrl_Gempub(gempub))) {
+    if (isCoverPageUrl_Gempub(gempub, d->mod.url)) {
         pos = 0;
     }
-    else if (equal_String(d->mod.url, indexPageUrl_Gempub(gempub))) {
+    else if (isIndexPageUrl_Gempub(gempub, d->mod.url)) {
         pos = 1;
     }
     else {
@@ -929,7 +929,7 @@ static void applyResume_DocumentWidget_(iDocumentWidget *d) {
         return;
     }
     const iGempub *gempub = d->fetch->sourceGempub;
-    if (gempub && equal_String(d->mod.url, coverPageUrl_Gempub(gempub))) {
+    if (gempub && isCoverPageUrl_Gempub(gempub, d->mod.url)) {
         return; /* the chapter is opened next */
     }
     size_t numChapters;
@@ -1440,6 +1440,30 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
     return savePath;
 }
 
+static iBool isEqualToFileContents_(const iString *path, const iBlock *data) {
+    if (fileSize_FileInfo(path) != size_Block(data)) {
+        return iFalse;
+    }
+    iFile *f = new_File(path);
+    if (!open_File(f, readOnly_FileMode)) {
+        iRelease(f);
+        return iFalse;
+    }
+    const char *expected = constData_Block(data);
+    const size_t total   = size_Block(data);
+    size_t       pos     = 0;
+    char         buf[0x10000];
+    while (pos < total) {
+        const size_t num = readData_File(f, iMin(sizeof(buf), total - pos), buf);
+        if (num == 0 || memcmp(buf, expected + pos, num)) {
+            break;
+        }
+        pos += num;
+    }
+    iRelease(f);
+    return pos == total;
+}
+
 static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite) {
     /* Books are copied to the shelf and pages become single-chapter books. */
     iWidget       *w      = as_Widget(d);
@@ -1492,6 +1516,14 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
     }
     const iBook   *existing     = find_Books(id);
     const iString *existingPath = existing ? path_Book(existing) : NULL;
+    if (existingPath && !overwrite && isEqualToFileContents_(existingPath, data)) {
+        delete_Block(data);
+        postCommandf_Root(w->root,
+                          "!open doc:%p url:%s",
+                          d,
+                          cstrCollect_String(makeFileUrl_String(existingPath)));
+        return;
+    }
     if (existingPath && !overwrite) {
         makeQuestion_Widget(
             uiHeading_ColorEscape "${heading.book.exists}",

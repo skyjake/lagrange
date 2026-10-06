@@ -186,11 +186,12 @@ void clear_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
 void scrollToLink_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iString *url,
                                        iBool isSmooth) {
     const iGmDocument *doc      = d->view->doc;
-    const iString     *canonUrl = canonicalUrl_String(url);
+    const iString     *canonUrl = collect_String(urlDecodeExclude_String(canonicalUrl_String(url), "/:"));
     const iGmRunRange  runs     = runRange_GmDocument(doc);
     for (const iGmRun *run = runs.start; run != runs.end; run++) {
         if (run->linkId && ~run->flags & decoration_GmRunFlag &&
-            equal_String(linkUrl_GmDocument(doc, run->linkId), canonUrl)) {
+            equal_String(collect_String(urlDecodeExclude_String(linkUrl_GmDocument(doc, run->linkId), "/:")),
+                         canonUrl)) {
             if (isSmooth) {
                 smoothScrollTo_DocumentView(d->view, mid_Rect(run->visBounds).y, iTrue, 400);
             }
