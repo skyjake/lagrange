@@ -831,13 +831,26 @@ const iString *debugInfo_App(void) {
             0
 #endif
         ]);
-        appendFormat_String(msg, "%s TrueType fonts (vector, monochrome)\n", enabled[
-#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-            1
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+        appendFormat_String(msg, "%s Core Text fonts (vector, color glyphs, system fonts)\n",
+                            enabled[1]);
+#elif defined (LAGRANGE_ENABLE_FREETYPE)
+        appendFormat_String(msg, "%s FreeType fonts (vector, color glyphs%s)\n", enabled[1],
+# if defined (LAGRANGE_ENABLE_FONTCONFIG) || defined (LAGRANGE_ENABLE_DIRECTWRITE)
+                            ", system fonts"
+# else
+                            ""
+# endif
+                            );
 #else
+        appendFormat_String(msg, "%s TrueType fonts (vector, monochrome)\n", enabled[
+# if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+            1
+# else
             0
-#endif
+# endif
             ]);
+#endif
         appendFormat_String(msg, "%s BiDi text\n", enabled[
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
             1
