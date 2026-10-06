@@ -841,6 +841,32 @@ static void updateActionsPadding_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+/* Feeds actions that don't fit are hidden: first the label, then the button (also in the menu). */
+static void checkFeedsActionsLayout_SidebarWidget_(iSidebarWidget *d) {
+    iWidget *readAll = findChild_Widget(d->actions, "feeds.markallread");
+    iWidget *show    = findChild_Widget(d->actions, "feeds.showlabel");
+    iWidget *mode    = findChild_Widget(d->actions, "feeds.modebutton");
+    if (!readAll || !show || !mode) {
+        return;
+    }
+    const int avail = width_Widget(d->actions) - d->actions->padding[0] - d->actions->padding[2];
+    if (avail <= 0) {
+        return;
+    }
+    const int readWidth = defaultSize_LabelWidget((const iLabelWidget *) readAll).x;
+    const int showWidth = defaultSize_LabelWidget((const iLabelWidget *) show).x;
+    const int modeWidth = width_Widget(mode);
+    const iBool fitsReadAll = readWidth + modeWidth <= avail;
+    const iBool fitsShow    = fitsReadAll && readWidth + showWidth + modeWidth <= avail;
+    if (!(readAll->flags & hidden_WidgetFlag) != fitsReadAll ||
+        !(show->flags & hidden_WidgetFlag) != fitsShow) {
+        setFlags_Widget(readAll, hidden_WidgetFlag, !fitsReadAll);
+        setFlags_Widget(show, hidden_WidgetFlag, !fitsShow);
+        arrange_Widget(d->actions);
+        refresh_Widget(d->actions);
+    }
+}
+
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
@@ -918,15 +944,19 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             /* Actions. */
             if (!isMobile) {
                 if (!keepActions && !isEmpty_PtrArray(feedEntries)) {
-                    addActionButton_SidebarWidget_(d,
-                                                   check_Icon
-                                                   " ${sidebar.action.feeds.markallread}",
-                                                   "feeds.markallread",
-                                                   expand_WidgetFlag | tight_WidgetFlag);
-                    updateSize_LabelWidget(
+                    setId_Widget(as_Widget(addActionButton_SidebarWidget_(
+                                     d,
+                                     check_Icon " ${sidebar.action.feeds.markallread}",
+                                     "feeds.markallread",
+                                     expand_WidgetFlag | tight_WidgetFlag | collapse_WidgetFlag)),
+                                 "feeds.markallread");
+                    iLabelWidget *showLabel =
                         addChildFlags_Widget(d->actions,
                                              iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
-                                             frameless_WidgetFlag | tight_WidgetFlag));
+                                             frameless_WidgetFlag | tight_WidgetFlag |
+                                                 collapse_WidgetFlag);
+                    setId_Widget(as_Widget(showLabel), "feeds.showlabel");
+                    updateSize_LabelWidget(showLabel);
                     const iMenuItem items[] = {
                         { page_Icon " ${sidebar.action.feeds.showall}",
                           SDLK_U,
@@ -1584,6 +1614,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     }
     arrange_Widget(d->actions);
     arrange_Widget(as_Widget(d));
+    checkFeedsActionsLayout_SidebarWidget_(d);
     updateMouseHover_ListWidget(list_SidebarWidget_(d));
 }
 
@@ -2184,6 +2215,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     w->rect.size.x = width;
     arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
+    checkFeedsActionsLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
     updateNavBarSize_Root(w->root);
 }
@@ -2627,6 +2659,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
         }
         updateActionsPadding_SidebarWidget_(d);
+        checkFeedsActionsLayout_SidebarWidget_(d);
         return iFalse;
     }
     else if (isMetricsChange_UserEvent(ev)) {
@@ -2634,6 +2667,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         updateMetrics_SidebarWidget_(d);
         arrange_Widget(w);
         checkModeButtonLayout_SidebarWidget_(d);
+        checkFeedsActionsLayout_SidebarWidget_(d);
     }
     else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
