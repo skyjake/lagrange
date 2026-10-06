@@ -1873,7 +1873,14 @@ void drawLayerEffects_Widget(const iWidget *d) {
         if (shadowAlpha > 0) {
             iPaint p;
             init_Paint(&p);
-            drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, shadowAlpha);
+            /* Centered on the rounded corners; the inset part is covered by the widget. */
+            int radius;
+            const int inset = roundCorners_Widget(d, &radius) ? radius : 0;
+            drawSoftShadow_Paint(&p,
+                                 shrunk_Rect(bounds_Widget(d), init1_I2(inset)),
+                                 12 * gap_UI + inset,
+                                 black_ColorId,
+                                 shadowAlpha);
         }
     }
     if (isFaded) {

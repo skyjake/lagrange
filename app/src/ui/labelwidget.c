@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "labelwidget.h"
 #include "inputwidget.h"
+#include "menu.h"
 #include "render/text.h"
 #include "render/paint.h"
 #include "app.h"
@@ -567,6 +568,16 @@ static int roundCorners_LabelWidget_(const iLabelWidget *d) {
     return all_RoundCorner & ~sharp;
 }
 
+static iBool isPopupMenuItem_LabelWidget_(const iWidget *w) {
+    if (isTerminal_Platform() || !w->parent) {
+        return iFalse;
+    }
+    /* Items may also be in a horizontal group inside the menu. */
+    const iWidget *p = w->parent;
+    return p->commandHandler == handleMenuCommand_Widget ||
+           (p->parent && p->parent->commandHandler == handleMenuCommand_Widget);
+}
+
 /* Frameless buttons embedded in a rounded input field match its corners. */
 static int flushCorners_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
@@ -622,9 +633,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
     const iBool isFramedRound = isRoundButton_LabelWidget_(w);
-    const int   corners       = isFramedRound ? roundCorners_LabelWidget_(d)
-                                : isButton    ? flushCorners_LabelWidget_(d)
-                                              : 0;
+    const int   corners       = isFramedRound                     ? roundCorners_LabelWidget_(d)
+                                : !isButton                       ? 0
+                                : isPopupMenuItem_LabelWidget_(w) ? all_RoundCorner
+                                                                  : flushCorners_LabelWidget_(d);
     const iBool isRound       = isFramedRound || corners != 0;
     const iBool isDrag        = (flags & dragged_WidgetFlag) && bg >= 0;
     if (isDrag) {
