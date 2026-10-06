@@ -773,6 +773,17 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(i, color);
         }
     }
+    if (d->flags.isBookCover) {
+        int tint = tmHeading1_ColorId;
+        for (int i = tmHeading1_ColorId; i <= tmHeading3_ColorId; i++) {
+            const iHSLColor hsl = get_HSLColor(i);
+            if (hsl.lum > 0.1f && hsl.sat > 0.1f) {
+                tint = i;
+                break;
+            }
+        }
+        set_Color(tmBackground_ColorId, getMixed_Color(tmBackground_ColorId, tint, 0.2f));
+    }
     /* Derived colors. */
     setDerivedThemeColors_(theme);
     /* Special exceptions. */

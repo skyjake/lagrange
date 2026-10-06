@@ -327,6 +327,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             redoLayout_GmDocument(doc_DocumentFetch_(d));
             documentRunsInvalidated_DocumentWidget(d->owner);
             updateVisible_DocumentView(view_DocumentFetch_(d));
+            updateTheme_DocumentWidget(d->owner);
             invalidate_DocumentWidget(d->owner);
             updateWindowTitle_DocumentWidget(d->owner);
         }

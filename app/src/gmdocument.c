@@ -456,6 +456,7 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isPaletteValid = iFalse;
     d->flags.isConvertedMarkdown = iFalse;
     d->flags.isCoverPage = iFalse;
+    d->flags.isBookCover = iFalse;
     d->flags.isUiTheme   = iFalse;
     d->flags.isDocPrefsPinned = iFalse;
 }
@@ -637,7 +638,10 @@ iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
     set_String(&d->chapterTitle, pos->chapterTitle);
     d->chapter            = pos->chapter;
     d->numChapters        = pos->numChapters;
-    d->flags.isBookCover  = pos->isCover;
+    if (d->flags.isBookCover != pos->isCover) {
+        d->flags.isBookCover = pos->isCover;
+        invalidatePalette_GmDocument(d);
+    }
     return iTrue;
 }
 
