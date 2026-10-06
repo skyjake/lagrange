@@ -988,8 +988,11 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             const float xf       = d->xCursor + xOffset;
             float       subpixel = xf - (int) xf;
             if (subpixel < 0.0f) subpixel = 1.0f + subpixel;
-            const int hoff = enableHalfPixelGlyphs_Text
-                                 ? (int) (subpixel / offsetStep_Glyph_()) : 0;
+            const iBool hasVariants = hasOffsetVariants_Glyph_(glyph);
+            const int   hoff        = enableHalfPixelGlyphs_Text && hasVariants
+                                          ? (int) (subpixel / offsetStep_Glyph_()) : 0;
+            /* Glyphs that can't be shifted are placed on the nearest pixel. */
+            const int   xRound      = !hasVariants && subpixel >= 0.5f ? 1 : 0;
             if (ch == 0x3001 || ch == 0x3002) { /* Ideographic Comma and Full Stop */
                 if (yOffset == 0.0f) {
                     yOffset = glyph->d[hoff].y + glyph->rect[hoff].size.y +
@@ -1000,7 +1003,7 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             SDL_Rect dst;
             if (isColor) {
                 dst = (SDL_Rect){
-                    d->orig.x + (int)(d->xCursor + xOffset) + glyph->d[0].x,
+                    d->orig.x + (int)(d->xCursor + xOffset) + xRound + glyph->d[0].x,
                     d->orig.y + (int)(d->yCursor - yOffset) +
                         ((iRasterFont *) glyph->font)->font.baseline + glyph->d[0].y,
                     glyph->colorRect.size.x, glyph->colorRect.size.y
@@ -1008,7 +1011,7 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             }
             else {
                 dst = (SDL_Rect){
-                    d->orig.x + (int)(d->xCursor + xOffset) + glyph->d[hoff].x,
+                    d->orig.x + (int)(d->xCursor + xOffset) + xRound + glyph->d[hoff].x,
                     d->orig.y + (int)(d->yCursor - yOffset) + ((iRasterFont *) glyph->font)->font.baseline +
                         glyph->d[hoff].y,
                     glyph->rect[hoff].size.x, glyph->rect[hoff].size.y
@@ -1064,11 +1067,10 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                 if (layerIndex == foreground_RunLayerType && !isSpace) {
                     /* Color glyphs reserve their atlas rect eagerly; only the pixel
                        upload is deferred to here (see glyphByIndex_Font_). */
-                    const int rasterHoff = isColor ? 0 : hoff;
-                    if (!isRasterized_Glyph_(glyph, rasterHoff)) {
+                    if (!isRasterized_Glyph_(glyph, hoff)) {
                         cacheSingleGlyph_Font_(runFont, glyphId);
                         glyph = glyphByIndex_Font_(runFont, glyphId);
-                        iAssert(isRasterized_Glyph_(glyph, rasterHoff));
+                        iAssert(isRasterized_Glyph_(glyph, hoff));
                     }
                     SDL_Rect src;
                     if (isColor) {

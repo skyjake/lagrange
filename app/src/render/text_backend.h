@@ -68,6 +68,7 @@ enum iGlyphFlag {
                                           subpixel variants are skipped because Emoji render at
                                           large sizes where sub-pixel shift is imperceptible,
                                           and CBDT/CBLC bitmaps are on a fixed pixel grid */
+    fixedOffset_GlyphFlag = iBit(6),   /* bitmap glyph that can't be shifted; only rect[0] used */
 };
 
 iDeclareType(Glyph)
@@ -97,6 +98,10 @@ iLocalDef iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
 
 iLocalDef void setRasterized_Glyph_(iGlyph *d, int hoff) {
     d->flags |= rasterized0_GlyphFlag << hoff;
+}
+
+iLocalDef iBool hasOffsetVariants_Glyph_(const iGlyph *d) {
+    return (d->flags & (isColor_GlyphFlag | fixedOffset_GlyphFlag)) == 0;
 }
 
 iLocalDef iBool isFullyRasterized_Glyph_(const iGlyph *d) {

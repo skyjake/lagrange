@@ -237,15 +237,43 @@ int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
     return (int) (fd->ftFace->glyph->advance.x >> 6);
 }
 
-void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
-                           float xScale, float yScale, float xShift,
-                           int *x0, int *y0, int *x1, int *y1) {
+/* Vertical-only hinting keeps glyph shapes consistent with the unhinted HarfBuzz advances,
+   which is required for fractional positioning. */
+static const FT_Int32 outlineLoadFlags_ = FT_LOAD_TARGET_LIGHT;
+
+static FT_UInt colorPpem_(const iFontFile *d, float xScale) {
+    return iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
+}
+
+/* Fractional size matches the unrounded scale of HarfBuzz advances. */
+static void setCharSize_(FT_Face face, const iFontFile *d, float xScale, float yScale) {
+    const float upm64 = (float) d->unitsPerEm * 64.0f;
+    FT_Set_Char_Size(face,
+                     iMax(64, (FT_F26Dot6) roundf(xScale * upm64)),
+                     iMax(64, (FT_F26Dot6) roundf(yScale * upm64)),
+                     72, 72);
+}
+
+/* Bitmap glyphs are not affected by the shift. */
+static FT_Error loadShiftedGlyph_(FT_Face face, uint32_t glyphIndex, FT_Int32 loadFlags,
+                                  float xShift) {
+    FT_Vector delta = { (FT_Pos) roundf(xShift * 64.0f), 0 };
+    FT_Set_Transform(face, NULL, &delta);
+    const FT_Error err = FT_Load_Glyph(face, glyphIndex, loadFlags);
+    FT_Set_Transform(face, NULL, NULL);
+    return err;
+}
+
+static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
+                                     float xScale, float yScale, float xShift,
+                                     int *x0, int *y0, int *x1, int *y1, iBool *isBitmap_out) {
     const iFtFontData *fd = ftData_FontFile(d);
     *x0 = *y0 = *x1 = *y1 = 0;
+    *isBitmap_out = iFalse;
     if (!fd || !fd->ftFace) return;
     FT_Face face = fd->ftFace;
-    iUnused(yScale, xShift);
     if (fd->isFixedSize) {
+        *isBitmap_out = iTrue;
         const float scale = prepareFixedSize_(face, d, fd, xScale);
         if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) != 0) return;
         FT_GlyphSlot slot = face->glyph;
@@ -257,73 +285,35 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
         *y1 = *y0 + iMax(1, (int) roundf((float) slot->bitmap.rows * scale));
         return;
     }
-    const FT_UInt ppem = iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
-    FT_Set_Pixel_Sizes(face, ppem, ppem);
-    /* Hinted load: metrics are grid-snapped, matching the rasterizer and avoiding 1px y-jitter. */
-    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_BITMAP) != 0) return;
-    const FT_Glyph_Metrics *m = &face->glyph->metrics;
-    if (m->width == 0 || m->height == 0) return;
-    *x0 =  (int)(m->horiBearingX >> 6);
-    *y0 = -(int)(m->horiBearingY >> 6);
-    *x1 =  (int)((m->horiBearingX + m->width  + 63) >> 6);
-    *y1 =  (int)((m->height - m->horiBearingY + 63) >> 6);
+    if (fd->hasColorGlyphs && isColorGlyph_(d, glyphIndex)) {
+        const FT_UInt ppem = colorPpem_(d, xScale);
+        FT_Set_Pixel_Sizes(face, ppem, ppem);
+        if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_BITMAP) != 0) return;
+        const FT_Glyph_Metrics *m = &face->glyph->metrics;
+        if (m->width == 0 || m->height == 0) return;
+        *x0 =  (int)(m->horiBearingX >> 6);
+        *y0 = -(int)(m->horiBearingY >> 6);
+        *x1 =  (int)((m->horiBearingX + m->width  + 63) >> 6);
+        *y1 =  (int)((m->height - m->horiBearingY + 63) >> 6);
+        return;
+    }
+    setCharSize_(face, d, xScale, yScale);
+    /* Without FT_LOAD_RENDER, the bitmap metrics are preset to match a later render. */
+    if (loadShiftedGlyph_(face, glyphIndex, outlineLoadFlags_, xShift) != 0) return;
+    FT_GlyphSlot slot = face->glyph;
+    *isBitmap_out = (slot->format == FT_GLYPH_FORMAT_BITMAP);
+    if (slot->bitmap.width == 0 || slot->bitmap.rows == 0) return;
+    *x0 = slot->bitmap_left;
+    *y0 = -slot->bitmap_top;
+    *x1 = *x0 + (int) slot->bitmap.width;
+    *y1 = *y0 + (int) slot->bitmap.rows;
 }
 
-/* Returns a heap-allocated 8-bit grayscale bitmap. The caller must free() it. */
-uint8_t *rasterizeGlyph_FontFile(const iFontFile *d, float xScale, float yScale, float xShift,
-                                 uint32_t glyphIndex, int *w, int *h) {
-    const iFtFontData *fd = ftData_FontFile(d);
-    *w = *h = 0;
-    if (!fd || !fd->ftFace) return NULL;
-    FT_Face face = fd->ftFace;
-    const FT_UInt ppem = iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
-    FT_Set_Pixel_Sizes(face, ppem, ppem);
-    FT_Int32 loadFlags = FT_LOAD_RENDER;
-    if (fd->hasColorGlyphs) {
-        loadFlags |= FT_LOAD_COLOR;
-    }
-    if (FT_Load_Glyph(face, glyphIndex, loadFlags) != 0) {
-        return NULL;
-    }
-    FT_GlyphSlot slot = face->glyph;
-    if (slot->bitmap.width == 0 || slot->bitmap.rows == 0) {
-        return NULL;
-    }
-    *w = (int) slot->bitmap.width;
-    *h = (int) slot->bitmap.rows;
-    iUnused(yScale, xShift);
-    if (slot->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA) {
-        /* Color emoji: copy as-is (BGRA). The caller (cacheGlyphs_Font_) handles this. */
-        const size_t sz = (size_t) (*w) * (size_t) (*h) * 4;
-        uint8_t *buf = malloc(sz);
-        memcpy(buf, slot->bitmap.buffer, sz);
-        return buf;
-    }
-    /* Grayscale: convert from FT's 8-bit to an 8-bit output. */
-    if (slot->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
-        const size_t sz = (size_t) (*w) * (size_t) (*h);
-        uint8_t *buf = malloc(sz);
-        for (int row = 0; row < *h; row++) {
-            memcpy(buf + row * *w,
-                   slot->bitmap.buffer + row * slot->bitmap.pitch,
-                   (size_t) *w);
-        }
-        return buf;
-    }
-    /* Mono bitmap: convert to 8-bit grayscale. */
-    if (slot->bitmap.pixel_mode == FT_PIXEL_MODE_MONO) {
-        const size_t sz = (size_t) (*w) * (size_t) (*h);
-        uint8_t *buf = calloc(sz, 1);
-        for (int row = 0; row < *h; row++) {
-            const uint8_t *src = slot->bitmap.buffer + row * slot->bitmap.pitch;
-            uint8_t       *dst = buf + row * *w;
-            for (int col = 0; col < *w; col++) {
-                dst[col] = (src[col / 8] & (0x80 >> (col % 8))) ? 255 : 0;
-            }
-        }
-        return buf;
-    }
-    return NULL;
+void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
+                           float xScale, float yScale, float xShift,
+                           int *x0, int *y0, int *x1, int *y1) {
+    iBool isBitmap;
+    measureGlyphEx_FontFile_(d, glyphIndex, xScale, yScale, xShift, x0, y0, x1, y1, &isBitmap);
 }
 
 /* COLR v0: composite all layers into a BGRA canvas.
@@ -428,7 +418,6 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
     *isColor_out = iFalse;
     if (!fd || !fd->ftFace) return NULL;
     FT_Face face = fd->ftFace;
-    iUnused(yScale, xShift);
     if (fd->isFixedSize) {
         const float scale = prepareFixedSize_(face, d, fd, xScale);
         if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) != 0) return NULL;
@@ -448,10 +437,10 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
         return stbir_resize_uint8_linear(slot->bitmap.buffer, sw, sh, slot->bitmap.pitch,
                                          NULL, dw, dh, 0, STBIR_BGRA_PM);
     }
-    const FT_UInt ppem = iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
-    FT_Set_Pixel_Sizes(face, ppem, ppem);
     /* First try FT_LOAD_COLOR which on FreeType >= 2.12 renders both CBDT and COLR as BGRA. */
     if (fd->hasColorGlyphs) {
+        const FT_UInt ppem = colorPpem_(d, xScale);
+        FT_Set_Pixel_Sizes(face, ppem, ppem);
         if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) == 0) {
             FT_GlyphSlot slot = face->glyph;
             if (slot->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA &&
@@ -473,8 +462,10 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
             return colr;
         }
     }
-    /* Grayscale path: render outline normally. */
-    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) != 0) return NULL;
+    setCharSize_(face, d, xScale, yScale);
+    if (loadShiftedGlyph_(face, glyphIndex, outlineLoadFlags_ | FT_LOAD_RENDER, xShift) != 0) {
+        return NULL;
+    }
     FT_GlyphSlot slot = face->glyph;
     if (slot->bitmap.width == 0 || slot->bitmap.rows == 0) return NULL;
     *w = (int) slot->bitmap.width;
@@ -502,6 +493,13 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
         return buf;
     }
     return NULL;
+}
+
+/* Returns a heap-allocated 8-bit grayscale (or BGRA color) bitmap. The caller must free() it. */
+uint8_t *rasterizeGlyph_FontFile(const iFontFile *d, float xScale, float yScale, float xShift,
+                                 uint32_t glyphIndex, int *w, int *h) {
+    iBool isColor;
+    return rasterizeGlyphEx_FontFile_(d, xScale, yScale, xShift, glyphIndex, w, h, &isColor);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -554,9 +552,19 @@ static enum iFontId fontId_Text_(const iFont *font) {
 
 void allocate_Font_(iRasterFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
-    int    x0, y0, x1, y1;
-    measureGlyph_FontFile(d->font.file, index_Glyph_(glyph), d->xScale, d->yScale,
-                          hoff * offsetStep_Glyph_(), &x0, &y0, &x1, &y1);
+    if (hoff > 0 && !hasOffsetVariants_Glyph_(glyph)) {
+        *glRect        = zero_Rect();
+        glyph->d[hoff] = glyph->d[0];
+        setRasterized_Glyph_(glyph, hoff);
+        return;
+    }
+    int   x0, y0, x1, y1;
+    iBool isBitmap;
+    measureGlyphEx_FontFile_(d->font.file, index_Glyph_(glyph), d->xScale, d->yScale,
+                             hoff * offsetStep_Glyph_(), &x0, &y0, &x1, &y1, &isBitmap);
+    if (isBitmap) {
+        glyph->flags |= fixedOffset_GlyphFlag;
+    }
     glRect->size = init_I2(x1 - x0, y1 - y0);
     if (glRect->size.x > 0 && glRect->size.y > 0) {
         glRect->pos = assignPos_GlyphCache(&current_FtText_()->grayscaleCache, glRect->size);
