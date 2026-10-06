@@ -542,7 +542,7 @@ static float displayScale_Window_(const iWindow *d) {
 }
 
 static void drawBlank_Window_(iWindow *d) {
-    const iColor bg = default_Color(uiBackground_ColorId);
+    const iColor bg = get_Color(uiBackground_ColorId);
     SDL_SetRenderDrawColor(d->render, bg.r, bg.g, bg.b, 255);
     SDL_RenderClear(d->render);
     SDL_RenderPresent(d->render);

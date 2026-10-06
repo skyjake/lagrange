@@ -234,6 +234,10 @@ static iBool readSystemDarkMode_(void) {
     return (value == 0); /* 0 = dark mode */
 }
 
+iBool isDarkSystemTheme_Win32(void) {
+    return readSystemDarkMode_();
+}
+
 static WNDPROC sdlWndProc_;
 
 static LRESULT CALLBACK darkModeWndProc_(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {

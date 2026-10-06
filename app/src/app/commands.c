@@ -379,10 +379,12 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (d->prefs.useSystemTheme) {
             const int contrast  = argLabel_Command(cmd, "contrast");
             const int preferred = d->prefs.systemPreferredColorTheme[dark ^ 1];
-            postCommandf_App("theme.set arg:%d auto:1",
-                             preferred >= 0 ? preferred
-                             : dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
-                                            : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
+            handlePrefsCommand_App_(
+                d,
+                format_CStr("theme.set arg:%d auto:1",
+                            preferred >= 0 ? preferred
+                            : dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
+                                   : (contrast ? pureWhite_ColorTheme : light_ColorTheme)));
         }
         return iFalse;
     }

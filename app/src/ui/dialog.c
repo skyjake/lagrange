@@ -976,10 +976,15 @@ iWindow *promoteDialogToWindow_Widget(iWidget *dlg) {
     SDL_SetWindowMinimumSize(
         x->win, width_Widget(dlg) / pixelRatio, height_Widget(dlg) / pixelRatio);
     addExtraWindow_App(x);
+    return x;
+}
+
+void showPromotedDialog_Widget(iWidget *dlg) {
+    iWindow *x = window_Widget(dlg);
     SDL_ShowWindow(x->win);
+    draw_Window(x); /* clear to background color at the final size */
     SDL_RaiseWindow(x->win);
     setActiveWindow_App(x);
-    return x;
 }
 
 iBool isPromoted_Widget(iWidget *dlg) {

@@ -87,5 +87,6 @@ iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
 
 void        animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);
 iWindow *   promoteDialogToWindow_Widget    (iWidget *);
+void        showPromotedDialog_Widget       (iWidget *);
 iBool       isPromoted_Widget               (iWidget *);
 void        destroyDialog_Widget            (iWidget *);

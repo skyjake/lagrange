@@ -262,6 +262,33 @@ static void postQuitOnSigTerm_(int sig) {
 }
 #endif
 
+void updateSystemTheme_App_(iApp *d) {
+    int isDark = -1;
+    int isHighContrast = iTrue; /* contrast is unknown on most platforms */
+#if defined (iPlatformAppleDesktop)
+    iBool contrast;
+    isDark = isDarkSystemTheme_MacOS(&contrast);
+    isHighContrast = contrast;
+#elif defined (iPlatformMsys) || defined (iPlatformWindows)
+    isDark = isDarkSystemTheme_Win32();
+#elif !defined (iPlatformTerminal)
+    switch (SDL_GetSystemTheme()) {
+        case SDL_SYSTEM_THEME_LIGHT:
+            isDark = iFalse;
+            break;
+        case SDL_SYSTEM_THEME_DARK:
+            isDark = iTrue;
+            break;
+        default:
+            break;
+    }
+#endif
+    if (isDark >= 0) {
+        handleNonWindowRelatedCommand_App_(
+            d, format_CStr("os.theme.changed dark:%d contrast:%d", isDark, isHighContrast));
+    }
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
     if (!saveMutex_App_) {
@@ -557,6 +584,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         set_Array(&d->initialWindowRects, 0, &winRect);
     }
     loadPrefs_App_(d);
+    updateSystemTheme_App_(d); /* before the first window is created */
 #if defined (iPlatformAppleDesktop)
     localizeApplicationMenu_MacOS();
 #endif

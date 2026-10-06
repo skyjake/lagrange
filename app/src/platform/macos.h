@@ -31,6 +31,7 @@ iDeclareType(Widget)
 /* Platform-specific functionality for macOS */
 
 iBool   shouldDefaultToMetalRenderer_MacOS  (void);
+iBool   isDarkSystemTheme_MacOS     (iBool *isHighContrast);
 
 void    enableMomentumScroll_MacOS  (void);
 void    registerURLHandler_MacOS    (void);

@@ -413,9 +413,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem colorPanelItems[] = {
             { "title id:heading.prefs.colors" },
             { "padding arg:0.667" },
-#if !defined (iPlatformLinuxMobile)
             { "toggle id:prefs.ostheme" },
-#endif
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
             { "radio horizontal:1 rowlen:3 id:prefs.accent", 0, 0, (const void *) accentItems },
             { "padding" },
@@ -674,7 +672,7 @@ iWidget *makePreferences_Widget(void) {
             /* Display character set. */
             addDialogToggle_Widget(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
         }
-#if (defined (iPlatformApple) || defined (iPlatformMsys) || defined (iPlatformWindows)) && !defined (iPlatformTerminal)
+#if !defined (iPlatformTerminal)
         addDialogToggle_Widget(headings, values, "${prefs.ostheme}", "prefs.ostheme");
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
@@ -1254,6 +1252,7 @@ void showPreferences_Widget(const char *cmd) {
         updatePreferencesLayout_Widget(dlg);
         promoteDialogToWindow_Widget(dlg);
         updatePreferencesLayout_Widget(dlg); /* apply window size limits and remembered height */
+        showPromotedDialog_Widget(dlg);
     }
     if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
         iWidget *idPanel = panel_Mobile(dlg,

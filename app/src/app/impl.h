@@ -182,6 +182,9 @@ const char *    downloadDir_App_        (void);
 void            migrateInternalUserDirToExternalStorage_App_(iApp *);
 #endif
 
+/* startup.c */
+void            updateSystemTheme_App_  (iApp *);
+
 /* state.c */
 iBool           isPlacementUnused_App_  (const iApp *, size_t index);
 iRect           initialWindowRect_App_  (const iApp *, size_t windowIndex);

@@ -265,6 +265,12 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
     [menuCommands postMenuItemCommand:sender];
 }
 
+iBool isDarkSystemTheme_MacOS(iBool *isHighContrast) {
+    NSString *name = currentSystemAppearance_();
+    *isHighContrast = [name containsString:@"HighContrast"];
+    return [name containsString:@"Dark"];
+}
+
 static void appearanceChanged_MacOS_(NSString *name) {
     const iBool isDark = [name containsString:@"Dark"];
     const iBool isHighContrast = [name containsString:@"HighContrast"];

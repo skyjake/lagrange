@@ -495,6 +495,11 @@ void loadPrefs_App_(iApp *d) {
                 continue; /* can't change downloads directory */
             }
 #endif
+            else if (equal_Command(cmd, "theme.set") || equal_Command(cmd, "accent.set") ||
+                     equal_Command(cmd, "ostheme")) {
+                /* The palette is needed when the first window is created. */
+                handlePrefsCommand_App_(d, cmd);
+            }
             else if (equal_Command(cmd, "version")) {
                 /* This is a special command that lets us know which version we're upgrading from.
                    It was added in v1.8.0. */
@@ -998,6 +1003,9 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         }
         if (hasLabel_Command(cmd, "preferlight")) {
             d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
+        }
+        if (equal_Command(cmd, "prefs.ostheme.changed") && d->prefs.useSystemTheme) {
+            updateSystemTheme_App_(d);
         }
         return iTrue;
     }

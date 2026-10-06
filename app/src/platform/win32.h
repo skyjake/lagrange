@@ -36,6 +36,7 @@ void     useExecutableIconResource_SDLWindow(SDL_Window *);
 void     enableDarkMode_SDLWindow(SDL_Window *);
 void     enableConsoleOutput_Win32();
 void     setupApplication_Win32(void);
+iBool    isDarkSystemTheme_Win32(void);
 void     handleCommand_Win32(const char *cmd);
 iString *windowsDirectory_Win32(void);
 iString *tempDirectory_Win32(void);
