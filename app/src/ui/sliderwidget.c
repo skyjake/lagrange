@@ -37,6 +37,7 @@ iDeclareType(SliderLabel)
 
 struct Impl_SliderLabel {
     int     index;
+    iString source; /* may contain ${} translation IDs */
     iString text;
 };
 
@@ -118,10 +119,14 @@ static void updateMetrics_SliderWidget_(iSliderWidget *d) {
     const int padY = isTerminal_Platform() ? 0
                      : isMobile_Platform() ? 3 * gap_UI / 2
                                            : (int) (gap_UI * aspect_UI);
-    int widest = iMax(measure_Text(d->font, text_SliderWidget_(d, 0)).bounds.size.x,
-                      measure_Text(d->font, text_SliderWidget_(d, d->numSteps)).bounds.size.x);
-    iConstForEach(Array, i, &d->labels) {
-        const iSliderLabel *label = i.value;
+    /* Steps next to the ends are measured as well, in case the ends have custom labels. */
+    const int ends[] = { 0, iMin(1, d->numSteps), iMax(0, d->numSteps - 1), d->numSteps };
+    int       widest = 0;
+    iForIndices(i, ends) {
+        widest = iMax(widest, measure_Text(d->font, text_SliderWidget_(d, ends[i])).bounds.size.x);
+    }
+    iConstForEach(Array, j, &d->labels) {
+        const iSliderLabel *label = j.value;
         widest = iMax(widest, measure_Text(d->font, cstr_String(&label->text)).bounds.size.x);
     }
     d->thumbWidth = widest + 2 * padX;
@@ -176,7 +181,9 @@ void init_SliderWidget(iSliderWidget *d, const char *command) {
 
 void deinit_SliderWidget(iSliderWidget *d) {
     iForEach(Array, i, &d->labels) {
-        deinit_String(&((iSliderLabel *) i.value)->text);
+        iSliderLabel *label = i.value;
+        deinit_String(&label->source);
+        deinit_String(&label->text);
     }
     deinit_Array(&d->labels);
     deinit_String(&d->command);
@@ -216,7 +223,7 @@ iSliderWidget *newMenuItem_SliderWidget(const iMenuItem *item) {
             addLabel_SliderWidget(d,
                                   argfLabel_Command(tick->label, "value"),
                                   hasLabel_Command(tick->label, "label")
-                                      ? cstr_Lang(cstr_Command(tick->label, "label"))
+                                      ? format_CStr("${%s}", cstr_Command(tick->label, "label"))
                                       : suffixPtr_Command(tick->label, "text"));
         }
     }
@@ -257,7 +264,9 @@ void setFont_SliderWidget(iSliderWidget *d, int fontId) {
 
 void addLabel_SliderWidget(iSliderWidget *d, float value, const char *label) {
     iSliderLabel lab = { .index = indexOf_SliderWidget_(d, value) };
-    initCStr_String(&lab.text, label);
+    initCStr_String(&lab.source, label);
+    initCopy_String(&lab.text, &lab.source);
+    translate_Lang(&lab.text);
     pushBack_Array(&d->labels, &lab);
     updateMetrics_SliderWidget_(d);
 }
@@ -294,17 +303,27 @@ static iBool processEvent_SliderWidget_(iSliderWidget *d, const SDL_Event *ev) {
     if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_SliderWidget_(d);
     }
+    else if (isCommand_UserEvent(ev, "lang.changed")) {
+        iForEach(Array, i, &d->labels) {
+            iSliderLabel *label = i.value;
+            set_String(&label->text, &label->source);
+            translate_Lang(&label->text);
+        }
+        updateMetrics_SliderWidget_(d);
+        refresh_Widget(d);
+        return iFalse;
+    }
     else if (isCommand_Widget(w, ev, "focus.gained") || isCommand_Widget(w, ev, "focus.lost")) {
         refresh_Widget(d);
         return iFalse;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult: {
-            const int x = pos_Click(&d->click).x;
-            const iRect thumb = thumbRect_SliderWidget_(d, d->index);
+            const int   x         = pos_Click(&d->click).x;
+            const iRect thumb     = thumbRect_SliderWidget_(d, d->index);
+            const iBool isOnThumb = contains_Rect(thumb, pos_Click(&d->click));
             /* Grabbing the thumb does not move it; elsewhere it jumps to the pointer. */
             d->startIndex = d->index;
-            const iBool isOnThumb = contains_Rect(thumb, pos_Click(&d->click));
             d->grabOffset = isOnThumb ? x - mid_Rect(thumb).x : 0;
             if (isOnThumb) {
                 setFocus_Widget(w);
@@ -315,7 +334,8 @@ static iBool processEvent_SliderWidget_(iSliderWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
         case drag_ClickResult:
-            setIndex_SliderWidget_(d, indexAt_SliderWidget_(d, pos_Click(&d->click).x - d->grabOffset));
+            setIndex_SliderWidget_(d,
+                                   indexAt_SliderWidget_(d, pos_Click(&d->click).x - d->grabOffset));
             return iTrue;
         case finished_ClickResult:
         case aborted_ClickResult:
@@ -387,6 +407,7 @@ static void drawLabels_SliderWidget_(const iSliderWidget *d, iPaint *p, int x0, 
     const iRect thumb  = drawnThumbRect_SliderWidget_(d);
     const int   font   = labelFont_SliderWidget_(d);
     const int   height = lineHeight_Text(font);
+    const int   fg     = isDisabled_Widget(d) ? uiTextDisabled_ColorId : uiTextDim_ColorId;
     iArray indices, drawn;
     init_Array(&indices, sizeof(int));
     init_Array(&drawn, sizeof(iRect));
@@ -420,7 +441,7 @@ static void drawLabels_SliderWidget_(const iSliderWidget *d, iPaint *p, int x0, 
         }
         if (!isOverlapping) {
             fillRect_Paint(p, rect, bg);
-            drawCentered_Text(font, rect, iTrue, uiTextDim_ColorId, "%s", text);
+            drawCentered_Text(font, rect, iTrue, fg, "%s", text);
         }
         /* Labels hidden by the thumb still reserve their place, so others don't pop in. */
         pushBack_Array(&drawn, &rect);
