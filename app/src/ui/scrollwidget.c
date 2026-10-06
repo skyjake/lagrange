@@ -288,11 +288,12 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     const iBool    isHot  = (flags_Widget(w) & pressed_WidgetFlag) || isHover_Widget(w);
     const int      height = isHot ? 2 * gap_UI : gap_UI;
+    const int      trackHeight = (isHot ? 3 * gap_UI : gap_UI) / 2;
     const iRect    track  = init_Rect(left_Rect(bounds), bottom_Rect(bounds) - height,
                                       width_Rect(bounds), height);
     /* In light mode, the bar is dark on a backing of the thumb color. */
     const iBool isDark  = isDark_ColorTheme(colorTheme_App());
-    const int   backing = isDark ? black_ColorId : d->thumbColor;
+    const int   backing = isDark ? uiBackgroundSidebar_ColorId : d->thumbColor;
     const int   bar     = isHot ? uiTextStrong_ColorId : isDark ? d->thumbColor : gray25_ColorId;
     iPaint p;
     init_Paint(&p);
@@ -303,7 +304,7 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
     fillRect_Paint(&p, track, backing);
     fillRect_Paint(&p,
                    init_Rect(left_Rect(track), top_Rect(track),
-                             width_Rect(track) * value_Anim(&d->progress), height),
+                             width_Rect(track) * value_Anim(&d->progress), trackHeight),
                    bar);
 }
 
