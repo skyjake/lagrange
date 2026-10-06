@@ -3529,9 +3529,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 &items,
                                 (iMenuItem[]){
                                     { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                                    { "---" },
                                     { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
-                                    { book_Icon " ${menu.save.books}", 0, 0, "document.savebook" } },
-                                3);
+                                    { book_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" } },
+                                4);
 #if defined (LAGRANGE_FILE_DIALOGS)
                             pushBack_Array(
                                 &items, &(iMenuItem){ "${menu.save.as}", 0, 0, "document.save saveas:1" });
