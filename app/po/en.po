@@ -431,6 +431,10 @@ msgstr "Copy Link to Page"
 msgid "menu.show.bookmarks"
 msgstr "Show Bookmarks"
 
+# Used in the View menu. Shows the sidebar with the bookshelf.
+msgid "menu.show.books"
+msgstr "Show Books"
+
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
 msgstr "Show Feed Entries"

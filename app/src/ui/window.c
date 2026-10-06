@@ -181,9 +181,16 @@ const iArray *updateViewMenu_Widget(iWidget *menu) {
                                      i < 9 ? leftSidebarTab_KeyModifier : 0,
                                      format_CStr("sidebar.tab arg:%zu toggle:1", i) });
     }
-    if (!isEmpty_Array(items)) {
+    if (!isEmpty_Array(items) && prefs_App()->gempubSidebar != prevSide) {
         pushBack_Array(items, &(iMenuItem){ "---" });
     }
+    pushBack_Array(items,
+                   &(iMenuItem){ "${menu.show.books}",
+                                 0,
+                                 0,
+                                 format_CStr("sidebar.mode arg:%d toggle:1 shelf:1",
+                                             gempub_SidebarMode) });
+    pushBack_Array(items, &(iMenuItem){ "---" });
     pushBackN_Array(items, viewMenuItems_, count_MenuItem(viewMenuItems_));
     return items;
 }

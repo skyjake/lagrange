@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "documentwidget.h"
 #include "feeds.h"
+#include "filedialog.h"
 #include "gamepad.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
@@ -50,9 +51,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_mouse.h>
+#include <the_Foundation/file.h>
 #include <the_Foundation/intset.h>
+#include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
+#include <errno.h>
+
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
+#if defined (iPlatformAndroidMobile)
+#   include "platform/android.h"
+#endif
 
 iDeclareType(SidebarItem) typedef iListItemClass iSidebarItemClass;
 
@@ -660,6 +671,23 @@ static iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
     return iTrue;
 }
 
+static iBool copyFile_SidebarWidget_(const iString *srcPath, const iString *dstPath) {
+    iBool  ok  = iFalse;
+    iFile *src = iClob(new_File(srcPath));
+    if (open_File(src, readOnly_FileMode)) {
+        const iBlock *data = collect_Block(readAll_File(src));
+        iFile        *dst  = iClob(new_File(dstPath));
+        if (open_File(dst, writeOnly_FileMode)) {
+            ok = write_File(dst, data) == size_Block(data);
+        }
+    }
+    if (!ok) {
+        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
+                                 strerror(errno));
+    }
+    return ok;
+}
+
 static iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
     return d->mode == gempub_SidebarMode && (d->gempubPage == 2 || !gempub_SidebarWidget_(d));
 }
@@ -713,12 +741,19 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         { openTab_Icon " ${menu.opentab}", 0, 0, "book.open newtab:1" },
         { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "book.open newtab:2" },
         { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "book.open newwindow:1" },
-#if defined (iPlatformAppleDesktop)
+#if defined (LAGRANGE_FILE_DIALOGS) || defined (iPlatformMobile) || \
+    defined (iPlatformAppleDesktop) || defined (iPlatformLinux)
         { "---" },
+#endif
+#if defined (iPlatformMobile)
+        { download_Icon " ${menu.save.files}", 0, 0, "book.saveas" },
+#elif defined (LAGRANGE_FILE_DIALOGS)
+        { download_Icon " ${menu.save.as}", 0, 0, "book.saveas" },
+#endif
+#if defined (iPlatformAppleDesktop)
         { magnifyingGlass_Icon " ${menu.reveal.macos}", 0, 0, "book.reveal" },
 #endif
 #if defined (iPlatformLinux)
-        { "---" },
         { magnifyingGlass_Icon " ${menu.reveal.filemgr}", 0, 0, "book.reveal" },
 #endif
         { "---" },
@@ -2294,17 +2329,25 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             !isModeEnabled_SidebarWidget_(d, d->side, mode) &&
             isModeEnabled_SidebarWidget_(d, d->side ^ 1, mode)) {
             /* Make it affect the other side instead. */
-            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d",
+            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d",
                                d->side == 0 ? "sidebar2" : "sidebar",
                                mode,
                                argLabel_Command(cmd, "show"),
-                               argLabel_Command(cmd, "toggle"));
+                               argLabel_Command(cmd, "toggle"),
+                               argLabel_Command(cmd, "shelf"));
             return iTrue;
+        }
+        iBool isShelfChanged = iFalse;
+        if (mode == gempub_SidebarMode && argLabel_Command(cmd, "shelf")) {
+            isShelfChanged = !isShowingShelf_SidebarWidget_(d);
+            d->gempubPage = 2;
+            d->isShelfOrderValid = iFalse;
         }
         const iBool wasChanged = setMode_SidebarWidget(d, mode);
         updateItems_SidebarWidget_(d);
         if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
-            (argLabel_Command(cmd, "toggle") && (!isVisible_Widget(w) || !wasChanged))) {
+            (argLabel_Command(cmd, "toggle") &&
+             (!isVisible_Widget(w) || (!wasChanged && !isShelfChanged)))) {
             postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
         }
         scrollOffset_ListWidget(d->list, 0);
@@ -2608,6 +2651,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->side == bookSide_SidebarWidget_()) {
                 removeDownload_Books(collect_String(suffix_Command(cmd, "id")));
                 postCommand_App("books.changed");
+            }
+        }
+        else if (equal_Command(cmd, "books.saveas") && pointer_Command(cmd) == d) {
+            const iBook   *book = find_Books(string_Command(cmd, "id"));
+            const iString *path = book ? path_Book(book) : NULL;
+            if (path) {
+                copyFile_SidebarWidget_(path, collect_String(suffix_Command(cmd, "path")));
             }
         }
         else if (equal_Command(cmd, "books.delete")) {
@@ -3166,6 +3216,27 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "book.saveas")) {
+            const iBook   *book = d->contextItem ? find_Books(&d->contextItem->bookId) : NULL;
+            const iString *path = book ? path_Book(book) : NULL;
+            if (path) {
+#if defined (iPlatformAppleMobile)
+                /* The exported file is removed afterwards. */
+                const iString *tmpPath = temporaryPathForUrl_App(
+                    collect_String(makeFileUrl_String(path)), collectNewCStr_String(mimeType_Gempub));
+                if (copyFile_SidebarWidget_(path, tmpPath)) {
+                    exportDownloadedFile_iOS(tmpPath);
+                }
+#elif defined (iPlatformAndroidMobile)
+                exportDownloadedFile_Android(path, collectNewCStr_String(mimeType_Gempub));
+#else
+                save_FileDialog(format_CStr("books.saveas ptr:%p id:%s", d, cstr_String(&book->id)),
+                                "${menu.save.as}",
+                                collect_String(concat_Path(downloadDir_App(), &book->fileName)));
+#endif
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "book.removedownload")) {
             const iSidebarItem *item = d->contextItem;
             if (item && !isEmpty_String(&item->bookId)) {
@@ -3412,6 +3483,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                    !isDownloadable_Book(book));
                     setMenuItemDisabled_Widget(d->menu,
                                                "book.reveal",
+                                               !book || !path_Book(book));
+                    setMenuItemDisabled_Widget(d->menu,
+                                               "book.saveas",
                                                !book || !path_Book(book));
                 }
                 else if (d->mode == feedEntries_SidebarMode && d->contextItem) {
