@@ -784,6 +784,7 @@ iWidget *makePreferences_Widget(void) {
         }
         addDialogToggle_Widget(headings, values, "${prefs.time.24h}", "prefs.time.24h");
         addDialogPadding_Widget(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.animate}", "prefs.animate");
         if (!isTerminal_Platform()) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pageturn}")));
             iWidget *turns = new_Widget();
@@ -792,11 +793,6 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_Widget(turns, "prefs.pageturn.2", "${prefs.pageturn.curl}", "pageturn.set arg:2");
             addChildFlags_Widget(values, iClob(turns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addDialogToggle_Widget(headings, values, "${prefs.animate}", "prefs.animate");
-        if (!isTerminal_Platform()) {
-            addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
-        }
-        //        makeTwoColumnHeading_Widget("${heading.prefs.scrolling}", headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
         /* Scroll speeds. */ {
             for (int type = 0; type < max_ScrollType; type++) {
@@ -817,6 +813,9 @@ iWidget *makePreferences_Widget(void) {
                 addChildFlags_Widget(
                     values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             }
+        }
+        if (!isTerminal_Platform()) {
+            addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
         }
     }
     /* Network. */ {
