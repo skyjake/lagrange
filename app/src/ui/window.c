@@ -43,6 +43,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
 #endif
+#if defined (iPlatformWindows)
+#   define WIN32_LEAN_AND_MEAN
+#   include <windows.h> /* SetEnvironmentVariableW */
+#endif
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"
 #endif

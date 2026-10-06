@@ -53,7 +53,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (LAGRANGE_ENABLE_DIRECTWRITE)
 #   define WIN32_LEAN_AND_MEAN
+#   define COBJMACROS
 #   include <windows.h>
+#   include <initguid.h>
 #   include <dwrite.h>
 #   include <combaseapi.h>
 #endif
@@ -307,7 +309,7 @@ static iBool isCacheStale_(const iString *path) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-#if defined (LAGRANGE_ENABLE_FONTCONFIG)
+#if defined (LAGRANGE_ENABLE_FONTCONFIG) || defined (LAGRANGE_ENABLE_DIRECTWRITE)
 
 /* Normalize a family name to a spec ID: "sys-<alphanumeric-hyphenated>" */
 static void makeSpecId_(const char *familyName, iString *id_out) {
@@ -334,6 +336,10 @@ static void makeSpecId_(const char *familyName, iString *id_out) {
         }
     }
 }
+
+#endif
+
+#if defined (LAGRANGE_ENABLE_FONTCONFIG)
 
 static enum iFontStyle fcStyleToFontStyle_(int weight, int slant) {
     const iBool isBold   = (weight >= FC_WEIGHT_BOLD);
@@ -436,35 +442,35 @@ static void enumerateFontconfig_(iArray *entries_out) {
 static void enumerateDirectWrite_(iArray *entries_out) {
     IDWriteFactory *factory = NULL;
     if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
-                                   &__uuidof(IDWriteFactory),
+                                   &IID_IDWriteFactory,
                                    (IUnknown **) &factory))) {
         return;
     }
     IDWriteFontCollection *collection = NULL;
-    factory->GetSystemFontCollection(&collection, FALSE);
-    if (!collection) { factory->Release(); return; }
+    IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    if (!collection) { IDWriteFactory_Release(factory); return; }
 
-    const UINT32 familyCount = collection->GetFontFamilyCount();
+    const UINT32 familyCount = IDWriteFontCollection_GetFontFamilyCount(collection);
     for (UINT32 fi = 0; fi < familyCount; fi++) {
         IDWriteFontFamily *family = NULL;
-        if (FAILED(collection->GetFontFamily(fi, &family))) continue;
+        if (FAILED(IDWriteFontCollection_GetFontFamily(collection, fi, &family))) continue;
 
         /* Get family name in the current locale. */
         IDWriteLocalizedStrings *names = NULL;
-        family->GetFamilyNames(&names);
-        if (!names) { family->Release(); continue; }
+        IDWriteFontFamily_GetFamilyNames(family, &names);
+        if (!names) { IDWriteFontFamily_Release(family); continue; }
 
         UINT32 nameIdx = 0;
         BOOL   exists  = FALSE;
         wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
         GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH);
-        names->FindLocaleName(localeName, &nameIdx, &exists);
+        IDWriteLocalizedStrings_FindLocaleName(names, localeName, &nameIdx, &exists);
         if (!exists) nameIdx = 0;
         UINT32 nameLen = 0;
-        names->GetStringLength(nameIdx, &nameLen);
+        IDWriteLocalizedStrings_GetStringLength(names, nameIdx, &nameLen);
         wchar_t *wname = (wchar_t *) malloc((nameLen + 1) * sizeof(wchar_t));
-        names->GetString(nameIdx, wname, nameLen + 1);
-        names->Release();
+        IDWriteLocalizedStrings_GetString(names, nameIdx, wname, nameLen + 1);
+        IDWriteLocalizedStrings_Release(names);
 
         /* Convert to UTF-8 for the spec ID/name. */
         char utf8name[512] = { 0 };
@@ -485,13 +491,13 @@ static void enumerateDirectWrite_(iArray *entries_out) {
         deinit_String(&dispName);
 
         /* Check first font for monospace. */
-        const UINT32 fontCount = family->GetFontCount();
+        const UINT32 fontCount = IDWriteFontFamily_GetFontCount(family);
         for (UINT32 fj = 0; fj < fontCount; fj++) {
             IDWriteFont *font = NULL;
-            if (FAILED(family->GetFont(fj, &font))) continue;
+            if (FAILED(IDWriteFontFamily_GetFont(family, fj, &font))) continue;
 
-            const DWRITE_FONT_WEIGHT weight = font->GetWeight();
-            const DWRITE_FONT_STYLE  style  = font->GetStyle();
+            const DWRITE_FONT_WEIGHT weight = IDWriteFont_GetWeight(font);
+            const DWRITE_FONT_STYLE  style  = IDWriteFont_GetStyle(font);
             enum iFontStyle styleId;
             if (weight >= DWRITE_FONT_WEIGHT_BOLD && style == DWRITE_FONT_STYLE_NORMAL) {
                 styleId = bold_FontStyle;
@@ -509,47 +515,47 @@ static void enumerateDirectWrite_(iArray *entries_out) {
                 styleId = regular_FontStyle;
             }
             if (!isEmpty_String(&entry.styles[styleId].identifier)) {
-                font->Release();
+                IDWriteFont_Release(font);
                 continue;
             }
             /* Get font file path. */
             IDWriteFontFace *face = NULL;
-            if (FAILED(font->CreateFontFace(&face))) { font->Release(); continue; }
+            if (FAILED(IDWriteFont_CreateFontFace(font, &face))) { IDWriteFont_Release(font); continue; }
             UINT32 fileCount = 0;
-            face->GetFiles(&fileCount, NULL);
+            IDWriteFontFace_GetFiles(face, &fileCount, NULL);
             if (fileCount > 0) {
                 IDWriteFontFile **files = (IDWriteFontFile **) calloc(fileCount, sizeof(*files));
-                face->GetFiles(&fileCount, files);
+                IDWriteFontFace_GetFiles(face, &fileCount, files);
                 IDWriteFontFile *ffile = files[0];
                 IDWriteFontFileLoader *loader = NULL;
                 const void *refKey    = NULL;
                 UINT32      refKeyLen = 0;
-                ffile->GetReferenceKey(&refKey, &refKeyLen);
-                ffile->GetLoader(&loader);
+                IDWriteFontFile_GetReferenceKey(ffile, &refKey, &refKeyLen);
+                IDWriteFontFile_GetLoader(ffile, &loader);
                 IDWriteLocalFontFileLoader *localLoader = NULL;
-                if (loader && SUCCEEDED(loader->QueryInterface(&__uuidof(IDWriteLocalFontFileLoader),
-                                                               (void **) &localLoader))) {
+                if (loader && SUCCEEDED(IDWriteFontFileLoader_QueryInterface(
+                                  loader, &IID_IDWriteLocalFontFileLoader, (void **) &localLoader))) {
                     UINT32 pathLen = 0;
-                    localLoader->GetFilePathLengthFromKey(refKey, refKeyLen, &pathLen);
+                    IDWriteLocalFontFileLoader_GetFilePathLengthFromKey(localLoader, refKey, refKeyLen, &pathLen);
                     wchar_t *wpath = (wchar_t *) malloc((pathLen + 1) * sizeof(wchar_t));
-                    localLoader->GetFilePathFromKey(refKey, refKeyLen, wpath, pathLen + 1);
+                    IDWriteLocalFontFileLoader_GetFilePathFromKey(localLoader, refKey, refKeyLen, wpath, pathLen + 1);
                     char pathUtf8[1024] = { 0 };
                     WideCharToMultiByte(CP_UTF8, 0, wpath, -1, pathUtf8, sizeof(pathUtf8), NULL, NULL);
                     free(wpath);
                     /* Get face index from the font face. */
-                    const UINT32 faceIdx = face->GetIndex();
+                    const UINT32 faceIdx = IDWriteFontFace_GetIndex(face);
                     iFontCacheStyle *sty = &entry.styles[styleId];
                     setCStr_String(&sty->identifier, pathUtf8);
                     sty->colIndex = (int) faceIdx;
                     extractMetrics_(pathUtf8, faceIdx, sty);
-                    localLoader->Release();
+                    IDWriteLocalFontFileLoader_Release(localLoader);
                 }
-                if (loader)  loader->Release();
-                for (UINT32 k = 0; k < fileCount; k++) files[k]->Release();
+                if (loader)  IDWriteFontFileLoader_Release(loader);
+                for (UINT32 k = 0; k < fileCount; k++) IDWriteFontFile_Release(files[k]);
                 free(files);
             }
-            face->Release();
-            font->Release();
+            IDWriteFontFace_Release(face);
+            IDWriteFont_Release(font);
         }
         /* Fill missing styles with regular. */
         for (int s = 0; s < max_FontStyle; s++) {
@@ -572,10 +578,10 @@ static void enumerateDirectWrite_(iArray *entries_out) {
         else {
             deinit_FontCacheEntry(&entry);
         }
-        family->Release();
+        IDWriteFontFamily_Release(family);
     }
-    collection->Release();
-    factory->Release();
+    IDWriteFontCollection_Release(collection);
+    IDWriteFactory_Release(factory);
 }
 
 #endif /* LAGRANGE_ENABLE_DIRECTWRITE */

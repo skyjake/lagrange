@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/tlsrequest.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 #include <stdio.h>
 #include <signal.h>
 
