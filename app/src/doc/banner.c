@@ -318,13 +318,18 @@ void draw_Banner(const iBanner *d) {
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;
         const iRect itemRect = { pos, init_I2(d->rect.size.x, item->height) };
-        fillRect_Paint(&p, itemRect, tmBannerItemBackground_ColorId);
-        drawRect_Paint(&p,
-                       itemRect,
-                       item->type != error_BannerType && d->isHover &&
-                               d->hoverIndex == index_ArrayConstIterator(&i)
-                           ? tmBannerItemText_ColorId
-                           : tmBannerItemFrame_ColorId);
+        const int frame = item->type != error_BannerType && d->isHover &&
+                                  d->hoverIndex == index_ArrayConstIterator(&i)
+                              ? tmBannerItemText_ColorId
+                              : tmBannerItemFrame_ColorId;
+        if (isTerminal_Platform()) {
+            fillRect_Paint(&p, itemRect, tmBannerItemBackground_ColorId);
+            drawRect_Paint(&p, itemRect, frame);
+        }
+        else {
+            drawRoundRect_Paint(
+                &p, itemRect, all_RoundCorner, 1, tmBannerItemBackground_ColorId, frame, frame);
+        }
         setBaseAttributes_Text(uiContent_FontId, tmBannerItemText_ColorId);
         iWrapText wt = {
             .text = range_String(&item->text),
