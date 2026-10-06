@@ -899,6 +899,9 @@ msgstr "Refresh Remote Sources"
 msgid "hint.filter.bookmark"
 msgstr "filter bookmarks"
 
+msgid "hint.filter.bindings"
+msgstr "filter key bindings"
+
 msgid "ident.using"
 msgstr "Using on this page"
 
@@ -2803,6 +2806,36 @@ msgstr "Sidebar: Show all feed entries"
 
 msgid "keys.feeds.showunread"
 msgstr "Sidebar: Show unread feed entries"
+
+msgid "keys.group.navigation"
+msgstr "Navigation"
+
+msgid "keys.group.scroll"
+msgstr "Scrolling"
+
+msgid "keys.group.links"
+msgstr "Links"
+
+msgid "keys.group.page"
+msgstr "Page"
+
+msgid "keys.group.view"
+msgstr "View"
+
+msgid "keys.group.tabs"
+msgstr "Tabs"
+
+msgid "keys.group.split"
+msgstr "Split View"
+
+msgid "keys.group.bookmarks"
+msgstr "Bookmarks & Feeds"
+
+msgid "keys.group.ui"
+msgstr "User Interface"
+
+msgid "keys.group.other"
+msgstr "Other"
 
 msgid "error.badstatus"
 msgstr "Unknown Status Code"

@@ -22,8 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "bindingswidget.h"
 #include "listwidget.h"
+#include "inputwidget.h"
+#include "labelwidget.h"
 #include "keys.h"
 #include "command.h"
+#include "defs.h"
 #include "util.h"
 #include "app.h"
 #include <lagrange/lang.h>
@@ -39,6 +42,8 @@ struct Impl_BindingItem {
     iString   label;
     iString   key;
     int       id;
+    int       group;
+    int       order; /* within group; headings are negative */
     iBool     isWaitingForEvent;
 };
 
@@ -47,6 +52,8 @@ void init_BindingItem(iBindingItem *d) {
     init_String(&d->label);
     init_String(&d->key);
     d->id = 0;
+    d->group = 0;
+    d->order = 0;
     d->isWaitingForEvent = iFalse;
 }
 
@@ -75,6 +82,8 @@ iDefineObjectConstruction(BindingItem)
 struct Impl_BindingsWidget {
     iWidget widget;
     iListWidget *list;
+    iInputWidget *filter;
+    iWidget *filterClear;
     size_t activePos;
     size_t contextPos;
     iWidget *menu;
@@ -82,12 +91,59 @@ struct Impl_BindingsWidget {
 
 iDefineObjectConstruction(BindingsWidget)
 
-static int cmpId_BindingItem_(const iListItem **item1, const iListItem **item2) {
+/* Bindings not listed here end up in the last group. */
+static const struct {
+    const char *label;
+    int         ids[16];
+} groups_[] = {
+    { "${keys.group.navigation}", { 30, 31, 32, 33, 35, 36, 37, 38 } },
+    { "${keys.group.scroll}",     { 1, 2, 10, 11, 22, 23, 24, 25 } },
+    { "${keys.group.links}",      { 41, 42, 45, 46, 47 } },
+    { "${keys.group.page}",       { 60, 65, 110, 111, 115, 120, 121, 125, 126, 130 } },
+    { "${keys.group.view}",       { 70, 71, 72, 73, 100 } },
+    { "${keys.group.tabs}",       { 76, 77, 78, 79, 80, 81, 84, 85, 86 } },
+    { "${keys.group.split}",      { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99 } },
+    { "${keys.group.bookmarks}",  { 50, 51, 55, 56, 57 } },
+    { "${keys.group.ui}",         { 140, 200, 205, 250, 251, 252, 253, 254, 255, 256, 257, 258 } },
+    { "${keys.group.other}",      { 0 } },
+};
+
+static void findGroup_BindingItem_(iBindingItem *d) {
+    iForIndices(g, groups_) {
+        for (size_t i = 0; i < iElemCount(groups_[g].ids) && groups_[g].ids[i]; i++) {
+            if (groups_[g].ids[i] == d->id) {
+                d->group = (int) g;
+                d->order = (int) i;
+                return;
+            }
+        }
+    }
+    d->group = iElemCount(groups_) - 1;
+    d->order = d->id;
+}
+
+static int cmp_BindingItem_(const iListItem **item1, const iListItem **item2) {
     const iBindingItem *d = (const iBindingItem *) *item1, *other = (const iBindingItem *) *item2;
-    return iCmp(d->id, other->id);
+    const int cmp = iCmp(d->group, other->group);
+    return cmp ? cmp : iCmp(d->order, other->order);
+}
+
+static void addHeading_BindingsWidget_(iBindingsWidget *d, int group, int order) {
+    iBindingItem *item = new_BindingItem();
+    item->listItem.flags.isSeparator = iTrue;
+    item->group = group;
+    item->order = order;
+    setCStr_String(&item->label, groups_[group].label);
+    translate_Lang(&item->label);
+    addItem_ListWidget(d->list, item);
+    iRelease(item);
 }
 
 static void updateItems_BindingsWidget_(iBindingsWidget *d) {
+    iString *term = collect_String(copy_String(text_InputWidget(d->filter)));
+    trim_String(term);
+    iBool hasGroup[iElemCount(groups_)];
+    iZap(hasGroup);
     clear_ListWidget(d->list);
     iConstForEach(PtrArray, i, list_Keys()) {
         const iBinding *bind = i.ptr;
@@ -99,11 +155,30 @@ static void updateItems_BindingsWidget_(iBindingsWidget *d) {
         item->id = bind->id;
         set_String(&item->label, &bind->label);
         translate_Lang(&item->label);
+        if (!isEmpty_String(term) &&
+            indexOfCStrSc_String(&item->label, cstr_String(term), &iCaseInsensitive) ==
+                iInvalidPos) {
+            iRelease(item);
+            continue;
+        }
+        findGroup_BindingItem_(item);
+        hasGroup[item->group] = iTrue;
         toString_Sym(bind->key, bind->mods, &item->key);
         addItem_ListWidget(d->list, item);
         iRelease(item);
     }
-    sort_ListWidget(d->list, cmpId_BindingItem_);
+    /* Each heading is two rows tall, except at the top. */
+    iBool isFirst = iTrue;
+    iForIndices(g, groups_) {
+        if (hasGroup[g]) {
+            if (!isFirst) {
+                addHeading_BindingsWidget_(d, (int) g, -2);
+            }
+            addHeading_BindingsWidget_(d, (int) g, -1);
+            isFirst = iFalse;
+        }
+    }
+    sort_ListWidget(d->list, cmp_BindingItem_);
     updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
 }
@@ -112,13 +187,36 @@ void init_BindingsWidget(iBindingsWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "bindings");
-    setFlags_Widget(w, resizeChildren_WidgetFlag, iTrue);
+    setFlags_Widget(w, resizeChildren_WidgetFlag | arrangeVertical_WidgetFlag, iTrue);
     d->activePos = iInvalidPos;
     d->contextPos = iInvalidPos;
     d->list = new_ListWidget();
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiLabel_FontId) * 1.5f);
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChild_Widget(w, iClob(d->list));
+    addChildFlags_Widget(w, iClob(d->list), expand_WidgetFlag);
+    /* Filter field. */ {
+        iWidget *row = new_Widget();
+        setBackgroundColor_Widget(row, uiInputBackground_ColorId);
+        addChildFlags_Widget(row,
+                             iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)),
+                             frameless_WidgetFlag | noBackground_WidgetFlag);
+        d->filter = new_InputWidget(0);
+        setId_Widget(as_Widget(d->filter), "bindings.filter");
+        setHint_InputWidget(d->filter, "${hint.filter.bindings}");
+        setEatEscape_InputWidget(d->filter, iFalse);
+        setSelectAllOnFocus_InputWidget(d->filter, iTrue);
+        setNotifyEdits_InputWidget(d->filter, iTrue);
+        setLineBreaksEnabled_InputWidget(d->filter, iFalse);
+        addChildFlags_Widget(row, iClob(d->filter), expand_WidgetFlag | frameless_WidgetFlag);
+        d->filterClear = addChildFlags_Widget(
+            row,
+            iClob(newIcon_LabelWidget(close_Icon, 0, 0, "bindings.filter.clear")),
+            noBackground_WidgetFlag | frameless_WidgetFlag | disabled_WidgetFlag);
+        addChildFlags_Widget(w,
+                             iClob(row),
+                             arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                                 resizeWidthOfChildren_WidgetFlag);
+    }
     updateItems_BindingsWidget_(d);
     d->menu = makeMenu_Widget(
         w,
@@ -143,6 +241,10 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         iBindingItem *item = item_ListWidget(d->list, d->activePos);
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
+        if (focus_Widget() == as_Widget(d->filter)) {
+            /* The pressed key must not go to the filter. */
+            setFocus_Widget(NULL);
+        }
     }
     setScrollMode_ListWidget(d->list, d->activePos != iInvalidPos);
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_MAC_CONTEXTMENU)
@@ -164,6 +266,23 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
     if (isCommand_Widget(w, ev, "list.clicked")) {
         const size_t index = (size_t) arg_Command(cmd);
         setActiveItem_BindingsWidget_(d, d->activePos != index ? index : iInvalidPos);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "input.edited") && pointer_Command(cmd) == d->filter) {
+        setActiveItem_BindingsWidget_(d, iInvalidPos);
+        d->contextPos = iInvalidPos;
+        setFlags_Widget(
+            d->filterClear, disabled_WidgetFlag, isEmpty_String(text_InputWidget(d->filter)));
+        updateItems_BindingsWidget_(d);
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "bindings.filter.clear")) {
+        setTextCStr_InputWidget(d->filter, "");
+        setFlags_Widget(d->filterClear, disabled_WidgetFlag, iTrue);
+        setActiveItem_BindingsWidget_(d, iInvalidPos);
+        d->contextPos = iInvalidPos;
+        updateItems_BindingsWidget_(d);
+        setFocus_Widget(as_Widget(d->filter));
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "menu.closed")) {
@@ -239,6 +358,24 @@ static void draw_BindingItem_(const iBindingItem *d, iPaint *p, iRect itemRect,
     const int   font       = uiLabel_FontId;
     const int   itemHeight = height_Rect(itemRect);
     const int   line       = lineHeight_Text(font);
+    if (d->listItem.flags.isSeparator) {
+        if (d->order == -2) {
+            drawHLine_Paint(p,
+                            init_I2(left_Rect(itemRect) + 3 * gap_UI,
+                                    bottom_Rect(itemRect) - itemHeight / 4 - gap_UI),
+                            width_Rect(itemRect) - 9 * gap_UI,
+                            uiSeparator_ColorId);
+        }
+        else {
+            const int headFont = uiLabelBold_FontId;
+            drawRange_Text(headFont,
+                           init_I2(left_Rect(itemRect) + 3 * gap_UI,
+                                   bottom_Rect(itemRect) - lineHeight_Text(headFont) - 2 * gap_UI),
+                           uiIcon_ColorId,
+                           range_String(&d->label));
+        }
+        return;
+    }
     int         fg         = uiText_ColorId;
     const iBool isPressing = isMouseDown_ListWidget(list) || d->isWaitingForEvent;
     const iBindingsWidget *parent = (const iBindingsWidget *) parent_Widget(list);
