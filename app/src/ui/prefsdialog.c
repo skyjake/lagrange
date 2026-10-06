@@ -69,6 +69,32 @@ static void addFontButtons_(iWidget *parent, const char *id) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static float prefsWindowHeight_; /* window coordinates; remembered for the session only */
+
+static void fitPreferencesWindow_(iWidget *prefs, iWidget *tabs) {
+    /* The tabs are the only child of a promoted dialog. */
+    const iWindow *win = window_Widget(prefs);
+    const iInt2 natural = init_I2(width_Widget(tabs) + prefs->padding[0] + prefs->padding[2],
+                                  height_Widget(tabs) + prefs->padding[1] + prefs->padding[3]);
+    SDL_SetWindowMinimumSize(
+        win->win, natural.x / win->pixelRatio, natural.y / win->pixelRatio);
+#if !defined (iPlatformTerminal)
+    SDL_SetWindowMaximumSize(win->win, natural.x / win->pixelRatio, 0);
+#endif
+    const int extra = (int) (prefsWindowHeight_ * win->pixelRatio) - natural.y;
+    if (extra > 0) {
+        tabs->rect.size.y += extra;
+    }
+}
+
+void setPreferencesWindowHeight_Widget(iWidget *prefs, int height) {
+    if (!prefs || !isPromoted_Widget(prefs)) {
+        return;
+    }
+    prefsWindowHeight_ = height / window_Widget(prefs)->pixelRatio;
+    updatePreferencesLayout_Widget(prefs);
+}
+
 void updatePreferencesLayout_Widget(iWidget *prefs) {
     if (!prefs || deviceType_App() != desktop_AppDeviceType) {
         return;
@@ -103,7 +129,13 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
         bindings->rect.size.x = 0;
     }
     resizeToLargestPage_Widget(tabs);
-    arrange_Widget(prefs);
+    if (isPromoted_Widget(prefs)) {
+        fitPreferencesWindow_(prefs, tabs);
+        arrange_Widget(root_Widget(prefs)); /* frame root must match the window size */
+    }
+    else {
+        arrange_Widget(prefs);
+    }
     iForIndices(i, inputIds) {
         expandInputFieldWidth_(findChild_Widget(tabs, inputIds[i]));
     }
@@ -1221,6 +1253,7 @@ void showPreferences_Widget(const char *cmd) {
         setPadding1_Widget(dlg, 0); /* no sheet frame in a window */
         updatePreferencesLayout_Widget(dlg);
         promoteDialogToWindow_Widget(dlg);
+        updatePreferencesLayout_Widget(dlg); /* apply window size limits and remembered height */
     }
     if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
         iWidget *idPanel = panel_Mobile(dlg,

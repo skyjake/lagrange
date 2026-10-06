@@ -315,6 +315,9 @@ static void windowSizeChanged_Window_(iWindow *d) {
     rect->size  = d->size;
     setCurrent_Root(root);
     updatePadding_Root(root);
+    if (d->type == extra_WindowType) {
+        setPreferencesWindowHeight_Widget(findChild_Widget(root->widget, "prefs"), d->size.y);
+    }
     arrange_Widget(root->widget);
 }
 

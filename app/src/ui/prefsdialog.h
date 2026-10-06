@@ -26,4 +26,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iWidget *   makePreferences_Widget          (void);
 void        updatePreferencesLayout_Widget  (iWidget *prefs);
+void        setPreferencesWindowHeight_Widget (iWidget *prefs, int height);
 void        showPreferences_Widget          (const char *cmd);
