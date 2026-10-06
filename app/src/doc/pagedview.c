@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 uint32_t pageTurnDuration_DocumentView(const iDocumentView *d) {
     /* Narrow pages turn faster, though not in proportion to the distance. The full duration
        is for a width of about 1000 points. */
-    const float full  = prefs_App()->pageTurn == curl_PageTurnAnimation ? 400 : 250;
+    const float full  = prefs_App()->pageTurn == curl_PageTurnAnimation ? 330 : 250;
     const float width = width_Rect(pageViewport_DocumentView(d)) / (250.0f * gap_UI);
     return full * iClamp(sqrtf(width), 0.5f, 1.0f);
 }
@@ -82,10 +82,22 @@ static int preferredWidth_DocumentView_(const iDocumentView *d, int columns) {
     return columns > 1 ? width * 0.85f : width;
 }
 
+static float textZoom_(void) {
+    return activeDocPrefs_App()->zoomPercent.value / 100.0f; /* follows the fonts */
+}
+
 static int pageMargin_DocumentView_(const iDocumentView *d, int columnWidth) {
     /* Margins are relative to the page size. */
-    const int pageSize = iMin(columnWidth, height_Rect(pageViewport_DocumentView(d)));
-    return iMax(2 * gap_UI, pageSize / 14);
+    const iRect viewport = pageViewport_DocumentView(d);
+    const int   pageSize = iMin(columnWidth, height_Rect(viewport));
+    const int   margin   = iMax(2 * gap_UI, pageSize / 14);
+    if (columnWidth < width_Rect(viewport)) {
+        return margin;
+    }
+    /* A single column on the page gives way to text that does not fit, down to half of
+       the margin. */
+    const int wanted = preferredWidth_DocumentView_(d, 1) * textZoom_();
+    return iMax(iMax(2 * gap_UI, margin / 2), iMin(margin, (columnWidth - wanted) / 2));
 }
 
 static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidth) {
@@ -93,8 +105,8 @@ static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidt
 }
 
 static int pagesFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
-    /* Two pages when both fit at the preferred width. */
-    return preferredWidth_DocumentView_(d, 2) <=
+    /* Two pages when both fit at the preferred width of the actual text size. */
+    return preferredWidth_DocumentView_(d, 2) * textZoom_() <=
                    maxWidthInColumn_DocumentView_(d, viewportWidth / 2)
                ? 2
                : 1;
@@ -103,8 +115,7 @@ static int pagesFor_DocumentView_(const iDocumentView *d, int viewportWidth) {
 static int columnsPerPageFor_DocumentView_(const iDocumentView *d, int pageWidth) {
     /* Two columns when both fit at the preferred width of the actual text size, so small
        text is set in narrower columns. */
-    const float zoom = activeDocPrefs_App()->zoomPercent.value / 100.0f; /* follows the fonts */
-    return preferredWidth_DocumentView_(d, 2) * zoom * 0.75f <=
+    return preferredWidth_DocumentView_(d, 2) * textZoom_() * 0.75f <=
                    maxWidthInColumn_DocumentView_(d, pageWidth / 2)
                ? 2
                : 1;
@@ -124,9 +135,8 @@ static int widthFor_DocumentView_(const iDocumentView *d, int viewportWidth, int
                                   int columnsPerPage) {
     int preferred = preferredWidth_DocumentView_(d, columns);
     if (columnsPerPage == 1) {
-        /* Smaller text does not make the lines of a single column any longer. */
-        const float zoom = activeDocPrefs_App()->zoomPercent.value / 100.0f;
-        preferred *= iMin(1.0f, zoom);
+        /* Lines of a single column follow the text size. */
+        preferred *= textZoom_();
     }
     return iMin(preferred, maxWidthInColumn_DocumentView_(d, viewportWidth / columns));
 }
@@ -454,17 +464,9 @@ int pageTurnZone_DocumentView(const iDocumentView *d, iInt2 windowPos) {
     if (!contains_Rect(viewport, windowPos)) {
         return 0;
     }
-    int left, right;
-    if (deviceType_App() == phone_AppDeviceType) {
-        /* The margins are too narrow for tapping. */
-        left  = left_Rect(viewport) + width_Rect(viewport) / 4;
-        right = right_Rect(viewport) - width_Rect(viewport) / 4;
-    }
-    else {
-        const size_t last = d->paged.column + numColumns_DocumentView(d) - 1;
-        left  = columnOrigin_DocumentView(d, d->paged.column).x;
-        right = columnOrigin_DocumentView(d, last).x + size_GmDocument(d->doc).x;
-    }
+    /* The margins may be too narrow for tapping. */
+    const int left  = left_Rect(viewport) + width_Rect(viewport) / 5;
+    const int right = right_Rect(viewport) - width_Rect(viewport) / 5;
     return windowPos.x < left ? -1 : windowPos.x >= right ? +1 : 0;
 }
 
