@@ -294,6 +294,10 @@ msgstr "Save to Downloads and Open File"
 msgid "menu.save.as"
 msgstr "Save As…"
 
+# Saves the current page or Gempub book to the bookshelf in the Book sidebar.
+msgid "menu.save.books"
+msgstr "Save to Bookshelf"
+
 msgid "menu.sidebar"
 msgstr "Toggle Sidebar"
 
@@ -591,7 +595,7 @@ msgstr "Tabs"
 msgid "sidebar.subscriptions"
 msgstr "Subscriptions"
 
-# Sidebar mode that shows the cover and the index page of the current GemPub book.
+# Sidebar mode that shows the cover and the index page of the current GemPub book, and the bookshelf.
 msgid "sidebar.gempub"
 msgstr "Book"
 
@@ -601,8 +605,24 @@ msgstr "Cover"
 msgid "sidebar.gempub.index"
 msgstr "Contents"
 
-msgid "sidebar.empty.gempub"
-msgstr "The current page is not part of a book."
+# Sidebar tab listing the books saved locally.
+msgid "sidebar.gempub.shelf"
+msgstr "Shelf"
+
+msgid "sidebar.empty.books"
+msgstr "No Books"
+
+msgid "book.delete"
+msgstr "Delete Book"
+
+msgid "heading.book.delete"
+msgstr "Delete Book"
+
+msgid "dlg.confirm.book.delete"
+msgstr "Do you want to delete \"%s\" from the bookshelf? The reading position is kept."
+
+msgid "dlg.book.delete"
+msgstr "Delete"
 
 # Preferences: on which sidebar the Book mode is shown.
 msgid "prefs.gempubsidebar"
@@ -1115,6 +1135,30 @@ msgstr "Open Downloaded File"
 msgid "heading.save.error"
 msgstr "Error Saving File"
 
+msgid "heading.book.save"
+msgstr "Save to Bookshelf"
+
+msgid "dlg.book.save.unsupported"
+msgstr "Only Gemtext pages and Gempub books can be saved to the bookshelf."
+
+msgid "dlg.book.save.error"
+msgstr "The book could not be saved to the bookshelf."
+
+msgid "heading.book.saved"
+msgstr "Saved to Bookshelf"
+
+msgid "dlg.book.saved"
+msgstr "\"%s\" is now on the bookshelf."
+
+msgid "heading.book.exists"
+msgstr "Book Already Saved"
+
+msgid "dlg.book.exists"
+msgstr "\"%s\" is already on the bookshelf. Do you want to overwrite the saved copy with the downloaded one?"
+
+msgid "dlg.book.overwrite"
+msgstr "Overwrite"
+
 msgid "heading.import.bookmarks"
 msgstr "Import Bookmarks"
 
@@ -1337,6 +1381,9 @@ msgstr "Trusted certificates:"
 msgid "import.userdata.sitespec"
 msgstr "Site settings:"
 
+msgid "import.userdata.books"
+msgstr "Reading positions:"
+
 msgid "dlg.userdata.no"
 msgstr "None"
 
@@ -1348,6 +1395,9 @@ msgstr "All (Overwrite)"
 
 msgid "dlg.userdata.alldup"
 msgstr "All (Keep Duplicates)"
+
+msgid "dlg.userdata.newer"
+msgstr "All (Keep Newer)"
 
 msgid "import.userdata"
 msgstr "Import Selected Data"
@@ -2919,6 +2969,13 @@ msgstr "This Gempub book can be viewed after it has been saved locally."
 
 msgid "gempub.cover.untitled"
 msgstr "Untitled Book"
+
+msgid "gempub.cover.openshelf"
+msgstr "Open from Bookshelf"
+
+# Heading on the contents page of a book made from a single page. Followed by a link to the page's original URL.
+msgid "gempub.page.source"
+msgstr "Source"
 
 msgid "gempub.cover.aboutbook"
 msgstr "About this book"

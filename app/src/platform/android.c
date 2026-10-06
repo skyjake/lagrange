@@ -363,7 +363,7 @@ static uint32_t backupUserData_Android_(void *data, SDL_TimerID timerID, uint32_
     /* This runs in a background thread. We don't want to block the UI thread for saving. */
     iExport *backup = new_Export();
     generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag |
-                           snippets_ExportFlag);
+                           snippets_ExportFlag | books_ExportFlag);
     iBuffer *buf = new_Buffer();
     openEmpty_Buffer(buf);
     serialize_Archive(archive_Export(backup), stream_Buffer(buf));
@@ -467,7 +467,7 @@ iBool handleCommand_Android(const char *cmd) {
             if (load_Export(backup, archive)) {
                 import_Export(backup, ifMissing_ImportMethod, all_ImportMethod,
                               none_ImportMethod, none_ImportMethod, none_ImportMethod,
-                              all_ImportMethod);
+                              all_ImportMethod, all_ImportMethod);
             }
             delete_Export(backup);
         }

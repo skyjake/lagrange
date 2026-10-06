@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../defs.h"
 #include "../export.h"
 #include "../bookmarks.h"
+#include "../books.h"
 #include "../feeds.h"
 #include "../gempub.h"
 #include "../gmutil.h"
@@ -197,12 +198,20 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
             makeFooterButtons_DocumentWidget(d->owner, constData_Array(items), size_Array(items));
         }
         else {
+            const iBook   *book      = find_Books(id_Books(d->sourceGempub));
+            const iString *shelfPath = book ? path_Book(book) : NULL;
             makeFooterButtons_DocumentWidget(
                 d->owner,
-                (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
-                                 SDLK_S,
-                                 KMOD_PRIMARY | SDL_KMOD_SHIFT,
-                                 "document.save open:1" },
+                (iMenuItem[]){ shelfPath ? (iMenuItem){ book_Icon " ${gempub.cover.openshelf}",
+                                                        SDLK_S,
+                                                        KMOD_PRIMARY | SDL_KMOD_SHIFT,
+                                                        format_CStr("!open url:%s",
+                                                                    cstrCollect_String(
+                                                                        makeFileUrl_String(shelfPath))) }
+                                         : (iMenuItem){ book_Icon " ${menu.save.books}",
+                                                        SDLK_S,
+                                                        KMOD_PRIMARY | SDL_KMOD_SHIFT,
+                                                        "document.savebook" },
                                { download_Icon " " saveToDownloads_Label,
                                  SDLK_S,
                                  KMOD_PRIMARY,
@@ -330,6 +339,15 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 invalidate_DocumentWidget(d->owner);
             }
             const iBool isCover = equal_String(url_DocumentFetch_(d), coverPageUrl_Gempub(d->sourceGempub));
+            if (!isCached && isRemote_Gempub(d->sourceGempub) && isCover) {
+                /* Downloaded books go on the shelf. */
+                postCommandf_Root(w->root, "document.savebook ptr:%p", d->owner);
+            }
+            if (!isCached && !isRemote_Gempub(d->sourceGempub) && isCover && !isInsideArchive) {
+                update_Books(d->sourceGempub,
+                             collect_String(localFilePathFromUrl_String(url_DocumentFetch_(d))));
+                postCommand_App("books.changed");
+            }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentWidget(d->owner) &&
                 (isCover || equal_String(url_DocumentFetch_(d), indexPageUrl_Gempub(d->sourceGempub)))) {
                 /* Opening a book: the cover is in the sidebar and the contents in the document. */
@@ -339,10 +357,15 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
                 postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");
                 if (isCover) {
-                    postCommandf_Root(w->root,
-                                      "open doc:%p url:%s",
-                                      d->owner,
-                                      cstr_String(indexPageUrl_Gempub(d->sourceGempub)));
+                    /* Reading continues where it was left off. */
+                    const iString *target = indexPageUrl_Gempub(d->sourceGempub);
+                    const iBook   *book   = find_Books(id_Books(d->sourceGempub));
+                    if (book && book->chapter >= 0 &&
+                        (size_t) book->chapter < navSize_Gempub(d->sourceGempub)) {
+                        resumeBook_DocumentWidget(d->owner, book->chapter, book->chapterPos);
+                        target = navLinkUrl_Gempub(d->sourceGempub, book->chapter);
+                    }
+                    postCommandf_Root(w->root, "open doc:%p url:%s", d->owner, cstr_String(target));
                 }
             }
         }

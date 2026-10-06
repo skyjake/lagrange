@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "media/player.h"
 #include "doc/banner.h"
 #include "bookmarks.h"
+#include "books.h"
 #include "command.h"
 #include "defs.h"
 #include "doc/documentview.h"
@@ -181,6 +182,9 @@ struct Impl_DocumentWidget {
     size_t         progressChapter;   /* shown in the progress bar */
     uint32_t       progressAnimEnd;   /* moving to another chapter until this time */
     float          pendingChapterPos; /* where the visible pages end; negative if none */
+    float          resumeChapterPos;  /* where the visible pages begin; negative if none */
+    size_t         savedChapter;      /* book position last saved */
+    size_t         savedColumn;
 
     /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
@@ -914,6 +918,74 @@ iBool isReadingOn_DocumentWidget(const iDocumentWidget *d) {
     return (d->flags & readingOn_DocumentWidgetFlag) != 0;
 }
 
+void resumeBook_DocumentWidget(iDocumentWidget *d, size_t chapter, float chapterPos) {
+    d->pendingChapter    = chapter;
+    d->pendingChapterPos = -1.0f;
+    d->resumeChapterPos  = chapterPos;
+}
+
+static void applyResume_DocumentWidget_(iDocumentWidget *d) {
+    if (d->resumeChapterPos < 0.0f) {
+        return;
+    }
+    const iGempub *gempub = d->fetch->sourceGempub;
+    if (gempub && equal_String(d->mod.url, coverPageUrl_Gempub(gempub))) {
+        return; /* the chapter is opened next */
+    }
+    size_t numChapters;
+    if (bookChapter_DocumentWidget_(d, &numChapters) == d->pendingChapter) {
+        if (isPaged_DocumentView(d->view)) {
+            showColumn_DocumentView(
+                d->view,
+                (size_t) (d->resumeChapterPos * numColumns_GmDocument(d->view->doc) + 0.001f),
+                iFalse);
+        }
+        else {
+            init_Anim(&d->view->scrollY.pos,
+                      d->resumeChapterPos * pageHeight_DocumentView(d->view));
+        }
+    }
+    d->resumeChapterPos = -1.0f;
+}
+
+static void saveBookPosition_DocumentWidget_(iDocumentWidget *d) {
+    /* Positions are saved when chapters are opened and pages are turned. */
+    size_t       numChapters;
+    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
+    if (chapter == iInvalidPos || d->savedChapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
+        return; /* no baseline yet */
+    }
+    const size_t column = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
+    if (chapter == d->savedChapter && column == d->savedColumn) {
+        return;
+    }
+    d->savedChapter = chapter;
+    d->savedColumn  = column;
+    const size_t numCols = numColumns_GmDocument(d->view->doc);
+    setPosition_Books(d->fetch->sourceGempub,
+                      (int) chapter,
+                      (int) numChapters,
+                      numCols > 0 ? (float) column / numCols : 0.0f);
+}
+
+static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
+    /* Restored tabs and layout changes keep the saved position, but another chapter replaces it. */
+    size_t       numChapters;
+    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
+    d->savedChapter      = chapter;
+    d->savedColumn       = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
+    if (chapter != iInvalidPos) {
+        const iBook *book = find_Books(id_Books(d->fetch->sourceGempub));
+        if (!book || book->chapter != (int) chapter) {
+            const size_t numCols = numColumns_GmDocument(d->view->doc);
+            setPosition_Books(d->fetch->sourceGempub,
+                              (int) chapter,
+                              (int) numChapters,
+                              numCols > 0 ? (float) d->savedColumn / numCols : 0.0f);
+        }
+    }
+}
+
 static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
     /* When paginated, the banner is only on the first page. */
     return !isPaged_DocumentView(d->view) || visibleColumns_DocumentView(d->view).start == 0;
@@ -1101,8 +1173,11 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         addBannerWarnings_DocumentFetch(d->fetch);
     }
     d->fetch->state = ready_RequestState;
+    d->savedChapter = iInvalidPos;
     postProcessContent_DocumentFetch(d->fetch, iTrue);
     resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
+    applyResume_DocumentWidget_(d);
+    beginBookPosition_DocumentWidget_(d);
     if (isPaged_DocumentView(d->view)) {
         pagesMoved_DocumentWidget(d);
     }
@@ -1363,6 +1438,93 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
         return collectNew_String();
     }
     return savePath;
+}
+
+static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite) {
+    /* Books are copied to the shelf and pages become single-chapter books. */
+    iWidget       *w      = as_Widget(d);
+    const iGempub *gempub = d->fetch->sourceGempub;
+    const iString *id;
+    const iString *fileName;
+    const iString *title;
+    iBlock        *data;
+    if (gempub) {
+        id       = id_Books(gempub);
+        iString *bookTitle = collect_String(copy_String(property_Gempub(gempub, title_GempubProperty)));
+        translate_Lang(bookTitle); /* may be a placeholder */
+        title    = bookTitle;
+        fileName = title;
+        if (isRemote_Gempub(gempub)) {
+            data = copy_Block(&d->fetch->sourceContent);
+        }
+        else {
+            const iString *path =
+                collect_String(localFilePathFromUrl_String(coverPageUrl_Gempub(gempub)));
+            if (isOnShelf_Books(path)) {
+                postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
+                return;
+            }
+            iFile *f = iClob(new_File(path));
+            if (!open_File(f, readOnly_FileMode)) {
+                return;
+            }
+            data = readAll_File(f);
+        }
+    }
+    else if (format_GmDocument(d->view->doc) == gemini_SourceFormat &&
+             !cmp_String(&d->fetch->sourceMime, "text/gemini")) {
+        title = title_GmDocument(d->view->doc);
+        if (isEmpty_String(title)) {
+            title = bookmarkTitle_DocumentWidget(d);
+        }
+        const iString *author = collectNewRange_String(urlHost_String(d->mod.url));
+        id       = collect_String(makeId_Books(title, author));
+        fileName = title;
+        data     = newPageArchive_Gempub(d->mod.url, title, author, source_GmDocument(d->view->doc));
+        overwrite = iTrue; /* saving the page again updates the book */
+    }
+    else {
+        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.book.save}",
+                                 "${dlg.book.save.unsupported}");
+        return;
+    }
+    const iBook   *existing     = find_Books(id);
+    const iString *existingPath = existing ? path_Book(existing) : NULL;
+    if (existingPath && !overwrite) {
+        makeQuestion_Widget(
+            uiHeading_ColorEscape "${heading.book.exists}",
+            format_Lang("${dlg.book.exists}", cstr_String(title)),
+            (iMenuItem[]){ { "${cancel}",
+                             SDLK_ESCAPE,
+                             0,
+                             format_CStr("!open doc:%p url:%s",
+                                         d,
+                                         cstrCollect_String(makeFileUrl_String(existingPath))) },
+                           { uiTextCaution_ColorEscape "${dlg.book.overwrite}",
+                             0,
+                             0,
+                             format_CStr("document.savebook overwrite:1 ptr:%p", d) } },
+            2);
+        delete_Block(data);
+        return;
+    }
+    const iString *savedPath = add_Books(data, fileName, existingPath);
+    delete_Block(data);
+    if (!savedPath) {
+        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
+                                 "${dlg.book.save.error}");
+        return;
+    }
+    postCommand_App("books.changed");
+    if (gempub) {
+        postCommandf_Root(w->root,
+                          "!open doc:%p url:%s",
+                          d,
+                          cstrCollect_String(makeFileUrl_String(savedPath)));
+    }
+    else {
+        makeSimpleMessage_Widget("${heading.book.saved}", format_Lang("${dlg.book.saved}", cstr_String(title)));
+    }
 }
 
 static const iString *saveAsPath_(const iString *url, const iString *mime) {
@@ -1985,6 +2147,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                      urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
                      iFalse);
         d->fetch->state = ready_RequestState;
+        d->savedChapter = iInvalidPos;
         postProcessContent_DocumentFetch(d->fetch, iFalse);
         d->flags &= ~readingOn_DocumentWidgetFlag;
         if (d->pendingChapterPos >= 0.0f) {
@@ -1998,6 +2161,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 d->pendingChapterPos = -1.0f;
             }
         }
+        applyResume_DocumentWidget_(d);
         if (d->flags & showLastPage_DocumentWidgetFlag) {
             /* Going backward from the next chapter. */
             d->flags &= ~showLastPage_DocumentWidgetFlag;
@@ -2005,6 +2169,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 showColumn_DocumentView(d->view, numColumns_GmDocument(d->view->doc) - 1, iFalse);
             }
         }
+        beginBookPosition_DocumentWidget_(d);
         if (isPaged_DocumentView(d->view)) {
             pagesMoved_DocumentWidget(d);
         }
@@ -2211,6 +2376,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     }
                 }
             }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.savebook") &&
+             (hasLabel_Command(cmd, "ptr") ? pointer_Command(cmd) == d : document_App() == d)) {
+        if (d->fetch->request) {
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.incomplete}",
+                                     "${dlg.save.incomplete}");
+        }
+        else if (!isEmpty_Block(&d->fetch->sourceContent)) {
+            saveToBookshelf_DocumentWidget_(d, argLabel_Command(cmd, "overwrite"));
         }
         return iTrue;
     }
@@ -3317,8 +3493,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 &items,
                                 (iMenuItem[]){
                                     { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" } },
-                                2);
+                                    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
+                                    { book_Icon " ${menu.save.books}", 0, 0, "document.savebook" } },
+                                3);
 #if defined (LAGRANGE_FILE_DIALOGS)
                             pushBack_Array(
                                 &items, &(iMenuItem){ "${menu.save.as}", 0, 0, "document.save saveas:1" });
@@ -3729,6 +3906,7 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
                                                  numColumns_GmDocument(d->view->doc)),
                                       bookProgressThumbSize_DocumentWidget_(d),
                                       d->progressAnimEnd > now ? d->progressAnimEnd - now : 0);
+        saveBookPosition_DocumentWidget_(d);
         return;
     }
     d->progressChapter = iInvalidPos;
@@ -4093,6 +4271,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->progressChapter    = iInvalidPos;
     d->progressAnimEnd    = 0;
     d->pendingChapterPos  = -1.0f;
+    d->resumeChapterPos   = -1.0f;
+    d->savedChapter       = iInvalidPos;
+    d->savedColumn        = 0;
     d->pendingLinkUpdates = 0;
     setOwner_Banner(d->banner, d);
     init_String(&d->pendingGotoHeading);

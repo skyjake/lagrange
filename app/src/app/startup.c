@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "impl.h"
 
 #include "bookmarks.h"
+#include "books.h"
 #include "feeds.h"
 #include "fontpack.h"
 #include <lagrange/core.h>
@@ -478,6 +479,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_SiteSpec(dataDir_App_());
     initCopy_DocPrefs(&d->activeDocPrefs, &constRule_ScopeRules("base")->prefs);
     init_Snippets(dataDir_App_());
+    init_Books(dataDir_App_());
     init_Misfin(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
@@ -725,6 +727,7 @@ static void deinit_App(iApp *d) {
     deinit_Fonts();
     save_Snippets(dataDir_App_());
     deinit_Misfin();
+    deinit_Books();
     deinit_Snippets();
     deinit_SiteSpec();
     deinit_ScopeRules();

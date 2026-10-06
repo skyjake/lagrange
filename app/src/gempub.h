@@ -73,6 +73,9 @@ const iString * navLinkUrl_Gempub       (const iGempub *, size_t index);
 const iString * navLinkLabel_Gempub     (const iGempub *, size_t index);
 const iString * chapterTitle_Gempub     (const iGempub *, size_t navIndex); /* level 1 heading in effect where the page begins */
 
+iBlock *    newPageArchive_Gempub   (const iString *url, const iString *title,
+                                     const iString *author, const iString *source);
+
 void        setup_Gempub            (void); /* one-time setup at launch */
 
 extern const char *mimeType_Gempub;

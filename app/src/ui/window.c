@@ -107,6 +107,7 @@ static const iMenuItem fileMenuItems_[] = {
 #if defined (LAGRANGE_FILE_DIALOGS)
     { "${menu.save.as}", 0, 0, "document.save saveas:1" },
 #endif
+    { "${menu.save.books}", 0, 0, "document.savebook" },
     { "---" },
     { "${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
 #if defined (LAGRANGE_PC_MENUS)

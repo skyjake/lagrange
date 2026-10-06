@@ -92,6 +92,7 @@ const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 const iString *     feedEntryUrl_DocumentWidget     (const iDocumentWidget *);
 const iGempub *     gempub_DocumentWidget           (const iDocumentWidget *); /* NULL if not a book */
 iBool               isReadingOn_DocumentWidget      (const iDocumentWidget *); /* adjacent chapter opening */
+void                resumeBook_DocumentWidget       (iDocumentWidget *, size_t chapter, float chapterPos);
 uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 int                 documentWidth_DocumentWidget        (const iDocumentWidget *);

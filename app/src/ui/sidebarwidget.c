@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "bookmarks.h"
+#include "books.h"
 #include "certlistwidget.h"
 #include "command.h"
 #include "defs.h"
@@ -66,6 +67,8 @@ struct Impl_SidebarItem {
     iString   url;
     int       count;
     iTime     ts;
+    float     progress; /* of a book; negative if not started */
+    uint64_t  size;
 };
 
 void init_SidebarItem(iSidebarItem *d) {
@@ -79,6 +82,8 @@ void init_SidebarItem(iSidebarItem *d) {
     init_String(&d->url);
     d->count = 0;
     iZap(d->ts);
+    d->progress = -1.0f;
+    d->size     = 0;
 }
 
 void deinit_SidebarItem(iSidebarItem *d) {
@@ -130,10 +135,11 @@ struct Impl_SidebarWidget {
     iWidget          *blank;
     iListWidget      *list;
     iCertListWidget  *certList;
-    iWidget          *gempubArea;   /* tabs and a document for the current book */
-    iLabelWidget     *gempubTabs[2];
+    iWidget          *gempubTabArea; /* shown when the current document is a book */
+    iLabelWidget     *gempubTabs[3];
+    iWidget          *gempubArea;   /* a document for the current book */
     iSimpleDocumentWidget *gempubDoc;
-    int               gempubPage;   /* 0: cover, 1: index */
+    int               gempubPage;   /* 0: cover, 1: index, 2: shelf */
     iString           gempubUrl;    /* page shown in `gempubDoc` */
     iString           gempubCentered; /* document whose link was centered in the index */
     iWidget          *actions;      /* below the list, area for buttons */
@@ -177,7 +183,7 @@ static int bookSide_SidebarWidget_(void) {
 static iBool isModeEnabled_SidebarWidget_(const iSidebarWidget *d, int side,
                                           enum iSidebarMode mode) {
     if (mode == gempub_SidebarMode) {
-        return side == bookSide_SidebarWidget_() && gempub_SidebarWidget_(d) != NULL;
+        return side == bookSide_SidebarWidget_();
     }
     return prefs_App()->sidebarModeEnabled[side][mode];
 }
@@ -616,9 +622,6 @@ static iSidebarItem *addStructureItem_SidebarWidget_(iSidebarWidget *d, const iS
 static iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
     /* Shows the cover or the index of the current book. Returns False if there is none. */
     const iGempub *gempub = gempub_SidebarWidget_(d);
-    for (int i = 0; i < 2; i++) {
-        setFlags_Widget(as_Widget(d->gempubTabs[i]), selected_WidgetFlag, i == d->gempubPage);
-    }
     if (!gempub) {
         clear_String(&d->gempubUrl);
         clear_SimpleDocumentWidget(d->gempubDoc);
@@ -648,6 +651,53 @@ static iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
         }
     }
     return iTrue;
+}
+
+static iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
+    return d->mode == gempub_SidebarMode && (d->gempubPage == 2 || !gempub_SidebarWidget_(d));
+}
+
+static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
+    /* Lists the books on the shelf. Returns False if there are none. */
+    const iGempub *current     = gempub_SidebarWidget_(d);
+    const iString *currentPath = current ? collect_String(localFilePathFromUrl_String(
+                                               coverPageUrl_Gempub(current)))
+                                         : NULL;
+    const iPtrArray *books = list_Books();
+    iConstForEach(PtrArray, i, books) {
+        const iBook   *book = i.ptr;
+        const iString *path = path_Book(book);
+        iSidebarItem  *item = new_SidebarItem();
+        set_String(&item->label, &book->title);
+        if (isEmpty_String(&item->label)) {
+            set_String(&item->label, &book->fileName);
+        }
+        set_String(&item->meta, &book->author);
+        set_String(&item->url, collect_String(makeFileUrl_String(path)));
+        item->progress = book->chapter >= 0 ? progress_Book(book) : -1.0f;
+        item->size     = book->size;
+        item->icon     = 0x1f56e; /* book */
+        item->listItem.flags.isSelected = currentPath && equal_String(currentPath, path);
+        addItem_ListWidget(d->list, item);
+        iRelease(item);
+    }
+    const iMenuItem menuItems[] = {
+        { openTab_Icon " ${menu.opentab}", 0, 0, "book.open newtab:1" },
+        { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "book.open newtab:2" },
+        { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "book.open newwindow:1" },
+#if defined (iPlatformAppleDesktop)
+        { "---" },
+        { magnifyingGlass_Icon " ${menu.reveal.macos}", 0, 0, "book.reveal" },
+#endif
+#if defined (iPlatformLinux)
+        { "---" },
+        { magnifyingGlass_Icon " ${menu.reveal.filemgr}", 0, 0, "book.reveal" },
+#endif
+        { "---" },
+        { delete_Icon " " uiTextCaution_ColorEscape "${book.delete}", 0, 0, "book.delete" },
+    };
+    d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
+    return !isEmpty_PtrArray(books);
 }
 
 static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
@@ -1275,16 +1325,28 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
         }
         case gempub_SidebarMode:
-            isEmpty = !updateGempub_SidebarWidget_(d);
+            isEmpty = isShowingShelf_SidebarWidget_(d) ? !updateShelf_SidebarWidget_(d)
+                                                       : !updateGempub_SidebarWidget_(d);
             break;
         default:
             break;
     }
+    const iBool isBookPage = d->mode == gempub_SidebarMode && !isShowingShelf_SidebarWidget_(d);
     setFlags_Widget(as_Widget(d->list),
                     hidden_WidgetFlag,
-                    d->mode == identities_SidebarMode || d->mode == gempub_SidebarMode);
+                    d->mode == identities_SidebarMode || isBookPage);
     setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);
-    setFlags_Widget(d->gempubArea, hidden_WidgetFlag, d->mode != gempub_SidebarMode || isEmpty);
+    setFlags_Widget(d->gempubArea, hidden_WidgetFlag, !isBookPage || isEmpty);
+    /* Book tabs. */ {
+        const iBool showTabs = d->mode == gempub_SidebarMode && gempub_SidebarWidget_(d) != NULL;
+        if (showTabs != isVisible_Widget(d->gempubTabArea)) {
+            setFlags_Widget(d->gempubTabArea, hidden_WidgetFlag, !showTabs);
+            arrange_Widget(as_Widget(d));
+        }
+        for (int i = 0; i < 3; i++) {
+            setFlags_Widget(as_Widget(d->gempubTabs[i]), selected_WidgetFlag, i == d->gempubPage);
+        }
+    }
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
     updateVisible_ListWidget(list_SidebarWidget_(d));
     invalidate_ListWidget(list_SidebarWidget_(d));
@@ -1349,10 +1411,10 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         else if (d->mode == gempub_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
-            setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId); /* the list is hidden */
+            setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addBlankIcon_SidebarWidget_(d, div);
-            iLabelWidget *msg = new_LabelWidget("${sidebar.empty.gempub}", NULL);
+            iLabelWidget *msg = new_LabelWidget("${sidebar.empty.books}", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
             setWrap_LabelWidget(msg, iTrue);
             setCenterWrapped_LabelWidget(msg, iTrue);
@@ -1422,9 +1484,9 @@ static size_t findItemUrl_SidebarWidget_(const iSidebarWidget *d, const iString 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     /* Note: identity item height is defined by CertListWidget */
 #if !defined(iPlatformTerminal)
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 2.5f, 0, 1.2f, 1.2f, 1.333f, 1.333f, 1.333f };
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 2.5f, 0, 1.2f, 1.2f, 1.333f, 1.333f, 2.333f };
 #else
-    const float heights[max_SidebarMode] = { 1, 3, 3, 0, 1, 1, 1, 1, 1 };
+    const float heights[max_SidebarMode] = { 1, 3, 3, 0, 1, 1, 1, 1, 2 };
 #endif
     if (d->list) {
         setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
@@ -1671,6 +1733,26 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                          arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
     setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
+    /* Tabs for the current book and the shelf. */ {
+        d->gempubTabArea = new_Widget();
+        setPadding_Widget(d->gempubTabArea, 3 * gap_UI, 2 * gap_UI, 3 * gap_UI, gap_UI);
+        static const char *tabLabels[3] = {
+            "${sidebar.gempub.cover}", "${sidebar.gempub.index}", "${sidebar.gempub.shelf}"
+        };
+        for (int i = 0; i < 3; i++) {
+            d->gempubTabs[i] = addChildFlags_Widget(
+                d->gempubTabArea,
+                iClob(new_LabelWidget(tabLabels[i],
+                                      format_CStr("%s.gempub.page arg:%d", cstr_String(id_Widget(w)), i))),
+                expand_WidgetFlag);
+        }
+        addChildFlags_Widget(vdiv,
+                             iClob(d->gempubTabArea),
+                             arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                                 arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                                 hidden_WidgetFlag | collapse_WidgetFlag);
+        setBackgroundColor_Widget(d->gempubTabArea, uiBackgroundSidebar_ColorId);
+    }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     iWidget *listAndActions = makeVDiv_Widget();
@@ -1687,20 +1769,6 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     /* The current book: cover and index pages. */ {
         d->gempubArea = makeVDiv_Widget();
-        iWidget *tabs = new_Widget();
-        setPadding_Widget(tabs, 3 * gap_UI, 2 * gap_UI, 3 * gap_UI, gap_UI);
-        static const char *tabLabels[2] = { "${sidebar.gempub.cover}", "${sidebar.gempub.index}" };
-        for (int i = 0; i < 2; i++) {
-            d->gempubTabs[i] = addChildFlags_Widget(
-                tabs,
-                iClob(new_LabelWidget(tabLabels[i],
-                                      format_CStr("%s.gempub.page arg:%d", cstr_String(id_Widget(w)), i))),
-                expand_WidgetFlag);
-        }
-        addChildFlags_Widget(d->gempubArea,
-                             iClob(tabs),
-                             arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
-                                 arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
         d->gempubDoc = new_SimpleDocumentWidget();
         addChildFlags_Widget(d->gempubArea, iClob(d->gempubDoc), expand_WidgetFlag);
         setBackgroundColor_Widget(d->gempubArea, uiBackgroundSidebar_ColorId);
@@ -1881,6 +1949,16 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             }
             break;
         }
+        case gempub_SidebarMode:
+            if (!isEmpty_String(&item->url)) {
+                postCommandf_Root(get_Root(),
+                                  "open newtab:%d url:%s",
+                                  mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
+                                  cstr_String(&item->url));
+                dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+                setFocus_Widget(NULL);
+            }
+            break;
         case openDocuments_SidebarMode: {
             iWidget *tabs = findWidget_Root("doctabs");
             dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
@@ -2081,7 +2159,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         return iTrue;
     }
     else if (equal_Command(cmd, "gempub.page")) {
-        d->gempubPage = iClamp(arg_Command(cmd), 0, 1);
+        d->gempubPage = iClamp(arg_Command(cmd), 0, 2);
         if (d->mode == gempub_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }
@@ -2436,6 +2514,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             if (d->mode != siteStructure_SidebarMode) {
                 scrollOffset_ListWidget(d->list, 0);
+            }
+        }
+        else if (equal_Command(cmd, "books.delete")) {
+            if (d->side == bookSide_SidebarWidget_()) {
+                remove_Books(collect_String(suffix_Command(cmd, "path")));
+                postCommand_App("books.changed");
+            }
+        }
+        else if (equal_Command(cmd, "books.changed")) {
+            if (isShowingShelf_SidebarWidget_(d)) {
+                updateItems_SidebarWidget_(d);
             }
         }
         else if (equal_Command(cmd, "sidebar.modes.changed")) {
@@ -2955,6 +3044,42 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
+        else if (isCommand_Widget(w, ev, "book.open")) {
+            const iSidebarItem *item = d->contextItem;
+            if (item && !isEmpty_String(&item->url)) {
+                postCommand_Widget(d,
+                                   "!open newtab:%d newwindow:%d url:%s",
+                                   argLabel_Command(cmd, "newtab"),
+                                   argLabel_Command(cmd, "newwindow"),
+                                   cstr_String(&item->url));
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "book.reveal")) {
+            const iSidebarItem *item = d->contextItem;
+            if (item && !isEmpty_String(&item->url)) {
+                postCommandf_App("reveal path:%s",
+                                 cstrCollect_String(localFilePathFromUrl_String(&item->url)));
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "book.delete")) {
+            const iSidebarItem *item = d->contextItem;
+            if (item && !isEmpty_String(&item->url)) {
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "${heading.book.delete}",
+                    format_Lang("${dlg.confirm.book.delete}", cstr_String(&item->label)),
+                    (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                                   { uiTextCaution_ColorEscape "${dlg.book.delete}",
+                                     0,
+                                     0,
+                                     format_CStr("!books.delete path:%s",
+                                                 cstrCollect_String(
+                                                     localFilePathFromUrl_String(&item->url))) } },
+                    2);
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "history.delete")) {
             if (d->contextItem && !isEmpty_String(&d->contextItem->url)) {
                 removeUrl_Visited(visited_App(), &d->contextItem->url);
@@ -3350,7 +3475,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const iBool isSel =
         (isHoverItem && isPressing) ||
         (d->listItem.flags.isSelected && (sidebar->mode == feedEntries_SidebarMode ||
-                                          sidebar->mode == identities_SidebarMode)) ||
+                                          sidebar->mode == identities_SidebarMode ||
+                                          sidebar->mode == gempub_SidebarMode)) ||
         (sidebar->mode == siteStructure_SidebarMode && d->id & 1) ||
         (sidebar->mode == openDocuments_SidebarMode && d->indent);
     const iBool isHover      = isHoverItem && !isSel;
@@ -3477,6 +3603,59 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 drawRange_Text(titleFont, addY_I2(pos, h1), labelFg, range_String(&d->label));
             }
         }
+    }
+    else if (sidebar->mode == gempub_SidebarMode) {
+        /* Title and author on the left, reading progress and size on the right. */
+        const int iconPad = (isTerminal_Platform() ? 3 : 9) * gap_UI;
+        const int h1      = lineHeight_Text(uiLabel_FontId);
+        const int h2      = lineHeight_Text(font);
+        const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiAnnotation_ColorId;
+        const int labelFg = isSel ? uiTextSelected_ColorId : isHover ? uiTextFramelessHover_ColorId
+                                                                    : uiTextStrong_ColorId;
+        iString str;
+        initUnicodeN_String(&str, &d->icon, 1);
+        drawCentered_Text(uiLabelLarge_FontId,
+                          (iRect){ pos, init_I2(iconPad * aspect_UI, itemHeight) },
+                          iTrue,
+                          iconColor,
+                          "%s",
+                          cstr_String(&str));
+        deinit_String(&str);
+        iString *progress = collectNew_String();
+        if (d->progress >= 0.0f) {
+            format_String(progress, "%d%%", (int) (d->progress * 100.0f + 0.5f));
+        }
+        iString *size = collectNewFormat_String("%.1f ${mb}", d->size / 1.0e6);
+        translate_Lang(size);
+        const int rightEdge = right_Rect(itemRect) - 3 * gap_UI * aspect_UI - blankWidth;
+        const int colWidth  = iMax(measureRange_Text(uiLabel_FontId, range_String(progress)).advance.x,
+                                   measureRange_Text(uiLabel_FontId, range_String(size)).advance.x);
+        const int top = pos.y + (itemHeight - h1 - h2) / 2;
+        pos.x += iconPad * aspect_UI;
+        const int avail = rightEdge - colWidth - 2 * gap_UI * aspect_UI - pos.x;
+        const char *endPos;
+        tryAdvanceNoWrap_Text(font, range_String(&d->label), avail, &endPos);
+        drawRange_Text(font,
+                       init_I2(pos.x, top),
+                       labelFg,
+                       (iRangecc){ constBegin_String(&d->label), endPos });
+        tryAdvanceNoWrap_Text(uiLabel_FontId, range_String(&d->meta), avail, &endPos);
+        drawRange_Text(uiLabel_FontId,
+                       init_I2(pos.x, top + h2),
+                       metaFg,
+                       (iRangecc){ constBegin_String(&d->meta), endPos });
+        drawAlign_Text(uiLabel_FontId,
+                       init_I2(rightEdge, top + (h2 - h1) / 2),
+                       isSel ? uiTextSelected_ColorId : uiText_ColorId,
+                       right_Alignment,
+                       "%s",
+                       cstr_String(progress));
+        drawAlign_Text(uiLabel_FontId,
+                       init_I2(rightEdge, top + h2),
+                       metaFg,
+                       right_Alignment,
+                       "%s",
+                       cstr_String(size));
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         const iBool isFolder = d->listItem.flags.isDropTarget;

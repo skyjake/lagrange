@@ -36,6 +36,7 @@ enum iExportFlags {
     visited_ExportFlag            = iBit(3),
     siteSpec_ExportFlag           = iBit(4),
     snippets_ExportFlag           = iBit(5),
+    books_ExportFlag              = iBit(6),
     everything_ExportFlag         = 0xff,
 };
 
@@ -49,7 +50,8 @@ void    import_Export   (const iExport *,
                          enum iImportMethod trusted,
                          enum iImportMethod visited,
                          enum iImportMethod siteSpec,
-                         enum iImportMethod snippets);
+                         enum iImportMethod snippets,
+                         enum iImportMethod books);
 
 iBool   detect_Export   (const iArchive *);
 

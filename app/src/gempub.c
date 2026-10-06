@@ -32,10 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmcerts.h>
 
 #include <the_Foundation/archive.h>
+#include <the_Foundation/buffer.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/time.h>
 
 const char *mimeType_Gempub = "application/gpub+zip";
 
@@ -478,6 +480,69 @@ iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
         }
     }
     return haveImage;
+}
+
+static iString *absoluteLinks_(const iString *source, const iString *baseUrl) {
+    /* Relative links would otherwise point inside the archive. */
+    iString *out         = new_String();
+    iRegExp *linkPattern = newGemtextLink_RegExp();
+    iBool    isPre       = iFalse;
+    iRangecc line        = iNullRange;
+    while (nextSplit_Rangecc(range_String(source), "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+        }
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (!isPre && startsWith_Rangecc(line, "=>") && matchRange_RegExp(linkPattern, line, &m)) {
+            const iString *url =
+                absoluteUrl_String(baseUrl, collectNewRange_String(capturedRange_RegExpMatch(&m, 1)));
+            appendFormat_String(out, "=> %s", cstr_String(url));
+            appendRange_String(out, capturedRange_RegExpMatch(&m, 2));
+        }
+        else {
+            appendRange_String(out, line);
+        }
+        appendCStr_String(out, "\n");
+    }
+    iRelease(linkPattern);
+    return out;
+}
+
+iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iString *author,
+                              const iString *source) {
+    iArchive *arch = new_Archive();
+    openWritable_Archive(arch);
+    iString *str = new_String();
+    iDate    today;
+    initCurrent_Date(&today);
+    format_String(str,
+                  "gpubVersion: 1.0.0\n"
+                  "title: %s\n"
+                  "author: %s\n"
+                  "revisionDate: %s\n",
+                  cstr_String(title),
+                  cstr_String(author),
+                  cstrCollect_String(format_Date(&today, "%Y-%m-%d")));
+    setDataCStr_Archive(arch, "metadata.txt", utf8_String(str));
+    format_String(str,
+                  "# %s\n\n=> page.gmi %s\n\n## %s\n=> %s\n",
+                  cstr_String(title),
+                  cstr_String(title),
+                  cstr_Lang("gempub.page.source"),
+                  cstr_String(url));
+    setDataCStr_Archive(arch, "index.gmi", utf8_String(str));
+    delete_String(str);
+    iString *page = absoluteLinks_(source, url);
+    setDataCStr_Archive(arch, "page.gmi", utf8_String(page));
+    delete_String(page);
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    serialize_Archive(arch, stream_Buffer(buf));
+    iBlock *data = copy_Block(data_Buffer(buf));
+    iRelease(buf);
+    iRelease(arch);
+    return data;
 }
 
 /*----------------------------------------------------------------------------------------------*/

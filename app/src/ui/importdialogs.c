@@ -125,20 +125,23 @@ static iBool handleUserDataImporterCommands_(iWidget *dlg, const char *cmd) {
                 isSelected_Widget(findChild_Widget(dlg, "importer.idents")) ? ifMissing_ImportMethod
                                                                             : none_ImportMethod;
             enum iImportMethod trustedMethod  = checkImportMethod_(dlg, "importer.trusted");
-            enum iImportMethod snippetsMethod = checkImportMethod_(dlg, "importer.snippets");
+            enum iImportMethod snippetsMethod = checkImportMethod_(dlg, "importer.snippet");
+            enum iImportMethod booksMethod    = checkImportMethod_(dlg, "importer.books");
             enum iImportMethod sitespecMethod = checkImportMethod_(dlg, "importer.sitespec");
             enum iImportMethod visitedMethod =
                 isSelected_Widget(findChild_Widget(dlg, "importer.history")) ? all_ImportMethod
                                                                              : none_ImportMethod;
             postCommandf_App(
                 "import arg:1 "
-                "bookmarks:%d idents:%d trusted:%d visited:%d sitespec:%d snippets:%d path:%s",
+                "bookmarks:%d idents:%d trusted:%d visited:%d sitespec:%d snippets:%d books:%d "
+                "path:%s",
                 bookmarkMethod,
                 identMethod,
                 trustedMethod,
                 visitedMethod,
                 sitespecMethod,
                 snippetsMethod,
+                booksMethod,
                 suffixPtr_Command(cmd, "path"));
         }
         setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
@@ -150,6 +153,7 @@ static iBool handleUserDataImporterCommands_(iWidget *dlg, const char *cmd) {
         postCommand_Widget(findChild_Widget(dlg, "importer.trusted.1"), "trigger");
         postCommand_Widget(findChild_Widget(dlg, "importer.sitespec.1"), "trigger");
         postCommand_Widget(findChild_Widget(dlg, "importer.snippet.1"), "trigger");
+        postCommand_Widget(findChild_Widget(dlg, "importer.books.2"), "trigger");
         setToggle_Widget(findChild_Widget(dlg, "importer.history"), iTrue);
         setToggle_Widget(findChild_Widget(dlg, "importer.idents"), iTrue);
         return iTrue;
@@ -180,6 +184,12 @@ iWidget *makeUserDataImporter_Widget(const iString *archivePath) {
             { "button id:importer.snippet.2 label:dlg.userdata.all", 0, 0, "." },
             { NULL }
         };
+        const iMenuItem booksItems[] = {
+            { "button id:importer.books.0 label:dlg.userdata.no", 0, 0, "." },
+            { "button id:importer.books.1 label:dlg.userdata.missing", 0, 0, "." },
+            { "button id:importer.books.2 label:dlg.userdata.newer", 0, 0, "." },
+            { NULL }
+        };
         const iMenuItem sitespecItems[] = {
             { "button id:importer.sitespec.0 label:dlg.userdata.no", 0, 0, "." },
             { "button id:importer.sitespec.1 label:dlg.userdata.missing", 0, 0, "." },
@@ -199,6 +209,7 @@ iWidget *makeUserDataImporter_Widget(const iString *archivePath) {
                            { "toggle id:importer.idents text:${import.userdata.idents}" },
                            { "radio id:import.userdata.bookmarks", 0, 0, (const void *) bookmarkItems },
                            { "radio id:import.userdata.snippets", 0, 0, (const void *) snippetItems },
+                           { "radio id:import.userdata.books", 0, 0, (const void *) booksItems },
                            { "radio id:import.userdata.sitespec", 0, 0, (const void *) sitespecItems },
                            { "radio id:import.userdata.trusted", 0, 0, (const void *) trustedItems },
                            { NULL } },
@@ -228,6 +239,14 @@ iWidget *makeUserDataImporter_Widget(const iString *archivePath) {
             addRadioButton_Widget(radio, "importer.snippet.2", "${dlg.userdata.all}", ".");
         }
         addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Reading positions. */
+        addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.books}")));
+        radio = new_Widget(); {
+            addRadioButton_Widget(radio, "importer.books.0", "${dlg.userdata.no}", ".");
+            addRadioButton_Widget(radio, "importer.books.1", "${dlg.userdata.missing}", ".");
+            addRadioButton_Widget(radio, "importer.books.2", "${dlg.userdata.newer}", ".");
+        }
+        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         /* Site-specific. */
         addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.sitespec}")));
         radio = new_Widget(); {
@@ -253,6 +272,7 @@ iWidget *makeUserDataImporter_Widget(const iString *archivePath) {
     /* Initialize. */
     setToggle_Widget(findChild_Widget(dlg, "importer.bookmark.0"), iTrue);
     setToggle_Widget(findChild_Widget(dlg, "importer.snippet.0"), iTrue);
+    setToggle_Widget(findChild_Widget(dlg, "importer.books.0"), iTrue);
     setToggle_Widget(findChild_Widget(dlg, "importer.idents.0"), iTrue);
     setToggle_Widget(findChild_Widget(dlg, "importer.sitespec.0"), iTrue);
     setToggle_Widget(findChild_Widget(dlg, "importer.trusted.0"), iTrue);

@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "bookmarks.h"
+#include "books.h"
 #include <lagrange/gmcerts.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
@@ -137,6 +138,13 @@ void generatePartial_Export(iExport *d, int dataFlags) {
         setDataCStr_Archive(d->arch, "snippets.ini", data_Buffer(buf));
         close_Buffer(buf);
     }
+    /* Reading positions of books. */
+    if (dataFlags & books_ExportFlag) {
+        openEmpty_Buffer(buf);
+        serialize_Books(stream_Buffer(buf));
+        setDataCStr_Archive(d->arch, "books.ini", data_Buffer(buf));
+        close_Buffer(buf);
+    }
     /* Export metadata. */
     setDataCStr_Archive(d->arch, metadataEntryName_Export_, utf8_String(meta));
     delete_String(meta);
@@ -164,7 +172,8 @@ iBuffer *openEntryBuffer_Export_(const iExport *d, const char *entryPath) {
 
 void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportMethod identities,
                    enum iImportMethod trusted, enum iImportMethod visited,
-                   enum iImportMethod siteSpec, enum iImportMethod snippets) {
+                   enum iImportMethod siteSpec, enum iImportMethod snippets,
+                   enum iImportMethod books) {
     if (bookmarks) {
         iBuffer *buf = openEntryBuffer_Export_(d, "bookmarks.ini");
         if (buf) {
@@ -254,6 +263,14 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
         if (buf) {
             deserialize_Snippets(stream_Buffer(buf), snippets);
             iRelease(buf);
+        }
+    }
+    if (books) {
+        iBuffer *buf = openEntryBuffer_Export_(d, "books.ini");
+        if (buf) {
+            deserialize_Books(stream_Buffer(buf), books);
+            iRelease(buf);
+            notify_App("books.changed");
         }
     }
 }

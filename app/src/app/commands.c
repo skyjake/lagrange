@@ -1299,9 +1299,10 @@ iBool handleCommand_App(const char *cmd) {
             const int visited   = argLabel_Command(cmd, "visited");
             const int siteSpec  = argLabel_Command(cmd, "sitespec");
             const int snippets  = argLabel_Command(cmd, "snippets");
+            const int books     = argLabel_Command(cmd, "books");
             iExport *export = new_Export();
             if (load_Export(export, zip)) {
-                import_Export(export, bookmarks, idents, trusted, visited, siteSpec, snippets);
+                import_Export(export, bookmarks, idents, trusted, visited, siteSpec, snippets, books);
             }
             else {
                 makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",

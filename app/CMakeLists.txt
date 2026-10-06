@@ -221,6 +221,8 @@ set (SOURCES
     src/app/windows.c
     src/bookmarks.c
     src/bookmarks.h
+    src/books.c
+    src/books.h
     src/color.c
     src/color.h
     src/defs.h

@@ -74,6 +74,7 @@ static const iMenuItem desktopNavMenuItems_[] = {
 #if defined (LAGRANGE_FILE_DIALOGS)
     { "${menu.save.as}", 0, 0, "document.save saveas:1" },
 #endif
+    { book_Icon " ${menu.save.books}", 0, 0, "document.savebook" },
     { "${menu.page.copysource}", SDLK_C, KMOD_PRIMARY, "copy" },
     { "---" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
@@ -1823,11 +1824,12 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
         { "---" },
         { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
+        { book_Icon " ${menu.save.books}", 0, 0, "document.savebook" },
         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
         { isSourceTextView_DocumentWidget(document_App())
             ? "${menu.viewformat.gemini}"
             : "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-    16);
+    17);
     return items;
 }
 
