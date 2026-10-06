@@ -257,10 +257,17 @@ int columnShift_DocumentView(const iDocumentView *d, size_t column) {
     if (numPages == 2) {
         /* On facing pages, the columns next to the crease are moved away from it, halfway
            toward the adjacent column. */
-        const float amount = 0.66f;
-        /* The two columns of a page are closer to each other than to the edges of the page. */
+        const float amount = 0.5f;
+        /* The two columns of a page are closer to each other than to the edges of the page.
+           The outer columns move inward for wider outer margins. */
         if (colsPerPage == 2) {
-            return (column % 4 == 1 ? -1 : column % 4 == 2 ? 1 : 0) * gap * amount;
+            const float outer = 0.25f;
+            switch (column % 4) {
+                case 0: return gap * outer;
+                case 1: return -gap * amount;
+                case 2: return gap * amount;
+                default: return -gap * outer;
+            }
         }
         else {
             return (column % 2 == 0 ? -1 : 1) * gap * 0.05f; /* away from the crease */
