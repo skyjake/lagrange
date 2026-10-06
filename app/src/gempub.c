@@ -75,7 +75,8 @@ struct Impl_Gempub {
 iDefineTypeConstruction(Gempub)
 
 static void parseNavigationLinks_Gempub_(const iGempub *d) {
-    if (!isEmpty_Array(d->navLinks)) {
+    /* Only the cover page of a remote book is viewable. */
+    if (!isEmpty_Array(d->navLinks) || isRemote_Gempub(d)) {
         return;
     }
     iGmRequest *index = iClob(new_GmRequest(get_GmCerts()));
@@ -418,16 +419,14 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     iAssert(!isEmpty_String(&d->baseUrl));
     const iString *baseUrl = withSpacesEncoded_String(&d->baseUrl);
     iString *out = new_String();
-    format_String(out, "# %s\n\n",
+    format_String(out, "# %s\n",
                   cstr_String(&d->props[title_GempubProperty]));
+    appendProperty_Gempub_(d, "## ", author_GempubProperty, out);
+    appendCStr_String(out, "\n");
     if (!isEmpty_String(&d->props[description_GempubProperty])) {
         appendFormat_String(out, "%s\n", cstr_String(&d->props[description_GempubProperty]));
     }
-    appendCStr_String(out, "\n");
-    appendProperty_Gempub_(d, "${gempub.meta.author}:", author_GempubProperty, out);
     if (!isRemote_Gempub(d)) {
-        appendFormat_String(out, "\n=> %s " book_Icon " ${gempub.cover.view}\n",
-                            cstr_String(indexPageUrl_Gempub(d)));
         if (hasProperty_Gempub_(d, cover_GempubProperty)) {
             appendFormat_String(out, "\n=> %s  ${gempub.cover.image}\n",
                                 cstrCollect_String(concat_Path(baseUrl, &d->props[cover_GempubProperty])));
@@ -437,11 +436,6 @@ iString *coverPageSource_Gempub(const iGempub *d) {
         iString *key = collectNew_String(); /* TODO: add a helper for this */
         toString_Sym(SDLK_S, KMOD_PRIMARY, key);
         appendCStr_String(out, "\n${gempub.cover.viewlocal}\n");
-//        appendFormat_String(out,
-//                            cstr_Lang("error.unsupported.suggestsave"),
-//                            cstr_String(key),
-//                            saveToDownloads_Label);
-//        appendCStr_String(out, "\n");
     }
     appendCStr_String(out, "\n## ${gempub.cover.aboutbook}\n");
     appendProperty_Gempub_(d, "${gempub.meta.version}:", version_GempubProperty, out);
