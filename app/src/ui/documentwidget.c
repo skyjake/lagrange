@@ -442,11 +442,12 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
     iLabelWidget *readerIcon = findChild_Widget(as_Widget(tabButton), "tabs.reader");
     if (d->mod.isReader) {
         if (!readerIcon) {
-            readerIcon = addChildFlags_Widget(as_Widget(tabButton),
-                                              iClob(new_LabelWidget(star_Icon, NULL)),
-                                              fixedPosition_WidgetFlag | tight_WidgetFlag |
-                                                  frameless_WidgetFlag | noBackground_WidgetFlag |
-                                                  unhittable_WidgetFlag);
+            readerIcon = addChildFlags_Widget(
+                as_Widget(tabButton),
+                iClob(new_LabelWidget(star_Icon, NULL)),
+                fixedPosition_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
+                    noBackground_WidgetFlag | unhittable_WidgetFlag |
+                    (isApple_Platform() ? moveToParentRightEdge_WidgetFlag : 0));
             setId_Widget(as_Widget(readerIcon), "tabs.reader");
             setTextColor_LabelWidget(readerIcon, uiIcon_ColorId);
             setParentTextColor_LabelWidget(readerIcon, iTrue);
@@ -4740,6 +4741,8 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
 }
 
 static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
+    /* Tab buttons share the page width, so titles may need re-truncating. */
+    updateWindowTitle_DocumentWidget(d);
     if (document_Root(constAs_Widget(d)->root) != d) {
         return; /* background tabs are updated when shown */
     }
