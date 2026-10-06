@@ -54,6 +54,8 @@ void    allocPagedVisBuffer_DocumentView(const iDocumentView *);
 
 size_t  anchor_DocumentView             (const iDocumentView *); /* source offset of the reading position */
 void    setAnchor_DocumentView          (iDocumentView *, size_t sourceOffset); /* for the next relayout */
+float   sourcePosition_DocumentView     (const iDocumentView *); /* anchor as a fraction of the source */
+void    showSourcePosition_DocumentView (iDocumentView *, float pos); /* independent of layout */
 void    resetPage_DocumentView          (iDocumentView *);
 void    animatePageTurn_DocumentView    (iAny *); /* ticker */
 void    showColumn_DocumentView         (iDocumentView *, size_t column, iBool isAnimated); /* animated if adjacent */

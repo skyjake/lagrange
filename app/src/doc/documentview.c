@@ -548,7 +548,7 @@ static int scrollMax_DocumentView_(const iDocumentView *d) {
 
 float normScrollPos_DocumentView(const iDocumentView *d) {
     if (isPaged_DocumentView(d)) {
-        return (float) d->paged.column / (float) numColumns_GmDocument(d->doc);
+        return sourcePosition_DocumentView(d);
     }
     const int height = pageHeight_DocumentView(d);
     if (height > 0) {
@@ -2411,7 +2411,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
 void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY) {
     resetScroll_DocumentView(d);
     if (isPaged_DocumentView(d)) {
-        showColumn_DocumentView(d, normScrollY * numColumns_GmDocument(d->doc) + 0.5f, iFalse);
+        showSourcePosition_DocumentView(d, normScrollY);
     }
     else {
         init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));

@@ -357,6 +357,22 @@ void setAnchor_DocumentView(iDocumentView *d, size_t sourceOffset) {
     d->paged.anchor = sourceOffset;
 }
 
+float sourcePosition_DocumentView(const iDocumentView *d) {
+    const size_t size   = size_String(source_GmDocument(d->doc));
+    const size_t anchor = anchor_DocumentView(d);
+    return size > 0 && anchor != iInvalidPos ? (float) ((double) anchor / size) : 0.0f;
+}
+
+void showSourcePosition_DocumentView(iDocumentView *d, float pos) {
+    const iString *source = source_GmDocument(d->doc);
+    const size_t   offset = (size_t) (iClamp(pos, 0.0f, 1.0f) * (double) size_String(source) + 0.5);
+    const iGmRun  *run    = findRunAtLoc_GmDocument(d->doc, cstr_String(source) + offset);
+    if (run) {
+        showDocumentY_DocumentView(d, top_Rect(run->visBounds));
+        d->paged.anchor = offset; /* kept until the page is turned */
+    }
+}
+
 void resetPage_DocumentView(iDocumentView *d) {
     removeTicker_App(animatePageTurn_DocumentView, d);
     d->paged.column      = 0;

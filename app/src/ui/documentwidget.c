@@ -935,10 +935,7 @@ static void applyResume_DocumentWidget_(iDocumentWidget *d) {
     size_t numChapters;
     if (bookChapter_DocumentWidget_(d, &numChapters) == d->pendingChapter) {
         if (isPaged_DocumentView(d->view)) {
-            showColumn_DocumentView(
-                d->view,
-                (size_t) (d->resumeChapterPos * numColumns_GmDocument(d->view->doc) + 0.001f),
-                iFalse);
+            showSourcePosition_DocumentView(d->view, d->resumeChapterPos);
         }
         else {
             init_Anim(&d->view->scrollY.pos,
@@ -961,11 +958,10 @@ static void saveBookPosition_DocumentWidget_(iDocumentWidget *d) {
     }
     d->savedChapter = chapter;
     d->savedColumn  = column;
-    const size_t numCols = numColumns_GmDocument(d->view->doc);
     setPosition_Books(d->fetch->sourceGempub,
                       (int) chapter,
                       (int) numChapters,
-                      numCols > 0 ? (float) column / numCols : 0.0f);
+                      isPaged_DocumentView(d->view) ? sourcePosition_DocumentView(d->view) : 0.0f);
 }
 
 static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
@@ -977,11 +973,11 @@ static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
     if (chapter != iInvalidPos) {
         const iBook *book = find_Books(id_Books(d->fetch->sourceGempub));
         if (!book || book->chapter != (int) chapter) {
-            const size_t numCols = numColumns_GmDocument(d->view->doc);
             setPosition_Books(d->fetch->sourceGempub,
                               (int) chapter,
                               (int) numChapters,
-                              numCols > 0 ? (float) d->savedColumn / numCols : 0.0f);
+                              isPaged_DocumentView(d->view) ? sourcePosition_DocumentView(d->view)
+                                                            : 0.0f);
         }
     }
 }
