@@ -669,29 +669,35 @@ static void centerHorizontal_Widget_(iWidget *d) {
     TRACE(d, "center horizontally: %d", d->rect.pos.x);
 }
 
+static void extendRange_(iRangei *range, iBool *isSet, int start, int end) {
+    if (*isSet) {
+        range->start = iMin(range->start, start);
+        range->end   = iMax(range->end, end);
+    }
+    else {
+        *range = (iRangei){ start, end };
+        *isSet = iTrue;
+    }
+}
+
 static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
-    *bounds_out = zero_Rect();
+    /* Axes are accumulated separately so an ignored axis doesn't discard the other one. */
+    iRangei xs = { 0, 0 }, ys = { 0, 0 };
+    iBool hasX = iFalse, hasY = iFalse;
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        if (isCollapsed_Widget_(child)) {
+        const iRect    rect  = child->rect;
+        if (isCollapsed_Widget_(child) || isEmpty_Rect(rect)) {
             continue;
         }
-        iRect childRect = child->rect;
-        if (child->flags & ignoreForParentWidth_WidgetFlag) {
-            childRect.size.x = 0;
-            childRect.pos.x  = bounds_out->pos.x;
+        if (~child->flags & ignoreForParentWidth_WidgetFlag) {
+            extendRange_(&xs, &hasX, left_Rect(rect), right_Rect(rect));
         }
-        if (child->flags & ignoreForParentHeight_WidgetFlag) {
-            childRect.size.y = 0;
-            childRect.pos.y  = bounds_out->pos.y;
-        }
-        if (isEmpty_Rect(*bounds_out)) {
-            *bounds_out = childRect;
-        }
-        else {
-            *bounds_out = union_Rect(*bounds_out, childRect);
+        if (~child->flags & ignoreForParentHeight_WidgetFlag) {
+            extendRange_(&ys, &hasY, top_Rect(rect), bottom_Rect(rect));
         }
     }
+    *bounds_out = init_Rect(xs.start, ys.start, xs.end - xs.start, ys.end - ys.start);
 #if !defined (NDEBUG)
     if (tracing_) {
         if (bounds_out->size.x && bounds_out->size.y == 0) {
