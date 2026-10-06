@@ -135,6 +135,8 @@ struct Impl_SidebarWidget {
     enum iSidebarMode mode;
     enum iFeedsMode   feedsMode;
     enum iBooksSortOrder shelfSort;
+    iStringArray     *shelfOrder;    /* book IDs as shown; kept while the shelf stays visible */
+    iBool             isShelfOrderValid;
     iString           cmdPrefix;
     iWidget          *blank;
     iListWidget      *list;
@@ -667,6 +669,27 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iGempub *current   = gempub_SidebarWidget_(d);
     const iString *currentId = current ? id_Books(current) : NULL;
     const iPtrArray *books = list_Books(d->shelfSort);
+    if (d->isShelfOrderValid && size_StringArray(d->shelfOrder) == size_PtrArray(books)) {
+        /* Items keep their places so a clicked book doesn't jump elsewhere. */
+        iPtrArray *ordered = collectNew_PtrArray();
+        iConstForEach(StringArray, s, d->shelfOrder) {
+            iConstForEach(PtrArray, b, books) {
+                if (equal_String(&((const iBook *) b.ptr)->id, s.value)) {
+                    pushBack_PtrArray(ordered, b.ptr);
+                    break;
+                }
+            }
+        }
+        if (size_PtrArray(ordered) == size_PtrArray(books)) {
+            books = ordered;
+        }
+    }
+    clear_StringArray(d->shelfOrder);
+    iConstForEach(PtrArray, b, books) {
+        pushBack_StringArray(d->shelfOrder, &((const iBook *) b.ptr)->id);
+    }
+    /* Sorted again when the shelf is shown the next time. */
+    d->isShelfOrderValid = isVisible_Widget(as_Widget(d));
     iConstForEach(PtrArray, i, books) {
         const iBook   *book = i.ptr;
         const iString *path = path_Book(book);
@@ -1549,6 +1572,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         d->modeScroll[d->mode] = scrollPos_ListWidget(list_SidebarWidget_(d)); /* saved for later */
     }
     d->mode = mode;
+    d->isShelfOrderValid = iFalse;
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
@@ -1669,6 +1693,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->pendingWidth     = -1.0f;
     d->feedsMode        = all_FeedsMode;
     d->shelfSort        = recent_BooksSortOrder;
+    d->shelfOrder       = new_StringArray();
+    d->isShelfOrderValid = iFalse;
     d->midHeight        = 0;
     d->isEditing        = iFalse;
     d->wasLandscape     = isLandscape_App();
@@ -1879,6 +1905,7 @@ static void applyPendingWidth_SidebarWidget_(iAny *context) {
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
     removeTicker_App(applyPendingWidth_SidebarWidget_, d);
+    iRelease(d->shelfOrder);
     deinit_String(&d->gempubCentered);
     deinit_String(&d->gempubUrl);
     iRelease(d->structureUnfolds);
@@ -2223,6 +2250,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             return iTrue;
         }
         d->gempubPage = iClamp(arg_Command(cmd), 0, 2);
+        d->isShelfOrderValid = iFalse;
         if (d->mode == gempub_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }
@@ -2316,6 +2344,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         const iBool isHiding = isVisible_Widget(w);
         if (isHiding) {
             cancelDrag_ListWidget(d->list);
+            d->isShelfOrderValid = iFalse;
         }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
@@ -2979,6 +3008,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equalWidget_Command(cmd, w, "books.sort")) {
             d->shelfSort = iClamp(arg_Command(cmd), 0, author_BooksSortOrder);
+            d->isShelfOrderValid = iFalse;
             if (isShowingShelf_SidebarWidget_(d)) {
                 updateItemsWithFlags_SidebarWidget_(d, iTrue);
             }
