@@ -224,15 +224,23 @@ iLocalDef float discCoverage_(float dist, float radius) {
 /* Atlas of 2r x 2r discs: the fill, then two frame layers per thickness. The layers are drawn
    in order (frame 2, frame 1) and together sum up to the ring's coverage. Frame 1 is weighted
    toward the top left, fading out across the anti-diagonal. */
-static SDL_Texture *roundCorners_Paint_(const iPaint *d) {
-    iWindow  *win    = d->dst;
-    const int radius = gap_UI;
-    if (win->roundCorners && win->roundCornerRadius == radius) {
-        return win->roundCorners;
+static SDL_Texture *roundCorners_Paint_(const iPaint *d, int radius) {
+    iWindow           *win  = d->dst;
+    iRoundCornerAtlas *slot = NULL;
+    iForIndices(i, win->roundCorners) {
+        iRoundCornerAtlas *atlas = &win->roundCorners[i];
+        if (atlas->texture && atlas->radius == radius) {
+            atlas->lastUsed = win->frameCount;
+            return atlas->texture;
+        }
+        /* Replace an empty slot or the least recently used one. */
+        if (!slot || (slot->texture && (!atlas->texture || atlas->lastUsed < slot->lastUsed))) {
+            slot = atlas;
+        }
     }
-    if (win->roundCorners) {
-        SDL_DestroyTexture(win->roundCorners);
-        win->roundCorners = NULL;
+    if (slot->texture) {
+        SDL_DestroyTexture(slot->texture);
+        slot->texture = NULL;
     }
     const int numFrames = iMin(maxFrameThickness_RoundCorner, radius);
     const int dim       = 2 * radius;
@@ -251,7 +259,7 @@ static SDL_Texture *roundCorners_Paint_(const iPaint *d) {
             pixels[4 * (y * dim + x) + 3] = (uint8_t) (255.0f * outer + 0.5f);
             for (int i = 0; i < numFrames; i++) {
                 /* Boosted so thin arcs match the visual weight of straight edges. */
-                const float cov = powf(outer - discCoverage_(dist, radius - (i + 1)), 0.7f);
+                const float cov = powf(outer - discCoverage_(dist, radius - (i + 1)), 0.8f);
                 const float a1  = cov * w1;
                 const float a2  = a1 < 1.0f ? cov * (1.0f - w1) / (1.0f - a1) : 0.0f;
                 pixels[4 * (((1 + 2 * i) * dim + y) * dim + x) + 3] = (uint8_t) (255.0f * a2 + 0.5f);
@@ -261,15 +269,16 @@ static SDL_Texture *roundCorners_Paint_(const iPaint *d) {
     }
     SDL_Surface *surf =
         SDL_CreateSurfaceFrom(dim, height, SDL_PIXELFORMAT_RGBA32, pixels, 4 * dim);
-    win->roundCorners = SDL_CreateTextureFromSurface(renderer_Paint_(d), surf);
-    if (win->roundCorners) {
-        SDL_SetTextureBlendMode(win->roundCorners, SDL_BLENDMODE_BLEND);
-        SDL_SetTextureScaleMode(win->roundCorners, SDL_SCALEMODE_NEAREST);
+    slot->texture  = SDL_CreateTextureFromSurface(renderer_Paint_(d), surf);
+    slot->radius   = radius;
+    slot->lastUsed = win->frameCount;
+    if (slot->texture) {
+        SDL_SetTextureBlendMode(slot->texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(slot->texture, SDL_SCALEMODE_NEAREST);
     }
-    win->roundCornerRadius = radius;
     SDL_DestroySurface(surf);
     free(pixels);
-    return win->roundCorners;
+    return slot->texture;
 }
 
 static void drawCorners_Paint_(const iPaint *d, SDL_Texture *atlas, iRect rect, int corners,
@@ -294,9 +303,9 @@ static void drawCorners_Paint_(const iPaint *d, SDL_Texture *atlas, iRect rect, 
     }
 }
 
-void drawRoundRect_Paint(const iPaint *d, iRect rect, int corners, int frameThickness,
-                         int fillColor, int frameColor1, int frameColor2) {
-    const int    radius = gap_UI;
+void drawRoundRectRadius_Paint(const iPaint *d, iRect rect, int radius, int corners,
+                               int frameThickness, int fillColor, int frameColor1,
+                               int frameColor2) {
     const int    t      = iClamp(frameThickness, 1, maxFrameThickness_RoundCorner);
     SDL_Texture *atlas  = NULL;
     if (frameColor2 < 0) {
@@ -318,10 +327,11 @@ void drawRoundRect_Paint(const iPaint *d, iRect rect, int corners, int frameThic
         }
         return;
     }
-    if (t > radius || width_Rect(rect) < 2 * radius || height_Rect(rect) < 2 * radius) {
+    if (radius < 1 || t > radius || width_Rect(rect) < 2 * radius ||
+        height_Rect(rect) < 2 * radius) {
         corners = 0;
     }
-    if (corners && (atlas = roundCorners_Paint_(d)) == NULL) {
+    if (corners && (atlas = roundCorners_Paint_(d, radius)) == NULL) {
         corners = 0;
     }
     const int x   = left_Rect(rect);

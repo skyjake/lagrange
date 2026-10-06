@@ -148,6 +148,8 @@ enum iWidgetFlag2 {
                                                            mouse dispatch */
     noRound_WidgetFlag2                     = iBit(16), /* button drawn with sharp corners */
     alwaysRound_WidgetFlag2                 = iBit(17), /* not joined with adjacent buttons */
+    roundFreeEdges_WidgetFlag2              = iBit(18), /* background has rounded corners except
+                                                           along the edges of the root's area */
 };
 
 enum iWidgetAddPos {

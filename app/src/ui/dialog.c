@@ -50,6 +50,7 @@ void useSheetStyle_Widget(iWidget *d) {
     setPadding1_Widget(d, 3 * gap_UI);
     setFrameColor_Widget(d, uiSeparator_ColorId);
     setBackgroundColor_Widget(d, uiBackground_ColorId);
+    d->flags2 |= roundFreeEdges_WidgetFlag2;
     setFlags_Widget(d,
                     parentCannotResize_WidgetFlag | focusRoot_WidgetFlag | mouseModal_WidgetFlag |
                         keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |

@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/rect.h>
 #include "color.h"
 #include "text.h"
+#include "ui/metrics.h"
 #include "ui/window.h"
 
 iDeclareType(Paint)
@@ -59,8 +60,9 @@ void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
 void    fillRect_Paint          (const iPaint *, iRect rect, int color);
 void    fillRectColor_Paint     (const iPaint *, iRect rect, iColor color);
-void    drawRoundRect_Paint     (const iPaint *, iRect rect, int corners, int frameThickness,
-                                 int fillColor, int frameColor1, int frameColor2); /* frame 1: top/left, 2: bottom/right; none_ColorId to omit */
+void    drawRoundRectRadius_Paint(const iPaint *, iRect rect, int radius, int corners,
+                                  int frameThickness, int fillColor, int frameColor1,
+                                  int frameColor2); /* frame 1: top/left, 2: bottom/right; none_ColorId to omit */
 void    drawSoftShadow_Paint    (const iPaint *, iRect rect, int thickness, int color, int alpha);
 void    drawSoftEdge_Paint      (const iPaint *, int x, iRangei ySpan, int thickness, iColor color, int alpha); /* vertical; darkest at `x`, negative thickness extends left */
 void    drawSoftCrease_Paint    (const iPaint *, int x, iRangei ySpan, int thickness, iColor color, int alpha); /* vertical */
@@ -69,6 +71,11 @@ void    drawSoftHorizontalEdge_Paint(const iPaint *, int y, iRangei xSpan, int t
 
 void    drawLines_Paint (const iPaint *, const iInt2 *points, size_t count, int color);
 
+iLocalDef void drawRoundRect_Paint(const iPaint *d, iRect rect, int corners, int frameThickness,
+                                   int fillColor, int frameColor1, int frameColor2) {
+    drawRoundRectRadius_Paint(
+        d, rect, gap_UI, corners, frameThickness, fillColor, frameColor1, frameColor2);
+}
 iLocalDef void drawLine_Paint(const iPaint *d, iInt2 a, iInt2 b, int color) {
     drawLines_Paint(d, (iInt2[]){ a, b }, 2, color);
 }

@@ -369,6 +369,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
         /* Native selections use the unmodified accent with white text. */
         set_Color(uiBackgroundSelected_ColorId, darkPalette_[systemHigh_ColorId]);
         copy_(uiTextSelected_ColorId, white_ColorId);
+        set_Color(uiEmbossSelected1_ColorId, /* distinct from the background */
+                  mix_Color(get_Color(white_ColorId), darkPalette_[systemHigh_ColorId], 0.5f));
     }
     set_Color(uiTextSelectedDim_ColorId,
               mix_Color(get_Color(uiTextSelected_ColorId),

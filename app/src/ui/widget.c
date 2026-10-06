@@ -102,7 +102,12 @@ static void realloc_WidgetDrawBuffer(iWidgetDrawBuffer *d, SDL_Renderer *render,
                                        SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                        size.x,
                                        size.y);
+#if defined (iPlatformTerminal)
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+#else
+        /* Content drawn over the transparent clear color is premultiplied. */
+        SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND_PREMULTIPLIED);
+#endif
         d->isValid = iFalse;
     }
 }
@@ -1959,6 +1964,68 @@ void drawBorders_Widget(const iWidget *d) {
     }
 }
 
+iLocalDef int freeEdgeRadius_Widget_(void) {
+    return 2 * gap_UI;
+}
+
+static int freeCorners_Widget_(const iWidget *d) {
+    if (isTerminal_Platform() || ~d->flags2 & roundFreeEdges_WidgetFlag2 || !d->root) {
+        return 0;
+    }
+    if (type_Window(window_Widget(d)) == popup_WindowType) {
+        return 0; /* the window itself is rectangular */
+    }
+    const iRect area   = safeRect_Root(d->root);
+    const iRect bounds = boundsWithoutVisualOffset_Widget(d);
+    int corners = all_RoundCorner;
+    if (top_Rect(bounds) <= top_Rect(area)) {
+        corners &= ~(topLeft_RoundCorner | topRight_RoundCorner);
+    }
+    if (bottom_Rect(bounds) >= bottom_Rect(area) || d->flags & drawBackgroundToBottom_WidgetFlag) {
+        corners &= ~(bottomLeft_RoundCorner | bottomRight_RoundCorner);
+    }
+    if (left_Rect(bounds) <= left_Rect(area)) {
+        corners &= ~(topLeft_RoundCorner | bottomLeft_RoundCorner);
+    }
+    if (right_Rect(bounds) >= right_Rect(area)) {
+        corners &= ~(topRight_RoundCorner | bottomRight_RoundCorner);
+    }
+    return corners;
+}
+
+/* Backgrounds reaching into the rounded corners of an ancestor are concentric with them. */
+static int innerCorners_Widget_(const iWidget *d, int *radius) {
+    if (isTerminal_Platform()) {
+        return 0;
+    }
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        if (w->flags2 & roundFreeEdges_WidgetFlag2) {
+            const int   outer   = freeCorners_Widget_(w);
+            const iRect bounds  = boundsWithoutVisualOffset_Widget(d);
+            const iRect area    = boundsWithoutVisualOffset_Widget(w);
+            const int   outerRadius = freeEdgeRadius_Widget_();
+            int         corners     = 0;
+            int         inset       = 0;
+            for (int i = 0; i < 4; i++) {
+                const iBool isRight  = (i == 1 || i == 2);
+                const iBool isBottom = (i >= 2);
+                const int   dx = isRight ? right_Rect(area) - right_Rect(bounds)
+                                         : left_Rect(bounds) - left_Rect(area);
+                const int   dy = isBottom ? bottom_Rect(area) - bottom_Rect(bounds)
+                                          : top_Rect(bounds) - top_Rect(area);
+                if (outer & iBit(i + 1) && dx >= 0 && dy >= 0 && dx < outerRadius &&
+                    dy < outerRadius) {
+                    corners |= iBit(i + 1);
+                    inset = iMax(inset, iMax(dx, dy));
+                }
+            }
+            *radius = outerRadius - inset;
+            return corners;
+        }
+    }
+    return 0;
+}
+
 void drawBackground_Widget(const iWidget *d) {
     if (d->flags & noBackground_WidgetFlag) {
         return;
@@ -1974,6 +2041,24 @@ void drawBackground_Widget(const iWidget *d) {
         }
         iPaint p;
         init_Paint(&p);
+        int radius  = freeEdgeRadius_Widget_();
+        int corners = freeCorners_Widget_(d);
+        if (!corners) {
+            corners = innerCorners_Widget_(d, &radius);
+        }
+        if (corners) {
+            drawRoundRectRadius_Paint(&p,
+                                      rect,
+                                      radius,
+                                      corners,
+                                      gap_UI / 4,
+                                      d->bgColor,
+                                      ~d->flags & frameless_WidgetFlag ? d->frameColor
+                                                                       : none_ColorId,
+                                      none_ColorId);
+            drawBorders_Widget(d);
+            return;
+        }
         if (d->bgColor >= 0) {
             if (isTerminal_Platform() && d->bgColor == uiSeparator_ColorId && rect.size.y == 1) {
                 fillRect_Paint(&p, adjusted_Rect(rect, zero_I2(), init_I2(0, -1)),

@@ -512,6 +512,7 @@ iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n,
     setDrawBufferEnabled_Widget(menu, iTrue);
     setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
+    menu->flags2 |= roundFreeEdges_WidgetFlag2;
     if (isTerminal_Platform()) {
         setPadding1_Widget(menu, 3);
     }

@@ -4273,7 +4273,16 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const int   height = lineHeight_Text(font) * 2;
         const iInt2 size   = init_I2(height * 2, height);
         const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
-        fillRect_Paint(&p, rect, pinchZoomPercent_DocumentSwipe(d->swipe) == 100 ? uiTextCaution_ColorId : uiTextAction_ColorId);
+        drawRoundRectRadius_Paint(&p,
+                                  rect,
+                                  2 * gap_UI,
+                                  all_RoundCorner,
+                                  1,
+                                  pinchZoomPercent_DocumentSwipe(d->swipe) == 100
+                                      ? uiTextCaution_ColorId
+                                      : uiTextAction_ColorId,
+                                  none_ColorId,
+                                  none_ColorId);
         drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
                           pinchZoomPercent_DocumentSwipe(d->swipe));
     }
