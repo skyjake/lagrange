@@ -728,6 +728,8 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->keyRoot       = NULL;
     d->borderShadow  = NULL;
     d->falloffShadow = NULL;
+    d->roundCorners  = NULL;
+    d->roundCornerRadius = 0;
     d->frameCount    = 0;
     init_Click(&d->midDrag, NULL, SDL_BUTTON_MIDDLE);
     d->midDragTime   = 0;
@@ -788,6 +790,9 @@ void deinit_Window(iWindow *d) {
     }
     deinitRoots_Window_(d);
     delete_Text(d->text);
+    if (d->roundCorners) {
+        SDL_DestroyTexture(d->roundCorners);
+    }
     SDL_DestroyRenderer(d->render);
     SDL_DestroyWindow(d->win);
     iForIndices(i, d->cursors) {

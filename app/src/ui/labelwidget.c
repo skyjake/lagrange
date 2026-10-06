@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "labelwidget.h"
+#include "inputwidget.h"
 #include "render/text.h"
 #include "render/paint.h"
 #include "app.h"
@@ -507,6 +508,91 @@ static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
     return content;
 }
 
+static iBool isRoundButton_LabelWidget_(const iWidget *w) {
+    return !isTerminal_Platform() && isInstance_Object(w, &Class_LabelWidget) &&
+           ((const iLabelWidget *) w)->click.buttons && ~w->flags & frameless_WidgetFlag &&
+           ~w->flags2 & noRound_WidgetFlag2;
+}
+
+static iBool isJoinable_LabelWidget_(const iWidget *w) {
+    return isRoundButton_LabelWidget_(w) && ~w->flags & hidden_WidgetFlag &&
+           ~w->flags2 & alwaysRound_WidgetFlag2;
+}
+
+/* Edges touching a horizontally adjacent button have sharp corners. */
+static int sharpCorners_LabelWidget_(const iWidget *d, const iWidget *sib) {
+    const iRect own   = d->rect;
+    const iRect other = sib->rect;
+    if (top_Rect(other) >= bottom_Rect(own) || top_Rect(own) >= bottom_Rect(other)) {
+        return 0;
+    }
+    if (right_Rect(other) == left_Rect(own)) {
+        return topLeft_RoundCorner | bottomLeft_RoundCorner;
+    }
+    if (left_Rect(other) == right_Rect(own)) {
+        return topRight_RoundCorner | bottomRight_RoundCorner;
+    }
+    return 0;
+}
+
+static int roundCorners_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    if (w->flags2 & alwaysRound_WidgetFlag2 || !w->parent) {
+        return all_RoundCorner;
+    }
+    const iWidget *prev = NULL, *next = NULL;
+    iBool          isFound = iFalse;
+    iConstForEach(ObjectList, i, w->parent->children) {
+        const iWidget *sib = i.object;
+        if (sib == w) {
+            isFound = iTrue;
+        }
+        else if (~sib->flags & hidden_WidgetFlag) {
+            if (!isFound) {
+                prev = sib;
+            }
+            else {
+                next = sib;
+                break;
+            }
+        }
+    }
+    int sharp = 0;
+    if (prev && isJoinable_LabelWidget_(prev)) {
+        sharp |= sharpCorners_LabelWidget_(w, prev);
+    }
+    if (next && isJoinable_LabelWidget_(next)) {
+        sharp |= sharpCorners_LabelWidget_(w, next);
+    }
+    return all_RoundCorner & ~sharp;
+}
+
+/* Frameless buttons embedded in a rounded input field match its corners. */
+static int flushCorners_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    if (isTerminal_Platform() || ~w->flags & frameless_WidgetFlag) {
+        return 0;
+    }
+    for (const iWidget *p = w->parent; p; p = p->parent) {
+        if (isInstance_Object(p, &Class_InputWidget)) {
+            if (p->flags & frameless_WidgetFlag || p->flags2 & noRound_WidgetFlag2) {
+                return 0;
+            }
+            const iRect own   = bounds_Widget(w);
+            const iRect field = bounds_Widget(p);
+            int corners = 0;
+            if (left_Rect(own) == left_Rect(field)) {
+                corners |= topLeft_RoundCorner | bottomLeft_RoundCorner;
+            }
+            if (right_Rect(own) == right_Rect(field)) {
+                corners |= topRight_RoundCorner | bottomRight_RoundCorner;
+            }
+            return corners;
+        }
+    }
+    return 0;
+}
+
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     drawBackground_Widget(w);
@@ -535,24 +621,40 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     setDisableColorEmoji_Text(!isTabButton_Widget(w));
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
-    if (bg >= 0) {
-        if (flags & dragged_WidgetFlag) {
-            p.alpha = 0x70;
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-        }
-        fillRect_Paint(&p, rect, bg);
-        if (flags & dragged_WidgetFlag) {
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-        }
+    const iBool isFramedRound = isRoundButton_LabelWidget_(w);
+    const int   corners       = isFramedRound ? roundCorners_LabelWidget_(d)
+                                : isButton    ? flushCorners_LabelWidget_(d)
+                                              : 0;
+    const iBool isRound       = isFramedRound || corners != 0;
+    const iBool isDrag        = (flags & dragged_WidgetFlag) && bg >= 0;
+    if (isDrag) {
+        p.alpha = 0x70;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
     }
-    if (isFocused_Widget(w)) {
+    if (isRound) {
+        const iBool isFocus = isFocused_Widget(w);
+        drawRoundRect_Paint(&p,
+                            rect,
+                            corners,
+                            !isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4,
+                            bg,
+                            isFocus ? uiTextAction_ColorId : isFramedRound ? frame : none_ColorId,
+                            isFocus ? uiTextAction_ColorId : isFramedRound ? frame2 : none_ColorId);
+    }
+    else if (bg >= 0) {
+        fillRect_Paint(&p, rect, bg);
+    }
+    if (isDrag) {
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
+    if (!isRound && isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         drawRectThickness_Paint(&p,
                                 frameRect,
                                 isHover ? gap_UI / 2 : (gap_UI / 4),
                                 uiTextAction_ColorId /*frame*/);
     }
-    else if (~flags & frameless_WidgetFlag) {
+    else if (!isRound && ~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         if (isButton) {
             drawEmbossedFrame_Paint(&p,

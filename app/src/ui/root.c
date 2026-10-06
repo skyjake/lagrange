@@ -2246,11 +2246,12 @@ void createUserInterface_Root(iRoot *d) {
         if (deviceType_App() == phone_AppDeviceType) {
             setBackgroundColor_Widget(buttons, uiBackground_ColorId);
         }
-        setId_Widget(
+        iWidget *newTab =
             addChildFlags_Widget(buttons,
                                  iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new append:1")),
-                                 moveToParentRightEdge_WidgetFlag | collapse_WidgetFlag),
-            "newtab");
+                                 moveToParentRightEdge_WidgetFlag | collapse_WidgetFlag);
+        setId_Widget(newTab, "newtab");
+        newTab->flags2 |= noRound_WidgetFlag2;
     }
     /* Sidebars. */ {
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SidebarSide);

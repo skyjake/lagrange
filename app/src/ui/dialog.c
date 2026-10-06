@@ -448,6 +448,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             addChild_Widget(div,
                             isToggle ? iClob(makeToggle_Widget(label))
                                      : iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
+        as_Widget(button)->flags2 |= alwaysRound_WidgetFlag2;
         if (isDefault) {
             setId_Widget(as_Widget(button), "default");
         }

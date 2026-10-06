@@ -146,6 +146,8 @@ enum iWidgetFlag2 {
     clipChildren_WidgetFlag2                = iBit(15), /* children are clipped to the widget's
                                                            bounds for drawing, hit-testing, and
                                                            mouse dispatch */
+    noRound_WidgetFlag2                     = iBit(16), /* button drawn with sharp corners */
+    alwaysRound_WidgetFlag2                 = iBit(17), /* not joined with adjacent buttons */
 };
 
 enum iWidgetAddPos {

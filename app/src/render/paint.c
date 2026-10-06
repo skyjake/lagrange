@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/array.h>
 #include <SDL3/SDL_version.h>
+#include <math.h>
+#include <string.h>
 
 iInt2 origin_Paint;
 
@@ -213,6 +215,152 @@ void fillRectColor_Paint(const iPaint *d, iRect rect, iColor color) {
     SDL_RenderFillRect(renderer_Paint_(d), &frect);
 }
 
+enum { maxFrameThickness_RoundCorner = 4 };
+
+iLocalDef float discCoverage_(float dist, float radius) {
+    return iClamp(radius - dist + 0.5f, 0.0f, 1.0f);
+}
+
+/* Atlas of 2r x 2r discs: the fill, then two frame layers per thickness. The layers are drawn
+   in order (frame 2, frame 1) and together sum up to the ring's coverage. Frame 1 is weighted
+   toward the top left, fading out across the anti-diagonal. */
+static SDL_Texture *roundCorners_Paint_(const iPaint *d) {
+    iWindow  *win    = d->dst;
+    const int radius = gap_UI;
+    if (win->roundCorners && win->roundCornerRadius == radius) {
+        return win->roundCorners;
+    }
+    if (win->roundCorners) {
+        SDL_DestroyTexture(win->roundCorners);
+        win->roundCorners = NULL;
+    }
+    const int numFrames = iMin(maxFrameThickness_RoundCorner, radius);
+    const int dim       = 2 * radius;
+    const int height    = dim * (1 + 2 * numFrames);
+    const float fade    = 0.5f * radius; /* half-width of the frame color transition */
+    uint8_t  *pixels    = malloc(4 * dim * height);
+    memset(pixels, 0xff, 4 * dim * height);
+    for (int y = 0; y < dim; y++) {
+        for (int x = 0; x < dim; x++) {
+            const float dx    = x + 0.5f - radius;
+            const float dy    = y + 0.5f - radius;
+            const float dist  = sqrtf(dx * dx + dy * dy);
+            const float outer = discCoverage_(dist, radius);
+            const float s     = iClamp((-dx - dy) / sqrtf(2.0f) / (2.0f * fade) + 0.5f, 0.0f, 1.0f);
+            const float w1    = s * s * (3.0f - 2.0f * s);
+            pixels[4 * (y * dim + x) + 3] = (uint8_t) (255.0f * outer + 0.5f);
+            for (int i = 0; i < numFrames; i++) {
+                /* Boosted so thin arcs match the visual weight of straight edges. */
+                const float cov = powf(outer - discCoverage_(dist, radius - (i + 1)), 0.7f);
+                const float a1  = cov * w1;
+                const float a2  = a1 < 1.0f ? cov * (1.0f - w1) / (1.0f - a1) : 0.0f;
+                pixels[4 * (((1 + 2 * i) * dim + y) * dim + x) + 3] = (uint8_t) (255.0f * a2 + 0.5f);
+                pixels[4 * (((2 + 2 * i) * dim + y) * dim + x) + 3] = (uint8_t) (255.0f * a1 + 0.5f);
+            }
+        }
+    }
+    SDL_Surface *surf =
+        SDL_CreateSurfaceFrom(dim, height, SDL_PIXELFORMAT_RGBA32, pixels, 4 * dim);
+    win->roundCorners = SDL_CreateTextureFromSurface(renderer_Paint_(d), surf);
+    if (win->roundCorners) {
+        SDL_SetTextureBlendMode(win->roundCorners, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(win->roundCorners, SDL_SCALEMODE_NEAREST);
+    }
+    win->roundCornerRadius = radius;
+    SDL_DestroySurface(surf);
+    free(pixels);
+    return win->roundCorners;
+}
+
+static void drawCorners_Paint_(const iPaint *d, SDL_Texture *atlas, iRect rect, int corners,
+                               int radius, int layer, int color) {
+    const iColor clr = get_Color(color & mask_ColorId);
+    SDL_SetTextureColorMod(atlas, clr.r, clr.g, clr.b);
+    SDL_SetTextureAlphaMod(atlas, (color & opaque_ColorId ? 255 : clr.a) * d->alpha / 255);
+    addv_I2(&rect.pos, origin_Paint);
+    for (int i = 0; i < 4; i++) {
+        if (corners & iBit(i + 1)) {
+            const iBool isRight  = (i == 1 || i == 2);
+            const iBool isBottom = (i >= 2);
+            SDL_RenderTexture(
+                renderer_Paint_(d),
+                atlas,
+                &(SDL_FRect){ isRight * radius, (2 * layer + isBottom) * radius, radius, radius },
+                &(SDL_FRect){ isRight ? right_Rect(rect) - radius : left_Rect(rect),
+                              isBottom ? bottom_Rect(rect) - radius : top_Rect(rect),
+                              radius,
+                              radius });
+        }
+    }
+}
+
+void drawRoundRect_Paint(const iPaint *d, iRect rect, int corners, int frameThickness,
+                         int fillColor, int frameColor1, int frameColor2) {
+    const int    radius = gap_UI;
+    const int    t      = iClamp(frameThickness, 1, maxFrameThickness_RoundCorner);
+    SDL_Texture *atlas  = NULL;
+    if (frameColor2 < 0) {
+        frameColor2 = frameColor1;
+    }
+    if (isTerminal_Platform()) {
+        if (fillColor >= 0) {
+            fillRect_Paint(d, rect, fillColor);
+        }
+        if (frameColor1 >= 0) {
+            const iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
+            if (frameColor1 == frameColor2) {
+                drawRectThickness_Paint(d, frameRect, frameThickness, frameColor1);
+            }
+            else {
+                drawEmbossedFrame_Paint(d, frameRect, frameColor1, frameColor2,
+                                        iFalse, iFalse);
+            }
+        }
+        return;
+    }
+    if (t > radius || width_Rect(rect) < 2 * radius || height_Rect(rect) < 2 * radius) {
+        corners = 0;
+    }
+    if (corners && (atlas = roundCorners_Paint_(d)) == NULL) {
+        corners = 0;
+    }
+    const int x   = left_Rect(rect);
+    const int y   = top_Rect(rect);
+    const int w   = width_Rect(rect);
+    const int h   = height_Rect(rect);
+    const int rTL = corners & topLeft_RoundCorner     ? radius : 0;
+    const int rTR = corners & topRight_RoundCorner    ? radius : 0;
+    const int rBR = corners & bottomRight_RoundCorner ? radius : 0;
+    const int rBL = corners & bottomLeft_RoundCorner  ? radius : 0;
+    if (fillColor >= 0) {
+        const int cl = iMax(rTL, rBL);
+        const int cr = iMax(rTR, rBR);
+        fillRect_Paint(d, init_Rect(x + cl, y, w - cl - cr, h), fillColor);
+        if (cl) {
+            fillRect_Paint(d, init_Rect(x, y + rTL, cl, h - rTL - rBL), fillColor);
+        }
+        if (cr) {
+            fillRect_Paint(d, init_Rect(x + w - cr, y + rTR, cr, h - rTR - rBR), fillColor);
+        }
+        if (corners) {
+            drawCorners_Paint_(d, atlas, rect, corners, radius, 0, fillColor);
+        }
+    }
+    if (frameColor1 >= 0) {
+        /* Sharp corners belong to the horizontal edges. */
+        const int lt = rTL ? rTL : t, lb = rBL ? rBL : t;
+        const int rt = rTR ? rTR : t, rb = rBR ? rBR : t;
+        fillRect_Paint(d, init_Rect(x + rTL, y, w - rTL - rTR, t), frameColor1);
+        fillRect_Paint(d, init_Rect(x, y + lt, t, h - lt - lb), frameColor1);
+        fillRect_Paint(d, init_Rect(x + rBL, y + h - t, w - rBL - rBR, t), frameColor2);
+        fillRect_Paint(d, init_Rect(x + w - t, y + rt, t, h - rt - rb), frameColor2);
+        if (corners) {
+            drawCorners_Paint_(d, atlas, rect, corners, radius, 2 * t - 1, frameColor2);
+            drawCorners_Paint_(d, atlas, rect, corners, radius, 2 * t, frameColor1);
+        }
+    }
+}
+
 void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
     addv_I2(&inner.pos, origin_Paint);
     SDL_Renderer *render = renderer_Paint_(d);
@@ -326,7 +474,7 @@ void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) 
     free(offsetPoints);
 }
 
-void drawEmbossedFrame_Paint(iPaint *p, iRect rect, int color1, int color2, iBool noBottom,
+void drawEmbossedFrame_Paint(const iPaint *p, iRect rect, int color1, int color2, iBool noBottom,
                              iBool noTop) {
     iInt2 points[] = {
         bottomLeft_Rect(rect),

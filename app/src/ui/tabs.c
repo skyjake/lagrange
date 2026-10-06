@@ -182,6 +182,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         setIcon_LabelWidget((iLabelWidget *) button, 0); /* no icon in the terminal (lack of room) */
     }
     setFlags_Widget(button, selected_WidgetFlag, isSel);
+    button->flags2 |= noRound_WidgetFlag2;
     setFlags_Widget(button,
                     commandOnClick_WidgetFlag |
                         (!isVerticalTabs ? horizontalOffset_WidgetFlag : 0) |

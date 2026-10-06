@@ -29,6 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Paint)
 
+enum iRoundCorner {
+    topLeft_RoundCorner     = iBit(1),
+    topRight_RoundCorner    = iBit(2),
+    bottomRight_RoundCorner = iBit(3),
+    bottomLeft_RoundCorner  = iBit(4),
+    all_RoundCorner         = 0xf,
+};
+
 struct Impl_Paint {
     iWindow *    dst;
     SDL_Texture *setTarget;
@@ -51,6 +59,8 @@ void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
 void    fillRect_Paint          (const iPaint *, iRect rect, int color);
 void    fillRectColor_Paint     (const iPaint *, iRect rect, iColor color);
+void    drawRoundRect_Paint     (const iPaint *, iRect rect, int corners, int frameThickness,
+                                 int fillColor, int frameColor1, int frameColor2); /* frame 1: top/left, 2: bottom/right; none_ColorId to omit */
 void    drawSoftShadow_Paint    (const iPaint *, iRect rect, int thickness, int color, int alpha);
 void    drawSoftEdge_Paint      (const iPaint *, int x, iRangei ySpan, int thickness, iColor color, int alpha); /* vertical; darkest at `x`, negative thickness extends left */
 void    drawSoftCrease_Paint    (const iPaint *, int x, iRangei ySpan, int thickness, iColor color, int alpha); /* vertical */
@@ -69,7 +79,7 @@ iLocalDef void drawVLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
     drawLine_Paint(d, pos, addY_I2(pos, len), color);
 }
 
-void    drawEmbossedFrame_Paint (iPaint *, iRect rect, int color1, int color2,
+void    drawEmbossedFrame_Paint (const iPaint *, iRect rect, int color1, int color2,
                                  iBool noBottom, iBool noTop);
 void    drawPin_Paint       (iPaint *, iRect rangeRect, int dir, int pinColor);
 

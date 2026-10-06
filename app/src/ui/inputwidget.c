@@ -3131,15 +3131,29 @@ static void draw_InputWidget_(const iInputWidget *d) {
     iPaint p;
     init_Paint(&p);
     /* `lines` is already up to date and ready for drawing. */
-    fillRect_Paint(
-        &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : w->bgColor);
-    if (!isTerminal_Platform() && ~w->flags & frameless_WidgetFlag && !isDisabled) {
-        drawRectThickness_Paint(&p,
-                                adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
-                                isFocused ? gap_UI / 4 : 1,
-                                //isDisabled ? uiTextDisabled_ColorId
-                                 isFocused ? uiInputFrameFocused_ColorId
-                                : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+    const iBool isFramed   = !isTerminal_Platform() && ~w->flags & frameless_WidgetFlag;
+    const int   bgColor    = isFocused ? uiInputBackgroundFocused_ColorId : w->bgColor;
+    const int   frameColor = isDisabled  ? none_ColorId
+                             : isFocused ? uiInputFrameFocused_ColorId
+                             : isHover   ? uiInputFrameHover_ColorId
+                                         : uiInputFrame_ColorId;
+    if (isFramed && ~w->flags2 & noRound_WidgetFlag2) {
+        drawRoundRect_Paint(&p,
+                            bounds,
+                            all_RoundCorner,
+                            isFocused ? gap_UI / 4 : 1,
+                            bgColor,
+                            frameColor,
+                            frameColor);
+    }
+    else {
+        fillRect_Paint(&p, bounds, bgColor);
+        if (isFramed && frameColor >= 0) {
+            drawRectThickness_Paint(&p,
+                                    adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
+                                    isFocused ? gap_UI / 4 : 1,
+                                    frameColor);
+        }
     }
     if (d->sysCtrl) {
         /* The system-provided control is drawing the text. */
