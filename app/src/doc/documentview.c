@@ -2185,7 +2185,7 @@ static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
                            ySpan_Rect(area),
                            (right - pageLeft) / 6,
                            shadow,
-                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.75f *
+                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.5f *
                                widthFactor);
         unsetClip_Paint(p);
     }
