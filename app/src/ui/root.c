@@ -2296,6 +2296,7 @@ void createUserInterface_Root(iRoot *d) {
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
         addChildFlags_Widget(
             searchBar, iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)), frameless_WidgetFlag);
+        searchBar->padding[2] = 2 * gap_UI; /* matches navbar right edge */
         iInputWidget *input = new_InputWidget(0);
         setHint_InputWidget(input, "${hint.findtext}");
         setSelectAllOnFocus_InputWidget(input, iTrue);
