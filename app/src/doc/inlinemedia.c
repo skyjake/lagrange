@@ -393,7 +393,7 @@ iBool processEvent_InlineMedia(iInlineMedia *d, const SDL_Event *ev) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
         if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_MOUSE_BUTTON_UP) {
             if (ev->button.button != SDL_BUTTON_LEFT) {
-                return iFalse;
+                continue; /* other media may still handle it */
             }
         }
         /* TODO: move this to mediaui.c */

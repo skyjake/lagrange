@@ -134,6 +134,19 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
 #endif /* LAGRANGE_ENABLE_AUDIO */
 }
 
+static void drawBox_MediaUI_(iPaint *p, iRect rect, int radius, int fill, int frame) {
+    if (isTerminal_Platform()) {
+        if (fill >= 0) {
+            fillRect_Paint(p, rect, fill);
+        }
+        if (frame >= 0) {
+            drawRect_Paint(p, rect, frame);
+        }
+        return;
+    }
+    drawRoundRectRadius_Paint(p, rect, radius, all_RoundCorner, 1, fill, frame, frame);
+}
+
 static void drawInlineButton_(iPaint *p, iRect rect, const char *label, int font) {
     const iInt2 mouse     = isInteracting_Touch() ? fingerPosition_Touch()
                                                   : mouseCoord_Window(get_Window(), 0);
@@ -142,12 +155,25 @@ static void drawInlineButton_(iPaint *p, iRect rect, const char *label, int font
                                         (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0);
     const int frame = (isPressed ? uiTextCaution_ColorId : isHover ? uiHeading_ColorId : uiAnnotation_ColorId);
     iRect frameRect = shrunk_Rect(rect, init_I2(gap_UI / 2, gap_UI));
-    drawRect_Paint(p, frameRect, frame);
+    drawBox_MediaUI_(p, frameRect, gap_UI, none_ColorId, frame);
     if (isPressed) {
-        fillRect_Paint(
-            p,
-            adjusted_Rect(shrunk_Rect(frameRect, divi_I2(gap2_UI, 2)), zero_I2(), one_I2()),
-            frame);
+        if (isTerminal_Platform()) {
+            fillRect_Paint(
+                p,
+                adjusted_Rect(shrunk_Rect(frameRect, divi_I2(gap2_UI, 2)), zero_I2(), one_I2()),
+                frame);
+        }
+        else {
+            /* Concentric with the frame. */
+            drawRoundRectRadius_Paint(p,
+                                      shrunk_Rect(frameRect, divi_I2(gap2_UI, 2)),
+                                      gap_UI / 2,
+                                      all_RoundCorner,
+                                      1,
+                                      frame,
+                                      none_ColorId,
+                                      none_ColorId);
+        }
     }
     const int fg = isPressed ? (permanent_ColorId | uiBackground_ColorId) : uiHeading_ColorId;
     drawCentered_Text(font, frameRect, iTrue, fg, "%s", label);
@@ -158,8 +184,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const int   playerBackground_ColorId = uiBackground_ColorId;
     const int   playerFrame_ColorId      = uiSeparator_ColorId;
     const iBool isAdjusting = (flags_Player(d->player) & adjustingVolume_PlayerFlag) != 0;
-    fillRect_Paint(p, d->bounds, playerBackground_ColorId);
-    drawRect_Paint(p, d->bounds, playerFrame_ColorId);
+    drawBox_MediaUI_(p, d->bounds, 2 * gap_UI, playerBackground_ColorId, playerFrame_ColorId);
     drawInlineButton_(p,
                       d->playPauseRect,
                       isPaused_Player(d->player) ? "\U0001f782" : "\u23f8",
@@ -227,13 +252,14 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                               ~flags_Player(d->player) & volumeGrabbed_PlayerFlag;
         const iBool isPressed = (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
         iRect adjRect = shrunk_Rect(d->volumeAdjustRect, init_I2(gap_UI / 2, gap_UI));
-        fillRect_Paint(p, adjRect, playerBackground_ColorId);
-        drawRect_Paint(p, adjRect, bright);
+        drawBox_MediaUI_(p, adjRect, gap_UI, playerBackground_ColorId, bright);
         if (isHover) {
-            fillRect_Paint(
+            drawBox_MediaUI_(
                 p,
                 shrunk_Rect(d->volumeRect, init_I2(gap_UI / 2 + gap_UI / 2, 3 * gap_UI / 2)),
-                isPressed ? uiTextCaution_ColorId : bright);
+                gap_UI / 2,
+                isPressed ? uiTextCaution_ColorId : bright,
+                none_ColorId);
         }
         drawCentered_Text(uiContentSymbols_FontId,
                           d->volumeRect,
@@ -331,8 +357,7 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
     downloadInfo_Media(d->media, d->mediaId, &info);
     downloadStats_Media(d->media, (iMediaId){ download_MediaType, d->mediaId },
                         &path, &bytesPerSecond, &isFinished);
-    fillRect_Paint(p, d->bounds, uiBackground_ColorId);
-    drawRect_Paint(p, d->bounds, uiSeparator_ColorId);
+    drawBox_MediaUI_(p, d->bounds, 2 * gap_UI, uiBackground_ColorId, uiSeparator_ColorId);
     iRect rect = d->bounds;
     shrink_Rect(&rect, init_I2(3 * gap_UI, 0));
     const int fonts[2] = { uiContentBold_FontId, uiLabel_FontId };
