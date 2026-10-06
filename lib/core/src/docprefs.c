@@ -470,7 +470,7 @@ const iDocPrefs *defaults_DocPrefs(void) {
         d->quoteIcon.value          = iTrue;
         d->sideIcon.value           = iTrue;
         d->boldLinkVisited.value    = iFalse;
-        d->boldLinkDark.value       = iTrue;
+        d->boldLinkDark.value       = iFalse;
         d->boldLinkLight.value      = iTrue;
         d->docThemeDark.value       = colorfulDark_GmDocumentTheme;
         d->docThemeLight.value      = white_GmDocumentTheme;
