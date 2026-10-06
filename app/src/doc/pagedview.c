@@ -454,8 +454,9 @@ iBool turnPage_DocumentView(iDocumentView *d, int dir) {
         postCommand_Widget(d->owner, "document.page.overflow arg:%d", dir);
         return iFalse;
     }
-    /* Swipes animate regardless of the setting. */
-    showColumn_DocumentView(d, target, prefs_App()->pageTurn != none_PageTurnAnimation);
+    /* Swipes animate regardless of the settings. */
+    showColumn_DocumentView(
+        d, target, prefs_App()->uiAnimations && prefs_App()->pageTurn != none_PageTurnAnimation);
     return iTrue;
 }
 

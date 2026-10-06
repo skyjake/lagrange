@@ -2219,7 +2219,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             d->flags &= ~animateChapterSwipe_DocumentWidgetFlag;
             d->swipe->flags &= ~begun_DocumentSwipeFlag;
             const int to = isSwipingBack_DocumentSwipe(d->swipe) ? width_Widget(d) : 0;
-            if (d->swipe->flags & pageCurl_DocumentSwipeFlag) {
+            if (!prefs_App()->uiAnimations) {
+                setValue_Anim(&d->swipe->offset, to, 0);
+            }
+            else if (d->swipe->flags & pageCurl_DocumentSwipeFlag) {
                 setValueEased_Anim(&d->swipe->offset, to, pageTurnDuration_DocumentView(d->view));
             }
             else {
