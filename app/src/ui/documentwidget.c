@@ -3359,6 +3359,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel);
             }
         }
+        else if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
+            postCommandf_App("zoom.delta arg:%d", ev->wheel.y > 0 ? 10 : -10);
+        }
         else {
             wheelPage_DocumentView(view, ev->wheel.y ? ev->wheel.y : ev->wheel.x);
         }
