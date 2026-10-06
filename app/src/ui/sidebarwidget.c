@@ -808,6 +808,39 @@ static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
     addChildFlags_Widget(div, iClob(icon), frameless_WidgetFlag);
 }
 
+/* Padding under the action bar depends on whether there are other UI elements next
+   to the bottom of the window. This is surprisingly convoluted; perhaps there is a
+   better way to handle this? (Some sort of intelligent padding widget at the bottom
+   of the sidebar? Root should just use safe insets as the padding? In that case,
+   individual widgets still need to be able to extend into the safe area.) */
+static int actionsBottomInset_SidebarWidget_(const iSidebarWidget *d) {
+    if (deviceType_App() == tablet_AppDeviceType) {
+        return prefs_App()->bottomNavBar ? 0 : bottomSafeInset_Mobile();
+    }
+    if (deviceType_App() == phone_AppDeviceType && !isPortrait_App()) {
+        /* In sliding sheet mode (portrait), sidebar is resized to fit in the safe area. */
+        if (!prefs_App()->bottomNavBar) {
+            return bottomSafeInset_Mobile();
+        }
+        return (!prefs_App()->hideToolbarOnScroll
+                    ? height_Widget(findChild_Widget(root_Widget(constAs_Widget(d)), "navbar"))
+                    : 0) +
+               bottomSafeInset_Mobile();
+    }
+    return 0;
+}
+
+static void updateActionsPadding_SidebarWidget_(iSidebarWidget *d) {
+    const int bottom = actionsBottomInset_SidebarWidget_(d);
+    if (childCount_Widget(d->actions)) {
+        /* Mirrors the book tab area padding. */
+        setPadding_Widget(d->actions, 3 * gap_UI, gap_UI, 3 * gap_UI, 2 * gap_UI + bottom);
+    }
+    else {
+        setPadding_Widget(d->actions, 0, 0, 0, bottom);
+    }
+}
+
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
@@ -1429,6 +1462,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         default:
             break;
     }
+    updateActionsPadding_SidebarWidget_(d);
     const iBool isBookPage = d->mode == gempub_SidebarMode && !isShowingShelf_SidebarWidget_(d);
     setFlags_Widget(as_Widget(d->list),
                     hidden_WidgetFlag,
@@ -2566,7 +2600,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     if (isResize_UserEvent(ev)) {
         checkModeButtonLayout_SidebarWidget_(d);
         if (deviceType_App() == phone_AppDeviceType) {
-            setPadding_Widget(d->actions, 0, 0, 0, 0);
             setFlags_Widget(
                 findChild_Widget(w, "sidebar.title"), hidden_WidgetFlag, isLandscape_App());
             setFlags_Widget(
@@ -2593,37 +2626,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setBackgroundColor_Widget(
                 w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
         }
-        /* Padding under the action bar depends on whether there are other UI elements next
-           to the bottom of the window. This is surprisingly convoluted; perhaps there is a
-           better way to handle this? (Some sort of intelligent padding widget at the bottom
-           of the sidebar? Root should just use safe insets as the padding? In that case,
-           individual widgets still need to be able to extend into the safe area.) */
-        if (deviceType_App() == desktop_AppDeviceType) {
-            setPadding_Widget(d->actions, 0, 0, 0, 0);
-        }
-        else if (deviceType_App() == tablet_AppDeviceType) {
-            setPadding_Widget(
-                d->actions, 0, 0, 0, prefs_App()->bottomNavBar ? 0 : bottomSafeInset_Mobile());
-        }
-        else if (deviceType_App() == phone_AppDeviceType) {
-            if (isPortrait_App()) {
-                /* In sliding sheet mode, sidebar is resized to fit in the safe area. */
-                setPadding_Widget(d->actions, 0, 0, 0, 0);
-            }
-            else if (!prefs_App()->bottomNavBar) {
-                setPadding_Widget(d->actions, 0, 0, 0, bottomSafeInset_Mobile());
-            }
-            else {
-                setPadding_Widget(d->actions,
-                                  0,
-                                  0,
-                                  0,
-                                  (prefs_App()->bottomNavBar && !prefs_App()->hideToolbarOnScroll
-                                       ? height_Widget(findChild_Widget(root_Widget(w), "navbar"))
-                                       : 0) +
-                                      bottomSafeInset_Mobile());
-            }
-        }
+        updateActionsPadding_SidebarWidget_(d);
         return iFalse;
     }
     else if (isMetricsChange_UserEvent(ev)) {
