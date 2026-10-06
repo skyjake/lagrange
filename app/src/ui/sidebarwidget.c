@@ -155,6 +155,7 @@ struct Impl_SidebarWidget {
     iLabelWidget     *firstVisibleModeButton;
     int               maxButtonLabelWidth;
     float             widthAsGaps;
+    float             pendingWidth;  /* applied once per frame while resizing; negative if none */
     int               buttonFont;
     int               itemFonts[2];
     size_t            numUnreadEntries;
@@ -1665,6 +1666,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeScroll);
     d->side             = side;
     d->mode             = -1;
+    d->pendingWidth     = -1.0f;
     d->feedsMode        = all_FeedsMode;
     d->shelfSort        = recent_BooksSortOrder;
     d->midHeight        = 0;
@@ -1866,7 +1868,17 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
 }
 
+static void applyPendingWidth_SidebarWidget_(iAny *context) {
+    iSidebarWidget *d = context;
+    if (d->pendingWidth >= 0.0f) {
+        setWidth_SidebarWidget(d, d->pendingWidth);
+        resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iFalse);
+        d->pendingWidth = -1.0f;
+    }
+}
+
 void deinit_SidebarWidget(iSidebarWidget *d) {
+    removeTicker_App(applyPendingWidth_SidebarWidget_, d);
     deinit_String(&d->gempubCentered);
     deinit_String(&d->gempubUrl);
     iRelease(d->structureUnfolds);
@@ -2679,6 +2691,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setFlags_Widget(d->resizer, pressed_WidgetFlag, iFalse);
                     setBackgroundColor_Widget(d->resizer, none_ColorId);
                     setMouseGrab_Widget(NULL);
+                    applyPendingWidth_SidebarWidget_(d);
                     /* Final size update in case it was resized. */
                     updateSize_DocumentWidget(document_App());
                     resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
@@ -2692,14 +2705,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (isResizing_SidebarWidget_(d)) {
                 const iInt2 inner  = windowToInner_Widget(w, coord_Command(cmd));
                 const int   resMid = d->resizer->rect.size.x / 2;
-                setWidth_SidebarWidget(
-                    d,
+                /* Mouse motion may arrive faster than the layout can be updated. */
+                d->pendingWidth =
                     ((d->side == left_SidebarSide
                           ? inner.x
                           : (right_Rect(rect_Root(w->root)) - coord_Command(cmd).x)) +
                      resMid) /
-                        (float) gap_UI);
-                resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iFalse);
+                    (float) gap_UI;
+                addTicker_App(applyPendingWidth_SidebarWidget_, d);
             }
             return iTrue;
         }
