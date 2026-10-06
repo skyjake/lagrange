@@ -54,6 +54,7 @@ void                setMidHeight_SidebarWidget  (iSidebarWidget *, int midHeight
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
+int                 shelfSort_SidebarWidget     (const iSidebarWidget *); /* enum iBooksSortOrder */
 float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     closedFolders_SidebarWidget (const iSidebarWidget *);
 

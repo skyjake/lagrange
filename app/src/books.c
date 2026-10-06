@@ -413,7 +413,24 @@ static int cmpTimestamp_Book_(const void *a, const void *b) {
     return cmpStringCase_String(&x->title, &y->title);
 }
 
-const iPtrArray *list_Books(void) {
+static int cmpTitle_Book_(const void *a, const void *b) {
+    const iBook *x   = *(const iBook **) a;
+    const iBook *y   = *(const iBook **) b;
+    const int    cmp = cmpStringCase_String(&x->title, &y->title);
+    return cmp ? cmp : cmpStringCase_String(&x->author, &y->author);
+}
+
+static int cmpAuthor_Book_(const void *a, const void *b) {
+    const iBook *x = *(const iBook **) a;
+    const iBook *y = *(const iBook **) b;
+    if (isEmpty_String(&x->author) != isEmpty_String(&y->author)) {
+        return isEmpty_String(&x->author) ? 1 : -1; /* unknown authors last */
+    }
+    const int cmp = cmpStringCase_String(&x->author, &y->author);
+    return cmp ? cmp : cmpStringCase_String(&x->title, &y->title);
+}
+
+const iPtrArray *list_Books(enum iBooksSortOrder sortOrder) {
     iBooks    *d       = books_;
     iPtrArray *shelf   = collectNew_PtrArray();
     iBool      changed = iFalse;
@@ -480,7 +497,10 @@ const iPtrArray *list_Books(void) {
         }
     }
     unlock_Mutex(d->mtx);
-    sort_Array(shelf, cmpTimestamp_Book_);
+    sort_Array(shelf,
+               sortOrder == title_BooksSortOrder    ? cmpTitle_Book_
+               : sortOrder == author_BooksSortOrder ? cmpAuthor_Book_
+                                                    : cmpTimestamp_Book_);
     if (changed) {
         save_Books();
     }
@@ -629,7 +649,7 @@ void removeDownload_Books(const iString *id) {
         removePath_CStr(cstr_String(j.value));
     }
     iRelease(paths);
-    list_Books(); /* forgets the files */
+    list_Books(recent_BooksSortOrder); /* forgets the files */
 }
 
 void remove_Books(const iString *id) {

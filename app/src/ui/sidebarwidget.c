@@ -134,6 +134,7 @@ struct Impl_SidebarWidget {
     enum iSidebarSide side;
     enum iSidebarMode mode;
     enum iFeedsMode   feedsMode;
+    enum iBooksSortOrder shelfSort;
     iString           cmdPrefix;
     iWidget          *blank;
     iListWidget      *list;
@@ -660,11 +661,11 @@ static iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
     return d->mode == gempub_SidebarMode && (d->gempubPage == 2 || !gempub_SidebarWidget_(d));
 }
 
-static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
+static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     /* Lists the books on the shelf. Returns False if there are none. */
     const iGempub *current   = gempub_SidebarWidget_(d);
     const iString *currentId = current ? id_Books(current) : NULL;
-    const iPtrArray *books = list_Books();
+    const iPtrArray *books = list_Books(d->shelfSort);
     iConstForEach(PtrArray, i, books) {
         const iBook   *book = i.ptr;
         const iString *path = path_Book(book);
@@ -701,6 +702,40 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d) {
         { delete_Icon " " uiTextCaution_ColorEscape "${book.delete}", 0, 0, "book.delete" },
     };
     d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
+    /* Actions. */
+    if (deviceType_App() == desktop_AppDeviceType) {
+        if (!keepActions && !isEmpty_PtrArray(books)) {
+            addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
+            updateSize_LabelWidget(
+                addChildFlags_Widget(d->actions,
+                                     iClob(new_LabelWidget("${sidebar.action.sort}", NULL)),
+                                     frameless_WidgetFlag | tight_WidgetFlag));
+            const iMenuItem items[] = {
+                { "${sidebar.action.books.recent}", 0, 0, "books.sort arg:0" },
+                { "${sidebar.action.books.title}", 0, 0, "books.sort arg:1" },
+                { "${sidebar.action.books.author}", 0, 0, "books.sort arg:2" },
+            };
+            iWidget *dropButton = addChild_Widget(
+                d->actions,
+                iClob(makeMenuButton_LabelWidget(items[d->shelfSort].label, items, 3)));
+            setId_Widget(dropButton, "books.sortbutton");
+            checkIcon_LabelWidget((iLabelWidget *) dropButton);
+            setFixedSize_Widget(
+                dropButton,
+                init_I2(iMaxi(20 * gap_UI,
+                              measure_Text(default_FontId,
+                                           translateCStr_Lang(
+                                               items[findWidestLabel_MenuItem(items, 3)].label))
+                                      .advance.x +
+                                  13 * gap_UI),
+                        -1));
+            addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
+        }
+        else if (keepActions) {
+            updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "books.sortbutton"),
+                                                format_CStr(" arg:%d", d->shelfSort));
+        }
+    }
     return !isEmpty_PtrArray(books);
 }
 
@@ -1329,7 +1364,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
         }
         case gempub_SidebarMode:
-            isEmpty = isShowingShelf_SidebarWidget_(d) ? !updateShelf_SidebarWidget_(d)
+            isEmpty = isShowingShelf_SidebarWidget_(d) ? !updateShelf_SidebarWidget_(d, keepActions)
                                                        : !updateGempub_SidebarWidget_(d);
             break;
         default:
@@ -1556,6 +1591,10 @@ enum iFeedsMode feedsMode_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->feedsMode : 0;
 }
 
+int shelfSort_SidebarWidget(const iSidebarWidget *d) {
+    return d ? d->shelfSort : 0;
+}
+
 float width_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->widthAsGaps : 0;
 }
@@ -1627,6 +1666,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->side             = side;
     d->mode             = -1;
     d->feedsMode        = all_FeedsMode;
+    d->shelfSort        = recent_BooksSortOrder;
     d->midHeight        = 0;
     d->isEditing        = iFalse;
     d->wasLandscape     = isLandscape_App();
@@ -2923,6 +2963,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode == feedEntries_SidebarMode || d->mode == subscriptions_SidebarMode) {
                 updateItems_SidebarWidget_(d);
             }
+        }
+        else if (equalWidget_Command(cmd, w, "books.sort")) {
+            d->shelfSort = iClamp(arg_Command(cmd), 0, author_BooksSortOrder);
+            if (isShowingShelf_SidebarWidget_(d)) {
+                updateItemsWithFlags_SidebarWidget_(d, iTrue);
+            }
+            return iTrue;
         }
         else if (equalWidget_Command(cmd, w, "feeds.mode")) {
             d->feedsMode = arg_Command(cmd);

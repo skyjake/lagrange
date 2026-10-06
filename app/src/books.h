@@ -32,6 +32,12 @@ iDeclareType(Gempub)
 
 iDeclareClass(Book)
 
+enum iBooksSortOrder {
+    recent_BooksSortOrder,
+    title_BooksSortOrder,
+    author_BooksSortOrder,
+};
+
 struct Impl_Book {
     iObject  object;
     iString  id;          /* from the title and author */
@@ -64,7 +70,7 @@ iString *       makeId_Books        (const iString *title, const iString *author
 const iString * id_Books            (const iGempub *);
 const iBook *   find_Books          (const iString *id);
 iBool           isOnShelf_Books     (const iString *path);
-const iPtrArray*list_Books          (void); /* downloaded or downloadable, most recently read first */
+const iPtrArray*list_Books          (enum iBooksSortOrder); /* downloaded or downloadable */
 
 void            update_Books        (const iGempub *, const iString *path);
 void            setPosition_Books   (const iGempub *, int chapter, int numChapters, float pos);

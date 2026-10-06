@@ -654,6 +654,19 @@ msgstr "Read All"
 msgid "sidebar.action.show"
 msgstr "Show:"
 
+# Label before the dropdown that selects the order of books on the bookshelf.
+msgid "sidebar.action.sort"
+msgstr "Sort:"
+
+msgid "sidebar.action.books.recent"
+msgstr "Most Recent"
+
+msgid "sidebar.action.books.title"
+msgstr "Title"
+
+msgid "sidebar.action.books.author"
+msgstr "Author"
+
 msgid "sidebar.action.feeds.showall"
 msgstr "All"
 

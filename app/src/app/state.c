@@ -270,6 +270,12 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                     if (flags & 8) {
                         postCommand_Widget(sidebar2, "feeds.mode arg:%d", unread_FeedsMode);
                     }
+                    if ((flags >> 4) & 3) {
+                        postCommand_Widget(sidebar, "books.sort arg:%d", (flags >> 4) & 3);
+                    }
+                    if ((flags >> 6) & 3) {
+                        postCommand_Widget(sidebar2, "books.sort arg:%d", (flags >> 6) & 3);
+                    }
                     if (deviceType_App() == desktop_AppDeviceType) {
                         /* Zero means the width was not available when saving. */
                         if (widths[0] > 0) setWidth_SidebarWidget(sidebar,  widths[0]);
@@ -439,7 +445,9 @@ void saveState_App_(const iApp *d, iBool withContent) {
                                       (isVisible_Widget(sidebar)  ? 0x100 : 0) |
                                       (isVisible_Widget(sidebar2) ? 0x200 : 0) |
                                       (feedsMode_SidebarWidget(sidebar)  == unread_FeedsMode ? 0x400 : 0) |
-                                      (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0));
+                                      (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0) |
+                                      (shelfSort_SidebarWidget(sidebar)  << 12) |
+                                      (shelfSort_SidebarWidget(sidebar2) << 14));
                         writeU8_File(f,
                                      mode_SidebarWidget(sidebar) |
                                      (mode_SidebarWidget(sidebar2) << 4));
