@@ -112,42 +112,26 @@ include (CMakePushCheckState)
 
 # Package resources.
 message (STATUS "Preparing resources...")
+include (PoCompile)
+set (LANGUAGES
+    cs de en eo es es_MX eu fi fr gl hu ia ie isv it ja nl pl ru sgs sk sr tok tr uk
+    zh_Hans zh_Hant
+)
+set (LANG_DIR ${CMAKE_CURRENT_BINARY_DIR}/res/lang)
+compile_lang_strings (${CMAKE_CURRENT_SOURCE_DIR}/po ${LANG_DIR} ${LANGUAGES})
 set (RESOURCES
     res/about/about.gmi
     res/about/lagrange.gmi
     res/about/license.gmi
-    res/lang/cs.bin
-    res/lang/de.bin
-    res/lang/en.bin
-    res/lang/eo.bin
-    res/lang/es.bin
-    res/lang/es_MX.bin
-    res/lang/eu.bin
-    res/lang/fi.bin
-    res/lang/fr.bin
-    res/lang/gl.bin
-    res/lang/hu.bin
-    res/lang/ia.bin
-    res/lang/ie.bin
-    res/lang/isv.bin
-    res/lang/it.bin
-    res/lang/ja.bin
-    res/lang/nl.bin
-    res/lang/pl.bin
-    res/lang/ru.bin
-    res/lang/sgs.bin
-    res/lang/sk.bin
-    res/lang/sr.bin
-    res/lang/tok.bin
-    res/lang/tr.bin
-    res/lang/uk.bin
-    res/lang/zh_Hans.bin
-    res/lang/zh_Hant.bin
     res/logo.png
     res/shadow.png
     res/fontpack.ini
     res/macos-system-fonts.ini
 )
+foreach (lang ${LANGUAGES})
+    list (APPEND RESOURCES ${LANG_DIR}/${lang}.bin)
+    set_property (DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS po/${lang}.po)
+endforeach ()
 if (EXISTS ${CACERT_PEM_PATH})
     message (STATUS "  ${CACERT_PEM_PATH}")
     list (APPEND RESOURCES ${CACERT_PEM_PATH})

@@ -10,5 +10,6 @@ build-*/
 /.cache/
 /.jked/
 /plan/
+/app/res/lang/
 /app/res/Images.xcassets/
 /app/Images.xcassets/

@@ -30,7 +30,7 @@ iDeclareType(Lang)
 iDeclareType(MsgStr)
 
 struct Impl_MsgStr {
-    iRangecc id; /* these point to null-terminated strings in resources */
+    iRangecc id; /* these point to null-terminated strings in Lang.strings */
     iRangecc str;
 };
 
@@ -52,6 +52,7 @@ enum iPluralType {
 };
 
 struct Impl_Lang {
+    iBlock strings;
     iSortedArray *messages;
     enum iPluralType pluralType;
     iString langCode;
@@ -87,6 +88,7 @@ static size_t pluralIndex_Lang_(const iLang *d, int n) {
 
 static void clear_Lang_(iLang *d) {
     clear_SortedArray(d->messages);
+    clear_Block(&d->strings);
 }
 
 static void load_Lang_(iLang *d, const char *id) {
@@ -142,8 +144,12 @@ static void load_Lang_(iLang *d, const char *id) {
     else {
         d->pluralType = notEqualToOne_PluralType;
     }
+    /* Strings may be terminated with 0x01 instead of NUL. */
+    set_Block(&d->strings, data);
+    replace_Block(&d->strings, 1, 0);
     iMsgStr msg;
-    for (const char *ptr = constBegin_Block(data); ptr != constEnd_Block(data); ptr++) {
+    for (const char *ptr = constBegin_Block(&d->strings); ptr != constEnd_Block(&d->strings);
+         ptr++) {
         msg.id.start = ptr;
         while (*++ptr) {}
         msg.id.end = ptr;
@@ -169,6 +175,7 @@ static void load_Lang_(iLang *d, const char *id) {
 void init_Lang(void) {
     iLang *d = &lang_;
     init_String(&d->langCode);
+    init_Block(&d->strings, 0);
     d->messages = new_SortedArray(sizeof(iMsgStr), cmp_MsgStr_);
     setCurrent_Lang("en");
 }
@@ -177,6 +184,7 @@ void deinit_Lang(void) {
     iLang *d = &lang_;
     clear_Lang_(d);
     delete_SortedArray(d->messages);
+    deinit_Block(&d->strings);
     deinit_String(&d->langCode);
 }
 
