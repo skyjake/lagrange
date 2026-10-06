@@ -1716,6 +1716,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         setLinkNumberMode_DocumentWidget(d, iFalse);
         d->phoneToolbar = findWidget_App("bottombar");
         if (document_Root(w->root) != d) {
+            updateWindowTitle_DocumentWidget(d); /* tab button width may have changed */
             return iFalse; /* background tabs are updated when shown */
         }
         /* Splitting moves documents between roots without a tab switch. */
@@ -1885,7 +1886,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         destroy_Widget(oldTab);
         return iTrue;
     }
-    else if (equal_Command(cmd, "tab.created")) {
+    else if (equal_Command(cmd, "tab.created") || equal_Command(cmd, "tab.closed")) {
         /* Space for tab buttons has changed. */
         updateWindowTitle_DocumentWidget(d);
         return iFalse;

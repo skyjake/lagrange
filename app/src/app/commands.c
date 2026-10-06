@@ -991,6 +991,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         if (wasClosed) {
             arrange_Widget(tabs);
+            postCommand_Root(tabs->root, "tab.closed");
             return iTrue;
         }
         const iBool isSplit = numRoots_Window(get_Window()) > 1;
@@ -1009,6 +1010,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             else {
                 arrange_Widget(tabs);
+                postCommand_Root(tabs->root, "tab.closed");
                 if (wasCurrent) {
                     size_t newIndex = index;
                     if (isRightmost) {
