@@ -805,26 +805,13 @@ iWidget *makePreferences_Widget(void) {
             addChildFlags_Widget(values, iClob(turns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
         addDialogToggle_Widget(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
-        /* Scroll speeds. */ {
-            for (int type = 0; type < max_ScrollType; type++) {
-                const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
-                addChild_Widget(headings,
-                                iClob(makeHeading_Widget(type == mouse_ScrollType
-                                                             ? "${prefs.scrollspeed.mouse}"
-                                                             : "${prefs.scrollspeed.keyboard}")));
-                /* TODO: Make a SliderWidget. */
-                iWidget *scrollSpeed = new_Widget();
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.7",  typeStr), "0", format_CStr("scrollspeed arg:7  type:%d", type));
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.10", typeStr), "1", format_CStr("scrollspeed arg:10 type:%d", type));
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.13", typeStr), "2", format_CStr("scrollspeed arg:13 type:%d", type));
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.17", typeStr), "3", format_CStr("scrollspeed arg:17 type:%d", type));
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.23", typeStr), "4", format_CStr("scrollspeed arg:23 type:%d", type));
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.30", typeStr), "5", format_CStr("scrollspeed arg:30 type:%d", type));
-                addRadioButton_Widget(scrollSpeed, format_CStr("prefs.scrollspeed.%s.40", typeStr), "6", format_CStr("scrollspeed arg:40 type:%d", type));
-                addChildFlags_Widget(
-                    values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            }
-        }
+        makeTwoColumnItems_Widget(
+            headings,
+            values,
+            (iMenuItem[]){
+                { "slider id:prefs.scrollspeed.keyboard cmd:scrollspeed.keyboard min:0 max:6" },
+                { "slider id:prefs.scrollspeed.mouse cmd:scrollspeed.mouse min:0 max:6" },
+                { NULL } });
         if (!isTerminal_Platform()) {
             addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
         }
@@ -1026,13 +1013,27 @@ static void updatePrefsToolBarActionButton_(iWidget *prefs, int buttonIndex, int
         format_CStr(" arg:%d button:%d", action, buttonIndex));
 }
 
-static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const int value) {
-    const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
-    for (int i = 0; i <= 40; i++) {
-        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.scrollspeed.%s.%d", typeStr, i)),
-                        selected_WidgetFlag,
-                        i == value);
+/* Slider levels correspond to these speeds. */
+static const int scrollSpeeds_[] = { 7, 10, 13, 17, 23, 30, 40 };
+
+static int scrollSpeed_(int level) {
+    return scrollSpeeds_[iClamp(level, 0, (int) iElemCount(scrollSpeeds_) - 1)];
+}
+
+static int scrollSpeedLevel_(int speed) {
+    int level = 0;
+    iForIndices(i, scrollSpeeds_) {
+        if (iAbs(scrollSpeeds_[i] - speed) < iAbs(scrollSpeeds_[level] - speed)) {
+            level = (int) i;
+        }
     }
+    return level;
+}
+
+static void updateScrollSpeedSlider_(iWidget *d, enum iScrollType type, const int value) {
+    const char *id = type == mouse_ScrollType ? "prefs.scrollspeed.mouse"
+                                              : "prefs.scrollspeed.keyboard";
+    setValue_SliderWidget(findChild_Widget(d, id), scrollSpeedLevel_(value));
 }
 
 static void updateFontButton_(iLabelWidget *button, const iString *fontId) {
@@ -1156,8 +1157,16 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "scrollspeed")) {
-        updateScrollSpeedButtons_(d, argLabel_Command(cmd, "type"), arg_Command(cmd));
+        updateScrollSpeedSlider_(d, argLabel_Command(cmd, "type"), arg_Command(cmd));
         return iFalse;
+    }
+    else if (equal_Command(cmd, "scrollspeed.keyboard") ||
+             equal_Command(cmd, "scrollspeed.mouse")) {
+        postCommandf_App("scrollspeed arg:%d type:%d",
+                         scrollSpeed_(arg_Command(cmd)),
+                         equal_Command(cmd, "scrollspeed.mouse") ? mouse_ScrollType
+                                                                 : keyboard_ScrollType);
+        return iTrue;
     }
     else if (equal_Command(cmd, "font.set")) {
         updateFontButton_(findChild_Widget(d, "prefs.font.ui"), string_Command(cmd, "ui"));
@@ -1220,8 +1229,9 @@ void showPreferences_Widget(const char *cmd) {
     updatePrefsGempubSidebarButtons_(dlg, prefs->gempubSidebar);
     updatePrefsPromptPositionButtons_(dlg, prefs->promptPosition);
     updatePrefsPageTurnButtons_(dlg, prefs->pageTurn);
-    updateScrollSpeedButtons_(dlg, mouse_ScrollType, prefs->smoothScrollSpeed[mouse_ScrollType]);
-    updateScrollSpeedButtons_(dlg, keyboard_ScrollType, prefs->smoothScrollSpeed[keyboard_ScrollType]);
+    iForIndices(type, prefs->smoothScrollSpeed) {
+        updateScrollSpeedSlider_(dlg, type, prefs->smoothScrollSpeed[type]);
+    }
     updateFeedIntervalButton_(findChild_Widget(dlg, "prefs.feedinterval"), prefs->feedInterval);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&prefs->strings[uiLanguage_PrefsString]));
     updateDropdownSelection_LabelWidget(
