@@ -49,6 +49,7 @@ struct Impl_SimpleDocumentWidget {
     iScrollWidget *scroll;
     iWidget       *menu;
     iGmLinkId      contextLink;
+    int            flags;
 };
 
 iDefineObjectConstruction(SimpleDocumentWidget)
@@ -124,6 +125,7 @@ void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     d->foundMark        = iNullRange;
     d->menu             = NULL;
     d->contextLink      = 0;
+    d->flags            = 0;
     d->view->banner     = d->banner;
     d->view->selectMark = &d->selectMark;
     d->view->foundMark  = &d->foundMark;
@@ -142,6 +144,13 @@ void deinit_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
 
 iGmDocument *document_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     return d->view->doc;
+}
+
+void setFlags_SimpleDocumentWidget(iSimpleDocumentWidget *d, int flags, iBool set) {
+    iChangeFlags(d->flags, flags, set);
+    const iBool isReading = (d->flags & reading_SimpleDocumentWidgetFlag) != 0;
+    d->view->pageMargin = isReading ? 5 : 1;
+    d->view->sideMargin = isReading ? 0 : 2;
 }
 
 static void pinPrefs_SimpleDocumentWidget_(iGmDocument *doc) {
@@ -169,12 +178,24 @@ static void documentChanged_SimpleDocumentWidget_(iSimpleDocumentWidget *d) {
 void setSource_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iString *url,
                                     const iString *source) {
     iGmDocument *doc = new_GmDocument();
-    setMode_GmDocument(doc, uiTheme_GmDocumentMode);
-    pinPrefs_SimpleDocumentWidget_(doc);
-    setUrl_GmDocument(doc, url);
-    const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
+    if (d->flags & reading_SimpleDocumentWidgetFlag) {
+        /* The URL's prefs apply, but there is no pagination. */
+        setUrl_GmDocument(doc, url);
+        iDocPrefs prefs;
+        initCopy_DocPrefs(&prefs, docPrefs_GmDocument(doc));
+        prefs.pageView.value = iFalse;
+        setDocPrefs_GmDocument(doc, &prefs);
+        deinit_DocPrefs(&prefs);
+    }
+    else {
+        setMode_GmDocument(doc, uiTheme_GmDocumentMode);
+        pinPrefs_SimpleDocumentWidget_(doc);
+        setUrl_GmDocument(doc, url);
+    }
     iRelease(d->view->doc);
     d->view->doc = doc;
+    /* Metrics depend on the prefs of the new document. */
+    const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
     setSource_GmDocument(doc, source, &metrics, final_GmDocumentUpdate);
     documentChanged_SimpleDocumentWidget_(d);
 }
@@ -227,8 +248,36 @@ static void updateWidth_SimpleDocumentWidget_(iSimpleDocumentWidget *d) {
 static void openLink_SimpleDocumentWidget_(iSimpleDocumentWidget *d, iGmLinkId linkId) {
     const iString *url = linkUrl_GmDocument(d->view->doc, linkId);
     if (url) {
-        postCommandf_Root(as_Widget(d)->root, "open url:%s", cstr_String(url));
+        postCommandf_Root(as_Widget(d)->root,
+                          "open%s url:%s",
+                          d->flags & newTabLinks_SimpleDocumentWidgetFlag ? " newtab:1" : "",
+                          cstr_String(url));
     }
+}
+
+static iBool handleScrollCommand_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const char *cmd) {
+    iDocumentView *view     = d->view;
+    const int      duration = prefs_App()->smoothScrolling ? 200 : 0;
+    if (equal_Command(cmd, "scroll.page")) {
+        const float amount = argLabel_Command(cmd, "full") ? 1.0f : 0.5f;
+        smoothScroll_DocumentView(view,
+                                  arg_Command(cmd) * amount *
+                                      height_Rect(documentBounds_DocumentView(view)),
+                                  duration);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "scroll.step")) {
+        smoothScroll_DocumentView(
+            view, 3 * lineHeight_Text(paragraph_FontId) * arg_Command(cmd), duration);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "scroll.top") || equal_Command(cmd, "scroll.bottom")) {
+        const int target =
+            equal_Command(cmd, "scroll.top") ? 0 : updateScrollMax_DocumentView(view);
+        smoothScroll_DocumentView(view, target - pos_SmoothScroll(&view->scrollY), duration);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static void copyLink_SimpleDocumentWidget_(const iSimpleDocumentWidget *d, const char *cmd) {
@@ -270,6 +319,11 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
     }
     else if (isCommand_Widget(w, ev, "simpledoc.copylink")) {
         copyLink_SimpleDocumentWidget_(d, command_UserEvent(ev));
+        return iTrue;
+    }
+    else if (d->flags & keyScrolling_SimpleDocumentWidgetFlag && isCommand_SDLEvent(ev) &&
+             isVisible_Widget(w) &&
+             handleScrollCommand_SimpleDocumentWidget_(d, command_UserEvent(ev))) {
         return iTrue;
     }
     if (ev->type == SDL_EVENT_MOUSE_WHEEL && isHover_Widget(w)) {
