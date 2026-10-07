@@ -1964,18 +1964,44 @@ void drawLayerEffects_Widget(const iWidget *d) {
 #endif
 }
 
-static int groupItemCorners_Widget_(const iWidget *d);
+static void groupItemSiblings_Widget_(const iWidget *d, const iWidget **prev,
+                                      const iWidget **next) {
+    *prev = *next = NULL;
+    iBool isFound = iFalse;
+    iConstForEach(ObjectList, i, d->parent->children) {
+        const iWidget *sib = i.object;
+        if (sib == d) {
+            isFound = iTrue;
+        }
+        else if (~sib->flags & hidden_WidgetFlag) {
+            if (!isFound) {
+                *prev = sib;
+            }
+            else {
+                *next = sib;
+                break;
+            }
+        }
+    }
+}
+
+iLocalDef iBool isGroupItem_Widget_(const iWidget *d) {
+    return d && d->flags2 & groupItem_WidgetFlag2;
+}
 
 void drawBorders_Widget(const iWidget *d) {
     int64_t flags = d->flags;
-    if (flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag) &&
-        d->flags2 & groupItem_WidgetFlag2) {
-        /* Separators are only drawn between items of a group. */
-        const int corners = groupItemCorners_Widget_(d);
-        if (corners & topLeft_RoundCorner) {
+    if (flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag) && isGroupItem_Widget_(d) &&
+        d->parent && !isTerminal_Platform()) {
+        /* Separators are only drawn between items of a group, and not next to a
+           highlighted item. */
+        const iWidget *prev, *next;
+        groupItemSiblings_Widget_(d, &prev, &next);
+        const iBool isSel = (d->flags & selected_WidgetFlag) != 0;
+        if (!isGroupItem_Widget_(prev) || isSel || prev->flags & selected_WidgetFlag) {
             flags &= ~borderTop_WidgetFlag;
         }
-        if (corners & bottomLeft_RoundCorner) {
+        if (!isGroupItem_Widget_(next) || isSel || next->flags & selected_WidgetFlag) {
             flags &= ~borderBottom_WidgetFlag;
         }
     }
@@ -2009,6 +2035,11 @@ static int freeCorners_Widget_(const iWidget *d) {
     if (type_Window(window_Widget(d)) == popup_WindowType) {
         return 0; /* the window itself is rectangular */
     }
+    if (d->flags2 & floating_WidgetFlag2) {
+        return d->flags & drawBackgroundToBottom_WidgetFlag
+                   ? (topLeft_RoundCorner | topRight_RoundCorner)
+                   : all_RoundCorner;
+    }
     const iRect area   = safeRect_Root(d->root);
     const iRect bounds = boundsWithoutVisualOffset_Widget(d);
     int corners = all_RoundCorner;
@@ -2031,28 +2062,13 @@ static int groupItemCorners_Widget_(const iWidget *d) {
     if (isTerminal_Platform() || ~d->flags2 & groupItem_WidgetFlag2 || !d->parent) {
         return 0;
     }
-    const iWidget *prev = NULL, *next = NULL;
-    iBool          isFound = iFalse;
-    iConstForEach(ObjectList, i, d->parent->children) {
-        const iWidget *sib = i.object;
-        if (sib == d) {
-            isFound = iTrue;
-        }
-        else if (~sib->flags & hidden_WidgetFlag) {
-            if (!isFound) {
-                prev = sib;
-            }
-            else {
-                next = sib;
-                break;
-            }
-        }
-    }
+    const iWidget *prev, *next;
+    groupItemSiblings_Widget_(d, &prev, &next);
     int corners = 0;
-    if (!prev || ~prev->flags2 & groupItem_WidgetFlag2) {
+    if (!isGroupItem_Widget_(prev)) {
         corners |= topLeft_RoundCorner | topRight_RoundCorner;
     }
-    if (!next || ~next->flags2 & groupItem_WidgetFlag2) {
+    if (!isGroupItem_Widget_(next)) {
         corners |= bottomLeft_RoundCorner | bottomRight_RoundCorner;
     }
     return corners;

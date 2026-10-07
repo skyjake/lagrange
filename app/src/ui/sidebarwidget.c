@@ -2771,7 +2771,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
         }
         else if (equal_Command(cmd, "menu.closed") && d->menu == pointer_Command(cmd)) {
-            setFocus_Widget(as_Widget(d->list));
+            if (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App())) {
+                setFocus_Widget(as_Widget(d->list));
+            }
             return iFalse;
         }
         else if (isCommand_Widget(w, ev, "mouse.clicked")) {

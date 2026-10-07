@@ -693,8 +693,11 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
 void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpenFlags) {
     iInt2 windowCoord         = topRight_Rect(windowAnchorRect);
     const iBool postCommands  = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
+    /* On touch devices, the menu is focused only for navigating with a gamepad. */
     const iBool isMenuFocused = ((menuOpenFlags & setFocus_MenuOpenFlags) ||
-                                 focus_Widget() == parent_Widget(d));
+                                 focus_Widget() == parent_Widget(d)) &&
+                                (deviceType_App() == desktop_AppDeviceType ||
+                                 isPointerHidden_Gamepad(gamepad_App()));
     const iBool isPopupForced = (menuOpenFlags & forcePopup_MenuOpenFlags) != 0;
     const iBool isSubmenu     = (menuOpenFlags & submenu_MenuOpenFlags) != 0;
     const iBool isFromMenuBar = (menuOpenFlags & fromMenuBar_MenuOpenFlags) != 0;
@@ -739,6 +742,8 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     if (isPhone) {
         setFrameColor_Widget(d, isPortraitPhone ? none_ColorId : uiSeparator_ColorId);
     }
+    /* Phone menus are attached to the screen edges; elsewhere they float like native menus. */
+    iChangeFlags(d->flags2, floating_WidgetFlag2, !isPhone);
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = (get_Window()->type == extra_WindowType);
     /* A vertical offset determined by a possible selected label in the menu. */
@@ -898,7 +903,8 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     bottomExcess += get_MainWindow()->keyboardHeight;
 #endif
     if (!allowOverflow) {
-        if (deviceType_App() == desktop_AppDeviceType) {
+        if (!isPhone) {
+            /* Stays near the opening point. */
             if (!isFromMenuBar && bottomExcess > 0 && !isSlidePanel) {
                 d->rect.pos.y -= bottomExcess;
             }

@@ -153,6 +153,8 @@ enum iWidgetFlag2 {
                                                            along the edges of the root's area */
     groupItem_WidgetFlag2                   = iBit(19), /* adjacent group item siblings share a
                                                            background with rounded ends */
+    floating_WidgetFlag2                    = iBit(20), /* free edges include the root's edges
+                                                           (e.g., context menus) */
 };
 
 enum iWidgetAddPos {

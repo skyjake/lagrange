@@ -372,6 +372,12 @@ void setThemePalette_Color(enum iColorTheme theme) {
         set_Color(uiEmbossSelected1_ColorId, /* distinct from the background */
                   mix_Color(get_Color(white_ColorId), darkPalette_[systemHigh_ColorId], 0.5f));
     }
+    if (theme == pureBlack_ColorTheme || theme == pureWhite_ColorTheme) {
+        /* Flat frames without embossing. */
+        for (int i = uiEmboss1_ColorId; i <= uiEmbossSelectedHover1_ColorId; i += 2) {
+            copy_(i, i + 1);
+        }
+    }
     set_Color(uiTextSelectedDim_ColorId,
               mix_Color(get_Color(uiTextSelected_ColorId),
                         get_Color(uiBackgroundSelected_ColorId),

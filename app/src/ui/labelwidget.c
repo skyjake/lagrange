@@ -715,7 +715,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         fillRect_Paint(&p, bgRect, bg);
     }
     if (isGroupItem && bg >= 0) {
-        drawBorders_Widget(w);
+        drawBorders_Widget(w); /* the background covers the full bounds */
     }
     if (isDrag) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);

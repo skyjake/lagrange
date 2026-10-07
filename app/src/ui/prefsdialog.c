@@ -562,7 +562,8 @@ iWidget *makePreferences_Widget(void) {
               0, 0, (const void *) toolbarPanelItems },
             { format_CStr("panel icon:0x1f5a7 iconcolor:%d id:heading.prefs.network", orange_ColorId),
               0, 0, (const void *) networkPanelItems },
-            { format_CStr("panel noscroll:1 iconcolor:%d text:" person_Icon " ${sidebar.identities}",
+            { format_CStr("panel noscroll:1 iconcolor:%d id:sidebar.identities text:" person_Icon
+                          " ${sidebar.identities}",
                           orange_ColorId), 0, 0, (const void *) identityPanelItems },
             { "padding" },
         }, 9);
@@ -1231,6 +1232,13 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     return iFalse;
 }
 
+static void openPanel_PrefsDialog_(iWidget *dlg, const char *panelId) {
+    iWidget *button = findChild_Widget(dlg, format_CStr("%s.button", panelId));
+    if (button) {
+        postCommand_Widget(button, "panel.open");
+    }
+}
+
 void showPreferences_Widget(const char *cmd) {
     const iPrefs *prefs = prefs_App();
     /* Preferences may already be open. */ {
@@ -1314,23 +1322,14 @@ void showPreferences_Widget(const char *cmd) {
         showPromotedDialog_Widget(dlg);
     }
     if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
-        iWidget *idPanel = panel_Mobile(dlg,
-                                        isConnected_Gamepad(gamepad_App())
-                                            ? 4
-                                            : 3); /* TODO: Don't hardcode the panel index. */
-        iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
-        postCommand_Widget(button, "panel.open");
+        openPanel_PrefsDialog_(dlg, "sidebar.identities");
     }
     if (argLabel_Command(cmd, "sniped")) {
         if (deviceType_App() == desktop_AppDeviceType) {
             postCommand_Widget(dlg, "tabs.switch id:sniped");
         }
         else {
-            /* TODO: Don't hardcode the panel index. */
-            iWidget *snippetPanel =
-                panel_Mobile(dlg, isConnected_Gamepad(gamepad_App()) ? 11 : 10);
-            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), snippetPanel);
-            postCommand_Widget(button, "panel.open");
+            openPanel_PrefsDialog_(dlg, "heading.prefs.snip");
         }
     }
     if (argLabel_Command(cmd, "sidecfg")) {
@@ -1338,10 +1337,7 @@ void showPreferences_Widget(const char *cmd) {
             postCommand_Widget(dlg, "tabs.switch id:sidecfg");
         }
         else {
-            /* TODO: Don't hardcode the panel index. */
-            iWidget *snippetPanel = panel_Mobile(dlg, 1);
-            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), snippetPanel);
-            postCommand_Widget(button, "panel.open");
+            openPanel_PrefsDialog_(dlg, "heading.prefs.toolbars"); /* has the sidebar tabs */
         }
     }
     if (isPointerHidden_Gamepad(gamepad_App())) {
