@@ -457,6 +457,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem identityPanelItems[] = {
             { "title id:sidebar.identities" },
+            { "padding arg:0.667" },
             { "certlist" },
             { "navi.action id:prefs.ident.import text:" import_Icon, 0, 0, "ident.import" },
             { "navi.action id:prefs.ident.new text:" add_Icon, 0, 0, "ident.new" },
@@ -475,6 +476,7 @@ iWidget *makePreferences_Widget(void) {
         }
         const iMenuItem snippetPanelItems[] = {
             { "title id:heading.prefs.snip" },
+            { "padding arg:0.667" },
             { "snippetlist" },
             { "navi.action id:sniped.new text:" add_Icon, 0, 0, "sniped.new" },
             { NULL }

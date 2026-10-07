@@ -422,8 +422,12 @@ void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols) {
         }
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         pushBack_Array(items, &(iMenuItem){ format_CStr("title id:%s", pages_[i].title) });
+        pushBack_Array(items, &(iMenuItem){ "padding arg:0.667" });
         const iMenuItem *groupItems = items_ScopedPrefs(pages_[i].group, withProtocols);
-        pushBackN_Array(items, groupItems, count_MenuItem(groupItems));
+        /* The scope bar is separate from the settings. */
+        pushBack_Array(items, &groupItems[0]);
+        pushBack_Array(items, &(iMenuItem){ "padding" });
+        pushBackN_Array(items, groupItems + 1, count_MenuItem(groupItems + 1));
         pushBack_Array(items, &(iMenuItem){ "padding" });
         pushBack_Array(items, &(iMenuItem){ NULL });
         pushBack_Array(panelItems,

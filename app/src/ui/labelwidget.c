@@ -642,10 +642,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
     const iBool isFramedRound = isRoundButton_LabelWidget_(w);
-    const int   corners       = isFramedRound                     ? roundCorners_LabelWidget_(d)
+    int         radius        = radius_UI;
+    int         corners       = isFramedRound                     ? roundCorners_LabelWidget_(d)
                                 : !isButton                       ? 0
                                 : isPopupMenuItem_LabelWidget_(w) ? all_RoundCorner
                                                                   : flushCorners_LabelWidget_(d);
+    if (!corners && isButton && (corners = groupCorners_Widget(w, &radius)) != 0) {
+        radius -= gap_UI / 4; /* concentric with the inset `rect` */
+    }
     const iBool isRound       = isFramedRound || corners != 0;
     const iBool isDrag        = (flags & dragged_WidgetFlag) && bg >= 0;
     if (isDrag) {
@@ -655,13 +659,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const int focusColor = focusColor_LabelWidget_(bg);
     if (isRound) {
         const iBool isFocus = isFocused_Widget(w);
-        drawRoundRect_Paint(&p,
-                            rect,
-                            corners,
-                            frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
-                            bg,
-                            isFocus ? focusColor : isFramedRound ? frame : none_ColorId,
-                            isFocus ? focusColor : isFramedRound ? frame2 : none_ColorId);
+        drawRoundRectRadius_Paint(&p,
+                                  rect,
+                                  radius,
+                                  corners,
+                                  frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
+                                  bg,
+                                  isFocus ? focusColor : isFramedRound ? frame : none_ColorId,
+                                  isFocus ? focusColor : isFramedRound ? frame2 : none_ColorId);
     }
     else if (bg >= 0) {
         fillRect_Paint(&p, rect, bg);

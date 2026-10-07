@@ -198,8 +198,8 @@ static void updateListHeights_(iWidget *detailStack) {
     if (snippetList) {
         setFixedSize_Widget(snippetList,
                             init_I2(-1,
-                                    -1 * gap_UI + bottom_Rect(safeRect_Root(certList->root)) -
-                                    top_Rect(boundsWithoutVisualOffset_Widget(certList))));
+                                    -1 * gap_UI + bottom_Rect(safeRect_Root(snippetList->root)) -
+                                    top_Rect(boundsWithoutVisualOffset_Widget(snippetList))));
     }
 }
 
@@ -427,6 +427,7 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
     setFont_LabelWidget(btn, labelFont_());
     setTextColor_LabelWidget(btn, uiTextStrong_ColorId);
     setBackgroundColor_Widget(as_Widget(btn), uiBackgroundSidebar_ColorId);
+    as_Widget(btn)->flags2 |= groupItem_WidgetFlag2;
     return btn;
 }
 
@@ -438,6 +439,7 @@ static iWidget *makeValuePadding_(iWidget *value) {
     }
     iWidget *pad = new_Widget();
     setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
+    pad->flags2 |= groupItem_WidgetFlag2;
     setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
     addChild_Widget(pad, iClob(value));
     setFlags_Widget(pad,
@@ -457,6 +459,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
                     arrangeHorizontal_WidgetFlag, iTrue);
     div->borderPad[2] = div->borderPad[3] = 4 * gap_UI;
     setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
+    div->flags2 |= groupItem_WidgetFlag2;
     setPadding_Widget(div, gap_UI, gap_UI, !isInput ? 4 * gap_UI : (2 * gap_UI), gap_UI);
     addChildFlags_Widget(div, iClob(heading), 0);
     setPadding1_Widget(as_Widget(heading), 0);
@@ -566,6 +569,18 @@ static void removeBorderFromLastChild_(iWidget *d) {
     if (last) last->flags &= ~borderBottom_WidgetFlag;
 }
 
+/* A preceding padding is replaced by the heading's own padding. */
+static void addHeadingPadding_(iWidget *panel) {
+    removeBorderFromLastChild_(panel);
+    const int height = lineHeight_Text(labelFont_());
+    iWidget  *last   = lastChild_Widget(panel);
+    if (last && !cmp_String(id_Widget(last), "padding")) {
+        setFixedSize_Widget(last, init1_I2(height));
+        return;
+    }
+    addChild_Widget(panel, iClob(makePadding_Widget(height)));
+}
+
 void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     iWidget *     widget  = NULL;
     iLabelWidget *heading = NULL;
@@ -600,8 +615,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setId_Widget(as_Widget(title), id);
     }
     else if (equal_Command(spec, "heading")) {
-        removeBorderFromLastChild_(panel);
-        addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
+        addHeadingPadding_(panel);
         heading = makeHeading_Widget(label);
         setAllCaps_LabelWidget(heading, iTrue);
         setRemoveTrailingColon_LabelWidget(heading, iTrue);
@@ -659,8 +673,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         const iBool isHorizontal = argLabel_Command(spec, "horizontal");
         const iBool noHeading    = argLabel_Command(spec, "noheading");
         const int   rowLen       = argLabel_Command(spec, "rowlen");
-        removeBorderFromLastChild_(panel);
-        addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
+        addHeadingPadding_(panel);
         if (!noHeading) {
             iLabelWidget *head = makeHeading_Widget(label);
             setAllCaps_LabelWidget(head, iTrue);
@@ -670,11 +683,10 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         widget = new_Widget();
         iWidget *subDiv = widget;
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
-        const int hPad = (isHorizontal ? 0 : 1);
-        setPadding_Widget(widget, hPad * gap_UI, 2 * gap_UI, hPad * gap_UI, 2 * gap_UI);
+        widget->flags2 |= groupItem_WidgetFlag2;
+        widget->borderPad[2] = widget->borderPad[3] = 4 * gap_UI;
         setFlags_Widget(widget,
-                        //borderTop_WidgetFlag |
-//                            borderBottom_WidgetFlag |
+                        borderBottom_WidgetFlag |
                             (isHorizontal && !rowLen ? arrangeHorizontal_WidgetFlag : arrangeVertical_WidgetFlag) |
                             arrangeHeight_WidgetFlag |
                             resizeToParentWidth_WidgetFlag |
@@ -700,7 +712,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 setFlags_Widget(sep, arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
                 setBackgroundColor_Widget(sep2, uiSeparator_ColorId);
                 setFixedSize_Widget(sep2, init_I2(-1, gap_UI / 4));
-                setPadding_Widget(sep, 5 * gap_UI, 0, 4 * gap_UI, 0);
+                setPadding_Widget(sep, 4 * gap_UI, 0, 4 * gap_UI, 0);
                 addChildFlags_Widget(widget, iClob(sep), 0);
             }
             isFirst = iFalse;
@@ -730,7 +742,6 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setCheckMark_LabelWidget(button, !isHorizontal);
             setPadding_Widget(as_Widget(button), gap_UI, 1 * gap_UI, 0, 1 * gap_UI);
             updateSize_LabelWidget(button);
-            setPadding_Widget(widget, 0, 0, 0, 0);
             addChildFlags_Widget(subDiv, iClob(button), flags);
             if (rowLen && ++numCols == rowLen) {
                 numCols = 0;
@@ -785,8 +796,10 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setPadding1_Widget(as_Widget(heading), 0);
         setFont_LabelWidget(heading, labelFont_());
         setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
+        removeBorderFromLastChild_(panel);
         widget = new_Widget();
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
+        widget->flags2 |= groupItem_WidgetFlag2;
         setPadding_Widget(widget, gap_UI, gap_UI, gap_UI, 2 * gap_UI);
         addChild_Widget(widget, iClob(heading));
         /* Side margins match the toggles. */
@@ -798,10 +811,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                              arrangeVertical_WidgetFlag | arrangeHeight_WidgetFlag |
                                  resizeToParentWidth_WidgetFlag);
         setFlags_Widget(widget,
-                        borderBottom_WidgetFlag | arrangeVertical_WidgetFlag |
-                            arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag,
+                        arrangeVertical_WidgetFlag | arrangeHeight_WidgetFlag |
+                            resizeToParentWidth_WidgetFlag,
                         iTrue);
-        widget->borderPad[2] = widget->borderPad[3] = 4 * gap_UI;
     }
     else if (equal_Command(spec, "certlist")) {
         iCertListWidget *certList = new_CertListWidget();

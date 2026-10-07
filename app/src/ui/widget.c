@@ -1957,19 +1957,33 @@ void drawLayerEffects_Widget(const iWidget *d) {
 #endif
 }
 
+static int groupItemCorners_Widget_(const iWidget *d);
+
 void drawBorders_Widget(const iWidget *d) {
-    if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
+    int64_t flags = d->flags;
+    if (flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag) &&
+        d->flags2 & groupItem_WidgetFlag2) {
+        /* Separators are only drawn between items of a group. */
+        const int corners = groupItemCorners_Widget_(d);
+        if (corners & topLeft_RoundCorner) {
+            flags &= ~borderTop_WidgetFlag;
+        }
+        if (corners & bottomLeft_RoundCorner) {
+            flags &= ~borderBottom_WidgetFlag;
+        }
+    }
+    if (flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
         const iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
         const int hgt = gap_UI / 4;
         const int borderColor = uiSeparator_ColorId; /* TODO: Add a property to customize? */
-        if (d->flags & borderTop_WidgetFlag) {
+        if (flags & borderTop_WidgetFlag) {
             fillRect_Paint(&p, (iRect){ addX_I2(topLeft_Rect(rect), d->borderPad[0]),
                                         init_I2(width_Rect(rect) - d->borderPad[1] - d->borderPad[0], hgt) },
                             borderColor);
         }
-        if (d->flags & borderBottom_WidgetFlag) {
+        if (flags & borderBottom_WidgetFlag) {
             fillRect_Paint(&p, (iRect) { add_I2(bottomLeft_Rect(rect), init_I2(d->borderPad[2], -hgt)),
                                          init_I2(width_Rect(rect) - d->borderPad[3] - d->borderPad[2], hgt) },
                             borderColor);
@@ -2006,14 +2020,46 @@ static int freeCorners_Widget_(const iWidget *d) {
     return corners;
 }
 
+static int groupItemCorners_Widget_(const iWidget *d) {
+    if (isTerminal_Platform() || ~d->flags2 & groupItem_WidgetFlag2 || !d->parent) {
+        return 0;
+    }
+    const iWidget *prev = NULL, *next = NULL;
+    iBool          isFound = iFalse;
+    iConstForEach(ObjectList, i, d->parent->children) {
+        const iWidget *sib = i.object;
+        if (sib == d) {
+            isFound = iTrue;
+        }
+        else if (~sib->flags & hidden_WidgetFlag) {
+            if (!isFound) {
+                prev = sib;
+            }
+            else {
+                next = sib;
+                break;
+            }
+        }
+    }
+    int corners = 0;
+    if (!prev || ~prev->flags2 & groupItem_WidgetFlag2) {
+        corners |= topLeft_RoundCorner | topRight_RoundCorner;
+    }
+    if (!next || ~next->flags2 & groupItem_WidgetFlag2) {
+        corners |= bottomLeft_RoundCorner | bottomRight_RoundCorner;
+    }
+    return corners;
+}
+
 /* Backgrounds reaching into the rounded corners of an ancestor are concentric with them. */
-static int innerCorners_Widget_(const iWidget *d, int *radius) {
+static int innerCorners_Widget_(const iWidget *d, int outerFlags, int *radius) {
     if (isTerminal_Platform()) {
         return 0;
     }
     for (const iWidget *w = d->parent; w; w = w->parent) {
-        if (w->flags2 & roundFreeEdges_WidgetFlag2) {
-            const int   outer   = freeCorners_Widget_(w);
+        if (w->flags2 & outerFlags) {
+            const int   outer   = w->flags2 & groupItem_WidgetFlag2 ? groupItemCorners_Widget_(w)
+                                                                    : freeCorners_Widget_(w);
             const iRect bounds  = boundsWithoutVisualOffset_Widget(d);
             const iRect area    = boundsWithoutVisualOffset_Widget(w);
             const int   outerRadius = freeEdgeRadius_Widget_();
@@ -2042,12 +2088,25 @@ static int innerCorners_Widget_(const iWidget *d, int *radius) {
 int roundCorners_Widget(const iWidget *d, int *radius) {
     *radius     = freeEdgeRadius_Widget_();
     int corners = freeCorners_Widget_(d);
+    if (!corners) {
+        corners = groupItemCorners_Widget_(d);
+    }
     if (!corners && d->flags2 & alwaysRound_WidgetFlag2 && !isTerminal_Platform()) {
         *radius = radius_UI;
         corners = all_RoundCorner;
     }
     if (!corners) {
-        corners = innerCorners_Widget_(d, radius);
+        corners = innerCorners_Widget_(
+            d, roundFreeEdges_WidgetFlag2 | groupItem_WidgetFlag2, radius);
+    }
+    return corners;
+}
+
+int groupCorners_Widget(const iWidget *d, int *radius) {
+    *radius     = freeEdgeRadius_Widget_();
+    int corners = groupItemCorners_Widget_(d);
+    if (!corners) {
+        corners = innerCorners_Widget_(d, groupItem_WidgetFlag2, radius);
     }
     return corners;
 }

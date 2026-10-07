@@ -151,6 +151,8 @@ enum iWidgetFlag2 {
                                                            background has rounded corners */
     roundFreeEdges_WidgetFlag2              = iBit(18), /* background has rounded corners except
                                                            along the edges of the root's area */
+    groupItem_WidgetFlag2                   = iBit(19), /* adjacent group item siblings share a
+                                                           background with rounded ends */
 };
 
 enum iWidgetAddPos {
@@ -257,6 +259,7 @@ void    drawClipped_Widget              (const iWidget *, iRect clipRect); /* em
 void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
 int     roundCorners_Widget             (const iWidget *, int *radius); /* of the background */
+int     groupCorners_Widget             (const iWidget *, int *radius); /* group item or inside one */
 void    drawBorders_Widget              (const iWidget *); /* called by `drawBackground` */
 void    drawChildren_Widget             (const iWidget *);
 void    drawRoot_Widget                 (const iWidget *); /* root only */
