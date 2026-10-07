@@ -190,6 +190,10 @@ void updateMetrics_InputWidget_(iInputWidget *d) {
     if (height_Rect(w->rect) != oldHeight) {
         notify_Widget(d, "input.resized arg:%d", w->root->pendingArrange + 1);
         updateTextInputRect_InputWidget_(d);
+        if (height_Rect(w->rect) > oldHeight && isFocused_Widget(w)) {
+            /* Keep the growing bottom edge visible after the rearrangement. */
+            postCommand_Widget(w, "input.overflow");
+        }
     }
 }
 
