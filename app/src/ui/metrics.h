@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/vec2.h>
 
 extern int   gap_UI;
+extern int   radius_UI; /* rounded corners */
+extern int   frame_UI;  /* frame thickness of buttons and fields */
 extern int   fontSize_UI;
 extern iInt2 gap2_UI;
 

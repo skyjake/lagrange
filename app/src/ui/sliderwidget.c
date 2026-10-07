@@ -54,6 +54,7 @@ struct Impl_SliderWidget {
     enum iSliderUnit unit;
     iBool            showSign;
     int              font;
+    float            heightScale;
     int              thumbWidth;
     iArray           labels; /* SliderLabel */
     iClick           click;
@@ -130,7 +131,7 @@ static void updateMetrics_SliderWidget_(iSliderWidget *d) {
         widest = iMax(widest, measure_Text(d->font, cstr_String(&label->text)).bounds.size.x);
     }
     d->thumbWidth = widest + 2 * padX;
-    w->rect.size.y = lineHeight_Text(d->font) + 2 * padY;
+    w->rect.size.y = iRound((lineHeight_Text(d->font) + 2 * padY) * d->heightScale);
     w->minSize.x = isTerminal_Platform() ? iMax(3 * d->thumbWidth, 24)
                    : isMobile_Platform() ? 2 * d->thumbWidth /* shares the row with a heading */
                                          : iMax(3 * d->thumbWidth, 60 * gap_UI);
@@ -170,8 +171,9 @@ void init_SliderWidget(iSliderWidget *d, const char *command) {
     d->precision  = 0;
     d->unit       = none_SliderUnit;
     d->showSign   = iFalse;
-    d->font       = uiLabel_FontId;
-    d->thumbWidth = 0;
+    d->font        = uiLabel_FontId;
+    d->heightScale = 1.0f;
+    d->thumbWidth  = 0;
     init_Array(&d->labels, sizeof(iSliderLabel));
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->startIndex = 0;
@@ -262,6 +264,11 @@ void setFont_SliderWidget(iSliderWidget *d, int fontId) {
     updateMetrics_SliderWidget_(d);
 }
 
+void setHeightScale_SliderWidget(iSliderWidget *d, float heightScale) {
+    d->heightScale = heightScale;
+    updateMetrics_SliderWidget_(d);
+}
+
 void addLabel_SliderWidget(iSliderWidget *d, float value, const char *label) {
     iSliderLabel lab = { .index = indexOf_SliderWidget_(d, value) };
     initCStr_String(&lab.source, label);
@@ -282,8 +289,27 @@ float value_SliderWidget(const iSliderWidget *d) {
     return d->value;
 }
 
+/* Vertical gap between the thumb and the widget bounds. */
+static int thumbInset_SliderWidget_(const iSliderWidget *d) {
+    if (isTerminal_Platform()) {
+        return 0;
+    }
+    const int base  = gap_UI / 4 + gap_UI / 8;
+    const int inner = height_Rect(bounds_Widget(constAs_Widget(d))) - 2 * base;
+    /* A taller slider has a proportionally shorter thumb. */
+    return base + iRound(inner * (1.0f - 1.0f / d->heightScale) / 4);
+}
+
+/* Area where the thumb moves. The gaps at the ends match the vertical gap. */
+static iRect travelRect_SliderWidget_(const iSliderWidget *d) {
+    iRect     bounds = bounds_Widget(constAs_Widget(d));
+    const int inset  = isTerminal_Platform() ? 0 : thumbInset_SliderWidget_(d) - gap_UI / 4;
+    adjustEdges_Rect(&bounds, 0, -inset, 0, inset);
+    return bounds;
+}
+
 static iRect thumbRect_SliderWidget_(const iSliderWidget *d, int index) {
-    const iRect bounds = bounds_Widget(constAs_Widget(d));
+    const iRect bounds = travelRect_SliderWidget_(d);
     const int   span   = width_Rect(bounds) - d->thumbWidth;
     return init_Rect(left_Rect(bounds) + span * index / d->numSteps,
                      top_Rect(bounds),
@@ -292,7 +318,7 @@ static iRect thumbRect_SliderWidget_(const iSliderWidget *d, int index) {
 }
 
 static int indexAt_SliderWidget_(const iSliderWidget *d, int x) {
-    const iRect bounds = bounds_Widget(constAs_Widget(d));
+    const iRect bounds = travelRect_SliderWidget_(d);
     const int   span   = iMax(1, width_Rect(bounds) - d->thumbWidth);
     const int   pos    = x - left_Rect(bounds) - d->thumbWidth / 2;
     return iClamp((int) lroundf((float) pos * d->numSteps / span), 0, d->numSteps);
@@ -325,7 +351,7 @@ static iBool processEvent_SliderWidget_(iSliderWidget *d, const SDL_Event *ev) {
             /* Grabbing the thumb does not move it; elsewhere it jumps to the pointer. */
             d->startIndex = d->index;
             d->grabOffset = isOnThumb ? x - mid_Rect(thumb).x : 0;
-            if (isOnThumb) {
+            if (isOnThumb && !isMobile_Platform()) {
                 setFocus_Widget(w);
             }
             setIndex_SliderWidget_(d, indexAt_SliderWidget_(d, x - d->grabOffset));
@@ -393,8 +419,8 @@ static int trackColor_SliderWidget_(const iSliderWidget *d) {
 static iRect drawnThumbRect_SliderWidget_(const iSliderWidget *d) {
     iRect thumb = thumbRect_SliderWidget_(d, d->index);
     if (!isTerminal_Platform()) {
-        shrink_Rect(&thumb, divi_I2(gap2_UI, 4));
-        adjustEdges_Rect(&thumb, gap_UI / 8, 0, -gap_UI / 8, 0);
+        const int inset = thumbInset_SliderWidget_(d);
+        adjustEdges_Rect(&thumb, inset, -gap_UI / 4, -inset, gap_UI / 4);
     }
     return thumb;
 }
@@ -503,7 +529,7 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
         drawRoundRect_Paint(&p,
                             thumb,
                             all_RoundCorner,
-                            !isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4,
+                            frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
                             bg,
                             isFocus ? uiTextAction_ColorId : frame1,
                             isFocus ? uiTextAction_ColorId : frame2);

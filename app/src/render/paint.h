@@ -74,7 +74,7 @@ void    drawLines_Paint (const iPaint *, const iInt2 *points, size_t count, int 
 iLocalDef void drawRoundRect_Paint(const iPaint *d, iRect rect, int corners, int frameThickness,
                                    int fillColor, int frameColor1, int frameColor2) {
     drawRoundRectRadius_Paint(
-        d, rect, gap_UI, corners, frameThickness, fillColor, frameColor1, frameColor2);
+        d, rect, radius_UI, corners, frameThickness, fillColor, frameColor1, frameColor2);
 }
 iLocalDef void drawLine_Paint(const iPaint *d, iInt2 a, iInt2 b, int color) {
     drawLines_Paint(d, (iInt2[]){ a, b }, 2, color);

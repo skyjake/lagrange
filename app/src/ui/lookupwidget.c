@@ -431,8 +431,8 @@ static void updateMetrics_LookupWidget_(iLookupWidget *d) {
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.333f);
     if (!isTerminal_Platform()) {
         /* The list is clipped to its bounds, which are kept inside the rounded corners. */
-        setPadding1_Widget(as_Widget(d), gap_UI);
-        as_Widget(d->list)->rect.pos = init1_I2(gap_UI);
+        setPadding1_Widget(as_Widget(d), radius_UI);
+        as_Widget(d->list)->rect.pos = init1_I2(radius_UI);
     }
 }
 

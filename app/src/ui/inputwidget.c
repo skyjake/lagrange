@@ -3141,7 +3141,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         drawRoundRect_Paint(&p,
                             bounds,
                             all_RoundCorner,
-                            isFocused ? gap_UI / 4 : 1,
+                            frame_UI * (isFocused ? gap_UI / 4 : 1),
                             bgColor,
                             isFramed ? frameColor : none_ColorId,
                             isFramed ? frameColor : none_ColorId);
@@ -3151,7 +3151,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         if (isFramed && frameColor >= 0) {
             drawRectThickness_Paint(&p,
                                     adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
-                                    isFocused ? gap_UI / 4 : 1,
+                                    frame_UI * (isFocused ? gap_UI / 4 : 1),
                                     frameColor);
         }
     }

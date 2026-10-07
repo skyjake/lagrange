@@ -1978,7 +1978,7 @@ void drawBorders_Widget(const iWidget *d) {
 }
 
 iLocalDef int freeEdgeRadius_Widget_(void) {
-    return 2 * gap_UI;
+    return 2 * radius_UI;
 }
 
 static int freeCorners_Widget_(const iWidget *d) {
@@ -2043,7 +2043,7 @@ int roundCorners_Widget(const iWidget *d, int *radius) {
     *radius     = freeEdgeRadius_Widget_();
     int corners = freeCorners_Widget_(d);
     if (!corners && d->flags2 & alwaysRound_WidgetFlag2 && !isTerminal_Platform()) {
-        *radius = gap_UI;
+        *radius = radius_UI;
         corners = all_RoundCorner;
     }
     if (!corners) {

@@ -215,7 +215,7 @@ void fillRectColor_Paint(const iPaint *d, iRect rect, iColor color) {
     SDL_RenderFillRect(renderer_Paint_(d), &frect);
 }
 
-enum { maxFrameThickness_RoundCorner = 4 };
+enum { maxFrameThickness_RoundCorner = 8 };
 
 iLocalDef float discCoverage_(float dist, float radius) {
     return iClamp(radius - dist + 0.5f, 0.0f, 1.0f);

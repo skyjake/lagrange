@@ -462,8 +462,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     setPadding1_Widget(as_Widget(heading), 0);
     setFont_LabelWidget(heading, labelFont_());
     setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
-    if ((isInput && ~value->flags & fixedWidth_WidgetFlag) ||
-        isInstance_Object(value, &Class_SliderWidget)) {
+    if (isInput && ~value->flags & fixedWidth_WidgetFlag) {
         addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
     }
     else if (isInstance_Object(value, &Class_LabelWidget) &&
@@ -778,10 +777,31 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         }
     }
     else if (equal_Command(spec, "slider")) {
+        /* The slider spans the full width below its heading. */
         iSliderWidget *slider = newMenuItem_SliderWidget(item);
         setFont_SliderWidget(slider, labelFont_());
-        value  = as_Widget(slider);
-        widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), value);
+        setHeightScale_SliderWidget(slider, 1.5f);
+        heading = makeHeading_Widget(label);
+        setPadding1_Widget(as_Widget(heading), 0);
+        setFont_LabelWidget(heading, labelFont_());
+        setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
+        widget = new_Widget();
+        setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
+        setPadding_Widget(widget, gap_UI, gap_UI, gap_UI, 2 * gap_UI);
+        addChild_Widget(widget, iClob(heading));
+        /* Side margins match the toggles. */
+        iWidget *margins = new_Widget();
+        setPadding_Widget(margins, 3 * gap_UI, gap_UI, 3 * gap_UI, 0);
+        addChildFlags_Widget(margins, iClob(slider), resizeToParentWidth_WidgetFlag);
+        addChildFlags_Widget(widget,
+                             iClob(margins),
+                             arrangeVertical_WidgetFlag | arrangeHeight_WidgetFlag |
+                                 resizeToParentWidth_WidgetFlag);
+        setFlags_Widget(widget,
+                        borderBottom_WidgetFlag | arrangeVertical_WidgetFlag |
+                            arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag,
+                        iTrue);
+        widget->borderPad[2] = widget->borderPad[3] = 4 * gap_UI;
     }
     else if (equal_Command(spec, "certlist")) {
         iCertListWidget *certList = new_CertListWidget();

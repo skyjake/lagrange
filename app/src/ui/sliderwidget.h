@@ -48,6 +48,7 @@ void    setPrecision_SliderWidget   (iSliderWidget *, int precision);
 void    setUnit_SliderWidget        (iSliderWidget *, enum iSliderUnit unit);
 void    setShowSign_SliderWidget    (iSliderWidget *, iBool showSign);
 void    setFont_SliderWidget        (iSliderWidget *, int fontId);
+void    setHeightScale_SliderWidget (iSliderWidget *, float heightScale);
 void    addLabel_SliderWidget       (iSliderWidget *, float value, const char *label);
 void    setValue_SliderWidget       (iSliderWidget *, float value); /* no command is posted */
 

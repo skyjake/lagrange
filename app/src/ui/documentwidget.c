@@ -4276,7 +4276,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
         drawRoundRectRadius_Paint(&p,
                                   rect,
-                                  2 * gap_UI,
+                                  2 * radius_UI,
                                   all_RoundCorner,
                                   1,
                                   pinchZoomPercent_DocumentSwipe(d->swipe) == 100

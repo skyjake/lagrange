@@ -36,6 +36,8 @@ const float aspect_UI = 1.0f;
 #endif
 
 int   gap_UI      = defaultGap_Metrics;
+int   radius_UI   = defaultGap_Metrics;
+int   frame_UI    = 1;
 iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };
 int   fontSize_UI = defaultFontSize_Metrics;
 
@@ -47,6 +49,8 @@ void setScale_Metrics(float scale) {
         }
         gap_UI      = iRound(defaultGap_Metrics * scale);
         gap2_UI     = init1_I2(gap_UI);
+        radius_UI   = isMobile_Platform() ? 2 * gap_UI : gap_UI;
+        frame_UI    = isMobile_Platform() ? 2 : 1;
         fontSize_UI = iRound(defaultFontSize_Metrics * scale);
     }
 }

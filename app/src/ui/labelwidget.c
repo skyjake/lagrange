@@ -658,7 +658,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawRoundRect_Paint(&p,
                             rect,
                             corners,
-                            !isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4,
+                            frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
                             bg,
                             isFocus ? focusColor : isFramedRound ? frame : none_ColorId,
                             isFocus ? focusColor : isFramedRound ? frame2 : none_ColorId);
