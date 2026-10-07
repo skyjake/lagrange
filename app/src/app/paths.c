@@ -303,8 +303,8 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
     }
     return;
 #endif
-#if SDL_VERSION_ATLEAST(2, 0, 14)
-    if (SDL_OpenURL(cstr_String(url)) == 0) {
+#if !defined (iPlatformTerminal) /* SEALCurses can't open URLs */
+    if (SDL_OpenURL(cstr_String(url))) {
         return;
     }
 #endif
