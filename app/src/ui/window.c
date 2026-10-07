@@ -1886,6 +1886,8 @@ void draw_Window(iWindow *d) {
         return;
     }
     isDrawing_ = iTrue;
+    iWindow *oldWin = get_Window();
+    setCurrent_Window(d);
     iPaint p;
     init_Paint(&p);
     iRoot *root = d->roots[0];
@@ -1911,6 +1913,7 @@ void draw_Window(iWindow *d) {
     }
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
+    setCurrent_Window(oldWin);
     isDrawing_ = iFalse;
 }
 
