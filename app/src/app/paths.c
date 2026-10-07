@@ -294,8 +294,12 @@ void openInDefaultBrowser_App(const iString *url, const iString *mime) {
         replace_String(copy, "\\", "%5C");
         url = collect_String(copy);
     }
+    if (equalCase_Rangecc(urlScheme_String(url), "local")) {
+        /* Other apps only know where the file is. */
+        url = collect_String(makeFileUrl_String(collect_String(localFilePathFromUrl_String(url))));
+    }
 #if defined (iPlatformAppleMobile)
-    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+    if (isLocalFileScheme_Rangecc(urlScheme_String(url))) {
         revealPath_App(collect_String(localFilePathFromUrl_String(url)));
     }
     else {

@@ -176,7 +176,8 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
     static const char *schemes[] = { "gemini:", "gopher:", "finger:", "spartan:", "nex:",
-                                     "misfin:", "guppy:",  "file:",   "data:",    "about:" };
+                                     "misfin:", "guppy:",  "file:",   "local:",   "data:",
+                                     "about:" };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
             return iTrue;
@@ -502,6 +503,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Prefs(&d->prefs);
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
+    setDataDir_Core(dataDir_App_());
     init_ScopeRules(dataDir_App_());
     init_SiteSpec(dataDir_App_());
     initCopy_DocPrefs(&d->activeDocPrefs, &constRule_ScopeRules("base")->prefs);

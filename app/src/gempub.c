@@ -243,7 +243,7 @@ iGempub *openForLocalUrl_Gempub(const iString *url, iBool *isInsideArchive_out) 
 
 const iString *localArchiveUrl_Gempub(const iString *url) {
     /* Only the file system is checked; the archive is not read. */
-    if (!equalCase_Rangecc(urlScheme_String(url), "file")) {
+    if (!isLocalFileScheme_Rangecc(urlScheme_String(url))) {
         return NULL;
     }
     iString *localPath = localFilePathFromUrl_String(url);
@@ -257,7 +257,7 @@ const iString *localArchiveUrl_Gempub(const iString *url) {
     if (!path || !equal_CStr(mediaType_Path(path), mimeType_Gempub)) {
         return NULL;
     }
-    return collect_String(makeFileUrl_String(path));
+    return canonicalUrl_String(collect_String(makeFileUrl_String(path)));
 }
 
 iBool openFile_Gempub(iGempub *d, const iString *path) {
@@ -292,7 +292,9 @@ void close_Gempub(iGempub *d) {
 }
 
 void setBaseUrl_Gempub(iGempub *d, const iString *url) {
-    set_String(&d->baseUrl, collect_String(urlDecodeExclude_String(url, "/:")));
+    /* Canonical, so it matches document URLs (e.g., "local:" for the user's books). */
+    set_String(&d->baseUrl,
+               collect_String(urlDecodeExclude_String(canonicalUrl_String(url), "/:")));
 }
 
 iBool isOpen_Gempub(const iGempub *d) {
@@ -427,7 +429,7 @@ static void appendProperty_Gempub_(const iGempub *d, const char *label,
 }
 
 iBool isRemote_Gempub(const iGempub *d) {
-    return !equalCase_Rangecc(urlScheme_String(&d->baseUrl), "file");
+    return !isLocalFileScheme_Rangecc(urlScheme_String(&d->baseUrl));
 }
 
 iString *coverPageSource_Gempub(const iGempub *d) {
@@ -564,7 +566,7 @@ iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iS
 static iBlock *mimeHook_Gempub_(const iString *mime, const iBlock *body,
                                 const iString *requestUrl) {
     /* Only process GemPub for local files. */
-    if (!equalCase_Rangecc(urlScheme_String(requestUrl), "file") ||
+    if (!isLocalFileScheme_Rangecc(urlScheme_String(requestUrl)) ||
         !startsWithCase_String(mime, mimeType_Gempub)) {
         return NULL;
     }

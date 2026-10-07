@@ -138,6 +138,7 @@ iBool           isTitanUrl_String       (const iString *);
 iBool           isKnownScheme_Rangecc   (iRangecc scheme); /* any URI scheme */
 iBool           isKnownUrlScheme_Rangecc(iRangecc scheme); /* URL schemes only */
 iBool           isGopherScheme_Rangecc  (iRangecc scheme); /* "gopher" or "gophers" */
+iBool           isLocalFileScheme_Rangecc(iRangecc scheme); /* "file" or "local" */
 iBool           isTlsScheme_Rangecc     (iRangecc scheme); /* "gophers" (and "gemini", "titan", ...) */
 void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
 void            punyEncodeUrlHost_String(iString *absoluteUrl);
@@ -150,7 +151,7 @@ iString *       withUrlParameters_String(const iString *d, ... /* key, value */)
 void            urlEncodeQuery_String   (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
-iString *       localFilePathFromUrl_String(const iString *);
+iString *       localFilePathFromUrl_String(const iString *); /* "file:" or "local:" */
 void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
 const iString * withScheme_String       (const iString *, const char *scheme); /* replace URI scheme */

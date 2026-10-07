@@ -1237,7 +1237,7 @@ void submit_GmRequest(iGmRequest *d) {
         aboutRequest_GmRequest_(d);
         return;
     }
-    else if (equalCase_Rangecc(url.scheme, "file")) {
+    else if (isLocalFileScheme_Rangecc(url.scheme)) {
         fileRequest_GmRequest_(d);
         return;
     }

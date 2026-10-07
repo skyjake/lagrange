@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/gmutil.h"
+#include "lagrange/core.h"
 #include "lagrange/sitespec.h"
 
 #include <the_Foundation/file.h>
@@ -334,7 +335,7 @@ iRangecc urlPath_String(const iString *d) {
 }
 
 const iBlock *urlThemeSeed_String(const iString *url) {
-    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+    if (isLocalFileScheme_Rangecc(urlScheme_String(url))) {
         return collect_Block(new_Block(0));
     }
     const iRangecc user = urlUser_String(url);
@@ -426,7 +427,7 @@ iBool isKnownScheme_Rangecc(iRangecc scheme) {
 
 iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
     static const char *schemes[] = { "gemini", "gopher", "gophers", "finger", "spartan",
-                                     "http",   "https",  "file" };
+                                     "http",   "https",  "file",    "local" };
     iForIndices(i, schemes) {
         if (equalCase_Rangecc(scheme, schemes[i])) {
             return iTrue;
@@ -527,6 +528,9 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
            and doubled slashes in them must be preserved as-is instead of being cleaned up. */
         cleanUrlPath_String(absolute);
     }
+    if (equalCase_Rangecc(scheme, "local") && startsWith_String(absolute, "local:///")) {
+        remove_Block(&absolute->chars, 6, 2); /* no authority: "local:/path" */
+    }
     return absolute;
 }
 
@@ -615,21 +619,99 @@ const char *makeFileUrl_CStr(const char *localFilePath) {
     return cstrCollect_String(makeFileUrl_String(collectNewCStr_String(localFilePath)));
 }
 
-iString *localFilePathFromUrl_String(const iString *d) {
+#if defined (iPlatformAppleMobile)
+/* The app's container directory may move, e.g., when the app is updated or reinstalled.
+   Paths saved earlier are rebased to the current container. */
+static iBool rebaseAppContainerPath_(iString *path) {
+    static const char *containers_ = "/Containers/Data/Application/";
+    const size_t pos = indexOfCStr_String(path, containers_);
+    if (pos == iInvalidPos) {
+        return iFalse;
+    }
+    const iString *home    = collect_String(home_Path());
+    const size_t   homePos = indexOfCStr_String(home, containers_);
+    if (homePos == iInvalidPos) {
+        return iFalse;
+    }
+    const size_t idStart = pos + strlen(containers_);
+    size_t       idEnd   = indexOfCStrFrom_String(path, "/", idStart);
+    if (idEnd == iInvalidPos) {
+        idEnd = size_String(path);
+    }
+    const iRangecc oldId = { constBegin_String(path) + idStart, constBegin_String(path) + idEnd };
+    const iRangecc newId = { constBegin_String(home) + homePos + strlen(containers_),
+                             constEnd_String(home) };
+    if (equal_Rangecc(oldId, cstrCollect_String(newRange_String(newId)))) {
+        return iFalse;
+    }
+    iString *rebased = newRange_String((iRangecc){ constBegin_String(path), oldId.start });
+    appendRange_String(rebased, newId);
+    appendRange_String(rebased, (iRangecc){ oldId.end, constEnd_String(path) });
+    set_String(path, rebased);
+    delete_String(rebased);
+    return iTrue;
+}
+#endif
+
+iBool isLocalFileScheme_Rangecc(iRangecc scheme) {
+    return equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "local");
+}
+
+static iString *localFilePath_(const iString *d, iBool *isRebased) {
     iUrl url;
     init_Url(&url, d);
-    if (!equalCase_Rangecc(url.scheme, "file")) {
+    const iBool isLocal = equalCase_Rangecc(url.scheme, "local");
+    *isRebased = iFalse;
+    if (!isLocal && !equalCase_Rangecc(url.scheme, "file")) {
         return NULL;
     }
     iString *path = urlDecode_String(collect_String(newRange_String(url.path)));
+    if (isLocal) {
+        /* Relative to the user's data directory. */
+        prepend_String(path, dataDir_Core());
+    }
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
-    /* Remove the extra slash from the beginning. */
-    if (startsWith_String(path, "/")) {
+    else if (startsWith_String(path, "/")) {
+        /* Remove the extra slash from the beginning. */
         remove_Block(&path->chars, 0, 1);
     }
     replace_Block(&path->chars, '/', '\\');
 #endif
+#if defined (iPlatformAppleMobile)
+    if (!isLocal) {
+        *isRebased = rebaseAppContainerPath_(path);
+    }
+#endif
     return path;
+}
+
+iString *localFilePathFromUrl_String(const iString *d) {
+    iBool isRebased;
+    return localFilePath_(d, &isRebased);
+}
+
+/* Files in the user's data directory have a "local:" URL that is independent of where the
+   directory is. Returns NULL if the URL does not need to change. */
+static iString *localUrlFromFileUrl_(const iString *fileUrl) {
+    const iString *dataDir = dataDir_Core();
+    iBool          isRebased;
+    iString *      path = localFilePath_(fileUrl, &isRebased);
+    iString *      url  = NULL;
+    const iRangecc rest = { constBegin_String(path) + iMin(size_String(path), size_String(dataDir)),
+                            constEnd_String(path) };
+    if (!isEmpty_String(dataDir) && startsWith_String(path, cstr_String(dataDir)) &&
+        startsWith_Rangecc(rest, iPathSeparator)) {
+        iString *rel = newRange_String(rest);
+        replace_Block(&rel->chars, '\\', '/');
+        url = urlEncodeExclude_String(rel, "/");
+        prependCStr_String(url, "local:");
+        delete_String(rel);
+    }
+    else if (isRebased) {
+        url = makeFileUrl_String(path);
+    }
+    delete_String(path);
+    return url;
 }
 
 const iString *findContainerArchive_Path(const iString *path) {
@@ -739,7 +821,14 @@ const iString *canonicalUrl_String(const iString *d) {
     /* The "canonical" form, used for internal storage and comparisons, is:
        - all non-reserved characters decoded (i.e., it's an IRI)
        - except spaces, which are always `%20`
-       This means a canonical URL can be used on a gemtext link line without modifications. */
+       This means a canonical URL can be used on a gemtext link line without modifications.
+       Files in the user's data directory use the "local:" scheme. */
+    if (startsWithCase_String(d, "file:")) {
+        iString *local = localUrlFromFileUrl_(d);
+        if (local) {
+            d = collect_String(local);
+        }
+    }
     iString *canon = NULL;
     iUrl parts;
     init_Url(&parts, d);
@@ -946,7 +1035,7 @@ const iGmError *get_GmError(enum iGmStatusCode code) {
 }
 
 const iBlock *urlPaletteSeed_String(const iString *url) {
-    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+    if (isLocalFileScheme_Rangecc(urlScheme_String(url))) {
         return urlThemeSeed_String(url);
     }
     /* Check for a site-specific setting. */

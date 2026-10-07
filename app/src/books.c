@@ -557,8 +557,8 @@ void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, floa
 
 static void setSource_Book_(iBook *d, const iString *url) {
     /* A local file does not replace a remote source. */
-    if (isEmpty_String(&d->url) || !equalCase_Rangecc(urlScheme_String(url), "file") ||
-        equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
+    if (isEmpty_String(&d->url) || !isLocalFileScheme_Rangecc(urlScheme_String(url)) ||
+        isLocalFileScheme_Rangecc(urlScheme_String(&d->url))) {
         set_String(&d->url, url);
     }
 }

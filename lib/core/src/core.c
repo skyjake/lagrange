@@ -39,7 +39,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Core)
 
 struct Impl_Core {
-    iBool isPhone;
+    iBool   isPhone;
+    iString dataDir;
 };
 
 static iCore core_;
@@ -47,10 +48,21 @@ static iCore core_;
 void init_Core(void) {
     iCore *d = &core_;
     d->isPhone = iFalse;
+    init_String(&d->dataDir);
 }
 
 void deinit_Core(void) {
-    /* nothing to do yet */
+    deinit_String(&core_.dataDir);
+}
+
+void setDataDir_Core(const char *path) {
+    iString *dir = makeAbsolute_Path(collect_String(cleanedCStr_Path(path)));
+    set_String(&core_.dataDir, dir);
+    delete_String(dir);
+}
+
+const iString *dataDir_Core(void) {
+    return &core_.dataDir;
 }
 
 void setPhone_Core(iBool isPhone) {

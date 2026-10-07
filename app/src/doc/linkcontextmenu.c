@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static iBool isNativeScheme_(iRangecc scheme) {
     return equalCase_Rangecc(scheme, "gemini") || willUseProxy_App(scheme) ||
-           equalCase_Rangecc(scheme, "data") || equalCase_Rangecc(scheme, "file") ||
+           equalCase_Rangecc(scheme, "data") || isLocalFileScheme_Rangecc(scheme) ||
            equalCase_Rangecc(scheme, "finger") || isGopherScheme_Rangecc(scheme) ||
            equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "nex");
 }
@@ -93,7 +93,7 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
                                      isSpartanQueryLink_DocumentWidget(d, linkId),
                                      originArg,
                                      setIdentArg_DocumentWidget(d, linkUrl)));
-        if (equalCase_Rangecc(scheme, "file")) {
+        if (isLocalFileScheme_Rangecc(scheme)) {
             pushBack_Array(items, &(iMenuItem){ "---" });
             pushBack_Array(
                 items,
@@ -157,7 +157,7 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
         9);
     delete_String(encLabel);
     if (isNativeScheme_(scheme) && linkId && linkMediaType != download_MediaType &&
-        !equalCase_Rangecc(scheme, "file")) {
+        !isLocalFileScheme_Rangecc(scheme)) {
         pushBackN_Array(items,
                         (iMenuItem[]){
                             { "---" },
@@ -185,7 +185,7 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
 #endif
         }
     }
-    if (equalCase_Rangecc(scheme, "file")) {
+    if (isLocalFileScheme_Rangecc(scheme)) {
         /* Local files may be deleted. */
         pushBack_Array(items, &(iMenuItem){ "---" });
         pushBack_Array(

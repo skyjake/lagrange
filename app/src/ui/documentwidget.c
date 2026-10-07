@@ -2401,7 +2401,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                 saveAsPath_(d->mod.url, &d->fetch->sourceMime));
             }
             else if (argLabel_Command(cmd, "extview")) {
-                if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file") &&
+                if (isLocalFileScheme_Rangecc(urlScheme_String(d->mod.url)) &&
                     fileExists_FileInfo(collect_String(localFilePathFromUrl_String(d->mod.url)))) {
                     /* Already a file so just open it directly. */
                     postCommandf_Root(w->root, "!open default:1 url:%s", cstr_String(d->mod.url));

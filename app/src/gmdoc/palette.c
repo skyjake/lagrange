@@ -818,7 +818,7 @@ const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
         return urlPaletteSeed_String(&d->themeUrl);
     }
     const iString *seed = d->docPrefs.paletteSeed;
-    if (!isEmpty_String(seed) && !equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
+    if (!isEmpty_String(seed) && !isLocalFileScheme_Rangecc(urlScheme_String(&d->url))) {
         return utf8_String(seed);
     }
     return urlThemeSeed_String(&d->url);

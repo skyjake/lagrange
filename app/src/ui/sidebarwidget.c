@@ -727,7 +727,9 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             set_String(&item->label, &book->fileName);
         }
         set_String(&item->meta, &book->author);
-        set_String(&item->url, path ? collect_String(makeFileUrl_String(path)) : &book->url);
+        set_String(&item->url,
+                   path ? canonicalUrl_String(collect_String(makeFileUrl_String(path)))
+                        : &book->url);
         set_String(&item->bookId, &book->id);
         item->progress = book->chapter >= 0 ? progress_Book(book) : -1.0f;
         item->size     = path ? book->size : 0;
@@ -3860,7 +3862,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int h1      = lineHeight_Text(uiLabel_FontId);
         const int h2      = lineHeight_Text(font);
         const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiAnnotation_ColorId;
-        const iBool isDownloaded = startsWithCase_String(&d->url, "file:");
+        const iBool isDownloaded = isLocalFileScheme_Rangecc(urlScheme_String(&d->url));
         const int labelFg = isSel     ? uiTextSelected_ColorId
                             : isHover ? uiTextFramelessHover_ColorId
                             : isDownloaded ? uiTextStrong_ColorId

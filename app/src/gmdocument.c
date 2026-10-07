@@ -242,7 +242,7 @@ iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
             else if (equalCase_Rangecc(parts.scheme, "guppy")) {
                 setScheme_GmLink_(link, guppy_GmLinkScheme);
             }
-            else if (equalCase_Rangecc(parts.scheme, "file")) {
+            else if (isLocalFileScheme_Rangecc(parts.scheme)) {
                 setScheme_GmLink_(link, file_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
@@ -839,7 +839,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
             set_String(&d->scopeKey.site, archive);
             const iString *source =
                 sourceUrl_Books(collect_String(localFilePathFromUrl_String(archive)));
-            if (source && !equalCase_Rangecc(urlScheme_String(source), "file")) {
+            if (source && !isLocalFileScheme_Rangecc(urlScheme_String(source))) {
                 set_String(&d->themeUrl, source);
             }
         }
@@ -1428,7 +1428,7 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iRangecc scheme = urlScheme_String(dstUrl);
     if (equalCase_Rangecc(scheme, "gemini") || isGopherScheme_Rangecc(scheme) ||
         equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "nex") ||
-        equalCase_Rangecc(scheme, "finger") || equalCase_Rangecc(scheme, "file") ||
+        equalCase_Rangecc(scheme, "finger") || isLocalFileScheme_Rangecc(scheme) ||
         willUseProxy_App(scheme)) {
         return (linkFlags_GmDocument(d, linkId) &
                 (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;

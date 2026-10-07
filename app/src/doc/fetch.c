@@ -1300,7 +1300,7 @@ void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
                        dismissWarnings_SiteSpecKey) |
         (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
     /* File pages don't allow dismissing warnings, so skip it. */
-    if (equalCase_Rangecc(urlScheme_String(url_DocumentFetch_(d)), "file")) {
+    if (isLocalFileScheme_Rangecc(urlScheme_String(url_DocumentFetch_(d)))) {
         dismissed |= ansiEscapes_GmDocumentWarning;
     }
     const int warnings = warnings_GmDocument(doc_DocumentFetch_(d)) & ~dismissed;

@@ -23,10 +23,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "defs.h"
+#include <the_Foundation/string.h>
 
 void    init_Core       (void);
 void    deinit_Core     (void);
 
 void    setPhone_Core   (iBool isPhone); /* determined at runtime (iOS) */
+
+void            setDataDir_Core (const char *path); /* base directory of "local:" URLs */
+const iString * dataDir_Core    (void); /* absolute; empty if not set */
 
 void    commitFile_Core (const char *path, const char *tempPathWithNewContents); /* latter will be removed */
