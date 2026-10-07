@@ -628,10 +628,14 @@ static iColor contrastFrameColor_(iColor emboss, iColor backdrop) {
 }
 
 /* The focus frame must stand out from the button background (e.g., system accent). */
-static int focusColor_LabelWidget_(int bg) {
+static int focusColor_LabelWidget_(const iLabelWidget *d, int bg) {
+    if (bg >= 0 && flags_Widget(constAs_Widget(d)) & pressed_WidgetFlag) {
+        return bg;
+    }
     if (bg >= 0 && perceptualDelta_Color(get_Color(bg & mask_ColorId),
                                          get_Color(uiTextAction_ColorId)) < 100) {
-        return uiTextStrong_ColorId;
+        /* Blend into a highlighted hover background. */
+        return isHover_LabelWidget_(d) ? bg : uiTextStrong_ColorId;
     }
     return uiTextAction_ColorId;
 }
@@ -690,7 +694,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         p.alpha = 0x70;
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
     }
-    const int focusColor = focusColor_LabelWidget_(bg);
+    const int focusColor = focusColor_LabelWidget_(d, bg);
     if (isRound) {
         const iBool isFocus = isFocused_Widget(w);
 #if 0
