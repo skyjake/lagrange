@@ -231,6 +231,7 @@ set (SOURCES
     src/gmutil.h
     src/history.c
     src/history.h
+    src/input/impl.h
     src/lookup.c
     src/lookup.h
     src/misfin.c
@@ -372,6 +373,16 @@ if (ENABLE_IPC)
     )
 endif ()
 
+if (ANDROID OR IOS)
+    list (APPEND SOURCES src/input/native.c)
+else ()
+    list (APPEND SOURCES
+        src/input/editor.c
+        src/input/textbuf.c
+        src/input/textbuf.h
+    )
+endif ()
+
 set (TUI_SOURCES
     ${SOURCES}
     src/render/text_terminal.c
@@ -380,6 +391,9 @@ set (TUI_SOURCES
 
 # Now specify the GUI-only sources:
 list (APPEND SOURCES ${AUDIO_SOURCES})
+if (NOT ANDROID AND NOT IOS)
+    list (APPEND SOURCES src/input/preedit.c)
+endif ()
 if (ENABLE_CORETEXT)
     list (APPEND SOURCES
         src/platform/apple_fontcache.c
