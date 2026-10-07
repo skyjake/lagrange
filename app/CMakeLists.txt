@@ -326,6 +326,8 @@ set (SOURCES
     src/ui/certimportwidget.h
     src/ui/certlistwidget.c
     src/ui/certlistwidget.h
+    src/ui/documentdialog.c
+    src/ui/documentdialog.h
     src/ui/documentwidget.c
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c

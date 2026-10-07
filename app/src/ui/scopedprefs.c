@@ -337,14 +337,15 @@ static const struct {
     const char *icon;
     int         mobileIcon;
     const char *title;
+    const char *mobileTitle; /* NULL if same as `title` */
     const char *pageId;
 } pages_[] = {
-    { typography_DocPrefsGroup, fonts_Icon, 0x1f5da, "heading.prefs.typography", "prefs.page.fonts" },
-    { theme_DocPrefsGroup, palette_Icon, 0x1f3a8, "heading.prefs.theme", "prefs.page.theme" },
-    { style_DocPrefsGroup, pageStyle_Icon, 0x1f660, "heading.prefs.style", "prefs.page.style" },
-    { layout_DocPrefsGroup, pageLayout_Icon, 0x1f4c4, "heading.prefs.layout", "prefs.page.layout" },
+    { typography_DocPrefsGroup, fonts_Icon, 0x1f5da, "heading.prefs.typography", NULL, "prefs.page.fonts" },
+    { theme_DocPrefsGroup, palette_Icon, 0x1f3a8, "heading.prefs.theme", "heading.prefs.colors", "prefs.page.theme" },
+    { style_DocPrefsGroup, pageStyle_Icon, 0x1f660, "heading.prefs.style", NULL, "prefs.page.style" },
+    { layout_DocPrefsGroup, pageLayout_Icon, 0x1f4c4, "heading.prefs.layout", NULL, "prefs.page.layout" },
     /* Global in Preferences; can only be overridden for a site. */
-    { content_DocPrefsGroup, photo_Icon, 0x1f5bc, "heading.prefs.content", "sitespec.page.content" },
+    { content_DocPrefsGroup, photo_Icon, 0x1f5bc, "heading.prefs.content", NULL, "sitespec.page.content" },
 };
 
 static iBool isPageUsed_(size_t index, iBool withProtocols) {
@@ -427,8 +428,10 @@ void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols, int iconC
         if (!isPageUsed_(i, withProtocols)) {
             continue;
         }
-        iArray *items = collectNew_Array(sizeof(iMenuItem));
-        pushBack_Array(items, &(iMenuItem){ format_CStr("title id:%s", pages_[i].title) });
+        const char *title = pages_[i].mobileTitle ? pages_[i].mobileTitle : pages_[i].title;
+        iArray     *items = collectNew_Array(sizeof(iMenuItem));
+        pushBack_Array(items,
+                       &(iMenuItem){ format_CStr("title id:%s text:${%s}", pages_[i].title, title) });
         pushBack_Array(items, &(iMenuItem){ "padding arg:0.667" });
         const iMenuItem *groupItems = items_ScopedPrefs(pages_[i].group, withProtocols);
         /* The scope bar is separate from the settings. */
@@ -438,10 +441,11 @@ void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols, int iconC
         pushBack_Array(items, &(iMenuItem){ "padding" });
         pushBack_Array(items, &(iMenuItem){ NULL });
         pushBack_Array(panelItems,
-                       &(iMenuItem){ format_CStr("panel icon:0x%x iconcolor:%d id:%s",
+                       &(iMenuItem){ format_CStr("panel icon:0x%x iconcolor:%d id:%s text:${%s}",
                                                  pages_[i].mobileIcon,
                                                  iconColor,
-                                                 pages_[i].title),
+                                                 pages_[i].title,
+                                                 title),
                                      0, 0, (const void *) constData_Array(items) });
     }
 }

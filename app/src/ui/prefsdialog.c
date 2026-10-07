@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "mobile.h"
 #include "render/text.h"
 #include "root.h"
+#include <lagrange/gmutil.h>
 #include <lagrange/snippets.h>
 #include "snippetwidget.h"
 #include "touch.h"
@@ -499,13 +500,15 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" export_Icon " " uiTextAction_ColorEscape "${menu.export}", 0, 0, "export" },
             { "button text:" import_Icon " " uiTextAction_ColorEscape "${menu.import}", 0, 0, "file.open" },
             { "padding" },
-            { "button text:" book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-            { "button text:" bookmark_Icon " ${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-            { "button text:" clock_Icon " ${macos.menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+            { "button text:" book_Icon " ${menu.bookmarks.list}", 0, 0, "docdlg.open url:about:bookmarks" },
+            { "button text:" bookmark_Icon " ${menu.bookmarks.bytag}", 0, 0, "docdlg.open url:about:bookmarks?tags" },
+            { "button text:" clock_Icon " ${macos.menu.bookmarks.bytime}", 0, 0, "docdlg.open url:about:bookmarks?created" },
             { "padding" },
-            { "button text:" star_Icon " ${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+            { "button text:" star_Icon " ${menu.feeds.entrylist}", 0, 0, "docdlg.open url:about:feeds" },
             { "padding" },
-            { "button text:" download_Icon " ${menu.downloads}", 0, 0, "downloads.open" },
+            { "button text:" download_Icon " ${menu.downloads}", 0, 0,
+              format_CStr("docdlg.open url:%s",
+                          cstrCollect_String(makeFileUrl_String(downloadDir_App()))) },
             { "padding" },
             { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }
@@ -513,8 +516,8 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem supportPanelItems[] = {
             { "title id:heading.prefs.support" },
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
-            { "button text:" star_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
-            { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
+            { "button text:" star_Icon " ${menu.releasenotes}", 0, 0, "docdlg.open url:about:version" },
+            { "button text:" info_Icon " ${menu.help}", 0, 0, "docdlg.open url:about:help" },
             { "padding" },
             { "button text:" globe_Icon " " uiTextAction_ColorEscape "${menu.website}",
               0,
@@ -529,8 +532,8 @@ iWidget *makePreferences_Widget(void) {
               0,
               "!open default:1 url:mailto:jaakko.keranen@iki.fi" },
             { "padding" },
-            { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "!open url:about:about" },
-            { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
+            { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "docdlg.open url:about:about" },
+            { "button text:" bug_Icon " ${menu.debug}", 0, 0, "docdlg.open url:about:debug" },
             { NULL }
         };
         iArray *contentItems = collectNew_Array(sizeof(iMenuItem)); {
@@ -555,7 +558,7 @@ iWidget *makePreferences_Widget(void) {
                           red_ColorId), 0, 0, (const void *) generalPanelItems },
             { format_CStr("panel icon:0x1f4f1 iconcolor:%d id:heading.prefs.ui", red_ColorId),
               0, 0, (const void *) uiPanelItems },
-            { format_CStr("panel icon:0x1f528 iconcolor:%d id:heading.prefs.toolbars", red_ColorId),
+            { format_CStr("panel icon:0x2b13 iconcolor:%d id:heading.prefs.toolbars", red_ColorId),
               0, 0, (const void *) toolbarPanelItems },
             { format_CStr("panel icon:0x1f5a7 iconcolor:%d id:heading.prefs.network", orange_ColorId),
               0, 0, (const void *) networkPanelItems },

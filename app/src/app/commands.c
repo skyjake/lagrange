@@ -44,6 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/text.h"
 #include "ui/certimportwidget.h"
 #include "ui/command.h"
+#include "ui/documentdialog.h"
 #include "ui/documentwidget.h"
 #include "ui/filedialog.h"
 #include "ui/gamepad.h"
@@ -1049,6 +1050,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "preferences")) {
         showPreferences_Widget(cmd);
+    }
+    else if (equal_Command(cmd, "docdlg.open")) {
+        makeDocumentDialog_Widget(collect_String(suffix_Command(cmd, "url")));
+        return iTrue;
     }
     else if (equal_Command(cmd, "navigate.home") && isMainWin) {
         /* Look for bookmarks tagged "homepage". */
