@@ -489,13 +489,13 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
     const int   inset      = isTerminal ? 1 : 3 * gap_UI;
     const int   x0         = left_Rect(bounds) + inset;
     const int   x1         = right_Rect(bounds) - inset;
+    const int   track      = trackColor_SliderWidget_(d);
     iPaint p;
     init_Paint(&p);
     if (isTerminal) {
         drawHLine_Paint(&p, init_I2(x0, midY), x1 - x0, uiSeparator_ColorId);
     }
     else {
-        const int track     = trackColor_SliderWidget_(d);
         const int thickness = iMax(1, gap_UI / 3);
         drawRoundRect_Paint(&p, bounds, all_RoundCorner, 0, track, none_ColorId, none_ColorId);
         fillRect_Paint(&p,
@@ -514,6 +514,15 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
         fg     = uiTextPressed_ColorId | permanent_ColorId;
         frame1 = uiEmbossPressed1_ColorId;
         frame2 = uiEmbossPressed2_ColorId;
+    }
+    else {
+        /* The thumb must not vanish into the track (e.g., white on white). */
+        const iColor trackRgb = get_Color(track);
+        if (perceptualDelta_Color(get_Color(bg), trackRgb) < 30 &&
+            perceptualDelta_Color(get_Color(frame1), trackRgb) < 30 &&
+            perceptualDelta_Color(get_Color(frame2), trackRgb) < 30) {
+            frame1 = frame2 = uiSeparator_ColorId;
+        }
     }
     if (isTerminal) {
         if (isFocus && !isPress) {
