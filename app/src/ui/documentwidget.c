@@ -3743,9 +3743,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         return iTrue;
                     }
                     if (!d->selectMark.start && d->click.count <= 1) {
-                        /* A click that clears the selection does not toggle the bars. */
-                        d->readingBarsTimer =
-                            SDL_AddTimer(350, postReadingBarsToggle_DocumentWidget_, d);
+                        /* A click that clears the selection does not toggle the bars. A mouse
+                           click waits in case it becomes a double click (word selection). */
+                        if (ev->button.which == SDL_TOUCH_MOUSEID) {
+                            toggleReadingBars_Root(w->root);
+                        }
+                        else {
+                            d->readingBarsTimer =
+                                SDL_AddTimer(350, postReadingBarsToggle_DocumentWidget_, d);
+                        }
                     }
                 }
                 if (view->hoverLink) {

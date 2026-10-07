@@ -838,7 +838,10 @@ static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
    individual widgets still need to be able to extend into the safe area.) */
 static int actionsBottomInset_SidebarWidget_(const iSidebarWidget *d) {
     if (deviceType_App() == tablet_AppDeviceType) {
-        return prefs_App()->bottomNavBar ? 0 : bottomSafeInset_Mobile();
+        /* Hidden reading bars leave the sidebar extending to the bottom. */
+        const iWidget *navBar = findChild_Widget(root_Widget(constAs_Widget(d)), "navbar");
+        return prefs_App()->bottomNavBar && isVisible_Widget(navBar) ? 0
+                                                                     : bottomSafeInset_Mobile();
     }
     if (deviceType_App() == phone_AppDeviceType && !isPortrait_App()) {
         /* In sliding sheet mode (portrait), sidebar is resized to fit in the safe area. */
@@ -2792,6 +2795,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     d, skipPrefix_Command(cmd) + size_String(&d->cmdPrefix))) {
                 return iTrue;
             }
+        }
+        else if (equal_Command(cmd, "readingbars.changed")) {
+            updateActionsPadding_SidebarWidget_(d);
+            arrange_Widget(w);
+            return iFalse;
         }
         else if (equal_Command(cmd, "menu.closed") && d->menu == pointer_Command(cmd)) {
             if (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App())) {

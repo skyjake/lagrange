@@ -115,6 +115,11 @@ static const iDocumentViewHost viewHost_SimpleDocumentWidget_ = {
     .aboutToScrollView     = (iAny *) aboutToScrollView_SimpleDocumentWidget_,
 };
 
+/* Horizontal margin of UI-styled content, in addition to the page margin. */
+static int uiSideMargin_SimpleDocumentWidget_(void) {
+    return deviceType_App() == tablet_AppDeviceType ? 6 : 2;
+}
+
 void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -130,7 +135,7 @@ void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     d->view->selectMark = &d->selectMark;
     d->view->foundMark  = &d->foundMark;
     d->view->pageMargin = 1;
-    d->view->sideMargin = 2;
+    d->view->sideMargin = uiSideMargin_SimpleDocumentWidget_();
     setOwner_DocumentView(d->view, d, &viewHost_SimpleDocumentWidget_);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -150,7 +155,7 @@ void setFlags_SimpleDocumentWidget(iSimpleDocumentWidget *d, int flags, iBool se
     iChangeFlags(d->flags, flags, set);
     const iBool isReading = (d->flags & reading_SimpleDocumentWidgetFlag) != 0;
     d->view->pageMargin = isReading ? 5 : 1;
-    d->view->sideMargin = isReading ? 0 : 2;
+    d->view->sideMargin = isReading ? 0 : uiSideMargin_SimpleDocumentWidget_();
 }
 
 static void pinPrefs_SimpleDocumentWidget_(iGmDocument *doc) {
@@ -332,7 +337,12 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->view->scrollY.pos);
             immediateScroll_DocumentView(d->view, -ev->wheel.y);
-            scrollWideBlock_DocumentView(d->view, mouse, -ev->wheel.x, 0, NULL);
+            if (!scrollWideBlock_DocumentView(d->view, mouse, -ev->wheel.x, 0, NULL) &&
+                ev->wheel.x && ev->wheel.y == 0 && !isInertia_MouseWheelEvent(&ev->wheel)) {
+                /* Swiping sideways, like in a list (e.g., to close a sidebar). */
+                postCommand_Widget(w, "listswipe.moved arg:%d coord:%d %d",
+                                   (int) ev->wheel.x, mouse.x, mouse.y);
+            }
         }
         else {
             const int lineHeight = lineHeight_Text(uiContent_FontId);
