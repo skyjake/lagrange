@@ -218,7 +218,9 @@ void init_Prefs(iPrefs *d) {
     d->translationIgnorePre         = iTrue;
     d->recentMenuBarIndex           = 0;
     d->useSystemTheme               = iTrue;
-    d->systemPreferredColorTheme[0] = (isApple_Platform() || isLinux_Platform()) && !isMobile_Platform() ? dark_ColorTheme : pureBlack_ColorTheme;
+    d->systemPreferredColorTheme[0] = (isApple_Platform() || isLinux_Platform()) &&
+                                       !isMobile_Platform() ? dark_ColorTheme
+                                                            : pureBlack_ColorTheme;
     d->systemPreferredColorTheme[1] = pureWhite_ColorTheme;
     d->theme                        = dark_ColorTheme;
     d->accent                   = isAppleDesktop_Platform() ? system_ColorAccent : cyan_ColorAccent;
