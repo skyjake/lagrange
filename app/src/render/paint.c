@@ -387,6 +387,17 @@ void drawRoundRectRadius_Paint(const iPaint *d, iRect rect, int radius, int corn
         const int rBL = corners & bottomLeft_RoundCorner  ? radius : 0;
         const int cl  = iMax(rTL, rBL);
         const int cr  = iMax(rTR, rBR);
+#if !defined (iPlatformTerminal)
+        /* A translucent fill must be blended like the corners, or the color's alpha is
+           written into the target (e.g., a draw buffer) as is. */
+        SDL_Renderer *render        = renderer_Paint_(d);
+        SDL_BlendMode oldBlend      = SDL_BLENDMODE_NONE;
+        const iBool   isTranslucent = paletteColor_Paint_(fillColor).a < 255;
+        if (isTranslucent) {
+            SDL_GetRenderDrawBlendMode(render, &oldBlend);
+            SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
+        }
+#endif
         fillRect_Paint(d, init_Rect(x + cl, y, w - cl - cr, h), fillColor);
         if (cl) {
             fillRect_Paint(d, init_Rect(x, y + rTL, cl, h - rTL - rBL), fillColor);
@@ -394,6 +405,11 @@ void drawRoundRectRadius_Paint(const iPaint *d, iRect rect, int radius, int corn
         if (cr) {
             fillRect_Paint(d, init_Rect(x + w - cr, y + rTR, cr, h - rTR - rBR), fillColor);
         }
+#if !defined (iPlatformTerminal)
+        if (isTranslucent) {
+            SDL_SetRenderDrawBlendMode(render, oldBlend);
+        }
+#endif
         if (corners) {
             drawCorners_Paint_(d, atlas, rect, corners, radius, 0, paletteColor_Paint_(fillColor));
         }

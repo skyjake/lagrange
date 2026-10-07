@@ -388,6 +388,15 @@ void setThemePalette_Color(enum iColorTheme theme) {
                                                      get_Color(uiBackgroundSidebar_ColorId), 0.5f));
         }
     }
+    /* A third level of shading takes another step from the background past the sidebar. */ {
+        const iColor bg      = get_Color(uiBackground_ColorId);
+        const iColor sidebar = get_Color(uiBackgroundSidebar_ColorId);
+        set_Color(uiBackgroundInset_ColorId,
+                  (iColor){ iClamp(2 * sidebar.r - bg.r, 0, 255),
+                            iClamp(2 * sidebar.g - bg.g, 0, 255),
+                            iClamp(2 * sidebar.b - bg.b, 0, 255),
+                            255 });
+    }
 }
 
 iColor get_Color(int color) {

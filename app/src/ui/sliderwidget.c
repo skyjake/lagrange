@@ -411,7 +411,7 @@ static iBool processEvent_SliderWidget_(iSliderWidget *d, const SDL_Event *ev) {
 static int trackColor_SliderWidget_(const iSliderWidget *d) {
     for (const iWidget *w = constAs_Widget(d); w; w = w->parent) {
         if (w->bgColor >= 0) {
-            return w->bgColor == uiBackgroundSidebar_ColorId ? uiBackground_ColorId
+            return w->bgColor == uiBackgroundSidebar_ColorId ? uiBackgroundInset_ColorId
                                                              : uiBackgroundSidebar_ColorId;
         }
     }
@@ -436,6 +436,8 @@ static void drawLabels_SliderWidget_(const iSliderWidget *d, iPaint *p, int x0, 
     const int   font   = labelFont_SliderWidget_(d);
     const int   height = lineHeight_Text(font);
     const int   fg     = isDisabled_Widget(d) ? uiTextDisabled_ColorId : uiTextDim_ColorId;
+    /* Gap between the text and the track line grows with the text and the thumb. */
+    const int   pad    = gap_UI + iMax(0, iRound(height * (d->heightScale - 1.0f) * 0.6f));
     iArray indices, drawn;
     init_Array(&indices, sizeof(int));
     init_Array(&drawn, sizeof(iRect));
@@ -447,20 +449,20 @@ static void drawLabels_SliderWidget_(const iSliderWidget *d, iPaint *p, int x0, 
         const size_t pos   = index_ArrayConstIterator(&i);
         const int    index = *(const int *) i.value;
         const char  *text  = text_SliderWidget_(d, index);
-        const int    width = measure_Text(font, text).bounds.size.x + 2 * gap_UI;
+        const int    width = measure_Text(font, text).bounds.size.x + 2 * pad;
         iRect rect = init_Rect(0, midY - height / 2, width, height);
         if (pos == 0) {
-            rect.pos.x = x0 - gap_UI;
+            rect.pos.x = x0 - pad;
         }
         else if (pos == 1) {
-            rect.pos.x = x1 + gap_UI - width;
+            rect.pos.x = x1 + pad - width;
         }
         else {
             rect.pos.x = mid_Rect(thumbRect_SliderWidget_(d, index)).x - width / 2;
             rect.pos.x = iClamp(rect.pos.x, left_Rect(bounds), right_Rect(bounds) - width);
         }
         /* Overlapping the label's padding or the thumb's rounded corner is tolerated. */
-        iBool isOverlapping = isOverlapping_Rect(shrunk_Rect(rect, init_I2(3 * gap_UI / 2, 0)),
+        iBool isOverlapping = isOverlapping_Rect(shrunk_Rect(rect, init_I2(pad + gap_UI / 2, 0)),
                                                  thumb);
         iConstForEach(Array, j, &drawn) {
             if (isOverlapping) break;
@@ -500,9 +502,12 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
     else {
         const int thickness = iMax(1, gap_UI / 3);
         drawRoundRect_Paint(&p, bounds, all_RoundCorner, 0, track, none_ColorId, none_ColorId);
-        fillRect_Paint(&p,
-                       init_Rect(x0, midY - thickness / 2, x1 - x0, thickness),
-                       isDisabled ? uiSeparator_ColorId : uiTextDim_ColorId);
+        /* When disabled, the line is dimmed toward the track but remains visible. */
+        fillRectColor_Paint(&p,
+                            init_Rect(x0, midY - thickness / 2, x1 - x0, thickness),
+                            isDisabled ? mix_Color(get_Color(uiTextDim_ColorId),
+                                                   get_Color(track), 0.5f)
+                                       : get_Color(uiTextDim_ColorId));
         drawLabels_SliderWidget_(d, &p, x0, x1, midY, track);
     }
     /* The thumb. */
