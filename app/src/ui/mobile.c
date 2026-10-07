@@ -425,9 +425,10 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
                     alignLeft_WidgetFlag | frameless_WidgetFlag | extraPadding_WidgetFlag,
                     iTrue);
     checkIcon_LabelWidget(btn);
-    as_Widget(btn)->borderPad[0] = as_Widget(btn)->borderPad[2] = (icon_LabelWidget(btn) ? 13.25f : 4) * gap_UI;
-    as_Widget(btn)->borderPad[1] = as_Widget(btn)->borderPad[3] = 4 * gap_UI;
     setFont_LabelWidget(btn, labelFont_());
+    /* Separators are aligned with the text. */
+    as_Widget(btn)->borderPad[0] = as_Widget(btn)->borderPad[2] = textOffset_LabelWidget(btn);
+    as_Widget(btn)->borderPad[1] = as_Widget(btn)->borderPad[3] = 4 * gap_UI;
     setTitleCase_LabelWidget(btn, iTrue);
     setTextColor_LabelWidget(btn, uiTextStrong_ColorId);
     setBackgroundColor_Widget(as_Widget(btn), uiBackgroundSidebar_ColorId);
@@ -988,6 +989,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         }
     }
     panels->flags2 |= fadeBackground_WidgetFlag2;
+    if (!isFullHeight) {
+        panels->flags2 |= roundFreeEdges_WidgetFlag2;
+    }
     setFlags_Widget(panels, overflowScrollable_WidgetFlag, iFalse);
     /* The top-level split between main and detail panels. */
     iWidget *mainDetailSplit = makeHDiv_Widget(); {
@@ -1086,7 +1090,8 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             const iChar icon = toInt_String(string_Command(item->label, "icon"));
             if (icon) {
                 setIcon_LabelWidget(button, icon);
-                as_Widget(button)->borderPad[0] = as_Widget(button)->borderPad[2] = 13.25f * gap_UI;
+                as_Widget(button)->borderPad[0] = as_Widget(button)->borderPad[2] =
+                    textOffset_LabelWidget(button);
             }
             if (hasLabel_Command(item->label, "iconcolor")) {
                 setIconColor_LabelWidget(button, argLabel_Command(item->label, "iconcolor"));

@@ -194,7 +194,9 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
     if (!isFinished_Anim(&d->visualOffset)) {
         addTickerRoot_App(visualOffsetAnimation_Widget_, d->root, ptr);
     }
-    else {
+    else if (~d->flags & destroyPending_WidgetFlag) {
+        /* A widget being destroyed stays where it was moved (e.g., offscreen) while
+           other animations finish. */
         d->flags &= ~visualOffset_WidgetFlag;
     }
 }

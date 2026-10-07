@@ -39,3 +39,4 @@ void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);
    the thumb size is the visible amount. Owner positions the widget. */
 void    setProgressMode_ScrollWidget(iScrollWidget *, iBool progressMode);
 iBool   isProgressMode_ScrollWidget (const iScrollWidget *);
+void    setProgressOpacity_ScrollWidget(iScrollWidget *, float opacity);

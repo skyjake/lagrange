@@ -251,6 +251,14 @@ iBool isProgressMode_ScrollWidget(const iScrollWidget *d) {
     return d->isProgress;
 }
 
+void setProgressOpacity_ScrollWidget(iScrollWidget *d, float opacity) {
+    iAssert(d->isProgress);
+    if (targetValue_Anim(&d->opacity) != opacity) {
+        setValue_Anim(&d->opacity, opacity, 0);
+        refresh_Widget(d);
+    }
+}
+
 static iBool processProgressEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const enum iClickResult result = processEvent_Click(&d->click, ev);
@@ -297,6 +305,11 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
     const int   bar     = isHot ? uiTextStrong_ColorId : isDark ? d->thumbColor : gray25_ColorId;
     iPaint p;
     init_Paint(&p);
+    p.alpha = 255 * value_Anim(&d->opacity);
+    SDL_Renderer *render = renderer_Window(get_Window());
+    if (p.alpha < 255) {
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
+    }
     fillRect_Paint(&p,
                    init_Rect(left_Rect(track), top_Rect(track) - gap_UI / 2,
                              width_Rect(track), height + gap_UI / 2),
@@ -306,6 +319,9 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
                    init_Rect(left_Rect(track), top_Rect(track),
                              width_Rect(track) * value_Anim(&d->progress), trackHeight),
                    bar);
+    if (p.alpha < 255) {
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+    }
 }
 
 void setFadeEnabled_ScrollWidget(iScrollWidget *d, iBool fadeEnabled) {
@@ -318,7 +334,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
     if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_ScrollWidget_(d);
     }
-    if (ev->type == SDL_EVENT_MOUSE_MOTION) {
+    if (ev->type == SDL_EVENT_MOUSE_MOTION && !d->isProgress) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         const iBool isNearby = containsExpanded_Widget(&d->widget, mouse, 4 * gap_UI);
         const iBool isOver = isNearby && contains_Rect(thumbRect_ScrollWidget_(d), mouse);

@@ -81,7 +81,10 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url) {
     useSheetStyle_Widget(w);
     /* The size is determined by the window, not the contents. */
     setFlags_Widget(w, arrangeSize_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
-    setFlags_Widget(w, moveToParentBottomEdge_WidgetFlag | frameless_WidgetFlag,
+    /* Swiping from the left edge goes back, like in the Settings panels. */
+    setFlags_Widget(w,
+                    moveToParentBottomEdge_WidgetFlag | frameless_WidgetFlag |
+                        leftEdgeDraggable_WidgetFlag,
                     deviceType_App() != desktop_AppDeviceType);
     setPadding1_Widget(w, 0);
     /* Navigation bar: back, title, and opening the page in a tab. */ {
@@ -205,7 +208,7 @@ static iBool processEvent_DocumentDialog_(iDocumentDialog *d, const SDL_Event *e
         showContent_DocumentDialog_(d);
         return iTrue;
     }
-    else if (isCommand_Widget(w, ev, "docdlg.close")) {
+    else if (isCommand_Widget(w, ev, "docdlg.close") || isCommand_Widget(w, ev, "swipe.back")) {
         dismiss_DocumentDialog_(d);
         return iTrue;
     }

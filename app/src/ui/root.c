@@ -2737,7 +2737,7 @@ iRect visibleRect_Root(const iRoot *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const uint32_t readingBarsDelay_Root_ = 2500;
+static const uint32_t readingBarsDelay_Root_ = 5000;
 
 static iWidget *readingBarsTimer_Root_(const iRoot *d) {
     /* Periodic context for hiding the bars. */

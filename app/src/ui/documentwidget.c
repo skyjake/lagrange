@@ -3911,12 +3911,24 @@ static void positionPagedProgress_DocumentWidget_(iDocumentWidget *d) {
     iWidget    *barWidget = as_Widget(d->scroll);
     const iRect bounds    = bounds_Widget(as_Widget(d));
     const iRect viewport  = pageViewport_DocumentView(d->view);
-    int         bottom    = bottom_Rect(viewport) - metrics_GmDocument(d->view->doc)->bottomInset;
+    const iRoot *root     = as_Widget(d)->root;
+    int         bottom    = bottom_Rect(viewport);
     int         edge;
     float       opacity;
-    if (readingBarsEdge_Root(as_Widget(d)->root, iTrue, &edge, &opacity)) {
-        /* Stays visible above the bars at the bottom, also while they slide. */
+    if (readingBarsEdge_Root(root, iTrue, &edge, &opacity)) {
+        /* Stays visible above the bars at the bottom, also while they slide. Hidden bars
+           let it fall to the bottom of the screen. */
         bottom = iMin(bottom, edge);
+    }
+    else if (!root->isReading || !root->areReadingBarsHidden) {
+        bottom -= metrics_GmDocument(d->view->doc)->bottomInset;
+    }
+    if (isMobile_Platform()) {
+        /* Over the safe area inset, it can't be interacted with. */
+        const int inset = metrics_GmDocument(d->view->doc)->bottomInset;
+        const int depth = bottom - (bottom_Rect(viewport) - inset);
+        setProgressOpacity_ScrollWidget(
+            d->scroll, inset > 0 ? 1.0f - 0.65f * iClamp((float) depth / inset, 0.0f, 1.0f) : 1.0f);
     }
     /* Reacts to the mouse up to the middle of the page footer. */
     const iGmDocument *doc = d->view->doc;

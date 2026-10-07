@@ -303,6 +303,13 @@ enum iEventResult processKeyDown_InputWidget_(iInputWidget *d, const SDL_Event *
 
 void drawContent_InputWidget_(const iInputWidget *d, iPaint *p, iRect bounds,
                               iRect contentBounds, int fg) {
-    iUnused(p, bounds, fg);
+    iUnused(fg);
+    const iWidget *w = constAs_Widget(d);
+    setClip_Paint(p,
+                  adjusted_Rect(bounds,
+                                init_I2(d->leftPadding, 0),
+                                init_I2(-d->rightPadding,
+                                        w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
     drawStatic_InputWidget_(d, contentBounds, visLineOffsetY_InputWidget_(d));
+    unsetClip_Paint(p);
 }

@@ -502,6 +502,10 @@ iLocalDef int iconPadding_LabelWidget_(const iLabelWidget *d) {
     return d->icon ? iRound(lineHeight_Text(d->font) * amount) : 0;
 }
 
+int textOffset_LabelWidget(const iLabelWidget *d) {
+    return padding_LabelWidget_(d, 0).x + iconPadding_LabelWidget_(d);
+}
+
 static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
     iRect content = adjusted_Rect(bounds_Widget(constAs_Widget(d)),
                                   padding_LabelWidget_(d, 0),
@@ -666,8 +670,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                 : !isButton                       ? 0
                                 : isPopupMenuItem_LabelWidget_(w) ? all_RoundCorner
                                                                   : flushCorners_LabelWidget_(d);
+    /* Group items are highlighted edge to edge, up to the separators. */
+    const iBool isGroupItem = isButton && flags & frameless_WidgetFlag &&
+                              (w->flags2 & groupItem_WidgetFlag2) != 0;
+    const iRect bgRect      = isGroupItem ? bounds : rect;
     if (!corners && isButton && (corners = groupCorners_Widget(w, &radius)) != 0) {
-        radius -= gap_UI / 4; /* concentric with the inset `rect` */
+        if (!isGroupItem) {
+            radius -= gap_UI / 4; /* concentric with the inset `rect` */
+        }
     }
     const iBool isRound       = isFramedRound || corners != 0;
     const iBool isDrag        = (flags & dragged_WidgetFlag) && bg >= 0;
@@ -693,7 +703,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         }
 #endif
         drawRoundRectRadius_Paint(&p,
-                                  rect,
+                                  bgRect,
                                   radius,
                                   corners,
                                   frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
@@ -702,7 +712,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                   isFocus ? focusColor : isFramedRound ? frame2 : none_ColorId);
     }
     else if (bg >= 0) {
-        fillRect_Paint(&p, rect, bg);
+        fillRect_Paint(&p, bgRect, bg);
+    }
+    if (isGroupItem && bg >= 0) {
+        drawBorders_Widget(w);
     }
     if (isDrag) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);

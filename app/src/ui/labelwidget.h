@@ -70,6 +70,7 @@ const iString * sourceText_LabelWidget  (const iLabelWidget *); /* untranslated 
 const iString * command_LabelWidget     (const iLabelWidget *);
 int             textColor_LabelWidget   (const iLabelWidget *);
 iChar           icon_LabelWidget        (const iLabelWidget *);
+int             textOffset_LabelWidget  (const iLabelWidget *); /* left edge of the text */
 iBool           isWrapped_LabelWidget   (const iLabelWidget *);
 
 iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command);
