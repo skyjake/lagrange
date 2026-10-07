@@ -795,6 +795,27 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                                                 format_CStr(" arg:%d", d->shelfSort));
         }
     }
+    else {
+        if (!keepActions && !isEmpty_PtrArray(books)) {
+            const iMenuItem items[] = {
+                { upDownArrow_Icon " ${sidebar.action.books.recent}", 0, 0, "books.sort arg:0" },
+                { upDownArrow_Icon " ${sidebar.action.books.title}", 0, 0, "books.sort arg:1" },
+                { upDownArrow_Icon " ${sidebar.action.books.author}", 0, 0, "books.sort arg:2" },
+            };
+            iLabelWidget *dropButton =
+                makeMenuButton_LabelWidget(items[d->shelfSort].label, items, 3);
+            addChildFlags_Widget(d->actions, iClob(dropButton), frameless_WidgetFlag);
+            setId_Widget(as_Widget(dropButton), "books.sortbutton");
+            setFont_LabelWidget(dropButton, actionButtonFont_SidebarWidget_(d));
+            setTextColor_LabelWidget(dropButton, uiTextAction_ColorId);
+            setBackgroundColor_Widget(as_Widget(dropButton), uiBackground_ColorId);
+            checkIcon_LabelWidget(dropButton);
+        }
+        else if (keepActions) {
+            updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "books.sortbutton"),
+                                                format_CStr(" arg:%d", d->shelfSort));
+        }
+    }
     return !isEmpty_PtrArray(books);
 }
 
@@ -832,8 +853,8 @@ static int actionsBottomInset_SidebarWidget_(const iSidebarWidget *d) {
 
 static void updateActionsPadding_SidebarWidget_(iSidebarWidget *d) {
     const int bottom = actionsBottomInset_SidebarWidget_(d);
-    if (childCount_Widget(d->actions)) {
-        /* Mirrors the book tab area padding. */
+    if (childCount_Widget(d->actions) && deviceType_App() == desktop_AppDeviceType) {
+        /* Mirrors the book tab area padding. Mobile action buttons have enough padding. */
         setPadding_Widget(d->actions, 3 * gap_UI, gap_UI, 3 * gap_UI, 2 * gap_UI + bottom);
     }
     else {
@@ -3089,14 +3110,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "feeds.markallread") && d->mode == feedEntries_SidebarMode) {
             if (argLabel_Command(cmd, "confirm")) {
-                /* This is used on mobile. */
-                iWidget *menu = makeMenu_Widget(
-                    w->root->widget,
-                    (iMenuItem[]) { check_Icon " " uiTextCaution_ColorEscape "${feeds.markallread}",
-                                    0,
-                                    0,
-                                    "feeds.markallread" },
-                    1);
+                /* This is used on mobile. Phone menus already have a Cancel item. */
+                const iMenuItem items[] = {
+                    { "```${feeds.markallread.confirm}" },
+                    { "---" },
+                    { check_Icon " " uiTextCaution_ColorEscape "${feeds.markallread}",
+                      0, 0, "feeds.markallread" },
+                    { "---" },
+                    { "${cancel}", 0, 0, "cancel" },
+                };
+                const size_t numItems = iElemCount(items) -
+                                        (deviceType_App() == phone_AppDeviceType ? 2 : 0);
+                iWidget *menu = makeMenu_Widget(w->root->widget, items, numItems);
                 openMenu_Widget(menu, topLeft_Rect(bounds_Widget(d->actions)));
                 return iTrue;
             }

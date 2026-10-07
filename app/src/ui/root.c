@@ -2234,19 +2234,14 @@ void createUserInterface_Root(iRoot *d) {
         setFlags_Widget(docTabs, expand_WidgetFlag, iTrue);
         d->bars.docTabs    = docTabs;
         d->bars.tabButtons = findChild_Widget(docTabs, "tabs.buttons");
-        if (isDesktop_Platform()) {
-            setBackgroundColor_Widget(findChild_Widget(docTabs, "tabs.buttons"),
-                                      uiBackground_ColorId);
-        }
+        /* Opaque, also between the inset tab buttons (e.g., over the page in reading mode). */
+        setBackgroundColor_Widget(d->bars.tabButtons, uiBackground_ColorId);
         iDocumentWidget *doc;
         appendTabPage_Widget(docTabs, iClob(doc = new_DocumentWidget()), "Document", 0, 0);
         addTabCloseButton_Widget(docTabs, as_Widget(doc), "tabs.close");
         iWidget *buttons = findChild_Widget(docTabs, "tabs.buttons");
         setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag |
                                      drawBackgroundToHorizontalSafeArea_WidgetFlag, iTrue);
-        if (deviceType_App() == phone_AppDeviceType) {
-            setBackgroundColor_Widget(buttons, uiBackground_ColorId);
-        }
         iWidget *newTab =
             addChildFlags_Widget(buttons,
                                  iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new append:1")),

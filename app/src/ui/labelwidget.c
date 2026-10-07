@@ -638,7 +638,12 @@ static int focusColor_LabelWidget_(int bg) {
 
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    drawBackground_Widget(w);
+    if (isRoundButton_LabelWidget_(w)) {
+        drawBorders_Widget(w); /* the background is drawn rounded below, not as a square */
+    }
+    else {
+        drawBackground_Widget(w);
+    }
     const iBool   isButton = d->click.buttons != 0;
     const int64_t flags    = flags_Widget(w);
     const iRect   bounds   = bounds_Widget(w);

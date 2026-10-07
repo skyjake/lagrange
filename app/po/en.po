@@ -814,6 +814,9 @@ msgstr "Unsubscribe…"
 msgid "feeds.markallread"
 msgstr "Mark All as Read"
 
+msgid "feeds.markallread.confirm"
+msgstr "Really mark all entries as read?"
+
 msgid "feeds.refresh"
 msgstr "Refresh Feeds"
 
@@ -3059,8 +3062,8 @@ msgstr "Open from Bookshelf"
 msgid "gempub.page.source"
 msgstr "Source"
 
-msgid "gempub.page.view"
-msgstr "Read archived page"
+msgid "gempub.page.contents"
+msgstr "Table of Contents"
 
 msgid "gempub.cover.aboutbook"
 msgstr "About this book"
