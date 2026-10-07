@@ -110,8 +110,10 @@ static const char *text_SliderWidget_(const iSliderWidget *d, int index) {
 }
 
 static int labelFont_SliderWidget_(const iSliderWidget *d) {
-    return d->font == uiLabelBig_FontId || d->font == uiLabelMedium_FontId ? uiLabel_FontId
-                                                                           : uiLabelSmall_FontId;
+    /* One size smaller than the thumb. */
+    return d->font == uiLabelBig_FontId      ? uiLabelMedium_FontId
+           : d->font == uiLabelMedium_FontId ? uiLabel_FontId
+                                             : uiLabelSmall_FontId;
 }
 
 static void updateMetrics_SliderWidget_(iSliderWidget *d) {
@@ -535,10 +537,13 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
         fillRect_Paint(&p, thumb, bg);
     }
     else {
+        const int thickness = frame_UI * (deviceType_App() == desktop_AppDeviceType ? 1 : 2);
         drawRoundRect_Paint(&p,
                             thumb,
                             all_RoundCorner,
-                            frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
+                            !isFocus ? thickness
+                                     : iMax(thickness,
+                                            frame_UI * (isHover ? gap_UI / 2 : gap_UI / 4)),
                             bg,
                             isFocus ? uiTextAction_ColorId : frame1,
                             isFocus ? uiTextAction_ColorId : frame2);
