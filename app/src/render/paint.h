@@ -60,6 +60,8 @@ void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
 void    fillRect_Paint          (const iPaint *, iRect rect, int color);
 void    fillRectColor_Paint     (const iPaint *, iRect rect, iColor color);
+void    drawRoundFrameColor_Paint(const iPaint *, iRect rect, int radius, int corners,
+                                  int frameThickness, iColor frame1, iColor frame2);
 void    drawRoundRectRadius_Paint(const iPaint *, iRect rect, int radius, int corners,
                                   int frameThickness, int fillColor, int frameColor1,
                                   int frameColor2); /* frame 1: top/left, 2: bottom/right; none_ColorId to omit */

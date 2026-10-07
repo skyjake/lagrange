@@ -605,6 +605,24 @@ static int flushCorners_LabelWidget_(const iLabelWidget *d) {
     return 0;
 }
 
+/* Color of the area surrounding the widget. */
+static iColor backdropColor_LabelWidget_(const iWidget *w) {
+    for (const iWidget *p = w->parent; p; p = p->parent) {
+        if (p->bgColor >= 0 && ~p->flags & noBackground_WidgetFlag) {
+            return get_Color(p->bgColor);
+        }
+    }
+    return get_Color(uiBackground_ColorId);
+}
+
+/* A secondary frame separates an emboss color from a backdrop of similar lightness. */
+static iColor contrastFrameColor_(iColor emboss, iColor backdrop) {
+    const iBool isDarker = hsl_Color(emboss).lum <= hsl_Color(backdrop).lum;
+    return mix_Color(backdrop,
+                     isDarker ? (iColor){ 255, 255, 255, 255 } : (iColor){ 0, 0, 0, 255 },
+                     0.07f);
+}
+
 /* The focus frame must stand out from the button background (e.g., system accent). */
 static int focusColor_LabelWidget_(int bg) {
     if (bg >= 0 && perceptualDelta_Color(get_Color(bg & mask_ColorId),
@@ -660,6 +678,18 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const int focusColor = focusColor_LabelWidget_(bg);
     if (isRound) {
         const iBool isFocus = isFocused_Widget(w);
+        if (isFramedRound && !isFocus && frame >= 0 && flags & selected_WidgetFlag) {
+            const iColor backdrop = backdropColor_LabelWidget_(w);
+            const int ctrThick = frame_UI * 2;
+            drawRoundFrameColor_Paint(&p,
+                                      expanded_Rect(rect, init1_I2(ctrThick)),
+                                      radius + ctrThick,
+                                      corners,
+                                      ctrThick,
+                                      contrastFrameColor_(get_Color(frame), backdrop),
+                                      contrastFrameColor_(get_Color(frame2 >= 0 ? frame2 : frame),
+                                                          backdrop));
+        }
         drawRoundRectRadius_Paint(&p,
                                   rect,
                                   radius,

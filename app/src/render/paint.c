@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/array.h>
+#include <the_Foundation/math.h>
 #include <SDL3/SDL_version.h>
 #include <math.h>
 #include <string.h>
@@ -217,13 +218,15 @@ void fillRectColor_Paint(const iPaint *d, iRect rect, iColor color) {
 
 enum { maxFrameThickness_RoundCorner = 8 };
 
+#define lightElevation_RoundCorner  60.0f /* degrees above horizontal, from the left */
+
 iLocalDef float discCoverage_(float dist, float radius) {
     return iClamp(radius - dist + 0.5f, 0.0f, 1.0f);
 }
 
 /* Atlas of 2r x 2r discs: the fill, then two frame layers per thickness. The layers are drawn
-   in order (frame 2, frame 1) and together sum up to the ring's coverage. Frame 1 is weighted
-   toward the top left, fading out across the anti-diagonal. */
+   in order (frame 2, frame 1) and together sum up to the ring's coverage. Frame 1 is lit from
+   the top left, fading out perpendicular to the light direction. */
 static SDL_Texture *roundCorners_Paint_(const iPaint *d, int radius) {
     iWindow           *win  = d->dst;
     iRoundCornerAtlas *slot = NULL;
@@ -246,6 +249,8 @@ static SDL_Texture *roundCorners_Paint_(const iPaint *d, int radius) {
     const int dim       = 2 * radius;
     const int height    = dim * (1 + 2 * numFrames);
     const float fade    = 0.5f * radius; /* half-width of the frame color transition */
+    const float lightX  = cosf(lightElevation_RoundCorner * iMathPif / 180.0f);
+    const float lightY  = sinf(lightElevation_RoundCorner * iMathPif / 180.0f);
     uint8_t  *pixels    = malloc(4 * dim * height);
     memset(pixels, 0xff, 4 * dim * height);
     for (int y = 0; y < dim; y++) {
@@ -254,7 +259,7 @@ static SDL_Texture *roundCorners_Paint_(const iPaint *d, int radius) {
             const float dy    = y + 0.5f - radius;
             const float dist  = sqrtf(dx * dx + dy * dy);
             const float outer = discCoverage_(dist, radius);
-            const float s     = iClamp((-dx - dy) / sqrtf(2.0f) / (2.0f * fade) + 0.5f, 0.0f, 1.0f);
+            const float s     = iClamp((-dx * lightX - dy * lightY) / (2.0f * fade) + 0.5f, 0.0f, 1.0f);
             const float w1    = s * s * (3.0f - 2.0f * s);
             pixels[4 * (y * dim + x) + 3] = (uint8_t) (255.0f * outer + 0.5f);
             for (int i = 0; i < numFrames; i++) {
@@ -281,11 +286,18 @@ static SDL_Texture *roundCorners_Paint_(const iPaint *d, int radius) {
     return slot->texture;
 }
 
+static iColor paletteColor_Paint_(int color) {
+    iColor clr = get_Color(color & mask_ColorId);
+    if (color & opaque_ColorId) {
+        clr.a = 255;
+    }
+    return clr;
+}
+
 static void drawCorners_Paint_(const iPaint *d, SDL_Texture *atlas, iRect rect, int corners,
-                               int radius, int layer, int color) {
-    const iColor clr = get_Color(color & mask_ColorId);
+                               int radius, int layer, iColor clr) {
     SDL_SetTextureColorMod(atlas, clr.r, clr.g, clr.b);
-    SDL_SetTextureAlphaMod(atlas, (color & opaque_ColorId ? 255 : clr.a) * d->alpha / 255);
+    SDL_SetTextureAlphaMod(atlas, clr.a * d->alpha / 255);
     addv_I2(&rect.pos, origin_Paint);
     for (int i = 0; i < 4; i++) {
         if (corners & iBit(i + 1)) {
@@ -303,11 +315,47 @@ static void drawCorners_Paint_(const iPaint *d, SDL_Texture *atlas, iRect rect, 
     }
 }
 
+/* Returns NULL if the corners cannot be rounded; `corners` is cleared in that case. */
+static SDL_Texture *cornerAtlas_Paint_(const iPaint *d, iRect rect, int radius, int *corners,
+                                       int thickness) {
+    if (radius < 1 || thickness > radius || width_Rect(rect) < 2 * radius ||
+        height_Rect(rect) < 2 * radius) {
+        *corners = 0;
+    }
+    SDL_Texture *atlas = *corners ? roundCorners_Paint_(d, radius) : NULL;
+    if (!atlas) {
+        *corners = 0;
+    }
+    return atlas;
+}
+
+static void drawFrame_Paint_(const iPaint *d, SDL_Texture *atlas, iRect rect, int radius,
+                             int corners, int t, iColor frame1, iColor frame2) {
+    const int x   = left_Rect(rect);
+    const int y   = top_Rect(rect);
+    const int w   = width_Rect(rect);
+    const int h   = height_Rect(rect);
+    const int rTL = corners & topLeft_RoundCorner     ? radius : 0;
+    const int rTR = corners & topRight_RoundCorner    ? radius : 0;
+    const int rBR = corners & bottomRight_RoundCorner ? radius : 0;
+    const int rBL = corners & bottomLeft_RoundCorner  ? radius : 0;
+    /* Sharp corners belong to the horizontal edges. */
+    const int lt = rTL ? rTL : t, lb = rBL ? rBL : t;
+    const int rt = rTR ? rTR : t, rb = rBR ? rBR : t;
+    fillRectColor_Paint(d, init_Rect(x + rTL, y, w - rTL - rTR, t), frame1);
+    fillRectColor_Paint(d, init_Rect(x, y + lt, t, h - lt - lb), frame1);
+    fillRectColor_Paint(d, init_Rect(x + rBL, y + h - t, w - rBL - rBR, t), frame2);
+    fillRectColor_Paint(d, init_Rect(x + w - t, y + rt, t, h - rt - rb), frame2);
+    if (corners) {
+        drawCorners_Paint_(d, atlas, rect, corners, radius, 2 * t - 1, frame2);
+        drawCorners_Paint_(d, atlas, rect, corners, radius, 2 * t, frame1);
+    }
+}
+
 void drawRoundRectRadius_Paint(const iPaint *d, iRect rect, int radius, int corners,
                                int frameThickness, int fillColor, int frameColor1,
                                int frameColor2) {
-    const int    t      = iClamp(frameThickness, 1, maxFrameThickness_RoundCorner);
-    SDL_Texture *atlas  = NULL;
+    const int t = iClamp(frameThickness, 1, maxFrameThickness_RoundCorner);
     if (frameColor2 < 0) {
         frameColor2 = frameColor1;
     }
@@ -327,24 +375,18 @@ void drawRoundRectRadius_Paint(const iPaint *d, iRect rect, int radius, int corn
         }
         return;
     }
-    if (radius < 1 || t > radius || width_Rect(rect) < 2 * radius ||
-        height_Rect(rect) < 2 * radius) {
-        corners = 0;
-    }
-    if (corners && (atlas = roundCorners_Paint_(d, radius)) == NULL) {
-        corners = 0;
-    }
-    const int x   = left_Rect(rect);
-    const int y   = top_Rect(rect);
-    const int w   = width_Rect(rect);
-    const int h   = height_Rect(rect);
-    const int rTL = corners & topLeft_RoundCorner     ? radius : 0;
-    const int rTR = corners & topRight_RoundCorner    ? radius : 0;
-    const int rBR = corners & bottomRight_RoundCorner ? radius : 0;
-    const int rBL = corners & bottomLeft_RoundCorner  ? radius : 0;
+    SDL_Texture *atlas = cornerAtlas_Paint_(d, rect, radius, &corners, t);
     if (fillColor >= 0) {
-        const int cl = iMax(rTL, rBL);
-        const int cr = iMax(rTR, rBR);
+        const int x   = left_Rect(rect);
+        const int y   = top_Rect(rect);
+        const int w   = width_Rect(rect);
+        const int h   = height_Rect(rect);
+        const int rTL = corners & topLeft_RoundCorner     ? radius : 0;
+        const int rTR = corners & topRight_RoundCorner    ? radius : 0;
+        const int rBR = corners & bottomRight_RoundCorner ? radius : 0;
+        const int rBL = corners & bottomLeft_RoundCorner  ? radius : 0;
+        const int cl  = iMax(rTL, rBL);
+        const int cr  = iMax(rTR, rBR);
         fillRect_Paint(d, init_Rect(x + cl, y, w - cl - cr, h), fillColor);
         if (cl) {
             fillRect_Paint(d, init_Rect(x, y + rTL, cl, h - rTL - rBL), fillColor);
@@ -353,22 +395,23 @@ void drawRoundRectRadius_Paint(const iPaint *d, iRect rect, int radius, int corn
             fillRect_Paint(d, init_Rect(x + w - cr, y + rTR, cr, h - rTR - rBR), fillColor);
         }
         if (corners) {
-            drawCorners_Paint_(d, atlas, rect, corners, radius, 0, fillColor);
+            drawCorners_Paint_(d, atlas, rect, corners, radius, 0, paletteColor_Paint_(fillColor));
         }
     }
     if (frameColor1 >= 0) {
-        /* Sharp corners belong to the horizontal edges. */
-        const int lt = rTL ? rTL : t, lb = rBL ? rBL : t;
-        const int rt = rTR ? rTR : t, rb = rBR ? rBR : t;
-        fillRect_Paint(d, init_Rect(x + rTL, y, w - rTL - rTR, t), frameColor1);
-        fillRect_Paint(d, init_Rect(x, y + lt, t, h - lt - lb), frameColor1);
-        fillRect_Paint(d, init_Rect(x + rBL, y + h - t, w - rBL - rBR, t), frameColor2);
-        fillRect_Paint(d, init_Rect(x + w - t, y + rt, t, h - rt - rb), frameColor2);
-        if (corners) {
-            drawCorners_Paint_(d, atlas, rect, corners, radius, 2 * t - 1, frameColor2);
-            drawCorners_Paint_(d, atlas, rect, corners, radius, 2 * t, frameColor1);
-        }
+        drawFrame_Paint_(d, atlas, rect, radius, corners, t,
+                         paletteColor_Paint_(frameColor1), paletteColor_Paint_(frameColor2));
     }
+}
+
+void drawRoundFrameColor_Paint(const iPaint *d, iRect rect, int radius, int corners,
+                               int frameThickness, iColor frame1, iColor frame2) {
+    if (isTerminal_Platform()) {
+        return;
+    }
+    const int    t     = iClamp(frameThickness, 1, maxFrameThickness_RoundCorner);
+    SDL_Texture *atlas = cornerAtlas_Paint_(d, rect, radius, &corners, t);
+    drawFrame_Paint_(d, atlas, rect, radius, corners, t, frame1, frame2);
 }
 
 void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
