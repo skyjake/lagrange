@@ -2322,6 +2322,9 @@ msgstr "Swiping on page:"
 msgid "prefs.hidetoolbarscroll"
 msgstr "Hide toolbar on scroll:"
 
+msgid "heading.prefs.toolbars"
+msgstr "Toolbars"
+
 msgid "heading.prefs.toolbaractions"
 msgstr "Toolbar Actions"
 
@@ -2579,6 +2582,9 @@ msgstr "Tab width:"
 
 msgid "prefs.quoteicon"
 msgstr "Quote indicator:"
+
+msgid "prefs.quotes"
+msgstr "Quotes"
 
 msgid "prefs.quoteicon.icon"
 msgstr "\" Icon"

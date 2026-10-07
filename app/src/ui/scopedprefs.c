@@ -284,7 +284,11 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
 #endif
             add_("toggle id:prefs.biglede except:finger");
             add_("padding id:prefs.pad.quoteicon except:finger");
-            add_("radio horizontal:1 id:prefs.quoteicon except:finger", 0, 0, (const void *) quoteItems_);
+            /* On mobile, the heading also covers the italic toggle. */
+            add_(isUsingPanelLayout_Mobile()
+                     ? "radio horizontal:1 id:prefs.quoteicon except:finger text:${prefs.quotes}"
+                     : "radio horizontal:1 id:prefs.quoteicon except:finger",
+                 0, 0, (const void *) quoteItems_);
             add_("toggle id:prefs.quote.italic except:finger");
             add_("padding");
             add_("buttons id:prefs.boldlink except:finger", 0, 0, (const void *) boldLinkItems_);
@@ -305,8 +309,11 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             break;
         case content_DocPrefsGroup:
             add_("buttons id:prefs.gemtext.ansi except:finger", 0, 0, (const void *) ansiItems_);
-            add_("toggle id:prefs.gopher.gemstyle scheme:gopher");
+            if (isUsingPanelLayout_Mobile()) {
+                add_("padding");
+            }
             add_("toggle id:prefs.markdown.viewsource except:finger");
+            add_("toggle id:prefs.gopher.gemstyle scheme:gopher");
             break;
         default:
             break;

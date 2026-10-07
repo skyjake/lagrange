@@ -59,6 +59,21 @@ static const char *uiScaleSliderSpec_(void) {
                        range.start, range.end);
 }
 
+/* Global settings may be shown at the end of a scoped settings panel. */
+static void appendToPanel_(iArray *mainItems, const char *panelId, const iMenuItem *items) {
+    iForEach(Array, i, mainItems) {
+        iMenuItem *panel = i.value;
+        if (equal_Command(panel->label, "panel") &&
+            !iCmpStr(cstr_Command(panel->label, "id"), panelId)) {
+            iArray *joined = collectNew_Array(sizeof(iMenuItem));
+            pushBackN_Array(joined, panel->data, count_MenuItem(panel->data));
+            pushBackN_Array(joined, items, count_MenuItem(items) + 1 /* NULL */);
+            panel->data = constData_Array(joined);
+            return;
+        }
+    }
+}
+
 static void expandInputFieldWidth_(iInputWidget *input) {
     if (!input) return;
     iWidget *page = as_Widget(input)->parent->parent->parent->parent; /* tabs > page > values > input */
@@ -368,32 +383,40 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.general" },
             { "heading text:${prefs.searchurl}" },
             { "input id:prefs.searchurl url:1 noheading:1" },
-            { "padding" },
-            { "toggle id:prefs.bookmarks.addbottom" },
-            { "toggle id:prefs.dataurl.openimages" },
-            { "toggle id:prefs.archive.openindex" },
-            { "toggle id:prefs.font.warnmissing" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
             { "dropdown id:prefs.feedinterval", 0, 0, (const void *) feedIntervalItems },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
+            { "radio id:prefs.pageturn", 0, 0, (const void *) pageTurnItems },
             { "padding" },
             { NULL }
         };
         const iMenuItem uiPanelItems[] = {
             { "title id:heading.prefs.ui" },
             { "padding arg:0.667" },
+            { "toggle id:prefs.ostheme" },
+            { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
+            { "radio horizontal:1 rowlen:3 id:prefs.accent", 0, 0, (const void *) accentItems },
+            { "padding" },
             { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviorItems },
-            { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "toggle id:prefs.bottomnavbar text:${LC:prefs.bottomnavbar}" },
             { "toggle id:prefs.bottomtabbar text:${LC:prefs.bottomtabbar}" },
             { "toggle id:prefs.hidetabs" },
             { "padding" },
             { "toggle id:prefs.swipe.edge" },
             { "toggle id:prefs.swipe.page" },
-            { "radio id:prefs.pageturn", 0, 0, (const void *) pageTurnItems },
+            { "heading id:heading.prefs.sizing" },
+            { uiScaleSliderSpec_() },
+            { "padding" },
+            { NULL }
+        };
+        const iMenuItem toolbarPanelItems[] = {
+            { "title id:heading.prefs.toolbars" },
+            { "padding arg:0.667" },
+            { "toggle device:2 id:prefs.hidetoolbarscroll" },
+            { "toggle id:prefs.bookmarks.addbottom" },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
@@ -415,17 +438,6 @@ iWidget *makePreferences_Widget(void) {
             { "toggle device:1 id:prefs.sidebar2.enabled.6 text:${LC:sidebar.documents}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.7 text:${LC:sidebar.history}" },
             { "radio device:1 id:prefs.gempubsidebar", 0, 0, (const void *) gempubSidebarItems },
-            { "heading id:heading.prefs.sizing" },
-            { uiScaleSliderSpec_() },
-            { "padding" },
-            { NULL }
-        };
-        const iMenuItem colorPanelItems[] = {
-            { "title id:heading.prefs.colors" },
-            { "padding arg:0.667" },
-            { "toggle id:prefs.ostheme" },
-            { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
-            { "radio horizontal:1 rowlen:3 id:prefs.accent", 0, 0, (const void *) accentItems },
             { "padding" },
             { NULL }
         };
@@ -521,34 +533,45 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
             { NULL }
         };
-        iArray *generalItems = collectNew_Array(sizeof(iMenuItem)); {
-            const iMenuItem *contentItems = globalContentItems_ScopedPrefs();
-            pushBackN_Array(generalItems, generalPanelItems, iElemCount(generalPanelItems) - 1);
-            pushBackN_Array(generalItems, contentItems, count_MenuItem(contentItems));
-            pushBackN_Array(generalItems, (iMenuItem[]){ { "padding" }, { NULL } }, 2);
+        iArray *contentItems = collectNew_Array(sizeof(iMenuItem)); {
+            const iMenuItem *globalItems = globalContentItems_ScopedPrefs();
+            pushBack_Array(contentItems, &(iMenuItem){ "title id:heading.prefs.content" });
+            pushBackN_Array(contentItems, globalItems, count_MenuItem(globalItems));
+            pushBackN_Array(contentItems, (iMenuItem[]){
+                { "padding" },
+                { "toggle id:prefs.dataurl.openimages" },
+                { "toggle id:prefs.archive.openindex" },
+                { "padding" },
+                { NULL }
+            }, 5);
         }
         iArray *mainItems = collectNew_Array(sizeof(iMenuItem));
         pushBackN_Array(mainItems, (iMenuItem[]){
             { "padding arg:0.333" },
             { "title id:heading.settings" },
             { "padding arg:0.167" },
-            { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, constData_Array(generalItems) },
+            { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f4f1 id:heading.prefs.ui", 0, 0, (const void *) uiPanelItems },
+            { "panel icon:0x1f528 id:heading.prefs.toolbars", 0, 0, (const void *) toolbarPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel noscroll:1 text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
             { "padding" },
-            { "panel icon:0x1f58c id:heading.prefs.colors", 0, 0, (const void *) colorPanelItems },
-            { "padding" },
-        }, 10);
+        }, 9);
         appendPanels_ScopedPrefs(mainItems, iTrue);
+        appendToPanel_(mainItems, "heading.prefs.typography", (iMenuItem[]){
+            { "toggle id:prefs.font.warnmissing" },
+            { "padding" },
+            { NULL }
+        });
         pushBackN_Array(mainItems, (iMenuItem[]){
+            { "panel icon:0x1f5bc id:heading.prefs.content", 0, 0, constData_Array(contentItems) },
             { "padding" },
             { "panel icon:0x1f4e6 id:heading.prefs.user", 0, 0, (const void *) userPanelItems },
             { "panel icon:0x1f4cb id:heading.prefs.snip", 0, 0, (const void *) snippetPanelItems },
             { "padding" },
             { "panel text:" info_Icon " ${heading.prefs.support}", 0, 0, (const void *) supportPanelItems },
             { NULL }
-        }, 6);
+        }, 7);
 #if defined (LAGRANGE_USE_GAMEPAD)
         iBool haveGamepad = iFalse;
         if (isAvailable_Gamepad()) {
@@ -582,7 +605,7 @@ iWidget *makePreferences_Widget(void) {
                 }
                 pushBack_Array(gamepadItems, &(iMenuItem) {NULL});
                 insert_Array(mainItems,
-                             5 /* after UI */,
+                             6 /* after Toolbars */,
                              &(iMenuItem) {"panel icon:0x1f3ae id:heading.prefs.gamepad",
                                            0,
                                            0,
