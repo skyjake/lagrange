@@ -443,6 +443,14 @@ void showDocumentY_DocumentView(iDocumentView *d, int documentY) {
     showColumn_DocumentView(d, columnAt_GmDocument(d->doc, documentY), iFalse);
 }
 
+static void hideReadingBars_DocumentView_(iDocumentView *d) {
+    iWidget *w = as_Widget(d->owner);
+    if (as_Widget(document_Root(w->root)) == w && isReadingMode_Root(w->root) &&
+        !w->root->areReadingBarsHidden) {
+        showReadingBars_Root(w->root, iFalse);
+    }
+}
+
 iBool turnPage_DocumentView(iDocumentView *d, int dir) {
     const int n      = numColumns_DocumentView(d);
     const int target = (int) d->paged.column + dir * n;
@@ -453,6 +461,7 @@ iBool turnPage_DocumentView(iDocumentView *d, int dir) {
     /* Swipes animate regardless of the settings. */
     showColumn_DocumentView(
         d, target, prefs_App()->uiAnimations && prefs_App()->pageTurn != none_PageTurnAnimation);
+    hideReadingBars_DocumentView_(d);
     return iTrue;
 }
 
@@ -562,6 +571,7 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
     }
     else {
         finishDrag_DocumentView_(d, 0, iTrue);
+        hideReadingBars_DocumentView_(d);
     }
     addTicker_App(animatePageTurn_DocumentView, d);
 }
