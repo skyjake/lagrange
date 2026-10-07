@@ -4200,10 +4200,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const int gap    = 4 * win->pixelRatio; /* not dependent on UI scaling; cf. Home indicator */
         const int indGap = 6 * gap;
         const int indMar = 6 * gap / 3;
-        const int indHgt = sidebarAreaHeight_DocumentSwipe(d->swipe) - 2 * indGap;
-        const int indPos = prefs_App()->bottomNavBar
-                                ? (bottom_Rect(bounds) - indHgt - indGap)
-                                : (top_Rect(bounds) + indGap);
+        const iRangei span   = sidebarAreaSpan_DocumentSwipe(d->swipe);
+        const int     indHgt = size_Range(&span) - 2 * indGap;
+        const int     indPos = span.start + indGap;
         const int indThick = 5 * gap / 3;
         iRect indRect = (iRect){ init_I2(left_Rect(bounds) + indMar, indPos),
                                  init_I2(indThick, indHgt) };

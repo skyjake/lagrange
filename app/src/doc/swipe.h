@@ -78,6 +78,7 @@ void    setOwner_DocumentSwipe      (iDocumentSwipe *, iDocumentWidget *owner);
 void    reset_DocumentSwipe         (iDocumentSwipe *);
 void    finishWheelSwipe_DocumentSwipe(iDocumentSwipe *, iBool aborted);
 int     sidebarAreaHeight_DocumentSwipe(const iDocumentSwipe *);
+iRangei sidebarAreaSpan_DocumentSwipe(const iDocumentSwipe *); /* vertical, in the safe area */
 void    abort_DocumentSwipe         (iDocumentSwipe *);
 void    maybeFinish_DocumentSwipe   (iDocumentSwipe *);
 iBool   isSwipingBack_DocumentSwipe (const iDocumentSwipe *);

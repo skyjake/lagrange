@@ -58,14 +58,8 @@ static iBool checkTabletVerticalPosition_DocumentSwipe_(const iDocumentSwipe *d,
     if (edge == 2 && isVisible_Widget(findWidget_App("sidebar2"))) {
         return iFalse;
     }
-    const iWidget *w = constAs_Widget(d->owner);
-    const int sidebarSwipeHgt = sidebarAreaHeight_DocumentSwipe(d);
-    if (prefs_App()->bottomNavBar) {
-        return swipeY > bottom_Rect(bounds_Widget(w)) - sidebarSwipeHgt;
-    }
-    else {
-        return swipeY < top_Rect(bounds_Widget(w)) + sidebarSwipeHgt;
-    }
+    const iRangei span = sidebarAreaSpan_DocumentSwipe(d);
+    return prefs_App()->bottomNavBar ? swipeY > span.start : swipeY < span.end;
 }
 
 iLocalDef int wheelSide_DocumentSwipe_(const iDocumentSwipe *d) {
@@ -216,6 +210,21 @@ iBool handlePinch_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
 int sidebarAreaHeight_DocumentSwipe(const iDocumentSwipe *d) {
     const iWindow *win = get_Window();
     return iMin(win->size.x, win->size.y) / 4;
+}
+
+iRangei sidebarAreaSpan_DocumentSwipe(const iDocumentSwipe *d) {
+    /* At the end nearer to the navbar. The document may extend under the safe area
+       (e.g., when the reading bars are hidden). */
+    const iWidget *w      = constAs_Widget(d->owner);
+    const iRect    bounds = bounds_Widget(w);
+    const iRect    safe   = safeRect_Root(w->root);
+    const int      hgt    = sidebarAreaHeight_DocumentSwipe(d);
+    if (prefs_App()->bottomNavBar) {
+        const int bottom = iMin(bottom_Rect(bounds), bottom_Rect(safe));
+        return (iRangei){ bottom - hgt, bottom };
+    }
+    const int top = iMax(top_Rect(bounds), top_Rect(safe));
+    return (iRangei){ top, top + hgt };
 }
 
 iBool handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
