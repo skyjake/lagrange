@@ -73,7 +73,7 @@ struct Impl_DocumentViewHost {
     void            (*didScrollView)        (iAnyObject *);
     void            (*documentRunsInvalidated)(iAnyObject *);
     void            (*repositionInlinePrompts)(iAnyObject *, iDocumentView *);
-    void            (*updateHoverLinkInfo)  (iAnyObject *, uint16_t linkId);
+    void            (*updateHoverLinkInfo)  (iAnyObject *, iDocumentView *, uint16_t linkId);
     void            (*pagesMoved)           (iAnyObject *);
 };
 

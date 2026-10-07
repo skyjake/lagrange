@@ -3875,7 +3875,10 @@ static void checkPendingInvalidation_DocumentWidget_(const iDocumentWidget *d) {
 }
 #endif
 
-void updateHoverLinkInfo_DocumentWidget(iDocumentWidget *d, iGmLinkId linkId) {
+void updateHoverLinkInfo_DocumentWidget(iDocumentWidget *d, iDocumentView *view, iGmLinkId linkId) {
+    if (view != d->view) {
+        return; /* e.g., swiped away; link IDs refer to another document */
+    }
     if (update_LinkInfo(d->linkInfo,
                         d,
                         linkId,

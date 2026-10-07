@@ -279,7 +279,7 @@ static void hostRepositionInlinePrompts_DocumentView_(iDocumentView *d) {
 
 static void hostUpdateHoverLinkInfo_DocumentView_(iDocumentView *d, uint16_t linkId) {
     if (d->host && d->host->updateHoverLinkInfo) {
-        d->host->updateHoverLinkInfo(d->owner, linkId);
+        d->host->updateHoverLinkInfo(d->owner, d, linkId);
     }
 }
 
