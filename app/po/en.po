@@ -2101,7 +2101,7 @@ msgid "heading.prefs.ui"
 msgstr "User Interface"
 
 msgid "heading.prefs.theme"
-msgstr "Page Theme"
+msgstr "Colors"
 
 msgid "heading.prefs.sidebars"
 msgstr "Sidebars"
