@@ -37,6 +37,7 @@ iDeclareType(VisBufMeta)
 
 enum iDocumentViewFlags {
     centerVertically_DocumentViewFlag = iBit(1),
+    embedded_DocumentViewFlag         = iBit(2), /* part of the UI, not the main page */
 };
 
 enum iDrawBufsFlag {

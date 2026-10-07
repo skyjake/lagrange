@@ -134,6 +134,7 @@ void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
     d->view->banner     = d->banner;
     d->view->selectMark = &d->selectMark;
     d->view->foundMark  = &d->foundMark;
+    d->view->flags     |= embedded_DocumentViewFlag;
     d->view->pageMargin = 1;
     d->view->sideMargin = uiSideMargin_SimpleDocumentWidget_();
     setOwner_DocumentView(d->view, d, &viewHost_SimpleDocumentWidget_);

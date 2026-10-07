@@ -1996,7 +1996,7 @@ void prerender_DocumentView(iAny *context) {
 }
 
 iBool isCoveringTopSafeArea_DocumentView(const iDocumentView *d) {
-    return isMobile_Platform() &&
+    return isMobile_Platform() && ~d->flags & embedded_DocumentViewFlag &&
            prefs_App()->bottomNavBar &&
            (isPortraitPhone_App() || (deviceType_App() == tablet_AppDeviceType &&
                                       prefs_App()->bottomTabBar));
