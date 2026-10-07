@@ -425,6 +425,7 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
     as_Widget(btn)->borderPad[0] = as_Widget(btn)->borderPad[2] = (icon_LabelWidget(btn) ? 13.25f : 4) * gap_UI;
     as_Widget(btn)->borderPad[1] = as_Widget(btn)->borderPad[3] = 4 * gap_UI;
     setFont_LabelWidget(btn, labelFont_());
+    setTitleCase_LabelWidget(btn, iTrue);
     setTextColor_LabelWidget(btn, uiTextStrong_ColorId);
     setBackgroundColor_Widget(as_Widget(btn), uiBackgroundSidebar_ColorId);
     as_Widget(btn)->flags2 |= groupItem_WidgetFlag2;
@@ -737,6 +738,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 setFlags_Widget(as_Widget(button), fixedWidth_WidgetFlag, iFalse);
             }
             setId_Widget(as_Widget(button), radId);
+            setTitleCase_LabelWidget(button, iTrue);
             setFont_LabelWidget(button, deviceType_App() == phone_AppDeviceType ?
                                 (isHorizontal ? uiLabelMedium_FontId : uiLabelBig_FontId) : labelFont_());
             setCheckMark_LabelWidget(button, !isHorizontal);
@@ -878,6 +880,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     /* Apply common styling to the heading. */
     if (heading) {
         setRemoveTrailingColon_LabelWidget(heading, iTrue);
+        setTitleCase_LabelWidget(heading, iTrue);
         const iChar icon = toInt_String(string_Command(item->label, "icon"));
         if (icon) {
             setIcon_LabelWidget(heading, icon);

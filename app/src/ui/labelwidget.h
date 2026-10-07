@@ -45,6 +45,7 @@ void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
 void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setRemoveTrailingColon_LabelWidget(iLabelWidget *, iBool removeTrailingColon);
+void    setTitleCase_LabelWidget    (iLabelWidget *, iBool titleCase); /* English only */
 void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setTextOffset_LabelWidget   (iLabelWidget *, iInt2 offset);

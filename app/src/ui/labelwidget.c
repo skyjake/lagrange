@@ -67,6 +67,7 @@ struct Impl_LabelWidget {
         uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
 
         uint16_t centerWrapped       : 1;
+        uint16_t titleCase           : 1;
     } flags;
 };
 
@@ -898,6 +899,9 @@ static void replaceVariables_LabelWidget_(iLabelWidget *d) {
     if (d->flags.removeTrailingColon && endsWith_String(&d->label, ":")) {
         removeEnd_String(&d->label, 1);
     }
+    if (d->flags.titleCase) {
+        titleCase_Lang(&d->label);
+    }
 }
 
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
@@ -1036,6 +1040,13 @@ void setAllCaps_LabelWidget(iLabelWidget *d, iBool allCaps) {
 void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingColon) {
     if (d) {
         d->flags.removeTrailingColon = removeTrailingColon;
+        replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setTitleCase_LabelWidget(iLabelWidget *d, iBool titleCase) {
+    if (d) {
+        d->flags.titleCase = titleCase;
         replaceVariables_LabelWidget_(d);
     }
 }
