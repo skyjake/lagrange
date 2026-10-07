@@ -245,6 +245,7 @@ static void     startCursorIdleCheck_Root_  (iRoot *);
 static void     finishHidingReadingBars_Root_(void *);
 static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
 static void     setReadingBarsVisible_Root_ (iRoot *, iBool show);
+static iBool    isTabBarWanted_Root_        (const iRoot *);
 static void     updateReadingBarsOnTop_Root_(iRoot *);
 
 iDefineTypeConstruction(Root)
@@ -2561,6 +2562,25 @@ static void setupMovableElements_Root_(iRoot *d) {
     postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
 }
 
+static void finishHidingBottomTabBar_Root_(void *ptr) {
+    /* Once offscreen, the tab bar gives its space to the document. */
+    iRoot   *d         = ptr;
+    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    iWidget *tabBar    = d->bars.tabButtons;
+    if (!bottomBar || ~bottomBar->flags & hidden_WidgetFlag || !tabBar ||
+        tabBar->flags & hidden_WidgetFlag) {
+        return; /* shown again */
+    }
+    if (!isFinished_Anim(&tabBar->visualOffset)) {
+        addTickerRoot_App(finishHidingBottomTabBar_Root_, d, d);
+        return;
+    }
+    setFlags_Widget(tabBar, hidden_WidgetFlag, iTrue);
+    setVisualOffset_Widget(tabBar, 0, 0, 0); /* a hidden widget with an offset is still drawn */
+    arrange_Widget(d->widget);
+    refresh_Widget(d->widget);
+}
+
 static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
     if (deviceType_App() != phone_AppDeviceType) {
         return;
@@ -2600,6 +2620,12 @@ static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
             setVisualOffset_Widget(toolBar, 0, 200 * animate, 0);
         }
         setVisualOffset_Widget(navBar, 0, 200 * animate, 0);
+        if (bottomTabBar && tabBar->flags & hidden_WidgetFlag && isTabBarWanted_Root_(root)) {
+            /* Slides back in from offscreen. */
+            setFlags_Widget(tabBar, hidden_WidgetFlag, iFalse);
+            arrange_Widget(root->widget);
+            setVisualOffset_Widget(tabBar, height_Widget(tabBar), 0, 0);
+        }
         if (bottomTabBar) {
             /* Tab bar needs to stay visible, too. */
             if (prefs->bottomNavBar || isPortrait_App()) {
@@ -2611,19 +2637,11 @@ static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
         }
     }
     else {
-        /* Close any menus that open via the toolbar. */
-        setVisualOffset_Widget(bottomBar,
-                       height - (bottomTabBar && tabBar->flags & hidden_WidgetFlag ? 0 : bottomSafe),
-                       200 * animate,
-                       easeOut_AnimFlag);
-        if (bottomTabBar) {
-            if (isPortraitPhone_App()) {
-                setVisualOffset_Widget(toolBar, bottomSafe, 200 * animate, 0);
-            }
-            if (prefs->bottomNavBar) {
-                setVisualOffset_Widget(navBar, bottomSafe, 200 * animate, 0);
-            }
-            setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
+        /* The tab bar goes offscreen with the bottom bar. */
+        setVisualOffset_Widget(bottomBar, height, 200 * animate, easeOut_AnimFlag);
+        if (bottomTabBar && ~tabBar->flags & hidden_WidgetFlag) {
+            setVisualOffset_Widget(tabBar, height_Widget(tabBar), 200 * animate, easeOut_AnimFlag);
+            addTickerRoot_App(finishHidingBottomTabBar_Root_, root, root);
         }
     }
 }
