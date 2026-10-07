@@ -503,11 +503,10 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
         const int thickness = iMax(1, gap_UI / 3);
         drawRoundRect_Paint(&p, bounds, all_RoundCorner, 0, track, none_ColorId, none_ColorId);
         /* When disabled, the line is dimmed toward the track but remains visible. */
-        fillRectColor_Paint(&p,
-                            init_Rect(x0, midY - thickness / 2, x1 - x0, thickness),
-                            isDisabled ? mix_Color(get_Color(uiTextDim_ColorId),
-                                                   get_Color(track), 0.5f)
-                                       : get_Color(uiTextDim_ColorId));
+        fillRectColor_Paint(
+            &p,
+            init_Rect(x0, midY - thickness / 2, x1 - x0, thickness),
+            mix_Color(get_Color(uiTextDisabled_ColorId), get_Color(track), isDisabled ? 0.5f : 0));
         drawLabels_SliderWidget_(d, &p, x0, x1, midY, track);
     }
     /* The thumb. */
