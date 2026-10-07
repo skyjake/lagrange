@@ -336,10 +336,6 @@ iRect pagedRunRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
 }
 
 void allocPagedVisBuffer_DocumentView(const iDocumentView *d) {
-    if (!isVisible_Widget(d->owner)) {
-        dealloc_VisBuf(d->visBuf);
-        return;
-    }
     const int n          = numColumns_DocumentView(d);
     const int pageHeight = pageHeight_GmDocument(d->doc);
     /* The current spread and the next one, which can be prerendered. During a turn, the

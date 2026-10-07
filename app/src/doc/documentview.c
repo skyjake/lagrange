@@ -985,16 +985,18 @@ static const iGmRun *middleRun_DocumentView_(const iDocumentView *d) {
     return params.closest;
 }
 
-void allocVisBuffer_DocumentView(const iDocumentView *d) {
+static void allocDrawnVisBuffer_DocumentView_(const iDocumentView *d) {
     if (isPaged_DocumentView(d)) {
         allocPagedVisBuffer_DocumentView(d);
-        return;
     }
-    const iWidget *w         = constAs_Widget(d->owner);
-    const iBool    isVisible = isVisible_Widget(w);
-    const iInt2    size      = bounds_Widget(w).size;
-    if (isVisible) {
-        alloc_VisBuf(d->visBuf, size, 1);
+    else {
+        alloc_VisBuf(d->visBuf, bounds_Widget(constAs_Widget(d->owner)).size, 1);
+    }
+}
+
+void allocVisBuffer_DocumentView(const iDocumentView *d) {
+    if (isVisible_Widget(d->owner)) {
+        allocDrawnVisBuffer_DocumentView_(d);
     }
     else {
         dealloc_VisBuf(d->visBuf);
@@ -1772,8 +1774,17 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
         return didDraw;
     }
     d->drawBufs->lastRenderTime = SDL_GetTicks();
+    /* A hidden widget is still drawn while it has a visual offset (e.g., sliding out). */
+    if (prerenderExtra) {
+        allocVisBuffer_DocumentView(d);
+    }
+    else {
+        allocDrawnVisBuffer_DocumentView_(d);
+    }
+    if (!visBuf->buffers[0].texture) {
+        return didDraw;
+    }
     /* Swap buffers around to have room available both before and after the visible region. */
-    allocVisBuffer_DocumentView(d);
     if (!isPaged_DocumentView(d)) {
         reposition_VisBuf(visBuf, vis);
     }
