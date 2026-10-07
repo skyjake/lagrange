@@ -540,9 +540,9 @@ iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iS
                   cstrCollect_String(format_Date(&today, "%Y-%m-%d")));
     setDataCStr_Archive(arch, "metadata.txt", utf8_String(str));
     format_String(str,
-                  "# %s\n\n=> page.gmi %s\n\n## %s\n=> %s\n",
+                  "## %s\n\n=> page.gmi %s\n\n### %s\n=> %s\n",
+                  cstr_Lang("gempub.page.contents"),
                   cstr_String(title),
-                  cstr_Lang("gempub.page.view"),
                   cstr_Lang("gempub.page.source"),
                   cstr_String(url));
     setDataCStr_Archive(arch, "index.gmi", utf8_String(str));
