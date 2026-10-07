@@ -133,6 +133,10 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         d->bottomMargins[heading1_GmLineType] *= 2;
         d->flags[heading1_GmLineType] |= centered_DocumentStyleFlag | keepBottomMargin_DocumentStyleFlag;
     }
+    if (params->isBookCover) {
+        d->flags[heading1_GmLineType] |= centered_DocumentStyleFlag;
+        d->flags[heading2_GmLineType] |= centered_DocumentStyleFlag;
+    }
     if (params->isUiTheme) {
         /* Only the empty lines of the source separate the lines, except for links that need
            room for the open link highlight. */

@@ -4003,6 +4003,8 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
                  centerVertically_DocumentViewFlag,
                  docPrefs_GmDocument(d->view->doc)->centerShortDocs.value ||
                      startsWithCase_String(d->mod.url, "about:") ||
+                     (d->fetch->sourceGempub &&
+                      isCoverPageUrl_Gempub(d->fetch->sourceGempub, d->mod.url)) ||
                      !isSuccess_GmStatusCode(d->fetch->sourceStatus));
     iScrollWidget *scrollBar = d->scroll;
     iRoot         *root      = as_Widget(d)->root;

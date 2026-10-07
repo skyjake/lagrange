@@ -253,6 +253,7 @@ iRangecc pageHeader_GmDocument  (const iGmDocument *, size_t page, iBool isLeftP
 iRangecc pageFooter_GmDocument  (const iGmDocument *, size_t page);
 iBool   setBook_GmDocument      (iGmDocument *, const iGmBookPosition *); /* returns True if changed */
 int     chapter_GmDocument      (const iGmDocument *, int *numChapters_out); /* zero if none */
+iBool   setCoverImage_GmDocument(iGmDocument *, iGmLinkId linkId); /* no link text or image info; returns True if changed */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source,

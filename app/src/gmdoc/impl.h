@@ -82,6 +82,7 @@ struct Impl_GmDocument {
     iString   chapterTitle; /* level 1 heading in effect where the document begins */
     int       chapter;   /* position in a book, shown in the page footer; zero if none */
     int       numChapters;
+    iGmLinkId coverImage; /* link shown only as its image */
     iArray    preMeta; /* metadata about preformatted blocks */
     iDocumentStyle style; /* set up for the current layout */
     int       ansiEscapes;

@@ -434,27 +434,18 @@ iBool isRemote_Gempub(const iGempub *d) {
 
 iString *coverPageSource_Gempub(const iGempub *d) {
     iAssert(!isEmpty_String(&d->baseUrl));
-    const iString *baseUrl = withSpacesEncoded_String(&d->baseUrl);
     iString *out = new_String();
-    format_String(out, "# %s\n",
-                  cstr_String(&d->props[title_GempubProperty]));
-    appendProperty_Gempub_(d, "## ", author_GempubProperty, out);
-    appendCStr_String(out, "\n");
-    if (!isEmpty_String(&d->props[description_GempubProperty])) {
-        appendFormat_String(out, "%s\n", cstr_String(&d->props[description_GempubProperty]));
+    if (hasProperty_Gempub_(d, cover_GempubProperty)) {
+        appendFormat_String(out, "=> %s  ${gempub.cover.image}\n\n",
+                            cstrCollect_String(concat_Path(withSpacesEncoded_String(&d->baseUrl),
+                                                           &d->props[cover_GempubProperty])));
     }
-    if (!isRemote_Gempub(d)) {
-        if (hasProperty_Gempub_(d, cover_GempubProperty)) {
-            appendFormat_String(out, "\n=> %s  ${gempub.cover.image}\n",
-                                cstrCollect_String(concat_Path(baseUrl, &d->props[cover_GempubProperty])));
-        }
+    appendFormat_String(out, "# %s\n", cstr_String(&d->props[title_GempubProperty]));
+    appendProperty_Gempub_(d, "\n## ", author_GempubProperty, out);
+    appendCStr_String(out, "\n\n### ${gempub.cover.aboutbook}\n");
+    if (hasProperty_Gempub_(d, description_GempubProperty)) {
+        appendFormat_String(out, "%s\n\n", cstr_String(&d->props[description_GempubProperty]));
     }
-    else {
-        iString *key = collectNew_String(); /* TODO: add a helper for this */
-        toString_Sym(SDLK_S, KMOD_PRIMARY, key);
-        appendCStr_String(out, "\n${gempub.cover.viewlocal}\n");
-    }
-    appendCStr_String(out, "\n### ${gempub.cover.aboutbook}\n");
     appendProperty_Gempub_(d, "${gempub.meta.version}:", version_GempubProperty, out);
     appendProperty_Gempub_(d, "${gempub.meta.revdate}:", revisionDate_GempubProperty, out);
     if (hasProperty_Gempub_(d, publishDate_GempubProperty)) {
@@ -476,26 +467,26 @@ iString *indexPageSource_Gempub(const iGempub *d) {
 }
 
 iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
-    iBool haveImage = iFalse;
-    for (size_t linkId = 1; ; linkId++) {
-        const iString *linkUrl = linkUrl_GmDocument(doc, linkId);
-        if (!linkUrl) break;
-        if (findLinkImage_Media(media_GmDocument(doc), linkId).type) {
-            continue; /* got this already */
-        }
-        if (linkFlags_GmDocument(doc, linkId) & imageFileExtension_GmLinkFlag) {
-            const iBlock *data = archiveData_Gempub_(d, linkUrl);
-            if (data) {
-                setData_Media(media_GmDocument(doc),
-                              linkId,
-                              collectNewCStr_String(mediaType_Path(linkUrl)),
-                              data,
-                              0);
-                haveImage = iTrue;
-            }
+    /* The cover image is the first link of the cover page. */
+    const iGmLinkId linkId  = 1;
+    const iString  *linkUrl = linkUrl_GmDocument(doc, linkId);
+    if (!hasProperty_Gempub_(d, cover_GempubProperty) || !linkUrl ||
+        ~linkFlags_GmDocument(doc, linkId) & imageFileExtension_GmLinkFlag) {
+        return iFalse;
+    }
+    iBool changed = setCoverImage_GmDocument(doc, linkId);
+    if (!findLinkImage_Media(media_GmDocument(doc), linkId).type) {
+        const iBlock *data = archiveData_Gempub_(d, linkUrl);
+        if (data) {
+            setData_Media(media_GmDocument(doc),
+                          linkId,
+                          collectNewCStr_String(mediaType_Path(linkUrl)),
+                          data,
+                          0);
+            changed = iTrue;
         }
     }
-    return haveImage;
+    return changed;
 }
 
 static iString *absoluteLinks_(const iString *source, const iString *baseUrl) {

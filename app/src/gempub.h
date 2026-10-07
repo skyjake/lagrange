@@ -61,7 +61,7 @@ iBool       isOpen_Gempub           (const iGempub *);
 iBool       isRemote_Gempub         (const iGempub *);
 iString *   coverPageSource_Gempub  (const iGempub *);
 iString *   indexPageSource_Gempub  (const iGempub *);
-iBool       preloadCoverImage_Gempub(const iGempub *, iGmDocument *doc);
+iBool       preloadCoverImage_Gempub(const iGempub *, iGmDocument *doc); /* returns True if layout needs redoing */
 
 const iString * property_Gempub         (const iGempub *, enum iGempubProperty);
 const iString * coverPageUrl_Gempub     (const iGempub *);

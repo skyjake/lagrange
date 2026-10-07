@@ -554,7 +554,8 @@ enum iPageAlign {
 static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
                                   enum iPageAlign align, uint16_t firstPreId, uint16_t lastPreId) {
     /* Runs from `start` onwards are on the page and begin at the top of `content`. */
-    if (align == top_PageAlign || !d->docPrefs.centerShortDocs.value ||
+    if (align == top_PageAlign ||
+        (!d->docPrefs.centerShortDocs.value && !d->flags.isBookCover) ||
         start >= size_Array(&d->layout)) {
         return;
     }
@@ -621,7 +622,8 @@ static void paginate_GmDocument_(iGmDocument *d) {
             }
             /* Columns are centered, but a chapter's last column is aligned to the top. */
             alignPage_GmDocument_(d, colStart, content,
-                                  isChapter ? top_PageAlign : center_PageAlign,
+                                  isChapter && !d->flags.isBookCover ? top_PageAlign
+                                                                     : center_PageAlign,
                                   colPreId, lastPreId);
             /* Chapters begin on a new page. */
             breakColumn_GmDocument_(d, &column, isChapter);
@@ -667,15 +669,18 @@ static void paginate_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &run);
         }
     }
-    /* The last column with content is aligned to the top, unless it is the only one. The inset
-       at the bottom of the page's last column is needed only if the content reaches it. */
+    /* The last column with content is aligned to the top, unless it is the only one or on a
+       cover. The inset at the bottom of the page's last column is needed only if the content
+       reaches it. */
     const iBool isLastOnPage   = (column + 1) % perPage == 0;
     const iBool needsInsetPage = isLastOnPage && content.end - lastBottom < d->metrics.lastPageInset;
     if (isLastOnPage && !needsInsetPage) {
         content.end -= d->metrics.lastPageInset;
     }
     alignPage_GmDocument_(d, colStart, content,
-                          column == 0 ? centerContent_PageAlign : top_PageAlign, colPreId, lastPreId);
+                          column == 0 || d->flags.isBookCover ? centerContent_PageAlign
+                                                              : top_PageAlign,
+                          colPreId, lastPreId);
     if (needsInsetPage) {
         breakColumn_GmDocument_(d, &column, iFalse);
     }
@@ -790,7 +795,8 @@ static iBool begin_Typesetter_(iTypesetter *d) {
                            .isPaged          = d->isPaged,
                            .isPlainText      = doc->viewFormat == plainText_SourceFormat,
                            .isDarkBackground = isDark_GmDocumentTheme(currentTheme_GmDocument_(doc)),
-                           .isUiTheme        = doc->flags.isUiTheme });
+                           .isUiTheme        = doc->flags.isUiTheme,
+                           .isBookCover      = doc->flags.isBookCover });
     doc->flags.isLayoutInvalidated = iFalse;
     doc->layoutFontKey = fontKey_App();
     clear_Array(&doc->layout);
@@ -1408,6 +1414,7 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
     iGmRun      *run = &d->run;
     const int    outsideMargin = d->outsideMargin;
     const iInt2 imgSize = imageSize_Media(doc->media, media);
+    const iBool isCover = run->linkId == doc->coverImage;
     run->bounds.pos = d->pos;
     run->bounds.size.x = doc->size.x;
     const float aspect = (float) imgSize.y / (float) imgSize.x;
@@ -1444,7 +1451,7 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
         }
         const int maxHeight = doc->metrics.pageHeight - pageHeaderHeight_GmDocument(doc) -
                               pageFooterHeight_GmDocument(doc) -
-                              2 * lineHeight_Text(paragraph_FontId) - linkHeight;
+                              (isCover ? 0 : 2 * lineHeight_Text(paragraph_FontId)) - linkHeight;
         if (height_Rect(run->visBounds) > maxHeight && maxHeight > 0) {
             run->visBounds.size.x =
                 width_Rect(run->visBounds) * maxHeight / height_Rect(run->visBounds);
@@ -1455,10 +1462,17 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
         }
         centerLinkLines_Typesetter_(d, run->linkId);
     }
+    if (isCover) {
+        run->linkId = 0; /* not clickable */
+    }
     pushBack_Array(&doc->layout, run);
     d->pos.y += run->bounds.size.y + margin / 2;
-    /* Image metadata caption */
-    if (!isEqual_I2(imgSize, zero_I2())) {
+    if (isCover) {
+        run->bounds.size.y = 0; /* already advanced */
+        d->pos.y += margin / 2;
+    }
+    else if (!isEqual_I2(imgSize, zero_I2())) {
+        /* Image metadata caption */
         run->font = FONT_ID(documentBody_FontId, semiBold_FontStyle, contentSmall_FontSize);
         run->color = tmQuoteIcon_ColorId;
         run->flags = decoration_GmRunFlag | caption_GmRunFlag;
@@ -1562,6 +1576,15 @@ static void typesetLine_Typesetter_(iTypesetter *d) {
     }
     if (isEmpty_Range(&d->line)) {
         addBlankLine_Typesetter_(d);
+        return;
+    }
+    if (d->type == link_GmLineType && d->run.linkId == d->doc->coverImage &&
+        findLinkImage_Media(d->doc->media, d->run.linkId).type) {
+        /* Just the image, without the link text. */
+        addLinkContent_Typesetter_(d);
+        d->prevType         = d->type;
+        d->prevNonBlankType = d->type;
+        d->followsBlank     = iFalse;
         return;
     }
     updateIndent_Typesetter_(d);

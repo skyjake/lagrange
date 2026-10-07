@@ -441,6 +441,7 @@ void init_GmDocument(iGmDocument *d) {
     init_Array(&d->pageBands, sizeof(iGmPageBands));
     d->chapter     = 0;
     d->numChapters = 0;
+    d->coverImage  = 0;
     init_Array(&d->preMeta, sizeof(iGmPreMeta));
     d->themeSeed = 0;
     d->layoutFontKey = 0;
@@ -642,6 +643,14 @@ iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
         d->flags.isBookCover = pos->isCover;
         invalidatePalette_GmDocument(d);
     }
+    return iTrue;
+}
+
+iBool setCoverImage_GmDocument(iGmDocument *d, iGmLinkId linkId) {
+    if (d->coverImage == linkId) {
+        return iFalse;
+    }
+    d->coverImage = linkId;
     return iTrue;
 }
 
