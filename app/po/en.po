@@ -2409,7 +2409,7 @@ msgid "prefs.retaintabs"
 msgstr "Restore tabs at launch:"
 
 msgid "prefs.releasenotes"
-msgstr "Show release notes after update:"
+msgstr "Show release notes:"
 
 msgid "prefs.uiscale"
 msgstr "UI scale factor:"

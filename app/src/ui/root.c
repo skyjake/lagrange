@@ -2825,7 +2825,7 @@ static void setReadingBarsVisible_Root_(iRoot *d, iBool show) {
         setFlags_Widget(tabBar, hidden_WidgetFlag, !show || !isTabBarWanted_Root_(d));
     }
     arrange_Widget(d->widget);
-    postCommandf_Root(d, "readingbars.changed arg:%d", show);
+    notifyf_Root(d, "readingbars.changed arg:%d", show);
 }
 
 static iBool isAtBottom_Root_(const iRoot *d, const iWidget *bar) {
