@@ -93,6 +93,7 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [capsLockKeyModifier_PrefsBool]     = { NULL, NULL, NULL,
                                             noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
     [misfinSelfCopy_PrefsBool]          = { "misfin.self.copy" },
+    [showReleaseNotes_PrefsBool]        = { "prefs.releasenotes" },
     /* Network */
     [warnTlsSecurity_PrefsBool]        = { "prefs.warn.security" },
     [decodeUserVisibleURLs_PrefsBool]   = { "prefs.decodeurls", "decodeurls" },
@@ -303,6 +304,7 @@ void init_Prefs(iPrefs *d) {
     d->pageSwipe                              = iTrue;
     d->capsLockKeyModifier                    = iFalse;
     d->misfinSelfCopy                         = iTrue;
+    d->showReleaseNotes                       = iTrue;
     d->allowSchemeChangingRedirect            = iFalse; /* must be manually followed */
     d->preferIPv6                             = iFalse;
     d->useProxy                               = iTrue;

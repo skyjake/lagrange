@@ -99,6 +99,7 @@ enum iPrefsBool {
     pageSwipe_PrefsBool,
     capsLockKeyModifier_PrefsBool,
     misfinSelfCopy_PrefsBool,
+    showReleaseNotes_PrefsBool,
 
     /* Network */
     warnTlsSecurity_PrefsBool,
@@ -212,6 +213,7 @@ struct Impl_Prefs {
             iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
             iBool capsLockKeyModifier;
             iBool misfinSelfCopy;
+            iBool showReleaseNotes; /* after an upgrade, unless the updater shows them */
 
             /* Network */
             iBool warnTlsSecurity;

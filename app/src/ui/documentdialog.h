@@ -27,7 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "widget.h"
 
-iDeclareWidgetClass(DocumentDialog)
-iDeclareObjectConstructionArgs(DocumentDialog, const iString *url)
+enum iDocumentDialogFlags {
+    popup_DocumentDialogFlag = iBit(1), /* mobile: not full screen; closes instead of going back */
+};
 
-iWidget *   makeDocumentDialog_Widget   (const iString *url); /* added to the root and shown */
+iDeclareWidgetClass(DocumentDialog)
+iDeclareObjectConstructionArgs(DocumentDialog, const iString *url, int flags)
+
+void        setTitle_DocumentDialog     (iDocumentDialog *, const char *title); /* overrides page title */
+
+iWidget *   makeDocumentDialog_Widget   (const iString *url, int flags); /* added to the root and shown */

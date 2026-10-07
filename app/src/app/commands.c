@@ -1052,7 +1052,16 @@ iBool handleCommand_App(const char *cmd) {
         showPreferences_Widget(cmd);
     }
     else if (equal_Command(cmd, "docdlg.open")) {
-        makeDocumentDialog_Widget(collect_String(suffix_Command(cmd, "url")));
+        makeDocumentDialog_Widget(collect_String(suffix_Command(cmd, "url")), 0);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "releasenotes.popup")) {
+        if (d->prefs.showReleaseNotes) {
+            setTitle_DocumentDialog(
+                (iDocumentDialog *) makeDocumentDialog_Widget(
+                    collectNewCStr_String("about:version"), popup_DocumentDialogFlag),
+                "${heading.releasenotes}");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.home") && isMainWin) {

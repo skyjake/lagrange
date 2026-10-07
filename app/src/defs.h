@@ -55,6 +55,11 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define LAGRANGE_FILE_DIALOGS
 #endif
 
+/* Sparkle and WinSparkle show the release notes themselves. */
+#if !defined (LAGRANGE_ENABLE_SPARKLE) && !defined (LAGRANGE_ENABLE_WINSPARKLE)
+#   define LAGRANGE_RELEASE_NOTES_POPUP
+#endif
+
 /* UI labels that depend on the platform */
 
 #if defined (iPlatformMobile)

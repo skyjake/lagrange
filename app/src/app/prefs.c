@@ -531,6 +531,15 @@ void loadPrefs_App_(iApp *d) {
         /* LibreTranslate updated with new language models, now defaulting to Auto-Detect. */
         postCommand_App("~translation.languages from:0 to:8");
     }
+#if defined (LAGRANGE_RELEASE_NOTES_POPUP)
+    if (upgradedFromAppVersion.major) {
+        iVersion appVersion;
+        init_Version(&appVersion, range_CStr(LAGRANGE_APP_VERSION));
+        if (cmp_Version(&upgradedFromAppVersion, &appVersion) < 0) {
+            postCommand_App("~releasenotes.popup"); /* handled after the prefs are applied */
+        }
+    }
+#endif
     /* Some settings have fixed values depending on the platform/config. */
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;

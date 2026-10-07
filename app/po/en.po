@@ -383,6 +383,10 @@ msgstr "Help"
 msgid "menu.releasenotes"
 msgstr "Release Notes"
 
+# dialog title, shown after an app update
+msgid "heading.releasenotes"
+msgstr "What's New?"
+
 msgid "menu.website"
 msgstr "Project Website…"
 
@@ -2403,6 +2407,9 @@ msgstr "24-hour time:"
 
 msgid "prefs.retaintabs"
 msgstr "Restore tabs at launch:"
+
+msgid "prefs.releasenotes"
+msgstr "Show release notes after update:"
 
 msgid "prefs.uiscale"
 msgstr "UI scale factor:"

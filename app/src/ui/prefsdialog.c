@@ -391,6 +391,10 @@ iWidget *makePreferences_Widget(void) {
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
             { "radio id:prefs.pageturn", 0, 0, (const void *) pageTurnItems },
+#if defined (LAGRANGE_RELEASE_NOTES_POPUP)
+            { "padding" },
+            { "toggle id:prefs.releasenotes" },
+#endif
             { "padding" },
             { NULL }
         };
@@ -707,6 +711,9 @@ iWidget *makePreferences_Widget(void) {
         if (!isTerminal_Platform()) {
             addDialogToggle_Widget(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
         }
+#if defined (LAGRANGE_RELEASE_NOTES_POPUP)
+        addDialogToggle_Widget(headings, values, "${prefs.releasenotes}", "prefs.releasenotes");
+#endif
         addDialogPadding_Widget(headings, values);
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
