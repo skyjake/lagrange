@@ -303,7 +303,8 @@ static iBool isCacheStale_(const iString *path) {
     uint32_t  count   = 0;
     const iBool valid = readCacheHeader_(in, &mtimeMs, &count);
     iRelease(f);
-    if (!valid || count == 0) return iTrue;
+    /* An empty cache is not stale: re-enumerating would find nothing, and reload endlessly. */
+    if (!valid) return iTrue;
     return fontDirMtimeMillis_() != mtimeMs;
 }
 
