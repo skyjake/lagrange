@@ -36,6 +36,7 @@ const iString * string_Lang     (const char *msgId);
 
 void            translate_Lang      (iString *textWithIds);
 const char *    translateCStr_Lang  (const char *textWithIds);
+void            titleCase_Lang      (iString *text); /* only affects English */
 
 const char *    cstrCount_Lang      (const char *msgId, int count);
 const char *    formatCStr_Lang     (const char *formatMsgId, int count);

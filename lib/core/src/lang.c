@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/string.h>
+#include <ctype.h>
 
 iDeclareType(Lang)
 iDeclareType(MsgStr)
@@ -306,6 +307,91 @@ const char *translateCStr_Lang(const char *textWithIds) {
     iString *text = collectNewCStr_String(textWithIds);
     translate_Lang(text);
     return cstr_String(text);
+}
+
+/* Articles, coordinating conjunctions, and short prepositions (Apple style). */
+static iBool isMinorWord_Lang_(iRangecc word) {
+    static const char *minorWords[] = { "a",    "an",   "and", "as",   "at",  "but", "by",
+                                        "for",  "from", "in",  "into", "nor", "of",  "on",
+                                        "onto", "or",   "over", "per", "so",  "the", "to",
+                                        "via",  "vs",   "with", "yet" };
+    while (!isEmpty_Range(&word) && strchr(":,;", word.end[-1])) {
+        word.end--;
+    }
+    iForIndices(i, minorWords) {
+        if (equalCase_Rangecc(word, minorWords[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static iBool hasLetters_Lang_(iRangecc word) {
+    for (const char *ch = word.start; ch != word.end; ch++) {
+        if (isalnum((unsigned char) *ch) || (unsigned char) *ch >= 0x80) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+/* File names, addresses, and words like "iOS" are kept as is. */
+static iBool isVerbatim_Lang_(iRangecc word) {
+    for (const char *ch = word.start; ch != word.end; ch++) {
+        if ((unsigned char) *ch < 0x20 || strchr("./@", *ch)) {
+            return iTrue;
+        }
+        if (ch > word.start && isupper((unsigned char) *ch) && islower((unsigned char) *word.start)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+void titleCase_Lang(iString *text) {
+    if (iCmpStr(code_Lang(), "en")) {
+        return;
+    }
+    /* The first and last words are always capitalized. */
+    const iRangecc src   = range_String(text);
+    const char    *first = NULL;
+    const char    *last  = NULL;
+    iRangecc       word  = iNullRange;
+    while (nextSplit_Rangecc(src, " ", &word)) {
+        if (hasLetters_Lang_(word)) {
+            if (!first) {
+                first = word.start;
+            }
+            last = word.start;
+        }
+    }
+    if (!first) {
+        return;
+    }
+    iString out;
+    init_String(&out);
+    word = iNullRange;
+    while (nextSplit_Rangecc(src, " ", &word)) {
+        if (word.start != src.start) {
+            appendCStr_String(&out, " ");
+        }
+        const iBool isEdge = (word.start == first || word.start == last);
+        if (isVerbatim_Lang_(word) || (!isEdge && isMinorWord_Lang_(word))) {
+            appendRange_String(&out, word);
+            continue;
+        }
+        /* Each part of a hyphenated compound is capitalized. */
+        iString chars;
+        initRange_String(&chars, word);
+        iBool isPartStart = iTrue;
+        iConstForEach(String, c, &chars) {
+            appendChar_String(&out, isPartStart ? upper_Char(c.value) : c.value);
+            isPartStart = (c.value == '-');
+        }
+        deinit_String(&chars);
+    }
+    set_String(text, &out);
+    deinit_String(&out);
 }
 
 const char *formatCStr_Lang(const char *formatMsgId, int count) {
