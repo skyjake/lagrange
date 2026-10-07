@@ -69,9 +69,12 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
         NSGraphicsContext *gc = [NSGraphicsContext graphicsContextWithBitmapImageRep:rep];
         [NSGraphicsContext saveGraphicsState];
         [NSGraphicsContext setCurrentContext:gc];
-        /* Calculate where the glyph will go inside the slot. */
+        /* Calculate where the glyph will go inside the slot. Tall symbols (e.g., stacked
+           shapes) are scaled down to fit. */
+        const CGFloat scale   = iMin(1.0, iMin(slotPixels / sz.width, slotPixels / sz.height));
         const iRect  bounds   = init_Rect(0, 0, slotPixels, slotPixels);
-        const iRect  glyph    = init_Rect(0, 0, (int) ceilf(sz.width), (int) ceilf(sz.height));
+        const iRect  glyph    = init_Rect(0, 0, (int) ceilf(sz.width * scale),
+                                          (int) ceilf(sz.height * scale));
         const iRect  centered = moved_Rect(glyph, divi_I2(sub_I2(bounds.size, glyph.size), 2));
         const NSRect dstRect  = NSMakeRect(centered.pos.x,  centered.pos.y,
                                            centered.size.x, centered.size.y);

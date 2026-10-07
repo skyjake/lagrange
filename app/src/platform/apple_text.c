@@ -134,57 +134,7 @@ static void deinit_AppleFont_(iAppleFont *d) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
-/* SF Symbols: map UI icon codepoints (from defs.h) to system symbol names. At init time
-   we scan the BMP PUA range of .AppleSymbolsFont to find the PUA character for each name. */
 
-/* TODO: Use this table as the canonical source for SF Symbols mappings on iOS, too.
-         See ios.m for the use of icons in menus. */
-
-static const struct { iChar iconChar; const char *symbolName; } sfSymbolMap_[] = {
-    /* clang-format off */
-    { 0x10117,  "list.bullet"               }, /* page_Icon */
-    { 0x1f310,  "globe"                     }, /* globe_Icon */
-    { 0x1f3e0,  "house.fill"                }, /* home_Icon */
-    { 0x1f464,  "person.fill"               }, /* person_Icon */
-    { 0x1f4c1,  "folder"                    }, /* folder_Icon */
-    { 0x1f4e4,  "square.and.arrow.up"       }, /* export_Icon */
-    { 0x1f503,  "arrow.clockwise"           }, /* reload_Icon */
-    { 0x1f50d,  "magnifyingglass"           }, /* magnifyingGlass_Icon */
-    { 0x1f512,  "lock.fill"                 }, /* closedLock_Icon */
-    { 0x1f513,  "lock.open.fill"            }, /* openLock_Icon */
-    { 0x1f516,  "bookmark.fill"             }, /* bookmark_Icon */
-    { 0x1f553,  "clock"                     }, /* clock_Icon */
-    { 0x1f56e,  "book"                      }, /* book_Icon */
-    { 0x1f870,  "arrow.backward"            }, /* backArrow_Icon */
-    { 0x1f871,  "arrow.up"                  }, /* upArrow_Icon */
-    { 0x1f872,  "arrow.forward"             }, /* forwardArrow_Icon */
-    { 0x1f873,  "arrow.down"                }, /* downArrow_Icon */
-    { 0x22f0,   "list.bullet.indent"        }, /* hierarchy_Icon */
-    { 0x2398,   "doc.on.doc.fill"           }, /* clipCopy_Icon / copy_Icon */
-    { 0x23f2,   "clock.arrow.2.circlepath"  }, /* timer_Icon */
-    { 0x2611,   "checkmark.square.fill"     }, /* ballotChecked_Icon */
-    { 0x2610,   "square"                    }, /* ballotUnchecked_Icon */
-    { 0x2699,   "gear"                      }, /* gear_Icon */
-    { 0x270e,   "pencil"                    }, /* edit_Icon */
-    { 0x2714,   "checkmark"                 }, /* check_Icon */
-    { 0x2750,   "square.on.square"          }, /* openTabBg_Icon */
-    { 0x2795,   "plus"                      }, /* add_Icon */
-    { 0x2912,   "arrow.up.to.line"          }, /* upArrowBar_Icon */
-    { 0x2913,   "arrow.down.to.line"        }, /* downArrowBar_Icon */
-    { 0x2a2f,   "xmark"                     }, /* close_Icon */
-    { 0x2b9c,   "chevron.backward"          }, /* leftArrowhead_Icon */
-    { 0x27a4,   "chevron.forward"           }, /* rightArrowhead_Icon */
-    { 0x25e7,   "rectangle.lefthalf.filled" }, /* leftHalf_Icon */
-    { 0x25e8,   "rectangle.righthalf.filled"}, /* rightHalf_Icon */
-    { 0x2605,   "star.fill"                 }, /* star_Icon */
-    { 0x2606,   "star"                      }, /* whiteStar_Icon */
-    { 0x26a0,   "exclamationmark.triangle"  }, /* warning_Icon */
-    { 0x2ba5,   "paperplane"                }, /* upload_Icon */
-    { 0x2ba7,   "square.and.arrow.down"     }, /* download_Icon */
-    /* clang-format on */
-};
-
-#define symbolMapSize_          iElemCount(sfSymbolMap_)
 #define maxRunCache_AppleText_  256    /* big enough for UI label and document runs */
 
 struct Impl_AppleText {
@@ -310,13 +260,6 @@ CTFontRef overrideFont_AppleText_(const iAppleText *d, iChar ch, float pointSize
     /* No B&W font has the glyph. */
     if (forceMonochrome) return NULL; /* cascade decides */
     return CTFontCreateWithName(CFSTR("AppleColorEmoji"), (CGFloat) pointSize, NULL);
-}
-
-const char *sfSymbolName_AppleText_(iChar iconChar) {
-    for (size_t i = 0; i < symbolMapSize_; i++) {
-        if (sfSymbolMap_[i].iconChar == iconChar) return sfSymbolMap_[i].symbolName;
-    }
-    return NULL;
 }
 
 static void applyCascadeList_AppleText_(iAppleText *d) {

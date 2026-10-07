@@ -881,40 +881,74 @@ void print_PerfTimer(const iPerfTimer *d, const char *msg) {
 
 #if defined(iPlatformApple)
 
+/* The canonical mapping of UI icon codepoints (see defs.h) to SF Symbols, used for both
+   native menus and UI text drawn with Core Text. */
 const char *systemImageName_Apple(iChar ch) {
     /* clang-format off */
     static const struct { iChar c; const char *name; } sysImages[] = {
-        { 0x10117,  "list.bullet" },
-        { 0x1f310,  "globe" },
-        { 0x1f3e0,  "house.fill" },
-        { 0x1f464,  "person.fill" },
-        { 0x1f4c1,  "folder" },
-        { 0x1f4e4,  "square.and.arrow.up" },
-        { 0x1f503,  "arrow.clockwise" },
-        { 0x1f50d,  "magnifyingglass" },
-        { 0x1f516,  "bookmark" },
-        { 0x1f553,  "clock" },
-        { 0x1f56e,  "book" },
-        { 0x1f871,  "arrow.up" },
-        { 0x22f0,   "list.bullet.indent" },
-        { 0x23f2,   "clock.arrow.2.circlepath" },
-        { 0x2398,   "doc.on.doc.fill" },
-        { 0x25e7,   "rectangle.lefthalf.filled" },
-        { 0x25e8,   "rectangle.righthalf.filled" },
-        { 0x2605,   "star" },
-        { 0x2606,   "star.fill" },
-        { 0x2699,   "gear" },
-        { 0x270e,   "pencil" },
-        { 0x2750,   "square.on.square" },
-        { 0x2795,   "plus" },
-        { 0x2912,   "arrow.up.to.line" },
-        { 0x2913,   "arrow.down.to.line" },
-        { 0x2a2f,   "xmark" },
-        { 0x2b71,   "arrow.up.to.line" },
-        { 0x2ba5,   "paperplane" },
-        { 0x2ba7,   "square.and.arrow.down" },
+        { 0x10117,  "list.bullet"                    }, /* page_Icon */
+        { 0x1d362,  "line.3.horizontal"              }, /* menu_Icon */
+        { 0x1f310,  "globe"                          }, /* globe_Icon */
+        { 0x1f3a8,  "paintpalette"                   }, /* palette_Icon */
+        { 0x1f3ae,  "gamecontroller"                 }, /* gamepad_Icon */
+        { 0x1f3e0,  "house.fill"                     }, /* home_Icon */
+        { 0x1f41e,  "ladybug"                        }, /* bug_Icon */
+        { 0x1f464,  "person.fill"                    }, /* person_Icon */
+        { 0x1f4c1,  "folder"                         }, /* folder_Icon */
+        { 0x1f4c4,  "ruler"                          }, /* Layout settings */
+        { 0x1f4cb,  "doc.on.clipboard"               }, /* clipboard_Icon */
+        { 0x1f4e4,  "square.and.arrow.up.on.square"  }, /* export_Icon */
+        { 0x1f4e5,  "square.and.arrow.down.on.square"}, /* import_Icon */
+        { 0x1f4e6,  "shippingbox"                    }, /* package_Icon */
+        { 0x1f4f1,  "iphone"                         }, /* User Interface settings */
+        { 0x1f503,  "arrow.clockwise"                }, /* reload_Icon */
+        { 0x1f50d,  "magnifyingglass"                }, /* magnifyingGlass_Icon */
+        { 0x1f512,  "lock.fill"                      }, /* closedLock_Icon */
+        { 0x1f513,  "lock.open.fill"                 }, /* openLock_Icon */
+        { 0x1f516,  "bookmark.fill"                  }, /* bookmark_Icon */
+        { 0x1f520,  "textformat.abc"                 }, /* fontpack_Icon */
+        { 0x1f528,  "hammer"                         }, /* hammer_Icon */
+        { 0x1f553,  "clock"                          }, /* clock_Icon */
+        { 0x1f56e,  "book"                           }, /* book_Icon */
+        { 0x1f5a7,  "network"                        }, /* network_Icon */
+        { 0x1f5bc,  "photo"                          }, /* photo_Icon */
+        { 0x1f5da,  "textformat"                     }, /* fonts_Icon */
+        { 0x1f660,  "paintbrush"                     }, /* pageStyle_Icon */
+        { 0x1f870,  "arrow.backward"                 }, /* backArrow_Icon */
+        { 0x1f871,  "arrow.up"                       }, /* upArrow_Icon */
+        { 0x1f872,  "arrow.forward"                  }, /* forwardArrow_Icon */
+        { 0x1f873,  "arrow.down"                     }, /* downArrow_Icon */
+        { 0x2139,   "info.circle"                    }, /* info_Icon */
+        { 0x2197,   "arrow.up.forward.square"        }, /* openInTab_Icon */
+        { 0x22f0,   "list.bullet.indent"             }, /* hierarchy_Icon */
+        { 0x2398,   "doc.on.doc.fill"                }, /* clipCopy_Icon / copy_Icon */
+        { 0x23f2,   "clock.arrow.2.circlepath"       }, /* timer_Icon */
+        { 0x25e7,   "rectangle.lefthalf.filled"      }, /* leftHalf_Icon */
+        { 0x25e8,   "rectangle.righthalf.filled"     }, /* rightHalf_Icon */
+        { 0x2605,   "star.fill"                      }, /* star_Icon */
+        { 0x2606,   "star"                           }, /* whiteStar_Icon */
+        { 0x2610,   "square"                         }, /* ballotUnchecked_Icon */
+        { 0x2611,   "checkmark.square.fill"          }, /* ballotChecked_Icon */
+        { 0x2699,   "gear"                           }, /* gear_Icon */
+        { 0x26a0,   "exclamationmark.triangle"       }, /* warning_Icon */
+        { 0x270e,   "pencil"                         }, /* edit_Icon */
+        { 0x2714,   "checkmark"                      }, /* check_Icon */
+        { 0x2750,   "square.on.square"               }, /* openTabBg_Icon */
+        { 0x2795,   "plus"                           }, /* add_Icon */
+        { 0x27a4,   "chevron.forward"                }, /* rightArrowhead_Icon */
+        { 0x2912,   "arrow.up.to.line"               }, /* upArrowBar_Icon */
+        { 0x2913,   "arrow.down.to.line"             }, /* downArrowBar_Icon */
+        { 0x2a2f,   "xmark"                          }, /* close_Icon */
+        { 0x2b13,   "menubar.dock.rectangle"         }, /* toolbar_Icon */
+        { 0x2b71,   "arrow.up.to.line"               },
+        { 0x2b9c,   "chevron.backward"               }, /* leftArrowhead_Icon */
+        { 0x2ba5,   "paperplane"                     }, /* upload_Icon */
+        { 0x2ba7,   "square.and.arrow.down"          }, /* download_Icon */
     };
     /* clang-format on */
+    if (ch == 0x1f4f1 && deviceType_App() == tablet_AppDeviceType) {
+        return "ipad";
+    }
     iForIndices(i, sysImages) {
         if (sysImages[i].c == ch) {
             return sysImages[i].name;

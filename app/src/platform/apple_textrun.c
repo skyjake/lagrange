@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/text.h"
 #include "render/font.h"
 #include "color.h"
+#include "ui/util.h"
 
 #include <lagrange/defs.h>
 #include <lagrange/prefs.h>
@@ -273,7 +274,7 @@ static iBool prepare_AppleTextRun_(
         }
         /* SF Symbol substitution: replace UI icon chars with inline images (U+FFFC placeholder).
            Only applies for UI-sized fonts; document fonts pass through unchanged. */
-        const char *symbolName = isUiFontId_(curFontId) ? sfSymbolName_AppleText_(ch) : NULL;
+        const char *symbolName = isUiFontId_(curFontId) ? systemImageName_Apple(ch) : NULL;
         if (symbolName) {
             const iAppleFont *af = constAppleFont_AppleText_(tx, curFontId);
             /* Metrics. */

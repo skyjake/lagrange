@@ -386,6 +386,7 @@ enum iAnsiFlag {
 #define openLock_Icon       "\U0001f513"
 #define openTabBg_Icon      "\u2750" //"\u2b1a"
 #define openTab_Icon        add_Icon
+#define openInTab_Icon      "\u2197"
 #define openWindow_Icon     "\u2b1a" //"\U0001F5d4"
 #define package_Icon        "\U0001f4e6"
 #define page_Icon           "\U00010117"
@@ -409,6 +410,7 @@ enum iAnsiFlag {
 #define spartan_Icon        "\U0001f4aa"
 #define star_Icon           "\u2605"
 #define timer_Icon          "\u23f2"
+#define toolbar_Icon        "\u2b13"
 #define toggleNo_Icon       bullet_Icon
 #define toggleYes_Icon      check_Icon
 #define undo_Icon           "\u23ea"

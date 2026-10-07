@@ -73,7 +73,6 @@ CFArrayRef          cascadeList_AppleText_      (const iAppleText *);
 CTFontRef           overrideFont_AppleText_     (const iAppleText *, iChar ch, float pointSize);
 
 iAppleFont *appleFont_AppleText_        (iAppleText *, int fontId);
-const char *sfSymbolName_AppleText_     (iChar iconChar); /* NULL if not in table */
 
 void        allocData_FontFile          (iFontFile *); /* backend-implemented */
 CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if not a system UI font */
