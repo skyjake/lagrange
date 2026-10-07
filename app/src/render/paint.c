@@ -218,7 +218,7 @@ void fillRectColor_Paint(const iPaint *d, iRect rect, iColor color) {
 
 enum { maxFrameThickness_RoundCorner = 8 };
 
-#define lightElevation_RoundCorner  60.0f /* degrees above horizontal, from the left */
+#define lightElevation_RoundCorner  62.5f /* degrees above horizontal, from the left */
 
 iLocalDef float discCoverage_(float dist, float radius) {
     return iClamp(radius - dist + 0.5f, 0.0f, 1.0f);

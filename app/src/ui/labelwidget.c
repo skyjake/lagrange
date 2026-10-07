@@ -678,6 +678,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const int focusColor = focusColor_LabelWidget_(bg);
     if (isRound) {
         const iBool isFocus = isFocused_Widget(w);
+#if 0
         if (isFramedRound && !isFocus && frame >= 0 && flags & selected_WidgetFlag) {
             const iColor backdrop = backdropColor_LabelWidget_(w);
             const int ctrThick = frame_UI * 2;
@@ -690,6 +691,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                       contrastFrameColor_(get_Color(frame2 >= 0 ? frame2 : frame),
                                                           backdrop));
         }
+#endif
         drawRoundRectRadius_Paint(&p,
                                   rect,
                                   radius,
