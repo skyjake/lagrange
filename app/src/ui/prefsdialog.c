@@ -505,7 +505,7 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" import_Icon " " uiTextAction_ColorEscape "${menu.import}", 0, 0, "file.open" },
             { "padding" },
             { "button text:" book_Icon " ${menu.bookmarks.list}", 0, 0, "docdlg.open url:about:bookmarks" },
-            { "button text:" bookmark_Icon " ${menu.bookmarks.bytag}", 0, 0, "docdlg.open url:about:bookmarks?tags" },
+            { "button text:" tag_Icon " ${menu.bookmarks.bytag}", 0, 0, "docdlg.open url:about:bookmarks?tags" },
             { "button text:" clock_Icon " ${macos.menu.bookmarks.bytime}", 0, 0, "docdlg.open url:about:bookmarks?created" },
             { "padding" },
             { "button text:" star_Icon " ${menu.feeds.entrylist}", 0, 0, "docdlg.open url:about:feeds" },

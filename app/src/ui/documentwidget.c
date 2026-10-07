@@ -3559,7 +3559,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
                             pushBack_Array(
                                 &items,
-                                &(iMenuItem){ book_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" });
+                                &(iMenuItem){ books_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" });
                         }
                     }
                     else {

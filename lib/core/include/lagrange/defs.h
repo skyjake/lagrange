@@ -333,6 +333,7 @@ enum iAnsiFlag {
 #define barRightArrow_Icon  "\u21a6"
 #define book_Icon           "\U0001f56e"
 #define bookmark_Icon       "\U0001f516"
+#define books_Icon          "\U0001f4da"
 #define bug_Icon            "\U0001f41e"
 #define bullet_Icon         "\u2022"
 #define check_Icon          "\u2714"
@@ -409,6 +410,7 @@ enum iAnsiFlag {
 #define select_Icon         "\u2b1a"
 #define spartan_Icon        "\U0001f4aa"
 #define star_Icon           "\u2605"
+#define tag_Icon            "\U0001f3f7"
 #define timer_Icon          "\u23f2"
 #define toolbar_Icon        "\u2b13"
 #define toggleNo_Icon       bullet_Icon
@@ -431,10 +433,13 @@ enum iAnsiFlag {
 #   define midEllipsis_Icon "..."
 #   define shift_Icon       "Sh"
 #   define shiftReturn_Icon "Sh-" return_Icon
+#   define bookmarks_Icon   bookmark_Icon
 #elif defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"
 #   define shiftReturn_Icon shift_Icon return_Icon
+#   define bookmarks_Icon   book_Icon
 #else
 #   define shift_Icon       "Shift"
 #   define shiftReturn_Icon shift_Icon " " return_Icon
+#   define bookmarks_Icon   bookmark_Icon
 #endif

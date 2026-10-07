@@ -179,7 +179,7 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
             iArray *items = collectNew_Array(sizeof(iMenuItem));
             pushBack_Array(
                 items,
-                &(iMenuItem){ book_Icon " ${gempub.cover.view}",
+                &(iMenuItem){ books_Icon " ${gempub.cover.view}",
                               0,
                               0,
                               format_CStr("!open url:%s",
@@ -202,13 +202,13 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
             const iString *shelfPath = book ? path_Book(book) : NULL;
             makeFooterButtons_DocumentWidget(
                 d->owner,
-                (iMenuItem[]){ shelfPath ? (iMenuItem){ book_Icon " ${gempub.cover.openshelf}",
+                (iMenuItem[]){ shelfPath ? (iMenuItem){ books_Icon " ${gempub.cover.openshelf}",
                                                         SDLK_S,
                                                         KMOD_PRIMARY | SDL_KMOD_SHIFT,
                                                         format_CStr("!open url:%s",
                                                                     cstrCollect_String(
                                                                         makeFileUrl_String(shelfPath))) }
-                                         : (iMenuItem){ book_Icon " ${menu.save.books}",
+                                         : (iMenuItem){ books_Icon " ${menu.save.books}",
                                                         SDLK_S,
                                                         KMOD_PRIMARY | SDL_KMOD_SHIFT,
                                                         "document.savebook" },
@@ -222,7 +222,7 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
     else if (isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d))) {
         makeFooterButtons_DocumentWidget(
             d->owner,
-            (iMenuItem[]){ { format_CStr(book_Icon " %s",
+            (iMenuItem[]){ { format_CStr(books_Icon " %s",
                                          cstr_String(property_Gempub(d->sourceGempub,
                                                                      title_GempubProperty))),
                              SDLK_LEFT,
@@ -262,7 +262,7 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
                 pushBack_Array(
                     items,
                     &(iMenuItem){
-                        format_CStr(book_Icon " %s",
+                        format_CStr(books_Icon " %s",
                                     cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
                         SDLK_LEFT,
                         0,
@@ -877,7 +877,7 @@ void showErrorPage_DocumentFetch(iDocumentFetch *d, enum iGmStatusCode code,
 
 static const char *zipPageHeading_(const iRangecc mime) {
     if (equalCase_Rangecc(mime, "application/gpub+zip")) {
-        return book_Icon " Gempub";
+        return books_Icon " Gempub";
     }
     else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
         return fontpack_Icon " Fontpack";

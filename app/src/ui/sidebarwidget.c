@@ -117,7 +117,7 @@ iBeginDefineSubclass(SidebarItem, ListItem).draw = (iAny *) draw_SidebarItem_,
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    bookmark_Icon " ${sidebar.bookmarks}",
+    bookmarks_Icon " ${sidebar.bookmarks}",
     star_Icon " ${sidebar.feeds}",
     whiteStar_Icon " ${sidebar.subscriptions}",
     person_Icon " ${sidebar.identities}",
@@ -125,11 +125,11 @@ static const char *normalModeLabels_[max_SidebarMode] = {
     hierarchy_Icon " ${sidebar.structure}",
     openTabBg_Icon " ${sidebar.documents}",
     clock_Icon " ${sidebar.history}",
-    book_Icon " ${sidebar.gempub}",
+    books_Icon " ${sidebar.gempub}",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    bookmark_Icon,
+    bookmarks_Icon,
     star_Icon,
     whiteStar_Icon,
     person_Icon,
@@ -137,7 +137,7 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     hierarchy_Icon,
     openTabBg_Icon,
     clock_Icon,
-    book_Icon,
+    books_Icon,
 };
 
 struct Impl_SidebarWidget {

@@ -896,11 +896,13 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x1f3a8,  "paintpalette"                   }, /* palette_Icon */
         { 0x1f3ae,  "gamecontroller"                 }, /* gamepad_Icon */
         { 0x1f3e0,  "house.fill"                     }, /* home_Icon */
+        { 0x1f3f7,  "tag"                            }, /* tag_Icon */
         { 0x1f41e,  "ladybug"                        }, /* bug_Icon */
         { 0x1f464,  "person.fill"                    }, /* person_Icon */
         { 0x1f4c1,  "folder"                         }, /* folder_Icon */
         { 0x1f4c4,  "ruler"                          }, /* Layout settings */
         { 0x1f4cb,  "doc.on.clipboard"               }, /* clipboard_Icon */
+        { 0x1f4da,  "books.vertical"                 }, /* books_Icon */
         { 0x1f4e4,  "square.and.arrow.up.on.square"  }, /* export_Icon */
         { 0x1f4e5,  "square.and.arrow.down.on.square"}, /* import_Icon */
         { 0x1f4e6,  "shippingbox"                    }, /* package_Icon */

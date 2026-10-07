@@ -608,9 +608,9 @@ msgstr "Tabs"
 msgid "sidebar.subscriptions"
 msgstr "Subscriptions"
 
-# Sidebar mode that shows the cover and the index page of the current GemPub book, and the bookshelf.
+# Sidebar mode that shows bookshelf and the cover and index page of the current Gempub book.
 msgid "sidebar.gempub"
-msgstr "Book"
+msgstr "Books"
 
 msgid "sidebar.gempub.cover"
 msgstr "Cover"
