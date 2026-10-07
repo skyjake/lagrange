@@ -81,7 +81,7 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url) {
     useSheetStyle_Widget(w);
     /* The size is determined by the window, not the contents. */
     setFlags_Widget(w, arrangeSize_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
-    setFlags_Widget(w, moveToParentBottomEdge_WidgetFlag,
+    setFlags_Widget(w, moveToParentBottomEdge_WidgetFlag | frameless_WidgetFlag,
                     deviceType_App() != desktop_AppDeviceType);
     setPadding1_Widget(w, 0);
     /* Navigation bar: back, title, and opening the page in a tab. */ {
@@ -134,24 +134,30 @@ void deinit_DocumentDialog(iDocumentDialog *d) {
 static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
     iWidget    *w         = as_Widget(d);
     const iRect safe      = safeRect_Root(w->root);
-    const int   device    = deviceType_App();
-    const int   width     = device == phone_AppDeviceType ? width_Rect(safe)
-                                                          : iMin(width_Rect(safe), 140 * gap_UI);
     const int   headerHgt = lineHeight_Text(headerFont_DocumentDialog_(iTrue)) + 4 * gap_UI;
-    int         height;
-    if (device == desktop_AppDeviceType) {
-        height = height_Rect(safe) * 4 / 5;
+    int         width, docHeight;
+    if (deviceType_App() == desktop_AppDeviceType) {
+        width     = iMin(width_Rect(safe), 140 * gap_UI);
+        const int height = height_Rect(safe) * 4 / 5;
+        /* Rounded bottom corners are not covered by the page. */
+        setPadding_Widget(w, 0, 0, 0, radius_UI);
+        setFixedSize_Widget(w, init_I2(width, height));
+        docHeight = height - headerHgt - radius_UI;
     }
     else {
-        /* Extends under the bottom safe area. */
-        height = bottom_Rect(rect_Root(w->root)) - top_Rect(safe) - 2 * gap_UI;
+        /* Covers the entire root so nothing underneath needs to be drawn. */
+        const iRect root = rect_Root(w->root);
+        width            = width_Rect(safe);
+        setPadding_Widget(w,
+                          left_Rect(safe) - left_Rect(root),
+                          top_Rect(safe) - top_Rect(root),
+                          right_Rect(root) - right_Rect(safe),
+                          0);
+        setFixedSize_Widget(w, root.size);
+        docHeight = bottom_Rect(root) - top_Rect(safe) - headerHgt; /* under bottom safe area */
     }
-    /* Rounded bottom corners are not covered by the page. */
-    const int bottomPad = device == desktop_AppDeviceType ? radius_UI : 0;
-    setPadding_Widget(w, 0, 0, 0, bottomPad);
-    setFixedSize_Widget(w, init_I2(width, height));
     setFixedSize_Widget(d->header, init_I2(width, headerHgt));
-    setFixedSize_Widget(as_Widget(d->doc), init_I2(width, height - headerHgt - bottomPad));
+    setFixedSize_Widget(as_Widget(d->doc), init_I2(width, docHeight));
     setFlags_Widget(w, arrangeVertical_WidgetFlag, iTrue);
     arrange_Widget(w);
     /* The title stays centered and clear of the buttons. */
