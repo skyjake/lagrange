@@ -422,7 +422,7 @@ void appendTabPages_ScopedPrefs(iWidget *tabs, iBool withProtocols, int iconColo
     }
 }
 
-void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols) {
+void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols, int iconColor) {
     iForIndices(i, pages_) {
         if (!isPageUsed_(i, withProtocols)) {
             continue;
@@ -438,7 +438,9 @@ void appendPanels_ScopedPrefs(iArray *panelItems, iBool withProtocols) {
         pushBack_Array(items, &(iMenuItem){ "padding" });
         pushBack_Array(items, &(iMenuItem){ NULL });
         pushBack_Array(panelItems,
-                       &(iMenuItem){ format_CStr("panel icon:0x%x id:%s", pages_[i].mobileIcon,
+                       &(iMenuItem){ format_CStr("panel icon:0x%x iconcolor:%d id:%s",
+                                                 pages_[i].mobileIcon,
+                                                 iconColor,
                                                  pages_[i].title),
                                      0, 0, (const void *) constData_Array(items) });
     }

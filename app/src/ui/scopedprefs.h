@@ -33,7 +33,8 @@ const iMenuItem *globalContentItems_ScopedPrefs(void); /* content settings are n
 
 void            appendTabPages_ScopedPrefs  (iWidget *tabs, iBool withProtocols, int iconColor,
                                              int firstShortcut);
-void            appendPanels_ScopedPrefs    (iArray *panelItems, iBool withProtocols);
+void            appendPanels_ScopedPrefs    (iArray *panelItems, iBool withProtocols,
+                                             int iconColor);
 
 void            init_ScopedPrefs            (iWidget *dlg, const char *scope);
 void            deinit_ScopedPrefs          (iWidget *dlg);

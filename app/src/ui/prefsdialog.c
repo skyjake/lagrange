@@ -550,26 +550,36 @@ iWidget *makePreferences_Widget(void) {
             { "padding arg:0.333" },
             { "title id:heading.settings" },
             { "padding arg:0.167" },
-            { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
-            { "panel icon:0x1f4f1 id:heading.prefs.ui", 0, 0, (const void *) uiPanelItems },
-            { "panel icon:0x1f528 id:heading.prefs.toolbars", 0, 0, (const void *) toolbarPanelItems },
-            { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
-            { "panel noscroll:1 text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
+            /* Icon colors run through the rainbow from top to bottom. */
+            { format_CStr("panel iconcolor:%d text:" gear_Icon " ${heading.prefs.general}",
+                          red_ColorId), 0, 0, (const void *) generalPanelItems },
+            { format_CStr("panel icon:0x1f4f1 iconcolor:%d id:heading.prefs.ui", red_ColorId),
+              0, 0, (const void *) uiPanelItems },
+            { format_CStr("panel icon:0x1f528 iconcolor:%d id:heading.prefs.toolbars", red_ColorId),
+              0, 0, (const void *) toolbarPanelItems },
+            { format_CStr("panel icon:0x1f5a7 iconcolor:%d id:heading.prefs.network", orange_ColorId),
+              0, 0, (const void *) networkPanelItems },
+            { format_CStr("panel noscroll:1 iconcolor:%d text:" person_Icon " ${sidebar.identities}",
+                          orange_ColorId), 0, 0, (const void *) identityPanelItems },
             { "padding" },
         }, 9);
-        appendPanels_ScopedPrefs(mainItems, iTrue);
+        appendPanels_ScopedPrefs(mainItems, iTrue, green_ColorId);
         appendToPanel_(mainItems, "heading.prefs.typography", (iMenuItem[]){
             { "toggle id:prefs.font.warnmissing" },
             { "padding" },
             { NULL }
         });
         pushBackN_Array(mainItems, (iMenuItem[]){
-            { "panel icon:0x1f5bc id:heading.prefs.content", 0, 0, constData_Array(contentItems) },
+            { format_CStr("panel icon:0x1f5bc iconcolor:%d id:heading.prefs.content", green_ColorId),
+              0, 0, constData_Array(contentItems) },
             { "padding" },
-            { "panel icon:0x1f4e6 id:heading.prefs.user", 0, 0, (const void *) userPanelItems },
-            { "panel icon:0x1f4cb id:heading.prefs.snip", 0, 0, (const void *) snippetPanelItems },
+            { format_CStr("panel icon:0x1f4e6 iconcolor:%d id:heading.prefs.user", cyan_ColorId),
+              0, 0, (const void *) userPanelItems },
+            { format_CStr("panel icon:0x1f4cb iconcolor:%d id:heading.prefs.snip", cyan_ColorId),
+              0, 0, (const void *) snippetPanelItems },
             { "padding" },
-            { "panel text:" info_Icon " ${heading.prefs.support}", 0, 0, (const void *) supportPanelItems },
+            { format_CStr("panel iconcolor:%d text:" info_Icon " ${heading.prefs.support}",
+                          blue_ColorId), 0, 0, (const void *) supportPanelItems },
             { NULL }
         }, 7);
 #if defined (LAGRANGE_USE_GAMEPAD)
@@ -606,7 +616,9 @@ iWidget *makePreferences_Widget(void) {
                 pushBack_Array(gamepadItems, &(iMenuItem) {NULL});
                 insert_Array(mainItems,
                              6 /* after Toolbars */,
-                             &(iMenuItem) {"panel icon:0x1f3ae id:heading.prefs.gamepad",
+                             &(iMenuItem) {format_CStr("panel icon:0x1f3ae iconcolor:%d "
+                                                       "id:heading.prefs.gamepad",
+                                                       orange_ColorId),
                                            0,
                                            0,
                                            constData_Array(gamepadItems)});

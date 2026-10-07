@@ -1036,7 +1036,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             noBackground_WidgetFlag | frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
                 resizeToParentHeight_WidgetFlag | moveToParentLeftEdge_WidgetFlag);
         setId_Widget(as_Widget(naviTitle), "navi.title");
-        setFont_LabelWidget(naviTitle, labelFont_());
+        setFont_LabelWidget(naviTitle, labelBoldFont_());
         //setTextColor_LabelWidget(naviTitle, uiTextStrong_ColorId);
         naviBack = addChildFlags_Widget(
             navi,
@@ -1084,6 +1084,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             if (icon) {
                 setIcon_LabelWidget(button, icon);
                 as_Widget(button)->borderPad[0] = as_Widget(button)->borderPad[2] = 13.25f * gap_UI;
+            }
+            if (hasLabel_Command(item->label, "iconcolor")) {
+                setIconColor_LabelWidget(button, argLabel_Command(item->label, "iconcolor"));
             }
             iWidget *panel = addChildPanel_(detailStack, button, NULL);
             if (argLabel_Command(item->label, "noscroll")) {

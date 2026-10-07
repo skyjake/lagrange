@@ -150,7 +150,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
             pushBack_Array(items, &(iMenuItem){ "input id:sitespec.titantoken sensitive:1" });
         }
         pushBack_Array(items, &(iMenuItem){ "padding" });
-        appendPanels_ScopedPrefs(items, iFalse);
+        appendPanels_ScopedPrefs(items, iFalse, none_ColorId);
         pushBack_Array(items, &(iMenuItem){ NULL });
         dlg = makePanels_Mobile(sheetId, constData_Array(items), actions, iElemCount(actions));
     }
