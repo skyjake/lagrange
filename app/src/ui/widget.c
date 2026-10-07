@@ -710,6 +710,15 @@ static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
 #endif
 }
 
+static void moveToParentBottomEdge_Widget_(iWidget *d) {
+    if (d->parent) {
+        d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+        const int minY = (d->parent->parent ? 0 : topSafeInset_Mobile());
+        d->rect.pos.y = iMax(minY, d->rect.pos.y);
+        TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
+    }
+}
+
 static void arrange_Widget_(iWidget *d) {
     TRACE(d, "arranging...");
     if (d->sizeRef) {
@@ -725,12 +734,7 @@ static void arrange_Widget_(iWidget *d) {
         TRACE(d, "move to parent right edge: %d", d->rect.pos.x);
     }
     else if (d->flags & moveToParentBottomEdge_WidgetFlag) {
-        if (d->parent) {
-            d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
-            const int minY = (d->parent->parent ? 0 : topSafeInset_Mobile());
-            d->rect.pos.y = iMax(minY, d->rect.pos.y);
-            TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
-        }
+        moveToParentBottomEdge_Widget_(d);
     }
     else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
@@ -1026,11 +1030,12 @@ static void arrange_Widget_(iWidget *d) {
                     arrange_Widget_(child);
                 }
             }
+            if ((d->flags & (moveToParentLeftEdge_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                             moveToParentBottomEdge_WidgetFlag)) ==
+                moveToParentBottomEdge_WidgetFlag) {
+                moveToParentBottomEdge_Widget_(d); /* the position depends on the new height */
+            }
         }
-//        if (d->flags & moveToParentBottomEdge_WidgetFlag) {
-//            /* TODO: Fix this: not DRY. See beginning of method. */
-//            d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
-//        }
         if (d->flags & centerHorizontal_WidgetFlag) {
             centerHorizontal_Widget_(d);
         }

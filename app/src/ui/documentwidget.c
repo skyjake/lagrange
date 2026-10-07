@@ -236,12 +236,23 @@ iRangecc selectionMark_DocumentWidget(const iDocumentWidget *d) {
     return norm;
 }
 
+static int phoneBottomTabBarHeight_DocumentWidget_(const iDocumentWidget *d) {
+    /* The phone's bottom tab bar is drawn over the page. */
+    if (deviceType_App() != phone_AppDeviceType || !prefs_App()->bottomTabBar) {
+        return 0;
+    }
+    const iWidget *tabBar = constAs_Widget(d)->root->bars.tabButtons;
+    return tabBar && ~flags_Widget(tabBar) & hidden_WidgetFlag ? height_Widget(tabBar) : 0;
+}
+
 int phoneToolbarHeight_DocumentWidget(const iDocumentWidget *d) {
     if (!d->phoneToolbar || !isPortraitPhone_App()) {
         return 0;
     }
     const iWidget *w = constAs_Widget(d);
-    return bottom_Rect(rect_Root(w->root)) - top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
+    return bottom_Rect(rect_Root(w->root)) -
+           top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar)) +
+           phoneBottomTabBarHeight_DocumentWidget_(d);
 }
 
 int phoneBottomNavbarHeight_DocumentWidget(const iDocumentWidget *d) {
@@ -251,10 +262,7 @@ int phoneBottomNavbarHeight_DocumentWidget(const iDocumentWidget *d) {
         if (prefs_App()->bottomNavBar) {
             height += height_Widget(findChild_Widget(root_Widget(w), "navbar"));
         }
-        else if (prefs_App()->bottomTabBar) {
-            height += height_Widget(findChild_Widget(findChild_Widget(root_Widget(w), "doctabs"),
-                                                     "tabs.buttons"));
-        }
+        height += phoneBottomTabBarHeight_DocumentWidget_(d);
     }
     return height;
 }
