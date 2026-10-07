@@ -27,7 +27,7 @@ target_include_directories (core PUBLIC
 )
 
 target_compile_definitions (core PUBLIC
-    LAGRANGE_APP_VERSION="${CMAKE_PROJECT_VERSION}"
+    LAGRANGE_APP_VERSION="${LAGRANGE_APP_VERSION}"
 )
 
 target_link_libraries (core PUBLIC

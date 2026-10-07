@@ -120,11 +120,3 @@ int main(int argc, char **argv) {
     deinit_Foundation();
     return 0;
 }
-
-#if defined (iPlatformAppleMobile)
-#undef main
-int main(int argc, char **argv) {
-    /* We are using sdl2-compat so this isn't yet seamless/automagic. */
-    return SDL_UIKitRunApp(argc, argv, SDL_main);
-}
-#endif

@@ -407,7 +407,10 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         const int rev = arg_Command(cmd);
         if (sheet->root->pendingArrange < rev) {
             sheet->root->pendingArrange = rev;
+            /* Arranging resets the overflow scroll position. */
+            const int oldTop = top_Rect(boundsWithoutVisualOffset_Widget(sheet));
             arrange_Widget(sheet);
+            scrollOverflow_Widget(sheet, oldTop - top_Rect(boundsWithoutVisualOffset_Widget(sheet)));
             refresh_Widget(pointer_Command(cmd)); /* may be on a buffered panel */
         }
         return iTrue;

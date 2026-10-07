@@ -203,6 +203,12 @@ void endEditing_InputWidget_(iInputWidget *d, iBool accept) {
         else {
             set_String(&d->text, &d->oldText);
         }
+#if defined (iPlatformAppleMobile)
+        const iWidget *focus = focus_Widget();
+        if (focus && focus != w && isInstance_Object(focus, &Class_InputWidget)) {
+            keepKeyboard_SystemTextInput(d->sysCtrl); /* focus moves to another input */
+        }
+#endif
         delete_SystemTextInput(d->sysCtrl);
         d->sysCtrl = NULL;
     }

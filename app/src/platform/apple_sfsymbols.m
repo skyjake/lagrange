@@ -107,16 +107,36 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
     }
 #else /* iOS */
     if (@available(iOS 13.0, *)) {
-        /* TODO: Should work the same way as on macOS (see above). */
         UIImageSymbolConfiguration *cfg =
             [UIImageSymbolConfiguration configurationWithPointSize:(CGFloat)pointSize
                                                             weight:UIImageSymbolWeightRegular];
         UIImage *img = [UIImage systemImageNamed:name withConfiguration:cfg];
         if (!img) return NULL;
-        UIColor *tint   = [UIColor colorWithCGColor:color];
-        UIImage *tinted = [img imageWithTintColor:tint
+        const CGSize sz = img.size;
+        if (sz.width <= 0 || sz.height <= 0) return NULL;
+        iAssert(slotPixels >= 0);
+        UIImage *tinted = [img imageWithTintColor:[UIColor colorWithCGColor:color]
                                     renderingMode:UIImageRenderingModeAlwaysOriginal];
-        return tinted.CGImage ? CGImageRetain(tinted.CGImage) : NULL;
+        /* Same placement as on macOS. The image is rendered 1:1 in pixels, ignoring the
+           screen scale, because the point size is already in pixels. */
+        const CGFloat scale   = iMin(1.0, iMin(slotPixels / sz.width, slotPixels / sz.height));
+        const iRect   bounds  = init_Rect(0, 0, slotPixels, slotPixels);
+        const iRect   glyph   = init_Rect(0, 0, (int) ceilf(sz.width * scale),
+                                          (int) ceilf(sz.height * scale));
+        const iRect   centered = moved_Rect(glyph, divi_I2(sub_I2(bounds.size, glyph.size), 2));
+        UIGraphicsImageRendererFormat *fmt = [UIGraphicsImageRendererFormat preferredFormat];
+        fmt.scale          = 1.0;
+        fmt.opaque         = NO;
+        fmt.preferredRange = UIGraphicsImageRendererFormatRangeStandard;
+        UIGraphicsImageRenderer *renderer =
+            [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(slotPixels, slotPixels)
+                                                   format:fmt];
+        UIImage *slot = [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+            iUnused(ctx);
+            [tinted drawInRect:CGRectMake(centered.pos.x, centered.pos.y,
+                                          centered.size.x, centered.size.y)];
+        }];
+        return slot.CGImage ? CGImageRetain(slot.CGImage) : NULL;
     }
 #endif
     return NULL;

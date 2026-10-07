@@ -716,7 +716,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 }
 
-static void deinit_App(iApp *d) {
+void deinit_App_(iApp *d) {
     if (d->tempFilesPendingDeletion == NULL) {
         return; /* already deinitialized */
     }
@@ -939,6 +939,6 @@ const iString *debugInfo_App(void) {
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
     const int rc = run_App_(&app_);
-    deinit_App(&app_);
+    deinit_App_(&app_);
     return rc;
 }

@@ -108,6 +108,7 @@ void    setTextChangedFunc_SystemTextInput
         (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);
 void    setSelection_SystemTextInput(iSystemTextInput *, iRangei selection);
 void    selectAll_SystemTextInput   (iSystemTextInput *);
+void    keepKeyboard_SystemTextInput(iSystemTextInput *); /* iOS: until the next input appears */
 
 const iString * text_SystemTextInput    (const iSystemTextInput *);
 int     preferredHeight_SystemTextInput (const iSystemTextInput *);

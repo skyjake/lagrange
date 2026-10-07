@@ -284,7 +284,7 @@ const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) 
         tmpPath,
         collect_String(concat_Path(collectNewRange_String(tmpDir),
                                    fileNameForUrl_App(url, mime))));
-    insert_StringSet(d->tempFilesPendingDeletion, tmpPath); /* deleted in `deinit_App` */
+    insert_StringSet(d->tempFilesPendingDeletion, tmpPath); /* deleted in `deinit_App_` */
     return tmpPath;
 }
 

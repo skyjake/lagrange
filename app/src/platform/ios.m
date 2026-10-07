@@ -23,7 +23,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ios.h"
 #include "app.h"
 #include <lagrange/core.h>
+#include <lagrange/gmutil.h>
 #include "media/player.h"
+#include "render/text.h"
 #include "ui/command.h"
 #include "ui/keys.h"
 #include "ui/window.h"
@@ -241,7 +243,7 @@ API_AVAILABLE(ios(13.0))
     iSystemTextInput *sysCtrl;
     float sysCtrlLineSpacing;
     NSMutableArray<PopupData *> *popupMenus;
-    uint32_t ignoreInputUntil; /* SDL ticks */
+    uint64_t ignoreInputUntil; /* SDL ticks */
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -376,7 +378,7 @@ static void sendReturnKeyPress_(int kmods) {
 }
 
 -(BOOL)isIgnoringInput {
-    return ignoreInputUntil && !SDL_TICKS_PASSED(SDL_GetTicks(), ignoreInputUntil);
+    return ignoreInputUntil && SDL_GetTicks() < ignoreInputUntil;
 }
 
 -(void)setSystemTextLineSpacing:(float)height {
@@ -956,7 +958,39 @@ struct Impl_SystemTextInput {
     iBool pendingSelectAll;
     void (*textChangedFunc)(iSystemTextInput *, void *);
     void *textChangedContext;
+    iBool keepKeyboard;
 };
+
+/* A removed input that still has the keyboard, so it doesn't hide while switching inputs. */
+static UIView *retiredInput_;
+
+static void releaseRetiredInput_(void) {
+    if (retiredInput_) {
+        [retiredInput_ resignFirstResponder];
+        [retiredInput_ removeFromSuperview];
+        retiredInput_ = nil;
+    }
+}
+
+static void retireInput_(UIView *input) {
+    releaseRetiredInput_();
+    retiredInput_ = input;
+    [input setHidden:YES];
+    if ([input isKindOfClass:[UITextField class]]) {
+        [(UITextField *) input setDelegate:nil];
+    }
+    else {
+        [[(UITextView *) input layoutManager] setDelegate:nil];
+        [(UITextView *) input setDelegate:nil];
+    }
+    /* In case no other input appears. */
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (0.25 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        if (retiredInput_ == input) {
+            releaseRetiredInput_();
+        }
+    });
+}
 
 iDefineTypeConstructionArgs(SystemTextInput, (iRect rect, int flags), rect, flags)
 
@@ -1006,6 +1040,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->field = NULL;
     d->view  = NULL;
     d->pendingSelectAll = iFalse;
+    d->keepKeyboard = iFalse;
     CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
     if (flags & multiLine_SystemTextInputFlags) {
         d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
@@ -1070,22 +1105,34 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
         [view setDelegate:appState_];
         [view becomeFirstResponder];
     }
+    releaseRetiredInput_(); /* the keyboard now belongs to this input */
     d->textChangedFunc = NULL;
     d->textChangedContext = NULL;
 }
 
 void deinit_SystemTextInput(iSystemTextInput *d) {
     [appState_ setSystemTextInput:nil];
+    UIView *input = d->field ? (UIView *) REF_d_field : (UIView *) REF_d_view;
+    if (input) {
+        if (d->keepKeyboard && [input isFirstResponder]) {
+            retireInput_(input);
+        }
+        else {
+            [input removeFromSuperview];
+        }
+    }
     if (d->field) {
-        [REF_d_field removeFromSuperview];
         CFBridgingRelease(d->field);
         d->field = nil;
     }
     if (d->view) {
-        [REF_d_view removeFromSuperview];
         CFBridgingRelease(d->view);
         d->view = nil;
     }
+}
+
+void keepKeyboard_SystemTextInput(iSystemTextInput *d) {
+    d->keepKeyboard = iTrue;
 }
 
 static UIView<UITextInput> *textInput_SystemTextInput_(const iSystemTextInput *d) {

@@ -602,7 +602,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             /* Sent from the Java UI thread (SDLActivity.onDestroy()): app and widget
                state must not be touched. App state was already saved on the SDL main
                thread when the app went to the background, and will be saved again by
-               deinit_App(). */
+               deinit_App_(). */
 #else
             iForEach(PtrArray, i, &d->mainWindows) {
                 setFreezeDraw_MainWindow(*i.value, iTrue);
@@ -610,7 +610,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
 #  if defined (iPlatformAppleMobile)
             /* SDL docs warn that we may not get any execution time after this event,
                so deinitialize everything immediately. */
-            deinit_App(d);
+            deinit_App_(d);
             d->isRunning = iFalse; /* stop the main loop; no further event processing */
 #  else
             savePrefs_App_(d);

@@ -35,6 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_version.h>
 
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
+
 iBool isCommand_SDLEvent(const SDL_Event *d) {
     return d->type == SDL_EVENT_USER && d->user.code == command_UserEventCode;
 }

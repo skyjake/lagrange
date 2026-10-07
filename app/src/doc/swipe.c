@@ -36,6 +36,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL3/SDL_timer.h>
 
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
+
 iDefineTypeConstruction(DocumentSwipe)
 
 static iDocumentView *ownerView_(const iDocumentSwipe *d) {

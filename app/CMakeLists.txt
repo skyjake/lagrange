@@ -505,6 +505,9 @@ else ()
         add_definitions (-DiPlatformMobileHandheld=1)
     endif ()
 endif ()
+# The core library is in another directory but needs the same platform definitions.
+get_directory_property (PLATFORM_DEFINITIONS COMPILE_DEFINITIONS)
+target_compile_definitions (core PRIVATE ${PLATFORM_DEFINITIONS})
 
 macro (set_common_app_properties target)
     set_property (TARGET ${target} PROPERTY C_STANDARD 11)
@@ -773,22 +776,21 @@ if (ENABLE_GUI)
                 XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)" # fix missing dSYM issue
                 MACOSX_BUNDLE_ICON_FILE "AppIcon"
             )
-            # Embed (and sign) the dynamic sdl2-compat and SDL3 in the app bundle.
+            # Embed (and sign) the dynamic SDL3 in the app bundle.
             set_target_properties (app PROPERTIES
                 XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks"
                 XCODE_EMBED_FRAMEWORKS
-                    "${IOS_DIR}/SDL2.framework;${IOS_DIR}/SDL3.framework"
+                    "${IOS_DIR}/SDL3.framework"
                 XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY      YES
                 XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
             )
-            # Copy SDL dSYMs into BUILT_PRODUCTS_DIR so Xcode includes them in
+            # Copy the SDL dSYM into BUILT_PRODUCTS_DIR so Xcode includes it in
             # the xcarchive for App Store / TestFlight crash symbolication.
             set (_sdl_dsym_script "${CMAKE_CURRENT_BINARY_DIR}/copy-sdl-dsyms.sh")
             file (WRITE "${_sdl_dsym_script}"
 "#!/bin/sh
-for dsym in '${IOS_DIR}/SDL2.framework.dSYM' '${IOS_DIR}/SDL3.framework.dSYM'; do
-    [ -d \"\$dsym\" ] && cp -r \"\$dsym\" \"\$BUILT_PRODUCTS_DIR/\"
-done
+dsym='${IOS_DIR}/SDL3.framework.dSYM'
+if [ -d \"\$dsym\" ]; then cp -r \"\$dsym\" \"\$BUILT_PRODUCTS_DIR/\"; fi
 ")
             add_custom_command (TARGET app POST_BUILD
                 COMMAND /bin/sh "${_sdl_dsym_script}"
