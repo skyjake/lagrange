@@ -244,6 +244,7 @@ static void     hideCursorIfIdle_Root_      (iRoot *);
 static void     startCursorIdleCheck_Root_  (iRoot *);
 static void     finishHidingReadingBars_Root_(void *);
 static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
+static void     setReadingBarsVisible_Root_ (iRoot *, iBool show);
 static void     updateReadingBarsOnTop_Root_(iRoot *);
 
 iDefineTypeConstruction(Root)
@@ -2482,6 +2483,10 @@ static void setupMovableElements_Root_(iRoot *d) {
     iWidget *tabBar    = findChild_Widget(docTabs, "tabs.buttons");
     iWidget *menuBar   = findChild_Widget(d->widget, "menubar");
     iWidget *navMenu   = findChild_Widget(d->widget, "navbar.menu");
+    if (d->isReading) {
+        /* The current reading bars may stop being ones when moved. */
+        setReadingBarsVisible_Root_(d, iTrue);
+    }
     setFlags_Widget(menuBar, hidden_WidgetFlag, !prefs->menuBar);
     setFlags_Widget(navMenu, hidden_WidgetFlag, prefs->menuBar);
     if (navBar) {
@@ -2771,18 +2776,21 @@ static void updateReadingBarsOnTop_Root_(iRoot *d) {
         order[0] = tabBar;
         order[1] = navBar;
     }
+    /* Bars moved elsewhere (e.g., into the phone's bottom bar) are no longer reading bars. */
+    iWidget *all[4] = { d->bars.navBar, d->bars.tabButtons, order[2], order[3] };
     for (int i = 0; i < 4; i++) {
-        if (order[i]) {
-            setFlags_Widget(order[i], keepOnTop_WidgetFlag, iFalse);
+        if (all[i]) {
+            setFlags_Widget(all[i], keepOnTop_WidgetFlag | noShadowBorder_WidgetFlag, iFalse);
         }
     }
+    if (d->bars.navBar) {
+        /* Hidden bars give their space to the document. */
+        setFlags_Widget(d->bars.navBar, collapse_WidgetFlag, d->isReading && navBar != NULL);
+    }
     for (int i = 0; i < 4; i++) {
-        if (order[i]) {
+        if (order[i] && d->isReading) {
             /* The document draws the shadows of the bars. */
-            setFlags_Widget(order[i], noShadowBorder_WidgetFlag, d->isReading);
-            if (d->isReading) {
-                setFlags_Widget(order[i], keepOnTop_WidgetFlag, iTrue);
-            }
+            setFlags_Widget(order[i], noShadowBorder_WidgetFlag | keepOnTop_WidgetFlag, iTrue);
         }
     }
 }
@@ -2795,8 +2803,6 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
     if (d->isReading == reading) {
         return;
     }
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
     if (!reading) {
         showReadingBars_Root(d, iTrue);
         if (readingBarsTimer_Root_(d)) {
@@ -2807,10 +2813,6 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
         }
     }
     d->isReading = reading;
-    /* Hidden bars give their space to the document. */
-    if (navBar) {
-        setFlags_Widget(navBar, collapse_WidgetFlag, reading);
-    }
     updateReadingBarsOnTop_Root_(d);
     if (reading) {
         showReadingBars_Root(d, iTrue);
@@ -2914,9 +2916,24 @@ static void finishHidingReadingBars_Root_(void *ptr) {
     refresh_Widget(d->widget);
 }
 
+/* A sheet dialog (e.g., Settings) is open over the document. */
+static iBool isSheetOpen_Root_(const iRoot *d) {
+    iConstForEach(ObjectList, i, children_Widget(d->widget)) {
+        const iWidget *child = i.object;
+        if (isVisible_Widget(child) && child->flags & focusRoot_WidgetFlag &&
+            (child->flags & mouseModal_WidgetFlag || child->flags2 & fadeBackground_WidgetFlag2)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 void showReadingBars_Root(iRoot *d, iBool show) {
     if (!d->isReading) {
         return;
+    }
+    if (show && isSheetOpen_Root_(d)) {
+        show = iFalse; /* not drawn over sheets */
     }
     const iBool animate = prefs_App()->uiAnimations && d->areReadingBarsHidden == show;
     d->areReadingBarsHidden = !show;

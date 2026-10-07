@@ -1230,6 +1230,9 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
     }
     const iBool isIncoming = (flags & incoming_TransitionFlag) != 0;
     const int   dir        = flags & dirMask_TransitionFlag;
+    if (isIncoming && sheet->root && parent_Widget(sheet) == sheet->root->widget) {
+        showReadingBars_Root(sheet->root, iFalse);
+    }
     if (!isUsingPanelLayout_Mobile()) {
         if (prefs_App()->uiAnimations) {
             setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
