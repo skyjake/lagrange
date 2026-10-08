@@ -1003,16 +1003,21 @@ static void check_Sync_(iSync *d, iBool isBookCheck) {
     start_Sync_(d, iFalse);
 }
 
-static void createIdentity_Sync_(void) {
+static void createIdentity_Sync_(const iString *name) {
     iDate until;
     initCurrent_Date(&until);
     until.year += 20;
+    iString *commonName = collect_String(copy_String(name));
+    trim_String(commonName);
+    if (isEmpty_String(commonName)) {
+        setCStr_String(commonName, cstr_Lang("sync.identity.name"));
+    }
     iString *empty = collectNew_String();
     iGmIdentity *ident = newIdentity_GmCerts(certs_App(),
                                              0,
                                              ed25519_TlsCertificateKeyType,
                                              until,
-                                             collectNewCStr_String(cstr_Lang("sync.identity.name")),
+                                             commonName,
                                              empty, empty, empty, empty, empty);
     if (!ident) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.sync.failed}",
@@ -1175,7 +1180,18 @@ iBool handleCommand_Sync(const char *cmd) {
         return iTrue;
     }
     if (equal_Command(cmd, "sync.newidentity")) {
-        createIdentity_Sync_();
+        if (suffixPtr_Command(cmd, "value")) {
+            createIdentity_Sync_(collect_String(suffix_Command(cmd, "value")));
+        }
+        else {
+            makeValueInput_Widget(get_Root()->widget,
+                                  collectNewCStr_String(cstr_Lang("sync.identity.name")),
+                                  uiHeading_ColorEscape "${heading.sync.newidentity}",
+                                  "${dlg.sync.newidentity}\n\n" uiTextDim_ColorEscape
+                                  "${dlg.sync.newidentity.info}",
+                                  uiTextAction_ColorEscape "${dlg.newident.create}",
+                                  "sync.newidentity");
+        }
         return iTrue;
     }
     return iFalse;

@@ -312,6 +312,19 @@ static void updateSyncIdentityButton_(iWidget *d, const char *fingerprint) {
         button, ident ? cstr_String(name_GmIdentity(ident)) : "${prefs.sync.identity.none}");
 }
 
+static void preselectSyncIdentity_(void) {
+    /* A single sync-compatible identity is presumably meant for syncing. */
+    if (!isEmpty_String(&prefs_App()->strings[syncIdentity_PrefsString])) {
+        return;
+    }
+    const iPtrArray *idents = listIdentities_GmCerts(certs_App(), isSyncIdentity_, NULL);
+    if (size_PtrArray(idents) == 1) {
+        const iGmIdentity *ident = constAt_PtrArray(idents, 0);
+        postCommandf_App("sync.identity fp:%s",
+                         cstrCollect_String(hexEncode_Block(&ident->fingerprint)));
+    }
+}
+
 static void updateSyncStatus_(iWidget *d) {
     iLabelWidget *status = findChild_Widget(d, "prefs.sync.status");
     if (status) {
@@ -1494,6 +1507,7 @@ void showPreferences_Widget(const char *cmd) {
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.sync.interval"),
                                         format_CStr(".set arg:%d", prefs->syncInterval));
     updateSyncIdentityButton_(dlg, cstr_String(&prefs->strings[syncIdentity_PrefsString]));
+    preselectSyncIdentity_();
     if (findChild_Widget(dlg, "prefs.sync.identity")) {
         setMenuUpdateItemsFunc_Widget(
             dropdownMenu_Widget(findChild_Widget(dlg, "prefs.sync.identity")), syncIdentityItems_);

@@ -3383,7 +3383,16 @@ msgid "sync.busy.sitespec"
 msgstr "Site settings cannot be edited while syncing. Please try again in a moment."
 
 msgid "sync.identity.name"
-msgstr "Lagrange Sync"
+msgstr "Sync"
+
+msgid "heading.sync.newidentity"
+msgstr "New Sync Identity"
+
+msgid "dlg.sync.newidentity"
+msgstr "Enter a name for the new sync identity. Use the same identity on all your devices."
+
+msgid "dlg.sync.newidentity.info"
+msgstr "The identity uses an Ed25519 key, as required for syncing. It is recommended to only use it for syncing, and not for signing in to sites."
 
 msgid "sync.identity.notes"
 msgstr "Used for syncing user data between devices"
