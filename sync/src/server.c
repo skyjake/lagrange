@@ -169,9 +169,9 @@ static void respondInfo_Handler_(iHandler *d, iTlsConnection *conn) {
         appendCStr_String(page, "No client certificate.\n");
     }
     else {
-        appendFormat_String(page, "Certificate fingerprint: %s\n", cstr_String(&d->fingerprint));
+        appendFormat_String(page, "Certificate fingerprint:\n%s\n\n", cstr_String(&d->fingerprint));
         if (!d->isEd25519) {
-            appendCStr_String(page, "This is not an Ed25519 certificate; it cannot be used for syncing.\n");
+            appendCStr_String(page, "\u26a0 This is not an Ed25519 certificate. It cannot be used for syncing.\n");
         }
         else if (!isAllowed_Storage(d->storage, &d->fingerprint)) {
             appendCStr_String(page, "This certificate is not authorized for syncing.\n");
@@ -180,8 +180,8 @@ static void respondInfo_Handler_(iHandler *d, iTlsConnection *conn) {
             uint64_t gen  = 0;
             iBlock  *data = load_Storage(d->storage, &d->fingerprint, &gen);
             if (data) {
-                appendFormat_String(page, "Stored: %zu bytes (generation %llu)\n",
-                                    size_Block(data), (unsigned long long) gen);
+                appendFormat_String(page, "Stored: %.1f KB (generation %llu)\n",
+                                    size_Block(data) / 1024.0f, (unsigned long long) gen);
                 delete_Block(data);
             }
             else {
