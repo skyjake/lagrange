@@ -294,6 +294,31 @@ iWidget *makeSnippetCreation_Widget(void) {
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iWidget *makeSyncIdentityCreation_Widget(void) {
+    iWidget *dlg = makeValueInput_Widget(get_Root()->widget,
+                                         collectNewCStr_String(cstr_Lang("sync.identity.name")),
+                                         uiHeading_ColorEscape "${heading.sync.newidentity}",
+                                         "${dlg.sync.newidentity}",
+                                         uiTextAction_ColorEscape "${dlg.newident.create}",
+                                         "sync.newidentity");
+    iInputWidget *input = findChild_Widget(dlg, "input");
+    setSelectAllOnFocus_InputWidget(input, iTrue);
+    /* The note goes below the input field. */
+    const size_t  pos  = indexOfChild_Widget(dlg, input);
+    iLabelWidget *info = new_LabelWidget(uiTextDim_ColorEscape "${dlg.sync.newidentity.info}", NULL);
+    setWrap_LabelWidget(info, iTrue);
+    insertChildAfterFlags_Widget(dlg,
+                                 iClob(info),
+                                 pos,
+                                 frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                                     fixedHeight_WidgetFlag);
+    insertChildAfter_Widget(dlg, iClob(makePadding_Widget(gap_UI)), pos);
+    /* The first pass wraps the note, the second lays out the dialog. */
+    arrange_Widget(dlg);
+    arrange_Widget(dlg);
+    return dlg;
+}
+
 iWidget *makeIdentityCreation_Widget(void) {
     const iMenuItem actions[] = { { "${dlg.newident.more}", 0, 0, "ident.showmore" },
                                   { "---" },

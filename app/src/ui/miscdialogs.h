@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Widget)
 
 iWidget *   makeIdentityCreation_Widget     (void);
+iWidget *   makeSyncIdentityCreation_Widget (void); /* posts `sync.newidentity value:` */
 iWidget *   makeSiteSpecificSettings_Widget (const iString *url);
 iWidget *   makeSnippetCreation_Widget      (void);
 iWidget *   makeGlyphFinder_Widget          (void);

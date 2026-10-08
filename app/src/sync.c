@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "feeds.h"
 #include "ui/command.h"
 #include "ui/dialog.h"
+#include "ui/miscdialogs.h"
 #include "ui/root.h"
 #include "ui/widget.h"
 #include "ui/window.h"
@@ -1184,13 +1185,7 @@ iBool handleCommand_Sync(const char *cmd) {
             createIdentity_Sync_(collect_String(suffix_Command(cmd, "value")));
         }
         else {
-            makeValueInput_Widget(get_Root()->widget,
-                                  collectNewCStr_String(cstr_Lang("sync.identity.name")),
-                                  uiHeading_ColorEscape "${heading.sync.newidentity}",
-                                  "${dlg.sync.newidentity}\n\n" uiTextDim_ColorEscape
-                                  "${dlg.sync.newidentity.info}",
-                                  uiTextAction_ColorEscape "${dlg.newident.create}",
-                                  "sync.newidentity");
+            makeSyncIdentityCreation_Widget();
         }
         return iTrue;
     }
