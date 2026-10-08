@@ -199,9 +199,14 @@ static void respondDownload_Handler_(iHandler *d, iTlsConnection *conn, uint64_t
         respond_Handler_(d, conn, 40, "unchanged", NULL);
     }
     else {
-        respond_Handler_(d, conn, 20,
-                         format_CStr("application/octet-stream; gen=%llu", (unsigned long long) gen),
-                         data ? data : collect_Block(new_Block(0)));
+        /* The generation precedes the data, since Gemini does not allow custom MIME
+           parameters. */
+        iBlock *body = collect_Block(
+            newCStr_Block(format_CStr("%llu\n", (unsigned long long) gen)));
+        if (data) {
+            append_Block(body, data);
+        }
+        respond_Handler_(d, conn, 20, "application/lagrange-sync", body);
     }
     delete_Block(data);
 }
@@ -211,8 +216,9 @@ static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
     uint64_t newGen = 0;
     switch (store_Storage(d->storage, &d->fingerprint, d->uploadGen, &d->received, &newGen)) {
         case ok_StoreResult:
-            respond_Handler_(d, conn, 20,
-                             format_CStr("text/plain; gen=%llu", (unsigned long long) newGen), NULL);
+            respond_Handler_(d, conn, 20, "text/plain",
+                             collect_Block(newCStr_Block(
+                                 format_CStr("%llu\n", (unsigned long long) newGen))));
             break;
         case stale_StoreResult:
             respond_Handler_(d, conn, 40, "stale", NULL);

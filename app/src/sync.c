@@ -616,9 +616,23 @@ static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *bo
     return ok;
 }
 
-static uint64_t generationFromMeta_(const iString *meta) {
-    const size_t pos = indexOfCStr_String(meta, "gen=");
-    return pos == iInvalidPos ? 0 : strtoull(cstr_String(meta) + pos + 4, NULL, 10);
+static const char *mimeType_Sync_ = "application/lagrange-sync";
+
+static iBool takeGeneration_(iBlock *body, uint64_t *gen_out) {
+    /* The generation is the first line of the response body. */
+    const char *start = constData_Block(body);
+    const char *nl    = memchr(start, '\n', size_Block(body));
+    if (!nl || nl == start) {
+        return iFalse;
+    }
+    for (const char *c = start; c < nl; c++) {
+        if (*c < '0' || *c > '9') {
+            return iFalse;
+        }
+    }
+    *gen_out = strtoull(start, NULL, 10);
+    remove_Block(body, 0, nl + 1 - start);
+    return iTrue;
 }
 
 static void setServerError_Sync_(iSync *d, int status, const iString *meta) {
@@ -644,7 +658,11 @@ static iSyncData *download_Sync_(iSync *d) {
         setServerError_Sync_(d, status, meta);
         return NULL;
     }
-    const uint64_t gen = generationFromMeta_(meta);
+    uint64_t gen = 0;
+    if (!equal_CStr(cstr_String(meta), mimeType_Sync_) || !takeGeneration_(body, &gen)) {
+        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.response")));
+        return NULL;
+    }
     if (gen < d->base->generation) {
         set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.rollback")));
         return NULL;
@@ -692,7 +710,10 @@ static enum iSyncUploadResult upload_Sync_(iSync *d, iSyncData *data, uint64_t b
         return failed_SyncUploadResult;
     }
     if (status == 20) {
-        data->generation = generationFromMeta_(meta);
+        if (!takeGeneration_(body, &data->generation)) {
+            set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.response")));
+            return failed_SyncUploadResult;
+        }
         return ok_SyncUploadResult;
     }
     if (status == 40 && equal_CStr(cstr_String(meta), "stale")) {
