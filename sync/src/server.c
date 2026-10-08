@@ -430,7 +430,10 @@ iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
     setMaxConnections_TlsService(sv, maxConnections_);
     iConnect(TlsService, sv, accepted, server, accepted_Server_);
     iBool ok = iFalse;
-    if (!setCertificate_TlsService(sv, cert)) {
+    if (keyType_TlsCertificate(cert) != ed25519_TlsCertificateKeyType) {
+        fprintf(stderr, "the server certificate must use an Ed25519 key\n");
+    }
+    else if (!setCertificate_TlsService(sv, cert)) {
         fprintf(stderr, "invalid server certificate or private key\n");
     }
     else if (!open_TlsService(sv)) {

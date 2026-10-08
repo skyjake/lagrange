@@ -67,6 +67,8 @@ static const double retryDelay_Sync_       = 15;      /* seconds; when blocked *
 static const double failureBackoff_Sync_   = 10 * 60; /* seconds */
 static const double bookCheckInterval_Sync_ = 5 * 60; /* seconds */
 static const int    maxAttempts_Sync_      = 3;
+static const double requestTimeout_Sync_   = 30;      /* seconds */
+static const double minTransferRate_Sync_  = 10000;   /* bytes per second */
 
 static const char *typeNames_Sync_[max_SyncDataType] = {
     "bookmarks", "books", "visited", "identities", "trusted", "snippets"
@@ -542,13 +544,23 @@ static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *bo
     setContent_TlsRequest(req, content);
     setCertificate_TlsRequest(req, d->cert);
     submit_TlsRequest(req);
-    waitForFinished_TlsRequest(req);
+    /* Uploads may take a while on slow connections. */
+    const double timeout = requestTimeout_Sync_ + size_Block(content) / minTransferRate_Sync_;
     iBool ok = iFalse;
-    if (!isVerified_TlsRequest(req)) {
+    if (!waitForFinishedTimeout_TlsRequest(req, timeout)) {
+        cancel_TlsRequest(req);
+        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.timeout")));
+    }
+    else if (!isVerified_TlsRequest(req)) {
         set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.untrusted")));
     }
     else if (status_TlsRequest(req) == error_TlsRequestStatus) {
         format_String(&d->error, "%s", cstr_String(errorMessage_TlsRequest(req)));
+    }
+    else if (!serverCertificate_TlsRequest(req) ||
+             keyType_TlsCertificate(serverCertificate_TlsRequest(req)) !=
+                 ed25519_TlsCertificateKeyType) {
+        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.servercert")));
     }
     else {
         iBlock *response = readAll_TlsRequest(req);

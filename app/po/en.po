@@ -3367,6 +3367,12 @@ msgstr "Used for syncing user data between devices"
 msgid "sync.error.untrusted"
 msgstr "The sync server's certificate is not trusted."
 
+msgid "sync.error.timeout"
+msgstr "The sync server did not respond in time."
+
+msgid "sync.error.servercert"
+msgstr "The sync server's certificate does not use an Ed25519 key."
+
 msgid "sync.error.response"
 msgstr "Invalid response from the sync server."
 

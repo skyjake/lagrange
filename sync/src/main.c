@@ -37,7 +37,7 @@ static const char *usage_ =
     "  -d, --dir DIR        Data directory (default: current directory)\n"
     "  -p, --port N         Listening port (default: 1965)\n"
     "  -h, --host NAME      Host name for a generated server certificate\n"
-    "      --cert FILE      Server certificate (PEM); generated if missing\n"
+    "      --cert FILE      Server certificate (PEM, Ed25519); generated if missing\n"
     "      --key FILE       Server private key (PEM); generated if missing\n"
     "      --max-size N     Maximum stored data per account in bytes (default: 1048576)\n"
     "      --allow FILE     Allowed client certificate fingerprints (SHA-256, hex), one per\n"
@@ -63,7 +63,7 @@ static iBool generateCertificate_(const iServerConfig *cfg, const iString *host)
         { 0, NULL }
     };
     iTlsCertificate *cert =
-        newSelfSigned_TlsCertificate(ecdsaP256_TlsCertificateKeyType, 0, until, names);
+        newSelfSigned_TlsCertificate(ed25519_TlsCertificateKeyType, 0, until, names);
     if (!cert) {
         return iFalse;
     }
