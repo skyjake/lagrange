@@ -89,13 +89,14 @@ iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags,
                                              const iString *userId, const iString *domain,
                                              const iString *org, const iString *country);
 
-void                importIdentity_GmCerts  (iGmCerts *, iTlsCertificate *cert,
+iGmIdentity *       importIdentity_GmCerts  (iGmCerts *, iTlsCertificate *cert,
                                              const iString *notes); /* takes ownership */
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
 void                saveIdentities_GmCerts  (const iGmCerts *);
 void                serialize_GmCerts       (const iGmCerts *, iStream *trusted, iStream *identsMeta);
 void                deserializeTrusted_GmCerts      (iGmCerts *, iStream *ins, enum iImportMethod method);
 iBool               deserializeIdentities_GmCerts   (iGmCerts *, iStream *ins, enum iImportMethod method);
+void                replaceTrusted_GmCerts  (iGmCerts *, iStream *ins); /* also saves */
 
 const iString *     certificatePath_GmCerts (const iGmCerts *, const iGmIdentity *identity);
 

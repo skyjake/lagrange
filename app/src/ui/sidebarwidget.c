@@ -694,6 +694,7 @@ static iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
 
 static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     /* Lists the books on the shelf. Returns False if there are none. */
+    postCommand_App("sync.check book:1"); /* reading positions may have changed elsewhere */
     const iGempub *current   = gempub_SidebarWidget_(d);
     const iString *currentId = current ? id_Books(current) : NULL;
     const iPtrArray *books = list_Books(d->shelfSort);
@@ -2955,6 +2956,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (findWidget_Root(dlgId)) {
                     return iTrue;
                 }
+                if (isBlockedBySync_BookmarkDialogs()) {
+                    return iTrue;
+                }
                 iWidget *dlg =
                     makeBookmarkEditor_Widget(isFolder_Bookmark(bm) ? id_Bookmark(bm) : 0, iTrue);
                 setId_Widget(dlg, dlgId);
@@ -2995,6 +2999,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 iBookmark  *bm       = get_Bookmarks(bookmarks_App(), item->id);
                 const iBool isRemote = (bm->flags & remote_BookmarkFlag) != 0;
                 iChar       icon     = isRemote ? 0x1f588 : bm->icon;
+                if (isBlockedBySync_BookmarkDialogs()) {
+                    return iTrue;
+                }
                 iWidget    *dlg      = makeBookmarkCreation_Widget(&bm->url, &bm->title, icon);
                 setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 if (!isRemote) {
@@ -3181,6 +3188,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
+                    if (isBlockedBySync_BookmarkDialogs()) {
+                        return iTrue;
+                    }
                     makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
                     if (deviceType_App() == desktop_AppDeviceType) {
                         postCommand_App("focus.set id:bmed.title");
@@ -3194,6 +3204,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         return iTrue;
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.edit")) {
+                        if (isBlockedBySync_BookmarkDialogs()) {
+                            return iTrue;
+                        }
                         iWidget *dlg = makeFeedSettings_Widget(id_Bookmark(feedBookmark));
                         return iTrue;
                     }
@@ -3244,6 +3257,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "sub.edit")) {
+                    if (isBlockedBySync_BookmarkDialogs()) {
+                        return iTrue;
+                    }
                     makeFeedSettings_Widget(item->id);
                     return iTrue;
                 }
@@ -3349,6 +3365,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "history.addbookmark")) {
             const iSidebarItem *item = d->contextItem;
             if (!isEmpty_String(&item->url)) {
+                if (isBlockedBySync_BookmarkDialogs()) {
+                    return iTrue;
+                }
                 makeBookmarkCreation_Widget(
                     &item->url,
                     collect_String(newRange_String(urlHost_String(&item->url))),
@@ -3385,6 +3404,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (item && !isEmpty_String(&item->url)) {
                 const iDocumentWidget *doc = findWidget_App(cstr_String(&item->meta));
                 if (!doc) return iTrue; /* something's stale? */
+                if (isBlockedBySync_BookmarkDialogs()) {
+                    return iTrue;
+                }
                 makeBookmarkCreation_Widget(&item->url,
                                             bookmarkTitle_DocumentWidget(doc),
                                             siteIcon_GmDocument(document_DocumentWidget(doc)));

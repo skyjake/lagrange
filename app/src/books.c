@@ -23,7 +23,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "books.h"
 #include "gempub.h"
 #include "gmutil.h"
+#include "sync.h"
 
+#include <lagrange/core.h>
 #include <lagrange/lang.h>
 
 #include <the_Foundation/file.h>
@@ -51,6 +53,8 @@ static void init_Book(iBook *d) {
     d->numChapters = 0;
     d->chapterPos  = 0.0f;
     iZap(d->timestamp);
+    iZap(d->positionTime);
+    iZap(d->openedAt);
 }
 
 static void deinit_Book(iBook *d) {
@@ -174,11 +178,13 @@ void serialize_Books(iStream *outs) {
                                 cstrCollect_String(quote_String(&book->url, iFalse)));
         }
         appendFormat_String(str,
-                            "chapter = %d\nchapters = %d\npos = %f\ntimestamp = %lld\n\n",
+                            "chapter = %d\nchapters = %d\npos = %f\ntimestamp = %lld\n"
+                            "positiontime = %lld\n\n",
                             book->chapter,
                             book->numChapters,
                             book->chapterPos,
-                            (long long) integralSeconds_Time(&book->timestamp));
+                            (long long) integralSeconds_Time(&book->timestamp),
+                            (long long) integralSeconds_Time(&book->positionTime));
         write_Stream(outs, utf8_String(str));
     }
     delete_String(str);
@@ -191,6 +197,7 @@ struct Impl_BooksLoader {
     iBooks            *books;
     enum iImportMethod method;
     iBool              isImport;
+    iBool              isSync; /* synced values replace the old ones */
     iBook             *book;
 };
 
@@ -224,11 +231,11 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
         iReleasePtr(&d->book);
         return;
     }
-    if (isEmpty_String(&old->url)) {
+    if (isEmpty_String(&old->url) || d->isSync) {
         set_String(&old->url, &book->url);
     }
-    if (d->method == all_ImportMethod &&
-        integralSeconds_Time(&book->timestamp) > integralSeconds_Time(&old->timestamp)) {
+    if (d->isSync || (d->method == all_ImportMethod &&
+        integralSeconds_Time(&book->timestamp) > integralSeconds_Time(&old->timestamp))) {
         /* The newer position is kept. */
         set_String(&old->title, &book->title);
         set_String(&old->author, &book->author);
@@ -236,6 +243,7 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
         old->numChapters = book->numChapters;
         old->chapterPos  = book->chapterPos;
         old->timestamp   = book->timestamp;
+        old->positionTime = book->positionTime;
     }
     iReleasePtr(&d->book);
 }
@@ -279,6 +287,9 @@ static void handleKeyValue_BooksLoader_(void *context, const iString *table, con
     else if (!cmp_String(key, "timestamp")) {
         initSeconds_Time(&book->timestamp, num);
     }
+    else if (!cmp_String(key, "positiontime")) {
+        initSeconds_Time(&book->positionTime, num);
+    }
 }
 
 static void deserialize_Books_(iBooks *d, iStream *ins, enum iImportMethod method,
@@ -301,6 +312,19 @@ void deserialize_Books(iStream *ins, enum iImportMethod method) {
     save_Books();
 }
 
+void applySync_Books(iStream *ins) {
+    iBooks *d = books_;
+    lock_Mutex(d->mtx);
+    iBooksLoader loader = { .books = d, .method = all_ImportMethod, .isImport = iTrue, .isSync = iTrue };
+    iTomlParser *toml = new_TomlParser();
+    setHandlers_TomlParser(toml, handleTable_BooksLoader_, handleKeyValue_BooksLoader_, &loader);
+    parse_TomlParser(toml, collect_String(newBlock_String(collect_Block(readAll_Stream(ins)))));
+    delete_TomlParser(toml);
+    iReleasePtr(&loader.book);
+    unlock_Mutex(d->mtx);
+    save_Books();
+}
+
 static void load_Books_(iBooks *d) {
     iFile *f = newCStr_File(concatPath_CStr(cstr_String(&d->saveDir), fileName_Books_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
@@ -316,6 +340,7 @@ void save_Books(void) {
         serialize_Books(stream_File(f));
     }
     iRelease(f);
+    notifyUserDataChanged_Core(books_UserDataType);
 }
 
 const iString *dir_Books(void) {
@@ -537,6 +562,20 @@ void update_Books(const iGempub *gempub, const iString *path) {
     save_Books();
 }
 
+void beginReading_Books(const iGempub *gempub) {
+    iBooks *d = books_;
+    iGuardMutex(d->mtx, initCurrent_Time(&bookForGempub_Books_(d, gempub)->openedAt));
+}
+
+static iBool isPositionUpToDate_Book_(const iBook *d) {
+    /* Reading that began before syncing may be based on an outdated position. */
+    if (!isValid_Time(&d->openedAt) || !isEnabled_Sync()) {
+        return iTrue;
+    }
+    const iTime checked = lastCheckTime_Sync();
+    return cmp_Time(&checked, &d->openedAt) > 0;
+}
+
 void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, float pos) {
     iBooks *d = books_;
     lock_Mutex(d->mtx);
@@ -548,6 +587,9 @@ void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, floa
         book->numChapters = numChapters;
         book->chapterPos  = pos;
         initCurrent_Time(&book->timestamp);
+        if (isPositionUpToDate_Book_(book)) {
+            book->positionTime = book->timestamp;
+        }
     }
     unlock_Mutex(d->mtx);
     if (isChanged) {

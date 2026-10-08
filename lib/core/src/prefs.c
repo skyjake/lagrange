@@ -100,6 +100,7 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [allowSchemeChangingRedirect_PrefsBool] = { "prefs.redirect.allowscheme" },
     [preferIPv6_PrefsBool]              = { "prefs.ipv6" },
     [useProxy_PrefsBool]                = { "prefs.socks" },
+    [sync_PrefsBool]                    = { "prefs.sync", NULL, "sync.prefs.changed" },
     /* Style */
     [fontSmoothing_PrefsBool]           = { "prefs.font.smooth" },
     [colorEmoji_PrefsBool]              = { "prefs.font.coloremoji" },
@@ -175,6 +176,8 @@ static const iPrefsStringSpec stringSpecs_[max_PrefsString] = {
     [socksServer_PrefsString]    = { "proxy.socks", "address", "noupdate:1", "prefs.socks.server" },
     [socksUser_PrefsString]      = { "proxy.socks", "user", "noupdate:1", "prefs.socks.user" },
     [socksPassword_PrefsString]  = { "proxy.socks", "password", NULL, "prefs.socks.password" },
+    [syncServer_PrefsString]     = { "sync.server", "url", NULL, "prefs.sync.server" },
+    [syncIdentity_PrefsString]   = { "sync.identity", "fp" },
     /* Style */
     [uiFont_PrefsString]         = { "font.set", "ui", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
 };
@@ -287,6 +290,7 @@ void init_Prefs(iPrefs *d) {
     d->promptPosition                         = inline_InputPromptPosition;
     d->pageTurn                               = curl_PageTurnAnimation;
     d->feedInterval                           = fourHours_FeedInterval;
+    d->syncInterval                           = 24;
     d->time24h                                = iTrue;
     d->returnKey                              = default_ReturnKeyBehavior;
     d->retainTabs                             = iTrue;

@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/snippets.h"
+#include "lagrange/core.h"
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
@@ -144,6 +145,7 @@ iBool set_Snippets(const iString *name, const iString *content) {
         remove_StringHash(d->hash, name);
     }
     unlock_Mutex(d->mtx);
+    notifyUserDataChanged_Core(snippets_UserDataType);
     return iTrue;
 }
 

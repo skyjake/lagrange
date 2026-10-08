@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmutil.h>
 #include <lagrange/snippets.h>
 #include "snippetwidget.h"
+#include "sync.h"
 #include "touch.h"
 #include "scopedprefs.h"
 #include "sliderwidget.h"
@@ -139,6 +140,7 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
         "prefs.socks.server",
         "prefs.socks.user",
         "prefs.socks.password",
+        "prefs.sync.server",
     };
     iWidget *tabs = findChild_Widget(prefs, "prefs.tabs");
     tabs->rect.size = zero_I2();
@@ -244,6 +246,41 @@ static iArray *gamepadButtonInfo_(void) {
 
 #endif /* LAGRANGE_USE_GAMEPAD */
 
+static iBool isSyncIdentity_(void *context, const iGmIdentity *ident) {
+    iUnused(context);
+    return ~ident->flags & temporary_GmIdentityFlag && hasPrivateKey_TlsCertificate(ident->cert) &&
+           keyType_TlsCertificate(ident->cert) == ed25519_TlsCertificateKeyType;
+}
+
+static const iArray *syncIdentityItems_(iWidget *menu) {
+    iUnused(menu);
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBack_Array(items, &(iMenuItem){ "${prefs.sync.identity.none}", 0, 0, "sync.identity fp:" });
+    appendIdentities_MenuItem(items, "sync.identity", isSyncIdentity_);
+    return items;
+}
+
+static void updateSyncIdentityButton_(iWidget *d, const char *fingerprint) {
+    iLabelWidget *button = findChild_Widget(d, "prefs.sync.identity");
+    if (!button) {
+        return;
+    }
+    const iGmIdentity *ident =
+        *fingerprint ? findIdentity_GmCerts(certs_App(),
+                                            collect_Block(hexDecode_Rangecc(range_CStr(fingerprint))))
+                     : NULL;
+    updateTextCStr_LabelWidget(button, ident ? cstr_String(name_GmIdentity(ident))
+                                             : "${prefs.sync.identity.none}");
+}
+
+static void updateSyncStatus_(iWidget *d) {
+    iLabelWidget *status = findChild_Widget(d, "prefs.sync.status");
+    if (status) {
+        updateText_LabelWidget(status, collect_String(statusText_Sync()));
+        arrange_Widget(parent_Widget(status));
+    }
+}
+
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
     /* clang-format off */
@@ -290,6 +327,17 @@ iWidget *makePreferences_Widget(void) {
         { formatCStrs_Lang("num.hours.n", 4), 0, 0, format_CStr("feedinterval.set arg:%d", fourHours_FeedInterval) },
         { formatCStrs_Lang("num.hours.n", 8), 0, 0, format_CStr("feedinterval.set arg:%d", eightHours_FeedInterval) },
         { "${reload.onceperday}", 0, 0, format_CStr("feedinterval.set arg:%d", oneDay_FeedInterval) },
+        { NULL }
+    };
+    const iMenuItem syncIntervalItems[] = {
+        { "${prefs.sync.interval.manual}", 0, 0, "syncinterval.set arg:0" },
+        { formatCStrs_Lang("num.hours.n", 1), 0, 0, "syncinterval.set arg:1" },
+        { formatCStrs_Lang("num.hours.n", 6), 0, 0, "syncinterval.set arg:6" },
+        { "${reload.onceperday}", 0, 0, "syncinterval.set arg:24" },
+        { NULL }
+    };
+    const iMenuItem syncIdentityItems[] = {
+        { "${prefs.sync.identity.none}", 0, 0, "sync.identity fp:" },
         { NULL }
     };
     /* clang-format on */
@@ -472,6 +520,21 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { NULL }
         };
+        const iMenuItem syncPanelItems[] = {
+            { "title id:heading.prefs.sync" },
+            { "padding arg:0.667" },
+            { "toggle id:prefs.sync" },
+            { "label text:${prefs.sync.info}" },
+            { "padding" },
+            { "input id:prefs.sync.server url:1 hint:hint.sync.server" },
+            { "dropdown id:prefs.sync.identity", 0, 0, (const void *) syncIdentityItems },
+            { "button text:" add_Icon " ${prefs.sync.newidentity}", 0, 0, "sync.newidentity" },
+            { "dropdown id:prefs.sync.interval", 0, 0, (const void *) syncIntervalItems },
+            { "padding" },
+            { "label id:prefs.sync.status text:" },
+            { "button text:" reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", 0, 0, "sync.now" },
+            { NULL }
+        };
         const iMenuItem identityPanelItems[] = {
             { "title id:sidebar.identities" },
             { "padding arg:0.667" },
@@ -569,8 +632,10 @@ iWidget *makePreferences_Widget(void) {
             { format_CStr("panel noscroll:1 iconcolor:%d id:sidebar.identities text:" person_Icon
                           " ${sidebar.identities}",
                           orange_ColorId), 0, 0, (const void *) identityPanelItems },
+            { format_CStr("panel icon:0x1f503 iconcolor:%d id:heading.prefs.sync", orange_ColorId),
+              0, 0, (const void *) syncPanelItems },
             { "padding" },
-        }, 9);
+        }, 10);
         appendPanels_ScopedPrefs(mainItems, iTrue, green_ColorId);
         appendToPanel_(mainItems, "heading.prefs.typography", (iMenuItem[]){
             { "toggle id:prefs.font.warnmissing" },
@@ -909,6 +974,53 @@ iWidget *makePreferences_Widget(void) {
         setSensitiveContent_InputWidget(field, iTrue);
         setHint_InputWidget(field, "${hint.optional}");
     }
+    /* Sync. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   reload_Icon " ${heading.prefs.sync}",
+                                                   cyan_ColorId,
+                                                   0,
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.sync");
+        addDialogToggle_Widget(headings, values, "${prefs.sync}", "prefs.sync");
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChildFlags_Widget(values,
+                             iClob(new_LabelWidget(uiTextDim_ColorEscape "${prefs.sync.info}", NULL)),
+                             frameless_WidgetFlag);
+        addDialogPadding_Widget(headings, values);
+        iInputWidget *server = new_InputWidget(0);
+        setHint_InputWidget(server, "${hint.sync.server}");
+        setUrlContent_InputWidget(server, iTrue);
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.sync.server", iClob(server));
+        addDialogDropMenu_Widget(headings,
+                                 values,
+                                 "${prefs.sync.identity}",
+                                 syncIdentityItems,
+                                 iElemCount(syncIdentityItems) - 1,
+                                 "prefs.sync.identity");
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChildFlags_Widget(
+            values,
+            iClob(new_LabelWidget(add_Icon " ${prefs.sync.newidentity}", "sync.newidentity")),
+            0);
+        addDialogDropMenu_Widget(headings,
+                                 values,
+                                 "${prefs.sync.interval}",
+                                 syncIntervalItems,
+                                 iElemCount(syncIntervalItems) - 1,
+                                 "prefs.sync.interval");
+        addDialogPadding_Widget(headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sync.status}")));
+        iLabelWidget *status = new_LabelWidget("", NULL);
+        setId_Widget(as_Widget(status), "prefs.sync.status");
+        addChildFlags_Widget(values, iClob(status), frameless_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChildFlags_Widget(
+            values,
+            iClob(new_LabelWidget(reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}",
+                                  "sync.now")),
+            0);
+    }
     /* Snippets. */ {
         iSnippetWidget *sniped = new_SnippetWidget();
         appendFramelessTabPage_Widget(tabs,
@@ -1204,6 +1316,19 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFeedIntervalButton_(findChild_Widget(d, "prefs.feedinterval"), arg_Command(cmd));
         return iFalse;
     }
+    else if (equal_Command(cmd, "syncinterval.set")) {
+        updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.sync.interval"),
+                                            format_CStr(".set arg:%d", arg_Command(cmd)));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "sync.identity")) {
+        updateSyncIdentityButton_(d, suffixPtr_Command(cmd, "fp"));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "sync.status.changed")) {
+        updateSyncStatus_(d);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "scrollspeed")) {
         updateScrollSpeedSlider_(d, argLabel_Command(cmd, "type"), arg_Command(cmd));
         return iFalse;
@@ -1288,6 +1413,14 @@ void showPreferences_Widget(const char *cmd) {
         updateScrollSpeedSlider_(dlg, type, prefs->smoothScrollSpeed[type]);
     }
     updateFeedIntervalButton_(findChild_Widget(dlg, "prefs.feedinterval"), prefs->feedInterval);
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.sync.interval"),
+                                        format_CStr(".set arg:%d", prefs->syncInterval));
+    updateSyncIdentityButton_(dlg, cstr_String(&prefs->strings[syncIdentity_PrefsString]));
+    if (findChild_Widget(dlg, "prefs.sync.identity")) {
+        setMenuUpdateItemsFunc_Widget(
+            dropdownMenu_Widget(findChild_Widget(dlg, "prefs.sync.identity")), syncIdentityItems_);
+    }
+    updateSyncStatus_(dlg);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&prefs->strings[uiLanguage_PrefsString]));
     updateDropdownSelection_LabelWidget(
         findChild_Widget(dlg, "prefs.returnkey"),

@@ -53,6 +53,8 @@ void    deinit_Feeds            (void);
 void    refresh_Feeds           (void);
 void    setRefreshInterval_Feeds(enum iFeedInterval feedInterval);
 void    refreshFinished_Feeds   (void); /* called on "feeds.refresh.finished" */
+iBool   isRefreshing_Feeds      (void);
+void    remapBookmarkIds_Feeds  (const iArray *idMappings); /* SyncIdMapping elements */
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);
 void    markEntryAsRead_Feeds   (uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead);
 iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUrl);

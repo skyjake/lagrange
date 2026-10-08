@@ -238,6 +238,10 @@ set (SOURCES
     src/misfin.h
     src/periodic.c
     src/periodic.h
+    src/sync.c
+    src/sync.h
+    src/syncdata.c
+    src/syncdata.h
     src/updater.h
     # Multimedia:
     src/media/media.c

@@ -50,6 +50,8 @@ struct Impl_Book {
     int      numChapters;
     float    chapterPos;  /* fraction of the chapter where the visible pages begin */
     iTime    timestamp;   /* last opened or read */
+    iTime    positionTime; /* position last changed while up to date with synced data */
+    iTime    openedAt;    /* runtime only: when the current reading session began */
 };
 
 float           progress_Book       (const iBook *); /* 0...1 of the whole book */
@@ -74,7 +76,9 @@ const iString * sourceUrl_Books     (const iString *path); /* NULL if not on the
 const iPtrArray*list_Books          (enum iBooksSortOrder); /* downloaded or downloadable */
 
 void            update_Books        (const iGempub *, const iString *path);
+void            beginReading_Books  (const iGempub *);
 void            setPosition_Books   (const iGempub *, int chapter, int numChapters, float pos);
+void            applySync_Books     (iStream *ins); /* replaces everything except local files */
 void            setSource_Books     (const iString *id, const iString *url);
 const iString * add_Books           (const iBlock *gempubData, const iString *fileName,
                                      const iString *replacePath,

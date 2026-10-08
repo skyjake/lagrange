@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include <lagrange/gmrequest.h>
 #include "app.h"
+#include "sync.h"
 
 #include <lagrange/core.h>
 
@@ -638,6 +639,10 @@ iBool updateUrls_Bookmark(iBookmarks *d, const iString *oldUrl, const iString *n
     return changed;
 }
 
+void reserveIds_Bookmarks(iBookmarks *d, uint32_t maxUsedId) {
+    iGuardMutex(d->mtx, d->idEnum = iMax(d->idEnum, (int) maxUsedId));
+}
+
 void setRecentFolder_Bookmarks(iBookmarks *d, uint32_t folderId) {
     iBookmark *bm = get_Bookmarks(d, folderId);
     if (bm && isFolder_Bookmark(bm)) {
@@ -924,29 +929,39 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
     free(userData_Object(req));
     iRelease(req);
     if (isEmpty_PtrArray(&d->remoteRequests)) {
-        notify_App("bookmarks.changed");
+        notify_App("bookmarks.changed remote:1");
     }
 }
 
+static void discardRemote_Bookmarks_(iBookmarks *d) {
+    size_t numRemoved = 0;
+    iForEach(Hash, i, &d->bookmarks) {
+        iBookmark *bm = (iBookmark *) i.value;
+        if (bm->flags & remote_BookmarkFlag) {
+            remove_HashIterator(&i);
+            delete_Bookmark(bm);
+            numRemoved++;
+        }
+    }
+    if (numRemoved) {
+        notify_App("bookmarks.changed remote:1");
+    }
+}
+
+void discardRemote_Bookmarks(iBookmarks *d) {
+    iGuardMutex(d->mtx, discardRemote_Bookmarks_(d));
+}
+
+iBool isFetchingRemote_Bookmarks(const iBookmarks *d) {
+    return !isEmpty_PtrArray(&d->remoteRequests);
+}
+
 void fetchRemote_Bookmarks(iBookmarks *d) {
-    if (!isEmpty_PtrArray(&d->remoteRequests)) {
-        return; /* Already ongoing. */
+    if (!isEmpty_PtrArray(&d->remoteRequests) || isRunning_Sync()) {
+        return; /* Already ongoing, or will be fetched after syncing. */
     }
     lock_Mutex(d->mtx);
-    /* Remove all current remote bookmarks. */ {
-        size_t numRemoved = 0;
-        iForEach(Hash, i, &d->bookmarks) {
-            iBookmark *bm = (iBookmark *) i.value;
-            if (bm->flags & remote_BookmarkFlag) {
-                remove_HashIterator(&i);
-                delete_Bookmark(bm);
-                numRemoved++;
-            }
-        }
-        if (numRemoved) {
-            notify_App("bookmarks.changed");
-        }
-    }
+    discardRemote_Bookmarks_(d);
     iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, isRemoteSource_Bookmark_, NULL)) {
         const iBookmark *bm   = i.ptr;
         iGmRequest *     req  = new_GmRequest(certs_App());

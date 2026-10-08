@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "render/text.h"
 #include "root.h"
+#include "sync.h"
 #include "util.h"
 #include "widget.h"
 
@@ -83,6 +84,15 @@ void updateBookmarkEditorFieldWidths_Widget(iWidget *d) {
             widget->rect.size.x = newWidth;
         }
     }
+}
+
+iBool isBlockedBySync_BookmarkDialogs(void) {
+    /* Bookmark IDs may change when the synced data is applied. */
+    if (isRunning_Sync()) {
+        makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.sync}", "${sync.busy.bookmarks}");
+        return iTrue;
+    }
+    return iFalse;
 }
 
 iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {

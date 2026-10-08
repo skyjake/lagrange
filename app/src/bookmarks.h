@@ -101,7 +101,11 @@ iBool       updateUrls_Bookmark         (iBookmarks *, const iString *oldUrl, co
 void        setRecentFolder_Bookmarks   (iBookmarks *, uint32_t folderId);
 void        sort_Bookmarks              (iBookmarks *, uint32_t parentId, iBookmarksCompareFunc cmp);
 
+void        reserveIds_Bookmarks        (iBookmarks *, uint32_t maxUsedId);
+
 void        fetchRemote_Bookmarks       (iBookmarks *);
+iBool       isFetchingRemote_Bookmarks  (const iBookmarks *);
+void        discardRemote_Bookmarks     (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
 iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);

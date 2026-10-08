@@ -634,6 +634,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
 #endif
             postRefreshAllWindows_App();
             setRefreshInterval_Feeds(d->prefs.feedInterval);
+            postCommand_App("sync.check");
             if (d->isTextInputActive) {
                 SDL_StartTextInput(as_Window(d->window)->win);
             }

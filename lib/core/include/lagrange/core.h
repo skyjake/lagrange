@@ -34,3 +34,18 @@ void            setDataDir_Core (const char *path); /* base directory of "local:
 const iString * dataDir_Core    (void); /* absolute; empty if not set */
 
 void    commitFile_Core (const char *path, const char *tempPathWithNewContents); /* latter will be removed */
+
+/* User data change notifications, for syncing. May be called in any thread. */
+enum iUserDataType {
+    bookmarks_UserDataType,
+    books_UserDataType,
+    visited_UserDataType,
+    identities_UserDataType,
+    trusted_UserDataType,
+    snippets_UserDataType,
+};
+
+typedef void (*iUserDataChangedFunc)(enum iUserDataType);
+
+void    setUserDataChangedFunc_Core (iUserDataChangedFunc func);
+void    notifyUserDataChanged_Core  (enum iUserDataType);

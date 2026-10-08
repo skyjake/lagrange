@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "books.h"
 #include "feeds.h"
+#include "sync.h"
 #include "fontpack.h"
 #include <lagrange/core.h>
 #include <lagrange/gmcerts.h>
@@ -640,6 +641,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         notify_App("~bookmarks.changed");
     }
     init_Feeds(dataDir_App_());
+    init_Sync(dataDir_App_());
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
@@ -751,6 +753,7 @@ void deinit_App_(iApp *d) {
     deinit_PtrArray(&d->mainWindows);
     deinit_PtrArray(&d->closedWindows);
     d->window = NULL;
+    deinit_Sync();
     deinit_Feeds();
     save_Keys(dataDir_App_());
     deinit_Keys();

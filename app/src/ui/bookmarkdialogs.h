@@ -33,6 +33,7 @@ void        setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folde
 void        updateBookmarkEditorFieldWidths_Widget(iWidget *);
 iWidget *   makeBookmarkCreation_Widget     (const iString *url, const iString *title, iChar icon);
 iWidget *   makeFeedSettings_Widget         (uint32_t bookmarkId);
+iBool       isBlockedBySync_BookmarkDialogs (void); /* shows a message if so */
 
 const iArray *  makeBookmarkFolderActions_MenuItem(const char *command, iBool withNullTerminator,
                                                    uint32_t omitFolderId);

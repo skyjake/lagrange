@@ -185,6 +185,8 @@ struct Impl_DocumentWidget {
     float          resumeChapterPos;  /* where the visible pages begin; negative if none */
     size_t         savedChapter;      /* book position last saved */
     size_t         savedColumn;
+    iString        readingBookId;     /* book being read in this tab */
+    iBool          didTurnPage;       /* since the book was opened */
 
     /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
@@ -967,6 +969,7 @@ static void saveBookPosition_DocumentWidget_(iDocumentWidget *d) {
     }
     d->savedChapter = chapter;
     d->savedColumn  = column;
+    d->didTurnPage  = iTrue;
     setPosition_Books(d->fetch->sourceGempub,
                       (int) chapter,
                       (int) numChapters,
@@ -980,7 +983,15 @@ static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
     d->savedChapter      = chapter;
     d->savedColumn       = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
     if (chapter != iInvalidPos) {
-        const iBook *book = find_Books(id_Books(d->fetch->sourceGempub));
+        const iString *bookId = id_Books(d->fetch->sourceGempub);
+        if (!equal_String(&d->readingBookId, bookId)) {
+            /* The synced position may be more recent. */
+            set_String(&d->readingBookId, bookId);
+            d->didTurnPage = iFalse;
+            beginReading_Books(d->fetch->sourceGempub);
+            postCommand_App("sync.check book:1");
+        }
+        const iBook *book = find_Books(bookId);
         if (!book || book->chapter != (int) chapter) {
             setPosition_Books(d->fetch->sourceGempub,
                               (int) chapter,
@@ -989,6 +1000,59 @@ static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
                                                             : 0.0f);
         }
     }
+}
+
+static void jumpToBookPosition_DocumentWidget_(iDocumentWidget *d, size_t chapter, float pos) {
+    size_t numChapters;
+    if (bookChapter_DocumentWidget_(d, &numChapters) == chapter) {
+        resumeBook_DocumentWidget(d, chapter, pos);
+        applyResume_DocumentWidget_(d);
+        d->savedColumn = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
+        if (isPaged_DocumentView(d->view)) {
+            pagesMoved_DocumentWidget(d);
+        }
+        refresh_Widget(d);
+    }
+    else if (chapter < numChapters) {
+        resumeBook_DocumentWidget(d, chapter, pos);
+        d->flags |= readingOn_DocumentWidgetFlag;
+        postCommandf_Root(as_Widget(d)->root,
+                          "open url:%s",
+                          cstr_String(navLinkUrl_Gempub(d->fetch->sourceGempub, chapter)));
+    }
+}
+
+static void checkSyncedBookPosition_DocumentWidget_(iDocumentWidget *d) {
+    size_t       numChapters;
+    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
+    if (chapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
+        return;
+    }
+    const iBook *book = find_Books(id_Books(d->fetch->sourceGempub));
+    if (!book || book->chapter < 0 || (size_t) book->chapter >= numChapters) {
+        return;
+    }
+    const float pos = isPaged_DocumentView(d->view) ? sourcePosition_DocumentView(d->view) : 0.0f;
+    if ((size_t) book->chapter == chapter && fabsf(book->chapterPos - pos) < 0.001f) {
+        return;
+    }
+    if (!d->didTurnPage) {
+        jumpToBookPosition_DocumentWidget_(d, book->chapter, book->chapterPos);
+        return;
+    }
+    if (document_Root(as_Widget(d)->root) != d) {
+        return; /* only the visible tab asks */
+    }
+    makeQuestion_Widget(
+        uiHeading_ColorEscape "${heading.book.synced}",
+        format_Lang("${dlg.book.synced}", book->chapter + 1),
+        (iMenuItem[]){ { "${dlg.book.synced.stay}", SDLK_ESCAPE, 0, NULL },
+                       { uiTextAction_ColorEscape "${dlg.book.synced.jump}",
+                         SDLK_RETURN,
+                         0,
+                         format_CStr("book.jump ptr:%p chapter:%d pos:%f",
+                                     d, book->chapter, book->chapterPos) } },
+        2);
 }
 
 static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
@@ -1764,6 +1828,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             invalidate_DocumentWidget(d);
             refresh_Widget(w);
         }
+    }
+    else if (equal_Command(cmd, "books.synced")) {
+        checkSyncedBookPosition_DocumentWidget_(d);
+        return iFalse;
+    }
+    else if (equalWidget_Command(cmd, w, "book.jump")) {
+        jumpToBookPosition_DocumentWidget_(d, argLabel_Command(cmd, "chapter"),
+                                           argfLabel_Command(cmd, "pos"));
+        return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.prefs.changed")) {
         if (document_Root(w->root) != d) {
@@ -4365,6 +4438,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->resumeChapterPos   = -1.0f;
     d->savedChapter       = iInvalidPos;
     d->savedColumn        = 0;
+    init_String(&d->readingBookId);
+    d->didTurnPage        = iFalse;
     d->pendingLinkUpdates = 0;
     setOwner_Banner(d->banner, d);
     init_String(&d->pendingGotoHeading);
@@ -4422,6 +4497,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_String(&d->linePrecedingLink);
     deinit_String(&d->readerEntryUrl);
     deinit_String(&d->originId);
+    deinit_String(&d->readingBookId);
     deinit_String(&d->pendingGotoHeading);
     delete_Banner(d->banner);
     delete_String(d->titleUser);

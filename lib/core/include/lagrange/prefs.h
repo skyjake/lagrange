@@ -51,6 +51,9 @@ enum iPrefsString {
     socksUser_PrefsString,
     socksPassword_PrefsString,
 
+    syncServer_PrefsString,
+    syncIdentity_PrefsString, /* fingerprint (hex) */
+
     /* Style */
     uiFont_PrefsString,
 
@@ -107,6 +110,7 @@ enum iPrefsBool {
     allowSchemeChangingRedirect_PrefsBool,
     preferIPv6_PrefsBool,
     useProxy_PrefsBool,
+    sync_PrefsBool,
 
     /* Style */
     fontSmoothing_PrefsBool,
@@ -221,6 +225,7 @@ struct Impl_Prefs {
             iBool allowSchemeChangingRedirect;
             iBool preferIPv6;
             iBool useProxy;
+            iBool sync;
 
             /* Style */
             iBool fontSmoothing;
@@ -261,6 +266,7 @@ struct Impl_Prefs {
     int maxCacheSize;  /* MB */
     int maxMemorySize; /* MB */
     int maxUrlSize;    /* bytes; longer ones will be disregarded */
+    int syncInterval;  /* hours; zero means only manual syncing */
 
     /* Style */
     iStringSet      *disabledFontPacks;

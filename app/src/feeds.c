@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/visited.h>
 #include <lagrange/lang.h>
 #include "app.h"
+#include "sync.h"
+#include "syncdata.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
@@ -551,8 +553,8 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
 }
 
 static iBool startWorker_Feeds_(iFeeds *d) {
-    if (d->worker) {
-        return iFalse; /* Refresh is already ongoing. */
+    if (d->worker || isRunning_Sync()) {
+        return iFalse; /* Refresh is already ongoing, or bookmarks may change. */
     }
     /* Queue up all the subscriptions for the worker. */
     iConstForEach(PtrArray, i, listSubscriptions_()) {
@@ -789,6 +791,34 @@ void setRefreshInterval_Feeds(enum iFeedInterval feedInterval) {
 void refreshFinished_Feeds(void) {
     stopWorker_Feeds_(&feeds_);
     setRefreshInterval_Feeds(prefs_App()->feedInterval); /* restart the timer */
+}
+
+iBool isRefreshing_Feeds(void) {
+    return feeds_.worker != NULL;
+}
+
+void remapBookmarkIds_Feeds(const iArray *idMappings) {
+    iFeeds *d = &feeds_;
+    if (!isInitialized_Feeds_(d) || isEmpty_Array(idMappings)) {
+        return;
+    }
+    lock_Mutex(d->mtx);
+    iIntSet checked;
+    init_IntSet(&checked);
+    iConstForEach(IntSet, i, &d->previouslyCheckedFeeds) {
+        insert_IntSet(&checked, mappedId_SyncIdMapping(idMappings, *(const int *) i.value));
+    }
+    deinit_IntSet(&d->previouslyCheckedFeeds);
+    d->previouslyCheckedFeeds = checked;
+    /* Entries are sorted by bookmark ID, too. */
+    iPtrArray *entries = collect_PtrArray(copy_Array(&d->entries.values));
+    clear_SortedArray(&d->entries);
+    iForEach(PtrArray, j, entries) {
+        iFeedEntry *entry = j.ptr;
+        entry->bookmarkId = mappedId_SyncIdMapping(idMappings, entry->bookmarkId);
+        insert_SortedArray(&d->entries, &entry);
+    }
+    unlock_Mutex(d->mtx);
 }
 
 void removeEntries_Feeds(uint32_t feedBookmarkId) {

@@ -140,6 +140,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "promptposition.set arg:%d\n", d->prefs.promptPosition);
     appendFormat_String(str, "pageturn.set arg:%d\n", d->prefs.pageTurn);
     appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
+    appendFormat_String(str, "syncinterval.set arg:%d\n", d->prefs.syncInterval);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
@@ -623,6 +624,12 @@ static void prefsStringValueChanged_App_(iApp *d, enum iPrefsString id, iBool is
                 postCommand_App("lang.changed");
             }
             break;
+        case syncServer_PrefsString:
+        case syncIdentity_PrefsString:
+            if (wasChanged) {
+                postCommand_App("sync.prefs.changed");
+            }
+            break;
         case searchUrl_PrefsString: {
             iString *url = &d->prefs.strings[id];
             if (startsWith_String(url, "//")) {
@@ -973,6 +980,11 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
     else if (equal_Command(cmd, "pageturn.set")) {
         d->prefs.pageTurn = iClamp(arg_Command(cmd), none_PageTurnAnimation, curl_PageTurnAnimation);
         return iTrue;
+    }
+    else if (equal_Command(cmd, "syncinterval.set")) {
+        d->prefs.syncInterval = iMax(0, arg_Command(cmd));
+        postCommand_App("sync.prefs.changed");
+        return iFalse;
     }
     else if (equal_Command(cmd, "feedinterval.set")) {
         d->prefs.feedInterval = arg_Command(cmd);

@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "export.h"
 #include "feeds.h"
+#include "sync.h"
 #include "fontpack.h"
 #include "gempub.h"
 #include <lagrange/core.h>
@@ -248,6 +249,9 @@ static const iString *popClosedTabUrl_App_(iApp *d) {
 
 iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     if (handlePrefsCommand_App_(d, cmd)) {
+        return iTrue;
+    }
+    if (handleCommand_Sync(cmd)) {
         return iTrue;
     }
     if (equal_Command(cmd, "downloads.open")) {
@@ -1135,6 +1139,9 @@ iBool handleCommand_App(const char *cmd) {
             postCommand_Widget(findWidget_App("sidebar"), "bookmark.edit id:%u", existing);
             return iTrue;
         }
+        if (isBlockedBySync_BookmarkDialogs()) {
+            return iTrue;
+        }
         makeBookmarkCreation_Widget(url, title, icon);
         if (deviceType_App() == desktop_AppDeviceType) {
             postCommand_App("focus.set id:bmed.title");
@@ -1150,7 +1157,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "feeds.subscribe") && isMainWin) {
         const iString *url = url_DocumentWidget(document_App());
-        if (isEmpty_String(url)) {
+        if (isEmpty_String(url) || isBlockedBySync_BookmarkDialogs()) {
             return iTrue;
         }
         makeFeedSettings_Widget(findUrl_Bookmarks(d->bookmarks, url));
@@ -1201,6 +1208,24 @@ iBool handleCommand_App(const char *cmd) {
             refreshFinished_Feeds();
             refresh_Widget(findWidget_App("url"));
             return iFalse;
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "sync.started") || equal_Command(cmd, "sync.finished")) {
+        const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
+        iAnyObject    *ind    = findChild_Widget(navBar, "sync.progress");
+        if (ind) {
+            const iBool isStarted = equal_Command(cmd, "sync.started");
+            if (isStarted) {
+                updateTextAndResizeWidthCStr_LabelWidget(
+                    ind,
+                    flags_Widget(navBar) & tight_WidgetFlag ||
+                            deviceType_App() == phone_AppDeviceType
+                        ? reload_Icon
+                        : reload_Icon " ${status.sync}");
+            }
+            showCollapsed_Widget(ind, isStarted);
+            refresh_Widget(findWidget_App("url"));
         }
         return iFalse;
     }

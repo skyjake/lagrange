@@ -725,6 +725,9 @@ msgstr "Search"
 msgid "status.feeds"
 msgstr "Updating Feeds"
 
+msgid "status.sync"
+msgstr "Syncing"
+
 # megabytes, used as the unit after a number
 msgid "mb"
 msgstr "MB"
@@ -1208,6 +1211,19 @@ msgstr "Book Already Saved"
 
 msgid "dlg.book.exists"
 msgstr "A different copy of \"%s\" is already on the bookshelf. Do you want to overwrite it with this one?"
+
+msgid "heading.book.synced"
+msgstr "Reading Position Synced"
+
+# %d is a chapter number.
+msgid "dlg.book.synced"
+msgstr "This book has a more recent reading position from another device, in chapter %d."
+
+msgid "dlg.book.synced.stay"
+msgstr "Stay Here"
+
+msgid "dlg.book.synced.jump"
+msgstr "Go to Synced Position"
 
 msgid "dlg.book.overwrite"
 msgstr "Overwrite"
@@ -2146,6 +2162,42 @@ msgstr "Content"
 # tab button
 msgid "heading.prefs.network"
 msgstr "Network"
+
+msgid "heading.prefs.sync"
+msgstr "Sync"
+
+msgid "prefs.sync"
+msgstr "Sync user data:"
+
+msgid "prefs.sync.info"
+msgstr "All data is encrypted before uploading and stored encrypted on the server.\nThe server cannot decrypt it."
+
+msgid "prefs.sync.server"
+msgstr "Server:"
+
+msgid "hint.sync.server"
+msgstr "gemini://sync.example.com"
+
+msgid "prefs.sync.identity"
+msgstr "Identity:"
+
+msgid "prefs.sync.identity.none"
+msgstr "None"
+
+msgid "prefs.sync.newidentity"
+msgstr "New Sync Identity"
+
+msgid "prefs.sync.interval"
+msgstr "Sync automatically:"
+
+msgid "prefs.sync.interval.manual"
+msgstr "Never"
+
+msgid "prefs.sync.status"
+msgstr "Status:"
+
+msgid "prefs.sync.now"
+msgstr "Sync Now"
 
 msgid "heading.prefs.proxy"
 msgstr "Proxies"
@@ -3272,3 +3324,72 @@ msgstr "Focus link"
 # Keyboard shortcut for the terminal. Should be very short or abbreviated.
 msgid "term.focus"
 msgstr "Focus"
+
+msgid "heading.sync"
+msgstr "Sync"
+
+msgid "heading.sync.failed"
+msgstr "Sync Failed"
+
+msgid "sync.status.off"
+msgstr "Sync is off."
+
+msgid "sync.status.setup"
+msgstr "Enter the sync server and choose an Ed25519 identity for syncing. Use the same identity on all your devices."
+
+msgid "sync.status.running"
+msgstr "Syncing…"
+
+msgid "sync.status.last"
+msgstr "Last synced:"
+
+msgid "sync.status.generation"
+msgstr "generation"
+
+msgid "sync.status.never"
+msgstr "Not synced yet."
+
+msgid "sync.status.pending"
+msgstr "Local changes are waiting to be synced."
+
+msgid "sync.status.error"
+msgstr "Error:"
+
+msgid "sync.busy.bookmarks"
+msgstr "Bookmarks cannot be edited while syncing. Please try again in a moment."
+
+msgid "sync.identity.name"
+msgstr "Lagrange Sync"
+
+msgid "sync.identity.notes"
+msgstr "Used for syncing user data between devices"
+
+msgid "sync.error.untrusted"
+msgstr "The sync server's certificate is not trusted."
+
+msgid "sync.error.response"
+msgstr "Invalid response from the sync server."
+
+msgid "sync.error.server"
+msgstr "The sync server responded:"
+
+msgid "sync.error.rollback"
+msgstr "The sync server has older data than this device. Turn syncing off and on again to start over."
+
+msgid "sync.error.decrypt"
+msgstr "The synced data could not be decrypted. Make sure the same sync identity is used on all devices."
+
+msgid "sync.error.encrypt"
+msgstr "The data could not be encrypted."
+
+msgid "sync.error.busy"
+msgstr "The data on the server kept changing. Please try again later."
+
+msgid "sync.error.identity"
+msgstr "The sync identity is missing or does not use an Ed25519 key."
+
+msgid "sync.error.editoropen"
+msgstr "Close the bookmark editor before syncing."
+
+msgid "sync.error.newidentity"
+msgstr "The identity could not be created."

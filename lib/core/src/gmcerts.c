@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/core.h>
 #include <lagrange/prefs.h>
 #include <lagrange/gmutil.h>
+#include <the_Foundation/buffer.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/mutex.h>
@@ -319,6 +320,7 @@ struct Impl_GmCerts {
     iStringHash *trusted;
     iPtrArray    idents;
     iBool        isReadOnly;
+    uint32_t     identsCrc; /* of the saved metadata, for detecting changes */
 };
 
 static iGmCerts *theCerts_;
@@ -360,17 +362,30 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
     }
 }
 
+static uint32_t identsCrc_GmCerts_(const iGmCerts *d, iBuffer *buf) {
+    openEmpty_Buffer(buf);
+    serialize_GmCerts(d, NULL, stream_Buffer(buf));
+    return crc32_Block(data_Buffer(buf));
+}
+
 void saveIdentities_GmCerts(const iGmCerts *d) {
     if (d->isReadOnly) {
         return;
+    }
+    iBuffer *buf = new_Buffer();
+    const uint32_t crc = identsCrc_GmCerts_(d, buf);
+    if (crc != d->identsCrc) {
+        iConstCast(iGmCerts *, d)->identsCrc = crc;
+        notifyUserDataChanged_Core(identities_UserDataType);
     }
     const iString *tempPath = collect_String(
             concatCStr_Path(&d->saveDir, tempIdentsFilename_GmCerts_));
     iFile *f = new_File(tempPath);
     if (open_File(f, writeOnly_FileMode)) {
-        serialize_GmCerts(d, NULL, stream_File(f));
+        write_File(f, data_Buffer(buf));
     }
     iRelease(f);
+    iRelease(buf);
     commitFile_Core(cstrCollect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)),
                     cstr_String(tempPath));
 }
@@ -386,6 +401,7 @@ static void save_GmCerts_(const iGmCerts *d) {
     }
     iRelease(f);
     iEndCollect();
+    notifyUserDataChanged_Core(trusted_UserDataType);
 }
 
 static void loadIdentityFromCertificate_GmCerts_(iGmCerts *d, const iString *crtPath) {
@@ -479,6 +495,9 @@ static void loadIdentities_GmCerts_(iGmCerts *d) {
         /* In any case, load any .crt/.key files that may be present in the "idents" dir. */
         loadIdentityCertsAndDiscardInvalid_GmCerts_(d);
     }
+    iBuffer *buf = new_Buffer();
+    d->identsCrc = identsCrc_GmCerts_(d, buf);
+    iRelease(buf);
 }
 
 iGmIdentity *findIdentity_GmCerts(iGmCerts *d, const iBlock *fingerprint) {
@@ -518,6 +537,12 @@ iGmIdentity *findIdentityFuzzy_GmCerts(iGmCerts *d, const iString *fuzzy) {
         }
     }
     return found;
+}
+
+void replaceTrusted_GmCerts(iGmCerts *d, iStream *ins) {
+    iGuardMutex(d->mtx, clear_StringHash(d->trusted));
+    deserializeTrusted_GmCerts(d, ins, all_ImportMethod);
+    iGuardMutex(d->mtx, save_GmCerts_(d));
 }
 
 void deserializeTrusted_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod method) {
@@ -590,6 +615,7 @@ void init_GmCerts(iGmCerts *d, const char *saveDir) {
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();
     init_PtrArray(&d->idents);
+    d->identsCrc = 0;
     load_GmCerts_(d);
     setVerifyFunc_TlsRequest(verify_GmCerts_);
 }
@@ -826,9 +852,12 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, enum iTlsCertificateKey
     return add_GmCerts_(d, cert, flags);
 }
 
-void importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *notes) {
+iGmIdentity *importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *notes) {
     iGmIdentity *id = add_GmCerts_(d, cert, 0);
-    set_String(&id->notes, notes);
+    if (id) {
+        set_String(&id->notes, notes);
+    }
+    return id;
 }
 
 static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {

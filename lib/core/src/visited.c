@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/visited.h"
+#include "lagrange/core.h"
 #include "lagrange/gmutil.h"
 
 #include <the_Foundation/file.h>
@@ -151,6 +152,7 @@ void clear_Visited(iVisited *d) {
     }
     clear_SortedArray(&d->visited);
     unlock_Mutex(d->mtx);
+    notifyUserDataChanged_Core(visited_UserDataType);
 }
 
 static size_t find_Visited_(const iVisited *d, const iString *url) {
@@ -191,11 +193,13 @@ void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, 
             old->flags = visitFlags;
             unlock_Mutex(d->mtx);
             deinit_VisitedUrl(&visit);
+            notifyUserDataChanged_Core(visited_UserDataType);
             return;
         }
     }
     insert_SortedArray(&d->visited, &visit);
     unlock_Mutex(d->mtx);
+    notifyUserDataChanged_Core(visited_UserDataType);
 }
 
 void setUrlKept_Visited(iVisited *d, const iString *url, iBool isKept) {
@@ -211,6 +215,7 @@ void setUrlKept_Visited(iVisited *d, const iString *url, iBool isKept) {
     }
     unlock_Mutex(d->mtx);
     deinit_VisitedUrl(&visit);
+    notifyUserDataChanged_Core(visited_UserDataType);
 }
 
 void removeUrl_Visited(iVisited *d, const iString *url) {
@@ -225,6 +230,7 @@ void removeUrl_Visited(iVisited *d, const iString *url) {
             }
         }
     });
+    notifyUserDataChanged_Core(visited_UserDataType);
 }
 
 iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {

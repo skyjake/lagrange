@@ -106,6 +106,18 @@ static iBool copyFile_Core_(const char *fromPath, const char *toPath) {
 }
 #endif
 
+static iUserDataChangedFunc userDataChanged_Core_;
+
+void setUserDataChangedFunc_Core(iUserDataChangedFunc func) {
+    userDataChanged_Core_ = func;
+}
+
+void notifyUserDataChanged_Core(enum iUserDataType type) {
+    if (userDataChanged_Core_) {
+        userDataChanged_Core_(type);
+    }
+}
+
 void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
     syncFile_Core_(tempPathWithNewContents);
 #if defined (iPlatformMsys) || defined (iPlatformWindows)

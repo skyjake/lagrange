@@ -2114,6 +2114,17 @@ void createUserInterface_Root(iRoot *d) {
                                      iClob(fprog),
                                      collapse_WidgetFlag | hidden_WidgetFlag | frameless_WidgetFlag);
             }
+            /* Sync indicator is inside the input field. */ {
+                iLabelWidget *syncInd = new_LabelWidget("", NULL);
+                setId_Widget(as_Widget(syncInd), "sync.progress");
+                setTextColor_LabelWidget(syncInd, uiTextAction_ColorId);
+                setFont_LabelWidget(syncInd, uiLabelSmall_FontId);
+                setBackgroundColor_Widget(as_Widget(syncInd), uiBackground_ColorId);
+                setNoAutoMinHeight_LabelWidget(syncInd, iTrue);
+                addChildFlags_Widget(rightEmbed,
+                                     iClob(syncInd),
+                                     collapse_WidgetFlag | hidden_WidgetFlag | frameless_WidgetFlag);
+            }
             /* Download progress indicator is also inside the input field, but hidden normally. */ {
                 iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 ${mb}", NULL);
                 setId_Widget(as_Widget(progress), "document.progress");
