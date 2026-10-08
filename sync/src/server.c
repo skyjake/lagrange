@@ -433,6 +433,9 @@ iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
     if (keyType_TlsCertificate(cert) != ed25519_TlsCertificateKeyType) {
         fprintf(stderr, "the server certificate must use an Ed25519 key\n");
     }
+    else if (!setMinProtocolVersion_TlsService(sv, tls1_3_TlsProtocolVersion)) {
+        fprintf(stderr, "TLS 1.3 is not supported by the TLS library\n");
+    }
     else if (!setCertificate_TlsService(sv, cert)) {
         fprintf(stderr, "invalid server certificate or private key\n");
     }
