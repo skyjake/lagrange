@@ -1460,7 +1460,6 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, const i
     iBool ok = iFalse;
     /* Write the file. */ {
         iFile *f = new_File(savePath);
-        postCommandf_App("debug show:%d msg:%s", showDialog, cstr_String(savePath));
         if (open_File(f, writeOnly_FileMode)) {
             write_File(f, content);
             close_File(f);
