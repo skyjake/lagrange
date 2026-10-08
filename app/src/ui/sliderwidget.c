@@ -58,8 +58,9 @@ struct Impl_SliderWidget {
     int              thumbWidth;
     iArray           labels; /* SliderLabel */
     iClick           click;
-    int              startIndex;
+    int              postedIndex;
     int              grabOffset;
+    int              stepDir;
 };
 
 iDefineObjectConstructionArgs(SliderWidget, (const char *command), command)
@@ -178,8 +179,9 @@ void init_SliderWidget(iSliderWidget *d, const char *command) {
     d->thumbWidth  = 0;
     init_Array(&d->labels, sizeof(iSliderLabel));
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
-    d->startIndex = 0;
-    d->grabOffset = 0;
+    d->postedIndex = 0;
+    d->grabOffset  = 0;
+    d->stepDir    = 0;
     updateMetrics_SliderWidget_(d);
 }
 
@@ -347,28 +349,35 @@ static iBool processEvent_SliderWidget_(iSliderWidget *d, const SDL_Event *ev) {
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult: {
-            const int   x         = pos_Click(&d->click).x;
-            const iRect thumb     = thumbRect_SliderWidget_(d, d->index);
-            const iBool isOnThumb = contains_Rect(thumb, pos_Click(&d->click));
-            /* Grabbing the thumb does not move it; elsewhere it jumps to the pointer. */
-            d->startIndex = d->index;
-            d->grabOffset = isOnThumb ? x - mid_Rect(thumb).x : 0;
-            if (isOnThumb && !isMobile_Platform()) {
+            const int   x     = pos_Click(&d->click).x;
+            const iRect thumb = thumbRect_SliderWidget_(d, d->index);
+            /* Clicking beside the thumb steps toward the pointer on release, unless dragged.
+               Dragging moves the thumb relative to where the click started. */
+            d->stepDir    = x < left_Rect(thumb) ? -1 : x >= right_Rect(thumb) ? 1 : 0;
+            d->postedIndex = d->index;
+            d->grabOffset  = x - mid_Rect(thumb).x;
+            if (!d->stepDir && !isMobile_Platform()) {
                 setFocus_Widget(w);
             }
-            setIndex_SliderWidget_(d, indexAt_SliderWidget_(d, x - d->grabOffset));
             setFlags_Widget(w, pressed_WidgetFlag, iTrue);
             refresh_Widget(d);
             return iTrue;
         }
         case drag_ClickResult:
+            d->stepDir = 0;
             setIndex_SliderWidget_(d,
                                    indexAt_SliderWidget_(d, pos_Click(&d->click).x - d->grabOffset));
+            if (d->index != d->postedIndex) {
+                d->postedIndex = d->index;
+                postCommand_SliderWidget_(d);
+            }
             return iTrue;
         case finished_ClickResult:
+            setIndex_SliderWidget_(d, d->index + d->stepDir);
+            /* fall through */
         case aborted_ClickResult:
             setFlags_Widget(w, pressed_WidgetFlag, iFalse);
-            if (d->index != d->startIndex) {
+            if (d->index != d->postedIndex) {
                 postCommand_SliderWidget_(d);
             }
             refresh_Widget(d);
