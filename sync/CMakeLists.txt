@@ -5,7 +5,9 @@ project (LagrangeSync
 )
 set (CMAKE_C_STANDARD 11)
 
-if (the_Foundation_DIR)
+if (TARGET the_Foundation::the_Foundation)
+    # Part of the Lagrange project.
+elseif (the_Foundation_DIR)
     find_package (the_Foundation REQUIRED)
 else ()
     # Use the_Foundation from the Lagrange repository.
@@ -30,4 +32,6 @@ target_compile_definitions (lagrange-sync PUBLIC
 )
 target_link_libraries (lagrange-sync PUBLIC the_Foundation::the_Foundation)
 
-install (TARGETS lagrange-sync RUNTIME DESTINATION bin)
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    install (TARGETS lagrange-sync RUNTIME DESTINATION bin)
+endif ()
