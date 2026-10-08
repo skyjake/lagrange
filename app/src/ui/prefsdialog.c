@@ -281,6 +281,18 @@ static void updateSyncStatus_(iWidget *d) {
     }
 }
 
+static iBool applySyncServer_(iWidget *d) {
+    /* Text fields are normally applied when the dialog is dismissed. */
+    const iInputWidget *input = findChild_Widget(d, "prefs.sync.server");
+    if (!input || equal_String(text_InputWidget(input),
+                               &prefs_App()->strings[syncServer_PrefsString])) {
+        return iFalse;
+    }
+    const iPrefsStringSpec *spec = stringSpec_Prefs(syncServer_PrefsString);
+    postCommandf_App("%s %s:%s", spec->cmd, spec->label, cstrText_InputWidget(input));
+    return iTrue;
+}
+
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
     /* clang-format off */
@@ -1327,6 +1339,17 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "sync.status.changed")) {
         updateSyncStatus_(d);
+        return iFalse;
+    }
+    else if (equalArg_Command(cmd, "input.ended", "id", "prefs.sync.server")) {
+        applySyncServer_(d);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "sync.now") && !argLabel_Command(cmd, "applied")) {
+        if (applySyncServer_(d)) {
+            postCommand_App("sync.now applied:1");
+            return iTrue;
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "scrollspeed")) {
