@@ -34,11 +34,16 @@ iDeclareTypeConstructionArgs(Storage, const iString *rootDir)
 enum iStoreResult {
     ok_StoreResult,
     stale_StoreResult, /* the generation has changed */
+    full_StoreResult,  /* no more accounts can be created */
     error_StoreResult,
 };
 
 void                setAllowList_Storage(iStorage *, const iStringSet *fingerprints); /* NULL: anyone */
 iBool               isAllowed_Storage   (const iStorage *, const iString *fingerprint);
+void                setMaxAccounts_Storage(iStorage *, size_t maxAccounts); /* zero: no limit */
+iBool               isFull_Storage      (iStorage *, const iString *fingerprint);
+void                touch_Storage       (iStorage *, const iString *fingerprint);
+size_t              expire_Storage      (iStorage *, double maxIdleSeconds); /* returns number removed */
 iBlock *            load_Storage        (iStorage *, const iString *fingerprint,
                                          uint64_t *generation_out); /* NULL if no data */
 enum iStoreResult   store_Storage       (iStorage *, const iString *fingerprint,

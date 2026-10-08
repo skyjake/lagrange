@@ -26,23 +26,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/time.h>
 #include <stdio.h>
+#include <utime.h>
 
 struct Impl_Storage {
     iMutex      mtx;
     iString     rootDir;
     iStringSet *allowList;
+    size_t      maxAccounts;
+    size_t      numAccounts;
 };
 
 iDefineTypeConstructionArgs(Storage, (const iString *rootDir), rootDir)
 
-static const char *header_Storage_ = "LGSYNC ";
+static const char  *header_Storage_        = "LGSYNC ";
+static const double touchInterval_Storage_ = 24 * 3600; /* seconds */
+
+static iBool isAccountFile_(const iString *path) {
+    return endsWith_String(path, ".dat");
+}
 
 void init_Storage(iStorage *d, const iString *rootDir) {
     init_Mutex(&d->mtx);
     initCopy_String(&d->rootDir, rootDir);
     d->allowList = NULL;
+    d->maxAccounts = 0;
+    d->numAccounts = 0;
     makeDirs_Path(&d->rootDir);
+    iForEach(DirFileInfo, i, iClob(new_DirFileInfo(&d->rootDir))) {
+        if (isAccountFile_(path_FileInfo(i.value))) {
+            d->numAccounts++;
+        }
+    }
 }
 
 void deinit_Storage(iStorage *d) {
@@ -58,6 +74,10 @@ void setAllowList_Storage(iStorage *d, const iStringSet *fingerprints) {
 
 iBool isAllowed_Storage(const iStorage *d, const iString *fingerprint) {
     return !d->allowList || contains_StringSet(d->allowList, fingerprint);
+}
+
+void setMaxAccounts_Storage(iStorage *d, size_t maxAccounts) {
+    iGuardMutex(&d->mtx, d->maxAccounts = maxAccounts);
 }
 
 static const iString *path_Storage_(const iStorage *d, const iString *fingerprint) {
@@ -89,6 +109,50 @@ iBlock *load_Storage(iStorage *d, const iString *fingerprint, uint64_t *generati
     return data;
 }
 
+static iBool isFull_Storage_(const iStorage *d, const iString *fingerprint) {
+    return d->maxAccounts > 0 && d->numAccounts >= d->maxAccounts &&
+           !fileExists_FileInfo(path_Storage_(d, fingerprint));
+}
+
+iBool isFull_Storage(iStorage *d, const iString *fingerprint) {
+    iBool full;
+    iGuardMutex(&d->mtx, full = isFull_Storage_(d, fingerprint));
+    return full;
+}
+
+void touch_Storage(iStorage *d, const iString *fingerprint) {
+    /* The modification time tracks the last activity. */
+    lock_Mutex(&d->mtx);
+    const iString *path = path_Storage_(d, fingerprint);
+    iFileInfo *info = new_FileInfo(path);
+    if (exists_FileInfo(info)) {
+        const iTime modified = lastModified_FileInfo(info);
+        if (elapsedSeconds_Time(&modified) > touchInterval_Storage_) {
+            utime(cstr_String(path), NULL);
+        }
+    }
+    iRelease(info);
+    unlock_Mutex(&d->mtx);
+}
+
+size_t expire_Storage(iStorage *d, double maxIdleSeconds) {
+    size_t count = 0;
+    lock_Mutex(&d->mtx);
+    iForEach(DirFileInfo, i, iClob(new_DirFileInfo(&d->rootDir))) {
+        const iString *path     = path_FileInfo(i.value);
+        const iTime    modified = lastModified_FileInfo(i.value);
+        if (isAccountFile_(path) && elapsedSeconds_Time(&modified) > maxIdleSeconds) {
+            removePath_CStr(cstr_String(path));
+            if (!fileExists_FileInfo(path)) {
+                d->numAccounts--;
+                count++;
+            }
+        }
+    }
+    unlock_Mutex(&d->mtx);
+    return count;
+}
+
 enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, uint64_t baseGeneration,
                                 const iBlock *data, uint64_t *newGeneration_out) {
     enum iStoreResult result = error_StoreResult;
@@ -98,9 +162,13 @@ enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, uint64_
     if (gen != baseGeneration) {
         result = stale_StoreResult;
     }
+    else if (isFull_Storage_(d, fingerprint)) {
+        result = full_StoreResult;
+    }
     else {
         const iString *path    = path_Storage_(d, fingerprint);
         const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
+        const iBool    isNew   = !fileExists_FileInfo(path);
         iFile *f = new_File(tmpPath);
         if (open_File(f, writeOnly_FileMode)) {
             printf_Stream(stream_File(f), "%s%llu\n", header_Storage_,
@@ -115,6 +183,9 @@ enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, uint64_
                 if (!fileExists_FileInfo(tmpPath)) {
                     *newGeneration_out = gen + 1;
                     result = ok_StoreResult;
+                    if (isNew) {
+                        d->numAccounts++;
+                    }
                 }
             }
         }

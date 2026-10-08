@@ -32,6 +32,9 @@ struct Impl_ServerConfig {
     iString  keyPath;  /* PEM */
     uint16_t port;
     size_t   maxDataSize;
+    size_t   maxAccounts;   /* zero: no limit */
+    int      expireDays;    /* inactive accounts are removed; zero: never */
+    size_t   maxPerAddress; /* simultaneous connections; zero: no limit */
 };
 
 /* Runs until the process is terminated. Returns false if the server could not be started. */

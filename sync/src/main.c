@@ -40,6 +40,11 @@ static const char *usage_ =
     "      --cert FILE      Server certificate (PEM, Ed25519); generated if missing\n"
     "      --key FILE       Server private key (PEM); generated if missing\n"
     "      --max-size N     Maximum stored data per account in bytes (default: 1048576)\n"
+    "      --max-accounts N Maximum number of accounts; 0 for no limit (default: 5000)\n"
+    "      --expire-days N  Remove accounts inactive for N days; 0 to keep forever\n"
+    "                       (default: 365)\n"
+    "      --max-per-ip N   Maximum simultaneous connections per IP address; 0 for no\n"
+    "                       limit (default: 4)\n"
     "      --allow FILE     Allowed client certificate fingerprints (SHA-256, hex), one per\n"
     "                       line; if omitted, anyone with an Ed25519 certificate can sync\n";
 
@@ -101,7 +106,10 @@ static int run_(int argc, char *argv[]) {
     init_String(&cfg.certPath);
     init_String(&cfg.keyPath);
     cfg.port        = 1965;
-    cfg.maxDataSize = 1024 * 1024;
+    cfg.maxDataSize   = 1024 * 1024;
+    cfg.maxAccounts   = 5000;
+    cfg.expireDays    = 365;
+    cfg.maxPerAddress = 4;
     iString *host     = collectNewCStr_String("localhost");
     iString *allowPath = collectNew_String();
     iCommandLineArg *arg;
@@ -126,6 +134,15 @@ static int run_(int argc, char *argv[]) {
     }
     if ((arg = iClob(checkArgumentValues_CommandLine(args, "max-size", 1))) != NULL) {
         cfg.maxDataSize = (size_t) strtoull(cstr_String(value_CommandLineArg(arg, 0)), NULL, 10);
+    }
+    if ((arg = iClob(checkArgumentValues_CommandLine(args, "max-accounts", 1))) != NULL) {
+        cfg.maxAccounts = (size_t) strtoull(cstr_String(value_CommandLineArg(arg, 0)), NULL, 10);
+    }
+    if ((arg = iClob(checkArgumentValues_CommandLine(args, "expire-days", 1))) != NULL) {
+        cfg.expireDays = iMax(0, toInt_String(value_CommandLineArg(arg, 0)));
+    }
+    if ((arg = iClob(checkArgumentValues_CommandLine(args, "max-per-ip", 1))) != NULL) {
+        cfg.maxPerAddress = (size_t) strtoull(cstr_String(value_CommandLineArg(arg, 0)), NULL, 10);
     }
     if ((arg = iClob(checkArgumentValues_CommandLine(args, "allow", 1))) != NULL) {
         set_String(allowPath, value_CommandLineArg(arg, 0));
@@ -156,6 +173,12 @@ static int run_(int argc, char *argv[]) {
     printf("  Data directory: %s\n", cstr_String(&cfg.dataDir));
     printf("  Certificate:    %s\n", cstr_String(&cfg.certPath));
     printf("  Maximum size:   %zu bytes\n", cfg.maxDataSize);
+    printf("  Accounts:       %s\n",
+           cfg.maxAccounts ? format_CStr("%zu maximum", cfg.maxAccounts) : "no limit");
+    printf("  Expiry:         %s\n",
+           cfg.expireDays ? format_CStr("%d days inactive", cfg.expireDays) : "never");
+    printf("  Per IP address: %s\n",
+           cfg.maxPerAddress ? format_CStr("%zu connections", cfg.maxPerAddress) : "no limit");
     if (allowed) {
         printf("  Allowed:        %zu certificates\n", size_StringSet(allowed));
     }
@@ -163,6 +186,7 @@ static int run_(int argc, char *argv[]) {
     iStorage *storage = new_Storage(
         collect_String(concatCStr_Path(&cfg.dataDir, "accounts")));
     setAllowList_Storage(storage, allowed);
+    setMaxAccounts_Storage(storage, cfg.maxAccounts);
     const iBool ok = run_Server(&cfg, storage);
     delete_Storage(storage);
     deinit_String(&cfg.keyPath);

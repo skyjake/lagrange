@@ -36,6 +36,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 enum { maxHeaderSize_ = 1024, maxConnections_ = 32 };
 
+static const double requestTimeout_ = 10;        /* seconds to receive the request line */
+static const double uploadTimeout_  = 30;        /* seconds, in addition to the transfer time */
+static const double minUploadRate_  = 5000;      /* bytes per second */
+static const double expiryInterval_ = 24 * 3600; /* seconds */
+
 static const char *dataPath_ = "/data";
 
 static iAtomicInt isStopping_;
@@ -177,6 +182,9 @@ static void respondInfo_Handler_(iHandler *d, iTlsConnection *conn) {
         else if (!isAllowed_Storage(d->storage, &d->fingerprint)) {
             appendCStr_String(page, "This certificate is not authorized for syncing.\n");
         }
+        else if (isFull_Storage(d->storage, &d->fingerprint)) {
+            appendCStr_String(page, "The server is full. New accounts cannot be created.\n");
+        }
         else {
             uint64_t gen  = 0;
             iBlock  *data = load_Storage(d->storage, &d->fingerprint, &gen);
@@ -224,6 +232,9 @@ static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
         case stale_StoreResult:
             respond_Handler_(d, conn, 40, "stale", NULL);
             break;
+        case full_StoreResult:
+            respond_Handler_(d, conn, 61, "Server is full", NULL);
+            break;
         default:
             respond_Handler_(d, conn, 42, "Failed to store data", NULL);
             break;
@@ -267,6 +278,7 @@ static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
         respond_Handler_(d, conn, 59, "Generation missing", NULL);
         return;
     }
+    touch_Storage(d->storage, &d->fingerprint);
     if (!isTitan) {
         respondDownload_Handler_(d, conn, gen);
         return;
@@ -287,8 +299,13 @@ static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
         respond_Handler_(d, conn, 40, "stale", NULL);
         return;
     }
+    if (isFull_Storage(d->storage, &d->fingerprint)) {
+        respond_Handler_(d, conn, 61, "Server is full", NULL);
+        return;
+    }
     d->isUpload  = iTrue;
     d->uploadGen = gen;
+    setDeadline_TlsConnection(conn, uploadTimeout_ + d->uploadSize / minUploadRate_);
 }
 
 static void readyRead_Handler_(iHandler *d, iTlsConnection *conn) {
@@ -355,6 +372,7 @@ static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *con
     d->uploadGen  = 0;
     d->isUpload   = iFalse;
     d->isDone     = iFalse;
+    setDeadline_TlsConnection(conn, requestTimeout_);
 }
 
 static void deinit_Handler(iHandler *d) {
@@ -441,6 +459,7 @@ iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
     iServer         *server = new_Server(cfg, storage);
     iTlsService     *sv     = new_TlsService(cfg->port);
     setMaxConnections_TlsService(sv, maxConnections_);
+    setMaxConnectionsPerAddress_TlsService(sv, cfg->maxPerAddress);
     iConnect(TlsService, sv, accepted, server, accepted_Server_);
     iBool ok = iFalse;
     if (keyType_TlsCertificate(cert) != ed25519_TlsCertificateKeyType) {
@@ -460,7 +479,17 @@ iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
         fflush(stdout);
         signal(SIGINT, stop_);
         signal(SIGTERM, stop_);
+        iTime lastExpiry = { 0 };
         while (!value_Atomic(&isStopping_)) {
+            if (cfg->expireDays > 0 && (!isValid_Time(&lastExpiry) ||
+                                        elapsedSeconds_Time(&lastExpiry) > expiryInterval_)) {
+                const size_t num = expire_Storage(storage, cfg->expireDays * 24.0 * 3600.0);
+                if (num) {
+                    printf("Removed %zu inactive account%s\n", num, num != 1 ? "s" : "");
+                    fflush(stdout);
+                }
+                initCurrent_Time(&lastExpiry);
+            }
             sleep_Thread(0.25);
             releaseHandlers_Server_(server, iFalse);
         }
