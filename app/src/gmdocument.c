@@ -167,6 +167,12 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
            (icon >= 0x1f191 && icon <= 0x1f19a) /* enclosed signs */;
 }
 
+static iBool isLocalOrInternal_GmDocument_(const iGmDocument *d) {
+    /* Remote pages may not refer to the user's data directory. */
+    const iRangecc scheme = urlScheme_String(&d->url);
+    return isLocalFileScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "about");
+}
+
 iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
     /* Returns the human-readable label of the link. */
     static iRegExp *pattern_;
@@ -188,6 +194,10 @@ iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
         setScheme_GmLink_(link, spartan_GmLinkScheme);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
+        if (startsWithCase_String(&link->url, "local:") && !isLocalOrInternal_GmDocument_(d)) {
+            delete_GmLink(link);
+            return line;
+        }
     }
     if (!link) {
         init_RegExpMatch(&m);
@@ -205,7 +215,8 @@ iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
              size_String(&link->url) > prefs_App()->maxUrlSize) ||
             (startsWithCase_String(&link->url, "about:command")
              /* this is a special internal page that allows submitting UI events */
-             && !d->flags.enableCommandLinks)) {
+             && !d->flags.enableCommandLinks) ||
+            (startsWithCase_String(&link->url, "local:") && !isLocalOrInternal_GmDocument_(d))) {
             delete_GmLink(link);
             return line;
         }
