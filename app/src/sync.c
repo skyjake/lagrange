@@ -99,6 +99,11 @@ struct Impl_Sync {
     iAtomicInt   isRunning;
     iBool        isApplying;
     iBool        isManual;
+    iString      trustHost;     /* untrusted server certificate offered to the user */
+    uint16_t     trustPort;
+    iBlock      *trustFingerprint;
+    iDate        trustValidUntil;
+    iBlock      *declinedFingerprint;
     SDL_TimerID  timer;
     SDL_TimerID  retryTimer;
     iThread     *worker;
@@ -115,6 +120,8 @@ struct Impl_Sync {
     iSyncData   *newPristine; /* matches the server */
     iArray       idMap;       /* bookmark IDs renumbered in `result` */
     iString      error;
+    iBlock      *serverFingerprint; /* set if the server certificate was not trusted */
+    iDate        serverValidUntil;
     iBool        didContact;
     iBool        didUpload;   /* all local changes are on the server */
 };
@@ -528,14 +535,20 @@ static const iString *endpoint_Sync_(const iSync *d, const char *scheme) {
     return ep;
 }
 
-static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *body,
-                           int *status_out, iString *meta_out, iBlock *body_out) {
+static iRangecc host_Sync_(const iSync *d, uint16_t *port_out) {
     iUrl parts;
     init_Url(&parts, &d->url);
-    const uint16_t port = isEmpty_Range(&parts.port) ? GEMINI_DEFAULT_PORT
-                                                     : (uint16_t) atoi(cstr_Rangecc(parts.port));
+    *port_out = isEmpty_Range(&parts.port) ? GEMINI_DEFAULT_PORT
+                                           : (uint16_t) atoi(cstr_Rangecc(parts.port));
+    return parts.host;
+}
+
+static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *body,
+                           int *status_out, iString *meta_out, iBlock *body_out) {
+    uint16_t       port;
+    const iRangecc host = host_Sync_(d, &port);
     iTlsRequest *req = new_TlsRequest();
-    setHost_TlsRequest(req, collectNewRange_String(parts.host), port);
+    setHost_TlsRequest(req, collectNewRange_String(host), port);
     iBlock *content = collect_Block(newCStr_Block(cstr_String(requestUrl)));
     appendCStr_Block(content, "\r\n");
     if (body) {
@@ -552,7 +565,18 @@ static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *bo
         set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.timeout")));
     }
     else if (!isVerified_TlsRequest(req)) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.untrusted")));
+        const iTlsCertificate *serverCert = serverCertificate_TlsRequest(req);
+        if (serverCert && isExpired_TlsCertificate(serverCert)) {
+            set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.expired")));
+        }
+        else {
+            set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.untrusted")));
+            if (serverCert) {
+                delete_Block(d->serverFingerprint);
+                d->serverFingerprint = publicKeyFingerprint_TlsCertificate(serverCert);
+                validUntil_TlsCertificate(serverCert, &d->serverValidUntil);
+            }
+        }
     }
     else if (status_TlsRequest(req) == error_TlsRequestStatus) {
         format_String(&d->error, "%s", cstr_String(errorMessage_TlsRequest(req)));
@@ -777,6 +801,49 @@ static void fail_Sync_(iSync *d, const char *error) {
     }
 }
 
+static void promptTrust_Sync_(iSync *d) {
+    uint16_t port;
+    setRange_String(&d->trustHost, host_Sync_(d, &port));
+    d->trustPort = port;
+    delete_Block(d->trustFingerprint);
+    d->trustFingerprint = copy_Block(d->serverFingerprint);
+    d->trustValidUntil  = d->serverValidUntil;
+    delete_Block(d->declinedFingerprint);
+    d->declinedFingerprint = copy_Block(d->serverFingerprint);
+    iWidget *old = findWidget_App("sync.trust");
+    if (old) {
+        destroyDialog_Widget(old);
+    }
+    iBlock  *trusted = trustedFingerprint_GmCerts(certs_App(), range_String(&d->trustHost), port);
+    iString *msg     = collectNew_String();
+    if (trusted) {
+        format_String(msg,
+                      "%s\n\n%s\n" uiTextStrong_ColorEscape "%s\n\n" uiText_ColorEscape
+                      "%s\n" uiTextStrong_ColorEscape "%s",
+                      cstr_Lang("dlg.sync.untrusted.changed"),
+                      cstr_Lang("dlg.sync.fp.trusted"),
+                      cstrCollect_String(fingerprintText_GmCerts(trusted)),
+                      cstr_Lang("dlg.sync.fp.server"),
+                      cstrCollect_String(fingerprintText_GmCerts(d->trustFingerprint)));
+        delete_Block(trusted);
+    }
+    else {
+        format_String(msg,
+                      "%s\n\n%s\n" uiTextStrong_ColorEscape "%s",
+                      cstr_Lang("dlg.sync.untrusted.unknown"),
+                      cstr_Lang("dlg.sync.fp.server"),
+                      cstrCollect_String(fingerprintText_GmCerts(d->trustFingerprint)));
+    }
+    appendFormat_String(msg, "\n\n" uiText_ColorEscape "%s", cstr_Lang("dlg.sync.untrusted.check"));
+    iWidget *dlg = makeQuestion_Widget(
+        uiTextCaution_ColorEscape "${heading.sync.untrusted}",
+        cstr_String(msg),
+        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                       { uiTextAction_ColorEscape "${dlg.cert.trust}", 0, 0, "!sync.trustcert" } },
+        2);
+    setId_Widget(dlg, "sync.trust");
+}
+
 static void start_Sync_(iSync *d, iBool isManual) {
     if (value_Atomic(&d->isRunning)) {
         return;
@@ -830,12 +897,28 @@ static void start_Sync_(iSync *d, iBool isManual) {
     d->didContact = iFalse;
     d->didUpload  = iFalse;
     clear_String(&d->error);
+    delete_Block(d->serverFingerprint);
+    d->serverFingerprint = NULL;
     clear_Array(&d->idMap);
     notifyStatus_Sync_();
     notify_App("sync.started");
     d->worker = new_Thread(run_Sync_);
     setName_Thread(d->worker, "Sync");
     start_Thread(d->worker);
+}
+
+static void trust_Sync_(iSync *d) {
+    if (!d->trustFingerprint) {
+        return;
+    }
+    setTrusted_GmCerts(certs_App(),
+                       range_String(&d->trustHost),
+                       d->trustPort,
+                       d->trustFingerprint,
+                       &d->trustValidUntil);
+    delete_Block(d->trustFingerprint);
+    d->trustFingerprint = NULL;
+    start_Sync_(d, iTrue);
 }
 
 static void finish_Sync_(iSync *d) {
@@ -881,7 +964,14 @@ static void finish_Sync_(iSync *d) {
     fetchRemote_Bookmarks(bookmarks_App());
     notify_App("sync.finished");
     notifyStatus_Sync_();
-    if (isError && d->isManual) {
+    if (d->serverFingerprint) {
+        /* Automatic syncs only ask once about the same certificate. */
+        if (d->isManual || !d->declinedFingerprint ||
+            cmp_Block(d->serverFingerprint, d->declinedFingerprint)) {
+            promptTrust_Sync_(d);
+        }
+    }
+    else if (isError && d->isManual) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.sync.failed}",
                                  cstr_String(&d->lastError));
     }
@@ -939,6 +1029,7 @@ void init_Sync(const char *dataDir) {
     init_String(&d->url);
     init_String(&d->identity);
     init_String(&d->error);
+    init_String(&d->trustHost);
     init_Array(&d->idMap, sizeof(iSyncIdMapping));
     d->pristine = new_SyncData();
     loadState_Sync_(d);
@@ -971,6 +1062,10 @@ void deinit_Sync(void) {
     delete_TlsCertificate(d->cert);
     deinit_Array(&d->idMap);
     deinit_String(&d->error);
+    deinit_String(&d->trustHost);
+    delete_Block(d->serverFingerprint);
+    delete_Block(d->trustFingerprint);
+    delete_Block(d->declinedFingerprint);
     deinit_String(&d->identity);
     deinit_String(&d->url);
     deinit_String(&d->syncedIdentity);
@@ -1063,6 +1158,10 @@ iBool handleCommand_Sync(const char *cmd) {
         updateTimer_Sync_(d);
         notifyStatus_Sync_();
         check_Sync_(d, iFalse);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sync.trustcert")) {
+        trust_Sync_(d);
         return iTrue;
     }
     if (equal_Command(cmd, "sync.newidentity")) {

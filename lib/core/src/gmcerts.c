@@ -760,6 +760,35 @@ iTime domainValidUntil_GmCerts(const iGmCerts *d, iRangecc domain, uint16_t port
     return expiry;
 }
 
+iBlock *trustedFingerprint_GmCerts(const iGmCerts *d, iRangecc domain, uint16_t port) {
+    iBlock *fp = NULL;
+    iString key;
+    init_String(&key);
+    makeTrustKey_(domain, port, &key);
+    lock_Mutex(d->mtx);
+    const iTrustEntry *trust = constValue_StringHash(d->trusted, &key);
+    if (trust) {
+        fp = copy_Block(&trust->fingerprint);
+    }
+    unlock_Mutex(d->mtx);
+    deinit_String(&key);
+    return fp;
+}
+
+iString *fingerprintText_GmCerts(const iBlock *fingerprint) {
+    iString *hex = hexEncode_Block(fingerprint);
+    iString *str = new_String();
+    for (size_t pos = 0; pos < size_String(hex); pos += 8) {
+        if (pos) {
+            appendCStr_String(str, " ");
+        }
+        appendRange_String(str, (iRangecc){ cstr_String(hex) + pos,
+                                            cstr_String(hex) + iMin(pos + 8, size_String(hex)) });
+    }
+    delete_String(hex);
+    return str;
+}
+
 iGmIdentity *identity_GmCerts(iGmCerts *d, unsigned int id) {
     return at_PtrArray(&d->idents, id);
 }

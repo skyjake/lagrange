@@ -3018,6 +3018,9 @@ msgstr "The connection was cancelled because the proxy server's TLS certificate 
 msgid "error.certverify"
 msgstr "Untrusted Server"
 
+msgid "error.certverify.fp"
+msgstr "Server's fingerprint:"
+
 msgid "error.certverify.msg"
 msgstr "Connection to the server was cancelled because its TLS certificate does not match the one we trust. Please check if the server has announced a certificate change. If not, it is possible that a malicious third party is masquerading as the server you tried to reach.\n\nThe certificate can be marked as trusted in Page Information."
 
@@ -3331,6 +3334,24 @@ msgstr "Sync"
 msgid "heading.sync.failed"
 msgstr "Sync Failed"
 
+msgid "heading.sync.untrusted"
+msgstr "Untrusted Sync Server"
+
+msgid "dlg.sync.untrusted.changed"
+msgstr "The sync server's certificate does not match the one trusted earlier. This is expected if the server's certificate was replaced, but it may also mean that someone is intercepting the connection."
+
+msgid "dlg.sync.untrusted.unknown"
+msgstr "The sync server's certificate is not valid for the server's address."
+
+msgid "dlg.sync.fp.trusted"
+msgstr "Trusted fingerprint:"
+
+msgid "dlg.sync.fp.server"
+msgstr "Server's fingerprint:"
+
+msgid "dlg.sync.untrusted.check"
+msgstr "Only trust the server's certificate if its fingerprint matches the one given by the server's administrator."
+
 msgid "sync.status.off"
 msgstr "Sync is off."
 
@@ -3366,6 +3387,9 @@ msgstr "Used for syncing user data between devices"
 
 msgid "sync.error.untrusted"
 msgstr "The sync server's certificate is not trusted."
+
+msgid "sync.error.expired"
+msgstr "The sync server's certificate has expired."
 
 msgid "sync.error.timeout"
 msgstr "The sync server did not respond in time."

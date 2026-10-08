@@ -71,6 +71,8 @@ iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, uint16
 void                setTrusted_GmCerts      (iGmCerts *, iRangecc domain, uint16_t port,
                                              const iBlock *fingerprint, const iDate *validUntil);
 iTime               domainValidUntil_GmCerts(const iGmCerts *, iRangecc domain, uint16_t port);
+iBlock *            trustedFingerprint_GmCerts(const iGmCerts *, iRangecc domain, uint16_t port); /* NULL if none */
+iString *           fingerprintText_GmCerts (const iBlock *fingerprint); /* hex in groups of 8 */
 
 /**
  * Create a new self-signed TLS client certificate for identifying the user.
