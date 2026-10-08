@@ -60,6 +60,7 @@ void generate_Export(iExport *d) {
 
 void generatePartial_Export(iExport *d, int dataFlags) {
     openWritable_Archive(d->arch);
+    setCompressionLevel_Archive(d->arch, 9);
     iBuffer *buf  = new_Buffer();
     iString *meta = new_String();
     iDate    today;

@@ -296,6 +296,7 @@ static iBool deserializeRecords_SyncData_(iSyncData *d, enum iSyncDataType type,
 iBlock *serialize_SyncData(const iSyncData *d) {
     iArchive *arch = new_Archive();
     openWritable_Archive(arch);
+    setCompressionLevel_Archive(arch, 9);
     iString *meta = new_String();
     format_String(meta,
                   "format = %u\n"

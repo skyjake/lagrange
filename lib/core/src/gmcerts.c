@@ -340,6 +340,9 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
         init_String(&line);
         iConstForEach(StringHash, i, d->trusted) {
             const iTrustEntry *trust = value_StringHashNode(i.value);
+            if (elapsedSeconds_Time(&trust->validUntil) >= 0) {
+                continue; /* expired entries have no effect on trust */
+            }
             format_String(&line,
                           "%s %llu %s\n",
                           cstr_String(key_StringHashConstIterator(&i)),
