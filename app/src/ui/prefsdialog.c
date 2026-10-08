@@ -326,6 +326,11 @@ static void preselectSyncIdentity_(void) {
 }
 
 static void updateSyncStatus_(iWidget *d) {
+    iWidget *syncNow = findChild_Widget(d, "prefs.sync.now");
+    if (syncNow) {
+        setFlags_Widget(syncNow, disabled_WidgetFlag, !prefs_App()->sync);
+        refresh_Widget(syncNow);
+    }
     iLabelWidget *status = findChild_Widget(d, "prefs.sync.status");
     if (status) {
         updateText_LabelWidget(status, collect_String(statusText_Sync()));
@@ -601,7 +606,7 @@ iWidget *makePreferences_Widget(void) {
             { "dropdown id:prefs.sync.interval", 0, 0, (const void *) syncIntervalItems },
             { "padding" },
             { "label id:prefs.sync.status text:" },
-            { "button text:" reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", 0, 0, "sync.now" },
+            { "button id:prefs.sync.now text:" reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", 0, 0, "sync.now" },
             { NULL }
         };
         const iMenuItem identityPanelItems[] = {
@@ -1046,11 +1051,10 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(status), frameless_WidgetFlag);
         statusHead->sizeRef = as_Widget(status);
         addChild_Widget(headings, iClob(makeHeading_Widget("")));
-        addChildFlags_Widget(
-            values,
-            iClob(new_LabelWidget(reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}",
-                                  "sync.now")),
-            0);
+        iLabelWidget *syncNow = new_LabelWidget(
+            reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", "sync.now");
+        setId_Widget(as_Widget(syncNow), "prefs.sync.now");
+        addChild_Widget(values, iClob(syncNow));
     }
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
