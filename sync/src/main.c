@@ -56,7 +56,7 @@ static iBool writeTextFile_(const iString *path, const iString *text) {
 static iBool generateCertificate_(const iServerConfig *cfg, const iString *host) {
     iDate until;
     initCurrent_Date(&until);
-    until.year += 20;
+    until.year += 50;
     const iTlsCertificateName names[] = {
         { issuerCommonName_TlsCertificateNameType, host },
         { subjectCommonName_TlsCertificateNameType, host },
