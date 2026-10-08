@@ -2449,15 +2449,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                             saveAsPath_(url_GmRequest(media->req), meta_GmRequest(media->req)));
         }
         else if (media) {
-            const iString *savePath;
-            if (!isEmpty_String(savePath = saveToDownloads_(url_GmRequest(media->req),
-                                                            meta_GmRequest(media->req),
-                                                            body_GmRequest(media->req),
-                                                            iTrue))) {
-                if (isDesktop_Platform()) {
-                    makeSimpleMessage_Widget("${heading.save}", cstr_String(savePath));
-                }
-            }
+            saveToDownloads_(url_GmRequest(media->req),
+                             meta_GmRequest(media->req),
+                             body_GmRequest(media->req),
+                             iTrue); /* shows a message */
         }
     }
     else if (equal_Command(cmd, "document.save") &&
@@ -2497,14 +2492,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 const iBool    doOpen   = argLabel_Command(cmd, "open");
                 const iString *savePath = saveToDownloads_(d->mod.url, &d->fetch->sourceMime,
                                                            &d->fetch->sourceContent, !doOpen);
-                if (!isEmpty_String(savePath)) {
-                    if (doOpen) {
-                        postCommandf_Root(
-                            w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
-                    }
-                    else if (isDesktop_Platform()) {
-                        makeSimpleMessage_Widget("${heading.save}", cstr_String(savePath));
-                    }
+                if (!isEmpty_String(savePath) && doOpen) {
+                    postCommandf_Root(
+                        w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
                 }
             }
         }
