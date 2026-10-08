@@ -34,14 +34,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdarg.h>
 #include <stdio.h>
 
-enum { maxHeaderSize_ = 1024, maxConnections_ = 32 };
+enum { maxHeaderSize_ = 1024, maxConnections_ = 32, maxRecentSize_ = 256 * 1024 };
 
 static const double requestTimeout_ = 10;        /* seconds to receive the request line */
 static const double uploadTimeout_  = 30;        /* seconds, in addition to the transfer time */
 static const double minUploadRate_  = 5000;      /* bytes per second */
 static const double expiryInterval_ = 24 * 3600; /* seconds */
 
-static const char *dataPath_ = "/data";
+static const char *dataPath_   = "/data";
+static const char *recentPath_ = "/recent";
 
 static iAtomicInt isStopping_;
 
@@ -70,6 +71,7 @@ struct Impl_Handler {
     iBool                isEd25519;
     iString              header;
     iBlock               received;
+    enum iStorageBlob    blob;
     size_t               uploadSize;
     uint64_t             uploadGen;
     iBool                isUpload;
@@ -187,11 +189,17 @@ static void respondInfo_Handler_(iHandler *d, iTlsConnection *conn) {
         }
         else {
             uint64_t gen  = 0;
-            iBlock  *data = load_Storage(d->storage, &d->fingerprint, &gen);
+            iBlock  *data = load_Storage(d->storage, &d->fingerprint, data_StorageBlob, &gen);
             if (data) {
                 appendFormat_String(page, "Stored: %.1f KB (generation %llu)\n",
                                     size_Block(data) / 1024.0f, (unsigned long long) gen);
                 delete_Block(data);
+                data = load_Storage(d->storage, &d->fingerprint, recent_StorageBlob, &gen);
+                if (data) {
+                    appendFormat_String(page, "Recent changes: %.1f KB (generation %llu)\n",
+                                        size_Block(data) / 1024.0f, (unsigned long long) gen);
+                    delete_Block(data);
+                }
             }
             else {
                 appendCStr_String(page, "No data stored.\n");
@@ -203,7 +211,7 @@ static void respondInfo_Handler_(iHandler *d, iTlsConnection *conn) {
 
 static void respondDownload_Handler_(iHandler *d, iTlsConnection *conn, uint64_t clientGen) {
     uint64_t gen  = 0;
-    iBlock  *data = load_Storage(d->storage, &d->fingerprint, &gen);
+    iBlock  *data = load_Storage(d->storage, &d->fingerprint, d->blob, &gen);
     if (gen == clientGen) {
         respond_Handler_(d, conn, 40, "unchanged", NULL);
     }
@@ -223,7 +231,8 @@ static void respondDownload_Handler_(iHandler *d, iTlsConnection *conn, uint64_t
 static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
     truncate_Block(&d->received, d->uploadSize);
     uint64_t newGen = 0;
-    switch (store_Storage(d->storage, &d->fingerprint, d->uploadGen, &d->received, &newGen)) {
+    switch (store_Storage(
+        d->storage, &d->fingerprint, d->blob, d->uploadGen, &d->received, &newGen)) {
         case ok_StoreResult:
             respond_Handler_(d, conn, 20, "text/plain",
                              collect_Block(newCStr_Block(
@@ -234,6 +243,9 @@ static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
             break;
         case full_StoreResult:
             respond_Handler_(d, conn, 61, "Server is full", NULL);
+            break;
+        case noAccount_StoreResult:
+            respond_Handler_(d, conn, 61, "No account", NULL);
             break;
         default:
             respond_Handler_(d, conn, 42, "Failed to store data", NULL);
@@ -257,7 +269,13 @@ static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
         respondInfo_Handler_(d, conn);
         return;
     }
-    if (!endsWith_Rangecc(url.path, dataPath_)) {
+    if (endsWith_Rangecc(url.path, dataPath_)) {
+        d->blob = data_StorageBlob;
+    }
+    else if (endsWith_Rangecc(url.path, recentPath_)) {
+        d->blob = recent_StorageBlob;
+    }
+    else {
         respond_Handler_(d, conn, 51, "Not found", NULL);
         return;
     }
@@ -287,21 +305,33 @@ static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
         respond_Handler_(d, conn, 59, "Missing size parameter", NULL);
         return;
     }
-    if (d->uploadSize > d->cfg->maxDataSize) {
+    const size_t maxSize =
+        d->blob == recent_StorageBlob ? iMin(maxRecentSize_, d->cfg->maxDataSize)
+                                      : d->cfg->maxDataSize;
+    if (d->uploadSize > maxSize) {
         respond_Handler_(d, conn, 59, format_CStr("Data too large (maximum is %zu bytes)",
-                                                  d->cfg->maxDataSize), NULL);
+                                                  maxSize), NULL);
         return;
     }
     /* Stale uploads are rejected before receiving the data. */
     uint64_t current = 0;
-    delete_Block(load_Storage(d->storage, &d->fingerprint, &current));
+    delete_Block(load_Storage(d->storage, &d->fingerprint, d->blob, &current));
     if (current != gen) {
         respond_Handler_(d, conn, 40, "stale", NULL);
         return;
     }
-    if (isFull_Storage(d->storage, &d->fingerprint)) {
+    if (d->blob == data_StorageBlob && isFull_Storage(d->storage, &d->fingerprint)) {
         respond_Handler_(d, conn, 61, "Server is full", NULL);
         return;
+    }
+    if (d->blob == recent_StorageBlob) {
+        uint64_t dataGen = 0;
+        iBlock  *data    = load_Storage(d->storage, &d->fingerprint, data_StorageBlob, &dataGen);
+        if (!data) {
+            respond_Handler_(d, conn, 61, "No account", NULL);
+            return;
+        }
+        delete_Block(data);
     }
     d->isUpload  = iTrue;
     d->uploadGen = gen;
@@ -368,6 +398,7 @@ static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *con
     }
     init_String(&d->header);
     init_Block(&d->received, 0);
+    d->blob       = data_StorageBlob;
     d->uploadSize = 0;
     d->uploadGen  = 0;
     d->isUpload   = iFalse;

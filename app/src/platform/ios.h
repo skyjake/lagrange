@@ -40,6 +40,8 @@ void    pickFile_iOS            (const char *command); /* ` path:%s` will be app
 void    openTextActivityView_iOS(const iString *text);
 void    openFileActivityView_iOS(const iString *path);
 iBool   openUri_iOS             (const iString *uri);
+void    beginBackgroundTask_iOS (void); /* asks for time to finish work in the background */
+void    endBackgroundTask_iOS   (void);
 
 iBool   isPhone_iOS             (void);
 int     displayRefreshRate_iOS  (void);

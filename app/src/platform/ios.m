@@ -791,6 +791,24 @@ void openFileActivityView_iOS(const iString *path) {
     openActivityView_(@[url]);
 }
 
+static UIBackgroundTaskIdentifier backgroundTask_ = UIBackgroundTaskInvalid;
+
+void endBackgroundTask_iOS(void) {
+    if (backgroundTask_ != UIBackgroundTaskInvalid) {
+        [[UIApplication sharedApplication] endBackgroundTask:backgroundTask_];
+        backgroundTask_ = UIBackgroundTaskInvalid;
+    }
+}
+
+void beginBackgroundTask_iOS(void) {
+    endBackgroundTask_iOS();
+    backgroundTask_ = [[UIApplication sharedApplication]
+        beginBackgroundTaskWithName:@"Sync"
+                  expirationHandler:^{
+                      endBackgroundTask_iOS();
+                  }];
+}
+
 iBool openUri_iOS(const iString *uri) {
     NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:cstr_String(uri)]];
     if ([[UIApplication sharedApplication] canOpenURL:url]) {

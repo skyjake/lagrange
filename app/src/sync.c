@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/root.h"
 #include "ui/widget.h"
 #include "ui/window.h"
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
 
 #include <lagrange/core.h>
 #include <lagrange/gmcerts.h>
@@ -64,15 +67,21 @@ _Static_assert((int) bookmarks_SyncDataType  == (int) bookmarks_UserDataType &&
                (int) sites_SyncDataType      == (int) sites_UserDataType,
                "data type mismatch");
 
-static const char  *stateFileName_Sync_    = "state.ini";
-static const char  *pristineFileName_Sync_ = "pristine.zip";
-static const double timerInterval_Sync_    = 10 * 60; /* seconds; checks if a sync is due */
-static const double retryDelay_Sync_       = 15;      /* seconds; when blocked */
-static const double failureBackoff_Sync_   = 10 * 60; /* seconds */
-static const double bookCheckInterval_Sync_ = 5 * 60; /* seconds */
-static const int    maxAttempts_Sync_      = 3;
-static const double requestTimeout_Sync_   = 30;      /* seconds */
-static const double minTransferRate_Sync_  = 10000;   /* bytes per second */
+static const char  *stateFileName_Sync_       = "state.ini";
+static const char  *pristineFileName_Sync_    = "pristine.zip";
+static const char  *recentFileName_Sync_      = "recent.zip";
+static const char  *recentLocalFileName_Sync_ = "recentlocal.zip";
+static const double timerInterval_Sync_       = 5 * 60;  /* seconds; checks if a sync is due */
+static const double retryDelay_Sync_          = 15;      /* seconds; when blocked */
+static const double failureBackoff_Sync_      = 10 * 60; /* seconds */
+static const int    maxAttempts_Sync_         = 3;
+static const double requestTimeout_Sync_      = 30;      /* seconds */
+static const double quitTimeout_Sync_         = 4;       /* seconds; when the app is closing */
+static const double minTransferRate_Sync_     = 10000;   /* bytes per second */
+static const double recentWindow_Sync_        = 24 * 3600; /* seconds of recent changes kept */
+static const double recentDelay_Sync_         = 60;      /* seconds from a change to uploading */
+static const double recentInterval_Sync_      = 60;      /* minimum seconds between checks */
+static const double recentBackoff_Sync_       = 2 * 60;  /* seconds */
 
 static const char *typeNames_Sync_[max_SyncDataType] = {
     "bookmarks", "books", "visited", "identities", "trusted", "snippets", "sites"
@@ -82,6 +91,17 @@ enum iSyncUploadResult {
     ok_SyncUploadResult,
     stale_SyncUploadResult,
     failed_SyncUploadResult,
+};
+
+enum iSyncDownloadResult {
+    failed_SyncDownloadResult,
+    unchanged_SyncDownloadResult,
+    data_SyncDownloadResult,
+};
+
+enum iSyncMode {
+    full_SyncMode,
+    recent_SyncMode, /* only the recent changes */
 };
 
 iDeclareType(Sync)
@@ -99,8 +119,22 @@ struct Impl_Sync {
     iString      syncedServer;  /* the pristine data belongs to this server and identity */
     iString      syncedIdentity;
     iSyncData   *pristine;
+    iSyncRecent *recent;           /* recent changes stored on the server */
+    iSyncRecent *recentLocal;      /* local changes to visited feed entries */
+    iTime        recentModified;   /* last local change to the recent data */
+    iTime        recentSyncedTime; /* recent changes before this are on the server */
     /* Runtime. */
-    iAtomicInt   isRunning;
+    iAtomicInt   isRunning;        /* full sync */
+    enum iSyncMode mode;
+    iTime        recentCheckTime;
+    iTime        recentFailTime;
+    iAtomicInt   isRecentChangePosted;
+    iBool        isFullPending;    /* full sync starts after the recent changes */
+    iBool        isFullPendingManual;
+    iBool        isBlocking;       /* worker runs in the calling thread */
+    iBool        isBackgroundTask;
+    double       requestTimeout;
+    SDL_TimerID  recentTimer;
     iBool        isApplying;
     iBool        isManual;
     iString      trustHost;     /* untrusted server certificate offered to the user */
@@ -118,8 +152,10 @@ struct Impl_Sync {
     iBlock      *key;
     iSyncData   *base;
     iSyncData   *snapshot;
+    iSyncRecent *outgoing;    /* local recent changes; NULL if none */
     iTime        snapshotTime;
     /* Worker output. */
+    iSyncRecent *recentResult;
     iSyncData   *result;      /* to be applied locally */
     iSyncData   *newPristine; /* matches the server */
     iArray       idMap;       /* bookmark IDs renumbered in `result` */
@@ -192,6 +228,25 @@ static void handleStateKeyValue_Sync_(void *context, const iString *table, const
     else if (!cmp_String(key, "synced")) {
         initSeconds_Time(&d->syncedTime, num);
     }
+    else if (!cmp_String(key, "recentmodified")) {
+        initSeconds_Time(&d->recentModified, num);
+    }
+    else if (!cmp_String(key, "recentsynced")) {
+        initSeconds_Time(&d->recentSyncedTime, num);
+    }
+}
+
+static void loadRecent_Sync_(const iSync *d, iSyncRecent *recent, const char *fileName) {
+    iFile *f = new_File(path_Sync_(d, fileName));
+    if (open_File(f, readOnly_FileMode)) {
+        if (!deserialize_SyncRecent(recent, collect_Block(readAll_File(f)))) {
+            fprintf(stderr, "[Sync] failed to read %s\n", fileName);
+            clear_StringHash(recent->visits);
+            clear_StringHash(recent->books);
+            recent->generation = 0;
+        }
+    }
+    iRelease(f);
 }
 
 static void loadState_Sync_(iSync *d) {
@@ -212,6 +267,8 @@ static void loadState_Sync_(iSync *d) {
         }
     }
     iRelease(f);
+    loadRecent_Sync_(d, d->recent, recentFileName_Sync_);
+    loadRecent_Sync_(d, d->recentLocal, recentLocalFileName_Sync_);
 }
 
 static void saveState_Sync_(iSync *d) {
@@ -220,11 +277,14 @@ static void saveState_Sync_(iSync *d) {
     lock_Mutex(d->mtx);
     format_String(str,
                   "lastsync = %f\nlastcheck = %f\nlastattempt = %f\nsynced = %f\n"
+                  "recentmodified = %f\nrecentsynced = %f\n"
                   "server = \"%s\"\nidentity = \"%s\"\nerror = \"%s\"\n\n[modified]\n",
                   seconds_Time(&d->lastSyncTime),
                   seconds_Time(&d->lastCheckTime),
                   seconds_Time(&d->lastAttemptTime),
                   seconds_Time(&d->syncedTime),
+                  seconds_Time(&d->recentModified),
+                  seconds_Time(&d->recentSyncedTime),
                   cstrCollect_String(quote_String(&d->syncedServer, iFalse)),
                   cstrCollect_String(quote_String(&d->syncedIdentity, iFalse)),
                   cstrCollect_String(quote_String(&d->lastError, iFalse)));
@@ -240,19 +300,29 @@ static void saveState_Sync_(iSync *d) {
     delete_String(str);
 }
 
-static void savePristine_Sync_(iSync *d) {
+static void writeFile_Sync_(iSync *d, const char *fileName, const iBlock *data) {
     makeDirs_Path(&d->dir);
-    const iString *path    = path_Sync_(d, pristineFileName_Sync_);
+    const iString *path    = path_Sync_(d, fileName);
     const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
-    iBlock *data = serialize_SyncData(d->pristine);
-    iFile  *f    = new_File(tmpPath);
+    iFile *f = new_File(tmpPath);
     if (open_File(f, writeOnly_FileMode)) {
         write_File(f, data);
         close_File(f);
         commitFile_Core(cstr_String(path), cstr_String(tmpPath));
     }
     iRelease(f);
-    delete_Block(data);
+}
+
+static void savePristine_Sync_(iSync *d) {
+    writeFile_Sync_(d, pristineFileName_Sync_, collect_Block(serialize_SyncData(d->pristine)));
+}
+
+static void saveRecent_Sync_(iSync *d) {
+    writeFile_Sync_(d, recentFileName_Sync_, collect_Block(serialize_SyncRecent(d->recent)));
+    lock_Mutex(d->mtx);
+    iBlock *local = serialize_SyncRecent(d->recentLocal);
+    unlock_Mutex(d->mtx);
+    writeFile_Sync_(d, recentLocalFileName_Sync_, collect_Block(local));
 }
 
 static void reset_Sync_(iSync *d) {
@@ -260,6 +330,18 @@ static void reset_Sync_(iSync *d) {
     delete_SyncData(d->pristine);
     d->pristine = new_SyncData();
     remove(cstr_String(path_Sync_(d, pristineFileName_Sync_)));
+    delete_SyncRecent(d->recent);
+    d->recent = new_SyncRecent();
+    lock_Mutex(d->mtx);
+    delete_SyncRecent(d->recentLocal);
+    d->recentLocal = new_SyncRecent();
+    unlock_Mutex(d->mtx);
+    remove(cstr_String(path_Sync_(d, recentFileName_Sync_)));
+    remove(cstr_String(path_Sync_(d, recentLocalFileName_Sync_)));
+    iZap(d->recentModified);
+    iZap(d->recentSyncedTime);
+    iZap(d->recentCheckTime);
+    iZap(d->recentFailTime);
     iZap(d->lastSyncTime);
     iZap(d->lastCheckTime);
     iZap(d->lastAttemptTime);
@@ -282,50 +364,90 @@ static iBool isDirty_Sync_(const iSync *d) {
     return dirty;
 }
 
+static iBool isRecentDirty_Sync_(const iSync *d) {
+    iBool dirty;
+    iGuardMutex(d->mtx, dirty = cmp_Time(&d->recentModified, &d->recentSyncedTime) > 0);
+    return dirty;
+}
+
+static void recentChanged_Sync_(iSync *d) {
+    if (!prefs_Sync_()->sync) {
+        return;
+    }
+    iGuardMutex(d->mtx, initCurrent_Time(&d->recentModified));
+    if (!exchange_Atomic(&d->isRecentChangePosted, iTrue)) {
+        postCommand_App("sync.recent.changed");
+    }
+}
+
 static void userDataChanged_Sync_(enum iUserDataType type) {
     iSync *d = &sync_;
     if (d->isApplying || !d->mtx) {
         return;
     }
     iGuardMutex(d->mtx, initCurrent_Time(&d->modified[type]));
+    if (type == books_UserDataType) {
+        recentChanged_Sync_(d);
+    }
+}
+
+static void visitedUrlChanged_Sync_(const iString *url, iBool isRemoved) {
+    /* Only the read status of feed entries is synced quickly. */
+    iSync *d = &sync_;
+    iUnused(isRemoved);
+    if (d->isApplying || !d->mtx || !prefs_Sync_()->sync || !isEntryUrl_Feeds(url)) {
+        return;
+    }
+    iTime now;
+    initCurrent_Time(&now);
+    lock_Mutex(d->mtx);
+    setFieldCStr_SyncRecord(addVisit_SyncRecent(d->recentLocal, url),
+                            changed_SyncRecentVisitField,
+                            format_CStr("%lld", (long long) integralSeconds_Time(&now)));
+    unlock_Mutex(d->mtx);
+    recentChanged_Sync_(d);
 }
 
 /*----------------------------------------------------------------------------------------------*/
 /* Snapshots of the current data */
 
+static void snapshotType_Sync_(iSyncData *snap, enum iSyncDataType type) {
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    iStream *outs = stream_Buffer(buf);
+    switch (type) {
+        case bookmarks_SyncDataType:
+            serialize_Bookmarks(bookmarks_App(), outs);
+            break;
+        case books_SyncDataType:
+            serialize_Books(outs);
+            break;
+        case visited_SyncDataType:
+            serialize_Visited(visited_App(), outs);
+            break;
+        case trusted_SyncDataType:
+            serialize_GmCerts(certs_App(), outs, NULL);
+            break;
+        case snippets_SyncDataType:
+            serialize_Snippets(outs);
+            break;
+        case sites_SyncDataType:
+            serialize_SiteSpec(outs);
+            break;
+        default:
+            break;
+    }
+    parseNative_SyncData(snap, type, data_Buffer(buf));
+    iRelease(buf);
+}
+
 static iSyncData *takeSnapshot_Sync_(iSync *d) {
     iSyncData *snap = new_SyncData();
-    iBuffer   *buf  = new_Buffer();
     for (int type = 0; type < max_SyncDataType; type++) {
-        if (type == identities_SyncDataType) {
-            continue;
+        if (type != identities_SyncDataType) {
+            snapshotType_Sync_(snap, type);
         }
-        openEmpty_Buffer(buf);
-        iStream *outs = stream_Buffer(buf);
-        switch (type) {
-            case bookmarks_SyncDataType:
-                serialize_Bookmarks(bookmarks_App(), outs);
-                break;
-            case books_SyncDataType:
-                serialize_Books(outs);
-                break;
-            case visited_SyncDataType:
-                serialize_Visited(visited_App(), outs);
-                break;
-            case trusted_SyncDataType:
-                serialize_GmCerts(certs_App(), outs, NULL);
-                break;
-            case snippets_SyncDataType:
-                serialize_Snippets(outs);
-                break;
-            case sites_SyncDataType:
-                serialize_SiteSpec(outs);
-                break;
-        }
-        parseNative_SyncData(snap, type, data_Buffer(buf));
-        close_Buffer(buf);
     }
-    iRelease(buf);
     iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), NULL, NULL)) {
         const iGmIdentity *ident = i.ptr;
         if (ident->flags & temporary_GmIdentityFlag || !hasPrivateKey_TlsCertificate(ident->cert)) {
@@ -355,6 +477,51 @@ static iSyncData *takeSnapshot_Sync_(iSync *d) {
     unlock_Mutex(d->mtx);
     snap->generation    = d->pristine->generation;
     snap->maxBookmarkId = d->pristine->maxBookmarkId;
+    return snap;
+}
+
+static iTime recentCutoff_Sync_(void) {
+    iTime cutoff, window;
+    initCurrent_Time(&cutoff);
+    initSeconds_Time(&window, recentWindow_Sync_);
+    sub_Time(&cutoff, &window);
+    return cutoff;
+}
+
+static iSyncRecent *takeRecentSnapshot_Sync_(iSync *d) {
+    const iTime  cutoff = recentCutoff_Sync_();
+    iSyncRecent *snap   = new_SyncRecent();
+    lock_Mutex(d->mtx);
+    prune_SyncRecent(d->recentLocal, cutoff);
+    iSyncRecent *log = copy_SyncRecent(d->recentLocal);
+    unlock_Mutex(d->mtx);
+    if (size_StringHash(log->visits)) {
+        /* Current state of the changed URLs; missing ones were removed. */
+        iSyncData *visited = new_SyncData();
+        snapshotType_Sync_(visited, visited_SyncDataType);
+        iConstForEach(StringHash, i, log->visits) {
+            const iSyncRecord *change = value_StringHashNode(i.value);
+            const iSyncRecord *vis    = find_SyncData(visited, visited_SyncDataType, &change->key);
+            iSyncRecord       *rec    = addVisit_SyncRecent(snap, &change->key);
+            setField_SyncRecord(rec, changed_SyncRecentVisitField,
+                                field_SyncRecord(change, changed_SyncRecentVisitField));
+            if (vis) {
+                setField_SyncRecord(rec, when_SyncRecentVisitField,
+                                    field_SyncRecord(vis, when_SyncVisitedField));
+                setField_SyncRecord(rec, flags_SyncRecentVisitField,
+                                    field_SyncRecord(vis, flags_SyncVisitedField));
+            }
+        }
+        delete_SyncData(visited);
+    }
+    delete_SyncRecent(log);
+    iSyncData *books = new_SyncData();
+    snapshotType_Sync_(books, books_SyncDataType);
+    iConstForEach(StringHash, j, books->records[books_SyncDataType]) {
+        addBook_SyncRecent(snap, value_StringHashNode(j.value));
+    }
+    delete_SyncData(books);
+    prune_SyncRecent(snap, cutoff);
     return snap;
 }
 
@@ -527,10 +694,77 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
     delete_SyncData(live);
 }
 
+static int64_t recordNumber_(const iSyncRecord *rec, size_t field) {
+    return strtoll(cstr_String(field_SyncRecord(rec, field)), NULL, 10);
+}
+
+static void applyRecent_Sync_(iSync *d, const iSyncRecent *recent) {
+    iVisited *visited = visited_App();
+    iBool     isVisitedChanged = iFalse;
+    d->isApplying = iTrue;
+    iConstForEach(StringHash, i, recent->visits) {
+        const iSyncRecord *rec     = value_StringHashNode(i.value);
+        const int64_t      changed = recordNumber_(rec, changed_SyncRecentVisitField);
+        int64_t            ownChanged = 0;
+        lock_Mutex(d->mtx);
+        const iSyncRecord *own = constValue_StringHash(d->recentLocal->visits, &rec->key);
+        if (own) {
+            ownChanged = recordNumber_(own, changed_SyncRecentVisitField);
+        }
+        unlock_Mutex(d->mtx);
+        const iTime   local     = urlVisitTime_Visited(visited, &rec->key);
+        const int64_t localWhen = isValid_Time(&local) ? integralSeconds_Time(&local) : 0;
+        if ((own && ownChanged >= changed) || localWhen > changed) {
+            continue; /* changed here afterwards */
+        }
+        const iString *when = field_SyncRecord(rec, when_SyncRecentVisitField);
+        if (isEmpty_String(when)) {
+            if (localWhen) {
+                removeUrl_Visited(visited, &rec->key);
+                isVisitedChanged = iTrue;
+            }
+        }
+        else if (localWhen != recordNumber_(rec, when_SyncRecentVisitField)) {
+            iTime visitTime;
+            initSeconds_Time(&visitTime, (double) recordNumber_(rec, when_SyncRecentVisitField));
+            visitUrlTime_Visited(
+                visited,
+                &rec->key,
+                (uint16_t) strtoul(cstr_String(field_SyncRecord(rec, flags_SyncRecentVisitField)),
+                                   NULL, 16),
+                visitTime);
+            isVisitedChanged = iTrue;
+        }
+    }
+    /* Newer reading positions. */
+    iSyncData *books = new_SyncData();
+    iConstForEach(StringHash, j, recent->books) {
+        const iSyncRecord *rec  = value_StringHashNode(j.value);
+        const iBook       *book = find_Books(&rec->key);
+        if (!book || recordNumber_(rec, positionTime_SyncBookField) >
+                         integralSeconds_Time(&book->positionTime)) {
+            iSyncRecord *copy = add_SyncData(books, books_SyncDataType, &rec->key);
+            for (size_t f = 0; f < numFields_SyncDataType(books_SyncDataType); f++) {
+                setField_SyncRecord(copy, f, field_SyncRecord(rec, f));
+            }
+        }
+    }
+    if (size_SyncData(books, books_SyncDataType)) {
+        applySync_Books(nativeStream_(books, books_SyncDataType));
+        notify_App("books.changed");
+        notify_App("books.synced");
+    }
+    delete_SyncData(books);
+    d->isApplying = iFalse;
+    if (isVisitedChanged) {
+        notify_App("visited.changed");
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 /* Network (worker thread) */
 
-static const iString *endpoint_Sync_(const iSync *d, const char *scheme) {
+static const iString *endpoint_Sync_(const iSync *d, const char *scheme, const char *name) {
     /* The data is located under the configured URL. */
     iUrl parts;
     init_Url(&parts, &d->url);
@@ -542,7 +776,7 @@ static const iString *endpoint_Sync_(const iSync *d, const char *scheme) {
     if (!endsWith_String(ep, "/")) {
         appendCStr_String(ep, "/");
     }
-    appendCStr_String(ep, "data");
+    appendCStr_String(ep, name);
     return ep;
 }
 
@@ -569,7 +803,8 @@ static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *bo
     setCertificate_TlsRequest(req, d->cert);
     submit_TlsRequest(req);
     /* Uploads may take a while on slow connections. */
-    const double timeout = requestTimeout_Sync_ + size_Block(content) / minTransferRate_Sync_;
+    const double timeout = (d->requestTimeout > 0 ? d->requestTimeout : requestTimeout_Sync_) +
+                           size_Block(content) / minTransferRate_Sync_;
     iBool ok = iFalse;
     if (!waitForFinishedTimeout_TlsRequest(req, timeout)) {
         cancel_TlsRequest(req);
@@ -639,46 +874,115 @@ static void setServerError_Sync_(iSync *d, int status, const iString *meta) {
     format_String(&d->error, "%s %d %s", cstr_Lang("sync.error.server"), status, cstr_String(meta));
 }
 
-static iSyncData *download_Sync_(iSync *d) {
+static const char *archiveName_(enum iSyncArchive kind) {
+    return kind == recent_SyncArchive ? "recent" : "data";
+}
+
+static void setError_Sync_(iSync *d, const char *msgId) {
+    set_String(&d->error, collectNewCStr_String(cstr_Lang(msgId)));
+}
+
+static enum iSyncDownloadResult downloadArchive_Sync_(iSync *d, enum iSyncArchive kind,
+                                                      uint64_t knownGen, uint64_t *gen_out,
+                                                      iBlock **plain_out) {
+    /* `plain_out` is set to NULL if nothing is stored yet. */
     int      status = 0;
     iString *meta   = collectNew_String();
     iBlock  *body   = collect_Block(new_Block(0));
+    *plain_out = NULL;
     if (!request_Sync_(d,
-                       collectNewFormat_String("%s?%llu",
-                                               cstr_String(endpoint_Sync_(d, "gemini")),
-                                               (unsigned long long) d->base->generation),
+                       collectNewFormat_String(
+                           "%s?%llu",
+                           cstr_String(endpoint_Sync_(d, "gemini", archiveName_(kind))),
+                           (unsigned long long) knownGen),
                        NULL, &status, meta, body)) {
-        return NULL;
+        return failed_SyncDownloadResult;
     }
     d->didContact = iTrue;
     if (status == 40 && equal_CStr(cstr_String(meta), "unchanged")) {
-        return copy_SyncData(d->base);
+        return unchanged_SyncDownloadResult;
     }
     if (status != 20) {
         setServerError_Sync_(d, status, meta);
-        return NULL;
+        return failed_SyncDownloadResult;
     }
-    uint64_t gen = 0;
-    if (!equal_CStr(cstr_String(meta), mimeType_Sync_) || !takeGeneration_(body, &gen)) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.response")));
-        return NULL;
+    if (!equal_CStr(cstr_String(meta), mimeType_Sync_) || !takeGeneration_(body, gen_out)) {
+        setError_Sync_(d, "sync.error.response");
+        return failed_SyncDownloadResult;
     }
-    if (gen < d->base->generation) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.rollback")));
-        return NULL;
+    if (*gen_out < knownGen) {
+        setError_Sync_(d, "sync.error.rollback");
+        return failed_SyncDownloadResult;
+    }
+    if (*gen_out == 0 && isEmpty_Block(body)) {
+        return data_SyncDownloadResult;
+    }
+    *plain_out = decrypt_SyncData(body, d->key, kind);
+    if (!*plain_out) {
+        setError_Sync_(d, "sync.error.decrypt");
+        return failed_SyncDownloadResult;
+    }
+    return data_SyncDownloadResult;
+}
+
+static enum iSyncUploadResult uploadArchive_Sync_(iSync *d, enum iSyncArchive kind,
+                                                  const iBlock *archive, uint64_t baseGeneration,
+                                                  uint64_t *newGen_out) {
+    iBlock *enc = encrypt_SyncData(archive, d->key, kind);
+    if (!enc) {
+        setError_Sync_(d, "sync.error.encrypt");
+        return failed_SyncUploadResult;
+    }
+    int      status = 0;
+    iString *meta   = collectNew_String();
+    iBlock  *body   = collect_Block(new_Block(0));
+    const iBool ok = request_Sync_(
+        d,
+        collectNewFormat_String("%s;size=%zu?%llu",
+                                cstr_String(endpoint_Sync_(d, "titan", archiveName_(kind))),
+                                size_Block(enc),
+                                (unsigned long long) baseGeneration),
+        enc, &status, meta, body);
+    delete_Block(enc);
+    if (!ok) {
+        return failed_SyncUploadResult;
+    }
+    if (status == 20) {
+        if (!takeGeneration_(body, newGen_out)) {
+            setError_Sync_(d, "sync.error.response");
+            return failed_SyncUploadResult;
+        }
+        return ok_SyncUploadResult;
+    }
+    if (status == 40 && equal_CStr(cstr_String(meta), "stale")) {
+        return stale_SyncUploadResult;
+    }
+    setServerError_Sync_(d, status, meta);
+    return failed_SyncUploadResult;
+}
+
+static iSyncData *download_Sync_(iSync *d) {
+    uint64_t gen   = 0;
+    iBlock  *plain = NULL;
+    switch (downloadArchive_Sync_(d, full_SyncArchive, d->base->generation, &gen, &plain)) {
+        case unchanged_SyncDownloadResult:
+            return copy_SyncData(d->base);
+        case failed_SyncDownloadResult:
+            return NULL;
+        default:
+            break;
     }
     iSyncData *remote = new_SyncData();
-    if (gen == 0 && isEmpty_Block(body)) {
+    if (!plain) {
         return remote; /* nothing stored yet */
     }
-    iBlock *plain = decrypt_SyncData(body, d->key);
-    if (!plain || !deserialize_SyncData(remote, plain)) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.decrypt")));
+    if (!deserialize_SyncData(remote, plain)) {
+        setError_Sync_(d, "sync.error.decrypt");
         delete_SyncData(remote);
         remote = NULL;
     }
     else if (remote->generation != gen) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.rollback")));
+        setError_Sync_(d, "sync.error.rollback");
         delete_SyncData(remote);
         remote = NULL;
     }
@@ -689,38 +993,49 @@ static iSyncData *download_Sync_(iSync *d) {
 static enum iSyncUploadResult upload_Sync_(iSync *d, iSyncData *data, uint64_t baseGeneration) {
     data->generation = baseGeneration + 1;
     iBlock *archive = serialize_SyncData(data);
-    iBlock *enc     = encrypt_SyncData(archive, d->key);
+    const enum iSyncUploadResult result =
+        uploadArchive_Sync_(d, full_SyncArchive, archive, baseGeneration, &data->generation);
     delete_Block(archive);
-    if (!enc) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.encrypt")));
-        return failed_SyncUploadResult;
+    return result;
+}
+
+static iSyncRecent *downloadRecent_Sync_(iSync *d) {
+    uint64_t gen   = 0;
+    iBlock  *plain = NULL;
+    switch (downloadArchive_Sync_(d, recent_SyncArchive, d->recent->generation, &gen, &plain)) {
+        case unchanged_SyncDownloadResult:
+            return copy_SyncRecent(d->recent);
+        case failed_SyncDownloadResult:
+            return NULL;
+        default:
+            break;
     }
-    int      status = 0;
-    iString *meta   = collectNew_String();
-    iBlock  *body   = collect_Block(new_Block(0));
-    const iBool ok = request_Sync_(
-        d,
-        collectNewFormat_String("%s;size=%zu?%llu",
-                                cstr_String(endpoint_Sync_(d, "titan")),
-                                size_Block(enc),
-                                (unsigned long long) baseGeneration),
-        enc, &status, meta, body);
-    delete_Block(enc);
-    if (!ok) {
-        return failed_SyncUploadResult;
+    iSyncRecent *remote = new_SyncRecent();
+    if (!plain) {
+        return remote;
     }
-    if (status == 20) {
-        if (!takeGeneration_(body, &data->generation)) {
-            set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.response")));
-            return failed_SyncUploadResult;
-        }
-        return ok_SyncUploadResult;
+    if (!deserialize_SyncRecent(remote, plain)) {
+        setError_Sync_(d, "sync.error.decrypt");
+        delete_SyncRecent(remote);
+        remote = NULL;
     }
-    if (status == 40 && equal_CStr(cstr_String(meta), "stale")) {
-        return stale_SyncUploadResult;
+    else if (remote->generation != gen) {
+        setError_Sync_(d, "sync.error.rollback");
+        delete_SyncRecent(remote);
+        remote = NULL;
     }
-    setServerError_Sync_(d, status, meta);
-    return failed_SyncUploadResult;
+    delete_Block(plain);
+    return remote;
+}
+
+static enum iSyncUploadResult uploadRecent_Sync_(iSync *d, iSyncRecent *recent,
+                                                 uint64_t baseGeneration) {
+    recent->generation = baseGeneration + 1;
+    iBlock *archive = serialize_SyncRecent(recent);
+    const enum iSyncUploadResult result =
+        uploadArchive_Sync_(d, recent_SyncArchive, archive, baseGeneration, &recent->generation);
+    delete_Block(archive);
+    return result;
 }
 
 static iThreadResult run_Sync_(iThread *thread) {
@@ -762,9 +1077,61 @@ static iThreadResult run_Sync_(iThread *thread) {
         break;
     }
     if (attempt == maxAttempts_Sync_) {
-        set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.busy")));
+        setError_Sync_(d, "sync.error.busy");
     }
     postCommand_App("sync.worker.finished");
+    return 0;
+}
+
+static iThreadResult runRecent_Sync_(iThread *thread) {
+    iSync *d = &sync_;
+    iUnused(thread);
+    const iTime cutoff = recentCutoff_Sync_();
+    int attempt;
+    for (attempt = 0; attempt < maxAttempts_Sync_; attempt++) {
+        iSyncRecent *remote = downloadRecent_Sync_(d);
+        if (!remote) {
+            break;
+        }
+        iSyncRecent *merged = copy_SyncRecent(remote);
+        if (d->outgoing) {
+            merge_SyncRecent(merged, d->outgoing);
+        }
+        prune_SyncRecent(merged, cutoff);
+        /* Old changes alone are not a reason to upload. */
+        iSyncRecent *current = copy_SyncRecent(remote);
+        prune_SyncRecent(current, cutoff);
+        const iBool isSame = equal_SyncRecent(merged, current);
+        delete_SyncRecent(current);
+        if (isSame) {
+            delete_SyncRecent(merged);
+            d->recentResult = remote;
+            d->didUpload    = iTrue;
+            break;
+        }
+        const enum iSyncUploadResult up = uploadRecent_Sync_(d, merged, remote->generation);
+        if (up == stale_SyncUploadResult) {
+            delete_SyncRecent(merged);
+            delete_SyncRecent(remote);
+            continue;
+        }
+        if (up == ok_SyncUploadResult) {
+            d->recentResult = merged;
+            d->didUpload    = iTrue;
+            delete_SyncRecent(remote);
+        }
+        else {
+            d->recentResult = remote; /* the remote changes can still be applied */
+            delete_SyncRecent(merged);
+        }
+        break;
+    }
+    if (attempt == maxAttempts_Sync_) {
+        setError_Sync_(d, "sync.error.busy");
+    }
+    if (!d->isBlocking) {
+        postCommand_App("sync.worker.finished");
+    }
     return 0;
 }
 
@@ -774,7 +1141,14 @@ static iThreadResult run_Sync_(iThread *thread) {
 static uint32_t timerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId);
     postCommand_App("sync.check");
+    postCommand_App("sync.recent");
     return interval;
+}
+
+static uint32_t recentTimerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
+    iUnused(userdata, timerId, interval);
+    postCommand_App("sync.recent push:1");
+    return 0;
 }
 
 static uint32_t retryCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
@@ -886,8 +1260,56 @@ static void promptTrust_Sync_(iSync *d) {
     setId_Widget(dlg, "sync.trust");
 }
 
+static iBool canSyncRecent_Sync_(const iSync *d) {
+    /* Recent changes are synced after the first full sync. */
+    return isConfigured_Sync_() && d->pristine->generation > 0 &&
+           equal_String(&d->syncedServer, server_Sync_()) &&
+           equal_String(&d->syncedIdentity, identity_Sync_());
+}
+
+static iBool beginWork_Sync_(iSync *d) {
+    const iGmIdentity *ident = syncIdentity_Sync_();
+    iBlock *key = ident ? key_SyncData(ident->cert) : NULL;
+    if (!key) {
+        return iFalse;
+    }
+    d->key  = key;
+    d->cert = copy_TlsCertificate(ident->cert);
+    set_String(&d->url, server_Sync_());
+    if (!startsWith_String(&d->url, "gemini://")) {
+        prependCStr_String(&d->url, "gemini://");
+    }
+    set_String(&d->identity, identity_Sync_());
+    initCurrent_Time(&d->snapshotTime);
+    d->didContact = iFalse;
+    d->didUpload  = iFalse;
+    clear_String(&d->error);
+    delete_Block(d->serverFingerprint);
+    d->serverFingerprint = NULL;
+    return iTrue;
+}
+
+static void endWork_Sync_(iSync *d) {
+    if (d->worker) {
+        join_Thread(d->worker);
+        iReleasePtr(&d->worker);
+    }
+    delete_Block(d->key);
+    d->key = NULL;
+    delete_TlsCertificate(d->cert);
+    d->cert = NULL;
+}
+
+static void startRecent_Sync_(iSync *d, iBool isBlocking);
+
 static void start_Sync_(iSync *d, iBool isManual) {
     if (value_Atomic(&d->isRunning)) {
+        return;
+    }
+    if (d->worker) {
+        /* Recent changes are being synced; the full sync follows. */
+        d->isFullPending = iTrue;
+        d->isFullPendingManual |= isManual;
         return;
     }
     d->isManual = isManual;
@@ -917,30 +1339,27 @@ static void start_Sync_(iSync *d, iBool isManual) {
         !equal_String(&d->syncedIdentity, identity_Sync_())) {
         reset_Sync_(d);
     }
+    if (!d->isFullPending && canSyncRecent_Sync_(d)) {
+        /* Recent changes first, so the full merge includes them. */
+        d->isFullPending       = iTrue;
+        d->isFullPendingManual = isManual;
+        startRecent_Sync_(d, iFalse);
+        if (d->worker) {
+            return;
+        }
+    }
+    d->isFullPending       = iFalse;
+    d->isFullPendingManual = iFalse;
     initCurrent_Time(&d->lastAttemptTime);
-    const iGmIdentity *ident = syncIdentity_Sync_();
-    iBlock *key = ident ? key_SyncData(ident->cert) : NULL;
-    if (!key) {
+    if (!beginWork_Sync_(d)) {
         fail_Sync_(d, cstr_Lang("sync.error.identity"));
         return;
     }
     set_Atomic(&d->isRunning, iTrue);
-    d->key  = key;
-    d->cert = copy_TlsCertificate(ident->cert);
-    set_String(&d->url, server_Sync_());
-    if (!startsWith_String(&d->url, "gemini://")) {
-        prependCStr_String(&d->url, "gemini://");
-    }
-    set_String(&d->identity, identity_Sync_());
+    d->mode = full_SyncMode;
     discardRemote_Bookmarks(bookmarks_App());
-    initCurrent_Time(&d->snapshotTime);
-    d->snapshot   = takeSnapshot_Sync_(d);
-    d->base       = copy_SyncData(d->pristine);
-    d->didContact = iFalse;
-    d->didUpload  = iFalse;
-    clear_String(&d->error);
-    delete_Block(d->serverFingerprint);
-    d->serverFingerprint = NULL;
+    d->snapshot = takeSnapshot_Sync_(d);
+    d->base     = copy_SyncData(d->pristine);
     clear_Array(&d->idMap);
     notifyStatus_Sync_();
     notify_App("sync.started");
@@ -964,8 +1383,7 @@ static void trust_Sync_(iSync *d) {
 }
 
 static void finish_Sync_(iSync *d) {
-    join_Thread(d->worker);
-    iReleasePtr(&d->worker);
+    endWork_Sync_(d);
     if (d->result) {
         apply_Sync_(d, d->result, &d->idMap);
     }
@@ -997,10 +1415,6 @@ static void finish_Sync_(iSync *d) {
     d->snapshot = NULL;
     delete_SyncData(d->base);
     d->base = NULL;
-    delete_Block(d->key);
-    d->key = NULL;
-    delete_TlsCertificate(d->cert);
-    d->cert = NULL;
     set_Atomic(&d->isRunning, iFalse);
     saveState_Sync_(d);
     fetchRemote_Bookmarks(bookmarks_App());
@@ -1019,7 +1433,7 @@ static void finish_Sync_(iSync *d) {
     }
 }
 
-static void check_Sync_(iSync *d, iBool isBookCheck) {
+static void check_Sync_(iSync *d) {
     if (!isConfigured_Sync_() || value_Atomic(&d->isRunning) || prefs_Sync_()->syncInterval <= 0) {
         return;
     }
@@ -1027,12 +1441,97 @@ static void check_Sync_(iSync *d, iBool isBookCheck) {
         elapsedSeconds_Time(&d->lastAttemptTime) < failureBackoff_Sync_) {
         return;
     }
-    const double interval =
-        isBookCheck ? bookCheckInterval_Sync_ : prefs_Sync_()->syncInterval * 3600.0;
-    if (isValid_Time(&d->lastCheckTime) && elapsedSeconds_Time(&d->lastCheckTime) < interval) {
+    if (isValid_Time(&d->lastCheckTime) &&
+        elapsedSeconds_Time(&d->lastCheckTime) < prefs_Sync_()->syncInterval * 3600.0) {
         return;
     }
     start_Sync_(d, iFalse);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+/* Recent changes */
+
+static void finishRecent_Sync_(iSync *d) {
+    endWork_Sync_(d);
+    if (d->recentResult) {
+        applyRecent_Sync_(d, d->recentResult);
+        delete_SyncRecent(d->recent);
+        d->recent       = d->recentResult;
+        d->recentResult = NULL;
+        saveRecent_Sync_(d);
+    }
+    if (d->didContact) {
+        initCurrent_Time(&d->recentCheckTime);
+    }
+    if (isEmpty_String(&d->error)) {
+        iZap(d->recentFailTime);
+    }
+    else {
+        initCurrent_Time(&d->recentFailTime);
+        fprintf(stderr, "[Sync] recent changes: %s\n", cstr_String(&d->error));
+    }
+    if (d->didUpload) {
+        iGuardMutex(d->mtx, d->recentSyncedTime = d->snapshotTime);
+    }
+    delete_SyncRecent(d->outgoing);
+    d->outgoing = NULL;
+    saveState_Sync_(d);
+#if defined (iPlatformAppleMobile)
+    if (d->isBackgroundTask) {
+        d->isBackgroundTask = iFalse;
+        endBackgroundTask_iOS();
+    }
+#endif
+    if (d->isBlocking) {
+        return;
+    }
+    if (d->isFullPending) {
+        start_Sync_(d, d->isFullPendingManual);
+    }
+    else if (isRecentDirty_Sync_(d) && !d->recentTimer) {
+        /* Changed during the sync. */
+        d->recentTimer = SDL_AddTimer(recentDelay_Sync_ * 1000, recentTimerCallback_Sync_, NULL);
+    }
+}
+
+static void startRecent_Sync_(iSync *d, iBool isBlocking) {
+    if (d->worker || value_Atomic(&d->isRunning) || !beginWork_Sync_(d)) {
+        return;
+    }
+    d->mode       = recent_SyncMode;
+    d->isBlocking = isBlocking;
+    d->outgoing   = isRecentDirty_Sync_(d) ? takeRecentSnapshot_Sync_(d) : NULL;
+    if (isBlocking) {
+        runRecent_Sync_(NULL);
+        finishRecent_Sync_(d);
+        d->isBlocking = iFalse;
+        return;
+    }
+    d->worker = new_Thread(runRecent_Sync_);
+    setName_Thread(d->worker, "SyncRecent");
+    start_Thread(d->worker);
+}
+
+static void checkRecent_Sync_(iSync *d, iBool isPush) {
+    if (!canSyncRecent_Sync_(d)) {
+        return;
+    }
+    if (d->worker || value_Atomic(&d->isRunning)) {
+        if (isPush && !d->recentTimer) {
+            d->recentTimer =
+                SDL_AddTimer(recentDelay_Sync_ * 1000, recentTimerCallback_Sync_, NULL);
+        }
+        return;
+    }
+    if (isValid_Time(&d->recentFailTime) &&
+        elapsedSeconds_Time(&d->recentFailTime) < recentBackoff_Sync_) {
+        return;
+    }
+    if (!isPush && isValid_Time(&d->recentCheckTime) &&
+        elapsedSeconds_Time(&d->recentCheckTime) < recentInterval_Sync_) {
+        return;
+    }
+    startRecent_Sync_(d, iFalse);
 }
 
 static void createIdentity_Sync_(const iString *name) {
@@ -1078,33 +1577,52 @@ void init_Sync(const char *dataDir) {
     init_String(&d->error);
     init_String(&d->trustHost);
     init_Array(&d->idMap, sizeof(iSyncIdMapping));
-    d->pristine = new_SyncData();
+    d->pristine    = new_SyncData();
+    d->recent      = new_SyncRecent();
+    d->recentLocal = new_SyncRecent();
     loadState_Sync_(d);
     setUserDataChangedFunc_Core(userDataChanged_Sync_);
+    setVisitedUrlChangedFunc_Core(visitedUrlChanged_Sync_);
     /* Prefs are loaded via the event queue, so this is handled after them. */
     postCommand_App("sync.prefs.changed launch:1");
 }
 
 void deinit_Sync(void) {
     iSync *d = &sync_;
-    setUserDataChangedFunc_Core(NULL);
     if (d->timer) {
         SDL_RemoveTimer(d->timer);
     }
     if (d->retryTimer) {
         SDL_RemoveTimer(d->retryTimer);
     }
+    if (d->recentTimer) {
+        SDL_RemoveTimer(d->recentTimer);
+    }
     if (d->worker) {
         /* The result is discarded; the local changes are still pending. */
         join_Thread(d->worker);
-        iRelease(d->worker);
+        iReleasePtr(&d->worker);
     }
+#if defined (iPlatformDesktop)
+    else if (isRecentDirty_Sync_(d) && canSyncRecent_Sync_(d)) {
+        /* Last chance to upload the recent changes. */
+        d->requestTimeout = quitTimeout_Sync_;
+        startRecent_Sync_(d, iTrue);
+    }
+#endif
+    setVisitedUrlChangedFunc_Core(NULL);
+    setUserDataChangedFunc_Core(NULL);
     saveState_Sync_(d);
+    saveRecent_Sync_(d);
     delete_SyncData(d->result);
     delete_SyncData(d->newPristine);
     delete_SyncData(d->snapshot);
     delete_SyncData(d->base);
     delete_SyncData(d->pristine);
+    delete_SyncRecent(d->recentResult);
+    delete_SyncRecent(d->outgoing);
+    delete_SyncRecent(d->recentLocal);
+    delete_SyncRecent(d->recent);
     delete_Block(d->key);
     delete_TlsCertificate(d->cert);
     deinit_Array(&d->idMap);
@@ -1132,7 +1650,29 @@ iBool isRunning_Sync(void) {
 }
 
 iTime lastCheckTime_Sync(void) {
-    return sync_.lastCheckTime;
+    /* Includes the recent changes, which have the reading positions. */
+    iTime t = sync_.lastCheckTime;
+    max_Time(&t, &sync_.recentCheckTime);
+    return t;
+}
+
+void enterBackground_Sync(void) {
+    /* Recent changes are uploaded before the app is suspended. */
+    iSync *d = &sync_;
+    if (!d->mtx || d->worker || !isRecentDirty_Sync_(d) || !canSyncRecent_Sync_(d)) {
+        return;
+    }
+#if defined (iPlatformAppleMobile)
+    beginBackgroundTask_iOS();
+    d->isBackgroundTask = iTrue;
+#endif
+    startRecent_Sync_(d, iFalse);
+#if defined (iPlatformAppleMobile)
+    if (!d->worker && d->isBackgroundTask) {
+        d->isBackgroundTask = iFalse;
+        endBackgroundTask_iOS();
+    }
+#endif
 }
 
 iString *statusText_Sync(void) {
@@ -1182,6 +1722,10 @@ iBool handleCommand_Sync(const char *cmd) {
         }
         return iFalse;
     }
+    if (equal_Command(cmd, "window.focus.gained")) {
+        checkRecent_Sync_(d, iFalse);
+        return iFalse;
+    }
     if (!startsWith_CStr(cmd, "sync.")) {
         return iFalse;
     }
@@ -1190,11 +1734,32 @@ iBool handleCommand_Sync(const char *cmd) {
         return iTrue;
     }
     if (equal_Command(cmd, "sync.check")) {
-        check_Sync_(d, argLabel_Command(cmd, "book") != 0);
+        check_Sync_(d);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sync.recent")) {
+        const iBool isPush = argLabel_Command(cmd, "push") != 0;
+        if (isPush) {
+            d->recentTimer = 0; /* the timer has fired */
+        }
+        checkRecent_Sync_(d, isPush);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sync.recent.changed")) {
+        set_Atomic(&d->isRecentChangePosted, iFalse);
+        if (canSyncRecent_Sync_(d) && !d->recentTimer) {
+            d->recentTimer =
+                SDL_AddTimer(recentDelay_Sync_ * 1000, recentTimerCallback_Sync_, NULL);
+        }
         return iTrue;
     }
     if (equal_Command(cmd, "sync.worker.finished")) {
-        finish_Sync_(d);
+        if (d->mode == recent_SyncMode) {
+            finishRecent_Sync_(d);
+        }
+        else {
+            finish_Sync_(d);
+        }
         return iTrue;
     }
     if (equal_Command(cmd, "sync.prefs.changed")) {
@@ -1204,7 +1769,7 @@ iBool handleCommand_Sync(const char *cmd) {
         }
         updateTimer_Sync_(d);
         notifyStatus_Sync_();
-        check_Sync_(d, iFalse);
+        check_Sync_(d);
         return iTrue;
     }
     if (equal_Command(cmd, "sync.copyfingerprint")) {

@@ -990,7 +990,7 @@ static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
             set_String(&d->readingBookId, bookId);
             d->didTurnPage = iFalse;
             beginReading_Books(d->fetch->sourceGempub);
-            postCommand_App("sync.check book:1");
+            postCommand_App("sync.recent");
         }
         const iBook *book = find_Books(bookId);
         if (!book || book->chapter != (int) chapter) {

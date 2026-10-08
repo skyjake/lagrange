@@ -890,6 +890,30 @@ iBool isUnreadEntry_Feeds(uint32_t feedBookmarkId, const iString *entryUrl) {
     return isUnread;
 }
 
+static iBool hasEntryAt_Feeds_(const iFeeds *d, const iString *url, iBool isPrefix) {
+    /* Entries are sorted by URL, so the first one at or after `url` is checked. */
+    const iFeedEntry  entry    = { .url = *url };
+    const iFeedEntry *entryPtr = &entry;
+    size_t pos;
+    locate_SortedArray(&d->entries, &entryPtr, &pos);
+    if (pos >= size_SortedArray(&d->entries)) {
+        return iFalse;
+    }
+    const iString *found = &(*(const iFeedEntry **) constAt_SortedArray(&d->entries, pos))->url;
+    return isPrefix ? startsWith_String(found, cstr_String(url)) : equal_String(found, url);
+}
+
+iBool isEntryUrl_Feeds(const iString *url) {
+    /* Entries with a fragment are headings on the page that is visited. */
+    iFeeds *d = &feeds_;
+    iBool found;
+    lock_Mutex(d->mtx);
+    found = hasEntryAt_Feeds_(d, url, iFalse) ||
+            hasEntryAt_Feeds_(d, collectNewFormat_String("%s#", cstr_String(url)), iTrue);
+    unlock_Mutex(d->mtx);
+    return found;
+}
+
 static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *e1 = a, * const *e2 = b;
     const int cmpPosted = -cmp_Time(&(*e1)->posted, &(*e2)->posted);

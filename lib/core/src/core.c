@@ -118,6 +118,18 @@ void notifyUserDataChanged_Core(enum iUserDataType type) {
     }
 }
 
+static iVisitedUrlChangedFunc visitedUrlChanged_Core_;
+
+void setVisitedUrlChangedFunc_Core(iVisitedUrlChangedFunc func) {
+    visitedUrlChanged_Core_ = func;
+}
+
+void notifyVisitedUrlChanged_Core(const iString *url, iBool isRemoved) {
+    if (visitedUrlChanged_Core_) {
+        visitedUrlChanged_Core_(url, isRemoved);
+    }
+}
+
 void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
     syncFile_Core_(tempPathWithNewContents);
 #if defined (iPlatformMsys) || defined (iPlatformWindows)

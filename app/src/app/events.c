@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 #include "feeds.h"
 #include "periodic.h"
+#include "sync.h"
 #include "render/text.h"
 #include <lagrange/visited.h>
 #include "ui/command.h"
@@ -635,6 +636,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             postRefreshAllWindows_App();
             setRefreshInterval_Feeds(d->prefs.feedInterval);
             postCommand_App("sync.check");
+            postCommand_App("sync.recent");
             if (d->isTextInputActive) {
                 SDL_StartTextInput(as_Window(d->window)->win);
             }
@@ -658,6 +660,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             }
             savePrefs_App_(d);
             saveState_App_(d, iTrue);
+            enterBackground_Sync();
             d->isSuspended = iTrue;
             if (d->isTextInputActive) {
                 SDL_StopTextInput(as_Window(d->window)->win);

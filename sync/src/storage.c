@@ -80,14 +80,22 @@ void setMaxAccounts_Storage(iStorage *d, size_t maxAccounts) {
     iGuardMutex(&d->mtx, d->maxAccounts = maxAccounts);
 }
 
-static const iString *path_Storage_(const iStorage *d, const iString *fingerprint) {
-    return collect_String(concat_Path(&d->rootDir, collectNewFormat_String(
-                                                        "%s.dat", cstr_String(fingerprint))));
+static const iString *blobPath_Storage_(const iStorage *d, const iString *fingerprint,
+                                        enum iStorageBlob blob) {
+    return collect_String(concat_Path(
+        &d->rootDir,
+        collectNewFormat_String("%s.%s", cstr_String(fingerprint),
+                                blob == recent_StorageBlob ? "recent" : "dat")));
 }
 
-static iBlock *read_Storage_(const iStorage *d, const iString *fingerprint, uint64_t *gen_out) {
+static const iString *path_Storage_(const iStorage *d, const iString *fingerprint) {
+    return blobPath_Storage_(d, fingerprint, data_StorageBlob);
+}
+
+static iBlock *read_Storage_(const iStorage *d, const iString *fingerprint,
+                             enum iStorageBlob blob, uint64_t *gen_out) {
     *gen_out = 0;
-    iFile *f = new_File(path_Storage_(d, fingerprint));
+    iFile *f = new_File(blobPath_Storage_(d, fingerprint, blob));
     iBlock *data = NULL;
     if (open_File(f, readOnly_FileMode)) {
         iBlock *all = readAll_File(f);
@@ -103,9 +111,10 @@ static iBlock *read_Storage_(const iStorage *d, const iString *fingerprint, uint
     return data;
 }
 
-iBlock *load_Storage(iStorage *d, const iString *fingerprint, uint64_t *generation_out) {
+iBlock *load_Storage(iStorage *d, const iString *fingerprint, enum iStorageBlob blob,
+                     uint64_t *generation_out) {
     iBlock *data;
-    iGuardMutex(&d->mtx, data = read_Storage_(d, fingerprint, generation_out));
+    iGuardMutex(&d->mtx, data = read_Storage_(d, fingerprint, blob, generation_out));
     return data;
 }
 
@@ -143,6 +152,10 @@ size_t expire_Storage(iStorage *d, double maxIdleSeconds) {
         const iTime    modified = lastModified_FileInfo(i.value);
         if (isAccountFile_(path) && elapsedSeconds_Time(&modified) > maxIdleSeconds) {
             removePath_CStr(cstr_String(path));
+            iRangecc fp = baseName_Path(path);
+            fp.end -= 4; /* ".dat" */
+            removePath_CStr(
+                cstr_String(blobPath_Storage_(d, collectNewRange_String(fp), recent_StorageBlob)));
             if (!fileExists_FileInfo(path)) {
                 d->numAccounts--;
                 count++;
@@ -153,20 +166,24 @@ size_t expire_Storage(iStorage *d, double maxIdleSeconds) {
     return count;
 }
 
-enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, uint64_t baseGeneration,
-                                const iBlock *data, uint64_t *newGeneration_out) {
+enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, enum iStorageBlob blob,
+                                uint64_t baseGeneration, const iBlock *data,
+                                uint64_t *newGeneration_out) {
     enum iStoreResult result = error_StoreResult;
     lock_Mutex(&d->mtx);
     uint64_t gen = 0;
-    delete_Block(read_Storage_(d, fingerprint, &gen));
+    delete_Block(read_Storage_(d, fingerprint, blob, &gen));
     if (gen != baseGeneration) {
         result = stale_StoreResult;
     }
-    else if (isFull_Storage_(d, fingerprint)) {
+    else if (blob == data_StorageBlob && isFull_Storage_(d, fingerprint)) {
         result = full_StoreResult;
     }
+    else if (blob != data_StorageBlob && !fileExists_FileInfo(path_Storage_(d, fingerprint))) {
+        result = noAccount_StoreResult;
+    }
     else {
-        const iString *path    = path_Storage_(d, fingerprint);
+        const iString *path    = blobPath_Storage_(d, fingerprint, blob);
         const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
         const iBool    isNew   = !fileExists_FileInfo(path);
         iFile *f = new_File(tmpPath);
@@ -183,7 +200,7 @@ enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, uint64_
                 if (!fileExists_FileInfo(tmpPath)) {
                     *newGeneration_out = gen + 1;
                     result = ok_StoreResult;
-                    if (isNew) {
+                    if (isNew && blob == data_StorageBlob) {
                         d->numAccounts++;
                     }
                 }

@@ -50,3 +50,9 @@ typedef void (*iUserDataChangedFunc)(enum iUserDataType);
 
 void    setUserDataChangedFunc_Core (iUserDataChangedFunc func);
 void    notifyUserDataChanged_Core  (enum iUserDataType);
+
+/* Visited URLs that were added, updated, or removed. May be called in any thread. */
+typedef void (*iVisitedUrlChangedFunc)(const iString *url, iBool isRemoved);
+
+void    setVisitedUrlChangedFunc_Core   (iVisitedUrlChangedFunc func);
+void    notifyVisitedUrlChanged_Core    (const iString *url, iBool isRemoved);

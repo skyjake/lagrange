@@ -194,12 +194,14 @@ void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, 
             unlock_Mutex(d->mtx);
             deinit_VisitedUrl(&visit);
             notifyUserDataChanged_Core(visited_UserDataType);
+            notifyVisitedUrlChanged_Core(url, iFalse);
             return;
         }
     }
     insert_SortedArray(&d->visited, &visit);
     unlock_Mutex(d->mtx);
     notifyUserDataChanged_Core(visited_UserDataType);
+    notifyVisitedUrlChanged_Core(url, iFalse);
 }
 
 void setUrlKept_Visited(iVisited *d, const iString *url, iBool isKept) {
@@ -220,6 +222,7 @@ void setUrlKept_Visited(iVisited *d, const iString *url, iBool isKept) {
 
 void removeUrl_Visited(iVisited *d, const iString *url) {
     url = canonicalUrl_String(url);
+    iBool removed = iFalse;
     iGuardMutex(d->mtx, {
         size_t pos = find_Visited_(d, url);
         if (pos < size_SortedArray(&d->visited)) {
@@ -227,10 +230,14 @@ void removeUrl_Visited(iVisited *d, const iString *url) {
             if (equal_String(&visUrl->url, url)) {
                 deinit_VisitedUrl(visUrl);
                 remove_Array(&d->visited.values, pos);
+                removed = iTrue;
             }
         }
     });
     notifyUserDataChanged_Core(visited_UserDataType);
+    if (removed) {
+        notifyVisitedUrlChanged_Core(url, iTrue);
+    }
 }
 
 iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {

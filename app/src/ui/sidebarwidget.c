@@ -694,7 +694,7 @@ static iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
 
 static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     /* Lists the books on the shelf. Returns False if there are none. */
-    postCommand_App("sync.check book:1"); /* reading positions may have changed elsewhere */
+    postCommand_App("sync.recent"); /* reading positions may have changed elsewhere */
     const iGempub *current   = gempub_SidebarWidget_(d);
     const iString *currentId = current ? id_Books(current) : NULL;
     const iPtrArray *books = list_Books(d->shelfSort);
@@ -1681,6 +1681,9 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     }
     d->mode = mode;
     d->isShelfOrderValid = iFalse;
+    if (mode == feedEntries_SidebarMode) {
+        postCommand_App("sync.recent"); /* read status may have changed elsewhere */
+    }
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }

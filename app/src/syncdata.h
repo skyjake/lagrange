@@ -167,7 +167,43 @@ iSyncData *         merge_SyncData      (const iSyncData *base, const iSyncData 
                                          const iString *protectedIdentity,
                                          iArray *bookmarkIdMap_out);
 
+/*----------------------------------------------------------------------------------------------*/
+
+/* Recent changes that are synced quickly between full syncs: read status of feed entries and
+   reading positions of books. Each item keeps only its latest change. */
+enum iSyncRecentVisitField {
+    changed_SyncRecentVisitField, /* when the change was made */
+    when_SyncRecentVisitField,    /* visit time; empty if the URL was removed */
+    flags_SyncRecentVisitField,
+};
+
+iDeclareType(SyncRecent)
+iDeclareTypeConstruction(SyncRecent)
+
+struct Impl_SyncRecent {
+    uint64_t     generation;
+    iStringHash *visits; /* URL -> SyncRecord with SyncRecentVisitFields */
+    iStringHash *books;  /* book ID -> SyncRecord with SyncBookFields */
+};
+
+iSyncRecent *       copy_SyncRecent     (const iSyncRecent *);
+iSyncRecord *       addVisit_SyncRecent (iSyncRecent *, const iString *url);
+void                addBook_SyncRecent  (iSyncRecent *, const iSyncRecord *book);
+iBool               equal_SyncRecent    (const iSyncRecent *, const iSyncRecent *); /* all records */
+void                merge_SyncRecent    (iSyncRecent *, const iSyncRecent *other);
+void                prune_SyncRecent    (iSyncRecent *, iTime cutoff); /* removes older changes */
+iBlock *            serialize_SyncRecent(const iSyncRecent *);
+iBool               deserialize_SyncRecent(iSyncRecent *, const iBlock *archive);
+
+/*----------------------------------------------------------------------------------------------*/
+
+enum iSyncArchive {
+    full_SyncArchive,
+    recent_SyncArchive,
+};
+
 /* Encryption for storing on the server. */
 iBlock *            key_SyncData        (const iTlsCertificate *syncIdentity); /* NULL if not Ed25519 */
-iBlock *            encrypt_SyncData    (const iBlock *archive, const iBlock *key);
-iBlock *            decrypt_SyncData    (const iBlock *encrypted, const iBlock *key); /* NULL on failure */
+iBlock *            encrypt_SyncData    (const iBlock *archive, const iBlock *key, enum iSyncArchive);
+iBlock *            decrypt_SyncData    (const iBlock *encrypted, const iBlock *key,
+                                         enum iSyncArchive); /* NULL on failure */

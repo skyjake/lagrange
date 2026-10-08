@@ -82,7 +82,14 @@ static const struct {
 
 static const uint32_t formatVersion_SyncData_ = 1;
 static const char    *metaEntry_SyncData_     = "sync.ini";
-static const char     magic_SyncData_[5]      = { 'L', 'g', 'S', 'y', 1 /* version */ };
+static const char     magic_SyncData_[2][5]   = {
+    { 'L', 'g', 'S', 'y', 1 /* version */ },
+    { 'L', 'g', 'S', 'r', 1 /* version */ }, /* recent changes */
+};
+static const char    *recentMetaEntry_SyncData_ = "recent.ini";
+static const iSyncFieldInfo recentVisitFields_[] = {
+    { "changed", iTrue }, { "when", iTrue }, { "flags" },
+};
 static const char    *keyLabel_SyncData_      = "lagrange-sync-v1";
 
 size_t numFields_SyncDataType(enum iSyncDataType type) {
@@ -244,13 +251,13 @@ uint32_t maxBookmarkId_SyncData(const iSyncData *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static iBlock *serializeRecords_SyncData_(const iSyncData *d, enum iSyncDataType type) {
+static iBlock *serializeRecords_(const iStringHash *records, size_t numFields) {
     iBuffer *buf = new_Buffer();
     openEmpty_Buffer(buf);
     iStream *outs = stream_Buffer(buf);
-    writeU32_Stream(outs, (uint32_t) size_StringHash(d->records[type]));
-    writeU32_Stream(outs, (uint32_t) types_[type].numFields);
-    iConstForEach(StringHash, i, d->records[type]) {
+    writeU32_Stream(outs, (uint32_t) size_StringHash(records));
+    writeU32_Stream(outs, (uint32_t) numFields);
+    iConstForEach(StringHash, i, records) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
         serialize_String(&rec->key, outs);
         iConstForEach(StringArray, f, &rec->fields) {
@@ -262,13 +269,12 @@ static iBlock *serializeRecords_SyncData_(const iSyncData *d, enum iSyncDataType
     return data;
 }
 
-static iBool deserializeRecords_SyncData_(iSyncData *d, enum iSyncDataType type,
-                                          const iBlock *data) {
+static iBool deserializeRecords_(iStringHash *records, size_t numFields, const iBlock *data) {
     iBuffer *buf = new_Buffer();
     open_Buffer(buf, data);
     iStream *ins = stream_Buffer(buf);
     const uint32_t count     = readU32_Stream(ins);
-    const uint32_t numFields = readU32_Stream(ins);
+    const uint32_t numStored = readU32_Stream(ins);
     iString *key   = new_String();
     iString *value = new_String();
     iBool    ok    = iTrue;
@@ -278,11 +284,13 @@ static iBool deserializeRecords_SyncData_(iSyncData *d, enum iSyncDataType type,
             break;
         }
         deserialize_String(key, ins);
-        iSyncRecord *rec = add_SyncData(d, type, key);
-        for (uint32_t f = 0; f < numFields; f++) {
+        iSyncRecord *rec = new_SyncRecord(key, numFields);
+        insert_StringHash(records, key, rec);
+        iRelease(rec);
+        for (uint32_t f = 0; f < numStored; f++) {
             deserialize_String(value, ins);
             /* Fields added in later versions are ignored. */
-            if (f < types_[type].numFields) {
+            if (f < numFields) {
                 setField_SyncRecord(rec, f, value);
             }
         }
@@ -309,7 +317,7 @@ iBlock *serialize_SyncData(const iSyncData *d) {
     for (int i = 0; i < max_SyncDataType; i++) {
         appendFormat_String(meta, "%s = %lld\n", types_[i].name,
                             (long long) integralSeconds_Time(&d->modified[i]));
-        iBlock *data = serializeRecords_SyncData_(d, i);
+        iBlock *data = serializeRecords_(d->records[i], types_[i].numFields);
         setData_Archive(arch, collectNewFormat_String("%s.bin", types_[i].name), data);
         delete_Block(data);
     }
@@ -362,9 +370,168 @@ iBool deserialize_SyncData(iSyncData *d, const iBlock *archive) {
                 const iBlock *data =
                     dataCStr_Archive(arch, format_CStr("%s.bin", types_[i].name));
                 if (data) {
-                    ok = deserializeRecords_SyncData_(d, i, data);
+                    ok = deserializeRecords_(d->records[i], types_[i].numFields, data);
                 }
             }
+        }
+    }
+    iRelease(arch);
+    return ok;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void init_SyncRecent(iSyncRecent *d) {
+    d->generation = 0;
+    d->visits     = new_StringHash();
+    d->books      = new_StringHash();
+}
+
+void deinit_SyncRecent(iSyncRecent *d) {
+    iRelease(d->books);
+    iRelease(d->visits);
+}
+
+iDefineTypeConstruction(SyncRecent)
+
+static void insertRecord_(iStringHash *records, iSyncRecord *record) {
+    insert_StringHash(records, &record->key, record);
+    iRelease(record);
+}
+
+iSyncRecent *copy_SyncRecent(const iSyncRecent *d) {
+    iSyncRecent *copy = new_SyncRecent();
+    copy->generation = d->generation;
+    iConstForEach(StringHash, i, d->visits) {
+        insertRecord_(copy->visits, copy_SyncRecord_(value_StringHashNode(i.value)));
+    }
+    iConstForEach(StringHash, j, d->books) {
+        insertRecord_(copy->books, copy_SyncRecord_(value_StringHashNode(j.value)));
+    }
+    return copy;
+}
+
+iSyncRecord *addVisit_SyncRecent(iSyncRecent *d, const iString *url) {
+    iSyncRecord *rec = new_SyncRecord(url, iElemCount(recentVisitFields_));
+    insertRecord_(d->visits, rec);
+    return rec;
+}
+
+void addBook_SyncRecent(iSyncRecent *d, const iSyncRecord *book) {
+    insertRecord_(d->books, copy_SyncRecord_(book));
+}
+
+static iBool equalRecords_(const iStringHash *a, const iStringHash *b) {
+    if (size_StringHash(a) != size_StringHash(b)) {
+        return iFalse;
+    }
+    iConstForEach(StringHash, i, a) {
+        const iSyncRecord *rec   = value_StringHashNode(i.value);
+        const iSyncRecord *other = constValue_StringHash(b, &rec->key);
+        if (!other || !equal_SyncRecord(rec, other)) {
+            return iFalse;
+        }
+    }
+    return iTrue;
+}
+
+iBool equal_SyncRecent(const iSyncRecent *d, const iSyncRecent *other) {
+    return equalRecords_(d->visits, other->visits) && equalRecords_(d->books, other->books);
+}
+
+static iBool isNewerVisit_(const iSyncRecord *a, const iSyncRecord *b) {
+    const int64_t ta = number_SyncRecord_(a, changed_SyncRecentVisitField);
+    const int64_t tb = number_SyncRecord_(b, changed_SyncRecentVisitField);
+    if (ta != tb) {
+        return ta > tb;
+    }
+    /* A removal at the same time is assumed to come after the visit. */
+    return isEmpty_String(field_SyncRecord(a, when_SyncRecentVisitField)) &&
+           !isEmpty_String(field_SyncRecord(b, when_SyncRecentVisitField));
+}
+
+static iBool isNewerBook_(const iSyncRecord *a, const iSyncRecord *b) {
+    const int64_t ta = number_SyncRecord_(a, positionTime_SyncBookField);
+    const int64_t tb = number_SyncRecord_(b, positionTime_SyncBookField);
+    if (ta != tb) {
+        return ta > tb;
+    }
+    return number_SyncRecord_(a, timestamp_SyncBookField) >
+           number_SyncRecord_(b, timestamp_SyncBookField);
+}
+
+static void mergeRecords_(iStringHash *records, const iStringHash *other,
+                          iBool (*isNewer)(const iSyncRecord *, const iSyncRecord *)) {
+    iConstForEach(StringHash, i, other) {
+        const iSyncRecord *rec = value_StringHashNode(i.value);
+        const iSyncRecord *old = constValue_StringHash(records, &rec->key);
+        if (!old || isNewer(rec, old)) {
+            insertRecord_(records, copy_SyncRecord_(rec));
+        }
+    }
+}
+
+void merge_SyncRecent(iSyncRecent *d, const iSyncRecent *other) {
+    mergeRecords_(d->visits, other->visits, isNewerVisit_);
+    mergeRecords_(d->books, other->books, isNewerBook_);
+}
+
+static void pruneRecords_(iStringHash *records, size_t timeField, int64_t cutoff) {
+    iForEach(StringHash, i, records) {
+        if (number_SyncRecord_(value_StringHashNode(i.value), timeField) < cutoff) {
+            remove_StringHashIterator(&i);
+        }
+    }
+}
+
+void prune_SyncRecent(iSyncRecent *d, iTime cutoff) {
+    pruneRecords_(d->visits, changed_SyncRecentVisitField, integralSeconds_Time(&cutoff));
+    pruneRecords_(d->books, positionTime_SyncBookField, integralSeconds_Time(&cutoff));
+}
+
+iBlock *serialize_SyncRecent(const iSyncRecent *d) {
+    iArchive *arch = new_Archive();
+    openWritable_Archive(arch);
+    setCompressionLevel_Archive(arch, 9);
+    iBlock *meta   = newCStr_Block(format_CStr("format = %u\ngeneration = %llu\n",
+                                               formatVersion_SyncData_,
+                                               (unsigned long long) d->generation));
+    iBlock *visits = serializeRecords_(d->visits, iElemCount(recentVisitFields_));
+    iBlock *books  = serializeRecords_(d->books, iElemCount(bookFields_));
+    setDataCStr_Archive(arch, recentMetaEntry_SyncData_, meta);
+    setDataCStr_Archive(arch, "visits.bin", visits);
+    setDataCStr_Archive(arch, "books.bin", books);
+    delete_Block(books);
+    delete_Block(visits);
+    delete_Block(meta);
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    serialize_Archive(arch, stream_Buffer(buf));
+    iBlock *zip = copy_Block(data_Buffer(buf));
+    iRelease(buf);
+    iRelease(arch);
+    return zip;
+}
+
+iBool deserialize_SyncRecent(iSyncRecent *d, const iBlock *archive) {
+    iArchive *arch = new_Archive();
+    iBool     ok   = iFalse;
+    clear_StringHash(d->visits);
+    clear_StringHash(d->books);
+    if (openData_Archive(arch, archive)) {
+        const iBlock *meta   = dataCStr_Archive(arch, recentMetaEntry_SyncData_);
+        const iBlock *visits = dataCStr_Archive(arch, "visits.bin");
+        const iBlock *books  = dataCStr_Archive(arch, "books.bin");
+        if (meta && visits && books) {
+            iSyncData   *info = new_SyncData();
+            iTomlParser *toml = new_TomlParser();
+            setHandlers_TomlParser(toml, NULL, handleMetaKeyValue_SyncData_, info);
+            ok = parse_TomlParser(toml, collect_String(newBlock_String(meta))) &&
+                 deserializeRecords_(d->visits, iElemCount(recentVisitFields_), visits) &&
+                 deserializeRecords_(d->books, iElemCount(bookFields_), books);
+            d->generation = info->generation;
+            delete_TomlParser(toml);
+            delete_SyncData(info);
         }
     }
     iRelease(arch);
@@ -912,8 +1079,9 @@ iBlock *key_SyncData(const iTlsCertificate *syncIdentity) {
     return key;
 }
 
-iBlock *encrypt_SyncData(const iBlock *archive, const iBlock *key) {
-    iBlock *aad   = newData_Block(magic_SyncData_, sizeof(magic_SyncData_));
+iBlock *encrypt_SyncData(const iBlock *archive, const iBlock *key, enum iSyncArchive kind) {
+    /* The magic is authenticated, so the archives cannot be swapped with each other. */
+    iBlock *aad   = newData_Block(magic_SyncData_[kind], sizeof(magic_SyncData_[kind]));
     iBlock *nonce = newRandom_Block(iAesGcmNonceSize);
     iBlock *enc   = nonce ? encryptAesGcm_Block(archive, key, nonce, aad) : NULL;
     iBlock *out   = NULL;
@@ -928,14 +1096,16 @@ iBlock *encrypt_SyncData(const iBlock *archive, const iBlock *key) {
     return out;
 }
 
-iBlock *decrypt_SyncData(const iBlock *encrypted, const iBlock *key) {
-    const size_t headerSize = sizeof(magic_SyncData_) + iAesGcmNonceSize;
+iBlock *decrypt_SyncData(const iBlock *encrypted, const iBlock *key, enum iSyncArchive kind) {
+    const char  *magic      = magic_SyncData_[kind];
+    const size_t magicSize  = sizeof(magic_SyncData_[kind]);
+    const size_t headerSize = magicSize + iAesGcmNonceSize;
     if (size_Block(encrypted) < headerSize + iAesGcmTagSize ||
-        memcmp(constData_Block(encrypted), magic_SyncData_, sizeof(magic_SyncData_))) {
+        memcmp(constData_Block(encrypted), magic, magicSize)) {
         return NULL;
     }
-    iBlock *aad    = newData_Block(magic_SyncData_, sizeof(magic_SyncData_));
-    iBlock *nonce  = newData_Block(constBegin_Block(encrypted) + sizeof(magic_SyncData_),
+    iBlock *aad    = newData_Block(magic, magicSize);
+    iBlock *nonce  = newData_Block(constBegin_Block(encrypted) + magicSize,
                                    iAesGcmNonceSize);
     iBlock *cipher = newData_Block(constBegin_Block(encrypted) + headerSize,
                                    size_Block(encrypted) - headerSize);

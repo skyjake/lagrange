@@ -35,4 +35,5 @@ iBool           handleCommand_Sync  (const char *cmd);
 iBool           isEnabled_Sync      (void);
 iBool           isRunning_Sync      (void); /* may be called in any thread */
 iTime           lastCheckTime_Sync  (void); /* last time the server was successfully contacted */
+void            enterBackground_Sync(void); /* the app may be suspended soon */
 iString *       statusText_Sync     (void);

@@ -58,6 +58,7 @@ void    remapBookmarkIds_Feeds  (const iArray *idMappings); /* SyncIdMapping ele
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);
 void    markEntryAsRead_Feeds   (uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead);
 iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUrl);
+iBool   isEntryUrl_Feeds        (const iString *url); /* visited URL of any feed entry */
 void    markAllEntriesAsRead_Feeds(void);
 void    resetKnownEntries_Feeds (void);
 
