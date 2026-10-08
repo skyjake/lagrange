@@ -777,6 +777,7 @@ void showErrorPage_DocumentFetch(iDocumentFetch *d, enum iGmStatusCode code,
     const iGmError *msg = get_GmError(code);
     makeFooterButtons_DocumentWidget(d->owner, NULL, 0);
     const iString *serverErrorMsg = NULL;
+    const iString *errorDetails   = NULL;
     if (meta) {
         switch (code) {
             case schemeChangeRedirect_GmStatusCode:
@@ -797,6 +798,14 @@ void showErrorPage_DocumentFetch(iDocumentFetch *d, enum iGmStatusCode code,
                 break;
             case tlsServerCertificateNotVerified_GmStatusCode:
             case proxyCertificateNotVerified_GmStatusCode:
+                if (code == tlsServerCertificateNotVerified_GmStatusCode &&
+                    !isEmpty_Block(d->certFingerprint)) {
+                    errorDetails = collectNewFormat_String(
+                        "%s\n\n%s\n%s",
+                        msg->info,
+                        cstr_Lang("error.certverify.fp"),
+                        cstrCollect_String(fingerprintText_GmCerts(d->certFingerprint)));
+                }
                 makeFooterButtons_DocumentWidget(
                     d->owner,
                     (iMenuItem[]){ { info_Icon " ${menu.pageinfo}",
@@ -868,7 +877,7 @@ void showErrorPage_DocumentFetch(iDocumentFetch *d, enum iGmStatusCode code,
     replaceDocument_DocumentWidget(d->owner, errorDoc);
     iRelease(errorDoc);
     clear_Banner(banner_DocumentFetch_(d));
-    add_Banner(banner_DocumentFetch_(d), error_BannerType, code, serverErrorMsg, NULL);
+    add_Banner(banner_DocumentFetch_(d), error_BannerType, code, serverErrorMsg, errorDetails);
     d->state = ready_RequestState;
     setSource_DocumentWidget(d->owner, src);
     updateTheme_DocumentWidget(d->owner);
