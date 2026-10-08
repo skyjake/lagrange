@@ -1,0 +1,36 @@
+cmake_minimum_required (VERSION 3.10)
+project (LagrangeSync
+    VERSION     1.0.0
+    LANGUAGES   C
+)
+set (CMAKE_C_STANDARD 11)
+
+if (the_Foundation_DIR)
+    find_package (the_Foundation REQUIRED)
+else ()
+    # Use the_Foundation from the Lagrange repository.
+    set (TFDN_STATIC_LIBRARY     ON  CACHE BOOL "" FORCE)
+    set (TFDN_ENABLE_INSTALL     OFF CACHE BOOL "" FORCE)
+    set (TFDN_ENABLE_TESTS       OFF CACHE BOOL "" FORCE)
+    set (TFDN_ENABLE_WEBREQUEST  OFF CACHE BOOL "" FORCE)
+    add_subdirectory (${CMAKE_CURRENT_LIST_DIR}/../lib/the_Foundation the_Foundation)
+    add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
+endif ()
+find_package (PkgConfig REQUIRED)
+pkg_check_modules (OPENSSL REQUIRED IMPORTED_TARGET openssl)
+
+set (SOURCES
+    src/main.c
+    src/server.c
+    src/server.h
+    src/storage.c
+    src/storage.h
+)
+
+add_executable (lagrange-sync ${SOURCES})
+target_compile_definitions (lagrange-sync PUBLIC
+    LAGRANGE_SYNC_VERSION="${LagrangeSync_VERSION}"
+)
+target_link_libraries (lagrange-sync PUBLIC the_Foundation::the_Foundation PkgConfig::OPENSSL)
+
+install (TARGETS lagrange-sync RUNTIME DESTINATION bin)
