@@ -320,10 +320,6 @@ static void disconnected_Handler_(iHandler *d, iTlsConnection *conn) {
     set_Atomic(&d->isFinished, iTrue);
 }
 
-static iHandler *new_Handler   (const iServer *server, iTlsConnection *conn);
-static void      init_Handler  (iHandler *, const iServer *server, iTlsConnection *conn);
-static void      deinit_Handler(iHandler *);
-
 static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *conn) {
     set_Atomic(&d->isFinished, iFalse);
     d->cfg     = server->cfg;
@@ -366,10 +362,6 @@ iDefineObjectConstructionArgs(Handler,
 iDefineClass(Handler)
 
 /*----------------------------------------------------------------------------------------------*/
-
-static iServer *new_Server     (const iServerConfig *cfg, iStorage *storage);
-static void     init_Server    (iServer *, const iServerConfig *cfg, iStorage *storage);
-static void     deinit_Server  (iServer *);
 
 static void init_Server(iServer *d, const iServerConfig *cfg, iStorage *storage) {
     d->cfg     = cfg;
