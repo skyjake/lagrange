@@ -142,6 +142,7 @@ void setPreferencesWindowHeight_Widget(iWidget *prefs, int height) {
 }
 
 static void arrangeTabs_(iWidget *prefs, iWidget *tabs) {
+    tabs->rect.size = zero_I2(); /* natural size; the window may make it taller */
     resizeToLargestPage_Widget(tabs);
     if (isPromoted_Widget(prefs)) {
         fitPreferencesWindow_(prefs, tabs);
@@ -173,7 +174,6 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
         "prefs.sync.server",
     };
     iWidget *tabs = findChild_Widget(prefs, "prefs.tabs");
-    tabs->rect.size = zero_I2();
     /* Input fields expand to the right edge. */
     /* TODO: Add an arrangement flag for this. */
     iForIndices(i, inputIds) {
