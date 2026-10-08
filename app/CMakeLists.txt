@@ -818,6 +818,7 @@ if [ -d \"\$dsym\" ]; then cp -r \"\$dsym\" \"\$BUILT_PRODUCTS_DIR/\"; fi
     endif ()
     if (MSYS OR MINGW OR WIN32)
         target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
+        target_link_libraries (app PUBLIC shell32 ole32) # revealing files
         if (ENABLE_WINSPARKLE)
             target_link_libraries (app PUBLIC winsparkle)
         endif ()

@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <d2d1.h>
+#include <shlobj.h>
 
 #include "win32.h"
 #include "ui/window.h"
@@ -478,6 +479,23 @@ iInt2 cursor_Win32(void) {
     return init_I2(p.x, p.y);
 }
 #endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
+
+void revealPath_Win32(const iString *path) {
+    iString *winPath = copy_String(path);
+    replace_String(winPath, "/", "\\");
+    iBlock *wpath = toUtf16_String(winPath);
+    const HRESULT initResult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    PIDLIST_ABSOLUTE pidl = ILCreateFromPathW(constData_Block(wpath));
+    if (pidl) {
+        SHOpenFolderAndSelectItems(pidl, 0, NULL, 0);
+        ILFree(pidl);
+    }
+    if (SUCCEEDED(initResult)) {
+        CoUninitialize();
+    }
+    delete_Block(wpath);
+    delete_String(winPath);
+}
 
 #endif /* !defined (iPlatformTerminal) */
 

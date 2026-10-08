@@ -353,6 +353,8 @@ void revealPath_App(const iString *path) {
 #elif defined (iPlatformAppleMobile)
     /* Use a share sheet. */
     openFileActivityView_iOS(path);
+#elif (defined (iPlatformMsys) || defined (iPlatformWindows)) && !defined (iPlatformTerminal)
+    revealPath_Win32(path);
 #elif defined (iPlatformLinux) || defined (iPlatformHaiku)
     iProcess *proc = NULL;
     /* Try with `dbus-send` first. */ {

@@ -1476,11 +1476,8 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, const i
 #else
             if (showDialog) {
                 const iMenuItem items[2] = {
-#if defined (iPlatformAppleDesktop)
-                    { "${menu.reveal.macos}", 0, 0,
-                        format_CStr("!reveal path:%s", cstr_String(savePath)) },
-#elif defined (iPlatformLinux)
-                    { "${menu.reveal.filemgr}", 0, 0,
+#if defined (LAGRANGE_HAVE_FILE_REVEAL)
+                    { revealFile_Label, 0, 0,
                         format_CStr("!reveal path:%s", cstr_String(savePath)) },
 #else
                     { "${dlg.save.opendownload}", 0, 0,

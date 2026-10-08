@@ -40,6 +40,7 @@ iBool    isDarkSystemTheme_Win32(void);
 void     handleCommand_Win32(const char *cmd);
 iString *windowsDirectory_Win32(void);
 iString *tempDirectory_Win32(void);
+void     revealPath_Win32(const iString *path);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 void     enableCustomFrameMessageHook_Win32(iWindow *window);

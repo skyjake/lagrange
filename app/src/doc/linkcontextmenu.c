@@ -101,20 +101,13 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
                               0,
                               0,
                               format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
-            if (isAppleDesktop_Platform()) {
-                pushBack_Array(items,
-                               &(iMenuItem){ "${menu.reveal.macos}",
-                                             0,
-                                             0,
-                                             format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
-            }
-            if (isLinux_Platform()) {
-                pushBack_Array(items,
-                               &(iMenuItem){ "${menu.reveal.filemgr}",
-                                             0,
-                                             0,
-                                             format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
-            }
+#if defined (LAGRANGE_HAVE_FILE_REVEAL)
+            pushBack_Array(items,
+                           &(iMenuItem){ revealFile_Label,
+                                         0,
+                                         0,
+                                         format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
+#endif
         }
     }
     else if (!willUseProxy_App(scheme)) {

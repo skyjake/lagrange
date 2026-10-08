@@ -55,6 +55,13 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define LAGRANGE_FILE_DIALOGS
 #endif
 
+/* Showing a file in the system file manager (see revealPath_App). */
+#if defined (iPlatformAppleDesktop) || \
+    (defined (iPlatformLinux) && !defined (iPlatformAndroid)) || \
+    ((defined (iPlatformMsys) || defined (iPlatformWindows)) && !defined (iPlatformTerminal))
+#   define LAGRANGE_HAVE_FILE_REVEAL
+#endif
+
 /* Sparkle and WinSparkle show the release notes themselves. */
 #if !defined (LAGRANGE_ENABLE_SPARKLE) && !defined (LAGRANGE_ENABLE_WINSPARKLE)
 #   define LAGRANGE_RELEASE_NOTES_POPUP
@@ -66,4 +73,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define saveToDownloads_Label    "${menu.save.files}"
 #else
 #   define saveToDownloads_Label    "${menu.save.downloads}"
+#endif
+
+#if defined (iPlatformAppleDesktop)
+#   define revealFile_Label         "${menu.reveal.macos}"
+#else
+#   define revealFile_Label         "${menu.reveal.filemgr}"
 #endif

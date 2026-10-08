@@ -312,20 +312,13 @@ iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
                       0,
                       format_CStr("!open newtab:1 url:%s",
                                   cstrCollect_String(makeFileUrl_String(path))) },
-#if defined (iPlatformAppleDesktop)
-                    { "${menu.reveal.macos}",
+#if defined (LAGRANGE_HAVE_FILE_REVEAL)
+                    { revealFile_Label,
                       0,
                       0,
                       format_CStr("!reveal path:%s", cstr_String(path)) },
-#endif
-#if defined (iPlatformAppleMobile)
+#elif defined (iPlatformAppleMobile)
                     { export_Icon " ${menu.share}",
-                      0,
-                      0,
-                      format_CStr("!reveal path:%s", cstr_String(path)) },
-#endif
-#if defined (iPlatformLinux)
-                    { "${menu.reveal.filemgr}",
                       0,
                       0,
                       format_CStr("!reveal path:%s", cstr_String(path)) },
