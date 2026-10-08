@@ -1476,8 +1476,16 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, const i
 #else
             if (showDialog) {
                 const iMenuItem items[2] = {
+#if defined (iPlatformAppleDesktop)
+                    { "${menu.reveal.macos}", 0, 0,
+                        format_CStr("!reveal path:%s", cstr_String(savePath)) },
+#elif defined (iPlatformLinux)
+                    { "${menu.reveal.filemgr}", 0, 0,
+                        format_CStr("!reveal path:%s", cstr_String(savePath)) },
+#else
                     { "${dlg.save.opendownload}", 0, 0,
                         format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
+#endif
                     { "${dlg.message.ok}", 0, 0, "message.ok" },
                 };
                 makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
