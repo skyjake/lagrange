@@ -312,13 +312,24 @@ iWidget *makeIdentityCreation_Widget(void) {
         { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:3" },
         { NULL }
     };
+    const iMenuItem keyTypeItems[] = {
+        { "${dlg.newident.keytype.ecdsa}", 0, 0,
+          format_CStr("ident.keytype arg:%d", ecdsaP256_TlsCertificateKeyType) },
+        { "${dlg.newident.keytype.ed25519}", 0, 0,
+          format_CStr("ident.keytype arg:%d", ed25519_TlsCertificateKeyType) },
+        { "${dlg.newident.keytype.rsa}", 0, 0,
+          format_CStr("ident.keytype arg:%d", rsa_TlsCertificateKeyType) },
+        { NULL }
+    };
     iWidget *dlg;
     if (isUsingPanelLayout_Mobile()) {
         dlg = makePanels_Mobile("ident", (iMenuItem[]){
             { "title id:ident.heading text:${heading.newident}" },
-            { "label text:${dlg.newident.rsa.selfsign}" },
+            { "label text:${dlg.newident.selfsign}" },
             { "dropdown id:ident.scope text:${dlg.newident.scope}", 0, 0,
               (const void *) scopeItems },
+            { "dropdown id:ident.keytype text:${dlg.newident.keytype}", 0, 0,
+              (const void *) keyTypeItems },
             { "input id:ident.until hint:hint.newident.date maxlen:10 text:${dlg.newident.until}" },
             //{ "padding" },
             //{ "toggle id:ident.temp text:${dlg.newident.temp}" },
@@ -339,7 +350,7 @@ iWidget *makeIdentityCreation_Widget(void) {
         addDialogTitle_Widget(dlg, "${heading.newident}", "ident.heading");
         iWidget *page = new_Widget();
         addChildFlags_Widget(
-            dlg, iClob(new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)), frameless_WidgetFlag);
+            dlg, iClob(new_LabelWidget("${dlg.newident.selfsign}", NULL)), frameless_WidgetFlag);
         /* TODO: Use makeTwoColumnWidget_? */
         addChild_Widget(dlg, iClob(page));
         setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -358,6 +369,16 @@ iWidget *makeIdentityCreation_Widget(void) {
                                 val = iClob(makeMenuButton_LabelWidget(
                                     scopeItems[0].label, scopeItems, iElemCount(scopeItems)))),
                 "ident.scope");
+            head->sizeRef = val;
+        }
+        /* Signature scheme. */ {
+            iWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.keytype}")));
+            iWidget *val;
+            setId_Widget(
+                addChild_Widget(values,
+                                val = iClob(makeMenuButton_LabelWidget(
+                                    keyTypeItems[0].label, keyTypeItems, iElemCount(keyTypeItems)))),
+                "ident.keytype");
             head->sizeRef = val;
         }
         addDialogInputWithHeading_Widget(headings,

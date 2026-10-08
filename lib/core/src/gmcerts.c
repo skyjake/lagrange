@@ -798,7 +798,8 @@ static iGmIdentity *add_GmCerts_(iGmCerts *d, iTlsCertificate *cert, int flags) 
     return id;
 }
 
-iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
+iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, enum iTlsCertificateKeyType keyType,
+                                 iDate validUntil, const iString *commonName,
                                  const iString *email, const iString *userId, const iString *domain,
                                  const iString *org, const iString *country) {
     /* Note: RFC 5280 defines a self-signed CA certificate as also being self-issued, so
@@ -818,7 +819,11 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
         { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
         { 0, NULL }
     };
-    return add_GmCerts_(d, newSelfSignedRSA_TlsCertificate(2048, validUntil, names), flags);
+    iTlsCertificate *cert = newSelfSigned_TlsCertificate(keyType, 2048, validUntil, names);
+    if (!cert) {
+        return NULL;
+    }
+    return add_GmCerts_(d, cert, flags);
 }
 
 void importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *notes) {

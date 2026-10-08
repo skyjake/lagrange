@@ -1904,6 +1904,21 @@ msgstr "New Identity"
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Creating a self-signed 2048-bit RSA certificate."
 
+msgid "dlg.newident.selfsign"
+msgstr "Creating a self-signed certificate."
+
+msgid "dlg.newident.keytype"
+msgstr "Signature:"
+
+msgid "dlg.newident.keytype.ecdsa"
+msgstr "ECDSA (P-256)"
+
+msgid "dlg.newident.keytype.ed25519"
+msgstr "Ed25519"
+
+msgid "dlg.newident.keytype.rsa"
+msgstr "RSA (2048-bit)"
+
 msgid "dlg.newident.until"
 msgstr "Valid until:"
 

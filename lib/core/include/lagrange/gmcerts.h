@@ -83,7 +83,8 @@ iTime               domainValidUntil_GmCerts(const iGmCerts *, iRangecc domain, 
  *
  * @returns Created identity. GmCerts retains ownership of returned object.
  */
-iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validUntil,
+iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags,
+                                             enum iTlsCertificateKeyType keyType, iDate validUntil,
                                              const iString *commonName, const iString *email,
                                              const iString *userId, const iString *domain,
                                              const iString *org, const iString *country);

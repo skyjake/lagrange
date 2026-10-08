@@ -173,8 +173,17 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 }
             }
             /* The input seems fine. */
+            enum iTlsCertificateKeyType keyType = ecdsaP256_TlsCertificateKeyType;
+            /* Key type. */ {
+                const char *keyCmd =
+                    selectedDropdownCommand_LabelWidget(findChild_Widget(dlg, "ident.keytype"));
+                if (startsWith_CStr(keyCmd, "ident.keytype arg:")) {
+                    keyType = arg_Command(keyCmd);
+                }
+            }
             iGmIdentity *ident = newIdentity_GmCerts(d->certs,
                                                      isTemp ? temporary_GmIdentityFlag : 0,
+                                                     keyType,
                                                      until,
                                                      commonName,
                                                      email,
