@@ -76,11 +76,30 @@ static void appendToPanel_(iArray *mainItems, const char *panelId, const iMenuIt
     }
 }
 
-static void expandInputFieldWidth_(iInputWidget *input) {
-    if (!input) return;
-    iWidget *page = as_Widget(input)->parent->parent->parent->parent; /* tabs > page > values > input */
-    as_Widget(input)->rect.size.x =
-        right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
+static void expandToPageEdge_(iAnyObject *widget) {
+    if (!widget) return;
+    iWidget *w = as_Widget(widget);
+    for (const iWidget *pages = w->parent; pages; pages = pages->parent) {
+        if (!cmp_String(id_Widget(pages), "tabs.pages")) {
+            w->rect.size.x = right_Rect(bounds_Widget(pages)) - left_Rect(bounds_Widget(w));
+            break;
+        }
+    }
+}
+
+static void findWrappedLabels_(iWidget *d, iPtrArray *labels) {
+    if (!d->children) return;
+    iForEach(ObjectList, i, d->children) {
+        iWidget *child = i.object;
+        if (flags_Widget(child) & keepOnTop_WidgetFlag) {
+            continue; /* menus are not part of the page */
+        }
+        if (isInstance_Object(child, &Class_LabelWidget) &&
+            isWrapped_LabelWidget((iLabelWidget *) child)) {
+            pushBack_PtrArray(labels, child);
+        }
+        findWrappedLabels_(child, labels);
+    }
 }
 
 static void addFontButtons_(iWidget *parent, const char *id) {
@@ -122,6 +141,17 @@ void setPreferencesWindowHeight_Widget(iWidget *prefs, int height) {
     updatePreferencesLayout_Widget(prefs);
 }
 
+static void arrangeTabs_(iWidget *prefs, iWidget *tabs) {
+    resizeToLargestPage_Widget(tabs);
+    if (isPromoted_Widget(prefs)) {
+        fitPreferencesWindow_(prefs, tabs);
+        arrange_Widget(root_Widget(prefs)); /* frame root must match the window size */
+    }
+    else {
+        arrange_Widget(prefs);
+    }
+}
+
 void updatePreferencesLayout_Widget(iWidget *prefs) {
     if (!prefs || deviceType_App() != desktop_AppDeviceType) {
         return;
@@ -152,20 +182,29 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
             as_Widget(input)->rect.size.x = 0;
         }
     }
+    /* Wrapped labels extend to the page edge, so they must not affect the page width. */
+    iPtrArray *wrapped = collectNew_PtrArray();
+    findWrappedLabels_(tabs, wrapped);
+    iForEach(PtrArray, w, wrapped) {
+        setFlags_Widget(w.ptr, fixedHeight_WidgetFlag, iFalse);
+        as_Widget(w.ptr)->rect.size.x = 0;
+        updateSize_LabelWidget(w.ptr);
+    }
     iWidget *bindings = findChild_Widget(prefs, "bindings");
     if (bindings) {
         bindings->rect.size.x = 0;
     }
-    resizeToLargestPage_Widget(tabs);
-    if (isPromoted_Widget(prefs)) {
-        fitPreferencesWindow_(prefs, tabs);
-        arrange_Widget(root_Widget(prefs)); /* frame root must match the window size */
-    }
-    else {
-        arrange_Widget(prefs);
+    arrangeTabs_(prefs, tabs);
+    if (!isEmpty_PtrArray(wrapped)) {
+        iForEach(PtrArray, label, wrapped) {
+            expandToPageEdge_(label.ptr);
+            setFlags_Widget(label.ptr, fixedHeight_WidgetFlag, iTrue);
+            updateWrappedHeight_LabelWidget(label.ptr);
+        }
+        arrangeTabs_(prefs, tabs); /* the largest page may have changed */
     }
     iForIndices(i, inputIds) {
-        expandInputFieldWidth_(findChild_Widget(tabs, inputIds[i]));
+        expandToPageEdge_(findChild_Widget(tabs, inputIds[i]));
     }
 }
 
@@ -269,15 +308,20 @@ static void updateSyncIdentityButton_(iWidget *d, const char *fingerprint) {
         *fingerprint ? findIdentity_GmCerts(certs_App(),
                                             collect_Block(hexDecode_Rangecc(range_CStr(fingerprint))))
                      : NULL;
-    updateTextCStr_LabelWidget(button, ident ? cstr_String(name_GmIdentity(ident))
-                                             : "${prefs.sync.identity.none}");
+    updateTextAndResizeWidthCStr_LabelWidget(
+        button, ident ? cstr_String(name_GmIdentity(ident)) : "${prefs.sync.identity.none}");
 }
 
 static void updateSyncStatus_(iWidget *d) {
     iLabelWidget *status = findChild_Widget(d, "prefs.sync.status");
     if (status) {
         updateText_LabelWidget(status, collect_String(statusText_Sync()));
-        arrange_Widget(parent_Widget(status));
+        if (deviceType_App() == desktop_AppDeviceType) {
+            updatePreferencesLayout_Widget(d);
+        }
+        else {
+            arrange_Widget(parent_Widget(status));
+        }
     }
 }
 
@@ -995,10 +1039,14 @@ iWidget *makePreferences_Widget(void) {
                                                    &values),
                      "prefs.page.sync");
         addDialogToggle_Widget(headings, values, "${prefs.sync}", "prefs.sync");
-        addChild_Widget(headings, iClob(makeHeading_Widget("")));
-        addChildFlags_Widget(values,
-                             iClob(new_LabelWidget(uiTextDim_ColorEscape "${prefs.sync.info}", NULL)),
-                             frameless_WidgetFlag);
+        /* Sync info. */ {
+            iWidget      *head = addChild_Widget(headings, iClob(makeHeading_Widget("")));
+            iLabelWidget *info = new_LabelWidget(uiTextDim_ColorEscape "${prefs.sync.info}", NULL);
+            setId_Widget(as_Widget(info), "prefs.sync.info");
+            setWrap_LabelWidget(info, iTrue);
+            addChildFlags_Widget(values, iClob(info), frameless_WidgetFlag);
+            head->sizeRef = as_Widget(info);
+        }
         addDialogPadding_Widget(headings, values);
         iInputWidget *server = new_InputWidget(0);
         setHint_InputWidget(server, "${hint.sync.server}");
@@ -1022,10 +1070,13 @@ iWidget *makePreferences_Widget(void) {
                                  iElemCount(syncIntervalItems) - 1,
                                  "prefs.sync.interval");
         addDialogPadding_Widget(headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sync.status}")));
+        iWidget      *statusHead =
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sync.status}")));
         iLabelWidget *status = new_LabelWidget("", NULL);
         setId_Widget(as_Widget(status), "prefs.sync.status");
+        setWrap_LabelWidget(status, iTrue);
         addChildFlags_Widget(values, iClob(status), frameless_WidgetFlag);
+        statusHead->sizeRef = as_Widget(status);
         addChild_Widget(headings, iClob(makeHeading_Widget("")));
         addChildFlags_Widget(
             values,
@@ -1376,6 +1427,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         if (!argLabel_Command(cmd, "auto")) {
             setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), prefs_App()->useSystemTheme);
         }
+    }
+    else if (equal_Command(cmd, "lang.changed")) {
+        postCommand_Root(d->root, "root.arrange"); /* after the labels are translated */
+        return iFalse;
     }
     else if (equalWidget_Command(cmd, d, "input.resized")) {
         if (d->root->pendingArrange < arg_Command(cmd)) {

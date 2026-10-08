@@ -58,6 +58,7 @@ void    setCenterWrapped_LabelWidget(iLabelWidget *, iBool centerWrapped); /* ea
 iBool   checkIcon_LabelWidget       (iLabelWidget *);
 iBool   triggerKey_LabelWidget      (iLabelWidget *, int key, int kmods); /* true if the key matches */
 void    updateSize_LabelWidget      (iLabelWidget *);
+void    updateWrappedHeight_LabelWidget(iLabelWidget *); /* fixedHeight: fit text to current width */
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
 void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */
 

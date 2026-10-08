@@ -884,6 +884,10 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
     }
 }
 
+void updateWrappedHeight_LabelWidget(iLabelWidget *d) {
+    sizeChanged_LabelWidget_(d);
+}
+
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
