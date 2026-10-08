@@ -698,11 +698,11 @@ iWidget *makePreferences_Widget(void) {
               0, 0, (const void *) toolbarPanelItems },
             { format_CStr("panel icon:0x1f5a7 iconcolor:%d id:heading.prefs.network", orange_ColorId),
               0, 0, (const void *) networkPanelItems },
+            { format_CStr("panel icon:0x1f503 iconcolor:%d id:heading.prefs.sync", orange_ColorId),
+              0, 0, (const void *) syncPanelItems },
             { format_CStr("panel noscroll:1 iconcolor:%d id:sidebar.identities text:" person_Icon
                           " ${sidebar.identities}",
                           orange_ColorId), 0, 0, (const void *) identityPanelItems },
-            { format_CStr("panel icon:0x1f503 iconcolor:%d id:heading.prefs.sync", orange_ColorId),
-              0, 0, (const void *) syncPanelItems },
             { "padding" },
         }, 10);
         appendPanels_ScopedPrefs(mainItems, iTrue, green_ColorId);
@@ -952,7 +952,7 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
     }
-    /* UI behavior. */ {
+    /* UI/app behavior. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", green_ColorId, '8', &headings, &values),
                      "prefs.page.ui");
         /* Feed refresh interval. */
@@ -997,6 +997,60 @@ iWidget *makePreferences_Widget(void) {
         if (!isTerminal_Platform()) {
             addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
         }
+    }
+    /* Sync. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   reload_Icon " ${heading.prefs.sync}",
+                                                   cyan_ColorId,
+                                                   0,
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.sync");
+        addDialogToggle_Widget(headings, values, "${prefs.sync}", "prefs.sync");
+        /* Sync info. */ {
+            iWidget      *head = addChild_Widget(headings, iClob(makeHeading_Widget("")));
+            iLabelWidget *info = new_LabelWidget(uiTextDim_ColorEscape "${prefs.sync.info}", NULL);
+            setId_Widget(as_Widget(info), "prefs.sync.info");
+            setWrap_LabelWidget(info, iTrue);
+            addChildFlags_Widget(values, iClob(info), frameless_WidgetFlag);
+            head->sizeRef = as_Widget(info);
+        }
+        addDialogDropMenu_Widget(headings,
+                                 values,
+                                 "${prefs.sync.interval}",
+                                 syncIntervalItems,
+                                 iElemCount(syncIntervalItems) - 1,
+                                 "prefs.sync.interval");
+        addDialogPadding_Widget(headings, values);
+        iInputWidget *server = new_InputWidget(0);
+        setHint_InputWidget(server, "${hint.sync.server}");
+        setUrlContent_InputWidget(server, iTrue);
+        addPrefsInputWithHeading_Widget(headings, values, "prefs.sync.server", iClob(server));
+        addDialogDropMenu_Widget(headings,
+                                 values,
+                                 "${prefs.sync.identity}",
+                                 syncIdentityItems,
+                                 iElemCount(syncIdentityItems) - 1,
+                                 "prefs.sync.identity");
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChildFlags_Widget(
+            values,
+            iClob(new_LabelWidget(add_Icon " ${prefs.sync.newidentity}", "sync.newidentity")),
+            0);
+        addDialogPadding_Widget(headings, values);
+        iWidget      *statusHead =
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sync.status}")));
+        iLabelWidget *status = new_LabelWidget("", NULL);
+        setId_Widget(as_Widget(status), "prefs.sync.status");
+        setWrap_LabelWidget(status, iTrue);
+        addChildFlags_Widget(values, iClob(status), frameless_WidgetFlag);
+        statusHead->sizeRef = as_Widget(status);
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChildFlags_Widget(
+            values,
+            iClob(new_LabelWidget(reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}",
+                                  "sync.now")),
+            0);
     }
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -1043,60 +1097,7 @@ iWidget *makePreferences_Widget(void) {
         setSensitiveContent_InputWidget(field, iTrue);
         setHint_InputWidget(field, "${hint.optional}");
     }
-    /* Sync. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
-                                                   reload_Icon " ${heading.prefs.sync}",
-                                                   cyan_ColorId,
-                                                   0,
-                                                   &headings,
-                                                   &values),
-                     "prefs.page.sync");
-        addDialogToggle_Widget(headings, values, "${prefs.sync}", "prefs.sync");
-        /* Sync info. */ {
-            iWidget      *head = addChild_Widget(headings, iClob(makeHeading_Widget("")));
-            iLabelWidget *info = new_LabelWidget(uiTextDim_ColorEscape "${prefs.sync.info}", NULL);
-            setId_Widget(as_Widget(info), "prefs.sync.info");
-            setWrap_LabelWidget(info, iTrue);
-            addChildFlags_Widget(values, iClob(info), frameless_WidgetFlag);
-            head->sizeRef = as_Widget(info);
-        }
-        addDialogPadding_Widget(headings, values);
-        iInputWidget *server = new_InputWidget(0);
-        setHint_InputWidget(server, "${hint.sync.server}");
-        setUrlContent_InputWidget(server, iTrue);
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.sync.server", iClob(server));
-        addDialogDropMenu_Widget(headings,
-                                 values,
-                                 "${prefs.sync.identity}",
-                                 syncIdentityItems,
-                                 iElemCount(syncIdentityItems) - 1,
-                                 "prefs.sync.identity");
-        addChild_Widget(headings, iClob(makeHeading_Widget("")));
-        addChildFlags_Widget(
-            values,
-            iClob(new_LabelWidget(add_Icon " ${prefs.sync.newidentity}", "sync.newidentity")),
-            0);
-        addDialogDropMenu_Widget(headings,
-                                 values,
-                                 "${prefs.sync.interval}",
-                                 syncIntervalItems,
-                                 iElemCount(syncIntervalItems) - 1,
-                                 "prefs.sync.interval");
-        addDialogPadding_Widget(headings, values);
-        iWidget      *statusHead =
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sync.status}")));
-        iLabelWidget *status = new_LabelWidget("", NULL);
-        setId_Widget(as_Widget(status), "prefs.sync.status");
-        setWrap_LabelWidget(status, iTrue);
-        addChildFlags_Widget(values, iClob(status), frameless_WidgetFlag);
-        statusHead->sizeRef = as_Widget(status);
-        addChild_Widget(headings, iClob(makeHeading_Widget("")));
-        addChildFlags_Widget(
-            values,
-            iClob(new_LabelWidget(reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}",
-                                  "sync.now")),
-            0);
-    }
+
     /* Snippets. */ {
         iSnippetWidget *sniped = new_SnippetWidget();
         appendFramelessTabPage_Widget(tabs,

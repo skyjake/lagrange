@@ -2167,10 +2167,10 @@ msgid "heading.prefs.sync"
 msgstr "Sync"
 
 msgid "prefs.sync"
-msgstr "Sync user data:"
+msgstr "Sync enabled:"
 
 msgid "prefs.sync.info"
-msgstr "All data is encrypted before uploading and stored encrypted on the server. The server cannot decrypt it.\nSite-specific settings are synced, but Preferences are not."
+msgstr "All data is encrypted before uploading and stored encrypted on the server. The server cannot decrypt it. Site-specific settings are synced but other settings are not."
 
 msgid "prefs.sync.server"
 msgstr "Server:"
@@ -2188,7 +2188,7 @@ msgid "prefs.sync.newidentity"
 msgstr "New Sync Identity"
 
 msgid "prefs.sync.interval"
-msgstr "Sync automatically:"
+msgstr "Interval:"
 
 msgid "prefs.sync.interval.manual"
 msgstr "Never"
@@ -3389,10 +3389,10 @@ msgid "heading.sync.newidentity"
 msgstr "New Sync Identity"
 
 msgid "dlg.sync.newidentity"
-msgstr "Enter a name for the new sync identity. Use the same identity on all your devices."
+msgstr "Enter a name for the new sync identity."
 
 msgid "dlg.sync.newidentity.info"
-msgstr "The identity uses an Ed25519 key, as required for syncing. It is recommended to only use it for syncing, and not for signing in to sites."
+msgstr "You must have one shared sync identity on your synced devices. Devices with different sync identities will not sync with each other. You can manage sync identities in the Identities sidebar. It is recommended to only use them for syncing, not for signing in to any other service. The identity uses an Ed25519 key."
 
 msgid "sync.identity.notes"
 msgstr "Used for syncing user data between devices"
