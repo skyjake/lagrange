@@ -30,6 +30,6 @@ include (CheckCCompilerFlag)
 add_subdirectory (lib/core)
 add_subdirectory (app)
 if (NOT IOS AND NOT ANDROID AND NOT EMSCRIPTEN)
-    # Sync server; built on demand: `cmake --build . --target lagrange-sync`
+    # Sync server; built on demand: `cmake --build . --target lgrsyncd`
     add_subdirectory (sync EXCLUDE_FROM_ALL)
 endif ()

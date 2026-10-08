@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdio.h>
 
 static const char *usage_ =
-    "Usage: lagrange-sync [options]\n"
+    "Usage: lgrsyncd [options]\n"
     "\n"
     "  -d, --dir DIR        Data directory (default: current directory)\n"
     "  -p, --port N         Listening port (default: 1965)\n"

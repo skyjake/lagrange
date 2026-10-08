@@ -26,12 +26,12 @@ set (SOURCES
     src/storage.h
 )
 
-add_executable (lagrange-sync ${SOURCES})
-target_compile_definitions (lagrange-sync PUBLIC
+add_executable (lgrsyncd ${SOURCES})
+target_compile_definitions (lgrsyncd PUBLIC
     LAGRANGE_SYNC_VERSION="${LagrangeSync_VERSION}"
 )
-target_link_libraries (lagrange-sync PUBLIC the_Foundation::the_Foundation)
+target_link_libraries (lgrsyncd PUBLIC the_Foundation::the_Foundation)
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    install (TARGETS lagrange-sync RUNTIME DESTINATION bin)
+    install (TARGETS lgrsyncd RUNTIME DESTINATION bin)
 endif ()
