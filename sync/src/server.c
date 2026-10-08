@@ -23,46 +23,54 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "server.h"
 
 #include <the_Foundation/atomic.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/ptrarray.h>
-#include <the_Foundation/regexp.h>
 #include <the_Foundation/thread.h>
 #include <the_Foundation/time.h>
+#include <the_Foundation/tlsservice.h>
 
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/ssl.h>
-#include <openssl/x509.h>
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <unistd.h>
 
-enum { maxHeaderSize_ = 1024, maxConnections_ = 32, ioTimeoutSeconds_ = 20 };
+enum { maxHeaderSize_ = 1024, maxConnections_ = 32 };
 
 static const char *dataPath_ = "/data";
 
-iDeclareType(Connection)
+static iAtomicInt isStopping_;
 
-struct Impl_Connection {
+/* Owns the request handlers. */
+iDeclareClass(Server)
+
+struct Impl_Server {
+    iObject              object;
     const iServerConfig *cfg;
     iStorage            *storage;
-    SSL                 *ssl;
-    int                  fd;
+    iMutex               mtx;
+    iPtrArray            handlers;
+};
+
+/* Request state of a single connection. Notifications arrive in the connection's thread. */
+iDeclareClass(Handler)
+
+struct Impl_Handler {
+    iObject              object;
+    iAtomicInt           isFinished; /* connection closed; can be released */
+    const iServerConfig *cfg;
+    iStorage            *storage;
     iString              remoteAddr;
     iString              fingerprint; /* client certificate; empty if none */
     iBool                isEd25519;
-    iBlock               received;    /* header and possibly the beginning of the body */
+    iString              header;
+    iBlock               received;
+    size_t               uploadSize;
+    uint64_t             uploadGen;
+    iBool                isUpload;
+    iBool                isDone;
 };
 
-static iAtomicInt numConnections_;
-
-static void log_Connection_(const iConnection *d, const char *format, ...) {
+static void log_Handler_(const iHandler *d, const char *format, ...) {
     iString *msg = new_String();
     va_list args;
     va_start(args, format);
@@ -79,93 +87,26 @@ static void log_Connection_(const iConnection *d, const char *format, ...) {
     delete_String(msg);
 }
 
-static iBool write_Connection_(iConnection *d, const void *data, size_t size) {
-    const char *ptr = data;
-    while (size > 0) {
-        const int n = SSL_write(d->ssl, ptr, (int) iMin(size, 0x10000));
-        if (n <= 0) {
-            return iFalse;
-        }
-        ptr += n;
-        size -= n;
-    }
-    return iTrue;
-}
-
-static void respond_Connection_(iConnection *d, int status, const char *meta,
-                                const iBlock *body) {
+static void respond_Handler_(iHandler *d, iTlsConnection *conn, int status, const char *meta,
+                             const iBlock *body) {
     iString *header = collectNewFormat_String("%02d %s\r\n", status, meta);
-    write_Connection_(d, cstr_String(header), size_String(header));
+    write_TlsConnection(conn, utf8_String(header));
     if (body) {
-        write_Connection_(d, constData_Block(body), size_Block(body));
+        write_TlsConnection(conn, body);
     }
-    log_Connection_(d, "%02d %s%s", status, meta,
-                    body ? cstrCollect_String(newFormat_String(" (%zu bytes)", size_Block(body)))
-                         : "");
-}
-
-static iBool readMore_Connection_(iConnection *d) {
-    char buf[0x4000];
-    const int n = SSL_read(d->ssl, buf, sizeof(buf));
-    if (n <= 0) {
-        return iFalse;
-    }
-    appendData_Block(&d->received, buf, n);
-    return iTrue;
-}
-
-static iBool readHeader_Connection_(iConnection *d, iString *header_out) {
-    for (;;) {
-        const char *start = constData_Block(&d->received);
-        const char *crlf  = NULL;
-        for (size_t i = 0; i + 1 < size_Block(&d->received); i++) {
-            if (start[i] == '\r' && start[i + 1] == '\n') {
-                crlf = start + i;
-                break;
-            }
-        }
-        if (crlf) {
-            setRange_String(header_out, (iRangecc){ start, crlf });
-            remove_Block(&d->received, 0, crlf + 2 - start);
-            return iTrue;
-        }
-        if (size_Block(&d->received) > maxHeaderSize_ || !readMore_Connection_(d)) {
-            return iFalse;
-        }
-    }
-}
-
-static void checkClientCertificate_Connection_(iConnection *d) {
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-    X509 *peer = SSL_get1_peer_certificate(d->ssl);
-#else
-    X509 *peer = SSL_get_peer_certificate(d->ssl);
-#endif
-    if (!peer) {
-        return;
-    }
-    uint8_t *der = NULL;
-    const int len = i2d_X509(peer, &der);
-    if (len > 0) {
-        uint8_t sha[SHA256_DIGEST_LENGTH];
-        SHA256(der, len, sha);
-        iBlock *digest = newData_Block(sha, sizeof(sha));
-        iString *hex = hexEncode_Block(digest);
-        set_String(&d->fingerprint, hex);
-        delete_String(hex);
-        delete_Block(digest);
-        OPENSSL_free(der);
-    }
-    d->isEd25519 = EVP_PKEY_base_id(X509_get0_pubkey(peer)) == EVP_PKEY_ED25519;
-    X509_free(peer);
+    close_TlsConnection(conn);
+    d->isDone = iTrue;
+    log_Handler_(d, "%02d %s%s", status, meta,
+                 body ? format_CStr(" (%zu bytes)", size_Block(body)) : "");
 }
 
 iDeclareType(RequestUrl)
 
 struct Impl_RequestUrl {
     iRangecc scheme;
-    iRangecc path;
-    iRangecc query; /* includes the "?" */
+    iRangecc path;   /* Titan parameters are part of the path */
+    iRangecc params; /* e.g., ";size=123" */
+    iRangecc query;  /* includes the "?" */
 };
 
 static iBool parse_RequestUrl_(iRequestUrl *d, iRangecc url) {
@@ -191,11 +132,16 @@ static iBool parse_RequestUrl_(iRequestUrl *d, iRangecc url) {
         }
         d->query.end = pos;
     }
+    const char *semi = isEmpty_Range(&d->path) ? NULL : memchr(d->path.start, ';', size_Range(&d->path));
+    if (semi) {
+        d->params   = (iRangecc){ semi, d->path.end };
+        d->path.end = semi;
+    }
     return iTrue;
 }
 
 static iBool parseGeneration_(iRangecc query, uint64_t *gen_out) {
-    /* Query is just the generation number. */
+    /* The query is just the generation number. */
     if (size_Range(&query) < 2 || query.start[0] != '?') {
         return iFalse;
     }
@@ -204,7 +150,20 @@ static iBool parseGeneration_(iRangecc query, uint64_t *gen_out) {
     return end == query.end;
 }
 
-static void handleInfo_Connection_(iConnection *d) {
+static iBool parseSize_(iRangecc params, size_t *size_out) {
+    /* Titan parameters: ;size=N;mime=...;token=... */
+    iRangecc param = iNullRange;
+    while (nextSplit_Rangecc(params, ";", &param)) {
+        if (startsWith_Rangecc(param, "size=")) {
+            char *end = NULL;
+            *size_out = strtoull(param.start + 5, &end, 10);
+            return end == param.end;
+        }
+    }
+    return iFalse;
+}
+
+static void respondInfo_Handler_(iHandler *d, iTlsConnection *conn) {
     iString *page = collectNewCStr_String("# Lagrange Sync\n\n");
     if (isEmpty_String(&d->fingerprint)) {
         appendCStr_String(page, "No client certificate.\n");
@@ -218,8 +177,8 @@ static void handleInfo_Connection_(iConnection *d) {
             appendCStr_String(page, "This certificate is not authorized for syncing.\n");
         }
         else {
-            uint64_t gen = 0;
-            iBlock *data = load_Storage(d->storage, &d->fingerprint, &gen);
+            uint64_t gen  = 0;
+            iBlock  *data = load_Storage(d->storage, &d->fingerprint, &gen);
             if (data) {
                 appendFormat_String(page, "Stored: %zu bytes (generation %llu)\n",
                                     size_Block(data), (unsigned long long) gen);
@@ -230,236 +189,276 @@ static void handleInfo_Connection_(iConnection *d) {
             }
         }
     }
-    respond_Connection_(d, 20, "text/gemini; charset=utf-8", utf8_String(page));
+    respond_Handler_(d, conn, 20, "text/gemini; charset=utf-8", utf8_String(page));
 }
 
-static void handleDownload_Connection_(iConnection *d, uint64_t clientGen) {
+static void respondDownload_Handler_(iHandler *d, iTlsConnection *conn, uint64_t clientGen) {
     uint64_t gen  = 0;
     iBlock  *data = load_Storage(d->storage, &d->fingerprint, &gen);
     if (gen == clientGen) {
-        respond_Connection_(d, 40, "unchanged", NULL);
+        respond_Handler_(d, conn, 40, "unchanged", NULL);
     }
     else {
-        respond_Connection_(d,
-                            20,
-                            format_CStr("application/octet-stream; gen=%llu",
-                                        (unsigned long long) gen),
-                            data ? data : collect_Block(new_Block(0)));
+        respond_Handler_(d, conn, 20,
+                         format_CStr("application/octet-stream; gen=%llu", (unsigned long long) gen),
+                         data ? data : collect_Block(new_Block(0)));
     }
     delete_Block(data);
 }
 
-static void handleUpload_Connection_(iConnection *d, iRangecc params, uint64_t baseGen) {
-    /* Titan parameters: ;size=N;mime=...;token=... */
-    size_t   size  = 0;
-    iBool    hasSize = iFalse;
-    iRangecc param = iNullRange;
-    while (nextSplit_Rangecc(params, ";", &param)) {
-        if (startsWith_Rangecc(param, "size=")) {
-            char *end = NULL;
-            size = strtoull(param.start + 5, &end, 10);
-            hasSize = (end == param.end);
-        }
-    }
-    if (!hasSize) {
-        respond_Connection_(d, 59, "Missing size parameter", NULL);
-        return;
-    }
-    if (size > d->cfg->maxDataSize) {
-        respond_Connection_(d, 59, format_CStr("Data too large (maximum is %zu bytes)",
-                                               d->cfg->maxDataSize), NULL);
-        return;
-    }
-    uint64_t current = 0;
-    delete_Block(load_Storage(d->storage, &d->fingerprint, &current));
-    if (current != baseGen) {
-        respond_Connection_(d, 40, "stale", NULL);
-        return;
-    }
-    while (size_Block(&d->received) < size) {
-        if (!readMore_Connection_(d)) {
-            log_Connection_(d, "upload interrupted");
-            return;
-        }
-    }
-    truncate_Block(&d->received, size);
+static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
+    truncate_Block(&d->received, d->uploadSize);
     uint64_t newGen = 0;
-    switch (store_Storage(d->storage, &d->fingerprint, baseGen, &d->received, &newGen)) {
+    switch (store_Storage(d->storage, &d->fingerprint, d->uploadGen, &d->received, &newGen)) {
         case ok_StoreResult:
-            respond_Connection_(d, 20, format_CStr("text/plain; gen=%llu",
-                                                   (unsigned long long) newGen), NULL);
+            respond_Handler_(d, conn, 20,
+                             format_CStr("text/plain; gen=%llu", (unsigned long long) newGen), NULL);
             break;
         case stale_StoreResult:
-            respond_Connection_(d, 40, "stale", NULL);
+            respond_Handler_(d, conn, 40, "stale", NULL);
             break;
         default:
-            respond_Connection_(d, 42, "Failed to store data", NULL);
+            respond_Handler_(d, conn, 42, "Failed to store data", NULL);
             break;
     }
 }
 
-static void handle_Connection_(iConnection *d) {
-    iString *header = collectNew_String();
-    if (!readHeader_Connection_(d, header)) {
-        log_Connection_(d, "bad request");
-        respond_Connection_(d, 59, "Bad request", NULL);
-        return;
-    }
-    log_Connection_(d, "%s", cstr_String(header));
+static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
+    log_Handler_(d, "%s", cstr_String(&d->header));
     iRequestUrl url;
-    if (!parse_RequestUrl_(&url, range_String(header))) {
-        respond_Connection_(d, 59, "Bad request", NULL);
+    if (!parse_RequestUrl_(&url, range_String(&d->header))) {
+        respond_Handler_(d, conn, 59, "Bad request", NULL);
         return;
     }
     const iBool isTitan = equalCase_Rangecc(url.scheme, "titan");
     if (!isTitan && !equalCase_Rangecc(url.scheme, "gemini")) {
-        respond_Connection_(d, 53, "Unsupported scheme", NULL);
+        respond_Handler_(d, conn, 53, "Unsupported scheme", NULL);
         return;
     }
-    /* Titan parameters are part of the path. */
-    iRangecc path   = url.path;
-    iRangecc params = iNullRange;
-    const char *semi = isEmpty_Range(&path) ? NULL : memchr(path.start, ';', size_Range(&path));
-    if (semi) {
-        params = (iRangecc){ semi, path.end };
-        path.end = semi;
-    }
-    if (!isTitan && (isEmpty_Range(&path) || equal_Rangecc(path, "/"))) {
-        handleInfo_Connection_(d);
+    if (!isTitan && (isEmpty_Range(&url.path) || equal_Rangecc(url.path, "/"))) {
+        respondInfo_Handler_(d, conn);
         return;
     }
-    if (!endsWith_Rangecc(path, dataPath_)) {
-        respond_Connection_(d, 51, "Not found", NULL);
+    if (!endsWith_Rangecc(url.path, dataPath_)) {
+        respond_Handler_(d, conn, 51, "Not found", NULL);
         return;
     }
     if (isEmpty_String(&d->fingerprint)) {
-        respond_Connection_(d, 60, "Client certificate required", NULL);
+        respond_Handler_(d, conn, 60, "Client certificate required", NULL);
         return;
     }
     if (!d->isEd25519) {
-        respond_Connection_(d, 62, "Ed25519 certificate required", NULL);
+        respond_Handler_(d, conn, 62, "Ed25519 certificate required", NULL);
         return;
     }
     if (!isAllowed_Storage(d->storage, &d->fingerprint)) {
-        respond_Connection_(d, 61, "Certificate not authorized", NULL);
+        respond_Handler_(d, conn, 61, "Certificate not authorized", NULL);
         return;
     }
     uint64_t gen = 0;
     if (!parseGeneration_(url.query, &gen)) {
-        respond_Connection_(d, 59, "Generation missing", NULL);
+        respond_Handler_(d, conn, 59, "Generation missing", NULL);
         return;
     }
-    if (isTitan) {
-        handleUpload_Connection_(d, params, gen);
+    if (!isTitan) {
+        respondDownload_Handler_(d, conn, gen);
+        return;
     }
-    else {
-        handleDownload_Connection_(d, gen);
+    if (!parseSize_(url.params, &d->uploadSize)) {
+        respond_Handler_(d, conn, 59, "Missing size parameter", NULL);
+        return;
+    }
+    if (d->uploadSize > d->cfg->maxDataSize) {
+        respond_Handler_(d, conn, 59, format_CStr("Data too large (maximum is %zu bytes)",
+                                                  d->cfg->maxDataSize), NULL);
+        return;
+    }
+    /* Stale uploads are rejected before receiving the data. */
+    uint64_t current = 0;
+    delete_Block(load_Storage(d->storage, &d->fingerprint, &current));
+    if (current != gen) {
+        respond_Handler_(d, conn, 40, "stale", NULL);
+        return;
+    }
+    d->isUpload  = iTrue;
+    d->uploadGen = gen;
+}
+
+static void readyRead_Handler_(iHandler *d, iTlsConnection *conn) {
+    iBlock *data = readAll_TlsConnection(conn);
+    if (!d->isDone) {
+        append_Block(&d->received, data);
+    }
+    delete_Block(data);
+    if (d->isDone) {
+        return;
+    }
+    if (!d->isUpload) {
+        const char *start = constData_Block(&d->received);
+        const char *crlf  = strstr(start, "\r\n");
+        if (!crlf) {
+            if (size_Block(&d->received) > maxHeaderSize_) {
+                respond_Handler_(d, conn, 59, "Bad request", NULL);
+            }
+            return;
+        }
+        setRange_String(&d->header, (iRangecc){ start, crlf });
+        remove_Block(&d->received, 0, crlf + 2 - start);
+        handleRequest_Handler_(d, conn);
+    }
+    if (d->isUpload && !d->isDone && size_Block(&d->received) >= d->uploadSize) {
+        finishUpload_Handler_(d, conn);
     }
 }
 
-static iThreadResult run_Connection_(iThread *thread) {
-    iConnection *d = userData_Thread(thread);
-    if (SSL_accept(d->ssl) == 1) {
-        checkClientCertificate_Connection_(d);
-        handle_Connection_(d);
-        SSL_shutdown(d->ssl);
+static void disconnected_Handler_(iHandler *d, iTlsConnection *conn) {
+    iUnused(conn);
+    /* This is the last notification from the connection. */
+    if (!d->isDone) {
+        log_Handler_(d, "disconnected before a response");
     }
-    else {
-        log_Connection_(d, "TLS handshake failed");
+    set_Atomic(&d->isFinished, iTrue);
+}
+
+iHandler *new_Handler   (const iServer *server, iTlsConnection *conn);
+void      init_Handler  (iHandler *, const iServer *server, iTlsConnection *conn);
+void      deinit_Handler(iHandler *);
+
+void init_Handler(iHandler *d, const iServer *server, iTlsConnection *conn) {
+    set_Atomic(&d->isFinished, iFalse);
+    d->cfg     = server->cfg;
+    d->storage = server->storage;
+    init_String(&d->remoteAddr);
+    if (address_TlsConnection(conn)) {
+        iString *addr = toString_Address(address_TlsConnection(conn));
+        set_String(&d->remoteAddr, addr);
+        delete_String(addr);
     }
-    SSL_free(d->ssl);
-    close(d->fd);
+    init_String(&d->fingerprint);
+    d->isEd25519 = iFalse;
+    const iTlsCertificate *cert = clientCertificate_TlsConnection(conn);
+    if (cert) {
+        iBlock *fp = fingerprint_TlsCertificate(cert);
+        iString *hex = hexEncode_Block(fp);
+        set_String(&d->fingerprint, hex);
+        delete_String(hex);
+        delete_Block(fp);
+        d->isEd25519 = (keyType_TlsCertificate(cert) == ed25519_TlsCertificateKeyType);
+    }
+    init_String(&d->header);
+    init_Block(&d->received, 0);
+    d->uploadSize = 0;
+    d->uploadGen  = 0;
+    d->isUpload   = iFalse;
+    d->isDone     = iFalse;
+}
+
+void deinit_Handler(iHandler *d) {
     deinit_Block(&d->received);
+    deinit_String(&d->header);
     deinit_String(&d->fingerprint);
     deinit_String(&d->remoteAddr);
-    free(d);
-    add_Atomic(&numConnections_, -1);
-    return 0;
 }
 
-static int acceptAnyCertificate_(int preverifyOk, X509_STORE_CTX *ctx) {
-    iUnused(preverifyOk, ctx);
-    return 1; /* clients use self-signed certificates */
+iDefineObjectConstructionArgs(Handler,
+                              (const iServer *server, iTlsConnection *conn),
+                              server, conn)
+iDefineClass(Handler)
+
+/*----------------------------------------------------------------------------------------------*/
+
+iServer *new_Server     (const iServerConfig *cfg, iStorage *storage);
+void     init_Server    (iServer *, const iServerConfig *cfg, iStorage *storage);
+void     deinit_Server  (iServer *);
+
+void init_Server(iServer *d, const iServerConfig *cfg, iStorage *storage) {
+    d->cfg     = cfg;
+    d->storage = storage;
+    init_Mutex(&d->mtx);
+    init_PtrArray(&d->handlers);
 }
 
-static SSL_CTX *makeContext_(const iServerConfig *cfg) {
-    SSL_CTX *ctx = SSL_CTX_new(TLS_server_method());
-    SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
-    if (SSL_CTX_use_certificate_chain_file(ctx, cstr_String(&cfg->certPath)) != 1 ||
-        SSL_CTX_use_PrivateKey_file(ctx, cstr_String(&cfg->keyPath), SSL_FILETYPE_PEM) != 1) {
-        ERR_print_errors_fp(stderr);
-        SSL_CTX_free(ctx);
-        return NULL;
-    }
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, acceptAnyCertificate_);
-    static const unsigned char sessionContext[] = "lagrange-sync";
-    SSL_CTX_set_session_id_context(ctx, sessionContext, sizeof(sessionContext) - 1);
-    return ctx;
-}
-
-iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
-    signal(SIGPIPE, SIG_IGN);
-    SSL_CTX *ctx = makeContext_(cfg);
-    if (!ctx) {
-        fprintf(stderr, "failed to set up TLS\n");
-        return iFalse;
-    }
-    const int sock = socket(AF_INET6, SOCK_STREAM, 0);
-    const int yes = 1, no = 0;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no));
-    struct sockaddr_in6 addr;
-    iZap(addr);
-    addr.sin6_family = AF_INET6;
-    addr.sin6_addr   = in6addr_any;
-    addr.sin6_port   = htons(cfg->port);
-    if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) != 0 || listen(sock, 16) != 0) {
-        perror("failed to listen");
-        close(sock);
-        SSL_CTX_free(ctx);
-        return iFalse;
-    }
-    printf("Listening on port %u\n", cfg->port);
-    fflush(stdout);
-    iPtrArray *threads = new_PtrArray();
-    for (;;) {
-        struct sockaddr_in6 remote;
-        socklen_t remoteLen = sizeof(remote);
-        const int fd = accept(sock, (struct sockaddr *) &remote, &remoteLen);
-        /* Release finished threads. */
-        iForEach(PtrArray, i, threads) {
-            if (isFinished_Thread(i.ptr)) {
-                join_Thread(i.ptr);
-                iRelease(i.ptr);
+static void releaseHandlers_Server_(iServer *d, iBool all) {
+    iPtrArray *done = new_PtrArray();
+    iGuardMutex(&d->mtx, {
+        iForEach(PtrArray, i, &d->handlers) {
+            iHandler *handler = i.ptr;
+            if (all || value_Atomic(&handler->isFinished)) {
+                pushBack_PtrArray(done, handler);
                 remove_PtrArrayIterator(&i);
             }
         }
-        if (fd < 0) {
-            continue;
-        }
-        if (value_Atomic(&numConnections_) >= maxConnections_) {
-            close(fd);
-            continue;
-        }
-        const struct timeval timeout = { ioTimeoutSeconds_, 0 };
-        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-        iConnection *conn = calloc(1, sizeof(iConnection));
-        conn->cfg     = cfg;
-        conn->storage = storage;
-        conn->fd      = fd;
-        conn->ssl     = SSL_new(ctx);
-        SSL_set_fd(conn->ssl, fd);
-        init_String(&conn->fingerprint);
-        init_Block(&conn->received, 0);
-        char addrStr[INET6_ADDRSTRLEN] = "";
-        inet_ntop(AF_INET6, &remote.sin6_addr, addrStr, sizeof(addrStr));
-        initCStr_String(&conn->remoteAddr, addrStr);
-        add_Atomic(&numConnections_, 1);
-        iThread *thread = new_Thread(run_Connection_);
-        setUserData_Thread(thread, conn);
-        pushBack_PtrArray(threads, thread);
-        start_Thread(thread);
+    });
+    iForEach(PtrArray, j, done) {
+        iRelease(j.ptr);
     }
-    return iTrue;
+    delete_PtrArray(done);
+}
+
+void deinit_Server(iServer *d) {
+    releaseHandlers_Server_(d, iTrue);
+    deinit_PtrArray(&d->handlers);
+    deinit_Mutex(&d->mtx);
+}
+
+iDefineObjectConstructionArgs(Server,
+                              (const iServerConfig *cfg, iStorage *storage),
+                              cfg, storage)
+iDefineClass(Server)
+
+static void accepted_Server_(iServer *d, iTlsService *sv, iTlsConnection *conn) {
+    iUnused(sv);
+    iHandler *handler = new_Handler(d, conn);
+    iGuardMutex(&d->mtx, pushBack_PtrArray(&d->handlers, handler));
+    iConnect(TlsConnection, conn, readyRead, handler, readyRead_Handler_);
+    iConnect(TlsConnection, conn, disconnected, handler, disconnected_Handler_);
+}
+
+static const iString *readFile_(const iString *path) {
+    iFile *f = iClob(new_File(path));
+    return open_File(f, readOnly_FileMode | text_FileMode) ? collect_String(readString_File(f))
+                                                           : NULL;
+}
+
+static void stop_(int sig) {
+    iUnused(sig);
+    set_Atomic(&isStopping_, iTrue);
+}
+
+iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
+    const iString *certPem = readFile_(&cfg->certPath);
+    const iString *keyPem  = readFile_(&cfg->keyPath);
+    if (!certPem || !keyPem) {
+        fprintf(stderr, "failed to read the server certificate\n");
+        return iFalse;
+    }
+    iTlsCertificate *cert   = newPemKey_TlsCertificate(certPem, keyPem);
+    iServer         *server = new_Server(cfg, storage);
+    iTlsService     *sv     = new_TlsService(cfg->port);
+    setMaxConnections_TlsService(sv, maxConnections_);
+    iConnect(TlsService, sv, accepted, server, accepted_Server_);
+    iBool ok = iFalse;
+    if (!setCertificate_TlsService(sv, cert)) {
+        fprintf(stderr, "invalid server certificate or private key\n");
+    }
+    else if (!open_TlsService(sv)) {
+        fprintf(stderr, "failed to listen on port %u\n", cfg->port);
+    }
+    else {
+        printf("Listening on port %u\n", cfg->port);
+        fflush(stdout);
+        signal(SIGINT, stop_);
+        signal(SIGTERM, stop_);
+        while (!value_Atomic(&isStopping_)) {
+            sleep_Thread(0.25);
+            releaseHandlers_Server_(server, iFalse);
+        }
+        printf("Stopping\n");
+        close_TlsService(sv);
+        ok = iTrue;
+    }
+    iRelease(sv);
+    iRelease(server);
+    delete_TlsCertificate(cert);
+    return ok;
 }

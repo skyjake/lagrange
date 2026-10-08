@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/tlsrequest.h>
+#include <signal.h>
 #include <stdio.h>
 
 static const char *usage_ =
@@ -94,6 +95,9 @@ static iStringSet *loadAllowList_(const iString *path) {
 }
 
 int main(int argc, char *argv[]) {
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+    signal(SIGPIPE, SIG_IGN); /* write errors are handled by the_Foundation */
+#endif
     init_Foundation();
     iCommandLine *args = iClob(new_CommandLine(argc, argv));
     iServerConfig cfg;

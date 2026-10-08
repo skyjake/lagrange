@@ -16,9 +16,6 @@ else ()
     add_subdirectory (${CMAKE_CURRENT_LIST_DIR}/../lib/the_Foundation the_Foundation)
     add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
 endif ()
-find_package (PkgConfig REQUIRED)
-pkg_check_modules (OPENSSL REQUIRED IMPORTED_TARGET openssl)
-
 set (SOURCES
     src/main.c
     src/server.c
@@ -31,6 +28,6 @@ add_executable (lagrange-sync ${SOURCES})
 target_compile_definitions (lagrange-sync PUBLIC
     LAGRANGE_SYNC_VERSION="${LagrangeSync_VERSION}"
 )
-target_link_libraries (lagrange-sync PUBLIC the_Foundation::the_Foundation PkgConfig::OPENSSL)
+target_link_libraries (lagrange-sync PUBLIC the_Foundation::the_Foundation)
 
 install (TARGETS lagrange-sync RUNTIME DESTINATION bin)

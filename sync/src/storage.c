@@ -107,9 +107,15 @@ enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, uint64_
                           (unsigned long long) gen + 1);
             const iBool ok = write_File(f, data) == size_Block(data);
             close_File(f);
-            if (ok && rename(cstr_String(tmpPath), cstr_String(path)) == 0) {
-                *newGeneration_out = gen + 1;
-                result = ok_StoreResult;
+            if (ok) {
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+                removePath_CStr(cstr_String(path)); /* not replaced when renaming */
+#endif
+                renamePath_CStr(cstr_String(tmpPath), cstr_String(path));
+                if (!fileExists_FileInfo(tmpPath)) {
+                    *newGeneration_out = gen + 1;
+                    result = ok_StoreResult;
+                }
             }
         }
         iRelease(f);
