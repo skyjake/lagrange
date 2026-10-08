@@ -44,6 +44,7 @@ void    deinit_SiteSpec     (void);
 
 void    serialize_SiteSpec      (iStream *);
 iBool   deserialize_SiteSpec    (iStream *, enum iImportMethod);
+void    replace_SiteSpec        (iStream *); /* also saves */
 
 /* changes saved immediately */
 void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value);

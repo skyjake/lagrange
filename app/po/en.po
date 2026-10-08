@@ -2170,7 +2170,7 @@ msgid "prefs.sync"
 msgstr "Sync user data:"
 
 msgid "prefs.sync.info"
-msgstr "All data is encrypted before uploading and stored encrypted on the server.\nThe server cannot decrypt it.\nPreferences and site-specific settings are never synced."
+msgstr "All data is encrypted before uploading and stored encrypted on the server. The server cannot decrypt it.\nSite-specific settings are synced, but Preferences are not."
 
 msgid "prefs.sync.server"
 msgstr "Server:"
@@ -3379,6 +3379,9 @@ msgstr "Error:"
 msgid "sync.busy.bookmarks"
 msgstr "Bookmarks cannot be edited while syncing. Please try again in a moment."
 
+msgid "sync.busy.sitespec"
+msgstr "Site settings cannot be edited while syncing. Please try again in a moment."
+
 msgid "sync.identity.name"
 msgstr "Lagrange Sync"
 
@@ -3419,7 +3422,7 @@ msgid "sync.error.identity"
 msgstr "The sync identity is missing or does not use an Ed25519 key."
 
 msgid "sync.error.editoropen"
-msgstr "Close the bookmark editor before syncing."
+msgstr "Close the bookmark editor and site settings before syncing."
 
 msgid "sync.error.newidentity"
 msgstr "The identity could not be created."

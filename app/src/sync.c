@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmutil.h>
 #include <lagrange/lang.h>
 #include <lagrange/prefs.h>
+#include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
 #include <lagrange/visited.h>
 
@@ -57,7 +58,8 @@ _Static_assert((int) bookmarks_SyncDataType  == (int) bookmarks_UserDataType &&
                (int) visited_SyncDataType    == (int) visited_UserDataType &&
                (int) identities_SyncDataType == (int) identities_UserDataType &&
                (int) trusted_SyncDataType    == (int) trusted_UserDataType &&
-               (int) snippets_SyncDataType   == (int) snippets_UserDataType,
+               (int) snippets_SyncDataType   == (int) snippets_UserDataType &&
+               (int) sites_SyncDataType      == (int) sites_UserDataType,
                "data type mismatch");
 
 static const char  *stateFileName_Sync_    = "state.ini";
@@ -71,7 +73,7 @@ static const double requestTimeout_Sync_   = 30;      /* seconds */
 static const double minTransferRate_Sync_  = 10000;   /* bytes per second */
 
 static const char *typeNames_Sync_[max_SyncDataType] = {
-    "bookmarks", "books", "visited", "identities", "trusted", "snippets"
+    "bookmarks", "books", "visited", "identities", "trusted", "snippets", "sites"
 };
 
 enum iSyncUploadResult {
@@ -314,6 +316,9 @@ static iSyncData *takeSnapshot_Sync_(iSync *d) {
             case snippets_SyncDataType:
                 serialize_Snippets(outs);
                 break;
+            case sites_SyncDataType:
+                serialize_SiteSpec(outs);
+                break;
         }
         parseNative_SyncData(snap, type, data_Buffer(buf));
         close_Buffer(buf);
@@ -434,6 +439,10 @@ static void applyType_Sync_(const iSyncData *data, enum iSyncDataType type,
         case snippets_SyncDataType:
             deserialize_Snippets(nativeStream_(data, type), all_ImportMethod);
             notify_App("snippets.changed");
+            break;
+        case sites_SyncDataType:
+            replace_SiteSpec(nativeStream_(data, type));
+            docPrefsChanged_App();
             break;
         default:
             break;
@@ -763,7 +772,7 @@ static void updateTimer_Sync_(iSync *d) {
     }
 }
 
-static iBool isBookmarkEditorOpen_Sync_(void) {
+static iBool isEditorOpen_Sync_(void) {
     iConstForEach(PtrArray, i, regularWindows_App()) {
         const iWindow *win = i.ptr;
         iForIndices(r, win->roots) {
@@ -772,7 +781,8 @@ static iBool isBookmarkEditorOpen_Sync_(void) {
             }
             iConstForEach(ObjectList, c, children_Widget(win->roots[r]->widget)) {
                 const iString *id = id_Widget(c.object);
-                if (startsWith_String(id, "bmed") || startsWith_String(id, "feedcfg")) {
+                if (startsWith_String(id, "bmed") || startsWith_String(id, "feedcfg") ||
+                    startsWith_String(id, "sitespec")) {
                     return iTrue;
                 }
             }
@@ -855,7 +865,7 @@ static void start_Sync_(iSync *d, iBool isManual) {
         }
         return;
     }
-    if (isBookmarkEditorOpen_Sync_()) {
+    if (isEditorOpen_Sync_()) {
         if (isManual) {
             makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.sync}",
                                      "${sync.error.editoropen}");

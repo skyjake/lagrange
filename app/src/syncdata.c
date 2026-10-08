@@ -62,6 +62,10 @@ static const iSyncFieldInfo snippetFields_[] = {
     { "content" },
 };
 
+static const iSyncFieldInfo siteFields_[] = {
+    { "value" },
+};
+
 static const struct {
     const char           *name;
     const iSyncFieldInfo *fields;
@@ -73,6 +77,7 @@ static const struct {
     { "identities", identityFields_, iElemCount(identityFields_) },
     { "trusted", trustedFields_, iElemCount(trustedFields_) },
     { "snippets", snippetFields_, iElemCount(snippetFields_) },
+    { "sites", siteFields_, iElemCount(siteFields_) },
 };
 
 static const uint32_t formatVersion_SyncData_ = 1;
@@ -441,6 +446,55 @@ static void parseLines_SyncData_(iSyncData *d, enum iSyncDataType type, const iB
     }
 }
 
+static void parseSites_SyncData_(iSyncData *d, const iBlock *native) {
+    /* Each line is a table header or "key = value". */
+    const iRangecc src  = range_Block(native);
+    iRangecc       line = iNullRange;
+    iRangecc       site = iNullRange;
+    while (nextSplit_Rangecc(src, "\n", &line)) {
+        trim_Rangecc(&line);
+        if (startsWith_Rangecc(line, "[") && endsWith_Rangecc(line, "]")) {
+            site = (iRangecc){ line.start + 1, line.end - 1 };
+            continue;
+        }
+        const char *eq = iStrStrN(line.start, " = ", size_Range(&line));
+        if (isEmpty_Range(&site) || !eq) {
+            continue;
+        }
+        iString *key = collectNewRange_String(site);
+        appendCStr_String(key, " ");
+        appendRange_String(key, (iRangecc){ line.start, eq });
+        iSyncRecord *rec = add_SyncData(d, sites_SyncDataType, key);
+        setField_SyncRecord(
+            rec, value_SyncSiteField, collectNewRange_String((iRangecc){ eq + 3, line.end }));
+    }
+}
+
+static void appendSites_SyncData_(const iSyncData *d, iString *out) {
+    iStringSet *keys = new_StringSet(); /* sorted, so each site's settings are together */
+    iConstForEach(StringHash, i, d->records[sites_SyncDataType]) {
+        insert_StringSet(keys, &((const iSyncRecord *) value_StringHashNode(i.value))->key);
+    }
+    iRangecc site = iNullRange;
+    iConstForEach(StringSet, k, keys) {
+        const size_t sep = lastIndexOfCStr_String(k.value, " ");
+        if (sep == iInvalidPos) {
+            continue;
+        }
+        const iRangecc keySite = { cstr_String(k.value), cstr_String(k.value) + sep };
+        if (!equalRange_Rangecc(site, keySite)) {
+            appendFormat_String(out, "%s[%s]\n", isEmpty_Range(&site) ? "" : "\n",
+                                cstr_Rangecc(keySite));
+            site = keySite;
+        }
+        appendFormat_String(out, "%s = %s\n",
+                            cstr_String(k.value) + sep + 1,
+                            cstr_String(field_SyncRecord(find_SyncData(d, sites_SyncDataType, k.value),
+                                                         value_SyncSiteField)));
+    }
+    iRelease(keys);
+}
+
 void parseNative_SyncData(iSyncData *d, enum iSyncDataType type, const iBlock *native) {
     clear_SyncData(d, type);
     switch (type) {
@@ -459,14 +513,16 @@ void parseNative_SyncData(iSyncData *d, enum iSyncDataType type, const iBlock *n
         case trusted_SyncDataType:
             parseLines_SyncData_(d, type, native);
             break;
+        case sites_SyncDataType:
+            parseSites_SyncData_(d, native);
+            break;
         default:
             iAssert(iFalse);
             break;
     }
 }
 
-iBlock *native_SyncData(const iSyncData *d, enum iSyncDataType type) {
-    iString *out = new_String();
+static void appendRecords_SyncData_(const iSyncData *d, enum iSyncDataType type, iString *out) {
     iConstForEach(StringHash, i, d->records[type]) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
         switch (type) {
@@ -501,6 +557,16 @@ iBlock *native_SyncData(const iSyncData *d, enum iSyncDataType type) {
                 appendCStr_String(out, "\n");
                 break;
         }
+    }
+}
+
+iBlock *native_SyncData(const iSyncData *d, enum iSyncDataType type) {
+    iString *out = new_String();
+    if (type == sites_SyncDataType) {
+        appendSites_SyncData_(d, out);
+    }
+    else {
+        appendRecords_SyncData_(d, type, out);
     }
     iBlock *data = copy_Block(utf8_String(out));
     delete_String(out);

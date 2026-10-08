@@ -59,6 +59,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "sidebarwidget.h"
 #include <lagrange/sitespec.h>
+#include "sync.h"
 #include "touch.h"
 #include "translation.h"
 #include "uploadwidget.h"
@@ -2119,7 +2120,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.sitespec") && d == document_App()) {
-        if (!findWidget_App("sitespec.palette")) {
+        if (isRunning_Sync()) {
+            /* The settings may change when the synced data is applied. */
+            makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.sync}", "${sync.busy.sitespec}");
+        }
+        else if (!findWidget_App("sitespec.palette")) {
             makeSiteSpecificSettings_Widget(d->mod.url);
         }
         return iTrue;

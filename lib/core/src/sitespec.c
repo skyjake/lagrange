@@ -269,10 +269,18 @@ static void save_SiteSpec_(iSiteSpec *d) {
         commitFile_Core(cstr_String(path), cstr_String(tempPath));
     }
     iRelease(f);
+    notifyUserDataChanged_Core(sites_UserDataType);
 }
 
 void save_SiteSpec(void) {
     save_SiteSpec_(&siteSpec_);
+}
+
+void replace_SiteSpec(iStream *ins) {
+    iSiteSpec *d = &siteSpec_;
+    clear_StringHash(&d->sites);
+    deserialize_SiteSpec(ins, all_ImportMethod);
+    save_SiteSpec_(d);
 }
 
 void init_SiteSpec(const char *saveDir) {

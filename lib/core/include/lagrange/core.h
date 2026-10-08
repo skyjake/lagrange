@@ -43,6 +43,7 @@ enum iUserDataType {
     identities_UserDataType,
     trusted_UserDataType,
     snippets_UserDataType,
+    sites_UserDataType,
 };
 
 typedef void (*iUserDataChangedFunc)(enum iUserDataType);

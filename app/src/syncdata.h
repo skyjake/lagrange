@@ -38,6 +38,7 @@ enum iSyncDataType {
     identities_SyncDataType,
     trusted_SyncDataType,
     snippets_SyncDataType,
+    sites_SyncDataType,
     max_SyncDataType
 };
 
@@ -87,6 +88,11 @@ enum iSyncSnippetField {
     content_SyncSnippetField,
 };
 
+/* Site-specific settings: one record per site and setting, keyed "<site> <setting>". */
+enum iSyncSiteField {
+    value_SyncSiteField, /* TOML value as written in sitespec.ini */
+};
+
 size_t          numFields_SyncDataType  (enum iSyncDataType);
 
 /*----------------------------------------------------------------------------------------------*/
@@ -132,7 +138,7 @@ iBlock *            serialize_SyncData  (const iSyncData *);
 iBool               deserialize_SyncData(iSyncData *, const iBlock *archive);
 
 /* Native formats used by the application's data stores: bookmarks.ini, books.ini,
-   visited.txt, trusted.txt, snippets.ini. Not applicable to identities. */
+   visited.txt, trusted.txt, snippets.ini, sitespec.ini. Not applicable to identities. */
 void                parseNative_SyncData(iSyncData *, enum iSyncDataType, const iBlock *native);
 iBlock *            native_SyncData     (const iSyncData *, enum iSyncDataType);
 
