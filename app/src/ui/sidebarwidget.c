@@ -744,10 +744,8 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         { openTab_Icon " ${menu.opentab}", 0, 0, "book.open newtab:1" },
         { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "book.open newtab:2" },
         { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "book.open newwindow:1" },
-#if defined (LAGRANGE_FILE_DIALOGS) || defined (iPlatformMobile) || \
-    defined (iPlatformAppleDesktop) || defined (iPlatformLinux)
         { "---" },
-#endif
+        { "${book.copysource}", 0, 0, "book.copysource" },
 #if defined (iPlatformMobile)
         { download_Icon " ${menu.save.files}", 0, 0, "book.saveas" },
 #elif defined (LAGRANGE_FILE_DIALOGS)
@@ -757,6 +755,7 @@ static iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         { magnifyingGlass_Icon " " revealFile_Label, 0, 0, "book.reveal" },
 #endif
         { "---" },
+        { "${book.redownload}", 0, 0, "book.redownload" },
         { "${book.removedownload}", 0, 0, "book.removedownload" },
         { delete_Icon " " uiTextCaution_ColorEscape "${book.delete}", 0, 0, "book.delete" },
     };
@@ -3278,6 +3277,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "book.copysource")) {
+            const iBook *book = d->contextItem ? find_Books(&d->contextItem->bookId) : NULL;
+            if (book && !isEmpty_String(&book->url)) {
+                SDL_SetClipboardText(cstr_String(&book->url));
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "book.redownload")) {
+            const iBook *book = d->contextItem ? find_Books(&d->contextItem->bookId) : NULL;
+            if (book && isDownloadable_Book(book)) {
+                d->gempubPage = 2; /* stays on the shelf */
+                postCommandf_Root(get_Root(), "open overwritebook:1 url:%s", cstr_String(&book->url));
+                dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "book.reveal")) {
             const iSidebarItem *item = d->contextItem;
             const iString *path = item ? collect_String(localFilePathFromUrl_String(&item->url)) : NULL;
@@ -3551,8 +3566,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     }
                 }
                 else if (d->mode == gempub_SidebarMode && d->contextItem) {
-                    /* Without a source URL, the book would disappear from the shelf. */
                     const iBook *book = find_Books(&d->contextItem->bookId);
+                    setMenuItemDisabled_Widget(d->menu,
+                                               "book.copysource",
+                                               !book || isEmpty_String(&book->url));
+                    setMenuItemDisabled_Widget(d->menu,
+                                               "book.redownload",
+                                               !book || !path_Book(book) ||
+                                                   !isDownloadable_Book(book));
+                    /* Without a source URL, the book would disappear from the shelf. */
                     setMenuItemDisabled_Widget(d->menu,
                                                "book.removedownload",
                                                !book || !path_Book(book) ||

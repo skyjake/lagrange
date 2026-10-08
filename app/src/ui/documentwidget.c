@@ -1587,7 +1587,14 @@ static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite)
                                  "${dlg.book.save.unsupported}");
         return;
     }
-    const iBook   *existing     = find_Books(id);
+    const iBook *existing = find_Books(id);
+    if (overwrite && (!existing || !path_Book(existing)) && sourceUrl) {
+        /* Redownloading replaces the book even if its title has changed. */
+        const iBook *previous = findBySource_Books(sourceUrl);
+        if (previous) {
+            existing = previous;
+        }
+    }
     const iString *existingPath = existing ? path_Book(existing) : NULL;
     if (existingPath && !overwrite && isEqualToFileContents_(existingPath, data)) {
         delete_Block(data);
@@ -4747,6 +4754,8 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
     iChangeFlags(d->fetch->flags, waitForIdle_DocumentFetchFlag,
                  setUrlFlags & waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag);
+    iChangeFlags(d->fetch->flags, overwriteBook_DocumentFetchFlag,
+                 setUrlFlags & overwriteBook_DocumentWidgetSetUrlFlag);
     d->fetch->flags |= goBackOnStop_DocumentFetchFlag;
     if (document_App() != d) {
         d->flags |= unseen_DocumentWidgetFlag;

@@ -650,6 +650,14 @@ msgstr "Do you want to delete the local copy of \"%s\"? The book stays on the sh
 msgid "dlg.book.removedownload"
 msgstr "Remove"
 
+# Copies the URL where the book was downloaded from.
+msgid "book.copysource"
+msgstr "Copy Source URL"
+
+# Downloads the book again from its source URL, replacing the local copy.
+msgid "book.redownload"
+msgstr "Redownload"
+
 # Preferences: on which sidebar the Book mode is shown.
 msgid "prefs.gempubsidebar"
 msgstr "Book"

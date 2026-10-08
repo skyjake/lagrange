@@ -678,6 +678,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         url,
         (isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
             (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
+            (argLabel_Command(cmd, "overwritebook") ? overwriteBook_DocumentWidgetSetUrlFlag : 0) |
             (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
         hasSetIdent ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident"))) : NULL);
     /* Optionally, jump to a text in the document. This will only work if the document

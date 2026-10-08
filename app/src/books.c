@@ -377,6 +377,21 @@ const iBook *find_Books(const iString *id) {
     return book;
 }
 
+const iBook *findBySource_Books(const iString *url) {
+    iBooks      *d     = books_;
+    const iBook *found = NULL;
+    lock_Mutex(d->mtx);
+    iConstForEach(StringHash, i, d->books) {
+        const iBook *book = value_StringHashNode(i.value);
+        if (!isEmpty_String(&book->fileName) && equal_String(&book->url, url)) {
+            found = book;
+            break;
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return found;
+}
+
 static iBool isInDir_(const iString *path, const iString *dir) {
     return size_String(path) > size_String(dir) + 1 && startsWith_String(path, cstr_String(dir)) &&
            cstr_String(path)[size_String(dir)] == iPathSeparator[0] &&
@@ -597,6 +612,14 @@ void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, floa
     }
 }
 
+static void resetPosition_Book_(iBook *d) {
+    d->chapter     = -1;
+    d->numChapters = 0;
+    d->chapterPos  = 0.0f;
+    initCurrent_Time(&d->timestamp);
+    d->positionTime = d->timestamp;
+}
+
 static void setSource_Book_(iBook *d, const iString *url) {
     /* A local file does not replace a remote source. */
     if (isEmpty_String(&d->url) || !isLocalFileScheme_Rangecc(urlScheme_String(url)) ||
@@ -664,6 +687,18 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
     makeDirs_Path(dir_Books());
     iString *path = replacePath ? copy_String(replacePath)
                                 : uniquePath_Books_(collect_String(cleanFileName_Books_(fileName)));
+    iString *oldId    = NULL;
+    iString *oldTitle = NULL;
+    if (replacePath) {
+        lock_Mutex(books_->mtx);
+        const iShelfFile *file = constValue_StringHash(
+            books_->files, collectNewRange_String(baseName_Path(replacePath)));
+        if (file) {
+            oldId    = copy_String(&file->book->id);
+            oldTitle = copy_String(&file->book->title);
+        }
+        unlock_Mutex(books_->mtx);
+    }
     iFile *f = new_File(path);
     iBool  ok = iFalse;
     if (open_File(f, writeOnly_FileMode)) {
@@ -678,7 +713,23 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
             unlock_Mutex(books_->mtx);
         }
         update_Books(gempub, path);
+        if (oldId) {
+            lock_Mutex(books_->mtx);
+            iBook *book = bookForGempub_Books_(books_, gempub);
+            if (!equal_String(&book->title, oldTitle)) {
+                /* A retitled book is read from the beginning. */
+                resetPosition_Book_(book);
+                iBook *old = value_StringHash(books_->books, oldId);
+                if (old && old != book && isEmpty_String(&old->fileName)) {
+                    clear_String(&old->url); /* superseded */
+                }
+            }
+            unlock_Mutex(books_->mtx);
+            save_Books();
+        }
     }
+    delete_String(oldTitle);
+    delete_String(oldId);
     delete_Gempub(gempub);
     if (!ok) {
         delete_String(path);

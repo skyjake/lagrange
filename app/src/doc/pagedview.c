@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 uint32_t pageTurnDuration_DocumentView(const iDocumentView *d) {
     /* Narrow pages turn faster, though not in proportion to the distance. The full duration
        is for a width of about 1000 points. */
-    const float full  = prefs_App()->pageTurn == curl_PageTurnAnimation ? 330 : 250;
+    const float full  = prefs_App()->pageTurn == curl_PageTurnAnimation ? 300 : 250;
     const float width = width_Rect(pageViewport_DocumentView(d)) / (250.0f * gap_UI);
     return full * iClamp(sqrtf(width), 0.5f, 1.0f);
 }

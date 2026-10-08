@@ -47,6 +47,7 @@ enum iDocumentFetchFlag {
     goBackOnStop_DocumentFetchFlag    = iBit(3), /* cancelling navigates back */
     fromCache_DocumentFetchFlag       = iBit(4), /* don't write anything to cache */
     preventInlining_DocumentFetchFlag = iBit(5), /* response can't become inline media */
+    overwriteBook_DocumentFetchFlag   = iBit(6), /* fetched book replaces the shelf copy */
 };
 
 iDeclareType(DocumentFetch)

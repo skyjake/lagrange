@@ -395,7 +395,7 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     const int    pageSpan = columnsPerPage_GmDocument(d) * d->metrics.pageHeight;
     /* Headers show the last level 1 heading on or before the page, except on the first page
        and on a page that begins with one. The first page of a book's chapter has it unless the
-       heading is on the page. */
+       heading is on the page. A single-page chapter has the book's title instead. */
     const iBool isBook = !isEmpty_String(&d->bookTitle);
     iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
     const iRangecc bookTitle =
@@ -433,6 +433,9 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
                                             : isBook && !isCoverStart && !hasHeading;
         if (hasHeader && !isEmpty_Range(&title)) {
             bands.header = fitPageBandText_GmDocument_(d, title);
+        }
+        else if (isBook && !isCoverStart && numPages == 1) {
+            bands.header = fitPageBandText_GmDocument_(d, bookTitle);
         }
         /* The book's title is shown also where the chapter title is. */
         if (!isEmpty_Range(&bookTitle) && !isCoverStart) {

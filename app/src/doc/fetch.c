@@ -340,16 +340,17 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 invalidate_DocumentWidget(d->owner);
             }
             const iBool isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
+            const int   overwrite = (d->flags & overwriteBook_DocumentFetchFlag) != 0;
             if (!isCached && isRemote_Gempub(d->sourceGempub) && isCover) {
                 /* Downloaded books go on the shelf. */
-                postCommandf_Root(w->root, "document.savebook doc:%p", d->owner);
+                postCommandf_Root(w->root, "document.savebook overwrite:%d doc:%p", overwrite, d->owner);
             }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && isCover && !isInsideArchive) {
                 const iString *path =
                     collect_String(localFilePathFromUrl_String(url_DocumentFetch_(d)));
                 if (!isOnShelf_Books(path)) {
                     /* Local books are read from a copy on the shelf. */
-                    postCommandf_Root(w->root, "document.savebook doc:%p", d->owner);
+                    postCommandf_Root(w->root, "document.savebook overwrite:%d doc:%p", overwrite, d->owner);
                     return;
                 }
                 update_Books(d->sourceGempub, path);
@@ -375,6 +376,12 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                     postCommandf_Root(w->root, "open doc:%p url:%s", d->owner, cstr_String(target));
                 }
             }
+        }
+        else if (!isCached && d->flags & overwriteBook_DocumentFetchFlag && d->request &&
+                 category_GmStatusCode(status_GmRequest(d->request)) ==
+                     categorySuccess_GmStatusCode) {
+            /* Pages saved as books are updated. */
+            postCommandf_Root(w->root, "document.savebook overwrite:1 doc:%p", d->owner);
         }
     }
 }

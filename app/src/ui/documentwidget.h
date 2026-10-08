@@ -131,6 +131,7 @@ enum iDocumentWidgetSetUrlFlags {
     preventInlining_DocumentWidgetSetUrlFlag             = iBit(2),
     waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag  = iBit(3),
     disallowCachedDocument_DocumentWidgetSetUrlFlag      = iBit(4),
+    overwriteBook_DocumentWidgetSetUrlFlag               = iBit(5),
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other, iBool isNewTab);
