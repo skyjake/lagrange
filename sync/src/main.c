@@ -94,11 +94,7 @@ static iStringSet *loadAllowList_(const iString *path) {
     return set;
 }
 
-int main(int argc, char *argv[]) {
-#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
-    signal(SIGPIPE, SIG_IGN); /* write errors are handled by the_Foundation */
-#endif
-    init_Foundation();
+static int run_(int argc, char *argv[]) {
     iCommandLine *args = iClob(new_CommandLine(argc, argv));
     iServerConfig cfg;
     initCStr_String(&cfg.dataDir, ".");
@@ -148,25 +144,39 @@ int main(int argc, char *argv[]) {
             return 1;
         }
     }
-    printf("Lagrange Sync " LAGRANGE_SYNC_VERSION "\n\n");
-    printf("  Data directory: %s\n", cstr_String(&cfg.dataDir));
-    printf("  Certificate:    %s\n", cstr_String(&cfg.certPath));
-    printf("  Maximum size:   %zu bytes\n", cfg.maxDataSize);
-    iStorage *storage = new_Storage(
-        collect_String(concatCStr_Path(&cfg.dataDir, "accounts")));
+    iStringSet *allowed = NULL;
     if (!isEmpty_String(allowPath)) {
-        iStringSet *allowed = loadAllowList_(allowPath);
+        allowed = iClob(loadAllowList_(allowPath));
         if (!allowed) {
             fprintf(stderr, "failed to read allow list: %s\n", cstr_String(allowPath));
             return 1;
         }
+    }
+    printf("Lagrange Sync " LAGRANGE_SYNC_VERSION "\n\n");
+    printf("  Data directory: %s\n", cstr_String(&cfg.dataDir));
+    printf("  Certificate:    %s\n", cstr_String(&cfg.certPath));
+    printf("  Maximum size:   %zu bytes\n", cfg.maxDataSize);
+    if (allowed) {
         printf("  Allowed:        %zu certificates\n", size_StringSet(allowed));
-        setAllowList_Storage(storage, allowed);
-        iRelease(allowed);
     }
     printf("\n");
+    iStorage *storage = new_Storage(
+        collect_String(concatCStr_Path(&cfg.dataDir, "accounts")));
+    setAllowList_Storage(storage, allowed);
     const iBool ok = run_Server(&cfg, storage);
     delete_Storage(storage);
-    deinit_Foundation();
+    deinit_String(&cfg.keyPath);
+    deinit_String(&cfg.certPath);
+    deinit_String(&cfg.dataDir);
     return ok ? 0 : 1;
+}
+
+int main(int argc, char *argv[]) {
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+    signal(SIGPIPE, SIG_IGN); /* write errors are handled by the_Foundation */
+#endif
+    init_Foundation();
+    const int rc = run_(argc, argv);
+    deinit_Foundation();
+    return rc;
 }
