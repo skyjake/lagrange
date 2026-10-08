@@ -3347,10 +3347,10 @@ msgid "dlg.sync.fp.trusted"
 msgstr "Trusted fingerprint:"
 
 msgid "dlg.sync.copyfp"
-msgstr "Copy New Fingerprint"
+msgstr "Copy Server Fingerprint"
 
 msgid "dlg.sync.fp.server"
-msgstr "Server's fingerprint:"
+msgstr "Server fingerprint:"
 
 msgid "dlg.sync.untrusted.check"
 msgstr "Only trust the server's certificate if its fingerprint matches the one given by the server's administrator."
