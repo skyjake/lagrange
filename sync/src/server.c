@@ -57,6 +57,7 @@ iDeclareClass(Handler)
 struct Impl_Handler {
     iObject              object;
     iAtomicInt           isFinished; /* connection closed; can be released */
+    iTlsConnection      *conn;
     const iServerConfig *cfg;
     iStorage            *storage;
     iString              remoteAddr;
@@ -328,6 +329,7 @@ static void disconnected_Handler_(iHandler *d, iTlsConnection *conn) {
 
 static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *conn) {
     set_Atomic(&d->isFinished, iFalse);
+    d->conn    = ref_Object(conn);
     d->cfg     = server->cfg;
     d->storage = server->storage;
     init_String(&d->remoteAddr);
@@ -356,6 +358,11 @@ static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *con
 }
 
 static void deinit_Handler(iHandler *d) {
+    /* The connection may be released in another thread, so its audiences must be
+       left before then. */
+    iDisconnect(TlsConnection, d->conn, readyRead, d, readyRead_Handler_);
+    iDisconnect(TlsConnection, d->conn, disconnected, d, disconnected_Handler_);
+    iRelease(d->conn);
     deinit_Block(&d->received);
     deinit_String(&d->header);
     deinit_String(&d->fingerprint);
