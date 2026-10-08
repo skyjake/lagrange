@@ -320,11 +320,11 @@ static void disconnected_Handler_(iHandler *d, iTlsConnection *conn) {
     set_Atomic(&d->isFinished, iTrue);
 }
 
-iHandler *new_Handler   (const iServer *server, iTlsConnection *conn);
-void      init_Handler  (iHandler *, const iServer *server, iTlsConnection *conn);
-void      deinit_Handler(iHandler *);
+static iHandler *new_Handler   (const iServer *server, iTlsConnection *conn);
+static void      init_Handler  (iHandler *, const iServer *server, iTlsConnection *conn);
+static void      deinit_Handler(iHandler *);
 
-void init_Handler(iHandler *d, const iServer *server, iTlsConnection *conn) {
+static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *conn) {
     set_Atomic(&d->isFinished, iFalse);
     d->cfg     = server->cfg;
     d->storage = server->storage;
@@ -353,7 +353,7 @@ void init_Handler(iHandler *d, const iServer *server, iTlsConnection *conn) {
     d->isDone     = iFalse;
 }
 
-void deinit_Handler(iHandler *d) {
+static void deinit_Handler(iHandler *d) {
     deinit_Block(&d->received);
     deinit_String(&d->header);
     deinit_String(&d->fingerprint);
@@ -367,11 +367,11 @@ iDefineClass(Handler)
 
 /*----------------------------------------------------------------------------------------------*/
 
-iServer *new_Server     (const iServerConfig *cfg, iStorage *storage);
-void     init_Server    (iServer *, const iServerConfig *cfg, iStorage *storage);
-void     deinit_Server  (iServer *);
+static iServer *new_Server     (const iServerConfig *cfg, iStorage *storage);
+static void     init_Server    (iServer *, const iServerConfig *cfg, iStorage *storage);
+static void     deinit_Server  (iServer *);
 
-void init_Server(iServer *d, const iServerConfig *cfg, iStorage *storage) {
+static void init_Server(iServer *d, const iServerConfig *cfg, iStorage *storage) {
     d->cfg     = cfg;
     d->storage = storage;
     init_Mutex(&d->mtx);
@@ -395,7 +395,7 @@ static void releaseHandlers_Server_(iServer *d, iBool all) {
     delete_PtrArray(done);
 }
 
-void deinit_Server(iServer *d) {
+static void deinit_Server(iServer *d) {
     releaseHandlers_Server_(d, iTrue);
     deinit_PtrArray(&d->handlers);
     deinit_Mutex(&d->mtx);
