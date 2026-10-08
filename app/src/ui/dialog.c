@@ -642,6 +642,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "menu.cancel") ||
           equal_Command(cmd, "mouse.missed") ||
           equal_Command(cmd, "server.copycert") ||
+          equal_Command(cmd, "sync.copyfingerprint") ||
           startsWith_Command(cmd, "cancel menu:") ||
           startsWith_Command(cmd, "window."))) {
 #ifndef NDEBUG
@@ -724,8 +725,10 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChild_Widget(dlg->root->widget, iClob(dlg));
     updateQuestionWidth_(dlg);
     class_Widget(as_Widget(msgLabel))->sizeChanged(as_Widget(msgLabel));
-    arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
-                            be arranged correctly unless it's here. */
+    /* The message gets its width in the first pass, so its wrapped height is only known
+       for the second one. */
+    arrange_Widget(dlg);
+    arrange_Widget(dlg);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     /* If this prompt is opened as a result of a context menu action, the menu
        will switch keyboard focus back to its owner when it closes. This would

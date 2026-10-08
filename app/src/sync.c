@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 #include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/toml.h>
+#include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_timer.h>
 
 _Static_assert((int) bookmarks_SyncDataType  == (int) bookmarks_UserDataType &&
@@ -846,12 +847,21 @@ static void promptTrust_Sync_(iSync *d) {
                       cstrCollect_String(fingerprintText_GmCerts(d->trustFingerprint)));
     }
     appendFormat_String(msg, "\n\n" uiText_ColorEscape "%s", cstr_Lang("dlg.sync.untrusted.check"));
-    iWidget *dlg = makeQuestion_Widget(
-        uiTextCaution_ColorEscape "${heading.sync.untrusted}",
-        cstr_String(msg),
-        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                       { uiTextAction_ColorEscape "${dlg.cert.trust}", 0, 0, "!sync.trustcert" } },
-        2);
+    /* Cancel is the default, since trusting needs a deliberate choice. */
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    if (!isTerminal_Platform()) {
+        pushBackN_Array(items, (iMenuItem[]){
+            { "${dlg.sync.copyfp}", 0, 0, "sync.copyfingerprint" },
+            { "---" } }, 2);
+    }
+    pushBackN_Array(items, (iMenuItem[]){
+        { uiTextAction_ColorEscape "${dlg.cert.trust}", 0, 0, "!sync.trustcert" },
+        { "${cancel}", SDLK_RETURN, 0, "cancel" } }, 2);
+    iWidget *dlg = makeQuestion_Widget(uiTextCaution_ColorEscape "${heading.sync.untrusted}",
+                                       cstr_String(msg),
+                                       constData_Array(items),
+                                       size_Array(items));
+    addAction_Widget(dlg, SDLK_ESCAPE, 0, "cancel");
     setId_Widget(dlg, "sync.trust");
 }
 
@@ -1174,6 +1184,12 @@ iBool handleCommand_Sync(const char *cmd) {
         updateTimer_Sync_(d);
         notifyStatus_Sync_();
         check_Sync_(d, iFalse);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sync.copyfingerprint")) {
+        if (d->trustFingerprint) {
+            SDL_SetClipboardText(cstrCollect_String(hexEncode_Block(d->trustFingerprint)));
+        }
         return iTrue;
     }
     if (equal_Command(cmd, "sync.trustcert")) {

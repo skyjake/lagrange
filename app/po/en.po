@@ -3346,6 +3346,9 @@ msgstr "The sync server's certificate is not valid for the server's address."
 msgid "dlg.sync.fp.trusted"
 msgstr "Trusted fingerprint:"
 
+msgid "dlg.sync.copyfp"
+msgstr "Copy New Fingerprint"
+
 msgid "dlg.sync.fp.server"
 msgstr "Server's fingerprint:"
 
