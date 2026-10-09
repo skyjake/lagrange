@@ -126,8 +126,10 @@ struct Impl_Sync {
     /* Runtime. */
     iAtomicInt   isRunning;        /* full sync */
     enum iSyncMode mode;
-    iTime        recentCheckTime;
+    iTime        recentCheckTime;   /* last successful contact */
+    iTime        recentAttemptTime; /* this session only, for rate limiting */
     iTime        recentFailTime;
+    iString      recentError;
     iAtomicInt   isRecentChangePosted;
     iBool        isFullPending;    /* full sync starts after the recent changes */
     iBool        isFullPendingManual;
@@ -234,6 +236,9 @@ static void handleStateKeyValue_Sync_(void *context, const iString *table, const
     else if (!cmp_String(key, "recentsynced")) {
         initSeconds_Time(&d->recentSyncedTime, num);
     }
+    else if (!cmp_String(key, "recentcheck")) {
+        initSeconds_Time(&d->recentCheckTime, num);
+    }
 }
 
 static void loadRecent_Sync_(const iSync *d, iSyncRecent *recent, const char *fileName) {
@@ -277,7 +282,7 @@ static void saveState_Sync_(iSync *d) {
     lock_Mutex(d->mtx);
     format_String(str,
                   "lastsync = %f\nlastcheck = %f\nlastattempt = %f\nsynced = %f\n"
-                  "recentmodified = %f\nrecentsynced = %f\n"
+                  "recentmodified = %f\nrecentsynced = %f\nrecentcheck = %f\n"
                   "server = \"%s\"\nidentity = \"%s\"\nerror = \"%s\"\n\n[modified]\n",
                   seconds_Time(&d->lastSyncTime),
                   seconds_Time(&d->lastCheckTime),
@@ -285,6 +290,7 @@ static void saveState_Sync_(iSync *d) {
                   seconds_Time(&d->syncedTime),
                   seconds_Time(&d->recentModified),
                   seconds_Time(&d->recentSyncedTime),
+                  seconds_Time(&d->recentCheckTime),
                   cstrCollect_String(quote_String(&d->syncedServer, iFalse)),
                   cstrCollect_String(quote_String(&d->syncedIdentity, iFalse)),
                   cstrCollect_String(quote_String(&d->lastError, iFalse)));
@@ -342,6 +348,7 @@ static void reset_Sync_(iSync *d) {
     iZap(d->recentSyncedTime);
     iZap(d->recentCheckTime);
     iZap(d->recentFailTime);
+    clear_String(&d->recentError);
     iZap(d->lastSyncTime);
     iZap(d->lastCheckTime);
     iZap(d->lastAttemptTime);
@@ -1463,12 +1470,12 @@ static void finishRecent_Sync_(iSync *d) {
     if (d->didContact) {
         initCurrent_Time(&d->recentCheckTime);
     }
+    set_String(&d->recentError, &d->error);
     if (isEmpty_String(&d->error)) {
         iZap(d->recentFailTime);
     }
     else {
         initCurrent_Time(&d->recentFailTime);
-        fprintf(stderr, "[Sync] recent changes: %s\n", cstr_String(&d->error));
     }
     if (d->didUpload) {
         iGuardMutex(d->mtx, d->recentSyncedTime = d->snapshotTime);
@@ -1476,6 +1483,7 @@ static void finishRecent_Sync_(iSync *d) {
     delete_SyncRecent(d->outgoing);
     d->outgoing = NULL;
     saveState_Sync_(d);
+    notifyStatus_Sync_();
 #if defined (iPlatformAppleMobile)
     if (d->isBackgroundTask) {
         d->isBackgroundTask = iFalse;
@@ -1500,6 +1508,7 @@ static void startRecent_Sync_(iSync *d, iBool isBlocking) {
     }
     d->mode       = recent_SyncMode;
     d->isBlocking = isBlocking;
+    initCurrent_Time(&d->recentAttemptTime);
     d->outgoing   = isRecentDirty_Sync_(d) ? takeRecentSnapshot_Sync_(d) : NULL;
     if (isBlocking) {
         runRecent_Sync_(NULL);
@@ -1510,6 +1519,7 @@ static void startRecent_Sync_(iSync *d, iBool isBlocking) {
     d->worker = new_Thread(runRecent_Sync_);
     setName_Thread(d->worker, "SyncRecent");
     start_Thread(d->worker);
+    notifyStatus_Sync_();
 }
 
 static void checkRecent_Sync_(iSync *d, iBool isPush) {
@@ -1527,8 +1537,8 @@ static void checkRecent_Sync_(iSync *d, iBool isPush) {
         elapsedSeconds_Time(&d->recentFailTime) < recentBackoff_Sync_) {
         return;
     }
-    if (!isPush && isValid_Time(&d->recentCheckTime) &&
-        elapsedSeconds_Time(&d->recentCheckTime) < recentInterval_Sync_) {
+    if (!isPush && isValid_Time(&d->recentAttemptTime) &&
+        elapsedSeconds_Time(&d->recentAttemptTime) < recentInterval_Sync_) {
         return;
     }
     startRecent_Sync_(d, iFalse);
@@ -1575,6 +1585,7 @@ void init_Sync(const char *dataDir) {
     init_String(&d->url);
     init_String(&d->identity);
     init_String(&d->error);
+    init_String(&d->recentError);
     init_String(&d->trustHost);
     init_Array(&d->idMap, sizeof(iSyncIdMapping));
     d->pristine    = new_SyncData();
@@ -1627,6 +1638,7 @@ void deinit_Sync(void) {
     delete_TlsCertificate(d->cert);
     deinit_Array(&d->idMap);
     deinit_String(&d->error);
+    deinit_String(&d->recentError);
     deinit_String(&d->trustHost);
     delete_Block(d->serverFingerprint);
     delete_Block(d->trustFingerprint);
@@ -1708,6 +1720,24 @@ iString *statusText_Sync(void) {
         appendFormat_String(str, "\n" uiTextCaution_ColorEscape "%s %s", cstr_Lang("sync.status.error"),
                             cstr_String(&d->lastError));
     }
+    /* Recent changes are synced quietly, so their status is only shown here. */
+    if (canSyncRecent_Sync_(d)) {
+        if (d->worker && d->mode == recent_SyncMode) {
+            appendFormat_String(str, "\n\n%s", cstr_Lang("sync.status.recent.running"));
+        }
+        else if (isValid_Time(&d->recentCheckTime)) {
+            appendFormat_String(str, "\n\n%s %s", cstr_Lang("sync.status.recent.last"),
+                                cstrCollect_String(format_Time(&d->recentCheckTime,
+                                                               "%Y-%m-%d %H:%M")));
+        }
+        if (isRecentDirty_Sync_(d)) {
+            appendFormat_String(str, "\n%s", cstr_Lang("sync.status.recent.pending"));
+        }
+        if (!isEmpty_String(&d->recentError)) {
+            appendFormat_String(str, "\n" uiTextCaution_ColorEscape "%s %s",
+                                cstr_Lang("sync.status.error"), cstr_String(&d->recentError));
+        }
+    }
     return str;
 }
 
@@ -1747,6 +1777,7 @@ iBool handleCommand_Sync(const char *cmd) {
     }
     if (equal_Command(cmd, "sync.recent.changed")) {
         set_Atomic(&d->isRecentChangePosted, iFalse);
+        notifyStatus_Sync_();
         if (canSyncRecent_Sync_(d) && !d->recentTimer) {
             d->recentTimer =
                 SDL_AddTimer(recentDelay_Sync_ * 1000, recentTimerCallback_Sync_, NULL);

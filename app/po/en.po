@@ -3387,6 +3387,15 @@ msgstr "Local changes are waiting to be synced."
 msgid "sync.status.error"
 msgstr "Error:"
 
+msgid "sync.status.recent.running"
+msgstr "Syncing recent changes…"
+
+msgid "sync.status.recent.last"
+msgstr "Recent changes checked:"
+
+msgid "sync.status.recent.pending"
+msgstr "Recent changes are waiting to be uploaded."
+
 msgid "sync.busy.bookmarks"
 msgstr "Bookmarks cannot be edited while syncing. Please try again in a moment."
 
