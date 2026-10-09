@@ -166,6 +166,27 @@ size_t expire_Storage(iStorage *d, double maxIdleSeconds) {
     return count;
 }
 
+size_t numAccounts_Storage(iStorage *d, uint64_t *totalSize_out) {
+    size_t   count = 0;
+    uint64_t total = 0;
+    lock_Mutex(&d->mtx);
+    iForEach(DirFileInfo, i, iClob(new_DirFileInfo(&d->rootDir))) {
+        const iString *path = path_FileInfo(i.value);
+        if (isAccountFile_(path)) {
+            total += size_FileInfo(i.value);
+            count++;
+        }
+        else if (endsWith_String(path, ".recent")) {
+            total += size_FileInfo(i.value);
+        }
+    }
+    unlock_Mutex(&d->mtx);
+    if (totalSize_out) {
+        *totalSize_out = total;
+    }
+    return count;
+}
+
 enum iStoreResult store_Storage(iStorage *d, const iString *fingerprint, enum iStorageBlob blob,
                                 uint64_t baseGeneration, const iBlock *data,
                                 uint64_t *newGeneration_out) {

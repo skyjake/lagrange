@@ -51,6 +51,7 @@ void                setMaxAccounts_Storage(iStorage *, size_t maxAccounts); /* z
 iBool               isFull_Storage      (iStorage *, const iString *fingerprint);
 void                touch_Storage       (iStorage *, const iString *fingerprint);
 size_t              expire_Storage      (iStorage *, double maxIdleSeconds); /* returns number removed */
+size_t              numAccounts_Storage (iStorage *, uint64_t *totalSize_out); /* all blobs */
 iBlock *            load_Storage        (iStorage *, const iString *fingerprint,
                                          enum iStorageBlob,
                                          uint64_t *generation_out); /* NULL if no data */

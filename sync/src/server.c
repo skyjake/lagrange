@@ -40,11 +40,29 @@ static const double requestTimeout_ = 10;        /* seconds to receive the reque
 static const double uploadTimeout_  = 30;        /* seconds, in addition to the transfer time */
 static const double minUploadRate_  = 5000;      /* bytes per second */
 static const double expiryInterval_ = 24 * 3600; /* seconds */
+static const double summaryInterval_ = 24 * 3600; /* seconds */
 
 static const char *dataPath_   = "/data";
 static const char *recentPath_ = "/recent";
 
 static iAtomicInt isStopping_;
+
+/* Activity since the last summary. */
+iDeclareType(ServerStats)
+
+struct Impl_ServerStats {
+    iMutex   mtx;
+    uint64_t numRequests;
+    uint64_t bytesSent;
+    uint64_t bytesReceived;
+};
+
+static void addTraffic_ServerStats_(iServerStats *d, size_t sent, size_t received) {
+    iGuardMutex(&d->mtx, {
+        d->bytesSent += sent;
+        d->bytesReceived += received;
+    });
+}
 
 /* Owns the request handlers. */
 iDeclareClass(Server)
@@ -53,6 +71,7 @@ struct Impl_Server {
     iObject              object;
     const iServerConfig *cfg;
     iStorage            *storage;
+    iServerStats         stats;
     iMutex               mtx;
     iPtrArray            handlers;
 };
@@ -66,6 +85,7 @@ struct Impl_Handler {
     iTlsConnection      *conn;
     const iServerConfig *cfg;
     iStorage            *storage;
+    iServerStats        *stats;
     iString              remoteAddr;
     iString              fingerprint; /* client certificate; empty if none */
     iBool                isEd25519;
@@ -102,6 +122,7 @@ static void respond_Handler_(iHandler *d, iTlsConnection *conn, int status, cons
     if (body) {
         write_TlsConnection(conn, body);
     }
+    addTraffic_ServerStats_(d->stats, size_String(header) + (body ? size_Block(body) : 0), 0);
     close_TlsConnection(conn);
     d->isDone = iTrue;
     log_Handler_(d, "%02d %s%s", status, meta,
@@ -255,6 +276,7 @@ static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
 
 static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
     log_Handler_(d, "%s", cstr_String(&d->header));
+    iGuardMutex(&d->stats->mtx, d->stats->numRequests++);
     iRequestUrl url;
     if (!parse_RequestUrl_(&url, range_String(&d->header))) {
         respond_Handler_(d, conn, 59, "Bad request", NULL);
@@ -340,6 +362,7 @@ static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
 
 static void readyRead_Handler_(iHandler *d, iTlsConnection *conn) {
     iBlock *data = readAll_TlsConnection(conn);
+    addTraffic_ServerStats_(d->stats, 0, size_Block(data));
     if (!d->isDone) {
         append_Block(&d->received, data);
     }
@@ -379,6 +402,7 @@ static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *con
     d->conn    = ref_Object(conn);
     d->cfg     = server->cfg;
     d->storage = server->storage;
+    d->stats   = (iServerStats *) &server->stats;
     init_String(&d->remoteAddr);
     if (address_TlsConnection(conn)) {
         iString *addr = toString_Address(address_TlsConnection(conn));
@@ -428,6 +452,8 @@ iDefineClass(Handler)
 static void init_Server(iServer *d, const iServerConfig *cfg, iStorage *storage) {
     d->cfg     = cfg;
     d->storage = storage;
+    iZap(d->stats);
+    init_Mutex(&d->stats.mtx);
     init_Mutex(&d->mtx);
     init_PtrArray(&d->handlers);
 }
@@ -453,6 +479,7 @@ static void deinit_Server(iServer *d) {
     releaseHandlers_Server_(d, iTrue);
     deinit_PtrArray(&d->handlers);
     deinit_Mutex(&d->mtx);
+    deinit_Mutex(&d->stats.mtx);
 }
 
 iDefineObjectConstructionArgs(Server,
@@ -466,6 +493,39 @@ static void accepted_Server_(iServer *d, iTlsService *sv, iTlsConnection *conn) 
     iGuardMutex(&d->mtx, pushBack_PtrArray(&d->handlers, handler));
     iConnect(TlsConnection, conn, readyRead, handler, readyRead_Handler_);
     iConnect(TlsConnection, conn, disconnected, handler, disconnected_Handler_);
+}
+
+static const char *formatBytes_(uint64_t bytes) {
+    if (bytes >= 1024 * 1024) {
+        return format_CStr("%.1f MB", bytes / (1024.0 * 1024.0));
+    }
+    return format_CStr("%.1f KB", bytes / 1024.0);
+}
+
+static void printSummary_Server_(iServer *d) {
+    uint64_t numRequests, bytesSent, bytesReceived;
+    iGuardMutex(&d->stats.mtx, {
+        numRequests   = d->stats.numRequests;
+        bytesSent     = d->stats.bytesSent;
+        bytesReceived = d->stats.bytesReceived;
+        d->stats.numRequests   = 0;
+        d->stats.bytesSent     = 0;
+        d->stats.bytesReceived = 0;
+    });
+    uint64_t     totalSize   = 0;
+    const size_t numAccounts = numAccounts_Storage(d->storage, &totalSize);
+    iDate now;
+    initCurrent_Date(&now);
+    printf("%s Summary: %zu account%s (average %s), %llu request%s, %s sent, %s received\n",
+           cstrCollect_String(format_Date(&now, "%Y-%m-%d %H:%M:%S")),
+           numAccounts,
+           numAccounts != 1 ? "s" : "",
+           formatBytes_(numAccounts ? totalSize / numAccounts : 0),
+           (unsigned long long) numRequests,
+           numRequests != 1 ? "s" : "",
+           formatBytes_(bytesSent),
+           formatBytes_(bytesReceived));
+    fflush(stdout);
 }
 
 static const iString *readFile_(const iString *path) {
@@ -511,7 +571,13 @@ iBool run_Server(const iServerConfig *cfg, iStorage *storage) {
         signal(SIGINT, stop_);
         signal(SIGTERM, stop_);
         iTime lastExpiry = { 0 };
+        iTime lastSummary;
+        initCurrent_Time(&lastSummary);
         while (!value_Atomic(&isStopping_)) {
+            if (elapsedSeconds_Time(&lastSummary) > summaryInterval_) {
+                printSummary_Server_(server);
+                initCurrent_Time(&lastSummary);
+            }
             if (cfg->expireDays > 0 && (!isValid_Time(&lastExpiry) ||
                                         elapsedSeconds_Time(&lastExpiry) > expiryInterval_)) {
                 const size_t num = expire_Storage(storage, cfg->expireDays * 24.0 * 3600.0);
