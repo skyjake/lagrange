@@ -289,6 +289,7 @@ static void     finishHidingReadingBars_Root_(void *);
 static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
 static void     setReadingBarsVisible_Root_ (iRoot *, iBool show);
 static void     updateReadingBarsOnTop_Root_(iRoot *);
+static void     showToolbar_Root_           (iRoot *, iBool show);
 
 iDefineTypeConstruction(Root)
 iDefineAudienceGetter(Root, arrangementChanged)
@@ -1665,7 +1666,14 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.show")) {
-        showToolbar_Root(toolBar->root, arg_Command(cmd));
+        iRoot *root = toolBar->root;
+        if (root->isReading && deviceType_App() == phone_AppDeviceType) {
+            /* Layout changes do not reveal the reading bars. */
+            showToolbar_Root_(root, arg_Command(cmd) && !root->areReadingBarsHidden);
+        }
+        else {
+            showToolbar_Root(root, arg_Command(cmd));
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showview")) {
@@ -2685,7 +2693,7 @@ void enableToolbar_Root(iRoot *d, iBool enable) {
     setFlags_Widget(navBar, disabled_WidgetFlag, !enable);
 }
 
-void showToolbar_Root(iRoot *d, iBool show) {
+static void showToolbar_Root_(iRoot *d, iBool show) {
     iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
     if (!bottomBar) return;
     if (focus_Widget() && isInstance_Object(focus_Widget(), &Class_InputWidget)) {
@@ -2714,6 +2722,15 @@ void showToolbar_Root(iRoot *d, iBool show) {
     /* The toolbar is only shown when in portrait mode, otherwise buttons are in the navbar. */
     showCollapsed_Widget(toolBar, isPortrait_App());
     updateBottomBarPosition_(bottomBar, iTrue);
+}
+
+void showToolbar_Root(iRoot *d, iBool show) {
+    if (d->isReading && deviceType_App() == phone_AppDeviceType) {
+        /* The toolbar is one of the reading bars. */
+        showReadingBars_Root(d, show);
+        return;
+    }
+    showToolbar_Root_(d, show);
 }
 
 size_t windowIndex_Root(const iRoot *d) {
@@ -2790,7 +2807,7 @@ iRect visibleRect_Root(const iRoot *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const uint32_t readingBarsDelay_Root_ = 5000;
+static const uint32_t readingBarsDelay_Root_ = 4000;
 
 static iWidget *readingBarsTimer_Root_(const iRoot *d) {
     /* Periodic context for hiding the bars. */
@@ -2989,7 +3006,7 @@ void showReadingBars_Root(iRoot *d, iBool show) {
     const iBool animate = prefs_App()->uiAnimations && d->areReadingBarsHidden == show;
     d->areReadingBarsHidden = !show;
     if (deviceType_App() == phone_AppDeviceType) {
-        showToolbar_Root(d, show);
+        showToolbar_Root_(d, show);
     }
     if (show) {
         iWidget *navBar, *tabBar;
@@ -3112,14 +3129,27 @@ iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *o
     }
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
+    /* The phone's bottom bar is hidden along with the reading bars, and the bottom tab bar
+       rests on top of it. */
+    iWidget *bottomBar   = NULL;
+    iWidget *phoneTabBar = NULL;
+    if (bottom && deviceType_App() == phone_AppDeviceType) {
+        bottomBar = findChild_Widget(d->widget, "bottombar");
+        if (bottomBar && isVisible_Widget(bottomBar) && prefs_App()->bottomTabBar) {
+            phoneTabBar = d->bars.tabButtons;
+        }
+    }
     iBool found    = iFalse;
     int   restEdge = 0;
-    for (int i = 0; i < 2; i++) {
-        const iWidget *bar = i == 0 ? navBar : tabBar;
+    for (int i = 0; i < 4; i++) {
+        const iWidget *bar = i == 0 ? navBar : i == 1 ? tabBar : i == 2 ? bottomBar : phoneTabBar;
         if (bar && isVisible_Widget(bar) && isAtBottom_Root_(d, bar) == bottom) {
+            const int   restOffset = i < 2  ? d->readingBarsRest[i]
+                                     : i == 3 ? -height_Widget(bottomBar)
+                                              : 0;
             const iRect rect = bounds_Widget(bar);
             const iRect rest = moved_Rect(boundsWithoutVisualOffset_Widget(bar),
-                                          init_I2(0, d->readingBarsRest[i]));
+                                          init_I2(0, restOffset));
             const int   edge = bottom ? top_Rect(rect) : bottom_Rect(rect);
             const int   rEdge = bottom ? top_Rect(rest) : bottom_Rect(rest);
             if (!found) {

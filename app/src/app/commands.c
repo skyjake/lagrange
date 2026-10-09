@@ -1233,7 +1233,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "document.changed")) {
         /* Set of open tabs has changed. */
         notify_App("document.openurls.changed");
-        if (deviceType_App() == phone_AppDeviceType) {
+        if (deviceType_App() == phone_AppDeviceType && !isReadingMode_Root(d->window->roots[0])) {
             showToolbar_Root(d->window->roots[0], iTrue);
         }
         return iFalse;

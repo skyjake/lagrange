@@ -791,12 +791,13 @@ void openFileActivityView_iOS(const iString *path) {
     openActivityView_(@[url]);
 }
 
-static UIBackgroundTaskIdentifier backgroundTask_ = UIBackgroundTaskInvalid;
+static UIBackgroundTaskIdentifier backgroundTask_;
+static iBool                      hasBackgroundTask_;
 
 void endBackgroundTask_iOS(void) {
-    if (backgroundTask_ != UIBackgroundTaskInvalid) {
+    if (hasBackgroundTask_) {
         [[UIApplication sharedApplication] endBackgroundTask:backgroundTask_];
-        backgroundTask_ = UIBackgroundTaskInvalid;
+        hasBackgroundTask_ = iFalse;
     }
 }
 
@@ -807,6 +808,7 @@ void beginBackgroundTask_iOS(void) {
                   expirationHandler:^{
                       endBackgroundTask_iOS();
                   }];
+    hasBackgroundTask_ = (backgroundTask_ != UIBackgroundTaskInvalid);
 }
 
 iBool openUri_iOS(const iString *uri) {

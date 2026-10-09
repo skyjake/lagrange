@@ -397,7 +397,9 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "document.changed")) {
-        postCommand_App("prefs.dismiss");
+        if (argLabel_Command(cmd, "urlchanged")) {
+            postCommand_App("prefs.dismiss"); /* not just reloaded */
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "keyboard.changed")) {

@@ -338,7 +338,9 @@ static void updateSyncStatus_(iWidget *d) {
             updatePreferencesLayout_Widget(d);
         }
         else {
+            updateWrappedHeight_LabelWidget(status);
             arrange_Widget(parent_Widget(status));
+            refresh_Widget(parent_Widget(status));
         }
     }
 }

@@ -283,7 +283,7 @@ void updateGempubFooterButtons_DocumentFetch(iDocumentFetch *d) {
     }
 }
 
-void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
+void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool isUrlChanged) {
     iWidget *w = as_Widget(d->owner);
     /* Embedded images in data links can be shown immediately as they are already fetched
        data that is part of the document. */
@@ -360,11 +360,14 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentBook(book_DocumentWidget(d->owner)) &&
                 (isCover || isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d)))) {
                 /* Opening a book: the cover is in the sidebar and the contents in the document. */
-                const iBool isRight =
-                    prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType;
-                postCommandf_Root(w->root, "%s.gempub.page arg:0 keepshelf:1", isRight ? "sidebar2" : "sidebar");
-                postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
-                postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");
+                if (isUrlChanged) {
+                    /* Not when restored or reloaded. */
+                    const iBool isRight =
+                        prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType;
+                    postCommandf_Root(w->root, "%s.gempub.page arg:0 keepshelf:1", isRight ? "sidebar2" : "sidebar");
+                    postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
+                    postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");
+                }
                 if (isCover) {
                     /* Reading continues where it was left off. */
                     const iString *target = indexPageUrl_Gempub(d->sourceGempub);
@@ -477,7 +480,7 @@ void restoreAddressBarAndHistory_DocumentFetch(iDocumentFetch *d, const iString 
         undo_History(state_DocumentWidget(d->owner)->history);
     }
     if (setDocumentUrl_DocumentWidget(d->owner, url_GmDocument(doc_DocumentFetch_(d)))) {
-        notify_Widget(d->owner, "!document.changed doc:%p url:%s", d->owner, cstr_String(url_DocumentFetch_(d)));
+        notify_Widget(d->owner, "!document.changed doc:%p urlchanged:1 url:%s", d->owner, cstr_String(url_DocumentFetch_(d)));
     }
 }
 

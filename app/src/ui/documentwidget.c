@@ -1063,7 +1063,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     }
     d->fetch->state = ready_RequestState;
     resetSavedPosition_DocumentBook(d->book);
-    postProcessContent_DocumentFetch(d->fetch, iTrue);
+    postProcessContent_DocumentFetch(d->fetch, iTrue, isUrlChanged_DocumentWidget(d));
     resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
     applyResume_DocumentBook(d->book);
     beginPosition_DocumentBook(d->book);
@@ -1071,10 +1071,14 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         pagesMoved_DocumentWidget(d);
     }
     cacheDocumentGlyphs_DocumentWidget_(d);
+    const iBool isUrlChanged = (d->flags & urlChanged_DocumentWidgetFlag) != 0;
     d->flags &= ~(urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag |
                   unseen_DocumentWidgetFlag);
-    notifyf_Root(
-        as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+    notifyf_Root(as_Widget(d)->root,
+                 "document.changed doc:%p urlchanged:%d url:%s",
+                 d,
+                 isUrlChanged,
+                 cstr_String(d->mod.url));
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCachedDoc) {
@@ -1222,7 +1226,8 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
         invalidateVisibleLinks_DocumentView(d->view);
     }
     /* Show and hide toolbar on scroll. */
-    if (deviceType_App() == phone_AppDeviceType && document_App() == d) {
+    if (deviceType_App() == phone_AppDeviceType && document_App() == d &&
+        !isReadingMode_Root(as_Widget(d)->root)) {
         const float normPos = normScrollPos_DocumentView(d->view);
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
             showToolbar_Root(as_Widget(d)->root, offset < 0 || d->view->scrollY.pos.to <= 0);
@@ -1749,12 +1754,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             init_Anim(&d->view->scrollY.pos, d->initNormScrollY * pageHeight_DocumentView(d->view));
         }
         addBannerWarnings_DocumentFetch(d->fetch);
+        const iBool isUrlChanged = (d->flags & urlChanged_DocumentWidgetFlag) != 0;
         iChangeFlags(d->flags,
                      urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
                      iFalse);
         d->fetch->state = ready_RequestState;
         resetSavedPosition_DocumentBook(d->book);
-        postProcessContent_DocumentFetch(d->fetch, iFalse);
+        postProcessContent_DocumentFetch(d->fetch, iFalse, isUrlChanged);
         didFinishRequest_DocumentBook(d->book);
         /* The response may be cached. */
         if (d->fetch->request) {
@@ -1770,9 +1776,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateVisible_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
         notifyf_Root(w->root,
-                     "document.changed doc:%p status:%d url:%s",
+                     "document.changed doc:%p status:%d urlchanged:%d url:%s",
                      d,
                      d->fetch->sourceStatus,
+                     isUrlChanged,
                      cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {

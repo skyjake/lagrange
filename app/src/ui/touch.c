@@ -498,6 +498,15 @@ static iWidget *findSlidePanel_Widget_(iWidget *d) {
 }
 #endif
 
+static iWidget *findSheet_Widget_(iWidget *d) {
+    for (iWidget *w = d; w; w = parent_Widget(w)) {
+        if (w->flags2 & sheet_WidgetFlag2) {
+            return w;
+        }
+    }
+    return NULL;
+}
+
 static void checkNewPinch_TouchState_(iTouchState *d, iTouch *newTouch) {
     iWidget *affinity = newTouch->affinity;
     if (!affinity) {
@@ -700,6 +709,12 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     //                identify_Widget(touch->affinity);
                     wasHandled = dispatchEvent_Widget(touch->affinity, (SDL_Event *) &user);
                     //                printf("...WAS HANDLED: %d\n", wasHandled);
+                    iWidget *sheet = findSheet_Widget_(touch->affinity);
+                    if (!wasHandled && sheet) {
+                        /* Swipes inside a sheet must not reach the widgets underneath. */
+                        dispatchEvent_Widget(sheet, (SDL_Event *) &user);
+                        wasHandled = iTrue;
+                    }
                 }
                 if (!wasHandled) {
                     postCommand_App(cmd);
