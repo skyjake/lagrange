@@ -37,17 +37,24 @@ struct Impl_SyncFieldInfo {
 };
 
 static const iSyncFieldInfo bookmarkFields_[] = {
-    { "url" }, { "title" }, { "tags" }, { "icon", iTrue }, { "created", iTrue },
+    { "url" },         { "title" }, { "tags" },     { "icon", iTrue },   { "created", iTrue },
     { "originalurl" }, { "notes" }, { "identity" }, { "parent", iTrue }, { "order", iTrue },
 };
 
 static const iSyncFieldInfo bookFields_[] = {
-    { "title" }, { "author" }, { "url" }, { "chapter", iTrue }, { "chapters", iTrue },
-    { "pos", iTrue }, { "timestamp", iTrue }, { "positiontime", iTrue },
+    { "title" },
+    { "author" },
+    { "url" },
+    { "chapter", iTrue },
+    { "chapters", iTrue },
+    { "pos", iTrue },
+    { "timestamp", iTrue },
+    { "positiontime", iTrue },
 };
 
 static const iSyncFieldInfo visitedFields_[] = {
-    { "when", iTrue }, { "flags" },
+    { "when", iTrue },
+    { "flags" },
 };
 
 static const iSyncFieldInfo identityFields_[] = {
@@ -55,7 +62,8 @@ static const iSyncFieldInfo identityFields_[] = {
 };
 
 static const iSyncFieldInfo trustedFields_[] = {
-    { "until", iTrue }, { "fingerprint" },
+    { "until", iTrue },
+    { "fingerprint" },
 };
 
 static const iSyncFieldInfo snippetFields_[] = {
@@ -88,7 +96,7 @@ static const char     magic_SyncData_[2][5]   = {
     { 'L', 'g', 'S', 'r', 1 /* version */ }, /* recent changes */
 };
 static const uint32_t recentFormatVersion_SyncData_ = 1;
-static const char    *keyLabel_SyncData_      = "lagrange-sync-v1";
+static const char    *keyLabel_SyncData_            = "lagrange-sync-v1";
 
 static int fieldIndex_SyncData_(enum iUserDataType type, const iString *name) {
     for (size_t i = 0; i < types_[type].numFields; i++) {

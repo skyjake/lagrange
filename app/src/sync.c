@@ -100,6 +100,7 @@ iDeclareType(Sync)
 struct Impl_Sync {
     iMutex      *mtx;
     iString      dir;
+
     /* Persistent state. */
     iTime        lastSyncTime;  /* last successful sync */
     iTime        lastCheckTime; /* last successful contact with the server */
@@ -109,11 +110,12 @@ struct Impl_Sync {
     iTime        syncedTime;    /* data modified after this has not been uploaded */
     iString      syncedServer;  /* the pristine data belongs to this server and identity */
     iString      syncedIdentity;
-    uint64_t     generation;    /* of the pristine data, which is loaded only when syncing */
+    uint64_t     generation;       /* of the pristine data, which is loaded only when syncing */
     iSyncRecent *recent;           /* recent changes stored on the server */
     iSyncRecent *recentLocal;      /* local changes to visited feed entries */
     iTime        recentModified;   /* last local change to the recent data */
     iTime        recentSyncedTime; /* recent changes before this are on the server */
+
     /* Runtime. */
     iAtomicInt   isRunning;        /* full sync */
     enum iSyncMode mode;
@@ -138,6 +140,7 @@ struct Impl_Sync {
     SDL_TimerID  timer;
     SDL_TimerID  retryTimer;
     iThread     *worker;
+
     /* Worker input. */
     iString      url;
     iString      identity;
@@ -147,6 +150,7 @@ struct Impl_Sync {
     iSyncData   *snapshot;
     iSyncRecent *outgoing;    /* local recent changes; NULL if none */
     iTime        snapshotTime;
+
     /* Worker output. */
     iSyncRecent *recentResult;
     iSyncData   *result;      /* to be applied locally */
