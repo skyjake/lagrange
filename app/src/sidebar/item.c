@@ -226,12 +226,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int iconPad = 12 * gap_UI; /* same as feed entries */
         const int h1      = lineHeight_Text(uiLabel_FontId);
         const int h2      = lineHeight_Text(font);
-        const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiAnnotation_ColorId;
+        const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiSubheading_ColorId;
         const iBool isDownloaded = isLocalFileScheme_Rangecc(urlScheme_String(&d->url));
         const int labelFg = isSel     ? uiTextSelected_ColorId
                             : isHover ? uiTextFramelessHover_ColorId
-                            : isDownloaded ? uiTextStrong_ColorId
-                                           : uiTextDim_ColorId;
+                                      : uiText_ColorId;
         const iRect iconArea = { pos, init_I2(iconPad * aspect_UI, itemHeight) };
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
@@ -248,7 +247,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         iString *size = collectNew_String();
         if (isDownloaded) {
-            format_String(size, "%.1f ${mb}", d->size / 1.0e6);
+            if (d->size < 100000) {
+                format_String(size, "%.0f ${kb}", d->size / 1.0e3);
+            }
+            else {
+                format_String(size, "%.1f ${mb}", d->size / 1.0e6);
+            }
             translate_Lang(size);
         }
         /* Aligned like the meta icons of bookmarks. */
