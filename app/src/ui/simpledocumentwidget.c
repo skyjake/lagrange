@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "keys.h"
 #include "menu.h"
+#include "render/paint.h"
 #include "render/text.h"
 #include "root.h"
 #include "scrollwidget.h"
@@ -398,6 +399,29 @@ static void draw_SimpleDocumentWidget_(const iSimpleDocumentWidget *d) {
         return;
     }
     draw_DocumentView(d->view, 0);
+    if (w->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
+        /* Drawn while the view's palette is still global. */
+        const iRect bounds = bounds_Widget(w);
+        const iRect outer  = bounds_Widget(w->parent);
+        iPaint      p;
+        init_Paint(&p);
+        if (left_Rect(bounds) > left_Rect(outer)) {
+            fillRect_Paint(&p,
+                           init_Rect(left_Rect(outer),
+                                     top_Rect(bounds),
+                                     left_Rect(bounds) - left_Rect(outer),
+                                     height_Rect(bounds)),
+                           tmBackground_ColorId);
+        }
+        if (right_Rect(bounds) < right_Rect(outer)) {
+            fillRect_Paint(&p,
+                           init_Rect(right_Rect(bounds),
+                                     top_Rect(bounds),
+                                     right_Rect(outer) - right_Rect(bounds),
+                                     height_Rect(bounds)),
+                           tmBackground_ColorId);
+        }
+    }
     /* The global palette belongs to the root's current document. */
     const iDocumentWidget *front = document_Root(w->root);
     if (front) {

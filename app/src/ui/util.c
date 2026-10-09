@@ -942,6 +942,8 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x2750,   "square.on.square"               }, /* openTabBg_Icon */
         { 0x2795,   "plus"                           }, /* add_Icon */
         { 0x27a4,   "chevron.forward"                }, /* rightArrowhead_Icon */
+        { 0x27e8,   "chevron.backward"               }, /* leftAngle_Icon */
+        { 0x27e9,   "chevron.forward"                }, /* rightAngle_Icon */
         { 0x2912,   "arrow.up.to.line"               }, /* upArrowBar_Icon */
         { 0x2913,   "arrow.down.to.line"             }, /* downArrowBar_Icon */
         { 0x2a2f,   "xmark"                          }, /* close_Icon */
@@ -950,6 +952,7 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x2b9c,   "chevron.backward"               }, /* leftArrowhead_Icon */
         { 0x2ba5,   "paperplane"                     }, /* upload_Icon */
         { 0x2ba7,   "square.and.arrow.down"          }, /* download_Icon */
+        { 0xfe40,   "chevron.down"                   }, /* downAngle_Icon */
     };
     /* clang-format on */
     if (ch == 0x1f4f1 && deviceType_App() == tablet_AppDeviceType) {

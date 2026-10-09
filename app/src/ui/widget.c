@@ -1256,13 +1256,23 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
 }
 
 static iBool isClippedAway_Widget_(const iWidget *d, iInt2 windowCoord) {
-    /* Any ancestor may be clipping this widget. */
-    for (const iWidget *w = d->parent; w; w = w->parent) {
-        if (w->flags2 & clipChildren_WidgetFlag2 && !contains_Widget(w, windowCoord)) {
+    /* Any ancestor may be clipping this widget. On-top widgets are drawn unclipped. */
+    for (const iWidget *w = d; w->parent && ~w->flags & keepOnTop_WidgetFlag; w = w->parent) {
+        if (w->parent->flags2 & clipChildren_WidgetFlag2 && !contains_Widget(w->parent, windowCoord)) {
             return iTrue;
         }
     }
     return iFalse;
+}
+
+static iRect overflowVisibleRect_Widget_(const iWidget *d) {
+    iRect rect = visibleRect_Root(d->root);
+    for (const iWidget *w = d; w->parent && ~w->flags & keepOnTop_WidgetFlag; w = w->parent) {
+        if (w->parent->flags2 & clipChildren_WidgetFlag2) {
+            rect = intersect_Rect(rect, boundsWithoutVisualOffset_Widget(w->parent));
+        }
+    }
+    return rect;
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
@@ -1514,9 +1524,11 @@ void contentScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info, int con
 void overflowScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
     iRect     bounds    = boundsWithoutVisualOffset_Widget(d);
     iRect     visBounds = bounds_Widget(d);
-    const int winTop    = top_Rect(safeRect_Root(d->root)) + d->overflowTopMargin;
+    const iRect visRect = overflowVisibleRect_Widget_(d);
+    const int   winTop  = iMax(top_Rect(safeRect_Root(d->root)), top_Rect(visRect)) +
+                          d->overflowTopMargin;
     info->totalHeight   = bounds.size.y;
-    info->visibleHeight = height_Rect(visibleRect_Root(d->root));
+    info->visibleHeight = height_Rect(visRect);
     if (info->visibleHeight >= info->totalHeight) {
         info->normScroll  = 0.0f;
         info->thumbY      = 0;
@@ -1546,7 +1558,7 @@ static iBool isOverflowScrollPossible_Widget_(const iWidget *d, int delta) {
         return iFalse;
     }
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-    const iRect winRect = visibleRect_Root(d->root);
+    const iRect winRect = overflowVisibleRect_Widget_(d);
     const int   yTop    = iMaxi(0, top_Rect(winRect) + d->overflowTopMargin);
     const int   yBottom = bottom_Rect(winRect);
     if (delta == 0) {
@@ -1565,7 +1577,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         return iFalse;
     }
     iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
-    const iRect winRect       = visibleRect_Root(d->root);
+    const iRect winRect       = overflowVisibleRect_Widget_(d);
     iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds),
                                   iMaxi(0, top_Rect(winRect) + d->overflowTopMargin) };
     if (delta) {
@@ -1870,6 +1882,17 @@ int backgroundFadeColor_Widget(void) {
     }
 }
 
+static float visualOffsetOpacity_Widget_(const iWidget *d) {
+    if (~d->flags2 & fadeWithVisualOffset_WidgetFlag2 || ~d->flags & visualOffset_WidgetFlag) {
+        return 1.0f;
+    }
+    const float range = iMax(fabsf(d->visualOffset.from), fabsf(d->visualOffset.to));
+    if (range <= 0.0f) {
+        return 1.0f;
+    }
+    return iClamp(1.0f - fabsf(value_Anim(&d->visualOffset)) / range, 0.0f, 1.0f);
+}
+
 void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
@@ -1893,7 +1916,8 @@ void drawLayerEffects_Widget(const iWidget *d) {
         (d->flags2 & fadeBackground_WidgetFlag2);
     if (isShadowStyle && ~d->flags & noShadowBorder_WidgetFlag) {
         /* Smoothly fade the shadow in/out during a transition. */
-        const int shadowAlpha = (int) (30 * (1.0f - value_Anim(&d->fadeOpacity)));
+        const int shadowAlpha = (int) (30 * (1.0f - value_Anim(&d->fadeOpacity)) *
+                                       visualOffsetOpacity_Widget_(d));
         if (shadowAlpha > 0) {
             iPaint p;
             init_Paint(&p);
@@ -2345,21 +2369,38 @@ void drawClipped_Widget(const iWidget *d, iRect clipRect /* may be empty */) {
         drawChildren_Widget(d);
         endBufferDraw_Widget_(d);
     }
+    const float opacity = visualOffsetOpacity_Widget_(d);
     if (d->drawBuf) {
         const iRect bounds = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
         setClip_Paint(&p, isEmpty_Rect(clipRect) ? rect_Root(d->root) : clipRect);
+        /* Contents are premultiplied, so color is modulated as well. */
+        const uint8_t mod = (uint8_t) (255 * opacity + 0.5f);
+        SDL_SetTextureColorMod(d->drawBuf->texture, mod, mod, mod);
+        SDL_SetTextureAlphaMod(d->drawBuf->texture, mod);
         SDL_RenderTexture(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
                        &(SDL_FRect){ bounds.pos.x, bounds.pos.y,
                                     d->drawBuf->size.x, d->drawBuf->size.y });
+        if (d->flags & drawBackgroundToBottom_WidgetFlag && d->bgColor >= 0 &&
+            ~d->flags & noBackground_WidgetFlag) {
+            /* A scrolled buffer may end above the bottom of the root. */
+            const int bufBottom  = bounds.pos.y + d->drawBuf->size.y;
+            const int rootBottom = bottom_Rect(rect_Root(d->root));
+            if (bufBottom < rootBottom) {
+                fillRect_Paint(&p,
+                               init_Rect(bounds.pos.x, bufBottom, d->drawBuf->size.x,
+                                         rootBottom - bufBottom),
+                               d->bgColor);
+            }
+        }
         unsetClip_Paint(&p);
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         iWidgetScrollInfo info;
         overflowScrollInfo_Widget(d, &info);
-        const float opacity = value_Anim(&d->overflowScrollOpacity);
-        drawScrollIndicator_Widget(d, &info, uiTextAction_ColorId, opacity);
+        const float scrollOpacity = value_Anim(&d->overflowScrollOpacity) * opacity;
+        drawScrollIndicator_Widget(d, &info, uiTextAction_ColorId, scrollOpacity);
     }
 }
 
@@ -2622,10 +2663,10 @@ iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
 }
 
 iAny *findOverflowScrollable_Widget(iWidget *d) {
-    const iRect rootRect = visibleRect_Root(d->root);
     for (iWidget *w = d; w; w = parent_Widget(w)) {
         if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
-            const iRect bounds = boundsWithoutVisualOffset_Widget(w);
+            const iRect rootRect = overflowVisibleRect_Widget_(w);
+            const iRect bounds   = boundsWithoutVisualOffset_Widget(w);
             if ((bottom_Rect(bounds) > bottom_Rect(rootRect) ||
                  top_Rect(bounds) < top_Rect(rootRect)) &&
                 !hasVisibleChildOnTop_Widget(w)) {

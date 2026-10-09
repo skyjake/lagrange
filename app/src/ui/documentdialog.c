@@ -93,7 +93,9 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
     useSheetStyle_Widget(w);
     /* The size is determined by the window, not the contents. */
     setFlags_Widget(w, arrangeSize_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
-    setFlags_Widget(w, moveToParentBottomEdge_WidgetFlag, deviceType_App() != desktop_AppDeviceType);
+    setFlags_Widget(w,
+                    moveToParentBottomEdge_WidgetFlag,
+                    deviceType_App() != desktop_AppDeviceType && !isFullScreen_DocumentDialog_(d));
     /* Swiping from the left edge goes back, like in the Settings panels. */
     setFlags_Widget(w,
                     frameless_WidgetFlag | leftEdgeDraggable_WidgetFlag,
@@ -136,7 +138,11 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
         setFont_LabelWidget(d->newTab, headerFont_DocumentDialog_(iTrue));
         setTextColor_LabelWidget(d->newTab, uiTextAction_ColorId);
     }
-    d->doc = addChildFlags_Widget(w, iClob(new_SimpleDocumentWidget()), 0);
+    d->doc = addChildFlags_Widget(w,
+                                  iClob(new_SimpleDocumentWidget()),
+                                  isFullScreen_DocumentDialog_(d)
+                                      ? drawBackgroundToHorizontalSafeArea_WidgetFlag
+                                      : 0);
     setFlags_SimpleDocumentWidget(d->doc,
                                   reading_SimpleDocumentWidgetFlag |
                                       newTabLinks_SimpleDocumentWidgetFlag |
@@ -170,6 +176,8 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
     iWidget    *w         = as_Widget(d);
     const iRect safe      = safeRect_Root(w->root);
     const int   headerHgt = lineHeight_Text(headerFont_DocumentDialog_(iTrue)) + 4 * gap_UI;
+    iWidget    *doc       = as_Widget(d->doc);
+    const iInt2 oldSize   = doc->rect.size;
     int         width, docHeight;
     if (deviceType_App() == desktop_AppDeviceType) {
         width     = iMin(width_Rect(safe), 140 * gap_UI);
@@ -199,13 +207,18 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
                           top_Rect(safe) - top_Rect(root),
                           right_Rect(root) - right_Rect(safe),
                           0);
+        w->rect.pos = zero_I2();
         setFixedSize_Widget(w, root.size);
         docHeight = bottom_Rect(root) - top_Rect(safe) - headerHgt; /* under bottom safe area */
     }
     setFixedSize_Widget(d->header, init_I2(width, headerHgt));
-    setFixedSize_Widget(as_Widget(d->doc), init_I2(width, docHeight));
+    setFixedSize_Widget(doc, init_I2(width, docHeight));
     setFlags_Widget(w, arrangeVertical_WidgetFlag, iTrue);
     arrange_Widget(w);
+    if (!isEqual_I2(oldSize, doc->rect.size)) {
+        /* Resized before arranging, so the arrangement didn't notice. */
+        class_Widget(doc)->sizeChanged(doc);
+    }
     /* The title stays centered and clear of the buttons. */
     const int inset = d->back ? iMax(width_Widget(d->back), width_Widget(d->newTab)) : 3 * gap_UI;
     setPadding_Widget(as_Widget(d->title), inset, 0, inset, 0);

@@ -508,12 +508,12 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.general" },
             { "heading text:${prefs.searchurl}" },
             { "input id:prefs.searchurl url:1 noheading:1" },
-            { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
             { "dropdown id:prefs.feedinterval", 0, 0, (const void *) feedIntervalItems },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
+            { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "radio id:prefs.pageturn", 0, 0, (const void *) pageTurnItems },
 #if defined (LAGRANGE_RELEASE_NOTES_POPUP)
             { "padding" },
@@ -604,11 +604,12 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "input id:prefs.sync.server url:1 hint:hint.sync.server" },
             { "dropdown id:prefs.sync.identity", 0, 0, (const void *) syncIdentityItems },
-            { "button text:" add_Icon " ${prefs.sync.newidentity}", 0, 0, "sync.newidentity" },
             { "dropdown id:prefs.sync.interval", 0, 0, (const void *) syncIntervalItems },
             { "padding" },
             { "label id:prefs.sync.status text:" },
             { "button id:prefs.sync.now text:" reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", 0, 0, "sync.now" },
+            { "padding" },
+            { "button text:" add_Icon " ${prefs.sync.newidentity}", 0, 0, "sync.newidentity" },
             { NULL }
         };
         const iMenuItem identityPanelItems[] = {
@@ -705,11 +706,11 @@ iWidget *makePreferences_Widget(void) {
               0, 0, (const void *) toolbarPanelItems },
             { format_CStr("panel icon:0x1f5a7 iconcolor:%d id:heading.prefs.network", orange_ColorId),
               0, 0, (const void *) networkPanelItems },
-            { format_CStr("panel icon:0x1f503 iconcolor:%d id:heading.prefs.sync", orange_ColorId),
-              0, 0, (const void *) syncPanelItems },
             { format_CStr("panel noscroll:1 iconcolor:%d id:sidebar.identities text:" person_Icon
                           " ${sidebar.identities}",
                           orange_ColorId), 0, 0, (const void *) identityPanelItems },
+            { format_CStr("panel icon:0x1f503 iconcolor:%d id:heading.prefs.sync", orange_ColorId),
+              0, 0, (const void *) syncPanelItems },
             { "padding" },
         }, 10);
         appendPanels_ScopedPrefs(mainItems, iTrue, green_ColorId);

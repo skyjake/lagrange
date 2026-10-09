@@ -115,16 +115,20 @@ static void updatePanelSheetMetrics_(iWidget *sheet) {
 #if defined (iPlatformMobile)
         safeAreaInsets_Mobile(&left, &top, &right, &bottom);
 #endif
-        if (isFullSizePanel_(sheet)) {
+        const iBool isFullSize = isFullSizePanel_(sheet);
+        if (isFullSize) {
             setPadding_Widget(sheet, left, 0, right, 0);
             navi->rect.pos = init_I2(left, top);
         }
         else {
             setPadding_Widget(sheet, 0, top, 0, bottom);
+            /* Panels are clipped below the navigation bar. */
+            iWidget *mdsplit = findChild_Widget(sheet, "mdsplit");
+            mdsplit->rect.pos.y = naviHeight;
         }
         iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {
             iWidget *pad = *i.value;
-            setFixedSize_Widget(pad, init1_I2(naviHeight));
+            setFixedSize_Widget(pad, init1_I2(isFullSize ? naviHeight : 0));
         }
     }
     setFixedSize_Widget(navi, init_I2(-1, naviHeight));
@@ -1002,6 +1006,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         if (!isFullHeight) {
             setFlags_Widget(
                 mainDetailSplit, resizeToParentWidth_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
+            mainDetailSplit->flags2 |= clipChildren_WidgetFlag2;
         }
         setId_Widget(mainDetailSplit, "mdsplit");
         addChild_Widget(panels, iClob(mainDetailSplit));
@@ -1223,6 +1228,9 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     const int maxOffset = isHorizPanel            ? width_Widget(sheet)
                           : isPortraitPhone_App() ? height_Widget(sheet)
                                                   : (4 * gap_UI);
+    iChangeFlags(sheet->flags2,
+                 fadeWithVisualOffset_WidgetFlag2,
+                 !isHorizPanel && !isPortraitPhone_App());
     if (isIncoming) {
         setVisualOffset_Widget(sheet, maxOffset, 0, 0);
         setVisualOffset_Widget(sheet, 0, 330, easeOut_AnimFlag | softer_AnimFlag);

@@ -156,6 +156,8 @@ enum iWidgetFlag2 {
     floating_WidgetFlag2                    = iBit(20), /* free edges include the root's edges
                                                            (e.g., context menus) */
     sheet_WidgetFlag2                       = iBit(21), /* dialog or sheet */
+    fadeWithVisualOffset_WidgetFlag2        = iBit(22), /* opacity follows the visual offset
+                                                           animation (needs a draw buffer) */
 };
 
 enum iWidgetAddPos {
