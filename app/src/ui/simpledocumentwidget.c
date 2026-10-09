@@ -118,7 +118,7 @@ static const iDocumentViewHost viewHost_SimpleDocumentWidget_ = {
 
 /* Horizontal margin of UI-styled content, in addition to the page margin. */
 static int uiSideMargin_SimpleDocumentWidget_(void) {
-    return deviceType_App() == tablet_AppDeviceType ? 6 : 2;
+    return deviceType_App() != desktop_AppDeviceType ? 6 : 2;
 }
 
 void init_SimpleDocumentWidget(iSimpleDocumentWidget *d) {
