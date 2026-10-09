@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
-/* Syncing user data with an lgrsyncd server. Settings are in Prefs. */
+/* Syncing user data with a Lagrange sync server. Sync settings are in Prefs. */
 
 void            init_Sync           (const char *dataDir);
 void            deinit_Sync         (void);
