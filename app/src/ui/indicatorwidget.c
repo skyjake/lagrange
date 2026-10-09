@@ -108,7 +108,7 @@ iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
                     animate_IndicatorWidget_(d);
                 }
                 else if (equal_Command(cmd, "finished")) {
-                    if (value_Anim(&d->pos) > 0.01f) {
+                    if (targetValue_Anim(&d->pos) > 0.0f && !isCompleted_IndicatorWidget_(d)) {
                         setValue_Anim(&d->pos, 1.0f, 250);
                         setFlags_Anim(&d->pos, easeOut_AnimFlag, iFalse);
                         animate_IndicatorWidget_(d);

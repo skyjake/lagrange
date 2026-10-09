@@ -73,6 +73,7 @@ enum iUserEventCode {
        take, it could turn into a tap-and-hold for example. */
     widgetTapBegins_UserEventCode,
     widgetTouchEnds_UserEventCode, /* finger lifted, but momentum may continue */
+    widgetTouchBegins_UserEventCode,
     releaseObject_UserEventCode,   /* object that needs releasing in the main thread */
 };
 

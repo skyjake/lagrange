@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/vec2.h>
+#include <the_Foundation/math.h>
 #include <SDL3/SDL_events.h>
 
 iDeclareType(Widget)
@@ -38,6 +38,8 @@ void    update_Touch            (void);
 
 void                    clear_Touch                 (void); /* forget all ongoing touches */
 float                   stopWidgetMomentum_Touch    (const iWidget *widget); /* pixels per second */
+iFloat3                 widgetMomentum_Touch        (const iWidget *widget); /* finger direction */
+float                   momentumDistance_Touch      (float speed); /* total distance until stopped */
 enum iWidgetTouchMode   widgetMode_Touch            (const iWidget *widget);
 void                    widgetDestroyed_Touch       (iWidget *widget);
 void                    transferAffinity_Touch      (iWidget *src, iWidget *dst);

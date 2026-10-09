@@ -373,12 +373,20 @@ iLocalDef float easeBoth_(float t) {
     return 0.5f + easeOut_((t - 0.5f) * 2.0f) * 0.5f;
 }
 
+static const float springOmega_Anim_ = 10.0f;
+
 static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
     if (now >= d->due) {
         return d->to;
     }
     if (now <= d->when) {
         return d->from;
+    }
+    if (d->flags & spring_AnimFlag) {
+        const float x0  = d->from - d->to;
+        const float sec = (now - d->when) / 1000.0f;
+        return d->to + (x0 + (d->bounce + springOmega_Anim_ * x0) * sec) *
+                           expf(-springOmega_Anim_ * sec);
     }
     float t = pos_Anim_(d, now);
     const iBool isSoft     = (d->flags & softer_AnimFlag) != 0;
@@ -407,6 +415,7 @@ static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
 }
 
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
+    d->flags &= ~spring_AnimFlag;
     if (span == 0) {
         d->from = d->to = to;
         d->when = d->due = frameTime_Window(get_Window()); /* effectively in the past */
@@ -422,6 +431,7 @@ void setValue_Anim(iAnim *d, float to, uint32_t span) {
 }
 
 void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
+    d->flags &= ~spring_AnimFlag;
     if (iAbs(d->to - to) > 0.0001f || !isFinished_Anim(d)) {
         const uint32_t now   = SDL_GetTicks();
         const float    from  = valueAt_Anim_(d, now);
@@ -623,8 +633,43 @@ static int overscroll_SmoothScroll_(const iSmoothScroll *d) {
     return 0;
 }
 
+static float visibleOverscroll_SmoothScroll_(const iSmoothScroll *d) {
+    const int over = overscroll_SmoothScroll_(d);
+#if defined (iPlatformAppleMobile)
+    if (d->pos.flags & spring_AnimFlag) {
+        return over;
+    }
+    const float dim = d->widget ? height_Widget(d->widget) : 0;
+    if (over && dim > 0) {
+        /* Same curve as UIScrollView. */
+        return iSign(over) * (1.0f - 1.0f / (iAbs(over) * 0.55f / dim + 1.0f)) * dim;
+    }
+#endif
+    return over * 0.333f;
+}
+
+static float rawOverscroll_SmoothScroll_(const iSmoothScroll *d, float visible) {
+#if defined (iPlatformAppleMobile)
+    const float dim = d->widget ? height_Widget(d->widget) : 0;
+    if (dim > 0) {
+        const float v = iMin(fabsf(visible), dim * 0.99f);
+        return iSign(visible) * dim / 0.55f * v / (dim - v);
+    }
+#endif
+    return visible / 0.333f;
+}
+
+static int overscrollLimit_SmoothScroll_(const iSmoothScroll *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->overscroll && d->widget) {
+        return iMax(d->overscroll, height_Widget(d->widget));
+    }
+#endif
+    return d->overscroll;
+}
+
 float pos_SmoothScroll(const iSmoothScroll *d) {
-    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) * 0.667f;
+    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) + visibleOverscroll_SmoothScroll_(d);
 }
 
 iBool isFinished_SmoothScroll(const iSmoothScroll *d) {
@@ -654,12 +699,38 @@ static void checkPullAction_SmoothScroll_(iSmoothScroll *d) {
     }
 }
 
+#if defined (iPlatformAppleMobile)
+static uint32_t settleOverscroll_SmoothScroll_(iSmoothScroll *d, int osDelta) {
+    const float vel = -y_F3(widgetMomentum_Touch(d->widget)); /* scrolling direction */
+    if (vel * osDelta < 0 && momentumDistance_Touch(fabsf(vel)) > iAbs(osDelta) + 4 * gap_UI) {
+        return 0; /* momentum carries it back in bounds */
+    }
+    stopWidgetMomentum_Touch(d->widget);
+    /* Spring back like UIScrollView. Outward peak is v/(omega*e), limited to dim/4. */
+    const float    edge    = osDelta < 0 ? 0 : d->max;
+    const float    visible = visibleOverscroll_SmoothScroll_(d);
+    const float    maxOut  = height_Widget(d->widget) * springOmega_Anim_ * 2.718f / 4;
+    const float    maxIn   = springOmega_Anim_ * fabsf(visible); /* don't cross the edge */
+    const uint32_t now     = SDL_GetTicks();
+    const uint32_t span    = 800;
+    d->pos.from   = edge + visible;
+    d->pos.to     = edge;
+    d->pos.when   = now;
+    d->pos.due    = now + span;
+    d->pos.flags  = spring_AnimFlag;
+    d->pos.bounce = vel * osDelta > 0 ? iSign(osDelta) * iMin(fabsf(vel), maxOut)
+                                      : -iSign(osDelta) * iMin(fabsf(vel), maxIn);
+    return span;
+}
+#endif
+
 void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
     if (!isMobile_Platform() && !prefs_App()->smoothScrolling) {
         span = 0; /* always instant */
     }
     int destY = targetValue_Anim(&d->pos) + offset;
-    if (d->flags & pullDownAction_SmoothScrollFlag && destY < -pullActionThreshold_SmoothScroll_(d)) {
+    if (d->flags & pullDownAction_SmoothScrollFlag && destY < -pullActionThreshold_SmoothScroll_(d) &&
+        offset < 0 && widgetMode_Touch(d->widget) != momentum_WidgetTouchMode) {
         if (d->pullActionTriggered == 0) {
             d->pullActionTriggered = iTrue;
 #if defined (iPlatformAppleMobile)
@@ -667,11 +738,12 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
 #endif
         }
     }
-    if (destY < -d->overscroll) {
-        destY = -d->overscroll;
+    const int limit = overscrollLimit_SmoothScroll_(d);
+    if (destY < -limit) {
+        destY = -limit;
     }
-    if (destY >= d->max + d->overscroll) {
-        destY = d->max + d->overscroll;
+    if (destY >= d->max + limit) {
+        destY = d->max + limit;
     }
     if (span) {
         setValueEased_Anim(&d->pos, destY, span);
@@ -682,6 +754,9 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
     if (d->overscroll && widgetMode_Touch(d->widget) == momentum_WidgetTouchMode) {
         const int osDelta = overscroll_SmoothScroll_(d);
         if (osDelta) {
+#if defined (iPlatformAppleMobile)
+            span = settleOverscroll_SmoothScroll_(d, osDelta);
+#else
             const float remaining = stopWidgetMomentum_Touch(d->widget);
             span = iMini(1000, 50 * sqrt(remaining / gap_UI));
             setValue_Anim(&d->pos, osDelta < 0 ? 0 : d->max, span);
@@ -690,6 +765,7 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
             d->pos.bounce = (osDelta < 0 ? -1 : 1) *
                             iMini(5 * d->overscroll, remaining * remaining * 0.00005f);
             checkPullAction_SmoothScroll_(d);
+#endif
         }
     }
     if (d->notify) {
@@ -702,11 +778,32 @@ void move_SmoothScroll(iSmoothScroll *d, int offset) {
 }
 
 iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
+    if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchBegins_UserEventCode) {
+        /* Catch an overscroll animation where it is currently shown. */
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta && !isFinished_Anim(&d->pos)) {
+            init_Anim(&d->pos, (osDelta < 0 ? 0 : d->max) +
+                                   rawOverscroll_SmoothScroll_(d, visibleOverscroll_SmoothScroll_(d)));
+        }
+        return iFalse;
+    }
     if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
         const int osDelta = overscroll_SmoothScroll_(d);
         if (osDelta) {
-            moveSpan_SmoothScroll(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
-            d->pos.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+#if defined (iPlatformAppleMobile)
+            if (widgetMode_Touch(d->widget) == momentum_WidgetTouchMode) {
+                const uint32_t span = settleOverscroll_SmoothScroll_(d, osDelta);
+                if (span && d->notify) {
+                    d->notify(d->widget, -osDelta, span);
+                }
+            }
+            else
+#endif
+            {
+                moveSpan_SmoothScroll(
+                    d, -osDelta, 173 * sqrtf(fabsf(visibleOverscroll_SmoothScroll_(d)) / gap_UI));
+                d->pos.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+            }
         }
         checkPullAction_SmoothScroll_(d);
         return iTrue;

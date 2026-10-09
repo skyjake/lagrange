@@ -1755,7 +1755,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         checkResponse_DocumentFetch(d->fetch);
         if (category_GmStatusCode(status_GmRequest(d->fetch->request)) == categorySuccess_GmStatusCode &&
             !d->view->userHasScrolled) {
-            init_Anim(&d->view->scrollY.pos, d->initNormScrollY * pageHeight_DocumentView(d->view));
+            const float dest = d->initNormScrollY * pageHeight_DocumentView(d->view);
+            /* Don't interrupt an overscroll bounce that is already heading there. */
+            if (isFinished_SmoothScroll(&d->view->scrollY) ||
+                fabsf(targetValue_Anim(&d->view->scrollY.pos) - dest) >= 1.0f) {
+                init_Anim(&d->view->scrollY.pos, dest);
+            }
         }
         addBannerWarnings_DocumentFetch(d->fetch);
         const iBool isUrlChanged = (d->flags & urlChanged_DocumentWidgetFlag) != 0;

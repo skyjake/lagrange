@@ -44,6 +44,10 @@ iDeclareType(TouchState)
 
 static const uint32_t longPressSpanMs_  = 500;
 static const uint32_t shortPressSpanMs_ = 250;
+#if defined (iPlatformAppleMobile)
+static const uint32_t flickCarrySpanMs_ = 300;
+static const float    maxFlickSpeedPt_  = 20000.0f;
+#endif
 #if defined (iPlatformAndroidMobile)
 static const int      tapRadiusPt_      = 30; /* inaccurate sensors? */
 #else
@@ -81,6 +85,7 @@ struct Impl_Touch {
     iFloat3 pos[numHistory_Touch_];
     size_t posCount;
     iFloat3 accum;
+    iFloat3 carryVelocity; /* momentum of the affinity widget when the touch began */
     iInt2 pendingScrollDelta; /* SDL_EVENT_FINGER_MOTION sometimes arrives unevently on iOS;
                                  accumulate the scrolls to smooth them out per refresh event */
     uint32_t pendingScrollTicks; /* accumulated milliseconds */
@@ -187,6 +192,16 @@ static iBool clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
         }
     }
     return iFalse;
+}
+
+static iFloat3 widgetMomentum_TouchState_(const iTouchState *d, const iWidget *widget) {
+    iConstForEach(Array, m, d->moms) {
+        const iMomentum *mom = m.value;
+        if (mom->affinity == widget) {
+            return mom->velocity;
+        }
+    }
+    return zero_F3();
 }
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
@@ -672,9 +687,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             .edge = edge,
             .startTime = nowTime,
             .startPos = pos,
+            .carryVelocity = widgetMomentum_TouchState_(d, aff),
         };
         pushPos_Touch_(&newTouch, pos, fingTime);
         pushBack_Array(d->touches, &newTouch);
+        dispatchNotification_Touch_(back_Array(d->touches), widgetTouchBegins_UserEventCode);
         /* Some widgets rely on hover state for scrolling. */
         if (flags_Widget(aff) & hover_WidgetFlag && ~flags_Widget(aff) & touchDrag_WidgetFlag) {
             setHover_Widget(aff);
@@ -929,6 +946,21 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         setY_F3(&velocity, 0.0f);
                     }
                 }
+#if defined (iPlatformAppleMobile)
+                /* Quickly repeated flicks in the same direction accelerate. */
+                if (duration < flickCarrySpanMs_) {
+                    const float maxSpeed = maxFlickSpeedPt_ * get_Window()->pixelRatio;
+                    float vel[3], carry[3];
+                    store_F3(velocity, vel);
+                    store_F3(touch->carryVelocity, carry);
+                    for (int axis = 0; axis < 2; axis++) {
+                        if (vel[axis] * carry[axis] > 0.0f) {
+                            vel[axis] = iClamp(vel[axis] + carry[axis], -maxSpeed, maxSpeed);
+                        }
+                    }
+                    velocity = init_F3(vel[0], vel[1], 0.0f);
+                }
+#endif
                 //printf("elap:%ums vel:%f\n", elapsed, length_F3(velocity));
                 pushPos_Touch_(touch, pos, nowTime);
                 /* If short and didn't move far, do a tap (left click). */
@@ -977,6 +1009,20 @@ void clear_Touch(void) {
     clear_Array(d->moms);
     clear_Array(d->touches);
     clear_Array(d->pinches);
+}
+
+iFloat3 widgetMomentum_Touch(const iWidget *widget) {
+    return widgetMomentum_TouchState_(touchState_(), widget);
+}
+
+float momentumDistance_Touch(float speed) {
+    const iTouchState *d  = touchState_();
+    const double       dt = d->stepDurationMs / 1000.0;
+#if defined (iPlatformAndroidMobile)
+    return speed * speed * dt / (2.0 * d->momFrictionPerStep);
+#else
+    return speed * dt * d->momFrictionPerStep / (1.0 - d->momFrictionPerStep);
+#endif
 }
 
 float stopWidgetMomentum_Touch(const iWidget *widget) {
@@ -1106,6 +1152,16 @@ void clear_Touch(void) {}
 
 float stopWidgetMomentum_Touch(const iWidget *widget) {
     iUnused(widget);
+    return 0;
+}
+
+iFloat3 widgetMomentum_Touch(const iWidget *widget) {
+    iUnused(widget);
+    return zero_F3();
+}
+
+float momentumDistance_Touch(float speed) {
+    iUnused(speed);
     return 0;
 }
 

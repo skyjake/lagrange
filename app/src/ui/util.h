@@ -170,6 +170,7 @@ enum iAnimFlag {
     softer_AnimFlag     = iBit(4),
     muchSofter_AnimFlag = iBit(5),
     bounce_AnimFlag     = iBit(6),
+    spring_AnimFlag     = iBit(7), /* critically damped; `bounce` is initial velocity */
 };
 
 struct Impl_Anim {
