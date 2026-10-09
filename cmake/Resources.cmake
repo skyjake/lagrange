@@ -1,9 +1,8 @@
-find_program (ZIP_EXECUTABLE zip DOC "ZIP archiver")
-if (NOT ZIP_EXECUTABLE)
-    message (FATAL_ERROR "Please install 'zip' for packaging resources.")
-endif ()
-
 function (make_resources dst)
+    find_program (ZIP_EXECUTABLE zip DOC "ZIP archiver")
+    if (NOT ZIP_EXECUTABLE)
+        message (FATAL_ERROR "Please install 'zip' for packaging resources.")
+    endif ()
     list (REMOVE_AT ARGV 0)
     set (files)
     set (genfiles)

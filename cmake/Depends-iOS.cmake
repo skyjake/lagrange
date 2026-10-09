@@ -2,6 +2,7 @@ message (STATUS "iOS dependency directory: ${IOS_DIR}")
 
 find_package (the_Foundation REQUIRED)
 
+set (SDL3_FOUND YES)
 set (SDL3_INCLUDE_DIRS ${IOS_DIR}/include/SDL3)
 set (SDL3_LDFLAGS
     ${IOS_DIR}/SDL3.framework/SDL3

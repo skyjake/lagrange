@@ -32,6 +32,5 @@ target_compile_definitions (lgrsyncd PUBLIC
 )
 target_link_libraries (lgrsyncd PUBLIC the_Foundation::the_Foundation)
 
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    install (TARGETS lgrsyncd RUNTIME DESTINATION bin)
-endif ()
+include (GNUInstallDirs)
+install (TARGETS lgrsyncd RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

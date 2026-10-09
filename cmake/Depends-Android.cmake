@@ -31,6 +31,8 @@ if (NOT ZLIB_FOUND)
     message (FATAL_ERROR "Lagrange requires zlib for reading compressed archives. Please check if pkg-config can find 'zlib'.")
 endif ()
 
+set (SDL3_FOUND YES)
+
 set (FRIBIDI_FOUND YES)
 set (FRIBIDI_LDFLAGS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/lib/libfribidi.a)
 set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include/fribidi)

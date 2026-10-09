@@ -77,6 +77,24 @@ else ()
     endif ()
 endif ()
 
+# SDL3 is optional; it is only needed for the GUI.
+if (VCPKG_TOOLCHAIN)
+    find_package (SDL3 CONFIG QUIET)
+else ()
+    find_package (SDL3 3.0.0 QUIET) # includes static link variant
+    pkg_check_modules (SDL3 sdl3>=3.0.0)
+endif ()
+if (ENABLE_GUI AND NOT SDL3_FOUND)
+    message (STATUS "SDL3 not found; GUI will not be built")
+    set (ENABLE_GUI OFF)
+endif ()
+if (NOT ENABLE_GUI)
+    # Only the GUI uses these.
+    set (ENABLE_FREETYPE OFF)
+    set (ENABLE_FRIBIDI OFF)
+    set (ENABLE_HARFBUZZ OFF)
+endif ()
+
 if (APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET)
     set (_dependMacOpts
         -Dc_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
@@ -275,13 +293,6 @@ if (ENABLE_TUI)
     else ()
         pkg_check_modules (SEALCURSES REQUIRED sealcurses)
     endif ()
-endif ()
-
-if (VCPKG_TOOLCHAIN)
-    find_package (SDL3 CONFIG REQUIRED)
-else ()
-    find_package (SDL3 3.0.0 QUIET) # includes static link variant
-    pkg_check_modules (SDL3 REQUIRED sdl3>=3.0.0)
 endif ()
 
 if (PKG_CONFIG_FOUND)

@@ -18,6 +18,9 @@ if (ANDROID)
 endif ()
 set (LAGRANGE_APP_VERSION ${PROJECT_VERSION}) # subprojects have their own PROJECT_VERSION
 
+option (ENABLE_GUI "Build the GUI application" ON)
+option (ENABLE_TUI "Build clagrange (TUI based on ncurses)" OFF)
+
 # Load modules from the source tree
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -28,7 +31,14 @@ include (Depends)
 include (CheckCCompilerFlag)
 
 add_subdirectory (lib/core)
-add_subdirectory (app)
+if (ENABLE_GUI OR ENABLE_TUI)
+    add_subdirectory (app)
+endif ()
 if (NOT IOS AND NOT ANDROID AND NOT EMSCRIPTEN)
-    add_subdirectory (sync EXCLUDE_FROM_ALL)    # sync server (lgrsyncd)
+    # Sync server (lgrsyncd) is built by default only if there is no app.
+    if (TARGET app OR TARGET tuiapp)
+        add_subdirectory (sync EXCLUDE_FROM_ALL)
+    else ()
+        add_subdirectory (sync)
+    endif ()
 endif ()
