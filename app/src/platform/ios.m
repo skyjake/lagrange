@@ -251,6 +251,7 @@ API_AVAILABLE(ios(13.0))
 
 static AppState *appState_;
 static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting notified of taps */
+static uint32_t lastAppTouchTime_;     /* finger down/up below the top safe area */
 
 @implementation AppState
 
@@ -328,7 +329,7 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
 }
 
 - (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
-    postCommand_App("scroll.top smooth:1");
+    postCommand_App("statusbar.tapped");
     return NO;
 }
 
@@ -570,14 +571,43 @@ float displayScale_iOS(const iWindow *window) {
     return uiWindow_(window).screen.nativeScale;
 }
 
+static void updateStatusBarTapper_(void) {
+    UIView *view = [viewController_(get_Window()) view];
+    CGRect frame = CGRectZero;
+    if (@available(iOS 13.0, *)) {
+        UIStatusBarManager *sbm = view.window.windowScene.statusBarManager;
+        if (sbm && !sbm.isStatusBarHidden) {
+            frame = [view convertRect:sbm.statusBarFrame fromView:nil];
+        }
+    }
+    /* Never cover the app's own UI below the safe area. */
+    frame = CGRectIntersection(frame, CGRectMake(0, 0, view.bounds.size.width,
+                                                 view.safeAreaInsets.top));
+    if (CGRectIsEmpty(frame)) {
+        frame = CGRectZero;
+    }
+    [statusBarTapper_ setFrame:frame];
+    [statusBarTapper_ setHidden:CGRectIsEmpty(frame)];
+}
+
+static bool SDLCALL watchFingers_(void *user, SDL_Event *ev) {
+    iUnused(user);
+    if (ev->type == SDL_EVENT_FINGER_DOWN || ev->type == SDL_EVENT_FINGER_UP) {
+        UIView *view = [viewController_(get_Window()) view];
+        if (ev->tfinger.y * view.bounds.size.height > view.safeAreaInsets.top) {
+            lastAppTouchTime_ = (uint32_t) SDL_GetTicks();
+        }
+    }
+    return true;
+}
+
 void setupWindow_iOS(iWindow *window) {
     UIViewController *ctl = viewController_(window);
     isSystemDarkMode_ = isDarkMode_(window);
     postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
     /* A hack to get notified on status bar taps. We create a thin dummy UIScrollView
        that occupies the top of the screen where the status bar is located. */ {
-        CGRect statusBarFrame = [UIApplication sharedApplication].statusBarFrame;
-        statusBarTapper_ = [[UIScrollView alloc] initWithFrame:statusBarFrame];
+        statusBarTapper_ = [[UIScrollView alloc] initWithFrame:CGRectZero];
 //        [statusBarTapper_ setBackgroundColor:[UIColor greenColor]]; /* to see where it is */
         [statusBarTapper_ setShowsVerticalScrollIndicator:NO];
         [statusBarTapper_ setShowsHorizontalScrollIndicator:NO];
@@ -586,6 +616,8 @@ void setupWindow_iOS(iWindow *window) {
         [statusBarTapper_ setScrollsToTop:YES];
         [statusBarTapper_ setDelegate:appState_];
         [ctl.view addSubview:statusBarTapper_];
+        updateStatusBarTapper_();
+        SDL_AddEventWatch(watchFingers_, NULL);
     }
 }
 
@@ -640,12 +672,10 @@ static void callVoidMethodWithIntArgument(id target, NSString *selectorName, int
 }
 
 iBool processEvent_iOS(const SDL_Event *ev) {
-    if (ev->type == SDL_EVENT_DISPLAY_ORIENTATION) {
-        if (deviceType_App() == phone_AppDeviceType) {
-            [statusBarTapper_ setHidden:(ev->display.data1 == SDL_ORIENTATION_LANDSCAPE ||
-                                     ev->display.data1 == SDL_ORIENTATION_LANDSCAPE_FLIPPED)];
-        }
-        [statusBarTapper_ setFrame:[UIApplication sharedApplication].statusBarFrame];
+    if (ev->type == SDL_EVENT_DISPLAY_ORIENTATION ||
+        ev->type == SDL_EVENT_WINDOW_RESIZED ||
+        ev->type == SDL_EVENT_WINDOW_SAFE_AREA_CHANGED) {
+        updateStatusBarTapper_();
         return iFalse;
     }
     if (ev->type == SDL_EVENT_WINDOW_RESTORED) {
@@ -674,6 +704,7 @@ iBool processEvent_iOS(const SDL_Event *ev) {
                 dlg = [UIApplication sharedApplication].delegate;
             }
             callVoidMethod(dlg, @"hideLaunchScreen");
+            updateStatusBarTapper_();
             /* When the application is launching, it is too early to post a SDL_EVENT_DROP_FILE
                event. The customized SDL application delegate saves the launch URL, so
                we can use it now to */
@@ -685,6 +716,13 @@ iBool processEvent_iOS(const SDL_Event *ev) {
                     postCommandf_App("open newtab:1 url:%s", [launchURL UTF8String]);
                 }
             }
+        }
+        else if (equal_Command(cmd, "statusbar.tapped")) {
+            /* The system may treat taps on the app's own UI near the top as status bar taps. */
+            if ((uint32_t) SDL_GetTicks() - lastAppTouchTime_ > 300) {
+                postCommand_App("scroll.top smooth:1");
+            }
+            return iTrue;
         }
         else if (equal_Command(cmd, "ostheme")) {
             if (arg_Command(cmd)) {
