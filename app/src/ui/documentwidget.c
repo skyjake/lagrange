@@ -121,6 +121,7 @@ enum iDocumentWidgetFlag {
     unseen_DocumentWidgetFlag                = iBit(15), /* user has not seen the contents */
     openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
     historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
+    swipedUp_DocumentWidgetFlag              = iBit(18), /* touch gesture has opened the sidebar */
 };
 
 enum iDocumentIndicator {
@@ -201,6 +202,8 @@ struct Impl_DocumentWidget {
     iString        originId;       /* origin document's widget ID, if opened via cross-split nav */
     iBool          originToNewTab; /* ...whether that navigation created a fresh tab */
     iString        readerEntryUrl; /* feed entry being viewed (may have a fragment) */
+    int            swipeUpY;       /* vertical movement of the current paginated swipe */
+    uint32_t       swipeUpTime;
 
     /* Widget structure: */
     iScrollWidget *scroll;
@@ -2347,7 +2350,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         showOrHideIndicators_DocumentWidget_(d);
     }
     else if (equal_Command(cmd, "document.autoreload")) {
-        if (d->mod.reloadInterval && !isRequestOngoing_DocumentFetch(d->fetch)) {
+        /* Books are never reloaded automatically. */
+        if (d->mod.reloadInterval && !isRequestOngoing_DocumentFetch(d->fetch) &&
+            !d->fetch->sourceGempub) {
             if (!isValid_Time(&d->fetch->sourceTime) || elapsedSeconds_Time(&d->fetch->sourceTime) >=
                     seconds_ReloadInterval(d->mod.reloadInterval)) {
                 notify_Widget(w, "document.reload");
@@ -2617,6 +2622,25 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
     interactingWithLink_DocumentWidget(d, linkId);
 }
 
+static void swipeVertically_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
+    /* On the phone, swiping up on the pages shows the Books sidebar. */
+    if (deviceType_App() != phone_AppDeviceType || ev->which != SDL_TOUCH_MOUSEID ||
+        ev->direction & inertia_MouseWheelFlag) {
+        return;
+    }
+    const uint32_t now = SDL_GetTicks();
+    if (now - d->swipeUpTime > 200) {
+        d->swipeUpY = 0; /* only continuous movement counts */
+    }
+    d->swipeUpTime = now;
+    d->swipeUpY += ev->y;
+    if (~d->flags & swipedUp_DocumentWidgetFlag &&
+        -d->swipeUpY > height_Rect(pageViewport_DocumentView(d->view)) / 20) {
+        d->flags |= swipedUp_DocumentWidgetFlag;
+        postCommandf_Root(as_Widget(d)->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
+    }
+}
+
 static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
     if (isHover_Widget(d)) {
         return iTrue;
@@ -2677,6 +2701,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (isMobile_Platform() && wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState &&
         ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
         finishWheelSwipe_DocumentSwipe(d->swipe, iFalse);
+    }
+    if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
+        d->swipeUpY = 0;
+        d->flags &= ~swipedUp_DocumentWidgetFlag;
     }
     if (isMetricsChange_UserEvent(ev)) {
         if (document_Root(w->root) == d) {
@@ -2796,9 +2824,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (ev->type == SDL_EVENT_MOUSE_WHEEL && isPaged_DocumentView(view) &&
              isScrollableWithWheel_DocumentWidget_(d)) {
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            /* Horizontal swipes drag the pages; vertical movement is ignored. */
+            /* Horizontal swipes drag the pages. */
             if (ev->wheel.x || wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState) {
                 handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel);
+            }
+            else if (ev->wheel.y) {
+                swipeVertically_DocumentWidget_(d, &ev->wheel);
             }
         }
         else if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
@@ -3793,6 +3824,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setOwner_DocumentBook(d->book, d);
     d->readingBarsTimer = 0;
     d->viewModeTimer    = 0;
+    d->swipeUpY         = 0;
+    d->swipeUpTime      = 0;
     d->indicator        = none_DocumentIndicator;
     init_Anim(&d->indicatorOpacity, 0.0f);
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
