@@ -123,6 +123,12 @@ enum iDocumentWidgetFlag {
     historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
 };
 
+enum iDocumentIndicator {
+    none_DocumentIndicator,
+    pinchZoom_DocumentIndicator,
+    viewMode_DocumentIndicator,
+};
+
 /* Note the following about swipes and keeping inline input prompts positioned:
 
    An inline input prompt is a real widget, similar to what appears in a modal
@@ -169,6 +175,9 @@ struct Impl_DocumentWidget {
     iDocumentSwipe *swipe;
     iDocumentBook *book;
     SDL_TimerID     readingBarsTimer; /* toggle unless the click becomes a double click */
+    SDL_TimerID     viewModeTimer;    /* view mode indicator is shown while running */
+    enum iDocumentIndicator indicator; /* remains set while fading out */
+    iAnim           indicatorOpacity;
     iLinkInfo *    linkInfo;
 
     /* Document: */
@@ -425,9 +434,42 @@ void animate_DocumentWidget(void *ticker) {
     repositionOutgoing_Query(d->query);
     if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
         !isFinished_Anim(offset_DocumentSwipe(d->swipe)) || swipeView_DocumentWidget(d) ||
-        (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity))) {
+        (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity)) ||
+        !isFinished_Anim(&d->indicatorOpacity)) {
         addTicker_App(animate_DocumentWidget, d);
     }
+}
+
+static void updateIndicator_DocumentWidget_(iDocumentWidget *d) {
+    const enum iDocumentIndicator ind = isPinchZooming_DocumentSwipe(d->swipe)
+                                            ? pinchZoom_DocumentIndicator
+                                        : d->viewModeTimer ? viewMode_DocumentIndicator
+                                                           : none_DocumentIndicator;
+    if (ind != none_DocumentIndicator) {
+        d->indicator = ind;
+    }
+    setValue_Anim(&d->indicatorOpacity, ind != none_DocumentIndicator ? 1.0f : 0.0f, 120);
+    addTicker_App(animate_DocumentWidget, d);
+}
+
+static uint32_t postViewModeHide_DocumentWidget_(void *context, SDL_TimerID timerId,
+                                                 uint32_t interval) {
+    iUnused(timerId, interval);
+    postCommand_Widget(context, "document.viewmode.hide");
+    return 0;
+}
+
+static void cancelViewModeIndicator_DocumentWidget_(iDocumentWidget *d) {
+    if (d->viewModeTimer) {
+        SDL_RemoveTimer(d->viewModeTimer);
+        d->viewModeTimer = 0;
+    }
+}
+
+static void showViewModeIndicator_DocumentWidget_(iDocumentWidget *d) {
+    cancelViewModeIndicator_DocumentWidget_(d);
+    d->viewModeTimer = SDL_AddTimer(1000, postViewModeHide_DocumentWidget_, d);
+    updateIndicator_DocumentWidget_(d);
 }
 
 void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
@@ -2085,6 +2127,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, w, "document.viewmode.hide")) {
+        if (d->viewModeTimer) {
+            d->viewModeTimer = 0;
+            updateIndicator_DocumentWidget_(d);
+        }
+        return iTrue;
+    }
     else if (equalWidget_Command(cmd, w, "document.page.overflow")) {
         if (openAdjacentChapter_DocumentBook(d->book, arg_Command(cmd), iFalse)) {
             return iTrue;
@@ -2331,7 +2380,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (startsWith_Command(cmd, "pinch.") && document_Command(cmd) == d) {
-        return handlePinch_DocumentSwipe(d->swipe, cmd);
+        handlePinch_DocumentSwipe(d->swipe, cmd);
+        updateIndicator_DocumentWidget_(d);
+        return iTrue;
     }
     else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
              isPaged_DocumentView(d->view)) {
@@ -3365,6 +3416,10 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     if (document_Root(root) == d &&
         isReadingMode_Root(root) != wantsPaged_DocumentView(d->view)) {
         postCommand_Root(root, format_CStr("root.reading arg:%d", wantsPaged_DocumentView(d->view)));
+        if (root->window->frameCount > 0) {
+            /* Not when the window first appears. */
+            showViewModeIndicator_DocumentWidget_(d);
+        }
     }
     if (isPaged_DocumentView(d->view)) {
         updatePagedProgress_DocumentWidget_(d);
@@ -3652,24 +3707,52 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                       tmQuote_ColorId, tmQuoteIcon_ColorId,
                                       bodySize_GmRequest(d->fetch->request));
     }
-    /* Pinch zoom indicator. */
-    if (isPinchZooming_DocumentSwipe(d->swipe)) {
-        const int   font   = uiLabelLargeBold_FontId;
-        const int   height = lineHeight_Text(font) * 2;
-        const iInt2 size   = init_I2(height * 2, height);
-        const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
-        drawRoundRectRadius_Paint(&p,
-                                  rect,
-                                  2 * radius_UI,
-                                  all_RoundCorner,
-                                  1,
-                                  pinchZoomPercent_DocumentSwipe(d->swipe) == 100
-                                      ? uiTextCaution_ColorId
-                                      : uiTextAction_ColorId,
-                                  none_ColorId,
-                                  none_ColorId);
-        drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
-                          pinchZoomPercent_DocumentSwipe(d->swipe));
+    /* Pinch zoom or view mode indicator. */
+    const float indOpacity = value_Anim(&d->indicatorOpacity);
+    if (indOpacity > 0.0f) {
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        p.alpha = 255 * indOpacity;
+        setOpacity_Text(indOpacity);
+        if (d->indicator == pinchZoom_DocumentIndicator) {
+            const int   font   = uiLabelLargeBold_FontId;
+            const int   height = lineHeight_Text(font) * 2;
+            const iInt2 size   = init_I2(height * 2, height);
+            const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
+            drawRoundRectRadius_Paint(&p,
+                                      rect,
+                                      2 * radius_UI,
+                                      all_RoundCorner,
+                                      1,
+                                      pinchZoomPercent_DocumentSwipe(d->swipe) == 100
+                                          ? uiTextCaution_ColorId
+                                          : uiTextAction_ColorId,
+                                      none_ColorId,
+                                      none_ColorId);
+            drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
+                              pinchZoomPercent_DocumentSwipe(d->swipe));
+        }
+        else if (d->indicator == viewMode_DocumentIndicator) {
+            const int   font = uiLabelHuge_FontId;
+            const int   size = lineHeight_Text(font) * 2;
+            const iRect rect = initCentered_Rect(mid_Rect(bounds), init1_I2(size));
+            drawRoundRectRadius_Paint(&p,
+                                      rect,
+                                      2 * radius_UI,
+                                      all_RoundCorner,
+                                      1,
+                                      uiBackgroundSelected_ColorId,
+                                      none_ColorId,
+                                      none_ColorId);
+            drawCentered_Text(font,
+                              rect,
+                              iTrue,
+                              uiTextSelected_ColorId,
+                              "%s",
+                              wantsPaged_DocumentView(d->view) ? book_Icon : upDownArrow_Icon);
+        }
+        setOpacity_Text(1.0f);
+        p.alpha = 0xff;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
 //    drawRect_Paint(&p, docBounds, red_ColorId);
     if (deviceType_App() == phone_AppDeviceType && document_App()) {
@@ -3702,6 +3785,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->book = new_DocumentBook();
     setOwner_DocumentBook(d->book, d);
     d->readingBarsTimer = 0;
+    d->viewModeTimer    = 0;
+    d->indicator        = none_DocumentIndicator;
+    init_Anim(&d->indicatorOpacity, 0.0f);
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
         setNavigable_DocumentSwipe(d->swipe, iTrue);
     }
@@ -3754,6 +3840,7 @@ void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
     cancelReadingBarsToggle_DocumentWidget_(d);
+    cancelViewModeIndicator_DocumentWidget_(d);
     cancelAllRequests_DocumentWidget(d);
     releasePlayers_Media(media_GmDocument(d->view->doc));
     removeTicker_App(animate_DocumentWidget, d);
