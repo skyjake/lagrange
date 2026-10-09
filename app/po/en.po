@@ -2190,7 +2190,7 @@ msgid "prefs.sync.server"
 msgstr "Server:"
 
 msgid "hint.sync.server"
-msgstr "gemini://sync.example.com"
+msgstr "gemini://sync.skyjake.fi:1966"
 
 msgid "prefs.sync.identity"
 msgstr "Identity:"
@@ -3406,7 +3406,7 @@ msgid "sync.busy.sitespec"
 msgstr "Site settings cannot be edited while syncing. Please try again in a moment."
 
 msgid "sync.identity.name"
-msgstr "Sync"
+msgstr "Sync Identity"
 
 msgid "heading.sync.newidentity"
 msgstr "New Sync Identity"
