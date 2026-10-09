@@ -44,6 +44,7 @@ enum iUserDataType {
     trusted_UserDataType,
     snippets_UserDataType,
     sites_UserDataType,
+    max_UserDataType
 };
 
 typedef void (*iUserDataChangedFunc)(enum iUserDataType);

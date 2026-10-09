@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <lagrange/core.h>
 #include <the_Foundation/array.h>
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/stringarray.h>
@@ -31,17 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /* User data in a device-independent form for syncing. Each data type is a set of records
    identified by a key. Record fields are strings. */
-
-enum iSyncDataType {
-    bookmarks_SyncDataType,
-    books_SyncDataType,
-    visited_SyncDataType,
-    identities_SyncDataType,
-    trusted_SyncDataType,
-    snippets_SyncDataType,
-    sites_SyncDataType,
-    max_SyncDataType
-};
 
 enum iSyncBookmarkField {
     url_SyncBookmarkField,
@@ -94,8 +84,6 @@ enum iSyncSiteField {
     value_SyncSiteField, /* TOML value as written in sitespec.ini */
 };
 
-size_t          numFields_SyncDataType  (enum iSyncDataType);
-
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareClass(SyncRecord)
@@ -120,28 +108,30 @@ iDeclareTypeConstruction(SyncData)
 struct Impl_SyncData {
     uint64_t     generation;
     uint32_t     maxBookmarkId; /* bookmark IDs up to this may have been used */
-    iTime        modified[max_SyncDataType];
-    iStringHash *records[max_SyncDataType];
+    iTime        modified[max_UserDataType];
+    iStringHash *records[max_UserDataType];
 };
 
 iSyncData *         copy_SyncData       (const iSyncData *);
-void                clear_SyncData      (iSyncData *, enum iSyncDataType);
-iSyncRecord *       add_SyncData        (iSyncData *, enum iSyncDataType, const iString *key);
-const iSyncRecord * find_SyncData       (const iSyncData *, enum iSyncDataType, const iString *key);
-iBool               remove_SyncData     (iSyncData *, enum iSyncDataType, const iString *key);
-size_t              size_SyncData       (const iSyncData *, enum iSyncDataType);
-iBool               equalRecords_SyncData(const iSyncData *, const iSyncData *, enum iSyncDataType);
+void                clear_SyncData      (iSyncData *, enum iUserDataType);
+iSyncRecord *       add_SyncData        (iSyncData *, enum iUserDataType, const iString *key);
+const iSyncRecord * find_SyncData       (const iSyncData *, enum iUserDataType, const iString *key);
+iBool               remove_SyncData     (iSyncData *, enum iUserDataType, const iString *key);
+size_t              size_SyncData       (const iSyncData *, enum iUserDataType);
+iBool               equalRecords_SyncData(const iSyncData *, const iSyncData *, enum iUserDataType);
 iBool               equal_SyncData      (const iSyncData *, const iSyncData *); /* all records */
 uint32_t            maxBookmarkId_SyncData(const iSyncData *);
 
-/* Archive containing all the data, plus metadata. */
+/* Archive with the data of each type in its native format, plus metadata. */
 iBlock *            serialize_SyncData  (const iSyncData *);
 iBool               deserialize_SyncData(iSyncData *, const iBlock *archive);
+iBool               isOutdated_SyncData (const iBlock *archive); /* written by an older version */
 
 /* Native formats used by the application's data stores: bookmarks.ini, books.ini,
-   visited.txt, trusted.txt, snippets.ini, sitespec.ini. Not applicable to identities. */
-void                parseNative_SyncData(iSyncData *, enum iSyncDataType, const iBlock *native);
-iBlock *            native_SyncData     (const iSyncData *, enum iSyncDataType);
+   visited.txt, trusted.txt, snippets.ini, sitespec.ini. Identities use the same format as
+   bookmarks and books. */
+void                parseNative_SyncData(iSyncData *, enum iUserDataType, const iBlock *native);
+iBlock *            native_SyncData     (const iSyncData *, enum iUserDataType);
 
 /* Bookmark IDs. */
 iDeclareType(SyncIdMapping)

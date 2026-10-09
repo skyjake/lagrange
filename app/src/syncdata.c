@@ -68,19 +68,20 @@ static const iSyncFieldInfo siteFields_[] = {
 
 static const struct {
     const char           *name;
+    const char           *entry; /* in the archive */
     const iSyncFieldInfo *fields;
     size_t                numFields;
-} types_[max_SyncDataType] = {
-    { "bookmarks", bookmarkFields_, iElemCount(bookmarkFields_) },
-    { "books", bookFields_, iElemCount(bookFields_) },
-    { "visited", visitedFields_, iElemCount(visitedFields_) },
-    { "identities", identityFields_, iElemCount(identityFields_) },
-    { "trusted", trustedFields_, iElemCount(trustedFields_) },
-    { "snippets", snippetFields_, iElemCount(snippetFields_) },
-    { "sites", siteFields_, iElemCount(siteFields_) },
+} types_[max_UserDataType] = {
+    { "bookmarks", "bookmarks.ini", bookmarkFields_, iElemCount(bookmarkFields_) },
+    { "books", "books.ini", bookFields_, iElemCount(bookFields_) },
+    { "visited", "visited.txt", visitedFields_, iElemCount(visitedFields_) },
+    { "identities", "identities.ini", identityFields_, iElemCount(identityFields_) },
+    { "trusted", "trusted.txt", trustedFields_, iElemCount(trustedFields_) },
+    { "snippets", "snippets.ini", snippetFields_, iElemCount(snippetFields_) },
+    { "sites", "sitespec.ini", siteFields_, iElemCount(siteFields_) },
 };
 
-static const uint32_t formatVersion_SyncData_ = 1;
+static const uint32_t formatVersion_SyncData_ = 2;
 static const char    *metaEntry_SyncData_     = "sync.ini";
 static const char     magic_SyncData_[2][5]   = {
     { 'L', 'g', 'S', 'y', 1 /* version */ },
@@ -89,11 +90,7 @@ static const char     magic_SyncData_[2][5]   = {
 static const uint32_t recentFormatVersion_SyncData_ = 1;
 static const char    *keyLabel_SyncData_      = "lagrange-sync-v1";
 
-size_t numFields_SyncDataType(enum iSyncDataType type) {
-    return types_[type].numFields;
-}
-
-static int fieldIndex_SyncDataType_(enum iSyncDataType type, const iString *name) {
+static int fieldIndex_SyncData_(enum iUserDataType type, const iString *name) {
     for (size_t i = 0; i < types_[type].numFields; i++) {
         if (!cmp_String(name, types_[type].fields[i].name)) {
             return (int) i;
@@ -173,7 +170,7 @@ void deinit_SyncData(iSyncData *d) {
 
 iDefineTypeConstruction(SyncData)
 
-static void insert_SyncData_(iSyncData *d, enum iSyncDataType type, iSyncRecord *record) {
+static void insert_SyncData_(iSyncData *d, enum iUserDataType type, iSyncRecord *record) {
     insert_StringHash(d->records[type], &record->key, record);
     iRelease(record);
 }
@@ -191,30 +188,30 @@ iSyncData *copy_SyncData(const iSyncData *d) {
     return copy;
 }
 
-void clear_SyncData(iSyncData *d, enum iSyncDataType type) {
+void clear_SyncData(iSyncData *d, enum iUserDataType type) {
     clear_StringHash(d->records[type]);
 }
 
-iSyncRecord *add_SyncData(iSyncData *d, enum iSyncDataType type, const iString *key) {
+iSyncRecord *add_SyncData(iSyncData *d, enum iUserDataType type, const iString *key) {
     iSyncRecord *record = new_SyncRecord(key, types_[type].numFields);
     insert_StringHash(d->records[type], key, record);
     iRelease(record);
     return record;
 }
 
-const iSyncRecord *find_SyncData(const iSyncData *d, enum iSyncDataType type, const iString *key) {
+const iSyncRecord *find_SyncData(const iSyncData *d, enum iUserDataType type, const iString *key) {
     return constValue_StringHash(d->records[type], key);
 }
 
-iBool remove_SyncData(iSyncData *d, enum iSyncDataType type, const iString *key) {
+iBool remove_SyncData(iSyncData *d, enum iUserDataType type, const iString *key) {
     return remove_StringHash(d->records[type], key);
 }
 
-size_t size_SyncData(const iSyncData *d, enum iSyncDataType type) {
+size_t size_SyncData(const iSyncData *d, enum iUserDataType type) {
     return size_StringHash(d->records[type]);
 }
 
-iBool equalRecords_SyncData(const iSyncData *d, const iSyncData *other, enum iSyncDataType type) {
+iBool equalRecords_SyncData(const iSyncData *d, const iSyncData *other, enum iUserDataType type) {
     if (size_StringHash(d->records[type]) != size_StringHash(other->records[type])) {
         return iFalse;
     }
@@ -229,7 +226,7 @@ iBool equalRecords_SyncData(const iSyncData *d, const iSyncData *other, enum iSy
 }
 
 iBool equal_SyncData(const iSyncData *d, const iSyncData *other) {
-    for (int i = 0; i < max_SyncDataType; i++) {
+    for (int i = 0; i < max_UserDataType; i++) {
         if (!equalRecords_SyncData(d, other, i)) {
             return iFalse;
         }
@@ -239,7 +236,7 @@ iBool equal_SyncData(const iSyncData *d, const iSyncData *other) {
 
 uint32_t maxBookmarkId_SyncData(const iSyncData *d) {
     uint32_t maxId = d->maxBookmarkId;
-    iConstForEach(StringHash, i, d->records[bookmarks_SyncDataType]) {
+    iConstForEach(StringHash, i, d->records[bookmarks_UserDataType]) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
         maxId = iMax(maxId, (uint32_t) toInt_String(&rec->key));
     }
@@ -247,56 +244,6 @@ uint32_t maxBookmarkId_SyncData(const iSyncData *d) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
-
-static iBlock *serializeRecords_(const iStringHash *records, size_t numFields) {
-    iBuffer *buf = new_Buffer();
-    openEmpty_Buffer(buf);
-    iStream *outs = stream_Buffer(buf);
-    writeU32_Stream(outs, (uint32_t) size_StringHash(records));
-    writeU32_Stream(outs, (uint32_t) numFields);
-    iConstForEach(StringHash, i, records) {
-        const iSyncRecord *rec = value_StringHashNode(i.value);
-        serialize_String(&rec->key, outs);
-        iConstForEach(StringArray, f, &rec->fields) {
-            serialize_String(f.value, outs);
-        }
-    }
-    iBlock *data = copy_Block(data_Buffer(buf));
-    iRelease(buf);
-    return data;
-}
-
-static iBool deserializeRecords_(iStringHash *records, size_t numFields, const iBlock *data) {
-    iBuffer *buf = new_Buffer();
-    open_Buffer(buf, data);
-    iStream *ins = stream_Buffer(buf);
-    const uint32_t count     = readU32_Stream(ins);
-    const uint32_t numStored = readU32_Stream(ins);
-    iString *key   = new_String();
-    iString *value = new_String();
-    iBool    ok    = iTrue;
-    for (uint32_t i = 0; i < count; i++) {
-        if (atEnd_Stream(ins)) {
-            ok = iFalse;
-            break;
-        }
-        deserialize_String(key, ins);
-        iSyncRecord *rec = new_SyncRecord(key, numFields);
-        insert_StringHash(records, key, rec);
-        iRelease(rec);
-        for (uint32_t f = 0; f < numStored; f++) {
-            deserialize_String(value, ins);
-            /* Fields added in later versions are ignored. */
-            if (f < numFields) {
-                setField_SyncRecord(rec, f, value);
-            }
-        }
-    }
-    delete_String(value);
-    delete_String(key);
-    iRelease(buf);
-    return ok;
-}
 
 iBlock *serialize_SyncData(const iSyncData *d) {
     iArchive *arch = new_Archive();
@@ -311,11 +258,11 @@ iBlock *serialize_SyncData(const iSyncData *d) {
                   formatVersion_SyncData_,
                   (unsigned long long) d->generation,
                   d->maxBookmarkId);
-    for (int i = 0; i < max_SyncDataType; i++) {
+    for (int i = 0; i < max_UserDataType; i++) {
         appendFormat_String(meta, "%s = %lld\n", types_[i].name,
                             (long long) integralSeconds_Time(&d->modified[i]));
-        iBlock *data = serializeRecords_(d->records[i], types_[i].numFields);
-        setData_Archive(arch, collectNewFormat_String("%s.bin", types_[i].name), data);
+        iBlock *data = native_SyncData(d, i);
+        setDataCStr_Archive(arch, types_[i].entry, data);
         delete_Block(data);
     }
     setDataCStr_Archive(arch, metaEntry_SyncData_, utf8_String(meta));
@@ -329,14 +276,25 @@ iBlock *serialize_SyncData(const iSyncData *d) {
     return zip;
 }
 
+iDeclareType(SyncMetaParser)
+
+struct Impl_SyncMetaParser {
+    iSyncData *data;
+    uint32_t   format;
+};
+
 static void handleMetaKeyValue_SyncData_(void *context, const iString *table, const iString *key,
                                          const iTomlValue *value) {
-    iSyncData *d = context;
+    iSyncMetaParser *parser = context;
+    iSyncData       *d      = parser->data;
     if (value->type != int64_TomlType) {
         return;
     }
     if (isEmpty_String(table)) {
-        if (!cmp_String(key, "generation")) {
+        if (!cmp_String(key, "format")) {
+            parser->format = (uint32_t) value->value.int64;
+        }
+        else if (!cmp_String(key, "generation")) {
             d->generation = (uint64_t) value->value.int64;
         }
         else if (!cmp_String(key, "maxbookmarkid")) {
@@ -344,7 +302,7 @@ static void handleMetaKeyValue_SyncData_(void *context, const iString *table, co
         }
     }
     else if (!cmp_String(table, "modified")) {
-        for (int i = 0; i < max_SyncDataType; i++) {
+        for (int i = 0; i < max_UserDataType; i++) {
             if (!cmp_String(key, types_[i].name)) {
                 initSeconds_Time(&d->modified[i], (double) value->value.int64);
             }
@@ -352,28 +310,51 @@ static void handleMetaKeyValue_SyncData_(void *context, const iString *table, co
     }
 }
 
+static uint32_t parseMeta_SyncData_(iSyncData *d, const iArchive *arch) {
+    const iBlock *meta = dataCStr_Archive(arch, metaEntry_SyncData_);
+    if (!meta) {
+        return 0;
+    }
+    iSyncData       scratch;
+    iSyncMetaParser parser = { d ? d : &scratch, 0 };
+    iTomlParser    *toml   = new_TomlParser();
+    setHandlers_TomlParser(toml, NULL, handleMetaKeyValue_SyncData_, &parser);
+    if (!parse_TomlParser(toml, collect_String(newBlock_String(meta)))) {
+        parser.format = 0;
+    }
+    delete_TomlParser(toml);
+    return parser.format;
+}
+
 iBool deserialize_SyncData(iSyncData *d, const iBlock *archive) {
     iArchive *arch = new_Archive();
     iBool     ok   = iFalse;
-    if (openData_Archive(arch, archive)) {
-        const iBlock *meta = dataCStr_Archive(arch, metaEntry_SyncData_);
-        if (meta) {
-            iTomlParser *toml = new_TomlParser();
-            setHandlers_TomlParser(toml, NULL, handleMetaKeyValue_SyncData_, d);
-            ok = parse_TomlParser(toml, collect_String(newBlock_String(meta)));
-            delete_TomlParser(toml);
-            for (int i = 0; ok && i < max_SyncDataType; i++) {
+    if (openData_Archive(arch, archive) &&
+        parseMeta_SyncData_(d, arch) == formatVersion_SyncData_) {
+        for (int i = 0; i < max_UserDataType; i++) {
+            const iBlock *data = dataCStr_Archive(arch, types_[i].entry);
+            if (data) {
+                parseNative_SyncData(d, i, data);
+            }
+            else {
                 clear_SyncData(d, i);
-                const iBlock *data =
-                    dataCStr_Archive(arch, format_CStr("%s.bin", types_[i].name));
-                if (data) {
-                    ok = deserializeRecords_(d->records[i], types_[i].numFields, data);
-                }
             }
         }
+        ok = iTrue;
     }
     iRelease(arch);
     return ok;
+}
+
+iBool isOutdated_SyncData(const iBlock *archive) {
+    iArchive *arch = new_Archive();
+    iBool     isOld = iFalse;
+    if (openData_Archive(arch, archive)) {
+        const uint32_t format = parseMeta_SyncData_(NULL, arch);
+        isOld = format > 0 && format < formatVersion_SyncData_;
+    }
+    iRelease(arch);
+    return isOld;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -614,7 +595,7 @@ iDeclareType(NativeParser)
 
 struct Impl_NativeParser {
     iSyncData         *data;
-    enum iSyncDataType type;
+    enum iUserDataType type;
     iSyncRecord       *record;
 };
 
@@ -630,7 +611,7 @@ static void handleKeyValue_NativeParser_(void *context, const iString *table, co
     if (!d->record) {
         return;
     }
-    const int index = fieldIndex_SyncDataType_(d->type, key);
+    const int index = fieldIndex_SyncData_(d->type, key);
     if (index < 0) {
         return;
     }
@@ -651,7 +632,7 @@ static void handleKeyValue_NativeParser_(void *context, const iString *table, co
     }
 }
 
-static void parseLines_SyncData_(iSyncData *d, enum iSyncDataType type, const iBlock *native) {
+static void parseLines_SyncData_(iSyncData *d, enum iUserDataType type, const iBlock *native) {
     const iRangecc src  = range_Block(native);
     iRangecc       line = iNullRange;
     while (nextSplit_Rangecc(src, "\n", &line)) {
@@ -666,7 +647,7 @@ static void parseLines_SyncData_(iSyncData *d, enum iSyncDataType type, const iB
             continue;
         }
         words[2] = (iRangecc){ word.end + 1, line.end };
-        if (type == visited_SyncDataType) {
+        if (type == visited_UserDataType) {
             /* when flags url */
             iSyncRecord *rec = add_SyncData(d, type, collectNewRange_String(words[2]));
             setField_SyncRecord(rec, when_SyncVisitedField, collectNewRange_String(words[0]));
@@ -702,7 +683,7 @@ static void parseSites_SyncData_(iSyncData *d, const iBlock *native) {
         iString *key = collectNewRange_String(site);
         appendCStr_String(key, " ");
         appendRange_String(key, (iRangecc){ line.start, eq });
-        iSyncRecord *rec = add_SyncData(d, sites_SyncDataType, key);
+        iSyncRecord *rec = add_SyncData(d, sites_UserDataType, key);
         setField_SyncRecord(
             rec, value_SyncSiteField, collectNewRange_String((iRangecc){ eq + 3, line.end }));
     }
@@ -710,7 +691,7 @@ static void parseSites_SyncData_(iSyncData *d, const iBlock *native) {
 
 static void appendSites_SyncData_(const iSyncData *d, iString *out) {
     iStringSet *keys = new_StringSet(); /* sorted, so each site's settings are together */
-    iConstForEach(StringHash, i, d->records[sites_SyncDataType]) {
+    iConstForEach(StringHash, i, d->records[sites_UserDataType]) {
         insert_StringSet(keys, &((const iSyncRecord *) value_StringHashNode(i.value))->key);
     }
     iRangecc site = iNullRange;
@@ -727,18 +708,19 @@ static void appendSites_SyncData_(const iSyncData *d, iString *out) {
         }
         appendFormat_String(out, "%s = %s\n",
                             cstr_String(k.value) + sep + 1,
-                            cstr_String(field_SyncRecord(find_SyncData(d, sites_SyncDataType, k.value),
+                            cstr_String(field_SyncRecord(find_SyncData(d, sites_UserDataType, k.value),
                                                          value_SyncSiteField)));
     }
     iRelease(keys);
 }
 
-void parseNative_SyncData(iSyncData *d, enum iSyncDataType type, const iBlock *native) {
+void parseNative_SyncData(iSyncData *d, enum iUserDataType type, const iBlock *native) {
     clear_SyncData(d, type);
     switch (type) {
-        case bookmarks_SyncDataType:
-        case books_SyncDataType:
-        case snippets_SyncDataType: {
+        case bookmarks_UserDataType:
+        case books_UserDataType:
+        case identities_UserDataType:
+        case snippets_UserDataType: {
             iNativeParser parser = { d, type, NULL };
             iTomlParser *toml = new_TomlParser();
             setHandlers_TomlParser(
@@ -747,11 +729,11 @@ void parseNative_SyncData(iSyncData *d, enum iSyncDataType type, const iBlock *n
             delete_TomlParser(toml);
             break;
         }
-        case visited_SyncDataType:
-        case trusted_SyncDataType:
+        case visited_UserDataType:
+        case trusted_UserDataType:
             parseLines_SyncData_(d, type, native);
             break;
-        case sites_SyncDataType:
+        case sites_UserDataType:
             parseSites_SyncData_(d, native);
             break;
         default:
@@ -760,17 +742,17 @@ void parseNative_SyncData(iSyncData *d, enum iSyncDataType type, const iBlock *n
     }
 }
 
-static void appendRecords_SyncData_(const iSyncData *d, enum iSyncDataType type, iString *out) {
+static void appendRecords_SyncData_(const iSyncData *d, enum iUserDataType type, iString *out) {
     iConstForEach(StringHash, i, d->records[type]) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
         switch (type) {
-            case visited_SyncDataType:
+            case visited_UserDataType:
                 appendFormat_String(out, "%s %s %s\n",
                                     cstr_String(field_SyncRecord(rec, when_SyncVisitedField)),
                                     cstr_String(field_SyncRecord(rec, flags_SyncVisitedField)),
                                     cstr_String(&rec->key));
                 break;
-            case trusted_SyncDataType:
+            case trusted_UserDataType:
                 appendFormat_String(out, "%s %s %s\n",
                                     cstr_String(&rec->key),
                                     cstr_String(field_SyncRecord(rec, until_SyncTrustedField)),
@@ -798,9 +780,9 @@ static void appendRecords_SyncData_(const iSyncData *d, enum iSyncDataType type,
     }
 }
 
-iBlock *native_SyncData(const iSyncData *d, enum iSyncDataType type) {
+iBlock *native_SyncData(const iSyncData *d, enum iUserDataType type) {
     iString *out = new_String();
-    if (type == sites_SyncDataType) {
+    if (type == sites_UserDataType) {
         appendSites_SyncData_(d, out);
     }
     else {
@@ -828,12 +810,12 @@ void remapBookmarks_SyncData(iSyncData *d, const iArray *idMappings) {
         return;
     }
     iStringHash *remapped = new_StringHash();
-    iConstForEach(StringHash, i, d->records[bookmarks_SyncDataType]) {
+    iConstForEach(StringHash, i, d->records[bookmarks_UserDataType]) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
         const uint32_t newId = mappedId_SyncIdMapping(idMappings, toInt_String(&rec->key));
         iSyncRecord *copy = new_SyncRecord(collectNewFormat_String("%u", newId),
-                                           types_[bookmarks_SyncDataType].numFields);
-        for (size_t f = 0; f < types_[bookmarks_SyncDataType].numFields; f++) {
+                                           types_[bookmarks_UserDataType].numFields);
+        for (size_t f = 0; f < types_[bookmarks_UserDataType].numFields; f++) {
             setField_SyncRecord(copy, f, field_SyncRecord(rec, f));
         }
         const uint32_t parent = (uint32_t) number_SyncRecord_(rec, parent_SyncBookmarkField);
@@ -844,8 +826,8 @@ void remapBookmarks_SyncData(iSyncData *d, const iArray *idMappings) {
         insert_StringHash(remapped, &copy->key, copy);
         iRelease(copy);
     }
-    iRelease(d->records[bookmarks_SyncDataType]);
-    d->records[bookmarks_SyncDataType] = remapped;
+    iRelease(d->records[bookmarks_UserDataType]);
+    d->records[bookmarks_UserDataType] = remapped;
 }
 
 static iBool isFolder_SyncBookmark_(const iSyncRecord *d) {
@@ -881,9 +863,9 @@ static const iSyncRecord *findMatchingBookmark_(const iStringHash *base, const i
 
 static void normalizeBookmarkIds_SyncData_(const iSyncData *base, iSyncData *local,
                                            const iSyncData *remote, iArray *map_out) {
-    const iStringHash *B = base->records[bookmarks_SyncDataType];
-    const iStringHash *L = local->records[bookmarks_SyncDataType];
-    const iStringHash *R = remote->records[bookmarks_SyncDataType];
+    const iStringHash *B = base->records[bookmarks_UserDataType];
+    const iStringHash *L = local->records[bookmarks_UserDataType];
+    const iStringHash *R = remote->records[bookmarks_UserDataType];
     uint32_t maxId = iMax(iMax(maxBookmarkId_SyncData(base), maxBookmarkId_SyncData(local)),
                           maxBookmarkId_SyncData(remote));
     iArray     *map     = new_Array(sizeof(iSyncIdMapping));
@@ -960,7 +942,7 @@ static void normalizeBookmarkIds_SyncData_(const iSyncData *base, iSyncData *loc
 iDeclareType(SyncMerge)
 
 struct Impl_SyncMerge {
-    enum iSyncDataType type;
+    enum iUserDataType type;
     iBool              preferLocal; /* local data of this type was modified more recently */
     const iString     *protectedIdentity;
 };
@@ -996,7 +978,7 @@ static iBool isAnyChanged_(const iSyncRecord *base, const iSyncRecord *rec, size
 static iSyncRecord *mergeRecord_SyncMerge_(const iSyncMerge *d, const iSyncRecord *base,
                                            const iSyncRecord *local, const iSyncRecord *remote) {
     const size_t numFields = types_[d->type].numFields;
-    if (d->type == trusted_SyncDataType) {
+    if (d->type == trusted_UserDataType) {
         /* The entry is updated as a whole. */
         const iBool lc = !base || !equal_SyncRecord(base, local);
         const iBool rc = !base || !equal_SyncRecord(base, remote);
@@ -1012,7 +994,7 @@ static iSyncRecord *mergeRecord_SyncMerge_(const iSyncMerge *d, const iSyncRecor
     for (size_t i = 0; i < numFields; i++) {
         setField_SyncRecord(out, i, mergeField_SyncMerge_(d, base, local, remote, i));
     }
-    if (d->type == visited_SyncDataType) {
+    if (d->type == visited_UserDataType) {
         const iBool isLocalLater = number_SyncRecord_(local, when_SyncVisitedField) >
                                    number_SyncRecord_(remote, when_SyncVisitedField);
         setField_SyncRecord(out, when_SyncVisitedField,
@@ -1024,7 +1006,7 @@ static iSyncRecord *mergeRecord_SyncMerge_(const iSyncMerge *d, const iSyncRecor
                                                  flags_SyncVisitedField));
         }
     }
-    else if (d->type == books_SyncDataType) {
+    else if (d->type == books_UserDataType) {
         /* The reading position is a single unit. */
         const iBool lc = isAnyChanged_(base, local, chapter_SyncBookField, positionTime_SyncBookField);
         const iBool rc = isAnyChanged_(base, remote, chapter_SyncBookField, positionTime_SyncBookField);
@@ -1052,12 +1034,12 @@ static iSyncRecord *mergeRecord_SyncMerge_(const iSyncMerge *d, const iSyncRecor
 
 static iBool survivesDeletion_SyncMerge_(const iSyncMerge *d, const iSyncRecord *base,
                                          const iSyncRecord *kept) {
-    if (d->type == visited_SyncDataType) {
+    if (d->type == visited_UserDataType) {
         /* Visited again after the deletion. */
         return number_SyncRecord_(kept, when_SyncVisitedField) >
                number_SyncRecord_(base, when_SyncVisitedField);
     }
-    if (d->type == identities_SyncDataType && d->protectedIdentity) {
+    if (d->type == identities_UserDataType && d->protectedIdentity) {
         return equal_String(&kept->key, d->protectedIdentity);
     }
     return iFalse;
@@ -1093,7 +1075,7 @@ iSyncData *merge_SyncData(const iSyncData *base, const iSyncData *local, const i
     iSyncData *out = new_SyncData();
     iSyncData *normLocal = copy_SyncData(local);
     normalizeBookmarkIds_SyncData_(base, normLocal, remote, bookmarkIdMap_out);
-    for (int type = 0; type < max_SyncDataType; type++) {
+    for (int type = 0; type < max_UserDataType; type++) {
         const iSyncMerge merge = {
             .type              = type,
             .preferLocal       = cmp_Time(&local->modified[type], &remote->modified[type]) > 0,
@@ -1121,11 +1103,11 @@ iSyncData *merge_SyncData(const iSyncData *base, const iSyncData *local, const i
         max_Time(&out->modified[type], &remote->modified[type]);
     }
     /* Bookmarks whose folder was deleted are moved to the top level. */
-    iForEach(StringHash, m, out->records[bookmarks_SyncDataType]) {
+    iForEach(StringHash, m, out->records[bookmarks_UserDataType]) {
         iSyncRecord *rec = value_StringHashNode(m.value);
         const iString *parent = field_SyncRecord(rec, parent_SyncBookmarkField);
         if (!isEmpty_String(parent) && cmp_String(parent, "0") &&
-            !contains_StringHash(out->records[bookmarks_SyncDataType], parent)) {
+            !contains_StringHash(out->records[bookmarks_UserDataType], parent)) {
             setFieldCStr_SyncRecord(rec, parent_SyncBookmarkField, "");
         }
     }

@@ -58,15 +58,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_timer.h>
 
-_Static_assert((int) bookmarks_SyncDataType  == (int) bookmarks_UserDataType &&
-               (int) books_SyncDataType      == (int) books_UserDataType &&
-               (int) visited_SyncDataType    == (int) visited_UserDataType &&
-               (int) identities_SyncDataType == (int) identities_UserDataType &&
-               (int) trusted_SyncDataType    == (int) trusted_UserDataType &&
-               (int) snippets_SyncDataType   == (int) snippets_UserDataType &&
-               (int) sites_SyncDataType      == (int) sites_UserDataType,
-               "data type mismatch");
-
 static const char  *stateFileName_Sync_       = "state.ini";
 static const char  *pristineFileName_Sync_    = "pristine.zip";
 static const char  *recentFileName_Sync_      = "recent.zip";
@@ -83,7 +74,7 @@ static const double recentDelay_Sync_         = 60;      /* seconds from a chang
 static const double recentInterval_Sync_      = 60;      /* minimum seconds between checks */
 static const double recentBackoff_Sync_       = 2 * 60;  /* seconds */
 
-static const char *typeNames_Sync_[max_SyncDataType] = {
+static const char *typeNames_Sync_[max_UserDataType] = {
     "bookmarks", "books", "visited", "identities", "trusted", "snippets", "sites"
 };
 
@@ -114,7 +105,7 @@ struct Impl_Sync {
     iTime        lastCheckTime; /* last successful contact with the server */
     iTime        lastAttemptTime;
     iString      lastError;
-    iTime        modified[max_SyncDataType];
+    iTime        modified[max_UserDataType];
     iTime        syncedTime;    /* data modified after this has not been uploaded */
     iString      syncedServer;  /* the pristine data belongs to this server and identity */
     iString      syncedIdentity;
@@ -199,7 +190,7 @@ static void handleStateKeyValue_Sync_(void *context, const iString *table, const
                                       const iTomlValue *value) {
     iSync *d = context;
     if (!cmp_String(table, "modified")) {
-        for (int i = 0; i < max_SyncDataType; i++) {
+        for (int i = 0; i < max_UserDataType; i++) {
             if (!cmp_String(key, typeNames_Sync_[i])) {
                 initSeconds_Time(&d->modified[i], number_TomlValue(value));
             }
@@ -303,7 +294,7 @@ static void saveState_Sync_(iSync *d) {
                   cstrCollect_String(quote_String(&d->syncedServer, iFalse)),
                   cstrCollect_String(quote_String(&d->syncedIdentity, iFalse)),
                   cstrCollect_String(quote_String(&d->lastError, iFalse)));
-    for (int i = 0; i < max_SyncDataType; i++) {
+    for (int i = 0; i < max_UserDataType; i++) {
         appendFormat_String(str, "%s = %f\n", typeNames_Sync_[i], seconds_Time(&d->modified[i]));
     }
     unlock_Mutex(d->mtx);
@@ -379,7 +370,7 @@ static void reset_Sync_(iSync *d) {
 static iBool isDirty_Sync_(const iSync *d) {
     iBool dirty = iFalse;
     lock_Mutex(d->mtx);
-    for (int i = 0; i < max_SyncDataType; i++) {
+    for (int i = 0; i < max_UserDataType; i++) {
         if (cmp_Time(&d->modified[i], &d->syncedTime) > 0) {
             dirty = iTrue;
         }
@@ -435,27 +426,27 @@ static void visitedUrlChanged_Sync_(const iString *url, iBool isRemoved) {
 /*----------------------------------------------------------------------------------------------*/
 /* Snapshots of the current data */
 
-static void snapshotType_Sync_(iSyncData *snap, enum iSyncDataType type) {
+static void snapshotType_Sync_(iSyncData *snap, enum iUserDataType type) {
     iBuffer *buf = new_Buffer();
     openEmpty_Buffer(buf);
     iStream *outs = stream_Buffer(buf);
     switch (type) {
-        case bookmarks_SyncDataType:
+        case bookmarks_UserDataType:
             serialize_Bookmarks(bookmarks_App(), outs);
             break;
-        case books_SyncDataType:
+        case books_UserDataType:
             serialize_Books(outs);
             break;
-        case visited_SyncDataType:
+        case visited_UserDataType:
             serialize_Visited(visited_App(), outs);
             break;
-        case trusted_SyncDataType:
+        case trusted_UserDataType:
             serialize_GmCerts(certs_App(), outs, NULL);
             break;
-        case snippets_SyncDataType:
+        case snippets_UserDataType:
             serialize_Snippets(outs);
             break;
-        case sites_SyncDataType:
+        case sites_UserDataType:
             serialize_SiteSpec(outs);
             break;
         default:
@@ -467,8 +458,8 @@ static void snapshotType_Sync_(iSyncData *snap, enum iSyncDataType type) {
 
 static iSyncData *takeSnapshot_Sync_(iSync *d) {
     iSyncData *snap = new_SyncData();
-    for (int type = 0; type < max_SyncDataType; type++) {
-        if (type != identities_SyncDataType) {
+    for (int type = 0; type < max_UserDataType; type++) {
+        if (type != identities_UserDataType) {
             snapshotType_Sync_(snap, type);
         }
     }
@@ -478,7 +469,7 @@ static iSyncData *takeSnapshot_Sync_(iSync *d) {
             continue;
         }
         iSyncRecord *rec =
-            add_SyncData(snap, identities_SyncDataType,
+            add_SyncData(snap, identities_UserDataType,
                          collect_String(hexEncode_Block(&ident->fingerprint)));
         setFieldCStr_SyncRecord(rec, icon_SyncIdentityField, format_CStr("%u", ident->icon));
         setField_SyncRecord(rec, notes_SyncIdentityField, &ident->notes);
@@ -495,7 +486,7 @@ static iSyncData *takeSnapshot_Sync_(iSync *d) {
                             collect_String(privateKeyPem_TlsCertificate(ident->cert)));
     }
     lock_Mutex(d->mtx);
-    for (int type = 0; type < max_SyncDataType; type++) {
+    for (int type = 0; type < max_UserDataType; type++) {
         snap->modified[type] = d->modified[type];
     }
     unlock_Mutex(d->mtx);
@@ -547,7 +538,7 @@ static iSyncRecent *takeRecentSnapshot_Sync_(iSync *d) {
 /*----------------------------------------------------------------------------------------------*/
 /* Applying synced data */
 
-static iStream *nativeStream_(const iSyncData *data, enum iSyncDataType type) {
+static iStream *nativeStream_(const iSyncData *data, enum iUserDataType type) {
     iBuffer *buf = iClob(new_Buffer());
     open_Buffer(buf, collect_Block(native_SyncData(data, type)));
     return stream_Buffer(buf);
@@ -555,7 +546,7 @@ static iStream *nativeStream_(const iSyncData *data, enum iSyncDataType type) {
 
 static void applyIdentities_Sync_(const iSyncData *data, const iString *protectedIdentity) {
     iGmCerts *certs = certs_App();
-    iConstForEach(StringHash, i, data->records[identities_SyncDataType]) {
+    iConstForEach(StringHash, i, data->records[identities_UserDataType]) {
         const iSyncRecord *rec   = value_StringHashNode(i.value);
         iGmIdentity       *ident = findIdentity_GmCerts(
             certs, collect_Block(hexDecode_Rangecc(range_String(&rec->key))));
@@ -585,7 +576,7 @@ static void applyIdentities_Sync_(const iSyncData *data, const iString *protecte
         iGmIdentity   *ident = j.ptr;
         const iString *fp    = collect_String(hexEncode_Block(&ident->fingerprint));
         if (~ident->flags & temporary_GmIdentityFlag &&
-            !find_SyncData(data, identities_SyncDataType, fp) &&
+            !find_SyncData(data, identities_UserDataType, fp) &&
             !equal_String(fp, protectedIdentity)) {
             deleteIdentity_GmCerts(certs, ident);
         }
@@ -594,10 +585,10 @@ static void applyIdentities_Sync_(const iSyncData *data, const iString *protecte
     postCommand_App("idents.changed");
 }
 
-static void applyType_Sync_(const iSyncData *data, enum iSyncDataType type,
+static void applyType_Sync_(const iSyncData *data, enum iUserDataType type,
                             const iArray *bookmarkIdMap, const iString *protectedIdentity) {
     switch (type) {
-        case bookmarks_SyncDataType: {
+        case bookmarks_UserDataType: {
             iBookmarks    *bm     = bookmarks_App();
             const uint32_t recent = recentFolder_Bookmarks(bm);
             clear_Bookmarks(bm);
@@ -608,27 +599,27 @@ static void applyType_Sync_(const iSyncData *data, enum iSyncDataType type,
             notify_App("bookmarks.changed sync:1");
             break;
         }
-        case books_SyncDataType:
+        case books_UserDataType:
             applySync_Books(nativeStream_(data, type));
             notify_App("books.changed");
             notify_App("books.synced");
             break;
-        case visited_SyncDataType:
+        case visited_UserDataType:
             clear_Visited(visited_App());
             deserialize_Visited(visited_App(), nativeStream_(data, type), iFalse);
             notify_App("visited.changed");
             break;
-        case identities_SyncDataType:
+        case identities_UserDataType:
             applyIdentities_Sync_(data, protectedIdentity);
             break;
-        case trusted_SyncDataType:
+        case trusted_UserDataType:
             replaceTrusted_GmCerts(certs_App(), nativeStream_(data, type));
             break;
-        case snippets_SyncDataType:
+        case snippets_UserDataType:
             deserialize_Snippets(nativeStream_(data, type), all_ImportMethod);
             notify_App("snippets.changed");
             break;
-        case sites_SyncDataType:
+        case sites_UserDataType:
             replace_SiteSpec(nativeStream_(data, type));
             docPrefsChanged_App();
             break;
@@ -667,11 +658,11 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
     iArray    *mergeMap = new_Array(sizeof(iSyncIdMapping));
     /* Bookmarks created during the sync must not collide with renumbered ones. */ {
         uint32_t next = iMax(maxBookmarkId_SyncData(live), maxBookmarkId_SyncData(result));
-        iConstForEach(StringHash, i, live->records[bookmarks_SyncDataType]) {
+        iConstForEach(StringHash, i, live->records[bookmarks_UserDataType]) {
             const iSyncRecord *rec = value_StringHashNode(i.value);
             const uint32_t     id  = toInt_String(&rec->key);
-            if (!find_SyncData(d->snapshot, bookmarks_SyncDataType, &rec->key) &&
-                (find_SyncData(result, bookmarks_SyncDataType, &rec->key) ||
+            if (!find_SyncData(d->snapshot, bookmarks_UserDataType, &rec->key) &&
+                (find_SyncData(result, bookmarks_UserDataType, &rec->key) ||
                  isMappedTo_(idMap, id))) {
                 pushBack_Array(liveMap, &(iSyncIdMapping){ id, ++next });
             }
@@ -694,19 +685,18 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
             }
         }
     }
+    /* The current data with the final bookmark IDs. */
+    remapBookmarks_SyncData(live, mergeMap);
     d->isApplying = iTrue;
-    iSyncData *current = takeSnapshot_Sync_(d);
-    remapBookmarks_SyncData(current, finalMap);
-    for (int type = 0; type < max_SyncDataType; type++) {
-        if (!equalRecords_SyncData(final, current, type) ||
-            (type == bookmarks_SyncDataType && !isEmpty_Array(finalMap))) {
+    for (int type = 0; type < max_UserDataType; type++) {
+        if (!equalRecords_SyncData(final, live, type) ||
+            (type == bookmarks_UserDataType && !isEmpty_Array(finalMap))) {
             applyType_Sync_(final, type, finalMap, &d->identity);
         }
     }
     reserveIds_Bookmarks(bookmarks_App(), final->maxBookmarkId);
     d->isApplying = iFalse;
     remapBookmarkIds_Feeds(finalMap);
-    delete_SyncData(current);
     delete_SyncData(final);
     delete_Array(mergeMap);
     delete_Array(finalMap);
@@ -979,9 +969,19 @@ static iSyncData *download_Sync_(iSync *d) {
         return remote; /* nothing stored yet */
     }
     if (!deserialize_SyncData(remote, plain)) {
-        setError_Sync_(d, "sync.error.decrypt");
-        delete_SyncData(remote);
-        remote = NULL;
+        if (isOutdated_SyncData(plain)) {
+            /* Replaced like on the first sync, so nothing is deleted. */
+            delete_SyncData(remote);
+            remote             = new_SyncData();
+            remote->generation = gen;
+            delete_SyncData(d->base);
+            d->base = new_SyncData();
+        }
+        else {
+            setError_Sync_(d, "sync.error.decrypt");
+            delete_SyncData(remote);
+            remote = NULL;
+        }
     }
     else if (remote->generation != gen) {
         setError_Sync_(d, "sync.error.rollback");
