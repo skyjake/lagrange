@@ -835,15 +835,18 @@ void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
     d->userHasScrolled = iTrue;
 }
 
-static int scrollPos_DocumentView_(const iDocumentView *d, int documentY, iBool centered) {
+static int scrollPos_DocumentView_(iDocumentView *d, int documentY, iBool centered) {
     if (!isEmpty_Banner(d->banner)) {
         documentY += height_Banner(d->banner) + documentTopPad_DocumentView(d);
     }
     else {
         documentY += documentTopPad_DocumentView(d) + d->pageMargin * gap_UI;
     }
-    return documentY - (centered ? documentBounds_DocumentView(d).size.y / 2
-                                 : lineHeight_Text(paragraph_FontId));
+    /* Not into the overscroll area. */
+    return iClamp(documentY - (centered ? documentBounds_DocumentView(d).size.y / 2
+                                        : lineHeight_Text(paragraph_FontId)),
+                  0,
+                  updateScrollMax_DocumentView(d));
 }
 
 void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
