@@ -201,10 +201,14 @@ void init_CertImportWidget(iCertImportWidget *d) {
         iWidget *buttons = makeDialogButtons_Widget(actions, iElemCount(actions));
         addChild_Widget(w, iClob(buttons));
     }
-    setTextColor_LabelWidget(d->crtLabel, invalidColor_);
-    setTextColor_LabelWidget(d->keyLabel, invalidColor_);
-    setFrameColor_Widget(as_Widget(d->crtLabel), invalidColor_);
-    setFrameColor_Widget(as_Widget(d->keyLabel), invalidColor_);
+    /* Style the crt/key boxes. */ {
+        setTextColor_LabelWidget(d->crtLabel, invalidColor_);
+        setTextColor_LabelWidget(d->keyLabel, invalidColor_);
+        setFrameColor_Widget(as_Widget(d->crtLabel), invalidColor_);
+        setFrameColor_Widget(as_Widget(d->keyLabel), invalidColor_);
+        as_Widget(d->crtLabel)->flags2 |= alwaysRound_WidgetFlag2;
+        as_Widget(d->keyLabel)->flags2 |= alwaysRound_WidgetFlag2;
+    }
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */
         postCommand_App("certimport.paste");

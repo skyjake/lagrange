@@ -1725,7 +1725,7 @@ iString *statusText_Sync(void) {
         setCStr_String(str, cstr_Lang("sync.status.setup"));
         return str;
     }
-    const char    *sep   = bullet_Icon;
+    const char *sep = " \u2014 ";
     const iString *error = NULL;
     if (isRunning_Sync()) {
         setCStr_String(str, cstr_Lang("sync.status.running"));
@@ -1735,7 +1735,7 @@ iString *statusText_Sync(void) {
             format_String(str, "%s %s", cstr_Lang("sync.status.last"),
                           timeText_Sync_(&d->lastSyncTime));
             if (d->generation) {
-                appendFormat_String(str, "%s%s %llu", sep, cstr_Lang("sync.status.generation"),
+                appendFormat_String(str, " (%s %llu)", cstr_Lang("sync.status.generation"),
                                     (unsigned long long) d->generation);
             }
         }
