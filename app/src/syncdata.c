@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "syncdata.h"
 
+#include <lagrange/visited.h>
+
 #include <the_Foundation/archive.h>
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/crypto.h>
@@ -751,8 +753,12 @@ void parseNative_SyncData(iSyncData *d, enum iUserDataType type, const iBlock *n
 }
 
 static void appendRecords_SyncData_(const iSyncData *d, enum iUserDataType type, iString *out) {
+    iStringSet *keys = new_StringSet(); /* sorted, so similar keys compress well together */
     iConstForEach(StringHash, i, d->records[type]) {
-        const iSyncRecord *rec = value_StringHashNode(i.value);
+        insert_StringSet(keys, &((const iSyncRecord *) value_StringHashNode(i.value))->key);
+    }
+    iConstForEach(StringSet, k, keys) {
+        const iSyncRecord *rec = find_SyncData(d, type, k.value);
         switch (type) {
             case visited_UserDataType:
                 appendFormat_String(out, "%s %s %s\n",
@@ -786,6 +792,7 @@ static void appendRecords_SyncData_(const iSyncData *d, enum iUserDataType type,
                 break;
         }
     }
+    iRelease(keys);
 }
 
 iBlock *native_SyncData(const iSyncData *d, enum iUserDataType type) {
@@ -802,6 +809,23 @@ iBlock *native_SyncData(const iSyncData *d, enum iUserDataType type) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
+
+void pruneVisited_SyncData(iSyncData *d, int64_t cutoff) {
+    iStringArray *pruned = new_StringArray();
+    iConstForEach(StringHash, i, d->records[visited_UserDataType]) {
+        const iSyncRecord *rec   = value_StringHashNode(i.value);
+        const uint16_t     flags = (uint16_t) strtoul(
+            cstr_String(field_SyncRecord(rec, flags_SyncVisitedField)), NULL, 16);
+        if (isTransientOnly_VisitedUrlFlags(flags) &&
+            number_SyncRecord_(rec, when_SyncVisitedField) < cutoff) {
+            pushBack_StringArray(pruned, &rec->key);
+        }
+    }
+    iConstForEach(StringArray, j, pruned) {
+        remove_SyncData(d, visited_UserDataType, j.value);
+    }
+    iRelease(pruned);
+}
 
 uint32_t mappedId_SyncIdMapping(const iArray *idMappings, uint32_t id) {
     iConstForEach(Array, i, idMappings) {

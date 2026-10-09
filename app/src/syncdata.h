@@ -133,6 +133,9 @@ iBool               isOutdated_SyncData (const iBlock *archive); /* written by a
 void                parseNative_SyncData(iSyncData *, enum iUserDataType, const iBlock *native);
 iBlock *            native_SyncData     (const iSyncData *, enum iUserDataType);
 
+/* Transient-only visits (redirects, input prompts) are synced only while they are recent. */
+void                pruneVisited_SyncData(iSyncData *, int64_t cutoff);
+
 /* Bookmark IDs. */
 iDeclareType(SyncIdMapping)
 

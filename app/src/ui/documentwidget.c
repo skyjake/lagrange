@@ -1632,7 +1632,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iGmDocument *doc = d->view->doc;
         for (size_t linkId = 1; linkId <= numLinks_GmDocument(doc); linkId++) {
             const iString *url = linkUrl_GmDocument(doc, linkId);
-            visitUrl_Visited(visited_App(), url, transient_VisitedUrlFlag);
+            visitUrl_Visited(
+                visited_App(), url, transient_VisitedUrlFlag | markedAsRead_VisitedUrlFlag);
         }
         updateVisitedLinks_GmDocument(d->view->doc);
         invalidate_DocumentWidget(d);

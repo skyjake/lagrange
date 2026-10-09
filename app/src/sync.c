@@ -132,6 +132,7 @@ struct Impl_Sync {
     SDL_TimerID  recentTimer;
     iBool        isApplying;
     iBool        isManual;
+    int64_t      visitedCutoff; /* older transient visits are not synced */
     iString      trustHost;     /* untrusted server certificate offered to the user */
     uint16_t     trustPort;
     iBlock      *trustFingerprint;
@@ -507,6 +508,12 @@ static int64_t recentCutoff_Sync_(void) {
     return integralSeconds_Time(&now) - (int64_t) recentWindow_Sync_;
 }
 
+static int64_t visitedCutoff_Sync_(void) {
+    iTime now;
+    initCurrent_Time(&now);
+    return integralSeconds_Time(&now) - maxTransientAge_Visited;
+}
+
 static iSyncRecent *takeRecentSnapshot_Sync_(iSync *d) {
     const int64_t cutoff = recentCutoff_Sync_();
     iSyncRecent  *snap   = new_SyncRecent();
@@ -613,6 +620,7 @@ static void applyType_Sync_(const iSyncData *data, enum iUserDataType type,
             notify_App("books.synced");
             break;
         case visited_UserDataType:
+            /* Unsynced visits are too old to be kept anyway. */
             clear_Visited(visited_App());
             deserialize_Visited(visited_App(), nativeStream_(data, type), iFalse);
             notify_App("visited.changed");
@@ -658,6 +666,7 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
     /* The data may have changed while syncing, so the result is merged with the current data
        using the snapshot as the base. */
     iSyncData *live     = takeSnapshot_Sync_(d);
+    pruneVisited_SyncData(live, d->visitedCutoff);
     iSyncData *base     = copy_SyncData(d->snapshot);
     live->generation    = d->snapshot->generation;
     live->maxBookmarkId = d->snapshot->maxBookmarkId;
@@ -1063,6 +1072,7 @@ static iThreadResult run_Sync_(iThread *thread) {
     iSync *d = &sync_;
     iUnused(thread);
     d->base = loadPristine_Sync_(d);
+    pruneVisited_SyncData(d->base, d->visitedCutoff);
     d->snapshot->generation    = d->base->generation;
     d->snapshot->maxBookmarkId = d->base->maxBookmarkId;
     int attempt;
@@ -1072,6 +1082,7 @@ static iThreadResult run_Sync_(iThread *thread) {
         if (!remote) {
             break;
         }
+        pruneVisited_SyncData(remote, d->visitedCutoff);
         iSyncData *merged = merge_SyncData(d->base, d->snapshot, remote, &d->identity, &d->idMap);
         if (equal_SyncData(merged, remote)) {
             /* Nothing new to upload. */
@@ -1409,6 +1420,8 @@ static void start_Sync_(iSync *d, iBool isManual) {
     d->mode = full_SyncMode;
     discardRemote_Bookmarks(bookmarks_App());
     d->snapshot = takeSnapshot_Sync_(d);
+    d->visitedCutoff = visitedCutoff_Sync_();
+    pruneVisited_SyncData(d->snapshot, d->visitedCutoff);
     clear_Array(&d->idMap);
     notifyStatus_Sync_();
     notify_App("sync.started");

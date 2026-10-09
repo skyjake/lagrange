@@ -857,8 +857,11 @@ void markEntryAsRead_Feeds(uint32_t feedBookmarkId, const iString *entryUrl, iBo
                 if (!isRead) {
                     sub_Time(&entryTime, &oneSecond);
                 }
-                visitUrlTime_Visited(
-                    vis, url, transient_VisitedUrlFlag | kept_VisitedUrlFlag, entryTime);
+                visitUrlTime_Visited(vis,
+                                     url,
+                                     transient_VisitedUrlFlag | kept_VisitedUrlFlag |
+                                         (isRead ? markedAsRead_VisitedUrlFlag : 0),
+                                     entryTime);
             }
             else {
                 unlock_Mutex(d->mtx);
@@ -870,7 +873,10 @@ void markEntryAsRead_Feeds(uint32_t feedBookmarkId, const iString *entryUrl, iBo
                 removeUrl_Visited(vis, entryUrl);
             }
             else if (isRead) {
-                visitUrl_Visited(vis, entryUrl, transient_VisitedUrlFlag | kept_VisitedUrlFlag);
+                visitUrl_Visited(vis,
+                                 entryUrl,
+                                 transient_VisitedUrlFlag | kept_VisitedUrlFlag |
+                                     markedAsRead_VisitedUrlFlag);
             }
         }
     }
