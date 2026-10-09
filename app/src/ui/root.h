@@ -48,6 +48,7 @@ void        createUserInterface_Root            (iRoot *);
 void        createClipMenu_Root                 (iRoot *);
 void        createSplitMenu_Root                (iRoot *, iBool withShortcuts);
 void        recreateSnippetMenu_Root            (iRoot *);
+const iArray *updateUserDataMenu_Widget          (iWidget *menu);
 
 void        setCurrent_Root                     (iRoot *);
 iRoot *     current_Root                        (void);

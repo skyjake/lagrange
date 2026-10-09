@@ -351,6 +351,12 @@ msgstr "List All"
 msgid "menu.userdata"
 msgstr "User Data"
 
+msgid "menu.sync.now"
+msgstr "Sync Now"
+
+msgid "menu.sync.configure"
+msgstr "Configure Sync…"
+
 msgid "menu.bookmarks.bytag"
 msgstr "List Bookmarks by Tag"
 

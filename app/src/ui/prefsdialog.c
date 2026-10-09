@@ -1569,6 +1569,14 @@ void showPreferences_Widget(const char *cmd) {
             openPanel_PrefsDialog_(dlg, "heading.prefs.snip");
         }
     }
+    if (argLabel_Command(cmd, "sync")) {
+        if (deviceType_App() == desktop_AppDeviceType) {
+            postCommand_Widget(dlg, "tabs.switch id:prefs.page.sync");
+        }
+        else {
+            openPanel_PrefsDialog_(dlg, "heading.prefs.sync");
+        }
+    }
     if (argLabel_Command(cmd, "sidecfg")) {
         if (deviceType_App() == desktop_AppDeviceType) {
             postCommand_Widget(dlg, "tabs.switch id:sidecfg");

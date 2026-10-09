@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gamepad.h"
 #include "prefsdialog.h"
 #include "util.h"
+#include "../sync.h"
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
@@ -271,6 +272,15 @@ size_t numWindowMenuItems_Window(void) {
 #if defined (LAGRANGE_MAC_MENUBAR)
 
 static iBool macMenusInserted_;
+static iBool macMenuSyncEnabled_;
+
+static void updateMacUserDataMenu_(void) {
+    /* The File menu is built from the submenu's native items. */
+    iWidget      *menu  = findWidget_Root("userdatamenu");
+    const iArray *items = updateUserDataMenu_Widget(menu);
+    setNativeMenuItems_Widget(menu, constData_Array(items), size_Array(items));
+    macMenuSyncEnabled_ = isEnabled_Sync();
+}
 
 static void insertMacMenus_(void) {
     if (macMenusInserted_) {
@@ -278,6 +288,7 @@ static void insertMacMenus_(void) {
     }
     iRoot *oldRoot = current_Root();
     setCurrent_Root(submenuRoot_MacOS());
+    updateMacUserDataMenu_();
     /* Create the needed bookmarks submenus. */
     insertMenuItems_MacOS("${menu.title.file}", 1, 0, fileMenuItems_, iElemCount(fileMenuItems_));
     insertMenuItems_MacOS("${menu.title.edit}", 2, 0, editMenuItems_, iElemCount(editMenuItems_));
@@ -306,6 +317,17 @@ static void removeMacMenus_(void) {
     removeMenu_MacOS(2);
     removeMenu_MacOS(1);
     macMenusInserted_ = iFalse;
+}
+
+static void updateMacFileMenu_(void) {
+    if (!macMenusInserted_ || macMenuSyncEnabled_ == isEnabled_Sync()) {
+        return;
+    }
+    iRoot *oldRoot = current_Root();
+    setCurrent_Root(submenuRoot_MacOS());
+    updateMacUserDataMenu_();
+    updateMenuItems_MacOS(1, fileMenuItems_, iElemCount(fileMenuItems_));
+    setCurrent_Root(oldRoot);
 }
 
 #endif /* LAGRANGE_MAC_MENUBAR */
@@ -1725,6 +1747,11 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
+#if defined (LAGRANGE_MAC_MENUBAR)
+            if (isCommand_UserEvent(&event, "sync.status.changed")) {
+                updateMacFileMenu_();
+            }
+#endif
             if (isCommand_UserEvent(&event, "lang.changed") && (mw || extraw)) {
 #if defined (LAGRANGE_MAC_MENUBAR)
                 /* Retranslate the menus. */

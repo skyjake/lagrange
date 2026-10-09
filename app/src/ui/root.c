@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "window.h"
 #include "../history.h"
 #include "../periodic.h"
+#include "../sync.h"
 #include <lagrange/gmcerts.h>
 #include "../gmutil.h"
 
@@ -113,6 +114,33 @@ static const iMenuItem userDataMenuItems_[] = {
     { NULL }
 };
 
+static iMenuItem syncMenuItem_(iBool withIcon) {
+    if (isEnabled_Sync()) {
+        return (iMenuItem){ withIcon ? reload_Icon " ${menu.sync.now}" : "${menu.sync.now}",
+                            0, 0, "sync.now" };
+    }
+    return (iMenuItem){ withIcon ? reload_Icon " ${menu.sync.configure}" : "${menu.sync.configure}",
+                        0, 0, "preferences sync:1" };
+}
+
+const iArray *updateUserDataMenu_Widget(iWidget *menu) {
+    iUnused(menu);
+    iArray         *items = collectNew_Array(sizeof(iMenuItem));
+    const iMenuItem sync  = syncMenuItem_(iFalse);
+    pushBack_Array(items, &sync);
+    pushBack_Array(items, &(iMenuItem){ "---" });
+    pushBackN_Array(items, userDataMenuItems_, count_MenuItem(userDataMenuItems_));
+    return items;
+}
+
+static iWidget *makeUserDataMenu_(iWidget *parent) {
+    const iArray *items = updateUserDataMenu_Widget(NULL);
+    iWidget *menu = makeMenu_Widget(parent, constData_Array(items), size_Array(items));
+    setId_Widget(menu, "userdatamenu");
+    menu->updateMenuItems = updateUserDataMenu_Widget;
+    return menu;
+}
+
 static const iMenuItem tabletNavMenuItems_[] = {
     { add_Icon " ${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
     { folder_Icon " ${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
@@ -149,6 +177,21 @@ static const iMenuItem phoneNavMenuItems_[] = {
 #endif
     { NULL }
 };
+
+static const iArray *updateMobileNavMenu_(iWidget *menu) {
+    iUnused(menu);
+    const iMenuItem *navItems = deviceType_App() == tablet_AppDeviceType ? tabletNavMenuItems_
+                                                                         : phoneNavMenuItems_;
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    for (const iMenuItem *i = navItems; i->label; i++) {
+        if (i->command && equal_CStr(i->command, "preferences")) {
+            const iMenuItem sync = syncMenuItem_(iTrue);
+            pushBack_Array(items, &sync);
+        }
+        pushBack_Array(items, i);
+    }
+    return items;
+}
 
 static const char *reloadCStr_   = reload_Icon;
 static const char *pageMenuCStr_ = midEllipsis_Icon;
@@ -275,8 +318,7 @@ iRoot *newOffscreen_Root(void) {
     iRoot *d = new_Root();
     setCurrent_Root(d);
     d->widget = new_Widget();
-    setId_Widget(makeMenu_Widget(d->widget, userDataMenuItems_, iElemCount(userDataMenuItems_)),
-                 "userdatamenu");
+    makeUserDataMenu_(d->widget);
     createSplitMenu_Root(d, iFalse);
     setCurrent_Root(NULL);
     return d;
@@ -2203,8 +2245,7 @@ void createUserInterface_Root(iRoot *d) {
         addChildIdFlags_Widget(navBar,
                                iClob(newIcon_LabelWidget(home_Icon, 0, 0, "navigate.home")),
                                "navbar.action4", collapse_WidgetFlag);
-        setId_Widget(makeMenu_Widget(root, userDataMenuItems_, iElemCount(userDataMenuItems_)),
-                     "userdatamenu");
+        makeUserDataMenu_(root);
 #if !defined (LAGRANGE_MAC_MENUBAR)
         /* Hamburger menu. */ {
             iLabelWidget *navMenu = makeMenuButton_LabelWidget(
@@ -2214,6 +2255,10 @@ void createUserInterface_Root(iRoot *d) {
                                                            : phoneNavMenuItems_,
                 iInvalidSize);
             setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"), uiSeparator_ColorId);
+            if (deviceType_App() != desktop_AppDeviceType) {
+                setMenuUpdateItemsFunc_Widget(findChild_Widget(as_Widget(navMenu), "menu"),
+                                              updateMobileNavMenu_);
+            }
             setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
             setAlignVisually_LabelWidget(navMenu, iTrue);
             addChildIdFlags_Widget(navBar, iClob(navMenu), "navbar.menu", collapse_WidgetFlag);
@@ -2367,6 +2412,8 @@ void createUserInterface_Root(iRoot *d) {
         setFont_LabelWidget(idName, uiLabelTiny_FontId);
         iLabelWidget *menuButton = makeMenuButton_LabelWidget(menu_Icon, phoneNavMenuItems_,
                                                               iElemCount(phoneNavMenuItems_));
+        setMenuUpdateItemsFunc_Widget(findChild_Widget(as_Widget(menuButton), "menu"),
+                                      updateMobileNavMenu_);
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         setId_Widget(as_Widget(menuButton), "toolbar.navmenu");
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
