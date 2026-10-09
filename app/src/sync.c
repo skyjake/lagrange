@@ -1316,6 +1316,29 @@ static iBool beginWork_Sync_(iSync *d) {
     return iTrue;
 }
 
+static void beginBackgroundTask_Sync_(iSync *d) {
+    /* Keeps the worker running if the app is moved to the background. */
+#if defined (iPlatformAppleMobile)
+    if (!d->isBackgroundTask) {
+        beginBackgroundTask_iOS();
+        d->isBackgroundTask = iTrue;
+    }
+#else
+    iUnused(d);
+#endif
+}
+
+static void endBackgroundTask_Sync_(iSync *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->isBackgroundTask) {
+        d->isBackgroundTask = iFalse;
+        endBackgroundTask_iOS();
+    }
+#else
+    iUnused(d);
+#endif
+}
+
 static void endWork_Sync_(iSync *d) {
     if (d->worker) {
         join_Thread(d->worker);
@@ -1389,6 +1412,7 @@ static void start_Sync_(iSync *d, iBool isManual) {
     clear_Array(&d->idMap);
     notifyStatus_Sync_();
     notify_App("sync.started");
+    beginBackgroundTask_Sync_(d);
     d->worker = new_Thread(run_Sync_);
     setName_Thread(d->worker, "Sync");
     start_Thread(d->worker);
@@ -1500,12 +1524,6 @@ static void finishRecent_Sync_(iSync *d) {
     d->outgoing = NULL;
     saveState_Sync_(d);
     notifyStatus_Sync_();
-#if defined (iPlatformAppleMobile)
-    if (d->isBackgroundTask) {
-        d->isBackgroundTask = iFalse;
-        endBackgroundTask_iOS();
-    }
-#endif
     if (d->isBlocking) {
         return;
     }
@@ -1532,6 +1550,7 @@ static void startRecent_Sync_(iSync *d, iBool isBlocking) {
         d->isBlocking = iFalse;
         return;
     }
+    beginBackgroundTask_Sync_(d);
     d->worker = new_Thread(runRecent_Sync_);
     setName_Thread(d->worker, "SyncRecent");
     start_Thread(d->worker);
@@ -1687,17 +1706,7 @@ void enterBackground_Sync(void) {
     if (!d->mtx || d->worker || !isRecentDirty_Sync_(d) || !canSyncRecent_Sync_(d)) {
         return;
     }
-#if defined (iPlatformAppleMobile)
-    beginBackgroundTask_iOS();
-    d->isBackgroundTask = iTrue;
-#endif
     startRecent_Sync_(d, iFalse);
-#if defined (iPlatformAppleMobile)
-    if (!d->worker && d->isBackgroundTask) {
-        d->isBackgroundTask = iFalse;
-        endBackgroundTask_iOS();
-    }
-#endif
 }
 
 static const char *timeText_Sync_(const iTime *time) {
@@ -1831,6 +1840,9 @@ iBool handleCommand_Sync(const char *cmd) {
         }
         else {
             finish_Sync_(d);
+        }
+        if (!d->worker) {
+            endBackgroundTask_Sync_(d); /* no follow-up sync was started */
         }
         return iTrue;
     }
