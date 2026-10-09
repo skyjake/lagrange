@@ -559,7 +559,7 @@ iBlock *serialize_SyncRecent(const iSyncRecent *d) {
         write32_Stream(outs, book->numChapters);
         writef_Stream(outs, book->pos);
     }
-    iBlock *out = compressLevel_Block(data_Buffer(buf), 9);
+    iBlock *out = compressLevel_Block(data_Buffer(buf), 1);
     iRelease(buf);
     return out;
 }

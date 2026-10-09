@@ -118,7 +118,7 @@ struct Impl_Sync {
     iTime        syncedTime;    /* data modified after this has not been uploaded */
     iString      syncedServer;  /* the pristine data belongs to this server and identity */
     iString      syncedIdentity;
-    iSyncData   *pristine;
+    uint64_t     generation;    /* of the pristine data, which is loaded only when syncing */
     iSyncRecent *recent;           /* recent changes stored on the server */
     iSyncRecent *recentLocal;      /* local changes to visited feed entries */
     iTime        recentModified;   /* last local change to the recent data */
@@ -159,7 +159,8 @@ struct Impl_Sync {
     /* Worker output. */
     iSyncRecent *recentResult;
     iSyncData   *result;      /* to be applied locally */
-    iSyncData   *newPristine; /* matches the server */
+    iBool        isPristineStaged; /* new pristine data is in a temporary file */
+    uint64_t     newGeneration;
     iArray       idMap;       /* bookmark IDs renumbered in `result` */
     iString      error;
     iBlock      *serverFingerprint; /* set if the server certificate was not trusted */
@@ -239,6 +240,9 @@ static void handleStateKeyValue_Sync_(void *context, const iString *table, const
     else if (!cmp_String(key, "recentcheck")) {
         initSeconds_Time(&d->recentCheckTime, num);
     }
+    else if (!cmp_String(key, "generation")) {
+        d->generation = (uint64_t) num;
+    }
 }
 
 static void loadRecent_Sync_(const iSync *d, iSyncRecent *recent, const char *fileName) {
@@ -251,6 +255,22 @@ static void loadRecent_Sync_(const iSync *d, iSyncRecent *recent, const char *fi
     iRelease(f);
 }
 
+static iSyncData *loadPristine_Sync_(const iSync *d) {
+    iSyncData *pristine = new_SyncData();
+    iFile     *f        = new_File(path_Sync_(d, pristineFileName_Sync_));
+    if (open_File(f, readOnly_FileMode)) {
+        iBlock *data = readAll_File(f);
+        if (!deserialize_SyncData(pristine, data)) {
+            fprintf(stderr, "[Sync] failed to read the pristine data\n");
+            delete_SyncData(pristine);
+            pristine = new_SyncData();
+        }
+        delete_Block(data);
+    }
+    iRelease(f);
+    return pristine;
+}
+
 static void loadState_Sync_(iSync *d) {
     iFile *f = new_File(path_Sync_(d, stateFileName_Sync_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
@@ -258,15 +278,6 @@ static void loadState_Sync_(iSync *d) {
         setHandlers_TomlParser(toml, NULL, handleStateKeyValue_Sync_, d);
         parse_TomlParser(toml, collect_String(readString_File(f)));
         delete_TomlParser(toml);
-    }
-    iRelease(f);
-    f = new_File(path_Sync_(d, pristineFileName_Sync_));
-    if (open_File(f, readOnly_FileMode)) {
-        if (!deserialize_SyncData(d->pristine, collect_Block(readAll_File(f)))) {
-            fprintf(stderr, "[Sync] failed to read the pristine data\n");
-            delete_SyncData(d->pristine);
-            d->pristine = new_SyncData();
-        }
     }
     iRelease(f);
     loadRecent_Sync_(d, d->recent, recentFileName_Sync_);
@@ -279,7 +290,7 @@ static void saveState_Sync_(iSync *d) {
     lock_Mutex(d->mtx);
     format_String(str,
                   "lastsync = %f\nlastcheck = %f\nlastattempt = %f\nsynced = %f\n"
-                  "recentmodified = %f\nrecentsynced = %f\nrecentcheck = %f\n"
+                  "recentmodified = %f\nrecentsynced = %f\nrecentcheck = %f\ngeneration = %llu\n"
                   "server = \"%s\"\nidentity = \"%s\"\nerror = \"%s\"\n\n[modified]\n",
                   seconds_Time(&d->lastSyncTime),
                   seconds_Time(&d->lastCheckTime),
@@ -288,6 +299,7 @@ static void saveState_Sync_(iSync *d) {
                   seconds_Time(&d->recentModified),
                   seconds_Time(&d->recentSyncedTime),
                   seconds_Time(&d->recentCheckTime),
+                  (unsigned long long) d->generation,
                   cstrCollect_String(quote_String(&d->syncedServer, iFalse)),
                   cstrCollect_String(quote_String(&d->syncedIdentity, iFalse)),
                   cstrCollect_String(quote_String(&d->lastError, iFalse)));
@@ -303,21 +315,30 @@ static void saveState_Sync_(iSync *d) {
     delete_String(str);
 }
 
-static void writeFile_Sync_(iSync *d, const char *fileName, const iBlock *data) {
-    makeDirs_Path(&d->dir);
-    const iString *path    = path_Sync_(d, fileName);
-    const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
-    iFile *f = new_File(tmpPath);
-    if (open_File(f, writeOnly_FileMode)) {
-        write_File(f, data);
-        close_File(f);
-        commitFile_Core(cstr_String(path), cstr_String(tmpPath));
-    }
-    iRelease(f);
+static const iString *tempPath_Sync_(const iSync *d, const char *fileName) {
+    return collectNewFormat_String("%s.tmp", cstr_String(path_Sync_(d, fileName)));
 }
 
-static void savePristine_Sync_(iSync *d) {
-    writeFile_Sync_(d, pristineFileName_Sync_, collect_Block(serialize_SyncData(d->pristine)));
+static iBool writeTempFile_Sync_(iSync *d, const char *fileName, const iBlock *data) {
+    makeDirs_Path(&d->dir);
+    iFile *f = new_File(tempPath_Sync_(d, fileName));
+    const iBool ok = open_File(f, writeOnly_FileMode);
+    if (ok) {
+        write_File(f, data);
+        close_File(f);
+    }
+    iRelease(f);
+    return ok;
+}
+
+static void commitFile_Sync_(iSync *d, const char *fileName) {
+    commitFile_Core(cstr_String(path_Sync_(d, fileName)), cstr_String(tempPath_Sync_(d, fileName)));
+}
+
+static void writeFile_Sync_(iSync *d, const char *fileName, const iBlock *data) {
+    if (writeTempFile_Sync_(d, fileName, data)) {
+        commitFile_Sync_(d, fileName);
+    }
 }
 
 static void saveRecent_Sync_(iSync *d) {
@@ -330,8 +351,7 @@ static void saveRecent_Sync_(iSync *d) {
 
 static void reset_Sync_(iSync *d) {
     /* Next sync begins from scratch, like the first one. */
-    delete_SyncData(d->pristine);
-    d->pristine = new_SyncData();
+    d->generation = 0;
     remove(cstr_String(path_Sync_(d, pristineFileName_Sync_)));
     delete_SyncRecent(d->recent);
     d->recent = new_SyncRecent();
@@ -404,9 +424,10 @@ static void visitedUrlChanged_Sync_(const iString *url, iBool isRemoved) {
     }
     iTime now;
     initCurrent_Time(&now);
+    const int64_t changed = integralSeconds_Time(&now);
     lock_Mutex(d->mtx);
-    setVisit_SyncRecent(d->recentLocal,
-                        &(iSyncRecentVisit){ .url = *url, .changed = integralSeconds_Time(&now) });
+    prune_SyncRecent(d->recentLocal, changed - (int64_t) recentWindow_Sync_);
+    setVisit_SyncRecent(d->recentLocal, &(iSyncRecentVisit){ .url = *url, .changed = changed });
     unlock_Mutex(d->mtx);
     recentChanged_Sync_(d);
 }
@@ -478,8 +499,6 @@ static iSyncData *takeSnapshot_Sync_(iSync *d) {
         snap->modified[type] = d->modified[type];
     }
     unlock_Mutex(d->mtx);
-    snap->generation    = d->pristine->generation;
-    snap->maxBookmarkId = d->pristine->maxBookmarkId;
     return snap;
 }
 
@@ -641,6 +660,8 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
        using the snapshot as the base. */
     iSyncData *live     = takeSnapshot_Sync_(d);
     iSyncData *base     = copy_SyncData(d->snapshot);
+    live->generation    = d->snapshot->generation;
+    live->maxBookmarkId = d->snapshot->maxBookmarkId;
     iArray    *liveMap  = new_Array(sizeof(iSyncIdMapping));
     iArray    *finalMap = new_Array(sizeof(iSyncIdMapping));
     iArray    *mergeMap = new_Array(sizeof(iSyncIdMapping));
@@ -1019,9 +1040,20 @@ static enum iSyncUploadResult uploadRecent_Sync_(iSync *d, iSyncRecent *recent,
     return result;
 }
 
+static void stagePristine_Sync_(iSync *d, const iSyncData *pristine) {
+    /* Committed when the result is applied. */
+    iBlock *data = serialize_SyncData(pristine);
+    d->isPristineStaged = writeTempFile_Sync_(d, pristineFileName_Sync_, data);
+    d->newGeneration    = pristine->generation;
+    delete_Block(data);
+}
+
 static iThreadResult run_Sync_(iThread *thread) {
     iSync *d = &sync_;
     iUnused(thread);
+    d->base = loadPristine_Sync_(d);
+    d->snapshot->generation    = d->base->generation;
+    d->snapshot->maxBookmarkId = d->base->maxBookmarkId;
     int attempt;
     for (attempt = 0; attempt < maxAttempts_Sync_; attempt++) {
         clear_Array(&d->idMap);
@@ -1033,9 +1065,10 @@ static iThreadResult run_Sync_(iThread *thread) {
         if (equal_SyncData(merged, remote)) {
             /* Nothing new to upload. */
             merged->generation = remote->generation;
-            d->result      = merged;
-            d->newPristine = remote;
-            d->didUpload   = iTrue;
+            d->result    = merged;
+            d->didUpload = iTrue;
+            stagePristine_Sync_(d, remote);
+            delete_SyncData(remote);
             break;
         }
         const enum iSyncUploadResult up = upload_Sync_(d, merged, remote->generation);
@@ -1047,19 +1080,21 @@ static iThreadResult run_Sync_(iThread *thread) {
         }
         d->result = merged;
         if (up == ok_SyncUploadResult) {
-            d->newPristine = copy_SyncData(merged);
-            d->didUpload   = iTrue;
-            delete_SyncData(remote);
+            d->didUpload = iTrue;
+            stagePristine_Sync_(d, merged);
         }
         else {
             /* Local changes remain pending. */
-            d->newPristine = remote;
+            stagePristine_Sync_(d, remote);
         }
+        delete_SyncData(remote);
         break;
     }
     if (attempt == maxAttempts_Sync_) {
         setError_Sync_(d, "sync.error.busy");
     }
+    delete_SyncData(d->base);
+    d->base = NULL;
     postCommand_App("sync.worker.finished");
     return 0;
 }
@@ -1243,7 +1278,7 @@ static void promptTrust_Sync_(iSync *d) {
 
 static iBool canSyncRecent_Sync_(const iSync *d) {
     /* Recent changes are synced after the first full sync. */
-    return isConfigured_Sync_() && d->pristine->generation > 0 &&
+    return isConfigured_Sync_() && d->generation > 0 &&
            equal_String(&d->syncedServer, server_Sync_()) &&
            equal_String(&d->syncedIdentity, identity_Sync_());
 }
@@ -1340,7 +1375,6 @@ static void start_Sync_(iSync *d, iBool isManual) {
     d->mode = full_SyncMode;
     discardRemote_Bookmarks(bookmarks_App());
     d->snapshot = takeSnapshot_Sync_(d);
-    d->base     = copy_SyncData(d->pristine);
     clear_Array(&d->idMap);
     notifyStatus_Sync_();
     notify_App("sync.started");
@@ -1368,11 +1402,10 @@ static void finish_Sync_(iSync *d) {
     if (d->result) {
         apply_Sync_(d, d->result, &d->idMap);
     }
-    if (d->newPristine) {
-        delete_SyncData(d->pristine);
-        d->pristine = d->newPristine;
-        d->newPristine = NULL;
-        savePristine_Sync_(d);
+    if (d->isPristineStaged) {
+        commitFile_Sync_(d, pristineFileName_Sync_);
+        d->generation       = d->newGeneration;
+        d->isPristineStaged = iFalse;
     }
     if (d->didContact) {
         initCurrent_Time(&d->lastCheckTime);
@@ -1394,8 +1427,6 @@ static void finish_Sync_(iSync *d) {
     d->result = NULL;
     delete_SyncData(d->snapshot);
     d->snapshot = NULL;
-    delete_SyncData(d->base);
-    d->base = NULL;
     set_Atomic(&d->isRunning, iFalse);
     saveState_Sync_(d);
     fetchRemote_Bookmarks(bookmarks_App());
@@ -1562,7 +1593,6 @@ void init_Sync(const char *dataDir) {
     init_String(&d->recentError);
     init_String(&d->trustHost);
     init_Array(&d->idMap, sizeof(iSyncIdMapping));
-    d->pristine    = new_SyncData();
     d->recent      = new_SyncRecent();
     d->recentLocal = new_SyncRecent();
     loadState_Sync_(d);
@@ -1600,10 +1630,8 @@ void deinit_Sync(void) {
     saveState_Sync_(d);
     saveRecent_Sync_(d);
     delete_SyncData(d->result);
-    delete_SyncData(d->newPristine);
     delete_SyncData(d->snapshot);
     delete_SyncData(d->base);
-    delete_SyncData(d->pristine);
     delete_SyncRecent(d->recentResult);
     delete_SyncRecent(d->outgoing);
     delete_SyncRecent(d->recentLocal);
@@ -1679,9 +1707,9 @@ iString *statusText_Sync(void) {
     if (isValid_Time(&d->lastSyncTime)) {
         format_String(str, "%s %s", cstr_Lang("sync.status.last"),
                       cstrCollect_String(format_Time(&d->lastSyncTime, "%Y-%m-%d %H:%M")));
-        if (d->pristine->generation) {
+        if (d->generation) {
             appendFormat_String(str, " (%s %llu)", cstr_Lang("sync.status.generation"),
-                                (unsigned long long) d->pristine->generation);
+                                (unsigned long long) d->generation);
         }
     }
     else {
@@ -1769,7 +1797,7 @@ iBool handleCommand_Sync(const char *cmd) {
     }
     if (equal_Command(cmd, "sync.prefs.changed")) {
         if (!prefs_Sync_()->sync && !argLabel_Command(cmd, "launch") &&
-            (isValid_Time(&d->lastAttemptTime) || d->pristine->generation)) {
+            (isValid_Time(&d->lastAttemptTime) || d->generation)) {
             reset_Sync_(d); /* syncing again will be like the first time */
         }
         updateTimer_Sync_(d);
