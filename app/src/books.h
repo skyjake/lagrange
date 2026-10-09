@@ -80,6 +80,9 @@ void            update_Books        (const iGempub *, const iString *path);
 void            beginReading_Books  (const iGempub *);
 void            setPosition_Books   (const iGempub *, int chapter, int numChapters, float pos);
 void            applySync_Books     (iStream *ins); /* replaces everything except local files */
+const iPtrArray*listPositions_Books (iTime since); /* books whose position changed after `since` */
+iBool           setSyncedPosition_Books(const iString *id, int chapter, int numChapters,
+                                        float pos, iTime positionTime); /* if newer */
 void            setSource_Books     (const iString *id, const iString *url);
 const iString * add_Books           (const iBlock *gempubData, const iString *fileName,
                                      const iString *replacePath,

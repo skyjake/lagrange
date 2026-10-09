@@ -254,6 +254,21 @@ iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
     return item.when;
 }
 
+uint16_t urlVisitFlags_Visited(const iVisited *d, const iString *url) {
+    iVisitedUrl item;
+    size_t pos;
+    uint16_t flags = 0;
+    iZap(item);
+    initCopy_String(&item.url, canonicalUrl_String(url));
+    lock_Mutex(d->mtx);
+    if (locate_SortedArray(&d->visited, &item, &pos)) {
+        flags = ((const iVisitedUrl *) constAt_SortedArray(&d->visited, pos))->flags;
+    }
+    unlock_Mutex(d->mtx);
+    deinit_String(&item.url);
+    return flags;
+}
+
 iBool containsUrl_Visited(const iVisited *d, const iString *url) {
     const iTime time = urlVisitTime_Visited(d, url);
     return isValid_Time(&time);

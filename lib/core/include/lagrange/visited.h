@@ -52,6 +52,7 @@ void    serialize_Visited       (const iVisited *, iStream *out);
 void    deserialize_Visited     (iVisited *, iStream *ins, iBool mergeKeepingLatest);
 
 iTime   urlVisitTime_Visited    (const iVisited *, const iString *url);
+uint16_t urlVisitFlags_Visited  (const iVisited *, const iString *url);
 void    visitUrl_Visited        (iVisited *, const iString *url, uint16_t visitFlags); /* adds URL to the visited URLs set */
 void    visitUrlTime_Visited    (iVisited *, const iString *url, uint16_t visitFlags, iTime when);
 void    setUrlKept_Visited      (iVisited *, const iString *url, iBool isKept); /* URL is marked as (non)discardable */

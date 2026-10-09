@@ -325,6 +325,41 @@ void applySync_Books(iStream *ins) {
     save_Books();
 }
 
+const iPtrArray *listPositions_Books(iTime since) {
+    iBooks    *d    = books_;
+    iPtrArray *list = collectNew_PtrArray();
+    lock_Mutex(d->mtx);
+    iConstForEach(StringHash, i, d->books) {
+        const iBook *book = value_StringHashNode(i.value);
+        if (cmp_Time(&book->positionTime, &since) > 0) {
+            pushBack_PtrArray(list, book);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return list;
+}
+
+iBool setSyncedPosition_Books(const iString *id, int chapter, int numChapters, float pos,
+                              iTime positionTime) {
+    iBooks *d = books_;
+    iBool   isChanged = iFalse;
+    lock_Mutex(d->mtx);
+    iBook *book = value_StringHash(d->books, id);
+    if (book && integralSeconds_Time(&positionTime) > integralSeconds_Time(&book->positionTime)) {
+        book->chapter      = chapter;
+        book->numChapters  = numChapters;
+        book->chapterPos   = iClamp(pos, 0.0f, 1.0f);
+        book->positionTime = positionTime;
+        max_Time(&book->timestamp, &positionTime);
+        isChanged = iTrue;
+    }
+    unlock_Mutex(d->mtx);
+    if (isChanged) {
+        save_Books();
+    }
+    return isChanged;
+}
+
 static void load_Books_(iBooks *d) {
     iFile *f = newCStr_File(concatPath_CStr(cstr_String(&d->saveDir), fileName_Books_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {

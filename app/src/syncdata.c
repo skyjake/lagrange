@@ -86,10 +86,7 @@ static const char     magic_SyncData_[2][5]   = {
     { 'L', 'g', 'S', 'y', 1 /* version */ },
     { 'L', 'g', 'S', 'r', 1 /* version */ }, /* recent changes */
 };
-static const char    *recentMetaEntry_SyncData_ = "recent.ini";
-static const iSyncFieldInfo recentVisitFields_[] = {
-    { "changed", iTrue }, { "when", iTrue }, { "flags" },
-};
+static const uint32_t recentFormatVersion_SyncData_ = 1;
 static const char    *keyLabel_SyncData_      = "lagrange-sync-v1";
 
 size_t numFields_SyncDataType(enum iSyncDataType type) {
@@ -381,160 +378,233 @@ iBool deserialize_SyncData(iSyncData *d, const iBlock *archive) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static int cmpVisit_SyncRecent_(const void *a, const void *b) {
+    return cmpString_String(&((const iSyncRecentVisit *) a)->url,
+                            &((const iSyncRecentVisit *) b)->url);
+}
+
+static int cmpBook_SyncRecent_(const void *a, const void *b) {
+    return cmpString_String(&((const iSyncRecentBook *) a)->id,
+                            &((const iSyncRecentBook *) b)->id);
+}
+
 void init_SyncRecent(iSyncRecent *d) {
     d->generation = 0;
-    d->visits     = new_StringHash();
-    d->books      = new_StringHash();
+    init_SortedArray(&d->visits, sizeof(iSyncRecentVisit), cmpVisit_SyncRecent_);
+    init_SortedArray(&d->books, sizeof(iSyncRecentBook), cmpBook_SyncRecent_);
 }
 
 void deinit_SyncRecent(iSyncRecent *d) {
-    iRelease(d->books);
-    iRelease(d->visits);
+    clear_SyncRecent(d);
+    deinit_SortedArray(&d->books);
+    deinit_SortedArray(&d->visits);
 }
 
 iDefineTypeConstruction(SyncRecent)
 
-static void insertRecord_(iStringHash *records, iSyncRecord *record) {
-    insert_StringHash(records, &record->key, record);
-    iRelease(record);
+void clear_SyncRecent(iSyncRecent *d) {
+    iForEach(Array, i, &d->visits.values) {
+        deinit_String(&((iSyncRecentVisit *) i.value)->url);
+    }
+    iForEach(Array, j, &d->books.values) {
+        deinit_String(&((iSyncRecentBook *) j.value)->id);
+    }
+    clear_SortedArray(&d->visits);
+    clear_SortedArray(&d->books);
+    d->generation = 0;
 }
 
 iSyncRecent *copy_SyncRecent(const iSyncRecent *d) {
     iSyncRecent *copy = new_SyncRecent();
     copy->generation = d->generation;
-    iConstForEach(StringHash, i, d->visits) {
-        insertRecord_(copy->visits, copy_SyncRecord_(value_StringHashNode(i.value)));
+    iConstForEach(Array, i, &d->visits.values) {
+        setVisit_SyncRecent(copy, i.value);
     }
-    iConstForEach(StringHash, j, d->books) {
-        insertRecord_(copy->books, copy_SyncRecord_(value_StringHashNode(j.value)));
+    iConstForEach(Array, j, &d->books.values) {
+        setBook_SyncRecent(copy, j.value);
     }
     return copy;
 }
 
-iSyncRecord *addVisit_SyncRecent(iSyncRecent *d, const iString *url) {
-    iSyncRecord *rec = new_SyncRecord(url, iElemCount(recentVisitFields_));
-    insertRecord_(d->visits, rec);
-    return rec;
+void setVisit_SyncRecent(iSyncRecent *d, const iSyncRecentVisit *visit) {
+    size_t pos;
+    if (locate_SortedArray(&d->visits, visit, &pos)) {
+        iSyncRecentVisit *old = at_SortedArray(&d->visits, pos);
+        old->changed    = visit->changed;
+        old->when       = visit->when;
+        old->visitFlags = visit->visitFlags;
+        old->flags      = visit->flags;
+        return;
+    }
+    iSyncRecentVisit copy = *visit;
+    initCopy_String(&copy.url, &visit->url);
+    insert_Array(&d->visits.values, pos, &copy);
 }
 
-void addBook_SyncRecent(iSyncRecent *d, const iSyncRecord *book) {
-    insertRecord_(d->books, copy_SyncRecord_(book));
+void setBook_SyncRecent(iSyncRecent *d, const iSyncRecentBook *book) {
+    size_t pos;
+    if (locate_SortedArray(&d->books, book, &pos)) {
+        iSyncRecentBook *old = at_SortedArray(&d->books, pos);
+        old->positionTime = book->positionTime;
+        old->chapter      = book->chapter;
+        old->numChapters  = book->numChapters;
+        old->pos          = book->pos;
+        return;
+    }
+    iSyncRecentBook copy = *book;
+    initCopy_String(&copy.id, &book->id);
+    insert_Array(&d->books.values, pos, &copy);
 }
 
-static iBool equalRecords_(const iStringHash *a, const iStringHash *b) {
-    if (size_StringHash(a) != size_StringHash(b)) {
+const iSyncRecentVisit *findVisit_SyncRecent(const iSyncRecent *d, const iString *url) {
+    const iSyncRecentVisit key = { .url = *url };
+    size_t pos;
+    return locate_SortedArray(&d->visits, &key, &pos) ? constAt_SortedArray(&d->visits, pos)
+                                                      : NULL;
+}
+
+static const iSyncRecentBook *findBook_SyncRecent_(const iSyncRecent *d, const iString *id) {
+    const iSyncRecentBook key = { .id = *id };
+    size_t pos;
+    return locate_SortedArray(&d->books, &key, &pos) ? constAt_SortedArray(&d->books, pos) : NULL;
+}
+
+iBool equal_SyncRecent(const iSyncRecent *d, const iSyncRecent *other) {
+    if (size_SortedArray(&d->visits) != size_SortedArray(&other->visits) ||
+        size_SortedArray(&d->books) != size_SortedArray(&other->books)) {
         return iFalse;
     }
-    iConstForEach(StringHash, i, a) {
-        const iSyncRecord *rec   = value_StringHashNode(i.value);
-        const iSyncRecord *other = constValue_StringHash(b, &rec->key);
-        if (!other || !equal_SyncRecord(rec, other)) {
+    for (size_t i = 0; i < size_SortedArray(&d->visits); i++) {
+        const iSyncRecentVisit *a = constAt_SortedArray(&d->visits, i);
+        const iSyncRecentVisit *b = constAt_SortedArray(&other->visits, i);
+        if (!equal_String(&a->url, &b->url) || a->changed != b->changed || a->when != b->when ||
+            a->visitFlags != b->visitFlags || a->flags != b->flags) {
+            return iFalse;
+        }
+    }
+    for (size_t i = 0; i < size_SortedArray(&d->books); i++) {
+        const iSyncRecentBook *a = constAt_SortedArray(&d->books, i);
+        const iSyncRecentBook *b = constAt_SortedArray(&other->books, i);
+        if (!equal_String(&a->id, &b->id) || a->positionTime != b->positionTime ||
+            a->chapter != b->chapter || a->numChapters != b->numChapters || a->pos != b->pos) {
             return iFalse;
         }
     }
     return iTrue;
 }
 
-iBool equal_SyncRecent(const iSyncRecent *d, const iSyncRecent *other) {
-    return equalRecords_(d->visits, other->visits) && equalRecords_(d->books, other->books);
-}
-
-static iBool isNewerVisit_(const iSyncRecord *a, const iSyncRecord *b) {
-    const int64_t ta = number_SyncRecord_(a, changed_SyncRecentVisitField);
-    const int64_t tb = number_SyncRecord_(b, changed_SyncRecentVisitField);
-    if (ta != tb) {
-        return ta > tb;
+static iBool isNewerVisit_(const iSyncRecentVisit *a, const iSyncRecentVisit *b) {
+    if (a->changed != b->changed) {
+        return a->changed > b->changed;
     }
     /* A removal at the same time is assumed to come after the visit. */
-    return isEmpty_String(field_SyncRecord(a, when_SyncRecentVisitField)) &&
-           !isEmpty_String(field_SyncRecord(b, when_SyncRecentVisitField));
-}
-
-static iBool isNewerBook_(const iSyncRecord *a, const iSyncRecord *b) {
-    const int64_t ta = number_SyncRecord_(a, positionTime_SyncBookField);
-    const int64_t tb = number_SyncRecord_(b, positionTime_SyncBookField);
-    if (ta != tb) {
-        return ta > tb;
-    }
-    return number_SyncRecord_(a, timestamp_SyncBookField) >
-           number_SyncRecord_(b, timestamp_SyncBookField);
-}
-
-static void mergeRecords_(iStringHash *records, const iStringHash *other,
-                          iBool (*isNewer)(const iSyncRecord *, const iSyncRecord *)) {
-    iConstForEach(StringHash, i, other) {
-        const iSyncRecord *rec = value_StringHashNode(i.value);
-        const iSyncRecord *old = constValue_StringHash(records, &rec->key);
-        if (!old || isNewer(rec, old)) {
-            insertRecord_(records, copy_SyncRecord_(rec));
-        }
-    }
+    return (a->flags & removed_SyncRecentVisitFlag) && !(b->flags & removed_SyncRecentVisitFlag);
 }
 
 void merge_SyncRecent(iSyncRecent *d, const iSyncRecent *other) {
-    mergeRecords_(d->visits, other->visits, isNewerVisit_);
-    mergeRecords_(d->books, other->books, isNewerBook_);
-}
-
-static void pruneRecords_(iStringHash *records, size_t timeField, int64_t cutoff) {
-    iForEach(StringHash, i, records) {
-        if (number_SyncRecord_(value_StringHashNode(i.value), timeField) < cutoff) {
-            remove_StringHashIterator(&i);
+    iConstForEach(Array, i, &other->visits.values) {
+        const iSyncRecentVisit *visit = i.value;
+        const iSyncRecentVisit *old   = findVisit_SyncRecent(d, &visit->url);
+        if (!old || isNewerVisit_(visit, old)) {
+            setVisit_SyncRecent(d, visit);
+        }
+    }
+    iConstForEach(Array, j, &other->books.values) {
+        const iSyncRecentBook *book = j.value;
+        const iSyncRecentBook *old  = findBook_SyncRecent_(d, &book->id);
+        if (!old || book->positionTime > old->positionTime) {
+            setBook_SyncRecent(d, book);
         }
     }
 }
 
-void prune_SyncRecent(iSyncRecent *d, iTime cutoff) {
-    pruneRecords_(d->visits, changed_SyncRecentVisitField, integralSeconds_Time(&cutoff));
-    pruneRecords_(d->books, positionTime_SyncBookField, integralSeconds_Time(&cutoff));
+void prune_SyncRecent(iSyncRecent *d, int64_t cutoff) {
+    iForEach(Array, i, &d->visits.values) {
+        iSyncRecentVisit *visit = i.value;
+        if (visit->changed < cutoff) {
+            deinit_String(&visit->url);
+            remove_ArrayIterator(&i);
+        }
+    }
+    iForEach(Array, j, &d->books.values) {
+        iSyncRecentBook *book = j.value;
+        if (book->positionTime < cutoff) {
+            deinit_String(&book->id);
+            remove_ArrayIterator(&j);
+        }
+    }
 }
 
 iBlock *serialize_SyncRecent(const iSyncRecent *d) {
-    iArchive *arch = new_Archive();
-    openWritable_Archive(arch);
-    setCompressionLevel_Archive(arch, 9);
-    iBlock *meta   = newCStr_Block(format_CStr("format = %u\ngeneration = %llu\n",
-                                               formatVersion_SyncData_,
-                                               (unsigned long long) d->generation));
-    iBlock *visits = serializeRecords_(d->visits, iElemCount(recentVisitFields_));
-    iBlock *books  = serializeRecords_(d->books, iElemCount(bookFields_));
-    setDataCStr_Archive(arch, recentMetaEntry_SyncData_, meta);
-    setDataCStr_Archive(arch, "visits.bin", visits);
-    setDataCStr_Archive(arch, "books.bin", books);
-    delete_Block(books);
-    delete_Block(visits);
-    delete_Block(meta);
     iBuffer *buf = new_Buffer();
     openEmpty_Buffer(buf);
-    serialize_Archive(arch, stream_Buffer(buf));
-    iBlock *zip = copy_Block(data_Buffer(buf));
+    iStream *outs = stream_Buffer(buf);
+    writeU32_Stream(outs, recentFormatVersion_SyncData_);
+    writeU64_Stream(outs, d->generation);
+    writeU32_Stream(outs, (uint32_t) size_SortedArray(&d->visits));
+    iConstForEach(Array, i, &d->visits.values) {
+        const iSyncRecentVisit *visit = i.value;
+        serialize_String(&visit->url, outs);
+        write64_Stream(outs, visit->changed);
+        write64_Stream(outs, visit->when);
+        writeU16_Stream(outs, visit->visitFlags);
+        writeU16_Stream(outs, visit->flags);
+    }
+    writeU32_Stream(outs, (uint32_t) size_SortedArray(&d->books));
+    iConstForEach(Array, j, &d->books.values) {
+        const iSyncRecentBook *book = j.value;
+        serialize_String(&book->id, outs);
+        write64_Stream(outs, book->positionTime);
+        write32_Stream(outs, book->chapter);
+        write32_Stream(outs, book->numChapters);
+        writef_Stream(outs, book->pos);
+    }
+    iBlock *out = compressLevel_Block(data_Buffer(buf), 9);
     iRelease(buf);
-    iRelease(arch);
-    return zip;
+    return out;
 }
 
-iBool deserialize_SyncRecent(iSyncRecent *d, const iBlock *archive) {
-    iArchive *arch = new_Archive();
-    iBool     ok   = iFalse;
-    clear_StringHash(d->visits);
-    clear_StringHash(d->books);
-    if (openData_Archive(arch, archive)) {
-        const iBlock *meta   = dataCStr_Archive(arch, recentMetaEntry_SyncData_);
-        const iBlock *visits = dataCStr_Archive(arch, "visits.bin");
-        const iBlock *books  = dataCStr_Archive(arch, "books.bin");
-        if (meta && visits && books) {
-            iSyncData   *info = new_SyncData();
-            iTomlParser *toml = new_TomlParser();
-            setHandlers_TomlParser(toml, NULL, handleMetaKeyValue_SyncData_, info);
-            ok = parse_TomlParser(toml, collect_String(newBlock_String(meta))) &&
-                 deserializeRecords_(d->visits, iElemCount(recentVisitFields_), visits) &&
-                 deserializeRecords_(d->books, iElemCount(bookFields_), books);
-            d->generation = info->generation;
-            delete_TomlParser(toml);
-            delete_SyncData(info);
+iBool deserialize_SyncRecent(iSyncRecent *d, const iBlock *data) {
+    clear_SyncRecent(d);
+    iBlock  *raw = decompress_Block(data);
+    iBuffer *buf = new_Buffer();
+    open_Buffer(buf, raw);
+    iStream *ins = stream_Buffer(buf);
+    iBool    ok  = !isEmpty_Block(raw) && readU32_Stream(ins) == recentFormatVersion_SyncData_;
+    if (ok) {
+        d->generation = readU64_Stream(ins);
+        const uint32_t numVisits = readU32_Stream(ins);
+        for (uint32_t i = 0; ok && i < numVisits; i++) {
+            iSyncRecentVisit visit;
+            init_String(&visit.url);
+            deserialize_String(&visit.url, ins);
+            visit.changed    = read64_Stream(ins);
+            visit.when       = read64_Stream(ins);
+            visit.visitFlags = readU16_Stream(ins);
+            visit.flags      = readU16_Stream(ins);
+            ok = !atEnd_Stream(ins);
+            setVisit_SyncRecent(d, &visit);
+            deinit_String(&visit.url);
+        }
+        const uint32_t numBooks = ok ? readU32_Stream(ins) : 0;
+        for (uint32_t i = 0; ok && i < numBooks; i++) {
+            iSyncRecentBook book;
+            init_String(&book.id);
+            deserialize_String(&book.id, ins);
+            book.positionTime = read64_Stream(ins);
+            book.chapter      = read32_Stream(ins);
+            book.numChapters  = read32_Stream(ins);
+            book.pos          = readf_Stream(ins);
+            ok = i + 1 == numBooks || !atEnd_Stream(ins);
+            setBook_SyncRecent(d, &book);
+            deinit_String(&book.id);
         }
     }
-    iRelease(arch);
+    iRelease(buf);
+    delete_Block(raw);
+    if (!ok) {
+        clear_SyncRecent(d);
+    }
     return ok;
 }
 

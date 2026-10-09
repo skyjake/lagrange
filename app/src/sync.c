@@ -246,9 +246,6 @@ static void loadRecent_Sync_(const iSync *d, iSyncRecent *recent, const char *fi
     if (open_File(f, readOnly_FileMode)) {
         if (!deserialize_SyncRecent(recent, collect_Block(readAll_File(f)))) {
             fprintf(stderr, "[Sync] failed to read %s\n", fileName);
-            clear_StringHash(recent->visits);
-            clear_StringHash(recent->books);
-            recent->generation = 0;
         }
     }
     iRelease(f);
@@ -408,9 +405,8 @@ static void visitedUrlChanged_Sync_(const iString *url, iBool isRemoved) {
     iTime now;
     initCurrent_Time(&now);
     lock_Mutex(d->mtx);
-    setFieldCStr_SyncRecord(addVisit_SyncRecent(d->recentLocal, url),
-                            changed_SyncRecentVisitField,
-                            format_CStr("%lld", (long long) integralSeconds_Time(&now)));
+    setVisit_SyncRecent(d->recentLocal,
+                        &(iSyncRecentVisit){ .url = *url, .changed = integralSeconds_Time(&now) });
     unlock_Mutex(d->mtx);
     recentChanged_Sync_(d);
 }
@@ -487,48 +483,45 @@ static iSyncData *takeSnapshot_Sync_(iSync *d) {
     return snap;
 }
 
-static iTime recentCutoff_Sync_(void) {
-    iTime cutoff, window;
-    initCurrent_Time(&cutoff);
-    initSeconds_Time(&window, recentWindow_Sync_);
-    sub_Time(&cutoff, &window);
-    return cutoff;
+static int64_t recentCutoff_Sync_(void) {
+    iTime now;
+    initCurrent_Time(&now);
+    return integralSeconds_Time(&now) - (int64_t) recentWindow_Sync_;
 }
 
 static iSyncRecent *takeRecentSnapshot_Sync_(iSync *d) {
-    const iTime  cutoff = recentCutoff_Sync_();
-    iSyncRecent *snap   = new_SyncRecent();
+    const int64_t cutoff = recentCutoff_Sync_();
+    iSyncRecent  *snap   = new_SyncRecent();
     lock_Mutex(d->mtx);
     prune_SyncRecent(d->recentLocal, cutoff);
     iSyncRecent *log = copy_SyncRecent(d->recentLocal);
     unlock_Mutex(d->mtx);
-    if (size_StringHash(log->visits)) {
-        /* Current state of the changed URLs; missing ones were removed. */
-        iSyncData *visited = new_SyncData();
-        snapshotType_Sync_(visited, visited_SyncDataType);
-        iConstForEach(StringHash, i, log->visits) {
-            const iSyncRecord *change = value_StringHashNode(i.value);
-            const iSyncRecord *vis    = find_SyncData(visited, visited_SyncDataType, &change->key);
-            iSyncRecord       *rec    = addVisit_SyncRecent(snap, &change->key);
-            setField_SyncRecord(rec, changed_SyncRecentVisitField,
-                                field_SyncRecord(change, changed_SyncRecentVisitField));
-            if (vis) {
-                setField_SyncRecord(rec, when_SyncRecentVisitField,
-                                    field_SyncRecord(vis, when_SyncVisitedField));
-                setField_SyncRecord(rec, flags_SyncRecentVisitField,
-                                    field_SyncRecord(vis, flags_SyncVisitedField));
-            }
+    /* Current state of the changed URLs; missing ones were removed. */
+    iConstForEach(Array, i, &log->visits.values) {
+        const iSyncRecentVisit *change = i.value;
+        const iTime when = urlVisitTime_Visited(visited_App(), &change->url);
+        iSyncRecentVisit visit = { .url = change->url, .changed = change->changed };
+        if (isValid_Time(&when)) {
+            visit.when       = integralSeconds_Time(&when);
+            visit.visitFlags = urlVisitFlags_Visited(visited_App(), &change->url);
         }
-        delete_SyncData(visited);
+        else {
+            visit.flags = removed_SyncRecentVisitFlag;
+        }
+        setVisit_SyncRecent(snap, &visit);
     }
     delete_SyncRecent(log);
-    iSyncData *books = new_SyncData();
-    snapshotType_Sync_(books, books_SyncDataType);
-    iConstForEach(StringHash, j, books->records[books_SyncDataType]) {
-        addBook_SyncRecent(snap, value_StringHashNode(j.value));
+    iTime since;
+    initSeconds_Time(&since, (double) cutoff);
+    iConstForEach(PtrArray, j, listPositions_Books(since)) {
+        const iBook *book = j.ptr;
+        setBook_SyncRecent(snap,
+                           &(iSyncRecentBook){ .id           = book->id,
+                                               .positionTime = integralSeconds_Time(&book->positionTime),
+                                               .chapter      = book->chapter,
+                                               .numChapters  = book->numChapters,
+                                               .pos          = book->chapterPos });
     }
-    delete_SyncData(books);
-    prune_SyncRecent(snap, cutoff);
     return snap;
 }
 
@@ -701,70 +694,51 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
     delete_SyncData(live);
 }
 
-static int64_t recordNumber_(const iSyncRecord *rec, size_t field) {
-    return strtoll(cstr_String(field_SyncRecord(rec, field)), NULL, 10);
-}
-
 static void applyRecent_Sync_(iSync *d, const iSyncRecent *recent) {
-    iVisited *visited = visited_App();
+    iVisited *visited          = visited_App();
     iBool     isVisitedChanged = iFalse;
+    iBool     isBooksChanged   = iFalse;
     d->isApplying = iTrue;
-    iConstForEach(StringHash, i, recent->visits) {
-        const iSyncRecord *rec     = value_StringHashNode(i.value);
-        const int64_t      changed = recordNumber_(rec, changed_SyncRecentVisitField);
-        int64_t            ownChanged = 0;
+    iConstForEach(Array, i, &recent->visits.values) {
+        const iSyncRecentVisit *visit = i.value;
         lock_Mutex(d->mtx);
-        const iSyncRecord *own = constValue_StringHash(d->recentLocal->visits, &rec->key);
-        if (own) {
-            ownChanged = recordNumber_(own, changed_SyncRecentVisitField);
-        }
+        const iSyncRecentVisit *own = findVisit_SyncRecent(d->recentLocal, &visit->url);
+        const iBool isOwnLater = own && own->changed >= visit->changed;
         unlock_Mutex(d->mtx);
-        const iTime   local     = urlVisitTime_Visited(visited, &rec->key);
+        const iTime   local     = urlVisitTime_Visited(visited, &visit->url);
         const int64_t localWhen = isValid_Time(&local) ? integralSeconds_Time(&local) : 0;
-        if ((own && ownChanged >= changed) || localWhen > changed) {
+        if (isOwnLater || localWhen > visit->changed) {
             continue; /* changed here afterwards */
         }
-        const iString *when = field_SyncRecord(rec, when_SyncRecentVisitField);
-        if (isEmpty_String(when)) {
+        if (visit->flags & removed_SyncRecentVisitFlag) {
             if (localWhen) {
-                removeUrl_Visited(visited, &rec->key);
+                removeUrl_Visited(visited, &visit->url);
                 isVisitedChanged = iTrue;
             }
         }
-        else if (localWhen != recordNumber_(rec, when_SyncRecentVisitField)) {
-            iTime visitTime;
-            initSeconds_Time(&visitTime, (double) recordNumber_(rec, when_SyncRecentVisitField));
-            visitUrlTime_Visited(
-                visited,
-                &rec->key,
-                (uint16_t) strtoul(cstr_String(field_SyncRecord(rec, flags_SyncRecentVisitField)),
-                                   NULL, 16),
-                visitTime);
+        else if (localWhen != visit->when) {
+            iTime when;
+            initSeconds_Time(&when, (double) visit->when);
+            visitUrlTime_Visited(visited, &visit->url, visit->visitFlags, when);
             isVisitedChanged = iTrue;
         }
     }
-    /* Newer reading positions. */
-    iSyncData *books = new_SyncData();
-    iConstForEach(StringHash, j, recent->books) {
-        const iSyncRecord *rec  = value_StringHashNode(j.value);
-        const iBook       *book = find_Books(&rec->key);
-        if (!book || recordNumber_(rec, positionTime_SyncBookField) >
-                         integralSeconds_Time(&book->positionTime)) {
-            iSyncRecord *copy = add_SyncData(books, books_SyncDataType, &rec->key);
-            for (size_t f = 0; f < numFields_SyncDataType(books_SyncDataType); f++) {
-                setField_SyncRecord(copy, f, field_SyncRecord(rec, f));
-            }
+    iConstForEach(Array, j, &recent->books.values) {
+        const iSyncRecentBook *book = j.value;
+        iTime positionTime;
+        initSeconds_Time(&positionTime, (double) book->positionTime);
+        if (setSyncedPosition_Books(
+                &book->id, book->chapter, book->numChapters, book->pos, positionTime)) {
+            isBooksChanged = iTrue;
         }
     }
-    if (size_SyncData(books, books_SyncDataType)) {
-        applySync_Books(nativeStream_(books, books_SyncDataType));
-        notify_App("books.changed");
-        notify_App("books.synced");
-    }
-    delete_SyncData(books);
     d->isApplying = iFalse;
     if (isVisitedChanged) {
         notify_App("visited.changed");
+    }
+    if (isBooksChanged) {
+        notify_App("books.changed");
+        notify_App("books.synced");
     }
 }
 
@@ -1022,9 +996,9 @@ static iSyncRecent *downloadRecent_Sync_(iSync *d) {
         return remote;
     }
     if (!deserialize_SyncRecent(remote, plain)) {
-        setError_Sync_(d, "sync.error.decrypt");
-        delete_SyncRecent(remote);
-        remote = NULL;
+        /* An unknown format is replaced, since the full sync has the data, too. */
+        fprintf(stderr, "[Sync] recent changes in unknown format\n");
+        remote->generation = gen;
     }
     else if (remote->generation != gen) {
         setError_Sync_(d, "sync.error.rollback");
@@ -1093,7 +1067,7 @@ static iThreadResult run_Sync_(iThread *thread) {
 static iThreadResult runRecent_Sync_(iThread *thread) {
     iSync *d = &sync_;
     iUnused(thread);
-    const iTime cutoff = recentCutoff_Sync_();
+    const int64_t cutoff = recentCutoff_Sync_();
     int attempt;
     for (attempt = 0; attempt < maxAttempts_Sync_; attempt++) {
         iSyncRecent *remote = downloadRecent_Sync_(d);

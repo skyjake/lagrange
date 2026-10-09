@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/array.h>
+#include <the_Foundation/sortedarray.h>
 #include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringhash.h>
 #include <the_Foundation/time.h>
@@ -171,10 +172,28 @@ iSyncData *         merge_SyncData      (const iSyncData *base, const iSyncData 
 
 /* Recent changes that are synced quickly between full syncs: read status of feed entries and
    reading positions of books. Each item keeps only its latest change. */
-enum iSyncRecentVisitField {
-    changed_SyncRecentVisitField, /* when the change was made */
-    when_SyncRecentVisitField,    /* visit time; empty if the URL was removed */
-    flags_SyncRecentVisitField,
+enum iSyncRecentVisitFlag {
+    removed_SyncRecentVisitFlag = 0x1, /* the URL was removed (e.g., marked as unread) */
+};
+
+iDeclareType(SyncRecentVisit)
+
+struct Impl_SyncRecentVisit {
+    iString  url;
+    int64_t  changed;    /* when the change was made (seconds) */
+    int64_t  when;       /* visit time (seconds) */
+    uint16_t visitFlags; /* VisitedUrlFlags */
+    uint16_t flags;      /* SyncRecentVisitFlags */
+};
+
+iDeclareType(SyncRecentBook)
+
+struct Impl_SyncRecentBook {
+    iString id;
+    int64_t positionTime; /* seconds */
+    int32_t chapter;
+    int32_t numChapters;
+    float   pos;
 };
 
 iDeclareType(SyncRecent)
@@ -182,18 +201,20 @@ iDeclareTypeConstruction(SyncRecent)
 
 struct Impl_SyncRecent {
     uint64_t     generation;
-    iStringHash *visits; /* URL -> SyncRecord with SyncRecentVisitFields */
-    iStringHash *books;  /* book ID -> SyncRecord with SyncBookFields */
+    iSortedArray visits; /* SyncRecentVisit, by URL */
+    iSortedArray books;  /* SyncRecentBook, by ID */
 };
 
-iSyncRecent *       copy_SyncRecent     (const iSyncRecent *);
-iSyncRecord *       addVisit_SyncRecent (iSyncRecent *, const iString *url);
-void                addBook_SyncRecent  (iSyncRecent *, const iSyncRecord *book);
-iBool               equal_SyncRecent    (const iSyncRecent *, const iSyncRecent *); /* all records */
-void                merge_SyncRecent    (iSyncRecent *, const iSyncRecent *other);
-void                prune_SyncRecent    (iSyncRecent *, iTime cutoff); /* removes older changes */
-iBlock *            serialize_SyncRecent(const iSyncRecent *);
-iBool               deserialize_SyncRecent(iSyncRecent *, const iBlock *archive);
+iSyncRecent *           copy_SyncRecent     (const iSyncRecent *);
+void                    clear_SyncRecent    (iSyncRecent *);
+void                    setVisit_SyncRecent (iSyncRecent *, const iSyncRecentVisit *); /* copied */
+void                    setBook_SyncRecent  (iSyncRecent *, const iSyncRecentBook *);  /* copied */
+const iSyncRecentVisit *findVisit_SyncRecent(const iSyncRecent *, const iString *url);
+iBool                   equal_SyncRecent    (const iSyncRecent *, const iSyncRecent *);
+void                    merge_SyncRecent    (iSyncRecent *, const iSyncRecent *other);
+void                    prune_SyncRecent    (iSyncRecent *, int64_t cutoff); /* removes older changes */
+iBlock *                serialize_SyncRecent(const iSyncRecent *);
+iBool                   deserialize_SyncRecent(iSyncRecent *, const iBlock *data);
 
 /*----------------------------------------------------------------------------------------------*/
 
