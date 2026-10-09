@@ -296,7 +296,7 @@ static void drawProgress_ScrollWidget_(const iScrollWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     const iBool    isHot  = (flags_Widget(w) & pressed_WidgetFlag) || isHover_Widget(w);
     const int      height = isHot ? 2 * gap_UI : gap_UI;
-    const int      trackHeight = (isHot ? 3 * gap_UI : gap_UI) / 2;
+    const int      trackHeight = (isHot ? 3 * gap_UI : (2 * gap_UI)) / 2;
     const iRect    track  = init_Rect(left_Rect(bounds), bottom_Rect(bounds) - height,
                                       width_Rect(bounds), height);
     /* In light mode, the bar is dark on a backing of the thumb color. */
