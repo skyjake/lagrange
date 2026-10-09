@@ -163,6 +163,18 @@ static const iPtrArray *listSubscriptions_(void) {
     return list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL);
 }
 
+static uint32_t findSubscription_Feeds_(const iString *url) {
+    /* Bookmarks may have the same URL, and subscriptions may use an identity. */
+    url = canonicalUrl_String(url);
+    iConstForEach(PtrArray, i, listSubscriptions_()) {
+        const iBookmark *bm = i.ptr;
+        if (equalCase_String(url, canonicalUrl_String(&bm->url))) {
+            return id_Bookmark(bm);
+        }
+    }
+    return 0;
+}
+
 static iFeedJob *startNextJob_Feeds_(iFeeds *d) {
     if (isEmpty_PtrArray(&d->jobs)) {
         return NULL;
@@ -254,7 +266,9 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
                 sub_Time(&now, &perEntryAdjust);
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
-                set_String(&entry->url, canonicalUrl_String(absoluteUrl_String(url_GmRequest(d->request), &entry->url)));
+                set_String(&entry->url, absoluteUrl_String(url_GmRequest(d->request), &entry->url));
+                stripDefaultUrlPort_String(&entry->url);
+                set_String(&entry->url, canonicalUrl_String(&entry->url));
                 setRange_String(&entry->title, title);
                 trimTitle_(&entry->title);
                 int year, month, day;
@@ -285,6 +299,7 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
                     set_String(&entry->url, &d->url);
                     appendChar_String(&entry->url, '#');
                     append_String(&entry->url, collect_String(urlEncode_String(title)));
+                    stripDefaultUrlPort_String(&entry->url);
                     set_String(&entry->url, canonicalUrl_String(&entry->url));
                     delete_String(title);
                     pushBack_PtrArray(&d->results, entry);
@@ -309,6 +324,9 @@ static void save_Feeds_(iFeeds *d) {
         /* Index of feeds for IDs. */ {
             iConstForEach(PtrArray, i, listSubscriptions_()) {
                 const iBookmark *bm = i.ptr;
+                if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
+                    continue; /* not successfully checked yet */
+                }
                 format_String(str, "%08x %s\n", id_Bookmark(bm), cstr_String(&bm->url));
                 write_File(f, utf8_String(str));
             }
@@ -361,6 +379,9 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
     iTime now;
     initCurrent_Time(&now);
     if (isHeadings) {
+        if (isEmpty_PtrArray(incoming)) {
+            return iFalse; /* probably not the usual page; keep the known headings */
+        }
         lock_Mutex(d->mtx);
         iStringSet *known = listHeadingEntriesFrom_Feeds_(d, sourceId);
         iStringSet *presentInSource = new_StringSet();
@@ -483,8 +504,15 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             if (work[i]) {
                 if (isFinished_GmRequest(work[i]->request)) {
                     if (parseResult_FeedJob_(work[i])) {
-                        gotNew |= updateEntries_Feeds_(
-                            d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
+                        if (isSuccess_GmStatusCode(status_GmRequest(work[i]->request))) {
+                            gotNew |= updateEntries_Feeds_(
+                                d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
+                            if (work[i]->isFirstUpdate) {
+                                iGuardMutex(d->mtx,
+                                            insert_IntSet(&d->previouslyCheckedFeeds,
+                                                          work[i]->bookmarkId));
+                            }
+                        }
                         delete_FeedJob(work[i]);
                         work[i] = NULL;
                         numFinishedJobs++;
@@ -562,9 +590,6 @@ static iBool startWorker_Feeds_(iFeeds *d) {
         iFeedJob *job = new_FeedJob(bm);
         if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
             job->isFirstUpdate = iTrue;
-//            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
-//            fflush(stdout);
-            insert_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm));
         }
         pushBack_PtrArray(&d->jobs, job);
     }
@@ -651,7 +676,7 @@ static void load_Feeds_(iFeeds *d) {
                         sscanf(line.start, "%08x", &id);
                         iString *feedUrl =
                             collect_String(newRange_String((iRangecc){ line.start + 9, line.end }));
-                        const uint32_t bookmarkId = findUrl_Bookmarks(bookmarks_App(), feedUrl);
+                        const uint32_t bookmarkId = findSubscription_Feeds_(feedUrl);
                         if (bookmarkId) {
                             iFeedHashNode *node = iMalloc(FeedHashNode);
                             node->node.key      = id;
