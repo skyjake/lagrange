@@ -392,7 +392,13 @@ static void disconnected_Handler_(iHandler *d, iTlsConnection *conn) {
     iUnused(conn);
     /* This is the last notification from the connection. */
     if (!d->isDone) {
-        log_Handler_(d, "disconnected before a response");
+        if (d->isUpload) {
+            log_Handler_(d, "disconnected before a response (received %zu of %zu bytes)",
+                         size_Block(&d->received), d->uploadSize);
+        }
+        else {
+            log_Handler_(d, "disconnected before a response");
+        }
     }
     set_Atomic(&d->isFinished, iTrue);
 }

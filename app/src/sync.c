@@ -836,7 +836,10 @@ static iBool request_Sync_(iSync *d, const iString *requestUrl, const iBlock *bo
         iBlock *response = readAll_TlsRequest(req);
         const char *start = constData_Block(response);
         const char *crlf  = strstr(start, "\r\n");
-        if (crlf && crlf - start >= 2) {
+        if (isEmpty_Block(response)) {
+            set_String(&d->error, collectNewCStr_String(cstr_Lang("sync.error.closed")));
+        }
+        else if (crlf && crlf - start >= 2) {
             *status_out = atoi(start);
             setRange_String(meta_out, (iRangecc){ iMin(start + 3, crlf), crlf });
             setData_Block(body_out, crlf + 2, size_Block(response) - (crlf + 2 - start));
