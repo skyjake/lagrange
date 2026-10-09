@@ -115,6 +115,13 @@ static void log_Handler_(const iHandler *d, const char *format, ...) {
     delete_String(msg);
 }
 
+/* In verbose mode, the request has already been logged. */
+static void logRequestForError_Handler_(const iHandler *d) {
+    if (!d->cfg->isVerbose && !isEmpty_String(&d->header)) {
+        log_Handler_(d, "%s", cstr_String(&d->header));
+    }
+}
+
 static void respond_Handler_(iHandler *d, iTlsConnection *conn, int status, const char *meta,
                              const iBlock *body) {
     iString *header = collectNewFormat_String("%02d %s\r\n", status, meta);
@@ -125,8 +132,12 @@ static void respond_Handler_(iHandler *d, iTlsConnection *conn, int status, cons
     addTraffic_ServerStats_(d->stats, size_String(header) + (body ? size_Block(body) : 0), 0);
     close_TlsConnection(conn);
     d->isDone = iTrue;
-    log_Handler_(d, "%02d %s%s", status, meta,
-                 body ? format_CStr(" (%zu bytes)", size_Block(body)) : "");
+    /* Status 40 is a normal part of the sync protocol. */
+    if (d->cfg->isVerbose || status > 40) {
+        logRequestForError_Handler_(d);
+        log_Handler_(d, "%02d %s%s", status, meta,
+                     body ? format_CStr(" (%zu bytes)", size_Block(body)) : "");
+    }
 }
 
 iDeclareType(RequestUrl)
@@ -275,7 +286,9 @@ static void finishUpload_Handler_(iHandler *d, iTlsConnection *conn) {
 }
 
 static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
-    log_Handler_(d, "%s", cstr_String(&d->header));
+    if (d->cfg->isVerbose) {
+        log_Handler_(d, "%s", cstr_String(&d->header));
+    }
     iGuardMutex(&d->stats->mtx, d->stats->numRequests++);
     iRequestUrl url;
     if (!parse_RequestUrl_(&url, range_String(&d->header))) {
@@ -393,10 +406,11 @@ static void disconnected_Handler_(iHandler *d, iTlsConnection *conn) {
     /* This is the last notification from the connection. */
     if (!d->isDone) {
         if (d->isUpload) {
+            logRequestForError_Handler_(d);
             log_Handler_(d, "disconnected before a response (received %zu of %zu bytes)",
                          size_Block(&d->received), d->uploadSize);
         }
-        else {
+        else if (d->cfg->isVerbose) {
             log_Handler_(d, "disconnected before a response");
         }
     }

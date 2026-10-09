@@ -46,7 +46,8 @@ static const char *usage_ =
     "      --max-per-ip N   Maximum simultaneous connections per IP address; 0 for no\n"
     "                       limit (default: 4)\n"
     "      --allow FILE     Allowed client certificate fingerprints (SHA-256, hex), one per\n"
-    "                       line; if omitted, anyone with an Ed25519 certificate can sync\n";
+    "                       line; if omitted, anyone with an Ed25519 certificate can sync\n"
+    "  -v, --verbose        Log all requests (default: only errors and daily statistics)\n";
 
 static iBool writeTextFile_(const iString *path, const iString *text) {
     iFile *f = new_File(path);
@@ -110,6 +111,7 @@ static int run_(int argc, char *argv[]) {
     cfg.maxAccounts   = 5000;
     cfg.expireDays    = 365;
     cfg.maxPerAddress = 4;
+    cfg.isVerbose     = iFalse;
     iString *host     = collectNewCStr_String("localhost");
     iString *allowPath = collectNew_String();
     iCommandLineArg *arg;
@@ -147,6 +149,7 @@ static int run_(int argc, char *argv[]) {
     if ((arg = iClob(checkArgumentValues_CommandLine(args, "allow", 1))) != NULL) {
         set_String(allowPath, value_CommandLineArg(arg, 0));
     }
+    cfg.isVerbose = contains_CommandLine(args, "v;verbose");
     set_String(&cfg.dataDir, collect_String(makeAbsolute_Path(&cfg.dataDir)));
     makeDirs_Path(&cfg.dataDir);
     if (isEmpty_String(&cfg.certPath)) {

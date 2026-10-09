@@ -35,6 +35,7 @@ struct Impl_ServerConfig {
     size_t   maxAccounts;   /* zero: no limit */
     int      expireDays;    /* inactive accounts are removed; zero: never */
     size_t   maxPerAddress; /* simultaneous connections; zero: no limit */
+    iBool    isVerbose;     /* log all requests, not just errors */
 };
 
 /* Runs until the process is terminated. Returns false if the server could not be started. */
