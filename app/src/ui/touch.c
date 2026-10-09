@@ -492,6 +492,10 @@ static void update_TouchState_(void *ptr) {
             }
         }
     }
+    if (!isEmpty_Array(d->moms)) {
+        /* Momentum advances one step per frame, so wait for the next frame even if nothing moved. */
+        postRefresh_Window(win);
+    }
     /* Keep updating if interaction is still ongoing. */
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTickerRoot_App(update_TouchState_, NULL, ptr);
