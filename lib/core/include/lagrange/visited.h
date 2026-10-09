@@ -29,7 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(VisitedUrl)
 iDeclareTypeConstruction(VisitedUrl)
 
-extern const int maxAge_Visited; /* seconds */
+extern const int maxAge_Visited;          /* seconds */
+extern const int maxTransientAge_Visited; /* seconds; transient-only visits */
 
 struct Impl_VisitedUrl {
     iString  url;
@@ -38,9 +39,12 @@ struct Impl_VisitedUrl {
 };
 
 enum iVisitedUrlFlag {
-    transient_VisitedUrlFlag = 0x1, /* redirected; don't show in history */
-    kept_VisitedUrlFlag      = 0x2, /* don't discard this even after max age */
+    transient_VisitedUrlFlag    = 0x1, /* redirected; don't show in history */
+    kept_VisitedUrlFlag         = 0x2, /* don't discard this even after max age */
+    markedAsRead_VisitedUrlFlag = 0x4, /* marked as visited by the user */
 };
+
+iBool   isTransientOnly_VisitedUrlFlags (uint16_t flags); /* discarded after max transient age */
 
 iDeclareType(Visited)
 iDeclareTypeConstruction(Visited)

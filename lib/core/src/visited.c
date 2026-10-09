@@ -30,7 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/sortedarray.h>
 
-const int maxAge_Visited = 6 * 3600 * 24 * 30; /* six months */
+const int maxAge_Visited          = 6 * 3600 * 24 * 30; /* six months */
+const int maxTransientAge_Visited = 7 * 3600 * 24;
+
+iBool isTransientOnly_VisitedUrlFlags(uint16_t flags) {
+    const uint16_t mask =
+        transient_VisitedUrlFlag | kept_VisitedUrlFlag | markedAsRead_VisitedUrlFlag;
+    return (flags & mask) == transient_VisitedUrlFlag;
+}
 
 void init_VisitedUrl(iVisitedUrl *d) {
     initCurrent_Time(&d->when);
@@ -115,9 +122,12 @@ void deserialize_Visited(iVisited *d, iStream *ins, iBool mergeKeepingLatest) {
         const char *urlStart = skipSpace_CStr(endp);
         iVisitedUrl item;
         item.when.ts = (struct timespec){ .tv_sec = ts };
-        if (~flags & kept_VisitedUrlFlag &&
-            secondsSince_Time(&now, &item.when) > maxAge_Visited) {
-            continue; /* Too old. */
+        if (~flags & kept_VisitedUrlFlag) {
+            const double age = secondsSince_Time(&now, &item.when);
+            if (age > maxAge_Visited ||
+                (isTransientOnly_VisitedUrlFlags(flags) && age > maxTransientAge_Visited)) {
+                continue; /* Too old. */
+            }
         }
         item.flags = flags;
         initRange_String(&item.url, (iRangecc){ urlStart, line.end });
@@ -185,9 +195,8 @@ void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, 
     lock_Mutex(d->mtx);
     if (locate_SortedArray(&d->visited, &visit, &pos)) {
         iVisitedUrl *old = at_SortedArray(&d->visited, pos);
-        if (old->flags & kept_VisitedUrlFlag) {
-            visitFlags |= kept_VisitedUrlFlag; /* must continue to be kept */
-        }
+        /* Must continue to be kept and marked. */
+        visitFlags |= old->flags & (kept_VisitedUrlFlag | markedAsRead_VisitedUrlFlag);
         if (cmpNewer_VisitedUrl_(&visit, old)) {
             old->when = visit.when;
             old->flags = visitFlags;
