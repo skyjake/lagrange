@@ -412,13 +412,13 @@ const iBook *find_Books(const iString *id) {
     return book;
 }
 
-const iBook *findBySource_Books(const iString *url) {
+const iBook *findBySource_Books(const iString *url, iBool isDownloaded) {
     iBooks      *d     = books_;
     const iBook *found = NULL;
     lock_Mutex(d->mtx);
     iConstForEach(StringHash, i, d->books) {
         const iBook *book = value_StringHashNode(i.value);
-        if (!isEmpty_String(&book->fileName) && equal_String(&book->url, url)) {
+        if (isEmpty_String(&book->fileName) != isDownloaded && equal_String(&book->url, url)) {
             found = book;
             break;
         }

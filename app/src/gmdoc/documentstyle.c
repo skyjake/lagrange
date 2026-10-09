@@ -101,6 +101,11 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         d->indents[bullet_GmLineType] -= 5;
         d->indents[preformatted_GmLineType] -= 5;
     }
+    if (isPaged && isNarrow) {
+        /* Headings are aligned with paragraphs instead of extending into the margin. */
+        d->indents[heading1_GmLineType] = d->indents[text_GmLineType];
+        d->indents[heading2_GmLineType] = d->indents[text_GmLineType];
+    }
     if (params->isGopher) {
         d->indents[preformatted_GmLineType] = d->indents[text_GmLineType];
     }

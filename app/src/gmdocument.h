@@ -246,6 +246,7 @@ int     columnsPerPage_GmDocument(const iGmDocument *);
 size_t  numPages_GmDocument     (const iGmDocument *);
 int     pageBandHeight_GmDocument(const iGmDocument *); /* header and footer text area */
 int     pageHeaderHeight_GmDocument(const iGmDocument *);
+iBool   isHeaderBelowCutout_GmDocument(const iGmDocument *);
 int     pageFooterHeight_GmDocument(const iGmDocument *);
 iRangei columnContentRange_GmDocument(const iGmDocument *, size_t column); /* between header and footer */
 int     pageBandFont_GmDocument (const iGmDocument *);

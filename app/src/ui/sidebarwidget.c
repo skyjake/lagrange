@@ -1085,10 +1085,13 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         }
         case gempub_SidebarMode:
             if (!isEmpty_String(&item->url)) {
+                const iBook *book = find_Books(&item->bookId);
                 d->gempubPage = 2; /* stays on the shelf */
+                /* Downloaded pages are saved as books, too. */
                 postCommandf_Root(get_Root(),
-                                  "open newtab:%d url:%s",
+                                  "open newtab:%d%s url:%s",
                                   mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
+                                  book && !path_Book(book) ? " overwritebook:1" : "",
                                   cstr_String(&item->url));
                 dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
                 setFocus_Widget(NULL);

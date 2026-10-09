@@ -462,6 +462,7 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
     const iString        *fileName;
     const iString        *title;
     iBlock               *data;
+    const iBool           isDownload = overwrite; /* requested via the shelf */
     if (gempub) {
         id       = id_Books(gempub);
         iString *bookTitle = collect_String(copy_String(property_Gempub(gempub, title_GempubProperty)));
@@ -487,7 +488,11 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
     }
     else if (format_GmDocument(doc) == gemini_SourceFormat &&
              !cmp_String(&fetch->sourceMime, "text/gemini")) {
-        title = title_GmDocument(doc);
+        /* Using the title of a book not yet downloaded keeps its ID. */
+        const iBook *pending = sourceUrl ? findBySource_Books(sourceUrl, iFalse) : NULL;
+        title = pending && !isEmpty_String(&pending->title)
+                    ? collect_String(copy_String(&pending->title))
+                    : title_GmDocument(doc);
         if (isEmpty_String(title)) {
             title = bookmarkTitle_DocumentWidget(owner);
         }
@@ -505,7 +510,7 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
     const iBook *existing = find_Books(id);
     if (overwrite && (!existing || !path_Book(existing)) && sourceUrl) {
         /* Redownloading replaces the book even if its title has changed. */
-        const iBook *previous = findBySource_Books(sourceUrl);
+        const iBook *previous = findBySource_Books(sourceUrl, iTrue);
         if (previous) {
             existing = previous;
         }
@@ -548,7 +553,7 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
         return;
     }
     postCommand_App("books.changed");
-    if (gempub) {
+    if (gempub || isDownload) {
         postCommandf_Root(w->root,
                           "!open doc:%p url:%s",
                           owner,

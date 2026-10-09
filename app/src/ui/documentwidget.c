@@ -3370,7 +3370,7 @@ static void positionPagedProgress_DocumentWidget_(iDocumentWidget *d) {
         const int inset = metrics_GmDocument(d->view->doc)->bottomInset;
         const int depth = bottom - (bottom_Rect(viewport) - inset);
         setProgressOpacity_ScrollWidget(
-            d->scroll, inset > 0 ? 1.0f - 0.65f * iClamp((float) depth / inset, 0.0f, 1.0f) : 1.0f);
+            d->scroll, inset > 0 ? 1.0f - 0.5f * iClamp((float) depth / inset, 0.0f, 1.0f) : 1.0f);
     }
     /* Reacts to the mouse up to the middle of the page footer. */
     const iGmDocument *doc = d->view->doc;

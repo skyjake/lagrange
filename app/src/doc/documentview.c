@@ -2034,6 +2034,15 @@ static void fillTopSafeArea_DocumentView_(const iDocumentView *d, iPaint *p, int
     }
 }
 
+static int pageHeaderTextTop_DocumentView_(const iDocumentView *d, int textPad) {
+    const int topInset = metrics_GmDocument(d->doc)->topInset;
+    if (isHeaderBelowCutout_GmDocument(d->doc)) {
+        /* The cutout ends ~11 pt above the safe area. */
+        return topInset + 3 * get_Window()->pixelRatio;
+    }
+    return topInset + textPad;
+}
+
 static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
     /* Each page has a header and a footer that span all of its columns. */
     const iGmDocument *doc      = d->doc;
@@ -2052,7 +2061,7 @@ static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
         if (!isEmpty_Range(&header)) {
             drawRange_Text(font,
                            init_I2(mid_Rect(rect).x - measureRange_Text(font, header).bounds.size.x / 2,
-                                   top_Rect(rect) + metrics_GmDocument(doc)->topInset + textPad),
+                                   top_Rect(rect) + pageHeaderTextTop_DocumentView_(d, textPad)),
                            tmQuoteIcon_ColorId,
                            header);
         }

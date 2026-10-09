@@ -71,7 +71,7 @@ const iString * dir_Books           (void);
 iString *       makeId_Books        (const iString *title, const iString *author);
 const iString * id_Books            (const iGempub *);
 const iBook *   find_Books          (const iString *id);
-const iBook *   findBySource_Books  (const iString *url); /* downloaded books only */
+const iBook *   findBySource_Books  (const iString *url, iBool isDownloaded);
 iBool           isOnShelf_Books     (const iString *path);
 const iString * sourceUrl_Books     (const iString *path); /* NULL if not on the shelf */
 const iPtrArray*list_Books          (enum iBooksSortOrder); /* downloaded or downloadable */
