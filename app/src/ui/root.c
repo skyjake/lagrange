@@ -1445,7 +1445,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 notify_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Root_(get_Root());
-                dismissPortraitPhoneSidebars_Root(get_Root());
+                if (argLabel_Command(cmd, "urlchanged")) {
+                    dismissPortraitPhoneSidebars_Root(get_Root()); /* not when reloaded */
+                }
                 updateNavBarIdentity_(navBar);
                 updateNavDirButtons_(navBar);
                 /* Update site-specific used identities. */ {
@@ -1486,7 +1488,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
                 checkLoadAnimation_Root_(get_Root());
-                dismissPortraitPhoneSidebars_Root(get_Root());
+                if (argLabel_Command(cmd, "urlchanged")) {
+                    dismissPortraitPhoneSidebars_Root(get_Root()); /* not when reloaded */
+                }
                 return iFalse;
             }
         }

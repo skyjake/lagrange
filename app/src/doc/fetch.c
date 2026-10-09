@@ -409,8 +409,9 @@ iBool fetch_DocumentFetch(iDocumentFetch *d) {
     }
     releasePlayers_Media(media_GmDocument(doc_DocumentFetch_(d)));
     notifyf_Root(as_Widget(d->owner)->root,
-                 "document.request.started doc:%p url:%s",
+                 "document.request.started doc:%p urlchanged:%d url:%s",
                  d->owner,
+                 isUrlChanged_DocumentWidget(d->owner),
                  cstr_String(url_DocumentFetch_(d)));
     setLinkNumberMode_DocumentWidget(d->owner, iFalse);
     setDrawDownloadCounter_DocumentWidget(d->owner, iFalse);
