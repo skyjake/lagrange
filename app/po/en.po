@@ -1122,7 +1122,7 @@ msgid "sitespec.titantoken"
 msgstr "Titan upload token:"
 
 msgid "sitespec.reset"
-msgstr "Reset This Site to Defaults"
+msgstr "Reset Site to Defaults"
 
 msgid "keys.pageinfo"
 msgstr "Show page information"
