@@ -84,6 +84,7 @@ struct Impl_SidebarWidget {
     iWidget          *actions;      /* below the list, area for buttons */
     int               midHeight;    /* on portrait phone, the height for the middle state */
     iBool             isEditing;    /* mobile edit mode */
+    iBool             isShowingUrls; /* Alt held down in Bookmarks */
     iBool             wasLandscape; /* orientation at the time of the previous resize */
     int               modeScroll[max_SidebarMode];
     iLabelWidget     *modeButtons[max_SidebarMode];

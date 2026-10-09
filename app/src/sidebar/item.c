@@ -309,7 +309,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         deinit_String(&str);
         const iInt2 textPos =
             addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
-        drawRange_Text(font, textPos, fg, range_String(&d->label));
+        drawRange_Text(font,
+                       textPos,
+                       fg,
+                       range_String(sidebar->isShowingUrls && !isEmpty_String(&d->url) ? &d->url
+                                                                                       : &d->label));
         const int metaFont      = uiLabel_FontId;
         const int metaIconWidth = 4.5f * gap_UI * aspect_UI;
         if (isEditing) {

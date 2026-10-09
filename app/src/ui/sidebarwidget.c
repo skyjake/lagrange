@@ -750,6 +750,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->isShelfOrderValid = iFalse;
     d->midHeight        = 0;
     d->isEditing        = iFalse;
+    d->isShowingUrls    = iFalse;
     d->wasLandscape     = isLandscape_App();
     d->numUnreadEntries = 0;
     d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
@@ -1437,6 +1438,19 @@ static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
                                                             : middle_SlidingSheetPos);
 }
 
+static void updateShowingUrls_SidebarWidget_(iSidebarWidget *d) {
+    if (deviceType_App() != desktop_AppDeviceType || isTerminal_Platform()) {
+        return;
+    }
+    const iBool showUrls = (modState_Keys() & SDL_KMOD_ALT) && isFocused_Widget(d->list);
+    if (showUrls != d->isShowingUrls) {
+        d->isShowingUrls = showUrls;
+        if (d->mode == bookmarks_SidebarMode && isVisible_Widget(d)) {
+            invalidate_ListWidget(d->list);
+        }
+    }
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
@@ -1482,6 +1496,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
+        if (equal_Command(cmd, "focus.gained") || equal_Command(cmd, "focus.lost")) {
+            updateShowingUrls_SidebarWidget_(d);
+        }
         if ((equal_Command(cmd, "tabs.changed") &&
              startsWith_Rangecc(range_Command(cmd, "id"), "doc")) ||
             equal_Command(cmd, "document.changed")) {
@@ -1878,6 +1895,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
+    }
+    if ((ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_KEY_UP) && isMod_Sym(ev->key.key)) {
+        updateShowingUrls_SidebarWidget_(d);
     }
     if (ev->type == SDL_EVENT_KEY_DOWN) {
         const int key   = ev->key.key;
