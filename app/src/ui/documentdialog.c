@@ -49,6 +49,7 @@ struct Impl_DocumentDialog {
     iLabelWidget          *back;
     iLabelWidget          *newTab;
     iSimpleDocumentWidget *doc;
+    iWidget               *buttons; /* desktop only */
 };
 
 iDefineObjectConstructionArgs(DocumentDialog, (const iString *url, int flags), url, flags)
@@ -98,7 +99,10 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
                     frameless_WidgetFlag | leftEdgeDraggable_WidgetFlag,
                     isFullScreen_DocumentDialog_(d));
     setPadding1_Widget(w, 0);
-    /* Navigation bar: back, title, and opening the page in a tab. */ {
+    d->back    = NULL;
+    d->newTab  = NULL;
+    d->buttons = NULL;
+    /* Navigation bar with the title. */ {
         d->header = addChildFlags_Widget(w, iClob(new_Widget()), 0);
         d->title  = addChildFlags_Widget(d->header,
                                         iClob(new_LabelWidget(cstr_String(url), NULL)),
@@ -107,6 +111,9 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
                                             resizeToParentHeight_WidgetFlag);
         setFont_LabelWidget(d->title, headerFont_DocumentDialog_(iTrue));
         setTruncateToFit_LabelWidget(d->title, iTrue);
+    }
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* Back and opening the page in a tab. Desktop uses dialog buttons instead. */
         d->back = addChildFlags_Widget(
             d->header,
             iClob(newKeyMods_LabelWidget(flags & popup_DocumentDialogFlag
@@ -135,6 +142,16 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
                                       newTabLinks_SimpleDocumentWidgetFlag |
                                       keyScrolling_SimpleDocumentWidgetFlag,
                                   iTrue);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        const iMenuItem actions[] = {
+            { openTab_Icon " ${menu.opentab}", 0, 0, "docdlg.newtab" },
+            { "---" },
+            { "${close}", 0, 0, "docdlg.close" },
+        };
+        d->buttons = addChild_Widget(w, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        setPadding_Widget(d->buttons, 3 * gap_UI, 2 * gap_UI, 3 * gap_UI, 3 * gap_UI);
+        addAction_Widget(w, SDLK_ESCAPE, 0, "docdlg.close");
+    }
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, url);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentDialog_);
@@ -157,10 +174,13 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
     if (deviceType_App() == desktop_AppDeviceType) {
         width     = iMin(width_Rect(safe), 140 * gap_UI);
         const int height = height_Rect(safe) * 4 / 5;
-        /* Rounded bottom corners are not covered by the page. */
-        setPadding_Widget(w, 0, 0, 0, radius_UI);
+        /* The page stays inside the frame. */
+        const int frame  = iMax(1, gap_UI / 4);
+        setPadding_Widget(w, frame, 0, frame, 0);
         setFixedSize_Widget(w, init_I2(width, height));
-        docHeight = height - headerHgt - radius_UI;
+        width -= 2 * frame;
+        arrange_Widget(d->buttons);
+        docHeight = height - headerHgt - height_Widget(d->buttons);
     }
     else if (!isFullScreen_DocumentDialog_(d)) {
         width = deviceType_App() == phone_AppDeviceType ? width_Rect(safe)
@@ -187,7 +207,7 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
     setFlags_Widget(w, arrangeVertical_WidgetFlag, iTrue);
     arrange_Widget(w);
     /* The title stays centered and clear of the buttons. */
-    const int inset = iMax(width_Widget(d->back), width_Widget(d->newTab));
+    const int inset = d->back ? iMax(width_Widget(d->back), width_Widget(d->newTab)) : 3 * gap_UI;
     setPadding_Widget(as_Widget(d->title), inset, 0, inset, 0);
     arrange_Widget(d->header);
 }
