@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+iDeclareType(GmDocument)
 iDeclareType(GmRequest)
 
 iDeclareType(Bookmark)
@@ -112,6 +113,9 @@ iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url)
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
 uint32_t    findUrlIdent_Bookmarks      (const iBookmarks *, const iString *url, const iString *identFp); /* O(n) */
 uint32_t    recentFolder_Bookmarks      (const iBookmarks *);
+size_t      numNewLinks_Bookmarks       (const iBookmarks *, const iGmDocument *doc); /* not bookmarked yet */
+size_t      importLinks_Bookmarks       (iBookmarks *, const iGmDocument *doc, uint32_t folderId,
+                                         iBool withHeadings); /* returns number of new links */
 
 iBool       filterHomepage_Bookmark     (void *, const iBookmark *);
 

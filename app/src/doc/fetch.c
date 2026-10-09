@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 #include "../history.h"
 #include "banner.h"
+#include "book.h"
 #include "documentview.h"
 #include "inlinemedia.h"
 #include "pagedview.h"
@@ -356,7 +357,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                 update_Books(d->sourceGempub, path);
                 postCommand_App("books.changed");
             }
-            if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentWidget(d->owner) &&
+            if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentBook(book_DocumentWidget(d->owner)) &&
                 (isCover || isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d)))) {
                 /* Opening a book: the cover is in the sidebar and the contents in the document. */
                 const iBool isRight =
@@ -370,7 +371,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached) {
                     const iBook   *book   = find_Books(id_Books(d->sourceGempub));
                     if (book && book->chapter >= 0 &&
                         (size_t) book->chapter < navSize_Gempub(d->sourceGempub)) {
-                        resumeBook_DocumentWidget(d->owner, book->chapter, book->chapterPos);
+                        resume_DocumentBook(book_DocumentWidget(d->owner), book->chapter, book->chapterPos);
                         target = navLinkUrl_Gempub(d->sourceGempub, book->chapter);
                     }
                     postCommandf_Root(w->root, "open doc:%p url:%s", d->owner, cstr_String(target));

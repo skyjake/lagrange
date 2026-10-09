@@ -23,12 +23,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include <lagrange/gmrequest.h>
 #include "app.h"
+#include "gmdocument.h"
 #include "sync.h"
 
 #include <lagrange/core.h>
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
+#include <the_Foundation/intset.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
@@ -164,6 +166,69 @@ int cmpTitleAscending_Bookmark(const iBookmark **a, const iBookmark **b) {
 
 iBool filterInsideFolder_Bookmark(void *context, const iBookmark *bm) {
     return hasParent_Bookmark(bm, id_Bookmark(context));
+}
+
+static iBookmark *parent_Bookmark(const iBookmark *d) {
+    /* TODO: Parent pointers should be prefetched! */
+    if (d->parentId) {
+        return get_Bookmarks(bookmarks_App(), d->parentId);
+    }
+    return NULL;
+}
+
+iBool hasParent_Bookmark(const iBookmark *d, uint32_t parentId) {
+    /* TODO: Parent pointers should be prefetched! */
+    while (d->parentId) {
+        if (d->parentId == parentId) {
+            return iTrue;
+        }
+        d = get_Bookmarks(bookmarks_App(), d->parentId);
+    }
+    return iFalse;
+}
+
+int depth_Bookmark(const iBookmark *d) {
+    /* TODO: Precalculate this! */
+    int depth = 0;
+    for (; d->parentId; depth++) {
+        d = get_Bookmarks(bookmarks_App(), d->parentId);
+    }
+    return depth;
+}
+
+int cmpTree_Bookmark(const iBookmark **a, const iBookmark **b) {
+    const iBookmark *bm1 = *a, *bm2 = *b;
+    /* Contents of a parent come after it. */
+    if (hasParent_Bookmark(bm2, id_Bookmark(bm1))) {
+        return -1;
+    }
+    if (hasParent_Bookmark(bm1, id_Bookmark(bm2))) {
+        return 1;
+    }
+    /* Comparisons are only valid inside the same parent. */
+    while (bm1->parentId != bm2->parentId) {
+        int depth1 = depth_Bookmark(bm1);
+        int depth2 = depth_Bookmark(bm2);
+        if (depth1 != depth2) {
+            /* Equalize the depth. */
+            while (depth1 > depth2) {
+                bm1 = parent_Bookmark(bm1);
+                depth1--;
+            }
+            while (depth2 > depth1) {
+                bm2 = parent_Bookmark(bm2);
+                depth2--;
+            }
+            continue;
+        }
+        bm1 = parent_Bookmark(bm1);
+        depth1--;
+        bm2 = parent_Bookmark(bm2);
+        depth2--;
+    }
+    const int cmp = iCmp(bm1->order, bm2->order);
+    if (cmp) return cmp;
+    return cmpStringCase_String(&bm1->title, &bm2->title);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -703,6 +768,119 @@ iBool filterHomepage_Bookmark(void *d, const iBookmark *bm) {
 
 uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
     return findUrlIdent_Bookmarks(d, url, NULL);
+}
+
+static iIntSet *newLinkIds_Bookmarks_(const iBookmarks *d, const iGmDocument *doc) {
+    /* Find links that aren't already bookmarked. */
+    iIntSet *linkIds = new_IntSet();
+    for (size_t linkId = 1; linkId <= numLinks_GmDocument(doc); linkId++) {
+        uint32_t bmid;
+        if ((bmid = findUrl_Bookmarks(d, linkUrl_GmDocument(doc, linkId))) != 0) {
+            const iBookmark *bm = get_Bookmarks(iConstCast(iBookmarks *, d), bmid);
+            /* We can import local copies of remote bookmarks. */
+            if (~bm->flags & remote_BookmarkFlag) {
+                continue; /* This one is bookmarked. */
+            }
+        }
+        insert_IntSet(linkIds, linkId);
+    }
+    return linkIds;
+}
+
+size_t numNewLinks_Bookmarks(const iBookmarks *d, const iGmDocument *doc) {
+    iIntSet     *linkIds = newLinkIds_Bookmarks_(d, doc);
+    const size_t count   = size_IntSet(linkIds);
+    delete_IntSet(linkIds);
+    return count;
+}
+
+size_t importLinks_Bookmarks(iBookmarks *d, const iGmDocument *doc, uint32_t intoFolder,
+                             iBool withHeadings) {
+    iIntSet     *linkIds = newLinkIds_Bookmarks_(d, doc);
+    const size_t count   = size_IntSet(linkIds);
+    if (count == 0) {
+        delete_IntSet(linkIds);
+        return 0;
+    }
+    /* We need to prepare some auxiliary bookkeeping to keep track of the folders
+       that are created for each section of the page. */
+    uint32_t parentId = intoFolder;
+    uint32_t hierarchy[] = { intoFolder, 0, 0, 0, 0, 0 };
+    const iPtrArray  *headings = headings_GmDocument(doc);
+    const iGmHeading *head = isEmpty_Array(headings) ? NULL : constData_Array(headings);
+    const iGmHeading *headFirst = head;
+    const iGmHeading *headEnd   = isEmpty_Array(headings) ? NULL : constEnd_Array(headings);
+    uint32_t *headingBookmarkIds = calloc(size_Array(headings), sizeof(uint32_t));
+    /* We will create folders as we go and afterwards delete the ones that
+       didn't end up containing any links. */
+    iDeclareType(InfoNode);
+    struct Impl_InfoNode {
+        iHashNode node;
+        size_t numChildren;
+    };
+    iHash *folderInfo = new_Hash();
+    /* `linkIds` only contains the new links that need to be bookmarked. */
+    iConstForEach(IntSet, j, linkIds) {
+        const iGmLinkId linkId = *j.value;
+        iRangecc linkRange = linkUrlRange_GmDocument(doc, linkId);
+        /* Advance in the headings until we reach the one that this link is under. */
+        while (withHeadings && head < headEnd && linkRange.start > head->text.start) {
+            if (!headingBookmarkIds[head - headFirst]) {
+                const int hlev = head->level + 1;
+                parentId       = addToFolder_Bookmarks(d,
+                                                 NULL,
+                                                 collectNewRange_String(head->text),
+                                                 NULL,
+                                                 0,
+                                                 hierarchy[hlev - 1]);
+                hierarchy[hlev] = parentId;
+                iInfoNode *info = iMalloc(InfoNode); {
+                    info->node.key = parentId;
+                    info->numChildren = 0;
+                }
+                insert_Hash(folderInfo, &info->node);
+                headingBookmarkIds[head - headFirst] = parentId;
+                /* Keep track of the hierarchy so we know at any time the parent
+                   of each heading level. */
+                for (int k = 1; k < hlev; k++) {
+                    if (hierarchy[k] == 0) {
+                        hierarchy[k] = parentId;
+                    }
+                }
+                hierarchy[hlev + 1] = parentId;
+                hierarchy[hlev + 2] = parentId;
+            }
+            head++;
+        }
+        addToFolder_Bookmarks(d,
+                              linkUrl_GmDocument(doc, linkId),
+                              collectNewRange_String(linkLabel_GmDocument(doc, linkId)),
+                              NULL,
+                              0x1f588 /* pin */,
+                              withHeadings ? parentId : intoFolder);
+        /* Count children. */
+        if (withHeadings) {
+            for (uint32_t pid = parentId;
+                 pid && pid != intoFolder;
+                 pid = get_Bookmarks(d, pid)->parentId) {
+                iInfoNode *n = (iInfoNode *) value_Hash(folderInfo, pid);
+                iAssert(n);
+                n->numChildren++;
+            }
+        }
+    }
+    iForEach(Hash, iter, folderInfo) {
+        iInfoNode *n = (iInfoNode *) iter.value;
+        if (n->numChildren == 0) {
+            /* This folder was not needed. */
+            remove_Bookmarks(d, n->node.key);
+        }
+        free(remove_HashIterator(&iter));
+    }
+    delete_Hash(folderInfo);
+    free(headingBookmarkIds);
+    delete_IntSet(linkIds);
+    return count;
 }
 
 /*----------------------------------------------------------------------------------------------*/

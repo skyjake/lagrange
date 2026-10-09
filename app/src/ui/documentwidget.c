@@ -25,8 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "media/player.h"
 #include "doc/banner.h"
+#include "doc/book.h"
 #include "bookmarks.h"
-#include "books.h"
 #include "command.h"
 #include "defs.h"
 #include "doc/documentview.h"
@@ -51,6 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "doc/linkcontextmenu.h"
 #include "doc/linkinfo.h"
+#include "doc/pageinfo.h"
 #include "media/media.h"
 #include "periodic.h"
 #include "render/paint.h"
@@ -59,7 +60,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "sidebarwidget.h"
 #include <lagrange/sitespec.h>
-#include "sync.h"
 #include "touch.h"
 #include "translation.h"
 #include "uploadwidget.h"
@@ -80,7 +80,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
-#include <the_Foundation/intset.h>
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
@@ -122,9 +121,6 @@ enum iDocumentWidgetFlag {
     unseen_DocumentWidgetFlag                = iBit(15), /* user has not seen the contents */
     openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
     historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
-    showLastPage_DocumentWidgetFlag          = iBit(18), /* new document opens at its last page */
-    readingOn_DocumentWidgetFlag             = iBit(19), /* next chapter of a book is opening */
-    animateChapterSwipe_DocumentWidgetFlag   = iBit(20), /* chapter slides in when loaded */
 };
 
 /* Note the following about swipes and keeping inline input prompts positioned:
@@ -171,6 +167,7 @@ struct Impl_DocumentWidget {
     iInlineMedia * media;
     iQuery *       query;
     iDocumentSwipe *swipe;
+    iDocumentBook *book;
     SDL_TimerID     readingBarsTimer; /* toggle unless the click becomes a double click */
     iLinkInfo *    linkInfo;
 
@@ -179,15 +176,6 @@ struct Impl_DocumentWidget {
     iString *      titleUser;
     float          initNormScrollY;
     enum iLinkUpdateFlags pendingLinkUpdates;
-    size_t         pendingChapter;    /* being opened via the progress bar */
-    size_t         progressChapter;   /* shown in the progress bar */
-    uint32_t       progressAnimEnd;   /* moving to another chapter until this time */
-    float          pendingChapterPos; /* where the visible pages end; negative if none */
-    float          resumeChapterPos;  /* where the visible pages begin; negative if none */
-    size_t         savedChapter;      /* book position last saved */
-    size_t         savedColumn;
-    iString        readingBookId;     /* book being read in this tab */
-    iBool          didTurnPage;       /* since the book was opened */
 
     /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
@@ -845,217 +833,6 @@ static size_t sourceOffset_DocumentWidget_(const iString *text, iInt2 linePos) {
     return iMin(ch + linePos.x, eol) - start;
 }
 
-static const iString *adjacentChapterUrl_DocumentWidget_(const iDocumentWidget *d, int dir) {
-    /* The reading order of a book is the cover, the contents, and the chapters. */
-    const iGempub *gempub = d->fetch->sourceGempub;
-    if (!gempub || isRemote_Gempub(gempub) || !dir) {
-        return NULL;
-    }
-    size_t pos;
-    if (isCoverPageUrl_Gempub(gempub, d->mod.url)) {
-        pos = 0;
-    }
-    else if (isIndexPageUrl_Gempub(gempub, d->mod.url)) {
-        pos = 1;
-    }
-    else {
-        const size_t index = navIndex_Gempub(gempub, d->mod.url);
-        if (index == iInvalidPos) {
-            return NULL;
-        }
-        pos = index + 2;
-    }
-    if ((dir < 0 && pos == 0) || (dir > 0 && pos + 1 >= navSize_Gempub(gempub) + 2)) {
-        return NULL;
-    }
-    pos = dir < 0 ? pos - 1 : pos + 1;
-    return pos == 0   ? coverPageUrl_Gempub(gempub)
-           : pos == 1 ? indexPageUrl_Gempub(gempub)
-                      : navLinkUrl_Gempub(gempub, pos - 2);
-}
-
-static size_t bookChapter_DocumentWidget_(const iDocumentWidget *d, size_t *numChapters_out) {
-    /* Index of the shown chapter in the book's navigation links. */
-    const iGempub *gempub = d->fetch->sourceGempub;
-    int            numChapters;
-    const int      chapter = chapter_GmDocument(d->view->doc, &numChapters);
-    if (!gempub || isRemote_Gempub(gempub) || chapter <= 0) {
-        return iInvalidPos;
-    }
-    *numChapters_out = numChapters;
-    return chapter - 1;
-}
-
-static iBool openAdjacentChapter_DocumentWidget_(iDocumentWidget *d, int dir, iBool isGesture) {
-    /* Turning past the first or last page continues in the previous or next chapter. The
-       current view slides away like in a history swipe. A gesture moves the views itself. */
-    const iString *url = adjacentChapterUrl_DocumentWidget_(d, dir);
-    if (!url) {
-        return iFalse;
-    }
-    reset_DocumentSwipe(d->swipe);
-    if (prefs_App()->pageTurn == curl_PageTurnAnimation && isPaged_DocumentView(d->view)) {
-        d->swipe->flags |= pageCurl_DocumentSwipeFlag;
-    }
-    setViewSwipedAway_DocumentSwipe(d->swipe, iTrue);
-    if (dir < 0) {
-        setOverlay_DocumentSwipe(d->swipe, iTrue);
-    }
-    else {
-        setOffset_DocumentSwipe(d->swipe, width_Widget(d));
-    }
-    setOutgoingView_DocumentSwipe(d->swipe, d->view);
-    d->swipe->flags |= begun_DocumentSwipeFlag; /* until the chapter has been loaded */
-    iChangeFlags(d->flags, showLastPage_DocumentWidgetFlag, dir < 0);
-    iChangeFlags(d->flags, animateChapterSwipe_DocumentWidgetFlag, !isGesture);
-    d->flags |= readingOn_DocumentWidgetFlag;
-    postCommandf_Root(as_Widget(d)->root, "open url:%s", cstr_String(url));
-    return iTrue;
-}
-
-static int chapterSwipeDir_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
-    /* A swipe past the first or last page goes to the adjacent chapter, if there is one. */
-    const iDocumentView *view   = d->view;
-    const int            side   = argLabel_Command(cmd, "side");
-    const size_t         column = currentColumn_DocumentView(view);
-    const int dir = side == 1 && column == 0 ? -1
-                    : side == 2 && column + numColumns_DocumentView(view) >=
-                                       numColumns_GmDocument(view->doc)
-                        ? +1
-                        : 0;
-    return dir && adjacentChapterUrl_DocumentWidget_(d, dir) ? dir : 0;
-}
-
-iBool isReadingOn_DocumentWidget(const iDocumentWidget *d) {
-    return (d->flags & readingOn_DocumentWidgetFlag) != 0;
-}
-
-void resumeBook_DocumentWidget(iDocumentWidget *d, size_t chapter, float chapterPos) {
-    d->pendingChapter    = chapter;
-    d->pendingChapterPos = -1.0f;
-    d->resumeChapterPos  = chapterPos;
-}
-
-static void applyResume_DocumentWidget_(iDocumentWidget *d) {
-    if (d->resumeChapterPos < 0.0f) {
-        return;
-    }
-    const iGempub *gempub = d->fetch->sourceGempub;
-    if (gempub && isCoverPageUrl_Gempub(gempub, d->mod.url)) {
-        return; /* the chapter is opened next */
-    }
-    size_t numChapters;
-    if (bookChapter_DocumentWidget_(d, &numChapters) == d->pendingChapter) {
-        if (isPaged_DocumentView(d->view)) {
-            showSourcePosition_DocumentView(d->view, d->resumeChapterPos);
-        }
-        else {
-            init_Anim(&d->view->scrollY.pos,
-                      d->resumeChapterPos * pageHeight_DocumentView(d->view));
-        }
-    }
-    d->resumeChapterPos = -1.0f;
-}
-
-static void saveBookPosition_DocumentWidget_(iDocumentWidget *d) {
-    /* Positions are saved when chapters are opened and pages are turned. */
-    size_t       numChapters;
-    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
-    if (chapter == iInvalidPos || d->savedChapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
-        return; /* no baseline yet */
-    }
-    const size_t column = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
-    if (chapter == d->savedChapter && column == d->savedColumn) {
-        return;
-    }
-    d->savedChapter = chapter;
-    d->savedColumn  = column;
-    d->didTurnPage  = iTrue;
-    setPosition_Books(d->fetch->sourceGempub,
-                      (int) chapter,
-                      (int) numChapters,
-                      isPaged_DocumentView(d->view) ? sourcePosition_DocumentView(d->view) : 0.0f);
-}
-
-static void beginBookPosition_DocumentWidget_(iDocumentWidget *d) {
-    /* Restored tabs and layout changes keep the saved position, but another chapter replaces it. */
-    size_t       numChapters;
-    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
-    d->savedChapter      = chapter;
-    d->savedColumn       = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
-    if (chapter != iInvalidPos) {
-        const iString *bookId = id_Books(d->fetch->sourceGempub);
-        if (!equal_String(&d->readingBookId, bookId)) {
-            /* The synced position may be more recent. */
-            set_String(&d->readingBookId, bookId);
-            d->didTurnPage = iFalse;
-            beginReading_Books(d->fetch->sourceGempub);
-            postCommand_App("sync.recent");
-        }
-        const iBook *book = find_Books(bookId);
-        if (!book || book->chapter != (int) chapter) {
-            setPosition_Books(d->fetch->sourceGempub,
-                              (int) chapter,
-                              (int) numChapters,
-                              isPaged_DocumentView(d->view) ? sourcePosition_DocumentView(d->view)
-                                                            : 0.0f);
-        }
-    }
-}
-
-static void jumpToBookPosition_DocumentWidget_(iDocumentWidget *d, size_t chapter, float pos) {
-    size_t numChapters;
-    if (bookChapter_DocumentWidget_(d, &numChapters) == chapter) {
-        resumeBook_DocumentWidget(d, chapter, pos);
-        applyResume_DocumentWidget_(d);
-        d->savedColumn = isPaged_DocumentView(d->view) ? currentColumn_DocumentView(d->view) : 0;
-        if (isPaged_DocumentView(d->view)) {
-            pagesMoved_DocumentWidget(d);
-        }
-        refresh_Widget(d);
-    }
-    else if (chapter < numChapters) {
-        resumeBook_DocumentWidget(d, chapter, pos);
-        d->flags |= readingOn_DocumentWidgetFlag;
-        postCommandf_Root(as_Widget(d)->root,
-                          "open url:%s",
-                          cstr_String(navLinkUrl_Gempub(d->fetch->sourceGempub, chapter)));
-    }
-}
-
-static void checkSyncedBookPosition_DocumentWidget_(iDocumentWidget *d) {
-    size_t       numChapters;
-    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
-    if (chapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
-        return;
-    }
-    const iBook *book = find_Books(id_Books(d->fetch->sourceGempub));
-    if (!book || book->chapter < 0 || (size_t) book->chapter >= numChapters) {
-        return;
-    }
-    const float pos = isPaged_DocumentView(d->view) ? sourcePosition_DocumentView(d->view) : 0.0f;
-    if ((size_t) book->chapter == chapter && fabsf(book->chapterPos - pos) < 0.001f) {
-        return;
-    }
-    if (!d->didTurnPage) {
-        jumpToBookPosition_DocumentWidget_(d, book->chapter, book->chapterPos);
-        return;
-    }
-    if (document_Root(as_Widget(d)->root) != d) {
-        return; /* only the visible tab asks */
-    }
-    makeQuestion_Widget(
-        uiHeading_ColorEscape "${heading.book.synced}",
-        format_Lang("${dlg.book.synced}", book->chapter + 1),
-        (iMenuItem[]){ { "${dlg.book.synced.stay}", SDLK_ESCAPE, 0, NULL },
-                       { uiTextAction_ColorEscape "${dlg.book.synced.jump}",
-                         SDLK_RETURN,
-                         0,
-                         format_CStr("book.jump ptr:%p chapter:%d pos:%f",
-                                     d, book->chapter, book->chapterPos) } },
-        2);
-}
-
 static iBool isBannerVisible_DocumentWidget_(const iDocumentWidget *d) {
     /* When paginated, the banner is only on the first page. */
     return !isPaged_DocumentView(d->view) || visibleColumns_DocumentView(d->view).start == 0;
@@ -1243,11 +1020,11 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         addBannerWarnings_DocumentFetch(d->fetch);
     }
     d->fetch->state = ready_RequestState;
-    d->savedChapter = iInvalidPos;
+    resetSavedPosition_DocumentBook(d->book);
     postProcessContent_DocumentFetch(d->fetch, iTrue);
     resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
-    applyResume_DocumentWidget_(d);
-    beginBookPosition_DocumentWidget_(d);
+    applyResume_DocumentBook(d->book);
+    beginPosition_DocumentBook(d->book);
     if (isPaged_DocumentView(d->view)) {
         pagesMoved_DocumentWidget(d);
     }
@@ -1514,144 +1291,6 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
     return savePath;
 }
 
-static iBool isEqualToFileContents_(const iString *path, const iBlock *data) {
-    if (fileSize_FileInfo(path) != size_Block(data)) {
-        return iFalse;
-    }
-    iFile *f = new_File(path);
-    if (!open_File(f, readOnly_FileMode)) {
-        iRelease(f);
-        return iFalse;
-    }
-    const char *expected = constData_Block(data);
-    const size_t total   = size_Block(data);
-    size_t       pos     = 0;
-    char         buf[0x10000];
-    while (pos < total) {
-        const size_t num = readData_File(f, iMin(sizeof(buf), total - pos), buf);
-        if (num == 0 || memcmp(buf, expected + pos, num)) {
-            break;
-        }
-        pos += num;
-    }
-    iRelease(f);
-    return pos == total;
-}
-
-static void saveToBookshelf_DocumentWidget_(iDocumentWidget *d, iBool overwrite) {
-    /* Books are copied to the shelf and pages become single-chapter books. */
-    iWidget       *w      = as_Widget(d);
-    const iGempub *gempub = d->fetch->sourceGempub;
-    const iString *id;
-    const iString *fileName;
-    const iString *title;
-    const iString *sourceUrl = d->mod.url;
-    iBlock        *data;
-    if (gempub) {
-        id       = id_Books(gempub);
-        iString *bookTitle = collect_String(copy_String(property_Gempub(gempub, title_GempubProperty)));
-        translate_Lang(bookTitle); /* may be a placeholder */
-        title    = bookTitle;
-        fileName = title;
-        if (isRemote_Gempub(gempub)) {
-            data = copy_Block(&d->fetch->sourceContent);
-        }
-        else {
-            const iString *path =
-                collect_String(localFilePathFromUrl_String(coverPageUrl_Gempub(gempub)));
-            if (isOnShelf_Books(path)) {
-                postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
-                return;
-            }
-            iFile *f = iClob(new_File(path));
-            if (!open_File(f, readOnly_FileMode)) {
-                return;
-            }
-            data = readAll_File(f);
-        }
-    }
-    else if (format_GmDocument(d->view->doc) == gemini_SourceFormat &&
-             !cmp_String(&d->fetch->sourceMime, "text/gemini")) {
-        title = title_GmDocument(d->view->doc);
-        if (isEmpty_String(title)) {
-            title = bookmarkTitle_DocumentWidget(d);
-        }
-        const iString *author = collectNewRange_String(urlHost_String(d->mod.url));
-        id       = collect_String(makeId_Books(title, author));
-        fileName = title;
-        data     = newPageArchive_Gempub(d->mod.url, title, author, source_GmDocument(d->view->doc));
-        overwrite = iTrue; /* saving the page again updates the book */
-    }
-    else {
-        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.book.save}",
-                                 "${dlg.book.save.unsupported}");
-        return;
-    }
-    const iBook *existing = find_Books(id);
-    if (overwrite && (!existing || !path_Book(existing)) && sourceUrl) {
-        /* Redownloading replaces the book even if its title has changed. */
-        const iBook *previous = findBySource_Books(sourceUrl);
-        if (previous) {
-            existing = previous;
-        }
-    }
-    const iString *existingPath = existing ? path_Book(existing) : NULL;
-    if (existingPath && !overwrite && isEqualToFileContents_(existingPath, data)) {
-        delete_Block(data);
-        if (sourceUrl) {
-            setSource_Books(id, sourceUrl);
-        }
-        postCommandf_Root(w->root,
-                          "!open doc:%p url:%s",
-                          d,
-                          cstrCollect_String(makeFileUrl_String(existingPath)));
-        return;
-    }
-    if (existingPath && !overwrite) {
-        makeQuestion_Widget(
-            uiHeading_ColorEscape "${heading.book.exists}",
-            format_Lang("${dlg.book.exists}", cstr_String(title)),
-            (iMenuItem[]){ { "${cancel}",
-                             SDLK_ESCAPE,
-                             0,
-                             format_CStr("!open doc:%p url:%s",
-                                         d,
-                                         cstrCollect_String(makeFileUrl_String(existingPath))) },
-                           { uiTextCaution_ColorEscape "${dlg.book.overwrite}",
-                             0,
-                             0,
-                             format_CStr("document.savebook overwrite:1 doc:%p", d) } },
-            2);
-        delete_Block(data);
-        return;
-    }
-    const iString *savedPath = add_Books(data, fileName, existingPath, sourceUrl);
-    delete_Block(data);
-    if (!savedPath) {
-        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
-                                 "${dlg.book.save.error}");
-        return;
-    }
-    postCommand_App("books.changed");
-    if (gempub) {
-        postCommandf_Root(w->root,
-                          "!open doc:%p url:%s",
-                          d,
-                          cstrCollect_String(makeFileUrl_String(savedPath)));
-    }
-    else {
-        const iMenuItem items[2] = {
-            { "${dlg.book.open}", 0, 0,
-              format_CStr("!open doc:%p url:%s", d, cstrCollect_String(makeFileUrl_String(savedPath))) },
-            { "${dlg.message.ok}", 0, 0, "message.ok" },
-        };
-        makeMessage_Widget("${heading.book.saved}",
-                           format_Lang("${dlg.book.saved}", cstr_String(title)),
-                           items,
-                           iElemCount(items));
-    }
-}
-
 static const iString *saveAsPath_(const iString *url, const iString *mime) {
     return collect_String(concat_Path(downloadDir_App(), fileNameForUrl_App(url, mime)));
 }
@@ -1685,51 +1324,6 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page, for turns */
-static const int bookProgressUnit_DocumentWidget_ = 10000; /* fractions of a chapter */
-
-static int bookProgressThumbSize_DocumentWidget_(const iDocumentWidget *d) {
-    /* A spread may extend past the last column of the chapter. */
-    const float numCols = numColumns_GmDocument(d->view->doc);
-    const float visible = iMin((float) numColumns_DocumentView(d->view),
-                               numCols - columnPosition_DocumentView(d->view));
-    return (int) (bookProgressUnit_DocumentWidget_ * iMax(0.0f, visible) / numCols);
-}
-
-static size_t columnEndingAt_DocumentWidget_(const iDocumentWidget *d, float pos) {
-    /* The spread that ends at a position in the document (0...1). */
-    const int numCols = (int) numColumns_GmDocument(d->view->doc);
-    const int column  = (int) ceilf(pos * numCols) - numColumns_DocumentView(d->view);
-    return (size_t) iClamp(column, 0, numCols - 1);
-}
-
-static iBool moveInBook_DocumentWidget_(iDocumentWidget *d, int thumb) {
-    /* The progress bar of a book's chapter spans the whole book, so it may be dragged to
-       another chapter. The opened chapter shows the pages at the dragged position. */
-    size_t       numChapters;
-    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
-    if (chapter == iInvalidPos || numChapters == 0) {
-        return iFalse;
-    }
-    const int unit   = bookProgressUnit_DocumentWidget_;
-    const int end    = thumb + bookProgressThumbSize_DocumentWidget_(d); /* follows the mouse */
-    const int target = iClamp((end + unit - 1) / unit - 1, 0, (int) numChapters - 1);
-    const float pos  = iClamp((float) (end - target * unit) / unit, 0.0f, 1.0f);
-    const iBool isPending = d->pendingChapterPos >= 0.0f;
-    if (isPending || (size_t) target != chapter) {
-        if ((size_t) target != (isPending ? d->pendingChapter : chapter)) {
-            d->pendingChapter = target;
-            d->flags |= readingOn_DocumentWidgetFlag;
-            postCommandf_Root(as_Widget(d)->root,
-                              "open url:%s",
-                              cstr_String(navLinkUrl_Gempub(d->fetch->sourceGempub, target)));
-        }
-        d->pendingChapterPos = pos;
-        return iTrue;
-    }
-    showColumn_DocumentView(d->view, columnEndingAt_DocumentWidget_(d, pos), iFalse);
-    return iTrue;
-}
-
 static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
     /* Swiping past the first or last page follows the scrolling mode settings. The first
        attempt only bounces back, so the history is not navigated by accident. */
@@ -1842,12 +1436,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
     }
     else if (equal_Command(cmd, "books.synced")) {
-        checkSyncedBookPosition_DocumentWidget_(d);
+        checkSyncedPosition_DocumentBook(d->book);
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "book.jump")) {
-        jumpToBookPosition_DocumentWidget_(d, argLabel_Command(cmd, "chapter"),
-                                           argfLabel_Command(cmd, "pos"));
+        jumpToPosition_DocumentBook(
+            d->book, argLabel_Command(cmd, "chapter"), argfLabel_Command(cmd, "pos"));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.prefs.changed")) {
@@ -2016,176 +1610,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "document.info") && d == document_App()) {
-        const char *unchecked       = red_ColorEscape "\u2610";
-        const char *checked         = green_ColorEscape "\u2611";
-        const iBool haveFingerprint = (d->fetch->certFlags & haveFingerprint_GmCertFlag) != 0;
-        const int   requiredForTrust =
-            (available_GmCertFlag | haveFingerprint_GmCertFlag | timeVerified_GmCertFlag);
-        const iBool canTrust = ~d->fetch->certFlags & trusted_GmCertFlag &&
-                               ((d->fetch->certFlags & requiredForTrust) == requiredForTrust);
-        const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
-        const iString    *meta   = &d->fetch->sourceMime;
-        if (recent && recent->cachedResponse) {
-            meta = &recent->cachedResponse->meta;
-        }
-        iString *msg = collectNew_String();
-        if (isEmpty_String(&d->fetch->sourceHeader)) {
-            appendFormat_String(msg,
-                                "%s\n%s\n",
-                                cstr_String(meta),
-                                formatCStrs_Lang("num.bytes.n", size_Block(&d->fetch->sourceContent)));
-        }
-        else {
-            appendFormat_String(msg, "%s\n", cstr_String(&d->fetch->sourceHeader));
-            if (size_Block(&d->fetch->sourceContent)) {
-                appendFormat_String(
-                    msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->fetch->sourceContent)));
-            }
-        }
-        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
-            equalCase_Rangecc(urlScheme_String(d->mod.url), "gophers")) {
-            appendFormat_String(
-                msg,
-                "\n%s${pageinfo.cert.status}\n"
-                "%s%s  %s\n"
-                "%s%s  %s%s\n"
-                "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
-                "%s%s  %s",
-                uiHeading_ColorEscape,
-                d->fetch->certFlags & authorityVerified_GmCertFlag ? checked
-                                                            : uiText_ColorEscape "\u2610",
-                uiText_ColorEscape,
-                d->fetch->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
-                                                            : "${pageinfo.cert.ca.unverified}",
-                d->fetch->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
-                uiText_ColorEscape,
-                d->fetch->certFlags & domainVerified_GmCertFlag ? "${pageinfo.domain.match}"
-                                                         : "${pageinfo.domain.mismatch}",
-                ~d->fetch->certFlags & domainVerified_GmCertFlag
-                    ? format_CStr(" (%s)", cstr_String(d->fetch->certSubject))
-                    : "",
-                d->fetch->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
-                uiText_ColorEscape,
-                d->fetch->certFlags & timeVerified_GmCertFlag ? "${pageinfo.cert.notexpired}"
-                                                       : "${pageinfo.cert.expired}",
-                d->fetch->certExpiry.year,
-                d->fetch->certExpiry.month,
-                d->fetch->certExpiry.day,
-                d->fetch->certExpiry.hour,
-                d->fetch->certExpiry.minute,
-                d->fetch->certExpiry.second,
-                d->fetch->certFlags & trusted_GmCertFlag ? checked : unchecked,
-                uiText_ColorEscape,
-                d->fetch->certFlags & trusted_GmCertFlag ? "${pageinfo.cert.trusted}"
-                                                  : "${pageinfo.cert.untrusted}");
-        }
-        setFocus_Widget(NULL);
-
-        const iMenuItem fingerprintItems[] = {
-            { "${dlg.cert.fingerprint.full}", 0, 0, "server.copycert arg:1" },
-            { "${dlg.cert.fingerprint.pubkey}", 0, 0, "server.copycert" },
-        };
-
-        iArray *items = new_Array(sizeof(iMenuItem));
-        if (canTrust) {
-            pushBack_Array(items,
-                           &(iMenuItem){ uiTextAction_ColorEscape "\x1b[1m${dlg.cert.trust}",
-                                         trustServerCertificate_KeyShortcut,
-                                         "server.trustcert" });
-        }
-        const iRangecc root = urlRoot_String(d->mod.url);
-        if (!isEmpty_Range(&root)) {
-            pushBack_Array(items, &(iMenuItem){ "${pageinfo.settings}", 0, 0, "document.sitespec" });
-        }
-        if (haveFingerprint && deviceType_App() != desktop_AppDeviceType) {
-            /* The sheet-based popup does not have buttons. */
-            pushBackN_Array(items, fingerprintItems, iElemCount(fingerprintItems));
-        }
-        if (!isEmpty_Array(items)) {
-            pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
-        }
-        pushBack_Array(items, &(iMenuItem){ "${close}", 0, 0, "message.ok" });
-        iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "${heading.pageinfo}",
-                                           cstr_String(msg),
-                                           data_Array(items),
-                                           size_Array(items));
-        /* Fingerprint menu. */
-        if (deviceType_App() == desktop_AppDeviceType) {
-            iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
-            if (haveFingerprint) {
-                iLabelWidget *fpMenu = makeMenuButton_LabelWidget(
-                    "${dlg.cert.fingerprint}", fingerprintItems, iElemCount(fingerprintItems));
-                if (!canTrust) {
-                    addChildPos_Widget(buttons, iClob(fpMenu), front_WidgetAddPos);
-                }
-                else {
-                    insertChildAfter_Widget(buttons, iClob(fpMenu), 0);
-                }
-            }
-        }
-        delete_Array(items);
-        arrange_Widget(dlg);
-        addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
-        addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "document.sitespec") && d == document_App()) {
-        if (isRunning_Sync()) {
-            /* The settings may change when the synced data is applied. */
-            makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.sync}", "${sync.busy.sitespec}");
-        }
-        else if (!findWidget_App("sitespec.palette")) {
-            makeSiteSpecificSettings_Widget(d->mod.url);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "server.unexpire") && document_App() == d) {
-        const iRangecc host = urlHost_String(d->mod.url);
-        const uint16_t port = urlPort_String(d->mod.url);
-        if (!isEmpty_Block(d->fetch->certFingerprint) && !isEmpty_Range(&host)) {
-            iTime expiry;
-            initCurrent_Time(&expiry);
-            iTime oneHour; /* One hour is long enough for a single visit (?). */
-            initSeconds_Time(&oneHour, 3600);
-            add_Time(&expiry, &oneHour);
-            iDate expDate;
-            init_Date(&expDate, &expiry);
-            setTrusted_GmCerts(certs_App(), host, port, d->fetch->certFingerprint, &expDate);
-            postCommand_Widget(w, "navigate.reload");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "server.trustcert") && document_App() == d) {
-        const iRangecc scheme = urlScheme_String(d->mod.url);
-        iRangecc host = urlHost_String(d->mod.url);
-        uint16_t port = urlPort_String(d->mod.url);
-        if (d->flags & proxyRequest_DocumentWidgetFlag &&
-            schemeProxy_Prefs(get_Prefs(), scheme)) {
-            const iString *proxyHost;
-            schemeProxyHostAndPort_Prefs(get_Prefs(), scheme, &proxyHost, &port);
-            host = range_String(proxyHost);
-        }
-        if (!isEmpty_Block(d->fetch->certFingerprint) && !isEmpty_Range(&host)) {
-            setTrusted_GmCerts(certs_App(), host, port, d->fetch->certFingerprint, &d->fetch->certExpiry);
-            postCommand_Widget(w, "navigate.reload");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "server.copycert") && document_App() == d) {
-        const iString *fp = collect_String(
-            hexEncode_Block(arg_Command(cmd) ? d->fetch->certFullFingerprint : d->fetch->certFingerprint));
-        if (isTerminal_Platform()) {
-            makeMessage_Widget(
-                arg_Command(cmd) ? "${dlg.cert.fingerprint.full}"
-                                 : "${dlg.cert.fingerprint.pubkey}",
-                cstr_String(fp),
-                (iMenuItem[]){ { "${dlg.message.ok}", SDLK_RETURN, 0, "message.ok" } },
-                1);
-        }
-        else {
-            SDL_SetClipboardText(cstr_String(fp));
-        }
+    else if (handlePageInfoCommand_DocumentWidget(d, cmd)) {
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
@@ -2286,49 +1711,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                      urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
                      iFalse);
         d->fetch->state = ready_RequestState;
-        d->savedChapter = iInvalidPos;
+        resetSavedPosition_DocumentBook(d->book);
         postProcessContent_DocumentFetch(d->fetch, iFalse);
-        d->flags &= ~readingOn_DocumentWidgetFlag;
-        if (d->pendingChapterPos >= 0.0f) {
-            /* Arrived via the progress bar. */
-            size_t numChapters;
-            if (bookChapter_DocumentWidget_(d, &numChapters) == d->pendingChapter) {
-                if (isPaged_DocumentView(d->view)) {
-                    showColumn_DocumentView(
-                        d->view, columnEndingAt_DocumentWidget_(d, d->pendingChapterPos), iFalse);
-                }
-                d->pendingChapterPos = -1.0f;
-            }
-        }
-        applyResume_DocumentWidget_(d);
-        if (d->flags & showLastPage_DocumentWidgetFlag) {
-            /* Going backward from the next chapter. */
-            d->flags &= ~showLastPage_DocumentWidgetFlag;
-            if (isPaged_DocumentView(d->view)) {
-                showColumn_DocumentView(d->view, numColumns_GmDocument(d->view->doc) - 1, iFalse);
-            }
-        }
-        beginBookPosition_DocumentWidget_(d);
-        if (isPaged_DocumentView(d->view)) {
-            pagesMoved_DocumentWidget(d);
-        }
-        if (d->flags & animateChapterSwipe_DocumentWidgetFlag) {
-            /* The new chapter has arrived, so the views can slide. */
-            d->flags &= ~animateChapterSwipe_DocumentWidgetFlag;
-            d->swipe->flags &= ~begun_DocumentSwipeFlag;
-            const int to = isSwipingBack_DocumentSwipe(d->swipe) ? width_Widget(d) : 0;
-            if (!prefs_App()->uiAnimations) {
-                setValue_Anim(&d->swipe->offset, to, 0);
-            }
-            else if (d->swipe->flags & pageCurl_DocumentSwipeFlag) {
-                setValueEased_Anim(&d->swipe->offset, to, pageTurnDuration_DocumentView(d->view));
-            }
-            else {
-                setFlags_Anim(&d->swipe->offset, easeOut_AnimFlag, iTrue);
-                setValue_Anim(&d->swipe->offset, to, 250);
-            }
-            animate_DocumentWidget(d);
-        }
+        didFinishRequest_DocumentBook(d->book);
         /* The response may be cached. */
         if (d->fetch->request) {
             iAssert(~d->fetch->flags & fromCache_DocumentFetchFlag);
@@ -2519,7 +1904,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                      "${dlg.save.incomplete}");
         }
         else if (!isEmpty_Block(&d->fetch->sourceContent)) {
-            saveToBookshelf_DocumentWidget_(d, argLabel_Command(cmd, "overwrite"));
+            saveToShelf_DocumentBook(d->book, argLabel_Command(cmd, "overwrite"));
         }
         return iTrue;
     }
@@ -2701,7 +2086,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.page.overflow")) {
-        if (openAdjacentChapter_DocumentWidget_(d, arg_Command(cmd), iFalse)) {
+        if (openAdjacentChapter_DocumentBook(d->book, arg_Command(cmd), iFalse)) {
             return iTrue;
         }
         /* There is nothing more to turn to, so offer the navigation controls. */
@@ -2709,7 +2094,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view) &&
-             moveInBook_DocumentWidget_(d, arg_Command(cmd))) {
+             moveProgress_DocumentBook(d->book, arg_Command(cmd))) {
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved") && isPaged_DocumentView(d->view)) {
@@ -2878,113 +2263,24 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.links") && document_App() == d) {
-        iIntSet *linkIds = collectNew_IntSet();
-        /* Find links that aren't already bookmarked. */
-        const iGmDocument *doc = d->view->doc;
-        for (size_t linkId = 1; linkId <= numLinks_GmDocument(doc); linkId++) {
-            uint32_t bmid;
-            if ((bmid = findUrl_Bookmarks(bookmarks_App(), linkUrl_GmDocument(doc, linkId))) != 0) {
-                const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
-                /* We can import local copies of remote bookmarks. */
-                if (~bm->flags & remote_BookmarkFlag) {
-                    continue; /* This one is bookmarked. */
-                }
-            }
-            insert_IntSet(linkIds, linkId);
-        }
-        if (!isEmpty_IntSet(linkIds)) {
-            if (argLabel_Command(cmd, "confirm")) {
-                const size_t count = size_IntSet(linkIds);
-                makeLinkImporter_Widget(count);
-            }
-            else {
-                const uint32_t intoFolder   = argLabel_Command(cmd, "folder");
-                const iBool    withHeadings = argLabel_Command(cmd, "headings");
-                /* We need to prepare some auxiliary bookkeeping to keep track of the folders
-                   that are created for each section of the page. */
-                uint32_t parentId = intoFolder;
-                uint32_t hierarchy[] = { intoFolder, 0, 0, 0, 0, 0 };
-                const iPtrArray  *headings = headings_GmDocument(doc);
-                const iGmHeading *head = isEmpty_Array(headings) ? NULL : constData_Array(headings);
-                const iGmHeading *headFirst = head;
-                const iGmHeading *headEnd   = isEmpty_Array(headings) ? NULL : constEnd_Array(headings);
-                uint32_t *headingBookmarkIds = calloc(size_Array(headings), sizeof(uint32_t));
-                /* We will create folders as we go and afterwards delete the ones that
-                   didn't end up containing any links. */
-                iDeclareType(InfoNode);
-                struct Impl_InfoNode {
-                    iHashNode node;
-                    size_t numChildren;
-                };
-                iHash *folderInfo = new_Hash();
-                /* `linkIds` only contains the new links that need to be bookmarked. */
-                iConstForEach(IntSet, j, linkIds) {
-                    const iGmLinkId linkId = *j.value;
-                    iRangecc linkRange = linkUrlRange_GmDocument(doc, linkId);
-                    /* Advance in the headings until we reach the one that this link is under. */
-                    while (withHeadings && head < headEnd && linkRange.start > head->text.start) {
-                        if (!headingBookmarkIds[head - headFirst]) {
-                            const int hlev = head->level + 1;
-                            parentId       = addToFolder_Bookmarks(bookmarks_App(),
-                                                             NULL,
-                                                             collectNewRange_String(head->text),
-                                                             NULL,
-                                                             0,
-                                                             hierarchy[hlev - 1]);
-                            hierarchy[hlev] = parentId;
-                            iInfoNode *info = iMalloc(InfoNode); {
-                                info->node.key = parentId;
-                                info->numChildren = 0;
-                            }
-                            insert_Hash(folderInfo, &info->node);
-                            headingBookmarkIds[head - headFirst] = parentId;
-                            parentId = parentId;
-                            /* Keep track of the hierarchy so we know at any time the parent
-                               of each heading level. */
-                            for (int k = 1; k < hlev; k++) {
-                                if (hierarchy[k] == 0) {
-                                    hierarchy[k] = parentId;
-                                }
-                            }
-                            hierarchy[hlev + 1] = parentId;
-                            hierarchy[hlev + 2] = parentId;
-                        }
-                        head++;
-                    }
-                    addToFolder_Bookmarks(bookmarks_App(),
-                                          linkUrl_GmDocument(doc, linkId),
-                                          collectNewRange_String(linkLabel_GmDocument(doc, linkId)),
-                                          NULL,
-                                          0x1f588 /* pin */,
-                                          withHeadings ? parentId : intoFolder);
-                    /* Count children. */
-                    if (withHeadings) {
-                        for (uint32_t pid = parentId;
-                             pid && pid != intoFolder;
-                             pid = get_Bookmarks(bookmarks_App(), pid)->parentId) {
-                            iInfoNode *n = (iInfoNode *) value_Hash(folderInfo, pid);
-                            iAssert(n);
-                            n->numChildren++;
-                        }
-                    }
-                }
-                iForEach(Hash, iter, folderInfo) {
-                    iInfoNode *n = (iInfoNode *) iter.value;
-                    if (n->numChildren == 0) {
-                        /* This folder was not needed. */
-                        remove_Bookmarks(bookmarks_App(), n->node.key);
-                    }
-                    free(remove_HashIterator(&iter));
-                }
-                delete_Hash(folderInfo);
-                free(headingBookmarkIds);
-                notify_App("bookmarks.changed");
-            }
-        }
-        else {
+        const iGmDocument *doc   = d->view->doc;
+        const iBool        isAsk = argLabel_Command(cmd, "confirm") != 0;
+        const size_t       count =
+            isAsk ? numNewLinks_Bookmarks(bookmarks_App(), doc)
+                  : importLinks_Bookmarks(bookmarks_App(),
+                                          doc,
+                                          argLabel_Command(cmd, "folder"),
+                                          argLabel_Command(cmd, "headings"));
+        if (count == 0) {
             makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.bookmarks}",
                                      numLinks_GmDocument(doc) == 0 ? "${dlg.import.notfound}"
                                                                    : "${dlg.import.notnew}");
+        }
+        else if (isAsk) {
+            makeLinkImporter_Widget(count);
+        }
+        else {
+            notify_App("bookmarks.changed");
         }
         return iTrue;
     }
@@ -3048,8 +2344,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 d->flags |= historySwipe_DocumentWidgetFlag;
                 return handleEdgeSwipe_DocumentSwipe(d->swipe, cmd);
             }
-            const int chapterDir = chapterSwipeDir_DocumentWidget_(d, cmd);
-            if (chapterDir && openAdjacentChapter_DocumentWidget_(d, chapterDir, iTrue)) {
+            const int chapterDir = chapterSwipeDir_DocumentBook(d->book, cmd);
+            if (chapterDir && openAdjacentChapter_DocumentBook(d->book, chapterDir, iTrue)) {
                 /* The rest of the gesture moves the views like in a history swipe. */
                 d->flags |= historySwipe_DocumentWidgetFlag;
                 return iTrue;
@@ -4046,30 +3342,9 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
         d->fetch->state == receivedPartialResponse_RequestState) {
         return; /* the progress continues from where it was when the new page is ready */
     }
-    size_t       numChapters;
-    const size_t chapter = bookChapter_DocumentWidget_(d, &numChapters);
-    if (chapter != iInvalidPos) {
-        /* Each chapter is an equal part of a book's progress. The bar moves to another
-           chapter like the pages slide in, unless it is being dragged. */
-        const int      unit = bookProgressUnit_DocumentWidget_;
-        const uint32_t now  = SDL_GetTicks();
-        if (d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
-            ~flags_Widget(as_Widget(d->scroll)) & pressed_WidgetFlag) {
-            d->progressAnimEnd = now + pageTurnDuration_DocumentView(d->view);
-        }
-        d->progressChapter = chapter;
-        setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numChapters * unit });
-        /* The pages of the new chapter may still be turned (e.g., to the last one). */
-        setThumbAnimated_ScrollWidget(d->scroll,
-                                      (int) chapter * unit +
-                                          (int) (columnPosition_DocumentView(d->view) * unit /
-                                                 numColumns_GmDocument(d->view->doc)),
-                                      bookProgressThumbSize_DocumentWidget_(d),
-                                      d->progressAnimEnd > now ? d->progressAnimEnd - now : 0);
-        saveBookPosition_DocumentWidget_(d);
+    if (updateProgress_DocumentBook(d->book)) {
         return;
     }
-    d->progressChapter = iInvalidPos;
     const int unit = pageProgressUnit_DocumentWidget_;
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, (int) numColumns_GmDocument(d->view->doc) * unit });
     setThumb_ScrollWidget(d->scroll,
@@ -4424,6 +3699,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setOwner_Query(d->query, d);
     d->swipe = new_DocumentSwipe();
     setOwner_DocumentSwipe(d->swipe, d);
+    d->book = new_DocumentBook();
+    setOwner_DocumentBook(d->book, d);
     d->readingBarsTimer = 0;
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
         setNavigable_DocumentSwipe(d->swipe, iTrue);
@@ -4437,15 +3714,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->foundMark          = iNullRange;
     d->contextLink        = NULL;
     d->initNormScrollY    = 0;
-    d->pendingChapter     = iInvalidPos;
-    d->progressChapter    = iInvalidPos;
-    d->progressAnimEnd    = 0;
-    d->pendingChapterPos  = -1.0f;
-    d->resumeChapterPos   = -1.0f;
-    d->savedChapter       = iInvalidPos;
-    d->savedColumn        = 0;
-    init_String(&d->readingBookId);
-    d->didTurnPage        = iFalse;
     d->pendingLinkUpdates = 0;
     setOwner_Banner(d->banner, d);
     init_String(&d->pendingGotoHeading);
@@ -4497,13 +3765,13 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_DocumentView(d->view);
     delete_Query(d->query);
     delete_DocumentSwipe(d->swipe);
+    delete_DocumentBook(d->book);
     delete_LinkInfo(d->linkInfo);
     delete_InlineMedia(d->media);
     delete_DocumentFetch(d->fetch);
     deinit_String(&d->linePrecedingLink);
     deinit_String(&d->readerEntryUrl);
     deinit_String(&d->originId);
-    deinit_String(&d->readingBookId);
     deinit_String(&d->pendingGotoHeading);
     delete_Banner(d->banner);
     delete_String(d->titleUser);
@@ -4560,6 +3828,14 @@ iGmLinkId requestLinkId_DocumentWidget(const iDocumentWidget *d) {
     return d->fetch->requestLinkId;
 }
 
+iDocumentSwipe *swipe_DocumentWidget(iDocumentWidget *d) {
+    return d->swipe;
+}
+
+iDocumentBook *book_DocumentWidget(iDocumentWidget *d) {
+    return d->book;
+}
+
 iDocumentFetch *fetch_DocumentWidget(iDocumentWidget *d) {
     return d->fetch;
 }
@@ -4602,6 +3878,10 @@ iTime sourceTime_DocumentWidget(const iDocumentWidget *d) {
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
     return isRequestOngoing_DocumentFetch(d->fetch);
+}
+
+iBool isProxyRequest_DocumentWidget(const iDocumentWidget *d) {
+    return (d->flags & proxyRequest_DocumentWidgetFlag) != 0;
 }
 
 iBool isFetchingOwnLink_DocumentWidget(const iDocumentWidget *d) {

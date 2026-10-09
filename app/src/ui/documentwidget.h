@@ -39,6 +39,7 @@ iDeclareType(DocumentView)
 iDeclareType(Click)
 iDeclareType(Query)
 iDeclareType(InlineMedia)
+iDeclareType(DocumentBook)
 iDeclareType(DocumentFetch)
 iDeclareType(PersistentDocumentState)
 iDeclareType(MenuItem)
@@ -61,6 +62,8 @@ iPersistentDocumentState *state_DocumentWidget      (iDocumentWidget *);
 iBanner *           banner_DocumentWidget           (iDocumentWidget *);
 iInlineMedia *      media_DocumentWidget            (iDocumentWidget *);
 iDocumentFetch *    fetch_DocumentWidget            (iDocumentWidget *);
+iDocumentSwipe *    swipe_DocumentWidget            (iDocumentWidget *);
+iDocumentBook *     book_DocumentWidget             (iDocumentWidget *);
 iGmLinkId           requestLinkId_DocumentWidget    (const iDocumentWidget *);
 iBool               isUrlChanged_DocumentWidget     (const iDocumentWidget *);
 void                setDrawDownloadCounter_DocumentWidget(iDocumentWidget *, iBool);
@@ -91,8 +94,6 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 const iString *     feedEntryUrl_DocumentWidget     (const iDocumentWidget *);
 const iGempub *     gempub_DocumentWidget           (const iDocumentWidget *); /* NULL if not a book */
-iBool               isReadingOn_DocumentWidget      (const iDocumentWidget *); /* adjacent chapter opening */
-void                resumeBook_DocumentWidget       (iDocumentWidget *, size_t chapter, float chapterPos);
 uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 int                 documentWidth_DocumentWidget        (const iDocumentWidget *);
@@ -104,6 +105,7 @@ const iGmIdentity * identity_DocumentWidget             (const iDocumentWidget *
 int                 generation_DocumentWidget           (const iDocumentWidget *);
 iBool               isRequestOngoing_DocumentWidget     (const iDocumentWidget *);
 iBool               isFetchingOwnLink_DocumentWidget    (const iDocumentWidget *);
+iBool               isProxyRequest_DocumentWidget       (const iDocumentWidget *); /* last response came via a proxy */
 iBool               isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget     (const iDocumentWidget *);
 iBool               isIdentityPinned_DocumentWidget     (const iDocumentWidget *);

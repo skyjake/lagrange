@@ -261,6 +261,8 @@ set (SOURCES
     # Document:
     src/doc/banner.c
     src/doc/banner.h
+    src/doc/book.c
+    src/doc/book.h
     src/doc/documentview.c
     src/doc/documentview.h
     src/doc/fetch.c
@@ -273,12 +275,21 @@ set (SOURCES
     src/doc/linkcontextmenu.h
     src/doc/linkinfo.c
     src/doc/linkinfo.h
+    src/doc/pageinfo.c
+    src/doc/pageinfo.h
     src/doc/pagedview.c
     src/doc/pagedview.h
     src/doc/persistentstate.c
     src/doc/persistentstate.h
     src/doc/swipe.c
     src/doc/swipe.h
+    # Sidebar:
+    src/sidebar/bookmarklist.c
+    src/sidebar/bookshelf.c
+    src/sidebar/feedlist.c
+    src/sidebar/impl.h
+    src/sidebar/item.c
+    src/sidebar/sitestructure.c
     # User interface:
     src/ui/bookmarkdialogs.c
     src/ui/bookmarkdialogs.h
