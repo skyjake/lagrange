@@ -331,6 +331,15 @@ static iBool isDocTabButton_(const iWidget *d) {
     return isTabButton_Widget(d) && !cmp_String(id_Widget(d->parent->parent), "doctabs");
 }
 
+static iBool isInSheet_(const iWidget *d) {
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->flags2 & sheet_WidgetFlag2) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2,
                                    int *icon, int *meta) {
     const iWidget *w           = constAs_Widget(d);
@@ -350,6 +359,12 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                                                            : none_ColorId;
     if (d->flags.checkMark) {
         *bg = none_ColorId;
+    }
+    else if (*bg == uiBackground_ColorId && !isSel && !isFrameless &&
+             (colorTheme_App() == pureWhite_ColorTheme ||
+              colorTheme_App() == pureBlack_ColorTheme) &&
+             isInSheet_(w)) {
+        *bg = contrastingBackgroundColor_Widget(w);
     }
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;

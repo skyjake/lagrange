@@ -416,17 +416,6 @@ static iBool processEvent_SliderWidget_(iSliderWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
-/* Track stands out from the background behind it. */
-static int trackColor_SliderWidget_(const iSliderWidget *d) {
-    for (const iWidget *w = constAs_Widget(d); w; w = w->parent) {
-        if (w->bgColor >= 0) {
-            return w->bgColor == uiBackgroundSidebar_ColorId ? uiBackgroundInset_ColorId
-                                                             : uiBackgroundSidebar_ColorId;
-        }
-    }
-    return uiBackgroundSidebar_ColorId;
-}
-
 static iRect drawnThumbRect_SliderWidget_(const iSliderWidget *d) {
     iRect thumb = thumbRect_SliderWidget_(d, d->index);
     if (!isTerminal_Platform()) {
@@ -502,7 +491,7 @@ static void draw_SliderWidget_(const iSliderWidget *d) {
     const int   inset      = isTerminal ? 1 : 3 * gap_UI;
     const int   x0         = left_Rect(bounds) + inset;
     const int   x1         = right_Rect(bounds) - inset;
-    const int   track      = trackColor_SliderWidget_(d);
+    const int   track      = contrastingBackgroundColor_Widget(constAs_Widget(d));
     iPaint p;
     init_Paint(&p);
     if (isTerminal) {

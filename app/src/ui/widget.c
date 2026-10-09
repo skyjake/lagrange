@@ -1848,6 +1848,17 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     return iFalse;
 }
 
+/* Stands out from the background behind the widget. */
+int contrastingBackgroundColor_Widget(const iWidget *d) {
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->bgColor >= 0) {
+            return w->bgColor == uiBackgroundSidebar_ColorId ? uiBackgroundInset_ColorId
+                                                             : uiBackgroundSidebar_ColorId;
+        }
+    }
+    return uiBackgroundSidebar_ColorId;
+}
+
 int backgroundFadeColor_Widget(void) {
     switch (colorTheme_App()) {
         case light_ColorTheme:

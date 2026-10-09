@@ -988,7 +988,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             //panels->maxHeight = safe.size.y;
         }
     }
-    panels->flags2 |= fadeBackground_WidgetFlag2;
+    panels->flags2 |= fadeBackground_WidgetFlag2 | sheet_WidgetFlag2;
     if (!isFullHeight) {
         panels->flags2 |= roundFreeEdges_WidgetFlag2;
     }

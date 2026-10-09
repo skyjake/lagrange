@@ -155,6 +155,7 @@ enum iWidgetFlag2 {
                                                            background with rounded ends */
     floating_WidgetFlag2                    = iBit(20), /* free edges include the root's edges
                                                            (e.g., context menus) */
+    sheet_WidgetFlag2                       = iBit(21), /* dialog or sheet */
 };
 
 enum iWidgetAddPos {
@@ -392,6 +393,7 @@ void        overflowScrollInfo_Widget   (const iWidget *, iWidgetScrollInfo *inf
 void        drawScrollIndicator_Widget  (const iWidget *, const iWidgetScrollInfo *info, int color, float opacity);
 
 int         backgroundFadeColor_Widget  (void);
+int         contrastingBackgroundColor_Widget (const iWidget *);
 
 enum iFocusMethod {
     none_FocusMethod,
