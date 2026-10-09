@@ -171,7 +171,11 @@ static const iPrefs *prefs_Sync_(void) {
 }
 
 static const iString *server_Sync_(void) {
-    return &prefs_Sync_()->strings[syncServer_PrefsString];
+    const iString *server = &prefs_Sync_()->strings[syncServer_PrefsString];
+    if (isEmpty_String(server)) {
+        return collectNewCStr_String("gemini://sync.skyjake.fi:1966");
+    }
+    return server;
 }
 
 static const iString *identity_Sync_(void) {
