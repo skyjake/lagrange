@@ -1693,6 +1693,27 @@ void enterBackground_Sync(void) {
 #endif
 }
 
+static const char *timeText_Sync_(const iTime *time) {
+    iDate date, today;
+    init_Date(&date, time);
+    initCurrent_Date(&today);
+    const char *clock = prefs_Sync_()->time24h ? "%H:%M" : "%I:%M %p";
+    if (date.year == today.year && date.month == today.month && date.day == today.day) {
+        return cstrCollect_String(format_Date(&date, clock));
+    }
+    iString *fmt = newCStr_String(cstr_Lang(date.year == today.year ? "sidebar.date.thisyear"
+                                                                     : "sidebar.date.otheryear"));
+    appendFormat_String(fmt, " %s", clock);
+    iString *str = format_Date(&date, cstr_String(fmt));
+    delete_String(fmt);
+    return cstrCollect_String(str);
+}
+
+static void appendError_Sync_(iString *str, const iString *error) {
+    appendFormat_String(str, "\n" uiTextCaution_ColorEscape "%s %s",
+                        cstr_Lang("sync.status.error"), cstr_String(error));
+}
+
 iString *statusText_Sync(void) {
     iSync   *d   = &sync_;
     iString *str = new_String();
@@ -1704,44 +1725,51 @@ iString *statusText_Sync(void) {
         setCStr_String(str, cstr_Lang("sync.status.setup"));
         return str;
     }
+    const char    *sep   = bullet_Icon;
+    const iString *error = NULL;
     if (isRunning_Sync()) {
         setCStr_String(str, cstr_Lang("sync.status.running"));
-        return str;
-    }
-    if (isValid_Time(&d->lastSyncTime)) {
-        format_String(str, "%s %s", cstr_Lang("sync.status.last"),
-                      cstrCollect_String(format_Time(&d->lastSyncTime, "%Y-%m-%d %H:%M")));
-        if (d->generation) {
-            appendFormat_String(str, " (%s %llu)", cstr_Lang("sync.status.generation"),
-                                (unsigned long long) d->generation);
-        }
     }
     else {
-        setCStr_String(str, cstr_Lang("sync.status.never"));
-    }
-    if (isDirty_Sync_(d)) {
-        appendFormat_String(str, "\n%s", cstr_Lang("sync.status.pending"));
-    }
-    if (!isEmpty_String(&d->lastError)) {
-        appendFormat_String(str, "\n" uiTextCaution_ColorEscape "%s %s", cstr_Lang("sync.status.error"),
-                            cstr_String(&d->lastError));
+        if (isValid_Time(&d->lastSyncTime)) {
+            format_String(str, "%s %s", cstr_Lang("sync.status.last"),
+                          timeText_Sync_(&d->lastSyncTime));
+            if (d->generation) {
+                appendFormat_String(str, "%s%s %llu", sep, cstr_Lang("sync.status.generation"),
+                                    (unsigned long long) d->generation);
+            }
+        }
+        else {
+            setCStr_String(str, cstr_Lang("sync.status.never"));
+        }
+        if (isDirty_Sync_(d)) {
+            appendFormat_String(str, "%s%s", sep, cstr_Lang("sync.status.pending"));
+        }
+        if (!isEmpty_String(&d->lastError)) {
+            error = &d->lastError;
+            appendError_Sync_(str, error);
+        }
     }
     /* Recent changes are synced quietly, so their status is only shown here. */
     if (canSyncRecent_Sync_(d)) {
+        iString *recent = new_String();
         if (d->worker && d->mode == recent_SyncMode) {
-            appendFormat_String(str, "\n\n%s", cstr_Lang("sync.status.recent.running"));
+            setCStr_String(recent, cstr_Lang("sync.status.recent.running"));
         }
         else if (isValid_Time(&d->recentCheckTime)) {
-            appendFormat_String(str, "\n\n%s %s", cstr_Lang("sync.status.recent.last"),
-                                cstrCollect_String(format_Time(&d->recentCheckTime,
-                                                               "%Y-%m-%d %H:%M")));
+            setCStr_String(recent, timeText_Sync_(&d->recentCheckTime));
         }
         if (isRecentDirty_Sync_(d)) {
-            appendFormat_String(str, "\n%s", cstr_Lang("sync.status.recent.pending"));
+            appendFormat_String(recent, "%s%s", isEmpty_String(recent) ? "" : sep,
+                                cstr_Lang("sync.status.pending"));
         }
-        if (!isEmpty_String(&d->recentError)) {
-            appendFormat_String(str, "\n" uiTextCaution_ColorEscape "%s %s",
-                                cstr_Lang("sync.status.error"), cstr_String(&d->recentError));
+        if (!isEmpty_String(recent)) {
+            appendFormat_String(str, "\n%s %s", cstr_Lang("sync.status.recent"),
+                                cstr_String(recent));
+        }
+        delete_String(recent);
+        if (!isEmpty_String(&d->recentError) && !(error && equal_String(&d->recentError, error))) {
+            appendError_Sync_(str, &d->recentError);
         }
     }
     return str;

@@ -3364,37 +3364,34 @@ msgid "dlg.sync.untrusted.check"
 msgstr "Only trust the server's certificate if its fingerprint matches the one given by the server's administrator."
 
 msgid "sync.status.off"
-msgstr "Sync is off."
+msgstr "Off"
 
 msgid "sync.status.setup"
-msgstr "Enter the sync server and choose an Ed25519 identity for syncing. Use the same identity on all your devices."
+msgstr "Needs a server and an Ed25519 identity (the same on all devices)."
 
 msgid "sync.status.running"
 msgstr "Syncing…"
 
 msgid "sync.status.last"
-msgstr "Last synced:"
+msgstr "Synced"
 
 msgid "sync.status.generation"
-msgstr "generation"
+msgstr "gen."
 
 msgid "sync.status.never"
-msgstr "Not synced yet."
+msgstr "Not synced yet"
 
 msgid "sync.status.pending"
-msgstr "Local changes are waiting to be synced."
+msgstr "changes pending"
 
 msgid "sync.status.error"
 msgstr "Error:"
 
 msgid "sync.status.recent.running"
-msgstr "Syncing recent changes…"
+msgstr "syncing…"
 
-msgid "sync.status.recent.last"
-msgstr "Recent changes checked:"
-
-msgid "sync.status.recent.pending"
-msgstr "Recent changes are waiting to be uploaded."
+msgid "sync.status.recent"
+msgstr "Recent:"
 
 msgid "sync.busy.bookmarks"
 msgstr "Bookmarks cannot be edited while syncing. Please try again in a moment."
