@@ -854,6 +854,9 @@ void refresh_App(void) {
             if (!d->warmupFrames && !exchange_Atomic(&win->isRefreshPending, iFalse)) {
                 continue; /* No need to draw this window. */
             }
+            if (indexOf_PtrArray(&d->closedWindows, win) != iInvalidPos) {
+                continue; /* widgets are pending destruction */
+            }
             setCurrent_Window(win);
             switch (win->type) {
                 case main_WindowType: {
