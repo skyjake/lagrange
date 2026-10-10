@@ -375,9 +375,13 @@ static iRangecc auxText_GmDocument_(iGmDocument *d, const iString *text) {
 }
 
 static iRangecc fitPageBandText_GmDocument_(iGmDocument *d, iRangecc text) {
-    /* Shortened to fit between the outer margins of the page, with an ellipsis. */
+    /* Shortened to fit within the paragraph lines of the page, with an ellipsis. Centered, so
+       the wider side margin applies to both sides. */
     const int font     = pageBandFont_GmDocument(d);
-    const int maxWidth = (columnsPerPage_GmDocument(d) - 1) * d->metrics.canvasWidth + d->size.x;
+    const int margin   = iMax(d->style.indents[text_GmLineType],
+                              d->style.rightMargins[text_GmLineType]) * gap_Text;
+    const int maxWidth = (columnsPerPage_GmDocument(d) - 1) * d->metrics.canvasWidth + d->size.x -
+                         2 * margin;
     const char *end;
     tryAdvance_Text(font, text, maxWidth, &end);
     if (end < text.end) {
