@@ -131,6 +131,7 @@ struct Impl_Sync {
     iAtomicInt   isRecentChangePosted;
     iAtomicInt   isPushChangePosted;
     SDL_TimerID  pushTimer;
+    iBool        isPushAfterRunning; /* edits made during the sync are pushed immediately */
     iBool        isFullPending;    /* full sync starts after the recent changes */
     iBool        isFullPendingManual;
     iBool        isBlocking;       /* worker runs in the calling thread */
@@ -429,7 +430,7 @@ static void recentChanged_Sync_(iSync *d) {
     }
     iGuardMutex(d->mtx, initCurrent_Time(&d->recentModified));
     if (!exchange_Atomic(&d->isRecentChangePosted, iTrue)) {
-        postCommand_App("sync.recent.changed");
+        notify_App("sync.recent.changed");
     }
 }
 
@@ -443,7 +444,7 @@ static void userDataChanged_Sync_(enum iUserDataType type) {
         recentChanged_Sync_(d);
     }
     if (isPushType_Sync_(type) && !exchange_Atomic(&d->isPushChangePosted, iTrue)) {
-        postCommand_App("sync.push.changed");
+        notify_App("sync.push.changed");
     }
 }
 
@@ -629,7 +630,7 @@ static void applyIdentities_Sync_(const iSyncData *data, const iString *protecte
         }
     }
     saveIdentities_GmCerts(certs);
-    postCommand_App("idents.changed");
+    notify_App("idents.changed");
 }
 
 static void applyType_Sync_(const iSyncData *data, enum iUserDataType type,
@@ -1149,7 +1150,7 @@ static iThreadResult run_Sync_(iThread *thread) {
     }
     delete_SyncData(d->base);
     d->base = NULL;
-    postCommand_App("sync.worker.finished");
+    notify_App("sync.worker.finished");
     return 0;
 }
 
@@ -1200,7 +1201,7 @@ static iThreadResult runRecent_Sync_(iThread *thread) {
         setError_Sync_(d, "sync.error.busy");
     }
     if (!d->isBlocking) {
-        postCommand_App("sync.worker.finished");
+        notify_App("sync.worker.finished");
     }
     return 0;
 }
@@ -1210,27 +1211,27 @@ static iThreadResult runRecent_Sync_(iThread *thread) {
 
 static uint32_t timerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId);
-    postCommand_App("sync.check");
-    postCommand_App("sync.recent");
+    notify_App("sync.check");
+    notify_App("sync.recent");
     return interval;
 }
 
 static uint32_t recentTimerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId, interval);
-    postCommand_App("sync.recent push:1");
+    notify_App("sync.recent push:1");
     return 0;
 }
 
 static uint32_t pushTimerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId, interval);
-    postCommand_App("sync.push");
+    notify_App("sync.push");
     return 0;
 }
 
 static uint32_t retryCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId, interval);
     sync_.retryTimer = 0;
-    postCommand_App(sync_.isManual ? "sync.now" : "sync.check");
+    notify_App(sync_.isManual ? "sync.now" : "sync.check");
     return 0;
 }
 
@@ -1540,6 +1541,14 @@ static void finish_Sync_(iSync *d) {
     fetchRemote_Bookmarks(bookmarks_App());
     notify_App("sync.finished");
     notifyStatus_Sync_();
+    const iTime edit = pendingEdit_Sync_(d);
+    const iBool isPushNow =
+        d->isPushAfterRunning && isValid_Time(&edit) && !isError && !d->serverFingerprint;
+    d->isPushAfterRunning = iFalse;
+    if (isPushNow) {
+        start_Sync_(d, iFalse);
+        return;
+    }
     schedulePush_Sync_(d); /* edited during the sync */
     if (d->serverFingerprint) {
         /* Automatic syncs only ask once about the same certificate. */
@@ -1554,12 +1563,13 @@ static void finish_Sync_(iSync *d) {
     }
 }
 
+static iBool isBackingOff_Sync_(const iSync *d) {
+    return isValid_Time(&d->lastAttemptTime) && !isEmpty_String(&d->lastError) &&
+           elapsedSeconds_Time(&d->lastAttemptTime) < failureBackoff_Sync_;
+}
+
 static void check_Sync_(iSync *d) {
-    if (!isAutomatic_Sync_() || value_Atomic(&d->isRunning)) {
-        return;
-    }
-    if (isValid_Time(&d->lastAttemptTime) && !isEmpty_String(&d->lastError) &&
-        elapsedSeconds_Time(&d->lastAttemptTime) < failureBackoff_Sync_) {
+    if (!isAutomatic_Sync_() || value_Atomic(&d->isRunning) || isBackingOff_Sync_(d)) {
         return;
     }
     if (isValid_Time(&d->lastCheckTime) &&
@@ -1704,7 +1714,7 @@ void init_Sync(const char *dataDir) {
     setUserDataChangedFunc_Core(userDataChanged_Sync_);
     setVisitedUrlChangedFunc_Core(visitedUrlChanged_Sync_);
     /* Prefs are loaded via the event queue, so this is handled after them. */
-    postCommand_App("sync.prefs.changed launch:1");
+    notify_App("sync.prefs.changed launch:1");
 }
 
 void deinit_Sync(void) {
@@ -1779,9 +1789,23 @@ iTime lastCheckTime_Sync(void) {
 }
 
 void enterBackground_Sync(void) {
-    /* Recent changes are uploaded before the app is suspended. */
+    /* Recent changes and edits are uploaded before the app is suspended. */
     iSync *d = &sync_;
-    if (!d->mtx || d->worker || !isRecentDirty_Sync_(d) || !canSyncRecent_Sync_(d)) {
+    if (!d->mtx) {
+        return;
+    }
+    const iTime edit = pendingEdit_Sync_(d);
+    if (isValid_Time(&edit) && isAutomatic_Sync_()) {
+        /* The user is done editing, so there is no need to wait for the push delay. */
+        if (value_Atomic(&d->isRunning)) {
+            d->isPushAfterRunning = iTrue;
+        }
+        else {
+            start_Sync_(d, iFalse);
+        }
+        return;
+    }
+    if (d->worker || !isRecentDirty_Sync_(d) || !canSyncRecent_Sync_(d)) {
         return;
     }
     startRecent_Sync_(d, iFalse);
@@ -1887,7 +1911,7 @@ iBool handleCommand_Sync(const char *cmd) {
         checkRecent_Sync_(d, iFalse);
         return iFalse;
     }
-    if (!startsWith_CStr(cmd, "sync.")) {
+    if (!startsWith_Command(cmd, "sync.")) {
         return iFalse;
     }
     if (equal_Command(cmd, "sync.now")) {

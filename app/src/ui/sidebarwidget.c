@@ -629,7 +629,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     d->mode = mode;
     d->isShelfOrderValid = iFalse;
     if (mode == feedEntries_SidebarMode) {
-        postCommand_App("sync.recent"); /* read status may have changed elsewhere */
+        notify_App("sync.recent"); /* read status may have changed elsewhere */
     }
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);

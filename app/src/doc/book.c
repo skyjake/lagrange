@@ -259,7 +259,7 @@ void beginPosition_DocumentBook(iDocumentBook *d) {
             set_String(&d->readingBookId, bookId);
             d->didTurnPage = iFalse;
             beginReading_Books(gempub);
-            postCommand_App("sync.recent");
+            notify_App("sync.recent");
         }
         const iBook *book = find_Books(bookId);
         if (!book || book->chapter != (int) chapter) {

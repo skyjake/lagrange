@@ -104,7 +104,7 @@ iBool isShowingShelf_SidebarWidget_(const iSidebarWidget *d) {
 
 iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     /* Lists the books on the shelf. Returns False if there are none. */
-    postCommand_App("sync.recent"); /* reading positions may have changed elsewhere */
+    notify_App("sync.recent"); /* reading positions may have changed elsewhere */
     const iGempub *current   = gempub_SidebarWidget_(d);
     const iString *currentId = current ? id_Books(current) : NULL;
     const iPtrArray *books = list_Books(d->shelfSort);
