@@ -134,6 +134,7 @@ struct Impl_Sync {
     iBool        isPushAfterRunning; /* edits made during the sync are pushed immediately */
     iBool        isFullPending;    /* full sync starts after the recent changes */
     iBool        isFullPendingManual;
+    iBool        isResetPending;   /* disabled while running */
     iBool        isBlocking;       /* worker runs in the calling thread */
     iBool        isBackgroundTask;
     double       requestTimeout;
@@ -1538,6 +1539,10 @@ static void finish_Sync_(iSync *d) {
     d->snapshot = NULL;
     set_Atomic(&d->isRunning, iFalse);
     saveState_Sync_(d);
+    if (d->isResetPending || !prefs_Sync_()->sync) {
+        d->isResetPending = iFalse;
+        reset_Sync_(d);
+    }
     fetchRemote_Bookmarks(bookmarks_App());
     notify_App("sync.finished");
     notifyStatus_Sync_();
@@ -1608,6 +1613,10 @@ static void finishRecent_Sync_(iSync *d) {
     delete_SyncRecent(d->outgoing);
     d->outgoing = NULL;
     saveState_Sync_(d);
+    if (d->isResetPending || !prefs_Sync_()->sync) {
+        d->isResetPending = iFalse;
+        reset_Sync_(d);
+    }
     notifyStatus_Sync_();
     if (d->isBlocking) {
         return;
@@ -1735,6 +1744,9 @@ void deinit_Sync(void) {
         /* The result is discarded; the local changes are still pending. */
         join_Thread(d->worker);
         iReleasePtr(&d->worker);
+        if (d->isResetPending) {
+            reset_Sync_(d);
+        }
     }
 #if defined (iPlatformDesktop)
     else if (isRecentDirty_Sync_(d) && canSyncRecent_Sync_(d)) {
@@ -1968,9 +1980,13 @@ iBool handleCommand_Sync(const char *cmd) {
         return iTrue;
     }
     if (equal_Command(cmd, "sync.prefs.changed")) {
-        if (!prefs_Sync_()->sync && !argLabel_Command(cmd, "launch") &&
-            (isValid_Time(&d->lastAttemptTime) || d->generation)) {
-            reset_Sync_(d); /* syncing again will be like the first time */
+        if (!prefs_Sync_()->sync) {
+            if (value_Atomic(&d->isRunning) || d->worker) {
+                d->isResetPending = iTrue;
+            }
+            else if (isValid_Time(&d->lastAttemptTime) || d->generation) {
+                reset_Sync_(d); /* syncing again will be like the first time */
+            }
         }
         updateTimer_Sync_(d);
         notifyStatus_Sync_();
