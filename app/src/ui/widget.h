@@ -158,6 +158,8 @@ enum iWidgetFlag2 {
     sheet_WidgetFlag2                       = iBit(21), /* dialog or sheet */
     fadeWithVisualOffset_WidgetFlag2        = iBit(22), /* opacity follows the visual offset
                                                            animation (needs a draw buffer) */
+    fadeHandedOver_WidgetFlag2              = iBit(23), /* background fade continues from a
+                                                           dismissed sheet */
 };
 
 enum iWidgetAddPos {
@@ -198,6 +200,7 @@ struct Impl_Widget {
     iWidgetDrawBuffer *drawBuf;
     iAnim        overflowScrollOpacity; /* scrollbar fading */
     iAnim        fadeOpacity;           /* modal/menu background layer dimming */
+    float        opacity;               /* of the draw buffer */
     iString      data;                  /* custom user data */
     /* Callbacks. */
     iBool           (*commandHandler)(iWidget *, const char *);
@@ -348,6 +351,7 @@ void    setVisualOffset_Widget      (iWidget *, int value, uint32_t span, int an
 void    showCollapsed_Widget        (iWidget *, iBool show); /* takes care of rearranging, refresh */
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
+void    setOpacity_Widget           (iWidget *, float opacity); /* needs a draw buffer */
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
 void    setRoot_Widget              (iWidget *, iRoot *root); /* updates the entire tree */
 iAny *  addChild_Widget             (iWidget *, iAnyObject *child); /* holds a ref */

@@ -174,6 +174,7 @@ void init_Widget(iWidget *d) {
     d->drawBuf        = NULL;
     init_Anim(&d->overflowScrollOpacity, 0.0f);
     init_Anim(&d->fadeOpacity, -1.0f); /* not yet drawn; undefined opacity */
+    d->opacity        = 1.0f;
     init_String(&d->data);
     iZap(d->padding);
     iZap(d->borderPad);
@@ -480,6 +481,10 @@ void setBackgroundColor_Widget(iWidget *d, int bgColor) {
 
 void setFrameColor_Widget(iWidget *d, int frameColor) {
     d->frameColor = frameColor;
+}
+
+void setOpacity_Widget(iWidget *d, float opacity) {
+    d->opacity = opacity;
 }
 
 void setCommandHandler_Widget(iWidget *d, iBool (*handler)(iWidget *, const char *)) {
@@ -1893,17 +1898,59 @@ static float visualOffsetOpacity_Widget_(const iWidget *d) {
     return iClamp(1.0f - fabsf(value_Anim(&d->visualOffset)) / range, 0.0f, 1.0f);
 }
 
+static float fadeTarget_Widget_(const iWidget *d) {
+    /* Sheets animate the toggling of `noFadeBackground`. */
+    return (~d->flags & destroyPending_WidgetFlag) && (d->bgColor >= 0 || d->frameColor >= 0) &&
+                   d->flags & mouseModal_WidgetFlag &&
+                   (~d->flags2 & sheet_WidgetFlag2 || ~d->flags & noFadeBackground_WidgetFlag)
+               ? 1.0f
+               : 0.0f;
+}
+
+static float fadeAreaFactor_Widget_(const iWidget *d) {
+    /* A sheet sliding in or out fades the background according to its visible area. */
+    if (~d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag) ||
+        (d->flags2 & fadeHandedOver_WidgetFlag2 && ~d->flags & destroyPending_WidgetFlag)) {
+        return 1.0f;
+    }
+    const float area        = d->rect.size.x * d->rect.size.y;
+    const float rootArea    = area_Rect(rect_Root(d->root));
+    const float visibleArea = area_Rect(intersect_Rect(bounds_Widget(d), rect_Root(d->root)));
+    if (isPortraitPhone_App() && !cmp_String(&d->id, "sidebar")) {
+        return iClamp(visibleArea / rootArea * 2, 0.0f, 1.0f);
+    }
+    return area > 0 ? visibleArea / area : 0.0f;
+}
+
+static void handOverFade_Widget_(iWidget *d) {
+    /* A dismissed sheet passes its background fade to a sheet that replaces it. */
+    if (~d->flags & destroyPending_WidgetFlag || ~d->flags2 & sheet_WidgetFlag2 ||
+        d->parent != d->root->widget) {
+        return;
+    }
+    const float fade = value_Anim(&d->fadeOpacity) * fadeAreaFactor_Widget_(d);
+    iForEach(ObjectList, i, children_Widget(d->parent)) {
+        iWidget *w = i.object;
+        if (w != d && w->flags2 & sheet_WidgetFlag2 && isVisible_Widget(w) &&
+            ~w->flags & noFadeBackground_WidgetFlag && fadeTarget_Widget_(w) > 0.0f &&
+            value_Anim(&w->fadeOpacity) < fade) {
+            init_Anim(&w->fadeOpacity, fade);
+            w->flags2 |= fadeHandedOver_WidgetFlag2;
+            d->flags |= noFadeBackground_WidgetFlag;
+            return;
+        }
+    }
+}
+
 void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
     iAssert(window_Widget(d) == get_Window());
     iBool shadowBorder = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
-    iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
     const iBool isShadowStyle = (d->flags & keepOnTop_WidgetFlag) != 0;
     /* Update the fade target. */ {
         iAnim *fadeOpacity = iConstCast(iAnim *, &d->fadeOpacity);
-        const float fadeTarget =
-            (d->flags & destroyPending_WidgetFlag) ? 0.0f : (fadeBackground ? 1.0f : 0.0f);
+        const float fadeTarget = fadeTarget_Widget_(d);
         if (value_Anim(fadeOpacity) < 0.0f) {
             init_Anim(fadeOpacity, 0.0f); /* first time this widget is drawn */
         }
@@ -1911,8 +1958,13 @@ void drawLayerEffects_Widget(const iWidget *d) {
             setFadeOpacity_Widget_(iConstCast(iWidget *, d), fadeTarget, 200);
         }
     }
+    if (value_Anim(&d->fadeOpacity) > 0.0f) {
+        handOverFade_Widget_(iConstCast(iWidget *, d));
+    }
     const iBool isFaded =
-        (value_Anim(&d->fadeOpacity) > 0.0f && ~d->flags & noFadeBackground_WidgetFlag) ||
+        (value_Anim(&d->fadeOpacity) > 0.0f &&
+         (~d->flags & noFadeBackground_WidgetFlag ||
+          (d->flags2 & sheet_WidgetFlag2 && ~d->flags & destroyPending_WidgetFlag))) ||
         (d->flags2 & fadeBackground_WidgetFlag2);
     if (isShadowStyle && ~d->flags & noShadowBorder_WidgetFlag) {
         /* Smoothly fade the shadow in/out during a transition. */
@@ -1934,22 +1986,7 @@ void drawLayerEffects_Widget(const iWidget *d) {
     if (isFaded) {
         iPaint p;
         init_Paint(&p);
-        p.alpha = 0x50;
-        if (flags_Widget(d) & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
-            const float area        = d->rect.size.x * d->rect.size.y;
-            const float rootArea    = area_Rect(rect_Root(d->root));
-            const float visibleArea = area_Rect(intersect_Rect(bounds_Widget(d), rect_Root(d->root)));
-            if (isPortraitPhone_App() && !cmp_String(&d->id, "sidebar")) {
-                p.alpha *= iClamp(visibleArea / rootArea * 2, 0.0f, 1.0f);
-            }
-            else if (area > 0) {
-                p.alpha *= visibleArea / area;
-            }
-            else {
-                p.alpha = 0;
-            }
-            //printf("area:%f visarea:%f alpha:%d\n", rootArea, visibleArea, p.alpha);
-        }
+        p.alpha = 0x50 * fadeAreaFactor_Widget_(d);
         if (value_Anim(&d->fadeOpacity) > 0.0f) {
             p.alpha *= value_Anim(&d->fadeOpacity);
         }
@@ -2369,7 +2406,7 @@ void drawClipped_Widget(const iWidget *d, iRect clipRect /* may be empty */) {
         drawChildren_Widget(d);
         endBufferDraw_Widget_(d);
     }
-    const float opacity = visualOffsetOpacity_Widget_(d);
+    const float opacity = visualOffsetOpacity_Widget_(d) * d->opacity;
     if (d->drawBuf) {
         const iRect bounds = bounds_Widget(d);
         iPaint p;
