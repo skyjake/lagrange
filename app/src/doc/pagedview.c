@@ -350,11 +350,17 @@ size_t anchor_DocumentView(const iDocumentView *d) {
     if (d->paged.anchor != iInvalidPos) {
         return d->paged.anchor;
     }
-    /* The first text of the spread. */
+    /* The first text of the spread. During a turn, the previous spread is also visible. */
     const iString *source = source_GmDocument(d->doc);
-    const char    *loc    = d->visibleRuns.start ? d->visibleRuns.start->text.start : NULL;
-    if (loc && loc >= cstr_String(source) && loc < constEnd_String(source)) {
-        return loc - cstr_String(source);
+    for (const iGmRun *run = d->visibleRuns.start; run && run <= d->visibleRuns.end; run++) {
+        if (run->flags & decoration_GmRunFlag || run->mediaId ||
+            columnAt_GmDocument(d->doc, top_Rect(run->visBounds)) < d->paged.column) {
+            continue;
+        }
+        const char *loc = run->text.start;
+        if (loc >= cstr_String(source) && loc < constEnd_String(source)) {
+            return loc - cstr_String(source);
+        }
     }
     return iInvalidPos;
 }

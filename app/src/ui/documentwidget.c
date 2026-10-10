@@ -3427,7 +3427,6 @@ static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
     as_Widget(d)->flags2 &= ~clipChildren_WidgetFlag2;
     setThumbColor_ScrollWidget(d->scroll, tmQuoteIcon_ColorId); /* same as page header and footer */
     positionPagedProgress_DocumentWidget_(d);
-    pagesMoved_DocumentWidget(d);
 }
 
 void pagesMoved_DocumentWidget(iDocumentWidget *d) {
@@ -3499,6 +3498,9 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
 
 void didScrollView_DocumentWidget(iDocumentWidget *d) {
     animate_InlineMedia(d->media);
+    if (isPaged_DocumentView(d->view)) {
+        pagesMoved_DocumentWidget(d); /* the reading position needs the visible runs */
+    }
     /* Remember scroll positions of recently visited pages. */ {
         iAssert(~d->widget.flags & destroyPending_WidgetFlag);
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
