@@ -503,6 +503,9 @@ msgstr "Reload Page"
 msgid "menu.autoreload"
 msgstr "Set Auto-Reload…"
 
+msgid "menu.sitespec"
+msgstr "Site-Specific Settings…"
+
 msgid "menu.page.bookmark"
 msgstr "Bookmark Page…"
 

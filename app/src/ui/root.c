@@ -1877,6 +1877,7 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
         { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+        { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
         { "---" },
         { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
         { books_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" },
@@ -1884,7 +1885,7 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { isSourceTextView_DocumentWidget(document_App())
             ? "${menu.viewformat.gemini}"
             : "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-    17);
+    18);
     return items;
 }
 
@@ -2496,7 +2497,9 @@ void createUserInterface_Root(iRoot *d) {
            { "---" },
            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
            { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
-        }, 8);
+           { "---" },
+           { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
+        }, 10);
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
         setId_Widget(toolsMenu, "toolsmenu");

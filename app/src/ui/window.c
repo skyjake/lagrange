@@ -162,6 +162,8 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
     { "${menu.reload}", reload_KeyShortcut, "navigate.reload" },
     { "---" },
+    { "${menu.sitespec}", 0, 0, "document.sitespec" },
+    { "---" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },

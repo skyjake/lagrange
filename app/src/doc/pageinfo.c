@@ -169,6 +169,10 @@ iBool handlePageInfoCommand_DocumentWidget(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.sitespec")) {
+        const iRangecc root = urlRoot_String(url);
+        if (isEmpty_Range(&root)) {
+            return iTrue;
+        }
         if (isRunning_Sync()) {
             /* The settings may change when the synced data is applied. */
             makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.sync}", "${sync.busy.sitespec}");
