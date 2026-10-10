@@ -2413,6 +2413,9 @@ msgstr "Bottom Tabs"
 msgid "prefs.hidetabs"
 msgstr "Hide tab bar:"
 
+msgid "prefs.hideviewtools"
+msgstr "Hide view tools:"
+
 msgid "prefs.menubar"
 msgstr "Menu Bar"
 

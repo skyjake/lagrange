@@ -65,6 +65,7 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [hideToolbarOnScroll_PrefsBool]     = { "prefs.hidetoolbarscroll", "hidetoolbarscroll", NULL,
                                             mobileOnly_PrefsSpecFlag },
     [hideTabBar_PrefsBool]              = { "prefs.hidetabs", NULL, "~root.movable" },
+    [hideViewTools_PrefsBool]           = { "prefs.hideviewtools", NULL, NULL, refresh_PrefsSpecFlag },
     [blinkingCursor_PrefsBool]          = { "prefs.blink" },
     [bottomNavBar_PrefsBool]            = { "prefs.bottomnavbar", NULL, "~root.movable" },
     [bottomTabBar_PrefsBool]            = { "prefs.bottomtabbar", NULL, "~root.movable" },
@@ -268,6 +269,7 @@ void init_Prefs(iPrefs *d) {
     }
     d->hideToolbarOnScroll = iTrue;
     d->hideTabBar          = iFalse;
+    d->hideViewTools       = iFalse;
     d->blinkingCursor      = iTrue;
     if (deviceType_App() == phone_AppDeviceType) {
         d->bottomNavBar = iTrue;

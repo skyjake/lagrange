@@ -71,6 +71,7 @@ enum iPrefsBool {
     hideToolbarOnScroll_PrefsBool,
 
     hideTabBar_PrefsBool,
+    hideViewTools_PrefsBool,
     blinkingCursor_PrefsBool,
     bottomNavBar_PrefsBool,
     bottomTabBar_PrefsBool,
@@ -186,6 +187,7 @@ struct Impl_Prefs {
             iBool hideToolbarOnScroll;
 
             iBool hideTabBar;
+            iBool hideViewTools; /* the document's floating toolbar */
             iBool blinkingCursor;
             iBool bottomNavBar;
             iBool bottomTabBar;

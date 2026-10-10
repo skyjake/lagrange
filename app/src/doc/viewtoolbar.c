@@ -250,7 +250,8 @@ void reveal_ViewToolbar(iViewToolbar *d) {
 static iBool isAvailable_ViewToolbar_(const iViewToolbar *d) {
     iDocumentWidget     *doc  = d->owner;
     const iDocumentView *view = view_DocumentWidget(doc);
-    if (equalCase_Rangecc(urlScheme_String(url_DocumentWidget(doc)), "about")) {
+    if (prefs_App()->hideViewTools ||
+        equalCase_Rangecc(urlScheme_String(url_DocumentWidget(doc)), "about")) {
         return iFalse;
     }
     return size_GmDocument(view->doc).y > 0 || !isEmpty_Banner(banner_DocumentWidget(doc));

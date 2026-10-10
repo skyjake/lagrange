@@ -545,6 +545,7 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.toolbars" },
             { "padding arg:0.667" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
+            { "toggle id:prefs.hideviewtools" },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
@@ -823,6 +824,7 @@ iWidget *makePreferences_Widget(void) {
             },
             iInvalidSize);
         addDialogToggle_Widget(headings, values, "${prefs.hidetabs}", "prefs.hidetabs");
+        addDialogToggle_Widget(headings, values, "${prefs.hideviewtools}", "prefs.hideviewtools");
         if (isDesktop_Platform()) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.promptposition}")));
             iWidget *promptPos = new_Widget();
