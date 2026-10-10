@@ -74,10 +74,14 @@ static void updateMetrics_ScrollWidget_(iScrollWidget *d) {
         d->widget.rect.size.y = (isMobile_Platform() ? 5.0f : 3.0f) * gap_UI;
         return;
     }
-    d->widget.rect.size.x = (isMobile_Platform()           ? 6.0f
-                             : prefs_App()->thickScrollBar ? 4.5f
-                                                           : 3.0f) *
-                            gap_UI;
+    d->widget.rect.size.x = thickness_ScrollWidget();
+}
+
+int thickness_ScrollWidget(void) {
+    return (isMobile_Platform()           ? 6.0f
+            : prefs_App()->thickScrollBar ? 4.5f
+                                          : 3.0f) *
+           gap_UI;
 }
 
 static void animateOpacity_ScrollWidget_(void *ptr) {

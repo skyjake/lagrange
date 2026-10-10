@@ -275,7 +275,11 @@ int pageBandFont_GmDocument(const iGmDocument *d) {
 }
 
 int pageBandHeight_GmDocument(const iGmDocument *d) {
-    return iMax(2 * lineHeight_Text(pageBandFont_GmDocument(d)), d->metrics.pageHeight / 14);
+    return pageBandHeightFor_GmDocument(d, d->metrics.pageHeight);
+}
+
+int pageBandHeightFor_GmDocument(const iGmDocument *d, int pageHeight) {
+    return iMax(2 * lineHeight_Text(pageBandFont_GmDocument(d)), pageHeight / 14);
 }
 
 iBool isHeaderBelowCutout_GmDocument(const iGmDocument *d) {

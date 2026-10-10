@@ -314,47 +314,54 @@ void arrange_ViewToolbar(iViewToolbar *d) {
         d->wasAvailable = iFalse;
         return;
     }
-    const iWidget       *owner  = constAs_Widget(d->owner);
-    iRoot               *root   = owner->root;
-    const iDocumentView *view   = view_DocumentWidget(d->owner);
-    const iScrollWidget *scroll = scrollBar_DocumentWidget(d->owner);
-    const iBool          paged  = isPaged_DocumentView(view);
-    const iRect          bounds = bounds_Widget(owner);
-    const iRect          safe   = safeRect_Root(root);
-    const iRect          area   = paged ? pageViewport_DocumentView(view) : bounds;
-    const int            pad    = 2 * gap_UI;
-    const int            edge   = iMin(right_Rect(area), right_Rect(safe));
-    int right = edge - pad;
-    if (!isProgressMode_ScrollWidget(scroll) && isVisible_Widget(scroll)) {
-        right = iMin(right, left_Rect(bounds_Widget(constAs_Widget(scroll))) - pad);
-    }
+    const iWidget       *owner    = constAs_Widget(d->owner);
+    iRoot               *root     = owner->root;
+    const iDocumentView *view     = view_DocumentWidget(d->owner);
+    const iBool          paged    = isPaged_DocumentView(view);
+    const iRect          bounds   = bounds_Widget(owner);
+    const iRect          safe     = safeRect_Root(root);
+    const iRect          area     = paged ? pageViewport_DocumentView(view) : bounds;
+    const int            pad      = 2 * gap_UI;
+    const iBool          atBottom = isPortraitPhone_App(); /* within reach */
+    /* The scroll bar's space is reserved in both modes, so toggling doesn't move the toolbar. */
+    const int left  = iMax(left_Rect(bounds), left_Rect(safe)) + pad;
+    const int right = iMin(right_Rect(bounds), right_Rect(safe)) - pad -
+                      (atBottom ? 0 : thickness_ScrollWidget());
     /* Labels are omitted if there isn't enough room. */
-    const iBool compact = d->fullWidth > right - iMax(left_Rect(area), left_Rect(safe)) - pad;
+    const iBool compact = d->fullWidth > right - left;
     if (compact != d->isCompact) {
         d->isCompact = compact;
         update_ViewToolbar(d);
     }
-    /* Equal distance from the corner's edges, unless aligned with the header or footer. */
-    const int   vPad      = paged ? pad : edge - right;
-    const int   height    = height_Widget(w);
-    const int   bandAlign = (lineHeight_Text(pageBandFont_GmDocument(view->doc)) - height) / 2;
-    const iBool atBottom  = isPortraitPhone_App(); /* within reach */
-    int         top;
-    int         barsEdge;
-    float       barsOpacity;
+    const int height = height_Widget(w);
+    int       top;
+    int       barsEdge;
+    float     barsOpacity;
     if (atBottom) {
-        top = paged ? top_Rect(area) + pageFooterTextTop_DocumentView(view) + bandAlign
-                    : iMin(bottom_Rect(area), bottom_Rect(safe)) - vPad - height;
-        top = iMin(top, bottomBarsEdge_ViewToolbar_(root) - vPad - height);
+        top = paged ? top_Rect(area) + pageFooterTextTop_DocumentView(view) +
+                          (lineHeight_Text(pageBandFont_GmDocument(view->doc)) - height) / 2
+                    : iMin(bottom_Rect(area), bottom_Rect(safe)) - pad - thickness_ScrollWidget() -
+                          height;
+        top = iMin(top, bottomBarsEdge_ViewToolbar_(root) - pad - height);
     }
     else {
-        top = paged ? top_Rect(area) + pageHeaderTextTop_DocumentView(view) + bandAlign
-                    : iMax(top_Rect(area), top_Rect(safe)) + vPad;
+        /* Below the bars and the safe area inset. */
+        top = paged ? top_Rect(area) + metrics_GmDocument(view->doc)->topInset
+                    : iMax(top_Rect(bounds), top_Rect(safe));
         if (readingBarsEdge_Root(root, iFalse, &barsEdge, &barsOpacity)) {
-            top = iMax(top, barsEdge + vPad);
+            top = iMax(top, barsEdge);
+        }
+        if (!isLandscapePhone_App()) {
+            /* Centered in the page header area, also when not paginated. */
+            const int band = pageBandHeightFor_GmDocument(
+                view->doc, height_Rect(readingRect_Root(root, bounds)));
+            top += (band - height) / 2;
         }
     }
-    w->rect.pos = sub_I2(init_I2(right - width_Widget(w), top), topLeft_Rect(bounds));
+    w->rect.pos = sub_I2(init_I2(atBottom ? (left + right - width_Widget(w)) / 2
+                                          : right - width_Widget(w),
+                                 top),
+                         topLeft_Rect(bounds));
     updateOpacity_ViewToolbar_(d);
     setFlags_Widget(w, hidden_WidgetFlag, value_Anim(&d->opacity) <= 0.0f);
     setOpacity_Widget(w, value_Anim(&d->opacity));

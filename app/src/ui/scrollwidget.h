@@ -38,5 +38,6 @@ void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);
 /* Progress mode: a horizontal bar that fills from the left. The thumb is the position and
    the thumb size is the visible amount. Owner positions the widget. */
 void    setProgressMode_ScrollWidget(iScrollWidget *, iBool progressMode);
+int     thickness_ScrollWidget      (void); /* width of a vertical scroll bar */
 iBool   isProgressMode_ScrollWidget (const iScrollWidget *);
 void    setProgressOpacity_ScrollWidget(iScrollWidget *, float opacity);
