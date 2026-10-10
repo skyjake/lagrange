@@ -69,7 +69,9 @@ static void drawDragHandle_(iPaint *p, iRect *itemRect, int bg) {
                        init_I2(itemHeight * 3 / 2, itemHeight) };
     fillRect_Paint(p, dragRect, bg);
     drawVLine_Paint(p, topLeft_Rect(dragRect), height_Rect(dragRect), uiSeparator_ColorId);
-    drawCentered_Text(uiContent_FontId, dragRect, iTrue, uiAnnotation_ColorId, menu_Icon);
+    /* Matches the size of native iOS drag handles. */
+    drawCentered_Text(isAppleMobile_Platform() ? uiLabelLarge_FontId : uiContent_FontId,
+                      dragRect, iTrue, uiAnnotation_ColorId, menu_Icon);
     /* Adjust the item rectangle to account for the handle. */
     adjustEdges_Rect(itemRect, 0, -width_Rect(dragRect), 0, 0);
 }
@@ -160,8 +162,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         else {
             const iBool isUnread  = (d->indent != 0);
-            const int   titleFont =
-                sidebar->itemFonts[isUnread || d->listItem.flags.isSelected ? 1 : 0];
+            const int   titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
             const int   h1        = lineHeight_Text(uiLabel_FontId);
             const int   h2        = lineHeight_Text(titleFont);
             iRect       iconArea  = { addY_I2(pos, 0), init_I2(iconPad * aspect_UI, itemHeight) };

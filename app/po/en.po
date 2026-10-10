@@ -802,9 +802,9 @@ msgstr "Next Entry"
 msgid "reader.prev"
 msgstr "Previous Entry"
 
-# Button at the bottom of the Reader tab (mobile). Returns to the Feeds list.
-msgid "reader.exit"
-msgstr "Exit Reader"
+# Button at the bottom of the Reader tab. Shows the Feeds sidebar.
+msgid "reader.showfeeds"
+msgstr "Show Feeds"
 
 # strftime() format string. Date of the feed entry shown in the Reader tab banner.
 # %d is the day of month without zero padding.

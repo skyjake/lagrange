@@ -895,6 +895,33 @@ static iBool triggerFooterKey_DocumentWidget_(iDocumentWidget *d, int key) {
     return iFalse;
 }
 
+static iBool isFeedsSidebarVisible_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *root = root_Widget(constAs_Widget(d));
+    for (int i = 0; i < 2; i++) {
+        const iSidebarWidget *sidebar = findChild_Widget(root, i == 0 ? "sidebar" : "sidebar2");
+        if (sidebar && isVisible_Widget(sidebar) &&
+            mode_SidebarWidget(sidebar) == feedEntries_SidebarMode) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static iBool updateReaderButtons_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *showFeeds =
+        d->footerButtons ? findChild_Widget(d->footerButtons, "reader.showfeeds") : NULL;
+    if (!showFeeds) {
+        return iFalse;
+    }
+    const iBool hide = isFeedsSidebarVisible_DocumentWidget_(d);
+    if (hide == ((flags_Widget(showFeeds) & hidden_WidgetFlag) != 0)) {
+        return iFalse;
+    }
+    setFlags_Widget(showFeeds, hidden_WidgetFlag, hide);
+    arrange_Widget(d->footerButtons);
+    return iTrue;
+}
+
 void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items, size_t count) {
     iWidget *w = as_Widget(d);
     destroy_Widget(d->footerButtons);
@@ -906,8 +933,10 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
             (iMenuItem[]){ { forwardArrow_Icon " ${reader.next}", SDLK_RIGHT, 0, "reader.next" },
                            { backArrow_Icon " ${reader.prev}", SDLK_LEFT, 0, "reader.prev" },
                            { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "reader.markallread" },
-                           { close_Icon " ${reader.exit}", 0, 0, "reader.exit" } },
-            deviceType_App() != desktop_AppDeviceType ? 4 : 3);
+                           { format_CStr("%s ${reader.showfeeds}",
+                                         icon_SidebarMode(feedEntries_SidebarMode)),
+                             0, 0, "reader.showfeeds" } },
+            4);
         if (count) {
             pushBackN_Array(all, items, count);
         }
@@ -937,23 +966,18 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
         setBackgroundColor_Widget(as_Widget(button), uiBackgroundSidebar_ColorId);
+        if (d->mod.isReader && items[i].command &&
+            (equal_CStr(items[i].command, "reader.markallread") ||
+             equal_CStr(items[i].command, "reader.showfeeds"))) {
+            setId_Widget(as_Widget(button), items[i].command);
+            setFlags_Widget(as_Widget(button), collapse_WidgetFlag, iTrue);
+        }
     }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
+    updateReaderButtons_DocumentWidget_(d);
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
     updateVisible_DocumentView(d->view); /* final placement for the buttons */
-}
-
-static iBool isFeedsSidebarVisible_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *root = root_Widget(constAs_Widget(d));
-    for (int i = 0; i < 2; i++) {
-        const iSidebarWidget *sidebar = findChild_Widget(root, i == 0 ? "sidebar" : "sidebar2");
-        if (sidebar && isVisible_Widget(sidebar) &&
-            mode_SidebarWidget(sidebar) == feedEntries_SidebarMode) {
-            return iTrue;
-        }
-    }
-    return iFalse;
 }
 
 static iBool openAdjacentFeedEntry_DocumentWidget_(iDocumentWidget *d, int dir) {
@@ -1530,6 +1554,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         showOrHideIndicators_DocumentWidget_(d);
         return iFalse;
     }
+    else if (equal_Command(cmd, "sidebar.mode.changed") ||
+             equal_Command(cmd, "sidebar2.mode.changed")) {
+        if (updateReaderButtons_DocumentWidget_(d)) {
+            updateVisible_DocumentView(d->view);
+            refresh_Widget(w);
+        }
+        return iFalse;
+    }
     else if (equal_Command(cmd, "tabs.changed")) {
         setLinkNumberMode_DocumentWidget(d, iFalse);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
@@ -1550,6 +1582,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateHover_Window(window_Widget(w));
             set_String(&w->root->tabInsertId, id_Widget(w)); /* insert next to current tab */
             iChangeFlags(d->flags, unseen_DocumentWidgetFlag, iFalse); /* has been seen now */
+            if (d->mod.isReader && deviceType_App() != phone_AppDeviceType &&
+                isFinishedLaunching_App()) {
+                showSidebar_DocumentWidget(d);
+            }
         }
         showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view->sideOpacity, 0);
@@ -2214,17 +2250,24 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (!openAdjacentFeedEntry_DocumentWidget_(d, equal_Command(cmd, "reader.next") ? +1 : -1) &&
                 !isFeedsSidebarVisible_DocumentWidget_(d)) {
                 /* No more entries this way; the list shows where we are. */
-                postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", feedEntries_SidebarMode);
+                showSidebar_DocumentWidget(d);
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "reader.markallread")) {
+            if (!argLabel_Command(cmd, "confirmed")) {
+                iWidget *button =
+                    d->footerButtons ? findChild_Widget(d->footerButtons, "reader.markallread") : NULL;
+                openMarkAllReadMenu_Widget(button ? button : w,
+                                           format_CStr("reader.markallread confirmed:1 doc:%p", d));
+                return iTrue;
+            }
             markAllEntriesAsRead_Feeds();
             notify_App("visited.changed");
             return iTrue;
         }
-        else if (equal_Command(cmd, "reader.exit")) {
-            postCommand_Root(w->root, "sidebar.mode arg:1 show:1");
+        else if (equal_Command(cmd, "reader.showfeeds")) {
+            showSidebar_DocumentWidget(d);
             return iTrue;
         }
     }
@@ -2643,7 +2686,7 @@ static void swipeVertically_DocumentWidget_(iDocumentWidget *d, const SDL_MouseW
     if (~d->flags & swipedUp_DocumentWidgetFlag &&
         -d->swipeUpY > height_Rect(pageViewport_DocumentView(d->view)) / 20) {
         d->flags |= swipedUp_DocumentWidgetFlag;
-        postCommandf_Root(as_Widget(d)->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
+        showSidebar_DocumentWidget(d);
     }
 }
 
@@ -4271,8 +4314,25 @@ void setOpenedExternally_DocumentWidget(iDocumentWidget *d, iBool openedExternal
     iChangeFlags(d->flags, openedExternally_DocumentWidgetFlag, openedExternally);
 }
 
+iBool showSidebar_DocumentWidget(iDocumentWidget *d) {
+    /* The sidebar for the document is scrolled to the current item. */
+    int mode;
+    if (d->mod.isReader) {
+        mode = feedEntries_SidebarMode;
+    }
+    else if (gempub_DocumentWidget(d)) {
+        mode = gempub_SidebarMode;
+    }
+    else {
+        return iFalse;
+    }
+    postCommandf_Root(as_Widget(d)->root, "sidebar.mode arg:%d show:1 current:1", mode);
+    return iTrue;
+}
+
 void updateSize_DocumentWidget(iDocumentWidget *d) {
     iDocumentView *view = d->view;
+    updateReaderButtons_DocumentWidget_(d);
     updateDocumentWidthRetainingScrollPosition_DocumentView(view, iFalse);
     resetWideRuns_DocumentView(view);
     updateDrawBufs_DocumentView(view, updateSideBuf_DrawBufsFlag);

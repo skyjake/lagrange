@@ -1270,12 +1270,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             !isModeEnabled_SidebarWidget_(d, d->side, mode) &&
             isModeEnabled_SidebarWidget_(d, d->side ^ 1, mode)) {
             /* Make it affect the other side instead. */
-            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d",
+            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d",
                                d->side == 0 ? "sidebar2" : "sidebar",
                                mode,
                                argLabel_Command(cmd, "show"),
                                argLabel_Command(cmd, "toggle"),
-                               argLabel_Command(cmd, "shelf"));
+                               argLabel_Command(cmd, "shelf"),
+                               argLabel_Command(cmd, "current"));
             return iTrue;
         }
         iBool isShelfChanged = iFalse;
@@ -1292,6 +1293,16 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
         }
         scrollOffset_ListWidget(d->list, 0);
+        if (argLabel_Command(cmd, "current")) {
+            /* Scrolled after the sidebar has been shown. */
+            for (size_t i = 0; i < numItems_ListWidget(d->list); i++) {
+                const iListItem *item = constItem_ListWidget(d->list, i);
+                if (item->flags.isSelected) {
+                    postCommand_Widget(d->list, "sideitem.show arg:%zu", i);
+                    break;
+                }
+            }
+        }
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
             if (isTerminal_Platform()) {

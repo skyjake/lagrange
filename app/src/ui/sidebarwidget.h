@@ -59,3 +59,5 @@ float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     openFolders_SidebarWidget   (const iSidebarWidget *);
 
 iListWidget *       list_SidebarWidget          (iSidebarWidget *);
+
+void    openMarkAllReadMenu_Widget  (iWidget *anchor, const char *command); /* asks for confirmation */

@@ -153,6 +153,7 @@ void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finished
 
 void    documentRunsInvalidated_DocumentWidget  (iDocumentWidget *);
 void    updateSize_DocumentWidget               (iDocumentWidget *);
+iBool   showSidebar_DocumentWidget              (iDocumentWidget *); /* reader or book */
 void    updateWindowTitle_DocumentWidget        (const iDocumentWidget *);
 void    updateHoverLinkInfo_DocumentWidget      (iDocumentWidget *, iDocumentView *, uint16_t linkId);
 void    scrollBegan_DocumentWidget              (iAnyObject *, int, uint32_t); /* SmoothScroll callback */

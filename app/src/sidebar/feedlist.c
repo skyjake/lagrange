@@ -323,6 +323,20 @@ void updateFeedContextMenu_SidebarWidget_(iSidebarWidget *d) {
                             0);
 }
 
+void openMarkAllReadMenu_Widget(iWidget *anchor, const char *command) {
+    /* Phone menus already have a Cancel item. */
+    const iMenuItem items[] = {
+        { "```${feeds.markallread.confirm}" },
+        { "---" },
+        { check_Icon " " uiTextCaution_ColorEscape "${feeds.markallread}", 0, 0, command },
+        { "---" },
+        { "${cancel}", 0, 0, "cancel" },
+    };
+    const size_t numItems = iElemCount(items) - (deviceType_App() == phone_AppDeviceType ? 2 : 0);
+    iWidget *menu = makeMenu_Widget(anchor->root->widget, items, numItems);
+    openMenu_Widget(menu, topLeft_Rect(bounds_Widget(anchor)));
+}
+
 iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equalWidget_Command(cmd, w, "feeds.mode")) {
@@ -332,19 +346,8 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
     }
     else if (equal_Command(cmd, "feeds.markallread") && d->mode == feedEntries_SidebarMode) {
         if (argLabel_Command(cmd, "confirm")) {
-            /* This is used on mobile. Phone menus already have a Cancel item. */
-            const iMenuItem items[] = {
-                { "```${feeds.markallread.confirm}" },
-                { "---" },
-                { check_Icon " " uiTextCaution_ColorEscape "${feeds.markallread}",
-                  0, 0, "feeds.markallread" },
-                { "---" },
-                { "${cancel}", 0, 0, "cancel" },
-            };
-            const size_t numItems = iElemCount(items) -
-                                    (deviceType_App() == phone_AppDeviceType ? 2 : 0);
-            iWidget *menu = makeMenu_Widget(w->root->widget, items, numItems);
-            openMenu_Widget(menu, topLeft_Rect(bounds_Widget(d->actions)));
+            /* This is used on mobile. */
+            openMarkAllReadMenu_Widget(d->actions, "feeds.markallread");
             return iTrue;
         }
         markAllEntriesAsRead_Feeds();
