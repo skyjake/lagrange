@@ -1383,7 +1383,7 @@ static void addMenuElementGroup_(NSMutableArray<UIMenuElement *> *elems,
                                    options:isEmpty_String(subTitle)
                                             ? UIMenuOptionsDisplayInline
                                             : 0
-                                  children:subElems]];
+                                  children:[NSArray arrayWithArray:subElems]]];
     clear_String(subTitle);
 }
 
@@ -1413,6 +1413,7 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
                     [subElems removeAllObjects];
                 }
                 setCStr_String(&sepTitle, item->label + 3);
+                removeIconPrefix_String(&sepTitle);
                 translate_Lang(&sepTitle);
                 if (endsWith_String(&sepTitle, ":")) {
                     removeEnd_String(&sepTitle, 1);
