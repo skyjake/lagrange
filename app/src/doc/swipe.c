@@ -158,6 +158,17 @@ void maybeFinish_DocumentSwipe(iDocumentSwipe *d) {
     }
 }
 
+void settle_DocumentSwipe(iDocumentSwipe *d) {
+    if (!d->view || isFinished_Anim(&d->offset) ||
+        d->flags & (begun_DocumentSwipeFlag | aborted_DocumentSwipeFlag |
+                    rubberband_DocumentSwipeFlag)) {
+        return;
+    }
+    init_Anim(&d->offset, targetValue_Anim(&d->offset));
+    maybeFinish_DocumentSwipe(d);
+    refresh_Widget(d->owner);
+}
+
 int offsetOfView_DocumentSwipe(const iDocumentSwipe *d, const iDocumentView *view) {
     /* Must match the horizontal offset used to draw `view` in draw_DocumentWidget_(). */
     const int swipeValue = value_Anim(&d->offset);

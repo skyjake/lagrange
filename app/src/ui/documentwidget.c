@@ -738,6 +738,12 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
         updateActiveDocPrefs_App();
     }
 }
+
+static void pageTurnBegins_DocumentWidget_(iDocumentWidget *d) {
+    /* A chapter still sliding in would show the turning pages twice. */
+    settle_DocumentSwipe(d->swipe);
+}
+
 static const iDocumentViewHost viewHost_DocumentWidget_ = {
     .footerButtons           = (iAny *) footerButtons_DocumentWidget,
     .footerHeight            = (iAny *) footerHeight_DocumentWidget,
@@ -764,6 +770,7 @@ static const iDocumentViewHost viewHost_DocumentWidget_ = {
     .repositionInlinePrompts = (iAny *) repositionInlinePrompts_DocumentWidget,
     .updateHoverLinkInfo     = (iAny *) updateHoverLinkInfo_DocumentWidget,
     .pagesMoved              = (iAny *) pagesMoved_DocumentWidget,
+    .pageTurnBegins          = (iAny *) pageTurnBegins_DocumentWidget_,
 };
 
 
@@ -791,12 +798,14 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->view == swipeView_DocumentWidget(d)) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
+        const uint32_t turnTime = d->view->paged.turnTime; /* turns continue in the next chapter */
         deferOutgoing_Query(d->query);
         takeOutgoing_DocumentSwipe(d->swipe, d->view, d->banner);
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
         setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
         allocView_DocumentWidget_(d);
+        d->view->paged.turnTime = turnTime;
     }
     destroyAll_Query(d->query);
     cancelInputPrompt_DocumentWidget_(d);
@@ -2875,6 +2884,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             /* Horizontal swipes drag the pages. */
             if (ev->wheel.x || wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState) {
+                if (~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
+                    d->flags |= noHoverWhileScrolling_DocumentWidgetFlag;
+                    updateHover_DocumentView(view, coord_MouseWheelEvent(&ev->wheel));
+                }
                 handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel);
             }
             else if (ev->wheel.y) {

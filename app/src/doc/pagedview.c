@@ -40,6 +40,14 @@ uint32_t pageTurnDuration_DocumentView(const iDocumentView *d) {
     return full * iClamp(sqrtf(width), 0.5f, 1.0f);
 }
 
+uint32_t beginPageTurn_DocumentView(iDocumentView *d, uint32_t duration) {
+    /* Rapid turns animate as fast as they are made. */
+    const uint32_t now      = SDL_GetTicks();
+    const uint32_t interval = now - d->paged.turnTime;
+    d->paged.turnTime = now;
+    return iMin(duration, interval);
+}
+
 static iBool isAlwaysScrolled_(const iString *url) {
     /* Checked whenever the page viewport is needed, so the URL is not fully parsed. */
     static const char *pages_[] = { "about:lagrange", "about:debug" };
@@ -98,7 +106,7 @@ static int pageMargin_DocumentView_(const iDocumentView *d, int columnWidth) {
        may go down to half of the margin, but wider pages keep their margins like a book. */
     const float wideness = iClamp((columnWidth / (float) gap_UI - 100.0f) / 100.0f, 0.0f, 1.0f);
     const int   minimum  = margin * (0.5f + 0.5f * wideness);
-    const int wanted = preferredWidth_DocumentView_(d, 1) * textZoom_();
+    const int   wanted   = preferredWidth_DocumentView_(d, 1) * textZoom_();
     return iMax(iMax(2 * gap_UI, minimum), iMin(margin, (columnWidth - wanted) / 2));
 }
 
@@ -418,6 +426,15 @@ void animatePageTurn_DocumentView(iAny *context) {
     updateVisible_DocumentView(d); /* buffers move on to the next spread */
 }
 
+void settlePageTurn_DocumentView(iDocumentView *d) {
+    if (d->paged.isDragging || isFinished_Anim(&d->paged.turnOffset)) {
+        return;
+    }
+    init_Anim(&d->paged.turnOffset, targetValue_Anim(&d->paged.turnOffset));
+    removeTicker_App(animatePageTurn_DocumentView, d);
+    animatePageTurn_DocumentView(d);
+}
+
 void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) {
     if (d->paged.isDragging) {
         return;
@@ -432,9 +449,12 @@ void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) 
     const int spreads = ((int) column - (int) d->paged.column) / (int) n;
     if (isAnimated && iAbs(spreads) == 1) {
         /* The old spread slides out as the new one slides in. */
+        hostPageTurnBegins_DocumentView(d);
         d->paged.turnFrom = d->paged.column;
         init_Anim(&d->paged.turnOffset, spreads * spreadStride_DocumentView_(d));
-        setValueEased_Anim(&d->paged.turnOffset, 0, pageTurnDuration_DocumentView(d));
+        setValueEased_Anim(&d->paged.turnOffset,
+                           0,
+                           beginPageTurn_DocumentView(d, pageTurnDuration_DocumentView(d)));
         addTicker_App(animatePageTurn_DocumentView, d);
     }
     else {
@@ -488,6 +508,7 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     const int n      = numColumns_DocumentView(d);
     const int spread = spreadStride_DocumentView_(d);
     if (!d->paged.isDragging) {
+        hostPageTurnBegins_DocumentView(d);
         if (d->paged.isReverting) {
             d->paged.column = d->paged.turnFrom;
         }

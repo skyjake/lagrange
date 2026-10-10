@@ -160,6 +160,7 @@ iBool openAdjacentChapter_DocumentBook(iDocumentBook *d, int dir, iBool isGestur
     iDocumentSwipe *swipe = swipe_DocumentWidget(d->owner);
     iDocumentView  *view  = view_DocumentBook_(d);
     reset_DocumentSwipe(swipe);
+    settlePageTurn_DocumentView(view); /* drawn as it is when sliding away */
     if (prefs_App()->pageTurn == curl_PageTurnAnimation && isPaged_DocumentView(view)) {
         swipe->flags |= pageCurl_DocumentSwipeFlag;
     }
@@ -305,11 +306,13 @@ void didFinishRequest_DocumentBook(iDocumentBook *d) {
             setValue_Anim(&swipe->offset, to, 0);
         }
         else if (swipe->flags & pageCurl_DocumentSwipeFlag) {
-            setValueEased_Anim(&swipe->offset, to, pageTurnDuration_DocumentView(view));
+            setValueEased_Anim(&swipe->offset,
+                               to,
+                               beginPageTurn_DocumentView(view, pageTurnDuration_DocumentView(view)));
         }
         else {
             setFlags_Anim(&swipe->offset, easeOut_AnimFlag, iTrue);
-            setValue_Anim(&swipe->offset, to, 250);
+            setValue_Anim(&swipe->offset, to, beginPageTurn_DocumentView(view, 250));
         }
         animate_DocumentWidget(d->owner);
     }

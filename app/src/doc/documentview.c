@@ -289,6 +289,12 @@ void hostPagesMoved_DocumentView(iDocumentView *d) {
     }
 }
 
+void hostPageTurnBegins_DocumentView(iDocumentView *d) {
+    if (d->host && d->host->pageTurnBegins) {
+        d->host->pageTurnBegins(d->owner);
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void setOwner_DocumentView(iDocumentView *d, iAnyObject *owner, const iDocumentViewHost *host) {

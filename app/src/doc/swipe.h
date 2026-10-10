@@ -81,6 +81,7 @@ int     sidebarAreaHeight_DocumentSwipe(const iDocumentSwipe *);
 iRangei sidebarAreaSpan_DocumentSwipe(const iDocumentSwipe *); /* vertical, in the safe area */
 void    abort_DocumentSwipe         (iDocumentSwipe *);
 void    maybeFinish_DocumentSwipe   (iDocumentSwipe *);
+void    settle_DocumentSwipe        (iDocumentSwipe *); /* ongoing slide jumps to the end */
 iBool   isSwipingBack_DocumentSwipe (const iDocumentSwipe *);
 int     offsetOfView_DocumentSwipe  (const iDocumentSwipe *, const iDocumentView *);
 

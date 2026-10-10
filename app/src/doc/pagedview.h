@@ -38,6 +38,8 @@ int     numColumns_DocumentView         (const iDocumentView *); /* in a spread 
 int     numPages_DocumentView           (const iDocumentView *); /* in a spread */
 int     spreadWidth_DocumentView        (const iDocumentView *);
 uint32_t pageTurnDuration_DocumentView (const iDocumentView *); /* depends on the animation style and width */
+uint32_t beginPageTurn_DocumentView    (iDocumentView *, uint32_t duration); /* returns adapted duration */
+void    settlePageTurn_DocumentView     (iDocumentView *); /* ongoing turn jumps to the end */
 iBool   isCurling_DocumentView          (const iDocumentView *); /* curl animation is ongoing */
 float   curlProgress_DocumentView       (const iDocumentView *); /* from the earlier spread to the later one */
 size_t  currentColumn_DocumentView      (const iDocumentView *); /* first of the spread */

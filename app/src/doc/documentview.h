@@ -75,6 +75,7 @@ struct Impl_DocumentViewHost {
     void            (*repositionInlinePrompts)(iAnyObject *, iDocumentView *);
     void            (*updateHoverLinkInfo)  (iAnyObject *, iDocumentView *, uint16_t linkId);
     void            (*pagesMoved)           (iAnyObject *);
+    void            (*pageTurnBegins)       (iAnyObject *);
 };
 
 struct Impl_DocumentView {
@@ -122,6 +123,7 @@ struct Impl_DocumentView {
         float       dragSpeed;  /* pixels per second */
         iBool       isDragging;
         iBool       isReverting; /* turn is animating back to `turnFrom` */
+        uint32_t    turnTime;   /* when the previous page turn animation began */
         float       wheelAccum;
         uint32_t    wheelTime;
         iBool       isWheelLocked;
@@ -179,6 +181,7 @@ uint32_t lastRenderTime_DocumentView    (const iDocumentView *);
 iWidget *hostFooterButtons_DocumentView     (const iDocumentView *);
 int     hostPhoneBarsHeight_DocumentView    (const iDocumentView *); /* toolbar and bottom navbar */
 void    hostPagesMoved_DocumentView         (iDocumentView *);
+void    hostPageTurnBegins_DocumentView     (iDocumentView *);
 void    prerender_DocumentView          (iAny *); /* ticker */
 void    draw_DocumentView               (const iDocumentView *, int horizOffset);
 void    drawCurlBetween_DocumentView    (const iDocumentView *earlier, const iDocumentView *later, float progress); /* both paged */
