@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmcerts.h>
 
 static const int      maxNameLength_ViewToolbar_ = 10;
-static const float    dimmedOpacity_ViewToolbar_ = 0.25f;
+static const float    dimmedOpacity_ViewToolbar_ = 0.0f; /* fully hidden */
 static const uint32_t fadeSpan_ViewToolbar_      = 250;
 
 iDefineTypeConstruction(ViewToolbar)
@@ -141,8 +141,9 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
     w->flags2 |= roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2;
     setBackgroundColor_Widget(w, uiBackground_ColorId);
     setFrameColor_Widget(w, uiSeparator_ColorId);
-    const float hPad = 1.75f * gap_UI;
-    setPadding_Widget(w, hPad, 1 * gap_UI, hPad, 1 * gap_UI);
+    const float hPad = 1.75f * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);
+    const float vPad = 1.0f  * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);
+    setPadding_Widget(w, hPad, vPad, hPad, vPad);
     setDrawBufferEnabled_Widget(w, iTrue);
     /* Identity pinned in the tab. */ {
         iLabelWidget *ident = makeMenuButton_LabelWidget(person_Icon, NULL, 0);
@@ -193,9 +194,10 @@ void update_ViewToolbar(iViewToolbar *d) {
                            isBook ? collectNewFormat_String("sidebar.mode arg:%d show:1 current:1 shelf:1",
                                                             gempub_SidebarMode)
                                   : collectNewCStr_String("document.info"));
-    /* Identity in use, pinned or not. */ {
-        const iGmIdentity *ident  = identity_DocumentWidget(doc);
-        iString           *name   = collectNew_String();
+    /* Identity in use (pinned or global). */ {
+        const iGmIdentity *ident    = identity_DocumentWidget(doc);
+        iString           *name     = collectNew_String();
+        const iBool        isPinned = isIdentityPinned_DocumentWidget(doc);
         if (ident) {
             set_String(name, name_GmIdentity(ident));
             if (length_String(name) > maxNameLength_ViewToolbar_) {
@@ -204,7 +206,9 @@ void update_ViewToolbar(iViewToolbar *d) {
             }
         }
         setLabel_ViewToolbar_(identButton, person_Icon, name);
-        setFlags_Widget(as_Widget(identButton), selected_WidgetFlag, isIdentityPinned_DocumentWidget(doc));
+        setFlags_Widget(as_Widget(identButton), selected_WidgetFlag, isPinned);
+        setTextColor_LabelWidget(identButton, !isPinned && ident ? uiTextAction_ColorId
+                                 : none_ColorId /* default */);
     }
     /* Auto-reload. */ {
         setLabel_ViewToolbar_(reloadButton,
