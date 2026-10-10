@@ -94,10 +94,12 @@ static int pageMargin_DocumentView_(const iDocumentView *d, int columnWidth) {
     if (columnWidth < width_Rect(viewport)) {
         return margin;
     }
-    /* A single column on the page gives way to text that does not fit, down to half of
-       the margin. */
+    /* A single column on the page gives way to text that does not fit. Phone-sized pages
+       may go down to half of the margin, but wider pages keep their margins like a book. */
+    const float wideness = iClamp((columnWidth / (float) gap_UI - 100.0f) / 100.0f, 0.0f, 1.0f);
+    const int   minimum  = margin * (0.5f + 0.5f * wideness);
     const int wanted = preferredWidth_DocumentView_(d, 1) * textZoom_();
-    return iMax(iMax(2 * gap_UI, margin / 2), iMin(margin, (columnWidth - wanted) / 2));
+    return iMax(iMax(2 * gap_UI, minimum), iMin(margin, (columnWidth - wanted) / 2));
 }
 
 static int maxWidthInColumn_DocumentView_(const iDocumentView *d, int columnWidth) {
