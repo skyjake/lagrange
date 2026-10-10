@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "command.h"
 
+#include <lagrange/gmutil.h>
 #include <SDL3/SDL_timer.h>
 
 struct Impl_IndicatorWidget {
@@ -72,6 +73,12 @@ static iBool isCompleted_IndicatorWidget_(const iIndicatorWidget *d) {
     return targetValue_Anim(&d->pos) == 1.0f;
 }
 
+static iBool isLocalUrl_(const char *url) {
+    const iRangecc scheme = urlScheme_String(collectNewCStr_String(url));
+    return equalCase_Rangecc(scheme, "about") || equalCase_Rangecc(scheme, "data") ||
+           isLocalFileScheme_Rangecc(scheme);
+}
+
 void draw_IndicatorWidget_(const iIndicatorWidget *d) {
     const float pos = value_Anim(&d->pos);
     if (pos > 0.0f && pos < 1.0f) {
@@ -103,6 +110,10 @@ iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
                 cmd = skipPrefix_Command(cmd) + 17;
                 if (equal_Command(cmd, "started")) {
                     setValue_Anim(&d->pos, 0, 0);
+                    if (isLocalUrl_(suffixPtr_Command(cmd, "url"))) {
+                        refresh_Widget(d);
+                        return iFalse; /* no progress to show */
+                    }
                     setValue_Anim(&d->pos, 0.75f, 4000);
                     setFlags_Anim(&d->pos, easeOut_AnimFlag, iTrue);
                     animate_IndicatorWidget_(d);
