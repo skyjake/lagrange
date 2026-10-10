@@ -316,6 +316,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
         if (d->sourceGempub) {
             book.title   = property_Gempub(d->sourceGempub, title_GempubProperty);
             book.isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
+            book.isContents = isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (navIndex != iInvalidPos) {
                 book.chapter      = (int) navIndex + 1;
@@ -359,25 +360,27 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
             }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentBook(book_DocumentWidget(d->owner)) &&
                 (isCover || isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d)))) {
-                /* Opening a book: the cover is in the sidebar and the contents in the document. */
-                if (isUrlChanged) {
+                /* Opening a book: a new book opens to the cover and the sidebar shows the
+                   contents. The phone sidebar would cover the page, so it stays hidden. */
+                if (isUrlChanged && deviceType_App() != phone_AppDeviceType) {
                     /* Not when restored or reloaded. */
-                    const iBool isRight =
-                        prefs_App()->gempubSidebar && deviceType_App() != phone_AppDeviceType;
-                    postCommandf_Root(w->root, "%s.gempub.page arg:0 keepshelf:1", isRight ? "sidebar2" : "sidebar");
+                    const iBool isRight = prefs_App()->gempubSidebar;
+                    postCommandf_Root(w->root, "%s.gempub.page arg:1 keepshelf:1", isRight ? "sidebar2" : "sidebar");
                     postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
                     postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");
                 }
                 if (isCover) {
                     /* Reading continues where it was left off. */
-                    const iString *target = indexPageUrl_Gempub(d->sourceGempub);
+                    const iString *target = NULL;
                     const iBook   *book   = find_Books(id_Books(d->sourceGempub));
                     if (book && book->chapter >= 0 &&
                         (size_t) book->chapter < navSize_Gempub(d->sourceGempub)) {
                         resume_DocumentBook(book_DocumentWidget(d->owner), book->chapter, book->chapterPos);
                         target = navLinkUrl_Gempub(d->sourceGempub, book->chapter);
                     }
-                    postCommandf_Root(w->root, "open doc:%p url:%s", d->owner, cstr_String(target));
+                    if (target) {
+                        postCommandf_Root(w->root, "open doc:%p url:%s", d->owner, cstr_String(target));
+                    }
                 }
             }
         }
