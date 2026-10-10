@@ -99,6 +99,13 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
         closeSiteSpecific_(dlg);
         return iTrue;
     }
+    if ((equal_Command(cmd, "focus.gained") || equal_Command(cmd, "focus.lost")) &&
+        pointer_Command(cmd) == findChild_Widget(dlg, "sitespec.palette")) {
+        /* Theme changes are visible while editing the seed. */
+        setFlags_Widget(dlg, noFadeBackground_WidgetFlag, equal_Command(cmd, "focus.gained"));
+        refresh_Widget(dlg);
+        return iFalse;
+    }
     if (equalArg_Command(cmd, "input.ended", "id", "sitespec.palette") ||
         equalArg_Command(cmd, "input.ended", "id", "sitespec.titantoken")) {
         commitSiteSpecificInputs_(dlg);
@@ -130,6 +137,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     const iString *archive    = localArchiveUrl_Gempub(url); /* each book is a site */
     const iString *site       = archive ? archive : collectNewRange_String(urlRoot_String(url));
     const char *   sheetId    = format_CStr("sitespec site:%s", cstr_String(site));
+    const iString *siteLabel  = collect_String(urlDecode_String(site));
     const iRangecc scheme     = urlScheme_String(site);
     const iBool    isTitanSite = equalCase_Rangecc(scheme, "gemini") ||
                                  equalCase_Rangecc(scheme, "titan");
@@ -140,7 +148,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         pushBackN_Array(items, (iMenuItem[]){
             { "title id:heading.sitespec" },
-            { format_CStr("heading text:%s", cstr_String(site)) },
+            { format_CStr("heading text:%s", cstr_String(siteLabel)) },
             { "input id:sitespec.palette" },
             { "padding" },
             { "toggle id:sitespec.ansi" },
@@ -161,7 +169,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
                                                       "heading.sitespec", &content);
         changeChildIndex_Widget(
             content,
-            addChildFlags_Widget(content, iClob(new_LabelWidget(cstr_String(site), NULL)),
+            addChildFlags_Widget(content, iClob(new_LabelWidget(cstr_String(siteLabel), NULL)),
                                  frameless_WidgetFlag | alignLeft_WidgetFlag),
             1);
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, globe_Icon " ${heading.sitespec.site}",
@@ -210,8 +218,6 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
             setValidator_InputWidget(palSeed, updateSiteSpecificTheme_, dlg);
         }
     }
-    /* Changes apply immediately, so allow seeing the document behind the dialog. */
-    setFlags_Widget(dlg, noFadeBackground_WidgetFlag, iTrue);
     setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;

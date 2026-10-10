@@ -281,6 +281,8 @@ set (SOURCES
     src/doc/persistentstate.h
     src/doc/swipe.c
     src/doc/swipe.h
+    src/doc/viewtoolbar.c
+    src/doc/viewtoolbar.h
     # Sidebar:
     src/sidebar/bookmarklist.c
     src/sidebar/bookshelf.c

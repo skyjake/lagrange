@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    two consecutive pages is shown side by side, so the visible document range remains
    contiguous. */
 
+iBool   isPageViewAllowed_DocumentView  (const iDocumentView *); /* content may be paginated */
 iBool   wantsPaged_DocumentView         (const iDocumentView *); /* prefs and content call for pages */
 iBool   isPaged_DocumentView            (const iDocumentView *); /* current layout is paginated */
 iRect   pageViewport_DocumentView       (const iDocumentView *); /* where the pages are shown */
@@ -50,6 +51,8 @@ int     columnShift_DocumentView        (const iDocumentView *, size_t column); 
 iInt2   columnOrigin_DocumentView       (const iDocumentView *, size_t column); /* window coords of the column's document top left */
 iRangei columnSpan_DocumentView         (const iDocumentView *, size_t column); /* window X range the column covers */
 iRect   pageTextRect_DocumentView       (const iDocumentView *, size_t page); /* window rect of the page's text */
+int     pageHeaderTextTop_DocumentView  (const iDocumentView *); /* from the top of the viewport */
+int     pageFooterTextTop_DocumentView  (const iDocumentView *); /* from the top of the viewport */
 iInt2   pagedDocumentPos_DocumentView   (const iDocumentView *, iInt2 windowPos);
 iRect   pagedRunRect_DocumentView       (const iDocumentView *, const iGmRun *run);
 void    allocPagedVisBuffer_DocumentView(const iDocumentView *);

@@ -83,6 +83,7 @@ size_t      pruneLeastImportantMemory_History   (iHistory *);
 void        invalidateTheme_History             (iHistory *); /* theme has changed, cached contents need updating */
 void        invalidateCachedLayout_History      (iHistory *);
 void        updateDocPrefs_History              (iHistory *); /* cached layouts invalidated if prefs differ */
+void        setPageViewInverted_History         (iHistory *, iBool invert); /* of cached documents */
 
 iBool       atNewest_History            (const iHistory *);
 iBool       atOldest_History            (const iHistory *);

@@ -532,6 +532,17 @@ void updateDocPrefs_History(iHistory *d) {
     unlock_Mutex(d->mtx);
 }
 
+void setPageViewInverted_History(iHistory *d, iBool invert) {
+    lock_Mutex(d->mtx);
+    iForEach(Array, i, &d->recent) {
+        iRecentUrl *url = i.value;
+        if (url->cachedDoc) {
+            setPageViewInverted_GmDocument(url->cachedDoc, invert);
+        }
+    }
+    unlock_Mutex(d->mtx);
+}
+
 size_t pruneLeastImportant_History(iHistory *d) {
     size_t delta  = 0;
     size_t chosen = iInvalidPos;

@@ -225,6 +225,7 @@ void    setThemeSeed_GmDocument (iGmDocument *,
                                  const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
 void    setDocPrefs_GmDocument  (iGmDocument *, const iDocPrefs *pinned); /* not resolved again */
 uint32_t updateDocPrefs_GmDocument(iGmDocument *); /* resolves again; returns DocPrefsSpecFlags of changes */
+void    setPageViewInverted_GmDocument(iGmDocument *, iBool invert); /* applied when resolving prefs */
 void    setMimeType_GmDocument  (iGmDocument *, const iString *mimeType); /* before setting the URL */
 void    setMode_GmDocument      (iGmDocument *, enum iGmDocumentMode mode);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat sourceFormat);

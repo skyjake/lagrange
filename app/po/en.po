@@ -980,6 +980,10 @@ msgstr "Stop Using Everywhere"
 msgid "ident.unset"
 msgstr "Unpin"
 
+# Submenu with the list of identities in the view toolbar's identity menu.
+msgid "viewtools.ident.pin"
+msgstr "Pin to This Tab"
+
 msgid "ident.export"
 msgstr "Export"
 
@@ -1283,6 +1287,20 @@ msgstr "Never"
 
 msgid "reload.onceperday"
 msgstr "Once per day"
+
+# Short form of an auto-reload interval in minutes.
+#, c-format
+msgid "reload.short.minutes"
+msgstr "%dm"
+
+# Short form of an auto-reload interval in hours.
+#, c-format
+msgid "reload.short.hours"
+msgstr "%dh"
+
+# Short form of a daily auto-reload interval.
+msgid "reload.short.day"
+msgstr "1d"
 
 #, c-format
 msgid "num.minutes"

@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "doc/query.h"
 #include "doc/pagedview.h"
 #include "doc/swipe.h"
+#include "doc/viewtoolbar.h"
 #include "doc/persistentstate.h"
 #include "gempub.h"
 #include "filedialog.h"
@@ -175,6 +176,7 @@ struct Impl_DocumentWidget {
     iQuery *       query;
     iDocumentSwipe *swipe;
     iDocumentBook *book;
+    iViewToolbar  *viewToolbar;
     SDL_TimerID     readingBarsTimer; /* toggle unless the click becomes a double click */
     SDL_TimerID     viewModeTimer;    /* view mode indicator is shown while running */
     enum iDocumentIndicator indicator; /* remains set while fading out */
@@ -458,7 +460,7 @@ static void updateIndicator_DocumentWidget_(iDocumentWidget *d) {
 static uint32_t postViewModeHide_DocumentWidget_(void *context, SDL_TimerID timerId,
                                                  uint32_t interval) {
     iUnused(timerId, interval);
-    postCommand_Widget(context, "document.viewmode.hide");
+    postCommand_Widget(context, "*document.viewmode.hide"); /* not a user action */
     return 0;
 }
 
@@ -1269,6 +1271,9 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
             showToolbar_Root(as_Widget(d)->root, offset < 0 || d->view->scrollY.pos.to <= 0);
         }
     }
+    if (normScrollPos_DocumentView(d->view) >= 0) {
+        scrollBegan_ViewToolbar(d->viewToolbar, offset, d->view->scrollY.pos.to <= 0);
+    }
     if (offset) {
         updateVisible_DocumentView(d->view);
         refresh_Widget(as_Widget(d));
@@ -1452,6 +1457,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateLinkStatus_DocumentWidget_(d, visited_LinkUpdateFlag);
         return iFalse;
     }
+    if (equal_Command(cmd, "idents.changed")) {
+        update_ViewToolbar(d->viewToolbar);
+        return iFalse;
+    }
+    if (equal_Command(cmd, "document.changed") && pointerLabel_Command(cmd, "doc") == d) {
+        reveal_ViewToolbar(d->viewToolbar);
+        update_ViewToolbar(d->viewToolbar);
+        return iFalse;
+    }
     if (equal_Command(cmd, "document.render")) /* `Periodic` makes direct dispatch to here */ {
 //        printf("%u: document.render\n", SDL_GetTicks());
         if (SDL_GetTicks() - lastRenderTime_DocumentView(d->view) > 150) {
@@ -1545,6 +1559,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateVisible_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
+        update_ViewToolbar(d->viewToolbar);
         invalidate_DocumentWidget(d);
         refresh_Widget(w);
         return iFalse;
@@ -1591,6 +1606,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateHover_Window(window_Widget(w));
             set_String(&w->root->tabInsertId, id_Widget(w)); /* insert next to current tab */
             iChangeFlags(d->flags, unseen_DocumentWidgetFlag, iFalse); /* has been seen now */
+            reveal_ViewToolbar(d->viewToolbar);
+            update_ViewToolbar(d->viewToolbar);
             if (d->mod.isReader && deviceType_App() != phone_AppDeviceType &&
                 isFinishedLaunching_App()) {
                 showSidebar_DocumentWidget(d);
@@ -2435,6 +2452,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
         d->mod.reloadInterval = arg_Command(cmd);
+        update_ViewToolbar(d->viewToolbar);
         /* Ensure that the indicator gets updated. */
         notifyf_Root(get_Root(), "window.reload.update root:%p", get_Root());
     }
@@ -2544,7 +2562,28 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.unsetident") && document_App() == d) {
         setIdentity_DocumentWidget(d, NULL);
+        setIdentity_History(d->mod.history, NULL);
         postCommand_Widget(w, "document.reload");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.setident") && document_App() == d) {
+        const iBlock *fp = collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp")));
+        setIdentity_DocumentWidget(d, fp);
+        setIdentity_History(d->mod.history, fp);
+        postCommand_Widget(w, "document.reload");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.pagemode.toggle") && document_App() == d) {
+        d->mod.invertPageView = !d->mod.invertPageView;
+        setPageViewInverted_History(d->mod.history, d->mod.invertPageView);
+        setPageViewInverted_GmDocument(d->view->doc, d->mod.invertPageView);
+        iDocumentView *swipeView = swipeView_DocumentWidget(d);
+        if (swipeView && swipeView->doc) {
+            setPageViewInverted_GmDocument(swipeView->doc, d->mod.invertPageView);
+        }
+        updateDocPrefs_DocumentWidget(d);
+        updateActiveDocPrefs_App();
+        update_ViewToolbar(d->viewToolbar);
         return iTrue;
     }
     else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
@@ -2943,6 +2982,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         if (ev->motion.which != SDL_TOUCH_MOUSEID) {
             iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
         }
+        updateHover_ViewToolbar(d->viewToolbar);
         const iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
         if (isVisible_Widget(d->menu)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_DEFAULT);
@@ -3769,7 +3809,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         unsetClip_Paint(&p);
     }
-    /* Scroll bar. */
+    /* Scroll bar and view toolbar. */
+    arrange_ViewToolbar(d->viewToolbar);
     if (isProgressMode_ScrollWidget(d->scroll)) {
         /* The bars at the bottom may be sliding. */
         positionPagedProgress_DocumentWidget_(iConstCast(iDocumentWidget *, d));
@@ -3923,6 +3964,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChildFlags_Widget(w,
                          iClob(new_IndicatorWidget()),
                          resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
+    d->viewToolbar = new_ViewToolbar();
+    setOwner_ViewToolbar(d->viewToolbar, d);
 #if !defined (iPlatformAppleDesktop) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, closeTab_KeyShortcut, "tabs.close");
@@ -3957,6 +4000,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_Query(d->query);
     delete_DocumentSwipe(d->swipe);
     delete_DocumentBook(d->book);
+    delete_ViewToolbar(d->viewToolbar);
     delete_LinkInfo(d->linkInfo);
     delete_InlineMedia(d->media);
     delete_DocumentFetch(d->fetch);
@@ -3970,6 +4014,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
+    setPageViewInverted_GmDocument(d->view->doc, d->mod.invertPageView);
     setUrl_GmDocument(d->view->doc, d->mod.url);
     if (document_App() == d) {
         updateActiveDocPrefs_App(); /* lay out with the right fonts */
@@ -4275,6 +4320,7 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     delete_History(d->mod.history);
     d->initNormScrollY = normScrollPos_DocumentView(d->view);
     d->mod.history = copy_History(orig->mod.history);
+    d->mod.invertPageView = orig->mod.invertPageView;
     setUrlFlags_DocumentWidget(
         d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag |
                                /* don't share GmDocument between tabs; width may differ,
@@ -4301,14 +4347,14 @@ void setIdentity_DocumentWidget(iDocumentWidget *d, const iBlock *setIdent) {
     if (!setIdent || isEmpty_Block(setIdent)) {
         delete_Block(d->mod.setIdentity);
         d->mod.setIdentity = NULL;
-        return;
     }
-    if (!d->mod.setIdentity) {
+    else if (!d->mod.setIdentity) {
         d->mod.setIdentity = copy_Block(setIdent);
     }
     else {
         set_Block(d->mod.setIdentity, setIdent);
     }
+    update_ViewToolbar(d->viewToolbar);
 }
 
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {

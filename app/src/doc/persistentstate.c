@@ -46,6 +46,20 @@ const char *label_ReloadInterval(enum iReloadInterval d) {
     return "";
 }
 
+const char *shortLabel_ReloadInterval(enum iReloadInterval d) {
+    const int secs = seconds_ReloadInterval(d);
+    if (secs == 0) {
+        return "";
+    }
+    if (d == day_ReloadInterval) {
+        return cstr_Lang("reload.short.day");
+    }
+    if (secs < 3600) {
+        return format_Lang("${reload.short.minutes}", secs / 60);
+    }
+    return format_Lang("${reload.short.hours}", secs / 3600);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void init_PersistentDocumentState(iPersistentDocumentState *d) {
@@ -55,6 +69,7 @@ void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->reloadInterval = 0;
     d->generation     = 0;
     d->isReader       = iFalse;
+    d->invertPageView = iFalse;
 }
 
 void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
@@ -71,7 +86,7 @@ void serializeWithContent_PersistentDocumentState(const iPersistentDocumentState
                                                  iBool withContent) {
     serialize_String(d->url, outs);
     uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4) |
-                      (d->isReader ? 0x100 : 0);
+                      (d->isReader ? 0x100 : 0) | (d->invertPageView ? 0x200 : 0);
     writeU16_Stream(outs, params);
     /* Identity override. */ {
         iBlock empty;
@@ -92,6 +107,7 @@ void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *i
     d->reloadInterval = params & 7;
     d->generation     = (params >> 4) & 15;
     d->isReader       = (params & 0x100) != 0;
+    d->invertPageView = (params & 0x200) != 0;
     if (version_Stream(ins) >= documentSetIdentity_FileVersion) {
         iBlock fp;
         init_Block(&fp, 0);

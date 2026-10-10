@@ -41,6 +41,7 @@ enum iReloadInterval {
 
 int             seconds_ReloadInterval  (enum iReloadInterval);
 const char *    label_ReloadInterval    (enum iReloadInterval);
+const char *    shortLabel_ReloadInterval(enum iReloadInterval);
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -55,6 +56,7 @@ struct Impl_PersistentDocumentState {
     enum iReloadInterval reloadInterval;
     int generation;
     iBool isReader; /* dedicated to viewing feed entries */
+    iBool invertPageView; /* paginated if prefs say scrolling, and vice versa */
 };
 
 void    serializeWithContent_PersistentDocumentState    (const iPersistentDocumentState *,

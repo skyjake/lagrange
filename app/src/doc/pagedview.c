@@ -25,9 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "banner.h"
 #include "gmutil.h"
+#include "render/text.h"
 #include "ui/metrics.h"
 #include "ui/root.h"
 #include "ui/visbuf.h"
+#include "ui/window.h"
 
 #include <SDL3/SDL_timer.h>
 #include <math.h>
@@ -62,9 +64,13 @@ static iBool isAlwaysScrolled_(const iString *url) {
     return iFalse;
 }
 
+iBool isPageViewAllowed_DocumentView(const iDocumentView *d) {
+    return !isTerminal_Platform() && !isCoverPage_GmDocument(d->doc) &&
+           !isAlwaysScrolled_(url_GmDocument(d->doc));
+}
+
 iBool wantsPaged_DocumentView(const iDocumentView *d) {
-    return !isTerminal_Platform() && docPrefs_GmDocument(d->doc)->pageView.value &&
-           !isCoverPage_GmDocument(d->doc) && !isAlwaysScrolled_(url_GmDocument(d->doc));
+    return docPrefs_GmDocument(d->doc)->pageView.value && isPageViewAllowed_DocumentView(d);
 }
 
 iBool isPaged_DocumentView(const iDocumentView *d) {
@@ -328,6 +334,21 @@ iRect pageTextRect_DocumentView(const iDocumentView *d, size_t page) {
     const int    left     = columnOrigin_DocumentView(d, first).x;
     const int    right    = columnOrigin_DocumentView(d, last).x + size_GmDocument(d->doc).x;
     return init_Rect(left, top_Rect(viewport), right - left, height_Rect(viewport));
+}
+
+int pageHeaderTextTop_DocumentView(const iDocumentView *d) {
+    const int topInset = metrics_GmDocument(d->doc)->topInset;
+    if (isHeaderBelowCutout_GmDocument(d->doc)) {
+        /* The cutout ends ~11 pt above the safe area. */
+        return topInset + 3 * get_Window()->pixelRatio;
+    }
+    return topInset + (pageBandHeight_GmDocument(d->doc) -
+                       lineHeight_Text(pageBandFont_GmDocument(d->doc))) / 2;
+}
+
+int pageFooterTextTop_DocumentView(const iDocumentView *d) {
+    return height_Rect(pageViewport_DocumentView(d)) - pageFooterHeight_GmDocument(d->doc) +
+           (pageBandHeight_GmDocument(d->doc) - lineHeight_Text(pageBandFont_GmDocument(d->doc))) / 2;
 }
 
 iInt2 pagedDocumentPos_DocumentView(const iDocumentView *d, iInt2 windowPos) {

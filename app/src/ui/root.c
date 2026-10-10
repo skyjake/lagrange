@@ -3079,10 +3079,13 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
     const iBool    isMouse = win->isMouseInside;
     const iInt2    mouse   = mouseCoord_Window(win, 0);
     const iWidget *focus   = focus_Widget();
-    for (int i = 0; i < 2; i++) {
-        const iWidget *bar = i == 0 ? navBar : tabBar;
-        if (bar && ((isMouse && contains_Widget(bar, mouse)) ||
-                    (focus && (focus == bar || hasParent_Widget(focus, bar))))) {
+    const iWidget *doc     = document_Root(d) ? constAs_Widget(document_Root(d)) : NULL;
+    const iWidget *tools   = doc ? findChild_Widget(doc, "viewtools") : NULL;
+    for (int i = 0; i < 3; i++) {
+        const iWidget *bar = i == 0 ? navBar : i == 1 ? tabBar : tools;
+        if (bar && isVisible_Widget(bar) &&
+            ((isMouse && contains_Widget(bar, mouse)) ||
+             (focus && (focus == bar || hasParent_Widget(focus, bar))))) {
             return; /* in use; check again later */
         }
     }
@@ -3091,6 +3094,9 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
     }
     if (mouseGrab_Widget()) {
         return; /* e.g., selecting text */
+    }
+    if (!isMobile_Platform() && isMouse && SDL_GetTicks() - win->mouseMotionTime < 1000) {
+        return; /* mouse is moving */
     }
     showReadingBars_Root(d, iFalse);
 }

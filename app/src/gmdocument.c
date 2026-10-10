@@ -472,6 +472,7 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isBookContents = iFalse;
     d->flags.isUiTheme   = iFalse;
     d->flags.isDocPrefsPinned = iFalse;
+    d->flags.isPageViewInverted = iFalse;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -545,9 +546,16 @@ uint32_t updateDocPrefs_GmDocument(iGmDocument *d) {
     init_DocPrefs(&resolved);
     resolve_DocPrefs(&resolved, &d->scopeKey, &d->url,
                      !isEmpty_String(&d->mimeType) ? &d->mimeType : NULL);
+    if (d->flags.isPageViewInverted) {
+        resolved.pageView.value = !resolved.pageView.value;
+    }
     const uint32_t diff = applyDocPrefs_GmDocument_(d, &resolved);
     deinit_DocPrefs(&resolved);
     return diff;
+}
+
+void setPageViewInverted_GmDocument(iGmDocument *d, iBool invert) {
+    d->flags.isPageViewInverted = invert;
 }
 
 void setMimeType_GmDocument(iGmDocument *d, const iString *mimeType) {
