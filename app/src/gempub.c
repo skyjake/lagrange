@@ -442,7 +442,7 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     }
     appendFormat_String(out, "# %s\n", cstr_String(&d->props[title_GempubProperty]));
     appendProperty_Gempub_(d, "\n## ", author_GempubProperty, out);
-    appendCStr_String(out, "\n\n### ${gempub.cover.aboutbook}\n");
+    appendCStr_String(out, "\n### ${gempub.cover.aboutbook}\n");
     if (hasProperty_Gempub_(d, description_GempubProperty)) {
         appendFormat_String(out, "%s\n\n", cstr_String(&d->props[description_GempubProperty]));
     }

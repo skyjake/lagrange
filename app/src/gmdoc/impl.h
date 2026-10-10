@@ -103,6 +103,7 @@ struct Impl_GmDocument {
         iBool isConvertedMarkdown : 1;
         iBool isCoverPage : 1;
         iBool isBookCover : 1;
+        iBool isBookContents : 1;
         iBool isUiTheme : 1;
         iBool isDocPrefsPinned : 1;
     } flags;

@@ -217,6 +217,7 @@ struct Impl_GmBookPosition {
     int            chapter;      /* zero if not a chapter */
     int            numChapters;
     iBool          isCover;
+    iBool          isContents;
 };
 
 void    setThemeSeed_GmDocument (iGmDocument *,

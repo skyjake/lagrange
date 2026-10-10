@@ -773,6 +773,8 @@ struct Impl_Typesetter {
     enum iGmLineType      prevType;
     enum iGmLineType      prevNonBlankType;
     iBool                 followsBlank;
+    int                   pendingMargin;     /* added below the next line's top margin */
+    int                   numHeading1;
     iBool                 prevWrapParagraph; /* previous line was a wrapped paragraph */
     iString               firstContentLine;  /* may be used as a title if one isn't specified */
 };
@@ -848,6 +850,8 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     d->prevType          = text_GmLineType;
     d->prevNonBlankType  = undefined_GmLineType;
     d->followsBlank      = iFalse;
+    d->pendingMargin     = 0;
+    d->numHeading1       = 0;
     d->prevWrapParagraph = iFalse;
     if (doc->format == plainText_SourceFormat) {
         d->isPreformat = iTrue;
@@ -1031,6 +1035,15 @@ static void addTopMargin_Typesetter_(iTypesetter *d) {
                              ? style->bottomMargins[d->prevNonBlankType]
                              : style->bottomMargins[d->prevType];
     int required = iMax(top, bottom) * lineHeight_Text(style->fonts[text_GmLineType]);
+    int moveUp   = 0;
+    const iGmDocument *doc = d->doc;
+    if (d->isPaged &&
+        (doc->chapter > 0 || doc->flags.isBookCover || doc->flags.isBookContents) &&
+        d->numHeading1 == 1 &&
+        d->type == heading2_GmLineType && d->prevNonBlankType == heading1_GmLineType) {
+        /* A subtitle sits closer to the title, with the difference added below it. */
+        moveUp = lineHeight_Text(style->fonts[text_GmLineType]);
+    }
     if (d->type == link_GmLineType && d->prevNonBlankType == link_GmLineType && d->followsBlank) {
         required = style->linkGroupMargin * lineHeight_Text(style->fonts[text_GmLineType]);
     }
@@ -1043,10 +1056,13 @@ static void addTopMargin_Typesetter_(iTypesetter *d) {
         required = 0; /* top of document; without a banner, pages begin a chapter lower down */
     }
     required *= d->prefs->lineSpacing.value;
+    moveUp   *= d->prefs->lineSpacing.value;
     int delta = d->pos.y - lastVisibleRunBottom_GmDocument_(d->doc);
-    if (delta < required) {
-        d->pos.y += (required - delta);
+    if (delta < required - moveUp) {
+        d->pos.y += (required - moveUp - delta);
     }
+    d->pos.y += d->pendingMargin;
+    d->pendingMargin = iMax(0, required - delta) - iMax(0, required - moveUp - delta);
 }
 
 static iBool addFoldedPreformatted_Typesetter_(iTypesetter *d) {
@@ -1643,6 +1659,9 @@ static void typesetLine_Typesetter_(iTypesetter *d) {
     markEndOfLine_Typesetter_(d, numRunsAdded);
     if (d->type == link_GmLineType) {
         addLinkContent_Typesetter_(d);
+    }
+    if (d->type == heading1_GmLineType) {
+        d->numHeading1++;
     }
     d->prevType         = d->type;
     d->prevNonBlankType = d->type;
