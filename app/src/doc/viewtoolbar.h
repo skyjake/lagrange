@@ -40,6 +40,8 @@ struct Impl_ViewToolbar {
     iBool            wasAvailable;   /* during the previous arrangement */
     iBool            isCompact;      /* icons only */
     int              fullWidth;      /* with labels */
+    iRect            headerArea;     /* hovering reveals the toolbar */
+    int              shownBarsEdge;  /* phone's bottom bars when settled while shown; 0 if unknown */
 };
 
 void    setOwner_ViewToolbar    (iViewToolbar *, iDocumentWidget *owner);

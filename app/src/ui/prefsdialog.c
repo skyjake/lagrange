@@ -545,7 +545,6 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.toolbars" },
             { "padding arg:0.667" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
-            { "toggle id:prefs.bookmarks.addbottom" },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
@@ -567,6 +566,8 @@ iWidget *makePreferences_Widget(void) {
             { "toggle device:1 id:prefs.sidebar2.enabled.6 text:${LC:sidebar.documents}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.7 text:${LC:sidebar.history}" },
             { "radio device:1 id:prefs.gempubsidebar", 0, 0, (const void *) gempubSidebarItems },
+            { "padding" },
+            { "toggle id:prefs.bookmarks.addbottom" },
             { "padding" },
             { NULL }
         };

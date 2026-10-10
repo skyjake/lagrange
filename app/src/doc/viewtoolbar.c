@@ -56,6 +56,8 @@ void init_ViewToolbar(iViewToolbar *d) {
     d->wasAvailable   = iFalse;
     d->isCompact      = iFalse;
     d->fullWidth      = 0;
+    d->headerArea     = zero_Rect();
+    d->shownBarsEdge  = 0;
 }
 
 static void animate_ViewToolbar_(void *ptr) {
@@ -127,6 +129,7 @@ static iLabelWidget *addButton_ViewToolbar_(iViewToolbar *d, iLabelWidget *butto
     setAlignVisually_LabelWidget(button, iTrue);
     setFont_LabelWidget(button, uiContent_FontId); /* same as the footer buttons */
     addChildIdFlags_Widget(d->widget, iClob(button), id, 0);
+    as_Widget(button)->flags2 |= alwaysRound_WidgetFlag2;
     return button;
 }
 
@@ -156,7 +159,7 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
         d, newIcon_LabelWidget(timer_Icon, 0, 0, "document.autoreload.menu"), "viewtools.reload");
     addButton_ViewToolbar_(
         d, newIcon_LabelWidget(book_Icon, 0, 0, "document.pagemode.toggle"), "viewtools.pagemode");
-    addChild_Widget(w, iClob(makePadding_Widget(1 * gap_UI)));
+    addChild_Widget(w, iClob(makePadding_Widget(hPad)));
     addButton_ViewToolbar_(
         d, newIcon_LabelWidget(gear_Icon, 0, 0, "document.sitespec"), "viewtools.sitespec");
     addButton_ViewToolbar_(d, newIcon_LabelWidget(info_Icon, 0, 0, "document.info"), "viewtools.info");
@@ -191,7 +194,7 @@ void update_ViewToolbar(iViewToolbar *d) {
     setFlags_Widget(findChild_Widget(w, "viewtools.sitespec"), hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     /* A book's information is in the sidebar. */
     setCommand_LabelWidget(findChild_Widget(w, "viewtools.info"),
-                           isBook ? collectNewFormat_String("sidebar.mode arg:%d show:1 current:1 shelf:1",
+                           isBook ? collectNewFormat_String("sidebar.mode arg:%d show:1 current:1 contents:1",
                                                             gempub_SidebarMode)
                                   : collectNewCStr_String("document.info"));
     /* Identity in use (pinned or global). */ {
@@ -253,12 +256,20 @@ static iBool isAvailable_ViewToolbar_(const iViewToolbar *d) {
     return size_GmDocument(view->doc).y > 0 || !isEmpty_Banner(banner_DocumentWidget(doc));
 }
 
+static iBool isHovered_ViewToolbar_(const iViewToolbar *d) {
+    const iWindow *win = window_Widget(d->widget);
+    if (!isDesktop_Platform() || !win->isMouseInside) {
+        return iFalse; /* touches leave the mouse coordinates behind */
+    }
+    const iInt2 mouse = mouseCoord_Window(win, 0);
+    return contains_Widget(d->widget, mouse) || contains_Rect(d->headerArea, mouse);
+}
+
 static iBool isActive_ViewToolbar_(const iViewToolbar *d) {
     const iWidget *w     = d->widget;
-    const iWindow *win   = window_Widget(w);
     const iWidget *focus = focus_Widget();
     const iWidget *menu  = findChild_Widget(w, "menu");
-    if ((win->isMouseInside && contains_Widget(w, mouseCoord_Window(win, 0))) ||
+    if (isHovered_ViewToolbar_(d) ||
         (focus && hasParent_Widget(focus, w)) || (menu && isVisible_Widget(menu))) {
         return iTrue;
     }
@@ -274,7 +285,7 @@ static void updateOpacity_ViewToolbar_(iViewToolbar *d) {
     const iRoot *root   = d->widget->root;
     float        target = 1.0f;
     if (isReadingMode_Root(root)) {
-        if (root->areReadingBarsHidden) {
+        if (root->areReadingBarsHidden && !isHovered_ViewToolbar_(d)) {
             target = 0.0f; /* hidden along with the bars while reading pages */
         }
     }
@@ -295,17 +306,34 @@ void updateHover_ViewToolbar(iViewToolbar *d) {
     }
 }
 
-static int bottomBarsEdge_ViewToolbar_(const iRoot *root) {
-    /* The phone's toolbar and the tab bar above it, also while they slide. */
-    const iWidget *bars[2] = { findChild_Widget(root->widget, "bottombar"),
-                               prefs_App()->bottomTabBar ? root->bars.tabButtons : NULL };
-    int edge = bottom_Rect(rect_Root(root));
-    for (size_t i = 0; i < iElemCount(bars); i++) {
-        if (bars[i] && isVisible_Widget(bars[i])) {
-            edge = iMin(edge, top_Rect(bounds_Widget(bars[i])));
-        }
+static int bottomBarsEdge_ViewToolbar_(iViewToolbar *d, const iRoot *root) {
+    /* The phone's toolbar and the tab bar above it. */
+    const iWidget *bottomBar  = findChild_Widget(root->widget, "bottombar");
+    const iWidget *tabBar     = prefs_App()->bottomTabBar ? root->bars.tabButtons : NULL;
+    const int      safeBottom = bottom_Rect(safeRect_Root(root));
+    if (!bottomBar) {
+        return safeBottom;
     }
-    return edge;
+    if (flags_Widget(bottomBar) & visualOffset_WidgetFlag &&
+        !isFinished_Anim(&bottomBar->visualOffset)) {
+        /* The bars slide separately, so follow the toolbar between the resting positions. */
+        const int   shown = d->shownBarsEdge ? d->shownBarsEdge
+                                             : top_Rect(boundsWithoutVisualOffset_Widget(bottomBar));
+        const int   height = height_Widget(bottomBar);
+        const float pos    = height > 0 ? iClamp(value_Anim(&bottomBar->visualOffset) / height,
+                                                 0.0f, 1.0f)
+                                        : 1.0f;
+        return iMin(safeBottom, shown + (int) (pos * (safeBottom - shown)));
+    }
+    if (!isVisible_Widget(bottomBar)) {
+        return safeBottom;
+    }
+    int edge = top_Rect(bounds_Widget(bottomBar));
+    if (tabBar && isVisible_Widget(tabBar)) {
+        edge = iMin(edge, top_Rect(bounds_Widget(tabBar)));
+    }
+    d->shownBarsEdge = edge;
+    return iMin(safeBottom, edge);
 }
 
 void arrange_ViewToolbar(iViewToolbar *d) {
@@ -341,12 +369,9 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     int       top;
     int       barsEdge;
     float     barsOpacity;
+    d->headerArea = zero_Rect();
     if (atBottom) {
-        top = paged ? top_Rect(area) + pageFooterTextTop_DocumentView(view) +
-                          (lineHeight_Text(pageBandFont_GmDocument(view->doc)) - height) / 2
-                    : iMin(bottom_Rect(area), bottom_Rect(safe)) - pad - thickness_ScrollWidget() -
-                          height;
-        top = iMin(top, bottomBarsEdge_ViewToolbar_(root) - pad - height);
+        top = bottomBarsEdge_ViewToolbar_(d, root) - 3 * gap_UI - height;
     }
     else {
         /* Below the bars and the safe area inset. */
@@ -359,6 +384,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
             /* Centered in the page header area, also when not paginated. */
             const int band = pageBandHeightFor_GmDocument(
                 view->doc, height_Rect(readingRect_Root(root, bounds)));
+            d->headerArea = init_Rect(left_Rect(bounds), top, width_Rect(bounds), band);
             top += (band - height) / 2;
         }
     }
