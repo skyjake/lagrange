@@ -406,6 +406,9 @@ size_t tabPageIndex_Widget(const iWidget *tabs, const iAnyObject *page) {
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {
     if (tabs) {
         iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+        if (!pages) {
+            return NULL; /* pending destruction */
+        }
         iConstForEach(ObjectList, i, pages->children) {
             if (isVisible_Widget(i.object)) {
                 return constAs_Widget(i.object);
