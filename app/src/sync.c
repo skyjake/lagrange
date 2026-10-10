@@ -73,9 +73,14 @@ static const double recentWindow_Sync_        = 24 * 3600; /* seconds of recent 
 static const double recentDelay_Sync_         = 60;      /* seconds from a change to uploading */
 static const double recentInterval_Sync_      = 60;      /* minimum seconds between checks */
 static const double recentBackoff_Sync_       = 2 * 60;  /* seconds */
+static const double pushDelay_Sync_           = 5 * 60;  /* seconds from the last edit to uploading */
 
 static const char *typeNames_Sync_[max_UserDataType] = {
     "bookmarks", "books", "visited", "identities", "trusted", "snippets", "sites"
+};
+
+static const char *pendingAbbrevs_Sync_[max_UserDataType] = {
+    "Bm", NULL, NULL, "Id", NULL, "Sn", "St"
 };
 
 enum iSyncUploadResult {
@@ -124,6 +129,8 @@ struct Impl_Sync {
     iTime        recentFailTime;
     iString      recentError;
     iAtomicInt   isRecentChangePosted;
+    iAtomicInt   isPushChangePosted;
+    SDL_TimerID  pushTimer;
     iBool        isFullPending;    /* full sync starts after the recent changes */
     iBool        isFullPendingManual;
     iBool        isBlocking;       /* worker runs in the calling thread */
@@ -376,16 +383,38 @@ static void reset_Sync_(iSync *d) {
     saveState_Sync_(d);
 }
 
-static iBool isDirty_Sync_(const iSync *d) {
-    iBool dirty = iFalse;
+static void appendPending_Sync_(const iSync *d, iString *str) {
     lock_Mutex(d->mtx);
     for (int i = 0; i < max_UserDataType; i++) {
-        if (cmp_Time(&d->modified[i], &d->syncedTime) > 0) {
-            dirty = iTrue;
+        if (pendingAbbrevs_Sync_[i] && cmp_Time(&d->modified[i], &d->syncedTime) > 0) {
+            appendFormat_String(str, " %s", pendingAbbrevs_Sync_[i]);
         }
     }
     unlock_Mutex(d->mtx);
-    return dirty;
+}
+
+static iBool isPushType_Sync_(enum iUserDataType type) {
+    /* Edits to these are uploaded soon, regardless of the sync interval. */
+    return type == bookmarks_UserDataType || type == identities_UserDataType ||
+           type == snippets_UserDataType || type == sites_UserDataType;
+}
+
+static iTime pendingEdit_Sync_(const iSync *d) {
+    iTime latest;
+    iZap(latest);
+    lock_Mutex(d->mtx);
+    for (int i = 0; i < max_UserDataType; i++) {
+        if (isPushType_Sync_(i) && cmp_Time(&d->modified[i], &d->syncedTime) > 0) {
+            max_Time(&latest, &d->modified[i]);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return latest;
+}
+
+static iBool isPushDue_Sync_(const iSync *d) {
+    const iTime edit = pendingEdit_Sync_(d);
+    return isValid_Time(&edit) && elapsedSeconds_Time(&edit) >= pushDelay_Sync_;
 }
 
 static iBool isRecentDirty_Sync_(const iSync *d) {
@@ -412,6 +441,9 @@ static void userDataChanged_Sync_(enum iUserDataType type) {
     iGuardMutex(d->mtx, initCurrent_Time(&d->modified[type]));
     if (type == books_UserDataType) {
         recentChanged_Sync_(d);
+    }
+    if (isPushType_Sync_(type) && !exchange_Atomic(&d->isPushChangePosted, iTrue)) {
+        postCommand_App("sync.push.changed");
     }
 }
 
@@ -1189,6 +1221,12 @@ static uint32_t recentTimerCallback_Sync_(void *userdata, SDL_TimerID timerId, u
     return 0;
 }
 
+static uint32_t pushTimerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
+    iUnused(userdata, timerId, interval);
+    postCommand_App("sync.push");
+    return 0;
+}
+
 static uint32_t retryCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId, interval);
     sync_.retryTimer = 0;
@@ -1196,14 +1234,36 @@ static uint32_t retryCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_
     return 0;
 }
 
+static iBool isAutomatic_Sync_(void) {
+    return isConfigured_Sync_() && prefs_Sync_()->syncInterval > 0;
+}
+
+static void schedulePush_Sync_(iSync *d) {
+    if (d->pushTimer || !isAutomatic_Sync_()) {
+        return;
+    }
+    const iTime edit = pendingEdit_Sync_(d);
+    if (isValid_Time(&edit)) {
+        const double wait = iMax(1.0, pushDelay_Sync_ - elapsedSeconds_Time(&edit));
+        d->pushTimer = SDL_AddTimer(wait * 1000, pushTimerCallback_Sync_, NULL);
+    }
+}
+
 static void updateTimer_Sync_(iSync *d) {
-    const iBool wantTimer = isConfigured_Sync_() && prefs_Sync_()->syncInterval > 0;
+    const iBool wantTimer = isAutomatic_Sync_();
     if (wantTimer && !d->timer) {
         d->timer = SDL_AddTimer(timerInterval_Sync_ * 1000, timerCallback_Sync_, NULL);
     }
     else if (!wantTimer && d->timer) {
         SDL_RemoveTimer(d->timer);
         d->timer = 0;
+    }
+    if (wantTimer) {
+        schedulePush_Sync_(d);
+    }
+    else if (d->pushTimer) {
+        SDL_RemoveTimer(d->pushTimer);
+        d->pushTimer = 0;
     }
 }
 
@@ -1480,6 +1540,7 @@ static void finish_Sync_(iSync *d) {
     fetchRemote_Bookmarks(bookmarks_App());
     notify_App("sync.finished");
     notifyStatus_Sync_();
+    schedulePush_Sync_(d); /* edited during the sync */
     if (d->serverFingerprint) {
         /* Automatic syncs only ask once about the same certificate. */
         if (d->isManual || !d->declinedFingerprint ||
@@ -1494,7 +1555,7 @@ static void finish_Sync_(iSync *d) {
 }
 
 static void check_Sync_(iSync *d) {
-    if (!isConfigured_Sync_() || value_Atomic(&d->isRunning) || prefs_Sync_()->syncInterval <= 0) {
+    if (!isAutomatic_Sync_() || value_Atomic(&d->isRunning)) {
         return;
     }
     if (isValid_Time(&d->lastAttemptTime) && !isEmpty_String(&d->lastError) &&
@@ -1502,7 +1563,8 @@ static void check_Sync_(iSync *d) {
         return;
     }
     if (isValid_Time(&d->lastCheckTime) &&
-        elapsedSeconds_Time(&d->lastCheckTime) < prefs_Sync_()->syncInterval * 3600.0) {
+        elapsedSeconds_Time(&d->lastCheckTime) < prefs_Sync_()->syncInterval * 3600.0 &&
+        !isPushDue_Sync_(d)) {
         return;
     }
     start_Sync_(d, iFalse);
@@ -1656,6 +1718,9 @@ void deinit_Sync(void) {
     if (d->recentTimer) {
         SDL_RemoveTimer(d->recentTimer);
     }
+    if (d->pushTimer) {
+        SDL_RemoveTimer(d->pushTimer);
+    }
     if (d->worker) {
         /* The result is discarded; the local changes are still pending. */
         join_Thread(d->worker);
@@ -1771,8 +1836,11 @@ iString *statusText_Sync(void) {
         else {
             setCStr_String(str, cstr_Lang("sync.status.never"));
         }
-        if (isDirty_Sync_(d)) {
-            appendFormat_String(str, "%s%s", sep, cstr_Lang("sync.status.pending"));
+        iString *pending = collectNew_String();
+        appendPending_Sync_(d, pending);
+        if (!isEmpty_String(pending)) {
+            appendFormat_String(str, "%s%s%s", sep, cstr_Lang("sync.status.pending.types"),
+                                cstr_String(pending));
         }
         if (!isEmpty_String(&d->lastError)) {
             error = &d->lastError;
@@ -1844,6 +1912,22 @@ iBool handleCommand_Sync(const char *cmd) {
         if (canSyncRecent_Sync_(d) && !d->recentTimer) {
             d->recentTimer =
                 SDL_AddTimer(recentDelay_Sync_ * 1000, recentTimerCallback_Sync_, NULL);
+        }
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sync.push.changed")) {
+        set_Atomic(&d->isPushChangePosted, iFalse);
+        notifyStatus_Sync_();
+        schedulePush_Sync_(d);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sync.push")) {
+        d->pushTimer = 0; /* the timer has fired */
+        if (isPushDue_Sync_(d)) {
+            check_Sync_(d);
+        }
+        else {
+            schedulePush_Sync_(d); /* edited again since */
         }
         return iTrue;
     }

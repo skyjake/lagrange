@@ -3390,6 +3390,9 @@ msgstr "Not synced yet"
 msgid "sync.status.pending"
 msgstr "changes pending"
 
+msgid "sync.status.pending.types"
+msgstr "pending:"
+
 msgid "sync.status.error"
 msgstr "Error:"
 
