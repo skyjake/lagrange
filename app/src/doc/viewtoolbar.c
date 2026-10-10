@@ -128,7 +128,8 @@ static const iArray *identityMenuItems_ViewToolbar_(iWidget *menu) {
 static iLabelWidget *addButton_ViewToolbar_(iViewToolbar *d, iLabelWidget *button, const char *id) {
     setAlignVisually_LabelWidget(button, iTrue);
     setFont_LabelWidget(button, uiContent_FontId); /* same as the footer buttons */
-    addChildIdFlags_Widget(d->widget, iClob(button), id, 0);
+    addChildIdFlags_Widget(
+        d->widget, iClob(button), id, frameless_WidgetFlag | noBackground_WidgetFlag);
     as_Widget(button)->flags2 |= alwaysRound_WidgetFlag2;
     return button;
 }
@@ -142,7 +143,7 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
     setId_Widget(w, "viewtools");
     setFlags_Widget(w, hidden_WidgetFlag | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     w->flags2 |= roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2;
-    setBackgroundColor_Widget(w, uiBackground_ColorId);
+    setBackgroundColor_Widget(w, uiBackgroundSidebar_ColorId);
     setFrameColor_Widget(w, uiSeparator_ColorId);
     const float hPad = 1.75f * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);
     const float vPad = 1.0f  * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);

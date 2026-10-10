@@ -693,7 +693,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     int         corners       = isFramedRound                     ? roundCorners_LabelWidget_(d)
                                 : !isButton                       ? 0
                                 : isPopupMenuItem_LabelWidget_(w) ? all_RoundCorner
-                                                                  : flushCorners_LabelWidget_(d);
+                                : w->flags2 & alwaysRound_WidgetFlag2 && !isTerminal_Platform()
+                                    ? all_RoundCorner
+                                    : flushCorners_LabelWidget_(d);
     /* Group items are highlighted edge to edge, up to the separators. */
     const iBool isGroupItem = isButton && flags & frameless_WidgetFlag &&
                               (w->flags2 & groupItem_WidgetFlag2) != 0;
