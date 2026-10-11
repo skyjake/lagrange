@@ -103,9 +103,18 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                         item->icon = first_String(&info.avatar);
                     }
                     if (!isEmpty_String(&info.author) && !equal_String(&info.author, &bm->title)) {
+                        const char *restoreCStr = "\x1b[0m" restore_ColorEscape;
                         appendFormat_String(&item->meta,
-                                            "\x1b[1m%s\x1b[0m" restore_ColorEscape,
+                                            "\x1b[1m%s",
                                             cstr_String(&info.author));
+                        /* The domain name of the handle has normal styling. */
+                        const size_t secondAtPos = indexOfCStrFrom_String(&item->meta, "@", 5);
+                        if (secondAtPos != iInvalidPos) {
+                            insertData_Block(&item->meta.chars, secondAtPos, restoreCStr, strlen(restoreCStr));
+                        }
+                        else {
+                            appendCStr_String(&item->meta, restoreCStr);
+                        }
                         appendCStr_String(&item->meta, " — ");
                     }
                 }

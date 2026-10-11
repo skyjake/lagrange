@@ -70,10 +70,10 @@ const iTinylogEntry *findStamp_Tinylog  (const iTinylog *, const iTinylogStamp *
 iString *   excerpt_TinylogEntry    (const iTinylogEntry *);
 
 /* Rewrites links of the entry content so they are absolute relative to the feed URL. Links to
-   local resources are shown as plain text. `responseFunc` may return a replacement URL for a
-   response link ("RE: @author <date>"). */
-typedef const iString *(*iTinylogResponseFunc)(void *context, const iString *url,
-                                               const iTinylogStamp *stamp);
+   local resources are shown as plain text. A response link ("RE: @author <date>") is omitted
+   if `responseFunc` returns true. */
+typedef iBool (*iTinylogResponseFunc)(void *context, const iString *url,
+                                      const iTinylogStamp *stamp);
 
 iString *   content_TinylogEntry    (const iTinylogEntry *, const iString *feedUrl,
                                      iTinylogResponseFunc responseFunc, void *context);

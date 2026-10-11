@@ -96,6 +96,10 @@ msgstr "This tinylog entry is not known. It may have been removed from the tinyl
 msgid "feeds.tinylog.unavailable"
 msgstr "The contents of this tinylog entry are not available."
 
+# Arguments: author, timestamp.
+msgid "feeds.tinylog.wrote"
+msgstr "%s wrote on %s:"
+
 # The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
 #, c-format
 msgid "feeds.list.counts"

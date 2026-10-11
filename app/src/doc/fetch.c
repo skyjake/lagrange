@@ -1390,7 +1390,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                                  title,
                                  details,
                                  format_CStr("open newtab:1 url:%s", cstr_String(&bm->url)),
-                                 iTrue); //entry->isTinylog);
+                                 iTrue);
                 delete_String(title);
                 break;
             }

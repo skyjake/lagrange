@@ -198,13 +198,15 @@ static void setText_BannerItem_(iBannerItem *d, iChar icon, const char *title,
     appendCStr_String(&d->text, escape_Color(tmBannerIcon_ColorId));
     appendChar_String(&d->text, icon);
     appendCStr_String(&d->text, restore_ColorEscape);
-    appendFormat_String(&d->text, "  %s%s%s%s \u2014 %s%s",
+    const char *sep = startsWith_CStr(details, "\n") ? "" : " \u2014 ";
+    appendFormat_String(&d->text, "  %s%s%s%s%s%s%s",
                         isTitleBold ? "\x1b[1m" : "",
                         escape_Color(isTitleBold ? tmBannerItemTitle_ColorId
                                                  : tmBannerItemText_ColorId),
                         title,
                         isTitleBold ? "\x1b[0m" : "",
                         escape_Color(tmBannerItemText_ColorId),
+                        sep,
                         details);
 }
 

@@ -1757,23 +1757,33 @@ iBool tinylogInfo_Feeds(const iString *entryUrl, iTinylogInfo *info_out) {
     return iTrue;
 }
 
-iDeclareType(TinylogResponse)
+iDeclareType(TinylogRef)
 
-struct Impl_TinylogResponse {
-    iFeeds  *feeds;
-    iString *refContent; /* content of the first referenced entry */
+struct Impl_TinylogRef {
+    iString url; /* local entry URL */
+    iString section;
+    iString sourceUrl;
+    iString author;
+    iTime   posted;
 };
 
-static const iString *responseUrl_Feeds_(void *context, const iString *url,
-                                         const iTinylogStamp *stamp) {
-    iTinylogResponse *d    = context;
-    const uint32_t    bmId = findSubscription_Feeds_(urlFragmentStripped_String(url));
-    const iBookmark  *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
+iDeclareType(TinylogThread)
+
+struct Impl_TinylogThread {
+    iFeeds     *feeds;
+    iPtrArray   refs; /* TinylogRef, in the order they are quoted */
+    iStringSet *seen; /* entry URLs on the page */
+};
+
+static iBool responseRef_Feeds_(void *context, const iString *url, const iTinylogStamp *stamp) {
+    iTinylogThread  *d    = context;
+    const uint32_t   bmId = findSubscription_Feeds_(urlFragmentStripped_String(url));
+    const iBookmark *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
     if (!bm || ~bm->flags & tinylog_BookmarkFlag) {
-        return NULL;
+        return iFalse;
     }
-    const iString *result = NULL;
-    iTinylogCache  cache;
+    iBool         found = iFalse;
+    iTinylogCache cache;
     init_TinylogCache_(&cache);
     if (loadTinylogCache_Feeds_(d->feeds, &bm->url, &cache, iFalse)) {
         iTinylog *log = new_Tinylog();
@@ -1783,17 +1793,54 @@ static const iString *responseUrl_Feeds_(void *context, const iString *url,
             lock_Mutex(d->feeds->mtx);
             iString *prefix = tinylogPrefix_Feeds_(d->feeds, &bm->url, &cache.base);
             unlock_Mutex(d->feeds->mtx);
-            result = canonicalUrl_String(collectNewFormat_String(
+            const iString *entryUrl = canonicalUrl_String(collectNewFormat_String(
                 "%s/%s", cstr_String(prefix), cstr_String(&entry->id)));
             delete_String(prefix);
-            if (!d->refContent) {
-                d->refContent = content_TinylogEntry(entry, &cache.url, NULL, NULL);
+            if (!contains_StringSet(d->seen, entryUrl)) {
+                insert_StringSet(d->seen, entryUrl);
+                iTinylogRef *ref = iMalloc(TinylogRef);
+                initCopy_String(&ref->url, entryUrl);
+                initRange_String(&ref->section, entry->range);
+                initCopy_String(&ref->sourceUrl, &cache.url);
+                initCopy_String(&ref->author, &log->author);
+                ref->posted = entry->stamp.utc;
+                pushBack_PtrArray(&d->refs, ref);
             }
+            found = iTrue;
         }
         delete_Tinylog(log);
     }
     deinit_TinylogCache_(&cache);
-    return result;
+    return found;
+}
+
+static void appendQuotedRef_TinylogThread_(iTinylogThread *d, const iTinylogRef *ref,
+                                           iString *page) {
+    iTinylog *log = new_Tinylog();
+    parse_Tinylog(log, &ref->section, NULL);
+    if (!isEmpty_Array(&log->entries)) {
+        iDate posted;
+        init_Date(&posted, &ref->posted);
+        /* Day of month without zero padding. */
+        iString *dateFormat = collectNewCStr_String(cstr_Lang("banner.tinylogentry.date"));
+        replace_String(dateFormat, "%d", format_CStr("%d", posted.day));
+        appendFormat_String(page, "\n---\n\n=> %s ", cstr_String(&ref->url));
+        appendFormat_String(page,
+                            cstr_Lang("feeds.tinylog.wrote"),
+                            cstr_String(&ref->author),
+                            cstr_String(collect_String(
+                                format_Date(&posted, cstr_String(dateFormat)))));
+        appendCStr_String(page, "\n");
+        iString *content = content_TinylogEntry(
+            constAt_Array(&log->entries, 0), &ref->sourceUrl, responseRef_Feeds_, d);
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(range_String(content), "\n", &line)) {
+            appendFormat_String(page, isEmpty_Range(&line) ? ">\n" : "> %s\n",
+                                cstr_Rangecc(line));
+        }
+        delete_String(content);
+    }
+    delete_Tinylog(log);
 }
 
 static const iBlock *tinylogPage_Feeds_(iRangecc path) {
@@ -1814,15 +1861,26 @@ static const iBlock *tinylogPage_Feeds_(iRangecc path) {
     const iTinylogEntry *entry =
         loadTinylogEntry_Feeds_(d, bm, canonicalUrl_String(url), log, sourceUrl);
     if (entry) {
-        iTinylogResponse resp    = { .feeds = d, .refContent = NULL };
-        iString         *content = content_TinylogEntry(entry, sourceUrl, responseUrl_Feeds_, &resp);
+        iTinylogThread thread = { .feeds = d, .seen = new_StringSet() };
+        init_PtrArray(&thread.refs);
+        insert_StringSet(thread.seen, canonicalUrl_String(url));
+        iString *content = content_TinylogEntry(entry, sourceUrl, responseRef_Feeds_, &thread);
         append_String(page, content);
         delete_String(content);
-        if (resp.refContent) {
-            appendFormat_String(page, "\n---\n### %s\n", cstr_Lang("feeds.tinylog.resp"));
-            append_String(page, resp.refContent);
-            delete_String(resp.refContent);
+        /* Quoting may add more references. */
+        for (size_t i = 0; i < size_PtrArray(&thread.refs); i++) {
+            appendQuotedRef_TinylogThread_(&thread, at_PtrArray(&thread.refs, i), page);
         }
+        iForEach(PtrArray, r, &thread.refs) {
+            iTinylogRef *ref = r.ptr;
+            deinit_String(&ref->author);
+            deinit_String(&ref->sourceUrl);
+            deinit_String(&ref->section);
+            deinit_String(&ref->url);
+            free(ref);
+        }
+        deinit_PtrArray(&thread.refs);
+        iRelease(thread.seen);
     }
     else {
         appendFormat_String(page,

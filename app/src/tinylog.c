@@ -464,6 +464,9 @@ iString *content_TinylogEntry(const iTinylogEntry *d, const iString *feedUrl,
     while (nextSplit_Rangecc(d->content, "\n", &line)) {
         iRangecc t = line;
         trimEnd_Rangecc(&t);
+        if (isEmpty_Range(&t) && isEmpty_String(out)) {
+            continue; /* response link was omitted */
+        }
         if (isPreformatToggle_(t)) {
             isPre = !isPre;
         }
@@ -479,11 +482,9 @@ iString *content_TinylogEntry(const iTinylogEntry *d, const iString *feedUrl,
             }
             else {
                 iTinylogStamp stamp;
-                if (responseFunc && parseResponse_(link.label, &stamp)) {
-                    const iString *repl = responseFunc(context, url, &stamp);
-                    if (repl) {
-                        url = repl;
-                    }
+                if (responseFunc && parseResponse_(link.label, &stamp) &&
+                    responseFunc(context, url, &stamp)) {
+                    continue;
                 }
                 appendFormat_String(out, "=> %s", cstr_String(url));
                 if (!isEmpty_Range(&link.label)) {
@@ -497,6 +498,8 @@ iString *content_TinylogEntry(const iTinylogEntry *d, const iString *feedUrl,
         }
         appendCStr_String(out, "\n");
     }
+    trimEnd_String(out);
+    appendCStr_String(out, "\n");
     if (isPre) {
         appendCStr_String(out, "```\n");
     }
