@@ -240,6 +240,8 @@ set (SOURCES
     src/sync.h
     src/syncdata.c
     src/syncdata.h
+    src/tinylog.c
+    src/tinylog.h
     src/updater.h
     # Multimedia:
     src/media/media.c

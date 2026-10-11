@@ -267,6 +267,7 @@ struct Impl_Prefs {
     /* Network */
     int maxCacheSize;  /* MB */
     int maxMemorySize; /* MB */
+    int maxTinylogSize; /* KB; cached source of each subscribed tinylog */
     int maxUrlSize;    /* bytes; longer ones will be disregarded */
     int syncInterval;  /* hours; zero means only manual syncing */
 

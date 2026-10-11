@@ -1339,7 +1339,7 @@ void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
         add_Banner(banner_DocumentFetch_(d), warning_BannerType, unsupportedMimeTypeShownAsUtf8_GmStatusCode,
                    NULL, NULL);
     }
-    if (isReader_DocumentWidget(d->owner)) {
+    if (isReader_DocumentWidget(d->owner) || tinylogBookmark_Feeds(url_DocumentFetch_(d))) {
         const iString *entryUrl = feedEntryUrl_DocumentWidget(d->owner);
         iConstForEach(PtrArray, i, listMatchingEntries_Feeds(cstr_String(entryUrl))) {
             const iFeedEntry *entry = i.ptr;
@@ -1351,12 +1351,32 @@ void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
                 iDate posted;
                 init_Date(&posted, &entry->posted);
                 /* Day of month without zero padding. */
-                iString *dateFormat = collectNewCStr_String(cstr_Lang("banner.feedentry.date"));
+                iString *dateFormat = collectNewCStr_String(cstr_Lang(
+                    entry->isTinylog ? "banner.tinylogentry.date" : "banner.feedentry.date"));
                 replace_String(dateFormat, "%d", format_CStr("%d", posted.day));
+                iString *details = collect_String(format_Date(&posted, cstr_String(dateFormat)));
+                iChar    icon    = 0x2605; /* star */
+                if (entry->isTinylog) {
+                    iTinylogInfo info;
+                    init_TinylogInfo(&info);
+                    if (tinylogInfo_Feeds(entryUrl, &info)) {
+                        if (!isEmpty_String(&info.avatar)) {
+                            icon = first_String(&info.avatar);
+                        }
+                        else if (bm->icon) {
+                            icon = bm->icon;
+                        }
+                        if (!isEmpty_String(&info.author)) {
+                            details = collectNewFormat_String(
+                                "%s \u00b7 %s", cstr_String(&info.author), cstr_String(details));
+                        }
+                    }
+                    deinit_TinylogInfo(&info);
+                }
                 addNotice_Banner(banner_DocumentFetch_(d),
-                                 0x2605, /* star */
+                                 icon,
                                  &bm->title,
-                                 collect_String(format_Date(&posted, cstr_String(dateFormat))),
+                                 details,
                                  format_CStr("open newtab:1 url:%s", cstr_String(&bm->url)));
                 break;
             }

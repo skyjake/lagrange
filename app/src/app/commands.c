@@ -349,6 +349,25 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         refresh_Feeds();
         return iTrue;
     }
+    else if (equal_Command(cmd, "feeds.fetched")) {
+        /* Results of the first fetch of a subscription. */
+        iBookmark *bm = get_Bookmarks(bookmarks_App(), argLabel_Command(cmd, "bmid"));
+        if (bm) {
+            if (bm->flags & autoDetect_BookmarkFlag) {
+                iChangeFlags(bm->flags, tinylog_BookmarkFlag, argLabel_Command(cmd, "tinylog"));
+                bm->flags &= ~(autoDetect_BookmarkFlag | headings_BookmarkFlag);
+            }
+            if (bm->flags & pendingTitle_BookmarkFlag) {
+                const iString *title = collect_String(suffix_Command(cmd, "title"));
+                if (!isEmpty_String(title)) {
+                    set_String(&bm->title, title);
+                }
+                bm->flags &= ~pendingTitle_BookmarkFlag;
+            }
+            notify_App("bookmarks.changed");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "feeds.reset")) {
         resetKnownEntries_Feeds();
         notify_App("feeds.update.finished"); /* not really, but we have zero entries now */
@@ -608,7 +627,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         doc = document_Command(cmd); /* may be different */
     }
     const iBool isReaderOpen =
-        argLabel_Command(cmd, "reader") && (newTab & newTabMask_OpenTabFlag) == 0;
+        (newTab & newTabMask_OpenTabFlag) == 0 &&
+        (argLabel_Command(cmd, "reader") ||
+         (isReader_DocumentWidget(doc) && tinylogBookmark_Feeds(url)));
     if (isReaderOpen) {
         /* Feed entries are viewed in the root's Reader tab. */
         iDocumentWidget *reader = NULL;

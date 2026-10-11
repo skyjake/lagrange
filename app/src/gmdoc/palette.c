@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "palette.h"
 #include "app.h"
 #include "bookmarks.h"
+#include "feeds.h"
 #include "ui/root.h"
 
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
@@ -148,6 +149,21 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
 }
 
 void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
+    if (d->flags.isTinylogEntry) {
+        iTinylogInfo info;
+        init_TinylogInfo(&info);
+        if (tinylogInfo_Feeds(&d->url, &info) && !isEmpty_String(&info.avatar)) {
+            d->siteIcon = first_String(&info.avatar);
+        }
+        else {
+            const iBookmark *bm = get_Bookmarks(bookmarks_App(), info.bookmarkId);
+            if (bm && bm->icon) {
+                d->siteIcon = bm->icon;
+            }
+        }
+        deinit_TinylogInfo(&info);
+        return;
+    }
     const iChar userIcon = siteIcon_Bookmarks(bookmarks_App(), &d->url);
     if (userIcon) {
         d->siteIcon = userIcon;

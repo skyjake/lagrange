@@ -529,7 +529,7 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         else if (!isEmpty_Range(&parts.host)) {
             pushBackRange_StringArray(title, parts.host);
         }
-        else if (!isEmpty_Range(&parts.path)) {
+        else if (!isEmpty_Range(&parts.path) && !tinylogBookmark_Feeds(d->mod.url)) {
             iRangecc name = baseNameSep_Path(collectNewRange_String(parts.path), "/");
             if (!isEmpty_Range(&name)) {
                 pushBack_StringArray(
@@ -647,6 +647,13 @@ static void applyPendingLinkUpdates_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
+    const uint32_t tinylogId = tinylogBookmark_Feeds(d->mod.url);
+    if (tinylogId) {
+        const iBookmark *bm = get_Bookmarks(bookmarks_App(), tinylogId);
+        if (bm) {
+            return urlHost_String(&bm->url);
+        }
+    }
     return isEmpty_String(d->titleUser) ? urlHost_String(d->mod.url)
                                         : range_String(d->titleUser);
 }
@@ -2393,6 +2400,23 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (d->foundMark.start) {
             d->foundMark = iNullRange;
             refresh_Widget(w);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "feeds.subscribeall") && document_App() == d) {
+        const iGmDocument  *doc  = d->view->doc;
+        const iStringArray *urls = listSubscribableUrls_Feeds(
+            source_GmDocument(doc), format_GmDocument(doc) == plainText_SourceFormat, d->mod.url);
+        if (isEmpty_StringArray(urls)) {
+            makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.subscribeall}",
+                                     "${dlg.subscribeall.notfound}");
+        }
+        else if (argLabel_Command(cmd, "confirm")) {
+            makeSubscribeAll_Widget(size_StringArray(urls));
+        }
+        else if (subscribeAll_Feeds(urls, bookmarkTitle_DocumentWidget(d), argLabel_Command(cmd, "type"))) {
+            notify_App("bookmarks.changed");
+            postCommand_App("feeds.refresh");
         }
         return iTrue;
     }

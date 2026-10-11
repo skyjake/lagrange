@@ -318,6 +318,7 @@ void init_Prefs(iPrefs *d) {
     d->warnTlsSecurity                        = iTrue;
     d->maxCacheSize                           = 10;
     d->maxMemorySize                          = 200;
+    d->maxTinylogSize                         = 64;
     d->maxUrlSize                             = 8192;
     setCStr_String(&d->strings[uiFont_PrefsString], "default");
     d->disabledFontPacks  = new_StringSet();

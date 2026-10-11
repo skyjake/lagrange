@@ -183,7 +183,8 @@ void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
     visitUrlTime_Visited(d, url, visitFlags, when);
 }
 
-void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, iTime when) {
+static void visit_Visited_(iVisited *d, const iString *url, uint16_t visitFlags, iTime when,
+                           iBool notify) {
     if (isEmpty_String(url)) return;
     url = canonicalUrl_String(urlDefaultPortStripped_String(url));
     iVisitedUrl visit;
@@ -202,15 +203,32 @@ void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, 
             old->flags = visitFlags;
             unlock_Mutex(d->mtx);
             deinit_VisitedUrl(&visit);
-            notifyUserDataChanged_Core(visited_UserDataType);
-            notifyVisitedUrlChanged_Core(url, iFalse);
+            if (notify) {
+                notifyUserDataChanged_Core(visited_UserDataType);
+                notifyVisitedUrlChanged_Core(url, iFalse);
+            }
             return;
         }
     }
     insert_SortedArray(&d->visited, &visit);
     unlock_Mutex(d->mtx);
+    if (notify) {
+        notifyUserDataChanged_Core(visited_UserDataType);
+        notifyVisitedUrlChanged_Core(url, iFalse);
+    }
+}
+
+void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, iTime when) {
+    visit_Visited_(d, url, visitFlags, when, iTrue);
+}
+
+void visitUrlsTime_Visited(iVisited *d, const iStringArray *urls, uint16_t visitFlags,
+                           iTime when) {
+    if (isEmpty_StringArray(urls)) return;
+    iConstForEach(StringArray, i, urls) {
+        visit_Visited_(d, i.value, visitFlags, when, iFalse);
+    }
     notifyUserDataChanged_Core(visited_UserDataType);
-    notifyVisitedUrlChanged_Core(url, iFalse);
 }
 
 void setUrlKept_Visited(iVisited *d, const iString *url, iBool isKept) {

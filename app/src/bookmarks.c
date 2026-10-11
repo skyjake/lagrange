@@ -62,6 +62,7 @@ void deinit_Bookmark(iBookmark *d) {
 static struct {
     const uint32_t bit;
     const char *   tag;
+    iBool          isNew; /* no dotless legacy form */
     iRegExp *      pattern;
     iRegExp *      oldPattern;
 }
@@ -73,6 +74,9 @@ specialTags_[] = {
     { subscribed_BookmarkFlag, ".subscribed" },
     { headings_BookmarkFlag, ".headings" },
     { ignoreWeb_BookmarkFlag, ".ignoreweb" },
+    { tinylog_BookmarkFlag, ".tinylog", iTrue },
+    { autoDetect_BookmarkFlag, ".autodetect", iTrue },
+    { pendingTitle_BookmarkFlag, ".pendingtitle", iTrue },
     /* `remote_BookmarkFlag` not included because it's runtime only */
 };
 
@@ -129,7 +133,7 @@ static void unpackDotTags_Bookmark_(iBookmark *d) {
         iRegExpMatch m;
         init_RegExpMatch(&m);
         iBool isSet = matchString_RegExp(specialTags_[i].pattern, &d->tags, &m);
-        if (!isSet) {
+        if (!isSet && !specialTags_[i].isNew) {
             init_RegExpMatch(&m);
             isSet = matchString_RegExp(specialTags_[i].oldPattern, &d->tags, &m);
         }

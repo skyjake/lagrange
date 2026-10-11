@@ -76,6 +76,7 @@ struct Impl_GmDocument {
     iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
     iString   title; /* the first top-level title */
+    iString   fixedTitle; /* used instead of headings, if set */
     iArray    headings;
     iArray    pageBands; /* GmPageBands of each page in a paginated layout */
     iString   bookTitle; /* shown in the page header */
@@ -107,6 +108,7 @@ struct Impl_GmDocument {
         iBool isUiTheme : 1;
         iBool isDocPrefsPinned : 1;
         iBool isPageViewInverted : 1;
+        iBool isTinylogEntry : 1;
     } flags;
 };
 

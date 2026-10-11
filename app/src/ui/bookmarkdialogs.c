@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/text.h"
 #include "root.h"
 #include "sync.h"
+#include "tinylog.h"
 #include "util.h"
 #include "widget.h"
 
@@ -327,7 +328,12 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         }
         int id = argLabel_Command(cmd, "bmid");
         const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
+        const iBool tinylog = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.tinylog"));
         const iBool ignoreWeb = isSelected_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"));
+        const uint32_t typeFlags =
+            headings_BookmarkFlag | tinylog_BookmarkFlag | autoDetect_BookmarkFlag;
+        const iBookmark *oldBm   = id ? get_Bookmarks(bookmarks_App(), id) : NULL;
+        const uint32_t   oldType = oldBm ? oldBm->flags & typeFlags : 0;
         if (!id) {
             const size_t numSubs = numSubscribed_Feeds();
             const iString *url   = url_DocumentWidget(document_App());
@@ -346,8 +352,15 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         iAssert(bm);
         set_String(&bm->title, feedTitle);
         bm->flags |= subscribed_BookmarkFlag;
+        bm->flags &= ~autoDetect_BookmarkFlag;
         iChangeFlags(bm->flags, headings_BookmarkFlag, headings);
+        iChangeFlags(bm->flags, tinylog_BookmarkFlag, tinylog);
         iChangeFlags(bm->flags, ignoreWeb_BookmarkFlag, ignoreWeb);
+        if (oldBm && oldType != (bm->flags & typeFlags)) {
+            /* Entries of the previous type are no longer valid. */
+            resetFeed_Feeds(id);
+            postCommand_App("feeds.refresh");
+        }
         notify_App("bookmarks.changed");
         setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
@@ -369,6 +382,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         const iMenuItem typeItems[] = {
             { "button id:feedcfg.type.gemini label:dlg.feed.type.gemini", 0, 0, "feedcfg.type arg:0" },
             { "button id:feedcfg.type.headings label:dlg.feed.type.headings", 0, 0, "feedcfg.type arg:1" },
+            { "button id:feedcfg.type.tinylog label:dlg.feed.type.tinylog", 0, 0, "feedcfg.type arg:2" },
             { NULL }
         };
         dlg = makePanels_Mobile("feedcfg", (iMenuItem[]){
@@ -392,6 +406,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         iWidget *types = new_Widget(); {
             addRadioButton_Widget(types, "feedcfg.type.gemini", "${dlg.feed.type.gemini}", "feedcfg.type arg:0");
             addRadioButton_Widget(types, "feedcfg.type.headings", "${dlg.feed.type.headings}", "feedcfg.type arg:1");
+            addRadioButton_Widget(types, "feedcfg.type.tinylog", "${dlg.feed.type.tinylog}", "feedcfg.type arg:2");
         }
         addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.ignoreweb}")));
@@ -407,8 +422,13 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
                             bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
+        const iBool isTinylog =
+            bm && bm->flags & subscribed_BookmarkFlag
+                ? (bm->flags & tinylog_BookmarkFlag) != 0
+                : isTinylog_Source(source_GmDocument(document_DocumentWidget(document_App())));
         setFlags_Widget(findChild_Widget(dlg,
-                                         bm && bm->flags & headings_BookmarkFlag
+                                         isTinylog ? "feedcfg.type.tinylog"
+                                         : bm && bm->flags & headings_BookmarkFlag
                                              ? "feedcfg.type.headings"
                                              : "feedcfg.type.gemini"),
                         selected_WidgetFlag,

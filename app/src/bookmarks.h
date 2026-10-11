@@ -44,6 +44,9 @@ enum iBookmarkFlags {
     subscribed_BookmarkFlag   = iBit(17),
     headings_BookmarkFlag     = iBit(18),
     ignoreWeb_BookmarkFlag    = iBit(19),
+    tinylog_BookmarkFlag      = iBit(20),
+    autoDetect_BookmarkFlag   = iBit(21), /* feed type is decided on the first fetch */
+    pendingTitle_BookmarkFlag = iBit(22), /* title is replaced on the first fetch */
     remote_BookmarkFlag       = iBit(31),
 };
 

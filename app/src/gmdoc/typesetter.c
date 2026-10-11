@@ -840,7 +840,7 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     clear_Array(&doc->headings);
     d->oldPreMeta = collect_Array(copy_Array(&doc->preMeta));
     clear_Array(&doc->preMeta);
-    clear_String(&doc->title);
+    set_String(&doc->title, &doc->fixedTitle);
     doc->contentWidth = 0;
     if (doc->size.x <= 0 || isEmpty_String(&doc->source)) {
         return iFalse;
@@ -939,7 +939,8 @@ static iBool detectLineType_Typesetter_(iTypesetter *d) {
     }
     else if (!d->isPreformat) {
         d->type = lineType_GmDocument_(doc, d->line);
-        if (doc->origFormat == markdown_SourceFormat && isHRule_(d->line)) {
+        if ((doc->origFormat == markdown_SourceFormat || doc->flags.isTinylogEntry) &&
+            isHRule_(d->line)) {
             addRule_Typesetter_(d);
             return iFalse;
         }

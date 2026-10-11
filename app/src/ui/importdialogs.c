@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "dialog.h"
 #include "export.h"
+#include "feeds.h"
 #include "labelwidget.h"
 #include "root.h"
 #include "util.h"
@@ -102,6 +103,80 @@ iWidget *makeLinkImporter_Widget(size_t count) {
                                         format_CStr(" arg:%zu", recentFolder_Bookmarks(bookmarks_App())));
     setToggle_Widget(findChild_Widget(dlg, "dlg.import.headings"), iTrue);
     setCommandHandler_Widget(dlg, handleLinkImporterCommands_);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    return dlg;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+static iBool handleSubscribeAllCommands_(iWidget *dlg, const char *cmd) {
+    if (equalWidget_Command(cmd, dlg, "cancel")) {
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, dlg, "dlg.subscribeall.accept")) {
+        const enum iFeedType type =
+            isSelected_Widget(findChild_Widget(dlg, "dlg.subscribeall.type.tinylog"))  ? tinylog_FeedType
+            : isSelected_Widget(findChild_Widget(dlg, "dlg.subscribeall.type.gemini")) ? gemini_FeedType
+                                                                                        : autoDetect_FeedType;
+        postCommandf_App("feeds.subscribeall type:%d", type);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeSubscribeAll_Widget(size_t count) {
+    const iMenuItem actions[] = {
+        { "${cancel}" },
+        { format_CStr(cstrCount_Lang("dlg.subscribeall.add.n", (int) count),
+                      uiTextAction_ColorEscape,
+                      count),
+          SDLK_RETURN,
+          KMOD_ACCEPT,
+          "dlg.subscribeall.accept" },
+    };
+    iWidget    *dlg   = NULL;
+    const char *dlgId = "subscribeall";
+    if (isUsingPanelLayout_Mobile()) {
+        const iMenuItem typeItems[] = {
+            { "button id:dlg.subscribeall.type.auto label:dlg.subscribeall.type.auto", 0, 0, "dlg.subscribeall.type arg:0" },
+            { "button id:dlg.subscribeall.type.gemini label:dlg.feed.type.gemini", 0, 0, "dlg.subscribeall.type arg:1" },
+            { "button id:dlg.subscribeall.type.tinylog label:dlg.feed.type.tinylog", 0, 0, "dlg.subscribeall.type arg:2" },
+            { NULL }
+        };
+        dlg = makePanels_Mobile(dlgId, (iMenuItem[]){
+            { "title id:heading.subscribeall" },
+            { format_CStr("label text:%s", formatCStrs_Lang("dlg.subscribeall.found.n", count)) },
+            { "radio id:dlg.subscribeall.type", 0, 0, (const void *) typeItems },
+            { "padding" },
+            { NULL }
+        }, actions, iElemCount(actions));
+    }
+    else {
+        iWidget *headings, *values;
+        dlg = makeSheet_Widget(dlgId);
+        addDialogTitle_Widget(dlg, "${heading.subscribeall}", "heading.subscribeall");
+        addWrappedLabel_Widget(dlg, formatCStrs_Lang("dlg.subscribeall.found.n", count), NULL);
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.subscribeall.type}")));
+        iWidget *types = new_Widget(); {
+            addRadioButton_Widget(types, "dlg.subscribeall.type.auto", "${dlg.subscribeall.type.auto}", "dlg.subscribeall.type arg:0");
+            addRadioButton_Widget(types, "dlg.subscribeall.type.gemini", "${dlg.feed.type.gemini}", "dlg.subscribeall.type arg:1");
+            addRadioButton_Widget(types, "dlg.subscribeall.type.tinylog", "${dlg.feed.type.tinylog}", "dlg.subscribeall.type arg:2");
+        }
+        addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        arrange_Widget(dlg);
+        arrange_Widget(dlg);
+    }
+    setFlags_Widget(findChild_Widget(dlg, "dlg.subscribeall.type.auto"), selected_WidgetFlag, iTrue);
+    setCommandHandler_Widget(dlg, handleSubscribeAllCommands_);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }

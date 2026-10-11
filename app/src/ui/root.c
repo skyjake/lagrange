@@ -1875,6 +1875,7 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
         { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+        { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
         { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
         { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
@@ -1885,7 +1886,7 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { isSourceTextView_DocumentWidget(document_App())
             ? "${menu.viewformat.gemini}"
             : "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-    18);
+    19);
     return items;
 }
 
@@ -2496,10 +2497,11 @@ void createUserInterface_Root(iRoot *d) {
            { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
            { "---" },
            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+           { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
            { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
            { "---" },
            { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
-        }, 10);
+        }, 11);
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
         setId_Widget(toolsMenu, "toolsmenu");

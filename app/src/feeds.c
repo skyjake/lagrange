@@ -22,7 +22,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "feeds.h"
 #include "bookmarks.h"
+#include "tinylog.h"
+#include <lagrange/core.h>
 #include <lagrange/gmrequest.h>
+#include <lagrange/gmutil.h>
 #include <lagrange/visited.h>
 #include <lagrange/lang.h>
 #include "app.h"
@@ -30,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "syncdata.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/intset.h>
 #include <the_Foundation/mutex.h>
@@ -53,6 +57,8 @@ void init_FeedEntry(iFeedEntry *d) {
     init_String(&d->title);
     d->bookmarkId = 0;
     d->isHeading = iFalse;
+    d->isTinylog = iFalse;
+    d->sourceRange = (iRangei){ 0, 0 };
 }
 
 void deinit_FeedEntry(iFeedEntry *d) {
@@ -85,26 +91,45 @@ static int requestTimeoutSeconds_FeedJob_ = 10.0f;
 
 struct Impl_FeedJob {
     iString     url;
+    iString     feedUrl; /* subscribed URL (before redirects) */
     uint32_t    bookmarkId;
     iTime       startTime;
     iBool       isFirstUpdate; /* hasn't been checked ever before */
     iBool       checkHeadings;
     iBool       ignoreWeb;
+    iBool       isTinylog;
+    iBool       autoDetect;
+    iBool       pendingTitle;
     iGmRequest *request;
     int         numRedirect;
     iPtrArray   results;
+    iString     title;          /* from the fetched page */
+    iString     tinylogSource;  /* to be cached; empty if not valid */
+    iString     tinylogBase;
+    iString     tinylogAuthor;
+    iString     tinylogAvatar;
 };
 
 static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     initCopy_String(&d->url, &bookmark->url);
+    initCopy_String(&d->feedUrl, &bookmark->url);
     d->bookmarkId = id_Bookmark(bookmark);
     d->request = NULL;
     d->numRedirect = 0;
     init_PtrArray(&d->results);
     iZap(d->startTime);
     d->isFirstUpdate = iFalse;
-    d->checkHeadings = (bookmark->flags & headings_BookmarkFlag) != 0;
+    d->autoDetect    = (bookmark->flags & autoDetect_BookmarkFlag) != 0;
+    d->pendingTitle  = (bookmark->flags & pendingTitle_BookmarkFlag) != 0;
+    d->isTinylog     = !d->autoDetect && (bookmark->flags & tinylog_BookmarkFlag) != 0;
+    d->checkHeadings = !d->autoDetect && !d->isTinylog &&
+                       (bookmark->flags & headings_BookmarkFlag) != 0;
     d->ignoreWeb     = (bookmark->flags & ignoreWeb_BookmarkFlag) != 0;
+    init_String(&d->title);
+    init_String(&d->tinylogSource);
+    init_String(&d->tinylogBase);
+    init_String(&d->tinylogAuthor);
+    init_String(&d->tinylogAvatar);
 }
 
 static void deinit_FeedJob(iFeedJob *d) {
@@ -113,6 +138,12 @@ static void deinit_FeedJob(iFeedJob *d) {
         delete_FeedEntry(i.ptr);
     }
     deinit_PtrArray(&d->results);
+    deinit_String(&d->tinylogAvatar);
+    deinit_String(&d->tinylogAuthor);
+    deinit_String(&d->tinylogBase);
+    deinit_String(&d->tinylogSource);
+    deinit_String(&d->title);
+    deinit_String(&d->feedUrl);
     deinit_String(&d->url);
 }
 
@@ -137,6 +168,17 @@ struct Impl_Feeds {
     iBool     stopWorker;
     iPtrArray jobs; /* pending */
     iSortedArray entries; /* pointers to all discovered feed entries, sorted by entry ID (URL) */
+    iPtrArray tinylogFeeds; /* TinylogFeed */
+};
+
+iDeclareType(TinylogFeed)
+
+struct Impl_TinylogFeed {
+    iString feedUrl;   /* canonical */
+    iString base;      /* entry URI base before resolving collisions */
+    iString sourceUrl; /* final URL of the source, for resolving links */
+    iString author;
+    iString avatar;
 };
 
 static iFeeds feeds_;
@@ -174,6 +216,233 @@ static uint32_t findSubscription_Feeds_(const iString *url) {
     }
     return 0;
 }
+
+/*----------------------------------------------------------------------------------------------*/
+/* Tinylog cache */
+
+static const char *tinylogDirName_Feeds_ = "tinylog";
+
+iDeclareType(TinylogCache)
+
+struct Impl_TinylogCache {
+    iString url;  /* final URL of the source, for resolving links */
+    iString base; /* entry URI base before resolving collisions */
+    iString author;
+    iString avatar;
+    iString source;
+    size_t  sourcePos; /* offset of the source in the file */
+};
+
+static void init_TinylogCache_(iTinylogCache *d) {
+    init_String(&d->url);
+    init_String(&d->base);
+    init_String(&d->author);
+    init_String(&d->avatar);
+    init_String(&d->source);
+    d->sourcePos = 0;
+}
+
+static void deinit_TinylogCache_(iTinylogCache *d) {
+    deinit_String(&d->source);
+    deinit_String(&d->avatar);
+    deinit_String(&d->author);
+    deinit_String(&d->base);
+    deinit_String(&d->url);
+}
+
+static const iString *tinylogCacheHeader_(const iString *url, const iString *base,
+                                          const iString *author, const iString *avatar) {
+    /* Files are read and written as binary so entry offsets are exact. */
+    return collectNewFormat_String("url: %s\nbase: %s\nauthor: %s\navatar: %s\n\n",
+                                   cstr_String(url),
+                                   cstr_String(base),
+                                   cstr_String(author),
+                                   cstr_String(avatar));
+}
+
+static const iString *tinylogDir_Feeds_(const iFeeds *d) {
+    return collect_String(concatCStr_Path(&d->saveDir, tinylogDirName_Feeds_));
+}
+
+static const iString *tinylogCacheName_(const iString *feedUrl) {
+    uint8_t md5[16];
+    md5_Block(utf8_String(canonicalUrl_String(feedUrl)), md5);
+    iString *name = collectNew_String();
+    for (size_t i = 0; i < 8; i++) {
+        appendFormat_String(name, "%02x", md5[i]);
+    }
+    appendCStr_String(name, ".gmi");
+    return name;
+}
+
+static const iString *tinylogCachePath_Feeds_(const iFeeds *d, const iString *feedUrl) {
+    return collect_String(concat_Path(tinylogDir_Feeds_(d), tinylogCacheName_(feedUrl)));
+}
+
+static iBool loadTinylogCache_Feeds_(const iFeeds *d, const iString *feedUrl,
+                                     iTinylogCache *cache, iBool headerOnly) {
+    iBool  ok = iFalse;
+    iFile *f  = new_File(tinylogCachePath_Feeds_(d, feedUrl));
+    if (open_File(f, readOnly_FileMode)) {
+        iBlock        *data = headerOnly ? read_File(f, 2048) : readAll_File(f);
+        const iRangecc src  = range_Block(data);
+        iRangecc       line = iNullRange;
+        while (nextSplit_Rangecc(src, "\n", &line)) {
+            if (isEmpty_Range(&line)) {
+                const char *sourceStart = iMin(line.end + 1, src.end);
+                cache->sourcePos = sourceStart - src.start;
+                if (!headerOnly) {
+                    setRange_String(&cache->source, (iRangecc){ sourceStart, src.end });
+                }
+                ok = !isEmpty_String(&cache->url);
+                break;
+            }
+            const char *sep = strchr(line.start, ' ');
+            if (!sep || sep >= line.end) {
+                continue;
+            }
+            const iRangecc key   = { line.start, sep };
+            const iRangecc value = { sep + 1, line.end };
+            if (equal_Rangecc(key, "url:")) {
+                setRange_String(&cache->url, value);
+            }
+            else if (equal_Rangecc(key, "base:")) {
+                setRange_String(&cache->base, value);
+            }
+            else if (equal_Rangecc(key, "author:")) {
+                setRange_String(&cache->author, value);
+            }
+            else if (equal_Rangecc(key, "avatar:")) {
+                setRange_String(&cache->avatar, value);
+            }
+        }
+        delete_Block(data);
+    }
+    iRelease(f);
+    return ok;
+}
+
+static void saveTinylogCache_Feeds_(const iFeeds *d, const iFeedJob *job) {
+    makeDirs_Path(tinylogDir_Feeds_(d));
+    const iString *path    = tinylogCachePath_Feeds_(d, &job->feedUrl);
+    iString       *content = collect_String(copy_String(tinylogCacheHeader_(
+        &job->url, &job->tinylogBase, &job->tinylogAuthor, &job->tinylogAvatar)));
+    append_String(content, &job->tinylogSource);
+    iBool  isUnchanged = iFalse;
+    iFile *f           = new_File(path);
+    if (open_File(f, readOnly_FileMode)) {
+        iBlock *old = readAll_File(f);
+        isUnchanged = cmp_Block(old, utf8_String(content)) == 0;
+        delete_Block(old);
+    }
+    iRelease(f);
+    if (!isUnchanged) {
+        const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
+        f = new_File(tmpPath);
+        if (open_File(f, write_FileMode)) {
+            write_File(f, utf8_String(content));
+            close_File(f);
+            commitFile_Core(cstr_String(path), cstr_String(tmpPath));
+        }
+        iRelease(f);
+    }
+}
+
+static iTinylogFeed *findTinylogFeed_Feeds_(const iFeeds *d, const iString *feedUrl) {
+    /* Caller must lock. */
+    feedUrl = canonicalUrl_String(feedUrl);
+    iConstForEach(PtrArray, i, &d->tinylogFeeds) {
+        iTinylogFeed *tf = i.ptr;
+        if (equalCase_String(&tf->feedUrl, feedUrl)) {
+            return tf;
+        }
+    }
+    return NULL;
+}
+
+static const iString *tinylogBase_Feeds_(const iFeeds *d, const iString *feedUrl) {
+    const iTinylogFeed *tf = findTinylogFeed_Feeds_(d, feedUrl);
+    return tf ? &tf->base : NULL;
+}
+
+static void setTinylogFeed_Feeds_(iFeeds *d, const iString *feedUrl, const iTinylogCache *info) {
+    /* Caller must lock. */
+    iTinylogFeed *tf = findTinylogFeed_Feeds_(d, feedUrl);
+    if (!tf) {
+        tf = iMalloc(TinylogFeed);
+        initCopy_String(&tf->feedUrl, canonicalUrl_String(feedUrl));
+        init_String(&tf->base);
+        init_String(&tf->sourceUrl);
+        init_String(&tf->author);
+        init_String(&tf->avatar);
+        pushBack_PtrArray(&d->tinylogFeeds, tf);
+    }
+    set_String(&tf->base, &info->base);
+    set_String(&tf->sourceUrl, &info->url);
+    set_String(&tf->author, &info->author);
+    set_String(&tf->avatar, &info->avatar);
+}
+
+static iString *tinylogPrefix_Feeds_(const iFeeds *d, const iString *feedUrl,
+                                     const iString *base) {
+    /* The earliest created subscription gets the base as-is, others are disambiguated. */
+    const iBookmark *first = NULL;
+    iConstForEach(PtrArray, i, listSubscriptions_()) {
+        const iBookmark *bm = i.ptr;
+        if (!(bm->flags & (tinylog_BookmarkFlag | autoDetect_BookmarkFlag))) {
+            continue;
+        }
+        const iString *bmBase = tinylogBase_Feeds_(d, &bm->url);
+        if (bmBase && equal_String(bmBase, base) &&
+            (!first || cmp_Time(&bm->when, &first->when) < 0)) {
+            first = bm;
+        }
+    }
+    iString *prefix = copy_String(base);
+    if (first &&
+        !equalCase_String(canonicalUrl_String(&first->url), canonicalUrl_String(feedUrl))) {
+        appendCStr_String(prefix, "-");
+        append_String(prefix, collect_String(pathSlug_Tinylog(feedUrl)));
+    }
+    return prefix;
+}
+
+static void loadTinylogFeeds_Feeds_(iFeeds *d) {
+    iConstForEach(PtrArray, i, listSubscriptions_()) {
+        const iBookmark *bm = i.ptr;
+        if (bm->flags & tinylog_BookmarkFlag) {
+            iTinylogCache cache;
+            init_TinylogCache_(&cache);
+            if (loadTinylogCache_Feeds_(d, &bm->url, &cache, iTrue)) {
+                setTinylogFeed_Feeds_(d, &bm->url, &cache);
+            }
+            deinit_TinylogCache_(&cache);
+        }
+    }
+}
+
+static void removeTinylogCaches_Feeds_(const iFeeds *d, iBool unusedOnly) {
+    iStringSet *used = new_StringSet();
+    if (unusedOnly) {
+        iConstForEach(PtrArray, i, listSubscriptions_()) {
+            const iBookmark *bm = i.ptr;
+            if (bm->flags & (tinylog_BookmarkFlag | autoDetect_BookmarkFlag)) {
+                insert_StringSet(used, tinylogCacheName_(&bm->url));
+            }
+        }
+    }
+    iForEach(DirFileInfo, i, iClob(new_DirFileInfo(tinylogDir_Feeds_(d)))) {
+        const iString *path = path_FileInfo(i.value);
+        const iRangecc name = baseName_Path(path);
+        if (endsWith_Rangecc(name, ".gmi") &&
+            !contains_StringSet(used, collectNewRange_String(name))) {
+            removePath_CStr(cstr_String(path));
+        }
+    }
+    iRelease(used);
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 static iFeedJob *startNextJob_Feeds_(iFeeds *d) {
     if (isEmpty_PtrArray(&d->jobs)) {
@@ -214,6 +483,63 @@ static iBool isUrlIgnored_FeedJob_(const iFeedJob *d, iRangecc url) {
     return iFalse;
 }
 
+static void parseTitle_FeedJob_(iFeedJob *d, const iString *src) {
+    iRangecc line  = iNullRange;
+    iBool    isPre = iFalse;
+    while (nextSplit_Rangecc(range_String(src), "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+        }
+        else if (!isPre && startsWith_Rangecc(line, "#") && !startsWith_Rangecc(line, "##")) {
+            iRangecc title = { line.start + 1, line.end };
+            trim_Rangecc(&title);
+            setRange_String(&d->title, title);
+            break;
+        }
+    }
+}
+
+static void parseTinylog_FeedJob_(iFeedJob *d, const iString *src) {
+    const size_t maxSize = (size_t) iMax(1, prefs_App()->maxTinylogSize) * 1024;
+    iString     *source  = truncated_Tinylog(src, maxSize);
+    iTinylog    *log     = new_Tinylog();
+    parse_Tinylog(log, source, &d->feedUrl);
+    if (!isEmpty_Array(&log->entries)) {
+        set_String(&d->tinylogSource, source);
+        iString *base = uriBase_Tinylog(&d->feedUrl, &log->author);
+        set_String(&d->tinylogBase, base);
+        delete_String(base);
+        set_String(&d->tinylogAuthor, &log->author);
+        set_String(&d->tinylogAvatar, &log->avatar);
+        set_String(&d->title, &log->title);
+        const char *sourceStart = constBegin_String(&log->source);
+        const int   headerSize  = (int) size_String(tinylogCacheHeader_(
+            &d->url, &d->tinylogBase, &d->tinylogAuthor, &d->tinylogAvatar));
+        iTime now;
+        iTime perEntryAdjust;
+        initCurrent_Time(&now);
+        initSeconds_Time(&perEntryAdjust, 1.0);
+        iConstForEach(Array, i, &log->entries) {
+            const iTinylogEntry *logEntry = i.value;
+            iFeedEntry          *entry    = new_FeedEntry();
+            entry->isTinylog  = iTrue;
+            entry->bookmarkId = d->bookmarkId;
+            entry->posted     = logEntry->stamp.utc;
+            entry->discovered = now;
+            sub_Time(&now, &perEntryAdjust);
+            set_String(&entry->url, &logEntry->id); /* prefixed when the URI base is resolved */
+            entry->sourceRange = (iRangei){ headerSize + (int) (logEntry->range.start - sourceStart),
+                                            headerSize + (int) (logEntry->range.end - sourceStart) };
+            iString *excerpt = excerpt_TinylogEntry(logEntry);
+            set_String(&entry->title, excerpt);
+            delete_String(excerpt);
+            pushBack_PtrArray(&d->results, entry);
+        }
+    }
+    delete_Tinylog(log);
+    delete_String(source);
+}
+
 static iBool parseResult_FeedJob_(iFeedJob *d) {
     const enum iGmStatusCode statusCode = status_GmRequest(d->request);
     /* Returns true if the job is done and can be released. False means the job continues. */
@@ -248,6 +574,17 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
         iString src;
         initBlock_String(&src, &lockResponse_GmRequest(d->request)->body);
         unlockResponse_GmRequest(d->request);
+        if (d->autoDetect) {
+            d->isTinylog = isTinylog_Source(&src);
+        }
+        if (d->isTinylog) {
+            parseTinylog_FeedJob_(d, &src);
+            deinit_String(&src);
+            iRelease(linkPattern);
+            iEndCollect();
+            return iTrue;
+        }
+        parseTitle_FeedJob_(d, &src);
         iRangecc srcLine = iNullRange;
         while (nextSplit_Rangecc(range_String(&src), "\n", &srcLine)) {
             iRangecc line = srcLine;
@@ -337,7 +674,7 @@ static void save_Feeds_(iFeeds *d) {
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
             /* Heading entries are kept as long as they are present in the source. */
-            if (!entry->isHeading && isValid_Time(&entry->discovered) &&
+            if (!entry->isHeading && !entry->isTinylog && isValid_Time(&entry->discovered) &&
                 secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                 continue; /* Forget entries discovered long ago. */
             }
@@ -360,7 +697,7 @@ static iBool isHeadingEntry_FeedEntry_(const iFeedEntry *d) {
     return contains_String(&d->url, '#');
 }
 
-static iStringSet *listHeadingEntriesFrom_Feeds_(const iFeeds *d, uint32_t sourceId) {
+static iStringSet *listEntryUrlsFrom_Feeds_(const iFeeds *d, uint32_t sourceId) {
     iStringSet *set = new_StringSet();
     iConstForEach(Array, i, &d->entries.values) {
         const iFeedEntry *entry = *(const iFeedEntry **) i.value;
@@ -383,7 +720,7 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
             return iFalse; /* probably not the usual page; keep the known headings */
         }
         lock_Mutex(d->mtx);
-        iStringSet *known = listHeadingEntriesFrom_Feeds_(d, sourceId);
+        iStringSet *known = listEntryUrlsFrom_Feeds_(d, sourceId);
         iStringSet *presentInSource = new_StringSet();
         /* Look for unknown entries. */
         iForEach(PtrArray, i, incoming) {
@@ -480,12 +817,125 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
     return gotNew;
 }
 
+static iBool updateTinylogEntries_Feeds_(iFeeds *d, const iFeedJob *job, iPtrArray *incoming) {
+    /* The cached source is authoritative: entries not present in it are removed. */
+    iBool         gotNew      = iFalse;
+    iBool         hasOverlap  = iFalse;
+    iStringArray *presentUrls = new_StringArray();
+    iStringArray *readUrls    = new_StringArray();
+    const iTime   pageVisit   = urlVisitTime_Visited(visited_App(), &job->feedUrl);
+    lock_Mutex(d->mtx);
+    iStringSet      *known   = listEntryUrlsFrom_Feeds_(d, job->bookmarkId);
+    iStringSet      *present = new_StringSet();
+    iPtrArray       *added   = new_PtrArray();
+    const iBool      wasKnown = !isEmpty_StringSet(known);
+    iForEach(PtrArray, i, incoming) {
+        iFeedEntry *entry = i.ptr;
+        if (contains_StringSet(present, &entry->url)) {
+            continue;
+        }
+        insert_StringSet(present, &entry->url);
+        pushBack_StringArray(presentUrls, &entry->url);
+        size_t pos;
+        if (locate_SortedArray(&d->entries, &entry, &pos)) {
+            /* Edits don't make the entry unread again. */
+            iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
+            set_String(&existing->title, &entry->title);
+            existing->posted      = entry->posted;
+            existing->sourceRange = entry->sourceRange;
+            hasOverlap = iTrue;
+        }
+        else {
+            insert_SortedArray(&d->entries, &entry);
+            pushBack_PtrArray(added, entry);
+            remove_PtrArrayIterator(&i);
+            gotNew = iTrue;
+        }
+    }
+    iForEach(Array, e, &d->entries.values) {
+        iFeedEntry *entry = *(iFeedEntry **) e.value;
+        if (entry->bookmarkId == job->bookmarkId && !contains_StringSet(present, &entry->url)) {
+            delete_FeedEntry(entry);
+            remove_ArrayIterator(&e);
+        }
+    }
+    if (!isEmpty_PtrArray(added) && (job->isFirstUpdate || (wasKnown && !hasOverlap))) {
+        /* Only the most recent entry is left unread. Also applies if all the URIs changed. */
+        const iFeedEntry *newest = NULL;
+        iConstForEach(PtrArray, a, added) {
+            const iFeedEntry *entry = a.ptr;
+            if (!newest || cmp_Time(&entry->posted, &newest->posted) > 0) {
+                newest = entry;
+            }
+        }
+        iConstForEach(PtrArray, b, added) {
+            const iFeedEntry *entry = b.ptr;
+            if (entry != newest || cmp_Time(&entry->posted, &pageVisit) <= 0) {
+                pushBack_StringArray(readUrls, &entry->url);
+            }
+        }
+    }
+    delete_PtrArray(added);
+    iRelease(present);
+    iRelease(known);
+    unlock_Mutex(d->mtx);
+    iConstForEach(StringArray, u, presentUrls) {
+        setUrlKept_Visited(visited_App(), u.value, iTrue);
+    }
+    if (!isEmpty_StringArray(readUrls)) {
+        /* Not synced as individual recent changes. */
+        iTime now;
+        initCurrent_Time(&now);
+        visitUrlsTime_Visited(visited_App(),
+                              readUrls,
+                              transient_VisitedUrlFlag | kept_VisitedUrlFlag |
+                                  markedAsRead_VisitedUrlFlag,
+                              now);
+    }
+    iRelease(readUrls);
+    iRelease(presentUrls);
+    return gotNew;
+}
+
+static iBool registerTinylog_Feeds_(iFeeds *d, const iFeedJob *job) {
+    if (isEmpty_String(&job->tinylogSource)) {
+        return iFalse; /* not valid; keep what we have */
+    }
+    saveTinylogCache_Feeds_(d, job);
+    iTinylogCache info;
+    init_TinylogCache_(&info);
+    set_String(&info.url, &job->url);
+    set_String(&info.base, &job->tinylogBase);
+    set_String(&info.author, &job->tinylogAuthor);
+    set_String(&info.avatar, &job->tinylogAvatar);
+    iGuardMutex(d->mtx, setTinylogFeed_Feeds_(d, &job->feedUrl, &info));
+    deinit_TinylogCache_(&info);
+    return iTrue;
+}
+
+static iBool applyTinylog_Feeds_(iFeeds *d, iFeedJob *job) {
+    /* All bases of the refresh must be registered first so collisions are resolved
+       consistently. */
+    lock_Mutex(d->mtx);
+    iString *prefix = tinylogPrefix_Feeds_(d, &job->feedUrl, &job->tinylogBase);
+    unlock_Mutex(d->mtx);
+    iForEach(PtrArray, i, &job->results) {
+        iFeedEntry *entry = i.ptr;
+        set_String(&entry->url,
+                   canonicalUrl_String(collectNewFormat_String(
+                       "%s/%s", cstr_String(prefix), cstr_String(&entry->url))));
+    }
+    delete_String(prefix);
+    return updateTinylogEntries_Feeds_(d, job, &job->results);
+}
+
 static iThreadResult fetch_Feeds_(iThread *thread) {
     iFeeds *d = &feeds_;
     iUnused(thread);
     iFeedJob *work[maxConcurrentRequests_Feeds]; /* We'll do a couple of concurrent requests. */
     iZap(work);
     iBool gotNew = iFalse;
+    iPtrArray *tinylogJobs = new_PtrArray(); /* applied after all jobs have finished */
     notify_App("feeds.update.started");
     const size_t totalJobs = size_PtrArray(&d->jobs);
     int numFinishedJobs = 0;
@@ -505,15 +955,30 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
                 if (isFinished_GmRequest(work[i]->request)) {
                     if (parseResult_FeedJob_(work[i])) {
                         if (isSuccess_GmStatusCode(status_GmRequest(work[i]->request))) {
-                            gotNew |= updateEntries_Feeds_(
-                                d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
-                            if (work[i]->isFirstUpdate) {
-                                iGuardMutex(d->mtx,
-                                            insert_IntSet(&d->previouslyCheckedFeeds,
-                                                          work[i]->bookmarkId));
+                            iFeedJob *job = work[i];
+                            if (job->autoDetect || job->pendingTitle) {
+                                postCommandf_App("feeds.fetched bmid:%u tinylog:%d title:%s",
+                                                 job->bookmarkId,
+                                                 job->isTinylog,
+                                                 cstr_String(&job->title));
+                            }
+                            if (job->isTinylog) {
+                                if (registerTinylog_Feeds_(d, job)) {
+                                    pushBack_PtrArray(tinylogJobs, job);
+                                    work[i] = NULL;
+                                }
+                            }
+                            else {
+                                gotNew |= updateEntries_Feeds_(
+                                    d, job->checkHeadings, job->bookmarkId, &job->results);
+                                if (job->isFirstUpdate) {
+                                    iGuardMutex(d->mtx,
+                                                insert_IntSet(&d->previouslyCheckedFeeds,
+                                                              job->bookmarkId));
+                                }
                             }
                         }
-                        delete_FeedJob(work[i]);
+                        delete_FeedJob(work[i]); /* NULL if kept */
                         work[i] = NULL;
                         numFinishedJobs++;
                         doNotify = iTrue;
@@ -550,8 +1015,20 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             }
         }
     }
+    iForEach(PtrArray, t, tinylogJobs) {
+        iFeedJob *job = t.ptr;
+        if (!d->stopWorker) {
+            gotNew |= applyTinylog_Feeds_(d, job);
+            if (job->isFirstUpdate) {
+                iGuardMutex(d->mtx, insert_IntSet(&d->previouslyCheckedFeeds, job->bookmarkId));
+            }
+        }
+        delete_FeedJob(job);
+    }
+    delete_PtrArray(tinylogJobs);
     initCurrent_Time(&d->lastRefreshedAt);
     save_Feeds_(d);
+    removeTinylogCaches_Feeds_(d, iTrue);
     /* Check if there are visited URLs marked as Kept that can be cleared because they are no
        longer present in the database. */ {
         iStringSet *knownEntryUrls = new_StringSet();
@@ -728,7 +1205,8 @@ static void load_Feeds_(iFeeds *d) {
                         stripDefaultUrlPort_String(&entry->url);
                         set_String(&entry->url, canonicalUrl_String(&entry->url));
                         set_String(&entry->title, title);
-                        entry->isHeading = isHeadingEntry_FeedEntry_(entry);
+                        entry->isTinylog = startsWith_String(&entry->url, "local:/tinylog/");
+                        entry->isHeading = !entry->isTinylog && isHeadingEntry_FeedEntry_(entry);
 //                        if (entry->isHeading) {
 //                            printf("[Feeds] src:%d url:{%s}\n", entry->bookmarkId,
 //                                   cstr_String(&entry->url));
@@ -755,6 +1233,7 @@ static void load_Feeds_(iFeeds *d) {
 /*----------------------------------------------------------------------------------------------*/
 
 static const iBlock *aboutFeedsPage_Feeds_(iRangecc path, iRangecc query);
+static const iBlock *tinylogPage_Feeds_(iRangecc path);
 
 void init_Feeds(const char *saveDir) {
     iFeeds *d = &feeds_;
@@ -766,9 +1245,12 @@ void init_Feeds(const char *saveDir) {
     d->worker = NULL;
     init_PtrArray(&d->jobs);
     init_SortedArray(&d->entries, sizeof(iFeedEntry *), cmp_FeedEntryPtr_);
+    init_PtrArray(&d->tinylogFeeds);
     load_Feeds_(d);
+    loadTinylogFeeds_Feeds_(d);
     setRefreshInterval_Feeds(prefs_App()->feedInterval);
     addAboutHandler_GmRequest(aboutFeedsPage_Feeds_);
+    addLocalHandler_GmRequest(tinylogPage_Feeds_);
 }
 
 void deinit_Feeds(void) {
@@ -783,6 +1265,16 @@ void deinit_Feeds(void) {
         iFeedEntry **entry = i.value;
         delete_FeedEntry(*entry);
     }
+    iForEach(PtrArray, t, &d->tinylogFeeds) {
+        iTinylogFeed *tf = t.ptr;
+        deinit_String(&tf->avatar);
+        deinit_String(&tf->author);
+        deinit_String(&tf->sourceUrl);
+        deinit_String(&tf->base);
+        deinit_String(&tf->feedUrl);
+        free(tf);
+    }
+    deinit_PtrArray(&d->tinylogFeeds);
     deinit_IntSet(&d->previouslyCheckedFeeds);
     deinit_SortedArray(&d->entries);
 }
@@ -790,6 +1282,7 @@ void deinit_Feeds(void) {
 void resetKnownEntries_Feeds(void) {
     iFeeds *d = &feeds_;
     iString *saveDir = copy_String(&d->saveDir);
+    removeTinylogCaches_Feeds_(d, iFalse);
     deinit_Feeds();
     removePath_CStr(cstrCollect_String(concatCStr_Path(saveDir, feedsFilename_Feeds_)));
     init_Feeds(cstr_String(saveDir));
@@ -855,6 +1348,13 @@ void removeEntries_Feeds(uint32_t feedBookmarkId) {
             remove_ArrayIterator(&i);
         }
     }
+    removeTinylogCaches_Feeds_(d, iTrue);
+}
+
+void resetFeed_Feeds(uint32_t feedBookmarkId) {
+    iFeeds *d = &feeds_;
+    removeEntries_Feeds(feedBookmarkId);
+    iGuardMutex(d->mtx, remove_IntSet(&d->previouslyCheckedFeeds, feedBookmarkId));
 }
 
 void markEntryAsRead_Feeds(uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead) {
@@ -1085,4 +1585,340 @@ static const iBlock *aboutFeedsPage_Feeds_(iRangecc path, iRangecc query) {
         return utf8_String(entryListPage_Feeds_());
     }
     return NULL;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void init_TinylogInfo(iTinylogInfo *d) {
+    d->bookmarkId = 0;
+    init_String(&d->author);
+    init_String(&d->avatar);
+    iZap(d->posted);
+}
+
+void deinit_TinylogInfo(iTinylogInfo *d) {
+    deinit_String(&d->avatar);
+    deinit_String(&d->author);
+}
+
+static const iFeedEntry *findTinylogEntry_Feeds_(const iFeeds *d, const iString *url) {
+    /* Caller must lock. Entries are sorted by URL, so the first one at or after `url` is
+       checked. */
+    const iFeedEntry  entry    = { .url = *url };
+    const iFeedEntry *entryPtr = &entry;
+    size_t pos;
+    locate_SortedArray(&d->entries, &entryPtr, &pos);
+    if (pos < size_SortedArray(&d->entries)) {
+        const iFeedEntry *found = *(const iFeedEntry **) constAt_SortedArray(&d->entries, pos);
+        if (found->isTinylog && equal_String(&found->url, url)) {
+            return found;
+        }
+    }
+    return NULL;
+}
+
+uint32_t tinylogBookmark_Feeds(const iString *entryUrl) {
+    iFeeds *d = &feeds_;
+    if (!isInitialized_Feeds_(d) || !startsWithCase_String(entryUrl, "local:/tinylog/")) {
+        return 0;
+    }
+    entryUrl = canonicalUrl_String(entryUrl);
+    uint32_t id = 0;
+    lock_Mutex(d->mtx);
+    const iFeedEntry *entry = findTinylogEntry_Feeds_(d, entryUrl);
+    if (entry) {
+        id = entry->bookmarkId;
+    }
+    unlock_Mutex(d->mtx);
+    return id;
+}
+
+static iBool readTinylogSection_Feeds_(const iFeeds *d, const iString *feedUrl, iRangei range,
+                                       iString *section_out) {
+    /* The section must be followed by the next entry or the end of the file. */
+    iBool  ok = iFalse;
+    iFile *f  = new_File(tinylogCachePath_Feeds_(d, feedUrl));
+    if (open_File(f, readOnly_FileMode) && range.end <= (int) size_File(f)) {
+        const size_t size = size_Range(&range);
+        seek_File(f, range.start);
+        iBlock *data = read_File(f, size + 2);
+        if (size_Block(data) == size ||
+            (size_Block(data) == size + 2 && !memcmp(constData_Block(data) + size, "##", 2))) {
+            truncate_Block(data, size);
+            setBlock_String(section_out, data);
+            ok = iTrue;
+        }
+        delete_Block(data);
+    }
+    iRelease(f);
+    return ok;
+}
+
+static void updateTinylogRanges_Feeds_(iFeeds *d, uint32_t bookmarkId, const iString *prefix,
+                                       const iTinylog *log, size_t sourcePos) {
+    /* Caller must lock. */
+    const char *sourceStart = constBegin_String(&log->source);
+    iConstForEach(Array, i, &log->entries) {
+        const iTinylogEntry *logEntry = i.value;
+        const iFeedEntry     key      = {
+            .url = *canonicalUrl_String(collectNewFormat_String(
+                "%s/%s", cstr_String(prefix), cstr_String(&logEntry->id))),
+            .bookmarkId = bookmarkId
+        };
+        const iFeedEntry *keyPtr = &key;
+        size_t pos;
+        if (locate_SortedArray(&d->entries, &keyPtr, &pos)) {
+            iFeedEntry *entry  = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
+            entry->sourceRange = (iRangei){ (int) (sourcePos + (logEntry->range.start - sourceStart)),
+                                            (int) (sourcePos + (logEntry->range.end - sourceStart)) };
+        }
+    }
+}
+
+static const iTinylogEntry *loadTinylogEntry_Feeds_(iFeeds *d, const iBookmark *bm,
+                                                    const iString *entryUrl, iTinylog *log,
+                                                    iString *sourceUrl_out) {
+    /* `entryUrl` must be canonical. The entry's known position in the cache file is used if
+       its contents check out. Otherwise, the whole file is parsed and positions updated. */
+    const iRangecc idRange = baseNameSep_Path(entryUrl, "/");
+    const iString *id      = collectNewRange_String(idRange);
+    iRangei        range   = { 0, 0 };
+    lock_Mutex(d->mtx);
+    const iFeedEntry *feedEntry = findTinylogEntry_Feeds_(d, entryUrl);
+    if (feedEntry) {
+        range = feedEntry->sourceRange;
+    }
+    const iTinylogFeed *tf = findTinylogFeed_Feeds_(d, &bm->url);
+    if (tf) {
+        set_String(sourceUrl_out, &tf->sourceUrl);
+    }
+    unlock_Mutex(d->mtx);
+    const iBool isUniqueStamp = indexOf_String(id, '-') == iInvalidPos; /* no "-2" suffix */
+    if (!isEmpty_Range(&range) && isUniqueStamp && !isEmpty_String(sourceUrl_out)) {
+        iString *section = collectNew_String();
+        if (readTinylogSection_Feeds_(d, &bm->url, range, section)) {
+            parse_Tinylog(log, section, NULL);
+            if (size_Array(&log->entries) == 1) {
+                const iTinylogEntry *entry = constAt_Array(&log->entries, 0);
+                if (entry->range.start == constBegin_String(&log->source) &&
+                    equal_String(&entry->id, id)) {
+                    return entry;
+                }
+            }
+        }
+    }
+    const iTinylogEntry *found = NULL;
+    iTinylogCache        cache;
+    init_TinylogCache_(&cache);
+    if (loadTinylogCache_Feeds_(d, &bm->url, &cache, iFalse)) {
+        parse_Tinylog(log, &cache.source, &bm->url);
+        set_String(sourceUrl_out, &cache.url);
+        const iString *prefix =
+            collectNewRange_String((iRangecc){ constBegin_String(entryUrl), idRange.start - 1 });
+        iGuardMutex(d->mtx,
+                    updateTinylogRanges_Feeds_(d, id_Bookmark(bm), prefix, log, cache.sourcePos));
+        found = findEntry_Tinylog(log, id);
+    }
+    deinit_TinylogCache_(&cache);
+    return found;
+}
+
+iBool tinylogInfo_Feeds(const iString *entryUrl, iTinylogInfo *info_out) {
+    iFeeds *d = &feeds_;
+    if (!isInitialized_Feeds_(d) || !startsWithCase_String(entryUrl, "local:/tinylog/")) {
+        return iFalse;
+    }
+    entryUrl = canonicalUrl_String(entryUrl);
+    lock_Mutex(d->mtx);
+    const iFeedEntry *entry = findTinylogEntry_Feeds_(d, entryUrl);
+    if (entry) {
+        info_out->bookmarkId = entry->bookmarkId;
+        info_out->posted     = entry->posted;
+    }
+    unlock_Mutex(d->mtx);
+    const iBookmark *bm = entry ? get_Bookmarks(bookmarks_App(), info_out->bookmarkId) : NULL;
+    if (!bm) {
+        return iFalse;
+    }
+    lock_Mutex(d->mtx);
+    const iTinylogFeed *tf = findTinylogFeed_Feeds_(d, &bm->url);
+    if (tf) {
+        set_String(&info_out->author, &tf->author);
+        set_String(&info_out->avatar, &tf->avatar);
+    }
+    unlock_Mutex(d->mtx);
+    return iTrue;
+}
+
+iDeclareType(TinylogResponse)
+
+struct Impl_TinylogResponse {
+    iFeeds  *feeds;
+    iString *refContent; /* content of the first referenced entry */
+};
+
+static const iString *responseUrl_Feeds_(void *context, const iString *url,
+                                         const iTinylogStamp *stamp) {
+    iTinylogResponse *d    = context;
+    const uint32_t    bmId = findSubscription_Feeds_(urlFragmentStripped_String(url));
+    const iBookmark  *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
+    if (!bm || ~bm->flags & tinylog_BookmarkFlag) {
+        return NULL;
+    }
+    const iString *result = NULL;
+    iTinylogCache  cache;
+    init_TinylogCache_(&cache);
+    if (loadTinylogCache_Feeds_(d->feeds, &bm->url, &cache, iFalse)) {
+        iTinylog *log = new_Tinylog();
+        parse_Tinylog(log, &cache.source, &bm->url);
+        const iTinylogEntry *entry = findStamp_Tinylog(log, stamp);
+        if (entry) {
+            lock_Mutex(d->feeds->mtx);
+            iString *prefix = tinylogPrefix_Feeds_(d->feeds, &bm->url, &cache.base);
+            unlock_Mutex(d->feeds->mtx);
+            result = canonicalUrl_String(collectNewFormat_String(
+                "%s/%s", cstr_String(prefix), cstr_String(&entry->id)));
+            delete_String(prefix);
+            if (!d->refContent) {
+                d->refContent = content_TinylogEntry(entry, &cache.url, NULL, NULL);
+            }
+        }
+        delete_Tinylog(log);
+    }
+    deinit_TinylogCache_(&cache);
+    return result;
+}
+
+static const iBlock *tinylogPage_Feeds_(iRangecc path) {
+    if (!startsWith_Rangecc(path, "/tinylog/")) {
+        return NULL;
+    }
+    iFeeds          *d    = &feeds_;
+    iString         *page = collectNew_String();
+    const iString   *url  = collectNewFormat_String("local:%s", cstr_Rangecc(path));
+    const uint32_t   bmId = tinylogBookmark_Feeds(url);
+    const iBookmark *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
+    if (!bm) {
+        setCStr_String(page, translateCStr_Lang("${feeds.tinylog.notfound}\n"));
+        return utf8_String(page);
+    }
+    iTinylog            *log       = new_Tinylog();
+    iString             *sourceUrl = collectNew_String();
+    const iTinylogEntry *entry =
+        loadTinylogEntry_Feeds_(d, bm, canonicalUrl_String(url), log, sourceUrl);
+    if (entry) {
+        iTinylogResponse resp    = { .feeds = d, .refContent = NULL };
+        iString         *content = content_TinylogEntry(entry, sourceUrl, responseUrl_Feeds_, &resp);
+        append_String(page, content);
+        delete_String(content);
+        if (resp.refContent) {
+            appendCStr_String(page, "\n---\n");
+            append_String(page, resp.refContent);
+            delete_String(resp.refContent);
+        }
+    }
+    else {
+        appendFormat_String(page,
+                            "%s\n\n=> %s %s\n",
+                            cstr_Lang("feeds.tinylog.unavailable"),
+                            cstr_String(&bm->url),
+                            cstr_String(&bm->title));
+    }
+    delete_Tinylog(log);
+    return utf8_String(page);
+}
+
+const iStringArray *listSubscribableUrls_Feeds(const iString *source, iBool isPlainText,
+                                               const iString *pageUrl) {
+    iStringArray *urls  = iClob(new_StringArray());
+    iStringSet   *seen  = iClob(new_StringSet());
+    iRangecc      line  = iNullRange;
+    iBool         isPre = iFalse;
+    insert_StringSet(seen, canonicalUrl_String(pageUrl));
+    while (nextSplit_Rangecc(range_String(source), "\n", &line)) {
+        iRangecc text = line;
+        trim_Rangecc(&text);
+        const iString *url = NULL;
+        if (isPlainText) {
+            /* Each line must be an absolute URL by itself. */
+            iUrl parts;
+            url = collectNewRange_String(text);
+            init_Url(&parts, url);
+            if (isEmpty_Range(&parts.scheme) || indexOf_String(url, ' ') != iInvalidPos ||
+                indexOf_String(url, '\t') != iInvalidPos) {
+                continue;
+            }
+        }
+        else {
+            if (startsWith_Rangecc(text, "```")) {
+                isPre = !isPre;
+                continue;
+            }
+            if (isPre || !startsWith_Rangecc(text, "=>")) {
+                continue;
+            }
+            text.start += 2;
+            trimStart_Rangecc(&text);
+            iRangecc word = iNullRange;
+            if (!nextSplit_Rangecc(text, " ", &word)) {
+                continue;
+            }
+            url = absoluteUrl_String(pageUrl, collect_String(newRange_String(word)));
+        }
+        iUrl parts;
+        init_Url(&parts, url);
+        if (!equalCase_Rangecc(parts.scheme, "gemini") || isEmpty_Range(&parts.host)) {
+            continue;
+        }
+        iString *canon = collect_String(copy_String(url));
+        stripDefaultUrlPort_String(canon);
+        url = canonicalUrl_String(canon);
+        if (contains_StringSet(seen, url) || findSubscription_Feeds_(url)) {
+            continue;
+        }
+        insert_StringSet(seen, url);
+        pushBack_StringArray(urls, url);
+    }
+    return urls;
+}
+
+size_t subscribeAll_Feeds(const iStringArray *urls, const iString *folderTitle,
+                          enum iFeedType type) {
+    iBookmarks    *bmarks    = bookmarks_App();
+    const uint32_t typeFlags = type == tinylog_FeedType      ? tinylog_BookmarkFlag
+                               : type == autoDetect_FeedType ? autoDetect_BookmarkFlag
+                                                             : 0;
+    uint32_t folderId = 0;
+    size_t   count    = 0;
+    iConstForEach(StringArray, i, urls) {
+        const iString *url = i.value;
+        iBookmark     *bm  = get_Bookmarks(bmarks, findUrl_Bookmarks(bmarks, url));
+        if (bm && bm->flags & remote_BookmarkFlag) {
+            bm = NULL; /* can't modify remote bookmarks */
+        }
+        if (bm && bm->flags & subscribed_BookmarkFlag) {
+            continue;
+        }
+        if (!bm) {
+            if (!folderId) {
+                folderId = addToFolder_Bookmarks(bmarks, NULL, folderTitle, NULL, 0, 0);
+            }
+            iUrl parts;
+            init_Url(&parts, url);
+            iString *title = collectNewRange_String(parts.host);
+            append_String(title, collect_String(urlDecode_String(collectNewRange_String(parts.path))));
+            bm = get_Bookmarks(bmarks,
+                               addToFolder_Bookmarks(bmarks,
+                                                     url,
+                                                     title,
+                                                     NULL,
+                                                     siteIcon_Bookmarks(bmarks, url),
+                                                     folderId));
+            bm->flags |= pendingTitle_BookmarkFlag;
+        }
+        bm->flags &= ~(headings_BookmarkFlag | tinylog_BookmarkFlag | autoDetect_BookmarkFlag);
+        bm->flags |= subscribed_BookmarkFlag | typeFlags;
+        count++;
+    }
+    return count;
 }

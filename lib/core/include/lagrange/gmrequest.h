@@ -100,3 +100,9 @@ iDate               certExpirationDate_GmRequest(const iGmRequest *);
 typedef const iBlock *(*iAboutHandlerFunc)(iRangecc path, iRangecc query);
 
 void                addAboutHandler_GmRequest   (iAboutHandlerFunc func);
+
+/* Local handlers serve virtual "local:" paths as text/gemini before the file system is
+   checked. A handler returns NULL if it doesn't own the path. */
+typedef const iBlock *(*iLocalHandlerFunc)(iRangecc path);
+
+void                addLocalHandler_GmRequest   (iLocalHandlerFunc func);

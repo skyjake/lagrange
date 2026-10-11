@@ -145,6 +145,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
+    appendFormat_String(str, "tinylogsize.set arg:%d\n", d->prefs.maxTinylogSize);
     appendFormat_String(str, "urlsize.set arg:%d\n", d->prefs.maxUrlSize);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
@@ -1042,6 +1043,10 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         if (d->prefs.maxMemorySize <= 0) {
             d->prefs.maxMemorySize = 0;
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "tinylogsize.set")) {
+        d->prefs.maxTinylogSize = iMax(1, arg_Command(cmd));
         return iTrue;
     }
     else if (equal_Command(cmd, "urlsize.set")) {

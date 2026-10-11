@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/visited.h>
 #include "bookmarks.h"
 #include "books.h"
+#include "feeds.h"
 #include "app.h"
 #include "defs.h"
 
@@ -432,6 +433,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->themeUrl);
+    init_String(&d->fixedTitle);
     init_String(&d->mimeType);
     init_String(&d->localHost);
     init_ScopeKey(&d->scopeKey);
@@ -493,6 +495,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->localHost);
     deinit_String(&d->mimeType);
     deinit_String(&d->themeUrl);
+    deinit_String(&d->fixedTitle);
     deinit_String(&d->url);
     deinit_String(&d->source);
     deinit_String(&d->origSource);
@@ -873,6 +876,18 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
             if (source && !isLocalFileScheme_Rangecc(urlScheme_String(source))) {
                 set_String(&d->themeUrl, source);
             }
+        }
+    }
+    /* Tinylog entries are themed and scoped as the subscribed tinylog. */ {
+        const uint32_t   bmId = tinylogBookmark_Feeds(url);
+        const iBookmark *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
+        d->flags.isTinylogEntry = (bm != NULL);
+        clear_String(&d->fixedTitle);
+        if (bm) {
+            deinit_ScopeKey(&d->scopeKey);
+            initUrl_ScopeKey(&d->scopeKey, &bm->url);
+            set_String(&d->themeUrl, &bm->url);
+            set_String(&d->fixedTitle, &bm->title);
         }
     }
     updateDocPrefs_GmDocument(d);

@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/time.h>
 
 iDeclareType(VisitedUrl)
@@ -59,6 +60,8 @@ iTime   urlVisitTime_Visited    (const iVisited *, const iString *url);
 uint16_t urlVisitFlags_Visited  (const iVisited *, const iString *url);
 void    visitUrl_Visited        (iVisited *, const iString *url, uint16_t visitFlags); /* adds URL to the visited URLs set */
 void    visitUrlTime_Visited    (iVisited *, const iString *url, uint16_t visitFlags, iTime when);
+void    visitUrlsTime_Visited   (iVisited *, const iStringArray *urls, uint16_t visitFlags,
+                                 iTime when); /* batch; no per-URL change notifications */
 void    setUrlKept_Visited      (iVisited *, const iString *url, iBool isKept); /* URL is marked as (non)discardable */
 void    removeUrl_Visited       (iVisited *, const iString *url);
 iBool   containsUrl_Visited     (const iVisited *, const iString *url);

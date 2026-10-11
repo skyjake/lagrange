@@ -29,4 +29,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Widget)
 
 iWidget *   makeLinkImporter_Widget     (size_t count);
+iWidget *   makeSubscribeAll_Widget     (size_t count);
 iWidget *   makeUserDataImporter_Widget (const iString *archivePath);

@@ -588,6 +588,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
+            { "input id:prefs.tinylogsize maxlen:4 selectall:1 unit:kb" },
             { "padding" },
             { "toggle id:prefs.decodeurls" },
             { urlSizeSliderSpec_ },
@@ -954,6 +955,17 @@ iWidget *makePreferences_Widget(void) {
                                      frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
                                          resizeToParentHeight_WidgetFlag);
             setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        /* Tinylog cache size. */ {
+            iInputWidget *tinylog = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(tinylog, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.tinylogsize", iClob(tinylog));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(tinylog),
+                                     iClob(new_LabelWidget("${kb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(tinylog, 0, width_Widget(unit) - 4 * gap_UI);
         }
         addDialogPadding_Widget(headings, values);
         makeTwoColumnItems_Widget(headings, values, globalContentItems_ScopedPrefs());
@@ -1323,6 +1335,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("memorysize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
+        postCommandf_App("tinylogsize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.tinylogsize"))));
         postCommandf_App("urlsize.set arg:%d",
                          (int) lroundf(value_SliderWidget(findChild_Widget(d, "prefs.urlsize")) *
                                        1024));
@@ -1547,6 +1561,8 @@ void showPreferences_Widget(const char *cmd) {
                         collectNewFormat_String("%d", prefs->maxCacheSize));
     setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
                         collectNewFormat_String("%d", prefs->maxMemorySize));
+    setText_InputWidget(findChild_Widget(dlg, "prefs.tinylogsize"),
+                        collectNewFormat_String("%d", prefs->maxTinylogSize));
     setValue_SliderWidget(findChild_Widget(dlg, "prefs.urlsize"), prefs->maxUrlSize / 1024.0f);
     iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
     if (tabs) {

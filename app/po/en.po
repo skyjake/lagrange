@@ -90,6 +90,12 @@ msgstr "Hz"
 msgid "feeds.list.title"
 msgstr "Feed entries"
 
+msgid "feeds.tinylog.notfound"
+msgstr "This tinylog entry is not known. It may have been removed from the tinylog, or the subscription may have been removed."
+
+msgid "feeds.tinylog.unavailable"
+msgstr "The contents of this tinylog entry are not available."
+
 # The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
 #, c-format
 msgid "feeds.list.counts"
@@ -541,6 +547,9 @@ msgstr "Import All Links on Page…"
 msgid "menu.page.import"
 msgstr "Import Links as Bookmarks…"
 
+msgid "menu.page.subscribeall"
+msgstr "Subscribe to All…"
+
 msgid "menu.page.visitlinks"
 msgstr "Mark All Links as Visited"
 
@@ -810,6 +819,9 @@ msgstr "Show Feeds"
 # %d is the day of month without zero padding.
 msgid "banner.feedentry.date"
 msgstr "%B %d, %Y"
+
+msgid "banner.tinylogentry.date"
+msgstr "%B %d, %Y, %H:%M"
 
 msgid "feeds.entry.markread"
 msgstr "Mark as Read"
@@ -1275,6 +1287,30 @@ msgstr "All links on this page are already bookmarked."
 
 msgid "dlg.import.notfound"
 msgstr "There are no links on this page."
+
+msgid "heading.subscribeall"
+msgstr "Subscribe to All"
+
+#, c-format
+msgid "dlg.subscribeall.found"
+msgid_plural "dlg.subscribeall.found.n"
+msgstr[0] "Found one new feed URL on the page. It will be added to a new bookmark folder."
+msgstr[1] "Found %d new feed URLs on the page. They will be added to a new bookmark folder."
+
+#, c-format
+msgid "dlg.subscribeall.add"
+msgid_plural "dlg.subscribeall.add.n"
+msgstr[0] "%sSubscribe"
+msgstr[1] "%sSubscribe to %d Feeds"
+
+msgid "dlg.subscribeall.type"
+msgstr "Feed type:"
+
+msgid "dlg.subscribeall.type.auto"
+msgstr "Auto-detect"
+
+msgid "dlg.subscribeall.notfound"
+msgstr "There are no new Gemini URLs on this page that could be subscribed to."
 
 msgid "heading.autoreload"
 msgstr "Auto-Reload"
@@ -2057,6 +2093,9 @@ msgstr "YYYY-MM-DD Links"
 msgid "dlg.feed.type.headings"
 msgstr "New Headings"
 
+msgid "dlg.feed.type.tinylog"
+msgstr "Tinylog"
+
 msgid "dlg.feed.ignoreweb"
 msgstr "Ignore HTTP(S) links:"
 
@@ -2739,6 +2778,9 @@ msgstr "Cache size:"
 
 msgid "prefs.memorysize"
 msgstr "Memory size:"
+
+msgid "prefs.tinylogsize"
+msgstr "Tinylog cache size:"
 
 msgid "prefs.ca.file"
 msgstr "CA file:"

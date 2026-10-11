@@ -76,6 +76,8 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
     iWidget       *w      = as_Widget(d);
     iArray        *items  = collectNew_Array(sizeof(iMenuItem));
     const iRangecc scheme = urlScheme_String(linkUrl);
+    const iBool    isFile = isLocalFileScheme_Rangecc(scheme) &&
+                            !startsWithCase_String(linkUrl, "local:/tinylog/"); /* virtual */
     if (deviceType_App() != desktop_AppDeviceType && linkId) {
         /* Show the link as the first, non-interactive item. */
         iString *infoText = collectNew_String();
@@ -93,7 +95,7 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
                                      isSpartanQueryLink_DocumentWidget(d, linkId),
                                      originArg,
                                      setIdentArg_DocumentWidget(d, linkUrl)));
-        if (isLocalFileScheme_Rangecc(scheme)) {
+        if (isFile) {
             pushBack_Array(items, &(iMenuItem){ "---" });
             pushBack_Array(
                 items,
@@ -178,7 +180,7 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
 #endif
         }
     }
-    if (isLocalFileScheme_Rangecc(scheme)) {
+    if (isFile) {
         /* Local files may be deleted. */
         pushBack_Array(items, &(iMenuItem){ "---" });
         pushBack_Array(

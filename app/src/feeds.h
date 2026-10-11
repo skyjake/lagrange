@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/time.h>
 
 iDeclareType(FeedEntry)
@@ -36,6 +37,8 @@ struct Impl_FeedEntry {
     iString url;
     iString title;
     iBool isHeading; /* URL fragment points to a heading */
+    iBool isTinylog; /* URL is a virtual "local:/tinylog/" entry */
+    iRangei sourceRange; /* tinylog: entry section in the cache file; runtime only, may be stale */
     uint32_t bookmarkId; /* note: runtime only, not a persistent ID */
 };
 
@@ -61,6 +64,38 @@ iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUr
 iBool   isEntryUrl_Feeds        (const iString *url); /* visited URL of any feed entry */
 void    markAllEntriesAsRead_Feeds(void);
 void    resetKnownEntries_Feeds (void);
+
+void    resetFeed_Feeds         (uint32_t feedBookmarkId); /* subscription type changed */
+
+/* Tinylog entries. */
+iDeclareType(TinylogInfo)
+
+struct Impl_TinylogInfo {
+    uint32_t bookmarkId;
+    iString  author;
+    iString  avatar;
+    iTime    posted;
+};
+
+void            init_TinylogInfo        (iTinylogInfo *);
+void            deinit_TinylogInfo      (iTinylogInfo *);
+
+uint32_t        tinylogBookmark_Feeds   (const iString *entryUrl); /* zero if not an entry */
+iBool           tinylogInfo_Feeds       (const iString *entryUrl, iTinylogInfo *info_out);
+
+/* Gemini URLs on a page that could be subscribed to. Returns a collected array. */
+const iStringArray *listSubscribableUrls_Feeds(const iString *source, iBool isPlainText,
+                                               const iString *pageUrl);
+
+enum iFeedType {
+    autoDetect_FeedType,
+    gemini_FeedType,
+    tinylog_FeedType,
+};
+
+/* New bookmarks are added in a new folder. Returns the number of new subscriptions. */
+size_t  subscribeAll_Feeds      (const iStringArray *urls, const iString *folderTitle,
+                                 enum iFeedType type);
 
 const iPtrArray *   listEntries_Feeds   (void);
 const iPtrArray *   listMatchingEntries_Feeds(const char *urlPrefix);

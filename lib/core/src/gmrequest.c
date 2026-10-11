@@ -62,6 +62,27 @@ static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     return NULL;
 }
 
+static iLocalHandlerFunc localHandlers_[4];
+static size_t            numLocalHandlers_;
+
+void addLocalHandler_GmRequest(iLocalHandlerFunc func) {
+    iAssert(numLocalHandlers_ < iElemCount(localHandlers_));
+    iForIndices(i, localHandlers_) {
+        if (localHandlers_[i] == func) {
+            return;
+        }
+    }
+    localHandlers_[numLocalHandlers_++] = func;
+}
+
+static const iBlock *localPageSource_(iRangecc path) {
+    for (size_t i = 0; i < numLocalHandlers_; i++) {
+        const iBlock *result = localHandlers_[i](path);
+        if (result) return result;
+    }
+    return NULL;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstruction(GmResponse)
@@ -1039,6 +1060,23 @@ static const iString *directoryIndexPage_Archive_(const iArchive *d, const iStri
 
 static void fileRequest_GmRequest_(iGmRequest *d) {
     iGmResponse *resp = d->resp;
+    /* Virtual paths. */ {
+        iUrl url;
+        init_Url(&url, &d->url);
+        if (equalCase_Rangecc(url.scheme, "local")) {
+            const iBlock *src = localPageSource_(url.path);
+            if (src) {
+                resp->statusCode = success_GmStatusCode;
+                setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+                set_Block(&resp->body, src);
+                d->state = receivingBody_GmRequestState;
+                iNotifyAudience(d, updated, GmRequestUpdated);
+                d->state = finished_GmRequestState;
+                iNotifyAudience(d, finished, GmRequestFinished);
+                return;
+            }
+        }
+    }
     iString *path = collect_String(localFilePathFromUrl_String(&d->url));
     /* Note: As a local file path, `path` uses the OS directory separators
        (i.e., \ on Windows). `Archive` accepts both. */

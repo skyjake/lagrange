@@ -206,6 +206,7 @@ iMenuItem bookmarksMenuItems_Window[] = {
     { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
+    { "${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
     { "---" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
