@@ -1213,7 +1213,7 @@ static iThreadResult runRecent_Sync_(iThread *thread) {
 static uint32_t timerCallback_Sync_(void *userdata, SDL_TimerID timerId, uint32_t interval) {
     iUnused(userdata, timerId);
     notify_App("sync.check");
-    notify_App("sync.recent");
+    notify_App("sync.recent timer:1");
     return interval;
 }
 
@@ -1286,6 +1286,20 @@ static iBool isEditorOpen_Sync_(void) {
         }
     }
     return iFalse;
+}
+
+static iBool isFocused_Sync_(void) {
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
+    iConstForEach(PtrArray, i, regularWindows_App()) {
+        const iWindow *win = i.ptr;
+        if (SDL_GetWindowFlags(win->win) & SDL_WINDOW_INPUT_FOCUS) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+#else
+    return iTrue;
+#endif
 }
 
 static iGmIdentity *syncIdentity_Sync_(void) {
@@ -1938,6 +1952,9 @@ iBool handleCommand_Sync(const char *cmd) {
         const iBool isPush = argLabel_Command(cmd, "push") != 0;
         if (isPush) {
             d->recentTimer = 0; /* the timer has fired */
+        }
+        if (argLabel_Command(cmd, "timer") && !isFocused_Sync_()) {
+            return iTrue; /* checked when focus is gained */
         }
         checkRecent_Sync_(d, isPush);
         return iTrue;
