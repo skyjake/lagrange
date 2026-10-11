@@ -1358,9 +1358,10 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                 iString       *details = new_String();
                 const iString *dateStr = collect_String(format_Date(&posted,
                                                                     cstr_String(dateFormat)));
-                iChar icon = 0x2605; /* star */
+                iChar icon;
                 if (entry->isTinylog) {
                     /* @jk@skyjake.fi — Off Hours\ntimestamp hh:mm */
+                    icon = 0x1f4ac; /* speech balloon */
                     iTinylogInfo info;
                     init_TinylogInfo(&info);
                     if (tinylogInfo_Feeds(entryUrl, &info)) {
@@ -1379,15 +1380,17 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                 }
                 else {
                     /* Feed name — timestamp */
+                    icon = 0x2605; /* star */
                     set_String(title, &bm->title);
-                    set_String(details, dateStr);
+                    setCStr_String(details, "\n");
+                    append_String(details, dateStr);
                 }
                 addNotice_Banner(banner_DocumentFetch_(d),
                                  icon,
                                  title,
                                  details,
                                  format_CStr("open newtab:1 url:%s", cstr_String(&bm->url)),
-                                 entry->isTinylog);
+                                 iTrue); //entry->isTinylog);
                 delete_String(title);
                 break;
             }

@@ -602,9 +602,23 @@ static size_t findItemUrl_SidebarWidget_(const iSidebarWidget *d, const iString 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     /* Note: identity item height is defined by CertListWidget */
 #if !defined(iPlatformTerminal)
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 2.5f, 0, 1.2f, 1.2f, 1.333f, 1.333f, 2.333f };
+    const float heights[max_SidebarMode] = {
+        [bookmarks_SidebarMode] = 1.333f,
+        [feedEntries_SidebarMode] = 3.333f,
+        [subscriptions_SidebarMode] = 2.5f,
+        [documentOutline_SidebarMode] = 1.2f,
+        [siteStructure_SidebarMode] = 1.2f,
+        [openDocuments_SidebarMode] = 1.333f,
+        [history_SidebarMode] = 1.333f,
+        [gempub_SidebarMode] = 2.333f,
+    };
 #else
-    const float heights[max_SidebarMode] = { 1, 3, 3, 0, 1, 1, 1, 1, 2 };
+    const float heights[max_SidebarMode] = {
+        [bookmarks_SidebarMode] = 1,     [feedEntries_SidebarMode] = 3,
+        [subscriptions_SidebarMode] = 3, [documentOutline_SidebarMode] = 1,
+        [siteStructure_SidebarMode] = 1, [openDocuments_SidebarMode] = 1,
+        [history_SidebarMode] = 1,       [gempub_SidebarMode] = 2,
+    };
 #endif
     if (d->list) {
         const int padding = d->mode == gempub_SidebarMode && !isTerminal_Platform() ? 2 * gap_UI : 0;

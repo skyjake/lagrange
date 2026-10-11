@@ -3569,11 +3569,12 @@ void pagesMoved_DocumentWidget(iDocumentWidget *d) {
 void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     iChangeFlags(d->view->flags,
                  centerVertically_DocumentViewFlag,
-                 docPrefs_GmDocument(d->view->doc)->centerShortDocs.value ||
-                     startsWithCase_String(d->mod.url, "about:") ||
-                     (d->fetch->sourceGempub &&
-                      isCoverPageUrl_Gempub(d->fetch->sourceGempub, d->mod.url)) ||
-                     !isSuccess_GmStatusCode(d->fetch->sourceStatus));
+                 !isReader_DocumentWidget(d) /* reader has metadata at top, shouldn't shift it */ &&
+                     (docPrefs_GmDocument(d->view->doc)->centerShortDocs.value ||
+                      startsWithCase_String(d->mod.url, "about:") ||
+                      (d->fetch->sourceGempub &&
+                       isCoverPageUrl_Gempub(d->fetch->sourceGempub, d->mod.url)) ||
+                      !isSuccess_GmStatusCode(d->fetch->sourceStatus)));
     iScrollWidget *scrollBar = d->scroll;
     iRoot         *root      = as_Widget(d)->root;
     if (document_Root(root) == d &&

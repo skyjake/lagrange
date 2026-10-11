@@ -63,6 +63,48 @@ void deinit_SidebarItem(iSidebarItem *d) {
     deinit_String(&d->label);
 }
 
+static int wrapLines_(int font, iRangecc *text, int width, iRangecc *lines, int maxLines) {
+    /* Consumes wrapped lines from `text`. */
+    int numLines = 0;
+    while (numLines < maxLines && !isEmpty_Range(text)) {
+        const char *endPos;
+        tryAdvance_Text(font, *text, width, &endPos);
+        if (endPos == text->start) {
+            tryAdvanceNoWrap_Text(font, *text, width, &endPos);
+            if (endPos == text->start) break;
+        }
+        lines[numLines++] = (iRangecc){ text->start, endPos };
+        text->start = endPos;
+        trimStart_Rangecc(text);
+    }
+    return numLines;
+}
+
+static void drawLines_(int font, iInt2 pos, int color, const iRangecc *lines, int numLines,
+                       iRangecc rest, int width) {
+    /* If there is text remaining, the last line is truncated with an ellipsis. */
+    for (int i = 0; i < numLines; i++) {
+        if (i == numLines - 1 && !isEmpty_Range(&rest)) {
+            const char *endPos;
+            tryAdvanceNoWrap_Text(font,
+                                  (iRangecc){ lines[i].start, rest.end },
+                                  width - measure_Text(font, "…").advance.x,
+                                  &endPos);
+            iRangecc line = { lines[i].start, endPos };
+            trimEnd_Rangecc(&line);
+            iString str;
+            initRange_String(&str, line);
+            appendCStr_String(&str, "…");
+            drawRange_Text(font, pos, color, range_String(&str));
+            deinit_String(&str);
+        }
+        else {
+            drawRange_Text(font, pos, color, lines[i]);
+        }
+        pos.y += lineHeight_Text(font);
+    }
+}
+
 static void drawDragHandle_(iPaint *p, iRect *itemRect, int bg) {
     const int itemHeight = height_Rect(*itemRect);
     iRect dragRect = { addX_I2(topRight_Rect(*itemRect), -itemHeight * 3 / 2),
@@ -187,39 +229,57 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             }
             /* Select the layout based on how the title fits. */
             int   metaFg    = isSel ? uiTextSelectedDim_ColorId : uiSubheading_ColorId;
-            iInt2 titleSize = measureRange_Text(titleFont, range_String(&d->label)).bounds.size;
             const iInt2 metaSize =
                 measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
             pos.x += iconPad * aspect_UI;
             const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
-            const int labelFg = isSel      ? uiTextSelected_ColorId
+            const int labelFg = isSel      ? uiTextSelected_ColorId | permanent_ColorId
                                 : isUnread ? uiTextStrong_ColorId
                                            : uiText_ColorId;
-            if (!isTinylog && titleSize.x > avail && metaSize.x < avail * 0.75f) {
-                /* Must wrap the title. */
-                pos.y += (itemHeight - h2 - h2) / 2;
-                draw_Text(uiLabel_FontId,
-                          addY_I2(pos, h2 - h1 - gap_UI / 8),
-                          metaFg,
-                          "%s \u2014 ",
-                          cstr_String(&d->meta));
-                int         skip = metaSize.x + measure_Text(uiLabel_FontId, " \u2014 ").advance.x;
-                iInt2       cur  = addX_I2(pos, skip);
-                const char *endPos;
-                tryAdvance_Text(titleFont, range_String(&d->label), avail - skip, &endPos);
-                drawRange_Text(
-                    titleFont, cur, labelFg, (iRangecc) { constBegin_String(&d->label), endPos });
-                if (endPos < constEnd_String(&d->label)) {
-                    drawRange_Text(titleFont,
-                                   addY_I2(pos, h2),
-                                   labelFg,
-                                   (iRangecc) { endPos, constEnd_String(&d->label) });
-                }
+            iRangecc lines[4];
+            if (isTinylog) {
+                /* Author and feed on one line, followed by the wrapped excerpt. */
+                const int maxLines = iClamp((itemHeight - h1 - 2 * gap_UI) / h2,
+                                            1, (int) iElemCount(lines));
+                iRangecc  rest     = range_String(&d->label);
+                const int numLines = wrapLines_(titleFont, &rest, avail, lines, maxLines);
+                pos.y += (itemHeight - h1 - numLines * h2) / 2;
+                const char *metaEnd;
+                tryAdvanceNoWrap_Text(uiLabel_FontId, range_String(&d->meta), avail, &metaEnd);
+                drawRange_Text(uiLabel_FontId,
+                               pos,
+                               metaFg,
+                               (iRangecc){ constBegin_String(&d->meta), metaEnd });
+                drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
             }
             else {
-                pos.y += (itemHeight - h1 - h2) / 2;
-                drawRange_Text(uiLabel_FontId, pos, metaFg, range_String(&d->meta));
-                drawRange_Text(titleFont, addY_I2(pos, h1), labelFg, range_String(&d->label));
+                iRangecc rest     = range_String(&d->label);
+                int      numLines = wrapLines_(titleFont, &rest, avail, lines, 2);
+                if (!isEmpty_Range(&rest) && metaSize.x < avail * 0.75f) {
+                    /* Title continues after the meta on the first line. */
+                    pos.y += (itemHeight - 3 * h2) / 2;
+                    draw_Text(uiLabel_FontId,
+                              addY_I2(pos, h2 - h1 - gap_UI / 8),
+                              metaFg,
+                              "%s \u2014 ",
+                              cstr_String(&d->meta));
+                    const int skip =
+                        metaSize.x + measure_Text(uiLabel_FontId, " \u2014 ").advance.x;
+                    const char *endPos;
+                    rest = range_String(&d->label);
+                    tryAdvance_Text(titleFont, rest, avail - skip, &endPos);
+                    drawRange_Text(
+                        titleFont, addX_I2(pos, skip), labelFg, (iRangecc){ rest.start, endPos });
+                    rest.start = endPos;
+                    trimStart_Rangecc(&rest);
+                    numLines = wrapLines_(titleFont, &rest, avail, lines, 2);
+                    drawLines_(titleFont, addY_I2(pos, h2), labelFg, lines, numLines, rest, avail);
+                }
+                else {
+                    pos.y += (itemHeight - h1 - numLines * h2) / 2;
+                    drawRange_Text(uiLabel_FontId, pos, metaFg, range_String(&d->meta));
+                    drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
+                }
             }
         }
     }

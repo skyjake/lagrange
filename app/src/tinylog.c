@@ -397,7 +397,7 @@ static iBool isLocalScheme_(const iString *url) {
 }
 
 iString *excerpt_TinylogEntry(const iTinylogEntry *d) {
-    const size_t maxLen  = 100;
+    const size_t maxLen  = 150;
     iString     *text    = new_String();
     iRangecc     line    = iNullRange;
     iRangecc     preText = iNullRange;

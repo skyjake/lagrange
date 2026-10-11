@@ -94,11 +94,37 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
         if (bm) {
             item->id   = entry->bookmarkId;
-            item->icon = bm->icon;
+            item->icon = bm->icon ? bm->icon : 0x1f4ac; /* speech balloon */
+            if (isTinylog) {
+                iTinylogInfo info;
+                init_TinylogInfo(&info);
+                if (tinylogInfo_Feeds(&entry->url, &info)) {
+                    if (!isEmpty_String(&info.avatar)) {
+                        item->icon = first_String(&info.avatar);
+                    }
+                    if (!isEmpty_String(&info.author) && !equal_String(&info.author, &bm->title)) {
+                        appendFormat_String(&item->meta,
+                                            "\x1b[1m%s\x1b[0m" restore_ColorEscape,
+                                            cstr_String(&info.author));
+                        appendCStr_String(&item->meta, " — ");
+                    }
+                }
+                deinit_TinylogInfo(&info);
+            }
             append_String(&item->meta, &bm->title);
         }
         addItem_ListWidget(d->list, item);
         iRelease(item);
+    #if 0
+        if (isTinylog) {
+                /* Tinylog entries are twice as tall. */
+                iSidebarItem *cont                  = new_SidebarItem();
+                cont->listItem.flags.isContinuation = iTrue;
+                addItem_ListWidget(d->list, cont);
+                iRelease(cont);
+            }
+        }
+    #endif
     }
     /* Actions. */
     if (!isMobile) {
@@ -315,7 +341,7 @@ static void handleFeedUnsubscribeCommand_SidebarWidget_(iSidebarWidget *d, const
 }
 
 void updateFeedContextMenu_SidebarWidget_(iSidebarWidget *d) {
-    const iBool isRead = d->contextItem->indent == 0;
+    const iBool isRead = (d->contextItem->indent & 1) == 0;
     setMenuItemLabel_Widget(d->menu,
                             "feed.entry.toggleread",
                             isRead ? circle_Icon " ${feeds.entry.markunread}"

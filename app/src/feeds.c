@@ -533,8 +533,10 @@ static void parseTinylog_FeedJob_(iFeedJob *d, const iString *src) {
                             headerSize + (int) (logEntry->range.end - sourceStart) };
             iDate posted;
             init_Date(&posted, &entry->posted);
-            format_String(&entry->title, "%s\x1b[1m%02d:%02d\x1b[0m ",
-                uiTextAction_ColorEscape, posted.hour, posted.minute);
+            format_String(&entry->title,
+                          uiTextAction_ColorEscape "\x1b[1m%02d:%02d\x1b[0m ",
+                          posted.hour,
+                          posted.minute);
             iString *excerpt = excerpt_TinylogEntry(logEntry);
             append_String(&entry->title, excerpt);
             delete_String(excerpt);
@@ -1817,7 +1819,7 @@ static const iBlock *tinylogPage_Feeds_(iRangecc path) {
         append_String(page, content);
         delete_String(content);
         if (resp.refContent) {
-            appendCStr_String(page, "\n---\n");
+            appendFormat_String(page, "\n---\n### %s\n", cstr_Lang("feeds.tinylog.resp"));
             append_String(page, resp.refContent);
             delete_String(resp.refContent);
         }
