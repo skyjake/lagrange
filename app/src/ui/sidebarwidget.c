@@ -1270,14 +1270,23 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             !isModeEnabled_SidebarWidget_(d, d->side, mode) &&
             isModeEnabled_SidebarWidget_(d, d->side ^ 1, mode)) {
             /* Make it affect the other side instead. */
-            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d",
+            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d contents:%d",
                                d->side == 0 ? "sidebar2" : "sidebar",
                                mode,
                                argLabel_Command(cmd, "show"),
                                argLabel_Command(cmd, "toggle"),
                                argLabel_Command(cmd, "shelf"),
-                               argLabel_Command(cmd, "current"));
+                               argLabel_Command(cmd, "current"),
+                               argLabel_Command(cmd, "contents"));
             return iTrue;
+        }
+        if (mode == gempub_SidebarMode && argLabel_Command(cmd, "contents")) {
+            if (isVisible_Widget(w) && d->mode == gempub_SidebarMode && d->gempubPage == 1) {
+                postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
+                return iTrue;
+            }
+            d->gempubPage = 1;
+            clear_String(&d->gempubCentered);
         }
         iBool isShelfChanged = iFalse;
         if (mode == gempub_SidebarMode && argLabel_Command(cmd, "shelf")) {

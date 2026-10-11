@@ -160,7 +160,7 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
         d, newIcon_LabelWidget(timer_Icon, 0, 0, "document.autoreload.menu"), "viewtools.reload");
     addButton_ViewToolbar_(
         d, newIcon_LabelWidget(book_Icon, 0, 0, "document.pagemode.toggle"), "viewtools.pagemode");
-    addChild_Widget(w, iClob(makePadding_Widget(hPad)));
+    //addChild_Widget(w, iClob(makePadding_Widget(hPad)));
     addButton_ViewToolbar_(
         d, newIcon_LabelWidget(gear_Icon, 0, 0, "document.sitespec"), "viewtools.sitespec");
     addButton_ViewToolbar_(d, newIcon_LabelWidget(info_Icon, 0, 0, "document.info"), "viewtools.info");
@@ -188,14 +188,16 @@ void update_ViewToolbar(iViewToolbar *d) {
     const iPersistentDocumentState *state = state_DocumentWidget(doc);
     iLabelWidget                   *identButton  = findChild_Widget(w, "viewtools.ident");
     iLabelWidget                   *reloadButton = findChild_Widget(w, "viewtools.reload");
+    iWidget                        *infoButton  = findChild_Widget(w, "viewtools.info");
     const iBool isBook  = gempub_DocumentWidget(doc) != NULL;
     const iBool isLocal = isLocalFileScheme_Rangecc(urlScheme_String(url_DocumentWidget(doc)));
     setFlags_Widget(as_Widget(identButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal);
     setFlags_Widget(as_Widget(reloadButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook);
     setFlags_Widget(findChild_Widget(w, "viewtools.sitespec"), hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
+    setFlags_Widget(infoButton, hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     /* A book's information is in the sidebar. */
     setCommand_LabelWidget(findChild_Widget(w, "viewtools.info"),
-                           isBook ? collectNewFormat_String("sidebar.mode arg:%d show:1 current:1 contents:1",
+                           isBook ? collectNewFormat_String("sidebar.mode arg:%d show:1 contents:1",
                                                             gempub_SidebarMode)
                                   : collectNewCStr_String("document.info"));
     /* Identity in use (pinned or global). */ {
