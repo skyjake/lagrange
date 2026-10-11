@@ -829,6 +829,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         const char *barId = cstr_String(id_Widget(w));
         // clang-format off
         const iMenuItem modeDropItems[] = {
+            { close_Icon " ${close}", 0, 0, format_CStr("%s.toggle", barId) },
+            { gear_Icon " ${menu.sidebar.configure}", 0, 0, "preferences sidecfg:1" },
+            { "---" },
             { normalModeLabels_[0], 0, 0, format_CStr("%s.mode force:1 arg:0", barId) },
             { normalModeLabels_[1], 0, 0, format_CStr("%s.mode force:1 arg:1", barId) },
             { normalModeLabels_[2], 0, 0, format_CStr("%s.mode force:1 arg:2", barId) },
@@ -841,9 +844,6 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
             { normalModeLabels_[7], 0, 0, format_CStr("%s.mode force:1 arg:7", barId) },
             { "---" },
             { normalModeLabels_[8], 0, 0, format_CStr("%s.mode force:1 arg:8", barId) },
-            { "---" },
-            { gear_Icon " ${menu.sidebar.configure}", 0, 0, "preferences sidecfg:1" },
-            { close_Icon " ${close}", 0, 0, format_CStr("%s.toggle", barId) },
         };
         // clang-format on
         addChildFlags_Widget(buttons,
