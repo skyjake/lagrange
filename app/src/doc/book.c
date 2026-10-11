@@ -499,7 +499,11 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
         if (isEmpty_String(title)) {
             title = bookmarkTitle_DocumentWidget(owner);
         }
-        const iString *author = collectNewRange_String(urlHost_String(sourceUrl));
+        iRangecc authorRange = urlUser_String(sourceUrl);
+        if (isEmpty_Range(&authorRange)) {
+            authorRange = urlHost_String(sourceUrl);
+        }
+        const iString *author = collectNewRange_String(authorRange);
         id       = collect_String(makeId_Books(title, author));
         fileName = title;
         data     = newPageArchive_Gempub(sourceUrl, title, author, source_GmDocument(doc));
