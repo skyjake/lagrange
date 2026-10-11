@@ -1151,7 +1151,9 @@ static iThreadResult run_Sync_(iThread *thread) {
     }
     delete_SyncData(d->base);
     d->base = NULL;
-    notify_App("sync.worker.finished");
+    if (!d->isBlocking) {
+        notify_App("sync.worker.finished");
+    }
     return 0;
 }
 
@@ -1438,6 +1440,35 @@ static void endWork_Sync_(iSync *d) {
 }
 
 static void startRecent_Sync_(iSync *d, iBool isBlocking);
+static void finish_Sync_(iSync *d);
+
+static void startFull_Sync_(iSync *d, iBool isBlocking) {
+    initCurrent_Time(&d->lastAttemptTime);
+    if (!beginWork_Sync_(d)) {
+        fail_Sync_(d, cstr_Lang("sync.error.identity"));
+        return;
+    }
+    set_Atomic(&d->isRunning, iTrue);
+    d->mode       = full_SyncMode;
+    d->isBlocking = isBlocking;
+    discardRemote_Bookmarks(bookmarks_App());
+    d->snapshot = takeSnapshot_Sync_(d);
+    d->visitedCutoff = visitedCutoff_Sync_();
+    pruneVisited_SyncData(d->snapshot, d->visitedCutoff);
+    clear_Array(&d->idMap);
+    if (isBlocking) {
+        run_Sync_(NULL);
+        finish_Sync_(d);
+        d->isBlocking = iFalse;
+        return;
+    }
+    notifyStatus_Sync_();
+    notify_App("sync.started");
+    beginBackgroundTask_Sync_(d);
+    d->worker = new_Thread(run_Sync_);
+    setName_Thread(d->worker, "Sync");
+    start_Thread(d->worker);
+}
 
 static void start_Sync_(iSync *d, iBool isManual) {
     if (value_Atomic(&d->isRunning)) {
@@ -1487,24 +1518,7 @@ static void start_Sync_(iSync *d, iBool isManual) {
     }
     d->isFullPending       = iFalse;
     d->isFullPendingManual = iFalse;
-    initCurrent_Time(&d->lastAttemptTime);
-    if (!beginWork_Sync_(d)) {
-        fail_Sync_(d, cstr_Lang("sync.error.identity"));
-        return;
-    }
-    set_Atomic(&d->isRunning, iTrue);
-    d->mode = full_SyncMode;
-    discardRemote_Bookmarks(bookmarks_App());
-    d->snapshot = takeSnapshot_Sync_(d);
-    d->visitedCutoff = visitedCutoff_Sync_();
-    pruneVisited_SyncData(d->snapshot, d->visitedCutoff);
-    clear_Array(&d->idMap);
-    notifyStatus_Sync_();
-    notify_App("sync.started");
-    beginBackgroundTask_Sync_(d);
-    d->worker = new_Thread(run_Sync_);
-    setName_Thread(d->worker, "Sync");
-    start_Thread(d->worker);
+    startFull_Sync_(d, iFalse);
 }
 
 static void trust_Sync_(iSync *d) {
@@ -1556,6 +1570,9 @@ static void finish_Sync_(iSync *d) {
     if (d->isResetPending || !prefs_Sync_()->sync) {
         d->isResetPending = iFalse;
         reset_Sync_(d);
+    }
+    if (d->isBlocking) {
+        return;
     }
     fetchRemote_Bookmarks(bookmarks_App());
     notify_App("sync.finished");
@@ -1763,10 +1780,20 @@ void deinit_Sync(void) {
         }
     }
 #if defined (iPlatformDesktop)
-    else if (isRecentDirty_Sync_(d) && canSyncRecent_Sync_(d)) {
-        /* Last chance to upload the recent changes. */
-        d->requestTimeout = quitTimeout_Sync_;
-        startRecent_Sync_(d, iTrue);
+    else if (canSyncRecent_Sync_(d)) {
+        /* Last chance to upload local changes. */
+        const iTime edit    = pendingEdit_Sync_(d);
+        iBool       isReady = iTrue;
+        d->requestTimeout   = quitTimeout_Sync_;
+        d->isManual         = iFalse;
+        if (isRecentDirty_Sync_(d)) {
+            startRecent_Sync_(d, iTrue);
+            isReady = isEmpty_String(&d->error);
+        }
+        if (isReady && isValid_Time(&edit) && isAutomatic_Sync_() && !isBackingOff_Sync_(d) &&
+            !isRefreshing_Feeds() && !isFetchingRemote_Bookmarks(bookmarks_App())) {
+            startFull_Sync_(d, iTrue);
+        }
     }
 #endif
     setVisitedUrlChangedFunc_Core(NULL);
