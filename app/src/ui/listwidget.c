@@ -150,6 +150,28 @@ size_t numItems_ListWidget(const iListWidget *d) {
     return size_PtrArray(&d->items);
 }
 
+static iBool isContinuation_ListWidget_(const iListWidget *d, size_t index) {
+    const iListItem *item = constItem_ListWidget(d, index);
+    return item && item->flags.isContinuation;
+}
+
+static size_t primaryIndex_ListWidget_(const iListWidget *d, size_t index) {
+    while (index > 0 && isContinuation_ListWidget_(d, index)) {
+        index--;
+    }
+    return index;
+}
+
+static size_t span_ListWidget_(const iListWidget *d, size_t index) {
+    size_t span = 1;
+    if (index < size_PtrArray(&d->items)) {
+        while (isContinuation_ListWidget_(d, index + span)) {
+            span++;
+        }
+    }
+    return span;
+}
+
 static int scrollMax_ListWidget_(const iListWidget *d) {
     return iMax(0,
                 (int) size_PtrArray(&d->items) * d->itemHeight -
@@ -238,7 +260,7 @@ void scrollToItem_ListWidget(iListWidget *d, size_t index, uint32_t span) {
     stop_Anim(&d->scrollY.pos);
     const iRect rect    = innerBoundsWithoutVisualOffset_Widget(as_Widget(d));
     int         yTop    = d->itemHeight * index - pos_SmoothScroll(&d->scrollY);
-    int         yBottom = yTop + d->itemHeight;
+    int         yBottom = yTop + d->itemHeight * (int) span_ListWidget_(d, index);
     if (height_Rect(rect) > d->itemHeight) {
         if (yBottom > height_Rect(rect)) {
             scrollOffsetSpan_ListWidget(d, yBottom - height_Rect(rect), span);
@@ -274,7 +296,7 @@ size_t itemIndex_ListWidget(const iListWidget *d, iInt2 pos) {
     if (pos.y < 0 || !d->itemHeight) return iInvalidPos;
     size_t index = pos.y / d->itemHeight;
     if (index >= size_Array(&d->items)) return iInvalidPos;
-    return index;
+    return primaryIndex_ListWidget_(d, index);
 }
 
 const iAnyObject *constItem_ListWidget(const iListWidget *d, size_t index) {
@@ -313,6 +335,7 @@ size_t hoverItemIndex_ListWidget(const iListWidget *d) {
 
 void setHoverItem_ListWidget(iListWidget *d, size_t index) {
     if (index < size_PtrArray(&d->items)) {
+        index = primaryIndex_ListWidget_(d, index);
         const iListItem *item = at_PtrArray(&d->items, index);
         if (item->flags.isSeparator) {
             index = iInvalidPos;
@@ -326,6 +349,11 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
     }
 }
 
+static iBool isCursorSkipped_ListWidget_(const iListWidget *d, size_t index, int dir) {
+    const iListItem *item = constItem_ListWidget(d, index);
+    return item->flags.isSeparator || (item->flags.isContinuation && dir > 0);
+}
+
 static iBool moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
     const size_t oldCursor = d->cursorItem;
     if (isEmpty_ListWidget(d)) {
@@ -337,10 +365,11 @@ static iBool moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) 
             d->cursorItem = 0;
         }
         d->cursorItem = iClamp((int) d->cursorItem + dir, 0, maxItem);
-        while (((const iListItem *) constItem_ListWidget(d, d->cursorItem))->flags.isSeparator &&
+        while (isCursorSkipped_ListWidget_(d, d->cursorItem, dir) &&
                ((d->cursorItem < maxItem && dir >= 0) || (d->cursorItem > 0 && dir < 0))) {
-            d->cursorItem += (dir >= 0 ? 1 : -1); /* Skip separators. */
+            d->cursorItem += (dir >= 0 ? 1 : -1);
         }
+        d->cursorItem = primaryIndex_ListWidget_(d, d->cursorItem);
     }
     if (oldCursor != d->cursorItem) {
         invalidateItem_ListWidget(d, oldCursor);
@@ -746,14 +775,59 @@ iRect itemRect_ListWidget(const iListWidget *d, size_t index) {
     const iRect bounds  = innerBounds_Widget(constAs_Widget(d));
     const int   scrollY = pos_SmoothScroll(&d->scrollY);
     return (iRect) { addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
-                     init_I2(width_Rect(bounds), d->itemHeight) };
+                     init_I2(width_Rect(bounds), d->itemHeight * (int) span_ListWidget_(d, index)) };
 }
 
 iRect itemRectWithoutVisualOffset_ListWidget(const iListWidget *d, size_t index) {
     const iRect bounds  = innerBoundsWithoutVisualOffset_Widget(constAs_Widget(d));
     const int   scrollY = targetValue_Anim(&d->scrollY.pos);
     return (iRect) { addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
-                     init_I2(width_Rect(bounds), d->itemHeight) };
+                     init_I2(width_Rect(bounds), d->itemHeight * (int) span_ListWidget_(d, index)) };
+}
+
+static void invalidateSpans_ListWidget_(iListWidget *d) {
+    /* All slots of an item are redrawn together because they may be in different buffers. */
+    iIntSet *spans = NULL;
+    iConstForEach(IntSet, i, &d->invalidItems) {
+        const size_t first = primaryIndex_ListWidget_(d, *i.value);
+        const size_t span  = span_ListWidget_(d, first);
+        if (first != (size_t) *i.value || span > 1) {
+            if (!spans) {
+                spans = new_IntSet();
+            }
+            for (size_t j = 0; j < span; j++) {
+                insert_IntSet(spans, (int) (first + j));
+            }
+        }
+    }
+    if (spans) {
+        iConstForEach(IntSet, j, spans) {
+            insert_IntSet(&d->invalidItems, *j.value);
+        }
+        delete_IntSet(spans);
+    }
+}
+
+static size_t drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index,
+                                   const iVisBufTexture *buf, int bg, int blankWidth) {
+    /* Draws the entire item even if it spans multiple slots; the texture clips it. Returns the
+       index of the last slot of the item. */
+    const size_t     first = primaryIndex_ListWidget_(d, index);
+    const size_t     span  = span_ListWidget_(d, first);
+    const iListItem *item  = constAt_PtrArray(&d->items, first);
+    if (!item->flags.isHidden) {
+        const iRect itemRect = { init_I2(0, (int) first * d->itemHeight - buf->origin),
+                                 init_I2(d->visBuf->texSize.x, (int) span * d->itemHeight) };
+        fillRect_Paint(p, itemRect, bg);
+        if (first != d->dragItem) {
+            class_ListItem(item)->draw(item, p, itemRect, d);
+        }
+        fillRect_Paint(p,
+                       (iRect){ init_I2(d->visBuf->texSize.x - blankWidth, top_Rect(itemRect)),
+                                init_I2(blankWidth, height_Rect(itemRect)) },
+                       bg);
+    }
+    return first + span - 1;
 }
 
 static void draw_ListWidget_(const iListWidget *d) {
@@ -779,6 +853,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         for (size_t i = 0; i < d->visBuf->numBuffers; i++) {
             iAssert(d->visBuf->buffers[i].texture);
         }
+        invalidateSpans_ListWidget_(iConstCast(iListWidget *, d));
         const int bg[maxBuffers_VisBuf] = {
             w->bgColor, w->bgColor, w->bgColor, w->bgColor /* Debug: Separate BG color for buffers. */
         };
@@ -798,21 +873,13 @@ static void draw_ListWidget_(const iListWidget *d) {
 #else
             const int blankWidth = scrollBarWidth_ListWidget(d);
 #endif
-            const iRect sbBlankRect = { init_I2(d->visBuf->texSize.x - blankWidth, 0),
-                                        init_I2(blankWidth, d->itemHeight) };
+            int drawnUntil = -1; /* sorted set; skip slots of an already drawn item */
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
-                if (contains_Range(&drawItems, index) && index < size_PtrArray(&d->items)) {
-                    const iListItem *item = constAt_PtrArray(&d->items, index);
-                    if (item->flags.isHidden) continue;
-                    const iRect itemRect = { init_I2(0, index * d->itemHeight - buf->origin),
-                                             init_I2(d->visBuf->texSize.x, d->itemHeight) };
+                if (*v.value > drawnUntil && contains_Range(&drawItems, index) &&
+                    index < size_PtrArray(&d->items)) {
                     beginTarget_Paint(&p, buf->texture);
-                    fillRect_Paint(&p, itemRect, bg[i]);
-                    if (index != d->dragItem) {
-                        class_ListItem(item)->draw(item, &p, itemRect, d);
-                    }
-                    fillRect_Paint(&p, moved_Rect(sbBlankRect, init_I2(0, top_Rect(itemRect))), bg[i]);
+                    drawnUntil = (int) drawItem_ListWidget_(d, &p, index, buf, bg[i], blankWidth);
                 }
             }
             /* Visible range is not fully covered. Fill in the new items. */
@@ -822,15 +889,7 @@ static void draw_ListWidget_(const iListWidget *d) {
                 drawItems.end   = invalidRange[i].end   / d->itemHeight + 1;
                 for (size_t j = drawItems.start; j < drawItems.end && j < size_PtrArray(&d->items);
                      j++) {
-                    const iListItem *item = constAt_PtrArray(&d->items, j);
-                    if (item->flags.isHidden) continue;
-                    const iRect itemRect = { init_I2(0, j * d->itemHeight - buf->origin),
-                                             init_I2(d->visBuf->texSize.x, d->itemHeight) };
-                    fillRect_Paint(&p, itemRect, bg[i]);
-                    if (j != d->dragItem) {
-                        class_ListItem(item)->draw(item, &p, itemRect, d);
-                    }
-                    fillRect_Paint(&p, moved_Rect(sbBlankRect, init_I2(0, top_Rect(itemRect))), bg[i]);
+                    j = drawItem_ListWidget_(d, &p, j, buf, bg[i], blankWidth);
                 }
             }
             endTarget_Paint(&p);
@@ -847,7 +906,8 @@ static void draw_ListWidget_(const iListWidget *d) {
         iInt2 pos = add_I2(mousePos, d->dragOrigin);
         const iListItem *item = constAt_PtrArray(&d->items, d->dragItem);
         const iRect itemRect = { init_I2(left_Rect(bounds), pos.y),
-                                 init_I2(d->visBuf->texSize.x, d->itemHeight) };
+                                 init_I2(d->visBuf->texSize.x,
+                                         d->itemHeight * (int) span_ListWidget_(d, d->dragItem)) };
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         enum iDragDestination dstKind;
         const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstKind);

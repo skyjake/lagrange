@@ -44,6 +44,7 @@ struct Impl_ListItem {
         iBool   isDraggable : 1;
         iBool   isDropTarget : 1; /* may drag-and-drop another item on this */
         iBool   isHidden : 1;
+        iBool   isContinuation : 1; /* dummy slot that extends the previous item's height */
     } flags;
 };
 
