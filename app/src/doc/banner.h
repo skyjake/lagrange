@@ -59,7 +59,7 @@ void    add_Banner          (iBanner *, enum iBannerType type, enum iGmStatusCod
                              const iString *message,
                              const iString *details);
 void    addNotice_Banner    (iBanner *, iChar icon, const iString *title,
-                             const iString *details, const char *command);
+                             const iString *details, const char *command, iBool isTitleBold);
 void    remove_Banner       (iBanner *, enum iGmStatusCode code);
 
 iBool   processEvent_Banner (iBanner *, const SDL_Event *ev);

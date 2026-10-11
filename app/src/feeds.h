@@ -32,14 +32,14 @@ iDeclareType(FeedEntry)
 iDeclareTypeConstruction(FeedEntry)
 
 struct Impl_FeedEntry {
-    iTime posted;
-    iTime discovered;
-    iString url;
-    iString title;
-    iBool isHeading; /* URL fragment points to a heading */
-    iBool isTinylog; /* URL is a virtual "local:/tinylog/" entry */
-    iRangei sourceRange; /* tinylog: entry section in the cache file; runtime only, may be stale */
-    uint32_t bookmarkId; /* note: runtime only, not a persistent ID */
+    iTime    posted;
+    iTime    discovered;
+    iString  url;
+    iString  title;
+    iBool    isHeading;   /* URL fragment points to a heading */
+    iBool    isTinylog;   /* URL is a virtual "local:/tinylog/" entry */
+    iRangei  sourceRange; /* tinylog: entry section in the cache file; runtime only, may be stale */
+    uint32_t bookmarkId;  /* note: runtime only, not a persistent ID */
 };
 
 iLocalDef iBool isHidden_FeedEntry(const iFeedEntry *d) {

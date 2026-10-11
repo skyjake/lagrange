@@ -1265,7 +1265,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
     }
 }
 
-void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
+ void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
     updateBanner_DocumentWidget(d->owner);
     /* Warnings are not shown on internal pages. */
     if (equalCase_Rangecc(urlScheme_String(url_DocumentFetch_(d)), "about")) {
@@ -1354,9 +1354,13 @@ void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
                 iString *dateFormat = collectNewCStr_String(cstr_Lang(
                     entry->isTinylog ? "banner.tinylogentry.date" : "banner.feedentry.date"));
                 replace_String(dateFormat, "%d", format_CStr("%d", posted.day));
-                iString *details = collect_String(format_Date(&posted, cstr_String(dateFormat)));
-                iChar    icon    = 0x2605; /* star */
+                iString       *title   = new_String();
+                iString       *details = new_String();
+                const iString *dateStr = collect_String(format_Date(&posted,
+                                                                    cstr_String(dateFormat)));
+                iChar icon = 0x2605; /* star */
                 if (entry->isTinylog) {
+                    /* @jk@skyjake.fi — Off Hours\ntimestamp hh:mm */
                     iTinylogInfo info;
                     init_TinylogInfo(&info);
                     if (tinylogInfo_Feeds(entryUrl, &info)) {
@@ -1367,17 +1371,24 @@ void addBannerWarnings_DocumentFetch(iDocumentFetch *d) {
                             icon = bm->icon;
                         }
                         if (!isEmpty_String(&info.author)) {
-                            details = collectNewFormat_String(
-                                "%s \u00b7 %s", cstr_String(&info.author), cstr_String(details));
+                            set_String(title, &info.author);
+                            format_String(details, "%s\n%s", cstr_String(&bm->title), cstr_String(dateStr));
                         }
                     }
                     deinit_TinylogInfo(&info);
                 }
+                else {
+                    /* Feed name — timestamp */
+                    set_String(title, &bm->title);
+                    set_String(details, dateStr);
+                }
                 addNotice_Banner(banner_DocumentFetch_(d),
                                  icon,
-                                 &bm->title,
+                                 title,
                                  details,
-                                 format_CStr("open newtab:1 url:%s", cstr_String(&bm->url)));
+                                 format_CStr("open newtab:1 url:%s", cstr_String(&bm->url)),
+                                 entry->isTinylog);
+                delete_String(title);
                 break;
             }
         }

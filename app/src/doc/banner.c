@@ -238,7 +238,7 @@ void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code,
 }
 
 void addNotice_Banner(iBanner *d, iChar icon, const iString *title, const iString *details,
-                      const char *command) {
+                      const char *command, iBool isTitleBold) {
     size_t pos = 0;
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;
@@ -256,7 +256,7 @@ void addNotice_Banner(iBanner *d, iChar icon, const iString *title, const iStrin
     item.type = notice_BannerType;
     item.code = none_GmStatusCode;
     setCStr_String(&item.command, command);
-    setText_BannerItem_(&item, icon, cstr_String(title), cstr_String(details), iFalse);
+    setText_BannerItem_(&item, icon, cstr_String(title), cstr_String(details), isTitleBold);
     insertItem_Banner_(d, pos, &item);
 }
 

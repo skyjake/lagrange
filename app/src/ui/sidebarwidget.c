@@ -192,12 +192,12 @@ static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
     addChildFlags_Widget(div, iClob(icon), frameless_WidgetFlag);
 }
 
-/* Padding under the action bar depends on whether there are other UI elements next
-   to the bottom of the window. This is surprisingly convoluted; perhaps there is a
-   better way to handle this? (Some sort of intelligent padding widget at the bottom
-   of the sidebar? Root should just use safe insets as the padding? In that case,
-   individual widgets still need to be able to extend into the safe area.) */
 static int actionsBottomInset_SidebarWidget_(const iSidebarWidget *d) {
+    /* Padding under the action bar depends on whether there are other UI elements next
+       to the bottom of the window. This is surprisingly convoluted; perhaps there is a
+       better way to handle this? (Some sort of intelligent padding widget at the bottom
+       of the sidebar? Root should just use safe insets as the padding? In that case,
+       individual widgets still need to be able to extend into the safe area.) */
     if (deviceType_App() == tablet_AppDeviceType) {
         /* Hidden reading bars leave the sidebar extending to the bottom. */
         const iWidget *navBar = findChild_Widget(root_Widget(constAs_Widget(d)), "navbar");

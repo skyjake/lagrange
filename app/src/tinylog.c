@@ -397,11 +397,11 @@ static iBool isLocalScheme_(const iString *url) {
 }
 
 iString *excerpt_TinylogEntry(const iTinylogEntry *d) {
-    const size_t maxLen = 100;
-    iString     *text   = new_String();
-    iRangecc     line   = iNullRange;
+    const size_t maxLen  = 100;
+    iString     *text    = new_String();
+    iRangecc     line    = iNullRange;
     iRangecc     preText = iNullRange;
-    iBool        isPre  = iFalse;
+    iBool        isPre   = iFalse;
     while (nextSplit_Rangecc(d->content, "\n", &line)) {
         iRangecc t = line;
         trim_Rangecc(&t);

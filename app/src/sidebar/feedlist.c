@@ -49,7 +49,7 @@ static iBool isSubscribed_Bookmark_(void *context, const iBookmark *bm) {
 iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool    isMobile = (deviceType_App() != desktop_AppDeviceType);
     iBool          isEmpty  = iTrue;
-    const iString *docUrl = feedEntryUrl_DocumentWidget(document_App());
+    const iString *docUrl   = feedEntryUrl_DocumentWidget(document_App());
     iTime          now;
     iDate          on;
     initCurrent_Time(&now);
@@ -57,11 +57,11 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iDate today = on;
     iZap(on);
     const iPtrArray *feedEntries = listFeedEntries_SidebarWidget_(d);
-    iConstForEach(PtrArray, i,
-                  listVisibleEntries_Feeds(d->feedsMode == unread_FeedsMode, docUrl)) {
-        const iFeedEntry *entry = i.ptr;
-        const iBool isOpen   = equal_String(docUrl, &entry->url);
-        const iBool isUnread = isUnread_FeedEntry(entry);
+    iConstForEach(PtrArray, i, listVisibleEntries_Feeds(d->feedsMode == unread_FeedsMode, docUrl)) {
+        const iFeedEntry *entry     = i.ptr;
+        const iBool       isOpen    = equal_String(docUrl, &entry->url);
+        const iBool       isUnread  = isUnread_FeedEntry(entry);
+        const iBool       isTinylog = entry->isTinylog;
         isEmpty = iFalse;
         /* Insert date separators. */ {
             iDate entryDate;
@@ -86,9 +86,9 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 iRelease(sep);
             }
         }
-        iSidebarItem *item        = new_SidebarItem();
+        iSidebarItem *item              = new_SidebarItem();
         item->listItem.flags.isSelected = isOpen; /* currently being viewed */
-        item->indent              = isUnread;
+        item->indent                    = isUnread | (isTinylog << 1); /* `indent` used for flags */
         set_String(&item->url, &entry->url);
         set_String(&item->label, &entry->title);
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);

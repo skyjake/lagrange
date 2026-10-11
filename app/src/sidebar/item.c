@@ -161,7 +161,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 range_String(&d->meta));
         }
         else {
-            const iBool isUnread  = (d->indent != 0);
+            const iBool isUnread  = (d->indent & 1) != 0;
+            const iBool isTinylog = (d->indent & 2) != 0;
             const int   titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
             const int   h1        = lineHeight_Text(uiLabel_FontId);
             const int   h2        = lineHeight_Text(titleFont);
@@ -194,7 +195,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int labelFg = isSel      ? uiTextSelected_ColorId
                                 : isUnread ? uiTextStrong_ColorId
                                            : uiText_ColorId;
-            if (titleSize.x > avail && metaSize.x < avail * 0.75f) {
+            if (!isTinylog && titleSize.x > avail && metaSize.x < avail * 0.75f) {
                 /* Must wrap the title. */
                 pos.y += (itemHeight - h2 - h2) / 2;
                 draw_Text(uiLabel_FontId,

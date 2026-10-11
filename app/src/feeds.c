@@ -528,10 +528,15 @@ static void parseTinylog_FeedJob_(iFeedJob *d, const iString *src) {
             entry->discovered = now;
             sub_Time(&now, &perEntryAdjust);
             set_String(&entry->url, &logEntry->id); /* prefixed when the URI base is resolved */
-            entry->sourceRange = (iRangei){ headerSize + (int) (logEntry->range.start - sourceStart),
-                                            headerSize + (int) (logEntry->range.end - sourceStart) };
+            entry->sourceRange =
+                (iRangei) { headerSize + (int) (logEntry->range.start - sourceStart),
+                            headerSize + (int) (logEntry->range.end - sourceStart) };
+            iDate posted;
+            init_Date(&posted, &entry->posted);
+            format_String(&entry->title, "%s\x1b[1m%02d:%02d\x1b[0m ",
+                uiTextAction_ColorEscape, posted.hour, posted.minute);
             iString *excerpt = excerpt_TinylogEntry(logEntry);
-            set_String(&entry->title, excerpt);
+            append_String(&entry->title, excerpt);
             delete_String(excerpt);
             pushBack_PtrArray(&d->results, entry);
         }
