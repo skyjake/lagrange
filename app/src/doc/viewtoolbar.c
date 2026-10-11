@@ -188,11 +188,14 @@ void update_ViewToolbar(iViewToolbar *d) {
     const iPersistentDocumentState *state = state_DocumentWidget(doc);
     iLabelWidget                   *identButton  = findChild_Widget(w, "viewtools.ident");
     iLabelWidget                   *reloadButton = findChild_Widget(w, "viewtools.reload");
-    iWidget                        *infoButton  = findChild_Widget(w, "viewtools.info");
-    const iBool isBook  = gempub_DocumentWidget(doc) != NULL;
-    const iBool isLocal = isLocalFileScheme_Rangecc(urlScheme_String(url_DocumentWidget(doc)));
+    iWidget                        *infoButton   = findChild_Widget(w, "viewtools.info");
+
+    const iBool isBook   = gempub_DocumentWidget(doc) != NULL;
+    const iBool isReader = isReader_DocumentWidget(doc);
+    const iBool isLocal  = isLocalFileScheme_Rangecc(urlScheme_String(url_DocumentWidget(doc)));
+
     setFlags_Widget(as_Widget(identButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal);
-    setFlags_Widget(as_Widget(reloadButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook);
+    setFlags_Widget(as_Widget(reloadButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook ||isReader);
     setFlags_Widget(findChild_Widget(w, "viewtools.sitespec"), hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     setFlags_Widget(infoButton, hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     /* A book's information is in the sidebar. */
