@@ -1909,7 +1909,7 @@ static float fadeTarget_Widget_(const iWidget *d) {
 
 static float fadeAreaFactor_Widget_(const iWidget *d) {
     /* A sheet sliding in or out fades the background according to its visible area. */
-    if (~d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag) ||
+    if (!(d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) ||
         (d->flags2 & fadeHandedOver_WidgetFlag2 && ~d->flags & destroyPending_WidgetFlag)) {
         return 1.0f;
     }
