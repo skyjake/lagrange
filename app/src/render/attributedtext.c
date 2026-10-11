@@ -286,7 +286,10 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                             run.attrib.italic = iFalse;
                             run.attrib.monospace = iFalse;
                             attribFont = run.font = d->baseFont;
-                            setFgColor_AttributedRun_(&run, d->baseFgColorId);
+                            setFgColor_AttributedRun_(&run,
+                                                      d->baseFgColorId != none_ColorId
+                                                          ? d->baseFgColorId
+                                                          : d->fgColorId);
                             setBgColor_AttributedRun_(&run, none_ColorId);
                         }
                         else {
