@@ -595,6 +595,10 @@ static int cmpNewestFirst_EntryOrder_(const void *a, const void *b) {
     return iCmp(x->index, y->index);
 }
 
+static int cmpIndex_(const void *a, const void *b) {
+    return iCmp(*(const size_t *) a, *(const size_t *) b);
+}
+
 iString *truncated_Tinylog(const iString *source, size_t maxSize) {
     /* The newest entries that fit are kept, in source order. */
     if (size_String(source) <= maxSize) {
@@ -602,42 +606,43 @@ iString *truncated_Tinylog(const iString *source, size_t maxSize) {
     }
     iTinylog *log = new_Tinylog();
     parse_Tinylog(log, source, NULL);
-    const size_t count = size_Array(&log->entries);
-    if (count == 0) {
+    if (isEmpty_Array(&log->entries)) {
         delete_Tinylog(log);
         return copy_String(source);
     }
-    const char        *start   = constBegin_String(&log->source);
+    const char          *start = constBegin_String(&log->source);
     const iTinylogEntry *first = constAt_Array(&log->entries, 0);
-    iEntryOrder *order = malloc(sizeof(iEntryOrder) * count);
-    iBool       *keep  = calloc(count, sizeof(iBool));
-    for (size_t i = 0; i < count; i++) {
-        const iTinylogEntry *entry = constAt_Array(&log->entries, i);
-        order[i] = (iEntryOrder){ entry->stamp.utc.ts.tv_sec, i };
+    iArray order;
+    init_Array(&order, sizeof(iEntryOrder));
+    iConstForEach(Array, i, &log->entries) {
+        const iTinylogEntry *entry = i.value;
+        pushBack_Array(&order,
+                       &(iEntryOrder){ entry->stamp.utc.ts.tv_sec, index_ArrayConstIterator(&i) });
     }
-    qsort(order, count, sizeof(iEntryOrder), cmpNewestFirst_EntryOrder_);
+    sort_Array(&order, cmpNewestFirst_EntryOrder_);
+    iSortedArray kept;
+    init_SortedArray(&kept, sizeof(size_t), cmpIndex_);
     size_t used = first->range.start - start; /* header */
-    for (size_t i = 0; i < count; i++) {
-        const iTinylogEntry *entry = constAt_Array(&log->entries, order[i].index);
+    iConstForEach(Array, j, &order) {
+        const iEntryOrder   *ord   = j.value;
+        const iTinylogEntry *entry = constAt_Array(&log->entries, ord->index);
         const size_t         size  = size_Range(&entry->range);
-        if (i > 0 && used + size > maxSize) {
+        if (!isEmpty_SortedArray(&kept) && used + size > maxSize) {
             break; /* at least the newest entry is kept */
         }
-        keep[order[i].index] = iTrue;
+        insert_SortedArray(&kept, &ord->index);
         used += size;
     }
     iString *result = newRange_String((iRangecc){ start, first->range.start });
-    for (size_t i = 0; i < count; i++) {
-        if (keep[i]) {
-            const iTinylogEntry *entry = constAt_Array(&log->entries, i);
-            if (!isEmpty_String(result) && !endsWith_String(result, "\n")) {
-                appendCStr_String(result, "\n");
-            }
-            appendRange_String(result, entry->range);
+    iConstForEach(Array, k, &kept.values) {
+        const iTinylogEntry *entry = constAt_Array(&log->entries, *(const size_t *) k.value);
+        if (!isEmpty_String(result) && !endsWith_String(result, "\n")) {
+            appendCStr_String(result, "\n");
         }
+        appendRange_String(result, entry->range);
     }
-    free(keep);
-    free(order);
+    deinit_SortedArray(&kept);
+    deinit_Array(&order);
     delete_Tinylog(log);
     return result;
 }
