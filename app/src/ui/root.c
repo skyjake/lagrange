@@ -964,12 +964,12 @@ static uint32_t updateReloadAnimation_Root_(void *root, SDL_TimerID timerID, uin
 
 static void setReloadLabel_Root_(iRoot *d, const iDocumentWidget *doc) {
     const iBool   isOngoing = isRequestOngoing_DocumentWidget(doc);
-    const iBool   isAuto    = isAutoReloading_DocumentWidget(doc) && !isOngoing;
+    //const iBool   isAuto    = isAutoReloading_DocumentWidget(doc) && !isOngoing;
     iLabelWidget *label     = findChild_Widget(d->widget, "reload");
     updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_Root_(d) : reloadCStr_);
-    setBackgroundColor_Widget(as_Widget(label), isAuto ? uiBackground_ColorId : none_ColorId);
-    setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);
-    setOutline_LabelWidget(label, isAuto);
+    setBackgroundColor_Widget(as_Widget(label), /*isAuto ? uiBackground_ColorId :*/ none_ColorId);
+    setTextColor_LabelWidget(label, /*isAuto ? uiTextAction_ColorId :*/ uiText_ColorId);
+    //setOutline_LabelWidget(label, isAuto);
     if (isTerminal_Platform()) {
         showCollapsed_Widget(as_Widget(label), isOngoing);
     }
