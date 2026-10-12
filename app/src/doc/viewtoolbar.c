@@ -190,11 +190,13 @@ void update_ViewToolbar(iViewToolbar *d) {
     iLabelWidget                   *reloadButton = findChild_Widget(w, "viewtools.reload");
     iWidget                        *infoButton   = findChild_Widget(w, "viewtools.info");
 
-    const iBool isBook   = gempub_DocumentWidget(doc) != NULL;
-    const iBool isReader = isReader_DocumentWidget(doc);
-    const iBool isLocal  = isLocalFileScheme_Rangecc(urlScheme_String(url_DocumentWidget(doc)));
+    const iRangecc scheme   = urlScheme_String(url_DocumentWidget(doc));
+    const iBool    isBook   = gempub_DocumentWidget(doc) != NULL;
+    const iBool    isReader = isReader_DocumentWidget(doc);
+    const iBool    isLocal  = isLocalFileScheme_Rangecc(scheme);
+    const iBool    isTls    = isTlsScheme_Rangecc(scheme);
 
-    setFlags_Widget(as_Widget(identButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal);
+    setFlags_Widget(as_Widget(identButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal || !isTls);
     setFlags_Widget(as_Widget(reloadButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook ||isReader);
     setFlags_Widget(findChild_Widget(w, "viewtools.sitespec"), hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     setFlags_Widget(infoButton, hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
