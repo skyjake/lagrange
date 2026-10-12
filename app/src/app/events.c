@@ -865,6 +865,9 @@ void refresh_App(void) {
                     draw_MainWindow(as_MainWindow(win));
 //                    printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
 //                    fflush(stdout);
+#if defined (iPlatformAppleMobile)
+                    updateStatusBarTapper_iOS(); /* sidebars may have changed */
+#endif
                     break;
                 }
                 default:

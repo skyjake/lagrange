@@ -571,7 +571,10 @@ float displayScale_iOS(const iWindow *window) {
     return uiWindow_(window).screen.nativeScale;
 }
 
-static void updateStatusBarTapper_(void) {
+void updateStatusBarTapper_iOS(void) {
+    if (!statusBarTapper_) {
+        return;
+    }
     UIView *view = [viewController_(get_Window()) view];
     CGRect frame = CGRectZero;
     if (@available(iOS 13.0, *)) {
@@ -583,10 +586,28 @@ static void updateStatusBarTapper_(void) {
     /* Never cover the app's own UI below the safe area. */
     frame = CGRectIntersection(frame, CGRectMake(0, 0, view.bounds.size.width,
                                                  view.safeAreaInsets.top));
+    /* Only cover the document area, excluding open sidebars. */ {
+        const iMainWindow *mw   = get_MainWindow();
+        iRoot             *root = mw ? mw->base.keyRoot : NULL;
+        if (!root && mw) {
+            root = mw->base.roots[0];
+        }
+        const iWidget *doc =
+            root && root->bars.docTabs ? constAs_Widget(document_Root(root)) : NULL;
+        if (doc) {
+            const iRect bounds = bounds_Widget(doc);
+            const float ratio  = mw->base.pixelRatio;
+            frame = CGRectIntersection(frame, CGRectMake(left_Rect(bounds) / ratio, 0,
+                                                         width_Rect(bounds) / ratio,
+                                                         view.bounds.size.height));
+        }
+    }
     if (CGRectIsEmpty(frame)) {
         frame = CGRectZero;
     }
-    [statusBarTapper_ setFrame:frame];
+    if (!CGRectEqualToRect(frame, statusBarTapper_.frame)) {
+        [statusBarTapper_ setFrame:frame];
+    }
     [statusBarTapper_ setHidden:CGRectIsEmpty(frame)];
 }
 
@@ -616,7 +637,7 @@ void setupWindow_iOS(iWindow *window) {
         [statusBarTapper_ setScrollsToTop:YES];
         [statusBarTapper_ setDelegate:appState_];
         [ctl.view addSubview:statusBarTapper_];
-        updateStatusBarTapper_();
+        updateStatusBarTapper_iOS();
         SDL_AddEventWatch(watchFingers_, NULL);
     }
 }
@@ -675,7 +696,7 @@ iBool processEvent_iOS(const SDL_Event *ev) {
     if (ev->type == SDL_EVENT_DISPLAY_ORIENTATION ||
         ev->type == SDL_EVENT_WINDOW_RESIZED ||
         ev->type == SDL_EVENT_WINDOW_SAFE_AREA_CHANGED) {
-        updateStatusBarTapper_();
+        updateStatusBarTapper_iOS();
         return iFalse;
     }
     if (ev->type == SDL_EVENT_WINDOW_RESTORED) {
@@ -704,7 +725,7 @@ iBool processEvent_iOS(const SDL_Event *ev) {
                 dlg = [UIApplication sharedApplication].delegate;
             }
             callVoidMethod(dlg, @"hideLaunchScreen");
-            updateStatusBarTapper_();
+            updateStatusBarTapper_iOS();
             /* When the application is launching, it is too early to post a SDL_EVENT_DROP_FILE
                event. The customized SDL application delegate saves the launch URL, so
                we can use it now to */

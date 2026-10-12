@@ -46,6 +46,7 @@ void    endBackgroundTask_iOS   (void);
 iBool   isPhone_iOS             (void);
 int     displayRefreshRate_iOS  (void);
 float   displayScale_iOS        (const iWindow *window);
+void    updateStatusBarTapper_iOS(void);
 
 /*----------------------------------------------------------------------------------------------*/
 
