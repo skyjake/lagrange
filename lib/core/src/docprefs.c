@@ -83,7 +83,7 @@ static const iDocPrefsSpec specs_[] = {
       reparse_DocPrefsSpecFlag },
     { I_(tabWidth), layout_DocPrefsGroup, "tabWidth", "prefs.tabwidth", "tabwidth.set",
       reparse_DocPrefsSpecFlag }, /* spaces need renormalizing */
-    { B_(justifyParagraph), style_DocPrefsGroup, "justifyParagraph", "prefs.justify", NULL,
+    { I_(justify), style_DocPrefsGroup, "justify", "prefs.justify", "justify.set",
       relayout_DocPrefsSpecFlag },
     { B_(bigFirstParagraph), style_DocPrefsGroup, "bigFirstParagraph", "prefs.biglede", NULL,
       relayout_DocPrefsSpecFlag },
@@ -385,6 +385,9 @@ iBool setInt_DocPrefs(iDocPrefs *d, enum iDocPrefsInt id, int value) {
         case collapsePre_DocPrefsInt:
             value = iClamp(value, never_Collapse, always_Collapse);
             break;
+        case justify_DocPrefsInt:
+            value = iClamp(value, never_Justify, always_Justify);
+            break;
         case docThemeDark_DocPrefsInt:
         case docThemeLight_DocPrefsInt:
             value = iClamp(value, 0, max_GmDocumentTheme - 1);
@@ -459,7 +462,7 @@ const iDocPrefs *defaults_DocPrefs(void) {
         d->lineWidth.value = deviceType_App() == phone_AppDeviceType ? 1000 /* fill */ : 38;
         d->lineSpacing.value        = 1.0f;
         d->tabWidth.value           = 8;
-        d->justifyParagraph.value   = iFalse;
+        d->justify.value            = pagesOnly_Justify;
         d->bigFirstParagraph.value  = iTrue;
         d->plainTextWrap.value      = iTrue;
         d->expandToLongLines.value  = iTrue;
@@ -1228,7 +1231,6 @@ void init_ScopeRules(const char *saveDir) {
     d->loadMethod = all_ImportMethod;
     addBuiltIn_ScopeRules_(d, "gopher", monospaceDocument_DocPrefsBool, iTrue);
     addBuiltIn_ScopeRules_(d, "gempub", pageView_DocPrefsBool, iTrue);
-    addBuiltIn_ScopeRules_(d, "gempub", justifyParagraph_DocPrefsBool, iTrue);
     /* A missing file counts as empty. Custom rules affect what the others inherit. */
     loadFile_ScopeRules_(d, custom_ScopeRuleKind, customFileName_ScopeRules_);
     loadFile_ScopeRules_(d, base_ScopeRuleKind, baseFileName_ScopeRules_);

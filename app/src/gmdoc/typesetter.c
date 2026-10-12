@@ -804,7 +804,7 @@ static void init_Typesetter_(iTypesetter *d, iGmDocument *doc) {
     d->isGopher      = isGopher_GmDocument_(doc);
     d->isPaged       = isPaged_GmDocument(doc);
     d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
-    d->isJustified   = d->prefs->justifyParagraph.value;
+    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
     d->outsideMargin = outsideMargin_GmDocument_(doc);
     init_String(&d->firstContentLine);
 }

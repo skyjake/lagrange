@@ -502,7 +502,7 @@ Paragraph layout options:
 * Line width: This setting determines the maximum width for text lines. "Fill" disables the maximum limit and fits text lines to the full width of the window. (Shorter lines are generally easier to read.)
 * Line spacing: Adjust spacing between text lines. A value of 1.1 would add 10% more space, while 2.0 would mean there is a full-height empty line between all text lines. For the best results, keep this pretty close to 1.0. (Values smaller than 1.0 may lead to visual artifacts as lines become overlapped.)
 * Tab width: Number of spaces to use for tab stops.
-* Justify: Paragraphs are justified when they at least three lines long. Spaces on each line are expanded to equalize line widths.
+* Justify: Paragraphs are justified when they at least three lines long. Spaces on each line are expanded to equalize line widths. "Pages Only" applies justification only in paginated views, while scrolling views remain unjustified.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font. (The leading paragraph is autodetected by Lagrange, so it is not guaranteed to always be appropriately chosen.)
 
 Other layout options:

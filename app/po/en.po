@@ -2759,6 +2759,15 @@ msgstr "Big 1st paragaph:"
 msgid "prefs.justify"
 msgstr "Justify:"
 
+msgid "justify.never"
+msgstr "Never"
+
+msgid "justify.pagesonly"
+msgstr "Pages Only"
+
+msgid "justify.always"
+msgstr "Always"
+
 msgid "prefs.plaintext.wrap"
 msgstr "Wrap long plaintext lines:"
 

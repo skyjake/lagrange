@@ -197,6 +197,17 @@ static const iMenuItem *collapseItems_(void) {
     return constData_Array(items);
 }
 
+static const iMenuItem *justifyItems_(void) {
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBackN_Array(items, (iMenuItem[]){
+        { "${justify.never}", 0, 0, format_CStr("justify.set arg:%d", never_Justify) },
+        { "${justify.pagesonly}", 0, 0, format_CStr("justify.set arg:%d", pagesOnly_Justify) },
+        { "${justify.always}", 0, 0, format_CStr("justify.set arg:%d", always_Justify) },
+        { NULL }
+    }, 4);
+    return constData_Array(items);
+}
+
 static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
     static const struct {
         const char *label;
@@ -280,7 +291,7 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             break;
         case style_DocPrefsGroup:
 #if defined (LAGRANGE_ENABLE_HARFBUZZ) || defined (LAGRANGE_ENABLE_CORETEXT)
-            add_("toggle id:prefs.justify except:finger");
+            add_("dropdown id:prefs.justify except:finger", 0, 0, menu_(justifyItems_()));
 #endif
             add_("toggle id:prefs.biglede except:finger");
             add_("padding id:prefs.pad.quoteicon except:finger");
@@ -542,6 +553,8 @@ static void applyValues_(iWidget *dlg, const iDocPrefs *prefs) {
     setValue_SliderWidget(findChild_Widget(dlg, "prefs.tabwidth"), prefs->tabWidth.value);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.collapsepre"),
                                         format_CStr(" arg:%d", prefs->collapsePre.value));
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.justify"),
+                                        format_CStr(" arg:%d", prefs->justify.value));
     for (int i = 0; i < 2; i++) {
         setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", i)),
                         selected_WidgetFlag,

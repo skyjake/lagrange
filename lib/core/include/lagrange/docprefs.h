@@ -44,6 +44,12 @@ enum iCollapse {
     always_Collapse,
 };
 
+enum iJustify {
+    never_Justify,
+    pagesOnly_Justify,
+    always_Justify,
+};
+
 /* Note: Group IDs are part of the file format. */
 enum iDocPrefsGroup {
     none_DocPrefsGroup, /* ungrouped fields follow `isDefined` */
@@ -67,7 +73,6 @@ enum iDocPrefsBool {
     /* Typography */
     monospaceDocument_DocPrefsBool,
     /* Layout */
-    justifyParagraph_DocPrefsBool,
     bigFirstParagraph_DocPrefsBool,
     plainTextWrap_DocPrefsBool,
     expandToLongLines_DocPrefsBool,
@@ -91,6 +96,8 @@ enum iDocPrefsInt {
     lineWidth_DocPrefsInt,
     tabWidth_DocPrefsInt,
     collapsePre_DocPrefsInt, /* enum iCollapse */
+    /* Style */
+    justify_DocPrefsInt, /* enum iJustify */
     /* Theme */
     docThemeDark_DocPrefsInt,  /* enum iGmDocumentTheme */
     docThemeLight_DocPrefsInt, /* enum iGmDocumentTheme */
@@ -128,7 +135,6 @@ struct Impl_DocPrefs {
         iOptBool bools[max_DocPrefsBool];
         struct {
             iOptBool monospaceDocument;
-            iOptBool justifyParagraph;
             iOptBool bigFirstParagraph;
             iOptBool plainTextWrap;
             iOptBool expandToLongLines;
@@ -150,6 +156,7 @@ struct Impl_DocPrefs {
             iOptInt lineWidth;
             iOptInt tabWidth;
             iOptInt collapsePre;
+            iOptInt justify;
             iOptInt docThemeDark;
             iOptInt docThemeLight;
             iOptInt pageThemeDark;
@@ -196,6 +203,11 @@ iLocalDef enum iGmDocumentTheme docTheme_DocPrefs(const iDocPrefs *d, iBool isDa
         }
     }
     return isDark ? d->docThemeDark.value : d->docThemeLight.value;
+}
+
+iLocalDef iBool isJustified_DocPrefs(const iDocPrefs *d, iBool isPaged) {
+    return d->justify.value == always_Justify ||
+           (d->justify.value == pagesOnly_Justify && isPaged);
 }
 
 /*----------------------------------------------------------------------------------------------*/

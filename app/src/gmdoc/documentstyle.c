@@ -122,7 +122,7 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
                                   i == quote_GmLineType || i == link_GmLineType);
         if (isVeryNarrow || d->isFullWidthImages) {
             d->rightMargins[i] =
-                !isExtremelyNarrow && prefs->justifyParagraph.value && isTextType ? 1 : 0;
+                !isExtremelyNarrow && isJustified_DocPrefs(prefs, isPaged) && isTextType ? 1 : 0;
         }
         else {
             d->rightMargins[i] = isTextType ? 4 : 0;

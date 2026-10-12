@@ -372,6 +372,12 @@ static iBool handleDocPrefsCommand_App_(const char *cmd) {
         }
         wasHandled = iFalse; /* may also set the UI font */
     }
+    else if (equal_Command(cmd, "prefs.justify.changed")) {
+        /* v1 toggle; off is covered by the default. */
+        if (arg_Command(cmd)) {
+            wasChanged = setInt_ScopeRules(scope, justify_DocPrefsInt, always_Justify);
+        }
+    }
     else if (equal_Command(cmd, "ansiescape")) {
         wasChanged = setInt_ScopeRules(scope, ansiEscapes_DocPrefsInt, arg_Command(cmd));
     }
