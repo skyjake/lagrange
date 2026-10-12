@@ -121,7 +121,7 @@ static void updateMetrics_SliderWidget_(iSliderWidget *d) {
     iWidget  *w    = as_Widget(d);
     const int padX = isTerminal_Platform() ? 1 : isMobile_Platform() ? 4 * gap_UI : 3 * gap_UI;
     const int padY = isTerminal_Platform() ? 0
-                     : isMobile_Platform() ? 3 * gap_UI / 2
+                     : isMobile_Platform() ? (int) (gap_UI * 1.0f)
                                            : (int) (gap_UI * aspect_UI);
     /* Steps next to the ends are measured as well, in case the ends have custom labels. */
     const int ends[] = { 0, iMin(1, d->numSteps), iMax(0, d->numSteps - 1), d->numSteps };
