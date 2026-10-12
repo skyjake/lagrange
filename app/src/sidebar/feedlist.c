@@ -80,6 +80,11 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                     appendCStr_String(text, " \u2014 ");
                     appendCStr_String(text, cstr_Lang("feeds.today"));
                 }
+                else if (elapsedSeconds_Time(&entry->posted) < 6 * 24 * 3600) {
+                    iString *weekday = format_Date(&entryDate, " \u2014 %A");
+                    append_String(text, weekday);
+                    delete_String(weekday);
+                }
                 set_String(&sep->meta, text);
                 delete_String(text);
                 addItem_ListWidget(d->list, sep);
