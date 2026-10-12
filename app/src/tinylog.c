@@ -297,8 +297,11 @@ void parse_Tinylog(iTinylog *d, const iString *source, const iString *feedUrl) {
         }
         if (isEmpty_Array(&d->entries)) {
             /* Header section. */
-            const iRangecc author = metadataValue_(trimmed, "author:");
+            iRangecc       author = metadataValue_(trimmed, "author:");
             const iRangecc avatar = metadataValue_(trimmed, "avatar:");
+            while (author.end > author.start && author.end[-1] == '/') {
+                author.end--;
+            }
             if (isEmpty_String(&d->title) && isHeading1_(trimmed)) {
                 iRangecc title = { trimmed.start + 1, trimmed.end };
                 trim_Rangecc(&title);
