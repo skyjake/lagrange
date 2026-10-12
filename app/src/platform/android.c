@@ -521,7 +521,7 @@ void blockWhileAppInBackground_Android(void) {
         while (isAppInBackground_Android() && numActiveSDLAudio_Player() == 0 &&
                !saveRequested_ && !value_Atomic(&isAppDestroyed_)) {
             iTime timeout;
-            initSeconds_Time(&timeout, 1.0);
+            initTimeout_Time(&timeout, 1.0);
             waitTimeout_Condition(&blockCond_, &blockMutex_, &timeout);
         }
     );
