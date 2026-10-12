@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/documentwidget.h"
 #include "ui/labelwidget.h"
 #include "ui/menu.h"
+#include "ui/mobile.h"
 #include "ui/root.h"
 #include "ui/scrollwidget.h"
 #include "ui/sidebarwidget.h"
@@ -58,6 +59,7 @@ void init_ViewToolbar(iViewToolbar *d) {
     d->fullWidth      = 0;
     d->headerArea     = zero_Rect();
     d->shownBarsEdge  = 0;
+    d->nativeMenuRect = zero_Rect();
 }
 
 static void animate_ViewToolbar_(void *ptr) {
@@ -232,8 +234,11 @@ void update_ViewToolbar(iViewToolbar *d) {
         const iDocumentView *view   = view_DocumentWidget(doc);
         const iBool isPagedByPrefs  = docPrefs_GmDocument(view->doc)->pageView.value != state->invertPageView;
         updateTextCStr_LabelWidget(button, isPagedByPrefs ? upDownArrow_Icon : book_Icon);
+        const iBool isAllowed = isPageViewAllowed_DocumentView(view);
         setFlags_Widget(button, selected_WidgetFlag, state->invertPageView);
-        setFlags_Widget(button, disabled_WidgetFlag, !isPageViewAllowed_DocumentView(view));
+        setFlags_Widget(button, disabled_WidgetFlag, !isAllowed);
+        /* Error pages and other UI content. */
+        setFlags_Widget(button, hidden_WidgetFlag | collapse_WidgetFlag, !isAllowed && !isBook);
     }
     arrange_Widget(w);
     d->fullWidth = width_Widget(w);
@@ -290,10 +295,30 @@ static iBool isActive_ViewToolbar_(const iViewToolbar *d) {
     return iFalse;
 }
 
+static iBool isCovered_ViewToolbar_(const iViewToolbar *d) {
+    if (isPortraitPhone_App() &&
+        isVisible_Widget(findChild_Widget(d->widget->root->widget, "sidebar"))) {
+        return iTrue;
+    }
+    const iWidget *footer = footerButtons_DocumentWidget(d->owner);
+    if (footer && isVisible_Widget(footer)) {
+        const iRect bounds = bounds_Widget(d->widget);
+        iConstForEach(ObjectList, i, footer->children) {
+            if (isVisible_Widget(i.object) && isOverlapping_Rect(bounds, bounds_Widget(i.object))) {
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
+}
+
 static void updateOpacity_ViewToolbar_(iViewToolbar *d) {
     const iRoot *root   = d->widget->root;
     float        target = 1.0f;
-    if (isReadingMode_Root(root)) {
+    if (isCovered_ViewToolbar_(d)) {
+        target = 0.0f;
+    }
+    else if (isReadingMode_Root(root)) {
         if (root->areReadingBarsHidden && !isHovered_ViewToolbar_(d)) {
             target = 0.0f; /* hidden along with the bars while reading pages */
         }
@@ -307,11 +332,28 @@ static void updateOpacity_ViewToolbar_(iViewToolbar *d) {
                       d->wasAvailable && prefs_App()->uiAnimations ? fadeSpan_ViewToolbar_ : 0);
         animate_ViewToolbar_(d);
     }
+    setFlags_Widget(d->widget, disabled_WidgetFlag, target <= 0.0f); /* also while fading out */
+}
+
+static void updateNativeMenu_ViewToolbar_(iViewToolbar *d) {
+    /* The native menu button is on top of everything, so it must follow the toolbar. */
+    iWidget *ident = findChild_Widget(d->widget, "viewtools.ident");
+    iWidget *menu  = findChild_Widget(ident, "menu");
+    if (!menu || ~flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        return;
+    }
+    const iRect rect =
+        isVisible_Widget(ident) && !isDisabled_Widget(ident) ? bounds_Widget(ident) : zero_Rect();
+    if (!equal_Rect(rect, d->nativeMenuRect)) {
+        d->nativeMenuRect = rect;
+        updateAfterBoundsChange_SystemMenu(menu);
+    }
 }
 
 void updateHover_ViewToolbar(iViewToolbar *d) {
     if (d->widget && d->wasAvailable) {
         updateOpacity_ViewToolbar_(d);
+        updateNativeMenu_ViewToolbar_(d);
     }
 }
 
@@ -353,6 +395,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     if (!isAvailable_ViewToolbar_(d)) {
         setFlags_Widget(w, hidden_WidgetFlag, iTrue);
         d->wasAvailable = iFalse;
+        updateNativeMenu_ViewToolbar_(d);
         return;
     }
     const iWidget       *owner    = constAs_Widget(d->owner);
@@ -405,4 +448,5 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     setFlags_Widget(w, hidden_WidgetFlag, value_Anim(&d->opacity) <= 0.0f);
     setOpacity_Widget(w, value_Anim(&d->opacity));
     d->wasAvailable = iTrue;
+    updateNativeMenu_ViewToolbar_(d);
 }

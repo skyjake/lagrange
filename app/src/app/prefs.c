@@ -666,6 +666,11 @@ void prefsBoolValueChanged_App_(iApp *d, enum iPrefsBool id, iBool isFrozen) {
                 showToolbar_Root(get_Root(), iTrue);
             }
             break;
+        case hideViewTools_PrefsBool:
+            if (!isFrozen) {
+                updateToolbarColors_Root(get_Root()); /* identity button */
+            }
+            break;
         case simpleChars_PrefsBool:
 #if defined (iPlatformTerminal)
             SDL_SetHint(SDL_HINT_VIDEO_CURSES_SIMPLE_CHARACTERS, d->prefs.simpleChars ? "1" : "0");

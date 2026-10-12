@@ -42,6 +42,7 @@ struct Impl_ViewToolbar {
     int              fullWidth;      /* with labels */
     iRect            headerArea;     /* hovering reveals the toolbar */
     int              shownBarsEdge;  /* phone's bottom bars when settled while shown; 0 if unknown */
+    iRect            nativeMenuRect; /* identity button as given to the native menu; zero if unusable */
 };
 
 void    setOwner_ViewToolbar    (iViewToolbar *, iDocumentWidget *owner);

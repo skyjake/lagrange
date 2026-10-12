@@ -887,6 +887,8 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName   = findWidget_App("toolbar.name");
     if (toolName) {
+        /* The view toolbar shows the name instead. */
+        const iString *shownName = prefs_App()->hideViewTools ? subjectName : NULL;
         setOutline_LabelWidget(toolButton, ident == NULL || isIdentityPinned_DocumentWidget(doc));
         if (ident) {
             setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
@@ -897,19 +899,19 @@ static void updateNavBarIdentity_(iWidget *navBar) {
                 toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
         }
         /* Fit the name in the widget. */
-        if (subjectName) {
+        if (shownName) {
             const char *endPos;
             tryAdvanceNoWrap_Text(
-                uiLabelTiny_FontId, range_String(subjectName), width_Widget(toolName), &endPos);
+                uiLabelTiny_FontId, range_String(shownName), width_Widget(toolName), &endPos);
             updateText_LabelWidget(
                 toolName,
-                collectNewRange_String((iRangecc){ constBegin_String(subjectName), endPos }));
+                collectNewRange_String((iRangecc){ constBegin_String(shownName), endPos }));
         }
         else {
             updateTextCStr_LabelWidget(toolName, "");
         }
-        setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
-        setTextOffset_LabelWidget(toolButton, init_I2(0, subjectName ? -1.5f * gap_UI : 0));
+        setFont_LabelWidget(toolButton, shownName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
+        setTextOffset_LabelWidget(toolButton, init_I2(0, shownName ? -1.5f * gap_UI : 0));
         arrange_Widget(parent_Widget(toolButton));
 #if defined (iPlatformAppleMobile)
         iRelease(findChild_Widget(as_Widget(toolButton), "menu"));
