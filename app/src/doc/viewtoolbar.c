@@ -337,6 +337,9 @@ static void updateOpacity_ViewToolbar_(iViewToolbar *d) {
 
 static void updateNativeMenu_ViewToolbar_(iViewToolbar *d) {
     /* The native menu button is on top of everything, so it must follow the toolbar. */
+    if (!isSupported_SystemMenu()) {
+        return;
+    }
     iWidget *ident = findChild_Widget(d->widget, "viewtools.ident");
     iWidget *menu  = findChild_Widget(ident, "menu");
     if (!menu || ~flags_Widget(menu) & nativeMenu_WidgetFlag) {
