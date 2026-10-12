@@ -560,7 +560,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int statusFg = isSel ? uiTextSelected_ColorId : uiTextAction_ColorId;
             fillRect_Paint(p, metaIconRect, bg);
             if (d->id & 4) {
-                drawOutline_Text(font, metaIconPos, statusFg, bg, range_CStr(reload_Icon));
+                draw_Text(font, metaIconPos, statusFg, timer_Icon);
             }
             else {
                 drawRange_Text(

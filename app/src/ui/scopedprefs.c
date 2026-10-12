@@ -144,7 +144,7 @@ static const iMenuItem protocolItems_[] = {
     { "Spartan", 0, 0, "prefs.scope.set scope:scheme:spartan" },
     { "Gopher", 0, 0, "prefs.scope.set scope:scheme:gopher" },
     { "Finger", 0, 0, "prefs.scope.set scope:scheme:finger" },
-    { "GemPub", 0, 0, "prefs.scope.set scope:scheme:gempub" },
+    { "Gempub", 0, 0, "prefs.scope.set scope:scheme:gempub" },
     { NULL }
 };
 
