@@ -516,7 +516,20 @@ iBool turnPage_DocumentView(iDocumentView *d, int dir) {
 
 int pageTurnZone_DocumentView(const iDocumentView *d, iInt2 windowPos) {
     const iRect viewport = pageViewport_DocumentView(d);
-    if (!contains_Rect(viewport, windowPos)) {
+    iRect       tapRect  = viewport;
+    if (isMobile_Platform()) {
+        /* Side safe areas next to the page can be tapped, too. */
+        const iRoot *root = constAs_Widget(d->owner)->root;
+        const iRect  full = rect_Root(root);
+        const iRect  safe = safeRect_Root(root);
+        if (left_Rect(viewport) <= left_Rect(safe)) {
+            adjustEdges_Rect(&tapRect, 0, 0, 0, left_Rect(full) - left_Rect(tapRect));
+        }
+        if (right_Rect(viewport) >= right_Rect(safe)) {
+            adjustEdges_Rect(&tapRect, 0, right_Rect(full) - right_Rect(tapRect), 0, 0);
+        }
+    }
+    if (!contains_Rect(tapRect, windowPos)) {
         return 0;
     }
     /* The margins may be too narrow for tapping. */

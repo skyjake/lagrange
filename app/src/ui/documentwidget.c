@@ -3188,6 +3188,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (isBannerVisible_DocumentWidget_(d) && processEvent_Banner(d->banner, ev)) {
         return iTrue;
     }
+    if (isMobile_Platform() && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+        ev->button.button == SDL_BUTTON_LEFT && !d->click.isActive &&
+        isPaged_DocumentView(d->view) && !contains_Widget(w, mouseCoord_SDLEvent(ev))) {
+        /* Tapped over a side safe area, outside the widget. */
+        const int zone = pageTurnZone_DocumentView(d->view, mouseCoord_SDLEvent(ev));
+        if (zone) {
+            turnPage_DocumentView(d->view, zone);
+            return iTrue;
+        }
+    }
     /* The left mouse button. */
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
