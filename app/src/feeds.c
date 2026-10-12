@@ -531,14 +531,8 @@ static void parseTinylog_FeedJob_(iFeedJob *d, const iString *src) {
             entry->sourceRange =
                 (iRangei) { headerSize + (int) (logEntry->range.start - sourceStart),
                             headerSize + (int) (logEntry->range.end - sourceStart) };
-            iDate posted;
-            init_Date(&posted, &entry->posted);
-            format_String(&entry->title,
-                          uiTextAction_ColorEscape "\x1b[1m%02d:%02d\x1b[0m ",
-                          posted.hour,
-                          posted.minute);
             iString *excerpt = excerpt_TinylogEntry(logEntry);
-            append_String(&entry->title, excerpt);
+            set_String(&entry->title, excerpt);
             delete_String(excerpt);
             pushBack_PtrArray(&d->results, entry);
         }

@@ -90,7 +90,15 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         item->listItem.flags.isSelected = isOpen; /* currently being viewed */
         item->indent                    = isUnread | (isTinylog << 1); /* `indent` used for flags */
         set_String(&item->url, &entry->url);
-        set_String(&item->label, &entry->title);
+        if (isTinylog) {
+            iDate posted;
+            init_Date(&posted, &entry->posted);
+            format_String(&item->label,
+                          uiTextAction_ColorEscape "\x1b[1m%02d:%02d\x1b[0m  ",
+                          posted.hour,
+                          posted.minute);
+        }
+        append_String(&item->label, &entry->title);
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
         if (bm) {
             item->id   = entry->bookmarkId;
