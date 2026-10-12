@@ -142,7 +142,7 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
     iWidget *w = d->widget = new_Widget();
     setId_Widget(w, "viewtools");
     setFlags_Widget(w, hidden_WidgetFlag | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    w->flags2 |= roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2;
+    w->flags2 |= roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2 | yieldSwipeToParent_WidgetFlag2;
     setBackgroundColor_Widget(w, uiBackgroundSidebar_ColorId);
     setFrameColor_Widget(w, uiSeparator_ColorId);
     const float hPad = 1.75f * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);

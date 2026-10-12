@@ -160,6 +160,8 @@ enum iWidgetFlag2 {
                                                            animation (needs a draw buffer) */
     fadeHandedOver_WidgetFlag2              = iBit(23), /* background fade continues from a
                                                            dismissed sheet */
+    yieldSwipeToParent_WidgetFlag2          = iBit(24), /* touch swipes starting on the widget
+                                                           scroll the parent instead */
 };
 
 enum iWidgetAddPos {

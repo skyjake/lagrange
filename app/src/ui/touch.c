@@ -794,6 +794,12 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                        the first one. */
                     divvf_F3(&touch->accum, 6);
                     divfv_I2(&pixels, 6);
+                    for (iWidget *w = touch->affinity; w; w = parent_Widget(w)) {
+                        if (w->flags2 & yieldSwipeToParent_WidgetFlag2) {
+                            touch->affinity = parent_Widget(w);
+                            break;
+                        }
+                    }
                     /* Allow scrolling a scrollable widget. */
                     if (touch->affinity && touch->affinity->flags2 & slidingSheetDraggable_WidgetFlag2) {
                         extern iWidgetClass Class_SidebarWidget; /* The only type of sliding sheet for now. */
