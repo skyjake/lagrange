@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(CertListWidget)
 iDeclareType(Gempub)
+iDeclareType(IndicatorWidget)
 iDeclareType(LabelWidget)
 iDeclareType(SimpleDocumentWidget)
 
@@ -82,6 +83,7 @@ struct Impl_SidebarWidget {
     iString           gempubUrl;    /* page shown in `gempubDoc` */
     iString           gempubCentered; /* document whose link was centered in the index */
     iWidget          *actions;      /* below the list, area for buttons */
+    iIndicatorWidget *feedsProgress; /* phone only: the sheet covers the navbar indicator */
     int               midHeight;    /* on portrait phone, the height for the middle state */
     iBool             isEditing;    /* mobile edit mode */
     iBool             isShowingUrls; /* Alt held down in Bookmarks */

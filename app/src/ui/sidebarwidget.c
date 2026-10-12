@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "feeds.h"
 #include "gamepad.h"
+#include "indicatorwidget.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
 #include "gmutil.h"
@@ -630,6 +631,16 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static void updateFeedsProgress_SidebarWidget_(iSidebarWidget *d) {
+    if (d->feedsProgress) {
+        setFlags_Widget(as_Widget(d->feedsProgress),
+                        hidden_WidgetFlag,
+                        !isSlidingSheet_SidebarWidget_(d) ||
+                            (d->mode != feedEntries_SidebarMode &&
+                             d->mode != subscriptions_SidebarMode));
+    }
+}
+
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     if (d->mode == mode) {
         return iFalse;
@@ -666,6 +677,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         setText_LabelWidget(sheetTitle, &title);
         deinit_String(&title);
     }
+    updateFeedsProgress_SidebarWidget_(d);
     return iTrue;
 }
 
@@ -914,6 +926,12 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         d->gempubPage = 1;
         init_String(&d->gempubUrl);
         init_String(&d->gempubCentered);
+    }
+    d->feedsProgress = NULL;
+    if (isPhone) {
+        d->feedsProgress = new_IndicatorWidget();
+        setManual_IndicatorWidget(d->feedsProgress, iTrue);
+        addChildFlags_Widget(listArea, iClob(d->feedsProgress), hidden_WidgetFlag);
     }
     addChildFlags_Widget(listAndActions, iClob(listArea), expand_WidgetFlag);
     setId_Widget(addChildPosFlags_Widget(listAndActions,
@@ -1515,6 +1533,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setFlags_Widget(w, drawBackgroundToBottom_WidgetFlag, isPortrait_App());
             setBackgroundColor_Widget(
                 w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
+            updateFeedsProgress_SidebarWidget_(d);
         }
         updateActionsPadding_SidebarWidget_(d);
         checkFeedsActionsLayout_SidebarWidget_(d);
@@ -1689,7 +1708,20 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (equal_Command(cmd, "feeds.update.started") ||
+                 equal_Command(cmd, "feeds.update.progress")) {
+            if (d->feedsProgress) {
+                /* Visible from the start. */
+                const int total = argLabel_Command(cmd, "total");
+                setProgress_IndicatorWidget(
+                    d->feedsProgress,
+                    0.05f + 0.95f * (total ? (float) arg_Command(cmd) / total : 0.0f));
+            }
+        }
         else if (equal_Command(cmd, "feeds.update.finished")) {
+            if (d->feedsProgress) {
+                setProgress_IndicatorWidget(d->feedsProgress, 1.0f);
+            }
             d->numUnreadEntries = argLabel_Command(cmd, "unread");
             checkModeButtonLayout_SidebarWidget_(d);
             if (d->mode == feedEntries_SidebarMode || d->mode == subscriptions_SidebarMode) {

@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 struct Impl_IndicatorWidget {
     iWidget widget;
     iAnim   pos;
+    iBool   isManual;
 };
 
 iDefineObjectConstruction(IndicatorWidget)
@@ -62,6 +63,7 @@ void init_IndicatorWidget(iIndicatorWidget *d) {
     iWidget *w = &d->widget;
     init_Widget(w);
     init_Anim(&d->pos, 0);
+    d->isManual = iFalse;
     setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 }
 
@@ -71,6 +73,33 @@ void deinit_IndicatorWidget(iIndicatorWidget *d) {
 
 static iBool isCompleted_IndicatorWidget_(const iIndicatorWidget *d) {
     return targetValue_Anim(&d->pos) == 1.0f;
+}
+
+void setManual_IndicatorWidget(iIndicatorWidget *d, iBool manual) {
+    d->isManual = manual;
+}
+
+void setProgress_IndicatorWidget(iIndicatorWidget *d, float progress) {
+    if (progress <= 0.0f) {
+        setValue_Anim(&d->pos, 0, 0);
+    }
+    else if (progress >= 1.0f) {
+        if (isCompleted_IndicatorWidget_(d)) {
+            return;
+        }
+        /* Completion is only shown if there was progress before. */
+        setValue_Anim(&d->pos, targetValue_Anim(&d->pos) > 0.0f ? 1.0f : 0.0f, 250);
+        setFlags_Anim(&d->pos, easeOut_AnimFlag, iFalse);
+    }
+    else {
+        if (isCompleted_IndicatorWidget_(d)) {
+            setValue_Anim(&d->pos, 0, 0);
+        }
+        setValue_Anim(&d->pos, iMax(progress, targetValue_Anim(&d->pos)), 250);
+        setFlags_Anim(&d->pos, easeOut_AnimFlag, iTrue);
+    }
+    animate_IndicatorWidget_(d);
+    refresh_Widget(d);
 }
 
 static iBool isLocalUrl_(const char *url) {
@@ -103,7 +132,7 @@ void draw_IndicatorWidget_(const iIndicatorWidget *d) {
 
 iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
-    if (isCommand_SDLEvent(ev)) {
+    if (!d->isManual && isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
         if (startsWith_Command(cmd, "document.request.")) {
             if (pointerLabel_Command(cmd, "doc") == parent_Widget(w)) {

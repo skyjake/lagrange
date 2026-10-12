@@ -26,3 +26,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareWidgetClass(IndicatorWidget)
 iDeclareObjectConstruction(IndicatorWidget)
+
+void    setManual_IndicatorWidget   (iIndicatorWidget *, iBool manual); /* ignores document requests */
+void    setProgress_IndicatorWidget (iIndicatorWidget *, float progress); /* 0...1, animated */
