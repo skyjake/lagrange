@@ -127,22 +127,16 @@ enum iColorId {
     tmLinkIconVisited_ColorId,
     tmLinkText_ColorId,
     tmLinkTextHover_ColorId,
-    tmLinkDomain_ColorId_OBSOLETE,
-    tmLinkLastVisitDate_ColorId_OBSOLETE,
 
     tmHypertextLinkIcon_ColorId,
     tmHypertextLinkIconVisited_ColorId,
     tmHypertextLinkText_ColorId,
     tmHypertextLinkTextHover_ColorId,
-    tmHypertextLinkDomain_ColorId_OBSOLETE,
-    tmHypertextLinkLastVisitDate_ColorId_OBSOLETE,
 
     tmGopherLinkIcon_ColorId,
     tmGopherLinkIconVisited_ColorId,
     tmGopherLinkText_ColorId,
     tmGopherLinkTextHover_ColorId,
-    tmGopherLinkDomain_ColorId_OBSOLETE,
-    tmGopherLinkLastVisitDate_ColorId_OBSOLETE,
 
     tmBannerItemBackground_ColorId,
     tmBannerItemFrame_ColorId,
