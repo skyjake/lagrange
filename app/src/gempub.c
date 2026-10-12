@@ -556,7 +556,7 @@ iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iS
 
 static iBlock *mimeHook_Gempub_(const iString *mime, const iBlock *body,
                                 const iString *requestUrl) {
-    /* Only process GemPub for local files. */
+    /* Only process Gempub for local files. */
     if (!isLocalFileScheme_Rangecc(urlScheme_String(requestUrl)) ||
         !startsWithCase_String(mime, mimeType_Gempub)) {
         return NULL;

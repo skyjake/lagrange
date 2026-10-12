@@ -866,7 +866,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     deinit_ScopeKey(&d->scopeKey);
     initUrl_ScopeKey(&d->scopeKey, url);
     clear_String(&d->themeUrl);
-    /* Pages of a local GemPub have a scope of their own, and each book is a site. */ {
+    /* Pages of a local Gempub have a scope of their own, and each book is a site. */ {
         const iString *archive = localArchiveUrl_Gempub(url);
         if (archive) {
             setCStr_String(&d->scopeKey.scheme, "gempub");
