@@ -1026,6 +1026,16 @@ static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return NULL;
 }
 
+static iDocumentWidget *findBookTab_SidebarWidget_(const iString *bookId) {
+    iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+        const iGempub *gempub = gempub_DocumentWidget(i.object);
+        if (gempub && !isRemote_Gempub(gempub) && equal_String(id_Books(gempub), bookId)) {
+            return (iDocumentWidget *) i.object;
+        }
+    }
+    return NULL;
+}
+
 static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex,
                                        int mouseButton) {
     const int mouseTabMode =
@@ -1118,12 +1128,23 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         }
         case gempub_SidebarMode:
             if (!isEmpty_String(&item->url)) {
-                const iBook *book = find_Books(&item->bookId);
+                const iBook *book    = find_Books(&item->bookId);
+                int          tabMode = mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys());
                 d->gempubPage = 2; /* stays on the shelf */
+                if (!tabMode) {
+                    iDocumentWidget *bookDoc = findBookTab_SidebarWidget_(&item->bookId);
+                    if (bookDoc) {
+                        postCommandf_Root(as_Widget(bookDoc)->root, "tabs.switch page:%p", bookDoc);
+                        dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+                        setFocus_Widget(NULL);
+                        break;
+                    }
+                    tabMode = new_OpenTabFlag;
+                }
                 /* Downloaded pages are saved as books, too. */
                 postCommandf_Root(get_Root(),
                                   "open newtab:%d%s url:%s",
-                                  mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
+                                  tabMode,
                                   book && !path_Book(book) ? " overwritebook:1" : "",
                                   cstr_String(&item->url));
                 dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
