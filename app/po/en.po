@@ -822,10 +822,10 @@ msgstr "Show Feeds"
 # strftime() format string. Date of the feed entry shown in the Reader tab banner.
 # %d is the day of month without zero padding.
 msgid "banner.feedentry.date"
-msgstr "%B %d, %Y"
+msgstr "%A, %B %d, %Y"
 
 msgid "banner.tinylogentry.date"
-msgstr "%B %d, %Y, %H:%M"
+msgstr "%A, %B %d, %Y at %H:%M"
 
 msgid "feeds.entry.markread"
 msgstr "Mark as Read"
