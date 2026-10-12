@@ -2264,10 +2264,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             fetchNextUnfetchedImage_InlineMedia(d->media)) {
             return iTrue;
         }
-        if (d->mod.isReader && dir > 0 && !argLabel_Command(cmd, "repeat") &&
+        if (d->mod.isReader && dir && !argLabel_Command(cmd, "repeat") &&
             !argLabel_Command(cmd, "full") && !isRequestOngoing_DocumentFetch(d->fetch) &&
-            pos_SmoothScroll(&d->view->scrollY) >= d->view->scrollY.max) {
-            openAdjacentFeedEntry_DocumentWidget_(d, +1);
+            (dir > 0 ? pos_SmoothScroll(&d->view->scrollY) >= d->view->scrollY.max
+                     : pos_SmoothScroll(&d->view->scrollY) <= 0)) {
+            openAdjacentFeedEntry_DocumentWidget_(d, dir > 0 ? +1 : -1);
             return iTrue;
         }
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
