@@ -1360,17 +1360,10 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                                                                     cstr_String(dateFormat)));
                 iChar icon;
                 if (entry->isTinylog) {
-                    /* @jk@skyjake.fi — Off Hours\ntimestamp hh:mm */
                     icon = 0x1f4ac; /* speech balloon */
                     iTinylogInfo info;
                     init_TinylogInfo(&info);
                     if (tinylogInfo_Feeds(entryUrl, &info)) {
-                        if (!isEmpty_String(&info.avatar)) {
-                            icon = first_String(&info.avatar);
-                        }
-                        else if (bm->icon) {
-                            icon = bm->icon;
-                        }
                         if (!isEmpty_String(&info.author)) {
                             set_String(title, &info.author);
                             format_String(details, "%s\n%s", cstr_String(&bm->title), cstr_String(dateStr));
@@ -1379,7 +1372,6 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                     deinit_TinylogInfo(&info);
                 }
                 else {
-                    /* Feed name — timestamp */
                     icon = 0x2605; /* star */
                     set_String(title, &bm->title);
                     setCStr_String(details, "\n");
