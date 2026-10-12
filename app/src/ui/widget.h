@@ -244,7 +244,8 @@ void    releaseChildren_Widget  (iWidget *);
 iWidget *       root_Widget             (const iWidget *);
 iWindow *       window_Widget           (const iAnyObject *);
 const iString * id_Widget               (const iWidget *);
-int64_t flags_Widget                    (const iWidget *);
+int64_t flags_Widget                    (const iAnyObject *);
+int     flags2_Widget                   (const iAnyObject *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
 iRect   boundsWithoutVisualOffset_Widget(const iWidget *);
 iRect   innerBounds_Widget              (const iWidget *);
@@ -342,7 +343,8 @@ iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
 int     visualOffsetByReference_Widget          (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
 void    setResizeId_Widget          (iWidget *, const char *resizeId); /* no need to be unique */
-void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
+void    setFlags_Widget             (iAnyObject *, int64_t flags, iBool set);
+void    setFlags2_Widget            (iAnyObject *, int flags2, iBool set);
 void    setTreeFlags_Widget         (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
 void    setFixedSize_Widget         (iWidget *, iInt2 fixedSize);

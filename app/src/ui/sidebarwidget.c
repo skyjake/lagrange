@@ -152,7 +152,7 @@ iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *labe
     setFont_LabelWidget(btn, actionButtonFont_SidebarWidget_(d));
     checkIcon_LabelWidget(btn);
     if (deviceType_App() != desktop_AppDeviceType) {
-        setFlags_Widget(as_Widget(btn), frameless_WidgetFlag, iTrue);
+        setFlags_Widget(btn, frameless_WidgetFlag, iTrue);
         setTextColor_LabelWidget(btn, uiTextAction_ColorId);
         setBackgroundColor_Widget(as_Widget(btn), uiBackground_ColorId);
     }
@@ -449,10 +449,10 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     }
     updateActionsPadding_SidebarWidget_(d);
     const iBool isBookPage = d->mode == gempub_SidebarMode && !isShowingShelf_SidebarWidget_(d);
-    setFlags_Widget(as_Widget(d->list),
+    setFlags_Widget(d->list,
                     hidden_WidgetFlag,
                     d->mode == identities_SidebarMode || isBookPage);
-    setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);
+    setFlags_Widget(d->certList, hidden_WidgetFlag, d->mode != identities_SidebarMode);
     setFlags_Widget(d->gempubArea, hidden_WidgetFlag, !isBookPage || isEmpty);
     /* Book tabs. */ {
         const iBool showTabs = d->mode == gempub_SidebarMode && gempub_SidebarWidget_(d) != NULL;
@@ -461,7 +461,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             arrange_Widget(as_Widget(d));
         }
         for (int i = 0; i < 3; i++) {
-            setFlags_Widget(as_Widget(d->gempubTabs[i]), selected_WidgetFlag, i == d->gempubPage);
+            setFlags_Widget(d->gempubTabs[i], selected_WidgetFlag, i == d->gempubPage);
         }
     }
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
@@ -646,7 +646,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         notify_App("sync.recent"); /* read status may have changed elsewhere */
     }
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
-        setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
+        setFlags_Widget(d->modeButtons[i], selected_WidgetFlag, i == d->mode);
     }
     setBackgroundColor_Widget(as_Widget(list_SidebarWidget_(d)),
                               // d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
@@ -807,8 +807,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
             iClob(new_LabelWidget(uiTextAction_ColorEscape "${sidebar.close}", "sidebar.toggle")),
             extraPadding_WidgetFlag | frameless_WidgetFlag | alignRight_WidgetFlag |
                 moveToParentRightEdge_WidgetFlag);
-        as_Widget(sheetTitle)->flags2 |= slidingSheetDraggable_WidgetFlag2;  /* phone */
-        as_Widget(closeButton)->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+        setFlags2_Widget(sheetTitle, slidingSheetDraggable_WidgetFlag2, iTrue);  /* phone */
+        setFlags2_Widget(closeButton, slidingSheetDraggable_WidgetFlag2, iTrue); /* phone */
         setId_Widget(as_Widget(sheetTitle), "sidebar.title");
         setId_Widget(as_Widget(closeButton), "sidebar.close");
         setFont_LabelWidget(sheetTitle, uiLabelBig_FontId);
@@ -836,7 +836,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         if (!d->firstVisibleModeButton && isEnabled) {
             d->firstVisibleModeButton = d->modeButtons[i];
         }
-        as_Widget(d->modeButtons[i])->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+        setFlags2_Widget(d->modeButtons[i], slidingSheetDraggable_WidgetFlag2, iTrue); /* phone */
     }
     /* Dropdown menu for changing the mode. */
     if (!isSlidingSheet_SidebarWidget_(d) && !isTerminal_Platform()) {
@@ -1142,10 +1142,9 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     for (int i = 0; i < max_SidebarMode; i++) {
         iLabelWidget *button = d->modeButtons[i];
         if (!button) continue;
-        setFlags_Widget(
-            as_Widget(button), hidden_WidgetFlag, !isModeEnabled_SidebarWidget_(d, d->side, i));
+        setFlags_Widget(button, hidden_WidgetFlag, !isModeEnabled_SidebarWidget_(d, d->side, i));
         setAlignVisually_LabelWidget(button, isTight);
-        setFlags_Widget(as_Widget(button), tight_WidgetFlag, isTight);
+        setFlags_Widget(button, tight_WidgetFlag, isTight);
         if (i == feedEntries_SidebarMode && d->numUnreadEntries) {
             updateText_LabelWidget(
                 button,
@@ -1510,7 +1509,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setFlags_Widget(findChild_Widget(w, "actions"),
                             drawBackgroundToHorizontalSafeArea_WidgetFlag,
                             isLandscape_App());
-            setFlags_Widget(as_Widget(d->list),
+            setFlags_Widget(d->list,
                             drawBackgroundToHorizontalSafeArea_WidgetFlag,
                             isLandscape_App());
             setFlags_Widget(w, drawBackgroundToBottom_WidgetFlag, isPortrait_App());

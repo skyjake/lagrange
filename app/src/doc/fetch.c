@@ -446,12 +446,12 @@ void updateTrust_DocumentFetch(iDocumentFetch *d, const iGmResponse *response) {
     }
     iLabelWidget *lock = findChild_Widget(root_Widget(as_Widget(d->owner)), "navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
-        setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
+        setFlags_Widget(lock, disabled_WidgetFlag, iTrue);
         updateTextCStr_LabelWidget(lock, openLock_Icon);
         setTextColor_LabelWidget(lock, gray50_ColorId);
         return;
     }
-    setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
+    setFlags_Widget(lock, disabled_WidgetFlag, iFalse);
     const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
     if (~d->certFlags & domainVerified_GmCertFlag ||
         ~d->certFlags & trusted_GmCertFlag) {

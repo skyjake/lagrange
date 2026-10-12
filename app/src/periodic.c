@@ -119,7 +119,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
                during the current loop execution. */
             continue;
         }
-        if (flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag) {
+        if (flags_Widget(pc->context) & destroyPending_WidgetFlag) {
             /* Destroyed but not yet collected; root/window may already be stale. */
             continue;
         }
@@ -171,7 +171,7 @@ void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
 void addDelay_Periodic(iPeriodic *d, uint32_t delay, iAny *context, const char *command) {
     iWidget *contextWidget = as_Widget(context);
     iAssert(~flags_Widget(contextWidget) & destroyPending_WidgetFlag);
-    contextWidget->flags2 |= usedAsPeriodicContext_WidgetFlag2;
+    setFlags2_Widget(contextWidget, usedAsPeriodicContext_WidgetFlag2, iTrue);
     lock_Mutex(d->mutex);
     size_t pos;
     iPeriodicCommand key = { .context = context };

@@ -315,10 +315,10 @@ iBool isHoverAllowed_DocumentWidget(const iDocumentWidget *d) {
     if (isPinchZooming_DocumentSwipe(d->swipe)) {
         return iFalse;
     }
-    if (flags_Widget(constAs_Widget(d)) & touchDrag_WidgetFlag) {
+    if (flags_Widget(d) & touchDrag_WidgetFlag) {
         return iFalse;
     }
-    if (flags_Widget(constAs_Widget(d->scroll)) & pressed_WidgetFlag) {
+    if (flags_Widget(d->scroll) & pressed_WidgetFlag) {
         return iFalse;
     }
     return iTrue;
@@ -584,8 +584,8 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         }
         const iBool tabCloseVisible = avail > width_Widget(tabCloseButton);
         if (deviceType_App() == tablet_AppDeviceType && tabCloseButton) {
-            iChangeFlags(as_Widget(tabCloseButton)->flags2, visibleOnParentSelected_WidgetFlag2,
-                         tabCloseVisible);
+            setFlags2_Widget(tabCloseButton, visibleOnParentSelected_WidgetFlag2,
+                             tabCloseVisible);
         }
         else {
             setFlags_Widget(tabCloseButton, visibleOnParentHover_WidgetFlag,
@@ -615,7 +615,7 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
 }
 
 void invalidate_DocumentWidget(iDocumentWidget *d) {
-    if (flags_Widget(as_Widget(d)) & destroyPending_WidgetFlag) {
+    if (flags_Widget(d) & destroyPending_WidgetFlag) {
         return;
     }
     invalidate_DocumentView(d->view);
@@ -720,7 +720,7 @@ void updateBanner_DocumentWidget(iDocumentWidget *d) {
 
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     iChangeFlags(d->flags, selecting_DocumentWidgetFlag | viewSource_DocumentWidgetFlag, iFalse);
-    setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse);
+    setFlags_Widget(d, touchDrag_WidgetFlag, iFalse);
     d->fetch->requestLinkId = 0;
     updateVisitedLinks_GmDocument(d->view->doc);
     documentRunsInvalidated_DocumentWidget(d);
@@ -988,7 +988,7 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
             (equal_CStr(items[i].command, "reader.markallread") ||
              equal_CStr(items[i].command, "reader.showfeeds"))) {
             setId_Widget(as_Widget(button), items[i].command);
-            setFlags_Widget(as_Widget(button), collapse_WidgetFlag, iTrue);
+            setFlags_Widget(button, collapse_WidgetFlag, iTrue);
         }
     }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
@@ -3545,7 +3545,7 @@ static void updatePagedProgress_DocumentWidget_(iDocumentWidget *d) {
     /* The scroll bar becomes a reading progress bar along the bottom. */
     setProgressMode_ScrollWidget(d->scroll, iTrue);
     /* Children are clipped to the page area that extends under the bars (see draw). */
-    as_Widget(d)->flags2 &= ~clipChildren_WidgetFlag2;
+    setFlags2_Widget(d, clipChildren_WidgetFlag2, iFalse);
     setThumbColor_ScrollWidget(d->scroll, tmQuoteIcon_ColorId); /* same as page header and footer */
     positionPagedProgress_DocumentWidget_(d);
 }
@@ -3594,7 +3594,7 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         setFlags_Widget(d->footerButtons, hidden_WidgetFlag, iFalse);
     }
     setProgressMode_ScrollWidget(scrollBar, iFalse);
-    as_Widget(d)->flags2 |= clipChildren_WidgetFlag2;
+    setFlags2_Widget(d, clipChildren_WidgetFlag2, iTrue);
     setThumbColor_ScrollWidget(scrollBar, tmQuote_ColorId);
     const iRangei visRange  = visibleRange_DocumentView(d->view);
     //    printf("visRange: %d...%d\n", visRange.start, visRange.end);
@@ -3940,7 +3940,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
     /* Inline content (input prompts) is anchored to document coordinates and can
        otherwise bleed outside the viewport into the tab/menu bars. */
-    w->flags2 |= clipChildren_WidgetFlag2;
+    setFlags2_Widget(w, clipChildren_WidgetFlag2, iTrue);
     init_PersistentDocumentState(&d->mod);
     d->flags = 0;
     d->fetch = new_DocumentFetch();

@@ -237,7 +237,7 @@ void setScrollMode_ListWidget(iListWidget *d, enum iScrollMode mode) {
 void setDragHandleWidth_ListWidget(iListWidget *d, int dragHandleWidth) {
     d->dragHandleWidth = dragHandleWidth;
     if (dragHandleWidth == 0) {
-        setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
+        setFlags_Widget(d, touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     }
 }
 
@@ -472,7 +472,7 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     if (d->dragItem == iInvalidPos) {
         return iFalse;
     }
-    setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
+    setFlags_Widget(d, touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     stop_Anim(&d->scrollY.pos);
     enum iDragDestination dstKind;
     const size_t index = resolveDragDestination_ListWidget_(d, endPos, &dstKind);
@@ -500,7 +500,7 @@ static void abortDrag_ListWidget_(iListWidget *d) {
         invalidateItem_ListWidget(d, d->dragItem);
         d->dragItem = iInvalidPos;
         redrawHoverItem_ListWidget_(d);
-        setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
+        setFlags_Widget(d, touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     }
 }
 

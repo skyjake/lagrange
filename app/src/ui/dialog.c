@@ -51,7 +51,7 @@ void useSheetStyle_Widget(iWidget *d) {
     setPadding1_Widget(d, 3 * gap_UI);
     setFrameColor_Widget(d, uiSeparator_ColorId);
     setBackgroundColor_Widget(d, uiBackground_ColorId);
-    d->flags2 |= roundFreeEdges_WidgetFlag2 | sheet_WidgetFlag2;
+    setFlags2_Widget(d, roundFreeEdges_WidgetFlag2 | sheet_WidgetFlag2, iTrue);
     setFlags_Widget(d,
                     parentCannotResize_WidgetFlag | focusRoot_WidgetFlag | mouseModal_WidgetFlag |
                         keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
@@ -450,16 +450,16 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             addChild_Widget(div,
                             isToggle ? iClob(makeToggle_Widget(label))
                                      : iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
-        as_Widget(button)->flags2 |= alwaysRound_WidgetFlag2;
+        setFlags2_Widget(button, alwaysRound_WidgetFlag2, iTrue);
         if (isDefault) {
             setId_Widget(as_Widget(button), "default");
         }
-        setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
+        setFlags_Widget(button, alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
         if (key && key != SDLK_ESCAPE && deviceType_App() == desktop_AppDeviceType) {
-            setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, iTrue);
+            setFlags_Widget(button, alignLeft_WidgetFlag | drawKey_WidgetFlag, iTrue);
         }
         if (deviceType_App() != desktop_AppDeviceType) {
-            setFlags_Widget(as_Widget(button), frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
+            setFlags_Widget(button, frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
             setTextColor_LabelWidget(button, uiTextAction_ColorId);
         }
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
@@ -481,7 +481,7 @@ static iInputWidget *makeValueInputContents_(iWidget *dlg, const iString *initia
     /* Value input instances can be placed either in a sheet or an embedded widget
        (inline prompt). The returned input widget is owned by `dlg`. */
     iLabelWidget *promptLabel = addWrappedLabel_Widget(dlg, prompt, "valueinput.prompt");
-    setFlags_Widget(as_Widget(promptLabel), commandOnClick_WidgetFlag, iTrue);
+    setFlags_Widget(promptLabel, commandOnClick_WidgetFlag, iTrue);
     iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)),
                                                resizeToParentWidth_WidgetFlag);
     setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
@@ -586,7 +586,7 @@ iWidget *makeEmbeddedValueInput_Widget(iWidget *container, const iString *initia
     iWidget *dlg = new_Widget();
     setBackgroundColor_Widget(dlg, uiBackground_ColorId);
     setFrameColor_Widget(dlg, uiSeparator_ColorId);
-    dlg->flags2 |= roundFreeEdges_WidgetFlag2;
+    setFlags2_Widget(dlg, roundFreeEdges_WidgetFlag2, iTrue);
     if (isTerminal_Platform()) {
         const int vPad = gap_UI / aspect_UI;
         const int hPad = 2 * gap_UI / aspect_UI;
@@ -884,8 +884,8 @@ void addDialogInputWithHeadingAndFlags_Widget(iWidget *headings, iWidget *values
         /* Ensure that the label has the same height as the input widget. */
         as_Widget(head)->sizeRef = as_Widget(input);
     }
-    setFlags_Widget(as_Widget(head), flags, iTrue);
-    setFlags_Widget(as_Widget(input), flags, iTrue);
+    setFlags_Widget(head, flags, iTrue);
+    setFlags_Widget(input, flags, iTrue);
 }
 
 void addDialogInputWithHeading_Widget(iWidget *headings, iWidget *values, const char *labelText,
@@ -930,7 +930,7 @@ void enableResizing_Widget(iWidget *d, int minWidth, const char *resizeId) {
     }
     if (deviceType_App() == desktop_AppDeviceType) {
         iChangeFlags(d->flags, arrangeWidth_WidgetFlag, iFalse);
-        d->flags2 |= horizontallyResizable_WidgetFlag2;
+        setFlags2_Widget(d, horizontallyResizable_WidgetFlag2, iTrue);
         d->minSize.x = minWidth;
         if (resizeId) {
             setCStr_String(&d->resizeId, resizeId);

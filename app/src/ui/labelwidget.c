@@ -513,7 +513,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
 }
 
 iLocalDef int iconPadding_LabelWidget_(const iLabelWidget *d) {
-    const float amount = flags_Widget(constAs_Widget(d)) & extraPadding_WidgetFlag ? 1.5f : 1.15f;
+    const float amount = flags_Widget(d) & extraPadding_WidgetFlag ? 1.5f : 1.15f;
     return d->icon ? iRound(lineHeight_Text(d->font) * amount) : 0;
 }
 
@@ -644,7 +644,7 @@ static iColor contrastFrameColor_(iColor emboss, iColor backdrop) {
 
 /* The focus frame must stand out from the button background (e.g., system accent). */
 static int focusColor_LabelWidget_(const iLabelWidget *d, int bg) {
-    if (bg >= 0 && flags_Widget(constAs_Widget(d)) & pressed_WidgetFlag) {
+    if (bg >= 0 && flags_Widget(d) & pressed_WidgetFlag) {
         return bg;
     }
     if (bg >= 0 && perceptualDelta_Color(get_Color(bg & mask_ColorId),
@@ -1237,7 +1237,7 @@ iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, cons
 
 iLabelWidget *newColor_LabelWidget(const char *text, int color) {
     iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), NULL);
-    setFlags_Widget(as_Widget(d), frameless_WidgetFlag, iTrue);
+    setFlags_Widget(d, frameless_WidgetFlag, iTrue);
     return d;
 }
 

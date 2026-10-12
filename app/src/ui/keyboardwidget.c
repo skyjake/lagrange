@@ -725,7 +725,7 @@ void init_KeyboardWidget(iKeyboardWidget *d) {
                         moveToParentBottomEdge_WidgetFlag | keepOnTop_WidgetFlag |
                         noFadeBackground_WidgetFlag | borderTop_WidgetFlag,
                     iTrue);
-    w->flags2 |= mustStayOnTop_WidgetFlag2; /* really, keep it on top */
+    setFlags2_Widget(w, mustStayOnTop_WidgetFlag2, iTrue); /* really, keep it on top */
     init_Array(&d->pages, sizeof(iKeyPage));
     setDrawBufferEnabled_Widget(w, iTrue);
     findAllLayouts_KeyboardWidget_(d);

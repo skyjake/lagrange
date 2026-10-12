@@ -172,7 +172,7 @@ static void checkVisible_ScrollWidget_(iScrollWidget *d) {
     const iBool isHidden  = d->isProgress ? d->thumbSize >= (int) size_Range(&d->range)
                             : d->thumbSize != 0 ? height_Rect(thumbRect_ScrollWidget_(d)) == 0
                                                 : iTrue;
-    setFlags_Widget(as_Widget(d), hidden_WidgetFlag, isHidden);
+    setFlags_Widget(d, hidden_WidgetFlag, isHidden);
     if (wasHidden && !isHidden) {
         unfade_ScrollWidget_(d, 1.0f);
     }

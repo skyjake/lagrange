@@ -49,7 +49,7 @@ static void animate_IndicatorWidget_(void *ptr) {
 }
 
 static void setActive_IndicatorWidget_(iIndicatorWidget *d, iBool set) {
-    setFlags_Widget(as_Widget(d), selected_WidgetFlag, set);
+    setFlags_Widget(d, selected_WidgetFlag, set);
     setValue_Anim(&d->pos, 0.0f, 0);
 }
 

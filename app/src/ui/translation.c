@@ -675,7 +675,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             }
             iLabelWidget *acceptButton = acceptButton_Translation_(d);
             updateTextCStr_LabelWidget(acceptButton, "00:00");
-            setFlags_Widget(as_Widget(acceptButton), disabled_WidgetFlag, iTrue);
+            setFlags_Widget(acceptButton, disabled_WidgetFlag, iTrue);
             iTranslationProgressWidget *prog = new_TranslationProgressWidget();
             if (isUsingPanelLayout_Mobile()) {
                 setPos_Widget(as_Widget(prog), init_I2(0, 3 * gap_UI)); /* TODO: No fixed offsets... */

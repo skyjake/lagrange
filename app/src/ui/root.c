@@ -703,7 +703,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     else if (isTerminal_Platform() && equal_Command(cmd, "menu.closed")) {
         if (!focus_Widget()) {
             iLabelWidget *status = findChild_Widget(root, "termstatus");
-            setFlags_Widget(as_Widget(status), hidden_WidgetFlag, iFalse);
+            setFlags_Widget(status, hidden_WidgetFlag, iFalse);
             updateTerminalStatus_(status);
         }
         return iFalse;
@@ -802,11 +802,11 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
                     addChild_Widget(sidebarParent, iClob(sidebar));
                 }
             }
-            iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
+            setFlags2_Widget(sidebar, fadeBackground_WidgetFlag2, isPortrait_App());
             if (isLandscape_App()) {
                 setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
                 setWidth_SidebarWidget(sidebar, 73.0f);
-                setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
+                setFlags_Widget(sidebar, fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
             }
             else {
                 setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
@@ -928,8 +928,8 @@ static void updateNavDirButtons_(iWidget *navBar) {
         const char *id = format_CStr("navbar.action%d", i + 1);
         setFlags_Widget(findChild_Widget(navBar, id), disabled_WidgetFlag, iFalse);
     }
-    setFlags_Widget(as_Widget(findMenuItem_Widget(navBar, "navigate.back")), disabled_WidgetFlag, atOldest);
-    setFlags_Widget(as_Widget(findMenuItem_Widget(navBar, "navigate.forward")), disabled_WidgetFlag, atNewest);
+    setFlags_Widget(findMenuItem_Widget(navBar, "navigate.back"), disabled_WidgetFlag, atOldest);
+    setFlags_Widget(findMenuItem_Widget(navBar, "navigate.forward"), disabled_WidgetFlag, atNewest);
     iWidget *toolBar = findWidget_App("toolbar");
     if (toolBar) {
         /* Reset the state. */
@@ -941,9 +941,9 @@ static void updateNavDirButtons_(iWidget *navBar) {
         /* Disable certain actions. */
         iLabelWidget *back = findMenuItem_Widget(toolBar, "navigate.back");
         iLabelWidget *fwd  = findMenuItem_Widget(toolBar, "navigate.forward");
-        setFlags_Widget(as_Widget(back), disabled_WidgetFlag, atOldest);
+        setFlags_Widget(back, disabled_WidgetFlag, atOldest);
         setOutline_LabelWidget(back, atOldest);
-        setFlags_Widget(as_Widget(fwd), disabled_WidgetFlag, atNewest);
+        setFlags_Widget(fwd, disabled_WidgetFlag, atNewest);
         setOutline_LabelWidget(fwd, atNewest);
         refresh_Widget(toolBar);
     }
@@ -1236,7 +1236,7 @@ static void updateNavBarSize_(iWidget *navBar) {
         iWidget *toolBar = findWidget_Root("toolbar");
         iForIndices(i, buttons) {
             iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
-            setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
+            setFlags_Widget(btn, hidden_WidgetFlag, isPortrait_App());
             if (isLandscape_App()) {
                 /* Collapsing sets size to zero and the label doesn't know when to update
                    its own size automatically. */
@@ -1271,7 +1271,7 @@ static void updateNavBarActions_(iWidget *navBar) {
         iLabelWidget *button =
             findChild_Widget(navBar, format_CStr("navbar.action%d", i + 1));
         if (button) {
-            setFlags_Widget(as_Widget(button), disabled_WidgetFlag, iFalse);
+            setFlags_Widget(button, disabled_WidgetFlag, iFalse);
             updateTextCStr_LabelWidget(button, toolbarActions_Mobile[action].icon);
             setCommand_LabelWidget(button, collectNewCStr_String(toolbarActions_Mobile[action].command));
         }
@@ -1615,7 +1615,7 @@ static void updateToolBarActions_(iWidget *toolBar) {
         iLabelWidget *button =
             findChild_Widget(toolBar, i == 0 ? "toolbar.action1" : "toolbar.action2");
         if (button) {
-            setFlags_Widget(as_Widget(button), disabled_WidgetFlag, iFalse);
+            setFlags_Widget(button, disabled_WidgetFlag, iFalse);
             setOutline_LabelWidget(button, iFalse);
             updateTextCStr_LabelWidget(button, toolbarActions_Mobile[action].icon);
             setCommand_LabelWidget(button, collectNewCStr_String(toolbarActions_Mobile[action].command));
@@ -1852,7 +1852,7 @@ static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
         iLabelWidget *curWinItem =
             findMenuItem_Widget(menu, format_CStr("!window.activate ptr:%p", get_MainWindow()));
         if (curWinItem) {
-            setFlags_Widget(as_Widget(curWinItem), noBackground_WidgetFlag, iFalse);
+            setFlags_Widget(curWinItem, noBackground_WidgetFlag, iFalse);
             setBackgroundColor_Widget(as_Widget(curWinItem), uiBackgroundUnfocusedSelection_ColorId);
             setTextColor_LabelWidget(curWinItem, uiTextStrong_ColorId);
         }
@@ -2099,7 +2099,7 @@ void createUserInterface_Root(iRoot *d) {
         iInputWidget *url;
         /* URL input field. */ {
             url = new_InputWidget(0);
-            setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
+            setFlags_Widget(url, resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
             setLineLimits_InputWidget(url, 1, 1); /* just one line while not focused */
@@ -2129,7 +2129,7 @@ void createUserInterface_Root(iRoot *d) {
                 setId_Widget(as_Widget(clear), "navbar.clear");
                // setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
                 setFont_LabelWidget(clear, uiLabelSymbols_FontId);
-               // setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
+               // setFlags_Widget(clear, noBackground_WidgetFlag, iFalse);
                // setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
             }
             iWidget *rightEmbed = new_Widget();
@@ -2317,7 +2317,7 @@ void createUserInterface_Root(iRoot *d) {
                                  iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new append:1")),
                                  moveToParentRightEdge_WidgetFlag | collapse_WidgetFlag);
         setId_Widget(newTab, "newtab");
-        newTab->flags2 |= noRound_WidgetFlag2;
+        setFlags2_Widget(newTab, noRound_WidgetFlag2, iTrue);
     }
     /* Sidebars. */ {
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SidebarSide);
@@ -2328,12 +2328,12 @@ void createUserInterface_Root(iRoot *d) {
             addChildPos_Widget(mainStack, iClob(sidebar1), front_WidgetAddPos);
             iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
             addChildPos_Widget(mainStack, iClob(sidebar2), back_WidgetAddPos);
-            setFlags_Widget(as_Widget(sidebar2), disabledWhenHidden_WidgetFlag, iTrue);
+            setFlags_Widget(sidebar2, disabledWhenHidden_WidgetFlag, iTrue);
         }
         else {
             /* Sidebar is a slide-over sheet. */
             addChild_Widget(root, iClob(sidebar1));
-            setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);
+            setFlags_Widget(sidebar1, hidden_WidgetFlag, iTrue);
         }
     }
     /* Lookup results. */ {
@@ -2560,7 +2560,7 @@ static void setupMovableElements_Root_(iRoot *d) {
     setFlags_Widget(menuBar, hidden_WidgetFlag, !prefs->menuBar);
     setFlags_Widget(navMenu, hidden_WidgetFlag, prefs->menuBar);
     if (navBar) {
-        iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2, iFalse);
+        setFlags2_Widget(navBar, permanentVisualOffset_WidgetFlag2, iFalse);
     }
     if (prefs->bottomNavBar) {
         if (deviceType_App() == phone_AppDeviceType) {
@@ -2578,8 +2578,8 @@ static void setupMovableElements_Root_(iRoot *d) {
             addChildPos_Widget(div, navBar, back_WidgetAddPos);
             iRelease(navBar);
             /* We'll need to be able to move the input field from under the keyboard. */
-            iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2,
-                         deviceType_App() == tablet_AppDeviceType);
+            setFlags2_Widget(navBar, permanentVisualOffset_WidgetFlag2,
+                             deviceType_App() == tablet_AppDeviceType);
         }
     }
     else if (navBar) {
@@ -2605,7 +2605,7 @@ static void setupMovableElements_Root_(iRoot *d) {
                         fixedPosition_WidgetFlag | moveToParentBottomEdge_WidgetFlag |
                             resizeToParentWidth_WidgetFlag,
                         deviceType_App() == phone_AppDeviceType && prefs->bottomTabBar);
-        iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
+        setFlags2_Widget(tabBar, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
         iChangeFlags(tabBar->flags, drawBackgroundToBottom_WidgetFlag, prefs->bottomTabBar);
         /* Tab button frames. */
         iForEach(ObjectList, i, children_Widget(tabBar)) {

@@ -822,7 +822,7 @@ iWidget *makePadding_Widget(int size) {
 
 iLabelWidget *makeHeading_Widget(const char *text) {
     iLabelWidget *heading = new_LabelWidget(text, NULL);
-    setFlags_Widget(as_Widget(heading), frameless_WidgetFlag | alignLeft_WidgetFlag, iTrue);
+    setFlags_Widget(heading, frameless_WidgetFlag | alignLeft_WidgetFlag, iTrue);
     setBackgroundColor_Widget(as_Widget(heading), none_ColorId);
     return heading;
 }
@@ -858,7 +858,7 @@ iInputWidget *makeFilterBar_Widget(const char *id, const char *hint, int clearKe
                                    const char *clearCommand) {
     iInputWidget *input = new_InputWidget(0);
     setId_Widget(as_Widget(input), id);
-    setFlags_Widget(as_Widget(input), frameless_WidgetFlag, iTrue);
+    setFlags_Widget(input, frameless_WidgetFlag, iTrue);
     setHint_InputWidget(input, hint);
     setEatEscape_InputWidget(input, iFalse);
     setSelectAllOnFocus_InputWidget(input, iTrue);

@@ -158,7 +158,7 @@ void setVerticalTabBar_Widget(iWidget *tabs) {
                              resizeWidthOfChildren_WidgetFlag, iFalse);
     setFlags_Widget(buttons, arrangeVertical_WidgetFlag | arrangeWidth_WidgetFlag |
                     resizeChildrenToWidestChild_WidgetFlag, iTrue);
-    buttons->flags2 |= centerChildrenVertical_WidgetFlag2;
+    setFlags2_Widget(buttons, centerChildrenVertical_WidgetFlag2, iTrue);
     setFlags_Widget(content, arrangeHorizontal_WidgetFlag, iFalse);
     setFlags_Widget(content, arrangeVertical_WidgetFlag, iTrue);
 }
@@ -182,7 +182,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         setIcon_LabelWidget((iLabelWidget *) button, 0); /* no icon in the terminal (lack of room) */
     }
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    button->flags2 |= noRound_WidgetFlag2;
+    setFlags2_Widget(button, noRound_WidgetFlag2, iTrue);
     setFlags_Widget(button,
                     commandOnClick_WidgetFlag |
                         (!isVerticalTabs ? horizontalOffset_WidgetFlag : 0) |
@@ -191,7 +191,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
     if (!cmp_String(id_Widget(tabs), "doctabs")) {
         /* Document tabs can be reordered.
            TODO: Maybe not hardcode the parent ID here? Could check a flag on `tabs`. */
-        button->flags2 |= siblingOrderDraggable_WidgetFlag2;
+        setFlags2_Widget(button, siblingOrderDraggable_WidgetFlag2, iTrue);
         if (isMobile_Platform()) {
             button->flags |= touchDrag_WidgetFlag;
         }
@@ -327,7 +327,7 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
     }
     iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
     setPadding_Widget(as_Widget(tabButton), 0, 0, 0, gap_UI / 4);
-    setFlags_Widget(as_Widget(tabButton), arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
+    setFlags_Widget(tabButton, arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
 #if defined (iPlatformApple)
     const int64_t edge = moveToParentLeftEdge_WidgetFlag;
 #else
@@ -340,12 +340,12 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
         edge | tight_WidgetFlag | frameless_WidgetFlag | noBackground_WidgetFlag |
             hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
     if (deviceType_App() != desktop_AppDeviceType) {
-        setFlags_Widget(as_Widget(close),
+        setFlags_Widget(close,
                         hidden_WidgetFlag | visibleOnParentHover_WidgetFlag, iFalse);
     }
     if (deviceType_App() == tablet_AppDeviceType) {
-        setFlags_Widget(as_Widget(close), hidden_WidgetFlag | disabledWhenHidden_WidgetFlag, iTrue);
-        as_Widget(close)->flags2 |= visibleOnParentSelected_WidgetFlag2;
+        setFlags_Widget(close, hidden_WidgetFlag | disabledWhenHidden_WidgetFlag, iTrue);
+        setFlags2_Widget(close, visibleOnParentSelected_WidgetFlag2, iTrue);
     }
     setNoAutoMinHeight_LabelWidget(close, iTrue);
     updateSize_LabelWidget(close);

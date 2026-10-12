@@ -163,7 +163,7 @@ static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
         /* Set a fixed size based on maximum possible width of the text. */
         iBlock *content = new_Block(d->maxLen);
         fill_Block(content, 'M');
-        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? extraPaddingHeight_InputWidget_(d) : 0);
+        int extraHeight = (flags_Widget(d) & extraPadding_WidgetFlag ? extraPaddingHeight_InputWidget_(d) : 0);
         setFixedSize_Widget(
             as_Widget(d),
             add_I2(measure_Text(d->font, cstr_Block(content)).bounds.size,

@@ -344,8 +344,14 @@ const iString *id_Widget(const iWidget *d) {
     return d ? &d->id : collectNew_String();
 }
 
-int64_t flags_Widget(const iWidget *d) {
+int64_t flags_Widget(const iAnyObject *any) {
+    const iWidget *d = constAs_Widget(any);
     return d ? d->flags : 0;
+}
+
+int flags2_Widget(const iAnyObject *any) {
+    const iWidget *d = constAs_Widget(any);
+    return d ? d->flags2 : 0;
 }
 
 static void addToOnTop_Widget_(iWidget *d) {
@@ -362,7 +368,8 @@ static void addToOnTop_Widget_(iWidget *d) {
     insert_PtrArray(onTop, pos, d);
 }
 
-void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
+void setFlags_Widget(iAnyObject *any, int64_t flags, iBool set) {
+    iWidget *d = as_Widget(any);
     if (d) {
         if (deviceType_App() != desktop_AppDeviceType) {
             /* TODO: Tablets should detect if a hardware keyboard is available. */
@@ -392,6 +399,13 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             identify_Widget(d);
         }
 #endif
+    }
+}
+
+void setFlags2_Widget(iAnyObject *any, int flags2, iBool set) {
+    iWidget *d = as_Widget(any);
+    if (d) {
+        iChangeFlags(d->flags2, flags2, set);
     }
 }
 

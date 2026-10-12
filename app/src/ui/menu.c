@@ -207,7 +207,7 @@ static iWidget *makeMenuSeparator_(void) {
     iWidget *sep = new_Widget();
     iWidget *sbar = new_Widget();
     setFlags_Widget(sep, resizeChildren_WidgetFlag, iTrue);
-    sep->flags2 |= centerChildrenVertical_WidgetFlag2;
+    setFlags2_Widget(sep, centerChildrenVertical_WidgetFlag2, iTrue);
     addChildFlags_Widget(sep, iClob(sbar), 0);
     setBackgroundColor_Widget(sbar, isMobile_Platform() ? uiSeparator_ColorId : uiTextDisabled_ColorId);
     sep->rect.size.y = 2 * gap_UI * aspect_UI;
@@ -328,16 +328,16 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             }
             if (command && startsWith_CStr(command, "submenu id:")) {
                 setChevron_LabelWidget(label, iTrue);
-                setFlags_Widget(as_Widget(label), drawKey_WidgetFlag, iFalse);
+                setFlags_Widget(label, drawKey_WidgetFlag, iFalse);
                 haveSubmenu = iTrue;
             }
             if (command && !submenuItems) {
                 setMenuCanceling_LabelWidget(label, iTrue);
             }
-            as_Widget(label)->flags2 |= commandOnHover_WidgetFlag2;
-            setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
+            setFlags2_Widget(label, commandOnHover_WidgetFlag2, iTrue);
+            setFlags_Widget(label, disabled_WidgetFlag, isDisabled);
             if (isInfo) {
-                setFlags_Widget(as_Widget(label), resizeToParentWidth_WidgetFlag |
+                setFlags_Widget(label, resizeToParentWidth_WidgetFlag |
                                 fixedHeight_WidgetFlag, iTrue); /* wrap changes height */
                 setTextColor_LabelWidget(label, uiTextAction_ColorId);
             }
@@ -512,7 +512,7 @@ iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n,
     setDrawBufferEnabled_Widget(menu, iTrue);
     setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
-    menu->flags2 |= roundFreeEdges_WidgetFlag2;
+    setFlags2_Widget(menu, roundFreeEdges_WidgetFlag2, iTrue);
     if (isTerminal_Platform()) {
         setPadding1_Widget(menu, 3);
     }
@@ -743,7 +743,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
         setFrameColor_Widget(d, isPortraitPhone ? none_ColorId : uiSeparator_ColorId);
     }
     /* Phone menus are attached to the screen edges; elsewhere they float like native menus. */
-    iChangeFlags(d->flags2, floating_WidgetFlag2, !isPhone);
+    setFlags2_Widget(d, floating_WidgetFlag2, !isPhone);
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = (get_Window()->type == extra_WindowType);
     /* A vertical offset determined by a possible selected label in the menu. */
@@ -797,7 +797,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
             setUserData_Object(d, parent_Widget(d));
             iAssert(userData_Object(d));
-            parent_Widget(d)->flags2 |= childMenuOpenedAsPopup_WidgetFlag2;
+            setFlags2_Widget(parent_Widget(d), childMenuOpenedAsPopup_WidgetFlag2, iTrue);
             removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
             iInt2 winPos;
             SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
@@ -961,7 +961,7 @@ void closeMenu_Widget(iWidget *d) {
             win->roots[0]->widget = NULL;
             setRoot_Widget(d, originalParent->root);
             addChild_Widget(originalParent, d);
-            originalParent->flags2 &= ~childMenuOpenedAsPopup_WidgetFlag2;
+            setFlags2_Widget(originalParent, childMenuOpenedAsPopup_WidgetFlag2, iFalse);
             setFlags_Widget(d, keepOnTop_WidgetFlag, iTrue);
         }
         SDL_HideWindow(win->win);
@@ -972,7 +972,7 @@ void closeMenu_Widget(iWidget *d) {
         setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
         iLabelWidget *button = parentMenuButton_(d);
         if (button) {
-            setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
+            setFlags_Widget(button, selected_WidgetFlag, iFalse);
         }
         iWidget *menubar = findParent_Widget(d, "menubar");
         if (menubar) {
@@ -1019,7 +1019,7 @@ void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disabl
     else {
         iLabelWidget *item = findMenuItem_Widget(menu, command);
         if (item) {
-            setFlags_Widget(as_Widget(item), disabled_WidgetFlag, disable);
+            setFlags_Widget(item, disabled_WidgetFlag, disable);
             refresh_Widget(item);
         }
     }
@@ -1061,7 +1061,7 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
 iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *items, size_t n) {
     iLabelWidget *button = new_LabelWidget(label, "menu.open");
     if (isTerminal_Platform()) {
-        setFlags_Widget(as_Widget(button), tight_WidgetFlag, iTrue);
+        setFlags_Widget(button, tight_WidgetFlag, iTrue);
     }
     iWidget *menu = makeMenuFlags_Widget(as_Widget(button), items, n, iTrue /* allow native */);
     setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
@@ -1125,7 +1125,7 @@ static iBool updateMenuSelection_Widget_(iWidget *menu, iLabelWidget *dropButton
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
             iLabelWidget *item       = i.object;
             const iBool   isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
-            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
+            setFlags_Widget(item, selected_WidgetFlag, isSelected);
             if (isSelected) {
                 updateText_LabelWidget(dropButton,
                                        replaceNewlinesWithDash_(text_LabelWidget(item)));
@@ -1233,7 +1233,7 @@ iWidget *makeMenuBar_Widget(const iMenuItem *topLevelMenus, size_t num) {
         as_Widget(submenuButton)->padding[0] = gap_UI;
         setCommandHandler_Widget(as_Widget(submenuButton), handleTopLevelMenuBarCommand_Widget);
         updateSize_LabelWidget(submenuButton);
-        as_Widget(submenuButton)->flags2 |= commandOnHover_WidgetFlag2;
+        setFlags2_Widget(submenuButton, commandOnHover_WidgetFlag2, iTrue);
         addChildFlags_Widget(bar, iClob(submenuButton), frameless_WidgetFlag);
     }
     return bar;

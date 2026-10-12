@@ -368,7 +368,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                         const iBool cmdUse   = arg_Command(cmdItem) != 0;
                         const iBool cmdClear = argLabel_Command(cmdItem, "clear") != 0;
                         setFlags_Widget(
-                            as_Widget(menuItem),
+                            menuItem,
                             disabled_WidgetFlag,
                             (cmdClear && !isUsed_GmIdentity(ident)) ||
                                 (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
@@ -376,7 +376,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                     }
                     else if (equal_Command(cmdItem, "ident.use.domain")) {
                         const iString *domainUrl = domainUseUrl_CertListWidget_(docUrl);
-                        setFlags_Widget(as_Widget(menuItem),
+                        setFlags_Widget(menuItem,
                                         disabled_WidgetFlag,
                                         isUsedOn_GmIdentity(ident, domainUrl));
                     }

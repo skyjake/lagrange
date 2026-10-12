@@ -414,7 +414,7 @@ iWidget *bookmarkContextMenu_SidebarWidget_(iSidebarWidget *d, const iSidebarIte
                                                "bookmark.tag tag:remotesource" };
         iForIndices(i, localOnlyCmds) {
             setFlags_Widget(
-                as_Widget(findMenuItem_Widget(d->menu, localOnlyCmds[i])),
+                findMenuItem_Widget(d->menu, localOnlyCmds[i]),
                 disabled_WidgetFlag, /* Remote bookmarks have limitations. */
                 isRemote);
         }

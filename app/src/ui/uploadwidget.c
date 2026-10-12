@@ -234,7 +234,7 @@ static void updateFieldWidths_UploadWidget(iUploadWidget *d) {
             setFixedSize_Widget(
                 as_Widget(d->token),
                 init_I2(width_Widget(d->tabs) - left_Rect(parent_Widget(d->token)->rect), -1));
-            setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
+            setFlags_Widget(d->token, expand_WidgetFlag, iTrue);
         }
     }
     else if (d->protocol == misfin_UploadProtocol) {
@@ -402,7 +402,7 @@ static void updateButtonExcerpts_UploadWidget_(iUploadWidget *d) {
         /* Update the excerpt in the panel button. */
         iLabelWidget *panelButton = findChild_Widget(as_Widget(d), "dlg.upload.text.button");
         setWrap_LabelWidget(panelButton, iTrue);
-        setFlags_Widget(as_Widget(panelButton), fixedHeight_WidgetFlag, iTrue);
+        setFlags_Widget(panelButton, fixedHeight_WidgetFlag, iTrue);
         iString *excerpt = collect_String(copy_String(text_InputWidget(d->input)));
         const size_t maxLen = 150;
         if (length_String(excerpt) > maxLen) {
@@ -711,20 +711,20 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         if (d->protocol != misfin_UploadProtocol) {
             d->editLabel = new_LabelWidget("", "");
             setBackgroundColor_Widget((iWidget *) d->editLabel, uiBackgroundSidebar_ColorId);
-            setFlags_Widget(as_Widget(d->editLabel), resizeToParentWidth_WidgetFlag, iTrue);
+            setFlags_Widget(d->editLabel, resizeToParentWidth_WidgetFlag, iTrue);
             /* Ensure the height of the progress pane matches the text editor, as the latter
                determines the height of the whole dialog. */
             as_Widget(d->editLabel)->sizeRef = (iWidget *) d->input;
             appendFramelessTabPage_Widget(d->tabs, iClob(d->editLabel), "", none_ColorId, 0, 0);
 
             iLabelWidget *tabButton = tabPageButton_Widget(d->tabs, d->editLabel);
-            setFlags_Widget(as_Widget(tabButton),
+            setFlags_Widget(tabButton,
                             collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag,
                             iTrue);
-            setFlags_Widget(as_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0))),
+            setFlags_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 0)),
                             collapse_WidgetFlag,
                             iTrue);
-            setFlags_Widget(as_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 1))),
+            setFlags_Widget(tabPageButton_Widget(d->tabs, tabPage_Widget(d->tabs, 1)),
                             collapse_WidgetFlag,
                             iTrue);
         }
@@ -905,7 +905,7 @@ static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
 static void updateUrlPanelButton_UploadWidget_(iUploadWidget *d) {
     if (isUsingPanelLayout_Mobile() && d->protocol == titan_UploadProtocol) {
         iLabelWidget *urlPanelButton = findChild_Widget(as_Widget(d), "dlg.upload.urllabel");
-        setFlags_Widget(as_Widget(urlPanelButton), fixedHeight_WidgetFlag, iTrue);
+        setFlags_Widget(urlPanelButton, fixedHeight_WidgetFlag, iTrue);
         setWrap_LabelWidget(urlPanelButton, iTrue);
         setText_LabelWidget(urlPanelButton, requestUrl_UploadWidget_(d));
         arrange_Widget(as_Widget(d));
@@ -1095,7 +1095,7 @@ static iBool handleEditContentResponse_UploadWidget_(iUploadWidget *d, uint32_t 
     }
     unlockResponse_GmRequest(req);
     iReleasePtr(&d->editRequest);
-    setFlags_Widget(as_Widget(d->path), disabled_WidgetFlag, iTrue); /* don't change path while editing */
+    setFlags_Widget(d->path, disabled_WidgetFlag, iTrue); /* don't change path while editing */
     return iTrue;
 }
 
@@ -1529,7 +1529,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         /* The dialog will remain open until the request finishes, showing upload progress. */
         setFocus_Widget(NULL);
         setFlags_Widget(d->tabs, disabled_WidgetFlag, iTrue);
-        setFlags_Widget(as_Widget(d->token), disabled_WidgetFlag, iTrue);
+        setFlags_Widget(d->token, disabled_WidgetFlag, iTrue);
         setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iTrue);
         return iTrue;
     }

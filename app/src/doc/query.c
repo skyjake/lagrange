@@ -207,7 +207,7 @@ static void setupDialog_Query_(iQuery *d, iWidget *dlg, const iString *url,
             insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
         }
         if (lineBreak) {
-            setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
+            setFlags_Widget(lineBreak, frameless_WidgetFlag, iTrue);
             setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
         }
     }
@@ -356,7 +356,7 @@ void deferOutgoing_Query(iQuery *d) {
         }
         setId_Widget(bar, format_CStr("outgoinginputprompt%u", run->linkId));
         setFlags_Widget(bar, hidden_WidgetFlag | horizontalOffset_WidgetFlag, iTrue);
-        iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
+        setFlags2_Widget(bar, deferredDraw_WidgetFlag2, iTrue);
         if (focus_Widget() == bar || hasParent_Widget(focus_Widget(), bar)) {
             setFocus_Widget(NULL);
         }
@@ -481,7 +481,7 @@ void reposition_Query(iQuery *d, iDocumentView *view) {
         iWidget *child = i.object;
         if (startsWith_String(id_Widget(child), "inputprompt")) {
             setFlags_Widget(child, hidden_WidgetFlag, iTrue);
-            iChangeFlags(child->flags2, deferredDraw_WidgetFlag2, iFalse);
+            setFlags2_Widget(child, deferredDraw_WidgetFlag2, iFalse);
         }
     }
     iConstForEach(PtrArray, m, &view->visibleMedia) {
@@ -505,12 +505,12 @@ void reposition_Query(iQuery *d, iDocumentView *view) {
         arrange_Widget(bar);
         if (isCovered) {
             setFlags_Widget(bar, hidden_WidgetFlag, iTrue);
-            iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iTrue);
+            setFlags2_Widget(bar, deferredDraw_WidgetFlag2, iTrue);
             pushBack_PtrArray(&d->covered, bar);
         }
         else {
             setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
-            iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
+            setFlags2_Widget(bar, deferredDraw_WidgetFlag2, iFalse);
         }
     }
     /* A hidden prompt would eat scroll keys if left focused. */
@@ -587,7 +587,7 @@ void resetAfterSwipe_Query(iQuery *d) {
     iForEach(PtrArray, c, &d->covered) {
         iWidget *bar = c.ptr;
         setFlags_Widget(bar, hidden_WidgetFlag, iFalse);
-        iChangeFlags(bar->flags2, deferredDraw_WidgetFlag2, iFalse);
+        setFlags2_Widget(bar, deferredDraw_WidgetFlag2, iFalse);
     }
     clear_PtrArray(&d->covered);
 }

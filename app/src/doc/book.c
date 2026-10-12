@@ -413,7 +413,7 @@ iBool updateProgress_DocumentBook(iDocumentBook *d) {
     const int            unit   = progressUnit_DocumentBook_;
     const uint32_t       now    = SDL_GetTicks();
     if (d->progressChapter != iInvalidPos && chapter != d->progressChapter &&
-        ~flags_Widget(as_Widget(scroll)) & pressed_WidgetFlag) {
+        ~flags_Widget(scroll) & pressed_WidgetFlag) {
         d->progressAnimEnd = now + pageTurnDuration_DocumentView(view);
     }
     d->progressChapter = chapter;

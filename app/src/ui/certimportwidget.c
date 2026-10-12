@@ -206,8 +206,8 @@ void init_CertImportWidget(iCertImportWidget *d) {
         setTextColor_LabelWidget(d->keyLabel, invalidColor_);
         setFrameColor_Widget(as_Widget(d->crtLabel), invalidColor_);
         setFrameColor_Widget(as_Widget(d->keyLabel), invalidColor_);
-        as_Widget(d->crtLabel)->flags2 |= alwaysRound_WidgetFlag2;
-        as_Widget(d->keyLabel)->flags2 |= alwaysRound_WidgetFlag2;
+        setFlags2_Widget(d->crtLabel, alwaysRound_WidgetFlag2, iTrue);
+        setFlags2_Widget(d->keyLabel, alwaysRound_WidgetFlag2, iTrue);
     }
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */

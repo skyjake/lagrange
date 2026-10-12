@@ -442,7 +442,7 @@ void init_LookupWidget(iLookupWidget *d) {
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag, iTrue);
     setFlags_Widget(w, unhittable_WidgetFlag, isMobile_Platform());
-    w->flags2 |= roundFreeEdges_WidgetFlag2;
+    setFlags2_Widget(w, roundFreeEdges_WidgetFlag2, iTrue);
     if (!isTerminal_Platform()) {
         setBackgroundColor_Widget(w, uiBackground_ColorId); /* matches the list */
     }
@@ -450,7 +450,7 @@ void init_LookupWidget(iLookupWidget *d) {
                                    resizeToParentWidth_WidgetFlag |
                                    resizeToParentHeight_WidgetFlag);
     /* We will handle focus and cursor manually. */
-    setFlags_Widget(as_Widget(d->list), focusable_WidgetFlag, iFalse);
+    setFlags_Widget(d->list, focusable_WidgetFlag, iFalse);
     if (isTerminal_Platform()) {
         setPadding_Widget(as_Widget(d->list), 2, 2, 2, 2);
     }

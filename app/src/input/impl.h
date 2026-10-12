@@ -138,7 +138,7 @@ iLocalDef iInt2 padding_InputWidget_(void) {
 }
 
 iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
-    return (flags_Widget(constAs_Widget(d)) & selected_WidgetFlag) != 0;
+    return (flags_Widget(d) & selected_WidgetFlag) != 0;
 }
 
 iLocalDef iBool hasNativeControl_InputWidget_(const iInputWidget *d) {

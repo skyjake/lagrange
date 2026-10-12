@@ -130,7 +130,7 @@ static iLabelWidget *addButton_ViewToolbar_(iViewToolbar *d, iLabelWidget *butto
     setFont_LabelWidget(button, uiContent_FontId); /* same as the footer buttons */
     addChildIdFlags_Widget(
         d->widget, iClob(button), id, frameless_WidgetFlag | noBackground_WidgetFlag);
-    as_Widget(button)->flags2 |= alwaysRound_WidgetFlag2;
+    setFlags2_Widget(button, alwaysRound_WidgetFlag2, iTrue);
     return button;
 }
 
@@ -142,7 +142,7 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
     iWidget *w = d->widget = new_Widget();
     setId_Widget(w, "viewtools");
     setFlags_Widget(w, hidden_WidgetFlag | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    w->flags2 |= roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2 | yieldSwipeToParent_WidgetFlag2;
+    setFlags2_Widget(w, roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2 | yieldSwipeToParent_WidgetFlag2, iTrue);
     setBackgroundColor_Widget(w, uiBackgroundSidebar_ColorId);
     setFrameColor_Widget(w, uiSeparator_ColorId);
     const float hPad = 1.75f * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);
@@ -196,8 +196,8 @@ void update_ViewToolbar(iViewToolbar *d) {
     const iBool    isLocal  = isLocalFileScheme_Rangecc(scheme);
     const iBool    isTls    = isTlsScheme_Rangecc(scheme);
 
-    setFlags_Widget(as_Widget(identButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal || !isTls);
-    setFlags_Widget(as_Widget(reloadButton), hidden_WidgetFlag | collapse_WidgetFlag, isBook ||isReader);
+    setFlags_Widget(identButton, hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal || !isTls);
+    setFlags_Widget(reloadButton, hidden_WidgetFlag | collapse_WidgetFlag, isBook ||isReader);
     setFlags_Widget(findChild_Widget(w, "viewtools.sitespec"), hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     setFlags_Widget(infoButton, hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     /* A book's information is in the sidebar. */
@@ -217,7 +217,7 @@ void update_ViewToolbar(iViewToolbar *d) {
             }
         }
         setLabel_ViewToolbar_(identButton, person_Icon, name);
-        setFlags_Widget(as_Widget(identButton), selected_WidgetFlag, isPinned);
+        setFlags_Widget(identButton, selected_WidgetFlag, isPinned);
         setTextColor_LabelWidget(identButton, !isPinned && ident ? uiTextAction_ColorId
                                  : none_ColorId /* default */);
     }
@@ -225,15 +225,15 @@ void update_ViewToolbar(iViewToolbar *d) {
         setLabel_ViewToolbar_(reloadButton,
                               timer_Icon,
                               collectNewCStr_String(shortLabel_ReloadInterval(state->reloadInterval)));
-        setFlags_Widget(as_Widget(reloadButton), selected_WidgetFlag, isAutoReloading_DocumentWidget(doc));
+        setFlags_Widget(reloadButton, selected_WidgetFlag, isAutoReloading_DocumentWidget(doc));
     }
     /* The button switches to the other mode. */ {
         iLabelWidget        *button = findChild_Widget(w, "viewtools.pagemode");
         const iDocumentView *view   = view_DocumentWidget(doc);
         const iBool isPagedByPrefs  = docPrefs_GmDocument(view->doc)->pageView.value != state->invertPageView;
         updateTextCStr_LabelWidget(button, isPagedByPrefs ? upDownArrow_Icon : book_Icon);
-        setFlags_Widget(as_Widget(button), selected_WidgetFlag, state->invertPageView);
-        setFlags_Widget(as_Widget(button), disabled_WidgetFlag, !isPageViewAllowed_DocumentView(view));
+        setFlags_Widget(button, selected_WidgetFlag, state->invertPageView);
+        setFlags_Widget(button, disabled_WidgetFlag, !isPageViewAllowed_DocumentView(view));
     }
     arrange_Widget(w);
     d->fullWidth = width_Widget(w);

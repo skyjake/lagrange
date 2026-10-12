@@ -1802,7 +1802,7 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                             ? (visBuf->texSize.x - size_GmDocument(d->doc).x) / 2
                             : left_Rect(ctx->docBounds) - left_Rect(bounds);
     /* Redraw the invalid ranges. */
-    if (~flags_Widget(constAs_Widget(d->owner)) & destroyPending_WidgetFlag) {
+    if (~flags_Widget(d->owner) & destroyPending_WidgetFlag) {
         iPaint *p = &ctx->paint;
         init_Paint(p);
         for (size_t i = 0; i < visBuf->numBuffers; i++) {
