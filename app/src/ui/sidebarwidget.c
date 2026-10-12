@@ -1714,9 +1714,16 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "sideitem.copy")) {
-                    SDL_SetClipboardText(cstr_String(argLabel_Command(cmd, "canon")
-                                                         ? canonicalUrl_String(&item->url)
-                                                         : &item->url));
+                    iString *link = responseLink_Feeds(&item->url);
+                    if (link) {
+                        SDL_SetClipboardText(cstr_String(link));
+                        delete_String(link);
+                    }
+                    else {
+                        SDL_SetClipboardText(cstr_String(argLabel_Command(cmd, "canon")
+                                                             ? canonicalUrl_String(&item->url)
+                                                             : &item->url));
+                    }
                     return iTrue;
                 }
             }

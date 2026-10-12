@@ -162,6 +162,23 @@ iBool matches_TinylogStamp(const iTinylogStamp *d, const iTinylogStamp *ref) {
     return a / 60 == b / 60;
 }
 
+iString *format_TinylogStamp(const iTinylogStamp *d) {
+    iString *str = newFormat_String("%04d-%02d-%02d", d->year, d->month, d->day);
+    if (d->hasTime) {
+        appendFormat_String(str, " %02d:%02d", d->hour, d->minute);
+        if (d->hasSeconds) {
+            appendFormat_String(str, ":%02d", d->second);
+        }
+        if (d->hasZone) {
+            const int offset = iAbs(d->gmtOffsetMinutes);
+            appendFormat_String(str, " %c%02d%02d",
+                                d->gmtOffsetMinutes < 0 ? '-' : '+',
+                                offset / 60, offset % 60);
+        }
+    }
+    return str;
+}
+
 static iString *normalizedId_TinylogStamp_(const iTinylogStamp *d) {
     const int64_t secs = d->utc.ts.tv_sec;
     int64_t days = secs / 86400;

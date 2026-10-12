@@ -1751,6 +1751,38 @@ iBool tinylogInfo_Feeds(const iString *entryUrl, iTinylogInfo *info_out) {
     return iTrue;
 }
 
+iString *responseLink_Feeds(const iString *entryUrl) {
+    iFeeds          *d    = &feeds_;
+    const uint32_t   bmId = tinylogBookmark_Feeds(entryUrl);
+    const iBookmark *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
+    if (!bm) {
+        return NULL;
+    }
+    iString             *link      = NULL;
+    iTinylog            *log       = new_Tinylog();
+    iString             *sourceUrl = collectNew_String();
+    const iTinylogEntry *entry =
+        loadTinylogEntry_Feeds_(d, bm, canonicalUrl_String(entryUrl), log, sourceUrl);
+    if (entry) {
+        iString *author = collectNew_String();
+        lock_Mutex(d->mtx);
+        const iTinylogFeed *tf = findTinylogFeed_Feeds_(d, &bm->url);
+        if (tf) {
+            set_String(author, &tf->author);
+        }
+        unlock_Mutex(d->mtx);
+        if (isEmpty_String(author)) {
+            set_String(author, collect_String(derivedAuthor_Tinylog(&bm->url)));
+        }
+        link = newFormat_String("=> %s RE: %s %s",
+                                cstr_String(isEmpty_String(sourceUrl) ? &bm->url : sourceUrl),
+                                cstr_String(author),
+                                cstr_String(collect_String(format_TinylogStamp(&entry->stamp))));
+    }
+    delete_Tinylog(log);
+    return link;
+}
+
 iDeclareType(TinylogRef)
 
 struct Impl_TinylogRef {

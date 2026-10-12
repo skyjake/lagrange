@@ -41,6 +41,7 @@ struct Impl_TinylogStamp {
 
 iBool   parse_TinylogStamp      (iTinylogStamp *, iRangecc text);
 iBool   matches_TinylogStamp    (const iTinylogStamp *, const iTinylogStamp *reference);
+iString *format_TinylogStamp    (const iTinylogStamp *);
 
 iDeclareType(TinylogEntry)
 
