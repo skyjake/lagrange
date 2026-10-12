@@ -753,6 +753,10 @@ void deinit_App_(iApp *d) {
     deinit_PtrArray(&d->mainWindows);
     deinit_PtrArray(&d->closedWindows);
     d->window = NULL;
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
+    /* Let the windows disappear before a possibly lengthy sync. */
+    SDL_PumpEvents();
+#endif
     deinit_Sync();
     deinit_Feeds();
     save_Keys(dataDir_App_());
