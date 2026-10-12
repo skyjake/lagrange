@@ -1808,8 +1808,8 @@ static iBool responseRef_Feeds_(void *context, const iString *url, const iTinylo
     return found;
 }
 
-static void appendQuotedRef_TinylogThread_(iTinylogThread *d, const iTinylogRef *ref,
-                                           iString *page) {
+static void prependQuotedRef_TinylogThread_(iTinylogThread *d, const iTinylogRef *ref,
+                                            iString *page) {
     iTinylog *log = new_Tinylog();
     parse_Tinylog(log, &ref->section, NULL);
     if (!isEmpty_Array(&log->entries)) {
@@ -1818,21 +1818,25 @@ static void appendQuotedRef_TinylogThread_(iTinylogThread *d, const iTinylogRef 
         /* Day of month without zero padding. */
         iString *dateFormat = collectNewCStr_String(cstr_Lang("banner.tinylogentry.date"));
         replace_String(dateFormat, "%d", format_CStr("%d", posted.day));
-        appendFormat_String(page, "\n---\n\n=> %s ", cstr_String(&ref->url));
-        appendFormat_String(page,
+        iString *quote = new_String();
+        appendFormat_String(quote, "=> %s ", cstr_String(&ref->url));
+        appendFormat_String(quote,
                             cstr_Lang("feeds.tinylog.wrote"),
                             cstr_String(&ref->author),
                             cstr_String(collect_String(
                                 format_Date(&posted, cstr_String(dateFormat)))));
-        appendCStr_String(page, "\n");
+        appendCStr_String(quote, "\n");
         iString *content = content_TinylogEntry(
             constAt_Array(&log->entries, 0), &ref->sourceUrl, responseRef_Feeds_, d);
         iRangecc line = iNullRange;
         while (nextSplit_Rangecc(range_String(content), "\n", &line)) {
-            appendFormat_String(page, isEmpty_Range(&line) ? ">\n" : "> %s\n",
+            appendFormat_String(quote, isEmpty_Range(&line) ? ">\n" : "> %s\n",
                                 cstr_Rangecc(line));
         }
+        appendCStr_String(quote, "\n");
+        prepend_String(page, quote);
         delete_String(content);
+        delete_String(quote);
     }
     delete_Tinylog(log);
 }
@@ -1863,7 +1867,7 @@ static const iBlock *tinylogPage_Feeds_(iRangecc path) {
         delete_String(content);
         /* Quoting may add more references. */
         for (size_t i = 0; i < size_PtrArray(&thread.refs); i++) {
-            appendQuotedRef_TinylogThread_(&thread, at_PtrArray(&thread.refs, i), page);
+            prependQuotedRef_TinylogThread_(&thread, at_PtrArray(&thread.refs, i), page);
         }
         iForEach(PtrArray, r, &thread.refs) {
             iTinylogRef *ref = r.ptr;

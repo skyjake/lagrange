@@ -939,7 +939,7 @@ static iBool detectLineType_Typesetter_(iTypesetter *d) {
     }
     else if (!d->isPreformat) {
         d->type = lineType_GmDocument_(doc, d->line);
-        if ((doc->origFormat == markdown_SourceFormat || doc->flags.isTinylogEntry) &&
+        if ((doc->origFormat == markdown_SourceFormat) &&
             isHRule_(d->line)) {
             addRule_Typesetter_(d);
             return iFalse;
