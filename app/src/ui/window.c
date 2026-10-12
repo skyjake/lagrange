@@ -211,8 +211,8 @@ iMenuItem bookmarksMenuItems_Window[] = {
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
     { "---" },
-    { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "${menu.feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" },
+    { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { NULL }
 };
 
