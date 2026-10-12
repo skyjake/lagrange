@@ -56,6 +56,8 @@ void    deinit_Feeds            (void);
 void    refresh_Feeds           (void);
 void    setRefreshInterval_Feeds(enum iFeedInterval feedInterval);
 void    refreshFinished_Feeds   (void); /* called on "feeds.refresh.finished" */
+void    pause_Feeds             (void); /* app moved to background */
+void    resume_Feeds            (void); /* retries requests interrupted by the pause */
 iBool   isRefreshing_Feeds      (void);
 void    remapBookmarkIds_Feeds  (const iArray *idMappings); /* SyncIdMapping elements */
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);

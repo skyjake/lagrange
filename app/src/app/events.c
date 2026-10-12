@@ -634,7 +634,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             d->lastEventTime = SDL_GetTicks();
 #endif
             postRefreshAllWindows_App();
-            setRefreshInterval_Feeds(d->prefs.feedInterval);
+            resume_Feeds();
             notify_App("sync.check");
             notify_App("sync.recent");
             if (d->isTextInputActive) {
@@ -661,6 +661,7 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
             savePrefs_App_(d);
             saveState_App_(d, iTrue);
             enterBackground_Sync();
+            pause_Feeds();
             d->isSuspended = iTrue;
             if (d->isTextInputActive) {
                 SDL_StopTextInput(as_Window(d->window)->win);

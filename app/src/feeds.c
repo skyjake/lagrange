@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "sync.h"
 #include "syncdata.h"
 
+#include <the_Foundation/atomic.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/hash.h>
@@ -101,6 +102,7 @@ struct Impl_FeedJob {
     iBool       autoDetect;
     iBool       pendingTitle;
     iGmRequest *request;
+    int         numResumes; /* Feeds resume count at submission */
     int         numRedirect;
     iPtrArray   results;
     iString     title;          /* from the fetched page */
@@ -115,6 +117,7 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     initCopy_String(&d->feedUrl, &bookmark->url);
     d->bookmarkId = id_Bookmark(bookmark);
     d->request = NULL;
+    d->numResumes = 0;
     d->numRedirect = 0;
     init_PtrArray(&d->results);
     iZap(d->startTime);
@@ -151,6 +154,11 @@ static iBool isTimedOut_FeedJob_(iFeedJob *d) {
     return elapsedSeconds_Time(&d->startTime) > requestTimeoutSeconds_FeedJob_;
 }
 
+static iBool isNetworkFailure_FeedJob_(const iFeedJob *d) {
+    return !isFinished_GmRequest(d->request) ||
+           category_GmStatusCode(status_GmRequest(d->request)) == 0;
+}
+
 iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 
 /*----------------------------------------------------------------------------------------------*/
@@ -166,6 +174,9 @@ struct Impl_Feeds {
     uint32_t  refreshInterval; /* milliseconds, for refreshTimer */
     iThread * worker;
     iBool     stopWorker;
+    iCondition *wakeup; /* signaled when the worker should stop */
+    iAtomicInt isPaused;
+    iAtomicInt numResumes;
     iPtrArray jobs; /* pending */
     iSortedArray entries; /* pointers to all discovered feed entries, sorted by entry ID (URL) */
     iPtrArray tinylogFeeds; /* TinylogFeed */
@@ -190,6 +201,7 @@ static iBool isInitialized_Feeds_(const iFeeds *d) {
 }
 
 static void submit_FeedJob_(iFeedJob *d) {
+    d->numResumes = value_Atomic(&feeds_.numResumes);
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, &d->url);
     initCurrent_Time(&d->startTime);
@@ -652,7 +664,10 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
 }
 
 static void save_Feeds_(iFeeds *d) {
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, feedsFilename_Feeds_)));
+    const iString *path    = collect_String(concatCStr_Path(&d->saveDir, feedsFilename_Feeds_));
+    const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
+    iBool          isSaved = iFalse;
+    iFile         *f       = new_File(tmpPath);
     if (open_File(f, write_FileMode | text_FileMode)) {
         lock_Mutex(d->mtx);
         iString *str = new_String();
@@ -690,8 +705,12 @@ static void save_Feeds_(iFeeds *d) {
         delete_String(str);
         close_File(f);
         unlock_Mutex(d->mtx);
+        isSaved = iTrue;
     }
     iRelease(f);
+    if (isSaved) {
+        commitFile_Core(cstr_String(path), cstr_String(tmpPath));
+    }
 }
 
 static iBool isHeadingEntry_FeedEntry_(const iFeedEntry *d) {
@@ -930,6 +949,16 @@ static iBool applyTinylog_Feeds_(iFeeds *d, iFeedJob *job) {
     return updateTinylogEntries_Feeds_(d, job, &job->results);
 }
 
+static void wait_Feeds_(iFeeds *d, double seconds) {
+    iTime until;
+    initTimeout_Time(&until, seconds);
+    lock_Mutex(d->mtx);
+    if (!d->stopWorker) {
+        waitTimeout_Condition(d->wakeup, d->mtx, &until);
+    }
+    unlock_Mutex(d->mtx);
+}
+
 static iThreadResult fetch_Feeds_(iThread *thread) {
     iFeeds *d = &feeds_;
     iUnused(thread);
@@ -941,19 +970,31 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     const size_t totalJobs = size_PtrArray(&d->jobs);
     int numFinishedJobs = 0;
     while (!d->stopWorker) {
-        /* Start new jobs. */
-        iForIndices(i, work) {
-            if (!work[i]) {
-                work[i] = startNextJob_Feeds_(d);
+        if (!value_Atomic(&d->isPaused)) {
+            /* Start new jobs. */
+            iForIndices(i, work) {
+                if (!work[i]) {
+                    work[i] = startNextJob_Feeds_(d);
+                }
             }
         }
-        sleep_Thread(0.5); /* TODO: wait on a Condition so we can exit quickly */
+        wait_Feeds_(d, 0.5);
         if (d->stopWorker) break;
+        if (value_Atomic(&d->isPaused)) {
+            continue; /* results are checked after resuming */
+        }
+        const int numResumes = value_Atomic(&d->numResumes);
         size_t ongoing = 0;
         iBool doNotify = iFalse;
         iForIndices(i, work) {
             if (work[i]) {
-                if (isFinished_GmRequest(work[i]->request)) {
+                if (work[i]->numResumes != numResumes && isNetworkFailure_FeedJob_(work[i])) {
+                    /* Interrupted by the app being suspended; try again. */
+                    iRelease(work[i]->request);
+                    submit_FeedJob_(work[i]);
+                    ongoing++;
+                }
+                else if (isFinished_GmRequest(work[i]->request)) {
                     if (parseResult_FeedJob_(work[i])) {
                         if (isSuccess_GmStatusCode(status_GmRequest(work[i]->request))) {
                             iFeedJob *job = work[i];
@@ -1096,7 +1137,10 @@ static void removeRefreshTimer_Feeds_(iFeeds *d) {
 
 static void stopWorker_Feeds_(iFeeds *d) {
     if (d->worker) {
+        lock_Mutex(d->mtx);
         d->stopWorker = iTrue;
+        signal_Condition(d->wakeup);
+        unlock_Mutex(d->mtx);
         join_Thread(d->worker);
         iReleasePtr(&d->worker);
     }
@@ -1240,10 +1284,13 @@ void init_Feeds(const char *saveDir) {
     iFeeds *d = &feeds_;
     d->refreshTimer = 0;
     d->mtx = new_Mutex();
+    d->wakeup = new_Condition();
     initCStr_String(&d->saveDir, saveDir);
     init_IntSet(&d->previouslyCheckedFeeds);
     iZap(d->lastRefreshedAt);
     d->worker = NULL;
+    set_Atomic(&d->isPaused, iFalse);
+    set_Atomic(&d->numResumes, 0);
     init_PtrArray(&d->jobs);
     init_SortedArray(&d->entries, sizeof(iFeedEntry *), cmp_FeedEntryPtr_);
     init_PtrArray(&d->tinylogFeeds);
@@ -1261,6 +1308,7 @@ void deinit_Feeds(void) {
     iAssert(isEmpty_PtrArray(&d->jobs));
     deinit_PtrArray(&d->jobs);
     deinit_String(&d->saveDir);
+    delete_Condition(d->wakeup);
     delete_Mutex(d->mtx);
     iForEach(Array, i, &d->entries.values) {
         iFeedEntry **entry = i.value;
@@ -1304,6 +1352,24 @@ void setRefreshInterval_Feeds(enum iFeedInterval feedInterval) {
             d->refreshTimer =
                 SDL_AddTimer((uint32_t) (iMax(1.0, remaining) * 1000), refresh_Feeds_, NULL);
         }
+    }
+}
+
+void pause_Feeds(void) {
+    iFeeds *d = &feeds_;
+    if (isInitialized_Feeds_(d)) {
+        removeRefreshTimer_Feeds_(d);
+        set_Atomic(&d->isPaused, iTrue);
+    }
+}
+
+void resume_Feeds(void) {
+    iFeeds *d = &feeds_;
+    if (isInitialized_Feeds_(d)) {
+        if (exchange_Atomic(&d->isPaused, iFalse)) {
+            add_Atomic(&d->numResumes, 1);
+        }
+        setRefreshInterval_Feeds(prefs_App()->feedInterval);
     }
 }
 
