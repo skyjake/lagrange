@@ -964,6 +964,9 @@ msgstr "Not used"
 msgid "ident.syncing"
 msgstr "Used for syncing"
 
+msgid "ident.misfin"
+msgstr "Misfin certificate"
+
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"

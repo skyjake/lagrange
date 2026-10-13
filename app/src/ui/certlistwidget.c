@@ -539,23 +539,18 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
         item->isPinned = (ident == pinnedIdent);
         item->isBold   = (ident == activeIdent);
         const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
-        const iBool isSync = !isEmpty_Block(syncFp) && !cmp_Block(&ident->fingerprint, syncFp);
+        const iBool isSync   = !isEmpty_Block(syncFp) && !cmp_Block(&ident->fingerprint, syncFp);
         format_String(&item->meta,
                       "%s",
-                      isActive ? cstr_Lang("ident.using")
+                      item->isMisfin ? cstr_Lang("ident.misfin")
+                      : isActive     ? cstr_Lang("ident.using")
                       : isUsed_GmIdentity(ident)
                           ? formatCStrs_Lang("ident.usedonurls.n", size_StringSet(ident->useUrls))
                       : isSync ? cstr_Lang("ident.syncing")
                                : cstr_Lang("ident.notused"));
         const char *expiry = expiry_CertListWidget_(ident);
         if (item->isMisfin) {
-            //iString *addr = misfinIdentity_GmIdentity(ident, &item->meta);
-            //set_String(&item->label, addr);
-            //delete_String(addr);
             item->icon = 0x1f4e7; /* envelope */
-            clear_String(&item->meta);
-            // set_String(&item->meta, &ident->notes);
-            // appendFormat_String(&item->meta, "\n%s", expiry);
         }
         if (isSync) {
             item->icon = 0x1f503; /* reload */
