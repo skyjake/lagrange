@@ -2996,7 +2996,7 @@ static void finishHidingReadingBars_Root_(void *ptr) {
 }
 
 /* A sheet dialog (e.g., Settings) is open over the document. */
-static iBool isSheetOpen_Root_(const iRoot *d) {
+iBool isSheetOpen_Root(const iRoot *d) {
     iConstForEach(ObjectList, i, children_Widget(d->widget)) {
         const iWidget *child = i.object;
         if (isVisible_Widget(child) && child->flags & focusRoot_WidgetFlag &&
@@ -3011,7 +3011,7 @@ void showReadingBars_Root(iRoot *d, iBool show) {
     if (!d->isReading) {
         return;
     }
-    if (show && isSheetOpen_Root_(d)) {
+    if (show && isSheetOpen_Root(d)) {
         show = iFalse; /* not drawn over sheets */
     }
     const iBool animate = prefs_App()->uiAnimations && d->areReadingBarsHidden == show;

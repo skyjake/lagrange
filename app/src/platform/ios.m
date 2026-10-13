@@ -692,6 +692,18 @@ static void callVoidMethodWithIntArgument(id target, NSString *selectorName, int
     }
 }
 
+static iBool isSheetOpen_iOS_(void) {
+    const iMainWindow *mw = get_MainWindow();
+    if (mw) {
+        iForIndices(i, mw->base.roots) {
+            if (mw->base.roots[i] && isSheetOpen_Root(mw->base.roots[i])) {
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
+}
+
 iBool processEvent_iOS(const SDL_Event *ev) {
     if (ev->type == SDL_EVENT_DISPLAY_ORIENTATION ||
         ev->type == SDL_EVENT_WINDOW_RESIZED ||
@@ -740,7 +752,8 @@ iBool processEvent_iOS(const SDL_Event *ev) {
         }
         else if (equal_Command(cmd, "statusbar.tapped")) {
             /* The system may treat taps on the app's own UI near the top as status bar taps. */
-            if ((uint32_t) SDL_GetTicks() - lastAppTouchTime_ > 300) {
+            /* Scrolling would dismiss an open sheet. */
+            if ((uint32_t) SDL_GetTicks() - lastAppTouchTime_ > 300 && !isSheetOpen_iOS_()) {
                 postCommand_App("scroll.top smooth:1");
             }
             return iTrue;
