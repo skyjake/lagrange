@@ -876,9 +876,10 @@ iInputWidget *makeFilterBar_Widget(const char *id, const char *hint, int clearKe
         embedFlags | disabled_WidgetFlag | moveToParentRightEdge_WidgetFlag);
     setId_Widget(as_Widget(clear), "filter.clear");
     updateSize_LabelWidget(magnifier);
+    as_Widget(magnifier)->padding[0] = 1 * gap_UI;
     updateSize_LabelWidget(clear);
     setContentPadding_InputWidget(input,
-                                  width_Widget(magnifier) - 2 * gap_UI,
+                                  width_Widget(magnifier) - 1 * gap_UI,
                                   width_Widget(clear) - 2 * gap_UI);
     return input;
 }

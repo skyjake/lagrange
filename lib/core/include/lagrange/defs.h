@@ -407,6 +407,7 @@ enum iAnsiFlag {
 #define toolbar_Icon        "\u2b13"
 #define toggleNo_Icon       bullet_Icon
 #define toggleYes_Icon      check_Icon
+#define trash_Icon          "\U0001f5d1"
 #define undo_Icon           "\u23ea"
 #define unhappy_Icon        "\U0001f641"
 #define upArrowBar_Icon     "\u2912"

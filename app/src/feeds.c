@@ -228,7 +228,7 @@ static void submit_FeedJob_(iFeedJob *d) {
 
 static iBool isSubscribed_(void *context, const iBookmark *bm) {
     iUnused(context);
-    return (bm->flags & subscribed_BookmarkFlag) != 0;
+    return (bm->flags & subscribed_BookmarkFlag) != 0 && !isTrash_Bookmark(bm);
 }
 
 static const iPtrArray *listSubscriptions_(void) {

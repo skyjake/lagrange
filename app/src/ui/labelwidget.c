@@ -1021,8 +1021,15 @@ void deinit_LabelWidget(iLabelWidget *d) {
 }
 
 void setFont_LabelWidget(iLabelWidget *d, int fontId) {
-    d->font = fontId;
+    updateFont_LabelWidget(d, fontId);
     updateSize_LabelWidget(d);
+}
+
+void updateFont_LabelWidget(iLabelWidget *d, int fontId) {
+    if (d->font != fontId) {
+        d->font = fontId;
+        refresh_Widget(d);
+    }
 }
 
 void setTextColor_LabelWidget(iLabelWidget *d, int color) {

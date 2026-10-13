@@ -62,6 +62,7 @@ enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
 int                 shelfSort_SidebarWidget     (const iSidebarWidget *); /* enum iBooksSortOrder */
 float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     openFolders_SidebarWidget   (const iSidebarWidget *);
+iBool               isShowingTrash_SidebarWidget(const iSidebarWidget *);
 
 iListWidget *       list_SidebarWidget          (iSidebarWidget *);
 

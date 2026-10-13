@@ -211,7 +211,7 @@ iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *labe
     checkIcon_LabelWidget(btn);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(btn, frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
-        setTextColor_LabelWidget(btn, uiTextAction_ColorId);        
+        setTextColor_LabelWidget(btn, uiTextAction_ColorId);
     }
     return btn;
 }
@@ -243,7 +243,11 @@ static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
     if (isMobile_Platform() || isTerminal_Platform()) {
         return;
     }
-    iLabelWidget *icon = new_LabelWidget(tightModeLabels_[d->mode], NULL);
+    iLabelWidget *icon =
+        new_LabelWidget(d->mode == bookmarks_SidebarMode && isShowingTrash_SidebarWidget(d)
+                            ? trash_Icon
+                            : tightModeLabels_[d->mode],
+                        NULL);
     setFont_LabelWidget(icon, uiLabelHuge_FontId);
     setTextColor_LabelWidget(icon, uiTextDim_ColorId);
     addChildFlags_Widget(div, iClob(icon), frameless_WidgetFlag);
@@ -324,12 +328,10 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         releaseChildren_Widget(d->actions);
     }
     d->actions->rect.size.y = 0;
-    destroy_Widget(d->menu);
-    destroy_Widget(d->modeMenu);
-    destroy_Widget(d->folderMenu);
-    d->menu       = NULL;
-    d->modeMenu   = NULL;
-    d->folderMenu = NULL;
+    iWidget **menus[] = { &d->menu, &d->modeMenu, &d->folderMenu, &d->trashMenu };
+    iForIndices(i, menus) {
+        destroy_Widget(*menus[i]), *menus[i] = NULL;
+    }
     iBool isEmpty = iFalse; /* show blank? */
     switch (d->mode) {
         case feedEntries_SidebarMode:
@@ -567,12 +569,13 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addBlankIcon_SidebarWidget_(d, div);
-            iLabelWidget *msg = new_LabelWidget(d->mode == subscriptions_SidebarMode
-                                                    ? "${sidebar.empty.subs}"
-                                                : d->mode == bookmarks_SidebarMode
-                                                    ? "${sidebar.empty.bookmarks}"
-                                                    : "${sidebar.empty.links}",
-                                                NULL);
+            iLabelWidget *msg = new_LabelWidget(
+                d->mode == subscriptions_SidebarMode ? "${sidebar.empty.subs}"
+                : d->mode == bookmarks_SidebarMode
+                    ? (isShowingTrash_SidebarWidget(d) ? "${sidebar.empty.trash}"
+                                                       : "${sidebar.empty.bookmarks}")
+                    : "${sidebar.empty.links}",
+                NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
             addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
@@ -1075,6 +1078,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->menu       = NULL;
     d->modeMenu   = NULL;
     d->folderMenu = NULL;
+    d->trashMenu  = NULL;
     addAction_Widget(w, refreshFeeds_KeyShortcut, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
     if (side == left_SidebarSide) {

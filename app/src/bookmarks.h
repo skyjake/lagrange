@@ -47,6 +47,7 @@ enum iBookmarkFlags {
     tinylog_BookmarkFlag      = iBit(20),
     autoDetect_BookmarkFlag   = iBit(21), /* feed type is decided on the first fetch */
     pendingTitle_BookmarkFlag = iBit(22), /* title is replaced on the first fetch */
+    trash_BookmarkFlag        = iBit(23), /* bookmark is in the trash */
     remote_BookmarkFlag       = iBit(31),
 };
 
@@ -70,6 +71,7 @@ struct Impl_Bookmark {
 
 iLocalDef uint32_t  id_Bookmark         (const iBookmark *d) { return d->node.key; }
 iLocalDef iBool     isFolder_Bookmark   (const iBookmark *d) { return isEmpty_String(&d->url); }
+iLocalDef iBool     isTrash_Bookmark    (const iBookmark *d) { return d && (d->flags & trash_BookmarkFlag) != 0; }
 
 iBool   hasParent_Bookmark              (const iBookmark *, uint32_t parentId);
 int     depth_Bookmark                  (const iBookmark *);
@@ -98,6 +100,7 @@ uint32_t    add_Bookmarks               (iBookmarks *, const iString *url, const
 uint32_t    addToFolder_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
                                          const iString *tags, iChar icon, uint32_t folderId);
 iBool       remove_Bookmarks            (iBookmarks *, uint32_t id);
+iBool       trash_Bookmarks             (iBookmarks *, uint32_t id, iBool putInTrash);
 iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
 void        reorder_Bookmarks           (iBookmarks *, uint32_t id, int newOrder);
 iBool       updateIcons_Bookmarks       (iBookmarks *, const iString *url, iChar icon);
@@ -119,6 +122,7 @@ uint32_t    recentFolder_Bookmarks      (const iBookmarks *);
 size_t      numNewLinks_Bookmarks       (const iBookmarks *, const iGmDocument *doc); /* not bookmarked yet */
 size_t      importLinks_Bookmarks       (iBookmarks *, const iGmDocument *doc, uint32_t folderId,
                                          iBool withHeadings); /* returns number of new links */
+size_t      numTrash_Bookmarks          (const iBookmarks *);
 
 iBool       filterHomepage_Bookmark     (void *, const iBookmark *);
 

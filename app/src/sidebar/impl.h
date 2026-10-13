@@ -101,6 +101,7 @@ struct Impl_SidebarWidget {
     iWidget          *menu;          /* context menu for an item */
     iWidget          *modeMenu;      /* context menu for the sidebar mode (no item) */
     iWidget          *folderMenu;    /* context menu for bookmark folders */
+    iWidget          *trashMenu;     /* context menu for trashed bookmarks */
     iSidebarItem     *contextItem;   /* list item accessed in the context menu */
     size_t            contextIndex;  /* index of list item accessed in the context menu */
     iIntSet          *openFolders;   /* otherwise folded */

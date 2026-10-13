@@ -77,6 +77,7 @@ specialTags_[] = {
     { tinylog_BookmarkFlag, ".tinylog", iTrue },
     { autoDetect_BookmarkFlag, ".autodetect", iTrue },
     { pendingTitle_BookmarkFlag, ".pendingtitle", iTrue },
+    { trash_BookmarkFlag, ".trash", iTrue },
     /* `remote_BookmarkFlag` not included because it's runtime only */
 };
 
@@ -169,6 +170,7 @@ int cmpTitleAscending_Bookmark(const iBookmark **a, const iBookmark **b) {
 }
 
 iBool filterInsideFolder_Bookmark(void *context, const iBookmark *bm) {
+    if (isTrash_Bookmark(bm)) return iFalse; /* trash is not in any folder */
     return hasParent_Bookmark(bm, id_Bookmark(context));
 }
 
@@ -456,6 +458,20 @@ static void deinit_BookmarkLoader(iBookmarkLoader *d) {
     delete_TomlParser(d->toml);
 }
 
+static iBool doRemove_Bookmarks_(iBookmarks *d, uint32_t id) {
+    /* Bookmarks must already be locked, and we don't check for trash. */
+    iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
+    if (bm) {
+        /* Remove all the contained bookmarks as well. */
+        iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, filterInsideFolder_Bookmark, bm)) {
+            delete_Bookmark((iBookmark *) remove_Hash(&d->bookmarks, id_Bookmark(i.ptr)));
+        }
+        delete_Bookmark(bm);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static void load_BookmarkLoader(iBookmarkLoader *d, iStream *stream) {
     if (d->baseId && d->method == all_ImportMethod) {
         /* Make a folder for possible duplicate bookmarks. */
@@ -466,7 +482,7 @@ static void load_BookmarkLoader(iBookmarkLoader *d, iStream *stream) {
         fprintf(stderr, "[Bookmarks] syntax error in bookmarks.ini\n");
     }
     if (d->dupFolderId && !d->didImportDuplicates) {
-        remove_Bookmarks(d->bookmarks, d->dupFolderId);
+        doRemove_Bookmarks_(d->bookmarks, d->dupFolderId);
     }
 }
 
@@ -660,16 +676,35 @@ uint32_t addToFolder_Bookmarks(iBookmarks *d, const iString *url, const iString 
 
 iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     lock_Mutex(d->mtx);
-    iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
-    if (bm) {
-        /* Remove all the contained bookmarks as well. */
-        iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, filterInsideFolder_Bookmark, bm)) {
-            delete_Bookmark((iBookmark *) remove_Hash(&d->bookmarks, id_Bookmark(i.ptr)));
+    iAssert(isTrash_Bookmark(get_Bookmarks(d, id)));
+    iBool wasRemoved = doRemove_Bookmarks_(d, id);
+    unlock_Mutex(d->mtx);
+    return wasRemoved;
+}
+
+static void trash_Bookmarks_(iBookmarks *d, iBookmark *bm, iBool putInTrash) {
+    iChangeFlags(bm->flags, trash_BookmarkFlag, putInTrash);
+    if (putInTrash) {
+        bm->parentId = 0; /* now in the trash */
+    }
+}
+
+iBool trash_Bookmarks(iBookmarks *d, uint32_t id, iBool putInTrash) {
+    iBool ok = iFalse;
+    lock_Mutex(d->mtx);
+    iBookmark *bm = get_Bookmarks(d, id);
+    if (bm && ~bm->flags & remote_BookmarkFlag) {
+        if (putInTrash) {
+            /* Trash all the contained bookmarks as well. */
+            iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, filterInsideFolder_Bookmark, bm)) {
+                trash_Bookmarks_(d, i.ptr, iTrue);
+            }
         }
-        delete_Bookmark(bm);
+        trash_Bookmarks_(d, bm, putInTrash);
+        ok = iTrue;
     }
     unlock_Mutex(d->mtx);
-    return bm != NULL;
+    return ok;
 }
 
 iBool updateIcons_Bookmarks(iBookmarks *d, const iString *url, iChar icon) {
@@ -767,7 +802,7 @@ void reorder_Bookmarks(iBookmarks *d, uint32_t id, int newOrder) {
 
 iBool filterHomepage_Bookmark(void *d, const iBookmark *bm) {
     iUnused(d);
-    return (bm->flags & homepage_BookmarkFlag) != 0;
+    return (bm->flags & homepage_BookmarkFlag) != 0 && isTrash_Bookmark(bm);
 }
 
 uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
@@ -877,7 +912,7 @@ size_t importLinks_Bookmarks(iBookmarks *d, const iGmDocument *doc, uint32_t int
         iInfoNode *n = (iInfoNode *) iter.value;
         if (n->numChildren == 0) {
             /* This folder was not needed. */
-            remove_Bookmarks(d, n->node.key);
+            doRemove_Bookmarks_(d, n->node.key);
         }
         free(remove_HashIterator(&iter));
     }
@@ -885,6 +920,17 @@ size_t importLinks_Bookmarks(iBookmarks *d, const iGmDocument *doc, uint32_t int
     free(headingBookmarkIds);
     delete_IntSet(linkIds);
     return count;
+}
+
+size_t numTrash_Bookmarks(const iBookmarks *d) {
+    size_t n = 0;
+    lock_Mutex(d->mtx);
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        if (isTrash_Bookmark(bm)) n++;
+    }
+    unlock_Mutex(d->mtx);
+    return n;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -897,6 +943,9 @@ struct Impl_MatchUrlArgs {
 };
 
 static iBool matchUrlAndIdent_(iMatchUrlArgs *args, const iBookmark *bm) {
+    if (isTrash_Bookmark(bm)) {
+        return iFalse;
+    }
     if (equalCase_String(args->url, canonicalUrl_String(&bm->url))) {
         if ((args->identityFp == NULL && isEmpty_String(&bm->identity)) ||
             (args->identityFp && equal_String(args->identityFp, &bm->identity))) {
@@ -929,6 +978,9 @@ const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
     iPtrArray *list = collectNew_PtrArray();
     iConstForEach(Hash, i, &d->bookmarks) {
         const iBookmark *bm = (const iBookmark *) i.value;
+        if (!filter && isTrash_Bookmark(bm)) {
+            continue; /* trash is only offered to custom filters */
+        }
         if (!filter || filter(context, bm)) {
             pushBack_PtrArray(list, bm);
         }
@@ -1052,7 +1104,7 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
 
 static iBool isRemoteSource_Bookmark_(void *context, const iBookmark *d) {
     iUnused(context);
-    return (d->flags & remoteSource_BookmarkFlag) != 0;
+    return (d->flags & remoteSource_BookmarkFlag) != 0 && !isTrash_Bookmark(d);
 }
 
 void remoteRequestFinished_Bookmarks_(iBookmarks *d, iGmRequest *req) {

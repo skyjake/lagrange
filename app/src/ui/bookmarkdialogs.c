@@ -464,6 +464,7 @@ extern iMenuItem bookmarksMenuItems_Window[];
 const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
     /* TODO: Updating the items is only needed if 1) there hasn't been an update yet, or 2)
        bookmarks have changed. */
+    /* TODO: Show the number of items in the trash: "Empty Trash (23)" */
     cleanupBookmarksMenu_Widget(menu);
     iWidget *rootWidget = (menu ? root_Widget(menu) : get_Root()->widget);
     iBool    isFirst    = iTrue;

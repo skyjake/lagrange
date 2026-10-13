@@ -54,7 +54,10 @@ static const iMenuItem bookmarkModeMenuItems_[] = {
     { "---" },
     { rightAngle_Icon " ${menu.foldall}", 0, 0, "bookmark.foldall arg:1" },
     { downAngle_Icon " ${menu.unfoldall}", 0, 0, "bookmark.foldall arg:0" },
-    { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
+    { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" },
+    { "---" },
+    { trash_Icon " " uiTextCaution_ColorEscape "${menu.trash.empty}", 0, 0,
+      "bookmarks.trash.empty" },
 };
 
 static void setupFromBookmark_SidebarItem_(iSidebarItem *d, const iBookmark *bm) {
@@ -104,8 +107,22 @@ static const iMenuItem bookmarkMenuItems_[] = {
     { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
 };
 
+static iBool filterTrash_(void *d, const iBookmark *bm) {
+    iUnused(d);
+    return isTrash_Bookmark(bm);
+}
+
+iBool isShowingTrash_SidebarWidget(const iSidebarWidget *d) {
+    return isSelected_Widget(findChild_Widget(constAs_Widget(d), "filter.bookmarks.trash"));
+}
+
 static void updateBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
-    iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, NULL, NULL)) {
+    iConstForEach(PtrArray,
+                  i,
+                  list_Bookmarks(bookmarks_App(),
+                                 cmpTree_Bookmark,
+                                 isShowingTrash_SidebarWidget(d) ? filterTrash_ : NULL,
+                                 NULL)) {
         const iBookmark *bm = i.ptr;
         if (isBookmarkFolded_SidebarWidget_(d, bm)) {
             continue; /* inside a closed folder */
@@ -148,12 +165,38 @@ static void updateBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
         d->folderMenu = makeMenu_Widget(as_Widget(d), constData_Array(items), size_Array(items));
         delete_Array(items);
     }
+    /* Menu for trashed bookmarks. */ {
+        static const iMenuItem trashMenuItems[] = {
+            { "${menu.trash.restore}", 0, 0, "bookmarks.trash.restore" },
+            { "---" },
+            { openTab_Icon " ${menu.folder.opentab}", 0, 0, "bookmark.open newtab:1" },
+#if !defined (iPlatformTerminal)
+            { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "bookmark.open newwindow:1" },
+#endif
+            { "---" },
+            { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
+            { "---" },
+            { trash_Icon " " uiTextCaution_ColorEscape "${menu.trash.empty}", 0, 0, "bookmarks.trash.empty" },
+        };
+        d->trashMenu = makeMenu_Widget(as_Widget(d), trashMenuItems, iElemCount(trashMenuItems));
+    }
 }
 
+iDeclareType(BookmarkFilterContext)
+
+struct Impl_BookmarkFilterContext {
+    const iString *term;
+    iBool          showTrash;
+};
+
 static iBool filterBookmark_String_(void *context, const iBookmark *bm) {
-    const iString *term = context;
-    size_t         pos;
+    const iBookmarkFilterContext *d    = context;
+    const iString                *term = d->term;
+    size_t                        pos;
     if (isFolder_Bookmark(bm)) return iFalse;
+    if (d->showTrash ^ isTrash_Bookmark(bm)) {
+        return iFalse;
+    }
     if (startsWith_String(term, ".")) {
         /* Starting with period means a special tag. */
         const uint32_t flag = fromSpecialTag_BookmarkFlag(cstr_String(term));
@@ -180,10 +223,14 @@ static iBool filterBookmark_String_(void *context, const iBookmark *bm) {
 static void updateFilteredBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
     const iWidget *w    = constAs_Widget(d);
     iString       *term = lower_String(&d->bookmarkFilter);
+    iBookmarkFilterContext ctx  = {
+        .term      = term,
+        .showTrash = isShowingTrash_SidebarWidget(d),
+    };
     iConstForEach(
         PtrArray,
         i,
-        list_Bookmarks(bookmarks_App(), cmpTitleAscending_Bookmark, filterBookmark_String_, term)) {
+        list_Bookmarks(bookmarks_App(), cmpTitleAscending_Bookmark, filterBookmark_String_, &ctx)) {
         const iBookmark *bm   = i.ptr;
         iSidebarItem    *item = new_SidebarItem();
         setupFromBookmark_SidebarItem_(item, bm);
@@ -224,7 +271,21 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         setBackgroundColor_Widget(as_Widget(filter), uiBackgroundSidebar_ColorId);
         setText_InputWidget(filter, &d->bookmarkFilter);
         updateFilterBar_Widget(filter);
-        addChildFlags_Widget(d->actions, iClob(filter), expand_WidgetFlag);
+        iWidget *div = new_Widget();
+        addChildFlags_Widget(div, iClob(filter), 0);
+        /* Button for showing everything in the trash. */
+        iLabelWidget *trashBtn = new_LabelWidget(trash_Icon " ${sidebar.action.bookmarks.showtrash}",
+                                                 "bookmarks.trash.toggle");
+        checkIcon_LabelWidget(trashBtn);
+        setIconColor_LabelWidget(trashBtn, uiText_ColorId);
+        setFont_LabelWidget(trashBtn, uiContent_FontId);
+        setId_Widget(addChildFlags_Widget(div, iClob(trashBtn), alignLeft_WidgetFlag),
+                     "filter.bookmarks.trash");
+        addChildFlags_Widget(d->actions,
+                             iClob(div),
+                             expand_WidgetFlag | arrangeVertical_WidgetFlag |
+                                 arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                                 unhittable_WidgetFlag);
     }
     else {
         /* On mobile, we need to show buttons for edit actions. */
@@ -232,6 +293,12 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                                        "${sidebar.action.bookmarks.newfolder}",
                                        "bookmarks.addfolder",
                                        !d->isEditing ? hidden_WidgetFlag : 0);
+        setId_Widget((iWidget *) addActionButton_SidebarWidget_(
+                         d,
+                         trash_Icon " ${sidebar.action.bookmarks.showtrash}",
+                         "bookmarks.trash.toggle",
+                         0),
+                     "filter.bookmarks.trash");
         addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
         addActionButton_SidebarWidget_(
             d,
@@ -402,6 +469,9 @@ iWidget *bookmarkContextMenu_SidebarWidget_(iSidebarWidget *d, const iSidebarIte
     if (!bm) {
         return NULL;
     }
+    if (isTrash_Bookmark(bm)) {
+        return d->trashMenu;
+    }
     if (isFolder_Bookmark(bm)) {
         return d->folderMenu;
     }
@@ -422,7 +492,14 @@ iWidget *bookmarkContextMenu_SidebarWidget_(iSidebarWidget *d, const iSidebarIte
     return d->menu;
 }
 
+static void updateAfterTrashAction_SidebarWidget_(iSidebarWidget *d) {
+    updateItemsWithFlags_SidebarWidget_(d, iTrue); /* must keep trash open */
+    notifyf_App("bookmarks.changed nosidebar:%p", d);
+}
+
 iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, const char *cmd) {
+    /* TODO: Most of these are conditional on `bookmarks_SidebarMode`. Could check for it
+       once up here... */
     iWidget *w = as_Widget(d);
     if (d->mode == bookmarks_SidebarMode &&
         equalArg_Command(cmd, "input.edited", "id", "filter.bookmark.input") &&
@@ -445,6 +522,39 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
     else if (d->mode == bookmarks_SidebarMode && isCommand_Widget(w, ev, "list.delete")) {
         d->contextItem = item_ListWidget(d->list, arg_Command(cmd));
         postCommand_Widget(w, "bookmark.delete");
+        return iTrue;
+    }
+    else if (d->mode == bookmarks_SidebarMode &&
+             isCommand_Widget(w, ev, "bookmarks.trash.restore")) {
+        const iSidebarItem *item = d->contextItem;
+        if (item) {
+            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+            if (bm && isTrash_Bookmark(bm)) {
+                trash_Bookmarks(bookmarks_App(), id_Bookmark(bm), iFalse);
+                updateAfterTrashAction_SidebarWidget_(d);
+            }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.trash.empty")) {
+        iBool wasRemoved = iFalse;
+        iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, filterTrash_, NULL)) {
+            const iBookmark *bm = i.ptr;
+            wasRemoved |= remove_Bookmarks(bookmarks_App(), id_Bookmark(bm));
+        }
+        if (wasRemoved) {
+            updateAfterTrashAction_SidebarWidget_(d);
+        }
+        return iTrue;
+    }
+    else if (d->mode == bookmarks_SidebarMode &&
+             isCommand_Widget(w, ev, "bookmarks.trash.toggle")) {
+        iWidget    *toggle    = findChild_Widget(w, "filter.bookmarks.trash");
+        const iBool showTrash = !isSelected_Widget(toggle);
+        setFlags_Widget(toggle, selected_WidgetFlag, showTrash);
+        updateFont_LabelWidget((iLabelWidget *) toggle,
+                               showTrash ? uiContentBold_FontId : uiContent_FontId);
+        updateItemsWithFlags_SidebarWidget_(d, iTrue);
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "bookmark.open")) {
@@ -593,13 +703,14 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
             if (bm && isFolder_Bookmark(bm)) {
                 const iPtrArray *list =
                     list_Bookmarks(bookmarks_App(), NULL, filterInsideFolder_Bookmark, bm);
-                /* Folder deletion requires confirmation because folders can contain
-                   any number of bookmarks and other folders. */
+                /* Folder trashing requires confirmation because folders can contain
+                   any number of bookmarks and other folders. Trashing removes contents
+                   from folders. */
                 if (argLabel_Command(cmd, "confirmed") || isEmpty_PtrArray(list)) {
                     iConstForEach(PtrArray, i, list) {
                         removeEntries_Feeds(id_Bookmark(i.ptr));
                     }
-                    remove_Bookmarks(bookmarks_App(), item->id);
+                    trash_Bookmarks(bookmarks_App(), item->id, iTrue);
                     notify_App("bookmarks.changed");
                 }
                 else {
@@ -621,9 +732,8 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
                 }
             }
             else {
-                /* TODO: Move it to a Trash folder? */
-                if (remove_Bookmarks(bookmarks_App(), item->id)) {
-                    removeEntries_Feeds(item->id);
+                if (trash_Bookmarks(bookmarks_App(), item->id, iTrue)) {
+                    removeEntries_Feeds(item->id); /* unsubscribe from trashed feed */
                     notify_App("bookmarks.changed");
                 }
             }

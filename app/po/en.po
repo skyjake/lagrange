@@ -352,6 +352,12 @@ msgstr "Fold All"
 msgid "menu.unfoldall"
 msgstr "Unfold All"
 
+msgid "menu.trash.restore"
+msgstr "Restore"
+
+msgid "menu.trash.empty"
+msgstr "Empty Trash"
+
 msgid "menu.bookmarks.list"
 msgstr "List All Bookmarks"
 
@@ -682,6 +688,9 @@ msgstr "Redownload"
 
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "New Folder"
+
+msgid "sidebar.action.bookmarks.showtrash"
+msgstr "Trash"
 
 msgid "sidebar.action.bookmarks.edit"
 msgstr "Edit"
@@ -1056,6 +1065,9 @@ msgstr "No Unread Entries"
 
 msgid "sidebar.empty.bookmarks"
 msgstr "No Bookmarks"
+
+msgid "sidebar.empty.trash"
+msgstr "No Trash"
 
 msgid "sidebar.empty.feeds"
 msgstr "No Feeds"
