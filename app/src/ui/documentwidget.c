@@ -3337,7 +3337,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         return iTrue;
                     }
                 }
-                if (view->hoverPre) {
+                /* When paginated, clicks only unfold to avoid accidental folding. */
+                if (view->hoverPre &&
+                    (!isPaged_DocumentView(view) ||
+                     preIsFolded_GmDocument(view->doc, preId_GmRun(view->hoverPre)))) {
                     togglePreFold_DocumentWidget_(d, preId_GmRun(view->hoverPre));
                     return iTrue;
                 }
