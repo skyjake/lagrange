@@ -280,10 +280,6 @@ void init_Prefs(iPrefs *d) {
         d->bottomNavBar = iFalse;
         d->bottomTabBar = iFalse;
     }
-    if (isTerminal_Platform()) {
-        d->bottomNavBar = iTrue;
-        d->bottomTabBar = iTrue;
-    }
     d->menuBar                                = (deviceType_App() == desktop_AppDeviceType);
     d->simpleChars                            = iTrue;  /* only in terminal */
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
@@ -297,7 +293,7 @@ void init_Prefs(iPrefs *d) {
     d->returnKey                              = default_ReturnKeyBehavior;
     d->retainTabs                             = iTrue;
     d->hoverLink                              = iTrue;
-    d->smoothScrolling                        = !isTerminal_Platform();
+    d->smoothScrolling                        = iTrue;
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling            = iFalse;

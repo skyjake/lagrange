@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/text.h"
 #include "render/paint.h"
 #include "app.h"
+#include "gmdocument.h"
 #include "util.h"
 #include "keys.h"
 #include "touch.h"

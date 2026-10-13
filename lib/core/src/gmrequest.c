@@ -1263,7 +1263,7 @@ void submit_GmRequest(iGmRequest *d) {
     set_Atomic(&d->allowUpdate, iTrue);
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
-#if !defined (NDEBUG) && !defined (iPlatformTerminal)
+#if !defined (NDEBUG)
     fprintf(stderr, "[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stderr);
 #endif
     iUrl url;

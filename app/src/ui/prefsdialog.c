@@ -418,10 +418,10 @@ iWidget *makePreferences_Widget(void) {
     };
     /* clang-format on */
     const iMenuItem returnKeyBehaviorItems[] = {
-        { returnKeyBehaviorStr_(default_ReturnKeyBehavior),
+        { returnKeyBehaviorStr_(appDefault_ReturnKeyBehavior),
           0,
           0,
-          format_CStr("returnkey.set arg:%d", default_ReturnKeyBehavior) },
+          format_CStr("returnkey.set arg:%d", appDefault_ReturnKeyBehavior) },
 #if !defined (iPlatformTerminal)
         { returnKeyBehaviorStr_(RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag)),
           0,
@@ -1303,8 +1303,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         equal_Command(cmd, "tabs.close")) {
         setupSheetTransition_Mobile(d, dialogTransitionDir_Widget(d));
         enableToolbar_Root(get_Root(), iTrue);
-        /* Apply the new UI scaling factor to all non-popup windows. */ {
-            const float uiScale = value_SliderWidget(findChild_Widget(d, "prefs.uiscale"));
+        /* Apply the new UI scaling factor to all non-popup windows. */
+        const iSliderWidget *uiScaleSlider = findChild_Widget(d, "prefs.uiscale");
+        if (uiScaleSlider) {
+            const float uiScale = value_SliderWidget(uiScaleSlider);
             iConstForEach(PtrArray, i, regularWindows_App()) {
                 setUiScale_Window(i.ptr, uiScale);
             }

@@ -25,6 +25,43 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/defs.h>
 #include <lagrange/lang.h>
 
+/* The core library is shared by the GUI and TUI builds, so terminal-specific
+   definitions belong here. */
+
+iLocalDef iBool isTerminal_Platform(void) {
+#if defined (iPlatformTerminal)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+#if defined (iPlatformTerminal)
+#   define appDefault_ReturnKeyBehavior RETURN_KEY_BEHAVIOR(gui_ReturnKeyFlag, 0)
+#else
+#   define appDefault_ReturnKeyBehavior default_ReturnKeyBehavior
+#endif
+
+#if defined (iPlatformTerminal)
+#   undef page_Icon
+#   undef upload_Icon
+#   undef midEllipsis_Icon
+#   define page_Icon        "∷"
+#   define upload_Icon      upArrow_Icon
+#   define midEllipsis_Icon "..."
+#   define shift_Icon       "Sh"
+#   define shiftReturn_Icon "Sh-" return_Icon
+#   define bookmarks_Icon   bookmark_Icon
+#elif defined (iPlatformApple)
+#   define shift_Icon       "⇧"
+#   define shiftReturn_Icon shift_Icon return_Icon
+#   define bookmarks_Icon   book_Icon
+#else
+#   define shift_Icon       "Shift"
+#   define shiftReturn_Icon shift_Icon " " return_Icon
+#   define bookmarks_Icon   bookmark_Icon
+#endif
+
 int     keyMod_ReturnKeyFlag    (int flag);
 
 /* Special keyboard modifier flag to indicate where menu items are valid. */

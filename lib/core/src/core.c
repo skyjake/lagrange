@@ -22,6 +22,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/core.h"
 
+#if defined (iPlatformTerminal)
+#   error "Core library must be independent of GUI/TUI build config"
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/string.h>

@@ -24,14 +24,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/defs.h>
 
-iLocalDef iBool isTerminal_Platform(void) {
-#if defined (iPlatformTerminal)
-    return iTrue;
-#else
-    return iFalse;
-#endif
-}
-
 iLocalDef iBool isDesktop_Platform(void) {
 #if defined (iPlatformDesktop)
     return iTrue;
@@ -235,9 +227,7 @@ enum iReturnKeyBehavior {
 #else
         RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, control_ReturnKeyFlag),
 #endif
-#if defined (iPlatformTerminal)
-    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(gui_ReturnKeyFlag, 0),
-#elif defined (iPlatformAndroidMobile)
+#if defined (iPlatformAndroidMobile)
     default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
 #else
     default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, 0),
@@ -425,22 +415,3 @@ enum iAnsiFlag {
 #define warning_Icon        "\u26a0"
 #define whiteStar_Icon      "\u2606"
 
-#if defined (iPlatformTerminal)
-#   undef page_Icon
-#   undef upload_Icon
-#   undef midEllipsis_Icon
-#   define page_Icon        "\u2237"
-#   define upload_Icon      upArrow_Icon
-#   define midEllipsis_Icon "..."
-#   define shift_Icon       "Sh"
-#   define shiftReturn_Icon "Sh-" return_Icon
-#   define bookmarks_Icon   bookmark_Icon
-#elif defined (iPlatformApple)
-#   define shift_Icon       "\u21e7"
-#   define shiftReturn_Icon shift_Icon return_Icon
-#   define bookmarks_Icon   book_Icon
-#else
-#   define shift_Icon       "Shift"
-#   define shiftReturn_Icon shift_Icon " " return_Icon
-#   define bookmarks_Icon   bookmark_Icon
-#endif
