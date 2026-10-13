@@ -151,8 +151,9 @@ enum iFileVersion {
     windowPlacementIndex_FileVersion    = 12,
     recentUrlPrefsCacheKey_FileVersion  = 13,
     openBookmarkFolders_FileVersion     = 14,
+    sidebarTabOrder_FileVersion         = 15,
     /* meta */
-    latest_FileVersion = 14, /* used by state.lgr */
+    latest_FileVersion = 15, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
 };
 

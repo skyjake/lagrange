@@ -169,7 +169,7 @@ enum iPageTurnAnimation {
 };
 
 #define maxNavbarActions_Prefs  4
-#define maxSidebarModes_Prefs   8
+#define maxSidebarModes_Prefs   max_SidebarMode
 
 /* TODO: Use a systematic command naming convention for notifications. */
 
@@ -257,7 +257,6 @@ struct Impl_Prefs {
 
     /* Behavior */
     int                        pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
-    int                        gempubSidebar; /* side of the Book sidebar: 0 left, 1 right */
     enum iInputPromptPosition  promptPosition; /* desktop only */
     enum iPageTurnAnimation    pageTurn;
     enum iFeedInterval         feedInterval;

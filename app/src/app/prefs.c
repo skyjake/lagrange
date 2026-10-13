@@ -136,7 +136,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "uploadzoom.set arg:%d\n", d->prefs.editorZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
-    appendFormat_String(str, "gempubsidebar.set arg:%d\n", d->prefs.gempubSidebar);
     appendFormat_String(str, "promptposition.set arg:%d\n", d->prefs.promptPosition);
     appendFormat_String(str, "pageturn.set arg:%d\n", d->prefs.pageTurn);
     appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
@@ -973,16 +972,6 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         d->prefs.pinSplit = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "gempubsidebar.set")) {
-        const int side = iClamp(arg_Command(cmd), 0, 1);
-        if (d->prefs.gempubSidebar != side) {
-            d->prefs.gempubSidebar = side;
-            if (!isFrozen) {
-                postCommand_App("~sidebar.modes.changed");
-            }
-        }
         return iTrue;
     }
     else if (equal_Command(cmd, "promptposition.set")) {

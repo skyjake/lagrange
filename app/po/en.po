@@ -680,10 +680,6 @@ msgstr "Copy Source URL"
 msgid "book.redownload"
 msgstr "Redownload"
 
-# Preferences: on which sidebar the Book mode is shown.
-msgid "prefs.gempubsidebar"
-msgstr "Book"
-
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "New Folder"
 

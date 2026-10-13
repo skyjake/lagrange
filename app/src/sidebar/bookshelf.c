@@ -253,7 +253,7 @@ void updateShelfContextMenu_SidebarWidget_(iSidebarWidget *d) {
 iBool handleShelfCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "books.removedownload")) {
-        if (d->side == bookSide_SidebarWidget_()) {
+        if (d->side == bookSide_SidebarWidget()) {
             removeDownload_Books(collect_String(suffix_Command(cmd, "id")));
             postCommand_App("books.changed");
         }
@@ -266,7 +266,7 @@ iBool handleShelfCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, 
         }
     }
     else if (equal_Command(cmd, "books.delete")) {
-        if (d->side == bookSide_SidebarWidget_()) {
+        if (d->side == bookSide_SidebarWidget()) {
             remove_Books(collect_String(suffix_Command(cmd, "id")));
             postCommand_App("books.changed");
         }

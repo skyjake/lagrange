@@ -769,7 +769,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 return iTrue;
             }
             if (!touch->isTouchDrag && !isStationary_Touch_(touch) &&
-                flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+                flags_Widget(touch->affinity) & touchDrag_WidgetFlag &&
+                /* Vertical movement drags the sliding sheet instead. */
+                (~touch->affinity->flags2 & slidingSheetDraggable_WidgetFlag2 ||
+                 fabsf(x_F3(delta_Touch_(touch))) > fabsf(y_F3(delta_Touch_(touch))))) {
                 touch->hasMoved = iTrue;
                 touch->isTouchDrag = iTrue;
                 touch->edge = none_TouchEdge;

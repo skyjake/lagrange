@@ -38,6 +38,11 @@ enum iSidebarSide {
 /* Configured tabs in visible order, left sidebar first. */
 iBool           tab_SidebarMode     (size_t index, enum iSidebarSide *side, enum iSidebarMode *mode);
 
+/* Tab order is shared by all sidebars on the same side. */
+enum iSidebarMode orderedMode_SidebarMode       (enum iSidebarSide side, size_t pos);
+void            serializeOrder_SidebarMode      (iStream *outs);
+void            deserializeOrder_SidebarMode    (iStream *ins, iBool apply);
+
 enum iFeedsMode {
     all_FeedsMode,
     unread_FeedsMode
@@ -59,5 +64,7 @@ float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     openFolders_SidebarWidget   (const iSidebarWidget *);
 
 iListWidget *       list_SidebarWidget          (iSidebarWidget *);
+
+enum iSidebarSide   bookSide_SidebarWidget      (void); /* first side with the Book tab */
 
 void    openMarkAllReadMenu_Widget  (iWidget *anchor, const char *command); /* asks for confirmation */

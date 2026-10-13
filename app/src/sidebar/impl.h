@@ -119,7 +119,6 @@ iLocalDef iListWidget *list_SidebarWidget_(iSidebarWidget *d) {
 
 /* Core (ui/sidebarwidget.c). */
 const iGempub * gempub_SidebarWidget_           (const iSidebarWidget *); /* book of the current tab */
-int             bookSide_SidebarWidget_         (void);
 iBool           isSlidingSheet_SidebarWidget_   (const iSidebarWidget *);
 enum iFontId    actionButtonFont_SidebarWidget_ (const iSidebarWidget *);
 iLabelWidget *  addActionButton_SidebarWidget_  (iSidebarWidget *, const char *label,

@@ -78,6 +78,12 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     books_Icon,
 };
 
+/* Display order of the tabs. */
+static int tabOrder_[2][max_SidebarMode] = {
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
+};
+
 iDefineObjectConstructionArgs(SidebarWidget, (enum iSidebarSide side), side);
 
 const iGempub *gempub_SidebarWidget_(const iSidebarWidget *d) {
@@ -87,15 +93,17 @@ const iGempub *gempub_SidebarWidget_(const iSidebarWidget *d) {
     return gempub && !isRemote_Gempub(gempub) ? gempub : NULL;
 }
 
-int bookSide_SidebarWidget_(void) {
-    return deviceType_App() == phone_AppDeviceType ? left_SidebarSide : prefs_App()->gempubSidebar;
+enum iSidebarSide bookSide_SidebarWidget(void) {
+    if (deviceType_App() != phone_AppDeviceType &&
+        !prefs_App()->sidebarModeEnabled[left_SidebarSide][gempub_SidebarMode] &&
+        prefs_App()->sidebarModeEnabled[right_SidebarSide][gempub_SidebarMode]) {
+        return right_SidebarSide;
+    }
+    return left_SidebarSide;
 }
 
 static iBool isModeEnabled_SidebarWidget_(const iSidebarWidget *d, int side,
                                           enum iSidebarMode mode) {
-    if (mode == gempub_SidebarMode) {
-        return side == bookSide_SidebarWidget_();
-    }
     return prefs_App()->sidebarModeEnabled[side][mode];
 }
 
@@ -117,9 +125,57 @@ static size_t numTabs_SidebarMode_(int side) {
     return count;
 }
 
+enum iSidebarMode orderedMode_SidebarMode(enum iSidebarSide side, size_t pos) {
+    return tabOrder_[side][pos];
+}
+
+static int modePos_SidebarWidget_(const iSidebarWidget *d, enum iSidebarMode mode) {
+    for (int i = 0; i < max_SidebarMode; i++) {
+        if (tabOrder_[d->side][i] == mode) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+void serializeOrder_SidebarMode(iStream *outs) {
+    for (int s = 0; s < 2; s++) {
+        writeU8_Stream(outs, max_SidebarMode);
+        for (int i = 0; i < max_SidebarMode; i++) {
+            writeU8_Stream(outs, tabOrder_[s][i]);
+        }
+    }
+}
+
+void deserializeOrder_SidebarMode(iStream *ins, iBool apply) {
+    for (int s = 0; s < 2; s++) {
+        int    order[max_SidebarMode];
+        iBool  isUsed[max_SidebarMode];
+        size_t count = 0;
+        iZap(isUsed);
+        for (int i = readU8_Stream(ins); i > 0; i--) {
+            const int mode = readU8_Stream(ins);
+            if (mode < max_SidebarMode && !isUsed[mode]) {
+                isUsed[mode]   = iTrue;
+                order[count++] = mode;
+            }
+        }
+        /* Modes missing from the saved order go last. */
+        for (int mode = 0; mode < max_SidebarMode; mode++) {
+            if (!isUsed[mode]) {
+                order[count++] = mode;
+            }
+        }
+        if (apply) {
+            memcpy(tabOrder_[s], order, sizeof(order));
+        }
+    }
+}
+
 iBool tab_SidebarMode(size_t index, enum iSidebarSide *side, enum iSidebarMode *mode) {
     for (int s = 0; s < 2; s++) {
-        for (int m = 0; m < maxSidebarModes_Prefs; m++) {
+        for (int i = 0; i < max_SidebarMode; i++) {
+            const int m = tabOrder_[s][i];
             if (isTab_SidebarMode_(s, m) && index-- == 0) {
                 *side = s;
                 *mode = m;
@@ -737,6 +793,53 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
     updateItemHeight_SidebarWidget_(d);
 }
 
+static void updateModeButtonOrder_SidebarWidget_(iSidebarWidget *d) {
+    iWidget *buttons = parent_Widget(d->modeButtons[0]);
+    size_t   index   = 0;
+    for (int i = 0; i < max_SidebarMode; i++) {
+        iLabelWidget *button = d->modeButtons[orderedMode_SidebarMode(d->side, i)];
+        if (button) {
+            changeChildIndex_Widget(buttons, button, index++);
+        }
+    }
+}
+
+static iBool moveTab_SidebarWidget_(iSidebarWidget *d, const iWidget *button, int steps) {
+    /* Steps are counted in visible buttons. */
+    int    visiblePos[max_SidebarMode];
+    size_t numVisible = 0;
+    size_t from       = iInvalidPos;
+    for (int i = 0; i < max_SidebarMode; i++) {
+        const iWidget *b = constAs_Widget(d->modeButtons[tabOrder_[d->side][i]]);
+        if (b && ~flags_Widget(b) & hidden_WidgetFlag) {
+            if (b == button) {
+                from = numVisible;
+            }
+            visiblePos[numVisible++] = i;
+        }
+    }
+    if (from == iInvalidPos) {
+        return iFalse;
+    }
+    const size_t to = iClamp((int) from + steps, 0, (int) numVisible - 1);
+    if (to == from) {
+        return iTrue;
+    }
+    int      *order = tabOrder_[d->side];
+    const int src   = visiblePos[from];
+    const int dst   = visiblePos[to];
+    const int mode  = order[src];
+    if (src < dst) {
+        memmove(order + src, order + src + 1, sizeof(int) * (dst - src));
+    }
+    else {
+        memmove(order + dst + 1, order + dst, sizeof(int) * (src - dst));
+    }
+    order[dst] = mode;
+    postCommand_App("~sidebar.modes.changed");
+    return iTrue;
+}
+
 static void updateSlidingSheetHeight_SidebarWidget_(iSidebarWidget *sidebar, iRoot *root) {
     if (!isPortraitPhone_App() || !isVisible_Widget(sidebar)) return;
     /* The list's VisBuf is sized to fit the largest possible sheet height so its
@@ -849,7 +952,13 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
             d->firstVisibleModeButton = d->modeButtons[i];
         }
         setFlags2_Widget(d->modeButtons[i], slidingSheetDraggable_WidgetFlag2, iTrue); /* phone */
+        setFlags2_Widget(d->modeButtons[i], siblingOrderDraggable_WidgetFlag2, iTrue);
+        setFlags_Widget(d->modeButtons[i],
+                        horizontalOffset_WidgetFlag |
+                            (isMobile_Platform() ? touchDrag_WidgetFlag : 0),
+                        iTrue);
     }
+    updateModeButtonOrder_SidebarWidget_(d);
     /* Dropdown menu for changing the mode. */
     if (!isSlidingSheet_SidebarWidget_(d) && !isTerminal_Platform()) {
         const char *barId = cstr_String(id_Widget(w));
@@ -1281,9 +1390,11 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         return iTrue;
     }
     else if (equal_Command(cmd, "cycle")) {
-        const int dir  = arg_Command(cmd);
-        int       mode = (d->mode + dir) % max_SidebarMode;
-        for (int i = 0; i < max_SidebarMode; i++, mode = (mode + dir) % max_SidebarMode) {
+        const int dir = arg_Command(cmd);
+        int       pos = modePos_SidebarWidget_(d, d->mode);
+        for (int i = 0; i < max_SidebarMode; i++) {
+            pos            = (pos + dir + max_SidebarMode) % max_SidebarMode;
+            const int mode = orderedMode_SidebarMode(d->side, pos);
             if (isModeEnabled_SidebarWidget_(d, d->side, mode)) {
                 postCommand_Widget(w, "%s.mode arg:%d", d->side == 0 ? "sidebar" : "sidebar2", mode);
                 break;
@@ -1292,19 +1403,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         return iTrue;
     }
     else if (equal_Command(cmd, "tab")) {
-        /* Left sidebar indices span both sidebars; right sidebar indices are its own.
-           The Book tab follows the configured tabs. */
-        const size_t      numLeft  = numTabs_SidebarMode_(left_SidebarSide);
-        const size_t      numRight = numTabs_SidebarMode_(right_SidebarSide);
-        const size_t      index    = arg_Command(cmd) + (d->side == right_SidebarSide ? numLeft : 0);
+        /* Left sidebar indices span both sidebars; right sidebar indices are its own. */
+        const size_t      numLeft = numTabs_SidebarMode_(left_SidebarSide);
+        const size_t      index   = arg_Command(cmd) + (d->side == right_SidebarSide ? numLeft : 0);
         enum iSidebarSide side;
         enum iSidebarMode mode;
         if (!tab_SidebarMode(index, &side, &mode)) {
-            side = bookSide_SidebarWidget_();
-            mode = gempub_SidebarMode;
-            if (index != numLeft + numRight || !isModeEnabled_SidebarWidget_(d, side, mode)) {
-                return iTrue;
-            }
+            return iTrue;
         }
         if (d->side == right_SidebarSide && side != right_SidebarSide) {
             return iTrue;
@@ -1586,8 +1691,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
         }
         else if (equal_Command(cmd, "sidebar.modes.changed")) {
+            updateModeButtonOrder_SidebarWidget_(d);
             checkModeButtonLayout_SidebarWidget_(d);
             arrange_Widget(parent_Widget(d->modeButtons[0]));
+            refresh_Widget(parent_Widget(d->modeButtons[0]));
+        }
+        else if (equal_Command(cmd, "tabs.move") && argLabel_Command(cmd, "dragged") &&
+                 moveTab_SidebarWidget_(d, pointer_Command(cmd), arg_Command(cmd))) {
+            return iTrue;
         }
         else if (equal_Command(cmd, "document.openurls.changed")) {
             if (d->mode == openDocuments_SidebarMode) {

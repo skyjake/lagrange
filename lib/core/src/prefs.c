@@ -266,6 +266,7 @@ void init_Prefs(iPrefs *d) {
         d->sidebarModeEnabled[1][siteStructure_SidebarMode] = iTrue;
         d->sidebarModeEnabled[1][openDocuments_SidebarMode] = iTrue;
         d->sidebarModeEnabled[1][history_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[1][gempub_SidebarMode] = iTrue;
     }
     d->hideToolbarOnScroll = iTrue;
     d->hideTabBar          = iFalse;
@@ -288,7 +289,6 @@ void init_Prefs(iPrefs *d) {
     d->evenSplit                              = iFalse; /* split mode tabs have even width */
     d->detachedPrefs                          = iTrue;
     d->pinSplit                               = 1;
-    d->gempubSidebar                          = 1;
     d->promptPosition                         = inline_InputPromptPosition;
     d->pageTurn                               = curl_PageTurnAnimation;
     d->feedInterval                           = fourHours_FeedInterval;

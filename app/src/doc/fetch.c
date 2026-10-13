@@ -44,6 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
 #include "ui/root.h"
+#include "ui/sidebarwidget.h"
 #include "ui/util.h"
 #include "ui/widget.h"
 #include "ui/window.h"
@@ -364,7 +365,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
                    contents. The phone sidebar would cover the page, so it stays hidden. */
                 if (isUrlChanged && deviceType_App() != phone_AppDeviceType) {
                     /* Not when restored or reloaded. */
-                    const iBool isRight = prefs_App()->gempubSidebar;
+                    const iBool isRight = bookSide_SidebarWidget() == right_SidebarSide;
                     postCommandf_Root(w->root, "%s.gempub.page arg:1 keepshelf:1", isRight ? "sidebar2" : "sidebar");
                     postCommandf_Root(w->root, "sidebar.mode arg:%d show:1", gempub_SidebarMode);
                     postCommandf_Root(w->root, "%s.toggle hide:1", isRight ? "sidebar" : "sidebar2");

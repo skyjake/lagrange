@@ -60,6 +60,7 @@ static const char *magicWindow_App_      = "wind";
 static const char *magicTabDocument_App_ = "tabd";
 static const char *magicSidebar_App_     = "side";
 static const char *magicInput_App_       = "inpt";
+static const char *magicTabOrder_App_    = "tord";
 
 enum iDocumentStateFlag {
     current_DocumentStateFlag    = iBit(1),
@@ -172,6 +173,12 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                 deserialize_StringArray(validateOnly ? iClob(new_StringArray())
                                                      : d->recentlySubmittedInput,
                                         stream_File(f));
+            }
+            else if (!memcmp(magic, magicTabOrder_App_, 4)) {
+                deserializeOrder_SidebarMode(stream_File(f), !validateOnly);
+                if (!validateOnly) {
+                    postCommand_App("~sidebar.modes.changed");
+                }
             }
             else if (!memcmp(magic, magicWindow_App_, 4)) {
                 numWins++;
@@ -431,6 +438,8 @@ void saveState_App_(const iApp *d, iBool withContent) {
         /* Recently submitted input strings. */
         writeData_File(f, magicInput_App_, 4);
         serialize_StringArray(d->recentlySubmittedInput, stream_File(f));
+        writeData_File(f, magicTabOrder_App_, 4);
+        serializeOrder_SidebarMode(stream_File(f));
         iConstForEach(PtrArray, winIter, &d->mainWindows) {
             const iMainWindow *win = winIter.ptr;
             setCurrent_Window(winIter.ptr);
