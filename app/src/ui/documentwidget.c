@@ -945,7 +945,11 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
     if (d->mod.isReader) {
+        /* Entry navigation stays in place when the page-specific items change. */
         iArray *all = collectNew_Array(sizeof(iMenuItem));
+        if (count) {
+            pushBackN_Array(all, items, count);
+        }
         pushBackN_Array(
             all,
             (iMenuItem[]){ { forwardArrow_Icon " ${reader.next}", SDLK_RIGHT, 0, "reader.next" },
@@ -955,9 +959,6 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
                                          icon_SidebarMode(feedEntries_SidebarMode)),
                              0, 0, "reader.showfeeds" } },
             4);
-        if (count) {
-            pushBackN_Array(all, items, count);
-        }
         items = constData_Array(all);
         count = size_Array(all);
     }
