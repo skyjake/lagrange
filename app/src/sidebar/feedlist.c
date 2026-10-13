@@ -201,12 +201,17 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             iLabelWidget *readAll = addActionButton_SidebarWidget_(
                 d, check_Icon, "feeds.markallread confirm:1", 0);
             setTextColor_LabelWidget(readAll, uiTextCaution_ColorId);
-            addActionButton_SidebarWidget_(d, page_Icon, "feeds.mode arg:0", 0);
-            addActionButton_SidebarWidget_(d, circle_Icon, "feeds.mode arg:1", 0);
+            setFlags2_Widget(addActionButton_SidebarWidget_(d, page_Icon, "feeds.mode arg:0", 0),
+                             alwaysRound_WidgetFlag2, iTrue);
+            setFlags2_Widget(addActionButton_SidebarWidget_(d, circle_Icon, "feeds.mode arg:1", 0),
+                             alwaysRound_WidgetFlag2, iTrue);
         }
-        setOutline_LabelWidget(child_Widget(d->actions, 1), d->feedsMode != all_FeedsMode);
-        setOutline_LabelWidget(child_Widget(d->actions, 2),
-                               d->feedsMode != unread_FeedsMode);
+        for (int i = 0; i < 2; i++) {
+            iLabelWidget *btn   = child_Widget(d->actions, i + 1);
+            const iBool   isSel = (d->feedsMode == (i == 0 ? all_FeedsMode : unread_FeedsMode));
+            setFlags_Widget(as_Widget(btn), selected_WidgetFlag, isSel);
+            setTextColor_LabelWidget(btn, isSel ? none_ColorId : uiTextAction_ColorId);
+        }
     }
     const iMenuItem menuItems[] = {
         { rightArrowhead_Icon " ${menu.opencurrent}", 0, 0, "feed.entry.open" },

@@ -217,7 +217,7 @@ iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             setId_Widget(as_Widget(dropButton), "books.sortbutton");
             setFont_LabelWidget(dropButton, actionButtonFont_SidebarWidget_(d));
             setTextColor_LabelWidget(dropButton, uiTextAction_ColorId);
-            setBackgroundColor_Widget(as_Widget(dropButton), uiBackground_ColorId);
+            setBackgroundColor_Widget(as_Widget(dropButton), uiBackgroundSidebar_ColorId);
             checkIcon_LabelWidget(dropButton);
         }
         else if (keepActions) {

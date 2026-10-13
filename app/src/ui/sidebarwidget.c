@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
+#include "doc/book.h"
 #include "feeds.h"
 #include "gamepad.h"
 #include "indicatorwidget.h"
@@ -209,9 +210,8 @@ iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *labe
     setFont_LabelWidget(btn, actionButtonFont_SidebarWidget_(d));
     checkIcon_LabelWidget(btn);
     if (deviceType_App() != desktop_AppDeviceType) {
-        setFlags_Widget(btn, frameless_WidgetFlag, iTrue);
-        setTextColor_LabelWidget(btn, uiTextAction_ColorId);
-        setBackgroundColor_Widget(as_Widget(btn), uiBackground_ColorId);
+        setFlags_Widget(btn, frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
+        setTextColor_LabelWidget(btn, uiTextAction_ColorId);        
     }
     return btn;
 }
@@ -1052,11 +1052,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(findChild_Widget(w, "sidebar.title"), borderTop_WidgetFlag, iTrue);
         setFlags_Widget(d->actions, drawBackgroundToBottom_WidgetFlag, iTrue);
-        setBackgroundColor_Widget(d->actions, uiBackground_ColorId);
     }
-    else {
-        setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
-    }
+    setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
     d->contextItem  = NULL;
     d->contextIndex = iInvalidPos;
     d->blank        = new_Widget();
