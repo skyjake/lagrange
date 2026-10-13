@@ -81,6 +81,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <fcntl.h>
 #   include <unistd.h>
 #endif
+#if defined (iPlatformTerminal) && !defined (NDEBUG)
+#   include <unistd.h>
+#endif
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
 #endif
@@ -476,6 +479,16 @@ static void init_App_(iApp *d, int argc, char **argv) {
         listen_Ipc(); /* We'll respond to commands from other instances. */
     }
 #endif
+#if defined (iPlatformTerminal) && !defined (NDEBUG)
+    /* Keep debug output from messing up the terminal UI. SEALCurses draws via /dev/tty. */
+    if (!doDump) {
+        makeDirs_Path(collectNewCStr_String(dataDir_App_()));
+        if (freopen(concatPath_CStr(dataDir_App_(), "clagrange.log"), "w", stdout)) {
+            setvbuf(stdout, NULL, _IOLBF, 0);
+            dup2(fileno(stdout), fileno(stderr)); /* shared file offset */
+        }
+    }
+#endif
     if (!doDump) {
         puts("Lagrange: A Beautiful Gemini Client");
     }
@@ -503,6 +516,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     init_Prefs(&d->prefs);
+#if defined (iPlatformTerminal)
+    d->prefs.bottomNavBar    = iTrue;
+    d->prefs.bottomTabBar    = iTrue;
+    d->prefs.smoothScrolling = iFalse;
+    d->prefs.returnKey       = appDefault_ReturnKeyBehavior;
+#endif
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
     setDataDir_Core(dataDir_App_());
     init_ScopeRules(dataDir_App_());
