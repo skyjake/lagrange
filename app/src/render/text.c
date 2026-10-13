@@ -344,22 +344,6 @@ void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t max
     drawBoundedN_Text_(fontId, pos, 0, iFalse, color, text, maxChars);
 }
 
-void drawOutline_Text(int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text) {
-#if !defined (iPlatformTerminal)
-    for (int off = 0; off < 4; ++off) {
-        drawRange_Text(fontId,
-                       add_I2(pos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
-                       outlineColor,
-                       text);
-    }
-    if (fillColor != none_ColorId) {
-        drawRange_Text(fontId, pos, fillColor, text);
-    }
-#else
-    drawRange_Text(fontId, pos, fillColor | fillBackground_ColorId, text);
-#endif
-}
-
 iTextMetrics measureWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
     iWrapText wrap = { .text = text, .maxWidth = maxWidth, .mode = word_WrapTextMode };
     return measure_WrapText(&wrap, fontId);

@@ -961,6 +961,9 @@ msgstr "Using on this page"
 msgid "ident.notused"
 msgstr "Not used"
 
+msgid "ident.syncing"
+msgstr "Used for syncing"
+
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
@@ -972,7 +975,15 @@ msgstr "Temporary"
 
 # strftime() formatted
 msgid "ident.expiry"
-msgstr "Expires %b %d, %Y"
+msgstr "Expires on %b %d"
+
+msgid "ident.expiry.years"
+msgid_plural "ident.expiry.years.n"
+msgstr[0] "Expires in %zu year"
+msgstr[1] "Expires in %zu years"
+
+msgid "ident.expired"
+msgstr "Expired"
 
 msgid "ident.sendmsg"
 msgstr "Send Message As…"

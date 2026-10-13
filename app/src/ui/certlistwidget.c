@@ -42,6 +42,7 @@ struct Impl_CertItem {
     int       indent;
     iChar     icon;
     iBool     isMisfin;
+    iBool     isPinned;
     iBool     isBold;
     iString   label;
     iString   meta;
@@ -53,6 +54,7 @@ void init_CertItem(iCertItem *d) {
     d->indent   = 0;
     d->icon     = 0;
     d->isMisfin = iFalse;
+    d->isPinned = iFalse;
     d->isBold   = iFalse;
     init_String(&d->label);
     init_String(&d->meta);
@@ -395,8 +397,7 @@ static void draw_CertListWidget_(const iCertListWidget *d) {
     ((iWidgetClass *) class_Widget(w)->super)->draw(w);
 }
 
-static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
-                              const iListWidget *list) {
+static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const iListWidget *list) {
     const iCertListWidget *certList = (const iCertListWidget *) list;
     const iBool isMenuVisible = isVisible_Widget(certList->menu);
     const iBool isDragging   = constDragItem_ListWidget(list) == d;
@@ -409,14 +410,11 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
             (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
             isDragging;
     const iBool isPressed    = isHoverItem && isPressing;
-    const iBool isSel        = d->listItem.flags.isSelected || isPressed;
+    const iBool isSel        = isPressed;
+    const iBool isActive     = d->listItem.flags.isSelected || d->isPinned;
     const iBool isHover      = isHoverItem && !isSel;
     const int itemHeight     = height_Rect(itemRect);
-    const int iconColor      = isSel     ? uiTextSelected_ColorId
-                               : isHover ? uiIconHover_ColorId
-                                         : uiIcon_ColorId;
-    const int altIconColor   = isSel ? uiTextSelected_ColorId : uiTextCaution_ColorId;
-    const int font = certList->itemFonts[d->isBold ? 1 : 0];
+    const int font = certList->itemFonts[0];
     int bg         = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
@@ -430,7 +428,10 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     const int fg = isSel     ? uiTextSelected_ColorId
                    : isHover ? uiTextFramelessHover_ColorId
                              : uiTextStrong_ColorId;
-    const iBool isUsedOnDomain = (d->indent != 0);
+    const int iconColor = !d->isBold ? fg
+                          : isSel    ? uiTextSelected_ColorId
+                          : isHover  ? uiIconHover_ColorId
+                                     : uiIcon_ColorId;
     iString icon;
     initUnicodeN_String(&icon, &d->icon, 1);
     iInt2 cPos = topLeft_Rect(itemRect);
@@ -442,17 +443,21 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     const int metaFg = isSel     ? permanent_ColorId | uiTextSelectedDim_ColorId
                        : isHover ? permanent_ColorId | uiTextFramelessHover_ColorId
                                  : uiTextDim_ColorId;
-    if (!d->listItem.flags.isSelected && !isUsedOnDomain) {
-        drawOutline_Text(font, cPos, metaFg, none_ColorId, range_String(&icon));
+    if (isActive) {
+        const int size    = lineHeight_Text(font);
+        const int advance = measureRange_Text(font, range_String(&icon)).advance.x;
+        drawRoundRect_Paint(p,
+                            (iRect){ init_I2(cPos.x + (advance - size) / 2, cPos.y),
+                                     init1_I2(size) },
+                            all_RoundCorner,
+                            0,
+                            iconColor,
+                            none_ColorId,
+                            none_ColorId);
     }
-    drawRange_Text(font,
-                   cPos,
-                   d->listItem.flags.isSelected ? iconColor
-                   : isUsedOnDomain       ? altIconColor
-                                          : bg,
-                   range_String(&icon));
+    drawRange_Text(font, cPos, isActive ? bg : iconColor, range_String(&icon));
     deinit_String(&icon);
-    drawRange_Text(d->listItem.flags.isSelected ? certList->itemFonts[1] : font,
+    drawRange_Text(certList->itemFonts[d->isBold ? 1 : 0],
                    add_I2(cPos, init_I2(indent, 0)),
                    fg,
                    range_String(&d->label));
@@ -485,12 +490,44 @@ void updateItemHeight_CertListWidget(iCertListWidget *d) {
     setItemHeight_ListWidget(&d->list, height * lineHeight_Text(d->itemFonts[0]));
 }
 
+static const char *expiry_CertListWidget_(const iGmIdentity *ident) {
+    if (ident->flags & temporary_GmIdentityFlag) {
+        return cstr_Lang("ident.temporary");
+    }
+    iDate until, now;
+    validUntil_TlsCertificate(ident->cert, &until);
+    initCurrent_Date(&now);
+    iTime untilTime, nowTime;
+    init_Time(&untilTime, &until);
+    init_Time(&nowTime, &now);
+    if (cmp_Time(&untilTime, &nowTime) <= 0) {
+        return format_CStr(warning_Icon " %s", cstr_Lang("ident.expired"));
+    }
+    int years = until.year - now.year;
+    if (until.month < now.month || (until.month == now.month && until.day < now.day)) {
+        years--;
+    }
+    if (years > 50) {
+        return "";
+    }
+    if (years >= 1) {
+        return formatCStrs_Lang("ident.expiry.years.n", years);
+    }
+    return cstrCollect_String(format_Date(&until, cstr_Lang("ident.expiry")));
+}
+
 iBool updateItems_CertListWidget(iCertListWidget *d) {
     clear_ListWidget(&d->list);
     destroy_Widget(d->menu);
     d->menu       = NULL;
     const iString *tabUrl = url_DocumentWidget(document_App());
     const iRangecc tabHost = urlHost_String(tabUrl);
+    const iDocumentWidget *doc = document_App();
+    const iGmIdentity *activeIdent = identity_DocumentWidget(doc);
+    const iGmIdentity *pinnedIdent =
+        isIdentityPinned_DocumentWidget(doc) ? overrideIdentity_DocumentWidget(doc) : NULL;
+    const iBlock *syncFp =
+        collect_Block(hexDecode_Rangecc(range_String(&prefs_App()->strings[syncIdentity_PrefsString])));
     iBool haveItems = iFalse;
     iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
         const iGmIdentity *ident = i.ptr;
@@ -499,19 +536,18 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
         item->icon = 0x1f464; /* person */
         set_String(&item->label, name_GmIdentity(ident));
         item->isMisfin = isMisfin_GmIdentity(ident);
-        iDate until;
-        validUntil_TlsCertificate(ident->cert, &until);
+        item->isPinned = (ident == pinnedIdent);
+        item->isBold   = (ident == activeIdent);
         const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
+        const iBool isSync = !isEmpty_Block(syncFp) && !cmp_Block(&ident->fingerprint, syncFp);
         format_String(&item->meta,
                       "%s",
                       isActive ? cstr_Lang("ident.using")
                       : isUsed_GmIdentity(ident)
                           ? formatCStrs_Lang("ident.usedonurls.n", size_StringSet(ident->useUrls))
-                          : cstr_Lang("ident.notused"));
-        const char *expiry =
-            ident->flags & temporary_GmIdentityFlag
-                ? cstr_Lang("ident.temporary")
-                : cstrCollect_String(format_Date(&until, cstr_Lang("ident.expiry")));
+                      : isSync ? cstr_Lang("ident.syncing")
+                               : cstr_Lang("ident.notused"));
+        const char *expiry = expiry_CertListWidget_(ident);
         if (item->isMisfin) {
             //iString *addr = misfinIdentity_GmIdentity(ident, &item->meta);
             //set_String(&item->label, addr);
@@ -521,21 +557,21 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
             // set_String(&item->meta, &ident->notes);
             // appendFormat_String(&item->meta, "\n%s", expiry);
         }
-        if (isEmpty_String(&ident->notes)) {
+        if (isSync) {
+            item->icon = 0x1f503; /* reload */
+        }
+        if (*expiry) {
+            if (!isEmpty_String(&item->meta)) {
+                appendCStr_String(&item->meta, isEmpty_String(&ident->notes) ? "\n" : " \u2014 ");
+            }
+            appendCStr_String(&item->meta, expiry);
+        }
+        if (!isEmpty_String(&ident->notes)) {
             if (!isEmpty_String(&item->meta)) {
                 appendCStr_String(&item->meta, "\n");
             }
-            appendFormat_String(&item->meta, "%s", expiry);
-        }
-        else {
-            if (!isEmpty_String(&item->meta)) {
-                appendCStr_String(&item->meta, " \u2014 ");
-            }
-            appendFormat_String(&item->meta,
-                                "%s\n%s%s",
-                                expiry,
-                                escape_Color(uiHeading_ColorId),
-                                cstr_String(&ident->notes));
+            appendFormat_String(
+                &item->meta, "%s%s", escape_Color(uiHeading_ColorId), cstr_String(&ident->notes));
         }
         item->listItem.flags.isSelected = isActive;
         if (!isActive && isUsedOnDomain_GmIdentity(ident, tabHost)) {

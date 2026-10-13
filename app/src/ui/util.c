@@ -1003,6 +1003,7 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x1f4e4,  "square.and.arrow.up.on.square"  }, /* export_Icon */
         { 0x1f4e5,  "square.and.arrow.down.on.square"}, /* import_Icon */
         { 0x1f4e6,  "shippingbox"                    }, /* package_Icon */
+        { 0x1f4e7,  "envelope"                       }, /* email_Icon */
         { 0x1f4f1,  "iphone"                         }, /* User Interface settings */
         { 0x1f503,  "arrow.clockwise"                }, /* reload_Icon */
         { 0x1f50d,  "magnifyingglass"                }, /* magnifyingGlass_Icon */

@@ -134,7 +134,6 @@ void    drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int 
 void    drawString_Text         (int fontId, iInt2 pos, int color, const iString *text);
 void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
-void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
 void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
