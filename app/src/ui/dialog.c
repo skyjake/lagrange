@@ -462,6 +462,9 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             setFlags_Widget(button, frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
             setTextColor_LabelWidget(button, uiTextAction_ColorId);
         }
+        else if (!cmd) {
+            setFlags_Widget(button, frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
+        }
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }
     return div;
