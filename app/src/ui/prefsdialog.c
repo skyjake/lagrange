@@ -614,7 +614,7 @@ iWidget *makePreferences_Widget(void) {
             { "label id:prefs.sync.status text:" },
             { "button id:prefs.sync.now text:" reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", 0, 0, "sync.now" },
             { "padding" },
-            { "button text:" add_Icon " ${prefs.sync.newidentity}", 0, 0, "sync.newidentity" },
+            { "button text:" add_Icon " " uiTextAction_ColorEscape "${prefs.sync.newidentity}", 0, 0, "sync.newidentity" },
             { NULL }
         };
         const iMenuItem identityPanelItems[] = {
