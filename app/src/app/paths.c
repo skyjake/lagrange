@@ -190,6 +190,33 @@ const iString *fontsDir_App(void) {
     return collect_String(cleanedCStr_Path(concatPath_CStr(dataDir_App_(), "fonts")));
 }
 
+const iString *backupDir_App(void) {
+    return collect_String(cleanedCStr_Path(concatPath_CStr(dataDir_App_(), "backup")));
+}
+
+void migrateBackupsToSubdir_App_(void) {
+    const iString *backupDir = backupDir_App();
+    if (fileExists_FileInfo(backupDir)) {
+        return;
+    }
+    makeDirs_Path(backupDir);
+    const iString *dataDir = dataDir_App();
+    iStringList *names = iClob(new_StringList());
+    iForEach(DirFileInfo, entry, iClob(new_DirFileInfo(dataDir))) {
+        if (isDirectory_FileInfo(entry.value)) {
+            continue;
+        }
+        const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+        if (strstr(cstr_Rangecc(name), "backup") && endsWith_Rangecc(name, ".txt")) {
+            pushBackRange_StringList(names, name);
+        }
+    }
+    iConstForEach(StringList, i, names) {
+        renamePath_CStr(concatPath_CStr(cstr_String(dataDir), cstr_String(i.value)),
+                        concatPath_CStr(cstr_String(backupDir), cstr_String(i.value)));
+    }
+}
+
 const iString *downloadDir_App(void) {
     return collect_String(cleaned_Path(&app_.prefs.strings[downloadDir_PrefsString]));
 }

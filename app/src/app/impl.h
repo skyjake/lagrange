@@ -178,6 +178,7 @@ extern iMutex *saveMutex_App_;
 /* paths.c */
 const char *    dataDir_App_            (void);
 const char *    downloadDir_App_        (void);
+void            migrateBackupsToSubdir_App_(void);
 #if defined (iPlatformAndroid)
 void            migrateInternalUserDirToExternalStorage_App_(iApp *);
 #endif

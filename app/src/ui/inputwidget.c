@@ -111,7 +111,7 @@ void setBackupFileName_InputWidget(iInputWidget *d, const char *fileName) {
         return;
     }
     if (!d->backupPath) {
-        d->backupPath = copy_String(dataDir_App());
+        d->backupPath = copy_String(backupDir_App());
     }
     append_Path(d->backupPath, collectNewCStr_String(fileName));
     /* Use the window's serial number instead of index so this is unaffected by focus changes. */

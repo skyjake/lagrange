@@ -554,7 +554,7 @@ void eraseBackupsForWindowSerial_App_(uint32_t serial) {
     /* Erases this window's input backup files (see setBackupFileName_InputWidget()); the
        "win" marker avoids matching unrelated version-numbered files like trusted.2.txt. */
     const iString *suffix = collectNewFormat_String(".win%u.txt", serial);
-    iForEach(DirFileInfo, entry, iClob(newCStr_DirFileInfo(dataDir_App_()))) {
+    iForEach(DirFileInfo, entry, iClob(new_DirFileInfo(backupDir_App()))) {
         if (isDirectory_FileInfo(entry.value)) {
             continue;
         }

@@ -605,6 +605,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         resize_Array(&d->initialWindowRects, 1);
         set_Array(&d->initialWindowRects, 0, &winRect);
     }
+    migrateBackupsToSubdir_App_();
     loadPrefs_App_(d);
     updateSystemTheme_App_(d); /* before the first window is created */
 #if defined (iPlatformAppleDesktop)
