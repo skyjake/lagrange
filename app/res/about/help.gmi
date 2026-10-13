@@ -639,7 +639,7 @@ The "Keys" tab lets you change which keys are bound to UI commands. Click on an 
 
 Erasing a binding can be useful to disable certain features. For example, if you have no use for keyboard navigation of links via a modifier key, that binding can be erased and use of the modifier key for other purposes will no longer distract you by showing the link shortcuts.
 
-To reset all bindings to their defaults, quit Lagrange and delete the "bindings.txt" file in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
+To reset all bindings to their defaults, quit Lagrange and delete the "bindings.lst" file (and "bindings.txt", if present) in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
 
 ## 2.9 Gopher
 
@@ -702,7 +702,15 @@ The location of user data files can be changed with the --user option. By defaul
 Other Unix : ~/.config/lagrange/
 ```
 
-### bindings.txt
+Files with the .lst extension are lists where each line is one item. The first line of the file is a header that identifies the format version:
+```
+list fmt:1
+```
+Empty lines and lines beginning with "#" are ignored.
+
+Older versions of Lagrange used .txt files instead (for example, "visited.2.txt"). These are converted to the corresponding .lst files when first loaded, and they are left unchanged in the runtime directory. An old file is only read if the corresponding new file does not exist.
+
+### bindings.lst
 Each line specifies one keybinding:
 > {binding-id} {keycode} {flags}
 * Binding IDs are defined in src/ui/keys.c.
@@ -735,30 +743,8 @@ order = 288
 * "parent" is the ID of the parent folder. Folders are stored as similar bookmark entries, but their URL value is always an empty string.
 * "order" is for sorting the bookmarks list. The list is sorted by ascending order. This value is updated automatically when bookmarks are reordered in the sidebar.
 
-### feeds.txt
-Cached state of feed subscriptions. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
-
-The file has three sections. The first one is simply a UNIX timestamp indicating when feeds were last refreshed. The second section begins after the comment:
-```
-# Feeds
-```
-In this section, each line identifies a subscription so it can be referenced in the feed entries:
-> {feed-id} {feed-url}
-* The feed ID a hexadecimal number and always eight characters long.
-
-The third section contains all the discovered feed entries. It begins after the comment:
-```
-# Entries
-```
-Each feed entry consists of five consecutive lines:
-> {feed-id}
-> {posted-time}
-> {discovery-time}
-> {url}
-> {title}
-* The feed ID is one of the identifiers from the Feeds section (without zeroes for padding).
-* The posted time is a UNIX timestamp that specifies when the entry was posted. This is determined from the "YYYY-MM-DD" date found on the link line. If this is a "new headings" subscription, the posted time and the discovery time are the same.
-* The discovery time is a UNIX timestamp that marks when the entry was added to the cache.
+### feeds.lgr
+A binary file that contains the cached state of feed subscriptions: all the known entries and when feeds were last refreshed. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
 
 ### fonts.ini
 This file is loaded as fontpack metadata (see section 5). It must be manually created.
@@ -768,7 +754,7 @@ idents.lgr is a binary file that contains metadata about the client certificates
 
 The "idents" subdirectory is where the actual client certificates are stored. Each certificate comprises a .crt and a .key file in PEM format. Certificates generated inside the application use the certificate fingerprint as the file name.
 
-### modmap.txt
+### modmap.lst
 Translation table for keyboard modifiers. For example, one could swap the Alt and Ctrl keys by changing their mappings. See the comment in the file that explains the format and usage.
 
 ### mimehooks.txt
@@ -857,7 +843,7 @@ markdownAsSource = false
 * "uri" and "mime" are regular expressions. If both are given, both must match unless "matchMode" is set to "either".
 * "order" is required and must be less than 900. Lower numbers take precedence. Site-specific settings have order 100 and protocol-specific settings have order 500.
 
-### trusted.2.txt
+### trusted.lst
 Trusted server certificates. Each line specifies the certificate fingerprint of one server:
 > {domain};{port} {valid-until} {fingerprint}
 * Domain names are stored in punycode format if they contain non-ASCII characters.
@@ -867,7 +853,7 @@ Trusted server certificates. Each line specifies the certificate fingerprint of 
 ### uploadbackup.txt
 Backup of the text entered into the Upload with Titan dialog.
 
-### visited.2.txt
+### visited.lst
 The combined navigation history of all tabs. Each line specifies one URL:
 > {last-visited} {flags} {url}
 * The last visited time is stored as a UNIX timestamp.

@@ -121,7 +121,9 @@ void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
         "state.lgr",
         "idents.lgr",
         "trusted.2.txt",
+        "trusted.lst",
         "visited.2.txt",
+        "visited.lst",
     };
     makeDirs_Path(collectNewCStr_String(extDataDir));
     iForIndices(i, names) {

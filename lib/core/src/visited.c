@@ -23,7 +23,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lagrange/visited.h"
 #include "lagrange/core.h"
 #include "lagrange/gmutil.h"
+#include "lagrange/listfile.h"
 
+#include <the_Foundation/buffer.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
@@ -32,6 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 const int maxAge_Visited          = 6 * 3600 * 24 * 30; /* six months */
 const int maxTransientAge_Visited = 7 * 3600 * 24;
+
+static const char *fileName_Visited_    = "visited.lst";
+static const char *oldFileName_Visited_ = "visited.2.txt";
 
 iBool isTransientOnly_VisitedUrlFlags(uint16_t flags) {
     const uint16_t mask =
@@ -100,11 +105,11 @@ void serialize_Visited(const iVisited *d, iStream *out) {
 }
 
 void save_Visited(const iVisited *d, const char *dirPath) {
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        serialize_Visited(d, stream_File(f));
-    }
-    iRelease(f);
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    serialize_Visited(d, stream_Buffer(buf));
+    save_ListFile(concatPath_CStr(dirPath, fileName_Visited_), data_Buffer(buf));
+    iRelease(buf);
 }
 
 void deserialize_Visited(iVisited *d, iStream *ins, iBool mergeKeepingLatest) {
@@ -113,7 +118,7 @@ void deserialize_Visited(iVisited *d, iStream *ins, iBool mergeKeepingLatest) {
     iTime          now;
     initCurrent_Time(&now);
     lock_Mutex(d->mtx);
-    while (nextSplit_Rangecc(src, "\n", &line)) {
+    while (nextLine_ListFile(src, &line)) {
         if (size_Range(&line) < 8) continue;
         char *endp = NULL;
         const unsigned long long ts = strtoull(line.start, &endp, 10);
@@ -148,7 +153,7 @@ void deserialize_Visited(iVisited *d, iStream *ins, iBool mergeKeepingLatest) {
 }
 
 void load_Visited(iVisited *d, const char *dirPath) {
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
+    iFile *f = newCStr_File(migrate_ListFile(dirPath, fileName_Visited_, oldFileName_Visited_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         deserialize_Visited(d, stream_File(f), iFalse /* no merge */);
     }

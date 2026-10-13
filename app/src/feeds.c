@@ -67,6 +67,22 @@ void deinit_FeedEntry(iFeedEntry *d) {
     deinit_String(&d->url);
 }
 
+void serialize_FeedEntry(const iFeedEntry *d, iStream *outs) {
+    writeU32_Stream(outs, d->bookmarkId);
+    write64_Stream(outs, integralSeconds_Time(&d->posted));
+    write64_Stream(outs, integralSeconds_Time(&d->discovered));
+    serialize_String(&d->url, outs);
+    serialize_String(&d->title, outs);
+}
+
+void deserialize_FeedEntry(iFeedEntry *d, iStream *ins) {
+    d->bookmarkId           = readU32_Stream(ins);
+    d->posted.ts.tv_sec     = read64_Stream(ins);
+    d->discovered.ts.tv_sec = read64_Stream(ins);
+    deserialize_String(&d->url, ins);
+    deserialize_String(&d->title, ins);
+}
+
 const iString *url_FeedEntry(const iFeedEntry *d) {
     return urlFragmentStripped_String(&d->url);
 }
@@ -163,7 +179,9 @@ iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *feedsFilename_Feeds_ = "feeds.txt";
+static const char *feedsFilename_Feeds_    = "feeds.lgr";
+static const char *oldFeedsFilename_Feeds_ = "feeds.txt";
+static const char *magic_Feeds_            = "lgFd";
 
 struct Impl_Feeds {
     iMutex *  mtx;
@@ -668,23 +686,29 @@ static void save_Feeds_(iFeeds *d) {
     const iString *tmpPath = collectNewFormat_String("%s.tmp", cstr_String(path));
     iBool          isSaved = iFalse;
     iFile         *f       = new_File(tmpPath);
-    if (open_File(f, write_FileMode | text_FileMode)) {
+    if (open_File(f, writeOnly_FileMode)) {
         lock_Mutex(d->mtx);
-        iString *str = new_String();
-        format_String(str, "%llu\n# Feeds\n", (unsigned long long)
-                      integralSeconds_Time(&d->lastRefreshedAt));
-        write_File(f, utf8_String(str));
+        iStream *outs = stream_File(f);
+        writeData_Stream(outs, magic_Feeds_, 4);
+        writeU32_Stream(outs, feeds_FileVersion);
+        write64_Stream(outs, integralSeconds_Time(&d->lastRefreshedAt));
         /* Index of feeds for IDs. */ {
+            iPtrArray *checked = new_PtrArray();
             iConstForEach(PtrArray, i, listSubscriptions_()) {
                 const iBookmark *bm = i.ptr;
-                if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
-                    continue; /* not successfully checked yet */
+                if (contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
+                    pushBack_PtrArray(checked, bm);
                 }
-                format_String(str, "%08x %s\n", id_Bookmark(bm), cstr_String(&bm->url));
-                write_File(f, utf8_String(str));
             }
+            writeU32_Stream(outs, (uint32_t) size_PtrArray(checked));
+            iConstForEach(PtrArray, j, checked) {
+                const iBookmark *bm = j.ptr;
+                writeU32_Stream(outs, id_Bookmark(bm));
+                serialize_String(&bm->url, outs);
+            }
+            delete_PtrArray(checked);
         }
-        writeData_File(f, "# Entries\n", 10);
+        iPtrArray *entries = new_PtrArray();
         iTime now;
         initCurrent_Time(&now);
         iConstForEach(Array, i, &d->entries.values) {
@@ -694,15 +718,13 @@ static void save_Feeds_(iFeeds *d) {
                 secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                 continue; /* Forget entries discovered long ago. */
             }
-            format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
-                          entry->bookmarkId,
-                          (unsigned long long) integralSeconds_Time(&entry->posted),
-                          (unsigned long long) integralSeconds_Time(&entry->discovered),
-                          cstr_String(&entry->url),
-                          cstr_String(&entry->title));
-            write_File(f, utf8_String(str));
+            pushBack_PtrArray(entries, entry);
         }
-        delete_String(str);
+        writeU32_Stream(outs, (uint32_t) size_PtrArray(entries));
+        iConstForEach(PtrArray, j, entries) {
+            serialize_FeedEntry(j.ptr, outs);
+        }
+        delete_PtrArray(entries);
         close_File(f);
         unlock_Mutex(d->mtx);
         isSaved = iTrue;
@@ -1168,109 +1190,160 @@ struct Impl_FeedHashNode {
     uint32_t  bookmarkId;
 };
 
+static void addLoadedFeed_Feeds_(iFeeds *d, iHash *feeds, uint32_t id, const iString *feedUrl) {
+    const uint32_t bookmarkId = findSubscription_Feeds_(feedUrl);
+    if (bookmarkId) {
+        iFeedHashNode *node = iMalloc(FeedHashNode);
+        node->node.key      = id;
+        node->bookmarkId    = bookmarkId;
+        insert_Hash(feeds, &node->node);
+        insert_IntSet(&d->previouslyCheckedFeeds, bookmarkId);
+    }
+}
+
+static void addLoadedEntry_Feeds_(iFeeds *d, const iHash *feeds, iFeedEntry *entry) {
+    /* The saved bookmark ID refers to the saved feed index. */
+    const iFeedHashNode *node = (const iFeedHashNode *) value_Hash(feeds, entry->bookmarkId);
+    if (!node) {
+        delete_FeedEntry(entry);
+        return;
+    }
+    entry->bookmarkId = node->bookmarkId;
+    stripDefaultUrlPort_String(&entry->url);
+    set_String(&entry->url, canonicalUrl_String(&entry->url));
+    entry->isTinylog = startsWith_String(&entry->url, "local:/tinylog/");
+    entry->isHeading = !entry->isTinylog && isHeadingEntry_FeedEntry_(entry);
+    insert_SortedArray(&d->entries, &entry);
+}
+
+static void deleteLoadedFeeds_(iHash *feeds) {
+    iForEach(Hash, i, feeds) {
+        free(i.value);
+    }
+    delete_Hash(feeds);
+}
+
+static iBool loadOld_Feeds_(iFeeds *d) {
+    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, oldFeedsFilename_Feeds_)));
+    if (!open_File(f, read_FileMode | text_FileMode)) {
+        iRelease(f);
+        return iFalse;
+    }
+    iBlock * src     = readAll_File(f);
+    iRangecc line    = iNullRange;
+    int      section = 0;
+    iHash *  feeds   = new_Hash(); /* mapping from IDs to feed URLs */
+    while (nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+        if (equal_Rangecc(line, "# Feeds")) {
+            section = 1;
+            continue;
+        }
+        else if (equal_Rangecc(line, "# Entries")) {
+            section = 2;
+            continue;
+        }
+        switch (section) {
+            case 0: {
+                unsigned long long ts = 0;
+                sscanf(line.start, "%llu", &ts);
+                d->lastRefreshedAt.ts.tv_sec = ts;
+                break;
+            }
+            case 1: {
+                if (size_Range(&line) > 8) {
+                    uint32_t id = 0;
+                    sscanf(line.start, "%08x", &id);
+                    addLoadedFeed_Feeds_(
+                        d,
+                        feeds,
+                        id,
+                        collect_String(newRange_String((iRangecc){ line.start + 9, line.end })));
+                }
+                break;
+            }
+            case 2: {
+                const uint32_t feedId = (uint32_t) strtoul(line.start, NULL, 16);
+                if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                    goto aborted;
+                }
+                const unsigned long long posted = strtoull(line.start, NULL, 10);
+                if (posted == 0) {
+                    goto aborted;
+                }
+                if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                    goto aborted;
+                }
+                char *endp = NULL;
+                const unsigned long long discovered = strtoull(line.start, &endp, 10);
+                if (endp != line.end) {
+                    goto aborted;
+                }
+                if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                    goto aborted;
+                }
+                const iRangecc urlRange = line;
+                if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                    goto aborted;
+                }
+                iFeedEntry *entry = new_FeedEntry();
+                entry->bookmarkId           = feedId;
+                entry->posted.ts.tv_sec     = posted;
+                entry->discovered.ts.tv_sec = discovered;
+                setRange_String(&entry->url, urlRange);
+                setRange_String(&entry->title, line);
+                addLoadedEntry_Feeds_(d, feeds, entry);
+                break;
+            }
+        }
+    }
+aborted:
+    delete_Block(src);
+    deleteLoadedFeeds_(feeds);
+    iRelease(f);
+    return iTrue;
+}
+
 static void load_Feeds_(iFeeds *d) {
     /* TODO: If there are lots of entries, it would make sense to load async. */
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, feedsFilename_Feeds_)));
-    if (open_File(f, read_FileMode | text_FileMode)) {
-        iBlock * src     = readAll_File(f);
-        iRangecc line    = iNullRange;
-        int      section = 0;
-        iHash *  feeds   = new_Hash(); /* mapping from IDs to feed URLs */
-        while (nextSplit_Rangecc(range_Block(src), "\n", &line)) {
-            if (equal_Rangecc(line, "# Feeds")) {
-                section = 1;
-                continue;
+    const iString *path = collect_String(concatCStr_Path(&d->saveDir, feedsFilename_Feeds_));
+    if (!fileExists_FileInfo(path)) {
+        if (loadOld_Feeds_(d)) {
+            save_Feeds_(d);
+        }
+        return;
+    }
+    iFile *f = new_File(path);
+    if (open_File(f, readOnly_FileMode)) {
+        iStream *ins = stream_File(f);
+        char     magic[4];
+        if (readData_Stream(ins, sizeof(magic), magic) != sizeof(magic) ||
+            memcmp(magic, magic_Feeds_, sizeof(magic))) {
+            fprintf(stderr, "[Feeds] format not recognized: %s\n", cstr_String(path));
+        }
+        else {
+            const uint32_t version = readU32_Stream(ins);
+            if (version > feeds_FileVersion) {
+                fprintf(stderr, "[Feeds] unsupported version (%u): %s\n", version, cstr_String(path));
             }
-            else if (equal_Rangecc(line, "# Entries")) {
-                section = 2;
-                continue;
-            }
-            switch (section) {
-                case 0: {
-                    unsigned long long ts = 0;
-                    sscanf(line.start, "%llu", &ts);
-                    d->lastRefreshedAt.ts.tv_sec = ts;
-                    break;
+            else {
+                setVersion_Stream(ins, version);
+                d->lastRefreshedAt.ts.tv_sec = read64_Stream(ins);
+                iHash   *feeds   = new_Hash(); /* mapping from IDs to feed URLs */
+                iString *feedUrl = new_String();
+                for (uint32_t n = readU32_Stream(ins); n > 0 && !atEnd_Stream(ins); n--) {
+                    const uint32_t id = readU32_Stream(ins);
+                    deserialize_String(feedUrl, ins);
+                    addLoadedFeed_Feeds_(d, feeds, id, feedUrl);
                 }
-                case 1: {
-                    if (size_Range(&line) > 8) {
-                        uint32_t id = 0;
-                        sscanf(line.start, "%08x", &id);
-                        iString *feedUrl =
-                            collect_String(newRange_String((iRangecc){ line.start + 9, line.end }));
-                        const uint32_t bookmarkId = findSubscription_Feeds_(feedUrl);
-                        if (bookmarkId) {
-                            iFeedHashNode *node = iMalloc(FeedHashNode);
-                            node->node.key      = id;
-                            node->bookmarkId    = bookmarkId;
-                            insert_Hash(feeds, &node->node);
-                            insert_IntSet(&d->previouslyCheckedFeeds, bookmarkId);
-                        }
-                    }
-                    break;
+                delete_String(feedUrl);
+                for (uint32_t n = readU32_Stream(ins); n > 0 && !atEnd_Stream(ins); n--) {
+                    iFeedEntry *entry = new_FeedEntry();
+                    deserialize_FeedEntry(entry, ins);
+                    addLoadedEntry_Feeds_(d, feeds, entry);
                 }
-                case 2: {
-                    /* TODO: Cleanup needed...
-                       All right, this could maybe use a bit more robust, structured format.
-                       The code below is messy. */
-                    const uint32_t feedId = (uint32_t) strtoul(line.start, NULL, 16);
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
-                        goto aborted;
-                    }
-                    const unsigned long long posted = strtoull(line.start, NULL, 10);
-                    if (posted == 0) {
-                        goto aborted;
-                    }
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
-                        goto aborted;
-                    }
-                    char *endp = NULL;
-                    const unsigned long long discovered = strtoull(line.start, &endp, 10);
-                    if (endp != line.end) {
-                        goto aborted;
-                    }
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
-                        goto aborted;
-                    }
-                    const iRangecc urlRange = line;
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
-                        goto aborted;
-                    }
-                    const iRangecc titleRange = line;
-                    iString *url   = newRange_String(urlRange);
-                    iString *title = newRange_String(titleRange);
-                    /* Look it up in the hash. */
-                    const iFeedHashNode *node = (iFeedHashNode *) value_Hash(feeds, feedId);
-                    if (node) {
-                        iFeedEntry *entry = new_FeedEntry();
-                        entry->bookmarkId           = node->bookmarkId;
-                        entry->posted.ts.tv_sec     = posted;
-                        entry->discovered.ts.tv_sec = discovered;
-                        set_String(&entry->url, url);
-                        stripDefaultUrlPort_String(&entry->url);
-                        set_String(&entry->url, canonicalUrl_String(&entry->url));
-                        set_String(&entry->title, title);
-                        entry->isTinylog = startsWith_String(&entry->url, "local:/tinylog/");
-                        entry->isHeading = !entry->isTinylog && isHeadingEntry_FeedEntry_(entry);
-//                        if (entry->isHeading) {
-//                            printf("[Feeds] src:%d url:{%s}\n", entry->bookmarkId,
-//                                   cstr_String(&entry->url));
-//                        }
-                        insert_SortedArray(&d->entries, &entry);
-                    }
-                    delete_String(title);
-                    delete_String(url);
-                    break;
-                }
+                deleteLoadedFeeds_(feeds);
             }
         }
-    aborted:
-        /* Cleanup. */
-        delete_Block(src);
-        iForEach(Hash, i, feeds) {
-            free(i.value);
-        }
-        delete_Hash(feeds);
     }
     iRelease(f);
 }
@@ -1334,6 +1407,7 @@ void resetKnownEntries_Feeds(void) {
     removeTinylogCaches_Feeds_(d, iFalse);
     deinit_Feeds();
     removePath_CStr(cstrCollect_String(concatCStr_Path(saveDir, feedsFilename_Feeds_)));
+    removePath_CStr(cstrCollect_String(concatCStr_Path(saveDir, oldFeedsFilename_Feeds_)));
     init_Feeds(cstr_String(saveDir));
     delete_String(saveDir);
 }

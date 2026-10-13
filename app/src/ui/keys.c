@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "window.h"
 #include "app.h"
 
+#include <lagrange/listfile.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrset.h>
@@ -119,16 +120,13 @@ void setCapsLockDown_Keys(iBool isDown) {
 }
 
 static void loadModMap_Keys_(const char *saveDir) {
-    iFile *f = iClob(newCStr_File(concatPath_CStr(saveDir, "modmap.txt")));
+    iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, "modmap.lst", "modmap.txt")));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         const iString *text = collect_String(readString_File(f));
         iRangecc textLine = iNullRange;
-        while (nextSplit_Rangecc(range_String(text), "\n", &textLine)) {
+        while (nextLine_ListFile(range_String(text), &textLine)) {
             iRangecc line = textLine;
             trim_Rangecc(&line);
-            if (isEmpty_Range(&line) || startsWith_Rangecc(line, "#")) {
-                continue; /* comment */
-            }
             iRangecc seg = iNullRange;
             if (nextSplit_Rangecc(line, "->", &seg)) {
                 const int fromMod = strToMod_(seg);
@@ -141,24 +139,24 @@ static void loadModMap_Keys_(const char *saveDir) {
         close_File(f);
     }
     else {
-        open_File(f, writeOnly_FileMode | text_FileMode);
-        printf_Stream(stream_File(f),
-                      "# This is a translation table for keyboard modifiers. The syntax is:\n"
-                      "#\n"
-                      "# (hardware key) -> (effective modifier)\n"
-                      "#\n"
-                      "# A modifier can be mapped to \"none\" to disable it. For example:\n"
-                      "#\n"
-                      "# Lalt -> none\n"
-                      "#\n"
-                      "# When using CapsLock as a modifier key, its toggled state will still affect\n"
-                      "# text entry. You may need to remap or disable CapsLock in your window system.\n"
-                      "#\n"
-                      "# You may delete this file and it will be recreated with the default mapping.\n\n");
+        iString *defaults = collectNew_String();
+        appendCStr_String(defaults,
+                          "# This is a translation table for keyboard modifiers. The syntax is:\n"
+                          "#\n"
+                          "# (hardware key) -> (effective modifier)\n"
+                          "#\n"
+                          "# A modifier can be mapped to \"none\" to disable it. For example:\n"
+                          "#\n"
+                          "# Lalt -> none\n"
+                          "#\n"
+                          "# When using CapsLock as a modifier key, its toggled state will still affect\n"
+                          "# text entry. You may need to remap or disable CapsLock in your window system.\n"
+                          "#\n"
+                          "# You may delete this file and it will be recreated with the default mapping.\n\n");
         for (int i = 1; i < max_ModMap; i++) {
-            printf_Stream(stream_File(f), "%s -> %s\n", modToStr_[i], modToStr_[i]);
+            appendFormat_String(defaults, "%s -> %s\n", modToStr_[i], modToStr_[i]);
         }
-        close_File(f);
+        save_ListFile(concatPath_CStr(saveDir, "modmap.lst"), utf8_String(defaults));
     }
 }
 
@@ -390,9 +388,11 @@ void reset_Binding(int id) {
 /*----------------------------------------------------------------------------------------------*/
 
 #if defined (iPlatformTerminal)
-static const char *filename_Keys_ = "cbindings.txt";
+static const char *filename_Keys_    = "cbindings.lst";
+static const char *oldFilename_Keys_ = "cbindings.txt";
 #else
-static const char *filename_Keys_ = "bindings.txt";
+static const char *filename_Keys_    = "bindings.lst";
+static const char *oldFilename_Keys_ = "bindings.txt";
 #endif
 
 void init_Keys(void) {
@@ -414,15 +414,17 @@ void deinit_Keys(void) {
 void load_Keys(const char *saveDir) {
     iKeys *d = &keys_;
     loadModMap_Keys_(saveDir);
-    iFile *f = iClob(newCStr_File(concatPath_CStr(saveDir, filename_Keys_)));
+    iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, filename_Keys_, oldFilename_Keys_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iBlock * src  = collect_Block(readAll_File(f));
         iRangecc line = iNullRange;
-        while (nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+        while (nextLine_ListFile(range_Block(src), &line)) {
             int id, key;
             char modBits[5];
             iZap(modBits);
-            sscanf(line.start, "%d %x %4s", &id, &key, modBits);
+            if (sscanf(line.start, "%d %x %4s", &id, &key, modBits) < 2) {
+                continue;
+            }
             iBinding *bind = findId_Keys_(d, id);
             if (bind) {
                 bind->key = key;
@@ -443,27 +445,23 @@ void load_Keys(const char *saveDir) {
 
 void save_Keys(const char *saveDir) {
     iKeys *d = &keys_;
-    iFile *f = newCStr_File(concatPath_CStr(saveDir, filename_Keys_));
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        iString *line = collectNew_String();
-        iConstForEach(Array, i, &d->bindings) {
-            const iBinding *bind = i.value;
-            format_String(line, "%d %x ", bind->id, bind->key);
-            if (bind->mods == 0) {
-                appendCStr_String(line, "0");
-            }
-            else {
-                if (bind->mods & SDL_KMOD_SHIFT) appendChar_String(line, 's');
-                if (bind->mods & SDL_KMOD_ALT) appendChar_String(line, 'a');
-                if (bind->mods & SDL_KMOD_CTRL) appendChar_String(line, 'c');
-                if (bind->mods & SDL_KMOD_GUI) appendChar_String(line, 'g');
-                if (bind->mods & SDL_KMOD_CAPS) appendChar_String(line, 'k');
-            }
-            appendChar_String(line, '\n');
-            write_File(f, &line->chars);
+    iString *lines = collectNew_String();
+    iConstForEach(Array, i, &d->bindings) {
+        const iBinding *bind = i.value;
+        appendFormat_String(lines, "%d %x ", bind->id, bind->key);
+        if (bind->mods == 0) {
+            appendCStr_String(lines, "0");
         }
-        iRelease(f);
+        else {
+            if (bind->mods & SDL_KMOD_SHIFT) appendChar_String(lines, 's');
+            if (bind->mods & SDL_KMOD_ALT) appendChar_String(lines, 'a');
+            if (bind->mods & SDL_KMOD_CTRL) appendChar_String(lines, 'c');
+            if (bind->mods & SDL_KMOD_GUI) appendChar_String(lines, 'g');
+            if (bind->mods & SDL_KMOD_CAPS) appendChar_String(lines, 'k');
+        }
+        appendChar_String(lines, '\n');
     }
+    save_ListFile(concatPath_CStr(saveDir, filename_Keys_), utf8_String(lines));
 }
 
 void bind_Keys(int id, const char *command, int key, int mods) {

@@ -147,6 +147,7 @@ enum iFileVersion {
     /* meta */
     latest_FileVersion = 15, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
+    feeds_FileVersion  = 1, /* used by Feeds/feeds.lgr */
 };
 
 enum iImageStyle {

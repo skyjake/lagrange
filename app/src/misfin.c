@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 #include "ui/window.h"
 
+#include <lagrange/listfile.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
@@ -34,9 +35,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Misfin);
 
 struct Impl_Misfin {
-    iString trustedPath;
+    iString dir;
     iRegExp *trustPattern;
 };
+
+static const char *trustedFileName_Misfin_    = "misfin.lst";
+static const char *oldTrustedFileName_Misfin_ = "trusted.misfin.txt";
 
 static iMisfin misfin_;
 
@@ -48,21 +52,26 @@ static iBool onlyMisfin_(void *context, const iGmIdentity *d) {
 void init_Misfin(const char *dir) {
     iMisfin *d = &misfin_;
     iZap(*d);
-    initCStr_String(&d->trustedPath, concatPath_CStr(dir, "trusted.misfin.txt"));
+    initCStr_String(&d->dir, dir);
     d->trustPattern = new_RegExp("^([0-9a-f]{64}) ([^\\s]+)$", 0);
 }
 
 void deinit_Misfin(void) {
     iMisfin *d = &misfin_;
     iRelease(d->trustPattern);
-    deinit_String(&d->trustedPath);
+    deinit_String(&d->dir);
+}
+
+static const char *trustedPath_Misfin_(const iMisfin *d) {
+    return migrate_ListFile(
+        cstr_String(&d->dir), trustedFileName_Misfin_, oldTrustedFileName_Misfin_);
 }
 
 enum iMisfinResult checkTrust_Misfin(const iString *address, const iString *expectedFingerprint,
                                      iString *fingerprint_out) {
     iMisfin *d = &misfin_;
     enum iMisfinResult result = unknown_MisfinResult;
-    iFile *f = new_File(&d->trustedPath);
+    iFile *f = newCStr_File(trustedPath_Misfin_(d));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         const iStringList *lines = readLines_File(f);
         iConstForEach(StringList, i, lines) {
@@ -105,10 +114,13 @@ enum iMisfinResult checkTrust_Misfin(const iString *address, const iString *expe
 void trust_Misfin(const iString *address, const iString *fingerprint) {
     iMisfin *d = &misfin_;
     iString *updated = new_String();
-    iFile *f = new_File(&d->trustedPath);
+    iFile *f = newCStr_File(trustedPath_Misfin_(d));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         const iStringList *lines = readLines_File(f);
         iConstForEach(StringList, i, lines) {
+            if (i.pos == 0 && isHeader_ListFile(range_String(i.value))) {
+                continue;
+            }
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (matchString_RegExp(d->trustPattern, i.value, &m)) {
@@ -129,10 +141,8 @@ void trust_Misfin(const iString *address, const iString *fingerprint) {
     appendCStr_String(updated, " ");
     append_String(updated, address);
     appendCStr_String(updated, "\n");
-    /* Write the new contents of the file. */
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        write_File(f, utf8_String(updated));
-    }
+    save_ListFile(concatPath_CStr(cstr_String(&d->dir), trustedFileName_Misfin_),
+                  utf8_String(updated));
     iRelease(f);
     delete_String(updated);
 }

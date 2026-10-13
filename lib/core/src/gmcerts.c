@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/core.h>
 #include <lagrange/prefs.h>
 #include <lagrange/gmutil.h>
+#include <lagrange/listfile.h>
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -37,7 +38,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <ctype.h>
 
-static const char *trustedFilename_GmCerts_   = "trusted.2.txt";
+static const char *trustedFilename_GmCerts_   = "trusted.lst";
+static const char *oldTrustedFilename_GmCerts_= "trusted.2.txt";
 static const char *identsDir_GmCerts_         = "idents";
 static const char *oldIdentsFilename_GmCerts_ = "idents.binary";
 static const char *identsFilename_GmCerts_    = "idents.lgr";
@@ -398,11 +400,11 @@ static void save_GmCerts_(const iGmCerts *d) {
         return;
     }
     iBeginCollect();
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, trustedFilename_GmCerts_)));
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        serialize_GmCerts(d, stream_File(f), NULL);
-    }
-    iRelease(f);
+    iBuffer *buf = iClob(new_Buffer());
+    openEmpty_Buffer(buf);
+    serialize_GmCerts(d, stream_Buffer(buf), NULL);
+    save_ListFile(cstrCollect_String(concatCStr_Path(&d->saveDir, trustedFilename_GmCerts_)),
+                  data_Buffer(buf));
     iEndCollect();
     notifyUserDataChanged_Core(trusted_UserDataType);
 }
@@ -553,7 +555,7 @@ void deserializeTrusted_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod me
     const iRangecc src     = range_Block(collect_Block(readAll_Stream(ins)));
     iRangecc       line    = iNullRange;
     lock_Mutex(d->mtx);
-    while (nextSplit_Rangecc(src, "\n", &line)) {
+    while (nextLine_ListFile(src, &line)) {
         iRegExpMatch m;
         init_RegExpMatch(&m);
         if (matchRange_RegExp(pattern, line, &m)) {
@@ -582,7 +584,8 @@ void deserializeTrusted_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod me
 }
 
 static void load_GmCerts_(iGmCerts *d) {
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, trustedFilename_GmCerts_)));
+    iFile *f = newCStr_File(migrate_ListFile(
+        cstr_String(&d->saveDir), trustedFilename_GmCerts_, oldTrustedFilename_GmCerts_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         deserializeTrusted_GmCerts(d, stream_File(f), all_ImportMethod);
     }

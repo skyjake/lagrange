@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(FeedEntry)
 iDeclareTypeConstruction(FeedEntry)
+iDeclareTypeSerialization(FeedEntry)
 
 struct Impl_FeedEntry {
     iTime    posted;

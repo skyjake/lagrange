@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "books.h"
 #include <lagrange/gmcerts.h>
+#include <lagrange/listfile.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
 #include <lagrange/visited.h>
@@ -45,6 +46,13 @@ struct Impl_Export {
 iDefineTypeConstruction(Export)
 
 static const char *metadataEntryName_Export_ = "lagrange-export.ini";
+
+static void setListData_Export_(iExport *d, const char *entryPath, const iBlock *content) {
+    iBlock *data = newCStr_Block(header_ListFile());
+    append_Block(data, content);
+    setDataCStr_Archive(d->arch, entryPath, data);
+    delete_Block(data);
+}
 
 void init_Export(iExport *d) {
     d->arch = new_Archive();
@@ -86,7 +94,7 @@ void generatePartial_Export(iExport *d, int dataFlags) {
         openEmpty_Buffer(buf2);
         openEmpty_Buffer(buf);
         serialize_GmCerts(certs_App(), stream_Buffer(buf), stream_Buffer(buf2));
-        setDataCStr_Archive(d->arch, "trusted.txt", data_Buffer(buf));
+        setListData_Export_(d, "trusted.lst", data_Buffer(buf));
         setDataCStr_Archive(d->arch, "idents.lgr", data_Buffer(buf2));
         iRelease(buf2);
         iForEach(DirFileInfo,
@@ -129,7 +137,7 @@ void generatePartial_Export(iExport *d, int dataFlags) {
     if (dataFlags & visited_ExportFlag) {
         openEmpty_Buffer(buf);
         serialize_Visited(visited_App(), stream_Buffer(buf));
-        setDataCStr_Archive(d->arch, "visited.txt", data_Buffer(buf));
+        setListData_Export_(d, "visited.lst", data_Buffer(buf));
         close_Buffer(buf);
     }
     /* Snippets. */
@@ -171,6 +179,12 @@ iBuffer *openEntryBuffer_Export_(const iExport *d, const char *entryPath) {
     return NULL;
 }
 
+static iBuffer *openListEntryBuffer_Export_(const iExport *d, const char *entryPath,
+                                            const char *oldEntryPath) {
+    iBuffer *buf = openEntryBuffer_Export_(d, entryPath);
+    return buf ? buf : openEntryBuffer_Export_(d, oldEntryPath);
+}
+
 void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportMethod identities,
                    enum iImportMethod trusted, enum iImportMethod visited,
                    enum iImportMethod siteSpec, enum iImportMethod snippets,
@@ -184,7 +198,7 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
         }
     }
     if (trusted) {
-        iBuffer *buf = openEntryBuffer_Export_(d, "trusted.txt");
+        iBuffer *buf = openListEntryBuffer_Export_(d, "trusted.lst", "trusted.txt");
         if (buf) {
             deserializeTrusted_GmCerts(certs_App(), stream_Buffer(buf), trusted);
             iRelease(buf);
@@ -217,7 +231,7 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
         }
     }
     if (visited) {
-        iBuffer *buf = openEntryBuffer_Export_(d, "visited.txt");
+        iBuffer *buf = openListEntryBuffer_Export_(d, "visited.lst", "visited.txt");
         if (buf) {
             deserialize_Visited(visited_App(), stream_Buffer(buf), iTrue /* keep latest */);
             iRelease(buf);

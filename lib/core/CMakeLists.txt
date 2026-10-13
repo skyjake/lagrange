@@ -13,6 +13,7 @@ add_library (core STATIC
     src/gopher.c
     src/guppy.c
     src/lang.c
+    src/listfile.c
     src/resources.c
     src/prefs.c
     src/sitespec.c

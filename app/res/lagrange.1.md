@@ -96,13 +96,13 @@ Use the **\--user** option to store user data in a custom location.
 
 The directory contains:
 
-**bindings.txt**
+**bindings.lst**
 :   Customized key bindings.
 
 **bookmarks.ini**
 :   Bookmarks in TOML format.
 
-**feeds.txt**
+**feeds.lgr**
 :   State of subscribed feeds: all the known entries and latest update timestamps.
 
 **fonts.ini**
@@ -114,7 +114,7 @@ The directory contains:
 **idents/**
 :   Subdirectory containing client certificates and private keys in PEM format.
 
-**modmap.txt**
+**modmap.lst**
 :   Customized keyboard modifier mapping.
 
 **mimehooks.txt**
@@ -135,10 +135,10 @@ The directory contains:
 **prefs/custom.ini**
 :   Optional user-written rules for document preferences. Never written by the application.
 
-**trusted.2.txt**
+**trusted.lst**
 :   Fingerprints of trusted server certificates.
 
-**visited.2.txt**
+**visited.lst**
 :   List of visited URLs with timestamps.
 
 # STANDARDS

@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "syncdata.h"
 
+#include <lagrange/listfile.h>
 #include <lagrange/visited.h>
 
 #include <the_Foundation/archive.h>
@@ -645,7 +646,7 @@ static void handleKeyValue_NativeParser_(void *context, const iString *table, co
 static void parseLines_SyncData_(iSyncData *d, enum iUserDataType type, const iBlock *native) {
     const iRangecc src  = range_Block(native);
     iRangecc       line = iNullRange;
-    while (nextSplit_Rangecc(src, "\n", &line)) {
+    while (nextLine_ListFile(src, &line)) {
         iRangecc words[3];
         iRangecc word = iNullRange;
         size_t   n    = 0;
