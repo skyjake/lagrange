@@ -190,7 +190,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         if (d->listItem.flags.isSeparator) {
             if (d != constItem_ListWidget(list, 0)) {
                 drawHLine_Paint(p,
-                                addY_I2(pos, 2 * gap_UI),
+                                addY_I2(pos, 4 * gap_UI),
                                 width_Rect(itemRect) - blankWidth,
                                 uiSeparator_ColorId);
             }
@@ -198,7 +198,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 uiLabelLargeBold_FontId,
                 add_I2(pos,
                        init_I2(3 * gap_UI * aspect_UI,
-                               itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 1 * gap_UI)),
+                               itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 2 * gap_UI)),
                 uiIcon_ColorId,
                 range_String(&d->meta));
         }
