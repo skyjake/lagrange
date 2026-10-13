@@ -1543,7 +1543,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         checkSyncedPosition_DocumentBook(d->book);
         return iFalse;
     }
-    else if (equalWidget_Command(cmd, w, "book.jump")) {
+    else if (equal_Command(cmd, "book.jump") && pointerLabel_Command(cmd, "doc") == d) {
         jumpToPosition_DocumentBook(
             d->book, argLabel_Command(cmd, "chapter"), argfLabel_Command(cmd, "pos"));
         return iTrue;
@@ -2033,6 +2033,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         else if (!isEmpty_Block(&d->fetch->sourceContent)) {
             saveToShelf_DocumentBook(d->book, argLabel_Command(cmd, "overwrite"));
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.openbook") && pointerLabel_Command(cmd, "doc") == d) {
+        openFromShelf_DocumentBook(d->book, collect_String(suffix_Command(cmd, "path")), iFalse);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.fetch")) {

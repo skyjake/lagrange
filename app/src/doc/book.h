@@ -67,3 +67,6 @@ iBool   openAdjacentChapter_DocumentBook(iDocumentBook *, int dir, iBool isGestu
 iBool   moveProgress_DocumentBook       (iDocumentBook *, int thumb); /* progress bar dragged */
 iBool   updateProgress_DocumentBook     (iDocumentBook *); /* False if not showing a chapter */
 void    saveToShelf_DocumentBook        (iDocumentBook *, iBool overwrite);
+void    openFromShelf_DocumentBook      (iDocumentBook *, const iString *path, iBool isReplaced);
+
+iDocumentWidget *findTab_DocumentBook   (const iString *bookId, const iString *path); /* either may be NULL */

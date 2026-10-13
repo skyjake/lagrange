@@ -1263,9 +1263,6 @@ msgstr "Reading Position Synced"
 msgid "dlg.book.synced"
 msgstr "This book has a more recent reading position from another device, in chapter %d."
 
-msgid "dlg.book.synced.stay"
-msgstr "Stay Here"
-
 msgid "dlg.book.synced.jump"
 msgstr "Go to Synced Position"
 

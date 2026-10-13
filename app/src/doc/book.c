@@ -362,11 +362,11 @@ void checkSyncedPosition_DocumentBook(iDocumentBook *d) {
     makeQuestion_Widget(
         uiHeading_ColorEscape "${heading.book.synced}",
         format_Lang("${dlg.book.synced}", book->chapter + 1),
-        (iMenuItem[]){ { "${dlg.book.synced.stay}", SDLK_ESCAPE, 0, NULL },
+        (iMenuItem[]){ { "${cancel}" },
                        { uiTextAction_ColorEscape "${dlg.book.synced.jump}",
                          SDLK_RETURN,
                          0,
-                         format_CStr("book.jump ptr:%p chapter:%d pos:%f",
+                         format_CStr("book.jump doc:%p chapter:%d pos:%f",
                                      d->owner, book->chapter, book->chapterPos) } },
         2);
 }
@@ -453,6 +453,62 @@ static iBool isEqualToFileContents_(const iString *path, const iBlock *data) {
     return pos == total;
 }
 
+static iBool isNewEdition_(const iGempub *gempub, const iString *existingPath) {
+    /* Revisions don't change the edition, but republishing does. Retitling is handled
+       by add_Books(). */
+    static const enum iGempubProperty dates[] = { published_GempubProperty,
+                                                  publishDate_GempubProperty };
+    iGempub *existing = new_Gempub();
+    iBool    isNew    = iFalse;
+    if (openFile_Gempub(existing, existingPath)) {
+        iForIndices(i, dates) {
+            if (!equal_String(property_Gempub(gempub, dates[i]),
+                              property_Gempub(existing, dates[i]))) {
+                isNew = iTrue;
+                break;
+            }
+        }
+    }
+    delete_Gempub(existing);
+    return isNew;
+}
+
+iDocumentWidget *findTab_DocumentBook(const iString *bookId, const iString *path) {
+    const iString *url = path ? collect_String(makeFileUrl_String(path)) : NULL;
+    iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+        const iGempub *gempub = gempub_DocumentWidget(i.object);
+        if (gempub && !isRemote_Gempub(gempub) &&
+            ((url && equal_String(coverPageUrl_Gempub(gempub), url)) ||
+             (bookId && equal_String(id_Books(gempub), bookId)))) {
+            return (iDocumentWidget *) i.object;
+        }
+    }
+    return NULL;
+}
+
+void openFromShelf_DocumentBook(iDocumentBook *d, const iString *path, iBool isReplaced) {
+    /* Only one copy of a book is open, so reading positions don't conflict. */
+    iDocumentWidget *owner  = d->owner;
+    const iGempub   *gempub = gempub_DocumentBook_(d);
+    const iString   *url    = collect_String(makeFileUrl_String(path));
+    iDocumentWidget *tab    = findTab_DocumentBook(gempub ? id_Books(gempub) : NULL, path);
+    if (tab && tab != owner) {
+        postCommandf_Root(as_Widget(tab)->root, "tabs.switch page:%p", tab);
+        if (isReplaced) {
+            postCommandf_Root(as_Widget(tab)->root, "!open doc:%p url:%s", tab, cstr_String(url));
+        }
+        return;
+    }
+    /* The remote copy is not kept in history. */
+    postCommandf_Root(as_Widget(owner)->root,
+                      "!open doc:%p%s url:%s",
+                      owner,
+                      gempub && isRemote_Gempub(gempub) && !isReader_DocumentWidget(owner)
+                          ? " redirect:1"
+                          : "",
+                      cstr_String(url));
+}
+
 void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
     /* Books are copied to the shelf and pages become single-chapter books. */
     iDocumentWidget      *owner     = d->owner;
@@ -515,35 +571,34 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
         return;
     }
     const iBook *existing = find_Books(id);
-    if (overwrite && (!existing || !path_Book(existing)) && sourceUrl) {
-        /* Redownloading replaces the book even if its title has changed. */
+    if ((overwrite || gempub) && (!existing || !path_Book(existing)) && sourceUrl) {
+        /* A book from the same source is replaced even if its title has changed. */
         const iBook *previous = findBySource_Books(sourceUrl, iTrue);
         if (previous) {
             existing = previous;
         }
     }
     const iString *existingPath = existing ? path_Book(existing) : NULL;
-    if (existingPath && !overwrite && isEqualToFileContents_(existingPath, data)) {
+    if (existingPath && (gempub || !overwrite) && isEqualToFileContents_(existingPath, data)) {
+        /* Nothing new to save. */
         delete_Block(data);
         if (sourceUrl) {
             setSource_Books(id, sourceUrl);
         }
-        postCommandf_Root(w->root,
-                          "!open doc:%p url:%s",
-                          owner,
-                          cstrCollect_String(makeFileUrl_String(existingPath)));
+        openFromShelf_DocumentBook(d, existingPath, iFalse);
         return;
     }
     if (existingPath && !overwrite) {
         makeQuestion_Widget(
             uiHeading_ColorEscape "${heading.book.exists}",
-            format_Lang("${dlg.book.exists}", cstr_String(title)),
+            format_Lang("${dlg.book.exists}",
+                        cstr_String(isEmpty_String(&existing->title) ? title : &existing->title)),
             (iMenuItem[]){ { "${cancel}",
                              SDLK_ESCAPE,
                              0,
-                             format_CStr("!open doc:%p url:%s",
+                             format_CStr("document.openbook doc:%p path:%s",
                                          owner,
-                                         cstrCollect_String(makeFileUrl_String(existingPath))) },
+                                         cstr_String(existingPath)) },
                            { uiTextCaution_ColorEscape "${dlg.book.overwrite}",
                              0,
                              0,
@@ -552,19 +607,20 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
         delete_Block(data);
         return;
     }
-    const iString *savedPath = add_Books(data, fileName, existingPath, sourceUrl);
+    const iBool    isNewEdition = gempub && existingPath && isNewEdition_(gempub, existingPath);
+    const iString *savedPath    = add_Books(data, fileName, existingPath, sourceUrl);
     delete_Block(data);
     if (!savedPath) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
                                  "${dlg.book.save.error}");
         return;
     }
+    if (isNewEdition) {
+        resetPosition_Books(id);
+    }
     postCommand_App("books.changed");
     if (gempub || isDownload) {
-        postCommandf_Root(w->root,
-                          "!open doc:%p url:%s",
-                          owner,
-                          cstrCollect_String(makeFileUrl_String(savedPath)));
+        openFromShelf_DocumentBook(d, savedPath, existingPath != NULL);
     }
     else {
         const iMenuItem items[2] = {

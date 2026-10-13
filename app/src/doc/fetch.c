@@ -200,20 +200,15 @@ static void makeGempubFooterButtons_DocumentFetch_(iDocumentFetch *d) {
             makeFooterButtons_DocumentWidget(d->owner, constData_Array(items), size_Array(items));
         }
         else {
-            const iBook   *book      = find_Books(id_Books(d->sourceGempub));
-            const iString *shelfPath = book ? path_Book(book) : NULL;
+            const iBook *book = find_Books(id_Books(d->sourceGempub));
+            /* Saving opens the shelf copy, offering to replace it if it differs. */
             makeFooterButtons_DocumentWidget(
                 d->owner,
-                (iMenuItem[]){ shelfPath ? (iMenuItem){ books_Icon " ${gempub.cover.openshelf}",
-                                                        SDLK_S,
-                                                        KMOD_PRIMARY | SDL_KMOD_SHIFT,
-                                                        format_CStr("!open url:%s",
-                                                                    cstrCollect_String(
-                                                                        makeFileUrl_String(shelfPath))) }
-                                         : (iMenuItem){ books_Icon " ${menu.save.books}",
-                                                        SDLK_S,
-                                                        KMOD_PRIMARY | SDL_KMOD_SHIFT,
-                                                        "document.savebook" },
+                (iMenuItem[]){ { book && path_Book(book) ? books_Icon " ${gempub.cover.openshelf}"
+                                                         : books_Icon " ${menu.save.books}",
+                                 SDLK_S,
+                                 KMOD_PRIMARY | SDL_KMOD_SHIFT,
+                                 "document.savebook" },
                                { download_Icon " " saveToDownloads_Label,
                                  SDLK_S,
                                  KMOD_PRIMARY,
@@ -344,8 +339,9 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
             }
             const iBool isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             const int   overwrite = (d->flags & overwriteBook_DocumentFetchFlag) != 0;
-            if (!isCached && isRemote_Gempub(d->sourceGempub) && isCover) {
-                /* Downloaded books go on the shelf. */
+            if (!isCached && isRemote_Gempub(d->sourceGempub) && isCover &&
+                !isReader_DocumentWidget(d->owner)) {
+                /* Downloaded books go on the shelf. The Reader only shows the cover. */
                 postCommandf_Root(w->root, "document.savebook overwrite:%d doc:%p", overwrite, d->owner);
             }
             if (!isCached && !isRemote_Gempub(d->sourceGempub) && isCover && !isInsideArchive) {

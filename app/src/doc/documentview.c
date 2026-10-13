@@ -669,10 +669,13 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     }
     const iScrollWidget *scrollBar = hostScrollBar_DocumentView_(d);
     if (isHover_Widget(w) && !(scrollBar && contains_Widget(constAs_Widget(scrollBar), mouse))) {
+        const iBool isClickablePre =
+            d->hoverPre && (!isPaged_DocumentView(d) ||
+                            preIsFolded_GmDocument(d->doc, preId_GmRun(d->hoverPre)));
         setCursor_Window(get_Window(),
-                         d->hoverLink || d->hoverPre ? SDL_SYSTEM_CURSOR_POINTER
-                         : selectableRun             ? SDL_SYSTEM_CURSOR_TEXT
-                                                     : SDL_SYSTEM_CURSOR_DEFAULT);
+                         d->hoverLink || isClickablePre ? SDL_SYSTEM_CURSOR_POINTER
+                         : selectableRun                ? SDL_SYSTEM_CURSOR_TEXT
+                                                        : SDL_SYSTEM_CURSOR_DEFAULT);
         if (d->hoverLink &&
             linkFlags_GmDocument(d->doc, d->hoverLink->linkId) & permanent_GmLinkFlag) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_DEFAULT); /* not dismissable */

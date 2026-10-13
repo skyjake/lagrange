@@ -84,6 +84,7 @@ const iPtrArray*listPositions_Books (iTime since); /* books whose position chang
 iBool           setSyncedPosition_Books(const iString *id, int chapter, int numChapters,
                                         float pos, iTime positionTime); /* if newer */
 void            setSource_Books     (const iString *id, const iString *url);
+void            resetPosition_Books (const iString *id); /* read from the beginning */
 const iString * add_Books           (const iBlock *gempubData, const iString *fileName,
                                      const iString *replacePath,
                                      const iString *sourceUrl); /* returns the saved path */

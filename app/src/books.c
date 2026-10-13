@@ -674,6 +674,17 @@ void setSource_Books(const iString *id, const iString *url) {
     save_Books();
 }
 
+void resetPosition_Books(const iString *id) {
+    iBooks *d = books_;
+    lock_Mutex(d->mtx);
+    iBook *book = value_StringHash(d->books, id);
+    if (book) {
+        resetPosition_Book_(book);
+    }
+    unlock_Mutex(d->mtx);
+    save_Books();
+}
+
 static iString *cleanFileName_Books_(const iString *fileName) {
     iString *name = new_String();
     iConstForEach(String, i, fileName) {
