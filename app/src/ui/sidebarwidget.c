@@ -320,6 +320,32 @@ static void checkFeedsActionsLayout_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static int outlineWidth_SidebarWidget_(const iSidebarWidget *d) {
+    return width_Rect(innerBounds_Widget(constAs_Widget(d->list)));
+}
+
+static void addOutlineItems_SidebarWidget_(iSidebarWidget *d) {
+    const iGmDocument *doc = document_DocumentWidget(document_App());
+    d->outlineWidth        = outlineWidth_SidebarWidget_(d);
+    iConstForEach(Array, i, headings_GmDocument(doc)) {
+        const iGmHeading *head = i.value;
+        iSidebarItem     *item = new_SidebarItem();
+        item->id               = index_ArrayConstIterator(&i);
+        setRange_String(&item->label, head->text);
+        item->indent = head->level * 5 * gap_UI;
+        item->isBold = head->level == 0;
+        addItem_ListWidget(d->list, item);
+        for (size_t span = outlineSpan_SidebarItem_(item, d, d->outlineWidth); span > 1; span--) {
+            iSidebarItem *cont                  = new_SidebarItem();
+            cont->id                            = item->id;
+            cont->listItem.flags.isContinuation = iTrue;
+            addItem_ListWidget(d->list, cont);
+            iRelease(cont);
+        }
+        iRelease(item);
+    }
+}
+
 void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
@@ -345,20 +371,9 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         case subscriptions_SidebarMode:
             isEmpty = !updateSubscriptions_SidebarWidget_(d);
             break;
-        case documentOutline_SidebarMode: {
-            const iGmDocument *doc = document_DocumentWidget(document_App());
-            iConstForEach(Array, i, headings_GmDocument(doc)) {
-                const iGmHeading *head = i.value;
-                iSidebarItem     *item = new_SidebarItem();
-                item->id               = index_ArrayConstIterator(&i);
-                setRange_String(&item->label, head->text);
-                item->indent = head->level * 5 * gap_UI;
-                item->isBold = head->level == 0;
-                addItem_ListWidget(d->list, item);
-                iRelease(item);
-            }
+        case documentOutline_SidebarMode:
+            addOutlineItems_SidebarWidget_(d);
             break;
-        }
         case siteStructure_SidebarMode:
             isEmpty = !updateStructure_SidebarWidget_(d, keepActions);
             break;
@@ -653,6 +668,61 @@ static size_t findItem_SidebarWidget_(const iSidebarWidget *d, int id) {
     return iInvalidPos;
 }
 
+static size_t outlineItemSpan_SidebarWidget_(const iSidebarWidget *d, size_t index) {
+    size_t span = 1;
+    for (;;) {
+        const iListItem *item = constItem_ListWidget(d->list, index + span);
+        if (!item || !item->flags.isContinuation) {
+            return span;
+        }
+        span++;
+    }
+}
+
+static void reflowOutline_SidebarWidget_(iSidebarWidget *d) {
+    if (d->mode != documentOutline_SidebarMode || !isVisible_Widget(d) ||
+        outlineWidth_SidebarWidget_(d) == d->outlineWidth) {
+        return;
+    }
+    iListWidget *list       = d->list;
+    const int    itemHeight = itemHeight_ListWidget(list);
+    if (!itemHeight) {
+        return;
+    }
+    /* The first visible heading keeps its position. */
+    const int           scrollPos = scrollPos_ListWidget(list);
+    const iSidebarItem *first     = constItem_ListWidget(list, iMax(0, scrollPos) / itemHeight);
+    const iSidebarItem *cursor    = constItem_ListWidget(list, list->cursorItem);
+    const iBool         hasFirst  = first != NULL;
+    const iBool         hasCursor = cursor != NULL;
+    const uint32_t      firstId   = first ? first->id : 0;
+    const uint32_t      cursorId  = cursor ? cursor->id : 0;
+    int                 offset    = 0;
+    size_t              oldSpan   = 1;
+    if (hasFirst) {
+        const size_t index = findItem_SidebarWidget_(d, firstId);
+        offset             = scrollPos - (int) index * itemHeight;
+        oldSpan            = outlineItemSpan_SidebarWidget_(d, index);
+    }
+    clear_ListWidget(list);
+    addOutlineItems_SidebarWidget_(d);
+    if (hasCursor) {
+        list->cursorItem = findItem_SidebarWidget_(d, cursorId);
+    }
+    updateVisible_ListWidget(list);
+    if (hasFirst) {
+        const size_t index = findItem_SidebarWidget_(d, firstId);
+        if (index != iInvalidPos) {
+            const int pos = (int) index * itemHeight +
+                            offset * (int) outlineItemSpan_SidebarWidget_(d, index) / (int) oldSpan;
+            setScrollPos_ListWidget(list, iMin(pos, list->scrollY.max));
+            updateVisible_ListWidget(list);
+        }
+    }
+    invalidate_ListWidget(list);
+    updateMouseHover_ListWidget(list);
+}
+
 static size_t findItemUrl_SidebarWidget_(const iSidebarWidget *d, const iString *url) {
     /* O(n) performance! */
     for (size_t i = 0; i < numItems_ListWidget(d->list); i++) {
@@ -671,7 +741,7 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
         [bookmarks_SidebarMode] = 1.333f,
         [feedEntries_SidebarMode] = 3.333f,
         [subscriptions_SidebarMode] = 2.5f,
-        [documentOutline_SidebarMode] = 1.2f,
+        [documentOutline_SidebarMode] = 0.5f, /* a line takes two slots */
         [siteStructure_SidebarMode] = 1.2f,
         [openDocuments_SidebarMode] = 1.333f,
         [history_SidebarMode] = 1.333f,
@@ -686,7 +756,10 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     };
 #endif
     if (d->list) {
-        const int padding = d->mode == gempub_SidebarMode && !isTerminal_Platform() ? 2 * gap_UI : 0;
+        int padding = d->mode == gempub_SidebarMode && !isTerminal_Platform() ? 2 * gap_UI : 0;
+        if (d->mode == documentOutline_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
+            padding -= 3 * gap_UI / 2; /* cancels the mobile padding, which would apply per slot */
+        }
         setItemHeight_ListWidget(d->list,
                                  heights[d->mode] * lineHeight_Text(d->itemFonts[0]) + padding);
     }
@@ -881,6 +954,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->side             = side;
     d->mode             = -1;
     d->pendingWidth     = -1.0f;
+    d->outlineWidth     = 0;
     d->feedsMode        = all_FeedsMode;
     d->shelfSort        = recent_BooksSortOrder;
     d->shelfOrder       = new_StringArray();
@@ -1332,6 +1406,9 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     checkFeedsActionsLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
     updateNavBarSize_Root(w->root);
+    if (!isResizing_SidebarWidget_(d)) {
+        reflowOutline_SidebarWidget_(d);
+    }
 }
 
 enum iSlidingSheetPos {
@@ -1779,6 +1856,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setBackgroundColor_Widget(d->resizer, none_ColorId);
                     setMouseGrab_Widget(NULL);
                     applyPendingWidth_SidebarWidget_(d);
+                    reflowOutline_SidebarWidget_(d);
                     /* Final size update in case it was resized. */
                     updateSize_DocumentWidget(document_App());
                     resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);

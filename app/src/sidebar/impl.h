@@ -94,6 +94,7 @@ struct Impl_SidebarWidget {
     int               maxButtonLabelWidth;
     float             widthAsGaps;
     float             pendingWidth;  /* applied once per frame while resizing; negative if none */
+    int               outlineWidth;  /* list width that outline headings were wrapped to */
     int               buttonFont;
     int               itemFonts[2];
     size_t            numUnreadEntries;
@@ -126,6 +127,10 @@ iLabelWidget *  addActionButton_SidebarWidget_  (iSidebarWidget *, const char *l
                                                  const char *command, int64_t flags);
 void            updateItems_SidebarWidget_      (iSidebarWidget *);
 void            updateItemsWithFlags_SidebarWidget_(iSidebarWidget *, iBool keepActions);
+
+/* Items (sidebar/item.c). */
+size_t          outlineSpan_SidebarItem_        (const iSidebarItem *, const iSidebarWidget *,
+                                                 int listWidth); /* number of list slots */
 
 /* Bookmarks (sidebar/bookmarklist.c). */
 iBool           updateBookmarks_SidebarWidget_  (iSidebarWidget *, iBool keepActions);

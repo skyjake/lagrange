@@ -105,6 +105,38 @@ static void drawLines_(int font, iInt2 pos, int color, const iRangecc *lines, in
     }
 }
 
+#define maxOutlineLines_SidebarItem_ 3
+
+/* Outline items consist of half-line slots: two per line of text, plus one for padding. */
+#if defined (iPlatformTerminal)
+#   define outlineSlotsPerLine_SidebarItem_    1
+#   define outlinePaddingSlots_SidebarItem_    0
+#else
+#   define outlineSlotsPerLine_SidebarItem_    2
+#   define outlinePaddingSlots_SidebarItem_    1
+#endif
+
+static int outlineTextWidth_SidebarItem_(const iSidebarItem *d, const iSidebarWidget *sidebar,
+                                         int listWidth) {
+    /* Room for the scroll bar is always reserved so its visibility doesn't affect wrapping. */
+    const int scrollBar = isApple_Platform() ? 0 : width_Widget(sidebar->list->scroll);
+    return listWidth - (5 * gap_UI + d->indent) * aspect_UI - scrollBar;
+}
+
+size_t outlineSpan_SidebarItem_(const iSidebarItem *d, const iSidebarWidget *sidebar,
+                                int listWidth) {
+    iRangecc  lines[maxOutlineLines_SidebarItem_];
+    iRangecc  text     = range_String(&d->label);
+    const int numLines = wrapLines_(sidebar->itemFonts[d->isBold ? 1 : 0],
+                                    &text,
+                                    outlineTextWidth_SidebarItem_(d, sidebar, listWidth),
+                                    lines,
+                                    maxOutlineLines_SidebarItem_);
+    /* Top-level headings get an extra slot for the separator. */
+    return iMax(1, numLines) * outlineSlotsPerLine_SidebarItem_ +
+           outlinePaddingSlots_SidebarItem_ + (d->isBold ? 1 : 0);
+}
+
 static void drawDragHandle_(iPaint *p, iRect *itemRect, int bg) {
     const int itemHeight = height_Rect(*itemRect);
     iRect dragRect = { addX_I2(topRight_Rect(*itemRect), -itemHeight * 3 / 2),
@@ -143,6 +175,16 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const iBool isHover      = isHoverItem && !isSel;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
     const int blankWidth     = isApple_Platform() ? 0 : scrollBarWidth;
+    int       sepHeight      = 0;
+    if (sidebar->mode == documentOutline_SidebarMode && d->isBold) {
+        /* Top-level headings have a separator above, outside the item's highlight. */
+        sepHeight = itemHeight_ListWidget(list);
+        drawHLine_Paint(p,
+                        addY_I2(itemRect.pos, sepHeight / 2),
+                        width_Rect(itemRect) - blankWidth,
+                        uiSeparator_ColorId);
+        adjustEdges_Rect(&itemRect, sepHeight, 0, 0, 0);
+    }
     const int itemHeight     = height_Rect(itemRect);
     const int font           = sidebar->itemFonts[d->isBold ? 1 : 0];
     const int iconColor = isSel     ? uiTextSelected_ColorId
@@ -179,11 +221,23 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                        : level <= 1 ? uiTextStrong_ColorId
                        : level == 2 ? uiText_ColorId
                                     : uiTextDim_ColorId;
-        drawRange_Text(font,
-                       init_I2(pos.x + (3 * gap_UI + d->indent) * aspect_UI,
-                               mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
-                       fg,
-                       range_String(&d->label));
+        const int width    = outlineTextWidth_SidebarItem_(d, sidebar, width_Rect(itemRect));
+        const int numSlots = (itemHeight + sepHeight) / itemHeight_ListWidget(list);
+        const int maxLines = iClamp((numSlots - outlinePaddingSlots_SidebarItem_ -
+                                     (d->isBold ? 1 : 0)) / outlineSlotsPerLine_SidebarItem_,
+                                    1,
+                                    maxOutlineLines_SidebarItem_);
+        iRangecc  lines[maxOutlineLines_SidebarItem_];
+        iRangecc  rest     = range_String(&d->label);
+        const int numLines = wrapLines_(font, &rest, width, lines, maxLines);
+        drawLines_(font,
+                   init_I2(pos.x + (3 * gap_UI + d->indent) * aspect_UI,
+                           pos.y + (itemHeight - numLines * lineHeight_Text(font)) / 2),
+                   fg,
+                   lines,
+                   numLines,
+                   rest,
+                   width);
     }
     else if (sidebar->mode == feedEntries_SidebarMode) {
         const int iconPad = 12 * gap_UI;

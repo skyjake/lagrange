@@ -1058,10 +1058,10 @@ iWidget *makePreferences_Widget(void) {
                                  iElemCount(syncIdentityItems) - 1,
                                  "prefs.sync.identity");
         addChild_Widget(headings, iClob(makeHeading_Widget("")));
-        addChildFlags_Widget(
+        checkIcon_LabelWidget(addChildFlags_Widget(
             values,
             iClob(new_LabelWidget(add_Icon " ${prefs.sync.newidentity}", "sync.newidentity")),
-            0);
+            0));
         addDialogPadding_Widget(headings, values);
         iWidget      *statusHead =
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sync.status}")));
@@ -1072,7 +1072,8 @@ iWidget *makePreferences_Widget(void) {
         statusHead->sizeRef = as_Widget(status);
         addChild_Widget(headings, iClob(makeHeading_Widget("")));
         iLabelWidget *syncNow = new_LabelWidget(
-            reload_Icon " " uiTextAction_ColorEscape "${prefs.sync.now}", "sync.now");
+            reload_Icon " ${prefs.sync.now}", "sync.now");
+        checkIcon_LabelWidget(syncNow);
         setId_Widget(as_Widget(syncNow), "prefs.sync.now");
         addChild_Widget(values, iClob(syncNow));
     }
