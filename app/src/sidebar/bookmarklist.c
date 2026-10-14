@@ -274,8 +274,8 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         iWidget *div = new_Widget();
         addChildFlags_Widget(div, iClob(filter), 0);
         /* Button for showing everything in the trash. */
-        iLabelWidget *trashBtn = new_LabelWidget(trash_Icon " ${sidebar.action.bookmarks.showtrash}",
-                                                 "bookmarks.trash.toggle");
+        iLabelWidget *trashBtn = new_LabelWidget(
+            trash_Icon " ${sidebar.action.bookmarks.showtrash}", "bookmarks.trash.toggle");
         checkIcon_LabelWidget(trashBtn);
         setIconColor_LabelWidget(trashBtn, uiText_ColorId);
         setFont_LabelWidget(trashBtn, uiContent_FontId);
@@ -292,19 +292,26 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         addActionButton_SidebarWidget_(d,
                                        "${sidebar.action.bookmarks.newfolder}",
                                        "bookmarks.addfolder",
-                                       !d->isEditing ? hidden_WidgetFlag : 0);
-        setId_Widget((iWidget *) addActionButton_SidebarWidget_(
-                         d,
-                         trash_Icon " ${sidebar.action.bookmarks.showtrash}",
-                         "bookmarks.trash.toggle",
-                         0),
-                     "filter.bookmarks.trash");
+                                       collapse_WidgetFlag |
+                                           (!d->isEditing ? hidden_WidgetFlag : 0));
+        iWidget *trashBtn = (iWidget *) addActionButton_SidebarWidget_(
+            d, trash_Icon " ${sidebar.action.bookmarks.showtrash}", "bookmarks.trash.toggle", 0);
+        setFixedSize_Widget(
+            as_Widget(trashBtn),
+            init_I2(measure_Text(fontWithStyle_Text(font_LabelWidget((iLabelWidget *) trashBtn),
+                                                    bold_FontStyle),
+                                 cstr_Lang("sidebar.action.bookmarks.showtrash"))
+                            .advance.x +
+                        textOffset_LabelWidget((iLabelWidget *) trashBtn) + 6 * gap_UI,
+                    -1));
+        setFlags2_Widget(trashBtn, alwaysRound_WidgetFlag2, iTrue);
+        setId_Widget(trashBtn, "filter.bookmarks.trash");
         addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
-        addActionButton_SidebarWidget_(
+        setId_Widget((iWidget *) addActionButton_SidebarWidget_(
             d,
             d->isEditing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}",
             format_CStr("%s.bookmarks.edit", cstr_String(&d->widget.id)),
-            0);
+            0), "mobile.bookmarks.edit");
     }
     return !isEmpty;
 }
@@ -549,11 +556,10 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
     }
     else if (d->mode == bookmarks_SidebarMode &&
              isCommand_Widget(w, ev, "bookmarks.trash.toggle")) {
-        iWidget    *toggle    = findChild_Widget(w, "filter.bookmarks.trash");
+        iLabelWidget *toggle  = findChild_Widget(w, "filter.bookmarks.trash");
         const iBool showTrash = !isSelected_Widget(toggle);
         setFlags_Widget(toggle, selected_WidgetFlag, showTrash);
-        updateFont_LabelWidget((iLabelWidget *) toggle,
-                               showTrash ? uiContentBold_FontId : uiContent_FontId);
+        updateFontStyle_LabelWidget(toggle, showTrash ? bold_FontStyle : regular_FontStyle);
         updateItemsWithFlags_SidebarWidget_(d, iTrue);
         return iTrue;
     }

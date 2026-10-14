@@ -1032,6 +1032,10 @@ void updateFont_LabelWidget(iLabelWidget *d, int fontId) {
     }
 }
 
+void updateFontStyle_LabelWidget(iLabelWidget *d, int fontStyle) {
+    updateFont_LabelWidget(d, fontWithStyle_Text(d->font, fontStyle));
+}
+
 void setTextColor_LabelWidget(iLabelWidget *d, int color) {
     if (d && d->forceFg != color) {
         d->forceFg = color;

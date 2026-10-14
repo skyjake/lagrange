@@ -231,7 +231,7 @@ static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
     if (d->actions) {
         setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, editing);
         setFlags_Widget(child_Widget(d->actions, 0), hidden_WidgetFlag, !editing);
-        setTextCStr_LabelWidget(child_Widget(as_Widget(d->actions), 2),
+        setTextCStr_LabelWidget(findChild_Widget(d->actions, "mobile.bookmarks.edit"),
                                 editing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}");
         setDragHandleWidth_ListWidget(d->list,
                                       editing ? itemHeight_ListWidget(d->list) * 3 / 2 : 0);
@@ -283,6 +283,11 @@ static void updateActionsPadding_SidebarWidget_(iSidebarWidget *d) {
     if (childCount_Widget(d->actions) && deviceType_App() == desktop_AppDeviceType) {
         /* Mirrors the book tab area padding. Mobile action buttons have enough padding. */
         setPadding_Widget(d->actions, 3 * gap_UI, gap_UI, 3 * gap_UI, 2 * gap_UI + bottom);
+    }
+    else if (deviceType_App() == phone_AppDeviceType) {
+        /* Keep buttons from going under rounded screen corners. */
+        const int edgePad = 3 * gap_UI;
+        setPadding_Widget(d->actions, edgePad, 0, edgePad, bottom);
     }
     else {
         setPadding_Widget(d->actions, 0, 0, 0, bottom);
