@@ -81,6 +81,7 @@ struct Impl_CertListWidget {
     iWidget     *menu;         /* context menu for an item */
     iCertItem   *contextItem;  /* list item accessed in the context menu */
     size_t       contextIndex; /* index of list item accessed in the context menu */
+    enum iCertListSortOrder sortOrder;
 };
 
 iDefineObjectConstruction(CertListWidget)
@@ -199,6 +200,18 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
         else if (isCommand_Widget(w, ev, "list.clicked")) {
             itemClicked_CertListWidget_(
                 d, pointerLabel_Command(cmd, "item"), argU32Label_Command(cmd, "arg"));
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "list.dragged")) {
+            const iCertItem *item = item_ListWidget(&d->list, argU32Label_Command(cmd, "arg"));
+            const size_t     pos  = hasLabel_Command(cmd, "before")
+                                        ? argU32Label_Command(cmd, "before")
+                                        : argU32Label_Command(cmd, "after") + 1;
+            if (item && d->sortOrder == manual_CertListSortOrder) {
+                moveIdentity_GmCerts(certs_App(), identity_GmCerts(certs_App(), item->id), pos);
+                saveIdentities_GmCerts(certs_App());
+                postCommand_App("idents.changed");
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
@@ -483,6 +496,7 @@ void init_CertListWidget(iCertListWidget *d) {
     d->menu = NULL;
     d->contextItem = NULL;
     d->contextIndex = iInvalidPos;
+    d->sortOrder = manual_CertListSortOrder;
 }
 
 void updateItemHeight_CertListWidget(iCertListWidget *d) {
@@ -514,6 +528,12 @@ static const char *expiry_CertListWidget_(const iGmIdentity *ident) {
         return formatCStrs_Lang("ident.expiry.years.n", years);
     }
     return cstrCollect_String(format_Date(&until, cstr_Lang("ident.expiry")));
+}
+
+static int cmpName_CertItem_(const iListItem **a, const iListItem **b) {
+    const iCertItem *x = (const iCertItem *) *a, *y = (const iCertItem *) *b;
+    const int cmp = cmpStringCase_String(&x->label, &y->label);
+    return cmp ? cmp : iCmp(x->id, y->id);
 }
 
 iBool updateItems_CertListWidget(iCertListWidget *d) {
@@ -569,6 +589,7 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
                 &item->meta, "%s%s", escape_Color(uiHeading_ColorId), cstr_String(&ident->notes));
         }
         item->listItem.flags.isSelected = isActive;
+        item->listItem.flags.isDraggable = (d->sortOrder == manual_CertListSortOrder);
         if (!isActive && isUsedOnDomain_GmIdentity(ident, tabHost)) {
             item->indent = 1; /* will be highlighted */
         }
@@ -576,7 +597,18 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
         haveItems = iTrue;
         iRelease(item);
     }
+    if (d->sortOrder == name_CertListSortOrder) {
+        sort_ListWidget(&d->list, cmpName_CertItem_);
+    }
     return haveItems;
+}
+
+void setSortOrder_CertListWidget(iCertListWidget *d, enum iCertListSortOrder sortOrder) {
+    d->sortOrder = sortOrder;
+}
+
+enum iCertListSortOrder sortOrder_CertListWidget(const iCertListWidget *d) {
+    return d ? d->sortOrder : manual_CertListSortOrder;
 }
 
 void deinit_CertListWidget(iCertListWidget *d) {

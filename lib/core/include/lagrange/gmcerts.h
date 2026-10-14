@@ -94,6 +94,7 @@ iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags,
 iGmIdentity *       importIdentity_GmCerts  (iGmCerts *, iTlsCertificate *cert,
                                              const iString *notes); /* takes ownership */
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
+void                moveIdentity_GmCerts    (iGmCerts *, iGmIdentity *identity, size_t pos); /* placed before `pos` */
 void                saveIdentities_GmCerts  (const iGmCerts *);
 void                serialize_GmCerts       (const iGmCerts *, iStream *trusted, iStream *identsMeta);
 void                deserializeTrusted_GmCerts      (iGmCerts *, iStream *ins, enum iImportMethod method);

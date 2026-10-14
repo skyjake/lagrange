@@ -247,7 +247,8 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                     setCurrent_Root(NULL);
                     return iFalse;
                 }
-                const uint16_t bits = readU16_File(f);
+                const uint32_t bits = version >= wideSidebarState_FileVersion ? readU32_File(f)
+                                                                              : readU16_File(f);
                 const uint8_t modes = readU8_File(f);
                 const float widths[2] = {
                     readf_Stream(stream_File(f)),
@@ -290,6 +291,12 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                     }
                     if ((flags >> 6) & 3) {
                         postCommand_Widget(sidebar2, "books.sort arg:%d", (flags >> 6) & 3);
+                    }
+                    if ((bits >> 16) & 3) {
+                        postCommand_Widget(sidebar, "idents.sort arg:%d", (bits >> 16) & 3);
+                    }
+                    if ((bits >> 18) & 3) {
+                        postCommand_Widget(sidebar2, "idents.sort arg:%d", (bits >> 18) & 3);
                     }
                     if (deviceType_App() == desktop_AppDeviceType) {
                         /* Zero means the width was not available when saving. */
@@ -458,13 +465,15 @@ void saveState_App_(const iApp *d, iBool withContent) {
                         writeData_File(f, magicSidebar_App_, 4);
                         const iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                         const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
-                        writeU16_File(f, i |
+                        writeU32_File(f, i |
                                       (isVisible_Widget(sidebar)  ? 0x100 : 0) |
                                       (isVisible_Widget(sidebar2) ? 0x200 : 0) |
                                       (feedsMode_SidebarWidget(sidebar)  == unread_FeedsMode ? 0x400 : 0) |
                                       (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0) |
                                       (shelfSort_SidebarWidget(sidebar)  << 12) |
-                                      (shelfSort_SidebarWidget(sidebar2) << 14));
+                                      (shelfSort_SidebarWidget(sidebar2) << 14) |
+                                      (identSort_SidebarWidget(sidebar)  << 16) |
+                                      (identSort_SidebarWidget(sidebar2) << 18));
                         writeU8_File(f,
                                      mode_SidebarWidget(sidebar) |
                                      (mode_SidebarWidget(sidebar2) << 4));

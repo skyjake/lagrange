@@ -460,12 +460,48 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         }
         case identities_SidebarMode: {
             isEmpty = !updateItems_CertListWidget(d->certList);
-            /* Actions. */
-            if (!isEmpty) {
-                addActionButton_SidebarWidget_(
-                    d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
-                addActionButton_SidebarWidget_(
-                    d, "${sidebar.action.ident.import}", "ident.import", 0);
+            /* Actions: sort order above the buttons. */
+            const iMenuItem sortItems[] = {
+                { "${sidebar.action.ident.name}", 0, 0, "idents.sort arg:1" },
+                { "${sidebar.action.ident.manual}", 0, 0, "idents.sort arg:0" },
+            };
+            const char *selectedSort = format_CStr(" arg:%d", d->identSort);
+            if (!keepActions && !isEmpty) {
+                iWidget *sortRow = new_Widget();
+                updateSize_LabelWidget(
+                    addChildFlags_Widget(sortRow,
+                                         iClob(new_LabelWidget("${sidebar.action.sort}", NULL)),
+                                         frameless_WidgetFlag | tight_WidgetFlag));
+                iLabelWidget *dropButton = makeMenuButton_LabelWidget(sortItems[0].label, sortItems, 2);
+                setId_Widget(as_Widget(dropButton), "idents.sortbutton");
+                addChildFlags_Widget(sortRow, iClob(dropButton), expand_WidgetFlag);
+                updateDropdownSelection_LabelWidget(dropButton, selectedSort);
+                iWidget *buttonRow = new_Widget();
+                const iMenuItem buttons[] = {
+                    { add_Icon " ${sidebar.action.ident.new}", 0, 0, "ident.new" },
+                    { "${sidebar.action.ident.import}", 0, 0, "ident.import" },
+                };
+                iForIndices(i, buttons) {
+                    iLabelWidget *btn = addChild_Widget(
+                        buttonRow, iClob(new_LabelWidget(buttons[i].label, buttons[i].command)));
+                    setFont_LabelWidget(btn, actionButtonFont_SidebarWidget_(d));
+                    checkIcon_LabelWidget(btn);
+                }
+                iWidget *rows = new_Widget();
+                const int64_t rowFlags = arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                                         resizeWidthOfChildren_WidgetFlag;
+                addChildFlags_Widget(rows, iClob(sortRow), rowFlags);
+                addChild_Widget(rows, iClob(makePadding_Widget(gap_UI)));
+                addChildFlags_Widget(rows, iClob(buttonRow), rowFlags);
+                addChildFlags_Widget(d->actions,
+                                     iClob(rows),
+                                     expand_WidgetFlag | arrangeVertical_WidgetFlag |
+                                         arrangeHeight_WidgetFlag |
+                                         resizeWidthOfChildren_WidgetFlag | unhittable_WidgetFlag);
+            }
+            else if (keepActions) {
+                updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "idents.sortbutton"),
+                                                    selectedSort);
             }
             break;
         }
@@ -841,6 +877,10 @@ int shelfSort_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->shelfSort : 0;
 }
 
+int identSort_SidebarWidget(const iSidebarWidget *d) {
+    return d ? d->identSort : manual_CertListSortOrder;
+}
+
 float width_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->widthAsGaps : 0;
 }
@@ -957,6 +997,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->outlineWidth     = 0;
     d->feedsMode        = all_FeedsMode;
     d->shelfSort        = recent_BooksSortOrder;
+    d->identSort        = manual_CertListSortOrder;
     d->shelfOrder       = new_StringArray();
     d->isShelfOrderValid = iFalse;
     d->midHeight        = 0;
@@ -1815,6 +1856,16 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
             updateItems_SidebarWidget_(d);
+            return iTrue;
+        }
+        else if (equalWidget_Command(cmd, w, "idents.sort")) {
+            d->identSort = iClamp(arg_Command(cmd), 0, name_CertListSortOrder);
+            if (d->certList) {
+                setSortOrder_CertListWidget(d->certList, d->identSort);
+                if (d->mode == identities_SidebarMode) {
+                    updateItemsWithFlags_SidebarWidget_(d, iTrue);
+                }
+            }
             return iTrue;
         }
         else if (equal_Command(cmd, "sync.prefs.changed") && d->mode == identities_SidebarMode) {

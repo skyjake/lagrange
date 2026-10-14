@@ -702,7 +702,7 @@ msgstr "Read All"
 msgid "sidebar.action.show"
 msgstr "Show:"
 
-# Label before the dropdown that selects the order of books on the bookshelf.
+# Label before the dropdown that selects the order of books or identities.
 msgid "sidebar.action.sort"
 msgstr "Sort:"
 
@@ -726,6 +726,13 @@ msgstr "New…"
 
 msgid "sidebar.action.ident.import"
 msgstr "Import…"
+
+msgid "sidebar.action.ident.name"
+msgstr "Name"
+
+# Identities are listed in the order chosen by the user, by dragging.
+msgid "sidebar.action.ident.manual"
+msgstr "Manual"
 
 msgid "sidebar.action.history.clear"
 msgstr "Clear"

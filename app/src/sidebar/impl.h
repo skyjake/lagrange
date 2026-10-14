@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "books.h"
 #include "render/font.h"
+#include "ui/certlistwidget.h"
 #include "ui/listwidget.h"
 #include "ui/sidebarwidget.h"
 
@@ -36,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <SDL3/SDL_events.h>
 
-iDeclareType(CertListWidget)
 iDeclareType(Gempub)
 iDeclareType(IndicatorWidget)
 iDeclareType(LabelWidget)
@@ -69,6 +69,7 @@ struct Impl_SidebarWidget {
     enum iSidebarMode mode;
     enum iFeedsMode   feedsMode;
     enum iBooksSortOrder shelfSort;
+    enum iCertListSortOrder identSort; /* also used by the identity list in mobile Settings */
     iStringArray     *shelfOrder;    /* book IDs as shown; kept while the shelf stays visible */
     iBool             isShelfOrderValid;
     iString           cmdPrefix;

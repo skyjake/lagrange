@@ -26,6 +26,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(CertListWidget)
 
+enum iCertListSortOrder {
+    manual_CertListSortOrder, /* order of the identities in GmCerts */
+    name_CertListSortOrder,
+};
+
 typedef iListWidgetClass iCertListWidgetClass;
 extern iCertListWidgetClass Class_CertListWidget;
 
@@ -38,3 +43,6 @@ iGmIdentity *       hoverIdentity_CertListWidget     (const iCertListWidget *);
 
 iBool   updateItems_CertListWidget      (iCertListWidget *); /* returns False is empty */
 void    updateItemHeight_CertListWidget (iCertListWidget *);
+void    setSortOrder_CertListWidget     (iCertListWidget *, enum iCertListSortOrder sortOrder);
+
+enum iCertListSortOrder sortOrder_CertListWidget(const iCertListWidget *);

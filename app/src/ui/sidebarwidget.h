@@ -60,6 +60,7 @@ void                setMidHeight_SidebarWidget  (iSidebarWidget *, int midHeight
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
 int                 shelfSort_SidebarWidget     (const iSidebarWidget *); /* enum iBooksSortOrder */
+int                 identSort_SidebarWidget     (const iSidebarWidget *); /* enum iCertListSortOrder */
 float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     openFolders_SidebarWidget   (const iSidebarWidget *);
 iBool               isShowingTrash_SidebarWidget(const iSidebarWidget *);

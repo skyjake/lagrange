@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "bindingswidget.h"
+#include "certlistwidget.h"
 #include "command.h"
 #include "defs.h"
 #include "fontpack.h"
@@ -40,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "sync.h"
 #include "touch.h"
 #include "scopedprefs.h"
+#include "sidebarwidget.h"
 #include "sliderwidget.h"
 #include "util.h"
 #include "widget.h"
@@ -322,6 +324,16 @@ static void preselectSyncIdentity_(void) {
         const iGmIdentity *ident = constAt_PtrArray(idents, 0);
         postCommandf_App("sync.identity fp:%s",
                          cstrCollect_String(hexEncode_Block(&ident->fingerprint)));
+    }
+}
+
+static void updateIdentSortButton_(iWidget *d, int sortOrder) {
+    iLabelWidget *button = findChild_Widget(d, "prefs.ident.sort");
+    if (button) {
+        updateDropdownSelection_LabelWidget(button, format_CStr(" arg:%d", sortOrder));
+        /* Only the icon fits in the navigation bar. */
+        setIcon_LabelWidget(button, 0);
+        updateTextCStr_LabelWidget(button, upDownArrow_Icon);
     }
 }
 
@@ -617,10 +629,16 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" add_Icon " " uiTextAction_ColorEscape "${prefs.sync.newidentity}", 0, 0, "sync.newidentity" },
             { NULL }
         };
+        const iMenuItem identSortItems[] = {
+            { "${sidebar.action.ident.name}", 0, 0, "identsort.set arg:1" },
+            { "${sidebar.action.ident.manual}", 0, 0, "identsort.set arg:0" },
+            { NULL }
+        };
         const iMenuItem identityPanelItems[] = {
             { "title id:sidebar.identities" },
             { "padding arg:0.667" },
             { "certlist" },
+            { "navi.menubutton id:prefs.ident.sort text:" upDownArrow_Icon, 0, 0, (const void *) identSortItems },
             { "navi.action id:prefs.ident.import text:" import_Icon, 0, 0, "ident.import" },
             { "navi.action id:prefs.ident.new text:" add_Icon, 0, 0, "ident.new" },
             { NULL }
@@ -781,6 +799,7 @@ iWidget *makePreferences_Widget(void) {
         }
 #endif /* LAGRANGE_USE_GAMEPAD */
         iWidget *dlg = makePanels_Mobile("prefs", constData_Array(mainItems), NULL, 0);
+        updateIdentSortButton_(dlg, identSort_SidebarWidget(findWidget_App("sidebar")));
 #if defined (LAGRANGE_USE_GAMEPAD)
         if (haveGamepad) {
             iConstForEach(Array, i, gamepadButtonInfo_()) {
@@ -1392,6 +1411,19 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "toolbar.action.set")) {
         updatePrefsToolBarActionButton_(d, argLabel_Command(cmd, "button"), arg_Command(cmd));
         return iFalse;
+    }
+    else if (equal_Command(cmd, "identsort.set")) {
+        const int        sortOrder = iClamp(arg_Command(cmd), 0, name_CertListSortOrder);
+        iCertListWidget *certList  = findChild_Widget(d, "certlist");
+        if (certList) {
+            setSortOrder_CertListWidget(certList, sortOrder);
+            updateItems_CertListWidget(certList);
+            invalidate_ListWidget((iListWidget *) certList);
+        }
+        updateIdentSortButton_(d, sortOrder);
+        /* The sidebar keeps the setting persistently. */
+        postCommand_Widget(findWidget_App("sidebar"), "idents.sort arg:%d", sortOrder);
+        return iTrue;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));

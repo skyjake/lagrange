@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "root.h"
+#include "sidebarwidget.h"
 #include "sliderwidget.h"
 #include "snippetwidget.h"
 #include "render/text.h"
@@ -833,6 +834,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setBackgroundColor_Widget(as_Widget(list), uiBackgroundSidebar_ColorId);
         widget = as_Widget(certList);
         setFlags_Widget(widget, borderTop_WidgetFlag | borderBottom_WidgetFlag, iTrue);
+        setSortOrder_CertListWidget(certList, identSort_SidebarWidget(findWidget_App("sidebar")));
         updateItems_CertListWidget(certList);
         invalidate_ListWidget(list);
     }

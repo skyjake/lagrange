@@ -916,6 +916,16 @@ void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
     unlock_Mutex(d->mtx);
 }
 
+void moveIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity, size_t pos) {
+    lock_Mutex(d->mtx);
+    const size_t index = indexOf_PtrArray(&d->idents, identity);
+    if (index != iInvalidPos && pos <= size_PtrArray(&d->idents)) {
+        removeOne_PtrArray(&d->idents, identity);
+        insert_PtrArray(&d->idents, pos > index ? pos - 1 : pos, identity);
+    }
+    unlock_Mutex(d->mtx);
+}
+
 const iString *certificatePath_GmCerts(const iGmCerts *d, const iGmIdentity *identity) {
     const char *filename = certPath_GmCerts_(d, identity);
     if (filename) {
