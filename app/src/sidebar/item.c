@@ -279,7 +279,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == feedEntries_SidebarMode) {
         const int iconPad = feedIconPad_SidebarItem_;
         if (d->listItem.flags.isSeparator) {
-            if (d != constItem_ListWidget(list, 0)) {
+            const iBool isFirstItem = (d == constItem_ListWidget(list, 0));
+            if (!isFirstItem) {
                 drawHLine_Paint(p,
                                 addY_I2(pos, 4 * gap_UI),
                                 width_Rect(itemRect) - blankWidth,
@@ -291,11 +292,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 2 * gap_UI));
             drawRange_Text(
                 uiLabelLargeBold_FontId, headingPos, uiIcon_ColorId, range_String(&d->meta));
-            const char *age =
-                d == constItem_ListWidget(list, 0) ? feedsRefreshAgeCStr_SidebarWidget_() : NULL;
+            const char *age = isFirstItem ? feedsRefreshAgeCStr_SidebarWidget_() : NULL;
             if (age) {
                 drawRange_Text(uiLabelSmall_FontId,
-                               addY_I2(headingPos, -lineHeight_Text(uiLabelSmall_FontId) - gap_UI),
+                               addY_I2(headingPos, -lineHeight_Text(uiLabelSmall_FontId) - 2 * gap_UI),
                                uiTextDim_ColorId,
                                range_CStr(age));
             }
