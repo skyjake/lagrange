@@ -49,6 +49,7 @@ struct Impl_DocumentBook {
     size_t           savedColumn;
     iString          readingBookId;     /* book being read in this tab */
     iBool            didTurnPage;       /* since the book was opened */
+    iString          offeredEdition;    /* user was asked about updating to this edition */
 };
 
 void    setOwner_DocumentBook           (iDocumentBook *, iDocumentWidget *owner);
@@ -62,6 +63,7 @@ void    applyResume_DocumentBook        (iDocumentBook *);
 void    beginPosition_DocumentBook      (iDocumentBook *);
 void    didFinishRequest_DocumentBook   (iDocumentBook *);
 void    checkSyncedPosition_DocumentBook(iDocumentBook *);
+void    checkEdition_DocumentBook       (iDocumentBook *); /* updates to a newer edition */
 void    jumpToPosition_DocumentBook     (iDocumentBook *, size_t chapter, float pos);
 iBool   openAdjacentChapter_DocumentBook(iDocumentBook *, int dir, iBool isGesture);
 iBool   moveProgress_DocumentBook       (iDocumentBook *, int thumb); /* progress bar dragged */

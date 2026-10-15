@@ -1113,6 +1113,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
     applyResume_DocumentBook(d->book);
     beginPosition_DocumentBook(d->book);
+    checkEdition_DocumentBook(d->book);
     if (isPaged_DocumentView(d->view)) {
         pagesMoved_DocumentWidget(d);
     }
@@ -1620,6 +1621,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 isFinishedLaunching_App()) {
                 showSidebar_DocumentWidget(d);
             }
+            checkEdition_DocumentBook(d->book);
         }
         showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view->sideOpacity, 0);
@@ -1852,6 +1854,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         iReleasePtr(&d->fetch->request);
+        checkEdition_DocumentBook(d->book);
         updateVisible_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
         notifyf_Root(w->root,

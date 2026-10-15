@@ -62,6 +62,7 @@ struct Impl_Book {
 float           progress_Book       (const iBook *); /* 0...1 of the whole book */
 iBool           isDownloadable_Book (const iBook *); /* source URL is available */
 const iString * path_Book           (const iBook *); /* NULL if not on the shelf */
+iBool           isShelved_Book      (const iBook *);
 iBool           isObsolete_Book     (const iBook *); /* downloaded copy is off the shelf or an older edition */
 
 /*----------------------------------------------------------------------------------------------*/
@@ -76,8 +77,10 @@ void    deserialize_Books   (iStream *ins, enum iImportMethod);
 const iString * dir_Books           (void);
 iString *       makeId_Books        (const iString *title, const iString *author);
 const iString * id_Books            (const iGempub *);
+const iString * edition_Books       (const iGempub *); /* publication date */
 const iBook *   find_Books          (const iString *id);
 const iBook *   findBySource_Books  (const iString *url, iBool isDownloaded);
+iBool           isOutdated_Books    (const iGempub *); /* a newer edition is known */
 iBool           isOnShelf_Books     (const iString *path);
 const iString * sourceUrl_Books     (const iString *path); /* NULL if not on the shelf */
 const iPtrArray*list_Books          (enum iBooksSortOrder); /* shelved, and downloaded or downloadable */

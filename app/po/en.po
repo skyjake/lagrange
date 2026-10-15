@@ -1306,6 +1306,16 @@ msgstr "This book has a more recent reading position from another device, in cha
 msgid "dlg.book.synced.jump"
 msgstr "Go to Synced Position"
 
+msgid "heading.book.newedition"
+msgstr "Update Available"
+
+# %s is the book's title.
+msgid "dlg.book.newedition"
+msgstr "A newer edition of \"%s\" has been downloaded on another device."
+
+msgid "dlg.book.newedition.update"
+msgstr "Update"
+
 msgid "dlg.book.overwrite"
 msgstr "Overwrite"
 

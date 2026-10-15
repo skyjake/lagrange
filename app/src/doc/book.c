@@ -59,9 +59,11 @@ void init_DocumentBook(iDocumentBook *d) {
     d->savedColumn       = 0;
     init_String(&d->readingBookId);
     d->didTurnPage       = iFalse;
+    init_String(&d->offeredEdition);
 }
 
 void deinit_DocumentBook(iDocumentBook *d) {
+    deinit_String(&d->offeredEdition);
     deinit_String(&d->readingBookId);
 }
 
@@ -344,7 +346,11 @@ void checkSyncedPosition_DocumentBook(iDocumentBook *d) {
     if (chapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
         return;
     }
-    const iBook *book = find_Books(id_Books(gempub_DocumentBook_(d)));
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    if (isOutdated_Books(gempub)) {
+        return; /* the position is in the newer edition */
+    }
+    const iBook *book = find_Books(id_Books(gempub));
     if (!book || book->chapter < 0 || (size_t) book->chapter >= numChapters) {
         return;
     }
@@ -368,6 +374,38 @@ void checkSyncedPosition_DocumentBook(iDocumentBook *d) {
                          0,
                          format_CStr("book.jump doc:%p chapter:%d pos:%f",
                                      d->owner, book->chapter, book->chapterPos) } },
+        2);
+}
+
+void checkEdition_DocumentBook(iDocumentBook *d) {
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    if (!gempub || isRemote_Gempub(gempub) || isRequestOngoing_DocumentWidget(d->owner) ||
+        !isOutdated_Books(gempub)) {
+        return;
+    }
+    const iBook *book = find_Books(id_Books(gempub));
+    if (!book || !isShelved_Book(book) || !isDownloadable_Book(book)) {
+        return;
+    }
+    iWidget    *w   = as_Widget(d->owner);
+    const char *cmd = format_CStr(
+        "open doc:%p overwritebook:1 url:%s", d->owner, cstr_String(&book->url));
+    if (!d->didTurnPage) {
+        postCommand_Root(w->root, cmd);
+        return;
+    }
+    if (document_Root(w->root) != d->owner || equal_String(&d->offeredEdition, &book->edition)) {
+        return; /* the visible tab asks once */
+    }
+    set_String(&d->offeredEdition, &book->edition);
+    makeQuestion_Widget(
+        uiHeading_ColorEscape "${heading.book.newedition}",
+        format_Lang("${dlg.book.newedition}", cstr_String(&book->title)),
+        (iMenuItem[]){ { "${cancel}" },
+                       { uiTextAction_ColorEscape "${dlg.book.newedition.update}",
+                         SDLK_RETURN,
+                         0,
+                         cmd } },
         2);
 }
 
@@ -489,8 +527,12 @@ iDocumentWidget *findTab_DocumentBook(const iString *bookId, const iString *path
 void tidyShelf_DocumentBook(void) {
     iBool isChanged = iFalse;
     iConstForEach(StringArray, i, listObsolete_Books()) {
-        /* An open book is removed later. */
-        if (!findTab_DocumentBook(i.value, NULL)) {
+        /* An open book is updated or removed later. */
+        iDocumentWidget *tab = findTab_DocumentBook(i.value, NULL);
+        if (tab) {
+            checkEdition_DocumentBook(book_DocumentWidget(tab));
+        }
+        else {
             removeDownload_Books(i.value);
             isChanged = iTrue;
         }
@@ -622,7 +664,10 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
         delete_Block(data);
         return;
     }
-    const iBool    isNewEdition = gempub && existingPath && isNewEdition_(gempub, existingPath);
+    const iBook   *known        = find_Books(id);
+    const iBool    isNewEdition = gempub && existingPath && isNewEdition_(gempub, existingPath) &&
+                                  /* the synced position may be in this edition already */
+                                  (!known || !equal_String(&known->edition, edition_Books(gempub)));
     const iString *savedPath    = add_Books(data, fileName, existingPath, sourceUrl);
     delete_Block(data);
     if (!savedPath) {

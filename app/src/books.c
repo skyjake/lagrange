@@ -97,7 +97,7 @@ const iString *path_Book(const iBook *d) {
     return collect_String(concat_Path(dir_Books(), &d->fileName));
 }
 
-static iBool isShelved_Book_(const iBook *d) {
+iBool isShelved_Book(const iBook *d) {
     return isValid_Time(&d->shelved) &&
            integralSeconds_Time(&d->shelved) > integralSeconds_Time(&d->deleted);
 }
@@ -115,15 +115,18 @@ static void migrateShelved_Book_(iBook *d) {
     }
 }
 
+static iBool isOlderEdition_Book_(const iBook *d, const iString *edition) {
+    return !isEmpty_String(edition) && cmpString_String(edition, &d->edition) < 0;
+}
+
 iBool isObsolete_Book(const iBook *d) {
     if (isEmpty_String(&d->fileName)) {
         return iFalse;
     }
-    return !isShelved_Book_(d) ||
-           (!isEmpty_String(&d->fileEdition) && cmpString_String(&d->fileEdition, &d->edition) < 0);
+    return !isShelved_Book(d) || isOlderEdition_Book_(d, &d->fileEdition);
 }
 
-static const iString *edition_Gempub_(const iGempub *gempub) {
+const iString *edition_Books(const iGempub *gempub) {
     /* Dates in ISO 8601 format can be compared as strings. */
     const iString *date = property_Gempub(gempub, publishDate_GempubProperty);
     return !isEmpty_String(date) ? date : property_Gempub(gempub, published_GempubProperty);
@@ -533,6 +536,15 @@ const iBook *find_Books(const iString *id) {
     return book;
 }
 
+iBool isOutdated_Books(const iGempub *gempub) {
+    iBooks *d = books_;
+    lock_Mutex(d->mtx);
+    const iBook *book  = constValue_StringHash(d->books, id_Books(gempub));
+    const iBool  isOld = book && isOlderEdition_Book_(book, edition_Books(gempub));
+    unlock_Mutex(d->mtx);
+    return isOld;
+}
+
 const iBook *findBySource_Books(const iString *url, iBool isDownloaded) {
     iBooks      *d     = books_;
     const iBook *found = NULL;
@@ -597,7 +609,7 @@ static iBook *bookForGempub_Books_(iBooks *d, const iGempub *gempub) {
     set_String(&book->title, property_Gempub(gempub, title_GempubProperty));
     translate_Lang(&book->title); /* may be a placeholder */
     set_String(&book->author, property_Gempub(gempub, author_GempubProperty));
-    updateEdition_Book_(book, edition_Gempub_(gempub));
+    updateEdition_Book_(book, edition_Books(gempub));
     return book;
 }
 
@@ -691,8 +703,8 @@ static iBool scan_Books_(iBooks *d) {
                 if (!isValid_Time(&book->timestamp)) {
                     book->timestamp = lastModified_FileInfo(i.value);
                 }
-                setFile_Books_(d, book, name, size, edition_Gempub_(gempub));
-                if (!isShelved_Book_(book)) {
+                setFile_Books_(d, book, name, size, edition_Books(gempub));
+                if (!isShelved_Book(book)) {
                     initCurrent_Time(&book->shelved); /* added manually */
                 }
                 file    = value_StringHash(d->files, name);
@@ -726,7 +738,7 @@ const iPtrArray *list_Books(enum iBooksSortOrder sortOrder) {
     const iBool changed = scan_Books_(d);
     iConstForEach(StringHash, i, d->books) {
         iBook *book = value_StringHashNode(i.value);
-        if (isShelved_Book_(book) &&
+        if (isShelved_Book(book) &&
             (!isEmpty_String(&book->fileName) || isDownloadable_Book(book))) {
             pushBack_PtrArray(shelf, book);
         }
@@ -753,7 +765,7 @@ void prune_Books(void) {
         const iBook *book = value_StringHashNode(i.value);
         iTime latest = book->timestamp;
         max_Time(&latest, &book->deleted);
-        if (!isShelved_Book_(book) && !hasFiles_Books_(d, book) &&
+        if (!isShelved_Book(book) && !hasFiles_Books_(d, book) &&
             secondsSince_Time(&now, &latest) > expiry_Books_) {
             pushBack_StringArray(expired, &book->id);
         }
@@ -781,7 +793,7 @@ const iStringArray *listObsolete_Books(void) {
             /* Downloaded before editions were known. */
             iGempub *gempub = new_Gempub();
             if (openFile_Gempub(gempub, path_Book(book))) {
-                set_String(&book->fileEdition, edition_Gempub_(gempub));
+                set_String(&book->fileEdition, edition_Books(gempub));
                 changed = iTrue;
             }
             delete_Gempub(gempub);
@@ -803,7 +815,7 @@ static iBook *update_Books_(iBooks *d, const iGempub *gempub, const iString *pat
         setFile_Books_(d, book,
                        collectNewRange_String(baseName_Path(path)),
                        fileSize_FileInfo(path),
-                       edition_Gempub_(gempub));
+                       edition_Books(gempub));
         initCurrent_Time(&book->shelved); /* also if deleted on another device earlier */
     }
     initCurrent_Time(&book->timestamp);
@@ -834,8 +846,10 @@ void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, floa
     iBooks *d = books_;
     lock_Mutex(d->mtx);
     iBook *book = bookForGempub_Books_(d, gempub);
-    const iBool isChanged = book->chapter != chapter || book->numChapters != numChapters ||
-                            fabsf(book->chapterPos - pos) > 0.0001f;
+    /* A position in an older edition does not apply to the latest one. */
+    const iBool isChanged = !isOlderEdition_Book_(book, edition_Books(gempub)) &&
+                            (book->chapter != chapter || book->numChapters != numChapters ||
+                             fabsf(book->chapterPos - pos) > 0.0001f);
     if (isChanged) {
         book->chapter     = chapter;
         book->numChapters = numChapters;
@@ -962,7 +976,7 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
         if (sourceUrl) {
             setSource_Book_(book, sourceUrl);
         }
-        set_String(&book->edition, edition_Gempub_(gempub)); /* even if dated earlier */
+        set_String(&book->edition, edition_Books(gempub)); /* even if dated earlier */
         if (oldId) {
             if (!equal_String(&book->title, oldTitle)) {
                 /* A retitled book is read from the beginning. */
