@@ -414,45 +414,127 @@ static iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const 
     return iFalse;
 }
 
-void bookmarkMoved_SidebarWidget_(iSidebarWidget *d, size_t index, size_t dstIndex,
-                                         iBool isBefore) {
-    const iSidebarItem *movingItem = item_ListWidget(d->list, index);
-    const iBool         isLast     = (dstIndex == numItems_ListWidget(d->list));
+static void contextBookmarks_SidebarWidget_(const iSidebarWidget *d, iPtrArray *bookmarks) {
+    iPtrArray items;
+    init_PtrArray(&items);
+    contextItems_SidebarWidget_(d, &items);
+    iConstForEach(PtrArray, i, &items) {
+        iBookmark *bm = get_Bookmarks(bookmarks_App(), ((const iSidebarItem *) i.ptr)->id);
+        if (bm) {
+            pushBack_PtrArray(bookmarks, bm);
+        }
+    }
+    deinit_PtrArray(&items);
+}
+
+static void movableBookmarks_(const iPtrArray *bookmarks, iPtrArray *movable) {
+    /* Local bookmarks that don't already move along with one of the folders. */
+    iIntSet ids;
+    init_IntSet(&ids);
+    iConstForEach(PtrArray, i, bookmarks) {
+        insert_IntSet(&ids, id_Bookmark(i.ptr));
+    }
+    iConstForEach(PtrArray, j, bookmarks) {
+        iBookmark *bm       = j.ptr;
+        iBool      isInside = iFalse;
+        for (const iBookmark *p = bm; p && p->parentId;
+             p = get_Bookmarks(bookmarks_App(), p->parentId)) {
+            if (contains_IntSet(&ids, p->parentId)) {
+                isInside = iTrue;
+                break;
+            }
+        }
+        if (~bm->flags & remote_BookmarkFlag && !isInside) {
+            pushBack_PtrArray(movable, bm);
+        }
+    }
+    deinit_IntSet(&ids);
+}
+
+static void moveBookmarks_SidebarWidget_(iSidebarWidget *d, const iPtrArray *bookmarks,
+                                         size_t dstIndex, iBool isBefore) {
+    const iBool         isLast  = (dstIndex == numItems_ListWidget(d->list));
     const iSidebarItem *dstItem =
         item_ListWidget(d->list, isLast ? numItems_ListWidget(d->list) - 1 : dstIndex);
     if (isLast && isBefore) isBefore = iFalse;
     const iBookmark *dst = get_Bookmarks(bookmarks_App(), dstItem->id);
-    if (hasParent_Bookmark(dst, movingItem->id) || dst->flags & remote_BookmarkFlag) {
-        /* Can't move a folder inside itself, and remote bookmarks cannot be reordered. */
+    if (!dst || dst->flags & remote_BookmarkFlag || indexOf_PtrArray(bookmarks, dst) != iInvalidPos) {
+        /* Remote bookmarks cannot be reordered. */
         return;
     }
-    reorder_Bookmarks(bookmarks_App(), movingItem->id, dst->order + (isBefore ? 0 : 1));
-    get_Bookmarks(bookmarks_App(), movingItem->id)->parentId = dst->parentId;
+    const uint32_t parentId = dst->parentId;
+    int            order    = dst->order + (isBefore ? 0 : 1);
+    iPtrArray      movable;
+    init_PtrArray(&movable);
+    movableBookmarks_(bookmarks, &movable);
+    iConstForEach(PtrArray, i, &movable) {
+        iBookmark *bm = i.ptr;
+        if (!hasParent_Bookmark(dst, id_Bookmark(bm))) { /* can't move a folder inside itself */
+            reorder_Bookmarks(bookmarks_App(), id_Bookmark(bm), order++);
+            bm->parentId = parentId;
+        }
+    }
+    deinit_PtrArray(&movable);
     updateItems_SidebarWidget_(d);
     /* Don't confuse the user: keep the dragged item in hover state. */
-    setHoverItem_ListWidget(d->list, dstIndex + (isBefore ? 0 : 1) + (index < dstIndex ? -1 : 0));
-    notifyf_App("bookmarks.changed nosidebar:%p",
-                     d); /* skip this sidebar since we updated already */
+    if (d->contextItem) {
+        setHoverItem_ListWidget(d->list, indexOf_PtrArray(&d->list->items, d->contextItem));
+    }
+    notifyf_App("bookmarks.changed nosidebar:%p", d); /* skip this sidebar since we updated already */
 }
 
-void bookmarkMovedOntoFolder_SidebarWidget_(iSidebarWidget *d, size_t index,
+static void moveBookmarksIntoFolder_SidebarWidget_(iSidebarWidget *d, const iPtrArray *bookmarks,
                                                    size_t folderIndex) {
-    const iSidebarItem *movingItem = item_ListWidget(d->list, index);
-    const iSidebarItem *dstItem    = item_ListWidget(d->list, folderIndex);
-    iBookmark          *bm         = get_Bookmarks(bookmarks_App(), movingItem->id);
-    bm->parentId                   = dstItem->id;
+    const iSidebarItem *dstItem = item_ListWidget(d->list, folderIndex);
+    const iBookmark    *folder  = dstItem ? get_Bookmarks(bookmarks_App(), dstItem->id) : NULL;
+    if (!folder) {
+        return;
+    }
+    iPtrArray movable;
+    init_PtrArray(&movable);
+    movableBookmarks_(bookmarks, &movable);
+    iConstForEach(PtrArray, i, &movable) {
+        iBookmark *bm = i.ptr;
+        if (bm != folder && !hasParent_Bookmark(folder, id_Bookmark(bm))) {
+            bm->parentId = id_Bookmark(folder);
+        }
+    }
+    deinit_PtrArray(&movable);
     notify_App("bookmarks.changed");
 }
 
-static size_t numBookmarks_(const iPtrArray *bmList) {
-    size_t num = 0;
-    iConstForEach(PtrArray, i, bmList) {
-        const iBookmark *bm = i.ptr;
-        if (!isFolder_Bookmark(bm) && ~bm->flags & remote_BookmarkFlag) {
-            num++;
-        }
+void bookmarksDragged_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
+    d->contextItem = item_ListWidget(d->list, argU32Label_Command(cmd, "arg"));
+    if (equal_Rangecc(range_Command(cmd, "target"), "filter.bookmarks.trash")) {
+        postCommand_Widget(d, "bookmark.delete");
+        return;
     }
-    return num;
+    if (hasLabel_Command(cmd, "target")) {
+        return;
+    }
+    iPtrArray bookmarks;
+    init_PtrArray(&bookmarks);
+    contextBookmarks_SidebarWidget_(d, &bookmarks);
+    if (hasLabel_Command(cmd, "onto")) {
+        moveBookmarksIntoFolder_SidebarWidget_(d, &bookmarks, argU32Label_Command(cmd, "onto"));
+    }
+    else {
+        const iBool isBefore = hasLabel_Command(cmd, "before");
+        moveBookmarks_SidebarWidget_(
+            d, &bookmarks, argU32Label_Command(cmd, isBefore ? "before" : "after"), isBefore);
+    }
+    deinit_PtrArray(&bookmarks);
+}
+
+static void appendOpenCommand_(iStringArray *cmds, const iBookmark *bm, int newTab) {
+    pushBack_StringArray(
+        cmds,
+        collectNewFormat_String(
+            "open newtab:%d%s url:%s",
+            sequenceTabMode_SidebarWidget_(newTab, size_StringArray(cmds)),
+            !isEmpty_String(&bm->identity) ? format_CStr(" setident:%s", cstr_String(&bm->identity))
+                                           : "",
+            cstr_String(&bm->url)));
 }
 
 void updateBookmarkContextMenu_SidebarWidget_(iSidebarWidget *d) {
@@ -544,13 +626,18 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
     }
     else if (d->mode == bookmarks_SidebarMode &&
              isCommand_Widget(w, ev, "bookmarks.trash.restore")) {
-        const iSidebarItem *item = d->contextItem;
-        if (item) {
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-            if (bm && isTrash_Bookmark(bm)) {
-                trash_Bookmarks(bookmarks_App(), id_Bookmark(bm), iFalse);
-                updateAfterTrashAction_SidebarWidget_(d);
+        iPtrArray bookmarks;
+        init_PtrArray(&bookmarks);
+        contextBookmarks_SidebarWidget_(d, &bookmarks);
+        iBool wasRestored = iFalse;
+        iConstForEach(PtrArray, i, &bookmarks) {
+            if (isTrash_Bookmark(i.ptr)) {
+                wasRestored |= trash_Bookmarks(bookmarks_App(), id_Bookmark(i.ptr), iFalse);
             }
+        }
+        deinit_PtrArray(&bookmarks);
+        if (wasRestored) {
+            updateAfterTrashAction_SidebarWidget_(d);
         }
         return iTrue;
     }
@@ -573,58 +660,41 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "bookmark.open")) {
-        const iSidebarItem *item = d->contextItem;
-        if (d->mode == bookmarks_SidebarMode && item) {
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-            if (bm) {
+        if (d->mode == bookmarks_SidebarMode) {
+            iPtrArray bookmarks;
+            init_PtrArray(&bookmarks);
+            contextBookmarks_SidebarWidget_(d, &bookmarks);
+            iRoot      *openingInRoot = get_Root();
+            const iBool isNewWindow   = argLabel_Command(cmd, "newwindow") != 0;
+            if (isNewWindow && !isEmpty_PtrArray(&bookmarks)) {
+                openingInRoot = newMainWindow_App()->base.roots[0];
+            }
+            const int     newTab = isNewWindow ? 0 : argLabel_Command(cmd, "newtab");
+            iStringArray *cmds   = new_StringArray();
+            iConstForEach(PtrArray, i, &bookmarks) {
+                const iBookmark *bm = i.ptr;
                 if (isFolder_Bookmark(bm)) {
-                    iRoot *openingInRoot = get_Root();
-                    iBool  isNewWindow   = iFalse;
-                    if (argLabel_Command(cmd, "newwindow")) {
-                        /* First open a new window. */
-                        iMainWindow *newWin = newMainWindow_App();
-                        openingInRoot       = newWin->base.roots[0];
-                        isNewWindow         = iTrue;
-                    }
-                    iBool isFirst = iTrue;
                     iConstForEach(PtrArray,
-                                  i,
+                                  j,
                                   list_Bookmarks(bookmarks_App(),
                                                  cmpTree_Bookmark,
                                                  filterInsideFolder_Bookmark,
-                                                 bm)) {
-                        const iBookmark *contained = i.ptr;
-                        if (!isFolder_Bookmark(contained)) {
-                            /* When opening multiple bookmarks at once, ensure that previous
-                               ones are idle before continuing. */
-                            postCommandf_Root(
-                                openingInRoot,
-                                "open idle:%d newtab:%d%s url:%s",
-                                !isFirst,
-                                (isNewWindow && isFirst ? 0
-                                 : isFirst              ? new_OpenTabFlag
-                                                        : newBackground_OpenTabFlag),
-                                !isEmpty_String(&contained->identity)
-                                    ? format_CStr(" setident:%s",
-                                                  cstr_String(&contained->identity))
-                                    : "",
-                                cstr_String(&contained->url));
-                            isFirst = iFalse;
+                                                 iConstCast(iBookmark *, bm))) {
+                        if (!isFolder_Bookmark(j.ptr)) {
+                            appendOpenCommand_(cmds, j.ptr, newTab);
                         }
                     }
-                    postCommandf_Root(openingInRoot, "window.unfreeze");
                 }
                 else {
-                    postCommandf_App(
-                        "open newtab:%d newwindow:%d%s url:%s",
-                        argLabel_Command(cmd, "newtab"),
-                        argLabel_Command(cmd, "newwindow"),
-                        isEmpty_String(&bm->identity)
-                            ? format_CStr(" setident:%s", cstr_String(&bm->identity))
-                            : "",
-                        cstr_String(&item->url));
+                    appendOpenCommand_(cmds, bm, newTab);
                 }
             }
+            postOpenCommands_SidebarWidget_(openingInRoot, cmds);
+            if (isNewWindow) {
+                postCommand_Root(openingInRoot, "window.unfreeze");
+            }
+            iRelease(cmds);
+            deinit_PtrArray(&bookmarks);
         }
         return iTrue;
     }
@@ -712,46 +782,81 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "bookmark.delete")) {
-        const iSidebarItem *item = d->contextItem;
-        if (d->mode == bookmarks_SidebarMode && item) {
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-            if (bm && isFolder_Bookmark(bm)) {
-                const iPtrArray *list =
-                    list_Bookmarks(bookmarks_App(), NULL, filterInsideFolder_Bookmark, bm);
-                /* Folder trashing requires confirmation because folders can contain
-                   any number of bookmarks and other folders. Trashing removes contents
-                   from folders. */
-                if (argLabel_Command(cmd, "confirmed") || isEmpty_PtrArray(list)) {
-                    iConstForEach(PtrArray, i, list) {
-                        removeEntries_Feeds(id_Bookmark(i.ptr));
+        if (d->mode == bookmarks_SidebarMode) {
+            iPtrArray bookmarks;
+            iIntSet   counted; /* non-folder bookmarks, including folder contents */
+            iBool     hasContents = iFalse;
+            init_PtrArray(&bookmarks);
+            init_IntSet(&counted);
+            contextBookmarks_SidebarWidget_(d, &bookmarks);
+            iConstForEach(PtrArray, i, &bookmarks) {
+                const iBookmark *bm = i.ptr;
+                if (isFolder_Bookmark(bm)) {
+                    iConstForEach(PtrArray,
+                                  j,
+                                  list_Bookmarks(bookmarks_App(),
+                                                 NULL,
+                                                 filterInsideFolder_Bookmark,
+                                                 iConstCast(iBookmark *, bm))) {
+                        const iBookmark *inside = j.ptr;
+                        hasContents = iTrue;
+                        if (!isFolder_Bookmark(inside) && ~inside->flags & remote_BookmarkFlag) {
+                            insert_IntSet(&counted, id_Bookmark(inside));
+                        }
                     }
-                    trash_Bookmarks(bookmarks_App(), item->id, iTrue);
-                    notify_App("bookmarks.changed");
                 }
-                else {
-                    setFocus_Widget(NULL);
-                    const size_t numBookmarks = numBookmarks_(list);
-                    makeQuestion_Widget(
-                        uiHeading_ColorEscape "${heading.confirm.bookmarks.delete}",
-                        formatCStrs_Lang("dlg.confirm.bookmarks.delete.n", numBookmarks),
-                        (iMenuItem[]) {
-                            { "${cancel}" },
-                            { format_CStr(
-                                  uiTextCaution_ColorEscape "%s",
-                                  formatCStrs_Lang("dlg.bookmarks.delete.n", numBookmarks)),
-                              0,
-                              0,
-                              format_CStr("!bookmark.delete confirmed:1 ptr:%p", d) },
-                        },
-                        2);
+                else if (~bm->flags & remote_BookmarkFlag) {
+                    insert_IntSet(&counted, id_Bookmark(bm));
                 }
+            }
+            /* Folder trashing requires confirmation because folders can contain
+               any number of bookmarks and other folders. Trashing removes contents
+               from folders. */
+            if (hasContents && !argLabel_Command(cmd, "confirmed")) {
+                setFocus_Widget(NULL);
+                const size_t num = size_IntSet(&counted);
+                makeQuestion_Widget(
+                    uiHeading_ColorEscape "${heading.confirm.bookmarks.delete}",
+                    size_PtrArray(&bookmarks) == 1
+                        ? formatCStrs_Lang("dlg.confirm.bookmarks.delete.n", num)
+                        : "${dlg.confirm.bookmarks.multidelete}",
+                    (iMenuItem[]) {
+                        { "${cancel}" },
+                        { format_CStr(uiTextCaution_ColorEscape "%s",
+                                      formatCStrs_Lang("dlg.bookmarks.delete.n", num)),
+                          0,
+                          0,
+                          format_CStr("!bookmark.delete confirmed:1 ptr:%p", d) },
+                    },
+                    2);
             }
             else {
-                if (trash_Bookmarks(bookmarks_App(), item->id, iTrue)) {
-                    removeEntries_Feeds(item->id); /* unsubscribe from trashed feed */
+                iBool wasTrashed = iFalse;
+                iConstForEach(PtrArray, i, &bookmarks) {
+                    const iBookmark *bm     = i.ptr;
+                    const uint32_t   id     = id_Bookmark(bm);
+                    const iPtrArray *inside = isFolder_Bookmark(bm)
+                                                  ? list_Bookmarks(bookmarks_App(),
+                                                                   NULL,
+                                                                   filterInsideFolder_Bookmark,
+                                                                   iConstCast(iBookmark *, bm))
+                                                  : NULL;
+                    if (trash_Bookmarks(bookmarks_App(), id, iTrue)) {
+                        removeEntries_Feeds(id); /* unsubscribe from trashed feed */
+                        if (inside) {
+                            iConstForEach(PtrArray, j, inside) {
+                                removeEntries_Feeds(id_Bookmark(j.ptr));
+                            }
+                        }
+                        wasTrashed = iTrue;
+                    }
+                }
+                if (wasTrashed) {
                     notify_App("bookmarks.changed");
                 }
             }
+            deinit_IntSet(&counted);
+            deinit_PtrArray(&bookmarks);
         }
         return iTrue;
     }

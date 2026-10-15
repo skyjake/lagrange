@@ -291,6 +291,7 @@ set (SOURCES
     src/sidebar/feedlist.c
     src/sidebar/impl.h
     src/sidebar/item.c
+    src/sidebar/multiselect.c
     src/sidebar/sitestructure.c
     # User interface:
     src/ui/bookmarkdialogs.c

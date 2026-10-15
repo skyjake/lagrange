@@ -926,6 +926,21 @@ msgstr "Copy URL"
 msgid "menu.forgeturl"
 msgstr "Forget URL"
 
+msgid "menu.multi.opentab.background"
+msgstr "Open in Background Tabs"
+
+msgid "menu.multi.copyurls"
+msgstr "Copy URLs"
+
+msgid "menu.multi.forgeturls"
+msgstr "Forget URLs"
+
+msgid "menu.multi.closetabs"
+msgstr "Close Tabs"
+
+msgid "menu.multi.bookmarks.delete"
+msgstr "Delete Bookmarks"
+
 msgid "history.clear"
 msgstr "Clear History…"
 
@@ -946,6 +961,9 @@ msgid "dlg.confirm.bookmarks.delete"
 msgid_plural "dlg.confirm.bookmarks.delete.n"
 msgstr[0] "Do you really want to delete the bookmark inside this folder?"
 msgstr[1] "Do you really want to delete all %u bookmarks inside this folder?"
+
+msgid "dlg.confirm.bookmarks.multidelete"
+msgstr "Some of the selected folders contain bookmarks. Do you really want to delete them all?"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -1117,6 +1135,12 @@ msgstr "Really unsubscribe from feed \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "Unsubscribe"
+
+#, c-format
+msgid "dlg.confirm.unsub.multi"
+msgid_plural "dlg.confirm.unsub.multi.n"
+msgstr[0] "Really unsubscribe from %u feed?"
+msgstr[1] "Really unsubscribe from %u feeds?"
 
 #, c-format
 msgid "error.unsupported.suggestsave"

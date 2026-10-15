@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Gempub)
 iDeclareType(IndicatorWidget)
 iDeclareType(LabelWidget)
+iDeclareType(Root)
 iDeclareType(SimpleDocumentWidget)
 
 iDeclareType(SidebarItem)
@@ -106,6 +107,7 @@ struct Impl_SidebarWidget {
     iWidget          *modeMenu;      /* context menu for the sidebar mode (no item) */
     iWidget          *folderMenu;    /* context menu for bookmark folders */
     iWidget          *trashMenu;     /* context menu for trashed bookmarks */
+    iWidget          *multiMenu;     /* context menu for multiple selected items */
     iSidebarItem     *contextItem;   /* list item accessed in the context menu */
     size_t            contextIndex;  /* index of list item accessed in the context menu */
     iIntSet          *openFolders;   /* otherwise folded */
@@ -136,10 +138,7 @@ void            updateItemsWithFlags_SidebarWidget_(iSidebarWidget *, iBool keep
 iBool           updateBookmarks_SidebarWidget_  (iSidebarWidget *, iBool keepActions);
 iBool           handleBookmarkCommand_SidebarWidget_(iSidebarWidget *, const SDL_Event *,
                                                      const char *cmd);
-void            bookmarkMoved_SidebarWidget_    (iSidebarWidget *, size_t index, size_t dstIndex,
-                                                 iBool isBefore);
-void            bookmarkMovedOntoFolder_SidebarWidget_(iSidebarWidget *, size_t index,
-                                                       size_t folderIndex);
+void            bookmarksDragged_SidebarWidget_ (iSidebarWidget *, const char *cmd);
 void            updateBookmarkContextMenu_SidebarWidget_(iSidebarWidget *);
 iWidget *       bookmarkContextMenu_SidebarWidget_(iSidebarWidget *, const iSidebarItem *hoverItem);
 
@@ -164,3 +163,18 @@ iBool           updateGempub_SidebarWidget_     (iSidebarWidget *); /* cover or 
 iBool           handleShelfCommand_SidebarWidget_(iSidebarWidget *, const SDL_Event *,
                                                   const char *cmd);
 void            updateShelfContextMenu_SidebarWidget_(iSidebarWidget *);
+
+/* Multiple selection and context items (sidebar/multiselect.c). Commands apply to the
+   context items: the selection if the context item is part of it, otherwise just the one item. */
+iBool           isMultiSelectMode_SidebarWidget_(const iSidebarWidget *);
+iStringSet *    saveMultiSelection_SidebarWidget_(const iSidebarWidget *); /* NULL if none */
+void            restoreMultiSelection_SidebarWidget_(iSidebarWidget *, iStringSet *selection);
+iString *       saveContextItem_SidebarWidget_  (const iSidebarWidget *); /* NULL if none */
+void            restoreContextItem_SidebarWidget_(iSidebarWidget *, iString *key);
+iBool           isMultiContextItem_SidebarWidget_(const iSidebarWidget *, const iSidebarItem *);
+void            contextItems_SidebarWidget_     (const iSidebarWidget *, iPtrArray *items);
+int             sequenceTabMode_SidebarWidget_  (int newTab, size_t index);
+void            postOpenCommands_SidebarWidget_ (iRoot *, const iStringArray *cmds);
+iWidget *       makeMultiMenu_SidebarWidget_    (iSidebarWidget *);
+void            moveTabs_SidebarWidget_         (iSidebarWidget *, const iPtrArray *moving,
+                                                 size_t dstPos);

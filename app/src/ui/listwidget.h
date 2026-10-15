@@ -46,6 +46,7 @@ struct Impl_ListItem {
         iBool   isDraggable : 1;
         iBool   isDropTarget : 1; /* may drag-and-drop another item on this */
         iBool   isHidden : 1;
+        iBool   isMultiSelected : 1;
     } flags;
     int height; /* zero: the list's default item height */
 };
@@ -56,6 +57,12 @@ iDeclareWidgetClass(ListWidget)
 iDeclareObjectConstruction(ListWidget)
 
 iDeclareType(VisBuf)
+
+enum iListRangeSelect {
+    none_ListRangeSelect,
+    mouse_ListRangeSelect,
+    keyboard_ListRangeSelect,
+};
 
 enum iScrollMode {
     normal_ScrollMode,
@@ -90,6 +97,12 @@ struct Impl_ListWidget {
     iBool          noHoverWhileScrolling;
 //    iBool          freezeOnDrag; /* freeze drawing when item dragged, to avoid glitching */
     iBool          hideItemOnDrag;
+    iBool          isMultiSelectEnabled; /* Shift selects multiple items */
+    size_t         numMultiSelected;
+    enum iListRangeSelect rangeSelect;
+    size_t         rangeAnchor;
+    iBool          isShiftClick;
+    iBool          isMultiDrag; /* dragging all the selected items */
 };
 
 void    init_ListWidget             (iListWidget *);
@@ -122,6 +135,9 @@ void    setHoverItem_ListWidget     (iListWidget *, size_t index);
 void    setCursorItem_ListWidget    (iListWidget *, size_t index);
 void    restoreCursorItem_ListWidget(iListWidget *, size_t index); /* no scrolling */
 void    cancelDrag_ListWidget       (iListWidget *);
+void    setMultiSelectEnabled_ListWidget(iListWidget *, iBool enabled);
+void    setMultiSelected_ListWidget (iListWidget *, size_t index, iBool isSelected);
+void    clearMultiSelection_ListWidget(iListWidget *);
 
 void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
 
@@ -139,6 +155,7 @@ const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
 size_t              hoverItemIndex_ListWidget   (const iListWidget *);
 size_t              cursorItemIndex_ListWidget  (const iListWidget *);
 const iAnyObject *  constCursorItem_ListWidget  (const iListWidget *);
+size_t              numMultiSelected_ListWidget (const iListWidget *);
 
 iLocalDef iBool isEmpty_ListWidget(const iListWidget *d) { return numItems_ListWidget(d) == 0; }
 

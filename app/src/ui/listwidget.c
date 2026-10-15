@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "command.h"
 #include "gamepad.h"
+#include "keys.h"
 #include "render/paint.h"
 #include "scrollwidget.h"
 #include "touch.h"
@@ -48,9 +49,14 @@ iDefineClass(ListItem)
 
 iDefineObjectConstruction(ListWidget)
 
+static void selectRangeAt_ListWidget_(iListWidget *d, iInt2 pos);
+
 static void refreshWhileScrolling_ListWidget_(iAnyObject *any) {
     iListWidget *d = any;
     updateVisible_ListWidget(d);
+    if (d->rangeSelect == mouse_ListRangeSelect) {
+        selectRangeAt_ListWidget_(d, mouseCoord_Window(get_Window(), 0));
+    }
     refresh_Widget(d);
     if (!isFinished_SmoothScroll(&d->scrollY)) {
         addTicker_App(refreshWhileScrolling_ListWidget_, any);
@@ -99,6 +105,12 @@ void init_ListWidget(iListWidget *d) {
     d->scrollMode = normal_ScrollMode;
     d->noHoverWhileScrolling = iFalse;
     d->hideItemOnDrag = iFalse;
+    d->isMultiSelectEnabled = iFalse;
+    d->numMultiSelected = 0;
+    d->rangeSelect = none_ListRangeSelect;
+    d->rangeAnchor = iInvalidPos;
+    d->isShiftClick = iFalse;
+    d->isMultiDrag = iFalse;
     init_PtrArray(&d->items);
     d->cursorItem = iInvalidPos;
     d->hoverItem = iInvalidPos;
@@ -148,6 +160,8 @@ void clear_ListWidget(iListWidget *d) {
     }
     clear_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
+    d->numMultiSelected = 0;
+    d->rangeSelect = none_ListRangeSelect;
     invalidateLayout_ListWidget_(d);
 }
 
@@ -541,6 +555,68 @@ size_t cursorItemIndex_ListWidget(const iListWidget *d) {
     return d->cursorItem;
 }
 
+void setMultiSelectEnabled_ListWidget(iListWidget *d, iBool enabled) {
+    d->isMultiSelectEnabled = enabled;
+    if (!enabled) {
+        clearMultiSelection_ListWidget(d);
+    }
+}
+
+void setMultiSelected_ListWidget(iListWidget *d, size_t index, iBool isSelected) {
+    iListItem *item = item_ListWidget(d, index);
+    if (item && item->flags.isMultiSelected != isSelected) {
+        item->flags.isMultiSelected = isSelected;
+        if (isSelected) {
+            d->numMultiSelected++;
+        }
+        else {
+            d->numMultiSelected--;
+        }
+        invalidateItem_ListWidget(d, index);
+    }
+}
+
+void clearMultiSelection_ListWidget(iListWidget *d) {
+    for (size_t i = 0; d->numMultiSelected && i < size_PtrArray(&d->items); i++) {
+        setMultiSelected_ListWidget(d, i, iFalse);
+    }
+}
+
+size_t numMultiSelected_ListWidget(const iListWidget *d) {
+    return d->numMultiSelected;
+}
+
+static iBool isMultiSelected_ListWidget_(const iListWidget *d, size_t index) {
+    const iListItem *item = constItem_ListWidget(d, index);
+    return item && item->flags.isMultiSelected;
+}
+
+static void selectRange_ListWidget_(iListWidget *d, size_t end) {
+    if (d->rangeAnchor == iInvalidPos || end == iInvalidPos) {
+        return;
+    }
+    const size_t first = iMin(d->rangeAnchor, end);
+    const size_t last  = iMax(d->rangeAnchor, end);
+    for (size_t i = 0; i < size_PtrArray(&d->items); i++) {
+        const iListItem *item = constAt_PtrArray(&d->items, i);
+        setMultiSelected_ListWidget(d,
+                                    i,
+                                    i >= first && i <= last && !item->flags.isSeparator &&
+                                        !item->flags.isHidden);
+    }
+}
+
+static void selectRangeAt_ListWidget_(iListWidget *d, iInt2 pos) {
+    /* Positions outside the list are clamped to the first or last item. */
+    const int y = pos.y - top_Rect(innerBounds_Widget(as_Widget(d))) + pos_SmoothScroll(&d->scrollY);
+    selectRange_ListWidget_(d, indexAt_ListWidget_(d, iClamp(y, 0, contentHeight_ListWidget_(d) - 1)));
+}
+
+static iBool isShiftMultiSelect_ListWidget_(const iListWidget *d, uint32_t device) {
+    return d->isMultiSelectEnabled && device != SDL_TOUCH_MOUSEID &&
+           keyMods_Sym(modState_Keys()) == SDL_KMOD_SHIFT;
+}
+
 void updateMouseHover_ListWidget(iListWidget *d) {
     const iInt2 mouse = mouseCoord_Window(
         get_Window(), deviceType_App() == desktop_AppDeviceType ? 0 : SDL_TOUCH_MOUSEID);
@@ -654,7 +730,13 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     }
     else if (index != d->dragItem) {
         if (d->hideItemOnDrag) {
-            ((iListItem *) item_ListWidget(d, d->dragItem))->flags.isHidden = iTrue;
+            iForEach(PtrArray, i, &d->items) {
+                iListItem *item = i.ptr;
+                if (index_PtrArrayIterator(&i) == d->dragItem ||
+                    (d->isMultiDrag && item->flags.isMultiSelected)) {
+                    item->flags.isHidden = iTrue;
+                }
+            }
         }
         if (dstKind == on_DragDestination) {
             postCommand_Widget(d, "list.dragged arg:%zu onto:%zu", d->dragItem, index);
@@ -667,6 +749,10 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     }
     invalidateItem_ListWidget(d, d->dragItem);
     d->dragItem = iInvalidPos;
+    if (d->isMultiDrag) {
+        d->isMultiDrag = iFalse;
+        invalidate_ListWidget(d);
+    }
     return iTrue;
 }
 
@@ -676,14 +762,28 @@ static void abortDrag_ListWidget_(iListWidget *d) {
         setDropTarget_ListWidget_(d, NULL);
         invalidateItem_ListWidget(d, d->dragItem);
         d->dragItem = iInvalidPos;
+        if (d->isMultiDrag) {
+            d->isMultiDrag = iFalse;
+            invalidate_ListWidget(d);
+        }
         redrawHoverItem_ListWidget_(d);
         setFlags_Widget(d, touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     }
 }
 
+static iBool endRangeSelect_ListWidget_(iListWidget *d) {
+    if (d->rangeSelect == mouse_ListRangeSelect) {
+        d->rangeSelect = none_ListRangeSelect;
+        stop_Anim(&d->scrollY.pos);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 void cancelDrag_ListWidget(iListWidget *d) {
     cancel_Click(&d->click);
     abortDrag_ListWidget_(d);
+    endRangeSelect_ListWidget_(d);
 }
 
 static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event *ev) {
@@ -763,6 +863,9 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             return iFalse;
         }
         else if (isCommand_Widget(w, ev, "focus.lost")) {
+            if (d->rangeSelect == keyboard_ListRangeSelect) {
+                d->rangeSelect = none_ListRangeSelect;
+            }
             invalidateItem_ListWidget(d, d->cursorItem);
             refresh_Widget(d);
             return iFalse;
@@ -771,7 +874,29 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     else if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTapBegins_UserEventCode) {
         d->noHoverWhileScrolling = iFalse;
     }
+    if (ev->type == SDL_EVENT_KEY_UP && d->rangeSelect == keyboard_ListRangeSelect &&
+        (ev->key.key == SDLK_LSHIFT || ev->key.key == SDLK_RSHIFT)) {
+        d->rangeSelect = none_ListRangeSelect;
+    }
     if (ev->type == SDL_EVENT_KEY_DOWN && isFocused_Widget(w)) {
+        if (d->isMultiSelectEnabled && d->scrollMode == normal_ScrollMode &&
+            keyMods_Sym(ev->key.mod) == SDL_KMOD_SHIFT) {
+            const int step = cursorKeyStep_ListWidget_(d, ev->key.key);
+            if (step) {
+                if (d->rangeSelect != keyboard_ListRangeSelect) {
+                    clearMultiSelection_ListWidget(d);
+                    moveCursor_ListWidget_(d, 0, 0);
+                    d->rangeAnchor = d->cursorItem;
+                    d->rangeSelect = keyboard_ListRangeSelect;
+                }
+                moveCursor_ListWidget_(d, step, iAbs(step) == 1 ? 0 : 150);
+                selectRange_ListWidget_(d, d->cursorItem);
+                return iTrue;
+            }
+        }
+        if (d->rangeSelect == keyboard_ListRangeSelect && !isMod_Sym(ev->key.key)) {
+            d->rangeSelect = none_ListRangeSelect; /* Shift release may go unnoticed */
+        }
         if (ev->key.mod == 0) {
             const int key = ev->key.key;
             switch (key) {
@@ -811,6 +936,12 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                                            d->cursorItem, constCursorItem_ListWidget(d));
                     }
                     return iTrue;
+                case SDLK_ESCAPE:
+                    if (d->numMultiSelected) {
+                        clearMultiSelection_ListWidget(d);
+                        return iTrue;
+                    }
+                    break;
             }
         }
     }
@@ -822,8 +953,13 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             }
             updateHover_ListWidget_(d, mousePos);
         }
-        else if (d->dragItem != iInvalidPos) {
-            setDropTarget_ListWidget_(d, dropTargetAt_(mousePos));
+        else if (d->dragItem != iInvalidPos || d->rangeSelect == mouse_ListRangeSelect) {
+            if (d->rangeSelect == mouse_ListRangeSelect) {
+                selectRangeAt_ListWidget_(d, mousePos);
+            }
+            else {
+                setDropTarget_ListWidget_(d, dropTargetAt_(mousePos));
+            }
             /* Start scrolling if near the ends. */
             const int zone = 2 * d->itemHeight;
             const iRect bounds = bounds_Widget(w);
@@ -901,43 +1037,72 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             d->noHoverWhileScrolling = iFalse;
+            d->isShiftClick = isShiftMultiSelect_ListWidget_(d, ev->button.which);
             updateHover_ListWidget_(d, mouseCoord_Window(get_Window(), ev->button.which));
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
             /* Released outside the list. */
+            if (endRangeSelect_ListWidget_(d)) {
+                return iTrue;
+            }
             if (dropTargetAt_(pos_Click(&d->click)) && endDrag_ListWidget_(d, pos_Click(&d->click))) {
                 return iTrue;
             }
             abortDrag_ListWidget_(d);
             break;
         case drag_ClickResult:
-            if (d->dragItem == iInvalidPos && length_I2(delta_Click(&d->click)) > gap_UI) {
+            if (d->dragItem == iInvalidPos && d->rangeSelect != mouse_ListRangeSelect &&
+                length_I2(delta_Click(&d->click)) > gap_UI) {
                 const size_t over = itemIndex_ListWidget(d, d->click.startPos);
-                if (over != iInvalidPos &&
+                if (d->isShiftClick) {
+                    if (over != iInvalidPos) {
+                        clearMultiSelection_ListWidget(d);
+                        d->rangeAnchor = over;
+                        d->rangeSelect = mouse_ListRangeSelect;
+                        selectRangeAt_ListWidget_(d, pos_Click(&d->click));
+                    }
+                }
+                else if (over != iInvalidPos &&
                     ((const iListItem *) item_ListWidget(d, over))->flags.isDraggable) {
+                    d->isMultiDrag = isMultiSelected_ListWidget_(d, over) && d->numMultiSelected > 1;
+                    if (d->isMultiDrag) {
+                        invalidate_ListWidget(d); /* all selected items are lifted */
+                    }
+                    else {
+                        clearMultiSelection_ListWidget(d);
+                    }
                     d->dragItem = over;
                     d->dragOrigin = sub_I2(topLeft_Rect(itemRect_ListWidget(d, over)),
                                            d->click.startPos);
                     invalidateItem_ListWidget(d, d->dragItem);
                 }
             }
-            return d->dragItem != iInvalidPos;
+            return d->dragItem != iInvalidPos || d->rangeSelect == mouse_ListRangeSelect;
         case finished_ClickResult:
-            if (endDrag_ListWidget_(d, pos_Click(&d->click))) {
+            if (endDrag_ListWidget_(d, pos_Click(&d->click)) || endRangeSelect_ListWidget_(d)) {
                 return iTrue;
             }
             redrawHoverItem_ListWidget_(d);
+            if (!d->isShiftClick) {
+                clearMultiSelection_ListWidget(d);
+            }
             if (contains_Rect(adjusted_Rect(itemRect_ListWidget(d, d->hoverItem),
                                             zero_I2(), init_I2(-d->dragHandleWidth, 0)),
                               pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidPos) {
                 setCursorWithoutScroll_ListWidget_(d, d->hoverItem);
-                postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p device:%u",
-                                   d->hoverItem,
-                                   d->click.clickButton,
-                                   constHoverItem_ListWidget(d),
-                                   ev->button.which);
+                if (d->isShiftClick) {
+                    setMultiSelected_ListWidget(
+                        d, d->hoverItem, !isMultiSelected_ListWidget_(d, d->hoverItem));
+                }
+                else {
+                    postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p device:%u",
+                                       d->hoverItem,
+                                       d->click.clickButton,
+                                       constHoverItem_ListWidget(d),
+                                       ev->button.which);
+                }
             }
             return iTrue;
         default:
@@ -994,7 +1159,7 @@ static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index,
         const iRect   itemRect = { init_I2(0, span.start - buf->origin),
                                    init_I2(d->visBuf->texSize.x, size_Range(&span)) };
         fillRect_Paint(p, itemRect, bg);
-        if (index != d->dragItem) {
+        if (index != d->dragItem && !(d->isMultiDrag && item->flags.isMultiSelected)) {
             class_ListItem(item)->draw(item, p, itemRect, d);
         }
         fillRect_Paint(p,
@@ -1107,6 +1272,20 @@ static void draw_ListWidget_(const iListWidget *d) {
         setOpacity_Text(0.5f);
         class_ListItem(item)->draw(item, &p, itemRect, d);
         setOpacity_Text(1.0f);
+        if (d->isMultiDrag) {
+            /* Number of dragged items. */
+            const int    font  = uiLabelBold_FontId;
+            const char  *count = format_CStr("%zu", d->numMultiSelected);
+            const iInt2  size  = init_I2(measure_Text(font, count).advance.x + 3 * gap_UI,
+                                         lineHeight_Text(font) + gap_UI);
+            const iRect  badge = { init_I2(right_Rect(itemRect) - size.x - 3 * gap_UI -
+                                               scrollBarWidth_ListWidget(d),
+                                           mid_Rect(itemRect).y - size.y / 2),
+                                   size };
+            p.alpha = 0xff;
+            fillRect_Paint(&p, badge, uiBackgroundSelected_ColorId);
+            drawCentered_Text(font, badge, iTrue, uiTextSelected_ColorId, "%s", count);
+        }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     unsetClip_Paint(&p);

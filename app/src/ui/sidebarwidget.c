@@ -335,7 +335,9 @@ static void addOutlineItems_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
-    const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
+    const iBool isMobile  = (deviceType_App() != desktop_AppDeviceType);
+    iStringSet *selection  = saveMultiSelection_SidebarWidget_(d);
+    iString    *contextKey = saveContextItem_SidebarWidget_(d);
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
     if (!keepActions) {
@@ -347,7 +349,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         releaseChildren_Widget(d->actions);
     }
     d->actions->rect.size.y = 0;
-    iWidget **menus[] = { &d->menu, &d->modeMenu, &d->folderMenu, &d->trashMenu };
+    iWidget **menus[] = { &d->menu, &d->modeMenu, &d->folderMenu, &d->trashMenu, &d->multiMenu };
     iForIndices(i, menus) {
         destroy_Widget(*menus[i]), *menus[i] = NULL;
     }
@@ -549,6 +551,12 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             break;
         default:
             break;
+    }
+    setMultiSelectEnabled_ListWidget(d->list, isMultiSelectMode_SidebarWidget_(d));
+    restoreMultiSelection_SidebarWidget_(d, selection);
+    restoreContextItem_SidebarWidget_(d, contextKey);
+    if (isMultiSelectMode_SidebarWidget_(d)) {
+        d->multiMenu = makeMultiMenu_SidebarWidget_(d);
     }
     updateActionsPadding_SidebarWidget_(d);
     const iBool isBookPage = d->mode == gempub_SidebarMode && !isShowingShelf_SidebarWidget_(d);
@@ -766,6 +774,11 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         d->modeScroll[d->mode] = scrollPos_ListWidget(list_SidebarWidget_(d)); /* saved for later */
         d->modeCursor[d->mode] = cursorItemIndex_ListWidget(list_SidebarWidget_(d));
     }
+    if (d->list) {
+        clearMultiSelection_ListWidget(d->list);
+    }
+    d->contextItem  = NULL;
+    d->contextIndex = iInvalidPos;
     d->mode = mode;
     d->isShelfOrderValid = iFalse;
     if (mode == feedEntries_SidebarMode) {
@@ -1146,6 +1159,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->modeMenu   = NULL;
     d->folderMenu = NULL;
     d->trashMenu  = NULL;
+    d->multiMenu  = NULL;
     addAction_Widget(w, refreshFeeds_KeyShortcut, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
     if (side == left_SidebarSide) {
@@ -1202,6 +1216,56 @@ static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
         return hoverIdentity_CertListWidget(d->certList);
     }
     return NULL;
+}
+
+static void openContextItems_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
+    iPtrArray items;
+    init_PtrArray(&items);
+    contextItems_SidebarWidget_(d, &items);
+    iStringArray *cmds = new_StringArray();
+    iConstForEach(PtrArray, i, &items) {
+        const iSidebarItem *item = i.ptr;
+        if (!isEmpty_String(&item->url)) {
+            const size_t index = size_StringArray(cmds);
+            pushBack_StringArray(
+                cmds,
+                collectNewFormat_String(
+                    "open newtab:%d newwindow:%d url:%s",
+                    sequenceTabMode_SidebarWidget_(argLabel_Command(cmd, "newtab"), index),
+                    index == 0 ? argLabel_Command(cmd, "newwindow") : 0,
+                    cstr_String(&item->url)));
+        }
+    }
+    postOpenCommands_SidebarWidget_(get_Root(), cmds);
+    iRelease(cmds);
+    deinit_PtrArray(&items);
+}
+
+static void copyContextItems_SidebarWidget_(iSidebarWidget *d, iBool isCanonical) {
+    iPtrArray items;
+    init_PtrArray(&items);
+    contextItems_SidebarWidget_(d, &items);
+    iString *text = new_String();
+    iConstForEach(PtrArray, i, &items) {
+        const iSidebarItem *item = i.ptr;
+        if (isEmpty_String(&item->url)) {
+            continue;
+        }
+        if (!isEmpty_String(text)) {
+            appendCStr_String(text, "\n");
+        }
+        iString *link = responseLink_Feeds(&item->url);
+        if (link) {
+            append_String(text, link);
+            delete_String(link);
+        }
+        else {
+            append_String(text, isCanonical ? canonicalUrl_String(&item->url) : &item->url);
+        }
+    }
+    SDL_SetClipboardText(cstr_String(text));
+    delete_String(text);
+    deinit_PtrArray(&items);
 }
 
 static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex,
@@ -1833,7 +1897,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             arrange_Widget(w);
             return iFalse;
         }
-        else if (equal_Command(cmd, "menu.closed") && d->menu == pointer_Command(cmd)) {
+        else if (equal_Command(cmd, "menu.closed") &&
+                 (d->menu == pointer_Command(cmd) || d->multiMenu == pointer_Command(cmd))) {
             if (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App())) {
                 setFocus_Widget(as_Widget(d->list));
             }
@@ -1887,35 +1952,21 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {
             if (d->mode == bookmarks_SidebarMode) {
-                if (equal_Rangecc(range_Command(cmd, "target"), "filter.bookmarks.trash")) {
-                    d->contextItem = item_ListWidget(d->list, argU32Label_Command(cmd, "arg"));
-                    postCommand_Widget(w, "bookmark.delete");
-                }
-                else if (hasLabel_Command(cmd, "onto")) {
-                    /* Dragged onto a folder. */
-                    bookmarkMovedOntoFolder_SidebarWidget_(
-                        d, argU32Label_Command(cmd, "arg"), argU32Label_Command(cmd, "onto"));
-                }
-                else {
-                    const iBool isBefore = hasLabel_Command(cmd, "before");
-                    bookmarkMoved_SidebarWidget_(
-                        d,
-                        argU32Label_Command(cmd, "arg"),
-                        argU32Label_Command(cmd, isBefore ? "before" : "after"),
-                        isBefore);
-                }
+                bookmarksDragged_SidebarWidget_(d, cmd);
             }
-            else if (d->mode == openDocuments_SidebarMode) {
-                /* Reorder tabs. */
-                const int           srcIndex = argU32Label_Command(cmd, "arg");
-                const iSidebarItem *item     = constItem_ListWidget(d->list, srcIndex);
-                /* Dragging onto is the same as dragging before. */
-                const int dstIndex = hasLabel_Command(cmd, "before")
-                                         ? argU32Label_Command(cmd, "before")
-                                         : argU32Label_Command(cmd, "after");
-                /* Must be the current tab to move. */
-                postCommandf_App("tabs.switch id:%s", cstr_String(&item->meta));
-                postCommandf_App("tabs.move arg:%d", dstIndex - srcIndex);
+            else if (d->mode == openDocuments_SidebarMode && !hasLabel_Command(cmd, "target")) {
+                d->contextItem = item_ListWidget(d->list, argU32Label_Command(cmd, "arg"));
+                iPtrArray moving;
+                init_PtrArray(&moving);
+                contextItems_SidebarWidget_(d, &moving);
+                moveTabs_SidebarWidget_(d,
+                                        &moving,
+                                        hasLabel_Command(cmd, "after")
+                                            ? argU32Label_Command(cmd, "after") + 1
+                                        : hasLabel_Command(cmd, "onto")
+                                            ? argU32Label_Command(cmd, "onto")
+                                            : argU32Label_Command(cmd, "before"));
+                deinit_PtrArray(&moving);
             }
             return iTrue;
         }
@@ -1949,23 +2000,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "sideitem.open")) {
-                    postCommandf_App("open newwindow:%d newtab:%d url:%s",
-                                     argLabel_Command(cmd, "newwindow"),
-                                     argLabel_Command(cmd, "newtab"),
-                                     cstr_String(&item->url));
+                    openContextItems_SidebarWidget_(d, cmd);
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "sideitem.copy")) {
-                    iString *link = responseLink_Feeds(&item->url);
-                    if (link) {
-                        SDL_SetClipboardText(cstr_String(link));
-                        delete_String(link);
-                    }
-                    else {
-                        SDL_SetClipboardText(cstr_String(argLabel_Command(cmd, "canon")
-                                                             ? canonicalUrl_String(&item->url)
-                                                             : &item->url));
-                    }
+                    copyContextItems_SidebarWidget_(d, argLabel_Command(cmd, "canon") != 0);
                     return iTrue;
                 }
             }
@@ -1980,23 +2019,24 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
         }
         else if (isCommand_Widget(w, ev, "history.delete")) {
-            if (d->contextItem && !isEmpty_String(&d->contextItem->url)) {
-                removeUrl_Visited(visited_App(), &d->contextItem->url);
+            iPtrArray items;
+            init_PtrArray(&items);
+            contextItems_SidebarWidget_(d, &items);
+            iConstForEach(PtrArray, i, &items) {
+                const iSidebarItem *item = i.ptr;
+                if (!isEmpty_String(&item->url)) {
+                    removeUrl_Visited(visited_App(), &item->url);
+                }
+            }
+            if (!isEmpty_PtrArray(&items)) {
                 updateItems_SidebarWidget_(d);
                 scrollOffset_ListWidget(d->list, 0);
             }
+            deinit_PtrArray(&items);
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "history.open")) {
-            const iSidebarItem *item = d->contextItem;
-            if (item && !isEmpty_String(&item->url)) {
-                const char *cmd = command_UserEvent(ev);
-                postCommand_Widget(d,
-                                   "!open newtab:%d newwindow:%d url:%s",
-                                   argLabel_Command(cmd, "newtab"),
-                                   argLabel_Command(cmd, "newwindow"),
-                                   cstr_String(&item->url));
-            }
+            openContextItems_SidebarWidget_(d, cmd);
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "history.addbookmark")) {
@@ -2067,18 +2107,21 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "opendocs.close")) {
-            const iSidebarItem *item = d->contextItem;
-            if (item) {
-                const int              toLeft  = argLabel_Command(cmd, "toleft");
-                const int              toRight = argLabel_Command(cmd, "toright");
-                const iDocumentWidget *doc     = findWidget_App(cstr_String(&item->meta));
-                if (!doc) return iTrue;
-                // postCommandf_App("tabs.switch id:%s", cstr_String(&item->meta));
-                postCommandf_App("tabs.close id:%s toleft:%d toright:%d",
-                                 cstr_String(&item->meta),
-                                 toLeft,
-                                 toRight);
+            iPtrArray items;
+            init_PtrArray(&items);
+            contextItems_SidebarWidget_(d, &items);
+            /* Closing to the left/right only applies to a single tab. */
+            const iBool isSingle = size_PtrArray(&items) == 1;
+            iConstForEach(PtrArray, i, &items) {
+                const iSidebarItem *item = i.ptr;
+                if (findWidget_App(cstr_String(&item->meta))) {
+                    postCommandf_App("tabs.close id:%s toleft:%d toright:%d",
+                                     cstr_String(&item->meta),
+                                     isSingle && argLabel_Command(cmd, "toleft"),
+                                     isSingle && argLabel_Command(cmd, "toright"));
+                }
             }
+            deinit_PtrArray(&items);
             return iTrue;
         }
         else if (isEdgeSwipable_SidebarWidget_(d) && hasAffinity_Touch(w) &&
@@ -2125,7 +2168,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
 #endif
     }
     if (ev->type == SDL_EVENT_MOUSE_MOTION &&
-        (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {
+        (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu) &&
+         !isVisible_Widget(d->multiMenu))) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         if (contains_Widget(d->resizer, mouse)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_EW_RESIZE);
@@ -2154,6 +2198,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->contextItem = NULL;
             if (!isVisible_Widget(d->menu) && !isEmulatedMouseDevice_UserEvent(ev)) {
                 updateMouseHover_ListWidget(d->list);
+            }
+            const iSidebarItem *hoverItem = constHoverItem_ListWidget(d->list);
+            if (hoverItem && !hoverItem->listItem.flags.isMultiSelected) {
+                clearMultiSelection_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
                 d->contextItem = hoverItem_ListWidget(d->list);
@@ -2264,12 +2312,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
         contains_Widget(as_Widget(d->list), init_I2(ev->button.x, ev->button.y))) {
         if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu) ||
-            isVisible_Widget(d->folderMenu)) {
+            isVisible_Widget(d->folderMenu) || isVisible_Widget(d->multiMenu)) {
             iWidget *contextMenu = d->menu;
             /* Update the menu before opening. */
             /* TODO: This kind of updating is already done above, and in `updateContextMenu_`... */
             const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
-            if (d->mode == bookmarks_SidebarMode) {
+            if (d->multiMenu && isMultiContextItem_SidebarWidget_(d, hoverItem)) {
+                contextMenu = d->multiMenu;
+            }
+            else if (d->mode == bookmarks_SidebarMode) {
                 contextMenu = bookmarkContextMenu_SidebarWidget_(d, hoverItem);
                 if (!contextMenu) {
                     return iTrue;

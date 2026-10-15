@@ -187,7 +187,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const iSidebarWidget *sidebar =
         findParentClass_Widget(constAs_Widget(list), &Class_SidebarWidget);
     const iBool isListFocus   = isFocused_Widget(list);
-    const iBool isMenuVisible = isVisible_Widget(sidebar->menu);
+    const iBool isMenuVisible = isVisible_Widget(sidebar->menu) || isVisible_Widget(sidebar->multiMenu);
     const iBool isDragging    = constDragItem_ListWidget(list) == d;
     const iBool isEditing     = sidebar->isEditing; /* only on mobile */
     const iBool isPressing    = isMouseDown_ListWidget(list) && !isDragging;
@@ -196,15 +196,18 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               (isMenuVisible && sidebar->contextItem == d) ||
                               (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
                               isDragging;
+    /* Multiple selection overrides the current item highlight. */
+    const iBool isMarked = d->listItem.flags.isMultiSelected && !(isHoverItem && isPressing);
     /* Pressed items use selection colors. */
     const iBool isSel =
         (isHoverItem && isPressing) ||
-        (d->listItem.flags.isSelected && (sidebar->mode == feedEntries_SidebarMode ||
-                                          sidebar->mode == identities_SidebarMode ||
-                                          sidebar->mode == gempub_SidebarMode)) ||
-        (sidebar->mode == siteStructure_SidebarMode && d->id & 1) ||
-        (sidebar->mode == openDocuments_SidebarMode && d->indent);
-    const iBool isHover      = isHoverItem && !isSel;
+        (!isMarked &&
+         ((d->listItem.flags.isSelected && (sidebar->mode == feedEntries_SidebarMode ||
+                                            sidebar->mode == identities_SidebarMode ||
+                                            sidebar->mode == gempub_SidebarMode)) ||
+          (sidebar->mode == siteStructure_SidebarMode && d->id & 1) ||
+          (sidebar->mode == openDocuments_SidebarMode && d->indent)));
+    const iBool isHover      = (isHoverItem && !isSel) || isMarked;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
     const int blankWidth     = isApple_Platform() ? 0 : scrollBarWidth;
     int       sepHeight      = 0;
@@ -226,6 +229,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     int bg = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
+        fillRect_Paint(p, itemRect, bg);
+    }
+    else if (isMarked) {
+        bg = uiBackgroundUnfocusedSelection_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
     else if (isHover) {

@@ -392,18 +392,35 @@ iBool updateSubscriptions_SidebarWidget_(iSidebarWidget *d) {
     return !isEmpty;
 }
 
-static void handleFeedUnsubscribeCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd,
-                                                        iBookmark *feedBookmark) {
+static void handleFeedUnsubscribeCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
+    /* Each context item belongs to a subscribed feed. */
+    iPtrArray items;
+    iIntSet   feeds;
+    init_PtrArray(&items);
+    init_IntSet(&feeds);
+    contextItems_SidebarWidget_(d, &items);
+    iConstForEach(PtrArray, i, &items) {
+        const uint32_t id = ((const iSidebarItem *) i.ptr)->id;
+        if (get_Bookmarks(bookmarks_App(), id)) {
+            insert_IntSet(&feeds, id);
+        }
+    }
     if (arg_Command(cmd) /* was confirmed? */) {
-        feedBookmark->flags &= ~subscribed_BookmarkFlag;
-        removeEntries_Feeds(id_Bookmark(feedBookmark));
+        iConstForEach(IntSet, i, &feeds) {
+            iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), *i.value);
+            feedBookmark->flags &= ~subscribed_BookmarkFlag;
+            removeEntries_Feeds(id_Bookmark(feedBookmark));
+        }
         updateItems_SidebarWidget_(d);
     }
-    else {
+    else if (!isEmpty_IntSet(&feeds)) {
         /* Ask for confirmation first. */
         makeQuestion_Widget(
             uiTextCaution_ColorEscape "${heading.unsub}",
-            format_CStr(cstr_Lang("dlg.confirm.unsub"), cstr_String(&feedBookmark->title)),
+            size_IntSet(&feeds) == 1
+                ? format_CStr(cstr_Lang("dlg.confirm.unsub"),
+                              cstr_String(&get_Bookmarks(bookmarks_App(), front_IntSet(&feeds))->title))
+                : formatCStrs_Lang("dlg.confirm.unsub.multi.n", size_IntSet(&feeds)),
             (iMenuItem[]) {
                 { "${cancel}", 0, 0, NULL },
                 { uiTextCaution_ColorEscape "${dlg.unsub}",
@@ -412,6 +429,8 @@ static void handleFeedUnsubscribeCommand_SidebarWidget_(iSidebarWidget *d, const
                   format_CStr("!%s arg:1 ptr:%p", cstr_Rangecc(name_Command(cmd)), d) } },
             2);
     }
+    deinit_IntSet(&feeds);
+    deinit_PtrArray(&items);
 }
 
 void updateFeedContextMenu_SidebarWidget_(iSidebarWidget *d) {
@@ -466,21 +485,45 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
         const iSidebarItem *item = d->contextItem;
         if (item) {
             if (isCommand_Widget(w, ev, "feed.entry.open")) {
-                const char *cmd = command_UserEvent(ev);
-                /* Opening an entry will always mark it as read. */
-                markEntryAsRead_Feeds(item->id, &item->url, iTrue);
-                postCommandString_Root(
-                    get_Root(),
-                    feedEntryOpenCommand_String(&item->url,
-                                                argLabel_Command(cmd, "newtab"),
-                                                argLabel_Command(cmd, "newwindow"),
-                                                isReader_DocumentWidget(document_App())));
+                iPtrArray items;
+                init_PtrArray(&items);
+                contextItems_SidebarWidget_(d, &items);
+                iStringArray *cmds = new_StringArray();
+                iConstForEach(PtrArray, i, &items) {
+                    const iSidebarItem *entry = i.ptr;
+                    const size_t        index = index_PtrArrayConstIterator(&i);
+                    /* Opening an entry will always mark it as read. */
+                    markEntryAsRead_Feeds(entry->id, &entry->url, iTrue);
+                    pushBack_StringArray(
+                        cmds,
+                        feedEntryOpenCommand_String(
+                            &entry->url,
+                            sequenceTabMode_SidebarWidget_(argLabel_Command(cmd, "newtab"), index),
+                            index == 0 ? argLabel_Command(cmd, "newwindow") : 0,
+                            isReader_DocumentWidget(document_App())));
+                }
+                postOpenCommands_SidebarWidget_(get_Root(), cmds);
+                iRelease(cmds);
+                deinit_PtrArray(&items);
                 return iTrue;
             }
             else if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
                 const iString *url = urlFragmentStripped_String(&item->url);
                 markEntryAsRead_Feeds(
                     item->id, &item->url, isUnreadEntry_Feeds(item->id, &item->url));
+                notify_App("visited.changed");
+                return iTrue;
+            }
+            else if (isCommand_Widget(w, ev, "feed.entry.markread") &&
+                     !hasLabel_Command(cmd, "below")) {
+                iPtrArray items;
+                init_PtrArray(&items);
+                contextItems_SidebarWidget_(d, &items);
+                iConstForEach(PtrArray, i, &items) {
+                    const iSidebarItem *entry = i.ptr;
+                    markEntryAsRead_Feeds(entry->id, &entry->url, arg_Command(cmd) != 0);
+                }
+                deinit_PtrArray(&items);
                 notify_App("visited.changed");
                 return iTrue;
             }
@@ -527,7 +570,7 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
                     return iTrue;
                 }
                 if (isCommand_Widget(w, ev, "feed.entry.unsubscribe")) {
-                    handleFeedUnsubscribeCommand_SidebarWidget_(d, cmd, feedBookmark);
+                    handleFeedUnsubscribeCommand_SidebarWidget_(d, cmd);
                     return iTrue;
                 }
             }
@@ -544,8 +587,7 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
                 return iTrue;
             }
             else if (isCommand_Widget(w, ev, "sub.unsubscribe")) {
-                handleFeedUnsubscribeCommand_SidebarWidget_(
-                    d, cmd, get_Bookmarks(bookmarks_App(), item->id));
+                handleFeedUnsubscribeCommand_SidebarWidget_(d, cmd);
                 return iTrue;
             }
         }
