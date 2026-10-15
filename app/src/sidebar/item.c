@@ -33,9 +33,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list);
+static int  measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iListWidget *list);
 
 iBeginDefineSubclass(SidebarItem, ListItem)
-    .draw = (iAny *) draw_SidebarItem_,
+    .draw          = (iAny *) draw_SidebarItem_,
+    .measureHeight = (iAny *) measureHeight_SidebarItem_,
 iEndDefineSubclass(SidebarItem)
 
 iDefineObjectConstruction(SidebarItem)
@@ -105,16 +107,18 @@ static void drawLines_(int font, iInt2 pos, int color, const iRangecc *lines, in
     }
 }
 
-#define maxOutlineLines_SidebarItem_ 3
+static int estimateLines_(int font, const iString *text, int width, int maxLines) {
+    /* Undershooting is preferable to leaving empty lines. */
+    if (width <= 0) {
+        return 1;
+    }
+    const int textWidth = (int) length_String(text) * measure_Text(font, "x").advance.x * 4 / 5;
+    return iClamp(1 + textWidth / width, 1, maxLines);
+}
 
-/* Outline items consist of half-line slots: two per line of text, plus one for padding. */
-#if defined (iPlatformTerminal)
-#   define outlineSlotsPerLine_SidebarItem_    1
-#   define outlinePaddingSlots_SidebarItem_    0
-#else
-#   define outlineSlotsPerLine_SidebarItem_    2
-#   define outlinePaddingSlots_SidebarItem_    1
-#endif
+#define maxOutlineLines_SidebarItem_    3
+#define maxTinylogLines_SidebarItem_    3 /* excerpt; the author line is separate */
+#define feedIconPad_SidebarItem_        (12 * gap_UI)
 
 static int outlineTextWidth_SidebarItem_(const iSidebarItem *d, const iSidebarWidget *sidebar,
                                          int listWidth) {
@@ -123,18 +127,46 @@ static int outlineTextWidth_SidebarItem_(const iSidebarItem *d, const iSidebarWi
     return listWidth - (5 * gap_UI + d->indent) * aspect_UI - scrollBar;
 }
 
-size_t outlineSpan_SidebarItem_(const iSidebarItem *d, const iSidebarWidget *sidebar,
-                                int listWidth) {
-    iRangecc  lines[maxOutlineLines_SidebarItem_];
-    iRangecc  text     = range_String(&d->label);
-    const int numLines = wrapLines_(sidebar->itemFonts[d->isBold ? 1 : 0],
-                                    &text,
-                                    outlineTextWidth_SidebarItem_(d, sidebar, listWidth),
-                                    lines,
-                                    maxOutlineLines_SidebarItem_);
-    /* Top-level headings get an extra slot for the separator. */
-    return iMax(1, numLines) * outlineSlotsPerLine_SidebarItem_ +
-           outlinePaddingSlots_SidebarItem_ + (d->isBold ? 1 : 0);
+static int outlineSeparatorHeight_SidebarItem_(const iSidebarWidget *sidebar) {
+    return lineHeight_Text(sidebar->itemFonts[0]) / (isTerminal_Platform() ? 1 : 2);
+}
+
+static int feedTextWidth_SidebarItem_(int itemWidth) {
+    return itemWidth - feedIconPad_SidebarItem_ - 3 * gap_UI;
+}
+
+static int measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iListWidget *list) {
+    const iSidebarWidget *sidebar =
+        findParentClass_Widget(constAs_Widget(list), &Class_SidebarWidget);
+    if (!sidebar || d->listItem.flags.isSeparator) {
+        return 0;
+    }
+    if (sidebar->mode == documentOutline_SidebarMode) {
+        /* Top-level headings have a separator above. */
+        const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
+        return estimateLines_(font,
+                              &d->label,
+                              outlineTextWidth_SidebarItem_(d, sidebar, width),
+                              maxOutlineLines_SidebarItem_) *
+                   lineHeight_Text(font) +
+               (d->isBold ? outlineSeparatorHeight_SidebarItem_(sidebar) : 0);
+    }
+    if (sidebar->mode == feedEntries_SidebarMode) {
+        const iBool isUnread  = (d->indent & 1) != 0;
+        const iBool isTinylog = (d->indent & 2) != 0;
+        const int   titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
+        const int   h1        = lineHeight_Text(uiLabel_FontId);
+        const int   h2        = lineHeight_Text(titleFont);
+        if (isTinylog) {
+            return h1 + estimateLines_(titleFont,
+                                       &d->label,
+                                       feedTextWidth_SidebarItem_(width),
+                                       maxTinylogLines_SidebarItem_) *
+                            h2;
+        }
+        return iMax(h1, h2) + h2;
+    }
+    return 0;
 }
 
 static void drawDragHandle_(iPaint *p, iRect *itemRect, int bg) {
@@ -178,7 +210,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     int       sepHeight      = 0;
     if (sidebar->mode == documentOutline_SidebarMode && d->isBold) {
         /* Top-level headings have a separator above, outside the item's highlight. */
-        sepHeight = itemHeight_ListWidget(list);
+        sepHeight = outlineSeparatorHeight_SidebarItem_(sidebar);
         drawHLine_Paint(p,
                         addY_I2(itemRect.pos, sepHeight / 2),
                         width_Rect(itemRect) - blankWidth,
@@ -222,9 +254,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                        : level == 2 ? uiText_ColorId
                                     : uiTextDim_ColorId;
         const int width    = outlineTextWidth_SidebarItem_(d, sidebar, width_Rect(itemRect));
-        const int numSlots = (itemHeight + sepHeight) / itemHeight_ListWidget(list);
-        const int maxLines = iClamp((numSlots - outlinePaddingSlots_SidebarItem_ -
-                                     (d->isBold ? 1 : 0)) / outlineSlotsPerLine_SidebarItem_,
+        const int maxLines = iClamp((itemHeight - list->itemPadding) / lineHeight_Text(font),
                                     1,
                                     maxOutlineLines_SidebarItem_);
         iRangecc  lines[maxOutlineLines_SidebarItem_];
@@ -240,7 +270,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                    width);
     }
     else if (sidebar->mode == feedEntries_SidebarMode) {
-        const int iconPad = 12 * gap_UI;
+        const int iconPad = feedIconPad_SidebarItem_;
         if (d->listItem.flags.isSeparator) {
             if (d != constItem_ListWidget(list, 0)) {
                 drawHLine_Paint(p,
@@ -262,9 +292,66 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int   titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
             const int   h1        = lineHeight_Text(uiLabel_FontId);
             const int   h2        = lineHeight_Text(titleFont);
-            iRect       iconArea  = { addY_I2(pos, 0), init_I2(iconPad * aspect_UI, itemHeight) };
+            /* Select the layout based on how the title fits. */
+            int   metaFg    = isSel ? uiTextSelectedDim_ColorId : uiSubheading_ColorId;
+            const iInt2 metaSize =
+                measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
+            pos.x += iconPad * aspect_UI;
+            const int avail = feedTextWidth_SidebarItem_(width_Rect(itemRect));
+            const int labelFg = isSel      ? uiTextSelected_ColorId | permanent_ColorId
+                                : isUnread ? uiTextStrong_ColorId
+                                           : uiText_ColorId;
+            int      iconHeight = h1 + h2; /* the icon is aligned with the first two lines */
+            iRangecc lines[maxTinylogLines_SidebarItem_];
+            if (isTinylog) {
+                /* Author and feed on one line, followed by the wrapped excerpt. */
+                const int maxLines = iClamp((itemHeight - list->itemPadding - h1) / h2,
+                                            1, (int) iElemCount(lines));
+                iRangecc  rest     = range_String(&d->label);
+                const int numLines = wrapLines_(titleFont, &rest, avail, lines, maxLines);
+                pos.y += (itemHeight - h1 - numLines * h2) / 2;
+                const char *metaEnd;
+                tryAdvanceNoWrap_Text(uiLabel_FontId, range_String(&d->meta), avail, &metaEnd);
+                drawRange_Text(uiLabel_FontId,
+                               pos,
+                               metaFg,
+                               (iRangecc){ constBegin_String(&d->meta), metaEnd });
+                drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
+            }
+            else {
+                iRangecc rest     = range_String(&d->label);
+                int      numLines = wrapLines_(titleFont, &rest, avail, lines, 1);
+                if (!isEmpty_Range(&rest) && metaSize.x < avail * 0.75f) {
+                    /* Title continues after the meta on the first line. */
+                    iconHeight = 2 * h2;
+                    pos.y += (itemHeight - iconHeight) / 2;
+                    draw_Text(uiLabel_FontId,
+                              addY_I2(pos, h2 - h1 - gap_UI / 8),
+                              metaFg,
+                              "%s \u2014 ",
+                              cstr_String(&d->meta));
+                    const int skip =
+                        metaSize.x + measure_Text(uiLabel_FontId, " \u2014 ").advance.x;
+                    const char *endPos;
+                    rest = range_String(&d->label);
+                    tryAdvance_Text(titleFont, rest, avail - skip, &endPos);
+                    drawRange_Text(
+                        titleFont, addX_I2(pos, skip), labelFg, (iRangecc){ rest.start, endPos });
+                    rest.start = endPos;
+                    trimStart_Rangecc(&rest);
+                    numLines = wrapLines_(titleFont, &rest, avail, lines, 1);
+                    drawLines_(titleFont, addY_I2(pos, h2), labelFg, lines, numLines, rest, avail);
+                }
+                else {
+                    pos.y += (itemHeight - h1 - numLines * h2) / 2;
+                    drawRange_Text(uiLabel_FontId, pos, metaFg, range_String(&d->meta));
+                    drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
+                }
+            }
             /* Icon. */ {
                 /* TODO: Use the primary hue from the theme of this site. */
+                const iRect iconArea = { init_I2(left_Rect(itemRect), pos.y),
+                                         init_I2(iconPad * aspect_UI, iconHeight) };
                 iString str;
                 initUnicodeN_String(&str, &d->icon, 1);
                 /* TODO: Add to palette. */
@@ -281,65 +368,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                   cstr_String(&str));
                 deinit_String(&str);
             }
-            /* Select the layout based on how the title fits. */
-            int   metaFg    = isSel ? uiTextSelectedDim_ColorId : uiSubheading_ColorId;
-            const iInt2 metaSize =
-                measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
-            pos.x += iconPad * aspect_UI;
-            const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
-            const int labelFg = isSel      ? uiTextSelected_ColorId | permanent_ColorId
-                                : isUnread ? uiTextStrong_ColorId
-                                           : uiText_ColorId;
-            iRangecc lines[4];
-            if (isTinylog) {
-                /* Author and feed on one line, followed by the wrapped excerpt. */
-                const int maxLines = iClamp((itemHeight - h1 - 2 * gap_UI) / h2,
-                                            1, (int) iElemCount(lines));
-                iRangecc  rest     = range_String(&d->label);
-                const int numLines = wrapLines_(titleFont, &rest, avail, lines, maxLines);
-                pos.y += (itemHeight - h1 - numLines * h2) / 2;
-                const char *metaEnd;
-                tryAdvanceNoWrap_Text(uiLabel_FontId, range_String(&d->meta), avail, &metaEnd);
-                drawRange_Text(uiLabel_FontId,
-                               pos,
-                               metaFg,
-                               (iRangecc){ constBegin_String(&d->meta), metaEnd });
-                drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
-            }
-            else {
-                iRangecc rest     = range_String(&d->label);
-                int      numLines = wrapLines_(titleFont, &rest, avail, lines, 2);
-                if (!isEmpty_Range(&rest) && metaSize.x < avail * 0.75f) {
-                    /* Title continues after the meta on the first line. */
-                    pos.y += (itemHeight - 3 * h2) / 2;
-                    draw_Text(uiLabel_FontId,
-                              addY_I2(pos, h2 - h1 - gap_UI / 8),
-                              metaFg,
-                              "%s \u2014 ",
-                              cstr_String(&d->meta));
-                    const int skip =
-                        metaSize.x + measure_Text(uiLabel_FontId, " \u2014 ").advance.x;
-                    const char *endPos;
-                    rest = range_String(&d->label);
-                    tryAdvance_Text(titleFont, rest, avail - skip, &endPos);
-                    drawRange_Text(
-                        titleFont, addX_I2(pos, skip), labelFg, (iRangecc){ rest.start, endPos });
-                    rest.start = endPos;
-                    trimStart_Rangecc(&rest);
-                    numLines = wrapLines_(titleFont, &rest, avail, lines, 2);
-                    drawLines_(titleFont, addY_I2(pos, h2), labelFg, lines, numLines, rest, avail);
-                }
-                else {
-                    pos.y += (itemHeight - h1 - numLines * h2) / 2;
-                    drawRange_Text(uiLabel_FontId, pos, metaFg, range_String(&d->meta));
-                    drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
-                }
-            }
         }
     }
     else if (sidebar->mode == gempub_SidebarMode) {
         /* Title and author on the left, reading progress and size on the right. */
-        const int iconPad = 12 * gap_UI; /* same as feed entries */
+        const int iconPad = feedIconPad_SidebarItem_;
         const int h1      = lineHeight_Text(uiLabel_FontId);
         const int h2      = lineHeight_Text(font);
         const int metaFg  = isSel ? uiTextSelectedDim_ColorId : uiSubheading_ColorId;

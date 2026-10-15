@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "render/paint.h"
 
+#include <the_Foundation/array.h>
 #include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>
 
@@ -32,6 +33,7 @@ iDeclareType(ListWidget)
 
 iBeginDeclareClass(ListItem)
     void    (*draw) (const iAnyObject *, iPaint *p, iRect rect, const iListWidget *list);
+    int     (*measureHeight)(const iAnyObject *, int width, const iListWidget *list); /* optional; zero for default */
 iEndDeclareClass(ListItem)
 
 iDeclareType(ListItem)
@@ -44,8 +46,8 @@ struct Impl_ListItem {
         iBool   isDraggable : 1;
         iBool   isDropTarget : 1; /* may drag-and-drop another item on this */
         iBool   isHidden : 1;
-        iBool   isContinuation : 1; /* dummy slot that extends the previous item's height */
     } flags;
+    int height; /* zero: the list's default item height */
 };
 
 iDeclareObjectConstruction(ListItem)
@@ -66,8 +68,13 @@ struct Impl_ListWidget {
     iWidget        widget;
     iScrollWidget *scroll;
     iSmoothScroll  scrollY;
-    int            itemHeight;
+    int            itemHeight; /* default */
+    int            itemPadding; /* added to measured item heights */
     iPtrArray      items;
+    iArray         itemTops; /* top of each item, followed by the total height */
+    iBool          isLayoutValid;
+    iBool          isResizing; /* only visible items are measured */
+    iBool          isLayoutPartial; /* some items were measured for an earlier width */
     size_t         cursorItem; /* when has focus */
     size_t         hoverItem;
     size_t         dragItem;
@@ -88,6 +95,8 @@ struct Impl_ListWidget {
 void    init_ListWidget             (iListWidget *);
 
 void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
+void    setItemPadding_ListWidget   (iListWidget *, int itemPadding);
+void    setResizing_ListWidget      (iListWidget *, iBool isResizing);
 
 void    invalidate_ListWidget       (iListWidget *);
 void    invalidateItem_ListWidget   (iListWidget *, size_t index);
