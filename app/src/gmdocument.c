@@ -206,6 +206,7 @@ void init_GmDocument(iGmDocument *d) {
     d->numFilledColumns = 0;
     iZap(d->style);
     d->wrapWidth = 0;
+    d->maxLineWidth = -1;
     d->size = zero_I2();
     iZap(d->import);
     init_GmParser(&d->parser);
@@ -278,13 +279,20 @@ void init_GmRebase(iGmRebase *d, const iGmDocument *doc) {
     d->oldRuns   = (iGmRunRange){ constData_Array(&doc->layout), constEnd_Array(&doc->layout) };
     d->newRuns   = d->oldRuns.start;
     d->layoutGen = doc->layoutGen;
+    d->layoutInserted = doc->layoutInserted;
+    d->layoutShift    = doc->layoutShift;
+    d->numInserted    = 0;
+    d->dy             = 0;
     d->isLayoutRedone = iFalse;
 }
 
 iBool update_GmRebase(iGmRebase *d, const iGmDocument *doc) {
-    d->newSource = constBegin_String(&doc->source);
-    d->newRuns   = constData_Array(&doc->layout);
+    d->newSource      = constBegin_String(&doc->source);
     d->isLayoutRedone = (d->layoutGen != doc->layoutGen);
+    d->numInserted    = d->isLayoutRedone ? 0 : doc->layoutInserted - d->layoutInserted;
+    d->dy             = doc->layoutShift - d->layoutShift;
+    d->newRuns        = d->numInserted ? constAt_Array(&doc->layout, d->numInserted)
+                                       : constData_Array(&doc->layout);
     return (d->newSource != d->oldSource.start && !isEmpty_Range(&d->oldSource)) ||
            (d->newRuns != d->oldRuns.start && d->oldRuns.start != d->oldRuns.end);
 }
@@ -383,7 +391,8 @@ static uint32_t applyDocPrefs_GmDocument_(iGmDocument *d, const iDocPrefs *prefs
             invalidateParse_GmDocument_(d);
         }
         if (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag)) {
-            d->wrapWidth = 0;
+            d->wrapWidth    = 0;
+            d->maxLineWidth = -1;
             invalidateLayout_GmDocument(d);
         }
     }
@@ -984,6 +993,7 @@ static void importMarkdown_GmDocument_(iGmDocument *d) {
 static void importMore_GmDocument_(iGmDocument *d) {
     /* Appends the newly received lines to the source. An incomplete last line is held back
        until the source is final. */
+    d->maxLineWidth = -1;
     const iRangecc orig  = range_String(&d->origSource);
     const char    *start = orig.start + d->import.pos;
     const char    *end   = orig.end;
@@ -1029,6 +1039,7 @@ static void importMore_GmDocument_(iGmDocument *d) {
 static void import_GmDocument_(iGmDocument *d) {
     deleteTypesetter_GmDocument_(d);
     invalidateParse_GmDocument_(d);
+    d->maxLineWidth = -1;
     d->format = d->origFormat;
     d->flags.isConvertedMarkdown = iFalse;
     d->import.isValid     = iTrue;
@@ -1211,7 +1222,10 @@ const iString *source_GmDocument(const iGmDocument *d) {
 }
 
 iGmRunRange runRange_GmDocument(const iGmDocument *d) {
-    return (iGmRunRange){ constFront_Array(&d->layout), constEnd_Array(&d->layout) };
+    if (isEmpty_Array(&d->layout)) {
+        return (iGmRunRange){ NULL, NULL };
+    }
+    return (iGmRunRange){ constData_Array(&d->layout), constEnd_Array(&d->layout) };
 }
 
 size_t memorySize_GmDocument(const iGmDocument *d) {
@@ -1320,6 +1334,21 @@ const iGmRun *findRunAtLoc_GmDocument(const iGmDocument *d, const char *textCStr
         if (contains_Range(&run->text, textCStr) || run->text.start > textCStr /* went past */) {
             return run;
         }
+    }
+    return NULL;
+}
+
+const char *sourceLoc_GmDocument(const iGmDocument *d, const iGmRun *run) {
+    const iRangecc src = range_String(&d->source);
+    if (~run->flags & decoration_GmRunFlag && run->text.start >= src.start &&
+        run->text.start <= src.end) {
+        return run->text.start;
+    }
+    if (preId_GmRun(run)) {
+        return constValue_Array(&d->preMeta, preId_GmRun(run) - 1, iGmPreMeta).bounds.start;
+    }
+    if (run->linkId) {
+        return ((const iGmLink *) constAt_PtrArray(&d->links, run->linkId - 1))->urlRange.start;
     }
     return NULL;
 }

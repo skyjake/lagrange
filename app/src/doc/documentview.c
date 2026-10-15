@@ -839,20 +839,43 @@ void documentAppended_DocumentView(iDocumentView *d, const iGmRebase *rebase) {
     const iGmRunRange runs     = runRange_GmDocument(d->doc);
     const size_t      oldCount = ((uintptr_t) rebase->oldRuns.end -
                                   (uintptr_t) rebase->oldRuns.start) / sizeof(iGmRun);
-    if (oldCount >= (size_t) (runs.end - runs.start)) {
+    iVisBuf *visBuf = d->visBuf;
+    for (size_t i = 0; i < visBuf->numBuffers; i++) {
+        applyRunRange_GmRebase(rebase, &((iVisBufMeta *) visBuf->buffers[i].user)->runsDrawn);
+    }
+    if (rebase->dy || rebase->numInserted) {
+        /* The old runs moved along with the scroll position. The inserted runs are above
+           them, where nothing has been drawn. */
+        const int dy  = rebase->dy;
+        const int top = oldCount ? top_Rect(rebase->newRuns->visBounds) : INT_MIN;
+        visBuf->vis.start += dy;
+        visBuf->vis.end   += dy;
+        for (size_t i = 0; i < visBuf->numBuffers; i++) {
+            iVisBufTexture *buf  = &visBuf->buffers[i];
+            iVisBufMeta    *meta = buf->user;
+            buf->origin += dy;
+            if (!isEmpty_Rangei(buf->validRange)) {
+                buf->validRange.start = iMax(buf->validRange.start + dy, top);
+                buf->validRange.end  += dy;
+                if (isEmpty_Rangei(buf->validRange)) {
+                    buf->validRange = (iRangei){ 0, 0 };
+                    iZap(meta->runsDrawn);
+                }
+            }
+        }
+    }
+    if (oldCount >= (size_t) (runs.end - rebase->newRuns)) {
         return;
     }
-    const iGmRun *firstNew = runs.start + oldCount;
+    const iGmRun *firstNew = rebase->newRuns + oldCount;
     int newTop = INT_MAX;
     for (const iGmRun *run = firstNew; run < runs.end; run++) {
         newTop = iMin(newTop, top_Rect(run->visBounds));
     }
     /* Continue drawing buffers into the area of the new runs. */
-    iVisBuf *visBuf = d->visBuf;
     for (size_t i = 0; i < visBuf->numBuffers; i++) {
         iVisBufTexture *buf  = &visBuf->buffers[i];
         iVisBufMeta    *meta = buf->user;
-        applyRunRange_GmRebase(rebase, &meta->runsDrawn);
         if (isEmpty_Rangei(buf->validRange) || buf->validRange.end <= newTop) {
             continue;
         }
@@ -866,6 +889,12 @@ void documentAppended_DocumentView(iDocumentView *d, const iGmRebase *rebase) {
         }
         buf->validRange.end = newTop;
     }
+}
+
+void moveScroll_DocumentView(iDocumentView *d, int dy) {
+    /* The document moved, so the view follows without animating. */
+    d->scrollY.pos.from += dy;
+    d->scrollY.pos.to   += dy;
 }
 
 void resetScroll_DocumentView(iDocumentView *d) {
@@ -1124,6 +1153,69 @@ static iBool updatePagedLayout_DocumentView_(iDocumentView *d, iBool force) {
     return iTrue;
 }
 
+static iBool isSourceRun_DocumentView_(const iDocumentView *d, const iGmRun *run) {
+    const iGmRunRange runs = runRange_GmDocument(d->doc);
+    const iString    *src  = source_GmDocument(d->doc);
+    return run && run >= runs.start && run < runs.end && ~run->flags & decoration_GmRunFlag &&
+           run->text.start >= constBegin_String(src) && run->text.start < constEnd_String(src);
+}
+
+iDeclareType(VisibleSourceRun)
+
+struct Impl_VisibleSourceRun {
+    const iDocumentView *view;
+    const iGmRun        *run;
+};
+
+static void find_VisibleSourceRun_(void *context, const iGmRun *run) {
+    iVisibleSourceRun *d = context;
+    if (!d->run && isSourceRun_DocumentView_(d->view, run)) {
+        d->run = run;
+    }
+}
+
+static const iGmRun *firstVisibleSourceRun_DocumentView_(const iDocumentView *d) {
+    iVisibleSourceRun params = { d, NULL };
+    render_GmDocument(d->doc, visibleRange_DocumentView(d), find_VisibleSourceRun_, &params);
+    return params.run;
+}
+
+static void setLayoutAnchor_DocumentView_(iDocumentView *d, const iGmRun *keep, iBool keepCenter) {
+    /* The relayout begins at the top of the visible area, or above it if the content may
+       shrink. The kept run stays where it is. */
+    const iGmRunRange runs     = runRange_GmDocument(d->doc);
+    const iRangei     visRange = visibleRange_DocumentView(d);
+    const int         height   = height_Rect(bounds_Widget(constAs_Widget(d->owner)));
+    const iGmRun     *start    = keep;
+    /* Partially visible runs above the kept one. */
+    while (start > runs.start && bottom_Rect(start[-1].visBounds) > visRange.start) {
+        start--;
+    }
+    if (keepCenter) {
+        while (start > runs.start && top_Rect(start[-1].visBounds) >= visRange.start - height / 2) {
+            start--;
+        }
+    }
+    const char *startPos = NULL;
+    int         startTop = 0;
+    for (const iGmRun *run = start; run <= keep; run++) {
+        if ((startPos = sourceLoc_GmDocument(d->doc, run)) != NULL) {
+            startTop = top_Rect(run->visBounds);
+            break;
+        }
+    }
+    if (!startPos || startPos > keep->text.start) {
+        startPos = keep->text.start;
+        startTop = top_Rect(keep->visBounds);
+    }
+    setLayoutAnchor_GmDocument(d->doc,
+                               startPos,
+                               startTop,
+                               keep->text.start,
+                               top_Rect(keep->visBounds),
+                               visRange.end + height);
+}
+
 iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, iBool keepCenter) {
     setCentered_Banner(d->banner, wantsPaged_DocumentView(d));
     if (isPaged_DocumentView(d) || wantsPaged_DocumentView(d)) {
@@ -1139,8 +1231,17 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     }
     /* Font changes (i.e., zooming) will keep the view centered, otherwise keep the top
        of the visible area fixed. */
-    const iGmRun *run     = keepCenter ? middleRun_DocumentView_(d) : d->visibleRuns.start;
+    const iGmRun *run     = keepCenter ? middleRun_DocumentView_(d) : NULL;
+    if (!isSourceRun_DocumentView_(d, run)) {
+        run = firstVisibleSourceRun_DocumentView_(d);
+    }
+    if (!run) {
+        run = d->visibleRuns.start;
+    }
     const char *  runLoc  = (run ? run->text.start : NULL);
+    if (isSourceRun_DocumentView_(d, run)) {
+        setLayoutAnchor_DocumentView_(d, run, keepCenter);
+    }
     int           voffset = 0;
     float         midPos  = 0.5f; /* normalized position of view center inside the run */
     if (!keepCenter && run) {

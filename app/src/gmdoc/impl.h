@@ -62,6 +62,10 @@ struct Impl_GmParser {
     uint16_t preId; /* current block while `isPreformat` */
     iRangecc line;  /* last parsed line */
     iArray  *oldPreMeta; /* fold states from before reparsing */
+    /* Long-range layout state, for seeding the typesetter anywhere. */
+    iBool    isPrevPre;     /* previous line was preformatted (for indents) */
+    size_t   indentPos;     /* offset of the line that enables indents */
+    size_t   firstTextPos;  /* offset of the line that ends the first paragraph (lede) */
 };
 
 iDeclareType(GmImport)
@@ -73,6 +77,15 @@ struct Impl_GmImport {
 };
 
 iDeclareType(Typesetter)
+iDeclareType(GmLayoutAnchor)
+
+struct Impl_GmLayoutAnchor {
+    const char *startPos; /* synchronous layout begins at this line */
+    int         startTop;
+    const char *pos;      /* the run with this text is kept at `top` */
+    int         top;
+    int         bottom;   /* synchronous layout continues until here */
+};
 
 struct Impl_GmDocument {
     iObject object;
@@ -93,11 +106,16 @@ struct Impl_GmDocument {
     iGmDocumentMetrics requestedMetrics;
     size_t    numFilledColumns; /* columns with content in a paginated layout */
     int       wrapWidth;    /* if non-zero, overrides the line wrap width */
+    int       maxLineWidth; /* widest line of plain text; -1 if not measured */
+    uint32_t  maxLineFontKey;
     iGmImport import;
     iGmParser parser;
     iTypesetter *typesetter; /* kept until the layout is finished */
     int       layoutSyncHeight; /* the rest of the layout is done in time slices */
+    iGmLayoutAnchor layoutAnchor; /* for the next layout */
     uint32_t  layoutGen;        /* incremented when the layout is redone */
+    size_t    layoutInserted;   /* total number of runs inserted at the front */
+    int       layoutShift;      /* total vertical offset applied to existing runs */
     iArray    layout;     /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
@@ -137,8 +155,22 @@ struct Impl_GmDocument {
         iBool isTinylogEntry : 1;
         iBool isSourceFinal : 1; /* all of the source has been received */
         iBool isLayoutCaughtUp : 1; /* all of the imported source is laid out */
+        iBool isAnchoredLayout : 1; /* layout began at a visible line instead of the top */
     } flags;
 };
+
+iLocalDef iBool isHRule_Rangecc_(iRangecc line) {
+    /* This is used in Markdown sources. */
+    if (!startsWith_Rangecc(line, "---")) {
+        return iFalse;
+    }
+    for (const char *ch = line.start; ch < line.end; ch++) {
+        if (*ch != '-') {
+            return iFalse;
+        }
+    }
+    return iTrue;
+}
 
 iLocalDef iBool nextLine_Rangecc_(iRangecc text, iRangecc *line) {
     /* Continues where the previous call left off, also after `text` has grown. */

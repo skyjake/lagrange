@@ -298,11 +298,29 @@ static void beginPreformatted_GmDocument_(iGmDocument *d, iRangecc line, const i
     p->preId       = size_Array(&d->preMeta);
 }
 
+static void updateContext_GmParser_(iGmParser *d, size_t offset, iBool enablesIndents,
+                                    iBool endsFirstText) {
+    if (enablesIndents && d->indentPos == iInvalidPos) {
+        d->indentPos = offset;
+    }
+    if (endsFirstText && d->firstTextPos == iInvalidPos) {
+        d->firstTextPos = offset;
+    }
+}
+
 static void parseLine_GmDocument_(iGmDocument *d, iRangecc line, const iArray *oldPreMeta) {
-    iGmParser *p = &d->parser;
+    /* The context updates mirror how the typesetter handles each line. */
+    iGmParser   *p      = &d->parser;
+    const size_t offset = line.start - constBegin_String(&d->source);
     if (d->flags.isNex) {
         if (lineType_GmDocument_(d, line) == link_GmLineType) {
             addLink_GmDocument_(d, line);
+        }
+        if (*line.end == '\r') {
+            line.end--;
+        }
+        if (!isEmpty_Range(&line)) {
+            updateContext_GmParser_(p, offset, iTrue, iTrue);
         }
         return;
     }
@@ -312,8 +330,21 @@ static void parseLine_GmDocument_(iGmDocument *d, iRangecc line, const iArray *o
             p->isPreformat = iFalse;
             p->preId       = 0;
         }
-        else if (meta) {
-            meta->contents.end = line.end;
+        else {
+            if (meta) {
+                meta->contents.end = line.end;
+            }
+            iRangecc text = line;
+            if (*text.end == '\r') {
+                text.end--;
+            }
+            if (line.start == constBegin_String(&d->source)) {
+                p->isPrevPre = iTrue;
+            }
+            if (!isEmpty_Range(&text)) {
+                updateContext_GmParser_(p, offset, !p->isPrevPre || isGopher_GmDocument_(d), iTrue);
+            }
+            p->isPrevPre = iTrue;
         }
         if (meta) {
             /* An unterminated block extends to the end of the source. */
@@ -324,18 +355,39 @@ static void parseLine_GmDocument_(iGmDocument *d, iRangecc line, const iArray *o
     if (*line.end == '\r') {
         line.end--;
     }
-    const enum iGmLineType type = lineType_GmDocument_(d, line);
+    enum iGmLineType type = lineType_GmDocument_(d, line);
+    if (line.start == constBegin_String(&d->source)) {
+        p->isPrevPre = (type == preformatted_GmLineType);
+    }
     if (type == preformatted_GmLineType) {
         beginPreformatted_GmDocument_(d, line, oldPreMeta);
+        return;
     }
-    else if (type == link_GmLineType) {
+    iRangecc text = line;
+    if (type == link_GmLineType) {
+        const size_t numLinks = size_PtrArray(&d->links);
         addLink_GmDocument_(d, line);
+        if (size_PtrArray(&d->links) > numLinks) {
+            text = ((const iGmLink *) back_PtrArray(&d->links))->textRange;
+        }
+        else {
+            type = text_GmLineType;
+        }
     }
     else if (type >= heading1_GmLineType && type <= heading3_GmLineType) {
-        trimLine_Rangecc(&line, type, shouldBeNormalized_GmDocument_(d));
+        iRangecc heading = line;
+        trimLine_Rangecc(&heading, type, shouldBeNormalized_GmDocument_(d));
         pushBack_Array(&d->headings,
-                       &(iGmHeading){ .text = line, .level = type - heading1_GmLineType });
+                       &(iGmHeading){ .text = heading, .level = type - heading1_GmLineType });
     }
+    if (d->origFormat == markdown_SourceFormat && isHRule_Rangecc_(line)) {
+        return;
+    }
+    trimLine_Rangecc(&text, type, shouldBeNormalized_GmDocument_(d));
+    if (!isEmpty_Range(&text)) {
+        updateContext_GmParser_(p, offset, iTrue, type != heading1_GmLineType);
+    }
+    p->isPrevPre = iFalse;
 }
 
 iBool isPreOpen_GmDocument_(const iGmDocument *d, uint16_t preId) {
@@ -351,9 +403,12 @@ static void begin_GmParser_(iGmDocument *d) {
         clear_Array(&d->preMeta);
         deinit_GmParser(p);
         init_GmParser(p);
-        p->isValid     = iTrue;
-        p->isPreformat = (d->format == plainText_SourceFormat);
-        p->oldPreMeta  = oldPreMeta;
+        p->isValid      = iTrue;
+        p->isPreformat  = (d->format == plainText_SourceFormat);
+        p->isPrevPre    = iFalse;
+        p->indentPos    = iInvalidPos;
+        p->firstTextPos = iInvalidPos;
+        p->oldPreMeta   = oldPreMeta;
         updateOpenURLs_GmDocument_(d);
     }
 }

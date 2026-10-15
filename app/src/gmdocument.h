@@ -230,8 +230,12 @@ struct Impl_GmRebase {
     iRangecc      oldSource;
     const char   *newSource;
     iGmRunRange   oldRuns;
-    const iGmRun *newRuns;
+    const iGmRun *newRuns;     /* new location of the first old run */
     uint32_t      layoutGen;
+    size_t        layoutInserted;
+    int           layoutShift;
+    size_t        numInserted; /* runs added in front of the old runs */
+    int           dy;          /* vertical offset of the old runs */
     iBool         isLayoutRedone; /* runs are all new and cannot be rebased */
 };
 
@@ -268,6 +272,11 @@ void    setLayoutSyncHeight_GmDocument(iGmDocument *, int height); /* below it, 
 iBool   isLayoutPending_GmDocument(const iGmDocument *); /* there is more to lay out in slices */
 iBool   isLayoutFinished_GmDocument(const iGmDocument *); /* all of the source laid out */
 iBool   continueLayout_GmDocument(iGmDocument *, int minHeight, double maxSeconds); /* True if changed */
+void    setLayoutAnchor_GmDocument(iGmDocument *, const char *startPos, int startTop,
+                                   const char *pos, int top, int bottom); /* for the next layout */
+iBool   isLayoutIndeterminate_GmDocument(const iGmDocument *); /* content above not yet known */
+iBool   settleLayout_GmDocument (iGmDocument *); /* lays out the content above; True if changed */
+const char *sourceLoc_GmDocument(const iGmDocument *, const iGmRun *run); /* on the run's line */
 void    finishLayout_GmDocument (iGmDocument *); /* lays out all of the received source */
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */

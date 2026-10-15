@@ -392,11 +392,15 @@ enum iWheelSwipeState wheelSwipeState_DocumentWidget(const iDocumentWidget *d) {
     return wheelState_DocumentSwipe(d->swipe);
 }
 
+static void checkPendingLayout_DocumentWidget_(const iDocumentWidget *);
+static void settleLayout_DocumentWidget_(iDocumentWidget *);
+
 void documentRunsInvalidated_DocumentWidget(iDocumentWidget *d) {
     d->foundMark     = iNullRange;
     d->selectMark    = iNullRange;
     d->contextLink   = NULL;
     documentRunsInvalidated_DocumentView(d->view);
+    checkPendingLayout_DocumentWidget_(d);
 }
 
 static void enableActions_DocumentWidget_(iDocumentWidget *d, iBool enable) {
@@ -718,8 +722,6 @@ void updateBanner_DocumentWidget(iDocumentWidget *d) {
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view->doc));
 }
 
-static void checkPendingLayout_DocumentWidget_(const iDocumentWidget *);
-
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     iChangeFlags(d->flags, selecting_DocumentWidgetFlag | viewSource_DocumentWidgetFlag, iFalse);
     setFlags_Widget(d, touchDrag_WidgetFlag, iFalse);
@@ -775,12 +777,15 @@ static void layoutContinued_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebas
        drawn buffers can be kept. */
     iGmDocument *doc = d->view->doc;
     update_GmRebase(rebase, doc);
+    /* Content above the visible area was spliced in. */
+    moveScroll_DocumentView(d->view, rebase->dy);
     if (rebase->isLayoutRedone) {
         documentRunsInvalidated_DocumentWidget(d);
         invalidate_DocumentView(d->view);
         isHandoff = iTrue;
     }
     else {
+        isHandoff |= (rebase->numInserted > 0 || rebase->dy != 0);
         apply_GmRebase(rebase, &d->selectMark);
         apply_GmRebase(rebase, &d->initialSelectMark);
         apply_GmRebase(rebase, &d->foundMark);
@@ -824,6 +829,16 @@ static void continueLayout_DocumentWidget_(iAny *ptr) {
 static void checkPendingLayout_DocumentWidget_(const iDocumentWidget *d) {
     if (d->view->doc && isLayoutPending_GmDocument(d->view->doc)) {
         addTicker_App(continueLayout_DocumentWidget_, iConstCast(iDocumentWidget *, d));
+    }
+}
+
+static void settleLayout_DocumentWidget_(iDocumentWidget *d) {
+    /* The scroll position must be known before scrolling. */
+    if (d->view->doc && isLayoutIndeterminate_GmDocument(d->view->doc)) {
+        iGmRebase rebase;
+        init_GmRebase(&rebase, d->view->doc);
+        settleLayout_GmDocument(d->view->doc);
+        layoutContinued_DocumentWidget_(d, &rebase, iFalse, iTrue);
     }
 }
 
@@ -1545,6 +1560,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         document_App() == d) {
         finishLayout_DocumentWidget_(d);
     }
+    else if (startsWith_CStr(cmd, "scroll.") && document_App() == d) {
+        settleLayout_DocumentWidget_(d);
+    }
     if (handleCommand_Query(d->query, cmd)) {
         return iTrue;
     }
@@ -2156,6 +2174,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.reload") && document_Command(cmd) == d) {
         d->view->userHasScrolled = iFalse; /* respect the current scroll position */
+        settleLayout_DocumentWidget_(d);
         d->initNormScrollY = normScrollPos_DocumentView(d->view);
         if (equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
             /* Reopen so the Upload dialog gets shown. */
@@ -2656,6 +2675,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
         if (!isRequestOngoing_DocumentFetch(d->fetch)) {
+            settleLayout_DocumentWidget_(d);
             setUrlAndSource_DocumentWidget(d,
                                            d->mod.url,
                                            string_Command(cmd, "mime"),
@@ -2960,6 +2980,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_KEY_DOWN) {
         /* Swiping past the first or last page counts as a repeat only with nothing between. */
         disarmEdge_DocumentView(view);
+    }
+    if (ev->type == SDL_EVENT_MOUSE_WHEEL || ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+        ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_FINGER_DOWN) {
+        settleLayout_DocumentWidget_(d);
     }
     /* Check if a swipe interaction has ended without inertia. */
     if (isMobile_Platform() && wheelState_DocumentSwipe(d->swipe) == direct_WheelSwipeState &&
@@ -3789,6 +3813,7 @@ void didScrollView_DocumentWidget(iDocumentWidget *d) {
         iAssert(~d->widget.flags & destroyPending_WidgetFlag);
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && size_GmDocument(d->view->doc).y > 0 && d->fetch->state == ready_RequestState &&
+            !isLayoutIndeterminate_GmDocument(d->view->doc) &&
             equal_String(&recent->url, d->mod.url)) {
             recent->normScrollY = normScrollPos_DocumentView(d->view);
         }

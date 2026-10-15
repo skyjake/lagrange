@@ -138,6 +138,7 @@ void    allocVisBuffer_DocumentView     (const iDocumentView *);
 
 void    invalidate_DocumentView         (iDocumentView *);
 void    documentAppended_DocumentView   (iDocumentView *, const iGmRebase *rebase);
+void    moveScroll_DocumentView         (iDocumentView *, int dy);
 void    invalidateLink_DocumentView     (iDocumentView *, iGmLinkId id);
 void    invalidateVisibleLinks_DocumentView(iDocumentView *);
 void    documentRunsInvalidated_DocumentView(iDocumentView *);
