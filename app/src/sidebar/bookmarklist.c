@@ -113,7 +113,16 @@ static iBool filterTrash_(void *d, const iBookmark *bm) {
 }
 
 iBool isShowingTrash_SidebarWidget(const iSidebarWidget *d) {
-    return isSelected_Widget(findChild_Widget(constAs_Widget(d), "filter.bookmarks.trash"));
+    return d->showTrash;
+}
+
+static void updateTrashToggle_SidebarWidget_(iSidebarWidget *d) {
+    iLabelWidget *toggle = findChild_Widget(as_Widget(d), "filter.bookmarks.trash");
+    if (toggle) {
+        setFlags_Widget(as_Widget(toggle), selected_WidgetFlag, d->showTrash);
+        setFlags2_Widget(as_Widget(toggle), dropTarget_WidgetFlag2, !d->showTrash);
+        updateFontStyle_LabelWidget(toggle, d->showTrash ? bold_FontStyle : regular_FontStyle);
+    }
 }
 
 static void updateBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
@@ -314,6 +323,7 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             format_CStr("%s.bookmarks.edit", cstr_String(&d->widget.id)),
             0), "mobile.bookmarks.edit");
     }
+    updateTrashToggle_SidebarWidget_(d);
     return !isEmpty;
 }
 
@@ -557,11 +567,8 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
     }
     else if (d->mode == bookmarks_SidebarMode &&
              isCommand_Widget(w, ev, "bookmarks.trash.toggle")) {
-        iLabelWidget *toggle  = findChild_Widget(w, "filter.bookmarks.trash");
-        const iBool showTrash = !isSelected_Widget(toggle);
-        setFlags_Widget(toggle, selected_WidgetFlag, showTrash);
-        setFlags2_Widget(toggle, dropTarget_WidgetFlag2, !showTrash);
-        updateFontStyle_LabelWidget(toggle, showTrash ? bold_FontStyle : regular_FontStyle);
+        d->showTrash = !d->showTrash;
+        updateTrashToggle_SidebarWidget_(d);
         updateItemsWithFlags_SidebarWidget_(d, iTrue);
         return iTrue;
     }

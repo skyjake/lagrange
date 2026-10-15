@@ -110,6 +110,7 @@ struct Impl_SidebarWidget {
     size_t            contextIndex;  /* index of list item accessed in the context menu */
     iIntSet          *openFolders;   /* otherwise folded */
     iString           bookmarkFilter;
+    iBool             showTrash;
     iStringSet       *structureUrls;
     iString           structureHost;
     iStringSet       *structureUnfolds;

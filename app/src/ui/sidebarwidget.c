@@ -975,6 +975,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->actions       = NULL;
     d->openFolders   = new_IntSet();
     init_String(&d->bookmarkFilter);
+    d->showTrash = iFalse;
     init_String(&d->structureHost);
     d->structureUrls    = new_StringSet();
     d->structureUnfolds = new_StringSet();
