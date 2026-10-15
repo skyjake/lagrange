@@ -222,6 +222,23 @@ struct Impl_GmDocumentMetrics {
 
 iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
 
+/* Appending to a document may move the source and the runs in memory. Pointers into them
+   can be rebased by recording the locations before the change. */
+iDeclareType(GmRebase)
+
+struct Impl_GmRebase {
+    iRangecc      oldSource;
+    const char   *newSource;
+    iGmRunRange   oldRuns;
+    const iGmRun *newRuns;
+};
+
+void    init_GmRebase           (iGmRebase *, const iGmDocument *doc);
+iBool   update_GmRebase         (iGmRebase *, const iGmDocument *doc); /* returns True if moved */
+void    apply_GmRebase          (const iGmRebase *, iRangecc *range);
+void    applyRun_GmRebase       (const iGmRebase *, const iGmRun **run);
+void    applyRunRange_GmRebase  (const iGmRebase *, iGmRunRange *runs);
+
 struct Impl_GmBookPosition {
     const iString *title;        /* of the book */
     const iString *chapterTitle; /* level 1 heading in effect where the document begins */
@@ -271,8 +288,9 @@ int     chapter_GmDocument      (const iGmDocument *, int *numChapters_out); /* 
 iBool   setCoverImage_GmDocument(iGmDocument *, iGmLinkId linkId); /* no link text or image info; returns True if changed */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source,
-                                 const iGmDocumentMetrics *metrics, enum iGmDocumentUpdate updateType);
+iBool   setSource_GmDocument    (iGmDocument *, const iString *source,
+                                 const iGmDocumentMetrics *metrics,
+                                 enum iGmDocumentUpdate updateType); /* returns True if appended */
 void    setWarning_GmDocument   (iGmDocument *, int warning, iBool set);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 

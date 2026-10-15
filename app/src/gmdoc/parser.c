@@ -282,7 +282,7 @@ static void beginPreformatted_GmDocument_(iGmDocument *d, iRangecc line, const i
     meta.altText  = line;
     trimLine_Rangecc(&meta.altText, preformatted_GmLineType, shouldBeNormalized_GmDocument_(d));
     /* Fold state is kept over reparsing. */
-    if (preIndex < size_Array(oldPreMeta)) {
+    if (oldPreMeta && preIndex < size_Array(oldPreMeta)) {
         meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags & folded_GmPreMetaFlag;
     }
     else if (d->docPrefs.collapsePre.value >= byDefault_Collapse && !isGopher_GmDocument_(d)) {
@@ -333,21 +333,25 @@ static void parseLine_GmDocument_(iGmDocument *d, iRangecc line, const iArray *o
     }
 }
 
+iBool isPreOpen_GmDocument_(const iGmDocument *d, uint16_t preId) {
+    return d->parser.isPreformat && d->parser.preId == preId;
+}
+
 void ensureParsed_GmDocument_(iGmDocument *d) {
-    iGmParser *p = &d->parser;
-    if (p->isValid) {
-        return;
+    /* Parses lines appended to the source since the last call. */
+    iGmParser    *p          = &d->parser;
+    const iArray *oldPreMeta = NULL;
+    if (!p->isValid) {
+        oldPreMeta = collect_Array(copy_Array(&d->preMeta));
+        clearLinks_GmDocument_(d);
+        clear_Array(&d->headings);
+        clear_Array(&d->preMeta);
+        init_GmParser(p);
+        p->isValid     = iTrue;
+        p->isPreformat = (d->format == plainText_SourceFormat);
+        updateOpenURLs_GmDocument_(d);
     }
-    iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta));
-    clearLinks_GmDocument_(d);
-    clear_Array(&d->headings);
-    clear_Array(&d->preMeta);
-    init_GmParser(p);
-    p->isValid     = iTrue;
-    p->isPreformat = (d->format == plainText_SourceFormat);
-    updateOpenURLs_GmDocument_(d);
-    iRangecc line = iNullRange;
-    while (nextSplit_Rangecc(range_String(&d->source), "\n", &line)) {
-        parseLine_GmDocument_(d, line, oldPreMeta);
+    while (nextLine_Rangecc_(range_String(&d->source), &p->line)) {
+        parseLine_GmDocument_(d, p->line, oldPreMeta);
     }
 }

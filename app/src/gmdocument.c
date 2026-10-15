@@ -207,7 +207,9 @@ void init_GmDocument(iGmDocument *d) {
     iZap(d->style);
     d->wrapWidth = 0;
     d->size = zero_I2();
+    iZap(d->import);
     init_GmParser(&d->parser);
+    d->typesetter = NULL;
     init_Array(&d->layout, sizeof(iGmRun));
     init_StringArray(&d->auxText);
     init_PtrArray(&d->links);
@@ -239,9 +241,11 @@ void init_GmDocument(iGmDocument *d) {
     d->flags.isUiTheme   = iFalse;
     d->flags.isDocPrefsPinned = iFalse;
     d->flags.isPageViewInverted = iFalse;
+    d->flags.isSourceFinal = iFalse;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
+    deleteTypesetter_GmDocument_(d);
     iReleasePtr(&d->openURLs);
     delete_Media(d->media);
     deinit_String(&d->chapterTitle);
@@ -263,6 +267,82 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->url);
     deinit_String(&d->source);
     deinit_String(&d->origSource);
+}
+
+void init_GmRebase(iGmRebase *d, const iGmDocument *doc) {
+    d->oldSource = range_String(&doc->source);
+    d->newSource = d->oldSource.start;
+    d->oldRuns   = (iGmRunRange){ constData_Array(&doc->layout), constEnd_Array(&doc->layout) };
+    d->newRuns   = d->oldRuns.start;
+}
+
+iBool update_GmRebase(iGmRebase *d, const iGmDocument *doc) {
+    d->newSource = constBegin_String(&doc->source);
+    d->newRuns   = constData_Array(&doc->layout);
+    return (d->newSource != d->oldSource.start && !isEmpty_Range(&d->oldSource)) ||
+           (d->newRuns != d->oldRuns.start && d->oldRuns.start != d->oldRuns.end);
+}
+
+static iBool isWithin_(const void *ptr, const void *start, const void *end) {
+    /* The old memory may already be freed, so just compare the addresses. */
+    return ptr && (uintptr_t) ptr >= (uintptr_t) start && (uintptr_t) ptr <= (uintptr_t) end;
+}
+
+static const char *rebaseSource_GmRebase_(const iGmRebase *d, const char *ptr) {
+    /* Splitting may leave a range start one past the end. */
+    if (isWithin_(ptr, d->oldSource.start, d->oldSource.end + 1)) {
+        return d->newSource + ((uintptr_t) ptr - (uintptr_t) d->oldSource.start);
+    }
+    return ptr;
+}
+
+void apply_GmRebase(const iGmRebase *d, iRangecc *range) {
+    if (d->newSource != d->oldSource.start) {
+        range->start = rebaseSource_GmRebase_(d, range->start);
+        range->end   = rebaseSource_GmRebase_(d, range->end);
+    }
+}
+
+void applyRun_GmRebase(const iGmRebase *d, const iGmRun **run) {
+    if (d->newRuns != d->oldRuns.start && isWithin_(*run, d->oldRuns.start, d->oldRuns.end)) {
+        *run = d->newRuns + ((uintptr_t) *run - (uintptr_t) d->oldRuns.start) / sizeof(iGmRun);
+    }
+}
+
+void applyRunRange_GmRebase(const iGmRebase *d, iGmRunRange *runs) {
+    applyRun_GmRebase(d, &runs->start);
+    applyRun_GmRebase(d, &runs->end);
+}
+
+void rebase_GmDocument_(iGmDocument *d, const iGmRebase *rebase) {
+    iForEach(Array, r, &d->layout) {
+        apply_GmRebase(rebase, &((iGmRun *) r.value)->text);
+    }
+    iForEach(PtrArray, i, &d->links) {
+        iGmLink *link = i.ptr;
+        apply_GmRebase(rebase, &link->urlRange);
+        apply_GmRebase(rebase, &link->labelRange);
+        apply_GmRebase(rebase, &link->labelIcon);
+        apply_GmRebase(rebase, &link->textRange);
+    }
+    iForEach(Array, h, &d->headings) {
+        apply_GmRebase(rebase, &((iGmHeading *) h.value)->text);
+    }
+    iForEach(Array, p, &d->preMeta) {
+        iGmPreMeta *meta = p.value;
+        apply_GmRebase(rebase, &meta->bounds);
+        apply_GmRebase(rebase, &meta->altText);
+        apply_GmRebase(rebase, &meta->contents);
+        applyRunRange_GmRebase(rebase, &meta->runRange);
+    }
+    iForEach(Array, b, &d->pageBands) {
+        iGmPageBands *bands = b.value;
+        apply_GmRebase(rebase, &bands->header);
+        apply_GmRebase(rebase, &bands->bookHeader);
+        apply_GmRebase(rebase, &bands->footer);
+    }
+    apply_GmRebase(rebase, &d->parser.line);
+    rebaseTypesetter_GmDocument_(d, rebase);
 }
 
 iMedia *media_GmDocument(iGmDocument *d) {
@@ -293,6 +373,7 @@ static uint32_t applyDocPrefs_GmDocument_(iGmDocument *d, const iDocPrefs *prefs
             invalidatePalette_GmDocument(d);
         }
         if (diff & reparse_DocPrefsSpecFlag) {
+            d->import.isValid = iFalse;
             invalidateParse_GmDocument_(d);
         }
         if (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag)) {
@@ -339,8 +420,13 @@ void setMode_GmDocument(iGmDocument *d, enum iGmDocumentMode mode) {
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {
+    const enum iSourceFormat viewFormat =
+        (format == plainText_SourceFormat ? format : gemini_SourceFormat);
+    if (d->origFormat != format || d->viewFormat != viewFormat) {
+        d->import.isValid = iFalse;
+    }
     d->origFormat = format;
-    d->viewFormat = (format == plainText_SourceFormat ? format : gemini_SourceFormat);
+    d->viewFormat = viewFormat;
 }
 
 iBool setViewFormat_GmDocument(iGmDocument *d, enum iSourceFormat viewFormat) {
@@ -529,107 +615,100 @@ iLocalDef iBool isNormalizableSpace_(char ch) {
     return ch == ' ' || ch == '\t';
 }
 
-static void normalize_GmDocument(iGmDocument *d) {
-    iString *normalized = new_String();
-    iRangecc src = range_String(&d->source);
-    /* Check for a BOM. In UTF-8, the BOM can just be skipped if present. */ {
+static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *out) {
+    static iRegExp *ansiCursorFwdPattern_;
+    if (!ansiCursorFwdPattern_) {
+        ansiCursorFwdPattern_ = new_RegExp("^\x1b\\[([0-9]+)C", 0);
+    }
+    iGmImport *imp = &d->import;
+    if (imp->isPreformat) {
+        for (const char *ch = line.start; ch != line.end; ch++) {
+            if (*ch == 0x1b) {
+                /* We can emulate an ANSI cursor forward sequence by adding spaces. */
+                iRegExpMatch m;
+                init_RegExpMatch(&m);
+                if (matchRange_RegExp(ansiCursorFwdPattern_, (iRangecc){ ch, line.end }, &m)) {
+                    int num = strtoul(capturedRange_RegExpMatch(&m, 1).start, NULL, 10);
+                    if (num > 0 && num < 200 /* arbitrary sanity limit */) {
+                        for (int i = 0; i < num; i++) {
+                            appendData_Block(&out->chars, " ", 1);
+                        }
+                    }
+                    ch = end_RegExpMatch(&m) - 1;
+                    continue;
+                }
+            }
+            if (*ch != '\v') {
+                appendCStrN_String(out, ch, 1);
+            }
+        }
+        appendCStr_String(out, "\n");
+        if (d->format == gemini_SourceFormat &&
+            lineType_GmDocument_(d, line) == preformatted_GmLineType) {
+            imp->isPreformat = iFalse;
+        }
+        return;
+    }
+    if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
+        imp->isPreformat = iTrue;
+        appendRange_String(out, line);
+        appendCStr_String(out, "\n");
+        return;
+    }
+    iBool isPrevSpace = iFalse;
+    int spaceCount = 0;
+    for (const char *ch = line.start; ch != line.end; ch++) {
+        char c = *ch;
+        if (c == '\v') {
+            continue;
+        }
+        if (isNormalizableSpace_(c)) {
+            if (isPrevSpace) {
+                if (++spaceCount == 8) {
+                    /* There are several consecutive space characters. The author likely
+                       really wants to have some space here, so normalize to a tab stop. */
+                    popBack_Block(&out->chars);
+                    pushBack_Block(&out->chars, '\t');
+                }
+                continue; /* skip repeated spaces */
+            }
+            c = ' ';
+            isPrevSpace = iTrue;
+        }
+        else {
+            isPrevSpace = iFalse;
+            spaceCount = 0;
+        }
+        appendCStrN_String(out, &c, 1);
+    }
+    appendCStr_String(out, "\n");
+}
+
+static void normalize_GmDocument_(iGmDocument *d, iRangecc src, iBool isStart, iString *out) {
+    if (isStart) {
+        /* Check for a BOM. In UTF-8, the BOM can just be skipped if present. */
         iChar ch = 0;
         decodeBytes_MultibyteChar(src.start, src.end, &ch);
         if (ch == 0xfeff) /* zero-width non-breaking space */ {
             src.start += 3;
         }
-    }
-    iRangecc line = iNullRange;
-    iBool isPreformat = iFalse;
-    if (d->format == plainText_SourceFormat) {
-        isPreformat = iTrue; /* Cannot be turned off. */
-    }
-    iBool wasNormalized = iFalse;
-    iRegExp *ansiCursorFwdPattern = new_RegExp("^\x1b\\[([0-9]+)C", 0);
-    while (nextSplit_Rangecc(src, "\n", &line)) {
-        if (isPreformat) {
-            for (const char *ch = line.start; ch != line.end; ch++) {
-                if (*ch == 0x1b) {
-                    /* We can emulate an ANSI cursor forward sequence by adding spaces. */
-                    iRegExpMatch m;
-                    init_RegExpMatch(&m);
-                    if (matchRange_RegExp(ansiCursorFwdPattern, (iRangecc){ ch, line.end }, &m)) {
-                        int num = strtoul(capturedRange_RegExpMatch(&m, 1).start, NULL, 10);
-                        if (num > 0 && num < 200 /* arbitrary sanity limit */) {
-                            for (int i = 0; i < num; i++) {
-                                appendData_Block(&normalized->chars, " ", 1);
-                            }
-                        }
-                        ch = end_RegExpMatch(&m) - 1;
-                        wasNormalized = iTrue;
-                        continue;
-                    }
-                }
-                if (*ch != '\v') {
-                    appendCStrN_String(normalized, ch, 1);
-                }
-                else {
-                    wasNormalized = iTrue;
-                }
-            }
-            appendCStr_String(normalized, "\n");
-            if (d->format == gemini_SourceFormat &&
-                lineType_GmDocument_(d, line) == preformatted_GmLineType) {
-                isPreformat = iFalse;
-            }
-            continue;
+        /* Splitting skips a newline at the start (see `nextSplit_Rangecc`). */
+        if (src.start < src.end && *src.start == '\n') {
+            src.start++;
         }
-        if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
-            isPreformat = iTrue;
-            appendRange_String(normalized, line);
-            appendCStr_String(normalized, "\n");
-            continue;
-        }
-        iBool isPrevSpace = iFalse;
-        int spaceCount = 0;
-        for (const char *ch = line.start; ch != line.end; ch++) {
-            char c = *ch;
-            if (c == '\v') {
-                wasNormalized = iTrue;
-                continue;
-            }
-            if (isNormalizableSpace_(c)) {
-                if (isPrevSpace) {
-                    if (++spaceCount == 8) {
-                        /* There are several consecutive space characters. The author likely
-                           really wants to have some space here, so normalize to a tab stop. */
-                        popBack_Block(&normalized->chars);
-                        pushBack_Block(&normalized->chars, '\t');
-                    }
-                    wasNormalized = iTrue;
-                    continue; /* skip repeated spaces */
-                }
-                if (c != ' ') {
-                    c = ' ';
-                    wasNormalized = iTrue;
-                }
-                isPrevSpace = iTrue;
-            }
-            else {
-                isPrevSpace = iFalse;
-                spaceCount = 0;
-            }
-            appendCStrN_String(normalized, &c, 1);
-        }
-        appendCStr_String(normalized, "\n");
     }
-    iUnused(wasNormalized);
-    iRelease(ansiCursorFwdPattern);
-//    printf("wasNormalized: %d\n", wasNormalized);
-//    fflush(stdout);
-    set_String(&d->source, collect_String(normalized));
-    //normalize_String(&d->source); /* NFC */
-//    printf("orig:%zu norm:%zu\n", size_String(&d->origSource), size_String(&d->source));
+    while (src.start < src.end) {
+        const char *nl   = memchr(src.start, '\n', src.end - src.start);
+        const iRangecc line = { src.start, nl ? nl : src.end };
+        normalizeLine_GmDocument_(d, line, out);
+        src.start = nl ? nl + 1 : src.end;
+    }
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(&d->url, url)) {
+        d->import.isValid = iFalse;
         invalidateParse_GmDocument_(d);
     }
     set_String(&d->url, url);
@@ -838,69 +917,168 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
     d->format = gemini_SourceFormat;
 }
 
-static void import_GmDocument_(iGmDocument *d) {
-    invalidateParse_GmDocument_(d);
-    d->format = d->origFormat;
-    d->flags.isConvertedMarkdown = iFalse;
-    set_String(&d->source, &d->origSource);
-    replace_String(&d->source, "\r\n", "\n");
-    /* Remove any null characters. */ {
-        const char *ch = constBegin_String(&d->source);
-        for (size_t pos = 0; pos < size_String(&d->source); pos++, ch++) {
-            if (*ch == 0) {
-                remove_Block(&d->source.chars, pos, 1);
-                pos--;
-                ch = constBegin_String(&d->source) + pos;
-            }
-        }
-    }
-    /* Detect use of ANSI escapes. */ {
-        iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)[ABCDEFGHJKSTfimn]", 0);
-        iRegExpMatch m;
-        init_RegExpMatch(&m);
-        const iBool found = matchString_RegExp(ansiEsc, &d->origSource, &m);
-        iChangeFlags(d->warnings, ansiEscapes_GmDocumentWarning, found);
-        iRelease(ansiEsc);
-    }
-    if (d->viewFormat == plainText_SourceFormat) {
-        d->format = plainText_SourceFormat;
-        d->ansiEscapes = allowAll_AnsiFlag;
+static void removeNulls_String_(iString *d) {
+    if (!memchr(cstr_String(d), 0, size_String(d))) {
         return;
     }
-    /* Do an internal format conversion to Gemtext. */
-    iAssert(d->viewFormat == gemini_SourceFormat);
-    if (d->format == gemini_SourceFormat) {
-        d->ansiEscapes = d->docPrefs.ansiEscapes.value;
+    char        *data = data_Block(&d->chars);
+    const size_t size = size_String(d);
+    size_t       n    = 0;
+    for (size_t i = 0; i < size; i++) {
+        if (data[i]) {
+            data[n++] = data[i];
+        }
     }
-    else if (d->format == markdown_SourceFormat) {
-        convertMarkdownToGemtext_GmDocument_(d);
-        d->flags.isConvertedMarkdown = iTrue;
-        d->ansiEscapes = allowAll_AnsiFlag; /* escapes are used for styling */
+    truncate_Block(&d->chars, n);
+}
+
+static iBool hasAnsiEscapes_(iRangecc text) {
+    static iRegExp *ansiEsc_;
+    if (!ansiEsc_) {
+        ansiEsc_ = new_RegExp("\x1b[[()]([0-9;AB]*?)[ABCDEFGHJKSTfimn]", 0);
+    }
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    return matchRange_RegExp(ansiEsc_, text, &m);
+}
+
+static iBool isImportedWhole_GmDocument_(const iGmDocument *d) {
+    /* Markdown conversion needs the whole document. */
+    return d->origFormat == markdown_SourceFormat && d->viewFormat == gemini_SourceFormat;
+}
+
+static void importMarkdown_GmDocument_(iGmDocument *d) {
+    set_String(&d->source, &d->origSource);
+    replace_String(&d->source, "\r\n", "\n");
+    removeNulls_String_(&d->source);
+    convertMarkdownToGemtext_GmDocument_(d);
+    d->flags.isConvertedMarkdown = iTrue;
+    if (shouldBeNormalized_GmDocument_(d)) {
+        iString *converted = copy_String(&d->source);
+        clear_String(&d->source);
+        normalize_GmDocument_(d, range_String(converted), iTrue, &d->source);
+        delete_String(converted);
+    }
+    d->import.pos = size_String(&d->origSource);
+}
+
+static void importMore_GmDocument_(iGmDocument *d) {
+    /* Appends the newly received lines to the source. An incomplete last line is held back
+       until the source is final. */
+    const iRangecc orig  = range_String(&d->origSource);
+    const char    *start = orig.start + d->import.pos;
+    const char    *end   = orig.end;
+    if (!d->flags.isSourceFinal) {
+        while (end > start && end[-1] != '\n') {
+            end--;
+        }
+    }
+    if (start == end) {
+        return;
+    }
+    const iBool isStart = (d->import.pos == 0);
+    d->import.pos = end - orig.start;
+    iString chunk;
+    initRange_String(&chunk, (iRangecc){ start, end });
+    replace_String(&chunk, "\r\n", "\n");
+    removeNulls_String_(&chunk);
+    if (hasAnsiEscapes_(range_String(&chunk))) {
+        d->warnings |= ansiEscapes_GmDocumentWarning;
+    }
+    iGmRebase rebase;
+    init_GmRebase(&rebase, d);
+    if (shouldBeNormalized_GmDocument_(d)) {
+        normalize_GmDocument_(d, range_String(&chunk), isStart, &d->source);
     }
     else {
-        d->ansiEscapes = allowAll_AnsiFlag;
+        append_String(&d->source, &chunk);
     }
-    if (shouldBeNormalized_GmDocument_(d)) {
-        normalize_GmDocument(d);
+    deinit_String(&chunk);
+#if !defined (NDEBUG)
+    /* Always move the source to catch missed rebases. */ {
+        iBlock *moved = newData_Block(constData_Block(&d->source.chars), size_String(&d->source));
+        set_Block(&d->source.chars, moved);
+        delete_Block(moved);
+    }
+#endif
+    if (update_GmRebase(&rebase, d)) {
+        rebase_GmDocument_(d, &rebase);
     }
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source,
-                          const iGmDocumentMetrics *metrics, enum iGmDocumentUpdate updateType) {
-    /* TODO: This API has been set up to allow partial/progressive updating of the content.
-       Currently the entire source is replaced every time, though. */
-//    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
-//           size_String(source), width, updateType == final_GmDocumentUpdate);
-    if (size_String(source) == size_String(&d->origSource)) {
-        iAssert(equal_String(source, &d->origSource));
-//        printf("[GmDocument] source is unchanged!\n");
-        updateMetrics_GmDocument(d, metrics);
-        return; /* Nothing to do. */
+static void import_GmDocument_(iGmDocument *d) {
+    deleteTypesetter_GmDocument_(d);
+    invalidateParse_GmDocument_(d);
+    d->format = d->origFormat;
+    d->flags.isConvertedMarkdown = iFalse;
+    d->import.isValid     = iTrue;
+    d->import.pos         = 0;
+    d->import.isPreformat = (d->format == plainText_SourceFormat);
+    clear_String(&d->source);
+    if (!d->flags.isSourceFinal) {
+        reserve_Block(&d->source.chars, 0x10000);
     }
-    /* Normalize and convert to Gemtext if needed. */
-    set_String(&d->origSource, source);
-    import_GmDocument_(d);
-    setMetrics_GmDocument(d, metrics); /* re-do layout */
+    d->warnings &= ~ansiEscapes_GmDocumentWarning;
+    if (d->viewFormat == plainText_SourceFormat) {
+        d->format = plainText_SourceFormat;
+        d->ansiEscapes = allowAll_AnsiFlag;
+    }
+    else if (d->format == gemini_SourceFormat) {
+        d->ansiEscapes = d->docPrefs.ansiEscapes.value;
+    }
+    else {
+        d->ansiEscapes = allowAll_AnsiFlag; /* Markdown uses escapes for styling */
+    }
+    if (isImportedWhole_GmDocument_(d)) {
+        if (hasAnsiEscapes_(range_String(&d->origSource))) {
+            d->warnings |= ansiEscapes_GmDocumentWarning;
+        }
+        importMarkdown_GmDocument_(d);
+    }
+    else {
+        importMore_GmDocument_(d);
+    }
+}
+
+iBool setSource_GmDocument(iGmDocument *d, const iString *source,
+                           const iGmDocumentMetrics *metrics, enum iGmDocumentUpdate updateType) {
+    const iBool  isFinal  = (updateType == final_GmDocumentUpdate);
+    const size_t oldSize  = size_String(&d->origSource);
+    const iBool  isPrefix = size_String(source) >= oldSize &&
+                            !memcmp(constBegin_String(source), constBegin_String(&d->origSource), oldSize);
+    if (isPrefix && size_String(source) == oldSize && d->import.isValid &&
+        isFinal == d->flags.isSourceFinal) {
+        updateMetrics_GmDocument(d, metrics);
+        return iFalse; /* Nothing to do. */
+    }
+    const iBool isAppend = isPrefix && d->import.isValid && !d->flags.isSourceFinal &&
+                           !isImportedWhole_GmDocument_(d);
+    d->flags.isSourceFinal = isFinal;
+#if !defined (NDEBUG)
+    iTime startTime;
+    initCurrent_Time(&startTime);
+#endif
+    if (!isAppend) {
+        set_String(&d->origSource, source);
+        import_GmDocument_(d);
+#if !defined (NDEBUG)
+        logTiming_GmDocument_(d, "import", &startTime);
+#endif
+        setMetrics_GmDocument(d, metrics); /* re-do layout */
+        return iFalse;
+    }
+    appendRange_String(&d->origSource, (iRangecc){ constBegin_String(source) + oldSize,
+                                                   constEnd_String(source) });
+    importMore_GmDocument_(d);
+#if !defined (NDEBUG)
+    logTiming_GmDocument_(d, "append", &startTime);
+#endif
+    if (d->typesetter && equal_GmDocumentMetrics(&d->requestedMetrics, metrics) &&
+        !isLayoutOutdated_GmDocument(d)) {
+        return continueLayout_GmDocument_(d);
+    }
+    setMetrics_GmDocument(d, metrics);
+    return iFalse;
 }
 
 void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {
@@ -1401,6 +1579,19 @@ void layoutDigest_GmDocument(const iGmDocument *d, iString *out) {
                             run->mediaType, run->mediaId, run->lineType, run->isLede);
         appendRange_GmDocument_(d, out, run->text);
         appendCStr_String(out, "\n");
+    }
+}
+
+void logTiming_GmDocument_(const iGmDocument *d, const char *phase, const iTime *start) {
+    /* Set LAGRANGE_LAYOUT_TIMING to print the duration of document processing phases. */
+    static int isEnabled_ = -1;
+    if (isEnabled_ < 0) {
+        isEnabled_ = getenv("LAGRANGE_LAYOUT_TIMING") != NULL;
+    }
+    if (isEnabled_) {
+        fprintf(stderr, "[GmDocument] %-8s %7.2f ms  source:%zu runs:%zu  %s\n", phase,
+               elapsedSeconds_Time(start) * 1000.0, size_String(&d->source),
+               size_Array(&d->layout), cstr_String(&d->url));
     }
 }
 

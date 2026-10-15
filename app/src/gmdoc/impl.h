@@ -60,7 +60,18 @@ struct Impl_GmParser {
     iBool    isValid;
     iBool    isPreformat;
     uint16_t preId; /* current block while `isPreformat` */
+    iRangecc line;  /* last parsed line */
 };
+
+iDeclareType(GmImport)
+
+struct Impl_GmImport {
+    iBool  isValid;     /* imported with the current format and settings */
+    size_t pos;         /* `origSource` has been imported up to here */
+    iBool  isPreformat; /* normalization state */
+};
+
+iDeclareType(Typesetter)
 
 struct Impl_GmDocument {
     iObject object;
@@ -81,7 +92,9 @@ struct Impl_GmDocument {
     iGmDocumentMetrics requestedMetrics;
     size_t    numFilledColumns; /* columns with content in a paginated layout */
     int       wrapWidth;    /* if non-zero, overrides the line wrap width */
+    iGmImport import;
     iGmParser parser;
+    iTypesetter *typesetter; /* kept until the layout is finished */
     iArray    layout;     /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
@@ -119,8 +132,17 @@ struct Impl_GmDocument {
         iBool isDocPrefsPinned : 1;
         iBool isPageViewInverted : 1;
         iBool isTinylogEntry : 1;
+        iBool isSourceFinal : 1; /* all of the source has been received */
     } flags;
 };
+
+iLocalDef iBool nextLine_Rangecc_(iRangecc text, iRangecc *line) {
+    /* Continues where the previous call left off, also after `text` has grown. */
+    if (line->start && line->end + 1 >= text.end) {
+        return iFalse;
+    }
+    return nextSplit_Rangecc(text, "\n", line);
+}
 
 /* gmdocument.c */
 iBool                   isForcedMonospace_GmDocument_   (const iGmDocument *);
@@ -129,8 +151,11 @@ iBool                   shouldBeNormalized_GmDocument_  (const iGmDocument *);
 enum iGmLineType        lineType_GmDocument_            (const iGmDocument *, const iRangecc line);
 void                    clearLinks_GmDocument_          (iGmDocument *);
 void                    updateOpenURLs_GmDocument_      (iGmDocument *);
+void                    rebase_GmDocument_              (iGmDocument *, const iGmRebase *);
 
 #if !defined (NDEBUG)
 void                    layoutDigest_GmDocument         (const iGmDocument *, iString *out);
 void                    dumpLayout_GmDocument_          (const iGmDocument *);
+void                    logTiming_GmDocument_           (const iGmDocument *, const char *phase,
+                                                         const iTime *start);
 #endif

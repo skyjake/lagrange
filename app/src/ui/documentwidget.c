@@ -747,6 +747,28 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void documentWasAppended_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebase) {
+    /* Existing runs are unchanged, so the selection and the drawn buffers can be kept. */
+    update_GmRebase(rebase, d->view->doc);
+    apply_GmRebase(rebase, &d->selectMark);
+    apply_GmRebase(rebase, &d->initialSelectMark);
+    apply_GmRebase(rebase, &d->foundMark);
+    applyRun_GmRebase(rebase, &d->contextLink);
+    applyRun_GmRebase(rebase, &d->media->grabbedPlayer);
+    documentAppended_DocumentView(d->view, rebase);
+    if (isFinished_GmRequest(d->fetch->request)) {
+        /* Finishing the layout may change existing runs. */
+        invalidate_DocumentView(d->view);
+    }
+    updateWindowTitle_DocumentWidget(d);
+    updateVisible_DocumentView(d->view);
+    updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
+    refresh_Widget(as_Widget(d));
+    if (~d->fetch->flags & fromCache_DocumentFetchFlag) {
+        setCachedDocument_History(d->mod.history, d->view->doc /* keeps a ref */);
+    }
+}
+
 static void pageTurnBegins_DocumentWidget_(iDocumentWidget *d) {
     /* A chapter still sliding in would show the turning pages twice. */
     settle_DocumentSwipe(d->swipe);
@@ -4101,13 +4123,21 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     updateBanner_DocumentWidget(d);
     setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
     const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
-    setSource_GmDocument(d->view->doc,
-                         source,
-                         &metrics,
-                         isFinished_GmRequest(d->fetch->request) ? final_GmDocumentUpdate
-                                                          : partial_GmDocumentUpdate);
+    iGmRebase rebase;
+    init_GmRebase(&rebase, d->view->doc);
+    const iBool isAppended =
+        setSource_GmDocument(d->view->doc,
+                             source,
+                             &metrics,
+                             isFinished_GmRequest(d->fetch->request) ? final_GmDocumentUpdate
+                                                                     : partial_GmDocumentUpdate);
     setWidth_Banner(d->banner, metrics.width);
-    documentWasChanged_DocumentWidget_(d);
+    if (isAppended) {
+        documentWasAppended_DocumentWidget_(d, &rebase);
+    }
+    else {
+        documentWasChanged_DocumentWidget_(d);
+    }
 }
 
 iHistory *history_DocumentWidget(iDocumentWidget *d) {

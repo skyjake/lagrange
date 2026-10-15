@@ -108,13 +108,12 @@ static void clear_RunTypesetter_(iRunTypesetter *d) {
     clear_Array(&d->layout);
 }
 
-static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc, int *maxWidth) {
     const size_t n = size_Array(&d->layout);
-    /* Update the actual content width of the document. This may exceed the page width
+    /* Track the actual content width of the document. This may exceed the page width
        if there are unwrappable lines. */
     for (size_t i = 0; i < size_Array(&d->layout); i++) {
-        doc->contentWidth = iMax(value_Array(&d->layout, i, iGmRun).visBounds.size.x,
-                                 doc->contentWidth);
+        *maxWidth = iMax(value_Array(&d->layout, i, iGmRun).visBounds.size.x, *maxWidth);
     }
     pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
     clear_RunTypesetter_(d);
@@ -213,15 +212,19 @@ static iBool isHardWrapped_GmDocument_(const iGmDocument *d) {
     return d->format == plainText_SourceFormat || isGopherMenu_GmDocument(d);
 }
 
-static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
+static iBool isExpandingToLongLines_GmDocument_(const iGmDocument *d) {
     const iDocPrefs *prefs = &d->docPrefs;
+    return !isPaged_GmDocument(d) && isHardWrapped_GmDocument_(d) && prefs->plainTextWrap.value &&
+           prefs->expandToLongLines.value;
+}
+
+static void determinePlainTextWrapWidth_GmDocument(iGmDocument *d) {
     /* Only do this once (and whenever font size changes). */
     if (d->wrapWidth) return;
     /* For plain text with word wrap and expand-to-long-lines, measure all lines first to
        find the widest one and potentially increase the layout width up to the full canvas
        width, so that long lines don't have to be wrapped unnecessarily. */
-    if (!isPaged_GmDocument(d) && isHardWrapped_GmDocument_(d) && prefs->plainTextWrap.value &&
-        prefs->expandToLongLines.value) {
+    if (isExpandingToLongLines_GmDocument_(d)) {
         iRegExp *linkPattern = d->format == gemini_SourceFormat ? newGemtextLink_RegExp() : NULL;
         int      maxLine = 0;
         iRangecc seg     = iNullRange;
@@ -734,8 +737,6 @@ static iBool isLineIndentable_(iRangecc line) {
 }
 
 
-iDeclareType(Typesetter)
-
 struct Impl_Typesetter {
     iGmDocument          *doc;
     const iDocPrefs      *prefs;
@@ -767,8 +768,11 @@ struct Impl_Typesetter {
     int                   pendingMargin;     /* added below the next line's top margin */
     int                   numHeading1;
     iBool                 prevWrapParagraph; /* previous line was a wrapped paragraph */
+    iString               headingTitle;      /* the first top-level heading */
     iString               firstContentLine;  /* may be used as a title if one isn't specified */
     size_t                nextLink;          /* index of the next parsed link */
+    int                   maxRunWidth;
+    uint16_t              openPreId;         /* block whose end was not received when laid out */
 };
 
 static iRegExp *ansiPattern_(void) {
@@ -790,11 +794,13 @@ static void init_Typesetter_(iTypesetter *d, iGmDocument *doc) {
     d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
     d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
     d->outsideMargin = outsideMargin_GmDocument_(doc);
+    init_String(&d->headingTitle);
     init_String(&d->firstContentLine);
 }
 
 static void deinit_Typesetter_(iTypesetter *d) {
     deinit_String(&d->firstContentLine);
+    deinit_String(&d->headingTitle);
 }
 
 static int verticalPad_Typesetter_(const iTypesetter *d) {
@@ -821,6 +827,7 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     clear_StringArray(&doc->auxText);
     clear_Array(&doc->pageBands);
     set_String(&doc->title, &doc->fixedTitle);
+    set_String(&d->headingTitle, &doc->fixedTitle);
     doc->contentWidth = 0;
     ensureParsed_GmDocument_(doc);
     iForEach(PtrArray, i, &doc->links) {
@@ -899,7 +906,19 @@ static void beginPreformatted_Typesetter_(iTypesetter *d) {
     iGmPreMeta *meta      = at_Array(&doc->preMeta, preIndex);
     iAssert(meta->bounds.start == d->line.start);
     meta->pixelRect.size = measureRange_Text(d->preFont, meta->contents).bounds.size;
+    if (isPreOpen_GmDocument_(doc, d->preId)) {
+        d->openPreId = d->preId;
+    }
     d->prevWrapParagraph = iFalse;
+}
+
+static void closeOpenPre_Typesetter_(iTypesetter *d) {
+    /* The size of the complete block is now known. */
+    if (d->openPreId) {
+        iGmPreMeta *meta = at_Array(&d->doc->preMeta, d->openPreId - 1);
+        meta->pixelRect.size = measureRange_Text(d->preFont, meta->contents).bounds.size;
+        d->openPreId = 0;
+    }
 }
 
 static iBool detectLineType_Typesetter_(iTypesetter *d) {
@@ -946,6 +965,7 @@ static iBool detectLineType_Typesetter_(iTypesetter *d) {
         if (doc->format == gemini_SourceFormat &&
             startsWithSc_Rangecc(d->line, "```", &iCaseSensitive)) {
             d->isPreformat = iFalse;
+            closeOpenPre_Typesetter_(d);
             return iFalse;
         }
         d->run.mediaType = max_MediaType; /* preformatted block */
@@ -1080,11 +1100,10 @@ static iBool addFoldedPreformatted_Typesetter_(iTypesetter *d) {
 
 static void updateTitle_Typesetter_(iTypesetter *d) {
     /* Save the document title (first high-level heading). */
-    iGmDocument *doc = d->doc;
-    if (d->type == heading1_GmLineType && isEmpty_String(&doc->title)) {
-        setRange_String(&doc->title, d->line);
+    if (d->type == heading1_GmLineType && isEmpty_String(&d->headingTitle)) {
+        setRange_String(&d->headingTitle, d->line);
         /* Get rid of ANSI escapes. */
-        replaceRegExp_String(&doc->title, ansiPattern_(), "", NULL, NULL);
+        replaceRegExp_String(&d->headingTitle, ansiPattern_(), "", NULL, NULL);
     }
     else if (d->type != preformatted_GmLineType && d->type != heading1_GmLineType &&
              isEmpty_String(&d->firstContentLine) && size_Range(&d->line) >= 3) {
@@ -1340,7 +1359,7 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d) {
                     hrun->visBounds.pos.x = (doc->size.x - width_Rect(hrun->visBounds)) / 2;
                 }
             }
-            numRunsAdded = commit_RunTypesetter_(&rts, doc);
+            numRunsAdded = commit_RunTypesetter_(&rts, doc, &d->maxRunWidth);
             break;
         }
         /* Try again... */
@@ -1669,18 +1688,9 @@ static void markWidePreformatted_Typesetter_(iTypesetter *d) {
     }
 }
 
-static void finish_Typesetter_(iTypesetter *d) {
+static void updateDocumentTitle_Typesetter_(iTypesetter *d) {
     iGmDocument *doc = d->doc;
-    doc->size.y = d->pos.y + verticalPad_Typesetter_(d);
-    if (!d->isJustified) {
-        iForEach(Array, r, &doc->layout) {
-            ((iGmRun *) r.value)->flags |= notJustified_GmRunFlag;
-        }
-    }
-    doc->contentWidth += d->style->indents[text_GmLineType] * gap_Text; /* indent not included in run widths */
-    if (checkMissing_Text()) {
-        doc->warnings |= missingGlyphs_GmDocumentWarning;
-    }
+    set_String(&doc->title, &d->headingTitle);
     /* If a title wasn't found, use the first content line but truncate it if it's long. */
     const iBool isHeadingTitle = !isEmpty_String(&doc->title);
     if (!isHeadingTitle) {
@@ -1705,6 +1715,45 @@ static void finish_Typesetter_(iTypesetter *d) {
                                                             cstr_String(chapter)));
         }
     }
+}
+
+static void typesetAvailable_Typesetter_(iTypesetter *d) {
+    /* Lays out all the lines of the source that haven't been laid out yet. */
+    iGmDocument *doc = d->doc;
+    const size_t firstRun = size_Array(&doc->layout);
+    setAnsiFlags_Text(doc->ansiEscapes);
+    checkMissing_Text(); /* clear the flag */
+    d->content = range_String(&doc->source);
+    if (d->openPreId && !d->isPreformat) {
+        /* Keep skipping a folded block that has grown. */
+        const iGmPreMeta *meta = constAt_Array(&doc->preMeta, d->openPreId - 1);
+        d->contentLine.end = meta->bounds.end;
+        if (!isPreOpen_GmDocument_(doc, d->openPreId)) {
+            closeOpenPre_Typesetter_(d);
+        }
+    }
+    while (nextLine_Rangecc_(d->content, &d->contentLine)) {
+        typesetLine_Typesetter_(d);
+    }
+    if (!d->isJustified) {
+        for (size_t i = firstRun; i < size_Array(&doc->layout); i++) {
+            ((iGmRun *) at_Array(&doc->layout, i))->flags |= notJustified_GmRunFlag;
+        }
+    }
+    if (checkMissing_Text()) {
+        doc->warnings |= missingGlyphs_GmDocumentWarning;
+    }
+    doc->size.y = d->pos.y + verticalPad_Typesetter_(d);
+    /* Indent is not included in run widths. */
+    doc->contentWidth = d->maxRunWidth + d->style->indents[text_GmLineType] * gap_Text;
+    updateDocumentTitle_Typesetter_(d);
+    setAnsiFlags_Text(allowAll_AnsiFlag);
+}
+
+static void finish_Typesetter_(iTypesetter *d) {
+    iGmDocument *doc = d->doc;
+    setAnsiFlags_Text(doc->ansiEscapes);
+    closeOpenPre_Typesetter_(d);
     if (d->isPaged) {
         paginate_GmDocument_(doc);
     }
@@ -1719,16 +1768,40 @@ static void finish_Typesetter_(iTypesetter *d) {
 #endif
 }
 
-static void typeset_GmDocument_(iGmDocument *d) {
-    iTypesetter ts;
-    init_Typesetter_(&ts, d);
-    if (begin_Typesetter_(&ts)) {
-        while (nextSplit_Rangecc(ts.content, "\n", &ts.contentLine)) {
-            typesetLine_Typesetter_(&ts);
-        }
-        finish_Typesetter_(&ts);
+void deleteTypesetter_GmDocument_(iGmDocument *d) {
+    if (d->typesetter) {
+        deinit_Typesetter_(d->typesetter);
+        free(d->typesetter);
+        d->typesetter = NULL;
     }
-    deinit_Typesetter_(&ts);
+}
+
+void rebaseTypesetter_GmDocument_(iGmDocument *d, const iGmRebase *rebase) {
+    iTypesetter *ts = d->typesetter;
+    if (ts) {
+        apply_GmRebase(rebase, &ts->content);
+        apply_GmRebase(rebase, &ts->contentLine);
+        apply_GmRebase(rebase, &ts->line);
+    }
+}
+
+static void typeset_GmDocument_(iGmDocument *d) {
+    deleteTypesetter_GmDocument_(d);
+    iTypesetter *ts = malloc(sizeof(iTypesetter));
+    init_Typesetter_(ts, d);
+    if (begin_Typesetter_(ts)) {
+        typesetAvailable_Typesetter_(ts);
+        if (d->flags.isSourceFinal || ts->isPaged) {
+            finish_Typesetter_(ts);
+        }
+        else {
+            /* More source is coming. */
+            d->typesetter = ts;
+            return;
+        }
+    }
+    deinit_Typesetter_(ts);
+    free(ts);
 }
 
 static void applyMetrics_GmDocument_(iGmDocument *d, const iGmDocumentMetrics *metrics) {
@@ -1740,6 +1813,10 @@ static void applyMetrics_GmDocument_(iGmDocument *d, const iGmDocumentMetrics *m
 }
 
 void doLayout_GmDocument_(iGmDocument *d) {
+#if !defined (NDEBUG)
+    iTime startTime;
+    initCurrent_Time(&startTime);
+#endif
     applyMetrics_GmDocument_(d, &d->requestedMetrics);
     d->numFilledColumns = 0;
     typeset_GmDocument_(d);
@@ -1755,6 +1832,54 @@ void doLayout_GmDocument_(iGmDocument *d) {
         typeset_GmDocument_(d);
     }
 #if !defined (NDEBUG)
-    dumpLayout_GmDocument_(d);
+    logTiming_GmDocument_(d, "layout", &startTime);
+    if (!d->typesetter) {
+        dumpLayout_GmDocument_(d);
+    }
 #endif
+}
+
+iBool continueLayout_GmDocument_(iGmDocument *d) {
+    iTypesetter *ts = d->typesetter;
+    iAssert(ts);
+#if !defined (NDEBUG)
+    iTime startTime;
+    initCurrent_Time(&startTime);
+#endif
+    if (d->flags.isSourceFinal && isExpandingToLongLines_GmDocument_(d)) {
+        /* The widest line determines the layout width. */
+        const int oldWrapWidth = d->wrapWidth;
+        d->wrapWidth = 0;
+        setAnsiFlags_Text(d->ansiEscapes);
+        determinePlainTextWrapWidth_GmDocument(d);
+        setAnsiFlags_Text(allowAll_AnsiFlag);
+        if (d->wrapWidth != oldWrapWidth) {
+            doLayout_GmDocument_(d);
+            return iFalse;
+        }
+    }
+    ensureParsed_GmDocument_(d);
+    typesetAvailable_Typesetter_(ts);
+    if (d->flags.isSourceFinal) {
+        finish_Typesetter_(ts);
+        deleteTypesetter_GmDocument_(d);
+    }
+#if !defined (NDEBUG)
+    logTiming_GmDocument_(d, "continue", &startTime);
+    /* Always move the runs to catch missed rebases. */ {
+        iGmRebase rebase;
+        init_GmRebase(&rebase, d);
+        iArray moved;
+        initCopy_Array(&moved, &d->layout);
+        deinit_Array(&d->layout);
+        d->layout = moved;
+        if (update_GmRebase(&rebase, d)) {
+            rebase_GmDocument_(d, &rebase);
+        }
+    }
+    if (!d->typesetter) {
+        dumpLayout_GmDocument_(d);
+    }
+#endif
+    return iTrue;
 }

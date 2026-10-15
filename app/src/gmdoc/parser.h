@@ -30,3 +30,4 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 void    init_GmParser                   (iGmParser *);
 void    invalidateParse_GmDocument_     (iGmDocument *); /* parsed again before the next layout */
 void    ensureParsed_GmDocument_        (iGmDocument *);
+iBool   isPreOpen_GmDocument_           (const iGmDocument *, uint16_t preId); /* end not received */

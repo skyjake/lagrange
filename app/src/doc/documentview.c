@@ -812,6 +812,62 @@ void documentRunsInvalidated_DocumentView(iDocumentView *d) {
     iZap(d->renderRuns);
 }
 
+static void rebaseRuns_PtrArray_(iPtrArray *runs, const iGmRebase *rebase) {
+    iForEach(PtrArray, i, runs) {
+        const iGmRun *run = i.ptr;
+        applyRun_GmRebase(rebase, &run);
+        set_PtrArray(runs, index_PtrArrayIterator(&i), (void *) run);
+    }
+}
+
+void documentAppended_DocumentView(iDocumentView *d, const iGmRebase *rebase) {
+    /* Runs were added at the end, and the existing ones may have moved in memory. */
+    applyRunRange_GmRebase(rebase, &d->visibleRuns);
+    applyRunRange_GmRebase(rebase, &d->renderRuns);
+    applyRunRange_GmRebase(rebase, &d->animWideRunRange);
+    applyRun_GmRebase(rebase, &d->hoverPre);
+    applyRun_GmRebase(rebase, &d->hoverAltPre);
+    applyRun_GmRebase(rebase, &d->hoverLink);
+    applyRun_GmRebase(rebase, &d->hoverKeyLink);
+    rebaseRuns_PtrArray_(&d->visibleLinks, rebase);
+    rebaseRuns_PtrArray_(&d->visiblePre, rebase);
+    rebaseRuns_PtrArray_(&d->visibleMedia, rebase);
+    rebaseRuns_PtrArray_(&d->visibleWideRuns, rebase);
+    iForEach(PtrSet, r, d->invalidRuns) {
+        applyRun_GmRebase(rebase, (const iGmRun **) r.value); /* order is unchanged */
+    }
+    const iGmRunRange runs     = runRange_GmDocument(d->doc);
+    const size_t      oldCount = ((uintptr_t) rebase->oldRuns.end -
+                                  (uintptr_t) rebase->oldRuns.start) / sizeof(iGmRun);
+    if (oldCount >= (size_t) (runs.end - runs.start)) {
+        return;
+    }
+    const iGmRun *firstNew = runs.start + oldCount;
+    int newTop = INT_MAX;
+    for (const iGmRun *run = firstNew; run < runs.end; run++) {
+        newTop = iMin(newTop, top_Rect(run->visBounds));
+    }
+    /* Continue drawing buffers into the area of the new runs. */
+    iVisBuf *visBuf = d->visBuf;
+    for (size_t i = 0; i < visBuf->numBuffers; i++) {
+        iVisBufTexture *buf  = &visBuf->buffers[i];
+        iVisBufMeta    *meta = buf->user;
+        applyRunRange_GmRebase(rebase, &meta->runsDrawn);
+        if (isEmpty_Rangei(buf->validRange) || buf->validRange.end <= newTop) {
+            continue;
+        }
+        if (!meta->runsDrawn.start || buf->validRange.start >= newTop) {
+            buf->validRange = (iRangei){ 0, 0 };
+            iZap(meta->runsDrawn);
+            continue;
+        }
+        if (!meta->runsDrawn.end) {
+            meta->runsDrawn.end = firstNew;
+        }
+        buf->validRange.end = newTop;
+    }
+}
+
 void resetScroll_DocumentView(iDocumentView *d) {
     reset_SmoothScroll(&d->scrollY);
     resetPage_DocumentView(d);

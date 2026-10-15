@@ -137,6 +137,7 @@ void    swap_DocumentView               (iDocumentView *, iDocumentView *swapBuf
 void    allocVisBuffer_DocumentView     (const iDocumentView *);
 
 void    invalidate_DocumentView         (iDocumentView *);
+void    documentAppended_DocumentView   (iDocumentView *, const iGmRebase *rebase);
 void    invalidateLink_DocumentView     (iDocumentView *, iGmLinkId id);
 void    invalidateVisibleLinks_DocumentView(iDocumentView *);
 void    documentRunsInvalidated_DocumentView(iDocumentView *);
