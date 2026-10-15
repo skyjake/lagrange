@@ -25,6 +25,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 
 void    doLayout_GmDocument_            (iGmDocument *); /* also paginates */
-iBool   continueLayout_GmDocument_      (iGmDocument *); /* lays out appended source; False if redone */
 void    deleteTypesetter_GmDocument_    (iGmDocument *);
 void    rebaseTypesetter_GmDocument_    (iGmDocument *, const iGmRebase *);

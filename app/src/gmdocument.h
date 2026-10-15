@@ -231,6 +231,8 @@ struct Impl_GmRebase {
     const char   *newSource;
     iGmRunRange   oldRuns;
     const iGmRun *newRuns;
+    uint32_t      layoutGen;
+    iBool         isLayoutRedone; /* runs are all new and cannot be rebased */
 };
 
 void    init_GmRebase           (iGmRebase *, const iGmDocument *doc);
@@ -262,6 +264,11 @@ enum iSourceFormat viewFormat_GmDocument(const iGmDocument *);
 void    setMetrics_GmDocument   (iGmDocument *, const iGmDocumentMetrics *metrics); /* redoes layout */
 iBool   updateMetrics_GmDocument(iGmDocument *, const iGmDocumentMetrics *metrics); /* returns True if layout redone */
 void    redoLayout_GmDocument   (iGmDocument *);
+void    setLayoutSyncHeight_GmDocument(iGmDocument *, int height); /* below it, layout continues in slices; zero: none */
+iBool   isLayoutPending_GmDocument(const iGmDocument *); /* there is more to lay out in slices */
+iBool   isLayoutFinished_GmDocument(const iGmDocument *); /* all of the source laid out */
+iBool   continueLayout_GmDocument(iGmDocument *, int minHeight, double maxSeconds); /* True if changed */
+void    finishLayout_GmDocument (iGmDocument *); /* lays out all of the received source */
 void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 iBool   isLayoutOutdated_GmDocument(const iGmDocument *); /* invalidated, or made with other fonts */
 int     contentWidth_GmDocument (const iGmDocument *); /* may exceed the layout width; unwrappable lines */

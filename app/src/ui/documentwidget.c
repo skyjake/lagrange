@@ -206,6 +206,7 @@ struct Impl_DocumentWidget {
     iString        readerEntryUrl; /* feed entry being viewed (may have a fragment) */
     int            swipeUpY;       /* vertical movement of the current paginated swipe */
     uint32_t       swipeUpTime;
+    uint32_t       layoutHandoffTime; /* when continued layout was last shown */
 
     /* Widget structure: */
     iScrollWidget *scroll;
@@ -717,6 +718,8 @@ void updateBanner_DocumentWidget(iDocumentWidget *d) {
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view->doc));
 }
 
+static void checkPendingLayout_DocumentWidget_(const iDocumentWidget *);
+
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     iChangeFlags(d->flags, selecting_DocumentWidgetFlag | viewSource_DocumentWidgetFlag, iFalse);
     setFlags_Widget(d, touchDrag_WidgetFlag, iFalse);
@@ -745,28 +748,102 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     if (document_App() == d) {
         updateActiveDocPrefs_App();
     }
+    checkPendingLayout_DocumentWidget_(d);
 }
 
-static void documentWasAppended_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebase) {
-    /* Existing runs are unchanged, so the selection and the drawn buffers can be kept. */
-    update_GmRebase(rebase, d->view->doc);
-    apply_GmRebase(rebase, &d->selectMark);
-    apply_GmRebase(rebase, &d->initialSelectMark);
-    apply_GmRebase(rebase, &d->foundMark);
-    applyRun_GmRebase(rebase, &d->contextLink);
-    applyRun_GmRebase(rebase, &d->media->grabbedPlayer);
-    documentAppended_DocumentView(d->view, rebase);
-    if (isFinished_GmRequest(d->fetch->request)) {
-        /* Finishing the layout may change existing runs. */
-        invalidate_DocumentView(d->view);
+static double layoutSliceSeconds_(void) {
+    /* Layout is continued for half of a frame. */
+    static double seconds_;
+    if (seconds_ <= 0.0) {
+#if defined (iPlatformAppleMobile)
+        float refreshRate = displayRefreshRate_iOS();
+#else
+        const SDL_DisplayMode *dispMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+        float refreshRate = dispMode ? dispMode->refresh_rate : 0.0f;
+#endif
+        if (refreshRate <= 0.0f) {
+            refreshRate = 60.0f;
+        }
+        seconds_ = 0.5 / refreshRate;
     }
-    updateWindowTitle_DocumentWidget(d);
-    updateVisible_DocumentView(d->view);
-    updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
-    refresh_Widget(as_Widget(d));
+    return seconds_;
+}
+
+static void layoutContinued_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebase,
+                                            iBool wasFinished, iBool isHandoff) {
+    /* Runs were added at the end. Existing runs are unchanged, so the selection and the
+       drawn buffers can be kept. */
+    iGmDocument *doc = d->view->doc;
+    update_GmRebase(rebase, doc);
+    if (rebase->isLayoutRedone) {
+        documentRunsInvalidated_DocumentWidget(d);
+        invalidate_DocumentView(d->view);
+        isHandoff = iTrue;
+    }
+    else {
+        apply_GmRebase(rebase, &d->selectMark);
+        apply_GmRebase(rebase, &d->initialSelectMark);
+        apply_GmRebase(rebase, &d->foundMark);
+        applyRun_GmRebase(rebase, &d->contextLink);
+        applyRun_GmRebase(rebase, &d->media->grabbedPlayer);
+        documentAppended_DocumentView(d->view, rebase);
+        if (!wasFinished && isLayoutFinished_GmDocument(doc)) {
+            /* Finishing the layout may change existing runs. */
+            invalidate_DocumentView(d->view);
+            isHandoff = iTrue;
+        }
+    }
+    if (isHandoff) {
+        d->layoutHandoffTime = SDL_GetTicks();
+        updateWindowTitle_DocumentWidget(d);
+        updateVisible_DocumentView(d->view);
+        updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
+        refresh_Widget(as_Widget(d));
+    }
+}
+
+static void continueLayout_DocumentWidget_(iAny *ptr) {
+    iDocumentWidget *d   = ptr;
+    iGmDocument     *doc = d->view->doc;
+    if (!doc || !isLayoutPending_GmDocument(doc) || !isVisible_Widget(d)) {
+        return; /* resumed when drawn */
+    }
+    /* Stay at least a page ahead of the visible area. */
+    const int minHeight = visibleRange_DocumentView(d->view).end + height_Widget(d);
+    iGmRebase rebase;
+    init_GmRebase(&rebase, doc);
+    continueLayout_GmDocument(doc, minHeight, layoutSliceSeconds_());
+    const iBool isPending = isLayoutPending_GmDocument(doc);
+    layoutContinued_DocumentWidget_(
+        d, &rebase, iFalse, !isPending || SDL_GetTicks() - d->layoutHandoffTime >= 150);
+    if (isPending) {
+        addTicker_App(continueLayout_DocumentWidget_, d);
+    }
+}
+
+static void checkPendingLayout_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->view->doc && isLayoutPending_GmDocument(d->view->doc)) {
+        addTicker_App(continueLayout_DocumentWidget_, iConstCast(iDocumentWidget *, d));
+    }
+}
+
+static void finishLayout_DocumentWidget_(iDocumentWidget *d) {
+    /* For things that need all of the document. */
+    if (isLayoutPending_GmDocument(d->view->doc)) {
+        iGmRebase rebase;
+        init_GmRebase(&rebase, d->view->doc);
+        finishLayout_GmDocument(d->view->doc);
+        layoutContinued_DocumentWidget_(d, &rebase, iFalse, iTrue);
+    }
+}
+
+static void documentWasAppended_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebase,
+                                                iBool wasFinished) {
+    layoutContinued_DocumentWidget_(d, rebase, wasFinished, iTrue);
     if (~d->fetch->flags & fromCache_DocumentFetchFlag) {
         setCachedDocument_History(d->mod.history, d->view->doc /* keeps a ref */);
     }
+    checkPendingLayout_DocumentWidget_(d);
 }
 
 static void pageTurnBegins_DocumentWidget_(iDocumentWidget *d) {
@@ -1463,6 +1540,11 @@ static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
+    if ((equal_Command(cmd, "scroll.bottom") || equal_Command(cmd, "document.goto") ||
+         equal_Command(cmd, "find.next") || equal_Command(cmd, "find.prev")) &&
+        document_App() == d) {
+        finishLayout_DocumentWidget_(d);
+    }
     if (handleCommand_Query(d->query, cmd)) {
         return iTrue;
     }
@@ -1886,6 +1968,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                      cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
+            finishLayout_DocumentWidget_(d);
             scrollToHeading_DocumentView(d->view, cstr_String(&d->pendingGotoHeading));
             clear_String(&d->pendingGotoHeading);
         }
@@ -2295,6 +2378,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         if (d->mod.isReader && dir && !argLabel_Command(cmd, "repeat") &&
             !argLabel_Command(cmd, "full") && !isRequestOngoing_DocumentFetch(d->fetch) &&
+            isLayoutFinished_GmDocument(d->view->doc) &&
             (dir > 0 ? pos_SmoothScroll(&d->view->scrollY) >= d->view->scrollY.max
                      : pos_SmoothScroll(&d->view->scrollY) <= 0)) {
             openAdjacentFeedEntry_DocumentWidget_(d, dir > 0 ? +1 : -1);
@@ -3664,8 +3748,10 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         updatePagedProgress_DocumentWidget_(d);
         return;
     }
+    /* The total height is unknown until the layout is finished. */
+    const iBool isLayoutPending = isLayoutPending_GmDocument(d->view->doc);
     if (d->footerButtons) {
-        setFlags_Widget(d->footerButtons, hidden_WidgetFlag, iFalse);
+        setFlags_Widget(d->footerButtons, hidden_WidgetFlag, isLayoutPending);
     }
     setProgressMode_ScrollWidget(scrollBar, iFalse);
     setFlags2_Widget(d, clipChildren_WidgetFlag2, iTrue);
@@ -3679,7 +3765,9 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
     const float scrollPos = pos_SmoothScroll(&d->view->scrollY);
     setThumb_ScrollWidget(scrollBar,
                           pos_SmoothScroll(&d->view->scrollY),
-                          docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
+                          docSize > 0 && !isLayoutPending
+                              ? height_Rect(bounds) * size_Range(&visRange) / docSize
+                              : 0);
     if (d->footerButtons) {
         const iRect bounds    = bounds_Widget(as_Widget(d));
         const iRect docBounds = documentBounds_DocumentView(d->view);
@@ -3764,6 +3852,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (width_Rect(bounds) <= 0) {
         return;
     }
+    checkPendingLayout_DocumentWidget_(d);
     iPaint p;
     init_Paint(&p);
     /* Views. */
@@ -4091,6 +4180,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     cancelAllRequests_DocumentWidget(d);
     releasePlayers_Media(media_GmDocument(d->view->doc));
     removeTicker_App(animate_DocumentWidget, d);
+    removeTicker_App(continueLayout_DocumentWidget_, d);
     removeTicker_App(prerender_DocumentView, d->view);
     removeTicker_App(refreshWhileScrolling_DocumentWidget, d);
     remove_Periodic(periodic_App(), d);
@@ -4123,17 +4213,26 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     updateBanner_DocumentWidget(d);
     setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
     const iGmDocumentMetrics metrics = metrics_DocumentView(d->view);
+    /* Below the visible area, new content is laid out in time slices. Restoring a scroll
+       position needs the full layout. */
+    setLayoutSyncHeight_GmDocument(
+        d->view->doc,
+        !wantsPaged_DocumentView(d->view) && d->initNormScrollY == 0.0f
+            ? iMax(0, visibleRange_DocumentView(d->view).end) + height_Widget(d)
+            : 0);
     iGmRebase rebase;
     init_GmRebase(&rebase, d->view->doc);
+    const iBool wasFinished = isLayoutFinished_GmDocument(d->view->doc);
     const iBool isAppended =
         setSource_GmDocument(d->view->doc,
                              source,
                              &metrics,
                              isFinished_GmRequest(d->fetch->request) ? final_GmDocumentUpdate
                                                                      : partial_GmDocumentUpdate);
+    setLayoutSyncHeight_GmDocument(d->view->doc, 0);
     setWidth_Banner(d->banner, metrics.width);
     if (isAppended) {
-        documentWasAppended_DocumentWidget_(d, &rebase);
+        documentWasAppended_DocumentWidget_(d, &rebase, wasFinished);
     }
     else {
         documentWasChanged_DocumentWidget_(d);

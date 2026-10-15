@@ -61,6 +61,7 @@ struct Impl_GmParser {
     iBool    isPreformat;
     uint16_t preId; /* current block while `isPreformat` */
     iRangecc line;  /* last parsed line */
+    iArray  *oldPreMeta; /* fold states from before reparsing */
 };
 
 iDeclareType(GmImport)
@@ -95,6 +96,8 @@ struct Impl_GmDocument {
     iGmImport import;
     iGmParser parser;
     iTypesetter *typesetter; /* kept until the layout is finished */
+    int       layoutSyncHeight; /* the rest of the layout is done in time slices */
+    uint32_t  layoutGen;        /* incremented when the layout is redone */
     iArray    layout;     /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
@@ -133,6 +136,7 @@ struct Impl_GmDocument {
         iBool isPageViewInverted : 1;
         iBool isTinylogEntry : 1;
         iBool isSourceFinal : 1; /* all of the source has been received */
+        iBool isLayoutCaughtUp : 1; /* all of the imported source is laid out */
     } flags;
 };
 

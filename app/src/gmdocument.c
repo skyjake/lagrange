@@ -210,6 +210,8 @@ void init_GmDocument(iGmDocument *d) {
     iZap(d->import);
     init_GmParser(&d->parser);
     d->typesetter = NULL;
+    d->layoutSyncHeight = 0;
+    d->layoutGen = 0;
     init_Array(&d->layout, sizeof(iGmRun));
     init_StringArray(&d->auxText);
     init_PtrArray(&d->links);
@@ -246,6 +248,7 @@ void init_GmDocument(iGmDocument *d) {
 
 void deinit_GmDocument(iGmDocument *d) {
     deleteTypesetter_GmDocument_(d);
+    deinit_GmParser(&d->parser);
     iReleasePtr(&d->openURLs);
     delete_Media(d->media);
     deinit_String(&d->chapterTitle);
@@ -274,11 +277,14 @@ void init_GmRebase(iGmRebase *d, const iGmDocument *doc) {
     d->newSource = d->oldSource.start;
     d->oldRuns   = (iGmRunRange){ constData_Array(&doc->layout), constEnd_Array(&doc->layout) };
     d->newRuns   = d->oldRuns.start;
+    d->layoutGen = doc->layoutGen;
+    d->isLayoutRedone = iFalse;
 }
 
 iBool update_GmRebase(iGmRebase *d, const iGmDocument *doc) {
     d->newSource = constBegin_String(&doc->source);
     d->newRuns   = constData_Array(&doc->layout);
+    d->isLayoutRedone = (d->layoutGen != doc->layoutGen);
     return (d->newSource != d->oldSource.start && !isEmpty_Range(&d->oldSource)) ||
            (d->newRuns != d->oldRuns.start && d->oldRuns.start != d->oldRuns.end);
 }
@@ -560,6 +566,10 @@ size_t columnAt_GmDocument(const iGmDocument *d, int documentY) {
     return iMin((size_t) (documentY / d->metrics.pageHeight), numColumns_GmDocument(d) - 1);
 }
 
+void setLayoutSyncHeight_GmDocument(iGmDocument *d, int height) {
+    d->layoutSyncHeight = height;
+}
+
 void redoLayout_GmDocument(iGmDocument *d) {
     doLayout_GmDocument_(d);
 }
@@ -622,12 +632,14 @@ static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *ou
     }
     iGmImport *imp = &d->import;
     if (imp->isPreformat) {
+        const char *span = line.start;
         for (const char *ch = line.start; ch != line.end; ch++) {
             if (*ch == 0x1b) {
                 /* We can emulate an ANSI cursor forward sequence by adding spaces. */
                 iRegExpMatch m;
                 init_RegExpMatch(&m);
                 if (matchRange_RegExp(ansiCursorFwdPattern_, (iRangecc){ ch, line.end }, &m)) {
+                    appendRange_String(out, (iRangecc){ span, ch });
                     int num = strtoul(capturedRange_RegExpMatch(&m, 1).start, NULL, 10);
                     if (num > 0 && num < 200 /* arbitrary sanity limit */) {
                         for (int i = 0; i < num; i++) {
@@ -635,13 +647,16 @@ static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *ou
                         }
                     }
                     ch = end_RegExpMatch(&m) - 1;
+                    span = ch + 1;
                     continue;
                 }
             }
-            if (*ch != '\v') {
-                appendCStrN_String(out, ch, 1);
+            if (*ch == '\v') {
+                appendRange_String(out, (iRangecc){ span, ch });
+                span = ch + 1;
             }
         }
+        appendRange_String(out, (iRangecc){ span, line.end });
         appendCStr_String(out, "\n");
         if (d->format == gemini_SourceFormat &&
             lineType_GmDocument_(d, line) == preformatted_GmLineType) {
@@ -655,8 +670,12 @@ static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *ou
         appendCStr_String(out, "\n");
         return;
     }
-    iBool isPrevSpace = iFalse;
-    int spaceCount = 0;
+    /* The normalized line is never longer than the original. */
+    const size_t start = size_String(out);
+    resize_Block(&out->chars, start + size_Range(&line) + 1);
+    char  *dst         = data_Block(&out->chars) + start;
+    iBool  isPrevSpace = iFalse;
+    int    spaceCount  = 0;
     for (const char *ch = line.start; ch != line.end; ch++) {
         char c = *ch;
         if (c == '\v') {
@@ -667,8 +686,7 @@ static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *ou
                 if (++spaceCount == 8) {
                     /* There are several consecutive space characters. The author likely
                        really wants to have some space here, so normalize to a tab stop. */
-                    popBack_Block(&out->chars);
-                    pushBack_Block(&out->chars, '\t');
+                    dst[-1] = '\t';
                 }
                 continue; /* skip repeated spaces */
             }
@@ -679,9 +697,10 @@ static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *ou
             isPrevSpace = iFalse;
             spaceCount = 0;
         }
-        appendCStrN_String(out, &c, 1);
+        *dst++ = c;
     }
-    appendCStr_String(out, "\n");
+    *dst++ = '\n';
+    truncate_Block(&out->chars, dst - (const char *) constData_Block(&out->chars));
 }
 
 static void normalize_GmDocument_(iGmDocument *d, iRangecc src, iBool isStart, iString *out) {
@@ -978,6 +997,7 @@ static void importMore_GmDocument_(iGmDocument *d) {
     }
     const iBool isStart = (d->import.pos == 0);
     d->import.pos = end - orig.start;
+    d->flags.isLayoutCaughtUp = iFalse;
     iString chunk;
     initRange_String(&chunk, (iRangecc){ start, end });
     replace_String(&chunk, "\r\n", "\n");
@@ -1075,7 +1095,9 @@ iBool setSource_GmDocument(iGmDocument *d, const iString *source,
 #endif
     if (d->typesetter && equal_GmDocumentMetrics(&d->requestedMetrics, metrics) &&
         !isLayoutOutdated_GmDocument(d)) {
-        return continueLayout_GmDocument_(d);
+        const uint32_t gen = d->layoutGen;
+        continueLayout_GmDocument(d, d->layoutSyncHeight > 0 ? d->layoutSyncHeight : INT_MAX, 0.0);
+        return gen == d->layoutGen;
     }
     setMetrics_GmDocument(d, metrics);
     return iFalse;

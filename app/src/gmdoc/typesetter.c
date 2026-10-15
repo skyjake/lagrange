@@ -773,6 +773,7 @@ struct Impl_Typesetter {
     size_t                nextLink;          /* index of the next parsed link */
     int                   maxRunWidth;
     uint16_t              openPreId;         /* block whose end was not received when laid out */
+    iBool                 isWrapWidthChecked;
 };
 
 static iRegExp *ansiPattern_(void) {
@@ -822,6 +823,8 @@ static iBool begin_Typesetter_(iTypesetter *d) {
                            .isUiTheme        = doc->flags.isUiTheme,
                            .isBookCover      = doc->flags.isBookCover });
     doc->flags.isLayoutInvalidated = iFalse;
+    doc->flags.isLayoutCaughtUp = iFalse;
+    doc->layoutGen++;
     doc->layoutFontKey = fontKey_App();
     clear_Array(&doc->layout);
     clear_StringArray(&doc->auxText);
@@ -829,7 +832,7 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     set_String(&doc->title, &doc->fixedTitle);
     set_String(&d->headingTitle, &doc->fixedTitle);
     doc->contentWidth = 0;
-    ensureParsed_GmDocument_(doc);
+    parseUntil_GmDocument_(doc, constBegin_String(&doc->source));
     iForEach(PtrArray, i, &doc->links) {
         ((iGmLink *) i.ptr)->flags &= ~(content_GmLinkFlag | permanent_GmLinkFlag);
     }
@@ -903,6 +906,7 @@ static void beginPreformatted_Typesetter_(iTypesetter *d) {
     d->isPreformat = iTrue;
     const size_t preIndex = d->preId++;
     d->preFont            = d->style->fonts[preformatted_GmLineType];
+    parsePre_GmDocument_(doc, d->preId);
     iGmPreMeta *meta      = at_Array(&doc->preMeta, preIndex);
     iAssert(meta->bounds.start == d->line.start);
     meta->pixelRect.size = measureRange_Text(d->preFont, meta->contents).bounds.size;
@@ -1605,6 +1609,7 @@ static void addLinkContent_Typesetter_(iTypesetter *d) {
 }
 
 static void typesetLine_Typesetter_(iTypesetter *d) {
+    parseUntil_GmDocument_(d->doc, d->contentLine.end);
     d->line = d->contentLine;
     if (*d->line.end == '\r') {
         d->line.end--; /* trim CR always */
@@ -1717,24 +1722,35 @@ static void updateDocumentTitle_Typesetter_(iTypesetter *d) {
     }
 }
 
-static void typesetAvailable_Typesetter_(iTypesetter *d) {
-    /* Lays out all the lines of the source that haven't been laid out yet. */
+static iBool typesetSome_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds) {
+    /* Lays out lines of the source that haven't been laid out yet: at least until `minHeight`,
+       and after that until `maxSeconds` have passed. Returns True if all lines were laid out. */
     iGmDocument *doc = d->doc;
     const size_t firstRun = size_Array(&doc->layout);
+    iTime startTime;
+    initCurrent_Time(&startTime);
     setAnsiFlags_Text(doc->ansiEscapes);
     checkMissing_Text(); /* clear the flag */
     d->content = range_String(&doc->source);
     if (d->openPreId && !d->isPreformat) {
         /* Keep skipping a folded block that has grown. */
+        parsePre_GmDocument_(doc, d->openPreId);
         const iGmPreMeta *meta = constAt_Array(&doc->preMeta, d->openPreId - 1);
         d->contentLine.end = meta->bounds.end;
         if (!isPreOpen_GmDocument_(doc, d->openPreId)) {
             closeOpenPre_Typesetter_(d);
         }
     }
-    while (nextLine_Rangecc_(d->content, &d->contentLine)) {
+    iBool isCaughtUp = iTrue;
+    for (unsigned count = 0; nextLine_Rangecc_(d->content, &d->contentLine); ) {
         typesetLine_Typesetter_(d);
+        if (d->pos.y >= minHeight && (maxSeconds <= 0.0 || (++count % 8 == 0 &&
+                                                            elapsedSeconds_Time(&startTime) >= maxSeconds))) {
+            isCaughtUp = (d->contentLine.end + 1 >= d->content.end);
+            break;
+        }
     }
+    doc->flags.isLayoutCaughtUp = isCaughtUp;
     if (!d->isJustified) {
         for (size_t i = firstRun; i < size_Array(&doc->layout); i++) {
             ((iGmRun *) at_Array(&doc->layout, i))->flags |= notJustified_GmRunFlag;
@@ -1748,10 +1764,12 @@ static void typesetAvailable_Typesetter_(iTypesetter *d) {
     doc->contentWidth = d->maxRunWidth + d->style->indents[text_GmLineType] * gap_Text;
     updateDocumentTitle_Typesetter_(d);
     setAnsiFlags_Text(allowAll_AnsiFlag);
+    return isCaughtUp;
 }
 
 static void finish_Typesetter_(iTypesetter *d) {
     iGmDocument *doc = d->doc;
+    ensureParsed_GmDocument_(doc);
     setAnsiFlags_Text(doc->ansiEscapes);
     closeOpenPre_Typesetter_(d);
     if (d->isPaged) {
@@ -1790,12 +1808,15 @@ static void typeset_GmDocument_(iGmDocument *d) {
     iTypesetter *ts = malloc(sizeof(iTypesetter));
     init_Typesetter_(ts, d);
     if (begin_Typesetter_(ts)) {
-        typesetAvailable_Typesetter_(ts);
-        if (d->flags.isSourceFinal || ts->isPaged) {
+        /* Paged layouts are always done in full. */
+        const int minHeight = (d->layoutSyncHeight > 0 && !ts->isPaged ? d->layoutSyncHeight : INT_MAX);
+        ts->isWrapWidthChecked = d->flags.isSourceFinal;
+        const iBool isCaughtUp = typesetSome_Typesetter_(ts, minHeight, 0.0);
+        if (isCaughtUp && (d->flags.isSourceFinal || ts->isPaged)) {
             finish_Typesetter_(ts);
         }
         else {
-            /* More source is coming. */
+            /* Continued in time slices, or when more source is received. */
             d->typesetter = ts;
             return;
         }
@@ -1839,28 +1860,39 @@ void doLayout_GmDocument_(iGmDocument *d) {
 #endif
 }
 
-iBool continueLayout_GmDocument_(iGmDocument *d) {
+iBool isLayoutFinished_GmDocument(const iGmDocument *d) {
+    return d->typesetter == NULL;
+}
+
+iBool isLayoutPending_GmDocument(const iGmDocument *d) {
+    return d->typesetter && (!d->flags.isLayoutCaughtUp || d->flags.isSourceFinal);
+}
+
+iBool continueLayout_GmDocument(iGmDocument *d, int minHeight, double maxSeconds) {
     iTypesetter *ts = d->typesetter;
-    iAssert(ts);
+    if (!isLayoutPending_GmDocument(d)) {
+        return iFalse;
+    }
 #if !defined (NDEBUG)
     iTime startTime;
     initCurrent_Time(&startTime);
 #endif
-    if (d->flags.isSourceFinal && isExpandingToLongLines_GmDocument_(d)) {
-        /* The widest line determines the layout width. */
-        const int oldWrapWidth = d->wrapWidth;
-        d->wrapWidth = 0;
-        setAnsiFlags_Text(d->ansiEscapes);
-        determinePlainTextWrapWidth_GmDocument(d);
-        setAnsiFlags_Text(allowAll_AnsiFlag);
-        if (d->wrapWidth != oldWrapWidth) {
-            doLayout_GmDocument_(d);
-            return iFalse;
+    if (d->flags.isSourceFinal && !ts->isWrapWidthChecked) {
+        ts->isWrapWidthChecked = iTrue;
+        if (isExpandingToLongLines_GmDocument_(d)) {
+            /* The widest line determines the layout width. */
+            const int oldWrapWidth = d->wrapWidth;
+            d->wrapWidth = 0;
+            setAnsiFlags_Text(d->ansiEscapes);
+            determinePlainTextWrapWidth_GmDocument(d);
+            setAnsiFlags_Text(allowAll_AnsiFlag);
+            if (d->wrapWidth != oldWrapWidth) {
+                doLayout_GmDocument_(d);
+                return iTrue;
+            }
         }
     }
-    ensureParsed_GmDocument_(d);
-    typesetAvailable_Typesetter_(ts);
-    if (d->flags.isSourceFinal) {
+    if (typesetSome_Typesetter_(ts, minHeight, maxSeconds) && d->flags.isSourceFinal) {
         finish_Typesetter_(ts);
         deleteTypesetter_GmDocument_(d);
     }
@@ -1882,4 +1914,8 @@ iBool continueLayout_GmDocument_(iGmDocument *d) {
     }
 #endif
     return iTrue;
+}
+
+void finishLayout_GmDocument(iGmDocument *d) {
+    continueLayout_GmDocument(d, INT_MAX, 0.0);
 }

@@ -270,6 +270,11 @@ void init_GmParser(iGmParser *d) {
     iZap(*d);
 }
 
+void deinit_GmParser(iGmParser *d) {
+    delete_Array(d->oldPreMeta);
+    d->oldPreMeta = NULL;
+}
+
 void invalidateParse_GmDocument_(iGmDocument *d) {
     d->parser.isValid = iFalse;
 }
@@ -337,21 +342,43 @@ iBool isPreOpen_GmDocument_(const iGmDocument *d, uint16_t preId) {
     return d->parser.isPreformat && d->parser.preId == preId;
 }
 
-void ensureParsed_GmDocument_(iGmDocument *d) {
-    /* Parses lines appended to the source since the last call. */
-    iGmParser    *p          = &d->parser;
-    const iArray *oldPreMeta = NULL;
+static void begin_GmParser_(iGmDocument *d) {
+    iGmParser *p = &d->parser;
     if (!p->isValid) {
-        oldPreMeta = collect_Array(copy_Array(&d->preMeta));
+        iArray *oldPreMeta = copy_Array(&d->preMeta);
         clearLinks_GmDocument_(d);
         clear_Array(&d->headings);
         clear_Array(&d->preMeta);
+        deinit_GmParser(p);
         init_GmParser(p);
         p->isValid     = iTrue;
         p->isPreformat = (d->format == plainText_SourceFormat);
+        p->oldPreMeta  = oldPreMeta;
         updateOpenURLs_GmDocument_(d);
     }
-    while (nextLine_Rangecc_(range_String(&d->source), &p->line)) {
-        parseLine_GmDocument_(d, p->line, oldPreMeta);
+}
+
+static iBool parseNextLine_GmDocument_(iGmDocument *d) {
+    iGmParser *p = &d->parser;
+    if (nextLine_Rangecc_(range_String(&d->source), &p->line)) {
+        parseLine_GmDocument_(d, p->line, p->oldPreMeta);
+        return iTrue;
     }
+    return iFalse;
+}
+
+void ensureParsed_GmDocument_(iGmDocument *d) {
+    begin_GmParser_(d);
+    while (parseNextLine_GmDocument_(d)) {}
+}
+
+void parseUntil_GmDocument_(iGmDocument *d, const char *pos) {
+    /* Parsing is done just ahead of the layout. */
+    iGmParser *p = &d->parser;
+    begin_GmParser_(d);
+    while ((!p->line.start || p->line.end < pos) && parseNextLine_GmDocument_(d)) {}
+}
+
+void parsePre_GmDocument_(iGmDocument *d, uint16_t preId) {
+    while (isPreOpen_GmDocument_(d, preId) && parseNextLine_GmDocument_(d)) {}
 }
