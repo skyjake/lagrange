@@ -223,6 +223,8 @@ set (SOURCES
     src/gmdoc/impl.h
     src/gmdoc/palette.c
     src/gmdoc/palette.h
+    src/gmdoc/parser.c
+    src/gmdoc/parser.h
     src/gmdoc/typesetter.c
     src/gmdoc/typesetter.h
     src/gmutil.c

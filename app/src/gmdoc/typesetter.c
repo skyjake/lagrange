@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "impl.h"
 #include "palette.h"
+#include "parser.h"
 #include "typesetter.h"
 #include "app.h"
 #include "defs.h"
@@ -41,23 +42,6 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
         return top_Rect(run->visBounds) + height_Rect(run->visBounds) * d->docPrefs.lineSpacing.value;
     }
     return 0;
-}
-
-static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font,
-                                                  iRangecc *contents, const char **endPos) {
-    const iRangecc content = { start, constEnd_String(&d->source) };
-    iRangecc line = iNullRange;
-    nextSplit_Rangecc(content, "\n", &line);
-    iAssert(startsWith_Rangecc(line, "```"));
-    *contents = (iRangecc){ line.end + 1, line.end + 1 };
-    while (nextSplit_Rangecc(content, "\n", &line)) {
-        if (startsWith_Rangecc(line, "```")) {
-            if (endPos) *endPos = line.end;
-            break;
-        }
-        contents->end = line.end;
-    }
-    return measureRange_Text(font, *contents).bounds.size;
 }
 
 static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
@@ -762,7 +746,6 @@ struct Impl_Typesetter {
     iBool                 isNormalized;
     iBool                 isJustified;
     int                   outsideMargin;
-    const iArray         *oldPreMeta; /* remember fold states */
     iRangecc              content;
     iRangecc              contentLine;
     /* Current line. */
@@ -785,6 +768,7 @@ struct Impl_Typesetter {
     int                   numHeading1;
     iBool                 prevWrapParagraph; /* previous line was a wrapped paragraph */
     iString               firstContentLine;  /* may be used as a title if one isn't specified */
+    size_t                nextLink;          /* index of the next parsed link */
 };
 
 static iRegExp *ansiPattern_(void) {
@@ -836,16 +820,22 @@ static iBool begin_Typesetter_(iTypesetter *d) {
     clear_Array(&doc->layout);
     clear_StringArray(&doc->auxText);
     clear_Array(&doc->pageBands);
-    clearLinks_GmDocument_(doc);
-    clear_Array(&doc->headings);
-    d->oldPreMeta = collect_Array(copy_Array(&doc->preMeta));
-    clear_Array(&doc->preMeta);
     set_String(&doc->title, &doc->fixedTitle);
     doc->contentWidth = 0;
+    ensureParsed_GmDocument_(doc);
+    iForEach(PtrArray, i, &doc->links) {
+        ((iGmLink *) i.ptr)->flags &= ~(content_GmLinkFlag | permanent_GmLinkFlag);
+    }
+    iForEach(Array, p, &doc->preMeta) {
+        iGmPreMeta *meta = p.value;
+        meta->flags &= folded_GmPreMetaFlag;
+        meta->runRange = (iGmRunRange){ NULL, NULL };
+        meta->initialOffset = 0;
+        meta->pixelRect = zero_Rect();
+    }
     if (doc->size.x <= 0 || isEmpty_String(&doc->source)) {
         return iFalse;
     }
-    updateOpenURLs_GmDocument_(doc);
     d->content           = range_String(&doc->source);
     d->contentLine       = iNullRange;
     d->pos               = init_I2(0, verticalPad_Typesetter_(d));
@@ -873,9 +863,15 @@ static iBool begin_Typesetter_(iTypesetter *d) {
 }
 
 static void parseLink_Typesetter_(iTypesetter *d) {
-    iGmLinkId linkId = 0;
-    d->line = addLink_GmDocument_(d->doc, d->line, &linkId);
-    d->run.linkId = linkId;
+    const iPtrArray *links = &d->doc->links;
+    d->run.linkId = 0;
+    if (d->nextLink < size_PtrArray(links)) {
+        const iGmLink *link = constAt_PtrArray(links, d->nextLink);
+        if (link->urlRange.start >= d->line.start && link->urlRange.start <= d->line.end) {
+            d->run.linkId = ++d->nextLink;
+            d->line = link->textRange;
+        }
+    }
     if (!d->run.linkId) {
         /* Invalid formatting. */
         d->type = text_GmLineType;
@@ -900,26 +896,9 @@ static void beginPreformatted_Typesetter_(iTypesetter *d) {
     d->isPreformat = iTrue;
     const size_t preIndex = d->preId++;
     d->preFont            = d->style->fonts[preformatted_GmLineType];
-    iGmPreMeta meta = { .bounds = d->line };
-    meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
-        doc, d->line.start, d->preFont, &meta.contents, &meta.bounds.end);
-    /*
-    int overrun = meta.pixelRect.size.x - doc->size.x;
-    if (d->prevNonBlankType == undefined_GmLineType && overrun > 0) {
-        meta.initialOffset = iMin(overrun / 2, d->outsideMargin - 5 * gap_UI);
-    }
-    */
-    trimLine_Rangecc(&d->line, d->type, d->isNormalized);
-    meta.altText = d->line; /* without the ``` */
-    /* Reuse previous state. */
-    if (preIndex < size_Array(d->oldPreMeta)) {
-        meta.flags = constValue_Array(d->oldPreMeta, preIndex, iGmPreMeta).flags &
-                     folded_GmPreMetaFlag;
-    }
-    else if (d->prefs->collapsePre.value >= byDefault_Collapse && !d->isGopher) {
-        meta.flags |= folded_GmPreMetaFlag;
-    }
-    pushBack_Array(&doc->preMeta, &meta);
+    iGmPreMeta *meta      = at_Array(&doc->preMeta, preIndex);
+    iAssert(meta->bounds.start == d->line.start);
+    meta->pixelRect.size = measureRange_Text(d->preFont, meta->contents).bounds.size;
     d->prevWrapParagraph = iFalse;
 }
 
@@ -957,13 +936,6 @@ static iBool detectLineType_Typesetter_(iTypesetter *d) {
         }
         trimLine_Rangecc(&d->line, d->type, d->isNormalized);
         d->run.font = style->fonts[d->type];
-        /* Remember headings for the document outline. */
-        if (d->type == heading1_GmLineType || d->type == heading2_GmLineType ||
-            d->type == heading3_GmLineType) {
-            pushBack_Array(
-                &doc->headings,
-                &(iGmHeading){ .text = d->line, .level = d->type - heading1_GmLineType });
-        }
     }
     else {
         /* Preformatted line. */

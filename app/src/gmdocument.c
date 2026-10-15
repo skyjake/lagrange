@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmdoc/impl.h"
 #include "gmdoc/palette.h"
+#include "gmdoc/parser.h"
 #include "gmdoc/typesetter.h"
 #include "gmutil.h"
 #include "gempub.h"
@@ -51,6 +52,8 @@ void init_GmLink(iGmLink *d) {
     init_String(&d->url);
     d->urlRange = iNullRange;
     d->labelRange = iNullRange;
+    d->labelIcon = iNullRange;
+    d->textRange = iNullRange;
     iZap(d->when);
     d->flags = 0;
 }
@@ -142,246 +145,6 @@ void trimLine_Rangecc(iRangecc *line, enum iGmLineType type, iBool normalize) {
     }
 }
 
-static void setScheme_GmLink_(iGmLink *d, enum iGmLinkScheme scheme) {
-    d->flags &= ~supportedScheme_GmLinkFlag;
-    d->flags |= scheme;
-}
-
-static iBool isRegionalIndicatorLetter_Char_(iChar c) {
-    return c >= 0x1f1e6 && c <= 0x1f1ff;
-}
-
-static iBool isAllowedLinkIcon_Char_(iChar icon) {
-    if (isFitzpatrickType_Char(icon)) {
-        return iFalse;
-    }
-    return isPictograph_Char(icon) || isEmoji_Char(icon) ||
-           isRegionalIndicatorLetter_Char_(icon) ||
-           /* TODO: Add range(s) of 0x2nnn symbols. */
-           icon == 0x2022 /* bullet */ ||
-           icon == 0x2139 /* info */ ||
-           (icon >= 0x2190 && icon <= 0x21ff /* arrows */) ||
-           icon == 0x29bf /* circled bullet */ ||
-           icon == 0x2a2f /* close X */ ||
-           (icon >= 0x2b00 && icon <= 0x2bff) ||
-           icon == 0x20bf /* bitcoin */ ||
-           (icon >= 0x1f191 && icon <= 0x1f19a) /* enclosed signs */;
-}
-
-static iBool isLocalOrInternal_GmDocument_(const iGmDocument *d) {
-    /* Remote pages may not refer to the user's data directory. */
-    const iRangecc scheme = urlScheme_String(&d->url);
-    return isLocalFileScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "about");
-}
-
-iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
-    /* Returns the human-readable label of the link. */
-    static iRegExp *pattern_;
-    static iRegExp *spartanQueryPattern_;
-    if (!pattern_) {
-        pattern_ = newGemtextLink_RegExp();
-    }
-    if (d->flags.isSpartan && !spartanQueryPattern_) {
-        spartanQueryPattern_ = new_RegExp("=:\\s*([^\\s]+)(\\s.*)?", 0);
-    }
-    *linkId = 0;
-    iGmLink *link = NULL;
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    if (d->flags.isSpartan && matchRange_RegExp(spartanQueryPattern_, line, &m)) {
-        link = new_GmLink();
-        link->urlRange = capturedRange_RegExpMatch(&m, 1);
-        link->flags = query_GmLinkFlag;
-        setScheme_GmLink_(link, spartan_GmLinkScheme);
-        setRange_String(&link->url, link->urlRange);
-        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
-        if (startsWithCase_String(&link->url, "local:") && !isLocalOrInternal_GmDocument_(d)) {
-            delete_GmLink(link);
-            return line;
-        }
-    }
-    if (!link) {
-        init_RegExpMatch(&m);
-    }
-    if (!link && matchRange_RegExp(pattern_, line, &m)) {
-        link = new_GmLink();
-        link->urlRange = capturedRange_RegExpMatch(&m, 1);
-        setRange_String(&link->url, link->urlRange);
-        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
-        if (d->flags.isNex) {
-            link->flags |= inline_GmLinkFlag;
-        }
-        /* If invalid, disregard the link. */
-        if ((d->format == gemini_SourceFormat &&
-             size_String(&link->url) > prefs_App()->maxUrlSize) ||
-            (startsWithCase_String(&link->url, "about:command")
-             /* this is a special internal page that allows submitting UI events */
-             && !d->flags.enableCommandLinks) ||
-            (startsWithCase_String(&link->url, "local:") && !isLocalOrInternal_GmDocument_(d))) {
-            delete_GmLink(link);
-            return line;
-        }
-        /* Check the URL. */ {
-            iUrl parts;
-            init_Url(&parts, &link->url);
-            if (!equalCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
-                link->flags |= remote_GmLinkFlag;
-            }
-            if (equalCase_Rangecc(parts.scheme, "gemini")) {
-                setScheme_GmLink_(link, gemini_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "titan")) {
-                setScheme_GmLink_(link, titan_GmLinkScheme);
-            }
-            else if (startsWithCase_Rangecc(parts.scheme, "http")) {
-                setScheme_GmLink_(link, http_GmLinkScheme);
-            }
-            else if (isGopherScheme_Rangecc(parts.scheme)) {
-                setScheme_GmLink_(link, gopher_GmLinkScheme);
-                if (startsWith_Rangecc(parts.path, "/7")) {
-                    link->flags |= query_GmLinkFlag;
-                }
-            }
-            else if (equalCase_Rangecc(parts.scheme, "finger")) {
-                setScheme_GmLink_(link, finger_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "spartan")) {
-                setScheme_GmLink_(link, spartan_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "nex")) {
-                setScheme_GmLink_(link, nex_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "guppy")) {
-                setScheme_GmLink_(link, guppy_GmLinkScheme);
-            }
-            else if (isLocalFileScheme_Rangecc(parts.scheme)) {
-                setScheme_GmLink_(link, file_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "data")) {
-                setScheme_GmLink_(link, data_GmLinkScheme);
-                if (startsWith_Rangecc(parts.path, "image/png") ||
-                    startsWith_Rangecc(parts.path, "image/jpg") ||
-                    startsWith_Rangecc(parts.path, "image/jpeg") ||
-                    startsWith_Rangecc(parts.path, "image/jxl") ||
-                    startsWith_Rangecc(parts.path, "image/webp") ||
-                    startsWith_Rangecc(parts.path, "image/gif")) {
-                    link->flags |= imageFileExtension_GmLinkFlag;
-                }
-            }
-            else if (equalCase_Rangecc(parts.scheme, "about")) {
-                setScheme_GmLink_(link, about_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "mailto")) {
-                setScheme_GmLink_(link, mailto_GmLinkScheme);
-            }
-            else if (equalCase_Rangecc(parts.scheme, "misfin")) {
-                setScheme_GmLink_(link, misfin_GmLinkScheme);
-            }
-            /* Check the file name extension, if present. */
-            if (!isEmpty_Range(&parts.path)) {
-                iString *path = newRange_String(parts.path);
-                if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
-                    endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
-                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
-                    endsWithCase_String(path, ".hdr")  ||
-#if defined (LAGRANGE_ENABLE_JXL)
-                    endsWithCase_String(path, ".jxl") ||
-#endif
-#if defined (LAGRANGE_ENABLE_WEBP)
-                    endsWithCase_String(path, ".webp") ||
-#endif
-                    endsWithCase_String(path, ".pic")) {
-                    link->flags |= imageFileExtension_GmLinkFlag;
-                }
-                else if (endsWithCase_String(path, ".mp3") || endsWithCase_String(path, ".wav") ||
-                         endsWithCase_String(path, ".ogg") ||
-#if defined (LAGRANGE_ENABLE_OPUS)
-                         endsWithCase_String(path, ".opus") ||
-#endif
-                         endsWithCase_String(path, ".mid")) {
-                    link->flags |= audioFileExtension_GmLinkFlag;
-                }
-                else if (endsWithCase_String(path, ".fontpack")) {
-                    link->flags |= fontpackFileExtension_GmLinkFlag;
-                }
-                delete_String(path);
-            }
-        }
-    }
-    if (link) {
-        /* Check if visited. */
-        if (cmpString_String(&link->url, &d->url)) {
-            link->when = urlVisitTime_Visited(visited_App(), &link->url);
-            if (isValid_Time(&link->when)) {
-                link->flags |= visited_GmLinkFlag;
-            }
-            if (contains_StringSet(d->openURLs, &link->url)) {
-                link->flags |= isOpen_GmLinkFlag;
-            }
-        }
-        pushBack_PtrArray(&d->links, link);
-        *linkId = size_PtrArray(&d->links); /* index + 1 */
-        iRangecc desc = capturedRange_RegExpMatch(&m, 2);
-        trim_Rangecc(&desc);
-        link->labelRange = desc;
-        link->labelIcon = iNullRange;
-        if (d->flags.isNex) {
-            link->labelIcon = (iRangecc){ line.start, link->urlRange.start };
-            link->labelRange = capturedRange_RegExpMatch(&m, 2);
-            line = link->urlRange;
-        }
-        else if (!isEmpty_Range(&desc)) {
-            line = desc; /* Just show the description. */
-            link->flags |= humanReadable_GmLinkFlag;
-            /* Check for a custom icon. */
-            enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
-            if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
-                scheme == about_GmLinkScheme || scheme == file_GmLinkScheme ||
-                scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme ||
-                scheme == 0 /* unsupported */) {
-                iChar icon = 0;
-                int   len  = 0;
-                if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
-                    if (((scheme != mailto_GmLinkScheme && scheme != misfin_GmLinkScheme &&
-                          isAllowedLinkIcon_Char_(icon)) ||
-                         ((scheme == mailto_GmLinkScheme || scheme == misfin_GmLinkScheme) &&
-                          icon == 0x1f4e7 /* envelope */))) {
-                        if (isRegionalIndicatorLetter_Char_(icon)) {
-                            iChar combo;
-                            int   len2 =
-                                decodeBytes_MultibyteChar(desc.start + len, desc.end, &combo);
-                            if (isRegionalIndicatorLetter_Char_(combo)) {
-                                len += len2;
-                            }
-                        }
-                        iRangecc iconRange = (iRangecc){ desc.start, desc.start + len };
-                        iRangecc remain    = (iRangecc){ iconRange.end, line.end };
-                        trim_Rangecc(&remain);
-                        if (!isEmpty_Range(&remain)) {
-                            /* Check the next character as well. If there are multiple Emoji,
-                               perhaps the first one wasn't meant to have special significance. */
-                            iChar nextChar;
-                            len = decodeBytes_MultibyteChar(remain.start, remain.end, &nextChar);
-                            if (len > 0 && !isAllowedLinkIcon_Char_(nextChar)) {
-                                link->flags |= iconFromLabel_GmLinkFlag;
-                                link->labelIcon = iconRange;
-                                line.start      = iconRange.end;
-                                trimStart_Rangecc(&line);
-                            }
-                        }
-                        // printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
-                        // fflush(stdout);
-                    }
-                }
-            }
-        }
-        else {
-            line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
-        }
-    }
-    return line;
-}
-
 void clearLinks_GmDocument_(iGmDocument *d) {
     iForEach(PtrArray, i, &d->links) {
         delete_GmLink(i.ptr);
@@ -444,6 +207,7 @@ void init_GmDocument(iGmDocument *d) {
     iZap(d->style);
     d->wrapWidth = 0;
     d->size = zero_I2();
+    init_GmParser(&d->parser);
     init_Array(&d->layout, sizeof(iGmRun));
     init_StringArray(&d->auxText);
     init_PtrArray(&d->links);
@@ -527,6 +291,9 @@ static uint32_t applyDocPrefs_GmDocument_(iGmDocument *d, const iDocPrefs *prefs
         set_DocPrefs(&d->docPrefs, prefs);
         if (diff & palette_DocPrefsSpecFlag) {
             invalidatePalette_GmDocument(d);
+        }
+        if (diff & reparse_DocPrefsSpecFlag) {
+            invalidateParse_GmDocument_(d);
         }
         if (diff & (relayout_DocPrefsSpecFlag | reparse_DocPrefsSpecFlag)) {
             d->wrapWidth = 0;
@@ -862,6 +629,9 @@ static void normalize_GmDocument(iGmDocument *d) {
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     url = canonicalUrl_String(url);
+    if (!equal_String(&d->url, url)) {
+        invalidateParse_GmDocument_(d);
+    }
     set_String(&d->url, url);
     deinit_ScopeKey(&d->scopeKey);
     initUrl_ScopeKey(&d->scopeKey, url);
@@ -1069,6 +839,7 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
 }
 
 static void import_GmDocument_(iGmDocument *d) {
+    invalidateParse_GmDocument_(d);
     d->format = d->origFormat;
     d->flags.isConvertedMarkdown = iFalse;
     set_String(&d->source, &d->origSource);
@@ -1144,12 +915,18 @@ void updateVisitedLinks_GmDocument(iGmDocument *d) {
     init_IntSet(&linkIds);
     iForEach(PtrArray, i, &d->links) {
         iGmLink *link = i.ptr;
+        const iTime visitTime = urlVisitTime_Visited(visited_App(), &link->url);
         if (~link->flags & visited_GmLinkFlag) {
-            iTime visitTime = urlVisitTime_Visited(visited_App(), &link->url);
             if (isValid_Time(&visitTime)) {
+                link->when = visitTime;
                 link->flags |= visited_GmLinkFlag;
                 insert_IntSet(&linkIds, index_PtrArrayIterator(&i) + 1);
             }
+        }
+        else if (!isValid_Time(&visitTime) && ~link->flags & isOpen_GmLinkFlag) {
+            /* Removed from history; runs are updated in the next layout. */
+            link->when = visitTime;
+            link->flags &= ~visited_GmLinkFlag;
         }
     }
     markLinkRunsVisited_GmDocument_(d, &linkIds);

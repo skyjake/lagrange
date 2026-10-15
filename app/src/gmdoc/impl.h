@@ -39,6 +39,7 @@ struct Impl_GmLink {
     iRangecc urlRange;   /* URL in the source */
     iRangecc labelRange; /* label in the source */
     iRangecc labelIcon;  /* special icon defined in the label text */
+    iRangecc textRange;  /* shown on the link line */
     iTime    when;
     int      flags;
 };
@@ -51,6 +52,14 @@ struct Impl_GmPageBands {
     iRangecc header;
     iRangecc bookHeader; /* for the left page of a two-page spread */
     iRangecc footer;
+};
+
+iDeclareType(GmParser)
+
+struct Impl_GmParser {
+    iBool    isValid;
+    iBool    isPreformat;
+    uint16_t preId; /* current block while `isPreformat` */
 };
 
 struct Impl_GmDocument {
@@ -72,6 +81,7 @@ struct Impl_GmDocument {
     iGmDocumentMetrics requestedMetrics;
     size_t    numFilledColumns; /* columns with content in a paginated layout */
     int       wrapWidth;    /* if non-zero, overrides the line wrap width */
+    iGmParser parser;
     iArray    layout;     /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on page but is not part of the source */
     iPtrArray links;
@@ -117,7 +127,6 @@ iBool                   isForcedMonospace_GmDocument_   (const iGmDocument *);
 iBool                   isGopher_GmDocument_            (const iGmDocument *);
 iBool                   shouldBeNormalized_GmDocument_  (const iGmDocument *);
 enum iGmLineType        lineType_GmDocument_            (const iGmDocument *, const iRangecc line);
-iRangecc                addLink_GmDocument_             (iGmDocument *, iRangecc line, iGmLinkId *linkId);
 void                    clearLinks_GmDocument_          (iGmDocument *);
 void                    updateOpenURLs_GmDocument_      (iGmDocument *);
 
