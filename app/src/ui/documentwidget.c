@@ -2817,6 +2817,35 @@ static void cancelReadingBarsToggle_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void revealReadingBars_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos) {
+    /* Hovering over the page header or footer shows the bars on that edge. */
+    iWidget *w = as_Widget(d);
+    if (!isReadingMode_Root(w->root) || !w->root->areReadingBarsHidden ||
+        document_Root(w->root) != d || !isPaged_DocumentView(d->view) || mouseGrab_Widget() ||
+        !contains_DocumentWidget_(d, mousePos)) {
+        return;
+    }
+    const iRect viewport = pageViewport_DocumentView(d->view);
+    if (!contains_Rect(viewport, mousePos)) {
+        return;
+    }
+    const iGmDocument *doc = d->view->doc;
+    iBool bottom;
+    if (mousePos.y < top_Rect(viewport) + pageHeaderHeight_GmDocument(doc)) {
+        bottom = iFalse;
+    }
+    else if (mousePos.y >= bottom_Rect(viewport) - pageFooterHeight_GmDocument(doc)) {
+        bottom = iTrue;
+    }
+    else {
+        return;
+    }
+    if (hasReadingBarAt_Root(w->root, bottom)) {
+        cancelReadingBarsToggle_DocumentWidget_(d);
+        showReadingBars_Root(w->root, iTrue);
+    }
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -3030,6 +3059,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setValue_Anim(&view->altTextOpacity, 0, 0); /* keep it hidden while moving */
             }
             updateHover_DocumentView(view, mpos);
+        }
+        if (ev->motion.which != SDL_TOUCH_MOUSEID) {
+            revealReadingBars_DocumentWidget_(d, mpos);
         }
     }
     if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTapBegins_UserEventCode) {

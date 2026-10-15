@@ -3062,6 +3062,14 @@ void toggleReadingBars_Root(iRoot *d) {
     showReadingBars_Root(d, d->areReadingBarsHidden);
 }
 
+iBool hasReadingBarAt_Root(const iRoot *d, iBool bottom) {
+    iWidget *navBar, *tabBar;
+    readingBars_Root_(d, &navBar, &tabBar);
+    const iPrefs *prefs = prefs_App();
+    return (navBar && prefs->bottomNavBar == bottom) ||
+           (tabBar && isTabBarWanted_Root_(d) && prefs->bottomTabBar == bottom);
+}
+
 static iBool isPopupOpen_Root_(const iRoot *d) {
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
