@@ -178,7 +178,7 @@ iBool openAdjacentChapter_DocumentBook(iDocumentBook *d, int dir, iBool isGestur
     iChangeFlags(d->flags, showLastPage_DocumentBookFlag, dir < 0);
     iChangeFlags(d->flags, animateChapterSwipe_DocumentBookFlag, !isGesture);
     d->flags |= readingOn_DocumentBookFlag;
-    postCommandf_Root(as_Widget(d->owner)->root, "open url:%s", cstr_String(url));
+    postCommandf_Root(as_Widget(d->owner)->root, "open doc:%p url:%s", d->owner, cstr_String(url));
     return iTrue;
 }
 
@@ -335,7 +335,8 @@ void jumpToPosition_DocumentBook(iDocumentBook *d, size_t chapter, float pos) {
         resume_DocumentBook(d, chapter, pos);
         d->flags |= readingOn_DocumentBookFlag;
         postCommandf_Root(as_Widget(d->owner)->root,
-                          "open url:%s",
+                          "open doc:%p url:%s",
+                          d->owner,
                           cstr_String(navLinkUrl_Gempub(gempub_DocumentBook_(d), chapter)));
     }
 }
@@ -427,7 +428,8 @@ iBool moveProgress_DocumentBook(iDocumentBook *d, int thumb) {
             d->pendingChapter = target;
             d->flags |= readingOn_DocumentBookFlag;
             postCommandf_Root(as_Widget(d->owner)->root,
-                              "open url:%s",
+                              "open doc:%p url:%s",
+                              d->owner,
                               cstr_String(navLinkUrl_Gempub(gempub_DocumentBook_(d), target)));
         }
         d->pendingChapterPos = pos;

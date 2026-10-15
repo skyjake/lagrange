@@ -638,7 +638,8 @@ iBool handleCommand_Query(iQuery *d, const char *cmd) {
             setEnabled_Query(d, argU32Label_Command(cmd, "link"), iFalse);
         }
         else {
-            postCommandf_Root(ownerWidget_(d)->root, "open redirect:1 url:%s", queryUrl);
+            postCommandf_Root(
+                ownerWidget_(d)->root, "open doc:%p redirect:1 url:%s", d->owner, queryUrl);
         }
         return iTrue;
     }
