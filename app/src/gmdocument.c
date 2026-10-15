@@ -1569,4 +1569,78 @@ iBool preHasAltText_GmDocument(const iGmDocument *d, uint16_t preId) {
     return meta && !isEmpty_Range(&meta->altText);
 }
 
+#if !defined (NDEBUG)
+static void appendRange_GmDocument_(const iGmDocument *d, iString *out, iRangecc range) {
+    const iRangecc src = range_String(&d->source);
+    if (!range.start) {
+        appendCStr_String(out, " -");
+    }
+    else if (range.start >= src.start && range.end <= src.end) {
+        appendFormat_String(out, " %zu:%zu", (size_t) (range.start - src.start), size_Range(&range));
+    }
+    else {
+        appendFormat_String(out, " \"%s\"", cstr_Rangecc(range));
+    }
+}
+
+void layoutDigest_GmDocument(const iGmDocument *d, iString *out) {
+    /* Everything that a layout produces, for comparing layouts. */
+    appendFormat_String(out, "size %d %d contentWidth %d title \"%s\"\n",
+                        d->size.x, d->size.y, d->contentWidth, cstr_String(&d->title));
+    iConstForEach(PtrArray, i, &d->links) {
+        const iGmLink *link = i.ptr;
+        appendFormat_String(out, "link %zu %s %x", index_PtrArrayConstIterator(&i) + 1,
+                            cstr_String(&link->url), link->flags);
+        appendRange_GmDocument_(d, out, link->urlRange);
+        appendRange_GmDocument_(d, out, link->labelRange);
+        appendRange_GmDocument_(d, out, link->labelIcon);
+        appendCStr_String(out, "\n");
+    }
+    iConstForEach(Array, h, &d->headings) {
+        const iGmHeading *head = h.value;
+        appendFormat_String(out, "heading %d", head->level);
+        appendRange_GmDocument_(d, out, head->text);
+        appendCStr_String(out, "\n");
+    }
+    iConstForEach(Array, p, &d->preMeta) {
+        const iGmPreMeta *meta = p.value;
+        appendFormat_String(out, "pre %x %d %d %d %d", meta->flags, meta->pixelRect.pos.x,
+                            meta->pixelRect.pos.y, meta->pixelRect.size.x, meta->pixelRect.size.y);
+        appendRange_GmDocument_(d, out, meta->bounds);
+        appendRange_GmDocument_(d, out, meta->altText);
+        appendRange_GmDocument_(d, out, meta->contents);
+        appendFormat_String(out, " runs %zd %zd\n",
+                            meta->runRange.start ? meta->runRange.start - (const iGmRun *) constData_Array(&d->layout) : -1,
+                            meta->runRange.end ? meta->runRange.end - (const iGmRun *) constData_Array(&d->layout) : -1);
+    }
+    iConstForEach(Array, r, &d->layout) {
+        const iGmRun *run = r.value;
+        appendFormat_String(out, "run %d %d %d %d / %d %d %d %d L%u F%x R%u C%u f%u m%u:%u t%u e%u",
+                            run->bounds.pos.x, run->bounds.pos.y,
+                            run->bounds.size.x, run->bounds.size.y,
+                            run->visBounds.pos.x, run->visBounds.pos.y,
+                            run->visBounds.size.x, run->visBounds.size.y,
+                            run->linkId, run->flags, run->isRTL, run->color, run->font,
+                            run->mediaType, run->mediaId, run->lineType, run->isLede);
+        appendRange_GmDocument_(d, out, run->text);
+        appendCStr_String(out, "\n");
+    }
+}
+
+void dumpLayout_GmDocument_(const iGmDocument *d) {
+    /* Set LAGRANGE_LAYOUT_DUMP to a file path to append each finished layout there. */
+    const char *path = getenv("LAGRANGE_LAYOUT_DUMP");
+    if (!path || !*path) {
+        return;
+    }
+    iString *out = collectNewFormat_String("=== %s\n", cstr_String(&d->url));
+    layoutDigest_GmDocument(d, out);
+    FILE *f = fopen(path, "a");
+    if (f) {
+        fwrite(cstr_String(out), 1, size_String(out), f);
+        fclose(f);
+    }
+}
+#endif
+
 iDefineClass(GmDocument)

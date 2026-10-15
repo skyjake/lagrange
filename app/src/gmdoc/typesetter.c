@@ -1782,4 +1782,7 @@ void doLayout_GmDocument_(iGmDocument *d) {
         applyMetrics_GmDocument_(d, &single);
         typeset_GmDocument_(d);
     }
+#if !defined (NDEBUG)
+    dumpLayout_GmDocument_(d);
+#endif
 }

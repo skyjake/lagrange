@@ -120,3 +120,8 @@ enum iGmLineType        lineType_GmDocument_            (const iGmDocument *, co
 iRangecc                addLink_GmDocument_             (iGmDocument *, iRangecc line, iGmLinkId *linkId);
 void                    clearLinks_GmDocument_          (iGmDocument *);
 void                    updateOpenURLs_GmDocument_      (iGmDocument *);
+
+#if !defined (NDEBUG)
+void                    layoutDigest_GmDocument         (const iGmDocument *, iString *out);
+void                    dumpLayout_GmDocument_          (const iGmDocument *);
+#endif
