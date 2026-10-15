@@ -182,6 +182,7 @@ iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 static const char *feedsFilename_Feeds_    = "feeds.lgr";
 static const char *oldFeedsFilename_Feeds_ = "feeds.txt";
 static const char *magic_Feeds_            = "lgFd";
+static const int   maxEntryAge_Feeds_      = 30 * 24 * 3600; /* seconds since last seen */
 
 struct Impl_Feeds {
     iMutex *  mtx;
@@ -709,14 +710,18 @@ static void save_Feeds_(iFeeds *d) {
             delete_PtrArray(checked);
         }
         iPtrArray *entries = new_PtrArray();
-        iTime now;
-        initCurrent_Time(&now);
+        /* Relative to the last refresh, so entries are not lost while the app is not run. */
+        iTime refreshed = d->lastRefreshedAt;
+        if (!isValid_Time(&refreshed)) {
+            initCurrent_Time(&refreshed);
+        }
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
-            /* Heading entries are kept as long as they are present in the source. */
+            /* Heading entries are kept as long as they are present in the source. Other
+               entries are rediscovered on every refresh while present. */
             if (!entry->isHeading && !entry->isTinylog && isValid_Time(&entry->discovered) &&
-                secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
-                continue; /* Forget entries discovered long ago. */
+                secondsSince_Time(&refreshed, &entry->discovered) > maxEntryAge_Feeds_) {
+                continue; /* Forget entries no longer in the source. */
             }
             pushBack_PtrArray(entries, entry);
         }

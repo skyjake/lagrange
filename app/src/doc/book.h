@@ -70,3 +70,4 @@ void    saveToShelf_DocumentBook        (iDocumentBook *, iBool overwrite);
 void    openFromShelf_DocumentBook      (iDocumentBook *, const iString *path, iBool isReplaced);
 
 iDocumentWidget *findTab_DocumentBook   (const iString *bookId, const iString *path); /* either may be NULL */
+void    tidyShelf_DocumentBook          (void); /* removes obsolete downloads and prunes books */

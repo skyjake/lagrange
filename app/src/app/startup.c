@@ -678,6 +678,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
             }
         }
     }
+    postCommand_App("~books.tidy");
     postCommand_App("~navbar.actions.changed");
     postCommand_App("~toolbar.actions.changed");
     postCommand_App("~root.movable");

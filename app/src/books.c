@@ -48,16 +48,22 @@ static void init_Book(iBook *d) {
     init_String(&d->author);
     init_String(&d->fileName);
     init_String(&d->url);
+    init_String(&d->edition);
+    init_String(&d->fileEdition);
     d->size        = 0;
     d->chapter     = -1;
     d->numChapters = 0;
     d->chapterPos  = 0.0f;
     iZap(d->timestamp);
     iZap(d->positionTime);
+    iZap(d->shelved);
+    iZap(d->deleted);
     iZap(d->openedAt);
 }
 
 static void deinit_Book(iBook *d) {
+    deinit_String(&d->fileEdition);
+    deinit_String(&d->edition);
     deinit_String(&d->url);
     deinit_String(&d->fileName);
     deinit_String(&d->author);
@@ -89,6 +95,44 @@ const iString *path_Book(const iBook *d) {
         return NULL;
     }
     return collect_String(concat_Path(dir_Books(), &d->fileName));
+}
+
+static iBool isShelved_Book_(const iBook *d) {
+    return isValid_Time(&d->shelved) &&
+           integralSeconds_Time(&d->shelved) > integralSeconds_Time(&d->deleted);
+}
+
+static void migrateShelved_Book_(iBook *d) {
+    /* Books used to be on the shelf if downloaded or downloadable. */
+    if (!isValid_Time(&d->shelved) && !isValid_Time(&d->deleted) &&
+        (!isEmpty_String(&d->fileName) || !isEmpty_String(&d->url))) {
+        if (isValid_Time(&d->timestamp)) {
+            d->shelved = d->timestamp;
+        }
+        else {
+            initCurrent_Time(&d->shelved);
+        }
+    }
+}
+
+iBool isObsolete_Book(const iBook *d) {
+    if (isEmpty_String(&d->fileName)) {
+        return iFalse;
+    }
+    return !isShelved_Book_(d) ||
+           (!isEmpty_String(&d->fileEdition) && cmpString_String(&d->fileEdition, &d->edition) < 0);
+}
+
+static const iString *edition_Gempub_(const iGempub *gempub) {
+    /* Dates in ISO 8601 format can be compared as strings. */
+    const iString *date = property_Gempub(gempub, publishDate_GempubProperty);
+    return !isEmpty_String(date) ? date : property_Gempub(gempub, published_GempubProperty);
+}
+
+static void updateEdition_Book_(iBook *d, const iString *edition) {
+    if (cmpString_String(&d->edition, edition) < 0) {
+        set_String(&d->edition, edition);
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -171,11 +215,29 @@ void serialize_Books(iStream *outs) {
                                 "file = \"%s\"\nsize = %llu\n",
                                 cstrCollect_String(quote_String(&book->fileName, iFalse)),
                                 (unsigned long long) book->size);
+            if (!isEmpty_String(&book->fileEdition)) {
+                appendFormat_String(str,
+                                    "fileedition = \"%s\"\n",
+                                    cstrCollect_String(quote_String(&book->fileEdition, iFalse)));
+            }
         }
         if (!isEmpty_String(&book->url)) {
             appendFormat_String(str,
                                 "url = \"%s\"\n",
                                 cstrCollect_String(quote_String(&book->url, iFalse)));
+        }
+        if (!isEmpty_String(&book->edition)) {
+            appendFormat_String(str,
+                                "edition = \"%s\"\n",
+                                cstrCollect_String(quote_String(&book->edition, iFalse)));
+        }
+        if (isValid_Time(&book->shelved)) {
+            appendFormat_String(str, "shelved = %lld\n",
+                                (long long) integralSeconds_Time(&book->shelved));
+        }
+        if (isValid_Time(&book->deleted)) {
+            appendFormat_String(str, "deleted = %lld\n",
+                                (long long) integralSeconds_Time(&book->deleted));
         }
         appendFormat_String(str,
                             "chapter = %d\nchapters = %d\npos = %f\ntimestamp = %lld\n"
@@ -198,6 +260,7 @@ struct Impl_BooksLoader {
     enum iImportMethod method;
     iBool              isImport;
     iBool              isSync; /* synced values replace the old ones */
+    iStringSet        *ids;    /* all loaded books */
     iBook             *book;
 };
 
@@ -223,9 +286,14 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
     if (d->isImport) {
         /* Files are specific to the exporting device. */
         clear_String(&book->fileName);
+        clear_String(&book->fileEdition);
         book->size = 0;
     }
+    if (d->ids) {
+        insert_StringSet(d->ids, &book->id);
+    }
     if (!old) {
+        migrateShelved_Book_(book);
         insert_StringHash(d->books->books, &book->id, book);
         insertFile_Books_(d->books, book);
         iReleasePtr(&d->book);
@@ -233,6 +301,16 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
     }
     if (isEmpty_String(&old->url) || d->isSync) {
         set_String(&old->url, &book->url);
+    }
+    if (d->isSync) {
+        set_String(&old->edition, &book->edition);
+        old->shelved = book->shelved;
+        old->deleted = book->deleted;
+    }
+    else {
+        updateEdition_Book_(old, &book->edition);
+        max_Time(&old->shelved, &book->shelved);
+        max_Time(&old->deleted, &book->deleted);
     }
     if (d->isSync || (d->method == all_ImportMethod &&
         integralSeconds_Time(&book->timestamp) > integralSeconds_Time(&old->timestamp))) {
@@ -245,6 +323,7 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
         old->timestamp   = book->timestamp;
         old->positionTime = book->positionTime;
     }
+    migrateShelved_Book_(old);
     iReleasePtr(&d->book);
 }
 
@@ -269,6 +348,12 @@ static void handleKeyValue_BooksLoader_(void *context, const iString *table, con
         else if (!cmp_String(key, "url")) {
             set_String(&book->url, value->value.string);
         }
+        else if (!cmp_String(key, "edition")) {
+            set_String(&book->edition, value->value.string);
+        }
+        else if (!cmp_String(key, "fileedition")) {
+            set_String(&book->fileEdition, value->value.string);
+        }
         return;
     }
     const double num = number_TomlValue(value);
@@ -289,6 +374,12 @@ static void handleKeyValue_BooksLoader_(void *context, const iString *table, con
     }
     else if (!cmp_String(key, "positiontime")) {
         initSeconds_Time(&book->positionTime, num);
+    }
+    else if (!cmp_String(key, "shelved")) {
+        initSeconds_Time(&book->shelved, num);
+    }
+    else if (!cmp_String(key, "deleted")) {
+        initSeconds_Time(&book->deleted, num);
     }
 }
 
@@ -312,15 +403,45 @@ void deserialize_Books(iStream *ins, enum iImportMethod method) {
     save_Books();
 }
 
+static iBool hasFiles_Books_(const iBooks *d, const iBook *book) {
+    iConstForEach(StringHash, i, d->files) {
+        if (((const iShelfFile *) value_StringHashNode(i.value))->book == book) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static void removeUnsynced_Books_(iBooks *d, const iStringSet *synced) {
+    /* Pruned on other devices. A downloaded book is kept and synced again. */
+    iStringArray *removed = new_StringArray();
+    iConstForEach(StringHash, i, d->books) {
+        const iBook *book = value_StringHashNode(i.value);
+        if (!contains_StringSet(synced, &book->id) && !hasFiles_Books_(d, book)) {
+            pushBack_StringArray(removed, &book->id);
+        }
+    }
+    iConstForEach(StringArray, j, removed) {
+        remove_StringHash(d->books, j.value);
+    }
+    iRelease(removed);
+}
+
 void applySync_Books(iStream *ins) {
     iBooks *d = books_;
     lock_Mutex(d->mtx);
-    iBooksLoader loader = { .books = d, .method = all_ImportMethod, .isImport = iTrue, .isSync = iTrue };
+    iBooksLoader loader = { .books    = d,
+                            .method   = all_ImportMethod,
+                            .isImport = iTrue,
+                            .isSync   = iTrue,
+                            .ids      = new_StringSet() };
     iTomlParser *toml = new_TomlParser();
     setHandlers_TomlParser(toml, handleTable_BooksLoader_, handleKeyValue_BooksLoader_, &loader);
     parse_TomlParser(toml, collect_String(newBlock_String(collect_Block(readAll_Stream(ins)))));
     delete_TomlParser(toml);
     iReleasePtr(&loader.book);
+    removeUnsynced_Books_(d, loader.ids);
+    iRelease(loader.ids);
     unlock_Mutex(d->mtx);
     save_Books();
 }
@@ -476,19 +597,23 @@ static iBook *bookForGempub_Books_(iBooks *d, const iGempub *gempub) {
     set_String(&book->title, property_Gempub(gempub, title_GempubProperty));
     translate_Lang(&book->title); /* may be a placeholder */
     set_String(&book->author, property_Gempub(gempub, author_GempubProperty));
+    updateEdition_Book_(book, edition_Gempub_(gempub));
     return book;
 }
 
-static void setFile_Books_(iBooks *d, iBook *book, const iString *fileName, uint64_t size) {
+static void setFile_Books_(iBooks *d, iBook *book, const iString *fileName, uint64_t size,
+                           const iString *edition) {
     iShelfFile *file = value_StringHash(d->files, fileName);
     if (file && file->book != book && equal_String(&file->book->fileName, fileName)) {
         clear_String(&file->book->fileName);
+        clear_String(&file->book->fileEdition);
         file->book->size = 0;
     }
     insert_StringHash(d->files, fileName, iClob(new_ShelfFile(book, size)));
     const iString *path = path_Book(book);
     if (!path || equal_String(&book->fileName, fileName) || !fileExists_FileInfo(path)) {
         set_String(&book->fileName, fileName);
+        set_String(&book->fileEdition, edition);
         book->size = size;
     }
 }
@@ -521,69 +646,88 @@ static int cmpAuthor_Book_(const void *a, const void *b) {
     return cmp ? cmp : cmpStringCase_String(&x->title, &y->title);
 }
 
-const iPtrArray *list_Books(enum iBooksSortOrder sortOrder) {
-    iBooks    *d       = books_;
-    iPtrArray *shelf   = collectNew_PtrArray();
-    iBool      changed = iFalse;
-    lock_Mutex(d->mtx);
-    iStringSet *present = iClob(new_StringSet());
+static const int64_t expiry_Books_ = 30 * 24 * 3600;
+
+static void forgetFile_Books_(iBooks *d, const iString *name) {
+    iShelfFile *file = value_StringHash(d->files, name);
+    if (!file) {
+        return;
+    }
+    iBook *book = file->book;
+    remove_StringHash(d->files, name);
+    if (equal_String(&book->fileName, name)) {
+        /* Another copy may remain. */
+        clear_String(&book->fileName);
+        clear_String(&book->fileEdition);
+        book->size = 0;
+        iConstForEach(StringHash, i, d->files) {
+            const iShelfFile *other = value_StringHashNode(i.value);
+            if (other->book == book) {
+                set_String(&book->fileName, key_StringHashConstIterator(&i));
+                book->size = other->size;
+                break;
+            }
+        }
+    }
+}
+
+static iBool scan_Books_(iBooks *d) {
+    /* Returns True if the cached metadata changed. */
+    iBool       changed = iFalse;
+    iStringSet *present = new_StringSet();
     iForEach(DirFileInfo, i, iClob(new_DirFileInfo(&d->dir))) {
         const iString *path = path_FileInfo(i.value);
         const iString *name = collectNewRange_String(baseName_Path(path));
         if (!endsWithCase_String(name, ".gpub") || startsWith_String(name, ".")) {
             continue;
         }
-        const uint64_t size = size_FileInfo(i.value);
-        iShelfFile    *file = value_StringHash(d->files, name);
-        iBook         *book = file && file->size == size ? file->book : NULL;
-        if (!book) {
+        const uint64_t    size = size_FileInfo(i.value);
+        const iShelfFile *file = value_StringHash(d->files, name);
+        if (!file || file->size != size) {
             /* Not seen before or changed, so the metadata must be read. */
             iGempub *gempub = new_Gempub();
             if (openFile_Gempub(gempub, path)) {
-                book = bookForGempub_Books_(d, gempub);
+                iBook *book = bookForGempub_Books_(d, gempub);
                 if (!isValid_Time(&book->timestamp)) {
                     book->timestamp = lastModified_FileInfo(i.value);
                 }
-                setFile_Books_(d, book, name, size);
+                setFile_Books_(d, book, name, size, edition_Gempub_(gempub));
+                if (!isShelved_Book_(book)) {
+                    initCurrent_Time(&book->shelved); /* added manually */
+                }
+                file    = value_StringHash(d->files, name);
                 changed = iTrue;
             }
             delete_Gempub(gempub);
         }
-        if (book) {
+        if (file) {
             insert_StringSet(present, name);
-            if (indexOf_PtrArray(shelf, book) == iInvalidPos) {
-                pushBack_PtrArray(shelf, book);
-            }
         }
     }
-    /* Forget files that no longer exist. */
-    iStringSet *gone = iClob(new_StringSet());
+    iStringArray *gone = new_StringArray();
     iConstForEach(StringHash, j, d->files) {
-        const iString *name = key_StringHashConstIterator(&j);
-        if (!contains_StringSet(present, name)) {
-            insert_StringSet(gone, name);
+        if (!contains_StringSet(present, key_StringHashConstIterator(&j))) {
+            pushBack_StringArray(gone, key_StringHashConstIterator(&j));
         }
     }
-    iConstForEach(StringSet, k, gone) {
-        remove_StringHash(d->files, k.value);
+    iConstForEach(StringArray, k, gone) {
+        forgetFile_Books_(d, k.value);
+        changed = iTrue;
     }
-    iConstForEach(StringHash, m, d->books) {
-        iBook *book = value_StringHashNode(m.value);
-        if (!isEmpty_String(&book->fileName) && !contains_StringSet(present, &book->fileName)) {
-            /* Another copy may remain. */
-            clear_String(&book->fileName);
-            book->size = 0;
-            iConstForEach(StringHash, n, d->files) {
-                const iShelfFile *file = value_StringHashNode(n.value);
-                if (file->book == book) {
-                    set_String(&book->fileName, key_StringHashConstIterator(&n));
-                    book->size = file->size;
-                    break;
-                }
-            }
-            changed = iTrue;
-        }
-        if (isEmpty_String(&book->fileName) && isDownloadable_Book(book)) {
+    iRelease(gone);
+    iRelease(present);
+    return changed;
+}
+
+const iPtrArray *list_Books(enum iBooksSortOrder sortOrder) {
+    iBooks    *d     = books_;
+    iPtrArray *shelf = collectNew_PtrArray();
+    lock_Mutex(d->mtx);
+    const iBool changed = scan_Books_(d);
+    iConstForEach(StringHash, i, d->books) {
+        iBook *book = value_StringHashNode(i.value);
+        if (isShelved_Book_(book) &&
+            (!isEmpty_String(&book->fileName) || isDownloadable_Book(book))) {
             pushBack_PtrArray(shelf, book);
         }
     }
@@ -598,17 +742,77 @@ const iPtrArray *list_Books(enum iBooksSortOrder sortOrder) {
     return shelf;
 }
 
-void update_Books(const iGempub *gempub, const iString *path) {
-    iBooks *d = books_;
+void prune_Books(void) {
+    iBooks       *d       = books_;
+    iStringArray *expired = new_StringArray();
+    iTime         now;
+    initCurrent_Time(&now);
     lock_Mutex(d->mtx);
+    iBool changed = scan_Books_(d);
+    iConstForEach(StringHash, i, d->books) {
+        const iBook *book = value_StringHashNode(i.value);
+        iTime latest = book->timestamp;
+        max_Time(&latest, &book->deleted);
+        if (!isShelved_Book_(book) && !hasFiles_Books_(d, book) &&
+            secondsSince_Time(&now, &latest) > expiry_Books_) {
+            pushBack_StringArray(expired, &book->id);
+        }
+    }
+    iConstForEach(StringArray, j, expired) {
+        remove_StringHash(d->books, j.value);
+        changed = iTrue;
+    }
+    unlock_Mutex(d->mtx);
+    iRelease(expired);
+    if (changed) {
+        save_Books();
+    }
+}
+
+const iStringArray *listObsolete_Books(void) {
+    iBooks       *d       = books_;
+    iStringArray *ids     = iClob(new_StringArray());
+    iBool         changed = iFalse;
+    lock_Mutex(d->mtx);
+    iConstForEach(StringHash, i, d->books) {
+        iBook *book = value_StringHashNode(i.value);
+        if (!isEmpty_String(&book->fileName) && isEmpty_String(&book->fileEdition) &&
+            !isEmpty_String(&book->edition)) {
+            /* Downloaded before editions were known. */
+            iGempub *gempub = new_Gempub();
+            if (openFile_Gempub(gempub, path_Book(book))) {
+                set_String(&book->fileEdition, edition_Gempub_(gempub));
+                changed = iTrue;
+            }
+            delete_Gempub(gempub);
+        }
+        if (isObsolete_Book(book)) {
+            pushBack_StringArray(ids, &book->id);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    if (changed) {
+        save_Books();
+    }
+    return ids;
+}
+
+static iBook *update_Books_(iBooks *d, const iGempub *gempub, const iString *path) {
     iBook *book = bookForGempub_Books_(d, gempub);
     if (isOnShelf_Books(path)) {
         setFile_Books_(d, book,
                        collectNewRange_String(baseName_Path(path)),
-                       fileSize_FileInfo(path));
+                       fileSize_FileInfo(path),
+                       edition_Gempub_(gempub));
+        initCurrent_Time(&book->shelved); /* also if deleted on another device earlier */
     }
     initCurrent_Time(&book->timestamp);
-    unlock_Mutex(d->mtx);
+    return book;
+}
+
+void update_Books(const iGempub *gempub, const iString *path) {
+    iBooks *d = books_;
+    iGuardMutex(d->mtx, update_Books_(d, gempub, path));
     save_Books();
 }
 
@@ -753,26 +957,24 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
     }
     iRelease(f);
     if (ok) {
+        lock_Mutex(books_->mtx);
+        iBook *book = update_Books_(books_, gempub, path);
         if (sourceUrl) {
-            lock_Mutex(books_->mtx);
-            setSource_Book_(bookForGempub_Books_(books_, gempub), sourceUrl);
-            unlock_Mutex(books_->mtx);
+            setSource_Book_(book, sourceUrl);
         }
-        update_Books(gempub, path);
+        set_String(&book->edition, edition_Gempub_(gempub)); /* even if dated earlier */
         if (oldId) {
-            lock_Mutex(books_->mtx);
-            iBook *book = bookForGempub_Books_(books_, gempub);
             if (!equal_String(&book->title, oldTitle)) {
                 /* A retitled book is read from the beginning. */
                 resetPosition_Book_(book);
-                iBook *old = value_StringHash(books_->books, oldId);
-                if (old && old != book && isEmpty_String(&old->fileName)) {
-                    clear_String(&old->url); /* superseded */
-                }
             }
-            unlock_Mutex(books_->mtx);
-            save_Books();
+            iBook *old = value_StringHash(books_->books, oldId);
+            if (old && old != book) {
+                initCurrent_Time(&old->deleted); /* superseded */
+            }
         }
+        unlock_Mutex(books_->mtx);
+        save_Books();
     }
     delete_String(oldTitle);
     delete_String(oldId);
@@ -786,25 +988,30 @@ const iString *add_Books(const iBlock *gempubData, const iString *fileName,
 
 void removeDownload_Books(const iString *id) {
     iBooks       *d     = books_;
-    iStringArray *paths = new_StringArray();
+    iStringArray *names = new_StringArray();
     lock_Mutex(d->mtx);
     const iBook *book = constValue_StringHash(d->books, id);
     if (book) {
         /* All copies of the book are removed. */
         iConstForEach(StringHash, i, d->files) {
-            const iShelfFile *file = value_StringHashNode(i.value);
-            if (file->book == book) {
-                pushBack_StringArray(
-                    paths, collect_String(concat_Path(&d->dir, key_StringHashConstIterator(&i))));
+            if (((const iShelfFile *) value_StringHashNode(i.value))->book == book) {
+                pushBack_StringArray(names, key_StringHashConstIterator(&i));
             }
         }
     }
     unlock_Mutex(d->mtx);
-    iConstForEach(StringArray, j, paths) {
-        removePath_CStr(cstr_String(j.value));
+    iConstForEach(StringArray, j, names) {
+        removePath_CStr(concatPath_CStr(cstr_String(&d->dir), cstr_String(j.value)));
     }
-    iRelease(paths);
-    list_Books(recent_BooksSortOrder); /* forgets the files */
+    lock_Mutex(d->mtx);
+    iConstForEach(StringArray, k, names) {
+        if (!fileExistsCStr_FileInfo(concatPath_CStr(cstr_String(&d->dir), cstr_String(k.value)))) {
+            forgetFile_Books_(d, k.value);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    iRelease(names);
+    save_Books();
 }
 
 void remove_Books(const iString *id) {
@@ -812,9 +1019,8 @@ void remove_Books(const iString *id) {
     lock_Mutex(d->mtx);
     iBook *book = value_StringHash(d->books, id);
     if (book) {
-        clear_String(&book->url);
+        initCurrent_Time(&book->deleted); /* other devices remove their downloads */
     }
     unlock_Mutex(d->mtx);
     removeDownload_Books(id);
-    save_Books();
 }

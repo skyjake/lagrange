@@ -652,6 +652,7 @@ static void applyType_Sync_(const iSyncData *data, enum iUserDataType type,
             applySync_Books(nativeStream_(data, type));
             notify_App("books.changed");
             notify_App("books.synced");
+            postCommand_App("~books.tidy"); /* expiry is a local change, so not while applying */
             break;
         case visited_UserDataType:
             /* Unsynced visits are too old to be kept anyway. */

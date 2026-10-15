@@ -53,6 +53,9 @@ static const iSyncFieldInfo bookFields_[] = {
     { "pos", iTrue },
     { "timestamp", iTrue },
     { "positiontime", iTrue },
+    { "edition" },
+    { "shelved", iTrue },
+    { "deleted", iTrue },
 };
 
 static const iSyncFieldInfo visitedFields_[] = {
@@ -1055,12 +1058,24 @@ static iSyncRecord *mergeRecord_SyncMerge_(const iSyncMerge *d, const iSyncRecor
         for (size_t i = chapter_SyncBookField; i <= positionTime_SyncBookField; i++) {
             setField_SyncRecord(out, i, field_SyncRecord(pos, i));
         }
-        setField_SyncRecord(out, timestamp_SyncBookField,
-                            field_SyncRecord(number_SyncRecord_(local, timestamp_SyncBookField) >
-                                                     number_SyncRecord_(remote, timestamp_SyncBookField)
-                                                 ? local
-                                                 : remote,
-                                             timestamp_SyncBookField));
+        static const enum iSyncBookField latest[] = { timestamp_SyncBookField,
+                                                       shelved_SyncBookField,
+                                                       deleted_SyncBookField };
+        iForIndices(i, latest) {
+            setField_SyncRecord(out, latest[i],
+                                field_SyncRecord(number_SyncRecord_(local, latest[i]) >
+                                                         number_SyncRecord_(remote, latest[i])
+                                                     ? local
+                                                     : remote,
+                                                 latest[i]));
+        }
+        if (isChanged_(base, local, edition_SyncBookField) &&
+            isChanged_(base, remote, edition_SyncBookField)) {
+            /* Editions are dated, so the newer one wins. */
+            const iString *le = field_SyncRecord(local, edition_SyncBookField);
+            const iString *re = field_SyncRecord(remote, edition_SyncBookField);
+            setField_SyncRecord(out, edition_SyncBookField, cmpString_String(le, re) > 0 ? le : re);
+        }
     }
     return out;
 }

@@ -486,6 +486,21 @@ iDocumentWidget *findTab_DocumentBook(const iString *bookId, const iString *path
     return NULL;
 }
 
+void tidyShelf_DocumentBook(void) {
+    iBool isChanged = iFalse;
+    iConstForEach(StringArray, i, listObsolete_Books()) {
+        /* An open book is removed later. */
+        if (!findTab_DocumentBook(i.value, NULL)) {
+            removeDownload_Books(i.value);
+            isChanged = iTrue;
+        }
+    }
+    prune_Books();
+    if (isChanged) {
+        postCommand_App("books.changed");
+    }
+}
+
 void openFromShelf_DocumentBook(iDocumentBook *d, const iString *path, iBool isReplaced) {
     /* Only one copy of a book is open, so reading positions don't conflict. */
     iDocumentWidget *owner  = d->owner;

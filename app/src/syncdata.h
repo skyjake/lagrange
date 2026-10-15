@@ -55,6 +55,9 @@ enum iSyncBookField {
     pos_SyncBookField,
     timestamp_SyncBookField,
     positionTime_SyncBookField,
+    edition_SyncBookField,
+    shelved_SyncBookField,
+    deleted_SyncBookField,
 };
 
 enum iSyncVisitedField {

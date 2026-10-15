@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/stream.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/time.h>
 
 iDeclareType(Gempub)
@@ -45,18 +46,23 @@ struct Impl_Book {
     iString  author;
     iString  fileName;    /* in the books directory; empty if not downloaded */
     iString  url;         /* where the book can be downloaded from */
+    iString  edition;     /* publication date of the latest known edition */
+    iString  fileEdition; /* edition of the downloaded copy */
     uint64_t size;
     int      chapter;     /* negative if not read yet */
     int      numChapters;
     float    chapterPos;  /* fraction of the chapter where the visible pages begin */
     iTime    timestamp;   /* last opened or read */
     iTime    positionTime; /* position last changed while up to date with synced data */
+    iTime    shelved;     /* put on the shelf; on it if later than `deleted` */
+    iTime    deleted;     /* removed from the shelf */
     iTime    openedAt;    /* runtime only: when the current reading session began */
 };
 
 float           progress_Book       (const iBook *); /* 0...1 of the whole book */
 iBool           isDownloadable_Book (const iBook *); /* source URL is available */
 const iString * path_Book           (const iBook *); /* NULL if not on the shelf */
+iBool           isObsolete_Book     (const iBook *); /* downloaded copy is off the shelf or an older edition */
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -74,7 +80,9 @@ const iBook *   find_Books          (const iString *id);
 const iBook *   findBySource_Books  (const iString *url, iBool isDownloaded);
 iBool           isOnShelf_Books     (const iString *path);
 const iString * sourceUrl_Books     (const iString *path); /* NULL if not on the shelf */
-const iPtrArray*list_Books          (enum iBooksSortOrder); /* downloaded or downloadable */
+const iPtrArray*list_Books          (enum iBooksSortOrder); /* shelved, and downloaded or downloadable */
+void            prune_Books         (void); /* forgets books that have been off the shelf for a while */
+const iStringArray *listObsolete_Books(void); /* IDs of books with obsolete downloads */
 
 void            update_Books        (const iGempub *, const iString *path);
 void            beginReading_Books  (const iGempub *);
@@ -89,4 +97,4 @@ const iString * add_Books           (const iBlock *gempubData, const iString *fi
                                      const iString *replacePath,
                                      const iString *sourceUrl); /* returns the saved path */
 void            removeDownload_Books(const iString *id); /* stays on the shelf if downloadable */
-void            remove_Books        (const iString *id); /* the reading position is kept */
+void            remove_Books        (const iString *id); /* off the shelf; the reading position is kept until pruned */

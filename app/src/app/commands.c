@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "impl.h"
 
 #include "bookmarks.h"
+#include "doc/book.h"
 #include "export.h"
 #include "feeds.h"
 #include "sync.h"
@@ -307,6 +308,10 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
 #endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "books.tidy")) {
+        tidyShelf_DocumentBook();
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {
