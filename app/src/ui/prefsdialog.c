@@ -949,55 +949,8 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.thickscroll}", "prefs.thickscroll");
     }
-    /* Document preferences. */
-    appendTabPages_ScopedPrefs(tabs, iTrue, orange_ColorId, '3');
-    /* Content. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
-                                                   green_ColorId, '7', &headings, &values),
-                     "prefs.page.content");
-        /* Cache size. */ {
-            iInputWidget *cache = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(cache, iTrue);
-            addPrefsInputWithHeading_Widget(headings, values, "prefs.cachesize", iClob(cache));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(cache),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        /* Memory size. */ {
-            iInputWidget *mem = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(mem, iTrue);
-            addPrefsInputWithHeading_Widget(headings, values, "prefs.memorysize", iClob(mem));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(mem),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        /* Tinylog cache size. */ {
-            iInputWidget *tinylog = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(tinylog, iTrue);
-            addPrefsInputWithHeading_Widget(headings, values, "prefs.tinylogsize", iClob(tinylog));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(tinylog),
-                                     iClob(new_LabelWidget("${kb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(tinylog, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        addDialogPadding_Widget(headings, values);
-        makeTwoColumnItems_Widget(headings, values, globalContentItems_ScopedPrefs());
-        addDialogPadding_Widget(headings, values);
-        addDialogToggle_Widget(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
-        addDialogToggle_Widget(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
-        addDialogPadding_Widget(headings, values);
-        addDialogToggle_Widget(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
-    }
     /* UI/app behavior. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", green_ColorId, '8', &headings, &values),
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", red_ColorId, '3', &headings, &values),
                      "prefs.page.ui");
         /* Feed refresh interval. */
         addDialogDropMenu_Widget(headings,
@@ -1045,8 +998,8 @@ iWidget *makePreferences_Widget(void) {
     /* Sync. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    reload_Icon " ${heading.prefs.sync}",
-                                                   cyan_ColorId,
-                                                   0,
+                                                   red_ColorId,
+                                                   '4',
                                                    &headings,
                                                    &values),
                      "prefs.page.sync");
@@ -1096,10 +1049,12 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(as_Widget(syncNow), "prefs.sync.now");
         addChild_Widget(values, iClob(syncNow));
     }
+    /* Document preferences. */
+    appendTabPages_ScopedPrefs(tabs, iTrue, orange_ColorId, '5');
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    network_Icon " ${heading.prefs.network}",
-                                                   cyan_ColorId,
+                                                   green_ColorId,
                                                    '9',
                                                    &headings,
                                                    &values),
@@ -1117,7 +1072,7 @@ iWidget *makePreferences_Widget(void) {
     /* Proxy configuration. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    networkProxy_Icon " ${heading.prefs.proxy}",
-                                                   cyan_ColorId,
+                                                   green_ColorId,
                                                    0,
                                                    &headings,
                                                    &values),
@@ -1141,13 +1096,57 @@ iWidget *makePreferences_Widget(void) {
         setSensitiveContent_InputWidget(field, iTrue);
         setHint_InputWidget(field, "${hint.optional}");
     }
-
+    /* Content. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
+                                                   cyan_ColorId, '7', &headings, &values),
+                     "prefs.page.content");
+        /* Cache size. */ {
+            iInputWidget *cache = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(cache, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.cachesize", iClob(cache));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(cache),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        /* Memory size. */ {
+            iInputWidget *mem = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(mem, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.memorysize", iClob(mem));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(mem),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        /* Tinylog cache size. */ {
+            iInputWidget *tinylog = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(tinylog, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.tinylogsize", iClob(tinylog));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(tinylog),
+                                     iClob(new_LabelWidget("${kb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(tinylog, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        addDialogPadding_Widget(headings, values);
+        makeTwoColumnItems_Widget(headings, values, globalContentItems_ScopedPrefs());
+        addDialogPadding_Widget(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
+        addDialogToggle_Widget(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
+        addDialogPadding_Widget(headings, values);
+        addDialogToggle_Widget(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
+    }
     /* Snippets. */ {
         iSnippetWidget *sniped = new_SnippetWidget();
         appendFramelessTabPage_Widget(tabs,
                                       iClob(sniped),
                                       clipboard_Icon " ${heading.prefs.snip}",
-                                      blue_ColorId,
+                                      cyan_ColorId,
                                       0,
                                       0);
     }
