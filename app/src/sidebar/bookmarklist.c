@@ -279,6 +279,7 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         checkIcon_LabelWidget(trashBtn);
         setIconColor_LabelWidget(trashBtn, uiText_ColorId);
         setFont_LabelWidget(trashBtn, uiContent_FontId);
+        setFlags2_Widget(trashBtn, dropTarget_WidgetFlag2, iTrue);
         setId_Widget(addChildFlags_Widget(div, iClob(trashBtn), alignLeft_WidgetFlag),
                      "filter.bookmarks.trash");
         addChildFlags_Widget(d->actions,
@@ -304,7 +305,7 @@ iBool updateBookmarks_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                             .advance.x +
                         textOffset_LabelWidget((iLabelWidget *) trashBtn) + 6 * gap_UI,
                     -1));
-        setFlags2_Widget(trashBtn, alwaysRound_WidgetFlag2, iTrue);
+        setFlags2_Widget(trashBtn, alwaysRound_WidgetFlag2 | dropTarget_WidgetFlag2, iTrue);
         setId_Widget(trashBtn, "filter.bookmarks.trash");
         addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget((iWidget *) addActionButton_SidebarWidget_(
@@ -559,6 +560,7 @@ iBool handleBookmarkCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *e
         iLabelWidget *toggle  = findChild_Widget(w, "filter.bookmarks.trash");
         const iBool showTrash = !isSelected_Widget(toggle);
         setFlags_Widget(toggle, selected_WidgetFlag, showTrash);
+        setFlags2_Widget(toggle, dropTarget_WidgetFlag2, !showTrash);
         updateFontStyle_LabelWidget(toggle, showTrash ? bold_FontStyle : regular_FontStyle);
         updateItemsWithFlags_SidebarWidget_(d, iTrue);
         return iTrue;

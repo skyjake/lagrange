@@ -162,6 +162,7 @@ enum iWidgetFlag2 {
                                                            dismissed sheet */
     yieldSwipeToParent_WidgetFlag2          = iBit(24), /* touch swipes starting on the widget
                                                            scroll the parent instead */
+    dropTarget_WidgetFlag2                  = iBit(25), /* list items can be dragged onto this */
 };
 
 enum iWidgetAddPos {

@@ -733,6 +733,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->size          = zero_I2(); /* will be updated below */
     d->hover         = NULL;
     d->lastHover     = NULL;
+    d->dropTarget    = NULL;
     d->mouseGrab     = NULL;
     d->keyPriority   = NULL;
     d->focus         = NULL;

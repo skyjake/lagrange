@@ -111,6 +111,7 @@ struct Impl_Window {
     iWidget *     lastHover;    /* cleared if deleted */
     iWidget *     mouseGrab;    /* cleared if deleted */
     iWidget *     keyPriority;  /* window dispatches keyboard events to this widget first */
+    iWidget *     dropTarget;   /* highlighted while dragging; cleared if deleted */
     iWidget *     focus;
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */

@@ -1886,7 +1886,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {
             if (d->mode == bookmarks_SidebarMode) {
-                if (hasLabel_Command(cmd, "onto")) {
+                if (equal_Rangecc(range_Command(cmd, "target"), "filter.bookmarks.trash")) {
+                    d->contextItem = item_ListWidget(d->list, argU32Label_Command(cmd, "arg"));
+                    postCommand_Widget(w, "bookmark.delete");
+                }
+                else if (hasLabel_Command(cmd, "onto")) {
                     /* Dragged onto a folder. */
                     bookmarkMovedOntoFolder_SidebarWidget_(
                         d, argU32Label_Command(cmd, "arg"), argU32Label_Command(cmd, "onto"));

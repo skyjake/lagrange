@@ -271,6 +271,9 @@ void deinit_Widget(iWidget *d) {
         if (win->keyPriority == d) {
             win->keyPriority = NULL;
         }
+        if (win->dropTarget == d) {
+            win->dropTarget = NULL;
+        }
         if (win->focus == d) {
             win->focus = NULL;
         }
@@ -2333,12 +2336,18 @@ void drawChildren_Widget(const iWidget *d) {
         init_Paint(&clipPaint);
         setClip_Paint(&clipPaint, bounds_Widget(d));
     }
+    const iWidget *dropTarget = get_Window()->dropTarget;
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
         if (~child->flags & keepOnTop_WidgetFlag && ~child->flags2 & deferredDraw_WidgetFlag2 &&
             isDrawn_Widget_(child)) {
             incrementDrawCount_(child);
             class_Widget(child)->draw(child);
+            if (child == dropTarget) {
+                iPaint p;
+                init_Paint(&p);
+                drawRectThickness_Paint(&p, bounds_Widget(child), gap_UI / 2, uiTextAction_ColorId);
+            }
         }
     }
     if (isClipping) {

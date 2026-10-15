@@ -621,15 +621,38 @@ static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dst
     return index;
 }
 
+static iWidget *dropTargetAt_(iInt2 pos) {
+    for (iWidget *w = hitChild_Window(get_Window(), pos); w; w = w->parent) {
+        if (w->flags2 & dropTarget_WidgetFlag2) {
+            return ~w->flags & disabled_WidgetFlag ? w : NULL;
+        }
+    }
+    return NULL;
+}
+
+static void setDropTarget_ListWidget_(iListWidget *d, iWidget *dropTarget) {
+    iWindow *win = get_Window();
+    if (win->dropTarget != dropTarget) {
+        win->dropTarget = dropTarget;
+        refresh_Widget(d);
+    }
+}
+
 static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     if (d->dragItem == iInvalidPos) {
         return iFalse;
     }
     setFlags_Widget(d, touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     stop_Anim(&d->scrollY.pos);
+    const iWidget *dropTarget = dropTargetAt_(endPos);
+    setDropTarget_ListWidget_(d, NULL);
     enum iDragDestination dstKind;
     const size_t index = resolveDragDestination_ListWidget_(d, endPos, &dstKind);
-    if (index != d->dragItem) {
+    if (dropTarget) {
+        postCommand_Widget(d, "list.dragged arg:%zu target:%s", d->dragItem,
+                           cstr_String(id_Widget(dropTarget)));
+    }
+    else if (index != d->dragItem) {
         if (d->hideItemOnDrag) {
             ((iListItem *) item_ListWidget(d, d->dragItem))->flags.isHidden = iTrue;
         }
@@ -650,6 +673,7 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
 static void abortDrag_ListWidget_(iListWidget *d) {
     if (d->dragItem != iInvalidPos) {
         stop_Anim(&d->scrollY.pos);
+        setDropTarget_ListWidget_(d, NULL);
         invalidateItem_ListWidget(d, d->dragItem);
         d->dragItem = iInvalidPos;
         redrawHoverItem_ListWidget_(d);
@@ -799,11 +823,15 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             updateHover_ListWidget_(d, mousePos);
         }
         else if (d->dragItem != iInvalidPos) {
+            setDropTarget_ListWidget_(d, dropTargetAt_(mousePos));
             /* Start scrolling if near the ends. */
             const int zone = 2 * d->itemHeight;
             const iRect bounds = bounds_Widget(w);
             float scrollSpeed = 0.0f;
-            if (mousePos.y > bottom_Rect(bounds) - zone) {
+            if (get_Window()->dropTarget) {
+                /* Don't scroll while over a drop target. */
+            }
+            else if (mousePos.y > bottom_Rect(bounds) - zone) {
                 scrollSpeed = (mousePos.y - bottom_Rect(bounds) + zone) / (float) zone;
             }
             else if (mousePos.y < top_Rect(bounds) + zone) {
@@ -877,6 +905,10 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
+            /* Released outside the list. */
+            if (dropTargetAt_(pos_Click(&d->click)) && endDrag_ListWidget_(d, pos_Click(&d->click))) {
+                return iTrue;
+            }
             abortDrag_ListWidget_(d);
             break;
         case drag_ClickResult:
@@ -1059,7 +1091,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         enum iDragDestination dstKind;
         const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstKind);
-        if (dstIndex != d->dragItem) {
+        if (dstIndex != d->dragItem && !get_Window()->dropTarget) {
             const iRect dstRect = itemRect_ListWidget(d, dstIndex);
             p.alpha = 0xff;
             if (dstKind == on_DragDestination) {
