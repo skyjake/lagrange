@@ -278,13 +278,20 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                 width_Rect(itemRect) - blankWidth,
                                 uiSeparator_ColorId);
             }
-            drawRange_Text(
-                uiLabelLargeBold_FontId,
+            const iInt2 headingPos =
                 add_I2(pos,
                        init_I2(3 * gap_UI * aspect_UI,
-                               itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 2 * gap_UI)),
-                uiIcon_ColorId,
-                range_String(&d->meta));
+                               itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 2 * gap_UI));
+            drawRange_Text(
+                uiLabelLargeBold_FontId, headingPos, uiIcon_ColorId, range_String(&d->meta));
+            const char *age =
+                d == constItem_ListWidget(list, 0) ? feedsRefreshAgeCStr_SidebarWidget_() : NULL;
+            if (age) {
+                drawRange_Text(uiLabelSmall_FontId,
+                               addY_I2(headingPos, -lineHeight_Text(uiLabelSmall_FontId) - gap_UI),
+                               uiTextDim_ColorId,
+                               range_CStr(age));
+            }
         }
         else {
             const iBool isUnread  = (d->indent & 1) != 0;

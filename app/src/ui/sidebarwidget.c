@@ -945,6 +945,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->isShowingUrls    = iFalse;
     d->wasLandscape     = isLandscape_App();
     d->numUnreadEntries = 0;
+    d->feedsAgeTimer    = 0;
     d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0]     = uiContent_FontId;
     d->itemFonts[1]     = uiContentBold_FontId;
@@ -1157,6 +1158,7 @@ static void applyPendingWidth_SidebarWidget_(iAny *context) {
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
     removeTicker_App(applyPendingWidth_SidebarWidget_, d);
+    stopFeedsAgeTimer_SidebarWidget_(d);
     iRelease(d->shelfOrder);
     deinit_String(&d->gempubCentered);
     deinit_String(&d->gempubUrl);

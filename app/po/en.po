@@ -816,6 +816,24 @@ msgstr "%b. %d, %Y"
 msgid "feeds.today"
 msgstr "Today"
 
+# Time since the latest feed refresh, shown at the top of the Feeds sidebar.
+msgid "sidebar.feeds.updated.now"
+msgstr "Updated just now"
+
+#, c-format
+msgid "sidebar.feeds.updated.min"
+msgstr "Updated %d min ago"
+
+#, c-format
+msgid "sidebar.feeds.updated.hours"
+msgstr "Updated %d h %d min ago"
+
+#, c-format
+msgid "sidebar.feeds.updated.days"
+msgid_plural "sidebar.feeds.updated.days.n"
+msgstr[0] "Updated %d day ago"
+msgstr[1] "Updated %d days ago"
+
 msgid "menu.opencurrent"
 msgstr "Open in Current Tab"
 

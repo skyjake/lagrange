@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_timer.h>
 
 iDeclareType(Gempub)
 iDeclareType(IndicatorWidget)
@@ -98,6 +99,7 @@ struct Impl_SidebarWidget {
     int               buttonFont;
     int               itemFonts[2];
     size_t            numUnreadEntries;
+    SDL_TimerID       feedsAgeTimer; /* redraws the time since the latest refresh */
     iWidget          *resizer;
     iWidget          *menu;          /* context menu for an item */
     iWidget          *modeMenu;      /* context menu for the sidebar mode (no item) */
@@ -145,6 +147,8 @@ iBool           updateSubscriptions_SidebarWidget_(iSidebarWidget *);
 iBool           handleFeedCommand_SidebarWidget_(iSidebarWidget *, const SDL_Event *,
                                                  const char *cmd);
 void            updateFeedContextMenu_SidebarWidget_(iSidebarWidget *);
+void            stopFeedsAgeTimer_SidebarWidget_(iSidebarWidget *);
+const char *    feedsRefreshAgeCStr_SidebarWidget_(void); /* NULL if never refreshed */
 
 /* Site structure (sidebar/sitestructure.c). */
 iBool           updateStructure_SidebarWidget_  (iSidebarWidget *, iBool keepActions);

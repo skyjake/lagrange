@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 
 #include <lagrange/lang.h>
+#include <math.h>
 
 static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) {
     iUnused(d);
@@ -44,6 +45,49 @@ static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) 
 static iBool isSubscribed_Bookmark_(void *context, const iBookmark *bm) {
     iUnused(context);
     return (!isFolder_Bookmark(bm) && bm->flags & subscribed_BookmarkFlag) != 0;
+}
+
+const char *feedsRefreshAgeCStr_SidebarWidget_(void) {
+    const iTime refreshed = lastRefreshedAt_Feeds();
+    if (!isValid_Time(&refreshed)) {
+        return NULL;
+    }
+    const int elapsed = iMax(0, (int) (elapsedSeconds_Time(&refreshed) / 60));
+    if (elapsed == 0) {
+        return cstr_Lang("sidebar.feeds.updated.now");
+    }
+    if (elapsed < 60) {
+        return format_CStr(cstr_Lang("sidebar.feeds.updated.min"), elapsed);
+    }
+    if (elapsed < 1440) {
+        return format_CStr(cstr_Lang("sidebar.feeds.updated.hours"), elapsed / 60, elapsed % 60);
+    }
+    return formatCStr_Lang("sidebar.feeds.updated.days.n", elapsed / 1440);
+}
+
+static uint32_t postFeedsAge_SidebarWidget_(void *context, SDL_TimerID timerId,
+                                            uint32_t interval) {
+    iUnused(timerId, interval);
+    notify_Widget(context, "feeds.age.changed");
+    return 0;
+}
+
+void stopFeedsAgeTimer_SidebarWidget_(iSidebarWidget *d) {
+    if (d->feedsAgeTimer) {
+        SDL_RemoveTimer(d->feedsAgeTimer);
+        d->feedsAgeTimer = 0;
+    }
+}
+
+static void startFeedsAgeTimer_SidebarWidget_(iSidebarWidget *d) {
+    stopFeedsAgeTimer_SidebarWidget_(d);
+    const iTime refreshed = lastRefreshedAt_Feeds();
+    if (isValid_Time(&refreshed)) {
+        /* Fires just after the displayed minute count changes. */
+        const double elapsed = iMax(0.0, elapsedSeconds_Time(&refreshed));
+        const double wait    = 60.0 - fmod(elapsed, 60.0) + 0.1;
+        d->feedsAgeTimer     = SDL_AddTimer((uint32_t) (wait * 1000), postFeedsAge_SidebarWidget_, d);
+    }
 }
 
 iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
@@ -237,6 +281,9 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "feeds.markallread" },
         { reload_Icon " ${feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" }
     };
+    if (!isEmpty) {
+        startFeedsAgeTimer_SidebarWidget_(d);
+    }
     d->menu     = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
     d->modeMenu = makeMenu_Widget(
         as_Widget(d),
@@ -392,6 +439,14 @@ void openMarkAllReadMenu_Widget(iWidget *anchor, const char *command) {
 
 iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, const char *cmd) {
     iWidget *w = as_Widget(d);
+    if (equalWidget_Command(cmd, w, "feeds.age.changed")) {
+        d->feedsAgeTimer = 0;
+        if (d->mode == feedEntries_SidebarMode && numItems_ListWidget(d->list)) {
+            invalidateItem_ListWidget(d->list, 0);
+            startFeedsAgeTimer_SidebarWidget_(d);
+        }
+        return iTrue;
+    }
     if (equalWidget_Command(cmd, w, "feeds.mode")) {
         d->feedsMode = arg_Command(cmd);
         updateItemsWithFlags_SidebarWidget_(d, iTrue);

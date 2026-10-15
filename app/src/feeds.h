@@ -106,3 +106,4 @@ const iPtrArray *   listMatchingEntries_Feeds(const char *urlPrefix);
 const iPtrArray *   listVisibleEntries_Feeds(iBool unreadOnly, const iString *openUrl);
 size_t              numSubscribed_Feeds (void);
 size_t              numUnread_Feeds     (void);
+iTime               lastRefreshedAt_Feeds(void); /* invalid if never refreshed */

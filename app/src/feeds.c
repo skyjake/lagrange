@@ -1090,7 +1090,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
         delete_FeedJob(job);
     }
     delete_PtrArray(tinylogJobs);
-    initCurrent_Time(&d->lastRefreshedAt);
+    iGuardMutex(d->mtx, initCurrent_Time(&d->lastRefreshedAt));
     save_Feeds_(d);
     removeTinylogCaches_Feeds_(d, iTrue);
     /* Check if there are visited URLs marked as Kept that can be cleared because they are no
@@ -1655,6 +1655,13 @@ void markAllEntriesAsRead_Feeds(void) {
 
 size_t numSubscribed_Feeds(void) {
     return size_PtrArray(listSubscriptions_());
+}
+
+iTime lastRefreshedAt_Feeds(void) {
+    iFeeds *d = &feeds_;
+    iTime   t;
+    iGuardMutex(d->mtx, t = d->lastRefreshedAt);
+    return t;
 }
 
 size_t numUnread_Feeds(void) {
