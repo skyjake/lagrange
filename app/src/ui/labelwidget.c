@@ -453,6 +453,14 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     if (*bg == uiBackgroundSelected_ColorId && prefs_App()->accent == system_ColorAccent) {
         *icon = *meta = uiTextSelected_ColorId;
     }
+    if (isSel && isDocTabButton_(w)) {
+        if (*bg == uiBackgroundSelected_ColorId) {
+            *icon = uiTextSelected_ColorId;
+        }
+        else if (isThemeBackground) {
+            *icon = uiTextStrong_ColorId;
+        }
+    }
     if (isHover) {
         if (isFrameless) {
             if (!isSel) {
@@ -484,12 +492,16 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     if (d->forceFg >= 0) {
-        *fg = *meta = d->forceFg;
+        /* A narrow doc tab shows only the site icon. */
+        *fg = *meta = (d->forceFg == uiIcon_ColorId && isDocTabButton_(w) ? *icon : d->forceFg);
     }
     if (d->flags.parentTextColor && isSelected_Widget(w->parent)) {
         int other[5];
         getColors_LabelWidget_((const iLabelWidget *) w->parent, &other[0], fg, &other[1],
                                &other[2], &other[3], &other[4]);
+        if (d->forceFg == uiIcon_ColorId && isDocTabButton_(w->parent)) {
+            *fg = other[3];
+        }
     }
     if (isPress) {
         if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {
@@ -841,6 +853,13 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             cstr_String(&d->label));
     }
     else {
+        const iString *label = &d->label;
+        if (flags & selected_WidgetFlag && iconColor != uiIcon_ColorId && isDocTabButton_(w)) {
+            /* Site icon is color-escaped in the label. */
+            iString *recolored = collect_String(copy_String(label));
+            replace_String(recolored, escape_Color(uiIcon_ColorId), escape_Color(iconColor));
+            label = recolored;
+        }
         drawCenteredOutline_Text(
             font,
             moved_Rect(
@@ -852,7 +871,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             d->flags.drawAsOutline ? fg : none_ColorId,
             d->flags.drawAsOutline ? d->widget.bgColor : fg,
             "%s",
-            cstr_String(&d->label));
+            cstr_String(label));
     }
     if (d->flags.chevron || (flags & selected_WidgetFlag && d->flags.checkMark)) {
         const iRect chRect = rect;
