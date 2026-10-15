@@ -91,6 +91,7 @@ struct Impl_SidebarWidget {
     iBool             isShowingUrls; /* Alt held down in Bookmarks */
     iBool             wasLandscape; /* orientation at the time of the previous resize */
     int               modeScroll[max_SidebarMode];
+    size_t            modeCursor[max_SidebarMode];
     iLabelWidget     *modeButtons[max_SidebarMode];
     iLabelWidget     *firstVisibleModeButton;
     int               maxButtonLabelWidth;

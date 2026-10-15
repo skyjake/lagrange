@@ -698,7 +698,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     }
     if (isListFocus && isHoverItem && constCursorItem_ListWidget(list) == d && !isTerminal_Platform()) {
         /* Visualize the keyboard cursor. */
-        drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), uiTextAction_ColorId);
+        drawRect_Paint(p,
+                       shrunk_Rect(itemRect, one_I2()),
+                       isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
     }
 }
 

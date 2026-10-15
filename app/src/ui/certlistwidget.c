@@ -478,6 +478,12 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const 
                    add_I2(cPos, init_I2(indent, lineHeight_Text(font))),
                    metaFg,
                    range_String(&d->meta));
+    if (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d && !isTerminal_Platform()) {
+        /* Visualize the keyboard cursor. */
+        drawRect_Paint(p,
+                       shrunk_Rect(itemRect, one_I2()),
+                       isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
+    }
 }
 
 void init_CertListWidget(iCertListWidget *d) {

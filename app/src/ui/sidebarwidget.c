@@ -764,6 +764,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     }
     if (d->mode >= 0 && d->mode < max_SidebarMode) {
         d->modeScroll[d->mode] = scrollPos_ListWidget(list_SidebarWidget_(d)); /* saved for later */
+        d->modeCursor[d->mode] = cursorItemIndex_ListWidget(list_SidebarWidget_(d));
     }
     d->mode = mode;
     d->isShelfOrderValid = iFalse;
@@ -782,6 +783,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     }
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(list_SidebarWidget_(d), d->modeScroll[mode]);
+    restoreCursorItem_ListWidget(list_SidebarWidget_(d), d->modeCursor[mode]);
     /* Title of the mobile sliding sheet. */
     iLabelWidget *sheetTitle = findChild_Widget(&d->widget, "sidebar.title");
     if (sheetTitle) {
@@ -932,6 +934,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                         noShadowBorder_WidgetFlag,
                     iTrue);
     iZap(d->modeScroll);
+    for (int i = 0; i < max_SidebarMode; i++) {
+        d->modeCursor[i] = iInvalidPos;
+    }
     d->side             = side;
     d->mode             = -1;
     d->pendingWidth     = -1.0f;

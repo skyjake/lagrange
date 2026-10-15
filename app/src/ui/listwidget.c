@@ -181,6 +181,27 @@ static void measureItem_ListWidget_(iListWidget *d, size_t index, int width) {
     }
 }
 
+static iBool isCursorSkipped_ListWidget_(const iListWidget *d, size_t index) {
+    const iListItem *item = constItem_ListWidget(d, index);
+    return item->flags.isSeparator;
+}
+
+static size_t nearestCursor_ListWidget_(const iListWidget *d, size_t index, int dir) {
+    const int count = (int) size_PtrArray(&d->items);
+    if (count == 0) {
+        return iInvalidPos;
+    }
+    index = iMin(index, (size_t) count - 1);
+    for (int pass = 0; pass < 2; pass++, dir = -dir) {
+        for (int i = (int) index; i >= 0 && i < count; i += dir) {
+            if (!isCursorSkipped_ListWidget_(d, i)) {
+                return i;
+            }
+        }
+    }
+    return iInvalidPos;
+}
+
 static void updateTops_ListWidget_(iListWidget *d) {
     const size_t count = size_PtrArray(&d->items);
     resize_Array(&d->itemTops, count + 1);
@@ -190,6 +211,10 @@ static void updateTops_ListWidget_(iListWidget *d) {
         tops[i + 1] = tops[i] + heightAt_ListWidget_(d, i);
     }
     d->isLayoutValid = iTrue;
+    /* Items may have changed under the cursor. */
+    if (d->cursorItem != iInvalidPos) {
+        d->cursorItem = nearestCursor_ListWidget_(d, d->cursorItem, 1);
+    }
 }
 
 static void updateLayout_ListWidget_(iListWidget *d) {
@@ -463,11 +488,6 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
     }
 }
 
-static iBool isCursorSkipped_ListWidget_(const iListWidget *d, size_t index) {
-    const iListItem *item = constItem_ListWidget(d, index);
-    return item->flags.isSeparator;
-}
-
 static iBool moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
     const size_t oldCursor = d->cursorItem;
     if (isEmpty_ListWidget(d)) {
@@ -478,11 +498,8 @@ static iBool moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) 
         if (d->cursorItem == iInvalidPos) {
             d->cursorItem = 0;
         }
-        d->cursorItem = iClamp((int) d->cursorItem + dir, 0, maxItem);
-        while (isCursorSkipped_ListWidget_(d, d->cursorItem) &&
-               ((d->cursorItem < maxItem && dir >= 0) || (d->cursorItem > 0 && dir < 0))) {
-            d->cursorItem += (dir >= 0 ? 1 : -1);
-        }
+        d->cursorItem = nearestCursor_ListWidget_(
+            d, iClamp((int) d->cursorItem + dir, 0, maxItem), dir >= 0 ? 1 : -1);
     }
     if (oldCursor != d->cursorItem) {
         invalidateItem_ListWidget(d, oldCursor);
@@ -503,6 +520,25 @@ void setCursorItem_ListWidget(iListWidget *d, size_t index) {
     invalidateItem_ListWidget(d, d->cursorItem);
     d->cursorItem = index;
     moveCursor_ListWidget_(d, 0, 0);
+}
+
+static void setCursorWithoutScroll_ListWidget_(iListWidget *d, size_t index) {
+    if (d->cursorItem != index) {
+        invalidateItem_ListWidget(d, d->cursorItem);
+        d->cursorItem = index;
+        invalidateItem_ListWidget(d, d->cursorItem);
+    }
+}
+
+void restoreCursorItem_ListWidget(iListWidget *d, size_t index) {
+    /* Validated against the items on the next layout update. */
+    d->cursorItem = index;
+    invalidateLayout_ListWidget_(d);
+    invalidate_ListWidget(d);
+}
+
+size_t cursorItemIndex_ListWidget(const iListWidget *d) {
+    return d->cursorItem;
 }
 
 void updateMouseHover_ListWidget(iListWidget *d) {
@@ -864,6 +900,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                                             zero_I2(), init_I2(-d->dragHandleWidth, 0)),
                               pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidPos) {
+                setCursorWithoutScroll_ListWidget_(d, d->hoverItem);
                 postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p device:%u",
                                    d->hoverItem,
                                    d->click.clickButton,
@@ -881,6 +918,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             return iTrue;
         case finished_ClickResult:
             if (!d->midClick.isDragging && d->hoverItem != iInvalidPos) {
+                setCursorWithoutScroll_ListWidget_(d, d->hoverItem);
                 postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p device:%u",
                                    d->hoverItem,
                                    SDL_BUTTON_MIDDLE,
