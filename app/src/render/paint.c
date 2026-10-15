@@ -459,6 +459,8 @@ void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color
                    &(SDL_FRect){ outer.pos.x, bottom_Rect(inner), thickness, thickness });
     SDL_RenderTexture(render, shadow, &(SDL_FRect){ 0, size.y / 2, size.x / 2, 1 },
                    &(SDL_FRect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
+    SDL_RenderTexture(render, shadow, &(SDL_FRect){ size.x / 2, size.y / 2, 1, 1 },
+                   &(SDL_FRect){ inner.pos.x, inner.pos.y, inner.size.x, inner.size.y });
 }
 
 void drawSoftEdge_Paint(const iPaint *d, int x, iRangei ySpan, int thickness, iColor color,

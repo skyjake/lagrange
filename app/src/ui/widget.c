@@ -1990,7 +1990,8 @@ void drawLayerEffects_Widget(const iWidget *d) {
         if (shadowAlpha > 0) {
             iPaint p;
             init_Paint(&p);
-            /* Centered on the rounded corners; the inset part is covered by the widget. */
+            /* Centered on the rounded corners. The interior is shadowed, too, so the
+               shadow stays uniform while the widget is translucent. */
             int radius;
             const int inset = roundCorners_Widget(d, &radius) ? radius : 0;
             drawSoftShadow_Paint(&p,
