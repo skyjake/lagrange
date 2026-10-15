@@ -53,6 +53,9 @@ struct Impl_AppleTextRun {
     iColor          resolvedColor; /* actual RGBA at creation time; part of cache key */
     int             baseDir;      /* requested paragraph direction; 0: natural */
     iChar           overrideChar; /* replaces all characters, if nonzero */
+    int             styleFontId;  /* base attributes at creation time; part of cache key */
+    int             styleFgColorId;
+    iColor          themeBgColor; /* affects legibility of ANSI colors; part of cache key */
     iBool           isBaseRTL;    /* resolved paragraph direction */
     char           *text;         /* clean UTF-8 (escape-stripped); owned */
     size_t          textLen;

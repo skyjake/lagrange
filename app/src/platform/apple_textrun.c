@@ -95,6 +95,13 @@ static CGColorRef cgColorFromColor_(const iColor c) {
     return ref; /* caller CFReleases */
 }
 
+static CGColorRef fgCgColor_(int fgColorId, iColor fg, iColor bg) {
+    if (fg.a > 0) {
+        return cgColorFromColor_(bg.a > 0 ? fg : legibleAnsiFg_Color(fg));
+    }
+    return cgColor_(fgColorId);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstructionArgs(AppleTextRun,
@@ -151,6 +158,11 @@ static iBool prepare_AppleTextRun_(
     int    curFgColorId = baseColorId;
     iColor curFgColor   = { 0, 0, 0, 0 }; /* .a == 0: use curFgColorId */
     iColor curBgColor   = { 0, 0, 0, 0 }; /* .a == 0: no background */
+    iBool  isBold       = iFalse; /* SGR 1 selects high-intensity ANSI colors */
+    /* SGR styles and default colors are relative to the current base attributes. */
+    const int styleFontId    = current_Text()->baseFontId >= 0 ? current_Text()->baseFontId
+                                                               : baseFontId;
+    const int styleFgColorId = current_Text()->baseFgColorId;
 
     const char *p   = rawText;
     const char *end = rawText + rawLen;
@@ -207,43 +219,57 @@ static iBool prepare_AppleTextRun_(
                         char     *argEnd;
                         const int arg = (int) strtoul(seqPos, &argEnd, 10);
                         if (arg == 0) { /* reset all */
-                            curFontId    = baseFontId;
-                            curFgColorId = baseColorId;
+                            curFontId = styleFontId;
+                            if (!isPermanent) {
+                                curFgColorId =
+                                    styleFgColorId != none_ColorId ? styleFgColorId : baseColorId;
+                            }
                             curFgColor.a = 0;
                             curBgColor.a = 0;
+                            isBold       = iFalse;
                         }
                         else if (arg == 1 && (ansi & allowFontStyle_AnsiFlag)) {
-                            curFontId = fontWithStyle_Text(baseFontId, bold_FontStyle);
+                            curFontId = fontWithStyle_Text(styleFontId, bold_FontStyle);
+                            isBold    = iTrue;
+                            if (styleFgColorId == tmParagraph_ColorId && !isPermanent) {
+                                curFgColorId = tmFirstParagraph_ColorId;
+                                curFgColor.a = 0;
+                            }
                         }
                         else if (arg == 2 && (ansi & allowFontStyle_AnsiFlag)) {
-                            curFontId = fontWithStyle_Text(baseFontId, light_FontStyle);
+                            curFontId = fontWithStyle_Text(styleFontId, light_FontStyle);
+                            isBold    = iFalse;
                         }
                         else if (arg == 3 && (ansi & allowFontStyle_AnsiFlag)) {
-                            curFontId = fontWithStyle_Text(baseFontId, italic_FontStyle);
+                            curFontId = fontWithStyle_Text(styleFontId, italic_FontStyle);
                         }
                         else if (arg == 10 && (ansi & allowFontStyle_AnsiFlag)) {
-                            curFontId = fontWithStyle_Text(baseFontId, regular_FontStyle);
+                            curFontId = fontWithStyle_Text(styleFontId, regular_FontStyle);
+                            isBold    = iFalse;
                         }
                         else if (arg == 11 && (ansi & allowFontStyle_AnsiFlag)) {
-                            curFontId = fontWithFamily_Text(baseFontId, monospace_FontId);
+                            curFontId = fontWithFamily_Text(styleFontId, monospace_FontId);
+                            if (!isPermanent) {
+                                curFgColorId = tmPreformatted_ColorId;
+                                curFgColor.a = 0;
+                            }
                         }
                         else {
-                            /* Color code (30+, 38;2/5, etc.). */
-                            iColor      fgColor = { 0, 0, 0, 0 };
-                            iColor      bgColor = { 0, 0, 0, 0 };
+                            /* Color code (30+, 38;2/5, etc.). SGR 39/49 may set a transparent
+                               color, which reverts to curFgColorId. */
+                            iColor      fgColor = curFgColor;
+                            iColor      bgColor = curBgColor;
                             const char *seqEnd  = seqPos;
                             ansiColors_Color((iRangecc) { seqPos, sequence.end },
-                                             baseColorId,
+                                             styleFgColorId,
                                              none_ColorId,
-                                             iFalse,
+                                             isBold,
                                              (ansi & allowFg_AnsiFlag) ? &fgColor : NULL,
                                              (ansi & allowBg_AnsiFlag) ? &bgColor : NULL,
                                              &seqEnd);
                             argEnd = (char *) seqEnd;
-                            if (fgColor.a > 0 && !isPermanent) {
+                            if (!isPermanent) {
                                 curFgColor = fgColor;
-                            }
-                            if (bgColor.a > 0 && !isPermanent) {
                                 curBgColor = bgColor;
                             }
                         }
@@ -281,8 +307,7 @@ static iBool prepare_AppleTextRun_(
             float      pts  = af ? af->pointSize : 16.0f;
             CGFloat    asc  = af ? (CGFloat) af->font.baseline : pts * 0.8f;
             CGFloat    desc = af ? (CGFloat) (af->font.height - af->font.baseline) : pts * 0.2f;
-            CGColorRef fg   = (curFgColor.a > 0) ? cgColorFromColor_(curFgColor)
-                                                 : cgColor_(curFgColorId);
+            CGColorRef fg   = fgCgColor_(curFgColorId, curFgColor, curBgColor);
             /* Render at ~80% of the line height so the symbol fits comfortably inside the
                slot with natural margins. */
             const float symbolScale = 0.8f;
@@ -357,8 +382,7 @@ static iBool prepare_AppleTextRun_(
             continue;
         }
         /* Build fg CGColor. */
-        CGColorRef fgCg =
-            (seg->fgColor.a > 0) ? cgColorFromColor_(seg->fgColor) : cgColor_(seg->fgColorId);
+        CGColorRef fgCg = fgCgColor_(seg->fgColorId, seg->fgColor, seg->bgColor);
 
         /* Populate the attributes dict. */
         CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,

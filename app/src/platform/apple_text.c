@@ -362,6 +362,9 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
        The resolved RGBA is part of the key so palette changes cause cache misses. */
     const size_t   rawLen        = (size_t) (text.end - text.start);
     const iColor   resolvedColor = get_Color(colorId & mask_ColorId);
+    const iColor   themeBgColor  = current_Root() ? get_Color(tmBackground_ColorId)
+                                                  : (iColor){ 0, 0, 0, 0 }; /* no theme */
+    const iText   *tx            = current_Text();
     uint32_t       colorPacked;
     memcpy(&colorPacked, &resolvedColor, 4);
     const uint32_t hash = iCrc32(text.start, rawLen)
@@ -372,7 +375,9 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
         iAppleTextRun *r = d->runCache[i];
         if (r && r->hash == hash && r->fontId == fontId && r->baseDir == baseDir &&
             r->overrideChar == overrideChar && equal_Color(r->resolvedColor, resolvedColor) && r->rawTextLen == rawLen &&
-            (r->colorId & permanent_ColorId) == (colorId & permanent_ColorId)) {
+            (r->colorId & permanent_ColorId) == (colorId & permanent_ColorId) &&
+            r->styleFontId == tx->baseFontId && r->styleFgColorId == tx->baseFgColorId &&
+            equal_Color(r->themeBgColor, themeBgColor)) {
             r->lastUsed = ++d->runCacheSerial;
 #if !defined(NDEBUG)
             d->cacheHits++;
@@ -418,6 +423,9 @@ static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int 
         text.start, rawLen, fontId, colorId, resolvedColor, baseDir, overrideChar, d);
     if (r) {
         r->lastUsed          = ++d->runCacheSerial;
+        r->styleFontId       = tx->baseFontId;
+        r->styleFgColorId    = tx->baseFgColorId;
+        r->themeBgColor      = themeBgColor;
         d->runCache[lruSlot] = r;
     }
     return r;

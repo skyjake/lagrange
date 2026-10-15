@@ -924,6 +924,33 @@ static const iColor ansi8BitColors_[256] = {
     { 255, 255, 255, 255 }
 };
 
+iColor legibleAnsiFg_Color(iColor fg) {
+    const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
+    const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
+    /* TODO: Actually this should check if the FG is too close to the BG, and
+       either darken or brighten the FG. Now it only accounts for nearly black/white
+       backgrounds. */
+    if (bgLuminance < 0.1f) {
+        /* Background is dark. Lighten the foreground. */
+        iHSLColor fgHsl = hsl_Color(fg);
+        fgHsl.lum = iMax(0.2f, fgHsl.lum);
+        return rgb_HSLColor(fgHsl);
+    }
+    if (bgLuminance > 0.4f) {
+        float dim = (bgLuminance - 0.4f);
+        fg.r *= 1.0f * dim;
+        fg.g *= 1.0f * dim;
+        fg.b *= 1.0f * dim;
+    }
+    if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
+        iHSLColor fgHsl = hsl_Color(fg);
+        fgHsl.hue = themeBg.hue;
+        fgHsl.lum = themeBg.lum * 0.5f;
+        fg = rgb_HSLColor(fgHsl);
+    }
+    return fg;
+}
+
 void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault, iBool isHighIntensity,
                       iColor *fg_out, iColor *bg_out, const char **endPos_out) {
     if (!fg_out && !bg_out && !endPos_out) {

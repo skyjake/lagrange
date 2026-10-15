@@ -255,6 +255,7 @@ void            setThemePalette_Color   (enum iColorTheme theme);
 void            ansiColors_Color        (iRangecc escapeSequence, int fgDefault, int bgDefault,
                                          iBool isHighIntensity, iColor *fg_out, iColor *bg_out,
                                          const char **endPos_out); /* out args can be NULL */
+iColor          legibleAnsiFg_Color     (iColor fg); /* adjusted for theme background */
 const char *    escape_Color            (int color);
 enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
 
