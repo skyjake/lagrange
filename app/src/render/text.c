@@ -385,6 +385,7 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
     deinit_Block(&chars);
 }
 
+#if 0
 void drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor,
                               int fillColor, const char *format, ...) {
     iBlock chars;
@@ -409,6 +410,7 @@ void drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int out
     }
     deinit_Block(&chars);
 }
+#endif
 
 void drawCenteredRange_Text(int fontId, iRect rect, iBool alignVisual, int color, iRangecc text) {
     iRect textBounds = alignVisual ? visualBounds_Text(fontId, text)

@@ -49,25 +49,24 @@ struct Impl_LabelWidget {
     struct {
         uint16_t alignVisual         : 1; /* align according to visible bounds, not font metrics */
         uint16_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
-        uint16_t drawAsOutline       : 1; /* draw as outline, filled with background color */
         uint16_t noTopFrame          : 1;
-
         uint16_t noBottomFrame       : 1;
+
         uint16_t wrap                : 1;
         uint16_t allCaps             : 1;
         uint16_t removeTrailingColon : 1;
-
         uint16_t chevron             : 1;
+        
         uint16_t checkMark           : 1;
         uint16_t truncateToFit       : 1;
         uint16_t menuCanceling       : 1;
-
         uint16_t noLabel             : 1;
+        
         uint16_t untranslated        : 1;
         uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected */
         uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
-
         uint16_t centerWrapped       : 1;
+        
         uint16_t titleCase           : 1;
     } flags;
 };
@@ -860,7 +859,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             replace_String(recolored, escape_Color(uiIcon_ColorId), escape_Color(iconColor));
             label = recolored;
         }
-        drawCenteredOutline_Text(
+        drawCentered_Text(
             font,
             moved_Rect(
                 adjusted_Rect(bounds,
@@ -868,8 +867,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                               init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
                 d->labelOffset),
             d->flags.alignVisual,
-            d->flags.drawAsOutline ? fg : none_ColorId,
-            d->flags.drawAsOutline ? d->widget.bgColor : fg,
+            fg,
             "%s",
             cstr_String(label));
     }
@@ -1128,12 +1126,6 @@ void setTranslation_LabelWidget(iLabelWidget *d, iBool translation) {
 
 void setTruncateToFit_LabelWidget (iLabelWidget *d, iBool truncateToFit) {
     d->flags.truncateToFit = truncateToFit;
-}
-
-void setOutline_LabelWidget(iLabelWidget *d, iBool drawAsOutline) {
-    if (d) {
-        d->flags.drawAsOutline = drawAsOutline;
-    }
 }
 
 void setAllCaps_LabelWidget(iLabelWidget *d, iBool allCaps) {

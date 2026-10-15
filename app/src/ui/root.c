@@ -879,17 +879,12 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         const char *idLabel = subjectName ? cstr_String(subjectName) : "${menu.identity.notactive}";
         setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
         setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
-        /* Visualize an identity override. */
-        setOutline_LabelWidget((iLabelWidget *) button, isIdentityPinned_DocumentWidget(doc));
-        setBackgroundColor_Widget(
-            button, isIdentityPinned_DocumentWidget(doc) ? uiBackground_ColorId : none_ColorId);
     }
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName   = findWidget_App("toolbar.name");
     if (toolName) {
         /* The view toolbar shows the name instead. */
         const iString *shownName = prefs_App()->hideViewTools ? subjectName : NULL;
-        setOutline_LabelWidget(toolButton, ident == NULL || isIdentityPinned_DocumentWidget(doc));
         if (ident) {
             setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
             setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
@@ -938,15 +933,12 @@ static void updateNavDirButtons_(iWidget *navBar) {
         for (int i = 0; i < 2; i++) {
             const char *id = (i == 0 ? "toolbar.action1" : "toolbar.action2");
             setFlags_Widget(findChild_Widget(toolBar, id), disabled_WidgetFlag, iFalse);
-            setOutline_LabelWidget(findChild_Widget(toolBar, id), iFalse);
         }
         /* Disable certain actions. */
         iLabelWidget *back = findMenuItem_Widget(toolBar, "navigate.back");
         iLabelWidget *fwd  = findMenuItem_Widget(toolBar, "navigate.forward");
         setFlags_Widget(back, disabled_WidgetFlag, atOldest);
-        setOutline_LabelWidget(back, atOldest);
         setFlags_Widget(fwd, disabled_WidgetFlag, atNewest);
-        setOutline_LabelWidget(fwd, atNewest);
         refresh_Widget(toolBar);
     }
     iEndCollect();
@@ -971,7 +963,6 @@ static void setReloadLabel_Root_(iRoot *d, const iDocumentWidget *doc) {
     updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_Root_(d) : reloadCStr_);
     setBackgroundColor_Widget(as_Widget(label), /*isAuto ? uiBackground_ColorId :*/ none_ColorId);
     setTextColor_LabelWidget(label, /*isAuto ? uiTextAction_ColorId :*/ uiText_ColorId);
-    //setOutline_LabelWidget(label, isAuto);
     if (isTerminal_Platform()) {
         showCollapsed_Widget(as_Widget(label), isOngoing);
     }
@@ -1022,7 +1013,7 @@ void updateToolbarColors_Root(iRoot *d) {
         setBackgroundColor_Widget(bottomBar, bg);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
             setTextColor_LabelWidget(i.object, useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId);
-            setBackgroundColor_Widget(i.object, bg); /* using noBackground, but ident has outline */
+            setBackgroundColor_Widget(i.object, bg);
         }
         if (!useThemeColors) {
             /* Menu uses accent color. */
@@ -1618,7 +1609,6 @@ static void updateToolBarActions_(iWidget *toolBar) {
             findChild_Widget(toolBar, i == 0 ? "toolbar.action1" : "toolbar.action2");
         if (button) {
             setFlags_Widget(button, disabled_WidgetFlag, iFalse);
-            setOutline_LabelWidget(button, iFalse);
             updateTextCStr_LabelWidget(button, toolbarActions_Mobile[action].icon);
             setCommand_LabelWidget(button, collectNewCStr_String(toolbarActions_Mobile[action].command));
         }
