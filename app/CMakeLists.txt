@@ -195,6 +195,8 @@ set (SOURCES
     src/app.h
     src/app/commands.c
     src/app/events.c
+    src/app/frametiming.c
+    src/app/frametiming.h
     src/app/impl.h
     src/app/paths.c
     src/app/prefs.c

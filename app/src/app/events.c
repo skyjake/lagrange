@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "impl.h"
+#include "frametiming.h"
 
 #include <lagrange/core.h>
 #include <the_Foundation/thread.h>
@@ -152,7 +153,9 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
                system sources (display sync, etc.) internally; we only break out
                when `wakeRunLoopOnEvent_App_` stops the loop in response to an
                actual SDL event being pushed. */
+            beginIdle_FrameTiming();
             CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.250, false);
+            endIdle_FrameTiming(wait_FrameIdle);
             SDL_PumpEvents();
             return SDL_PollEvent(event);
 #else
@@ -161,10 +164,16 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
                 /* SDL Metal workaround: if we block here for too long, there will be a longer
                    ~100ms stutter later on after refresh resumes, when the render pipeline does
                    some kind of an update (?). */
-                return SDL_WaitEventTimeout(event, 250);
+                beginIdle_FrameTiming();
+                const iBool gotEvent = SDL_WaitEventTimeout(event, 250);
+                endIdle_FrameTiming(wait_FrameIdle);
+                return gotEvent;
             }
             /* Wait indefinitely. */
-            return SDL_WaitEvent(event);
+            beginIdle_FrameTiming();
+            const iBool gotEvent = SDL_WaitEvent(event);
+            endIdle_FrameTiming(wait_FrameIdle);
+            return gotEvent;
 #endif
         }
     }
@@ -172,7 +181,10 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
        events posted immediately beforehand. Waiting with a very short timeout
        seems to work better. */
 #if !defined (iPlatformTerminal) && defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
-    return SDL_WaitEventTimeout(event, 1);
+    beginIdle_FrameTiming();
+    const iBool gotEvent = SDL_WaitEventTimeout(event, 1);
+    endIdle_FrameTiming(wait_FrameIdle);
+    return gotEvent;
 #elif !defined (iPlatformTerminal)
     if (SDL_PollEvent(event)) {
         return iTrue;
@@ -181,7 +193,11 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
        handled before the next draw. */
     return SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST) > 0;
 #else
-    return SDL_PollEvent(event);
+    /* Terminal input is polled with a timeout. */
+    beginIdle_FrameTiming();
+    const iBool gotEvent = SDL_PollEvent(event);
+    endIdle_FrameTiming(wait_FrameIdle);
+    return gotEvent;
 #endif
 }
 
@@ -588,7 +604,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
         /* This is where we spend most of our time when idle. The sleep delay depends on the
            display refresh rate. iOS SDL_WaitEvent() seems to use 10x more CPU time compared to
            just sleeping (2.0.18). */
+        beginIdle_FrameTiming();
         SDL_Delay(d->idleSleepDelayMs);
+        endIdle_FrameTiming(wait_FrameIdle);
     }
 #endif
 backToMainLoop:;
@@ -749,7 +767,13 @@ static bool resizeWatcher_(void *user, SDL_Event *event) {
         iForEach(PtrArray, i, &d->mainWindows) {
             iMainWindow *win = i.ptr;
             if (SDL_GetWindowID(win->base.win) == winev->windowID) {
+                const double start   = isEnabled_FrameTiming() ? now_FrameTiming() : 0.0;
+                const double present = totalPresent_FrameTiming();
                 drawWhileResizing_MainWindow(win, winev->data1, winev->data2);
+                if (start > 0.0) {
+                    addFrame_FrameTiming("resize", now_FrameTiming() - start,
+                                         totalPresent_FrameTiming() - present);
+                }
                 break;
             }
         }
@@ -805,15 +829,20 @@ int run_App_(iApp *d) {
     SDL_AddEventWatch(wakeRunLoopOnEvent_App_, NULL);
 #endif
     while (d->isRunning) {
+        beginFrame_FrameTiming();
         processEvents_App(waitForNewEvents_AppEventMode);
+        endPhase_FrameTiming(events_FramePhase);
         runTickers_App_(d);
+        endPhase_FrameTiming(tickers_FramePhase);
         refresh_App();
+        endPhase_FrameTiming(draw_FramePhase);
         /* Change the widget tree while we are not iterating through it. */
         if (d->window && d->window->type == main_WindowType) {
             checkPendingSplit_MainWindow(as_MainWindow(d->window));
         }
         recycle_Garbage();
         deleteClosedWindows_App_(d);
+        endFrame_FrameTiming();
     }
     SDL_RemoveEventWatch(resizeWatcher_, d);
     SDL_RemoveEventWatch(lifecycleWatcher_App_, d);
@@ -877,7 +906,9 @@ void refresh_App(void) {
             }
             win->frameCount++;
             if (isTerminal_Platform()) {
+                beginIdle_FrameTiming();
                 sleep_Thread(1.0 / 60.0);
+                endIdle_FrameTiming(wait_FrameIdle);
             }
         }
     }

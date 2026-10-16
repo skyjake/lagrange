@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "window.h"
 
 #include "../app.h"
+#include "../app/frametiming.h"
 #include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
@@ -572,11 +573,17 @@ static float displayScale_Window_(const iWindow *d) {
 #endif
 }
 
+static void present_Window_(SDL_Renderer *render) {
+    beginIdle_FrameTiming();
+    SDL_RenderPresent(render);
+    endIdle_FrameTiming(present_FrameIdle);
+}
+
 static void drawBlank_Window_(iWindow *d) {
     const iColor bg = get_Color(uiBackground_ColorId);
     SDL_SetRenderDrawColor(d->render, bg.r, bg.g, bg.b, 255);
     SDL_RenderClear(d->render);
-    SDL_RenderPresent(d->render);
+    present_Window_(d->render);
 }
 
 static iRoot *rootAt_Window_(const iWindow *d, iInt2 coord) {
@@ -1938,7 +1945,7 @@ void draw_Window(iWindow *d) {
                                 root->widget->frameColor);
     }
     setCurrent_Root(NULL);
-    SDL_RenderPresent(d->render);
+    present_Window_(d->render);
     setCurrent_Window(oldWin);
     isDrawing_ = iFalse;
 }
@@ -1948,7 +1955,7 @@ void drawQuick_MainWindow(iMainWindow *d) {
     if (d->backBuf) {
         SDL_Renderer *render = d->base.render;
         SDL_RenderTexture(render, d->backBuf, NULL, NULL);
-        SDL_RenderPresent(render);
+        present_Window_(render);
     }
 }
 
@@ -2158,7 +2165,7 @@ void draw_MainWindow(iMainWindow *d) {
         SDL_RenderTexture(d->render, glyphCache_Text(), NULL, &rect);
     }
 #endif
-    SDL_RenderPresent(w->render);
+    present_Window_(w->render);
     isDrawing_ = iFalse;
 }
 
