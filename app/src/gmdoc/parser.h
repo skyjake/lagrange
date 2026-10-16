@@ -34,3 +34,6 @@ void    ensureParsed_GmDocument_        (iGmDocument *); /* all of the source */
 void    parseUntil_GmDocument_          (iGmDocument *, const char *pos); /* lines starting before */
 void    parsePre_GmDocument_            (iGmDocument *, uint16_t preId); /* through the end of block */
 iBool   isPreOpen_GmDocument_           (const iGmDocument *, uint16_t preId); /* end not received */
+size_t  preBefore_GmDocument_           (const iGmDocument *, const char *pos);
+size_t  linksBefore_GmDocument_         (const iGmDocument *, const char *pos);
+const char *findLeadIn_GmDocument_      (const iGmDocument *, const char *lineStart);

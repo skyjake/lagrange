@@ -221,6 +221,9 @@ set (SOURCES
     src/gmdoc/documentstyle.c
     src/gmdoc/documentstyle.h
     src/gmdoc/impl.h
+    src/gmdoc/layout.c
+    src/gmdoc/paginate.c
+    src/gmdoc/paginate.h
     src/gmdoc/palette.c
     src/gmdoc/palette.h
     src/gmdoc/parser.c

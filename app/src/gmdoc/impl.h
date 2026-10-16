@@ -159,6 +159,13 @@ struct Impl_GmDocument {
     } flags;
 };
 
+iLocalDef const char *lineStart_Rangecc_(iRangecc text, const char *pos) {
+    while (pos > text.start && pos[-1] != '\n') {
+        pos--;
+    }
+    return pos;
+}
+
 iLocalDef iBool isHRule_Rangecc_(iRangecc line) {
     /* This is used in Markdown sources. */
     if (!startsWith_Rangecc(line, "---")) {

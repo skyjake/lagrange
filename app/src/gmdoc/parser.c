@@ -437,3 +437,93 @@ void parseUntil_GmDocument_(iGmDocument *d, const char *pos) {
 void parsePre_GmDocument_(iGmDocument *d, uint16_t preId) {
     while (isPreOpen_GmDocument_(d, preId) && parseNextLine_GmDocument_(d)) {}
 }
+
+size_t preBefore_GmDocument_(const iGmDocument *d, const char *pos) {
+    /* Number of preformatted blocks that begin before `pos`. */
+    size_t lo = 0, hi = size_Array(&d->preMeta);
+    while (lo < hi) {
+        const size_t mid = (lo + hi) / 2;
+        if (constValue_Array(&d->preMeta, mid, iGmPreMeta).bounds.start < pos) {
+            lo = mid + 1;
+        }
+        else {
+            hi = mid;
+        }
+    }
+    return lo;
+}
+
+size_t linksBefore_GmDocument_(const iGmDocument *d, const char *pos) {
+    size_t lo = 0, hi = size_PtrArray(&d->links);
+    while (lo < hi) {
+        const size_t mid = (lo + hi) / 2;
+        if (((const iGmLink *) constAt_PtrArray(&d->links, mid))->urlRange.start < pos) {
+            lo = mid + 1;
+        }
+        else {
+            hi = mid;
+        }
+    }
+    return lo;
+}
+
+const char *findLeadIn_GmDocument_(const iGmDocument *d, const char *lineStart) {
+    /* The nearest preceding line that produces a text run. After it, the typesetter state is
+       the same regardless of what came before, apart from the long-range parser context. */
+    const iRangecc src        = range_String(&d->source);
+    const iBool    normalized = shouldBeNormalized_GmDocument_(d);
+    const char    *pos        = lineStart;
+    for (int count = 0; pos > src.start && count < 1000; count++) {
+        const char *start = lineStart_Rangecc_(src, pos - 1);
+        iRangecc    line  = { start, pos - 1 };
+        pos = start;
+        if (line.end > line.start && line.end[-1] == '\r') {
+            line.end--;
+        }
+        if (d->format == plainText_SourceFormat || d->flags.isNex) {
+            if (!isEmpty_Range(&line)) {
+                return start;
+            }
+            continue;
+        }
+        const size_t numPre = preBefore_GmDocument_(d, start);
+        if (numPre) {
+            const iGmPreMeta *meta = constAt_Array(&d->preMeta, numPre - 1);
+            if (start <= meta->bounds.end) {
+                if (meta->flags & folded_GmPreMetaFlag) {
+                    pos = meta->bounds.start; /* the whole block is a single run */
+                    continue;
+                }
+                iRangecc text = line;
+                trim_Rangecc(&text);
+                if (!startsWith_Rangecc(line, "```") && !isEmpty_Range(&text)) {
+                    return start;
+                }
+                continue;
+            }
+        }
+        enum iGmLineType type = lineType_GmDocument_(d, line);
+        if (type == preformatted_GmLineType ||
+            (d->origFormat == markdown_SourceFormat && isHRule_Rangecc_(line))) {
+            continue;
+        }
+        iRangecc text = line;
+        if (type == link_GmLineType) {
+            const size_t index = linksBefore_GmDocument_(d, start);
+            const iGmLink *link =
+                index < size_PtrArray(&d->links) ? constAt_PtrArray(&d->links, index) : NULL;
+            if (link && link->urlRange.start <= line.end) {
+                text = link->textRange;
+            }
+            else {
+                type = text_GmLineType;
+            }
+        }
+        trimLine_Rangecc(&text, type, normalized);
+        trim_Rangecc(&text);
+        if (!isEmpty_Range(&text)) {
+            return start;
+        }
+    }
+    return NULL;
+}
