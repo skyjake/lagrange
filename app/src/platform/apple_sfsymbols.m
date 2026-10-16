@@ -104,7 +104,9 @@ static CGImageRef createImage_(const char *symbolName, float pointSize, CGColorR
         [NSGraphicsContext restoreGraphicsState];
         CGImageRef cg = [rep CGImage];
         if (cg) CGImageRetain(cg);
+#if !__has_feature(objc_arc)
         [rep release];
+#endif
         return cg;
     }
 #else /* iOS */
@@ -138,7 +140,9 @@ static CGImageRef createImage_(const char *symbolName, float pointSize, CGColorR
             [tinted drawInRect:CGRectMake(centered.pos.x, centered.pos.y,
                                           centered.size.x, centered.size.y)];
         }];
+#if !__has_feature(objc_arc)
         [renderer release];
+#endif
         return slot.CGImage ? CGImageRetain(slot.CGImage) : NULL;
     }
 #endif
