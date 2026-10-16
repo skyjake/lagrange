@@ -207,6 +207,7 @@ void init_GmDocument(iGmDocument *d) {
     iZap(d->style);
     d->wrapWidth = 0;
     d->maxLineWidth = -1;
+    d->maxRunHeight = 0;
     d->size = zero_I2();
     iZap(d->import);
     init_GmParser(&d->parser);
@@ -1156,23 +1157,54 @@ const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {
     return NULL;
 }
 
+static size_t firstRunReaching_GmDocument_(const iGmDocument *d, int y) {
+    /* Index of the first run whose bottom reaches `y`. Runs are ordered by their tops, so
+       the ones starting well above `y` are skipped with a binary search. */
+    const iGmRun *runs = constData_Array(&d->layout);
+    const size_t  num  = size_Array(&d->layout);
+    const int     skip = y - 2 * d->maxRunHeight;
+    size_t lo = 0, hi = num;
+    while (lo < hi) {
+        const size_t mid = (lo + hi) / 2;
+        if (top_Rect(runs[mid].visBounds) < skip) {
+            lo = mid + 1;
+        }
+        else {
+            hi = mid;
+        }
+    }
+    while (lo < num && bottom_Rect(runs[lo].visBounds) < y) {
+        lo++;
+    }
+#if !defined (NDEBUG)
+    static int isChecked_ = -1;
+    if (isChecked_ < 0) {
+        isChecked_ = getenv("LAGRANGE_LAYOUT_CHECK") != NULL;
+    }
+    if (isChecked_) {
+        size_t first = 0;
+        while (first < num && bottom_Rect(runs[first].visBounds) < y) {
+            first++;
+        }
+        if (first != lo) {
+            fprintf(stderr, "[GmDocument] first run reaching %d: %zu, expected %zu\n", y, lo,
+                    first);
+        }
+    }
+#endif
+    return lo;
+}
+
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
                        void *context) {
-    iBool isInside = iFalse;
     setAnsiFlags_Text(d->ansiEscapes);
-    /* TODO: Check lookup table for quick starting position. */
-    iConstForEach(Array, i, &d->layout) {
-        const iGmRun *run = i.value;
-        if (isInside) {
-            if (top_Rect(run->visBounds) > visRangeY.end) {
-                break;
-            }
-            render(context, run);
+    const iGmRun *runs = constData_Array(&d->layout);
+    const size_t  num  = size_Array(&d->layout);
+    for (size_t i = firstRunReaching_GmDocument_(d, visRangeY.start); i < num; i++) {
+        if (top_Rect(runs[i].visBounds) > visRangeY.end) {
+            break;
         }
-        else if (bottom_Rect(run->visBounds) >= visRangeY.start) {
-            isInside = iTrue;
-            render(context, run);
-        }
+        render(context, runs + i);
     }
     setAnsiFlags_Text(allowAll_AnsiFlag);
 }

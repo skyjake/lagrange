@@ -109,6 +109,7 @@ struct Impl_GmDocument {
     size_t    numFilledColumns; /* columns with content in a paginated layout */
     int       wrapWidth;    /* if non-zero, overrides the line wrap width */
     int       maxLineWidth; /* widest line of plain text; -1 if not measured */
+    int       maxRunHeight; /* at least the height of the tallest run */
     uint32_t  maxLineFontKey;
     iGmImport import;
     iGmParser parser;

@@ -1334,10 +1334,12 @@ iBool typesetLines_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds)
             break;
         }
     }
-    if (!d->isJustified) {
-        for (size_t i = firstRun; i < size_Array(d->layout); i++) {
-            ((iGmRun *) at_Array(d->layout, i))->flags |= notJustified_GmRunFlag;
+    for (size_t i = firstRun; i < size_Array(d->layout); i++) {
+        iGmRun *run = at_Array(d->layout, i);
+        if (!d->isJustified) {
+            run->flags |= notJustified_GmRunFlag;
         }
+        d->maxRunHeight = iMax(d->maxRunHeight, height_Rect(run->visBounds));
     }
     if (checkMissing_Text()) {
         doc->warnings |= missingGlyphs_GmDocumentWarning;
@@ -1353,6 +1355,7 @@ void publish_Typesetter_(iTypesetter *d, iBool isCaughtUp) {
     doc->size.y = d->pos.y + verticalPad_Typesetter_(d);
     /* Indent is not included in run widths. */
     doc->contentWidth = d->maxRunWidth + d->style->indents[text_GmLineType] * gap_Text;
+    doc->maxRunHeight = d->maxRunHeight;
     if (!d->above) {
         updateDocumentTitle_Typesetter_(d);
     }

@@ -74,7 +74,8 @@ static iTypesetter *spliceAbove_GmDocument_(iGmDocument *d) {
         if (update_GmRebase(&rebase, d)) {
             rebase_GmDocument_(d, &rebase);
         }
-        ts->maxRunWidth = iMax(ts->maxRunWidth, above->maxRunWidth);
+        ts->maxRunWidth  = iMax(ts->maxRunWidth, above->maxRunWidth);
+        ts->maxRunHeight = iMax(ts->maxRunHeight, above->maxRunHeight);
         if (!isEmpty_String(&above->headingTitle)) {
             set_String(&ts->headingTitle, &above->headingTitle);
         }

@@ -81,6 +81,7 @@ struct Impl_Typesetter {
     iString               firstContentLine;  /* may be used as a title if one isn't specified */
     size_t                nextLink;          /* index of the next parsed link */
     int                   maxRunWidth;
+    int                   maxRunHeight;
     uint16_t              openPreId;         /* block whose end was not received when laid out */
     uint16_t              topLeftPreId;      /* last block whose position was set */
     iBool                 isWrapWidthChecked;
