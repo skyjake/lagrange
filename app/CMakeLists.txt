@@ -39,6 +39,7 @@ endif ()
 option (ENABLE_APP_BUNDLE       "Build an app bundle instead of a Unix-style install (macOS)" ON)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_FRAME_TIMING     "Print statistics about frame timing" OFF)
 option (ENABLE_GAMEPAD          "Allow UI to be controlled with a gamepad" ON)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ${DEFAULT_IDLE_SLEEP})
 option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
@@ -195,8 +196,6 @@ set (SOURCES
     src/app.h
     src/app/commands.c
     src/app/events.c
-    src/app/frametiming.c
-    src/app/frametiming.h
     src/app/impl.h
     src/app/paths.c
     src/app/prefs.c
@@ -391,6 +390,9 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
+if (ENABLE_FRAME_TIMING)
+    list (APPEND SOURCES src/app/frametiming.c src/app/frametiming.h)
+endif ()
 if (IOS OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
@@ -616,6 +618,9 @@ macro (set_common_app_properties target)
     endif ()
     if (ENABLE_GAMEPAD)
         target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_GAMEPAD=1)
+    endif ()
+    if (ENABLE_FRAME_TIMING)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_FRAME_TIMING=1)
     endif ()
 
     # Common dependencies.
@@ -1013,6 +1018,7 @@ print_summary (
     ENABLE_CORETEXT
     ENABLE_CUSTOM_FRAME
     ENABLE_DOWNLOAD_EDIT
+    ENABLE_FRAME_TIMING
     ENABLE_FREETYPE
     ENABLE_FRIBIDI
     ENABLE_FRIBIDI_BUILD

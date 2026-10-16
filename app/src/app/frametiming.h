@@ -41,6 +41,8 @@ enum iFrameIdle {
     present_FrameIdle,
 };
 
+#if defined (LAGRANGE_ENABLE_FRAME_TIMING)
+
 iBool   isEnabled_FrameTiming   (void);
 void    beginFrame_FrameTiming  (void);
 void    endPhase_FrameTiming    (enum iFramePhase phase);
@@ -50,3 +52,17 @@ double  now_FrameTiming         (void); /* seconds */
 double  totalPresent_FrameTiming(void); /* seconds spent presenting so far */
 void    beginIdle_FrameTiming   (void);
 void    endIdle_FrameTiming     (enum iFrameIdle idle);
+
+#else
+
+#define isEnabled_FrameTiming()                 iFalse
+#define beginFrame_FrameTiming()
+#define endPhase_FrameTiming(phase)
+#define endFrame_FrameTiming()
+#define addFrame_FrameTiming(label, sec, pres)  iUnused(label, sec, pres)
+#define now_FrameTiming()                       0.0
+#define totalPresent_FrameTiming()              0.0
+#define beginIdle_FrameTiming()
+#define endIdle_FrameTiming(idle)
+
+#endif
