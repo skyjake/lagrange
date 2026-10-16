@@ -74,18 +74,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdoc/markdown.h"
 #include "gmutil.h"
 #include "gempub.h"
-#include <lagrange/lang.h>
 #include "color.h"
 #include "render/text.h"
 #include "ui/metrics.h"
 #include "ui/mediaui.h"
 #include "ui/window.h"
-#include <lagrange/visited.h>
 #include "bookmarks.h"
 #include "books.h"
 #include "feeds.h"
 #include "app.h"
 #include "defs.h"
+
+#include <lagrange/lang.h>
+#include <lagrange/visited.h>
 
 #include <the_Foundation/intset.h>
 #include <the_Foundation/path.h>
@@ -1074,10 +1075,13 @@ static size_t firstRunReaching_GmDocument_(const iGmDocument *d, int y) {
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
                        void *context) {
     setAnsiFlags_Text(d->ansiEscapes);
-    const iGmRun *runs = constData_Array(&d->layout);
-    const size_t  num  = size_Array(&d->layout);
-    for (size_t i = firstRunReaching_GmDocument_(d, visRangeY.start); i < num; i++) {
-        if (top_Rect(runs[i].visBounds) > visRangeY.end) {
+    const iGmRun *runs  = constData_Array(&d->layout);
+    const size_t  num   = size_Array(&d->layout);
+    const size_t  first = firstRunReaching_GmDocument_(d, visRangeY.start);
+    for (size_t i = first; i < num; i++) {
+        /* The first run is included even if it starts below the range. Progressive buffer
+           filling continues from it. */
+        if (i > first && top_Rect(runs[i].visBounds) > visRangeY.end) {
             break;
         }
         render(context, runs + i);
