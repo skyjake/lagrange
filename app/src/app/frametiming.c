@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static struct {
     int      isEnabled; /* -1: not checked yet */
-    double   budget;
+    double   budget; /* zero: one frame at the display refresh rate */
     double   tickSeconds;
     uint64_t phaseStart;
     uint64_t idleStart[4]; /* nested idle periods, e.g., resize drawing while waiting */
@@ -48,6 +48,10 @@ static struct {
 
 static double seconds_(uint64_t ticks) {
     return (double) ticks * timing_.tickSeconds;
+}
+
+static double budget_(void) {
+    return timing_.budget > 0.0 ? timing_.budget : 1.0 / displayRefreshRate_App();
 }
 
 static void logPeriod_(uint64_t now) {
@@ -83,7 +87,7 @@ iBool isEnabled_FrameTiming(void) {
         const char *env = getenv("LAGRANGE_FRAME_TIMING");
         const double ms = env ? atof(env) : 0.0;
         timing_.isEnabled   = (env != NULL);
-        timing_.budget      = ms > 0.0 ? ms / 1000.0 : 1.0 / displayRefreshRate_App();
+        timing_.budget      = ms > 0.0 ? ms / 1000.0 : 0.0;
         timing_.tickSeconds = 1.0 / (double) SDL_GetPerformanceFrequency();
         timing_.periodStart = SDL_GetPerformanceCounter();
     }
@@ -121,7 +125,7 @@ void endFrame_FrameTiming(void) {
     for (int i = 0; i < max_FramePhase; i++) {
         busy += timing_.phases[i];
     }
-    if (busy >= timing_.budget) {
+    if (busy >= budget_()) {
         timing_.numOver++;
         fprintf(stderr,
                 "[Frame] %6.2f ms: events %.2f, tickers %.2f, draw %.2f, other %.2f "
@@ -141,7 +145,7 @@ void addFrame_FrameTiming(const char *label, double seconds, double presentSecon
         return;
     }
     seconds -= presentSeconds;
-    if (seconds >= timing_.budget) {
+    if (seconds >= budget_()) {
         timing_.numOver++;
         fprintf(stderr, "[Frame] %6.2f ms: %s\n", seconds * 1000.0, label);
     }

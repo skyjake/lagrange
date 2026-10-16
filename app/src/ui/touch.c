@@ -121,6 +121,7 @@ struct Impl_TouchState {
     iArray *touches;
     iArray *pinches;
     iArray *moms;
+    float refreshRate;
     double stepDurationMs;
     double momFrictionPerStep;
     double lastMomTime;
@@ -136,19 +137,13 @@ static iTouchState *touchState_(void) {
         d->pinches        = new_Array(sizeof(iPinch));
         d->moms           = new_Array(sizeof(iMomentum));
         d->lastMomTime    = 0.0;
-#if defined (iPlatformAppleMobile)
-        d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
-#else
-        /* Ask SDL about the display refresh rate. */ {
-            const SDL_DisplayMode *dispMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
-            float refreshRate = dispMode ? dispMode->refresh_rate : 0.0f;
-            if (refreshRate == 0) {
-                refreshRate = 60;
-            }
-            d->stepDurationMs = 1000.0 / (double) refreshRate;
-        }
-#endif
-        d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
+    }
+    const float rate = displayRefreshRate_App();
+    if (rate != d->refreshRate) {
+        /* Momentum is stepped once per frame. */
+        d->refreshRate        = rate;
+        d->stepDurationMs     = 1000.0 / (double) rate;
+        d->momFrictionPerStep = pow(0.985, 120.0 / (double) rate);
 #if defined (iPlatformAndroidMobile)
         d->momFrictionPerStep = 9 * gap_UI;
 #endif

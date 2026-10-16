@@ -131,12 +131,12 @@ struct Impl_App {
     int          autoReloadTimer; /* TODO: only start this when tabs are autoreloading */
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
+    float        refreshRate; /* of the main window's display */
     iGamepad *   gamepad;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
     int          sleepTimer;
-    unsigned int idleSleepDelayMs;
 #endif
 #if defined (iPlatformAndroidMobile)
     uint32_t     lastBackButtonTime; /* detect and discard rapid Back button presses */
@@ -203,6 +203,7 @@ void            prefsBoolValueChanged_App_(iApp *, enum iPrefsBool, iBool isFroz
 
 /* windows.c */
 iPtrArray *     listWindows_App_        (const iApp *, iPtrArray *windows);
+void            updateRefreshRate_App_  (iApp *);
 iObjectList *   listAllDocuments_App    (void); /* all windows */
 void            clearCache_App_         (void);
 

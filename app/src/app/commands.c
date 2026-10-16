@@ -411,6 +411,10 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         postCommand_App("idents.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "display.refreshrate.check")) {
+        updateRefreshRate_App_(d);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "os.theme.changed")) {
         const int dark = argLabel_Command(cmd, "dark");
         d->isDarkSystemTheme = dark;

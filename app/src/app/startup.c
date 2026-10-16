@@ -692,21 +692,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         d->isIdling      = iFalse;
         d->lastEventTime = 0;
         d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
-# if defined (iPlatformTerminal)
-        d->idleSleepDelayMs = 1000 / 60;
-# else
-        const SDL_DisplayMode *dispMode =
-            SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(d->window->win));
-        if (dispMode && dispMode->refresh_rate > 0) {
-            d->idleSleepDelayMs = (unsigned int) (1000 / dispMode->refresh_rate);
-        }
-        else {
-            d->idleSleepDelayMs = 1000 / 60;
-        }
-# endif
-        d->idleSleepDelayMs *= 0.9f;
     }
 #endif
+    updateRefreshRate_App_(d);
     d->gamepad = (prefs_App()->useGamepad ? new_Gamepad() : NULL);
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {

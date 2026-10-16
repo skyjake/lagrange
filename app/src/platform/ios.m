@@ -333,6 +333,13 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     return NO;
 }
 
+-(void)powerStateChanged:(NSNotification *)notification {
+    iUnused(notification);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        notify_App("~display.refreshrate.check");
+    });
+}
+
 -(void)keyboardOnScreen:(NSNotification *)notification {
     NSDictionary *info   = notification.userInfo;
     NSValue      *value  = info[UIKeyboardFrameEndUserInfoKey];
@@ -533,6 +540,10 @@ void setupApplication_iOS(void) {
                selector:@selector(keyboardOffScreen:)
                    name:UIKeyboardWillHideNotification
                  object:nil];
+    [center addObserver:appState_
+               selector:@selector(powerStateChanged:)
+                   name:NSProcessInfoPowerStateDidChangeNotification
+                 object:nil];
 }
 
 static iBool isDarkMode_(iWindow *window) {
@@ -564,7 +575,11 @@ void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom)
 }
 
 int displayRefreshRate_iOS(void) {
-    return (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+    int rate = (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+    if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
+        rate = iMin(rate, 60); /* ProMotion is limited to 60 Hz */
+    }
+    return rate;
 }
 
 float displayScale_iOS(const iWindow *window) {

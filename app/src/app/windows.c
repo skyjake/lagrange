@@ -193,14 +193,27 @@ iBool isLandscape_App(void) {
     return size.x > size.y;
 }
 
-float displayRefreshRate_App(void) {
+void updateRefreshRate_App_(iApp *d) {
+    float rate = 0.0f;
 #if defined (iPlatformAppleMobile)
-    const float rate = displayRefreshRate_iOS();
-#else
-    const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
-    const float rate = mode ? mode->refresh_rate : 0.0f;
+    rate = displayRefreshRate_iOS();
+#elif !defined (iPlatformTerminal)
+    const SDL_DisplayID display =
+        d->window ? SDL_GetDisplayForWindow(as_Window(d->window)->win) : SDL_GetPrimaryDisplay();
+    const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(display);
+    if (mode) {
+        rate = mode->refresh_rate;
+    }
 #endif
-    return rate > 0.0f ? rate : 60.0f;
+    d->refreshRate = rate > 0.0f ? rate : 60.0f;
+}
+
+float displayRefreshRate_App(void) {
+    iApp *d = &app_;
+    if (d->refreshRate <= 0.0f) {
+        updateRefreshRate_App_(d);
+    }
+    return d->refreshRate;
 }
 
 iDocumentWidget *document_Root(iRoot *d) {

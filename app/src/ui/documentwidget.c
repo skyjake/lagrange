@@ -756,11 +756,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
 
 static double layoutSliceSeconds_(void) {
     /* Layout is continued for half of a frame. */
-    static double seconds_;
-    if (seconds_ <= 0.0) {
-        seconds_ = 0.5 / displayRefreshRate_App();
-    }
-    return seconds_;
+    return 0.5 / displayRefreshRate_App();
 }
 
 static void layoutContinued_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebase,

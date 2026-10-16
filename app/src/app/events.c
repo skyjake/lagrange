@@ -223,6 +223,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
             continue;
         }
 #endif
+#if !defined (iPlatformTerminal)
+        if (ev.type == SDL_EVENT_WINDOW_DISPLAY_CHANGED ||
+            ev.type == SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED) {
+            updateRefreshRate_App_(d);
+        }
+#endif
         switch (ev.type) {
             case SDL_EVENT_QUIT:
                 if (isDesktop_Platform() || isMobileLinux_Platform() || isHandheld_Platform()) {
@@ -605,7 +611,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
            display refresh rate. iOS SDL_WaitEvent() seems to use 10x more CPU time compared to
            just sleeping (2.0.18). */
         beginIdle_FrameTiming();
-        SDL_Delay(d->idleSleepDelayMs);
+        SDL_Delay((uint32_t) (900.0f / displayRefreshRate_App())); /* 90% of a frame */
         endIdle_FrameTiming(wait_FrameIdle);
     }
 #endif
