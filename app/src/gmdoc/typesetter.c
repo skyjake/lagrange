@@ -253,17 +253,6 @@ static iBool isLineIndentable_(iRangecc line) {
     return iTrue;
 }
 
-int lastVisibleRunBottom_Typesetter_(const iTypesetter *d) {
-    iReverseConstForEach(Array, i, d->layout) {
-        const iGmRun *run = i.value;
-        if (isEmpty_Range(&run->text)) {
-            continue;
-        }
-        return top_Rect(run->visBounds) + height_Rect(run->visBounds) * d->prefs->lineSpacing.value;
-    }
-    return d->earlierBottom;
-}
-
 static iRegExp *ansiPattern_(void) {
     static iRegExp *pattern_;
     if (!pattern_) {
@@ -272,139 +261,8 @@ static iRegExp *ansiPattern_(void) {
     return pattern_;
 }
 
-void init_Typesetter_(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
-    iZap(*d);
-    d->doc           = doc;
-    init_Array(&d->ownLayout, sizeof(iGmRun));
-    d->layout        = isOwnLayout ? &d->ownLayout : &doc->layout;
-    d->prefs         = &doc->docPrefs;
-    d->style         = &doc->style;
-    d->isMono        = isForcedMonospace_GmDocument_(doc);
-    d->isGopher      = isGopher_GmDocument_(doc);
-    d->isPaged       = isPaged_GmDocument(doc);
-    d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
-    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
-    d->outsideMargin = outsideMargin_GmDocument_(doc);
-    init_String(&d->headingTitle);
-    init_String(&d->firstContentLine);
-}
-
-void deinit_Typesetter_(iTypesetter *d) {
-    if (d->above) {
-        deinit_Typesetter_(d->above);
-        free(d->above);
-    }
-    deinit_String(&d->firstContentLine);
-    deinit_String(&d->headingTitle);
-    deinit_Array(&d->ownLayout);
-}
-
 static int verticalPad_Typesetter_(const iTypesetter *d) {
     return d->style->verticalPad * lineHeight_Text(d->style->fonts[text_GmLineType]);
-}
-
-iBool beginLayout_GmDocument_(iGmDocument *doc, iBool keepTitle) {
-    /* Resets the layout. The title does not depend on the layout parameters. */
-    init_DocumentStyle(&doc->style,
-                       &(iDocumentStyleParams){
-                           .prefs            = &doc->docPrefs,
-                           .width            = doc->size.x,
-                           .outsideMargin    = outsideMargin_GmDocument_(doc),
-                           .isMonospace      = isForcedMonospace_GmDocument_(doc),
-                           .isGopher         = isGopher_GmDocument_(doc),
-                           .isPaged          = isPaged_GmDocument(doc),
-                           .isPlainText      = doc->viewFormat == plainText_SourceFormat,
-                           .isDarkBackground = isDark_GmDocumentTheme(currentTheme_GmDocument_(doc)),
-                           .isUiTheme        = doc->flags.isUiTheme,
-                           .isBookCover      = doc->flags.isBookCover });
-    doc->flags.isLayoutInvalidated = iFalse;
-    doc->flags.isLayoutCaughtUp = iFalse;
-    doc->layoutGen++;
-    doc->layoutFontKey = fontKey_App();
-    clear_Array(&doc->layout);
-    clear_StringArray(&doc->auxText);
-    clear_Array(&doc->pageBands);
-    if (!keepTitle) {
-        set_String(&doc->title, &doc->fixedTitle);
-    }
-    doc->contentWidth = 0;
-    parseUntil_GmDocument_(doc, constBegin_String(&doc->source));
-    iForEach(PtrArray, i, &doc->links) {
-        ((iGmLink *) i.ptr)->flags &= ~(content_GmLinkFlag | permanent_GmLinkFlag);
-    }
-    iForEach(Array, p, &doc->preMeta) {
-        iGmPreMeta *meta = p.value;
-        meta->flags &= folded_GmPreMetaFlag;
-        meta->runRange = (iGmRunRange){ NULL, NULL };
-        meta->initialOffset = 0;
-        meta->pixelRect = zero_Rect();
-    }
-    if (doc->size.x <= 0 || isEmpty_String(&doc->source)) {
-        return iFalse;
-    }
-    doc->warnings &= ~missingGlyphs_GmDocumentWarning;
-    checkMissing_Text(); /* clear the flag */
-    setAnsiFlags_Text(doc->ansiEscapes);
-    determinePlainTextWrapWidth_GmDocument_(doc);
-    setAnsiFlags_Text(allowAll_AnsiFlag);
-    return iTrue;
-}
-
-void begin_Typesetter_(iTypesetter *d) {
-    /* State at the top of the document. */
-    iGmDocument *doc = d->doc;
-    set_String(&d->headingTitle, &doc->fixedTitle);
-    d->content           = range_String(&doc->source);
-    d->contentLine       = iNullRange;
-    d->pos               = init_I2(0, verticalPad_Typesetter_(d));
-    d->isAtTop           = iTrue;
-    d->isFirstText       = d->style->hasLede;
-    d->addQuoteIcon      = d->prefs->quoteIcon.value;
-    d->isPreformat       = iFalse;
-    d->preFont           = d->style->fonts[preformatted_GmLineType];
-    d->preId             = 0;
-    d->enableIndents     = iFalse;
-    d->prevType          = text_GmLineType;
-    d->prevNonBlankType  = undefined_GmLineType;
-    d->followsBlank      = iFalse;
-    d->pendingMargin     = 0;
-    d->numHeading1       = 0;
-    d->prevWrapParagraph = iFalse;
-    if (doc->format == plainText_SourceFormat) {
-        d->isPreformat = iTrue;
-        d->isFirstText = iFalse;
-    }
-}
-
-void beginAt_Typesetter_(iTypesetter *d, const char *lineStart) {
-    /* State where a line begins, except for what the lead-in line itself sets up. */
-    iGmDocument     *doc    = d->doc;
-    const iGmParser *parser = &doc->parser;
-    const size_t     offset = lineStart - constBegin_String(&doc->source);
-    begin_Typesetter_(d);
-    d->isAtTop     = iFalse;
-    d->contentLine = (iRangecc){ lineStart - 1, lineStart - 1 };
-    d->pos         = zero_I2();
-    if (doc->format != plainText_SourceFormat && !doc->flags.isNex) {
-        d->preId = preBefore_GmDocument_(doc, lineStart);
-        if (d->preId &&
-            lineStart <= constValue_Array(&doc->preMeta, d->preId - 1, iGmPreMeta).bounds.end) {
-            d->isPreformat  = iTrue;
-            d->topLeftPreId = d->preId;
-            if (isPreOpen_GmDocument_(doc, d->preId)) {
-                d->openPreId = d->preId;
-            }
-        }
-    }
-    if (doc->format != plainText_SourceFormat) {
-        d->isFirstText = d->style->hasLede && parser->firstTextPos >= offset;
-    }
-    d->enableIndents = parser->indentPos < offset;
-    if (d->isPreformat && parser->indentPos != offset) {
-        d->prevType = preformatted_GmLineType; /* indents are not enabled by this line */
-    }
-    d->nextLink      = linksBefore_GmDocument_(doc, lineStart);
-    d->seedPreId     = d->preId;
 }
 
 static void parseLink_Typesetter_(iTypesetter *d) {
@@ -1289,13 +1147,152 @@ static void captureSeam_Typesetter_(iTypesetter *d) {
     seam->prevWrapParagraph = d->prevWrapParagraph;
 }
 
-iBool isSame_TypesetterSeam_(const iTypesetterSeam *a, const iTypesetterSeam *b) {
-    return a->gap == b->gap && a->prevType == b->prevType &&
-           a->prevNonBlankType == b->prevNonBlankType && a->nextLink == b->nextLink &&
-           a->pendingMargin == b->pendingMargin && a->preId == b->preId &&
-           a->isPreformat == b->isPreformat && a->enableIndents == b->enableIndents &&
-           a->isFirstText == b->isFirstText && a->addQuoteIcon == b->addQuoteIcon &&
-           a->followsBlank == b->followsBlank && a->prevWrapParagraph == b->prevWrapParagraph;
+static void rebasePos_(const iGmRebase *rebase, const char **pos) {
+    iRangecc range = { *pos, *pos };
+    apply_GmRebase(rebase, &range);
+    *pos = range.start;
+}
+
+int lastVisibleRunBottom_Typesetter_(const iTypesetter *d) {
+    iReverseConstForEach(Array, i, d->layout) {
+        const iGmRun *run = i.value;
+        if (isEmpty_Range(&run->text)) {
+            continue;
+        }
+        return top_Rect(run->visBounds) + height_Rect(run->visBounds) * d->prefs->lineSpacing.value;
+    }
+    return d->earlierBottom;
+}
+
+void init_Typesetter_(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
+    iZap(*d);
+    d->doc           = doc;
+    init_Array(&d->ownLayout, sizeof(iGmRun));
+    d->layout        = isOwnLayout ? &d->ownLayout : &doc->layout;
+    d->prefs         = &doc->docPrefs;
+    d->style         = &doc->style;
+    d->isMono        = isForcedMonospace_GmDocument_(doc);
+    d->isGopher      = isGopher_GmDocument_(doc);
+    d->isPaged       = isPaged_GmDocument(doc);
+    d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
+    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
+    d->outsideMargin = outsideMargin_GmDocument_(doc);
+    init_String(&d->headingTitle);
+    init_String(&d->firstContentLine);
+}
+
+void deinit_Typesetter_(iTypesetter *d) {
+    if (d->above) {
+        deinit_Typesetter_(d->above);
+        free(d->above);
+    }
+    deinit_String(&d->firstContentLine);
+    deinit_String(&d->headingTitle);
+    deinit_Array(&d->ownLayout);
+}
+
+iBool beginLayout_GmDocument_(iGmDocument *doc, iBool keepTitle) {
+    /* Resets the layout. The title does not depend on the layout parameters. */
+    init_DocumentStyle(&doc->style,
+                       &(iDocumentStyleParams){
+                           .prefs            = &doc->docPrefs,
+                           .width            = doc->size.x,
+                           .outsideMargin    = outsideMargin_GmDocument_(doc),
+                           .isMonospace      = isForcedMonospace_GmDocument_(doc),
+                           .isGopher         = isGopher_GmDocument_(doc),
+                           .isPaged          = isPaged_GmDocument(doc),
+                           .isPlainText      = doc->viewFormat == plainText_SourceFormat,
+                           .isDarkBackground = isDark_GmDocumentTheme(currentTheme_GmDocument_(doc)),
+                           .isUiTheme        = doc->flags.isUiTheme,
+                           .isBookCover      = doc->flags.isBookCover });
+    doc->flags.isLayoutInvalidated = iFalse;
+    doc->flags.isLayoutCaughtUp = iFalse;
+    doc->layoutGen++;
+    doc->layoutFontKey = fontKey_App();
+    clear_Array(&doc->layout);
+    clear_StringArray(&doc->auxText);
+    clear_Array(&doc->pageBands);
+    if (!keepTitle) {
+        set_String(&doc->title, &doc->fixedTitle);
+    }
+    doc->contentWidth = 0;
+    parseUntil_GmDocument_(doc, constBegin_String(&doc->source));
+    iForEach(PtrArray, i, &doc->links) {
+        ((iGmLink *) i.ptr)->flags &= ~(content_GmLinkFlag | permanent_GmLinkFlag);
+    }
+    iForEach(Array, p, &doc->preMeta) {
+        iGmPreMeta *meta = p.value;
+        meta->flags &= folded_GmPreMetaFlag;
+        meta->runRange = (iGmRunRange){ NULL, NULL };
+        meta->initialOffset = 0;
+        meta->pixelRect = zero_Rect();
+    }
+    if (doc->size.x <= 0 || isEmpty_String(&doc->source)) {
+        return iFalse;
+    }
+    doc->warnings &= ~missingGlyphs_GmDocumentWarning;
+    checkMissing_Text(); /* clear the flag */
+    setAnsiFlags_Text(doc->ansiEscapes);
+    determinePlainTextWrapWidth_GmDocument_(doc);
+    setAnsiFlags_Text(allowAll_AnsiFlag);
+    return iTrue;
+}
+
+void begin_Typesetter_(iTypesetter *d) {
+    /* State at the top of the document. */
+    iGmDocument *doc = d->doc;
+    set_String(&d->headingTitle, &doc->fixedTitle);
+    d->content           = range_String(&doc->source);
+    d->contentLine       = iNullRange;
+    d->pos               = init_I2(0, verticalPad_Typesetter_(d));
+    d->isAtTop           = iTrue;
+    d->isFirstText       = d->style->hasLede;
+    d->addQuoteIcon      = d->prefs->quoteIcon.value;
+    d->isPreformat       = iFalse;
+    d->preFont           = d->style->fonts[preformatted_GmLineType];
+    d->preId             = 0;
+    d->enableIndents     = iFalse;
+    d->prevType          = text_GmLineType;
+    d->prevNonBlankType  = undefined_GmLineType;
+    d->followsBlank      = iFalse;
+    d->pendingMargin     = 0;
+    d->numHeading1       = 0;
+    d->prevWrapParagraph = iFalse;
+    if (doc->format == plainText_SourceFormat) {
+        d->isPreformat = iTrue;
+        d->isFirstText = iFalse;
+    }
+}
+
+void beginAt_Typesetter_(iTypesetter *d, const char *lineStart) {
+    /* State where a line begins, except for what the lead-in line itself sets up. */
+    iGmDocument     *doc    = d->doc;
+    const iGmParser *parser = &doc->parser;
+    const size_t     offset = lineStart - constBegin_String(&doc->source);
+    begin_Typesetter_(d);
+    d->isAtTop     = iFalse;
+    d->contentLine = (iRangecc){ lineStart - 1, lineStart - 1 };
+    d->pos         = zero_I2();
+    if (doc->format != plainText_SourceFormat && !doc->flags.isNex) {
+        d->preId = preBefore_GmDocument_(doc, lineStart);
+        if (d->preId &&
+            lineStart <= constValue_Array(&doc->preMeta, d->preId - 1, iGmPreMeta).bounds.end) {
+            d->isPreformat  = iTrue;
+            d->topLeftPreId = d->preId;
+            if (isPreOpen_GmDocument_(doc, d->preId)) {
+                d->openPreId = d->preId;
+            }
+        }
+    }
+    if (doc->format != plainText_SourceFormat) {
+        d->isFirstText = d->style->hasLede && parser->firstTextPos >= offset;
+    }
+    d->enableIndents = parser->indentPos < offset;
+    if (d->isPreformat && parser->indentPos != offset) {
+        d->prevType = preformatted_GmLineType; /* indents are not enabled by this line */
+    }
+    d->nextLink      = linksBefore_GmDocument_(doc, lineStart);
+    d->seedPreId     = d->preId;
 }
 
 iBool typesetLines_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds) {
@@ -1365,6 +1362,15 @@ iBool typesetSome_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds) 
     const iBool isCaughtUp = typesetLines_Typesetter_(d, minHeight, maxSeconds);
     publish_Typesetter_(d, isCaughtUp);
     return isCaughtUp;
+}
+
+iBool isSame_TypesetterSeam_(const iTypesetterSeam *a, const iTypesetterSeam *b) {
+    return a->gap == b->gap && a->prevType == b->prevType &&
+           a->prevNonBlankType == b->prevNonBlankType && a->nextLink == b->nextLink &&
+           a->pendingMargin == b->pendingMargin && a->preId == b->preId &&
+           a->isPreformat == b->isPreformat && a->enableIndents == b->enableIndents &&
+           a->isFirstText == b->isFirstText && a->addQuoteIcon == b->addQuoteIcon &&
+           a->followsBlank == b->followsBlank && a->prevWrapParagraph == b->prevWrapParagraph;
 }
 
 void shift_Typesetter_(iTypesetter *d, int dy) {
@@ -1440,12 +1446,6 @@ void finish_Typesetter_(iTypesetter *d) {
            doc->size.x,
            doc->contentWidth);
 #endif
-}
-
-static void rebasePos_(const iGmRebase *rebase, const char **pos) {
-    iRangecc range = { *pos, *pos };
-    apply_GmRebase(rebase, &range);
-    *pos = range.start;
 }
 
 void rebase_Typesetter_(iTypesetter *d, const iGmRebase *rebase) {

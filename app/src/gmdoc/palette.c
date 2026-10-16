@@ -27,13 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "feeds.h"
 #include "ui/root.h"
 
-iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
-    if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme || d == sepia_GmDocumentTheme) {
-        return isDark_ColorTheme(colorTheme_App());
-    }
-    return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
-}
-
 enum iGmDocumentTheme currentTheme_GmDocument_(const iGmDocument *d) {
     return docTheme_DocPrefs(&d->docPrefs, isDark_ColorTheme(colorTheme_App()));
 }
@@ -204,6 +197,28 @@ static void setUiThemeColors_(void) {
     }
     setDerivedThemeColors_(isDark_ColorTheme(colorTheme_App()) ? black_GmDocumentTheme
                                                                : white_GmDocumentTheme);
+}
+
+const iString *themeUrl_GmDocument_(const iGmDocument *d) {
+    return isEmpty_String(&d->themeUrl) ? &d->url : &d->themeUrl;
+}
+
+const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
+    if (!isEmpty_String(&d->themeUrl)) {
+        return urlPaletteSeed_String(&d->themeUrl);
+    }
+    const iString *seed = d->docPrefs.paletteSeed;
+    if (!isEmpty_String(seed) && !isLocalFileScheme_Rangecc(urlScheme_String(&d->url))) {
+        return utf8_String(seed);
+    }
+    return urlThemeSeed_String(&d->url);
+}
+
+iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
+    if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme || d == sepia_GmDocumentTheme) {
+        return isDark_ColorTheme(colorTheme_App());
+    }
+    return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iBlock *iconSeed) {
@@ -823,21 +838,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
        palettes on the fly if more than one GmDocument is being displayed simultaneously. */
     memcpy(d->palette, get_Root()->tmPalette, sizeof(d->palette));
     d->flags.isPaletteValid = iTrue;
-}
-
-const iString *themeUrl_GmDocument_(const iGmDocument *d) {
-    return isEmpty_String(&d->themeUrl) ? &d->url : &d->themeUrl;
-}
-
-const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
-    if (!isEmpty_String(&d->themeUrl)) {
-        return urlPaletteSeed_String(&d->themeUrl);
-    }
-    const iString *seed = d->docPrefs.paletteSeed;
-    if (!isEmpty_String(seed) && !isLocalFileScheme_Rangecc(urlScheme_String(&d->url))) {
-        return utf8_String(seed);
-    }
-    return urlThemeSeed_String(&d->url);
 }
 
 void makePaletteGlobal_GmDocument(const iGmDocument *d) {

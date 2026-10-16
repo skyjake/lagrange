@@ -260,19 +260,6 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
     }
 }
 
-void init_GmParser(iGmParser *d) {
-    iZap(*d);
-}
-
-void deinit_GmParser(iGmParser *d) {
-    delete_Array(d->oldPreMeta);
-    d->oldPreMeta = NULL;
-}
-
-void invalidateParse_GmDocument_(iGmDocument *d) {
-    d->parser.isValid = iFalse;
-}
-
 static void beginPreformatted_GmDocument_(iGmDocument *d, iRangecc line, const iArray *oldPreMeta) {
     iGmParser *p = &d->parser;
     const size_t preIndex = size_Array(&d->preMeta);
@@ -384,10 +371,6 @@ static void parseLine_GmDocument_(iGmDocument *d, iRangecc line, const iArray *o
     p->isPrevPre = iFalse;
 }
 
-iBool isPreOpen_GmDocument_(const iGmDocument *d, uint16_t preId) {
-    return d->parser.isPreformat && d->parser.preId == preId;
-}
-
 static void begin_GmParser_(iGmDocument *d) {
     iGmParser *p = &d->parser;
     if (!p->isValid) {
@@ -420,6 +403,14 @@ static iBool parseNextLine_GmDocument_(iGmDocument *d) {
         return iTrue;
     }
     return iFalse;
+}
+
+void invalidateParse_GmDocument_(iGmDocument *d) {
+    d->parser.isValid = iFalse;
+}
+
+iBool isPreOpen_GmDocument_(const iGmDocument *d, uint16_t preId) {
+    return d->parser.isPreformat && d->parser.preId == preId;
 }
 
 void ensureParsed_GmDocument_(iGmDocument *d) {
@@ -526,4 +517,13 @@ const char *findLeadIn_GmDocument_(const iGmDocument *d, const char *lineStart) 
         }
     }
     return NULL;
+}
+
+void init_GmParser(iGmParser *d) {
+    iZap(*d);
+}
+
+void deinit_GmParser(iGmParser *d) {
+    delete_Array(d->oldPreMeta);
+    d->oldPreMeta = NULL;
 }

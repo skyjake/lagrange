@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdoc/impl.h"
 #include "gmdoc/palette.h"
 #include "gmdoc/parser.h"
-#include "gmdoc/typesetter.h"
+#include "gmdoc/layout.h"
 #include "gmutil.h"
 #include "gempub.h"
 #include <lagrange/lang.h>

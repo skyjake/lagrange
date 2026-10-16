@@ -20,6 +20,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include "layout.h"
 #include "parser.h"
 #include "typesetter.h"
 #include "render/text.h"
@@ -29,8 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static void typesetAnchored_Typesetter_(iTypesetter *d, const iGmLayoutAnchor *anchor,
                                         const char *leadIn) {
-    /* Lays out the visible part of the document, seeded from a preceding line. The content
-       above it is laid out in slices and spliced in front. */
+    /* Lays out the visible part of the document, seeded from a preceding line. */
     iGmDocument   *doc  = d->doc;
     const iRangecc src  = range_String(&doc->source);
     const char    *seam = lineStart_Rangecc_(src, src.start + anchor->startPos);
@@ -55,20 +55,6 @@ static void typesetAnchored_Typesetter_(iTypesetter *d, const iGmLayoutAnchor *a
     begin_Typesetter_(d->above);
     d->above->seamPos = seam;
     typesetSome_Typesetter_(d, anchor->bottom, 0.0);
-}
-
-void deleteTypesetter_GmDocument_(iGmDocument *d) {
-    if (d->typesetter) {
-        deinit_Typesetter_(d->typesetter);
-        free(d->typesetter);
-        d->typesetter = NULL;
-    }
-}
-
-void rebaseTypesetter_GmDocument_(iGmDocument *d, const iGmRebase *rebase) {
-    if (d->typesetter) {
-        rebase_Typesetter_(d->typesetter, rebase);
-    }
 }
 
 static iTypesetter *spliceAbove_GmDocument_(iGmDocument *d) {
@@ -205,6 +191,65 @@ static void applyMetrics_GmDocument_(iGmDocument *d, const iGmDocumentMetrics *m
     d->size.x  = metrics->width;
 }
 
+#if !defined (NDEBUG)
+static void moveRuns_GmDocument_(iGmDocument *d) {
+    /* Always move the runs to catch missed rebases. */
+    iGmRebase rebase;
+    init_GmRebase(&rebase, d);
+    iArray moved;
+    initCopy_Array(&moved, &d->layout);
+    deinit_Array(&d->layout);
+    d->layout = moved;
+    if (update_GmRebase(&rebase, d)) {
+        rebase_GmDocument_(d, &rebase);
+    }
+}
+
+static void checkLayout_GmDocument_(iGmDocument *d) {
+    /* Compares the layout with one done from the top in one go. */
+    iString *layout = new_String();
+    iString *check  = new_String();
+    layoutDigest_GmDocument(d, layout);
+    const int syncHeight = d->layoutSyncHeight;
+    d->layoutSyncHeight = 0;
+    doLayout_GmDocument_(d);
+    d->layoutSyncHeight = syncHeight;
+    layoutDigest_GmDocument(d, check);
+    if (equal_String(layout, check)) {
+        fprintf(stderr, "[GmDocument] layout check: ok\n");
+    }
+    else {
+        iRangecc a = iNullRange, b = iNullRange;
+        int lineNum = 0;
+        while (nextSplit_Rangecc(range_String(layout), "\n", &a) &&
+               nextSplit_Rangecc(range_String(check), "\n", &b)) {
+            lineNum++;
+            if (!equal_Rangecc(a, cstr_Rangecc(b))) {
+                break;
+            }
+        }
+        fprintf(stderr, "[GmDocument] layout check: MISMATCH at line %d\n  got: %s\n  exp: %s\n",
+                lineNum, cstr_Rangecc(a), cstr_Rangecc(b));
+    }
+    delete_String(check);
+    delete_String(layout);
+}
+#endif
+
+void deleteTypesetter_GmDocument_(iGmDocument *d) {
+    if (d->typesetter) {
+        deinit_Typesetter_(d->typesetter);
+        free(d->typesetter);
+        d->typesetter = NULL;
+    }
+}
+
+void rebaseTypesetter_GmDocument_(iGmDocument *d, const iGmRebase *rebase) {
+    if (d->typesetter) {
+        rebase_Typesetter_(d->typesetter, rebase);
+    }
+}
+
 void doLayout_GmDocument_(iGmDocument *d) {
 #if !defined (NDEBUG)
     iTime startTime;
@@ -260,51 +305,6 @@ iBool isLayoutPending_GmDocument(const iGmDocument *d) {
 iBool isLayoutIndeterminate_GmDocument(const iGmDocument *d) {
     return d->typesetter && d->typesetter->above;
 }
-
-#if !defined (NDEBUG)
-static void moveRuns_GmDocument_(iGmDocument *d) {
-    /* Always move the runs to catch missed rebases. */
-    iGmRebase rebase;
-    init_GmRebase(&rebase, d);
-    iArray moved;
-    initCopy_Array(&moved, &d->layout);
-    deinit_Array(&d->layout);
-    d->layout = moved;
-    if (update_GmRebase(&rebase, d)) {
-        rebase_GmDocument_(d, &rebase);
-    }
-}
-
-static void checkLayout_GmDocument_(iGmDocument *d) {
-    /* Compares the layout with one done from the top in one go. */
-    iString *layout = new_String();
-    iString *check  = new_String();
-    layoutDigest_GmDocument(d, layout);
-    const int syncHeight = d->layoutSyncHeight;
-    d->layoutSyncHeight = 0;
-    doLayout_GmDocument_(d);
-    d->layoutSyncHeight = syncHeight;
-    layoutDigest_GmDocument(d, check);
-    if (equal_String(layout, check)) {
-        fprintf(stderr, "[GmDocument] layout check: ok\n");
-    }
-    else {
-        iRangecc a = iNullRange, b = iNullRange;
-        int lineNum = 0;
-        while (nextSplit_Rangecc(range_String(layout), "\n", &a) &&
-               nextSplit_Rangecc(range_String(check), "\n", &b)) {
-            lineNum++;
-            if (!equal_Rangecc(a, cstr_Rangecc(b))) {
-                break;
-            }
-        }
-        fprintf(stderr, "[GmDocument] layout check: MISMATCH at line %d\n  got: %s\n  exp: %s\n",
-                lineNum, cstr_Rangecc(a), cstr_Rangecc(b));
-    }
-    delete_String(check);
-    delete_String(layout);
-}
-#endif
 
 iBool settleLayout_GmDocument(iGmDocument *d) {
     if (!isLayoutIndeterminate_GmDocument(d)) {

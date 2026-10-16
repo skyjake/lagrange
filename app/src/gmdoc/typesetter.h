@@ -97,6 +97,11 @@ struct Impl_Typesetter {
     iTypesetter          *above;             /* lays out the content above the seam */
 };
 
+iBool   isExpandingToLongLines_GmDocument_      (const iGmDocument *);
+void    determinePlainTextWrapWidth_GmDocument_ (iGmDocument *);
+iBool   beginLayout_GmDocument_                 (iGmDocument *, iBool keepTitle);
+
+int     lastVisibleRunBottom_Typesetter_(const iTypesetter *);
 void    init_Typesetter_                (iTypesetter *, iGmDocument *doc, iBool isOwnLayout);
 void    deinit_Typesetter_              (iTypesetter *);
 void    begin_Typesetter_               (iTypesetter *); /* at the top of the document */
@@ -104,19 +109,9 @@ void    beginAt_Typesetter_             (iTypesetter *, const char *lineStart);
 iBool   typesetLines_Typesetter_        (iTypesetter *, int minHeight, double maxSeconds); /* True if caught up */
 void    publish_Typesetter_             (iTypesetter *, iBool isCaughtUp);
 iBool   typesetSome_Typesetter_         (iTypesetter *, int minHeight, double maxSeconds); /* lines and publish */
+iBool   isSame_TypesetterSeam_          (const iTypesetterSeam *, const iTypesetterSeam *);
 void    shift_Typesetter_               (iTypesetter *, int dy);
 const iGmRun *findKeptRun_Typesetter_   (const iTypesetter *);
 const iGmRun *layoutUntilKept_Typesetter_(iTypesetter *);
-int     lastVisibleRunBottom_Typesetter_(const iTypesetter *);
 void    finish_Typesetter_              (iTypesetter *); /* whole-document steps */
 void    rebase_Typesetter_              (iTypesetter *, const iGmRebase *);
-iBool   isSame_TypesetterSeam_          (const iTypesetterSeam *, const iTypesetterSeam *);
-
-iBool   beginLayout_GmDocument_         (iGmDocument *, iBool keepTitle);
-iBool   isExpandingToLongLines_GmDocument_(const iGmDocument *);
-void    determinePlainTextWrapWidth_GmDocument_(iGmDocument *);
-
-/* Implemented in layout.c: */
-void    doLayout_GmDocument_            (iGmDocument *); /* also paginates */
-void    deleteTypesetter_GmDocument_    (iGmDocument *);
-void    rebaseTypesetter_GmDocument_    (iGmDocument *, const iGmRebase *);

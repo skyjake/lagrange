@@ -28,60 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lagrange/lang.h>
 
-/*----------------------------------------------------------------------------------------------*/
 /* Pagination: the continuous layout is cut into columns that begin at multiples of the page
    height. A page has one or more columns, and a header and a footer. */
-
-int pageBandFont_GmDocument(const iGmDocument *d) {
-    /* Same family as the document's headings. */
-    return FONT_ID(isForcedMonospace_GmDocument_(d) ? documentMonospace_FontId
-                                                    : documentHeading_FontId,
-                   semiBold_FontStyle,
-                   deviceType_App() == phone_AppDeviceType ? contentTiny_FontSize
-                                                           : contentSmall_FontSize);
-}
-
-int pageBandHeight_GmDocument(const iGmDocument *d) {
-    return pageBandHeightFor_GmDocument(d, d->metrics.pageHeight);
-}
-
-int pageBandHeightFor_GmDocument(const iGmDocument *d, int pageHeight) {
-    return iMax(2 * lineHeight_Text(pageBandFont_GmDocument(d)), pageHeight / 14);
-}
-
-iBool isHeaderBelowCutout_GmDocument(const iGmDocument *d) {
-    /* A phone in portrait has a camera cutout in the top safe area. */
-    return deviceType_App() == phone_AppDeviceType &&
-           d->metrics.topInset > 40 * get_Window()->pixelRatio;
-}
 
 static int cutoutShift_GmDocument_(const iGmDocument *d) {
     /* The header is next to the cutout, so the content area moves up. */
     return isHeaderBelowCutout_GmDocument(d) ? lineHeight_Text(paragraph_FontId) * 4 / 5 : 0;
-}
-
-int pageHeaderHeight_GmDocument(const iGmDocument *d) {
-    return pageBandHeight_GmDocument(d) + d->metrics.topInset - cutoutShift_GmDocument_(d);
-}
-
-int pageFooterHeight_GmDocument(const iGmDocument *d) {
-    const int band = pageBandHeight_GmDocument(d);
-    if (deviceType_App() == phone_AppDeviceType) {
-        /* The text is just above the safe area. The progress bar is at the bottom edge while
-           the reading bars are hidden. */
-        const int lineHeight = lineHeight_Text(pageBandFont_GmDocument(d));
-        return iMax(d->metrics.bottomInset, 3 * gap_UI) + gap_UI + (band + lineHeight) / 2 +
-               cutoutShift_GmDocument_(d);
-    }
-    /* The reading progress bar and the find bar are below the footer. */
-    return band + 3 * gap_UI + d->metrics.bottomInset;
-}
-
-iRangei columnContentRange_GmDocument(const iGmDocument *d, size_t column) {
-    const int top = (int) column * d->metrics.pageHeight;
-    return (iRangei){ top + pageHeaderHeight_GmDocument(d) +
-                          ((int) column < columnsPerPage_GmDocument(d) ? d->metrics.firstPageInset : 0),
-                      top + d->metrics.pageHeight - pageFooterHeight_GmDocument(d) };
 }
 
 static iBool isAttachedDecoration_GmRun_(const iGmRun *d) {
@@ -489,4 +441,51 @@ void paginate_GmDocument_(iGmDocument *d) {
     d->size.y = (int) numColumns * d->metrics.pageHeight;
     setPageBands_GmDocument_(d);
     deinit_Array(&colGroups);
+}
+
+int pageBandFont_GmDocument(const iGmDocument *d) {
+    /* Same family as the document's headings. */
+    return FONT_ID(isForcedMonospace_GmDocument_(d) ? documentMonospace_FontId
+                                                    : documentHeading_FontId,
+                   semiBold_FontStyle,
+                   deviceType_App() == phone_AppDeviceType ? contentTiny_FontSize
+                                                           : contentSmall_FontSize);
+}
+
+int pageBandHeight_GmDocument(const iGmDocument *d) {
+    return pageBandHeightFor_GmDocument(d, d->metrics.pageHeight);
+}
+
+int pageBandHeightFor_GmDocument(const iGmDocument *d, int pageHeight) {
+    return iMax(2 * lineHeight_Text(pageBandFont_GmDocument(d)), pageHeight / 14);
+}
+
+iBool isHeaderBelowCutout_GmDocument(const iGmDocument *d) {
+    /* A phone in portrait has a camera cutout in the top safe area. */
+    return deviceType_App() == phone_AppDeviceType &&
+           d->metrics.topInset > 40 * get_Window()->pixelRatio;
+}
+
+int pageHeaderHeight_GmDocument(const iGmDocument *d) {
+    return pageBandHeight_GmDocument(d) + d->metrics.topInset - cutoutShift_GmDocument_(d);
+}
+
+int pageFooterHeight_GmDocument(const iGmDocument *d) {
+    const int band = pageBandHeight_GmDocument(d);
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* The text is just above the safe area. The progress bar is at the bottom edge while
+           the reading bars are hidden. */
+        const int lineHeight = lineHeight_Text(pageBandFont_GmDocument(d));
+        return iMax(d->metrics.bottomInset, 3 * gap_UI) + gap_UI + (band + lineHeight) / 2 +
+               cutoutShift_GmDocument_(d);
+    }
+    /* The reading progress bar and the find bar are below the footer. */
+    return band + 3 * gap_UI + d->metrics.bottomInset;
+}
+
+iRangei columnContentRange_GmDocument(const iGmDocument *d, size_t column) {
+    const int top = (int) column * d->metrics.pageHeight;
+    return (iRangei){ top + pageHeaderHeight_GmDocument(d) +
+                          ((int) column < columnsPerPage_GmDocument(d) ? d->metrics.firstPageInset : 0),
+                      top + d->metrics.pageHeight - pageFooterHeight_GmDocument(d) };
 }
