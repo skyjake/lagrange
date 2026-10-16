@@ -102,9 +102,7 @@ struct Impl_Typesetter {
     iTypesetter          *above;             /* lays out the content above the seam */
 };
 
-
-void    init_Typesetter_                    (iTypesetter *, iGmDocument *doc, iBool isOwnLayout);
-void    deinit_Typesetter_                  (iTypesetter *);
+iDeclareTypeConstructionArgs(Typesetter, iGmDocument *doc, iBool isOwnLayout)
 
 iBool   beginLayout_GmDocument_                 (iGmDocument *, iBool keepTitle);
 void    determinePlainTextWrapWidth_GmDocument_ (iGmDocument *);

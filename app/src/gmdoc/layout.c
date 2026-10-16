@@ -51,7 +51,7 @@ static void typesetAnchored_Typesetter_(iTypesetter *d, const iGmLayoutAnchor *a
         shift_Typesetter_(d, anchor->top - top_Rect(kept->visBounds));
     }
     d->above = malloc(sizeof(iTypesetter));
-    init_Typesetter_(d->above, doc, iTrue);
+    init_Typesetter(d->above, doc, iTrue);
     begin_Typesetter_(d->above);
     d->above->seamPos = seam;
     typesetSome_Typesetter_(d, anchor->bottom, 0.0);
@@ -82,7 +82,7 @@ static iTypesetter *spliceAbove_GmDocument_(iGmDocument *d) {
         if (!isEmpty_String(&above->firstContentLine)) {
             set_String(&ts->firstContentLine, &above->firstContentLine);
         }
-        deinit_Typesetter_(above);
+        deinit_Typesetter(above);
         free(above);
     }
     else {
@@ -127,7 +127,7 @@ static iTypesetter *spliceAbove_GmDocument_(iGmDocument *d) {
                                  newKept ? top_Rect(newKept->visBounds) + above->syncSpan : INT_MAX,
                                  0.0);
         d->typesetter = above;
-        deinit_Typesetter_(ts);
+        deinit_Typesetter(ts);
         free(ts);
         ts = above;
     }
@@ -144,7 +144,7 @@ static void typeset_GmDocument_(iGmDocument *d) {
     }
     const char  *keepPos = (anchor.pos != iInvalidPos ? src.start + anchor.pos : NULL);
     iTypesetter *ts      = malloc(sizeof(iTypesetter));
-    init_Typesetter_(ts, d, iFalse);
+    init_Typesetter(ts, d, iFalse);
     d->flags.isAnchoredLayout = iFalse;
     if (beginLayout_GmDocument_(d, keepPos != NULL)) {
         ts->isWrapWidthChecked = d->flags.isSourceFinal;
@@ -180,7 +180,7 @@ static void typeset_GmDocument_(iGmDocument *d) {
             return;
         }
     }
-    deinit_Typesetter_(ts);
+    deinit_Typesetter(ts);
     free(ts);
 }
 
@@ -239,8 +239,7 @@ static void checkLayout_GmDocument_(iGmDocument *d) {
 
 void deleteTypesetter_GmDocument_(iGmDocument *d) {
     if (d->typesetter) {
-        deinit_Typesetter_(d->typesetter);
-        free(d->typesetter);
+        delete_Typesetter(d->typesetter);
         d->typesetter = NULL;
     }
 }

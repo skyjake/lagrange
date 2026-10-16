@@ -55,6 +55,7 @@ struct Impl_GmPageBands {
 };
 
 iDeclareType(GmParser)
+iDeclareTypeConstruction(GmParser)
 
 struct Impl_GmParser {
     iBool    isValid;

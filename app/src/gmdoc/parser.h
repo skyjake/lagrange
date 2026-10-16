@@ -27,9 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "impl.h"
 
-void    init_GmParser                   (iGmParser *);
-void    deinit_GmParser                 (iGmParser *);
-
 void    invalidateParse_GmDocument_     (iGmDocument *); /* parsed again before the next layout */
 void    ensureParsed_GmDocument_        (iGmDocument *); /* all of the source */
 void    parseUntil_GmDocument_          (iGmDocument *, const char *pos); /* lines starting before */

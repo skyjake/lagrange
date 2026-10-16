@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
 
+iDefineTypeConstruction(GmParser)
+
 static void setScheme_GmLink_(iGmLink *d, enum iGmLinkScheme scheme) {
     d->flags &= ~supportedScheme_GmLinkFlag;
     d->flags |= scheme;

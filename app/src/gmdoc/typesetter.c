@@ -36,6 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <SDL3/SDL_timer.h>
 
+iDefineTypeConstructionArgs(Typesetter, (iGmDocument *doc, iBool isOwnLayout), doc, isOwnLayout)
+
 static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
                                               uint16_t linkId) {
     iGmLink *link = at_PtrArray(&d->links, linkId - 1);
@@ -1169,7 +1171,7 @@ int lastVisibleRunBottom_Typesetter_(const iTypesetter *d) {
     return d->earlierBottom;
 }
 
-void init_Typesetter_(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
+void init_Typesetter(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
     iZap(*d);
     d->doc           = doc;
     init_Array(&d->ownLayout, sizeof(iGmRun));
@@ -1186,9 +1188,9 @@ void init_Typesetter_(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
     init_String(&d->firstContentLine);
 }
 
-void deinit_Typesetter_(iTypesetter *d) {
+void deinit_Typesetter(iTypesetter *d) {
     if (d->above) {
-        deinit_Typesetter_(d->above);
+        deinit_Typesetter(d->above);
         free(d->above);
     }
     deinit_String(&d->firstContentLine);

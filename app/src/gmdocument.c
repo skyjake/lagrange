@@ -1345,8 +1345,6 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
     if (!link) {
         return none_ColorId;
     }
-//    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
-//    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
     const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
     if (link) {
         const iBool isUnsupported = (link->flags & supportedScheme_GmLinkFlag) == 0;
