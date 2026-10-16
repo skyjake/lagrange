@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "frametiming.h"
+#include "app.h"
 
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
@@ -82,7 +83,7 @@ iBool isEnabled_FrameTiming(void) {
         const char *env = getenv("LAGRANGE_FRAME_TIMING");
         const double ms = env ? atof(env) : 0.0;
         timing_.isEnabled   = (env != NULL);
-        timing_.budget      = (ms > 0.0 ? ms : 1000.0 / 60.0) / 1000.0;
+        timing_.budget      = ms > 0.0 ? ms / 1000.0 : 1.0 / displayRefreshRate_App();
         timing_.tickSeconds = 1.0 / (double) SDL_GetPerformanceFrequency();
         timing_.periodStart = SDL_GetPerformanceCounter();
     }

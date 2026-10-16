@@ -25,8 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/defs.h>
 
 /* Set LAGRANGE_FRAME_TIMING to log the main thread's busy time per frame. The value is the
-   frame budget in milliseconds (default: 16.7). Waiting for events and presenting a frame
-   are not counted as busy time. */
+   frame budget in milliseconds (default: 0, one frame at the display refresh rate). Waiting
+   for events and presenting a frame are not counted as busy time. */
 
 enum iFramePhase {
     events_FramePhase,

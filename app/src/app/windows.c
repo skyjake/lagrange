@@ -33,6 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"
 #endif
+#if defined (iPlatformAppleMobile)
+#   include "platform/ios.h"
+#endif
 
 iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     clear_PtrArray(windows);
@@ -188,6 +191,16 @@ iBool isLandscape_App(void) {
         return size.x > size.y * 1.4f;
     }
     return size.x > size.y;
+}
+
+float displayRefreshRate_App(void) {
+#if defined (iPlatformAppleMobile)
+    const float rate = displayRefreshRate_iOS();
+#else
+    const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+    const float rate = mode ? mode->refresh_rate : 0.0f;
+#endif
+    return rate > 0.0f ? rate : 60.0f;
 }
 
 iDocumentWidget *document_Root(iRoot *d) {

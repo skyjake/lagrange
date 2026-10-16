@@ -758,16 +758,7 @@ static double layoutSliceSeconds_(void) {
     /* Layout is continued for half of a frame. */
     static double seconds_;
     if (seconds_ <= 0.0) {
-#if defined (iPlatformAppleMobile)
-        float refreshRate = displayRefreshRate_iOS();
-#else
-        const SDL_DisplayMode *dispMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
-        float refreshRate = dispMode ? dispMode->refresh_rate : 0.0f;
-#endif
-        if (refreshRate <= 0.0f) {
-            refreshRate = 60.0f;
-        }
-        seconds_ = 0.5 / refreshRate;
+        seconds_ = 0.5 / displayRefreshRate_App();
     }
     return seconds_;
 }
