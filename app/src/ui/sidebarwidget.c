@@ -335,6 +335,9 @@ static void addOutlineItems_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
+    if (flags_Widget(as_Widget(d)) & hidden_WidgetFlag) {
+        return; /* items are updated when the sidebar is shown */
+    }
     const iBool isMobile  = (deviceType_App() != desktop_AppDeviceType);
     iStringSet *selection  = saveMultiSelection_SidebarWidget_(d);
     iString    *contextKey = saveContextItem_SidebarWidget_(d);

@@ -1038,15 +1038,18 @@ void deinit_LabelWidget(iLabelWidget *d) {
 }
 
 void setFont_LabelWidget(iLabelWidget *d, int fontId) {
-    updateFont_LabelWidget(d, fontId);
-    updateSize_LabelWidget(d);
+    if (updateFont_LabelWidget(d, fontId)) {
+        updateSize_LabelWidget(d);
+    }
 }
 
-void updateFont_LabelWidget(iLabelWidget *d, int fontId) {
+iBool updateFont_LabelWidget(iLabelWidget *d, int fontId) {
     if (d->font != fontId) {
         d->font = fontId;
         refresh_Widget(d);
+        return iTrue;
     }
+    return iFalse;
 }
 
 void updateFontStyle_LabelWidget(iLabelWidget *d, int fontStyle) {

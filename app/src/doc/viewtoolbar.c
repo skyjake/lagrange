@@ -362,7 +362,7 @@ void updateHover_ViewToolbar(iViewToolbar *d) {
 
 static int bottomBarsEdge_ViewToolbar_(iViewToolbar *d, const iRoot *root) {
     /* The phone's toolbar and the tab bar above it. */
-    const iWidget *bottomBar  = findChild_Widget(root->widget, "bottombar");
+    const iWidget *bottomBar  = root->bars.bottomBar;
     const iWidget *tabBar     = prefs_App()->bottomTabBar ? root->bars.tabButtons : NULL;
     const int      safeBottom = bottom_Rect(safeRect_Root(root));
     if (!bottomBar) {

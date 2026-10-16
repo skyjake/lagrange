@@ -47,6 +47,22 @@ static iBool isSubscribed_Bookmark_(void *context, const iBookmark *bm) {
     return (!isFolder_Bookmark(bm) && bm->flags & subscribed_BookmarkFlag) != 0;
 }
 
+static const iTinylogInfo *cachedTinylogInfo_(iArray *cache, const iFeedEntry *entry) {
+    /* Author and avatar are per-feed, so look them up once per bookmark. */
+    iConstForEach(Array, i, cache) {
+        const iTinylogInfo *info = i.value;
+        if (info->bookmarkId == entry->bookmarkId) {
+            return info;
+        }
+    }
+    iTinylogInfo info;
+    init_TinylogInfo(&info);
+    tinylogInfo_Feeds(&entry->url, &info);
+    info.bookmarkId = entry->bookmarkId;
+    pushBack_Array(cache, &info);
+    return back_Array(cache);
+}
+
 const char *feedsRefreshAgeCStr_SidebarWidget_(void) {
     const iTime refreshed = lastRefreshedAt_Feeds();
     if (!isValid_Time(&refreshed)) {
@@ -100,7 +116,8 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     init_Date(&on, &now);
     const iDate today = on;
     iZap(on);
-    const iPtrArray *feedEntries = listFeedEntries_SidebarWidget_(d);
+    const iPtrArray *feedEntries  = listFeedEntries_SidebarWidget_(d);
+    iArray          *tinylogInfos = new_Array(sizeof(iTinylogInfo));
     iConstForEach(PtrArray, i, listVisibleEntries_Feeds(d->feedsMode == unread_FeedsMode, docUrl)) {
         const iFeedEntry *entry     = i.ptr;
         const iBool       isOpen    = equal_String(docUrl, &entry->url);
@@ -153,29 +170,25 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             item->id   = entry->bookmarkId;
             item->icon = bm->icon ? bm->icon : 0x1f4ac; /* speech balloon */
             if (isTinylog) {
-                iTinylogInfo info;
-                init_TinylogInfo(&info);
-                if (tinylogInfo_Feeds(&entry->url, &info)) {
-                    if (!isEmpty_String(&info.avatar)) {
-                        item->icon = first_String(&info.avatar);
-                    }
-                    if (!isEmpty_String(&info.author) && !equal_String(&info.author, &bm->title)) {
-                        const char *restoreCStr = "\x1b[0m" restore_ColorEscape;
-                        appendFormat_String(&item->meta,
-                                            "\x1b[1m%s",
-                                            cstr_String(&info.author));
-                        /* The domain name of the handle has normal styling. */
-                        const size_t secondAtPos = indexOfCStrFrom_String(&item->meta, "@", 5);
-                        if (secondAtPos != iInvalidPos) {
-                            insertData_Block(&item->meta.chars, secondAtPos, restoreCStr, strlen(restoreCStr));
-                        }
-                        else {
-                            appendCStr_String(&item->meta, restoreCStr);
-                        }
-                        appendCStr_String(&item->meta, " — ");
-                    }
+                const iTinylogInfo *info = cachedTinylogInfo_(tinylogInfos, entry);
+                if (!isEmpty_String(&info->avatar)) {
+                    item->icon = first_String(&info->avatar);
                 }
-                deinit_TinylogInfo(&info);
+                if (!isEmpty_String(&info->author) && !equal_String(&info->author, &bm->title)) {
+                    const char *restoreCStr = "\x1b[0m" restore_ColorEscape;
+                    appendFormat_String(&item->meta,
+                                        "\x1b[1m%s",
+                                        cstr_String(&info->author));
+                    /* The domain name of the handle has normal styling. */
+                    const size_t secondAtPos = indexOfCStrFrom_String(&item->meta, "@", 5);
+                    if (secondAtPos != iInvalidPos) {
+                        insertData_Block(&item->meta.chars, secondAtPos, restoreCStr, strlen(restoreCStr));
+                    }
+                    else {
+                        appendCStr_String(&item->meta, restoreCStr);
+                    }
+                    appendCStr_String(&item->meta, " — ");
+                }
             }
             append_String(&item->meta, &bm->title);
         }
@@ -192,6 +205,10 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         }
     #endif
     }
+    iForEach(Array, ti, tinylogInfos) {
+        deinit_TinylogInfo(ti.value);
+    }
+    delete_Array(tinylogInfos);
     /* Actions. */
     if (!isMobile) {
         if (!keepActions && !isEmpty_PtrArray(feedEntries)) {

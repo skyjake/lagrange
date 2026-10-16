@@ -37,6 +37,7 @@ struct Impl_Root {
         iWidget *docTabs;
         iWidget *tabButtons;
         iWidget *searchBar;
+        iWidget *bottomBar; /* phone only */
     } bars; /* looked up often (e.g., the page viewport), so not searched for by ID */
 };
 

@@ -688,17 +688,18 @@ uint32_t findBookmarkId_DocumentWidget(const iDocumentWidget *d) {
         d->mod.setIdentity ? collect_String(hexEncode_Block(d->mod.setIdentity)) : NULL);
 }
 
-static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
-    iWidget *w = as_Widget(d);
-    if (d != document_Root(w->root)) {
-        return;
-    }
-    iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
+static void updateIndicators_DocumentWidget_(iDocumentWidget *d, uint32_t bookmarkId) {
+    iWidget *navBar = findChild_Widget(root_Widget(as_Widget(d)), "navbar");
     showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
-    const iBool isBookmarked = findBookmarkId_DocumentWidget(d) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
-    setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : gray50_ColorId);
+    setTextColor_LabelWidget(bmPin, bookmarkId ? uiTextAction_ColorId : gray50_ColorId);
+}
+
+static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
+    if (d == document_Root(as_Widget(d)->root)) {
+        updateIndicators_DocumentWidget_(d, findBookmarkId_DocumentWidget(d));
+    }
 }
 
 static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
@@ -744,7 +745,9 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
-    showOrHideIndicators_DocumentWidget_(d);
+    if (d == document_Root(as_Widget(d)->root)) {
+        updateIndicators_DocumentWidget_(d, bmid);
+    }
     if (~d->fetch->flags & fromCache_DocumentFetchFlag) {
         setCachedDocument_History(d->mod.history, d->view->doc /* keeps a ref */);
     }

@@ -709,7 +709,7 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             drawLine_AppleText_(tx, activeLine, af, linePos, args->color, args->mode);
         }
         /* Hit testing: find the character at hitPoint (screen coordinate -> source pointer). */
-        if (wrap && !wrap->hitChar_out) {
+        if (wrap && !wrap->hitChar_out && !isEqual_I2(wrap->hitPoint, zero_I2())) {
             const int lineTop    = pos.y;
             const int lineBottom = pos.y + d->height;
             if (wrap->hitPoint.y >= lineTop && wrap->hitPoint.y < lineBottom) {

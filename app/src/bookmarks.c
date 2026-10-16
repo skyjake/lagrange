@@ -734,7 +734,7 @@ iBool updateUrls_Bookmark(iBookmarks *d, const iString *oldUrl, const iString *n
                     /* Remember the URL that was originally bookmarked. */
                     set_String(&bm->originalUrl, &bm->url);
                 }
-                set_String(&bm->url, newUrl);
+                set_String(&bm->url, canonicalUrl_String(newUrl));
                 changed = iTrue;
             }
         }
@@ -943,10 +943,9 @@ struct Impl_MatchUrlArgs {
 };
 
 static iBool matchUrlAndIdent_(iMatchUrlArgs *args, const iBookmark *bm) {
-    if (isTrash_Bookmark(bm)) {
-        return iFalse;
-    }
-    if (equalCase_String(args->url, canonicalUrl_String(&bm->url))) {
+    /* Bookmark URLs are stored in canonical form. */
+    if (cmpStringSc_String(args->url, &bm->url, &iCaseInsensitiveFast) == 0 &&
+        !isTrash_Bookmark(bm)) {
         if ((args->identityFp == NULL && isEmpty_String(&bm->identity)) ||
             (args->identityFp && equal_String(args->identityFp, &bm->identity))) {
             return iTrue;

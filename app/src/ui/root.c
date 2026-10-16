@@ -614,6 +614,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         iWidget *toolBar = findWidget_Root("toolbar");
         iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
         if (button) {
+            destroy_Widget(findChild_Widget(button, "menu")); /* from the previous opening */
             iWidget *menu = makeIdentityMenu_(button);
             openMenuFlags_Widget(menu, bottomLeft_Rect(bounds_Widget(button)),
                                  postCommands_MenuOpenFlags | (setFocus ? setFocus_MenuOpenFlags : 0));
@@ -851,10 +852,6 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iFalse; /* all roots must handle this */
     }
-    else if (equal_Command(cmd, "document.openurls.changed")) {
-        updateNavBarSize_Root(root->root);
-        return iFalse; /* all roots must handle this */
-    }
     else if (equal_Command(cmd, "theme.changed")) {
         /* The phone toolbar is draw-buffered so it needs refreshing. */
         refresh_Widget(findWidget_App("toolbar"));
@@ -908,10 +905,6 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         setFont_LabelWidget(toolButton, shownName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
         setTextOffset_LabelWidget(toolButton, init_I2(0, shownName ? -1.5f * gap_UI : 0));
         arrange_Widget(parent_Widget(toolButton));
-#if defined (iPlatformAppleMobile)
-        iRelease(findChild_Widget(as_Widget(toolButton), "menu"));
-        makeIdentityMenu_(as_Widget(toolButton));
-#endif
     }
 }
 
@@ -1002,7 +995,7 @@ void updateToolbarColors_Root(iRoot *d) {
     if (!isMobile_Platform()) {
         return;
     }
-    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    iWidget *bottomBar = d->bars.bottomBar;
     if (bottomBar) {
         iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
         const iWidget *tabs = findChild_Widget(d->widget, "doctabs");
@@ -1452,14 +1445,19 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                         const iStringArray *usedIdents =
                             strings_SiteSpec(site, usedIdentities_SiteSpecKey);
                         const iString *fingerprint = collect_String(hexEncode_Block(&ident->fingerprint));
-                        /* Keep this identity at the end of the list. */
-                        removeString_SiteSpec(site, usedIdentities_SiteSpecKey, fingerprint);
-                        insertString_SiteSpec(site, usedIdentities_SiteSpecKey, fingerprint);
-                        /* Keep the list short. */
-                        while (size_StringArray(usedIdents) > 5) {
-                            removeString_SiteSpec(site,
-                                                  usedIdentities_SiteSpecKey,
-                                                  constAt_StringArray(usedIdents, 0));
+                        const size_t   numUsed     = size_StringArray(usedIdents);
+                        /* Keep this identity at the end of the list. Each change is saved. */
+                        if (numUsed == 0 ||
+                            !equal_String(constAt_StringArray(usedIdents, numUsed - 1),
+                                          fingerprint)) {
+                            removeString_SiteSpec(site, usedIdentities_SiteSpecKey, fingerprint);
+                            insertString_SiteSpec(site, usedIdentities_SiteSpecKey, fingerprint);
+                            /* Keep the list short. */
+                            while (size_StringArray(usedIdents) > 5) {
+                                removeString_SiteSpec(site,
+                                                      usedIdentities_SiteSpecKey,
+                                                      constAt_StringArray(usedIdents, 0));
+                            }
                         }
                     }
                 }
@@ -2371,6 +2369,7 @@ void createUserInterface_Root(iRoot *d) {
     if (deviceType_App() == phone_AppDeviceType) {
         iWidget *bottomBar = new_Widget();
         setId_Widget(bottomBar, "bottombar");
+        d->bars.bottomBar = bottomBar;
         addChildFlags_Widget(root,
                              iClob(bottomBar),
                              moveToParentBottomEdge_WidgetFlag |
@@ -2536,7 +2535,7 @@ void createUserInterface_Root(iRoot *d) {
 static void setupMovableElements_Root_(iRoot *d) {
     /* The navbar and the tab bar may be move depending on preferences. */
     const iPrefs *prefs = prefs_App();
-    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    iWidget *bottomBar = d->bars.bottomBar;
 //    iWidget *toolBar   = findChild_Widget(bottomBar, "toolbar");
     iWidget *navBar    = findChild_Widget(d->widget, "navbar");
     iWidget *winBar    = findChild_Widget(d->widget, "winbar"); /* optional: custom window frame */
@@ -2688,14 +2687,14 @@ static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
 }
 
 void enableToolbar_Root(iRoot *d, iBool enable) {
-    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    iWidget *bottomBar = d->bars.bottomBar;
     iWidget *navBar = findChild_Widget(d->widget, "navbar");
     setFlags_Widget(bottomBar, disabled_WidgetFlag, !enable);
     setFlags_Widget(navBar, disabled_WidgetFlag, !enable);
 }
 
 static void showToolbar_Root_(iRoot *d, iBool show) {
-    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    iWidget *bottomBar = d->bars.bottomBar;
     if (!bottomBar) return;
     if (focus_Widget() && isInstance_Object(focus_Widget(), &Class_InputWidget)) {
         /* Don't move anything while text input is active. */
@@ -3149,7 +3148,7 @@ iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *o
     iWidget *bottomBar   = NULL;
     iWidget *phoneTabBar = NULL;
     if (bottom && deviceType_App() == phone_AppDeviceType) {
-        bottomBar = findChild_Widget(d->widget, "bottombar");
+        bottomBar = d->bars.bottomBar;
         if (bottomBar && isVisible_Widget(bottomBar) && prefs_App()->bottomTabBar) {
             phoneTabBar = d->bars.tabButtons;
         }
