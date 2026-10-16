@@ -74,7 +74,7 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
         setScheme_GmLink_(link, spartan_GmLinkScheme);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
-        if (startsWithFastCase_String(&link->url, "local:") && !d->parser.isLocalOrInternal) {
+        if (startsWithCaseFast_String(&link->url, "local:") && !d->parser.isLocalOrInternal) {
             delete_GmLink(link);
             return;
         }
@@ -93,26 +93,26 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
         /* If invalid, disregard the link. */
         if ((d->format == gemini_SourceFormat &&
              size_String(&link->url) > prefs_App()->maxUrlSize) ||
-            (startsWithFastCase_String(&link->url, "about:command")
+            (startsWithCaseFast_String(&link->url, "about:command")
              /* this is a special internal page that allows submitting UI events */
              && !d->flags.enableCommandLinks) ||
-            (startsWithFastCase_String(&link->url, "local:") && !d->parser.isLocalOrInternal)) {
+            (startsWithCaseFast_String(&link->url, "local:") && !d->parser.isLocalOrInternal)) {
             delete_GmLink(link);
             return;
         }
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
-            if (!equalFastCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
+            if (!equalCaseFast_Rangecc(parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (equalFastCase_Rangecc(parts.scheme, "gemini")) {
+            if (equalCaseFast_Rangecc(parts.scheme, "gemini")) {
                 setScheme_GmLink_(link, gemini_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "titan")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "titan")) {
                 setScheme_GmLink_(link, titan_GmLinkScheme);
             }
-            else if (startsWithFastCase_Rangecc(parts.scheme, "http")) {
+            else if (startsWithCaseFast_Rangecc(parts.scheme, "http")) {
                 setScheme_GmLink_(link, http_GmLinkScheme);
             }
             else if (isGopherScheme_Rangecc(parts.scheme)) {
@@ -121,22 +121,22 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
                     link->flags |= query_GmLinkFlag;
                 }
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "finger")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "finger")) {
                 setScheme_GmLink_(link, finger_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "spartan")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "spartan")) {
                 setScheme_GmLink_(link, spartan_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "nex")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "nex")) {
                 setScheme_GmLink_(link, nex_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "guppy")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "guppy")) {
                 setScheme_GmLink_(link, guppy_GmLinkScheme);
             }
             else if (isLocalFileScheme_Rangecc(parts.scheme)) {
                 setScheme_GmLink_(link, file_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "data")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "data")) {
                 setScheme_GmLink_(link, data_GmLinkScheme);
                 if (startsWith_Rangecc(parts.path, "image/png") ||
                     startsWith_Rangecc(parts.path, "image/jpg") ||
@@ -147,40 +147,40 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "about")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "about")) {
                 setScheme_GmLink_(link, about_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "mailto")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "mailto")) {
                 setScheme_GmLink_(link, mailto_GmLinkScheme);
             }
-            else if (equalFastCase_Rangecc(parts.scheme, "misfin")) {
+            else if (equalCaseFast_Rangecc(parts.scheme, "misfin")) {
                 setScheme_GmLink_(link, misfin_GmLinkScheme);
             }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
                 iString *path = newRange_String(parts.path);
-                if (endsWithFastCase_String(path, ".gif")  || endsWithFastCase_String(path, ".jpg") ||
-                    endsWithFastCase_String(path, ".jpeg") || endsWithFastCase_String(path, ".png") ||
-                    endsWithFastCase_String(path, ".tga")  || endsWithFastCase_String(path, ".psd") ||
-                    endsWithFastCase_String(path, ".hdr")  ||
+                if (endsWithCaseFast_String(path, ".gif")  || endsWithCaseFast_String(path, ".jpg") ||
+                    endsWithCaseFast_String(path, ".jpeg") || endsWithCaseFast_String(path, ".png") ||
+                    endsWithCaseFast_String(path, ".tga")  || endsWithCaseFast_String(path, ".psd") ||
+                    endsWithCaseFast_String(path, ".hdr")  ||
 #if defined (LAGRANGE_ENABLE_JXL)
-                    endsWithFastCase_String(path, ".jxl") ||
+                    endsWithCaseFast_String(path, ".jxl") ||
 #endif
 #if defined (LAGRANGE_ENABLE_WEBP)
-                    endsWithFastCase_String(path, ".webp") ||
+                    endsWithCaseFast_String(path, ".webp") ||
 #endif
-                    endsWithFastCase_String(path, ".pic")) {
+                    endsWithCaseFast_String(path, ".pic")) {
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }
-                else if (endsWithFastCase_String(path, ".mp3") || endsWithFastCase_String(path, ".wav") ||
-                         endsWithFastCase_String(path, ".ogg") ||
+                else if (endsWithCaseFast_String(path, ".mp3") || endsWithCaseFast_String(path, ".wav") ||
+                         endsWithCaseFast_String(path, ".ogg") ||
 #if defined (LAGRANGE_ENABLE_OPUS)
-                         endsWithFastCase_String(path, ".opus") ||
+                         endsWithCaseFast_String(path, ".opus") ||
 #endif
-                         endsWithFastCase_String(path, ".mid")) {
+                         endsWithCaseFast_String(path, ".mid")) {
                     link->flags |= audioFileExtension_GmLinkFlag;
                 }
-                else if (endsWithFastCase_String(path, ".fontpack")) {
+                else if (endsWithCaseFast_String(path, ".fontpack")) {
                     link->flags |= fontpackFileExtension_GmLinkFlag;
                 }
                 delete_String(path);
@@ -386,7 +386,7 @@ static void begin_GmParser_(iGmDocument *d) {
         /* Remote pages may not refer to the user's data directory. */ {
             const iRangecc scheme = urlScheme_String(&d->url);
             p->isLocalOrInternal =
-                isLocalFileScheme_Rangecc(scheme) || equalFastCase_Rangecc(scheme, "about");
+                isLocalFileScheme_Rangecc(scheme) || equalCaseFast_Rangecc(scheme, "about");
         }
         p->isPrevPre    = iFalse;
         p->indentPos    = iInvalidPos;
