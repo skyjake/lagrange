@@ -145,8 +145,9 @@ enum iFileVersion {
     openBookmarkFolders_FileVersion     = 14,
     sidebarTabOrder_FileVersion         = 15,
     wideSidebarState_FileVersion        = 16,
+    recentUrlScrollAnchor_FileVersion   = 17,
     /* meta */
-    latest_FileVersion = 16, /* used by state.lgr */
+    latest_FileVersion = 17, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
     feeds_FileVersion  = 1, /* used by Feeds/feeds.lgr */
 };

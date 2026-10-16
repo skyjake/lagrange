@@ -31,8 +31,9 @@ static void typesetAnchored_Typesetter_(iTypesetter *d, const iGmLayoutAnchor *a
                                         const char *leadIn) {
     /* Lays out the visible part of the document, seeded from a preceding line. The content
        above it is laid out in slices and spliced in front. */
-    iGmDocument *doc  = d->doc;
-    const char  *seam = lineStart_Rangecc_(range_String(&doc->source), anchor->startPos);
+    iGmDocument   *doc  = d->doc;
+    const iRangecc src  = range_String(&doc->source);
+    const char    *seam = lineStart_Rangecc_(src, src.start + anchor->startPos);
     beginAt_Typesetter_(d, leadIn);
     d->seamPos = seam;
     typesetLines_Typesetter_(d, INT_MAX, 0.0);
@@ -43,7 +44,7 @@ static void typesetAnchored_Typesetter_(iTypesetter *d, const iGmLayoutAnchor *a
     d->seamPos     = NULL;
     d->isAtSeam    = iFalse;
     d->contentLine = (iRangecc){ seam - 1, seam - 1 };
-    d->keepPos     = anchor->pos;
+    d->keepPos     = src.start + anchor->pos;
     d->syncSpan    = anchor->bottom - anchor->top;
     const iGmRun *kept = layoutUntilKept_Typesetter_(d);
     if (kept) {
@@ -149,24 +150,25 @@ static iTypesetter *spliceAbove_GmDocument_(iGmDocument *d) {
 static void typeset_GmDocument_(iGmDocument *d) {
     deleteTypesetter_GmDocument_(d);
     iGmLayoutAnchor anchor = d->layoutAnchor;
-    iZap(d->layoutAnchor);
+    d->layoutAnchor.pos = iInvalidPos;
     const iRangecc src = range_String(&d->source);
-    if (!anchor.pos || anchor.pos < src.start || anchor.pos >= src.end || !anchor.startPos ||
-        anchor.startPos < src.start || anchor.startPos > anchor.pos || isPaged_GmDocument(d)) {
-        iZap(anchor);
+    if (anchor.pos >= size_Range(&src) || anchor.startPos > anchor.pos || isPaged_GmDocument(d)) {
+        anchor.pos = iInvalidPos;
     }
-    iTypesetter *ts = malloc(sizeof(iTypesetter));
+    const char  *keepPos = (anchor.pos != iInvalidPos ? src.start + anchor.pos : NULL);
+    iTypesetter *ts      = malloc(sizeof(iTypesetter));
     init_Typesetter_(ts, d, iFalse);
     d->flags.isAnchoredLayout = iFalse;
-    if (beginLayout_GmDocument_(d, anchor.pos != NULL)) {
+    if (beginLayout_GmDocument_(d, keepPos != NULL)) {
         ts->isWrapWidthChecked = d->flags.isSourceFinal;
-        if (anchor.pos) {
-            parseUntil_GmDocument_(d, anchor.pos);
+        if (keepPos) {
+            parseUntil_GmDocument_(d, keepPos);
         }
         /* If there is little content above, it is laid out right away. */
-        const char *leadIn = anchor.pos && anchor.startTop > anchor.bottom - anchor.startTop
-                                 ? findLeadIn_GmDocument_(d, lineStart_Rangecc_(src, anchor.startPos))
-                                 : NULL;
+        const char *leadIn =
+            keepPos && anchor.startTop > anchor.bottom - anchor.startTop
+                ? findLeadIn_GmDocument_(d, lineStart_Rangecc_(src, src.start + anchor.startPos))
+                : NULL;
         if (leadIn) {
             d->flags.isAnchoredLayout = iTrue;
             typesetAnchored_Typesetter_(ts, &anchor, leadIn);
@@ -176,8 +178,8 @@ static void typeset_GmDocument_(iGmDocument *d) {
         begin_Typesetter_(ts);
         /* Paged layouts are always done in full. */
         int minHeight = (d->layoutSyncHeight > 0 && !ts->isPaged ? d->layoutSyncHeight : INT_MAX);
-        if (anchor.pos) {
-            ts->keepPos = anchor.pos;
+        if (keepPos) {
+            ts->keepPos = keepPos;
             const iGmRun *kept = layoutUntilKept_Typesetter_(ts);
             minHeight = kept ? top_Rect(kept->visBounds) + anchor.bottom - anchor.top : INT_MAX;
         }
@@ -232,7 +234,18 @@ void doLayout_GmDocument_(iGmDocument *d) {
 
 void setLayoutAnchor_GmDocument(iGmDocument *d, const char *startPos, int startTop,
                                 const char *pos, int top, int bottom) {
-    d->layoutAnchor = (iGmLayoutAnchor){ startPos, startTop, pos, top, bottom };
+    const char *src = constBegin_String(&d->source);
+    d->layoutAnchor = (iGmLayoutAnchor){ startPos - src, startTop, pos - src, top, bottom };
+}
+
+void setLayoutAnchorOffset_GmDocument(iGmDocument *d, size_t pos, int top, int bottom) {
+    d->layoutAnchor = (iGmLayoutAnchor){ pos, top, pos, top, bottom };
+}
+
+iBool clearLayoutAnchor_GmDocument(iGmDocument *d) {
+    const iBool wasSet = (d->layoutAnchor.pos != iInvalidPos);
+    d->layoutAnchor.pos = iInvalidPos;
+    return wasSet;
 }
 
 iBool isLayoutFinished_GmDocument(const iGmDocument *d) {

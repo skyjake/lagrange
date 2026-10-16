@@ -187,6 +187,7 @@ struct Impl_DocumentWidget {
     iPersistentDocumentState mod;
     iString *      titleUser;
     float          initNormScrollY;
+    iGmScrollAnchor initScrollAnchor;
     enum iLinkUpdateFlags pendingLinkUpdates;
 
     /* User interface: */
@@ -1201,6 +1202,8 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     invalidate_DocumentView(d->view);
     d->view->doc = new_GmDocument();
     makeFooterButtons_DocumentWidget(d, NULL, 0);
+    iBool isAnchored = d->initScrollAnchor.pos != iInvalidPos && normScrollY > 0.0f &&
+                       !wantsPaged_DocumentView(d->view);
     d->fetch->state = fetching_RequestState;
     d->fetch->flags &= ~pendingRedirect_DocumentFetchFlag;
     d->fetch->flags |= fromCache_DocumentFetchFlag;
@@ -1217,13 +1220,25 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         if (!cachedDoc) {
             updateWidthAndRedoLayout_DocumentWidget_(d);
         }
+        if (isAnchored) {
+            /* Only the part around the anchor is laid out right away. */
+            if (cachedDoc && !isLayoutFinished_GmDocument(cachedDoc)) {
+                invalidateLayout_GmDocument(cachedDoc);
+            }
+            setLayoutScrollAnchor_DocumentView(
+                d->view, cachedDoc ? cachedDoc : d->view->doc, &d->initScrollAnchor);
+        }
         updateDocument_DocumentFetch(d->fetch, resp, cachedDoc, iTrue);
+        if (clearLayoutAnchor_GmDocument(d->view->doc)) {
+            isAnchored = iFalse; /* the cached layout was valid */
+        }
         addBannerWarnings_DocumentFetch(d->fetch);
     }
     d->fetch->state = ready_RequestState;
     resetSavedPosition_DocumentBook(d->book);
     postProcessContent_DocumentFetch(d->fetch, iTrue, isUrlChanged_DocumentWidget(d));
-    resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
+    resetScrollPosition_DocumentView(
+        d->view, d->initNormScrollY, isAnchored ? &d->initScrollAnchor : NULL);
     applyResume_DocumentBook(d->book);
     beginPosition_DocumentBook(d->book);
     checkEdition_DocumentBook(d->book);
@@ -1247,6 +1262,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
     setIdentity_DocumentWidget(d, recent ? &recent->setIdentity : NULL);
     if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
         iGmDocument *cachedDoc = (useCachedDoc ? recent->cachedDoc : NULL);
+        d->initScrollAnchor = recent->scrollAnchor;
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, cachedDoc);
         if (!cachedDoc) {
@@ -3813,9 +3829,11 @@ void didScrollView_DocumentWidget(iDocumentWidget *d) {
         iAssert(~d->widget.flags & destroyPending_WidgetFlag);
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && size_GmDocument(d->view->doc).y > 0 && d->fetch->state == ready_RequestState &&
-            !isLayoutIndeterminate_GmDocument(d->view->doc) &&
             equal_String(&recent->url, d->mod.url)) {
-            recent->normScrollY = normScrollPos_DocumentView(d->view);
+            if (!isLayoutIndeterminate_GmDocument(d->view->doc)) {
+                recent->normScrollY = normScrollPos_DocumentView(d->view);
+            }
+            recent->scrollAnchor = scrollAnchor_DocumentView(d->view);
         }
     }
     /* After scrolling/resizing stops, begin pre-rendering the visbuf contents. */ {
@@ -4159,6 +4177,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->foundMark          = iNullRange;
     d->contextLink        = NULL;
     d->initNormScrollY    = 0;
+    d->initScrollAnchor   = (iGmScrollAnchor){ iInvalidPos, 0.0f };
     d->pendingLinkUpdates = 0;
     setOwner_Banner(d->banner, d);
     init_String(&d->pendingGotoHeading);
@@ -4542,6 +4561,7 @@ void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, cons
     initCurrent_Time(&resp->when);
     set_String(&resp->meta, mime);
     set_Block(&resp->body, source);
+    d->initScrollAnchor.pos = iInvalidPos;
     updateFromCachedResponse_DocumentWidget_(d, normScrollY, resp, NULL);
     updateBanner_DocumentWidget(d);
     delete_GmResponse(resp);
@@ -4594,7 +4614,8 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
 }
 
 void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
-    d->initNormScrollY = normScrollY;
+    d->initNormScrollY      = normScrollY;
+    d->initScrollAnchor.pos = iInvalidPos;
 }
 
 void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {

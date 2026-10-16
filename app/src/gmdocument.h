@@ -147,6 +147,13 @@ struct Impl_GmRunRange {
     const iGmRun *end;
 };
 
+iDeclareType(GmScrollAnchor)
+
+struct Impl_GmScrollAnchor {
+    size_t pos;   /* source offset of the run at the top of the viewport; none: invalid */
+    float  normY; /* top of the viewport inside the run, normalized to its height */
+};
+
 iLocalDef iBool isMedia_GmRun(const iGmRun *d) {
     return d->mediaType > 0 && d->mediaType < max_MediaType;
 }
@@ -274,6 +281,8 @@ iBool   isLayoutFinished_GmDocument(const iGmDocument *); /* all of the source l
 iBool   continueLayout_GmDocument(iGmDocument *, int minHeight, double maxSeconds); /* True if changed */
 void    setLayoutAnchor_GmDocument(iGmDocument *, const char *startPos, int startTop,
                                    const char *pos, int top, int bottom); /* for the next layout */
+void    setLayoutAnchorOffset_GmDocument(iGmDocument *, size_t pos, int top, int bottom);
+iBool   clearLayoutAnchor_GmDocument(iGmDocument *); /* True if it was not used by a layout */
 iBool   isLayoutIndeterminate_GmDocument(const iGmDocument *); /* content above not yet known */
 iBool   settleLayout_GmDocument (iGmDocument *); /* lays out the content above; True if changed */
 const char *sourceLoc_GmDocument(const iGmDocument *, const iGmRun *run); /* on the run's line */

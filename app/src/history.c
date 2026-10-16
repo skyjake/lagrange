@@ -35,6 +35,7 @@ static const size_t maxStack_History_ = 50; /* back/forward navigable items */
 void init_RecentUrl(iRecentUrl *d) {
     init_String(&d->url);
     d->normScrollY    = 0;
+    d->scrollAnchor   = (iGmScrollAnchor){ iInvalidPos, 0.0f };
     d->cachedResponse = NULL;
     d->cachedDoc      = NULL;
     d->flags          = 0;
@@ -55,6 +56,7 @@ iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
     iRecentUrl *copy = new_RecentUrl();
     set_String(&copy->url, &d->url);
     copy->normScrollY    = d->normScrollY;
+    copy->scrollAnchor   = d->scrollAnchor;
     copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
     copy->cachedDoc      = ref_Object(d->cachedDoc);
     copy->flags          = d->flags;
@@ -200,6 +202,9 @@ void serializeWithContent_History(const iHistory *d, iStream *outs, iBool withCo
         }
         serialize_Block(&item->setIdentity, outs);
         writeU32_Stream(outs, item->prefsCacheKey);
+        writeU32_Stream(outs, item->scrollAnchor.pos < 0xffffffff ? item->scrollAnchor.pos
+                                                                  : 0xffffffff);
+        write32_Stream(outs, item->scrollAnchor.normY * 1.0e6f);
     }
     unlock_Mutex(d->mtx);
 }
@@ -227,6 +232,11 @@ void deserialize_History(iHistory *d, iStream *ins) {
         }
         if (version_Stream(ins) >= recentUrlPrefsCacheKey_FileVersion) {
             item.prefsCacheKey = readU32_Stream(ins);
+        }
+        if (version_Stream(ins) >= recentUrlScrollAnchor_FileVersion) {
+            const uint32_t pos = readU32_Stream(ins);
+            item.scrollAnchor.pos   = (pos == 0xffffffff ? iInvalidPos : pos);
+            item.scrollAnchor.normY = (float) read32_Stream(ins) / 1.0e6f;
         }
         pushBack_Array(&d->recent, &item);
     }

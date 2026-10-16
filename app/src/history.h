@@ -37,6 +37,7 @@ iDeclareTypeConstruction(RecentUrl)
 struct Impl_RecentUrl {
     iString      url;
     float        normScrollY;    /* normalized to document height */
+    iGmScrollAnchor scrollAnchor; /* source position at the top of the viewport */
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
     iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
     iBlock       setIdentity;    /* fingerprint of identity that was pinned*/

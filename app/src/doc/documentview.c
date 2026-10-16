@@ -1278,6 +1278,42 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     return iTrue;
 }
 
+iGmScrollAnchor scrollAnchor_DocumentView(const iDocumentView *d) {
+    iGmScrollAnchor anchor = { iInvalidPos, 0.0f };
+    if (isPaged_DocumentView(d)) {
+        return anchor;
+    }
+    const iGmRun *run = NULL;
+    if (d->visibleRuns.start) {
+        for (const iGmRun *i = d->visibleRuns.start; i <= d->visibleRuns.end; i++) {
+            if (isSourceRun_DocumentView_(d, i)) {
+                run = i;
+                break;
+            }
+        }
+    }
+    if (!run) {
+        run = firstVisibleSourceRun_DocumentView_(d);
+    }
+    if (run) {
+        const int height = height_Rect(run->visBounds);
+        anchor.pos   = run->text.start - constBegin_String(source_GmDocument(d->doc));
+        anchor.normY = height > 0 ? (float) (visibleRange_DocumentView(d).start -
+                                             top_Rect(run->visBounds)) / height
+                                  : 0.0f;
+    }
+    return anchor;
+}
+
+void setLayoutScrollAnchor_DocumentView(const iDocumentView *d, iGmDocument *doc,
+                                        const iGmScrollAnchor *anchor) {
+    /* The anchor run is laid out at an arbitrary position far from the top, and the content
+       above it in slices. Near the beginning of the source, layout starts from the top. */
+    const int height = iMax(height_Widget(d->owner), size_Root(d->owner->root).y);
+    const int top    = anchor->pos < 0x4000 ? 0 : 0x100000;
+    setLayoutAnchorOffset_GmDocument(doc, anchor->pos, top, top + 2 * height);
+}
+
 iRect runRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
     if (isPaged_DocumentView(d)) {
         return pagedRunRect_DocumentView(d, run);
@@ -2604,13 +2640,26 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                                   tmBannerBackground_ColorId : tmBackground_ColorId);
 }
 
-void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY) {
+void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY,
+                                      const iGmScrollAnchor *anchor) {
     resetScroll_DocumentView(d);
     if (isPaged_DocumentView(d)) {
         showSourcePosition_DocumentView(d, normScrollY);
     }
     else {
-        init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));
+        const iString *src = source_GmDocument(d->doc);
+        const iGmRun  *run = anchor && anchor->pos < size_String(src)
+                                 ? findRunAtLoc_GmDocument(d->doc, cstr_String(src) + anchor->pos)
+                                 : NULL;
+        if (run) {
+            const int top = top_Rect(run->visBounds) +
+                            (int) (anchor->normY * height_Rect(run->visBounds) + 0.5f);
+            init_Anim(&d->scrollY.pos,
+                      scrollPos_DocumentView_(d, top + lineHeight_Text(paragraph_FontId), iFalse));
+        }
+        else {
+            init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));
+        }
     }
     updateVisible_DocumentView(d);
     clampScroll_DocumentView(d);

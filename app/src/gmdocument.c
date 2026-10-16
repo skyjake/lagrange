@@ -213,6 +213,7 @@ void init_GmDocument(iGmDocument *d) {
     d->typesetter = NULL;
     d->layoutSyncHeight = 0;
     d->layoutGen = 0;
+    d->layoutAnchor.pos = iInvalidPos;
     init_Array(&d->layout, sizeof(iGmRun));
     init_StringArray(&d->auxText);
     init_PtrArray(&d->links);

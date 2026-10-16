@@ -80,11 +80,11 @@ iDeclareType(Typesetter)
 iDeclareType(GmLayoutAnchor)
 
 struct Impl_GmLayoutAnchor {
-    const char *startPos; /* synchronous layout begins at this line */
-    int         startTop;
-    const char *pos;      /* the run with this text is kept at `top` */
-    int         top;
-    int         bottom;   /* synchronous layout continues until here */
+    size_t startPos; /* source offset; synchronous layout begins at this line */
+    int    startTop;
+    size_t pos;      /* source offset; the run with this text is kept at `top` (none: invalid) */
+    int    top;
+    int    bottom;   /* synchronous layout continues until here */
 };
 
 struct Impl_GmDocument {

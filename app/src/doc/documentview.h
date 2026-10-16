@@ -157,7 +157,11 @@ void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool c
 void    smoothScrollTo_DocumentView     (iDocumentView *, int documentY, iBool centered, int duration);
 void    scrollToHeading_DocumentView    (iDocumentView *, const char *heading);
 void    resetScroll_DocumentView        (iDocumentView *);
-void    resetScrollPosition_DocumentView(iDocumentView *, float normScrollY);
+void    resetScrollPosition_DocumentView(iDocumentView *, float normScrollY,
+                                         const iGmScrollAnchor *anchor); /* anchor may be NULL */
+iGmScrollAnchor scrollAnchor_DocumentView(const iDocumentView *);
+void    setLayoutScrollAnchor_DocumentView(const iDocumentView *, iGmDocument *doc,
+                                           const iGmScrollAnchor *anchor); /* for the next layout */
 iBool   isWideBlockScrollable_DocumentView(const iDocumentView *, const iRect docBounds, const iGmRun *run);
 iBool   scrollWideBlock_DocumentView    (iDocumentView *, iInt2 mousePos, int delta, int duration, iBool *isAtEnd_out);
 void    resetWideRuns_DocumentView      (iDocumentView *);
