@@ -1380,6 +1380,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                                  details,
                                  format_CStr("open newtab:1 url:%s", cstr_String(&bm->url)),
                                  iTrue);
+                delete_String(details);
                 delete_String(title);
                 break;
             }
