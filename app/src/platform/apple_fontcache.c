@@ -410,7 +410,8 @@ static const char *systemUIFontIds_[max_FontStyle] = {
 };
 
 CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
-    static const CGFloat weights_[max_FontStyle] = { 0, 0, -0.6, 0.3, 0.56 };
+    /* Heavier than native, since glyphs are rendered without font smoothing. */
+    static const CGFloat weights_[max_FontStyle] = { 0.154, 0.154, -0.466, 0.367, 0.56 };
     int style = -1;
     for (int s = 0; s < max_FontStyle; s++) {
         if (!cmp_String(fontFileId, systemUIFontIds_[s])) {
@@ -478,7 +479,8 @@ iFontSpec *newSystemUIFontSpec_AppleText(void) {
     iFontSpec *spec = new_FontSpec();
     setCStr_String(&spec->name, "System UI");
     spec->glyphScale[0]  = 0.79f;
-    spec->glyphScale[1]  = 0.825f;
+    spec->glyphScale[1]  = 0.90f * glyphScaleFromMetrics_(files[regular_FontStyle]);
+    spec->heightScale[1] = 0.85f / spec->glyphScale[1]; /* keep glyph size unchanged */
     for (int s = 0; s < max_FontStyle; s++) {
         spec->styles[s] = files[s] ? files[s] : ref_Object(files[regular_FontStyle]);
     }
