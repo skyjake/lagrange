@@ -76,6 +76,8 @@ CFArrayRef          cascadeList_AppleText_      (const iAppleText *);
 CTFontRef           overrideFont_AppleText_     (const iAppleText *, iChar ch, float pointSize);
 
 iAppleFont *appleFont_AppleText_        (iAppleText *, int fontId);
+CGImageRef  sfSymbolImage_AppleText_    (iAppleText *, const char *symbolName, float pointSize,
+                                         iColor color, int slotPixels); /* caller releases */
 
 void        allocData_FontFile          (iFontFile *); /* backend-implemented */
 CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if not a system UI font */
@@ -84,6 +86,7 @@ CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if 
    `slotPixels`: height of the square slot in screen pixels in which to place the glyph. */
 CGImageRef  sfSymbolCreateImage_Apple   (const char *symbolName, float pointSize, CGColorRef color,
                                          int slotPixels);
+CGColorRef  cgColorCreate_Apple         (iColor); /* caller must CGColorRelease */
 
 extern CFStringRef lagBgKey_;       /* custom CFAttributedString attribute: per-run bg CGColorRef */
 extern CFStringRef lagSfSymbolKey_; /* custom CFAttributedString attribute: SF Symbol CGImageRef */

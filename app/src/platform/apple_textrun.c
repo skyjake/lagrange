@@ -78,28 +78,25 @@ static const CTRunDelegateCallbacks kSfDelegateCallbacks_ = {
     kCTRunDelegateVersion1, sfDealloc_, sfAscent_, sfDescent_, sfWidth_
 };
 
-static CGColorRef cgColor_(int colorId) {
-    const iColor    c        = get_Color(colorId);
-    const CGFloat   comps[4] = { c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0 };
-    CGColorSpaceRef cs       = CGColorSpaceCreateDeviceRGB();
-    CGColorRef      ref      = CGColorCreate(cs, comps);
-    CGColorSpaceRelease(cs);
-    return ref; /* caller CFReleases */
-}
-
-static CGColorRef cgColorFromColor_(const iColor c) {
-    const CGFloat   comps[4] = { c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0 };
-    CGColorSpaceRef cs       = CGColorSpaceCreateDeviceRGB();
-    CGColorRef      ref      = CGColorCreate(cs, comps);
-    CGColorSpaceRelease(cs);
-    return ref; /* caller CFReleases */
+static iColor fgColor_(int fgColorId, iColor fg, iColor bg) {
+    if (fg.a > 0) {
+        return bg.a > 0 ? fg : legibleAnsiFg_Color(fg);
+    }
+    return get_Color(fgColorId);
 }
 
 static CGColorRef fgCgColor_(int fgColorId, iColor fg, iColor bg) {
-    if (fg.a > 0) {
-        return cgColorFromColor_(bg.a > 0 ? fg : legibleAnsiFg_Color(fg));
-    }
-    return cgColor_(fgColorId);
+    return cgColorCreate_Apple(fgColor_(fgColorId, fg, bg));
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+CGColorRef cgColorCreate_Apple(iColor c) {
+    const CGFloat   comps[4] = { c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0 };
+    CGColorSpaceRef cs       = CGColorSpaceCreateDeviceRGB();
+    CGColorRef      ref      = CGColorCreate(cs, comps);
+    CGColorSpaceRelease(cs);
+    return ref;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -307,13 +304,14 @@ static iBool prepare_AppleTextRun_(
             float      pts  = af ? af->pointSize : 16.0f;
             CGFloat    asc  = af ? (CGFloat) af->font.baseline : pts * 0.8f;
             CGFloat    desc = af ? (CGFloat) (af->font.height - af->font.baseline) : pts * 0.2f;
-            CGColorRef fg   = fgCgColor_(curFgColorId, curFgColor, curBgColor);
             /* Render at ~80% of the line height so the symbol fits comfortably inside the
                slot with natural margins. */
             const float symbolScale = 0.8f;
-            CGImageRef  img = sfSymbolCreateImage_Apple(
-                symbolName, pts, fg, (int) ceilf((asc + desc) * symbolScale));
-            CFRelease(fg);
+            CGImageRef  img = sfSymbolImage_AppleText_(tx,
+                                                       symbolName,
+                                                       pts,
+                                                       fgColor_(curFgColorId, curFgColor, curBgColor),
+                                                       (int) ceilf((asc + desc) * symbolScale));
             if (img) {
                 CGFloat wid = asc + desc; /* square slot; image is fit-inside at draw time */
                 sfInfos[sfInfoCount++] = (iSfSymbolInfo){ utf16Idx, img, asc, desc, wid };
@@ -392,7 +390,7 @@ static iBool prepare_AppleTextRun_(
         CFDictionarySetValue(attrs, kCTFontAttributeName, af->ctFont);
         CFDictionarySetValue(attrs, kCTForegroundColorAttributeName, fgCg);
         if (seg->bgColor.a > 0) {
-            CGColorRef bgCg = cgColorFromColor_(seg->bgColor);
+            CGColorRef bgCg = cgColorCreate_Apple(seg->bgColor);
             CFDictionarySetValue(attrs, lagBgKey_, bgCg);
             CFRelease(bgCg);
         }

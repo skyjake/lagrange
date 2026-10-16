@@ -35,8 +35,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/defs.h>
 #include <the_Foundation/rect.h>
 
-CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CGColorRef color,
-                                     int slotPixels) {
+static CGImageRef createImage_(const char *symbolName, float pointSize, CGColorRef color,
+                                int slotPixels) {
     NSString *name = [NSString stringWithUTF8String:symbolName];
     if (!name) return NULL;
 #if TARGET_OS_OSX
@@ -103,7 +103,9 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
 #endif
         [NSGraphicsContext restoreGraphicsState];
         CGImageRef cg = [rep CGImage];
-        return cg ? CGImageRetain(cg) : NULL;
+        if (cg) CGImageRetain(cg);
+        [rep release];
+        return cg;
     }
 #else /* iOS */
     if (@available(iOS 13.0, *)) {
@@ -136,8 +138,17 @@ CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CG
             [tinted drawInRect:CGRectMake(centered.pos.x, centered.pos.y,
                                           centered.size.x, centered.size.y)];
         }];
+        [renderer release];
         return slot.CGImage ? CGImageRetain(slot.CGImage) : NULL;
     }
 #endif
     return NULL;
+}
+
+CGImageRef sfSymbolCreateImage_Apple(const char *symbolName, float pointSize, CGColorRef color,
+                                     int slotPixels) {
+    /* Called during drawing, outside any autorelease pool. */
+    @autoreleasepool {
+        return createImage_(symbolName, pointSize, color, slotPixels);
+    }
 }

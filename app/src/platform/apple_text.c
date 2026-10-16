@@ -135,7 +135,17 @@ static void deinit_AppleFont_(iAppleFont *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-#define maxRunCache_AppleText_  256    /* big enough for UI label and document runs */
+#define maxRunCache_AppleText_      256 /* big enough for UI label and document runs */
+#define maxSfSymbolCache_AppleText_ 64
+
+typedef struct {
+    const char *name; /* static string from systemImageName_Apple() */
+    float       pointSize;
+    int         slotPixels;
+    iColor      color;
+    CGImageRef  image;
+    uint32_t    lastUsed;
+} iSfSymbolImage;
 
 struct Impl_AppleText {
     iObject        object;
@@ -151,6 +161,8 @@ struct Impl_AppleText {
        A run is keyed by (CRC of raw text, fontId, colorId). */
     iAppleTextRun *runCache[maxRunCache_AppleText_];
     uint32_t       runCacheSerial;
+    iSfSymbolImage sfSymbolCache[maxSfSymbolCache_AppleText_];
+    uint32_t       sfSymbolCacheSerial;
 #if !defined(NDEBUG)
     /* Cache performance statistics: */
     uint32_t       cacheHits;
@@ -354,6 +366,42 @@ static void clearRunCache_AppleText_(iAppleText *d) {
         }
     }
     d->runCacheSerial = 0;
+    iForIndices(i, d->sfSymbolCache) {
+        if (d->sfSymbolCache[i].image) {
+            CGImageRelease(d->sfSymbolCache[i].image);
+        }
+    }
+    iZap(d->sfSymbolCache);
+    d->sfSymbolCacheSerial = 0;
+}
+
+CGImageRef sfSymbolImage_AppleText_(iAppleText *d, const char *symbolName, float pointSize,
+                                    iColor color, int slotPixels) {
+    /* Empty slots have lastUsed=0, so they are picked first for replacement. */
+    iSfSymbolImage *lru = &d->sfSymbolCache[0];
+    iForIndices(i, d->sfSymbolCache) {
+        iSfSymbolImage *s = &d->sfSymbolCache[i];
+        if (s->image && s->name == symbolName && s->pointSize == pointSize &&
+            s->slotPixels == slotPixels && equal_Color(s->color, color)) {
+            s->lastUsed = ++d->sfSymbolCacheSerial;
+            return CGImageRetain(s->image);
+        }
+        if (s->lastUsed < lru->lastUsed) {
+            lru = s;
+        }
+    }
+    CGColorRef cg  = cgColorCreate_Apple(color);
+    CGImageRef img = sfSymbolCreateImage_Apple(symbolName, pointSize, cg, slotPixels);
+    CGColorRelease(cg);
+    if (!img) {
+        return NULL;
+    }
+    if (lru->image) {
+        CGImageRelease(lru->image);
+    }
+    *lru = (iSfSymbolImage){ symbolName, pointSize, slotPixels, color, CGImageRetain(img),
+                             ++d->sfSymbolCacheSerial };
+    return img;
 }
 
 static iAppleTextRun *maybeMakeRun_AppleText_(iAppleText *d, iRangecc text, int fontId,
@@ -901,6 +949,8 @@ iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
         sharedText_->opacity        = 1.0f;
         sharedText_->runCacheSerial = 0;
         iZap(sharedText_->runCache);
+        iZap(sharedText_->sfSymbolCache);
+        sharedText_->sfSymbolCacheSerial = 0;
         initFonts_AppleText_(sharedText_);
         setCurrent_Text(oldActive);
     }
