@@ -561,25 +561,19 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.sidebar.enabled.0 text:${LC:sidebar.bookmarks}" },
             { "toggle id:prefs.sidebar.enabled.1 text:${LC:sidebar.feeds}" },
             { "toggle id:prefs.sidebar.enabled.2 text:${LC:sidebar.subscriptions}" },
-            { "padding" },
             { "toggle id:prefs.sidebar.enabled.4 text:${LC:sidebar.outline}" },
             { "toggle id:prefs.sidebar.enabled.5 text:${LC:sidebar.structure}" },
-            { "padding" },
             { "toggle id:prefs.sidebar.enabled.6 text:${LC:sidebar.documents}" },
             { "toggle id:prefs.sidebar.enabled.7 text:${LC:sidebar.history}" },
-            { "padding" },
             { "toggle id:prefs.sidebar.enabled.8 text:${LC:sidebar.gempub}" },
             { "heading device:1 id:heading.prefs.toolbartabs.right" },
             { "toggle device:1 id:prefs.sidebar2.enabled.0 text:${LC:sidebar.bookmarks}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.1 text:${LC:sidebar.feeds}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.2 text:${LC:sidebar.subscriptions}" },
-            { "padding device:1" },
             { "toggle device:1 id:prefs.sidebar2.enabled.4 text:${LC:sidebar.outline}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.5 text:${LC:sidebar.structure}" },
-            { "padding device:1" },
             { "toggle device:1 id:prefs.sidebar2.enabled.6 text:${LC:sidebar.documents}" },
             { "toggle device:1 id:prefs.sidebar2.enabled.7 text:${LC:sidebar.history}" },
-            { "padding device:1" },
             { "toggle device:1 id:prefs.sidebar2.enabled.8 text:${LC:sidebar.gempub}" },
             { "padding" },
             { "toggle id:prefs.bookmarks.addbottom" },
@@ -1171,11 +1165,6 @@ iWidget *makePreferences_Widget(void) {
         };
         makeTwoColumnHeading_Widget("${heading.prefs.sidebars.tabs}", headings, values);
         iForIndices(sm, modes) {
-            /* Grouped like the sidebar's mode menu. */
-            if (sm == identities_SidebarMode || sm == openDocuments_SidebarMode ||
-                sm == gempub_SidebarMode) {
-                addDialogPadding_Widget(headings, values);
-            }
             addDialogToggleGroupWithLabels_(
                 headings,
                 values,
