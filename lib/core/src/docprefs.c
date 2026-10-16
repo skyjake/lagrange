@@ -122,7 +122,8 @@ static const iDocPrefsSpec specs_[] = {
     /* Content */
     { I_(ansiEscapes), content_DocPrefsGroup, "ansiEscapes", NULL, "ansiescape",
       reparse_DocPrefsSpecFlag | manual_DocPrefsSpecFlag }, /* separate toggle for each flag */
-    { B_(geminiStyledGopher), content_DocPrefsGroup, "geminiStyledGopher", "prefs.gopher.gemstyle" },
+    { B_(geminiStyledGopher), content_DocPrefsGroup, "geminiStyledGopher", "prefs.gopher.gemstyle",
+      NULL, reparse_DocPrefsSpecFlag },
     { B_(markdownAsSource), content_DocPrefsGroup, "markdownAsSource", "prefs.markdown.viewsource" },
     /* Ungrouped */
     { S_(paletteSeed), none_DocPrefsGroup, "paletteSeed", NULL, NULL,

@@ -54,12 +54,6 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
            (icon >= 0x1f191 && icon <= 0x1f19a) /* enclosed signs */;
 }
 
-static iBool isLocalOrInternal_GmDocument_(const iGmDocument *d) {
-    /* Remote pages may not refer to the user's data directory. */
-    const iRangecc scheme = urlScheme_String(&d->url);
-    return isLocalFileScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "about");
-}
-
 static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
     /* Links are numbered in source order; invalid links are not added. */
     static iRegExp *pattern_;
@@ -80,7 +74,7 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
         setScheme_GmLink_(link, spartan_GmLinkScheme);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
-        if (startsWithCase_String(&link->url, "local:") && !isLocalOrInternal_GmDocument_(d)) {
+        if (startsWithCase_String(&link->url, "local:") && !d->parser.isLocalOrInternal) {
             delete_GmLink(link);
             return;
         }
@@ -102,7 +96,7 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
             (startsWithCase_String(&link->url, "about:command")
              /* this is a special internal page that allows submitting UI events */
              && !d->flags.enableCommandLinks) ||
-            (startsWithCase_String(&link->url, "local:") && !isLocalOrInternal_GmDocument_(d))) {
+            (startsWithCase_String(&link->url, "local:") && !d->parser.isLocalOrInternal)) {
             delete_GmLink(link);
             return;
         }
@@ -285,7 +279,7 @@ static void beginPreformatted_GmDocument_(iGmDocument *d, iRangecc line, const i
     iGmPreMeta meta = { .bounds = line };
     meta.contents = (iRangecc){ line.end + 1, line.end + 1 };
     meta.altText  = line;
-    trimLine_Rangecc(&meta.altText, preformatted_GmLineType, shouldBeNormalized_GmDocument_(d));
+    trimLine_Rangecc(&meta.altText, preformatted_GmLineType, d->parser.isNormalized);
     /* Fold state is kept over reparsing. */
     if (oldPreMeta && preIndex < size_Array(oldPreMeta)) {
         meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags & folded_GmPreMetaFlag;
@@ -376,14 +370,14 @@ static void parseLine_GmDocument_(iGmDocument *d, iRangecc line, const iArray *o
     }
     else if (type >= heading1_GmLineType && type <= heading3_GmLineType) {
         iRangecc heading = line;
-        trimLine_Rangecc(&heading, type, shouldBeNormalized_GmDocument_(d));
+        trimLine_Rangecc(&heading, type, d->parser.isNormalized);
         pushBack_Array(&d->headings,
                        &(iGmHeading){ .text = heading, .level = type - heading1_GmLineType });
     }
     if (d->origFormat == markdown_SourceFormat && isHRule_Rangecc_(line)) {
         return;
     }
-    trimLine_Rangecc(&text, type, shouldBeNormalized_GmDocument_(d));
+    trimLine_Rangecc(&text, type, d->parser.isNormalized);
     if (!isEmpty_Range(&text)) {
         updateContext_GmParser_(p, offset, iTrue, type != heading1_GmLineType);
     }
@@ -405,6 +399,12 @@ static void begin_GmParser_(iGmDocument *d) {
         init_GmParser(p);
         p->isValid      = iTrue;
         p->isPreformat  = (d->format == plainText_SourceFormat);
+        p->isNormalized = shouldBeNormalized_GmDocument_(d);
+        /* Remote pages may not refer to the user's data directory. */ {
+            const iRangecc scheme = urlScheme_String(&d->url);
+            p->isLocalOrInternal =
+                isLocalFileScheme_Rangecc(scheme) || equalCase_Rangecc(scheme, "about");
+        }
         p->isPrevPre    = iFalse;
         p->indentPos    = iInvalidPos;
         p->firstTextPos = iInvalidPos;
@@ -471,7 +471,7 @@ const char *findLeadIn_GmDocument_(const iGmDocument *d, const char *lineStart) 
     /* The nearest preceding line that produces a text run. After it, the typesetter state is
        the same regardless of what came before, apart from the long-range parser context. */
     const iRangecc src        = range_String(&d->source);
-    const iBool    normalized = shouldBeNormalized_GmDocument_(d);
+    const iBool    normalized = d->parser.isNormalized;
     const char    *pos        = lineStart;
     for (int count = 0; pos > src.start && count < 1000; count++) {
         const char *start = lineStart_Rangecc_(src, pos - 1);

@@ -62,6 +62,8 @@ struct Impl_GmParser {
     uint16_t preId; /* current block while `isPreformat` */
     iRangecc line;  /* last parsed line */
     iArray  *oldPreMeta; /* fold states from before reparsing */
+    iBool    isNormalized;      /* same for the whole document */
+    iBool    isLocalOrInternal; /* may refer to the user's data directory */
     /* Long-range layout state, for seeding the typesetter anywhere. */
     iBool    isPrevPre;     /* previous line was preformatted (for indents) */
     size_t   indentPos;     /* offset of the line that enables indents */
