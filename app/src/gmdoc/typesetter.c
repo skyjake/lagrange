@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lagrange/lang.h>
 #include <the_Foundation/regexp.h>
+#include <SDL3/SDL_timer.h>
 
 static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
                                               uint16_t linkId) {
@@ -1304,9 +1305,9 @@ iBool typesetLines_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds)
     if (d->isAtSeam) {
         return iFalse;
     }
-    const size_t firstRun = size_Array(d->layout);
-    iTime startTime;
-    initCurrent_Time(&startTime);
+    const size_t   firstRun = size_Array(d->layout);
+    const uint64_t deadline = SDL_GetPerformanceCounter() +
+                              (uint64_t) (maxSeconds * SDL_GetPerformanceFrequency());
     setAnsiFlags_Text(doc->ansiEscapes);
     checkMissing_Text(); /* clear the flag */
     d->content = range_String(&doc->source);
@@ -1329,8 +1330,9 @@ iBool typesetLines_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds)
         }
         typesetLine_Typesetter_(d);
         if ((d->stopPos && d->contentLine.end >= d->stopPos) ||
-            (d->pos.y >= minHeight && (maxSeconds <= 0.0 || (++count % 8 == 0 &&
-                                                             elapsedSeconds_Time(&startTime) >= maxSeconds)))) {
+            (d->pos.y >= minHeight &&
+             (maxSeconds <= 0.0 ||
+              (++count % 8 == 0 && SDL_GetPerformanceCounter() >= deadline)))) {
             isCaughtUp = (d->contentLine.end + 1 >= d->content.end);
             break;
         }
