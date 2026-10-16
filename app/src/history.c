@@ -52,17 +52,15 @@ void deinit_RecentUrl(iRecentUrl *d) {
 
 iDefineTypeConstruction(RecentUrl)
 
-iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
-    iRecentUrl *copy = new_RecentUrl();
-    set_String(&copy->url, &d->url);
-    copy->normScrollY    = d->normScrollY;
-    copy->scrollAnchor   = d->scrollAnchor;
-    copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
-    copy->cachedDoc      = ref_Object(d->cachedDoc);
-    copy->flags          = d->flags;
-    copy->prefsCacheKey  = d->prefsCacheKey;
-    set_Block(&copy->setIdentity, &d->setIdentity);
-    return copy;
+static void initCopy_RecentUrl(iRecentUrl *d, const iRecentUrl *other) {
+    initCopy_String(&d->url, &other->url);
+    d->normScrollY    = other->normScrollY;
+    d->scrollAnchor   = other->scrollAnchor;
+    d->cachedResponse = other->cachedResponse ? copy_GmResponse(other->cachedResponse) : NULL;
+    d->cachedDoc      = ref_Object(other->cachedDoc);
+    d->flags          = other->flags;
+    d->prefsCacheKey  = other->prefsCacheKey;
+    initCopy_Block(&d->setIdentity, &other->setIdentity);
 }
 
 size_t cacheSize_RecentUrl(const iRecentUrl *d) {
@@ -110,7 +108,9 @@ iHistory *copy_History(const iHistory *d) {
     lock_Mutex(d->mtx);
     iHistory *copy = new_History();
     iConstForEach(Array, i, &d->recent) {
-        pushBack_Array(&copy->recent, copy_RecentUrl(i.value));
+        iRecentUrl item;
+        initCopy_RecentUrl(&item, i.value);
+        pushBack_Array(&copy->recent, &item);
     }
     copy->recentPos = d->recentPos;
     unlock_Mutex(d->mtx);
@@ -315,7 +315,7 @@ void add_History(iHistory *d, const iString *url) {
     lock_Mutex(d->mtx);
     /* Cut the trailing history items. */
     if (d->recentPos > 0) {
-        for (size_t i = 0; i < d->recentPos - 1; i++) {
+        for (size_t i = 0; i < d->recentPos; i++) {
             deinit_RecentUrl(recentUrl_History(d, i));
         }
         removeN_Array(&d->recent, size_Array(&d->recent) - d->recentPos, iInvalidSize);
