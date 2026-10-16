@@ -760,6 +760,7 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d, iBool hasDecoration) 
                 iForEach(Array, hr, &rts.layout) {
                     iGmRun *hrun = hr.value;
                     hrun->visBounds.pos.x = (doc->size.x - width_Rect(hrun->visBounds)) / 2;
+                    hrun->flags |= notJustified_GmRunFlag;
                 }
             }
             numRunsAdded = commit_RunTypesetter_(&rts, d->layout, &d->maxRunWidth);
@@ -844,7 +845,9 @@ static void centerLinkLines_Typesetter_(iTypesetter *d, iGmLinkId linkId) {
         if (top != INT_MIN) {
             const int shift = (d->doc->size.x - size_Range(&span)) / 2 - span.start;
             for (size_t i = pos; i < end; i++) {
-                ((iGmRun *) at_Array(layout, i))->visBounds.pos.x += shift;
+                iGmRun *run = at_Array(layout, i);
+                run->visBounds.pos.x += shift;
+                run->flags |= notJustified_GmRunFlag;
             }
         }
         pos = end;

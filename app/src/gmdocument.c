@@ -1054,6 +1054,7 @@ static size_t firstRunReaching_GmDocument_(const iGmDocument *d, int y) {
         lo++;
     }
 #if !defined (NDEBUG)
+    /* Check validity. */
     static int isChecked_ = -1;
     if (isChecked_ < 0) {
         isChecked_ = getenv("LAGRANGE_LAYOUT_CHECK") != NULL;
