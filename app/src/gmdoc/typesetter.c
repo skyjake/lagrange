@@ -644,7 +644,7 @@ static iBool isTitleLayout_GmDocument_(const iGmDocument *d) {
     return iTrue;
 }
 
-static size_t typesetParagraph_Typesetter_(iTypesetter *d) {
+static size_t typesetParagraph_Typesetter_(iTypesetter *d, iBool hasDecoration) {
     /* Returns the number of runs added. */
     iGmDocument          *doc   = d->doc;
     const iDocPrefs      *prefs = d->prefs;
@@ -743,8 +743,7 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d) {
                     prun->bounds.pos.x    += offset;
                     prun->visBounds.pos.x += offset;
                 }
-                if (type == bullet_GmLineType || type == link_GmLineType ||
-                    (type == quote_GmLineType && prefs->quoteIcon.value)) {
+                if (hasDecoration) {
                     iGmRun *decor = back_Array(d->layout);
                     iAssert(decor->flags & decoration_GmRunFlag);
                     decor->visBounds.pos.x = doc->size.x - width_Rect(decor->visBounds) -
@@ -1037,6 +1036,7 @@ static void typesetLine_Typesetter_(iTypesetter *d) {
         return;
     }
     updateTitle_Typesetter_(d);
+    const size_t numBeforeDecoration = size_Array(d->layout);
     if (d->type == bullet_GmLineType) {
         addBullet_Typesetter_(d);
     }
@@ -1051,7 +1051,8 @@ static void typesetLine_Typesetter_(iTypesetter *d) {
         addLinkIcon_Typesetter_(d);
     }
     setRunStyle_Typesetter_(d);
-    const size_t numRunsAdded = typesetParagraph_Typesetter_(d);
+    const size_t numRunsAdded =
+        typesetParagraph_Typesetter_(d, size_Array(d->layout) > numBeforeDecoration);
     if (numRunsAdded == 0) {
         d->pos.y += lineHeight_Text(d->run.font) * d->prefs->lineSpacing.value;
         d->followsBlank = iTrue;
