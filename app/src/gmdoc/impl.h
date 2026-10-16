@@ -169,19 +169,6 @@ iLocalDef const char *lineStart_Rangecc_(iRangecc text, const char *pos) {
     return pos;
 }
 
-iLocalDef iBool isHRule_Rangecc_(iRangecc line) {
-    /* This is used in Markdown sources. */
-    if (!startsWith_Rangecc(line, "---")) {
-        return iFalse;
-    }
-    for (const char *ch = line.start; ch < line.end; ch++) {
-        if (*ch != '-') {
-            return iFalse;
-        }
-    }
-    return iTrue;
-}
-
 iLocalDef iBool nextLine_Rangecc_(iRangecc text, iRangecc *line) {
     /* Continues where the previous call left off, also after `text` has grown. */
     if (line->start && line->end + 1 >= text.end) {

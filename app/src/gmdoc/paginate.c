@@ -144,11 +144,10 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     /* Headers show the last level 1 heading on or before the page, except on the first page
        and on a page that begins with one. The first page of a book's chapter has it unless the
        heading is on the page. A single-page chapter has the book's title instead. */
-    const iBool isBook = !isEmpty_String(&d->bookTitle);
-    iRangecc title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
-    const iRangecc bookTitle =
-        auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
-    size_t   runPos = 0;
+    const iBool    isBook = !isEmpty_String(&d->bookTitle);
+    iRangecc       title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
+    const iRangecc bookTitle = auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
+    size_t         runPos    = 0;
     clear_Array(&d->pageBands);
     for (size_t page = 0; page < numPages; page++) {
         const int pageEnd        = (int) (page + 1) * pageSpan;
@@ -196,14 +195,15 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
                 d,
                 auxText_GmDocument_(
                     d,
-                    hasPages && hasChapters
-                        ? collectNewFormat_String(cstr_Lang("doc.page.chapter"),
-                                                  (int) page + 1, (int) numPages,
-                                                  d->chapter, d->numChapters)
-                    : hasPages ? collectNewFormat_String(cstr_Lang("doc.page.number"),
-                                                         (int) page + 1, (int) numPages)
-                               : collectNewFormat_String(cstr_Lang("doc.chapter.number"),
-                                                         d->chapter, d->numChapters)));
+                    hasPages && hasChapters ? collectNewFormat_String(cstr_Lang("doc.page.chapter"),
+                                                                      (int) page + 1,
+                                                                      (int) numPages,
+                                                                      d->chapter,
+                                                                      d->numChapters)
+                    : hasPages              ? collectNewFormat_String(
+                                                  cstr_Lang("doc.page.number"), (int) page + 1, (int) numPages)
+                                            : collectNewFormat_String(
+                                                  cstr_Lang("doc.chapter.number"), d->chapter, d->numChapters)));
         }
         pushBack_Array(&d->pageBands, &bands);
     }
@@ -244,20 +244,23 @@ static const iGmRun *firstContentRun_GmDocument_(const iArray *runs, size_t star
     return NULL;
 }
 
-static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *groups, size_t breakPos) {
+static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *groups,
+                                          size_t breakPos) {
+    iBool        isCaptionMoved = iFalse;
+    const size_t n              = size_Array(groups);
     /* Index of the first group in the column that continues in the next column along with
        the group at `breakPos`. Headings are not left at the end of a column, not even with
        only the first line of the following paragraph. An image is not separated from the
        link above it. */
-    const size_t n = size_Array(groups);
     size_t       moved = n;
-    if (n >= 2 && isContinuationGroup_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos)) &&
+    if (n >= 2 &&
+        isContinuationGroup_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos)) &&
         !isContinuationGroup_GmDocument_(
             src, ((const iColumnGroup *) constAt_Array(groups, n - 1))->src, breakPos)) {
         moved = n - 1;
     }
-    iBool         isCaptionMoved = iFalse;
-    const iGmRun *image = firstContentRun_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos));
+    const iGmRun *image =
+        firstContentRun_GmDocument_(src, breakPos, groupEnd_GmDocument_(src, breakPos));
     if (image && image->linkId && image->mediaType == image_MediaType) {
         while (moved > 0) {
             const iGmRun *caption = firstContentRun_GmDocument_(
@@ -272,10 +275,10 @@ static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *group
         }
     }
     size_t first = moved;
-    while (first > 0 &&
-           isHeadingGroup_GmDocument_(src,
-                                      ((const iColumnGroup *) constAt_Array(groups, first - 1))->src,
-                                      groupSrcEnd_(groups, first - 1, breakPos))) {
+    while (first > 0 && isHeadingGroup_GmDocument_(
+                            src,
+                            ((const iColumnGroup *) constAt_Array(groups, first - 1))->src,
+                            groupSrcEnd_(groups, first - 1, breakPos))) {
         first--;
     }
     /* A heading at the top of the column stays, so it is not split either. */
@@ -338,21 +341,21 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
 }
 
 void paginate_GmDocument_(iGmDocument *d) {
-    const iArray *src        = collect_Array(copy_Array(&d->layout));
-    const size_t  numSrc     = size_Array(src);
-    const size_t  perPage    = columnsPerPage_GmDocument(d);
+    const iArray *src     = collect_Array(copy_Array(&d->layout));
+    const size_t  numSrc  = size_Array(src);
+    const size_t  perPage = columnsPerPage_GmDocument(d);
     clear_Array(&d->layout);
     size_t   column     = 0;
     iRangei  content    = columnContentRange_GmDocument(d, column);
     int      offset     = content.start; /* the continuous layout begins at zero */
     int      lastBottom = content.start;
     size_t   firstGroup = 0;
-    iArray   colGroups;                /* groups placed in the column */
-    size_t   colStart   = 0;           /* layout index of the first run in the column */
-    uint16_t lastPreId  = 0;
-    uint16_t colPreId   = 1;           /* first preformatted block that may begin in the column */
-    int      srcBottom  = 0;           /* bottom of the placed runs in the continuous layout */
-    iBool    hasTitle   = iFalse;      /* the first level 1 heading is a title, not a chapter */
+    iArray   colGroups;     /* groups placed in the column */
+    size_t   colStart  = 0; /* layout index of the first run in the column */
+    uint16_t lastPreId = 0;
+    uint16_t colPreId  = 1;      /* first preformatted block that may begin in the column */
+    int      srcBottom = 0;      /* bottom of the placed runs in the continuous layout */
+    iBool    hasTitle  = iFalse; /* the first level 1 heading is a title, not a chapter */
     init_Array(&colGroups, sizeof(iColumnGroup));
     for (size_t i = 0; i < numSrc;) {
         size_t        end       = groupEnd_GmDocument_(src, i);

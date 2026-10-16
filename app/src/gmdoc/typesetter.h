@@ -58,11 +58,14 @@ struct Impl_Typesetter {
     int                   outsideMargin;
     iRangecc              content;
     iRangecc              contentLine;
+
     /* Current line. */
-    iRangecc              line; /* trimmed; modifying `contentLine` would confuse `nextSplit_Rangecc` */
+    iRangecc              line; /* trimmed; modifying `contentLine` would
+                                   confuse `nextSplit_Rangecc` */
     enum iGmLineType      type;
     float                 indent;
     iGmRun                run;
+
     /* State carried over between lines. */
     iInt2                 pos;
     iBool                 isFirstText;
@@ -87,6 +90,7 @@ struct Impl_Typesetter {
     iBool                 isWrapWidthChecked;
     iBool                 isAtTop;           /* no runs precede `layout` */
     int                   earlierBottom;     /* bottom of text that precedes `layout` */
+
     /* Anchored layout. */
     const char           *seamPos;           /* stop before this line */
     const char           *stopPos;           /* stop after the line containing this */
@@ -98,21 +102,25 @@ struct Impl_Typesetter {
     iTypesetter          *above;             /* lays out the content above the seam */
 };
 
-iBool   isExpandingToLongLines_GmDocument_      (const iGmDocument *);
-void    determinePlainTextWrapWidth_GmDocument_ (iGmDocument *);
-iBool   beginLayout_GmDocument_                 (iGmDocument *, iBool keepTitle);
 
-int     lastVisibleRunBottom_Typesetter_(const iTypesetter *);
-void    init_Typesetter_                (iTypesetter *, iGmDocument *doc, iBool isOwnLayout);
-void    deinit_Typesetter_              (iTypesetter *);
-void    begin_Typesetter_               (iTypesetter *); /* at the top of the document */
-void    beginAt_Typesetter_             (iTypesetter *, const char *lineStart);
-iBool   typesetLines_Typesetter_        (iTypesetter *, int minHeight, double maxSeconds); /* True if caught up */
-void    publish_Typesetter_             (iTypesetter *, iBool isCaughtUp);
-iBool   typesetSome_Typesetter_         (iTypesetter *, int minHeight, double maxSeconds); /* lines and publish */
-iBool   isSame_TypesetterSeam_          (const iTypesetterSeam *, const iTypesetterSeam *);
-void    shift_Typesetter_               (iTypesetter *, int dy);
-const iGmRun *findKeptRun_Typesetter_   (const iTypesetter *);
-const iGmRun *layoutUntilKept_Typesetter_(iTypesetter *);
-void    finish_Typesetter_              (iTypesetter *); /* whole-document steps */
-void    rebase_Typesetter_              (iTypesetter *, const iGmRebase *);
+void    init_Typesetter_                    (iTypesetter *, iGmDocument *doc, iBool isOwnLayout);
+void    deinit_Typesetter_                  (iTypesetter *);
+
+iBool   beginLayout_GmDocument_                 (iGmDocument *, iBool keepTitle);
+void    determinePlainTextWrapWidth_GmDocument_ (iGmDocument *);
+
+void    begin_Typesetter_                   (iTypesetter *); /* at the top of the document */
+void    beginAt_Typesetter_                 (iTypesetter *, const char *lineStart);
+iBool   typesetLines_Typesetter_            (iTypesetter *, int minHeight, double maxSeconds); /* True if caught up */
+void    publish_Typesetter_                 (iTypesetter *, iBool isCaughtUp);
+iBool   typesetSome_Typesetter_             (iTypesetter *, int minHeight, double maxSeconds); /* lines and publish */
+void    shift_Typesetter_                   (iTypesetter *, int dy);
+const iGmRun *layoutUntilKept_Typesetter_   (iTypesetter *);
+void    finish_Typesetter_                  (iTypesetter *); /* whole-document steps */
+void    rebase_Typesetter_                  (iTypesetter *, const iGmRebase *);
+
+iBool   isExpandingToLongLines_GmDocument_  (const iGmDocument *);
+
+const iGmRun *findKeptRun_Typesetter_       (const iTypesetter *);
+int     lastVisibleRunBottom_Typesetter_    (const iTypesetter *);
+iBool   isSame_TypesetterSeam_              (const iTypesetterSeam *, const iTypesetterSeam *);

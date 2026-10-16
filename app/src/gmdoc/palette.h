@@ -27,4 +27,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 enum iGmDocumentTheme   currentTheme_GmDocument_        (const iGmDocument *);
 const iString *         themeUrl_GmDocument_            (const iGmDocument *);
 const iBlock *          paletteSeed_GmDocument_         (const iGmDocument *);
+
 void                    updateIconBasedOnUrl_GmDocument_(iGmDocument *);
