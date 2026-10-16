@@ -34,54 +34,133 @@ iRegExp *newGemtextLink_RegExp(void) {
     return new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", 0);
 }
 
+static iBool isSchemeChar_(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+           c == '-' || c == '.' || c == '+';
+}
+
+static iBool isDigit_(char c) {
+    return c >= '0' && c <= '9';
+}
+
+static iBool isIPv6Char_(char c) {
+    return isDigit_(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || c == ':';
+}
+
+static iBool isFileUrl_(const char *start, const char *end) {
+    static const char prefix_[] = "file://";
+    if (end - start < 7) {
+        return iFalse;
+    }
+    for (int i = 0; i < 7; i++) {
+        const char c = start[i];
+        if ((c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c) != prefix_[i]) {
+            return iFalse;
+        }
+    }
+    return iTrue;
+}
+
+static iBool parseHostPort_(iUrl *d, const char *pos, const char *end) {
+    /* `host[:port]` or `[IPv6][:port]`; anything after them is ignored. */
+    const char *i = pos;
+    while (i < end && *i != ':' && *i != '[' && *i != ']') {
+        i++;
+    }
+    if (i == pos) {
+        if (pos == end || *pos != '[') {
+            return iFalse;
+        }
+        for (i = pos + 1; i < end && isIPv6Char_(*i); i++) {}
+        if (i == pos + 1 || i == end || *i != ']') {
+            return iFalse;
+        }
+        i++;
+    }
+    d->host = (iRangecc){ pos, i };
+    d->port = (iRangecc){ i, i };
+    if (end - i >= 2 && *i == ':' && isDigit_(i[1])) {
+        const char *port = ++i;
+        while (i < end && isDigit_(*i)) {
+            i++;
+        }
+        d->port = (iRangecc){ port, i };
+    }
+    return iTrue;
+}
+
+static void parseAuthority_(iUrl *d) {
+    /* The authority is searched for `[user@]host[:port]` from left to right. */
+    const iRangecc auth = d->host;
+    for (const char *pos = auth.start; pos < auth.end; pos++) {
+        const char *at = pos;
+        while (at < auth.end && *at != '@') {
+            at++;
+        }
+        if (at > pos && at < auth.end && parseHostPort_(d, at + 1, auth.end)) {
+            d->user = (iRangecc){ pos, at };
+            return;
+        }
+        if (parseHostPort_(d, pos, auth.end)) {
+            d->user = (iRangecc){ pos, pos };
+            return;
+        }
+    }
+}
+
 void init_Url(iUrl *d, const iString *text) {
-    if (!text) {
-        iZap(*d);
-        return;
-    }
-    /* Handle "file:" as a special case since it only has the path part. */
-    if (startsWithCase_String(text, "file://")) {
-        iZap(*d);
-        const char *cstr = constBegin_String(text);
-        d->scheme = (iRangecc){ cstr, cstr + 4 };
-        d->path   = (iRangecc){ cstr + 7, constEnd_String(text) };
-        return;
-    }
-    static iRegExp *urlPattern_;
-    static iRegExp *authPattern_;
-    if (!urlPattern_) {
-        urlPattern_  = new_RegExp("^(([-.+a-z0-9]+):)?(//([^/?#]*))?"
-                                  "([^?#]*)(\\?([^#]*))?(#(.*))?",
-                                  caseInsensitive_RegExpOption);
-        authPattern_ = new_RegExp("(([^@]+)@)?(([^:\\[\\]]+)"
-                                  "|(\\[[0-9a-f:]+\\]))(:([0-9]+))?",
-                                  caseInsensitive_RegExpOption);
-    }
     iZap(*d);
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    if (matchString_RegExp(urlPattern_, text, &m)) {
-        d->scheme   = capturedRange_RegExpMatch(&m, 2);
-        d->host     = capturedRange_RegExpMatch(&m, 4);
-        d->port     = (iRangecc){ d->host.end, d->host.end };
-        d->path     = capturedRange_RegExpMatch(&m, 5);
-        d->query    = capturedRange_RegExpMatch(&m, 6);
-        d->fragment = capturedRange_RegExpMatch(&m, 8); /* starts with a hash */
-        if (isEmpty_Range(&d->host)) {
-            d->host = (iRangecc){ d->scheme.end, d->scheme.end };
+    if (!text) {
+        return;
+    }
+    const char *start = constBegin_String(text);
+    const char *end   = constEnd_String(text);
+    /* Handle "file:" as a special case since it only has the path part. */
+    if (isFileUrl_(start, end)) {
+        d->scheme = (iRangecc){ start, start + 4 };
+        d->path   = (iRangecc){ start + 7, end };
+        return;
+    }
+    /* Components are split as in RFC 3986 (Appendix B). Missing ones are empty ranges at the
+       position where they would be. */
+    const char *pos = start;
+    const char *i   = start;
+    while (i < end && isSchemeChar_(*i)) {
+        i++;
+    }
+    if (i > start && i < end && *i == ':') {
+        d->scheme = (iRangecc){ start, i };
+        pos = i + 1;
+    }
+    else {
+        d->scheme = (iRangecc){ start, start };
+    }
+    d->host = (iRangecc){ d->scheme.end, d->scheme.end };
+    if (end - pos >= 2 && pos[0] == '/' && pos[1] == '/') {
+        for (i = pos + 2; i < end && *i != '/' && *i != '?' && *i != '#'; i++) {}
+        if (i > pos + 2) {
+            d->host = (iRangecc){ pos + 2, i };
         }
-        /* Check if the authority contains a port. */
-        init_RegExpMatch(&m);
-        if (matchRange_RegExp(authPattern_, d->host, &m)) {
-            d->user = capturedRange_RegExpMatch(&m, 2);
-            d->host = capturedRange_RegExpMatch(&m, 3);
-            d->port = capturedRange_RegExpMatch(&m, 7);
-        }
-        /* Remove brackets from an IPv6 literal. */
-        if (size_Range(&d->host) > 2 && d->host.start[0] == '[' && d->host.end[-1] == ']') {
-            d->host.start++;
-            d->host.end--;
-        }
+        pos = i;
+    }
+    for (i = pos; i < end && *i != '?' && *i != '#'; i++) {}
+    d->path = (iRangecc){ pos, i };
+    pos = i;
+    if (pos < end && *pos == '?') {
+        for (i = pos + 1; i < end && *i != '#'; i++) {}
+    }
+    d->query = (iRangecc){ pos, i };
+    pos = i;
+    if (pos < end && *pos == '#') {
+        for (i = pos + 1; i < end && *i != '\n'; i++) {}
+    }
+    d->fragment = (iRangecc){ pos, i };
+    d->port     = (iRangecc){ d->host.end, d->host.end };
+    parseAuthority_(d);
+    /* Remove brackets from an IPv6 literal. */
+    if (size_Range(&d->host) > 2 && d->host.start[0] == '[' && d->host.end[-1] == ']') {
+        d->host.start++;
+        d->host.end--;
     }
 }
 
@@ -829,10 +908,7 @@ const iString *canonicalUrl_String(const iString *d) {
             d = collect_String(local);
         }
     }
-    iString *canon = NULL;
-    iUrl parts;
-    init_Url(&parts, d);
-    canon = maybeUrlDecodeExclude_String(d, " " URL_DECODE_EXCLUDE_CHARS);
+    iString *canon = maybeUrlDecodeExclude_String(d, " " URL_DECODE_EXCLUDE_CHARS);
     /* `canon` may now be NULL if nothing was decoded. */
     if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
         indexOfCStr_String(canon ? canon : d, "\n") != iInvalidPos) {
