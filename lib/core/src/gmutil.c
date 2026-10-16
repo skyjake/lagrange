@@ -175,25 +175,25 @@ uint16_t port_Url(const iUrl *d) {
     if (port != 0) {
         return port;
     }
-    if (isEmpty_Range(&d->scheme) || equalCase_Rangecc(d->scheme, "gemini")) {
+    if (isEmpty_Range(&d->scheme) || equalFastCase_Rangecc(d->scheme, "gemini")) {
         port = GEMINI_DEFAULT_PORT;
     }
     else if (isGopherScheme_Rangecc(d->scheme)) {
         port = 70;
     }
-    else if (equalCase_Rangecc(d->scheme, "finger")) {
+    else if (equalFastCase_Rangecc(d->scheme, "finger")) {
         port = 79;
     }
-    else if (equalCase_Rangecc(d->scheme, "http")) {
+    else if (equalFastCase_Rangecc(d->scheme, "http")) {
         port = 80;
     }
-    else if (equalCase_Rangecc(d->scheme, "spartan")) {
+    else if (equalFastCase_Rangecc(d->scheme, "spartan")) {
         port = 300;
     }
-    else if (equalCase_Rangecc(d->scheme, "guppy")) {
+    else if (equalFastCase_Rangecc(d->scheme, "guppy")) {
         port = 6775;
     }
-    else if (equalCase_Rangecc(d->scheme, "https")) {
+    else if (equalFastCase_Rangecc(d->scheme, "https")) {
         port = 443;
     }
     return port;
@@ -231,7 +231,7 @@ void stripUrlPort_String(iString *d) {
 }
 
 static iBool isDefaultPort_Url_(const iUrl *d) {
-    return (equalCase_Rangecc(d->scheme, "gemini") &&
+    return (equalFastCase_Rangecc(d->scheme, "gemini") &&
             equal_Rangecc(d->port, GEMINI_DEFAULT_PORT_CSTR)) ||
            (isGopherScheme_Rangecc(d->scheme) && equal_Rangecc(d->port, "70"));
 }
@@ -268,7 +268,7 @@ const iString *urlQueryStripped_String(const iString *url) {
 }
 
 iBool isDataUrl_String(const iString *d) {
-    return startsWithCase_String(d, "data:");
+    return startsWithFastCase_String(d, "data:");
 }
 
 const iString *urlFragmentStripped_String(const iString *d) {
@@ -399,7 +399,7 @@ iRangecc urlRoot_String(const iString *d) {
     else {
         iUrl parts;
         init_Url(&parts, d);
-        if (equalCase_Rangecc(parts.scheme, "about")) {
+        if (equalFastCase_Rangecc(parts.scheme, "about")) {
             return (iRangecc){ constBegin_String(d), parts.path.start };
         }
         rootEnd = parts.path.start;
@@ -435,7 +435,7 @@ static iString *punyDecodeHost_(iRangecc host) {
         if (!isEmpty_String(result)) {
             appendChar_String(result, '.');
         }
-        if (startsWithCase_Rangecc(label, "xn--")) {
+        if (startsWithFastCase_Rangecc(label, "xn--")) {
             iString *dec = punyDecode_Rangecc((iRangecc){ label.start + 4, label.end });
             if (!isEmpty_String(dec)) {
                 append_String(result, dec);
@@ -497,7 +497,7 @@ iBool isKnownScheme_Rangecc(iRangecc scheme) {
     }
     static const char *uriSchemes[] = { "about", "data" };
     iForIndices(i, uriSchemes) {
-        if (equalCase_Rangecc(scheme, uriSchemes[i])) {
+        if (equalFastCase_Rangecc(scheme, uriSchemes[i])) {
             return iTrue;
         }
     }
@@ -508,7 +508,7 @@ iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
     static const char *schemes[] = { "gemini", "gopher", "gophers", "finger", "spartan",
                                      "http",   "https",  "file",    "local" };
     iForIndices(i, schemes) {
-        if (equalCase_Rangecc(scheme, schemes[i])) {
+        if (equalFastCase_Rangecc(scheme, schemes[i])) {
             return iTrue;
         }
     }
@@ -516,12 +516,12 @@ iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
 }
 
 iBool isGopherScheme_Rangecc(iRangecc scheme) {
-    return equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "gophers");
+    return equalFastCase_Rangecc(scheme, "gopher") || equalFastCase_Rangecc(scheme, "gophers");
 }
 
 iBool isTlsScheme_Rangecc(iRangecc scheme) {
-    return equalCase_Rangecc(scheme, "gophers") || equalCase_Rangecc(scheme, "gemini") ||
-           equalCase_Rangecc(scheme, "titan") || equalCase_Rangecc(scheme, "misfin");
+    return equalFastCase_Rangecc(scheme, "gophers") || equalFastCase_Rangecc(scheme, "gemini") ||
+           equalFastCase_Rangecc(scheme, "titan") || equalFastCase_Rangecc(scheme, "misfin");
 }
 
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
@@ -534,7 +534,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         /* Probably not an URL, so we can't make this absolute. */
         return urlMaybeRelative;
     }
-    if (equalCase_Rangecc(rel.scheme, "misfin")) {
+    if (equalFastCase_Rangecc(rel.scheme, "misfin")) {
         /* Use as-is. */
         return urlMaybeRelative;
     }
@@ -564,7 +564,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         delete_String(decHost);
         /* Default Gemini port is removed as redundant; normalization. */
         if (!isEmpty_Range(&selHost->port) &&
-            (!equalCase_Rangecc(scheme, "gemini") ||
+            (!equalFastCase_Rangecc(scheme, "gemini") ||
              !equal_Rangecc(selHost->port, GEMINI_DEFAULT_PORT_CSTR))) {
             appendCStr_String(absolute, ":");
             appendRange_String(absolute, selHost->port);
@@ -602,12 +602,12 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     appendRange_String(absolute, rel.query);
     appendRange_String(absolute, rel.fragment);
     normalize_String(absolute);
-    if (!isGopherScheme_Rangecc(scheme) && !equalCase_Rangecc(scheme, "finger")) {
+    if (!isGopherScheme_Rangecc(scheme) && !equalFastCase_Rangecc(scheme, "finger")) {
         /* Gopher/finger paths are opaque selectors, not hierarchical paths, so dot-segments
            and doubled slashes in them must be preserved as-is instead of being cleaned up. */
         cleanUrlPath_String(absolute);
     }
-    if (equalCase_Rangecc(scheme, "local") && startsWith_String(absolute, "local:///")) {
+    if (equalFastCase_Rangecc(scheme, "local") && startsWith_String(absolute, "local:///")) {
         remove_Block(&absolute->chars, 6, 2); /* no authority: "local:/path" */
     }
     return absolute;
@@ -632,7 +632,7 @@ iBool isLikelyUrl_String(const iString *d) {
 }
 
 iBool isTitanUrl_String(const iString *d) {
-    return equalCase_Rangecc(urlScheme_String(d), "titan");
+    return equalFastCase_Rangecc(urlScheme_String(d), "titan");
 }
 
 static iBool equalPuny_(const iString *d, iRangecc orig) {
@@ -669,7 +669,7 @@ void punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out) {
 void punyEncodeUrlHost_String(iString *absoluteUrl) {
     iUrl url;
     init_Url(&url, absoluteUrl);
-    if (equalCase_Rangecc(url.scheme, "data")) {
+    if (equalFastCase_Rangecc(url.scheme, "data")) {
         return;
     }
     if (isEmpty_Range(&url.host)) {
@@ -733,15 +733,15 @@ static iBool rebaseAppContainerPath_(iString *path) {
 #endif
 
 iBool isLocalFileScheme_Rangecc(iRangecc scheme) {
-    return equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "local");
+    return equalFastCase_Rangecc(scheme, "file") || equalFastCase_Rangecc(scheme, "local");
 }
 
 static iString *localFilePath_(const iString *d, iBool *isRebased) {
     iUrl url;
     init_Url(&url, d);
-    const iBool isLocal = equalCase_Rangecc(url.scheme, "local");
+    const iBool isLocal = equalFastCase_Rangecc(url.scheme, "local");
     *isRebased = iFalse;
-    if (!isLocal && !equalCase_Rangecc(url.scheme, "file")) {
+    if (!isLocal && !equalFastCase_Rangecc(url.scheme, "file")) {
         return NULL;
     }
     iString *path = urlDecode_String(collect_String(newRange_String(url.path)));
@@ -797,9 +797,9 @@ const iString *findContainerArchive_Path(const iString *path) {
     iBeginCollect();
     while (!isEmpty_String(path) && cmp_String(path, ".")) {
         iString *dir = newRange_String(dirName_Path(path));
-        if (endsWithCase_String(dir, ".zip") ||
-            endsWithCase_String(dir, ".gpub") ||
-            endsWithCase_String(dir, ".fontpack")) {
+        if (endsWithFastCase_String(dir, ".zip") ||
+            endsWithFastCase_String(dir, ".gpub") ||
+            endsWithFastCase_String(dir, ".fontpack")) {
             iEndCollect();
             return collect_String(dir);
         }
@@ -827,7 +827,7 @@ static const char *mimetypes_[] = {
 
 const char *mediaTypeFromFileExtension_String(const iString *d) {
     for (int i = 0; mimetypes_[i]; i += 2) {
-        if (endsWithCase_String(d, mimetypes_[i])) {
+        if (endsWithFastCase_String(d, mimetypes_[i])) {
             return mimetypes_[i + 1];
         }
     }
@@ -888,7 +888,7 @@ const iString *withSpacesEncoded_String(const iString *d) {
 const iString *withScheme_String(const iString *d, const char *scheme) {
     iUrl parts;
     init_Url(&parts, d);
-    if (!equalCase_Rangecc(parts.scheme, scheme)) {
+    if (!equalFastCase_Rangecc(parts.scheme, scheme)) {
         iString *repl = collectNewCStr_String(scheme);
         appendRange_String(repl, (iRangecc){ parts.scheme.end, constEnd_String(d) });
         return repl;
@@ -902,7 +902,7 @@ const iString *canonicalUrl_String(const iString *d) {
        - except spaces, which are always `%20`
        This means a canonical URL can be used on a gemtext link line without modifications.
        Files in the user's data directory use the "local:" scheme. */
-    if (startsWithCase_String(d, "file:")) {
+    if (startsWithFastCase_String(d, "file:")) {
         iString *local = localUrlFromFileUrl_(d);
         if (local) {
             d = collect_String(local);
