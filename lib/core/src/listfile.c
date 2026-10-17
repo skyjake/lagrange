@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/listfile.h"
+#include "lagrange/command.h"
 #include "lagrange/core.h"
 
 #include <the_Foundation/file.h>
@@ -40,8 +41,7 @@ const char *header_ListFile(void) {
 }
 
 iBool isHeader_ListFile(iRangecc line) {
-    iRangecc word = iNullRange;
-    return nextSplit_Rangecc(line, " ", &word) && equal_Rangecc(word, "list");
+    return equal_Command(cstr_Rangecc(line), "list");
 }
 
 static iBool isIgnored_ListFile_(iRangecc *line) {
@@ -49,39 +49,37 @@ static iBool isIgnored_ListFile_(iRangecc *line) {
     return isEmpty_Range(line) || *line->start == '#';
 }
 
-int format_ListFile(iRangecc src) {
-    iRangecc line = iNullRange;
-    while (nextSplit_Rangecc(src, "\n", &line)) {
-        iRangecc text = line;
-        if (isIgnored_ListFile_(&text)) {
-            continue;
+static iRangecc headerRange_ListFile_(iRangecc src) {
+    if (!isEmpty_Range(&src)) {
+        const char    *end  = findAscii_Rangecc(src, '\n');
+        const iRangecc line = { src.start, end ? end : src.end };
+        if (isHeader_ListFile(line)) {
+            return line;
         }
-        if (isHeader_ListFile(text)) {
-            iRangecc word = iNullRange;
-            while (nextSplit_Rangecc(text, " ", &word)) {
-                if (startsWith_Rangecc(word, "fmt:")) {
-                    const int format = atoi(cstr_Rangecc((iRangecc){ word.start + 4, word.end }));
-                    return format > 0 ? format : v1_ListFileFormat;
-                }
-            }
-        }
-        break;
     }
-    return v1_ListFileFormat;
+    return iNullRange;
+}
+
+const char *headerLine_ListFile(iRangecc src) {
+    return cstr_Rangecc(headerRange_ListFile_(src));
+}
+
+int format_ListFile(iRangecc src) {
+    const int format = argLabel_Command(headerLine_ListFile(src), "fmt");
+    return format > 0 ? format : v1_ListFileFormat;
 }
 
 iBool nextLine_ListFile(iRangecc src, iRangecc *line) {
-    iBool checkHeader = (line->start == NULL);
+    if (line->start == NULL) {
+        const iRangecc header = headerRange_ListFile_(src);
+        if (header.start) {
+            *line = header;
+        }
+    }
     while (nextSplit_Rangecc(src, "\n", line)) {
         iRangecc text = *line;
         if (isIgnored_ListFile_(&text)) {
             continue;
-        }
-        if (checkHeader) {
-            checkHeader = iFalse;
-            if (isHeader_ListFile(text)) {
-                continue;
-            }
         }
         *line = text;
         return iTrue;
@@ -90,18 +88,10 @@ iBool nextLine_ListFile(iRangecc src, iRangecc *line) {
 }
 
 static void removeHeader_ListFile_(iBlock *data) {
-    const iRangecc src  = range_Block(data);
-    iRangecc       line = iNullRange;
-    while (nextSplit_Rangecc(src, "\n", &line)) {
-        iRangecc text = line;
-        if (isIgnored_ListFile_(&text)) {
-            continue;
-        }
-        if (isHeader_ListFile(text)) {
-            const char *end = iMin(line.end + 1, src.end);
-            remove_Block(data, line.start - src.start, end - line.start);
-        }
-        break;
+    const iRangecc src    = range_Block(data);
+    const iRangecc header = headerRange_ListFile_(src);
+    if (header.start) {
+        remove_Block(data, 0, iMin(header.end + 1, src.end) - src.start);
     }
 }
 

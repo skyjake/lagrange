@@ -22,48 +22,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/range.h>
-#include <the_Foundation/string.h>
-#include <the_Foundation/vec2.h>
+#include <lagrange/command.h>
 
-#define notification_CommandPrefix  '*' /* not a user action */
-#define global_CommandPrefix        '!' /* not restricted to a particular root */
-#define deferred_CommandPrefix      '~' /* held until launch has finished */
-
-iLocalDef iBool isNotification_Command(const char *d) {
-    return *d == notification_CommandPrefix;
-}
-iLocalDef const char *skipPrefix_Command(const char *d) {
-    return d + (*d == notification_CommandPrefix);
-}
-
-void        makeNotification_Command(iString *command);
-
-iRangecc    name_Command            (const char *command);
-
-iBool       equal_Command           (const char *commandWithArgs, const char *command);
-iBool       startsWith_Command      (const char *commandWithArgs, const char *prefix);
-iBool       equalArg_Command        (const char *commandWithArgs, const char *command,
-                                     const char *label, const char *value);
-
-int         arg_Command             (const char *); /* arg: */
-float       argf_Command            (const char *); /* arg: */
-int         argLabel_Command        (const char *, const char *label);
-uint32_t    argU32Label_Command     (const char *, const char *label);
-float       argfLabel_Command       (const char *, const char *label);
-void *      pointer_Command         (const char *); /* ptr: */
-void *      pointerLabel_Command    (const char *, const char *label);
-iInt2       coord_Command           (const char *);
-iInt2       dir_Command             (const char *);
-
-const iString * string_Command      (const char *, const char *label); /* space-delimited */
-iRangecc        range_Command       (const char *, const char *label); /* space-delimited */
-const char *    suffixPtr_Command   (const char *, const char *label); /* until end-of-command */
-iString *       suffix_Command      (const char *, const char *label); /* until end-of-command */
-
-iLocalDef iBool hasLabel_Command(const char *d, const char *label) {
-    return suffixPtr_Command(d, label) != NULL;
-}
-iLocalDef const char *cstr_Command(const char *d, const char *label) {
-    return cstr_Rangecc(range_Command(d, label));
-}
+void *      pointer_Command         (const char *); /* ptr:, NULL if widget was deleted */

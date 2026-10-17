@@ -26,9 +26,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/block.h>
 #include <the_Foundation/range.h>
 
-/* Line-based user data files (.lst). The first line is a header: "list fmt:N". Empty lines
-   and comment lines starting with "#" are ignored. Files without a header are format 1.
-   The format number is specific to each file. */
+/* Line-based user data files (.lst). The header `list fmt:N` must be the first line.
+   After the header, empty lines and comment lines (starting with `#`) are ignored.
+   Files without a header are assumed to be format 1. */
 
 enum iListFileFormat {
     v1_ListFileFormat      = 1,
@@ -38,8 +38,9 @@ enum iListFileFormat {
 
 const char *header_ListFile     (void); /* default format, with newline */
 iBool       isHeader_ListFile   (iRangecc line);
+const char *headerLine_ListFile (iRangecc src);
 int         format_ListFile     (iRangecc src); /* from the header; 1 if there is none */
-iBool       nextLine_ListFile   (iRangecc src, iRangecc *line); /* like nextSplit_Rangecc */
+iBool       nextLine_ListFile   (iRangecc src, iRangecc *line); /* cf. nextSplit_Rangecc */
 iBool       save_ListFile       (const char *path, const iBlock *content); /* header is prepended */
 iBool       saveFormat_ListFile (const char *path, int format, const iBlock *content);
 const char *migrate_ListFile    (const char *dir, const char *fileName,
