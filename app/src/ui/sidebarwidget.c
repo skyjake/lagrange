@@ -321,11 +321,13 @@ static void checkFeedsActionsLayout_SidebarWidget_(iSidebarWidget *d) {
 }
 
 static void addOutlineItems_SidebarWidget_(iSidebarWidget *d) {
-    const iGmDocument *doc = document_DocumentWidget(document_App());
-    iConstForEach(Array, i, headings_GmDocument(doc)) {
-        const iGmHeading *head = i.value;
+    /* Appends the headings not yet in the list. */
+    const iGmDocument *doc      = document_DocumentWidget(document_App());
+    const iArray      *headings = headings_GmDocument(doc);
+    for (size_t i = numItems_ListWidget(d->list); i < size_Array(headings); i++) {
+        const iGmHeading *head = constAt_Array(headings, i);
         iSidebarItem     *item = new_SidebarItem();
-        item->id               = index_ArrayConstIterator(&i);
+        item->id               = i;
         setRange_String(&item->label, head->text);
         item->indent = head->level * 5 * gap_UI;
         item->isBold = head->level == 0;
@@ -1815,6 +1817,21 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode != siteStructure_SidebarMode) {
                 scrollOffset_ListWidget(d->list, 0);
             }
+        }
+        else if (equal_Command(cmd, "document.outline.changed")) {
+            if (d->mode == documentOutline_SidebarMode && ~flags_Widget(w) & hidden_WidgetFlag &&
+                pointerLabel_Command(cmd, "doc") == document_App()) {
+                if (numItems_ListWidget(d->list) >
+                    size_Array(headings_GmDocument(document_DocumentWidget(document_App())))) {
+                    updateItems_SidebarWidget_(d);
+                }
+                else {
+                    addOutlineItems_SidebarWidget_(d);
+                    updateVisible_ListWidget(d->list);
+                    invalidate_ListWidget(d->list);
+                }
+            }
+            return iFalse;
         }
         else if (equal_Command(cmd, "sidebar.modes.changed")) {
             updateModeButtonOrder_SidebarWidget_(d);

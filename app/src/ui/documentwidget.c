@@ -210,6 +210,7 @@ struct Impl_DocumentWidget {
     int            swipeUpY;       /* vertical movement of the current paginated swipe */
     uint32_t       swipeUpTime;
     uint32_t       layoutHandoffTime; /* when continued layout was last shown */
+    size_t         numHeadings;
 
     /* Widget structure: */
     iScrollWidget *scroll;
@@ -795,6 +796,11 @@ static void layoutContinued_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebas
     }
     if (isHandoff) {
         d->layoutHandoffTime = SDL_GetTicks();
+        /* Headings are parsed just ahead of the layout. */
+        if (size_Array(headings_GmDocument(doc)) != d->numHeadings) {
+            d->numHeadings = size_Array(headings_GmDocument(doc));
+            notifyf_Root(as_Widget(d)->root, "document.outline.changed doc:%p", d);
+        }
         updateWindowTitle_DocumentWidget(d);
         updateVisible_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
@@ -1656,6 +1662,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     if (equal_Command(cmd, "document.changed") && pointerLabel_Command(cmd, "doc") == d) {
+        d->numHeadings = size_Array(headings_GmDocument(d->view->doc));
         reveal_ViewToolbar(d->viewToolbar);
         update_ViewToolbar(d->viewToolbar);
         return iFalse;
@@ -4218,10 +4225,12 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setOwner_DocumentSwipe(d->swipe, d);
     d->book = new_DocumentBook();
     setOwner_DocumentBook(d->book, d);
-    d->readingBarsTimer = 0;
-    d->viewModeTimer    = 0;
-    d->swipeUpY         = 0;
-    d->swipeUpTime      = 0;
+    d->readingBarsTimer  = 0;
+    d->viewModeTimer     = 0;
+    d->swipeUpY          = 0;
+    d->swipeUpTime       = 0;
+    d->layoutHandoffTime = 0;
+    d->numHeadings       = 0;
     d->indicator        = none_DocumentIndicator;
     init_Anim(&d->indicatorOpacity, 0.0f);
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
