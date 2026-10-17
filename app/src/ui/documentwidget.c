@@ -471,7 +471,7 @@ static void updateIndicator_DocumentWidget_(iDocumentWidget *d) {
 static uint32_t postViewModeHide_DocumentWidget_(void *context, SDL_TimerID timerId,
                                                  uint32_t interval) {
     iUnused(timerId, interval);
-    postCommand_Widget(context, "*document.viewmode.hide"); /* not a user action */
+    notifyf_App("document.viewmode.hide ptr:%p", context); /* not a user action */
     return 0;
 }
 
@@ -2416,14 +2416,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                           cstr_String(rootUrl));
         return iTrue;
     }
-    else if (equalWidget_Command(cmd, w, "document.readingbars.toggle")) {
+    else if (equal_Command(cmd, "document.readingbars.toggle") && pointer_Command(cmd) == d) {
         if (d->readingBarsTimer) {
             d->readingBarsTimer = 0;
             toggleReadingBars_Root(w->root);
         }
         return iTrue;
     }
-    else if (equalWidget_Command(cmd, w, "document.viewmode.hide")) {
+    else if (equal_Command(cmd, "document.viewmode.hide") && pointer_Command(cmd) == d) {
         if (d->viewModeTimer) {
             d->viewModeTimer = 0;
             updateIndicator_DocumentWidget_(d);
@@ -3019,7 +3019,8 @@ static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
 static uint32_t postReadingBarsToggle_DocumentWidget_(void *context, SDL_TimerID timerId,
                                                       uint32_t interval) {
     iUnused(timerId, interval);
-    postCommand_Widget(context, "document.readingbars.toggle");
+    /* Timer thread: the widget may already be deleted, so it is not accessed. */
+    postCommandf_App("document.readingbars.toggle ptr:%p", context);
     return 0;
 }
 
