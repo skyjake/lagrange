@@ -1378,6 +1378,34 @@ static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
     return wt.hitAdvance_out.x;
 }
 
+static int linkNumberFont_DrawContext_(const iDrawContext *d) {
+    const enum iFontSize fontSize = size_FontId(font_GmDocument(d->view->doc, link_GmLineType));
+    return FONT_ID(default_FontId,
+                   regular_FontStyle,
+                   fontSize == contentRegular_FontSize ? contentSmall_FontSize
+                                                       : contentTiny_FontSize);
+}
+
+static iRect linkNumberArea_DrawContext_(const iDrawContext *d, iRect visRect, iRect *frame_out) {
+    /* Numbers are always in the left margin, even if the link icon is elsewhere.
+       Returns the full area to erase. */
+    iRect area = { init_I2(d->viewPos.x - gap_UI / 3, top_Rect(visRect)),
+                   init_I2(3.95f * gap_Text, height_Rect(visRect)) };
+    if (isTerminal_Platform()) {
+        area.pos.x += 1;
+        if (frame_out) {
+            *frame_out = area;
+        }
+        return area;
+    }
+    const iRect frame = initCentered_Rect(
+        mid_Rect(area), init1_I2(lineHeight_Text(linkNumberFont_DrawContext_(d)) + gap_UI / 2));
+    if (frame_out) {
+        *frame_out = frame;
+    }
+    return union_Rect(area, frame);
+}
+
 static void fillMark_DrawContext_(iDrawContext *d, iRect rect, const iMarkStyle *style) {
     const int oldAlpha = d->paint.alpha;
     SDL_SetRenderDrawBlendMode(d->paint.dst->render, style->blend);
@@ -1570,17 +1598,14 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             /* Normal background for other runs. There are cases when runs get drawn multiple
                times, e.g., at the buffer boundary, and there are slightly overlapping characters
                in monospace blocks. Clearing the background here ensures a cleaner visual
-               appearance since only one glyph is visible at any given point.
-
-               Link icons with custom symbols may have unexpected width, so clear the background
-               a bit more to the left to erase any leftovers from link numbering circles. */
-            const iBool isLinkIcon =
-                (run->linkId && run->flags & decoration_GmRunFlag &&
-                 run->flags & startOfLine_GmRunFlag && ~run->flags & caption_GmRunFlag);
-            fillRect_Paint(
-                &d->paint,
-                adjusted_Rect(visRect, init_I2(isLinkIcon ? -2 * gap_Text : 0, 0), zero_I2()),
-                tmBackground_ColorId);
+               appearance since only one glyph is visible at any given point. */
+            fillRect_Paint(&d->paint, visRect, tmBackground_ColorId);
+            if (run->linkId && run->flags & decoration_GmRunFlag &&
+                run->flags & startOfLine_GmRunFlag && ~run->flags & caption_GmRunFlag) {
+                /* Erase any previously drawn link number. */
+                fillRect_Paint(
+                    &d->paint, linkNumberArea_DrawContext_(d, visRect, NULL), tmBackground_ColorId);
+            }
         }
     }
     if (run->linkId) {
@@ -1616,25 +1641,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     hostLinkOrdinalChar_DocumentView_(d->view,
                                                    ord - hostOrdinalBase_DocumentView_(d->view));
                 if (ordChar) {
-                    const enum iFontSize fontSize =
-                        size_FontId(font_GmDocument(doc, link_GmLineType));
-                    const char *circle     = "\u25ef"; /* Large Circle */
-                    const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, fontSize);
-                    iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                     init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
-                    if (isTerminal_Platform()) {
-                        nbArea.pos.x += 1;
+                    iRect frame;
+                    linkNumberArea_DrawContext_(d, visRect, &frame);
+                    if (!isTerminal_Platform()) {
+                        drawRoundRectRadius_Paint(&d->paint,
+                                                  frame,
+                                                  gap_Text,
+                                                  all_RoundCorner,
+                                                  frame_UI,
+                                                  none_ColorId,
+                                                  tmQuote_ColorId,
+                                                  tmQuote_ColorId);
                     }
-                    drawRange_Text(
-                        circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
-                    iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
-                    addv_I2(&circleArea.pos, topLeft_Rect(nbArea));
-                    drawCentered_Text(FONT_ID(default_FontId,
-                                              regular_FontStyle,
-                                              fontSize == contentRegular_FontSize
-                                                  ? contentSmall_FontSize
-                                                  : contentTiny_FontSize),
-                                      circleArea,
+                    drawCentered_Text(linkNumberFont_DrawContext_(d),
+                                      frame,
                                       iTrue,
                                       tmQuote_ColorId,
                                       "%lc",
