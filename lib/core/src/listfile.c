@@ -28,10 +28,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+static const char *headerFormat_ListFile_(int format) {
+    return format_CStr("list fmt:%d\n", format);
+}
+
 const char *header_ListFile(void) {
-    return format_CStr("list fmt:%d\n", latest_ListFileFormat);
+    return headerFormat_ListFile_(default_ListFileFormat);
 }
 
 iBool isHeader_ListFile(iRangecc line) {
@@ -42,6 +47,27 @@ iBool isHeader_ListFile(iRangecc line) {
 static iBool isIgnored_ListFile_(iRangecc *line) {
     trimStart_Rangecc(line);
     return isEmpty_Range(line) || *line->start == '#';
+}
+
+int format_ListFile(iRangecc src) {
+    iRangecc line = iNullRange;
+    while (nextSplit_Rangecc(src, "\n", &line)) {
+        iRangecc text = line;
+        if (isIgnored_ListFile_(&text)) {
+            continue;
+        }
+        if (isHeader_ListFile(text)) {
+            iRangecc word = iNullRange;
+            while (nextSplit_Rangecc(text, " ", &word)) {
+                if (startsWith_Rangecc(word, "fmt:")) {
+                    const int format = atoi(cstr_Rangecc((iRangecc){ word.start + 4, word.end }));
+                    return format > 0 ? format : v1_ListFileFormat;
+                }
+            }
+        }
+        break;
+    }
+    return v1_ListFileFormat;
 }
 
 iBool nextLine_ListFile(iRangecc src, iRangecc *line) {
@@ -80,11 +106,15 @@ static void removeHeader_ListFile_(iBlock *data) {
 }
 
 iBool save_ListFile(const char *path, const iBlock *content) {
+    return saveFormat_ListFile(path, default_ListFileFormat, content);
+}
+
+iBool saveFormat_ListFile(const char *path, int format, const iBlock *content) {
     const char *tmpPath = format_CStr("%s.tmp", path);
     iBool       ok      = iFalse;
     iFile      *f       = newCStr_File(tmpPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        const char *header = header_ListFile();
+        const char *header = headerFormat_ListFile_(format);
         ok = writeData_File(f, header, strlen(header)) == strlen(header) &&
              write_File(f, content) == size_Block(content);
         close_File(f);

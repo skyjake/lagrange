@@ -119,6 +119,119 @@ void setCapsLockDown_Keys(iBool isDown) {
     capsLockDown_ = isDown;
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+static const struct {
+    int         mod;
+    const char *name;
+} modNames_[] = {
+    { SDL_KMOD_CTRL, "ctrl" },
+    { SDL_KMOD_ALT, "alt" },
+    { SDL_KMOD_SHIFT, "shift" },
+    { SDL_KMOD_GUI, "gui" },
+    { SDL_KMOD_CAPS, "caps" },
+};
+
+static iBool isCharKey_(int key) {
+    return key > 0x20 && key < 0x40000000 && key != 0x7f && !isSpace_Char(key);
+}
+
+static iBool modFromName_(iRangecc name, int *mod) {
+    /* Note: Some modifiers have no bits in the terminal. */
+    trim_Rangecc(&name);
+    if (equalCase_Rangecc(name, "primary")) {
+        *mod = KMOD_PRIMARY;
+        return iTrue;
+    }
+    iForIndices(i, modNames_) {
+        if (equalCase_Rangecc(name, modNames_[i].name)) {
+            *mod = modNames_[i].mod;
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static int keyFromName_(iRangecc name) {
+    trim_Rangecc(&name);
+    if (isEmpty_Range(&name)) {
+        return -1;
+    }
+    if (equalCase_Rangecc(name, "none")) {
+        return 0;
+    }
+    if (size_Range(&name) > 2 && startsWithCase_Rangecc(name, "0x")) {
+        char *end = NULL;
+        const long key = strtol(cstr_Rangecc(name), &end, 16);
+        return *end == 0 ? (int) key : -1;
+    }
+    /* SDL would map characters via the keyboard layout. */
+    const iString *str = collectNewRange_String(name);
+    if (length_String(str) == 1 && isCharKey_(first_String(str))) {
+        return lower_Char(first_String(str));
+    }
+    const SDL_Keycode key = SDL_GetKeyFromName(cstr_String(str));
+    return key != SDLK_UNKNOWN ? (int) key : -1;
+}
+
+static void appendKeyName_(iString *str, int key) {
+    if (key == 0) {
+        appendCStr_String(str, "none");
+        return;
+    }
+    if (isCharKey_(key)) {
+        if (lower_Char(key) == key) {
+            appendChar_String(str, key);
+            return;
+        }
+    }
+    else {
+        const iString *name =
+            collect_String(lower_String(collectNewCStr_String(SDL_GetKeyName(key))));
+        if (!isEmpty_String(name) && SDL_GetKeyFromName(cstr_String(name)) == (SDL_Keycode) key) {
+            append_String(str, name);
+            return;
+        }
+    }
+    appendFormat_String(str, "0x%x", key);
+}
+
+void shortcutToString_Keys(int key, int mods, iString *str) {
+    if (key) {
+        /* In the terminal, GUI and Alt are the same modifier. */
+        iForIndices(i, modNames_) {
+            if (mods & modNames_[i].mod) {
+                appendFormat_String(str, "%s+", modNames_[i].name);
+                mods &= ~modNames_[i].mod;
+            }
+        }
+    }
+    appendKeyName_(str, key);
+}
+
+iBool shortcutFromString_Keys(iRangecc str, int *key, int *mods) {
+    trim_Rangecc(&str);
+    int parsedMods = 0;
+    /* A leading or lone "+" is the key itself. */
+    for (;;) {
+        const char *plus =
+            size_Range(&str) > 1 ? memchr(str.start + 1, '+', size_Range(&str) - 1) : NULL;
+        int mod = 0;
+        if (!plus || !modFromName_((iRangecc){ str.start, plus }, &mod)) {
+            break;
+        }
+        parsedMods |= mod;
+        str.start = plus + 1;
+    }
+    const int parsedKey = keyFromName_(str);
+    if (parsedKey < 0) {
+        return iFalse;
+    }
+    *key  = parsedKey;
+    *mods = parsedKey ? parsedMods : 0;
+    return iTrue;
+}
+
 static void loadModMap_Keys_(const char *saveDir) {
     iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, "modmap.lst", "modmap.txt")));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
@@ -395,6 +508,32 @@ static const char *filename_Keys_    = "bindings.lst";
 static const char *oldFilename_Keys_ = "bindings.txt";
 #endif
 
+static iBool parseBinding_Keys_(iRangecc line, int format, int *id, int *key, int *mods) {
+    if (format == v1_ListFileFormat) {
+        char modBits[5];
+        iZap(modBits);
+        if (sscanf(line.start, "%d %x %4s", id, key, modBits) < 2) {
+            return iFalse;
+        }
+        *mods = 0;
+        const char *m = modBits;
+        for (int i = 0; i < 4 && *m; i++, m++) {
+            if (*m == 's') *mods |= SDL_KMOD_SHIFT;
+            if (*m == 'a') *mods |= SDL_KMOD_ALT;
+            if (*m == 'c') *mods |= SDL_KMOD_CTRL;
+            if (*m == 'g') *mods |= SDL_KMOD_GUI;
+            if (*m == 'k') *mods |= SDL_KMOD_CAPS;
+        }
+        return iTrue;
+    }
+    char *end = NULL;
+    *id = (int) strtol(line.start, &end, 10);
+    if (end == line.start || end >= line.end || !isSpace_Char(*end)) {
+        return iFalse;
+    }
+    return shortcutFromString_Keys((iRangecc){ end, line.end }, key, mods);
+}
+
 void init_Keys(void) {
     iKeys *d = &keys_;
     init_ModMap_();
@@ -416,27 +555,18 @@ void load_Keys(const char *saveDir) {
     loadModMap_Keys_(saveDir);
     iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, filename_Keys_, oldFilename_Keys_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
-        iBlock * src  = collect_Block(readAll_File(f));
-        iRangecc line = iNullRange;
+        iBlock   *src    = collect_Block(readAll_File(f));
+        const int format = format_ListFile(range_Block(src));
+        iRangecc  line   = iNullRange;
         while (nextLine_ListFile(range_Block(src), &line)) {
-            int id, key;
-            char modBits[5];
-            iZap(modBits);
-            if (sscanf(line.start, "%d %x %4s", &id, &key, modBits) < 2) {
+            int id, key, mods;
+            if (!parseBinding_Keys_(line, format, &id, &key, &mods)) {
                 continue;
             }
             iBinding *bind = findId_Keys_(d, id);
             if (bind) {
-                bind->key = key;
-                bind->mods = 0;
-                const char *m = modBits;
-                for (int i = 0; i < 4 && *m; i++, m++) {
-                    if (*m == 's') bind->mods |= SDL_KMOD_SHIFT;
-                    if (*m == 'a') bind->mods |= SDL_KMOD_ALT;
-                    if (*m == 'c') bind->mods |= SDL_KMOD_CTRL;
-                    if (*m == 'g') bind->mods |= SDL_KMOD_GUI;
-                    if (*m == 'k') bind->mods |= SDL_KMOD_CAPS;
-                }
+                bind->key  = key;
+                bind->mods = mods;
             }
         }
     }
@@ -445,23 +575,17 @@ void load_Keys(const char *saveDir) {
 
 void save_Keys(const char *saveDir) {
     iKeys *d = &keys_;
-    iString *lines = collectNew_String();
+    iString *lines = collectNewCStr_String(
+        "# This file is generated automatically. Keys are specified using SDL key names\n"
+        "# or hexadecimal SDL keycodes, for example \"ctrl+shift+k\" or \"ctrl+0x4000004a\".\n");
     iConstForEach(Array, i, &d->bindings) {
         const iBinding *bind = i.value;
-        appendFormat_String(lines, "%d %x ", bind->id, bind->key);
-        if (bind->mods == 0) {
-            appendCStr_String(lines, "0");
-        }
-        else {
-            if (bind->mods & SDL_KMOD_SHIFT) appendChar_String(lines, 's');
-            if (bind->mods & SDL_KMOD_ALT) appendChar_String(lines, 'a');
-            if (bind->mods & SDL_KMOD_CTRL) appendChar_String(lines, 'c');
-            if (bind->mods & SDL_KMOD_GUI) appendChar_String(lines, 'g');
-            if (bind->mods & SDL_KMOD_CAPS) appendChar_String(lines, 'k');
-        }
+        appendFormat_String(lines, "\n# %s\n%d ", cstr_String(&bind->command), bind->id);
+        shortcutToString_Keys(bind->key, bind->mods, lines);
         appendChar_String(lines, '\n');
     }
-    save_ListFile(concatPath_CStr(saveDir, filename_Keys_), utf8_String(lines));
+    saveFormat_ListFile(
+        concatPath_CStr(saveDir, filename_Keys_), v2_ListFileFormat, utf8_String(lines));
 }
 
 void bind_Keys(int id, const char *command, int key, int mods) {

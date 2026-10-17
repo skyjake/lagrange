@@ -150,6 +150,9 @@ const iBinding *findCommand_Keys    (const char *command);
 iBool           processEvent_Keys   (const SDL_Event *);
 const iPtrArray *list_Keys          (void);
 
+void            shortcutToString_Keys   (int key, int mods, iString *str); /* e.g., "ctrl+k" */
+iBool           shortcutFromString_Keys (iRangecc str, int *key, int *mods);
+
 int             mapMods_Keys        (int modFlags);
 int             modState_Keys       (void); /* current modifier key state */
 void            setCapsLockDown_Keys(iBool isDown);

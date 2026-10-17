@@ -712,17 +712,14 @@ Older versions of Lagrange used .txt files instead (for example, "visited.2.txt"
 
 ### bindings.lst
 Each line specifies one keybinding:
-> {binding-id} {keycode} {flags}
-* Binding IDs are defined in src/ui/keys.c.
-* Keycode is one of the SDLK constants from SDL (hexadecimal).
-* Flags specifies the modifier keys:
-```Table of modifier key flags
-s : Shift
-a : Alt
-c : Ctrl
-g : Gui (Windows/Command/Meta key)
-k : Caps Lock
-```
+> {binding-id} {shortcut}
+* Binding IDs are defined in src/ui/keys.c. The file has a comment above each binding showing the corresponding UI command.
+* Shortcut is a key name preceded by zero or more modifiers, separated with "+". For example: "ctrl+shift+k".
+* Key names are SDL key names (case-insensitive), for example "pageup" or "f5". A key can also be specified as a hexadecimal SDL keycode, for example "0x4000004b".
+* The modifiers are: "shift", "ctrl", "alt", "gui" (Windows/Command/Meta key), and "caps" (Caps Lock). "primary" means Command on macOS and Ctrl on other platforms.
+* "none" means that no key is bound.
+
+The terminal version uses "cbindings.lst" instead.
 
 ### bookmarks.ini
 This file stores all bookmarks and bookmark folders. The format is a subset of TOML: the only supported value types are strings and integers.
