@@ -3374,10 +3374,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
                                                                            : "${menu.viewformat.plain}",
                                   0, 0, "document.viewformat" },
+                                { "${menu.sitespec}", 0, 0, "document.sitespec" },
                                 { hammer_Icon " ${menu.tools}", 0, 0, "submenu id:toolsmenu" },
                                 { "---" },
                                 { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
-                            10);
+                            11);
                         if (isEmpty_Range(&d->selectMark)) {
                             pushBackN_Array(
                                 &items,

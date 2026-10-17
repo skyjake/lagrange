@@ -1861,6 +1861,8 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { "---" },
         { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
         { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+        { "---" },
+        { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
         { "---${menu.tools}" },
         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
@@ -1869,7 +1871,6 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
         { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-        { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
         { "---" },
         { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
         { books_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" },
@@ -2513,9 +2514,7 @@ void createUserInterface_Root(iRoot *d) {
            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
            { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
            { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
-           { "---" },
-           { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
-        }, 11);
+        }, 9);
         appendToolMenuItems_Root_(toolsItems);
         iWidget *toolsMenu = makeMenu_Widget(root, constData_Array(toolsItems), size_Array(toolsItems));
         setId_Widget(tabsMenu, "doctabs.menu");
