@@ -28,12 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 
 struct Impl_ToolJob {
-    const iTool *tool;
-    iString      mime;
-    iBlock       body;
-    iString      url;
-    iThread     *thread;
-    iBlock      *output;
+    const iTool  *tool;
+    iString       mime;
+    iBlock        body;
+    iString       url;
+    iThread      *thread;
+    iToolProcess *toolProc;
+    iBlock       *output;
 };
 
 static iPtrArray *orphans_; /* accessed only in the main thread */
@@ -58,8 +59,9 @@ void init_ToolJob(iToolJob *d, const iTool *tool, const iString *mime, const iBl
     initCopy_String(&d->mime, mime);
     initCopy_Block(&d->body, body);
     initCopy_String(&d->url, url);
-    d->thread = NULL;
-    d->output = NULL;
+    d->thread   = NULL;
+    d->toolProc = new_ToolProcess();
+    d->output   = NULL;
 }
 
 void deinit_ToolJob(iToolJob *d) {
@@ -67,6 +69,7 @@ void deinit_ToolJob(iToolJob *d) {
         join_Thread(d->thread);
         iRelease(d->thread);
     }
+    delete_ToolProcess(d->toolProc);
     delete_Block(d->output);
     deinit_String(&d->url);
     deinit_Block(&d->body);
@@ -80,7 +83,7 @@ iDefineTypeConstructionArgs(ToolJob,
 
 static iThreadResult run_ToolJob_(iThread *thread) {
     iToolJob *d = userData_Thread(thread);
-    d->output = run_Tool(d->tool, &d->mime, &d->body, &d->url);
+    d->output = run_ToolProcess(d->toolProc, d->tool, &d->mime, &d->body, &d->url);
     notifyf_App("tool.finished job:%p", d);
     return 0;
 }
@@ -94,6 +97,7 @@ void start_ToolJob(iToolJob *d) {
 }
 
 void orphan_ToolJob(iToolJob *d) {
+    cancel_ToolProcess(d->toolProc);
     if (!orphans_) {
         orphans_ = new_PtrArray();
     }

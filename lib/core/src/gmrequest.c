@@ -219,6 +219,7 @@ struct Impl_GmRequest {
     iBool                isFilterEnabled;
     iBool                isRespLocked;
     iBool                isRespFiltered;
+    iToolProcess *       filterProc;
     iAtomicInt           allowUpdate;
     iAudience *          updated;
     iAudience *          finished;
@@ -351,7 +352,8 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 
 static void applyFilter_GmRequest_(iGmRequest *d) {
     iAssert(d->state == finished_GmRequestState);
-    iBlock *xbody = tryFilter_Tools(get_Tools(), &d->resp->meta, &d->resp->body, &d->url);
+    iBlock *xbody =
+        tryFilter_Tools(get_Tools(), d->filterProc, &d->resp->meta, &d->resp->body, &d->url);
     if (xbody) {
         lock_Mutex(d->mtx);
         clear_String(&d->resp->meta);
@@ -807,6 +809,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
     d->isRespFiltered  = iFalse;
+    d->filterProc      = new_ToolProcess();
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     initCopy_DocPrefs(&d->docPrefs, defaults_DocPrefs());
@@ -823,6 +826,9 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
 }
 
 void deinit_GmRequest(iGmRequest *d) {
+    /* Filters run during the TlsRequest "finished" notification, after the state is already
+       finished, so they must be stopped before disconnecting. */
+    cancel_ToolProcess(d->filterProc);
     if (d->req) {
         iDisconnectObject(TlsRequest, d->req, sent, d);
         iDisconnectObject(TlsRequest, d->req, readyRead, d);
@@ -838,6 +844,7 @@ void deinit_GmRequest(iGmRequest *d) {
         unlock_Mutex(d->mtx);
     }
     iReleasePtr(&d->req);
+    delete_ToolProcess(d->filterProc);
     delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
     if (d->guppy) {
@@ -1358,6 +1365,7 @@ void submit_GmRequest(iGmRequest *d) {
 }
 
 void cancel_GmRequest(iGmRequest *d) {
+    cancel_ToolProcess(d->filterProc);
     if (d->req) {
         cancel_TlsRequest(d->req);
     }

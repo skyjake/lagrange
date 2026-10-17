@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
+#include <the_Foundation/stringlist.h>
 #include <the_Foundation/toml.h>
 #include <the_Foundation/xml.h>
 
@@ -38,7 +39,7 @@ iDefineTypeConstruction(Tool)
 void init_Tool(iTool *d) {
     init_String(&d->id);
     init_String(&d->name);
-    d->command = new_StringList();
+    d->command = new_StringArray();
     init_String(&d->mimePattern);
     d->mimeRegex = NULL;
     d->isEnabled = iTrue;
@@ -63,12 +64,12 @@ static void setMimePattern_Tool_(iTool *d, const iString *pattern) {
 }
 
 iBool isUsable_Tool(const iTool *d) {
-    return d->isEnabled && !isEmpty_StringList(d->command);
+    return d->isEnabled && !isEmpty_StringArray(d->command);
 }
 
 static iBool hasPath_Tool_(const iTool *d) {
     /* Executables without a path are searched in PATH. */
-    const iString *exec = constAt_StringList(d->command, 0);
+    const iString *exec = constAt_StringArray(d->command, 0);
     return contains_String(exec, '/') || contains_String(exec, '\\');
 }
 
@@ -79,49 +80,6 @@ iBool matchMime_Tool(const iTool *d, const iString *mime) {
     iRegExpMatch m;
     init_RegExpMatch(&m);
     return matchString_RegExp(d->mimeRegex, mime, &m);
-}
-
-iBlock *run_Tool(const iTool *d, const iString *mime, const iBlock *body,
-                 const iString *requestUrl) {
-    static iMutex *mtx_;
-    if (!mtx_) {
-        /* Currently we are starting child processes from multiple background threads.
-           This is apparently not a great idea when the processes are created as forks.
-           What we _should_ probably be doing is using a single dedicated thread to
-           launch the child processes, via a queue of some sort, and wait for the output
-           to be returned via a Condition. For now, we will avoid concurrency problems
-           (mostly related to I/O pipe fds getting confused) by only running a single
-           filter process at a time. */
-        mtx_ = new_Mutex();
-    }
-    iStringList *env = new_StringList();
-    pushBack_StringList(env, collectNewFormat_String("CONTENT_TYPE=%s", cstr_String(mime)));
-    if (!isEmpty_String(requestUrl)) {
-        pushBack_StringList(env,
-                            collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)));
-    }
-    lock_Mutex(mtx_);
-    iBlock *output = NULL;
-    for (int attempts = 0; attempts < 3; attempts++) {
-        iProcess *proc = new_Process();
-        setArguments_Process(proc, d->command);
-        setEnvironment_Process(proc, env);
-        if (start_Process(proc)) {
-            writeInput_Process(proc, body);
-            output = readOutputUntilClosed_Process(proc);
-            if (!startsWith_Rangecc(range_Block(output), "20")) {
-                /* Didn't produce valid output. */
-                delete_Block(output);
-                output = NULL;
-            }
-            iRelease(proc);
-            break;
-        }
-        iRelease(proc);
-    }
-    unlock_Mutex(mtx_);
-    iRelease(env);
-    return output;
 }
 
 iBool parseOutput_Tool(const iBlock *output, iString *mime_out, iBlock *body_out) {
@@ -135,6 +93,84 @@ iBool parseOutput_Tool(const iBlock *output, iString *mime_out, iBlock *body_out
     setRange_String(mime_out, meta);
     setData_Block(body_out, eol + 1, src.end - eol - 1);
     return !isEmpty_String(mime_out);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_ToolProcess {
+    iMutex    mtx;
+    iProcess *proc;
+    iBool     isCancelled;
+};
+
+iDefineTypeConstruction(ToolProcess)
+
+void init_ToolProcess(iToolProcess *d) {
+    init_Mutex(&d->mtx);
+    d->proc        = NULL;
+    d->isCancelled = iFalse;
+}
+
+void deinit_ToolProcess(iToolProcess *d) {
+    iAssert(!d->proc);
+    deinit_Mutex(&d->mtx);
+}
+
+static void setProcess_ToolProcess_(iToolProcess *d, iProcess *proc) {
+    lock_Mutex(&d->mtx);
+    d->proc = proc;
+    if (proc && d->isCancelled) {
+        kill_Process(proc); /* cancelled while starting */
+    }
+    unlock_Mutex(&d->mtx);
+}
+
+iBlock *run_ToolProcess(iToolProcess *d, const iTool *tool, const iString *mime,
+                        const iBlock *body, const iString *requestUrl) {
+    if (isCancelled_ToolProcess(d)) {
+        return NULL;
+    }
+    iStringList *args = newArray_StringList(tool->command);
+    iStringList *env = new_StringList();
+    pushBack_StringList(env, collectNewFormat_String("CONTENT_TYPE=%s", cstr_String(mime)));
+    if (!isEmpty_String(requestUrl)) {
+        pushBack_StringList(env,
+                            collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)));
+    }
+    iBlock *output = NULL;
+    iProcess *proc = new_Process();
+    setArguments_Process(proc, args);
+    setEnvironment_Process(proc, env);
+    if (start_Process(proc)) {
+        setProcess_ToolProcess_(d, proc);
+        output = communicate_Process(proc, body);
+        setProcess_ToolProcess_(d, NULL);
+        waitForFinished_Process(proc); /* reap the child */
+        if (isCancelled_ToolProcess(d) || !startsWith_Rangecc(range_Block(output), "20")) {
+            /* Cancelled, or didn't produce valid output. */
+            delete_Block(output);
+            output = NULL;
+        }
+    }
+    iRelease(proc);
+    iRelease(env);
+    iRelease(args);
+    return output;
+}
+
+void cancel_ToolProcess(iToolProcess *d) {
+    lock_Mutex(&d->mtx);
+    d->isCancelled = iTrue;
+    if (d->proc) {
+        kill_Process(d->proc);
+    }
+    unlock_Mutex(&d->mtx);
+}
+
+iBool isCancelled_ToolProcess(const iToolProcess *d) {
+    iBool cancelled;
+    iGuardMutex(&d->mtx, cancelled = d->isCancelled);
+    return cancelled;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -330,10 +366,10 @@ static void handleTable_Tools_(void *context, const iString *table, iBool isStar
     if (isEmpty_String(&tool->name)) {
         set_String(&tool->name, &tool->id);
     }
-    if (isEmpty_StringList(tool->command)) {
+    if (isEmpty_StringArray(tool->command)) {
         addError_Tools(d, tool, "command not specified");
     }
-    else if (hasPath_Tool_(tool) && !fileExists_FileInfo(constAt_StringList(tool->command, 0))) {
+    else if (hasPath_Tool_(tool) && !fileExists_FileInfo(constAt_StringArray(tool->command, 0))) {
         addError_Tools(d, tool, "executable not found");
     }
 }
@@ -355,10 +391,7 @@ static void handleKeyValue_Tools_(void *context, const iString *table, const iSt
     else if (!cmp_String(key, "command")) {
         isValid = (value->type == stringArray_TomlType);
         if (isValid) {
-            clear_StringList(tool->command);
-            iConstForEach(StringArray, i, value->value.stringArray) {
-                pushBack_StringList(tool->command, i.value);
-            }
+            iChangeRef(tool->command, value->value.stringArray);
         }
     }
     else if (!cmp_String(key, "mime")) {
@@ -417,16 +450,19 @@ iBool willTryFilter_Tools(const iTools *d, const iString *mime) {
     return iFalse;
 }
 
-iBlock *tryFilter_Tools(const iTools *d, const iString *mime, const iBlock *body,
-                        const iString *requestUrl) {
+iBlock *tryFilter_Tools(const iTools *d, iToolProcess *proc, const iString *mime,
+                        const iBlock *body, const iString *requestUrl) {
     iConstForEach(PtrArray, i, &d->tools) {
         const iTool *tool = i.ptr;
         if (isUsable_Tool(tool) && tool->isAuto && matchMime_Tool(tool, mime)) {
-            iBlock *result = run_Tool(tool, mime, body, requestUrl);
+            iBlock *result = run_ToolProcess(proc, tool, mime, body, requestUrl);
             if (result) {
                 return result;
             }
         }
+    }
+    if (isCancelled_ToolProcess(proc)) {
+        return NULL;
     }
     /* Built-in filters. */
     iConstForEach(PtrArray, bi, &d->builtins) {
@@ -475,16 +511,16 @@ const iString *debugInfo_Tools(const iTools *d) {
         appendFormat_String(str, "MIME regex:\n```\n%s\n```\n",
                             isEmpty_String(&tool->mimePattern) ? "(any)"
                                                                : cstr_String(&tool->mimePattern));
-        if (isEmpty_StringList(tool->command)) {
+        if (isEmpty_StringArray(tool->command)) {
             appendCStr_String(str, "⚠ Command not specified!\n");
             continue;
         }
         appendFormat_String(str, "Command:%s\n```\n",
                             !hasPath_Tool_(tool) ? " (executable searched in PATH)"
-                            : fileExists_FileInfo(constAt_StringList(tool->command, 0))
+                            : fileExists_FileInfo(constAt_StringArray(tool->command, 0))
                                 ? ""
                                 : " ⚠ EXECUTABLE NOT FOUND");
-        iConstForEach(StringList, a, tool->command) {
+        iConstForEach(StringArray, a, tool->command) {
             appendFormat_String(str, "%s\n", cstr_String(a.value));
         }
         appendCStr_String(str, "```\n");

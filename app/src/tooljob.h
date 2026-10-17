@@ -35,7 +35,7 @@ iDeclareTypeConstructionArgs(ToolJob, const iTool *tool, const iString *mime,
                              const iBlock *body, const iString *url)
 
 void            start_ToolJob   (iToolJob *);
-void            orphan_ToolJob  (iToolJob *); /* deleted when finished */
+void            orphan_ToolJob  (iToolJob *); /* cancelled; deleted when finished */
 
 const iTool *   tool_ToolJob    (const iToolJob *);
 const iString * url_ToolJob     (const iToolJob *);

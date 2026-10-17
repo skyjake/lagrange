@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/string.h>
-#include <the_Foundation/stringlist.h>
+#include <the_Foundation/stringarray.h>
 
 /* External programs configured in "tools.ini". */
 
@@ -35,7 +35,7 @@ iDeclareTypeConstruction(Tool)
 struct Impl_Tool {
     iString      id;
     iString      name;
-    iStringList *command;
+    iStringArray *command;
     iString      mimePattern;
     iRegExp     *mimeRegex; /* NULL matches everything */
     iBool        isEnabled;
@@ -46,9 +46,20 @@ struct Impl_Tool {
 
 iBool   isUsable_Tool   (const iTool *);
 iBool   matchMime_Tool  (const iTool *, const iString *mime);
-iBlock *run_Tool        (const iTool *, const iString *mime, const iBlock *body,
-                         const iString *requestUrl); /* blocking; NULL if refused */
 iBool   parseOutput_Tool(const iBlock *output, iString *mime_out, iBlock *body_out);
+
+/*----------------------------------------------------------------------------------------------*/
+
+/* Runs tools as child processes. Another thread may cancel a run. */
+
+iDeclareType(ToolProcess)
+iDeclareTypeConstruction(ToolProcess)
+
+/* Blocking. Returns NULL if the tool refused or the run was cancelled. */
+iBlock *run_ToolProcess         (iToolProcess *, const iTool *tool, const iString *mime,
+                                 const iBlock *body, const iString *requestUrl);
+void    cancel_ToolProcess      (iToolProcess *); /* kills the running process; permanent */
+iBool   isCancelled_ToolProcess (const iToolProcess *);
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -60,7 +71,7 @@ typedef iBlock *(*iToolFilterFunc)(const iString *mime, const iBlock *body,
 
 void        addBuiltinFilter_Tools  (iTools *, iToolFilterFunc func);
 iBool       willTryFilter_Tools     (const iTools *, const iString *mime);
-iBlock *    tryFilter_Tools         (const iTools *, const iString *mime,
+iBlock *    tryFilter_Tools         (const iTools *, iToolProcess *, const iString *mime,
                                      const iBlock *body, const iString *requestUrl);
 
 iBool       load_Tools              (iTools *, const char *saveDir); /* false if errors found */
