@@ -946,6 +946,11 @@ iColor legibleAnsiFg_Color(iColor fg) {
         iHSLColor fgHsl = hsl_Color(fg);
         fgHsl.hue = themeBg.hue;
         fgHsl.lum = themeBg.lum * 0.5f;
+        if (fgHsl.hue > 75 && fgHsl.hue < 165) {
+            /* Saturated greens are glaring. */
+            fgHsl.sat = iMin(fgHsl.sat, 0.5f);
+            fgHsl.lum = themeBg.lum * 0.4f;
+        }
         fg = rgb_HSLColor(fgHsl);
     }
     return fg;

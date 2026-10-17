@@ -2714,6 +2714,12 @@ msgstr "High Contrast"
 msgid "prefs.doctheme.name.oceanic"
 msgstr "Oceanic"
 
+msgid "prefs.doctheme.name.paperwhite"
+msgstr "Paperwhite"
+
+msgid "prefs.doctheme.name.arboreal"
+msgstr "Arboreal"
+
 msgid "prefs.saturation"
 msgstr "Saturation:"
 

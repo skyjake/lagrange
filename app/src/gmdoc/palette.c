@@ -215,7 +215,8 @@ const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
 }
 
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
-    if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme || d == sepia_GmDocumentTheme) {
+    if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme ||
+        d == arboreal_GmDocumentTheme || d == sepia_GmDocumentTheme) {
         return isDark_ColorTheme(colorTheme_App());
     }
     return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
@@ -402,6 +403,37 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             }
             setHsl_Color(tmBannerBackground_ColorId, setLum_HSLColor(base, base.lum * 0.93f));
         }
+        else if (theme == paperwhite_GmDocumentTheme) {
+            const iHSLColor base     = { 40, 0.22f, 0.965f, 1.0f };
+            const iHSLColor textBase = { 30, 0.10f, 0.21f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            setHsl_Color(tmParagraph_ColorId, textBase);
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(textBase, 0.05f, -0.06f));
+            setHsl_Color(tmQuote_ColorId, (iHSLColor){ 32, 0.18f, 0.40f, 1.0f });
+            set_Color(tmPreformatted_ColorId, get_Color(tmQuote_ColorId));
+            setHsl_Color(tmHeading1_ColorId, (iHSLColor){ 28, 0.50f, 0.28f, 1.0f });
+            set_Color(tmHeading2_ColorId, getMixed_Color(tmHeading1_ColorId, tmParagraph_ColorId, 0.4f));
+            setHsl_Color(tmHeading3_ColorId, (iHSLColor){ 30, 0.06f, 0.36f, 1.0f });
+            setHsl_Color(tmBannerBackground_ColorId, setLum_HSLColor(base, base.lum * 0.97f));
+            setHsl_Color(tmBannerTitle_ColorId, (iHSLColor){ 32, 0.12f, 0.42f, 1.0f });
+            setHsl_Color(tmBannerIcon_ColorId, (iHSLColor){ 28, 0.45f, 0.45f, 1.0f });
+            setHsl_Color(tmInlineContentMetadata_ColorId, (iHSLColor){ 28, 0.40f, 0.40f, 1.0f });
+            /* Links in muted sepia and gray tones. */
+            setHsl_Color(tmLinkText_ColorId, addSatLum_HSLColor(textBase, 0.05f, -0.08f));
+            set_Color(tmHypertextLinkText_ColorId, get_Color(tmLinkText_ColorId));
+            set_Color(tmGopherLinkText_ColorId, get_Color(tmLinkText_ColorId));
+            setHsl_Color(tmLinkIcon_ColorId, (iHSLColor){ 28, 0.55f, 0.42f, 1.0f });
+            setHsl_Color(tmHypertextLinkIcon_ColorId, (iHSLColor){ 15, 0.45f, 0.45f, 1.0f });
+            setHsl_Color(tmGopherLinkIcon_ColorId, (iHSLColor){ 60, 0.25f, 0.36f, 1.0f });
+            set_Color(tmLinkTextHover_ColorId, get_Color(tmLinkIcon_ColorId));
+            set_Color(tmHypertextLinkTextHover_ColorId, get_Color(tmHypertextLinkIcon_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(tmGopherLinkIcon_ColorId));
+            set_Color(tmLinkIconVisited_ColorId, getMixed_Color(tmLinkIcon_ColorId, tmBackground_ColorId, 0.5f));
+            set_Color(tmHypertextLinkIconVisited_ColorId,
+                      getMixed_Color(tmHypertextLinkIcon_ColorId, tmBackground_ColorId, 0.5f));
+            set_Color(tmGopherLinkIconVisited_ColorId,
+                      getMixed_Color(tmGopherLinkIcon_ColorId, tmBackground_ColorId, 0.5f));
+        }
         else if (theme == white_GmDocumentTheme) {
             const iHSLColor base = { 40, 0, 1.0f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
@@ -445,7 +477,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         d->themeSeed = 0;
     }
     /* Set up colors. */
-    if (d->themeSeed || theme == oceanic_GmDocumentTheme) {
+    if (d->themeSeed || theme == oceanic_GmDocumentTheme || theme == arboreal_GmDocumentTheme) {
         enum iHue {
             red_Hue,
             reddishOrange_Hue,
@@ -655,10 +687,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerTitle_ColorId, primDim);
             setHsl_Color(tmBannerIcon_ColorId, primDim);
         }
-        else if (theme == oceanic_GmDocumentTheme) {
-            const float hues[3] = {
-                195, 210, 30
+        else if (theme == oceanic_GmDocumentTheme || theme == arboreal_GmDocumentTheme) {
+            /* Two background hues and an accent hue. */
+            static const float themeHues[2][3] = {
+                { 195, 210, 30 }, /* oceanic */
+                { 100, 145, 42 }, /* arboreal */
             };
+            const iBool  isArboreal = (theme == arboreal_GmDocumentTheme);
+            const float *hues       = themeHues[isArboreal];
             const int bgIndex  = primIndex % 2;
             const int altIndex = (d->themeSeed >> 7) & 1 ? 2 : bgIndex;
             const float lum    = ((d->themeSeed >> 19) & 0xff) / (float) 255.0f;
@@ -676,13 +712,40 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                                    0.75f + sat * 0.25f,
                                    isDarkUI ? 0.5f + lum2 * 0.5f : (0.25f + lum2 * 0.2f),
                                    1.0f };
+            if (isArboreal) {
+                /* Saturated greens are overpowering. */
+                base.sat *= isDarkUI ? 0.6f : 0.75f;
+            }
             if (!isDarkUI) {
                 base.sat *= 0.66f;
                 if (altIndex == 2) {
 //                    altBase.sat = 0.5f;
-                    altBase.sat *= 0.8f;
-                    altBase.lum += 0.1f;
-                    altBase.hue -= 40;
+                    if (isArboreal) {
+                        /* Brown accent. */
+                        altBase.sat *= 0.6f;
+                        altBase.lum -= 0.05f;
+                        altBase.hue -= 12;
+                    }
+                    else {
+                        altBase.sat *= 0.8f;
+                        altBase.lum += 0.1f;
+                        altBase.hue -= 40;
+                    }
+                }
+                if (isArboreal) {
+                    /* Green and yellow have high luma, so darken them for contrast. */
+                    if (altIndex != 2) {
+                        altBase.sat *= 0.55f;
+                        altBase.lum *= 0.55f;
+                    }
+                    if (preBase.hue == hues[2]) {
+                        preBase.sat *= 0.6f;
+                        preBase.hue -= 6;
+                    }
+                    else {
+                        preBase.sat *= 0.55f;
+                    }
+                    preBase.lum *= 0.75f;
                 }
             }
             setHsl_Color(tmBackground_ColorId, base);
@@ -690,6 +753,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
 //            set_Color(tmBannerBackground_ColorId, getMixed_Color(tmBackground_ColorId, uiBackground_ColorId, 0.5f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 1.0f, isDarkUI ? 0.5f : -0.5f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.3f : -0.5f));
+            if (isArboreal && !isDarkUI) {
+                const float bgLum = iMin(base.lum, 1.0f);
+                setHsl_Color(tmBannerIcon_ColorId, (iHSLColor){ base.hue, 0.45f, bgLum * 0.47f, 1.0f });
+                setHsl_Color(tmBannerTitle_ColorId, (iHSLColor){ base.hue, 0.2f, bgLum * 0.44f, 1.0f });
+            }
 //            setHsl_Color(tmBannerSideTitle_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
             setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.3f, isDarkUI ? (0.5f + lum * 0.1f) : -0.6f));
             setHsl_Color(tmPreformatted_ColorId, preBase); //addSatLum_HSLColor(preBase, 0.4f, isDarkUI ? 0.4f : -0.2f));
@@ -713,7 +781,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         }
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if ((isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) &&
-            theme != oceanic_GmDocumentTheme && theme != sepia_GmDocumentTheme) {
+            theme != oceanic_GmDocumentTheme && theme != arboreal_GmDocumentTheme &&
+            theme != sepia_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLums_[primIndex], 1.0f };
             if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,

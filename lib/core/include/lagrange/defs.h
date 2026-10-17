@@ -274,6 +274,8 @@ enum iGmDocumentTheme {
     highContrast_GmDocumentTheme,
     oceanic_GmDocumentTheme,
     vibrantLight_GmDocumentTheme,
+    paperwhite_GmDocumentTheme,
+    arboreal_GmDocumentTheme,
     max_GmDocumentTheme
 };
 

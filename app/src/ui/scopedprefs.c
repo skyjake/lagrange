@@ -220,7 +220,9 @@ static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
         { "${prefs.doctheme.name.gray}", gray_GmDocumentTheme },
         { "${prefs.doctheme.name.white}", white_GmDocumentTheme },
         { "${prefs.doctheme.name.sepia}", sepia_GmDocumentTheme },
+        { "${prefs.doctheme.name.paperwhite}", paperwhite_GmDocumentTheme },
         { "${prefs.doctheme.name.oceanic}", oceanic_GmDocumentTheme },
+        { "${prefs.doctheme.name.arboreal}", arboreal_GmDocumentTheme },
         { "${prefs.doctheme.name.highcontrast}", highContrast_GmDocumentTheme },
     };
     iArray *items = collectNew_Array(sizeof(iMenuItem));

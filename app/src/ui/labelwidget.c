@@ -324,7 +324,9 @@ static iBool areTabButtonsThemeColored_(void) {
     return (docTheme == colorfulLight_GmDocumentTheme ||
             docTheme == vibrantLight_GmDocumentTheme ||
             docTheme == sepia_GmDocumentTheme ||
-            (docTheme == oceanic_GmDocumentTheme && !isDarkUI));
+            docTheme == paperwhite_GmDocumentTheme ||
+            ((docTheme == oceanic_GmDocumentTheme || docTheme == arboreal_GmDocumentTheme) &&
+             !isDarkUI));
 }
 
 static iBool isDocTabButton_(const iWidget *d) {
@@ -387,7 +389,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 const enum iGmDocumentTheme docTheme = docTheme_DocPrefs(activeDocPrefs_App(), isDark_ColorTheme(colorTheme_App()));
                 if (areTabButtonsThemeColored_() && isDocTabButton_(w)) {
                     *bg = (docTheme == oceanic_GmDocumentTheme ||
-                                   (docTheme == sepia_GmDocumentTheme &&
+                                   docTheme == arboreal_GmDocumentTheme ||
+                                   ((docTheme == sepia_GmDocumentTheme ||
+                                     docTheme == paperwhite_GmDocumentTheme) &&
                                     colorTheme_App() == pureWhite_ColorTheme)
                                ? tmBackground_ColorId
                                : tmBannerBackground_ColorId);
