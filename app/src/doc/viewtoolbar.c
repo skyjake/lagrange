@@ -70,8 +70,14 @@ static void animate_ViewToolbar_(void *ptr) {
     }
 }
 
+static void rootArrangementChanged_ViewToolbar_(iWidget *, iRoot *);
+
 void deinit_ViewToolbar(iViewToolbar *d) {
     removeTicker_App(animate_ViewToolbar_, d); /* the widget is owned by the document */
+    if (d->widget && isSupported_SystemMenu()) {
+        iDisconnect(Root, d->widget->root, arrangementChanged, d->widget,
+                    rootArrangementChanged_ViewToolbar_);
+    }
 }
 
 static iDocumentWidget *menuOwner_ViewToolbar_(iWidget *menu) {
@@ -167,6 +173,10 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
         d, newIcon_LabelWidget(gear_Icon, 0, 0, "document.sitespec"), "viewtools.sitespec");
     addButton_ViewToolbar_(d, newIcon_LabelWidget(info_Icon, 0, 0, "document.info"), "viewtools.info");
     addChild_Widget(as_Widget(owner), iClob(w));
+    if (isSupported_SystemMenu()) {
+        setUserData_Object(w, d);
+        iConnect(Root, w->root, arrangementChanged, w, rootArrangementChanged_ViewToolbar_);
+    }
     update_ViewToolbar(d);
 }
 
@@ -335,7 +345,7 @@ static void updateOpacity_ViewToolbar_(iViewToolbar *d) {
     setFlags_Widget(d->widget, disabled_WidgetFlag, target <= 0.0f); /* also while fading out */
 }
 
-static void updateNativeMenu_ViewToolbar_(iViewToolbar *d) {
+static void updateNativeMenu_ViewToolbar_(iViewToolbar *d, iBool force) {
     /* The native menu button is on top of everything, so it must follow the toolbar. */
     if (!isSupported_SystemMenu()) {
         return;
@@ -347,16 +357,27 @@ static void updateNativeMenu_ViewToolbar_(iViewToolbar *d) {
     }
     const iRect rect =
         isVisible_Widget(ident) && !isDisabled_Widget(ident) ? bounds_Widget(ident) : zero_Rect();
-    if (!equal_Rect(rect, d->nativeMenuRect)) {
+    if (force || !equal_Rect(rect, d->nativeMenuRect)) {
         d->nativeMenuRect = rect;
         updateAfterBoundsChange_SystemMenu(menu);
     }
 }
 
+static void rootArrangementChanged_ViewToolbar_(iWidget *w, iRoot *root) {
+    /* A fully covered document isn't drawn, so arrange_ViewToolbar may not run. Forced since
+       the native menu's own observer may have just shown it. */
+    iViewToolbar *d = userData_Object(w);
+    iUnused(root);
+    if (d->wasAvailable) {
+        updateOpacity_ViewToolbar_(d);
+    }
+    updateNativeMenu_ViewToolbar_(d, iTrue);
+}
+
 void updateHover_ViewToolbar(iViewToolbar *d) {
     if (d->widget && d->wasAvailable) {
         updateOpacity_ViewToolbar_(d);
-        updateNativeMenu_ViewToolbar_(d);
+        updateNativeMenu_ViewToolbar_(d, iFalse);
     }
 }
 
@@ -398,7 +419,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     if (!isAvailable_ViewToolbar_(d)) {
         setFlags_Widget(w, hidden_WidgetFlag, iTrue);
         d->wasAvailable = iFalse;
-        updateNativeMenu_ViewToolbar_(d);
+        updateNativeMenu_ViewToolbar_(d, iFalse);
         return;
     }
     const iWidget       *owner    = constAs_Widget(d->owner);
@@ -451,5 +472,5 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     setFlags_Widget(w, hidden_WidgetFlag, value_Anim(&d->opacity) <= 0.0f);
     setOpacity_Widget(w, value_Anim(&d->opacity));
     d->wasAvailable = iTrue;
-    updateNativeMenu_ViewToolbar_(d);
+    updateNativeMenu_ViewToolbar_(d, iFalse);
 }
