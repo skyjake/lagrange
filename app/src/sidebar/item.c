@@ -649,13 +649,13 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             init_I2(right_Rect(itemRect) - metaIconWidth + 0.5f * gap_UI * aspect_UI, textPos.y);
         iRect metaIconRect = initCorners_Rect(addX_I2(topRight_Rect(itemRect), -metaIconWidth),
                                               bottomRight_Rect(itemRect));
-        if (d->id & 8) { /* Reader tab */
+        if (d->id & (8 | 16)) { /* Reader or Gempub tab */
             const int offset = (d->id & 7 ? -metaIconWidth : 0);
             fillRect_Paint(p, moved_Rect(metaIconRect, init_I2(offset, 0)), bg);
             drawRange_Text(font,
                            addX_I2(metaIconPos, offset),
                            isSel ? uiTextSelected_ColorId : uiIcon_ColorId,
-                           range_CStr(star_Icon));
+                           range_CStr(d->id & 8 ? star_Icon : book_Icon));
         }
         if (d->id & 7) { /* used for status flags */
             const int statusFg = isSel ? uiTextSelected_ColorId : uiTextAction_ColorId;

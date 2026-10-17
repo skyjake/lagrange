@@ -330,6 +330,16 @@ iBool isIndexPageUrl_Gempub(const iGempub *d, const iString *url) {
     return isSameUrl_(url, indexPageUrl_Gempub(d));
 }
 
+iBool isInside_Gempub(const iGempub *d, const iString *url) {
+    url = canonicalUrl_String(url);
+    if (isCoverPageUrl_Gempub(d, url)) {
+        return iTrue;
+    }
+    const iString *path   = collect_String(urlDecodeExclude_String(url, "/:"));
+    const iString *prefix = collectNewFormat_String("%s/", cstr_String(&d->baseUrl));
+    return startsWithCase_String(path, cstr_String(prefix));
+}
+
 const iString *navStartLinkUrl_Gempub(const iGempub *d) {
     parseNavigationLinks_Gempub_(d);
     if (isEmpty_Array(d->navLinks)) {

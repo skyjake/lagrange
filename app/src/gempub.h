@@ -67,6 +67,7 @@ const iString * coverPageUrl_Gempub     (const iGempub *);
 const iString * indexPageUrl_Gempub     (const iGempub *);
 iBool           isCoverPageUrl_Gempub   (const iGempub *, const iString *url);
 iBool           isIndexPageUrl_Gempub   (const iGempub *, const iString *url);
+iBool           isInside_Gempub         (const iGempub *, const iString *url); /* cover page or archive contents */
 const iString * navStartLinkUrl_Gempub  (const iGempub *); /* for convenience */
 size_t          navSize_Gempub          (const iGempub *);
 size_t          navIndex_Gempub         (const iGempub *, const iString *url);

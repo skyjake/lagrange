@@ -2906,6 +2906,11 @@ static iWidget *findInputPromptSheet_DocumentWidget_(iDocumentWidget *d, const i
 static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
     const iString *linkUrl = absoluteUrl_String(d->mod.url,
                                                 linkUrl_GmDocument(d->view->doc, linkId));
+    /* Keep the book open; links leading outside it open in a new tab. */
+    if (d->fetch->sourceGempub && !(tabMode & (newTabMask_OpenTabFlag | otherRoot_OpenTabFlag)) &&
+        !isInside_Gempub(d->fetch->sourceGempub, linkUrl)) {
+        tabMode |= new_OpenTabFlag;
+    }
     /* If the user has requested to be prompted for a query string, do so before actually
        opening the link. */
     if (isPromptUrl_SiteSpec(linkUrl)) {
