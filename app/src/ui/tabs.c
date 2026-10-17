@@ -376,6 +376,11 @@ void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
         }
         refresh_Widget(tabs);
     }
+    /* Pages may skip size changes while hidden. The notification below arrives too late
+       for the next frame. */
+    if (wasChanged && class_Widget(page)->sizeChanged) {
+        class_Widget(page)->sizeChanged(iConstCast(iWidget *, page));
+    }
     /* Notify. */
     if (wasChanged && !isEmpty_String(id_Widget(page))) {
         notifyf_Root(constAs_Widget(page)->root,
