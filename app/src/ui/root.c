@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 
 #include <lagrange/sitespec.h>
+#include <lagrange/tools.h>
 #include <lagrange/visited.h>
 
 #if defined (iPlatformAppleDesktop)
@@ -1964,6 +1965,27 @@ void recreateSnippetMenu_Root(iRoot *d) {
     setId_Widget(menu, "snippetmenu");
 }
 
+static void appendToolMenuItems_Root_(iArray *items) {
+    iBool isFirst = iTrue;
+    iConstForEach(PtrArray, i, list_Tools(tools_App())) {
+        const iTool *tool = i.ptr;
+        if (!tool->inMenu || !isUsable_Tool(tool)) {
+            continue;
+        }
+        if (isFirst) {
+            pushBack_Array(items, &(iMenuItem){ "---" });
+            isFirst = iFalse;
+        }
+        const char     *command = format_CStr("tool.run id:%s", cstr_String(&tool->id));
+        const iBinding *bind    = findCommand_Keys(command);
+        pushBack_Array(items,
+                       &(iMenuItem){ cstr_String(&tool->name),
+                                     bind ? bind->key : 0,
+                                     bind ? bind->mods : 0,
+                                     command });
+    }
+}
+
 void createUserInterface_Root(iRoot *d) {
     iWidget *root = d->widget = new_Widget();
     root->rect.size = get_Window()->size;
@@ -2480,7 +2502,8 @@ void createUserInterface_Root(iRoot *d) {
         createClipMenu_Root(d);
         recreateSnippetMenu_Root(d);
         createSplitMenu_Root(d, iTrue);
-        iWidget *toolsMenu = makeMenu_Widget(root, (iMenuItem[]) {
+        iArray *toolsItems = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(toolsItems, (iMenuItem[]) {
            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
            { "---" },
@@ -2493,6 +2516,8 @@ void createUserInterface_Root(iRoot *d) {
            { "---" },
            { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
         }, 11);
+        appendToolMenuItems_Root_(toolsItems);
+        iWidget *toolsMenu = makeMenu_Widget(root, constData_Array(toolsItems), size_Array(toolsItems));
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
         setId_Widget(toolsMenu, "toolsmenu");

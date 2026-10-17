@@ -920,6 +920,9 @@ The following properties are supported:
 * `command` (array of strings): The program to execute, followed by its arguments. The program is executed directly without involving the shell. This means scripts must be invoked via the interpreter executable. A program name without a directory is searched for in PATH.
 * `mime` (string): Regular expression that is matched against the MIME type and parameters, ignoring case. If omitted, the tool applies to all content.
 * `enabled` (boolean): Set to false to disable the tool without removing its definition. Defaults to true.
+* `auto` (boolean): Whether the tool is used as a content filter, i.e., run automatically on matching responses. Set to false for tools that are only run manually. Defaults to true.
+* `menu` (boolean): Show the tool in the "Tools" submenu of the page context menu. Defaults to false.
+* `key` (string): Keyboard shortcut for running the tool on the current page, for example "ctrl+shift+t". The syntax is the same as in "bindings.lst" (see section 3.5). Tool shortcuts take precedence over other key bindings, and they are not shown in Preferences.
 
 Filters are tried in the order they are defined in the file. Lagrange's built-in filters (e.g., for Atom feeds) are tried after the configured ones.
 
@@ -929,7 +932,22 @@ On macOS, apps launched via Finder or the Dock are given a minimal PATH that doe
 
 Errors in tools.ini are reported at launch, and the details are shown in "about:debug".
 
-## 4.3 Example: Converting from Atom to Gemini
+## 4.3 Running tools manually
+
+A tool can also be run manually on the current page via the context menu or a keyboard shortcut. The tool is only available when the page's MIME type matches the tool's `mime` regexp. The page source is passed to the tool like for content filters (see 4.1), and the tool runs in the background. When the tool finishes, its output replaces the page contents, possibly changing the MIME type. Reloading the page restores the original contents.
+
+For example, a tool that is not used as a content filter but appears in the context menu of Gemtext pages:
+```tools.ini
+[translate]
+name    = "Translate to English"
+command = ["/usr/bin/python3", "/home/jaakko/translate.py", "en"]
+mime    = '^text/gemini'
+auto    = false
+menu    = true
+key     = "primary+shift+e"
+```
+
+## 4.4 Example: Converting from Atom to Gemini
 
 The following simple Python script demonstrates how a content filter could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
 ```python

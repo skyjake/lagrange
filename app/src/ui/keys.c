@@ -580,6 +580,9 @@ void save_Keys(const char *saveDir) {
         "# or hexadecimal SDL keycodes, for example \"ctrl+shift+k\" or \"ctrl+0x4000004a\".\n");
     iConstForEach(Array, i, &d->bindings) {
         const iBinding *bind = i.value;
+        if (bind->id >= tool_BindingId) {
+            continue;
+        }
         appendFormat_String(lines, "\n# %s\n%d ", cstr_String(&bind->command), bind->id);
         shortcutToString_Keys(bind->key, bind->mods, lines);
         appendChar_String(lines, '\n');

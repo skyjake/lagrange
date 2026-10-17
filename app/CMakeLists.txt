@@ -251,6 +251,8 @@ set (SOURCES
     src/syncdata.h
     src/tinylog.c
     src/tinylog.h
+    src/tooljob.c
+    src/tooljob.h
     src/updater.h
     # Multimedia:
     src/media/media.c

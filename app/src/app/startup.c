@@ -294,6 +294,26 @@ void updateSystemTheme_App_(iApp *d) {
     }
 }
 
+static iBool bindToolKeys_App_(iApp *d) {
+    iBool isValid = iTrue;
+    int   id      = tool_BindingId;
+    iConstForEach(PtrArray, i, list_Tools(d->tools)) {
+        const iTool *tool = i.ptr;
+        if (isEmpty_String(&tool->key) || !isUsable_Tool(tool)) {
+            continue;
+        }
+        int key, mods;
+        if (shortcutFromString_Keys(range_String(&tool->key), &key, &mods)) {
+            bind_Keys(id++, format_CStr("tool.run id:%s", cstr_String(&tool->id)), key, mods);
+        }
+        else {
+            addError_Tools(d->tools, tool, "invalid key");
+            isValid = iFalse;
+        }
+    }
+    return isValid;
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
     if (!saveMutex_App_) {
@@ -612,6 +632,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     localizeApplicationMenu_MacOS();
 #endif
     updateActive_Fonts();
+    const iBool isToolsValid = load_Tools(d->tools, dataDir_App_()) && bindToolKeys_App_(d);
     load_Keys(dataDir_App_());
     iRect *winRect0 = at_Array(&d->initialWindowRects, 0);
     /* See if the user wants to override the window size. */ {
@@ -643,7 +664,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     load_Visited(d->visited, dataDir_App_());
-    if (!load_Tools(d->tools, dataDir_App_())) {
+    if (!isToolsValid) {
         postCommand_App("~config.error where:tools.ini");
     }
     if (isFirstRun) {

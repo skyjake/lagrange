@@ -102,6 +102,26 @@ void setProgress_IndicatorWidget(iIndicatorWidget *d, float progress) {
     refresh_Widget(d);
 }
 
+void start_IndicatorWidget(iIndicatorWidget *d) {
+    setValue_Anim(&d->pos, 0, 0);
+    setValue_Anim(&d->pos, 0.75f, 4000);
+    setFlags_Anim(&d->pos, easeOut_AnimFlag, iTrue);
+    animate_IndicatorWidget_(d);
+}
+
+void finish_IndicatorWidget(iIndicatorWidget *d) {
+    if (targetValue_Anim(&d->pos) > 0.0f && !isCompleted_IndicatorWidget_(d)) {
+        setValue_Anim(&d->pos, 1.0f, 250);
+        setFlags_Anim(&d->pos, easeOut_AnimFlag, iFalse);
+        animate_IndicatorWidget_(d);
+    }
+    else {
+        setValue_Anim(&d->pos, 0, 0);
+        animate_IndicatorWidget_(d);
+        refresh_Widget(d);
+    }
+}
+
 static iBool isLocalUrl_(const char *url) {
     const iRangecc scheme = urlScheme_String(collectNewCStr_String(url));
     return equalCase_Rangecc(scheme, "about") || equalCase_Rangecc(scheme, "data") ||
@@ -143,21 +163,10 @@ iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
                         refresh_Widget(d);
                         return iFalse; /* no progress to show */
                     }
-                    setValue_Anim(&d->pos, 0.75f, 4000);
-                    setFlags_Anim(&d->pos, easeOut_AnimFlag, iTrue);
-                    animate_IndicatorWidget_(d);
+                    start_IndicatorWidget(d);
                 }
                 else if (equal_Command(cmd, "finished")) {
-                    if (targetValue_Anim(&d->pos) > 0.0f && !isCompleted_IndicatorWidget_(d)) {
-                        setValue_Anim(&d->pos, 1.0f, 250);
-                        setFlags_Anim(&d->pos, easeOut_AnimFlag, iFalse);
-                        animate_IndicatorWidget_(d);
-                    }
-                    else {
-                        setValue_Anim(&d->pos, 0, 0);
-                        animate_IndicatorWidget_(d);
-                        refresh_Widget(d);
-                    }
+                    finish_IndicatorWidget(d);
                 }
                 else if (equal_Command(cmd, "cancelled")) {
                     setValue_Anim(&d->pos, 0, 0);

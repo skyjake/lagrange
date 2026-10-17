@@ -29,3 +29,5 @@ iDeclareObjectConstruction(IndicatorWidget)
 
 void    setManual_IndicatorWidget   (iIndicatorWidget *, iBool manual); /* ignores document requests */
 void    setProgress_IndicatorWidget (iIndicatorWidget *, float progress); /* 0...1, animated */
+void    start_IndicatorWidget       (iIndicatorWidget *); /* progress of unknown duration */
+void    finish_IndicatorWidget      (iIndicatorWidget *);

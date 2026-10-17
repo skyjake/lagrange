@@ -42,9 +42,13 @@ void init_Tool(iTool *d) {
     init_String(&d->mimePattern);
     d->mimeRegex = NULL;
     d->isEnabled = iTrue;
+    d->isAuto    = iTrue;
+    d->inMenu    = iFalse;
+    init_String(&d->key);
 }
 
 void deinit_Tool(iTool *d) {
+    deinit_String(&d->key);
     iRelease(d->mimeRegex);
     deinit_String(&d->mimePattern);
     iRelease(d->command);
@@ -58,7 +62,7 @@ static void setMimePattern_Tool_(iTool *d, const iString *pattern) {
     d->mimeRegex = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
 }
 
-static iBool isUsable_Tool_(const iTool *d) {
+iBool isUsable_Tool(const iTool *d) {
     return d->isEnabled && !isEmpty_StringList(d->command);
 }
 
@@ -77,8 +81,8 @@ iBool matchMime_Tool(const iTool *d, const iString *mime) {
     return matchString_RegExp(d->mimeRegex, mime, &m);
 }
 
-static iBlock *run_Tool_(const iTool *d, const iString *mime, const iBlock *body,
-                         const iString *requestUrl) {
+iBlock *run_Tool(const iTool *d, const iString *mime, const iBlock *body,
+                 const iString *requestUrl) {
     static iMutex *mtx_;
     if (!mtx_) {
         /* Currently we are starting child processes from multiple background threads.
@@ -118,6 +122,19 @@ static iBlock *run_Tool_(const iTool *d, const iString *mime, const iBlock *body
     unlock_Mutex(mtx_);
     iRelease(env);
     return output;
+}
+
+iBool parseOutput_Tool(const iBlock *output, iString *mime_out, iBlock *body_out) {
+    const iRangecc src = range_Block(output);
+    const char *eol = memchr(src.start, '\n', size_Range(&src));
+    if (!eol || !startsWith_Rangecc(src, "20 ")) {
+        return iFalse;
+    }
+    iRangecc meta = { src.start + 3, eol };
+    trim_Rangecc(&meta);
+    setRange_String(mime_out, meta);
+    setData_Block(body_out, eol + 1, src.end - eol - 1);
+    return !isEmpty_String(mime_out);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -264,15 +281,28 @@ void deinit_Tools(iTools *d) {
     deinit_PtrArray(&d->tools);
 }
 
-static void addError_Tools_(iTools *d, const iTool *tool, const char *msg) {
+void addError_Tools(iTools *d, const iTool *tool, const char *msg) {
     pushBack_StringList(d->errors,
                         tool ? collectNewFormat_String("[%s] %s", cstr_String(&tool->id), msg)
                              : collectNewCStr_String(msg));
 }
 
-static iTool *findTool_Tools_(const iTools *d, const iString *id) {
+static iBool isValidId_Tool_(const iString *id) {
+    iConstForEach(String, i, id) {
+        if (!isAlphaNumeric_Char(i.value) && i.value != '_' && i.value != '-') {
+            return iFalse;
+        }
+    }
+    return iTrue;
+}
+
+const iPtrArray *list_Tools(const iTools *d) {
+    return &d->tools;
+}
+
+const iTool *find_Tools(const iTools *d, const iString *id) {
     iConstForEach(PtrArray, i, &d->tools) {
-        iTool *tool = i.ptr;
+        const iTool *tool = i.ptr;
         if (equal_String(&tool->id, id)) {
             return tool;
         }
@@ -285,8 +315,13 @@ static void handleTable_Tools_(void *context, const iString *table, iBool isStar
     if (isStart) {
         iTool *tool = new_Tool();
         set_String(&tool->id, table);
-        if (findTool_Tools_(d, table)) {
-            addError_Tools_(d, tool, "duplicate tool ID");
+        if (!isValidId_Tool_(table)) {
+            addError_Tools(d, tool, "invalid tool ID (use letters, numbers, '_', and '-')");
+            tool->isEnabled = iFalse;
+        }
+        else if (find_Tools(d, table)) {
+            addError_Tools(d, tool, "duplicate tool ID");
+            tool->isEnabled = iFalse;
         }
         pushBack_PtrArray(&d->tools, tool);
         return;
@@ -296,10 +331,10 @@ static void handleTable_Tools_(void *context, const iString *table, iBool isStar
         set_String(&tool->name, &tool->id);
     }
     if (isEmpty_StringList(tool->command)) {
-        addError_Tools_(d, tool, "command not specified");
+        addError_Tools(d, tool, "command not specified");
     }
     else if (hasPath_Tool_(tool) && !fileExists_FileInfo(constAt_StringList(tool->command, 0))) {
-        addError_Tools_(d, tool, "executable not found");
+        addError_Tools(d, tool, "executable not found");
     }
 }
 
@@ -335,11 +370,29 @@ static void handleKeyValue_Tools_(void *context, const iString *table, const iSt
     else if (!cmp_String(key, "enabled")) {
         isValid = (value->type == boolean_TomlType);
         if (isValid) {
-            tool->isEnabled = value->value.boolean;
+            tool->isEnabled &= value->value.boolean;
+        }
+    }
+    else if (!cmp_String(key, "auto")) {
+        isValid = (value->type == boolean_TomlType);
+        if (isValid) {
+            tool->isAuto = value->value.boolean;
+        }
+    }
+    else if (!cmp_String(key, "menu")) {
+        isValid = (value->type == boolean_TomlType);
+        if (isValid) {
+            tool->inMenu = value->value.boolean;
+        }
+    }
+    else if (!cmp_String(key, "key")) {
+        isValid = (value->type == string_TomlType);
+        if (isValid) {
+            set_String(&tool->key, value->value.string);
         }
     }
     if (!isValid) {
-        addError_Tools_(d, tool, format_CStr("invalid value for \"%s\"", cstr_String(key)));
+        addError_Tools(d, tool, format_CStr("invalid value for \"%s\"", cstr_String(key)));
     }
 }
 
@@ -351,7 +404,7 @@ iBool willTryFilter_Tools(const iTools *d, const iString *mime) {
     /* TODO: Combine this function with tryFilter_Tools! */
     iConstForEach(PtrArray, i, &d->tools) {
         const iTool *tool = i.ptr;
-        if (isUsable_Tool_(tool) && matchMime_Tool(tool, mime)) {
+        if (isUsable_Tool(tool) && tool->isAuto && matchMime_Tool(tool, mime)) {
             return iTrue;
         }
     }
@@ -368,8 +421,8 @@ iBlock *tryFilter_Tools(const iTools *d, const iString *mime, const iBlock *body
                         const iString *requestUrl) {
     iConstForEach(PtrArray, i, &d->tools) {
         const iTool *tool = i.ptr;
-        if (isUsable_Tool_(tool) && matchMime_Tool(tool, mime)) {
-            iBlock *result = run_Tool_(tool, mime, body, requestUrl);
+        if (isUsable_Tool(tool) && tool->isAuto && matchMime_Tool(tool, mime)) {
+            iBlock *result = run_Tool(tool, mime, body, requestUrl);
             if (result) {
                 return result;
             }
@@ -393,7 +446,7 @@ iBool load_Tools(iTools *d, const char *saveDir) {
         iTomlParser *toml = new_TomlParser();
         setHandlers_TomlParser(toml, handleTable_Tools_, handleKeyValue_Tools_, d);
         if (!parse_TomlParser(toml, src)) {
-            addError_Tools_(d, NULL, "syntax error");
+            addError_Tools(d, NULL, "syntax error");
         }
         delete_TomlParser(toml);
     }
@@ -413,6 +466,11 @@ const iString *debugInfo_Tools(const iTools *d) {
         appendFormat_String(str, "### %s: %s\n", cstr_String(&tool->id), cstr_String(&tool->name));
         if (!tool->isEnabled) {
             appendCStr_String(str, "Disabled\n");
+        }
+        appendFormat_String(str, "Automatic filter: %s\nIn menu: %s\n",
+                            tool->isAuto ? "yes" : "no", tool->inMenu ? "yes" : "no");
+        if (!isEmpty_String(&tool->key)) {
+            appendFormat_String(str, "Key: %s\n", cstr_String(&tool->key));
         }
         appendFormat_String(str, "MIME regex:\n```\n%s\n```\n",
                             isEmpty_String(&tool->mimePattern) ? "(any)"

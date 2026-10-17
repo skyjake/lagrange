@@ -39,9 +39,16 @@ struct Impl_Tool {
     iString      mimePattern;
     iRegExp     *mimeRegex; /* NULL matches everything */
     iBool        isEnabled;
+    iBool        isAuto;    /* filters responses automatically */
+    iBool        inMenu;
+    iString      key;       /* key shortcut, e.g., "ctrl+k" */
 };
 
+iBool   isUsable_Tool   (const iTool *);
 iBool   matchMime_Tool  (const iTool *, const iString *mime);
+iBlock *run_Tool        (const iTool *, const iString *mime, const iBlock *body,
+                         const iString *requestUrl); /* blocking; NULL if refused */
+iBool   parseOutput_Tool(const iBlock *output, iString *mime_out, iBlock *body_out);
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -57,6 +64,10 @@ iBlock *    tryFilter_Tools         (const iTools *, const iString *mime,
                                      const iBlock *body, const iString *requestUrl);
 
 iBool       load_Tools              (iTools *, const char *saveDir); /* false if errors found */
+void        addError_Tools          (iTools *, const iTool *tool, const char *msg);
+
+const iPtrArray *list_Tools         (const iTools *);
+const iTool *    find_Tools         (const iTools *, const iString *id);
 
 const iString *debugInfo_Tools      (const iTools *);
 

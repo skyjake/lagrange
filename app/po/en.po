@@ -551,6 +551,13 @@ msgstr "Debug Information"
 msgid "menu.tools"
 msgstr "Tools"
 
+msgid "heading.tool.failed"
+msgstr "Tool Failed"
+
+# %s is the name of a user-configured external tool.
+msgid "dlg.tool.failed"
+msgstr "\"%s\" did not produce valid output for this page."
+
 msgid "menu.import.links"
 msgstr "Import All Links on Page…"
 

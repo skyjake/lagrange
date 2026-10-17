@@ -61,7 +61,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "sidebarwidget.h"
 #include <lagrange/sitespec.h>
+#include <lagrange/tools.h>
 #include "touch.h"
+#include "tooljob.h"
 #include "translation.h"
 #include "uploadwidget.h"
 #include "util.h"
@@ -215,6 +217,8 @@ struct Impl_DocumentWidget {
     iWidget *      menu;
     iWidget *      copyMenu;
     iTranslation * translation;
+    iToolJob *     toolJob;
+    iIndicatorWidget *progress;
     iWidget *      phoneToolbar;
 };
 
@@ -1559,6 +1563,60 @@ static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char
     return prefs_App()->pageSwipe && d->swipe->flags & navigable_DocumentSwipeFlag;
 }
 
+static iBool canRunTool_DocumentWidget_(const iDocumentWidget *d, const iTool *tool) {
+    return tool && isUsable_Tool(tool) && !d->toolJob && !isRequestOngoing_DocumentFetch(d->fetch) &&
+           !isEmpty_Block(&d->fetch->sourceContent) && matchMime_Tool(tool, &d->fetch->sourceMime);
+}
+
+static void runTool_DocumentWidget_(iDocumentWidget *d, const iTool *tool) {
+    if (!canRunTool_DocumentWidget_(d, tool)) {
+        return;
+    }
+    d->toolJob = new_ToolJob(tool, &d->fetch->sourceMime, &d->fetch->sourceContent, d->mod.url);
+    start_ToolJob(d->toolJob);
+    start_IndicatorWidget(d->progress);
+}
+
+static void updateToolsMenu_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *toolsMenu = findChild_Widget(as_Widget(d)->root->widget, "toolsmenu");
+    if (!toolsMenu) {
+        return;
+    }
+    iConstForEach(PtrArray, i, list_Tools(tools_App())) {
+        const iTool *tool = i.ptr;
+        if (tool->inMenu) {
+            setMenuItemDisabled_Widget(toolsMenu,
+                                       format_CStr("tool.run id:%s", cstr_String(&tool->id)),
+                                       !canRunTool_DocumentWidget_(d, tool));
+        }
+    }
+}
+
+static void finishTool_DocumentWidget_(iDocumentWidget *d) {
+    iToolJob *job = d->toolJob;
+    d->toolJob = NULL;
+    finish_IndicatorWidget(d->progress);
+    /* The page may have changed while the tool was running. */
+    if (equal_String(url_ToolJob(job), d->mod.url) &&
+        !cmp_Block(body_ToolJob(job), &d->fetch->sourceContent)) {
+        iString mime;
+        iBlock  body;
+        init_String(&mime);
+        init_Block(&body, 0);
+        if (output_ToolJob(job) && parseOutput_Tool(output_ToolJob(job), &mime, &body)) {
+            setUrlAndSource_DocumentWidget(d, d->mod.url, &mime, &body, 0.0f);
+        }
+        else {
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.tool.failed}",
+                                     format_CStr(cstr_Lang("dlg.tool.failed"),
+                                                 cstr_String(&tool_ToolJob(job)->name)));
+        }
+        deinit_Block(&body);
+        deinit_String(&mime);
+    }
+    delete_ToolJob(job);
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if ((equal_Command(cmd, "scroll.bottom") || equal_Command(cmd, "document.goto") ||
@@ -2013,6 +2071,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setLinkNumberMode_DocumentWidget(d, iTrue);
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "tool.run") && d == document_App()) {
+        runTool_DocumentWidget_(d, find_Tools(tools_App(), string_Command(cmd, "id")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "tool.finished") && d->toolJob &&
+             pointerLabel_Command(cmd, "job") == d->toolJob) {
+        finishTool_DocumentWidget_(d);
+        return iTrue;
     }
     else if (equal_Command(cmd, "document.translate") && d == document_App()) {
         if (!d->translation) {
@@ -3355,6 +3422,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         "document.upload copy:1",
                         !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
                             !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
+                    updateToolsMenu_DocumentWidget_(d);
                 }
             }
             processContextMenuEvent_Widget(d->menu, ev, {});
@@ -4184,8 +4252,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->menu        = NULL; /* created when clicking */
     d->copyMenu    = NULL;
     d->translation = NULL;
+    d->toolJob     = NULL;
     addChildFlags_Widget(w,
-                         iClob(new_IndicatorWidget()),
+                         iClob(d->progress = new_IndicatorWidget()),
                          resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
     d->viewToolbar = new_ViewToolbar();
     setOwner_ViewToolbar(d->viewToolbar, d);
@@ -4219,6 +4288,9 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(refreshWhileScrolling_DocumentWidget, d);
     remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
+    if (d->toolJob) {
+        orphan_ToolJob(d->toolJob);
+    }
     reset_DocumentSwipe(d->swipe); /* touches d->view; must run before it's deleted */
     delete_DocumentView(d->view);
     delete_Query(d->query);
