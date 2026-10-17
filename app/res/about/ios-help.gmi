@@ -547,9 +547,9 @@ Lagrange registers itself as a "gemini" and "gopher" URL scheme handler, so you 
 
 The runtime files, e.g., bookmarks, preferences, identities, and history, are not directly accessible to the user. You can export user data to get a copy of the data, though.
 
-# 4 MIME hooks
+# 4 Content filters
 
-MIME hooks are not supported in the mobile version of Lagrange.
+Content filters are not supported in the mobile version of Lagrange.
 
 # 5 Fontpacks
 

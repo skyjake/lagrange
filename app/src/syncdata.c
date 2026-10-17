@@ -643,6 +643,8 @@ static void handleKeyValue_NativeParser_(void *context, const iString *table, co
         case boolean_TomlType:
             setFieldCStr_SyncRecord(d->record, index, value->value.boolean ? "1" : "0");
             break;
+        default:
+            break;
     }
 }
 

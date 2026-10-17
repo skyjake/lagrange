@@ -8,7 +8,7 @@ add_library (core STATIC
     src/docprefs.c
     src/gmcerts.c
     src/gmrequest.c
-    src/mimehooks.c
+    src/tools.c
     src/gmutil.c
     src/gopher.c
     src/guppy.c

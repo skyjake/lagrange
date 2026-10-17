@@ -15,7 +15,7 @@ List of bookmarks with creation dates.
 List of bookmarks that have at least one tag.
 
 => about:debug
-Runtime debug information: contents of currently open tabs, navigation history, environment variables, command line arguments, and configured MIME hooks.
+Runtime debug information: contents of currently open tabs, navigation history, environment variables, command line arguments, and configured tools.
 
 => about:feeds
 List of all entries from subscribed feeds.

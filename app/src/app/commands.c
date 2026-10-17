@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/core.h>
 #include <lagrange/gmcerts.h>
 #include <lagrange/gmrequest.h>
-#include <lagrange/mimehooks.h>
+#include <lagrange/tools.h>
 #include <lagrange/resources.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>

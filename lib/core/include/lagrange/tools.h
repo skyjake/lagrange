@@ -22,39 +22,42 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/audience.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringlist.h>
 
-iDeclareType(FilterHook)
-iDeclareTypeConstruction(FilterHook)
+/* External programs configured in "tools.ini". */
 
-struct Impl_FilterHook {
-    iString  label;
-    iString  mimePattern;
-    iRegExp *mimeRegex;
-    iString  command;
+iDeclareType(Tool)
+iDeclareTypeConstruction(Tool)
+
+struct Impl_Tool {
+    iString      id;
+    iString      name;
+    iStringList *command;
+    iString      mimePattern;
+    iRegExp     *mimeRegex; /* NULL matches everything */
+    iBool        isEnabled;
 };
 
-void    setMimePattern_FilterHook   (iFilterHook *, const iString *pattern);
-void    setCommand_FilterHook       (iFilterHook *, const iString *command);
+iBool   matchMime_Tool  (const iTool *, const iString *mime);
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(MimeHooks)
-iDeclareTypeConstruction(MimeHooks)
+iDeclareType(Tools)
+iDeclareTypeConstruction(Tools)
 
-typedef iBlock *(*iMimeHookFunc)(const iString *mime, const iBlock *body, const iString *requestUrl);
+typedef iBlock *(*iToolFilterFunc)(const iString *mime, const iBlock *body,
+                                   const iString *requestUrl);
 
-void        addBuiltinFilter_MimeHooks  (iMimeHooks *, iMimeHookFunc func);
-iBool       willTryFilter_MimeHooks     (const iMimeHooks *, const iString *mime);
-iBlock *    tryFilter_MimeHooks         (const iMimeHooks *, const iString *mime,
-                                         const iBlock *body, const iString *requestUrl);
+void        addBuiltinFilter_Tools  (iTools *, iToolFilterFunc func);
+iBool       willTryFilter_Tools     (const iTools *, const iString *mime);
+iBlock *    tryFilter_Tools         (const iTools *, const iString *mime,
+                                     const iBlock *body, const iString *requestUrl);
 
-iBool       load_MimeHooks          (iMimeHooks *, const char *saveDir);
-void        save_MimeHooks          (const iMimeHooks *);
+iBool       load_Tools              (iTools *, const char *saveDir); /* false if errors found */
 
-const iString *debugInfo_MimeHooks  (const iMimeHooks *);
+const iString *debugInfo_Tools      (const iTools *);
 
-iMimeHooks *get_MimeHooks           (void); /* global instance (set in init_MimeHooks) */
+iTools *    get_Tools               (void); /* global instance (set in init_Tools) */

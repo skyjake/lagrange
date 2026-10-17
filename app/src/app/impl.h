@@ -103,7 +103,7 @@ struct Impl_App {
     iStringList *recentlyClosedTabUrls; /* for reopening, like an undo stack */
     iStringArray *recentlySubmittedInput;
     iStringHash *savedWidths;
-    iMimeHooks * mimehooks;
+    iTools *     tools;
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;

@@ -20,46 +20,65 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "lagrange/mimehooks.h"
+#include "lagrange/tools.h"
 
 #include <lagrange/lang.h>
 #include <lagrange/gmutil.h>
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
-#include <the_Foundation/stringlist.h>
+#include <the_Foundation/toml.h>
 #include <the_Foundation/xml.h>
 
-iDefineTypeConstruction(FilterHook)
+iDefineTypeConstruction(Tool)
 
-void init_FilterHook(iFilterHook *d) {
-    init_String(&d->label);
+void init_Tool(iTool *d) {
+    init_String(&d->id);
+    init_String(&d->name);
+    d->command = new_StringList();
     init_String(&d->mimePattern);
-    init_String(&d->command);
     d->mimeRegex = NULL;
+    d->isEnabled = iTrue;
 }
 
-void deinit_FilterHook(iFilterHook *d) {
+void deinit_Tool(iTool *d) {
     iRelease(d->mimeRegex);
-    deinit_String(&d->command);
     deinit_String(&d->mimePattern);
-    deinit_String(&d->label);
+    iRelease(d->command);
+    deinit_String(&d->name);
+    deinit_String(&d->id);
 }
 
-void setMimePattern_FilterHook(iFilterHook *d, const iString *pattern) {
+static void setMimePattern_Tool_(iTool *d, const iString *pattern) {
     iReleasePtr(&d->mimeRegex);
     set_String(&d->mimePattern, pattern);
     d->mimeRegex = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
 }
 
-void setCommand_FilterHook(iFilterHook *d, const iString *command) {
-    set_String(&d->command, command);
+static iBool isUsable_Tool_(const iTool *d) {
+    return d->isEnabled && !isEmpty_StringList(d->command);
 }
 
-iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock *body,
-                        const iString *requestUrl) {
+static iBool hasPath_Tool_(const iTool *d) {
+    /* Executables without a path are searched in PATH. */
+    const iString *exec = constAt_StringList(d->command, 0);
+    return contains_String(exec, '/') || contains_String(exec, '\\');
+}
+
+iBool matchMime_Tool(const iTool *d, const iString *mime) {
+    if (!d->mimeRegex) {
+        return iTrue;
+    }
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    return matchString_RegExp(d->mimeRegex, mime, &m);
+}
+
+static iBlock *run_Tool_(const iTool *d, const iString *mime, const iBlock *body,
+                         const iString *requestUrl) {
     static iMutex *mtx_;
     if (!mtx_) {
         /* Currently we are starting child processes from multiple background threads.
@@ -71,26 +90,18 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
            filter process at a time. */
         mtx_ = new_Mutex();
     }
-    iStringList *args = new_StringList();
-    iRangecc     seg  = iNullRange;
-    while (nextSplit_Rangecc(range_String(&d->command), ";", &seg)) {
-        pushBackRange_StringList(args, seg);
-    }
-    seg = iNullRange;
-    while (nextSplit_Rangecc(range_String(mime), ";", &seg)) {
-        pushBackRange_StringList(args, seg);
+    iStringList *env = new_StringList();
+    pushBack_StringList(env, collectNewFormat_String("CONTENT_TYPE=%s", cstr_String(mime)));
+    if (!isEmpty_String(requestUrl)) {
+        pushBack_StringList(env,
+                            collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)));
     }
     lock_Mutex(mtx_);
     iBlock *output = NULL;
     for (int attempts = 0; attempts < 3; attempts++) {
         iProcess *proc = new_Process();
-        setArguments_Process(proc, args);
-        if (!isEmpty_String(requestUrl)) {
-            setEnvironment_Process(
-                proc,
-                iClob(newStrings_StringList(
-                    collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)), NULL)));
-        }
+        setArguments_Process(proc, d->command);
+        setEnvironment_Process(proc, env);
         if (start_Process(proc)) {
             writeInput_Process(proc, body);
             output = readOutputUntilClosed_Process(proc);
@@ -105,7 +116,7 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
         iRelease(proc);
     }
     unlock_Mutex(mtx_);
-    iRelease(args);
+    iRelease(env);
     return output;
 }
 
@@ -219,53 +230,133 @@ finished:
     return output;
 }
 
-/*----------------------------------------------------------------------------------------------*/
 
-static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
+static const char *fileName_Tools_ = "tools.ini";
 
-struct Impl_MimeHooks {
-    iPtrArray filters;
-    iPtrArray builtins; /* iMimeHookFunc pointers */
+struct Impl_Tools {
+    iPtrArray    tools;
+    iPtrArray    builtins; /* iToolFilterFunc pointers */
+    iStringList *errors;
 };
 
-static iMimeHooks *theMimehooks_;
+static iTools *theTools_;
 
-iDefineTypeConstruction(MimeHooks)
+iDefineTypeConstruction(Tools)
 
-iMimeHooks *get_MimeHooks(void) {
-    return theMimehooks_;
+iTools *get_Tools(void) {
+    return theTools_;
 }
 
-void init_MimeHooks(iMimeHooks *d) {
-    theMimehooks_ = d; /* global instance */
-    init_PtrArray(&d->filters);
+void init_Tools(iTools *d) {
+    theTools_ = d; /* global instance */
+    init_PtrArray(&d->tools);
     init_PtrArray(&d->builtins);
-    addBuiltinFilter_MimeHooks(d, translateAtomXmlToGeminiFeed_);
+    d->errors = new_StringList();
+    addBuiltinFilter_Tools(d, translateAtomXmlToGeminiFeed_);
 }
 
-void deinit_MimeHooks(iMimeHooks *d) {
-    iForEach(PtrArray, i, &d->filters) {
-        delete_FilterHook(i.ptr);
+void deinit_Tools(iTools *d) {
+    iForEach(PtrArray, i, &d->tools) {
+        delete_Tool(i.ptr);
     }
+    iRelease(d->errors);
     deinit_PtrArray(&d->builtins);
-    deinit_PtrArray(&d->filters);
+    deinit_PtrArray(&d->tools);
 }
 
-void addBuiltinFilter_MimeHooks(iMimeHooks *d, iMimeHookFunc func) {
+static void addError_Tools_(iTools *d, const iTool *tool, const char *msg) {
+    pushBack_StringList(d->errors,
+                        tool ? collectNewFormat_String("[%s] %s", cstr_String(&tool->id), msg)
+                             : collectNewCStr_String(msg));
+}
+
+static iTool *findTool_Tools_(const iTools *d, const iString *id) {
+    iConstForEach(PtrArray, i, &d->tools) {
+        iTool *tool = i.ptr;
+        if (equal_String(&tool->id, id)) {
+            return tool;
+        }
+    }
+    return NULL;
+}
+
+static void handleTable_Tools_(void *context, const iString *table, iBool isStart) {
+    iTools *d = context;
+    if (isStart) {
+        iTool *tool = new_Tool();
+        set_String(&tool->id, table);
+        if (findTool_Tools_(d, table)) {
+            addError_Tools_(d, tool, "duplicate tool ID");
+        }
+        pushBack_PtrArray(&d->tools, tool);
+        return;
+    }
+    iTool *tool = back_PtrArray(&d->tools);
+    if (isEmpty_String(&tool->name)) {
+        set_String(&tool->name, &tool->id);
+    }
+    if (isEmpty_StringList(tool->command)) {
+        addError_Tools_(d, tool, "command not specified");
+    }
+    else if (hasPath_Tool_(tool) && !fileExists_FileInfo(constAt_StringList(tool->command, 0))) {
+        addError_Tools_(d, tool, "executable not found");
+    }
+}
+
+static void handleKeyValue_Tools_(void *context, const iString *table, const iString *key,
+                                  const iTomlValue *value) {
+    iTools *d = context;
+    if (isEmpty_String(table) || isEmpty_PtrArray(&d->tools)) {
+        return;
+    }
+    iTool *tool    = back_PtrArray(&d->tools);
+    iBool  isValid = iTrue;
+    if (!cmp_String(key, "name")) {
+        isValid = (value->type == string_TomlType);
+        if (isValid) {
+            set_String(&tool->name, value->value.string);
+        }
+    }
+    else if (!cmp_String(key, "command")) {
+        isValid = (value->type == stringArray_TomlType);
+        if (isValid) {
+            clear_StringList(tool->command);
+            iConstForEach(StringArray, i, value->value.stringArray) {
+                pushBack_StringList(tool->command, i.value);
+            }
+        }
+    }
+    else if (!cmp_String(key, "mime")) {
+        isValid = (value->type == string_TomlType);
+        if (isValid) {
+            setMimePattern_Tool_(tool, value->value.string);
+        }
+    }
+    else if (!cmp_String(key, "enabled")) {
+        isValid = (value->type == boolean_TomlType);
+        if (isValid) {
+            tool->isEnabled = value->value.boolean;
+        }
+    }
+    if (!isValid) {
+        addError_Tools_(d, tool, format_CStr("invalid value for \"%s\"", cstr_String(key)));
+    }
+}
+
+void addBuiltinFilter_Tools(iTools *d, iToolFilterFunc func) {
     pushBack_PtrArray(&d->builtins, (void *) func);
 }
 
-iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
-    /* TODO: Combine this function with tryFilter_MimeHooks! */
-    iRegExpMatch m;
-    iConstForEach(PtrArray, i, &d->filters) {
-        const iFilterHook *xc = i.ptr;
-        init_RegExpMatch(&m);
-        if (matchString_RegExp(xc->mimeRegex, mime, &m)) {
+iBool willTryFilter_Tools(const iTools *d, const iString *mime) {
+    /* TODO: Combine this function with tryFilter_Tools! */
+    iConstForEach(PtrArray, i, &d->tools) {
+        const iTool *tool = i.ptr;
+        if (isUsable_Tool_(tool) && matchMime_Tool(tool, mime)) {
             return iTrue;
         }
     }
     /* Built-in filters. */
+    iRegExpMatch m;
     init_RegExpMatch(&m);
     if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
         return iTrue;
@@ -273,14 +364,12 @@ iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
     return iFalse;
 }
 
-iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlock *body,
-                            const iString *requestUrl) {
-    iRegExpMatch m;
-    iConstForEach(PtrArray, i, &d->filters) {
-        const iFilterHook *xc = i.ptr;
-        init_RegExpMatch(&m);
-        if (matchString_RegExp(xc->mimeRegex, mime, &m)) {
-            iBlock *result = run_FilterHook_(xc, mime, body, requestUrl);
+iBlock *tryFilter_Tools(const iTools *d, const iString *mime, const iBlock *body,
+                        const iString *requestUrl) {
+    iConstForEach(PtrArray, i, &d->tools) {
+        const iTool *tool = i.ptr;
+        if (isUsable_Tool_(tool) && matchMime_Tool(tool, mime)) {
+            iBlock *result = run_Tool_(tool, mime, body, requestUrl);
             if (result) {
                 return result;
             }
@@ -288,7 +377,7 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
     }
     /* Built-in filters. */
     iConstForEach(PtrArray, bi, &d->builtins) {
-        iBlock *result = ((iMimeHookFunc) bi.ptr)(mime, body, requestUrl);
+        iBlock *result = ((iToolFilterFunc) bi.ptr)(mime, body, requestUrl);
         if (result) {
             return result;
         }
@@ -296,72 +385,51 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
     return NULL;
 }
 
-iBool load_MimeHooks(iMimeHooks *d, const char *saveDir) {
-    iBool reportError = iFalse;
-    iFile *f = newCStr_File(concatPath_CStr(saveDir, mimeHooksFilename_MimeHooks_));
-    if (open_File(f, read_FileMode | text_FileMode)) {
-        iBlock * src     = readAll_File(f);
-        iRangecc srcLine = iNullRange;
-        int      pos     = 0;
-        iRangecc lines[3];
-        iZap(lines);
-        while (nextSplit_Rangecc(range_Block(src), "\n", &srcLine)) {
-            iRangecc line = srcLine;
-            trim_Rangecc(&line);
-            if (isEmpty_Range(&line)) {
-                continue;
-            }
-            lines[pos++] = line;
-            if (pos == 3) {
-                iFilterHook *hook = new_FilterHook();
-                setRange_String(&hook->label, lines[0]);
-                setMimePattern_FilterHook(hook, collect_String(newRange_String(lines[1])));
-                setCommand_FilterHook(hook, collect_String(newRange_String(lines[2])));
-                /* Check if commmand is valid. */ {
-                    iRangecc seg = iNullRange;
-                    while (nextSplit_Rangecc(range_String(&hook->command), ";", &seg)) {
-                        if (!fileExistsCStr_FileInfo(cstr_Rangecc(seg))) {
-                            reportError = iTrue;
-                        }
-                        break;
-                    }
-                }
-                pushBack_PtrArray(&d->filters, hook);
-                pos = 0;
-            }
+iBool load_Tools(iTools *d, const char *saveDir) {
+    iFile *f = iClob(newCStr_File(concatPath_CStr(saveDir, fileName_Tools_)));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        iString *src = collect_String(readString_File(f));
+        close_File(f);
+        iTomlParser *toml = new_TomlParser();
+        setHandlers_TomlParser(toml, handleTable_Tools_, handleKeyValue_Tools_, d);
+        if (!parse_TomlParser(toml, src)) {
+            addError_Tools_(d, NULL, "syntax error");
         }
-        delete_Block(src);
+        delete_TomlParser(toml);
     }
-    iRelease(f);
-    return !reportError;
+    return isEmpty_StringList(d->errors);
 }
 
-void save_MimeHooks(const iMimeHooks *d) {
-    iUnused(d);
-}
-
-const iString *debugInfo_MimeHooks(const iMimeHooks *d) {
+const iString *debugInfo_Tools(const iTools *d) {
     iString *str = collectNew_String();
-    size_t index = 0;
-    iConstForEach(PtrArray, i, &d->filters) {
-        const iFilterHook *filter = i.ptr;
-        appendFormat_String(str, "### %d: %s\n", index, cstr_String(&filter->label));
-        appendFormat_String(str, "MIME regex:\n```\n%s\n```\n", cstr_String(&filter->mimePattern));
-        iStringList *args = iClob(split_String(&filter->command, ";"));
-        if (isEmpty_StringList(args)) {
-            appendFormat_String(str, "\u26a0 Command not specified!\n");
+    if (!isEmpty_StringList(d->errors)) {
+        appendFormat_String(str, "### ⚠ Errors in %s\n", fileName_Tools_);
+        iConstForEach(StringList, e, d->errors) {
+            appendFormat_String(str, "* %s\n", cstr_String(e.value));
+        }
+    }
+    iConstForEach(PtrArray, i, &d->tools) {
+        const iTool *tool = i.ptr;
+        appendFormat_String(str, "### %s: %s\n", cstr_String(&tool->id), cstr_String(&tool->name));
+        if (!tool->isEnabled) {
+            appendCStr_String(str, "Disabled\n");
+        }
+        appendFormat_String(str, "MIME regex:\n```\n%s\n```\n",
+                            isEmpty_String(&tool->mimePattern) ? "(any)"
+                                                               : cstr_String(&tool->mimePattern));
+        if (isEmpty_StringList(tool->command)) {
+            appendCStr_String(str, "⚠ Command not specified!\n");
             continue;
         }
-        const iString *exec = constAt_StringList(args, 0);
-        if (isEmpty_String(exec)) {
-            appendFormat_String(str, "\u26a0 Command not specified!\n");
+        appendFormat_String(str, "Command:%s\n```\n",
+                            !hasPath_Tool_(tool) ? " (executable searched in PATH)"
+                            : fileExists_FileInfo(constAt_StringList(tool->command, 0))
+                                ? ""
+                                : " ⚠ EXECUTABLE NOT FOUND");
+        iConstForEach(StringList, a, tool->command) {
+            appendFormat_String(str, "%s\n", cstr_String(a.value));
         }
-        else {
-            appendFormat_String(str, "Executable: %s\n```\n%s\n```\n",
-                                fileExists_FileInfo(exec) ? "" : "\u26a0 FILE NOT FOUND",
-                                cstr_String(exec));
-        }
-        index++;
+        appendCStr_String(str, "```\n");
     }
     return str;
 }

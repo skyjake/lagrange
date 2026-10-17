@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gempub.h"
-#include <lagrange/mimehooks.h>
+#include <lagrange/tools.h>
 #include "gmutil.h"
 #include "defs.h"
 #include "gmdocument.h"
@@ -554,8 +554,8 @@ iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iS
 
 /*----------------------------------------------------------------------------------------------*/
 
-static iBlock *mimeHook_Gempub_(const iString *mime, const iBlock *body,
-                                const iString *requestUrl) {
+static iBlock *filter_Gempub_(const iString *mime, const iBlock *body,
+                              const iString *requestUrl) {
     /* Only process Gempub for local files. */
     if (!isLocalFileScheme_Rangecc(urlScheme_String(requestUrl)) ||
         !startsWithCase_String(mime, mimeType_Gempub)) {
@@ -575,5 +575,5 @@ static iBlock *mimeHook_Gempub_(const iString *mime, const iBlock *body,
 }
 
 void setup_Gempub(void) {
-    addBuiltinFilter_MimeHooks(get_MimeHooks(), mimeHook_Gempub_);
+    addBuiltinFilter_Tools(get_Tools(), filter_Gempub_);
 }

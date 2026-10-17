@@ -426,8 +426,8 @@ iBool moveFocusWithArrows_App(const void *sdlEvent) {
     return focusRoot_Widget(focus_Widget()) != root_Widget(focus_Widget());
 }
 
-iMimeHooks *mimeHooks_App(void) {
-    return app_.mimehooks;
+iTools *tools_App(void) {
+    return app_.tools;
 }
 
 iPeriodic *periodic_App(void) {

@@ -25,7 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 
 iDeclareType(GmDocument)
-iDeclareType(MimeHooks)
 
 iDeclareType(Gempub)
 iDeclareTypeConstruction(Gempub)

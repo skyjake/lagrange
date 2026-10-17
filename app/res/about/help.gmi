@@ -757,9 +757,6 @@ The "idents" subdirectory is where the actual client certificates are stored. Ea
 ### modmap.lst
 Translation table for keyboard modifiers. For example, one could swap the Alt and Ctrl keys by changing their mappings. See the comment in the file that explains the format and usage.
 
-### mimehooks.txt
-See section 4.
-
 ### palette.txt
 Palette for UI color themes. This configuration file does not exist by default and must be created manually.
 
@@ -843,6 +840,9 @@ markdownAsSource = false
 * "uri" and "mime" are regular expressions. If both are given, both must match unless "matchMode" is set to "either".
 * "order" is required and must be less than 900. Lower numbers take precedence. Site-specific settings have order 100 and protocol-specific settings have order 500.
 
+### tools.ini
+Configuration of external tools, such as content filters. See section 4.
+
 ### trusted.lst
 Trusted server certificates. Each line specifies the certificate fingerprint of one server:
 > {domain};{port} {valid-until} {fingerprint}
@@ -875,11 +875,11 @@ Override display DPI detection with a user-provided value. The same value is app
 LAGRANGE_OVERRIDE_DPI=96
 ```
 
-# 4 MIME hooks
+# 4 Content filters
 
-MIME hooks enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
+Content filters enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
 
-Hooks are configured using the file "mimehooks.txt" in Lagrange's config directory. Each hook has a regexp that is matched against the response MIME type and parameters, and each matching hook is offered the response body via stdin. The called external programs are free to rewrite the entire response, including the MIME type. If one of the hooks returns a valid response, it is used as the final response of the Gemini request.
+Filters are configured using the file "tools.ini" in Lagrange's config directory. Each filter has a regexp that is matched against the response MIME type and parameters, and each matching filter is offered the response body via stdin. The called external programs are free to rewrite the entire response, including the MIME type. If one of the filters returns a valid response, it is used as the final response of the Gemini request.
 
 Example use cases:
 * Parsing an Atom XML feed and generating a Gemini feed index page
@@ -888,14 +888,15 @@ Example use cases:
 * Converting HTML or Markdown to 'text/gemini'
 * Language translations
 
+Earlier versions of Lagrange used a file called "mimehooks.txt" for configuring filters (then called "MIME hooks"). It is no longer used; any existing hooks must be manually rewritten in tools.ini.
+
 ## 4.1 Interface
 
-When a hook is called, it is given the MIME type and parameters via command line arguments. The response body is provided via stdin. The request's URL is available in the REQUEST_URL environment variable.
+The response body is provided to the filter program via stdin. The program is run with a minimal CGI-like environment:
+* CONTENT_TYPE is the MIME type and parameters of the response, for example "text/gemini; lang=ja".
+* REQUEST_URL is the URL of the request.
 
-The MIME type and parameters are split at semicolons, so "text/gemini; lang=ja" would be called as:
-```
-hookprogram text/gemini lang=ja
-```
+The rest of the environment variables are inherited from Lagrange.
 
 Output from the program (via stdout) must be a valid "20" Gemini response that includes the new MIME type:
 ```
@@ -903,29 +904,37 @@ Output from the program (via stdout) must be a valid "20" Gemini response that i
 {...body...}
 ```
 
-Any output that does not follow this format is considered to mean that the hook refused to process the contents. The next hook will be offered the response instead.
+Any output that does not follow this format is considered to mean that the filter refused to process the contents. The next filter will be offered the response instead.
 
-## 4.2 mimehooks.txt syntax
+## 4.2 tools.ini syntax
 
-Like other Lagrange configuration lines, mimehooks.txt has a simple line-oriented syntax. Lagrange must be restarted for changes to the configuration file to take effect.
-
-Each hook is specified as three lines:
-* A human-readable label (for reporting to the user)
-* MIME type/parameter regular expression
-* Command to execute, plus additional arguments each separated with semicolons
+tools.ini uses TOML syntax. Each tool is defined as a table whose name is a unique ID for the tool. Lagrange must be restarted for changes to the configuration file to take effect.
 
 For example:
-```mimehooks.txt
-Convert Atom to Gemini feed
-application/xml
-/usr/bin/python3;/home/jaakko/atomconv.py
+```tools.ini
+[atom2gmi]
+name    = "Convert Atom to Gemini feed"
+command = ["/usr/bin/python3", "/home/jaakko/atomconv.py"]
+mime    = '^application/(atom\+)?xml'
 ```
 
-The hook program is executed directly without involving the shell. This means scripts must be invoked via the interpreter executable.
+The following properties are supported:
+* `name` (string): Human-readable label for reporting to the user. Defaults to the tool ID.
+* `command` (array of strings): The program to execute, followed by its arguments. The program is executed directly without involving the shell. This means scripts must be invoked via the interpreter executable. A program name without a directory is searched for in PATH.
+* `mime` (string): Regular expression that is matched against the MIME type and parameters, ignoring case. If omitted, the tool applies to all content.
+* `enabled` (boolean): Set to false to disable the tool without removing its definition. Defaults to true.
+
+Filters are tried in the order they are defined in the file. Lagrange's built-in filters (e.g., for Atom feeds) are tried after the configured ones.
+
+Single-quoted strings are literal, i.e., backslashes are not treated as escape characters. This is convenient for regular expressions and Windows paths. In double-quoted strings, backslashes must be escaped ("\\").
+
+On macOS, apps launched via Finder or the Dock are given a minimal PATH that does not include, for example, Homebrew's installation directory. Using absolute program paths is therefore recommended.
+
+Errors in tools.ini are reported at launch, and the details are shown in "about:debug".
 
 ## 4.3 Example: Converting from Atom to Gemini
 
-The following simple Python script demonstrates how a MIME hook could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
+The following simple Python script demonstrates how a content filter could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
 ```python
 import sys
 import xml.etree.ElementTree as ET

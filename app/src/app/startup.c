@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/core.h>
 #include <lagrange/gmcerts.h>
 #include <lagrange/gmrequest.h>
-#include <lagrange/mimehooks.h>
+#include <lagrange/tools.h>
 #include <lagrange/resources.h>
 #include <lagrange/sitespec.h>
 #include <lagrange/snippets.h>
@@ -534,7 +534,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
     d->window    = NULL;
-    d->mimehooks = new_MimeHooks();
+    d->tools     = new_Tools();
     d->certs     = new_GmCerts(dataDir_App_());
     d->visited   = new_Visited();
     d->bookmarks = new_Bookmarks();
@@ -643,8 +643,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     load_Visited(d->visited, dataDir_App_());
-    if (!load_MimeHooks(d->mimehooks, dataDir_App_())) {
-        postCommand_App("~config.error where:mimehooks.txt");
+    if (!load_Tools(d->tools, dataDir_App_())) {
+        postCommand_App("~config.error where:tools.ini");
     }
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
@@ -784,8 +784,7 @@ void deinit_App_(iApp *d) {
     save_Visited(d->visited, dataDir_App_());
     delete_Visited(d->visited);
     delete_GmCerts(d->certs);
-    save_MimeHooks(d->mimehooks);
-    delete_MimeHooks(d->mimehooks);
+    delete_Tools(d->tools);
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
     delete_String(d->execPath);
@@ -949,8 +948,8 @@ const iString *debugInfo_App(void) {
     iConstForEach(StringList, j, d->launchCommands) {
         appendFormat_String(msg, "%s\n", cstr_String(j.value));
     }
-    appendFormat_String(msg, "## MIME hooks\n");
-    append_String(msg, debugInfo_MimeHooks(d->mimehooks));
+    appendFormat_String(msg, "## Tools\n");
+    append_String(msg, debugInfo_Tools(d->tools));
     return msg;
 }
 

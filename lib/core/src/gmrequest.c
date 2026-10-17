@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gopher.h>
 #include <lagrange/guppy.h>
 #include <lagrange/lang.h>
-#include <lagrange/mimehooks.h>
+#include <lagrange/tools.h>
 #include <lagrange/prefs.h>
 #include <lagrange/sitespec.h>
 
@@ -299,7 +299,7 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
                 resp->statusCode = code;
                 d->state         = receivingBody_GmRequestState;
                 notifyUpdate     = iTrue;
-                if (d->isFilterEnabled && willTryFilter_MimeHooks(get_MimeHooks(), &resp->meta)) {
+                if (d->isFilterEnabled && willTryFilter_Tools(get_Tools(), &resp->meta)) {
                     d->isRespFiltered = iTrue;
                 }
             }
@@ -351,7 +351,7 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 
 static void applyFilter_GmRequest_(iGmRequest *d) {
     iAssert(d->state == finished_GmRequestState);
-    iBlock *xbody = tryFilter_MimeHooks(get_MimeHooks(), &d->resp->meta, &d->resp->body, &d->url);
+    iBlock *xbody = tryFilter_Tools(get_Tools(), &d->resp->meta, &d->resp->body, &d->url);
     if (xbody) {
         lock_Mutex(d->mtx);
         clear_String(&d->resp->meta);
@@ -402,7 +402,7 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     }
     checkServerCertificate_GmRequest_(d);
     unlock_Mutex(d->mtx);
-    /* Check for mimehooks. */
+    /* Check for content filters. */
     if (d->isRespFiltered && d->state == finished_GmRequestState) {
         applyFilter_GmRequest_(d);
     }
@@ -1158,7 +1158,7 @@ static void fileRequest_GmRequest_(iGmRequest *d) {
                     }
                 }
                 /* Show an archive index page if this is a directory. */
-                /* TODO: Use a built-in MIME hook for this? */
+                /* TODO: Use a built-in content filter for this? */
                 if (isDir) {
                     iString *page = new_String();
                     const iRangecc containerName = baseName_Path(container);
@@ -1245,7 +1245,7 @@ static void fileRequest_GmRequest_(iGmRequest *d) {
     }
     iRelease(f);
     d->state = finished_GmRequestState;
-    /* MIME hooks may to this content. */
+    /* Content filters may apply to this content. */
     if (d->isFilterEnabled && resp->statusCode == success_GmStatusCode) {
         /* TODO: Use a background thread, the hook may take some time to run. */
         applyFilter_GmRequest_(d);

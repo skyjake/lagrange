@@ -117,9 +117,6 @@ The directory contains:
 **modmap.lst**
 :   Customized keyboard modifier mapping.
 
-**mimehooks.txt**
-:   Configuration of external programs to filter page contents depending on MIME type.
-
 **palette.txt**
 :   Colors of the UI palette.
 
@@ -134,6 +131,9 @@ The directory contains:
 
 **prefs/custom.ini**
 :   Optional user-written rules for document preferences. Never written by the application.
+
+**tools.ini**
+:   Configuration of external tools, such as programs that filter page contents depending on MIME type.
 
 **trusted.lst**
 :   Fingerprints of trusted server certificates.
