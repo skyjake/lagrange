@@ -277,7 +277,7 @@ void initGrayscaleCache_RasterText_(iRasterText *d) {
     }
     gc->bottom = 0;
     gc->texture = SDL_CreateTexture(d->base.render,
-                                    SDL_PIXELFORMAT_RGBA4444,
+                                    SDL_PIXELFORMAT_ARGB8888,
                                     SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                     gc->size.x, gc->size.y);
     SDL_SetTextureScaleMode(gc->texture, SDL_SCALEMODE_NEAREST);

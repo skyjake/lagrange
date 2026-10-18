@@ -429,7 +429,7 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
     d->size = measure_WrapText(wrapText, font).bounds.size;
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
-                                       SDL_PIXELFORMAT_RGBA4444,
+                                       SDL_PIXELFORMAT_ARGB8888,
                                        SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                        d->size.x,
                                        d->size.y);

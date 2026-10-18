@@ -1863,7 +1863,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     }
     SDL_Renderer *render = renderer_Window(get_Window());
     dbuf->sideIconBuf = SDL_CreateTexture(render,
-                                          SDL_PIXELFORMAT_RGBA4444,
+                                          SDL_PIXELFORMAT_ARGB8888,
                                           SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                           bufSize.x, bufSize.y);
     iPaint p;
