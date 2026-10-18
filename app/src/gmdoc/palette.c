@@ -657,7 +657,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmHeading2_ColorId, mix_Color(rgb_HSLColor(base), rgb_HSLColor(altBase), 0.5f));
             setHsl_Color(tmHeading3_ColorId, altBase);
 
-            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.9f, 0.1f));
+            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.95f, 0.07f));
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
             setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.25f, 1.0f });
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));

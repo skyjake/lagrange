@@ -118,7 +118,7 @@ static const char *fontLabel_(const iString *name) {
     iString       *label   = midTruncated_(base, avail - length_String(idStr));
     appendFormat_String(label, " [%s]", cstr_String(idStr));
     delete_String(idStr);
-    return cstr_String(collect_String(label));
+    return cstrCollect_String(label);
 }
 
 static void pushFontItem_(iArray *items, const iFontSpec *spec, const char *id) {
