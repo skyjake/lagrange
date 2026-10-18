@@ -143,7 +143,8 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
     const int    pageSpan = columnsPerPage_GmDocument(d) * d->metrics.pageHeight;
     /* Headers show the last level 1 heading on or before the page, except on the first page
        and on a page that begins with one. The first page of a book's chapter has it unless the
-       heading is on the page. A single-page chapter has the book's title instead. */
+       heading is on the page or the page begins with a level 2 heading (the chapter title).
+       A single-page chapter has the book's title instead. */
     const iBool    isBook = !isEmpty_String(&d->bookTitle);
     iRangecc       title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
     const iRangecc bookTitle = auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
@@ -153,6 +154,7 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
         const int pageEnd        = (int) (page + 1) * pageSpan;
         iBool     isFirstRun     = iTrue;
         iBool     isChapterStart = iFalse;
+        iBool     isTitleStart   = iFalse;
         iBool     hasHeading     = iFalse;
         for (; runPos < size_Array(&d->layout); runPos++) {
             const iGmRun *run = constAt_Array(&d->layout, runPos);
@@ -166,6 +168,7 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
                 run->lineType == heading1_GmLineType && run->flags & startOfLine_GmRunFlag;
             if (isFirstRun) {
                 isChapterStart = isHeading;
+                isTitleStart   = run->lineType == heading2_GmLineType;
                 isFirstRun     = iFalse;
             }
             if (isHeading) {
@@ -177,7 +180,8 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
         iGmPageBands bands = { iNullRange, iNullRange, iNullRange };
         const iBool isCoverStart = d->flags.isBookCover && page == 0;
         const iBool hasHeader    = page > 0 ? !isChapterStart
-                                            : isBook && !isCoverStart && !hasHeading;
+                                            : isBook && !isCoverStart && !hasHeading &&
+                                                  !isTitleStart;
         if (hasHeader && !isEmpty_Range(&title)) {
             bands.header = fitPageBandText_GmDocument_(d, title);
         }

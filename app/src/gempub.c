@@ -411,28 +411,44 @@ static iRangecc lastHeading1_(iRangecc source) {
     return heading;
 }
 
-static iBool beginsWithHeading_(iRangecc source) {
+static int leadingHeading_(iRangecc source, iRangecc *text_out) {
+    /* Level of the heading on the first line, or zero. */
     iRangecc line = iNullRange;
     while (nextSplit_Rangecc(source, "\n", &line)) {
         iRangecc text = line;
         trim_Rangecc(&text);
-        if (!isEmpty_Range(&text)) {
-            return startsWith_Rangecc(text, "#");
+        if (isEmpty_Range(&text)) {
+            continue;
         }
+        int level = 0;
+        while (level < 3 && text.start < text.end && *text.start == '#') {
+            text.start++;
+            level++;
+        }
+        trim_Rangecc(&text);
+        *text_out = text;
+        return level;
     }
-    return iFalse;
+    return 0;
 }
 
 const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
-    /* A page that does not begin with a heading is titled by its link on the index page.
-       Otherwise, the last level 1 heading on the preceding pages, or else the heading above
-       the link on the index page. */
+    /* A level 2 heading that begins the page, or the page's link on the index page if there
+       is no heading. Otherwise, the last level 1 heading on the preceding pages, or else the
+       heading above the link on the index page. */
     parseNavigationLinks_Gempub_(d);
     if (navIndex < size_Array(d->navLinks)) {
         const iGempubNavLink *nav  = constAt_Array(d->navLinks, navIndex);
         const iBlock         *data = archiveData_Gempub_(d, &nav->url);
-        if (nav->hasLabel && data && !beginsWithHeading_(range_Block(data))) {
-            return &nav->label;
+        if (data) {
+            iRangecc  heading = iNullRange;
+            const int level   = leadingHeading_(range_Block(data), &heading);
+            if (level == 0 && nav->hasLabel) {
+                return &nav->label;
+            }
+            if (level == 2 && !isEmpty_Range(&heading)) {
+                return collectNewRange_String(heading);
+            }
         }
     }
     for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
