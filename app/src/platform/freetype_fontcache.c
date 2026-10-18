@@ -60,6 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <combaseapi.h>
 #endif
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -354,6 +355,15 @@ static enum iFontStyle fcStyleToFontStyle_(int weight, int slant) {
     return regular_FontStyle;
 }
 
+static int fcStyleWeight_(enum iFontStyle style) {
+    switch (style) {
+        case light_FontStyle:    return FC_WEIGHT_LIGHT;
+        case semiBold_FontStyle: return FC_WEIGHT_DEMIBOLD;
+        case bold_FontStyle:     return FC_WEIGHT_BOLD;
+        default:                 return FC_WEIGHT_REGULAR;
+    }
+}
+
 static void enumerateFontconfig_(iArray *entries_out) {
     FcConfig *config = FcInitLoadConfigAndFonts();
     if (!config) return;
@@ -368,10 +378,22 @@ static void enumerateFontconfig_(iArray *entries_out) {
         FcConfigDestroy(config);
         return;
     }
+    /* Distance of each filled style slot from its nominal weight, parallel to entries_out. */
+    iArray slotDists;
+    init_Array(&slotDists, sizeof(int) * max_FontStyle);
     /* Two passes: non-italic faces first so they take priority in shared style slots.
        Both bold and bold-italic map to bold_FontStyle, so without this ordering a
        bold-italic face returned first by fontconfig would lock out the plain bold face. */
     for (int pass = 0; pass < 2; pass++) {
+    if (pass == 1) {
+        /* Italic faces cannot replace roman ones. */
+        iForEach(Array, j, &slotDists) {
+            int *dists = j.value;
+            for (int k = 0; k < max_FontStyle; k++) {
+                if (dists[k] != INT_MAX) dists[k] = 0;
+            }
+        }
+    }
     for (int i = 0; i < fs->nfont; i++) {
         FcPattern *font = fs->fonts[i];
         FcChar8 *familyCStr = NULL;
@@ -396,6 +418,7 @@ static void enumerateFontconfig_(iArray *entries_out) {
         if (pass == 0 && slant != FC_SLANT_ROMAN) continue;
         if (pass == 1 && slant == FC_SLANT_ROMAN) continue;
         iFontCacheEntry *entry = NULL;
+        int             *dists = NULL;
         /* Find or create entry via linear scan (one-time init, so fast enough). */ {
             iString specId;
             init_String(&specId);
@@ -403,6 +426,7 @@ static void enumerateFontconfig_(iArray *entries_out) {
             iForEach(Array, j, entries_out) {
                 if (equal_String(&((iFontCacheEntry *) j.value)->id, &specId)) {
                     entry = j.value;
+                    dists = at_Array(&slotDists, index_ArrayIterator(&j));
                     break;
                 }
             }
@@ -414,20 +438,35 @@ static void enumerateFontconfig_(iArray *entries_out) {
                 if (spacing == FC_MONO) newEntry.flags |= monospace_FontSpecFlag;
                 pushBack_Array(entries_out, &newEntry);
                 entry = back_Array(entries_out);
+                int newDists[max_FontStyle];
+                for (int k = 0; k < max_FontStyle; k++) newDists[k] = INT_MAX;
+                pushBack_Array(&slotDists, newDists);
+                dists = back_Array(&slotDists);
             }
             deinit_String(&specId);
         }
+        /* Prefer the face closest to the nominal weight; weight metadata may be bogus. */
         const enum iFontStyle styleId = fcStyleToFontStyle_(weight, slant);
-        iFontCacheStyle      *sty     = &entry->styles[styleId];
-        if (!isEmpty_String(&sty->identifier)) {
-            /* Style slot already filled. */
+        const int             dist    = iAbsi(weight - fcStyleWeight_(styleId));
+        if (dist >= dists[styleId]) {
             continue;
         }
+        dists[styleId] = dist;
+        iFontCacheStyle *sty = &entry->styles[styleId];
         setCStr_String(&sty->identifier, (const char *) fileCStr);
         sty->colIndex = colIndex;
-        extractMetrics_((const char *) fileCStr, colIndex, sty);
     }
     } /* pass */
+    iForEach(Array, j, entries_out) {
+        iFontCacheEntry *entry = j.value;
+        for (int k = 0; k < max_FontStyle; k++) {
+            iFontCacheStyle *sty = &entry->styles[k];
+            if (!isEmpty_String(&sty->identifier)) {
+                extractMetrics_(cstr_String(&sty->identifier), sty->colIndex, sty);
+            }
+        }
+    }
+    deinit_Array(&slotDists);
     FcFontSetDestroy(fs);
     FcConfigDestroy(config);
 }
