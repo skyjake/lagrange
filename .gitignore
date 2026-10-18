@@ -5,6 +5,7 @@
 
 /.*/
 /build/
+/build2/
 build-*/
 /*.sublime-*
 /.cache/

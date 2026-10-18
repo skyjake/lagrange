@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <windowsx.h>
 #include <dwmapi.h>
-#include <d2d1.h>
 #include <shlobj.h>
+#include <d2d1.h>
 
 #include "win32.h"
 #include "ui/window.h"
