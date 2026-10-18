@@ -1548,10 +1548,11 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             return iTrue;
         }
         postCommand_Widget(w,
-                           "%s.mode force:1 arg:%d toggle:%d",
+                           "%s.mode force:1 arg:%d toggle:%d keydown:%d",
                            side == left_SidebarSide ? "sidebar" : "sidebar2",
                            mode,
-                           argLabel_Command(cmd, "toggle"));
+                           argLabel_Command(cmd, "toggle"),
+                           argLabel_Command(cmd, "keydown"));
         return iTrue;
     }
     else if (equal_Command(cmd, "mode")) {
@@ -1560,19 +1561,22 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             !isModeEnabled_SidebarWidget_(d, d->side, mode) &&
             isModeEnabled_SidebarWidget_(d, d->side ^ 1, mode)) {
             /* Make it affect the other side instead. */
-            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d contents:%d",
+            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d contents:%d keydown:%d",
                                d->side == 0 ? "sidebar2" : "sidebar",
                                mode,
                                argLabel_Command(cmd, "show"),
                                argLabel_Command(cmd, "toggle"),
                                argLabel_Command(cmd, "shelf"),
                                argLabel_Command(cmd, "current"),
-                               argLabel_Command(cmd, "contents"));
+                               argLabel_Command(cmd, "contents"),
+                               argLabel_Command(cmd, "keydown"));
             return iTrue;
         }
         if (mode == gempub_SidebarMode && argLabel_Command(cmd, "contents")) {
             if (isVisible_Widget(w) && d->mode == gempub_SidebarMode && d->gempubPage == 1) {
-                postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
+                postCommandf_App("%s.toggle keydown:%d",
+                                 cstr_String(id_Widget(w)),
+                                 argLabel_Command(cmd, "keydown"));
                 return iTrue;
             }
             d->gempubPage = 1;
@@ -1589,7 +1593,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
             (argLabel_Command(cmd, "toggle") &&
              (!isVisible_Widget(w) || (!wasChanged && !isShelfChanged)))) {
-            postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
+            postCommandf_App("%s.toggle keydown:%d",
+                             cstr_String(id_Widget(w)),
+                             argLabel_Command(cmd, "keydown"));
         }
         scrollOffset_ListWidget(d->list, 0);
         if (argLabel_Command(cmd, "current")) {
@@ -1711,7 +1717,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
         }
         if (!isHiding && d->mode != gempub_SidebarMode /* keys are for turning pages */ &&
-            (!isMobile_Platform() || isPointerHidden_Gamepad(gamepad_App()))) {
+            (isTerminal_Platform() || isPointerHidden_Gamepad(gamepad_App()) ||
+             (!isMobile_Platform() && argLabel_Command(cmd, "keydown")))) {
             setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
         else {
