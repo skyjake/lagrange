@@ -79,6 +79,53 @@ static iBool hasFamilyPrefix_(const char *name, const char *prefix, size_t prefi
     return c == '\0' || c == ' ' || c == '_';
 }
 
+static iString *midTruncated_(iRangecc range, size_t maxLen) {
+    iString *str = collectNewRange_String(range);
+    const size_t len = length_String(str);
+    if (len <= maxLen) {
+        return str;
+    }
+    const size_t tailLen = (maxLen - 1) / 2;
+    iString *out  = collect_String(mid_String(str, 0, maxLen - 1 - tailLen));
+    iString *tail = collect_String(mid_String(str, len - tailLen, tailLen));
+    trimEnd_String(out);
+    trimStart_String(tail);
+    appendCStr_String(out, "\u2026");
+    append_String(out, tail);
+    return out;
+}
+
+/* Long names are shortened in the middle. A disambiguating " [id]" suffix is shortened
+   separately to keep the brackets. */
+static const char *fontLabel_(const iString *name) {
+    const size_t maxLen = 40;
+    const size_t len    = length_String(name);
+    if (len <= maxLen) {
+        return cstr_String(name);
+    }
+    const size_t idPos = lastIndexOfCStr_String(name, " [");
+    if (idPos == iInvalidPos || !endsWith_String(name, "]")) {
+        return cstr_String(midTruncated_(range_String(name), maxLen));
+    }
+    const iRangecc base    = { constBegin_String(name), constBegin_String(name) + idPos };
+    const iRangecc id      = { base.end + 2, constEnd_String(name) - 1 };
+    const size_t   avail   = maxLen - 3;
+    const size_t   baseLen = length_String(collectNewRange_String(base));
+    const size_t   idMax   = iMax(avail / 3, avail - iMin(baseLen, avail));
+    const iString *idStr   = midTruncated_(id, idMax);
+    iString       *label   = midTruncated_(base, avail - length_String(idStr));
+    appendFormat_String(label, " [%s]", cstr_String(idStr));
+    return cstr_String(label);
+}
+
+static void pushFontItem_(iArray *items, const iFontSpec *spec, const char *id) {
+    pushBack_Array(items,
+                   &(iMenuItem){ fontLabel_(&spec->name),
+                                 0,
+                                 0,
+                                 format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
+}
+
 static void appendGroupedFontItems_(iArray *items, const iPtrArray *specs, const char *id) {
     const size_t n = size_PtrArray(specs);
     char prefix[128];
@@ -99,12 +146,7 @@ static void appendGroupedFontItems_(iArray *items, const iPtrArray *specs, const
             pushBack_Array(items, &(iMenuItem) { format_CStr("---%s", prefix) });
             for (size_t j = i; j < groupEnd; j++) {
                 const iFontSpec *s = constAt_PtrArray(specs, j);
-                pushBack_Array(
-                    items,
-                    &(iMenuItem) { cstr_String(&s->name),
-                                   0,
-                                   0,
-                                   format_CStr("!font.set %s:%s", id, cstr_String(&s->id)) });
+                pushFontItem_(items, s, id);
             }
             pushBack_Array(items, &(iMenuItem) { "---:" }); /* terminate the group */
         }
@@ -112,12 +154,7 @@ static void appendGroupedFontItems_(iArray *items, const iPtrArray *specs, const
             /* Emit the font(s) flat. */
             for (size_t j = i; j < groupEnd; j++) {
                 const iFontSpec *s = constAt_PtrArray(specs, j);
-                pushBack_Array(
-                    items,
-                    &(iMenuItem) { cstr_String(&s->name),
-                                   0,
-                                   0,
-                                   format_CStr("!font.set %s:%s", id, cstr_String(&s->id)) });
+                pushFontItem_(items, s, id);
             }
         }
         i = groupEnd;

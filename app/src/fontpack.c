@@ -548,18 +548,27 @@ static void sortSpecs_Fonts_(iFonts *d) {
 }
 
 static void disambiguateSpecs_Fonts_(iFonts *d) {
-    /* Names of specs with the same human-readable label are augmented with the font ID. */
+    /* Names of specs with the same human-readable label are augmented with the font ID.
+       Auxiliary specs are not listed in the UI. */
     const size_t numSpecs = size_PtrArray(&d->specOrder);
+    iPtrSet *ambiguous = new_PtrSet();
     for (size_t i = 0; i < numSpecs; i++) {
         iFontSpec *spec1 = at_PtrArray(&d->specOrder, i);
+        if (spec1->flags & auxiliary_FontSpecFlag) continue;
         for (size_t j = i + 1; j < numSpecs; j++) {
             iFontSpec *spec2 = at_PtrArray(&d->specOrder, j);
-            if (equalCase_String(&spec1->name, &spec2->name)) {
-                appendFormat_String(&spec1->name, " [%s]", cstr_String(&spec1->id));
-                appendFormat_String(&spec2->name, " [%s]", cstr_String(&spec2->id));
+            if (~spec2->flags & auxiliary_FontSpecFlag &&
+                equalCase_String(&spec1->name, &spec2->name)) {
+                insert_PtrSet(ambiguous, spec1);
+                insert_PtrSet(ambiguous, spec2);
             }
         }
     }
+    iForEach(PtrSet, i, ambiguous) {
+        iFontSpec *spec = *i.value;
+        appendFormat_String(&spec->name, " [%s]", cstr_String(&spec->id));
+    }
+    delete_PtrSet(ambiguous);
 }
 
 static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
