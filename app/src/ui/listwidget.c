@@ -98,6 +98,7 @@ void init_ListWidget(iListWidget *d) {
     init_SmoothScroll(&d->scrollY, w, scrollBegan_ListWidget_);
     d->itemHeight = 0;
     d->itemPadding = 0;
+    d->wheelStep = 0;
     init_Array(&d->itemTops, sizeof(int));
     d->isLayoutValid = iFalse;
     d->isResizing = iFalse;
@@ -359,6 +360,10 @@ void setItemPadding_ListWidget(iListWidget *d, int itemPadding) {
         invalidateLayout_ListWidget_(d);
         invalidate_ListWidget(d);
     }
+}
+
+void setWheelStep_ListWidget(iListWidget *d, int wheelStep) {
+    d->wheelStep = wheelStep;
 }
 
 void setResizing_ListWidget(iListWidget *d, iBool isResizing) {
@@ -1021,7 +1026,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         }
         else {
             /* Traditional mouse wheel. */
-            amount *= 3 * d->itemHeight;
+            amount *= d->wheelStep ? d->wheelStep : 3 * d->itemHeight;
             moveSpan_SmoothScroll(
                 &d->scrollY, amount, 600 * scrollSpeedFactor_Prefs(prefs_App(), mouse_ScrollType));
         }

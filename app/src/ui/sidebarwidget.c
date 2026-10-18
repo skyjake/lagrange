@@ -753,6 +753,10 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
             }
         }
         setItemPadding_ListWidget(d->list, itemPadding);
+        /* Variable-height items: three default heights would be too much. */
+        const iBool isVariable =
+            d->mode == documentOutline_SidebarMode || d->mode == feedEntries_SidebarMode;
+        setWheelStep_ListWidget(d->list, isVariable ? 3 * itemHeight_ListWidget(d->list) / 2 : 0);
     }
     if (d->certList) {
         updateItemHeight_CertListWidget(d->certList);

@@ -77,6 +77,7 @@ struct Impl_ListWidget {
     iSmoothScroll  scrollY;
     int            itemHeight; /* default */
     int            itemPadding; /* added to measured item heights */
+    int            wheelStep; /* zero: three default item heights */
     iPtrArray      items;
     iArray         itemTops; /* top of each item, followed by the total height */
     iBool          isLayoutValid;
@@ -109,6 +110,7 @@ void    init_ListWidget             (iListWidget *);
 
 void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
 void    setItemPadding_ListWidget   (iListWidget *, int itemPadding);
+void    setWheelStep_ListWidget     (iListWidget *, int wheelStep);
 void    setResizing_ListWidget      (iListWidget *, iBool isResizing);
 
 void    invalidate_ListWidget       (iListWidget *);
