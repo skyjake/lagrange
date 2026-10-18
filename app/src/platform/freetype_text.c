@@ -265,8 +265,9 @@ int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
 }
 
 /* Vertical-only hinting keeps glyph shapes consistent with the unhinted HarfBuzz advances,
-   which is required for fractional positioning. */
-static const FT_Int32 outlineLoadFlags_ = FT_LOAD_TARGET_LIGHT;
+   which is required for fractional positioning. No autohinter: it stretches glyphs vertically
+   to round the x-height, while native TrueType (v40) hints are vertical-only, too. */
+static const FT_Int32 outlineLoadFlags_ = FT_LOAD_TARGET_LIGHT | FT_LOAD_NO_AUTOHINT;
 
 static FT_UInt colorPpem_(const iFontFile *d, float xScale) {
     return iMax(1, (FT_UInt) roundf(xScale * (float) d->unitsPerEm));
