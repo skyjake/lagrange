@@ -508,6 +508,7 @@ void init_CertListWidget(iCertListWidget *d) {
 void updateItemHeight_CertListWidget(iCertListWidget *d) {
     const float height = isTerminal_Platform() ? 4.0f : 3.5f;
     setItemHeight_ListWidget(&d->list, height * lineHeight_Text(d->itemFonts[0]));
+    setWheelStep_ListWidget(&d->list, itemHeight_ListWidget(&d->list));
 }
 
 static const char *expiry_CertListWidget_(const iGmIdentity *ident) {
