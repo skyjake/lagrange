@@ -216,13 +216,15 @@ static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
         { "${prefs.doctheme.name.colorfuldark}", colorfulDark_GmDocumentTheme },
         { "${prefs.doctheme.name.colorfullight}", colorfulLight_GmDocumentTheme },
         { "${prefs.doctheme.name.vibrantlight}", vibrantLight_GmDocumentTheme },
+        { "${prefs.doctheme.name.oceanic}", oceanic_GmDocumentTheme },
+        { "${prefs.doctheme.name.arboreal}", arboreal_GmDocumentTheme },
+        { "---" },
         { "${prefs.doctheme.name.black}", black_GmDocumentTheme },
         { "${prefs.doctheme.name.gray}", gray_GmDocumentTheme },
         { "${prefs.doctheme.name.white}", white_GmDocumentTheme },
+        { "---" },
         { "${prefs.doctheme.name.sepia}", sepia_GmDocumentTheme },
         { "${prefs.doctheme.name.paperwhite}", paperwhite_GmDocumentTheme },
-        { "${prefs.doctheme.name.oceanic}", oceanic_GmDocumentTheme },
-        { "${prefs.doctheme.name.arboreal}", arboreal_GmDocumentTheme },
         { "${prefs.doctheme.name.highcontrast}", highContrast_GmDocumentTheme },
     };
     iArray *items = collectNew_Array(sizeof(iMenuItem));
@@ -232,9 +234,14 @@ static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
                                      format_CStr("%s.set arg:%d", cmd, none_GmDocumentTheme) });
     }
     iForIndices(i, themes) {
+        const char *label = themes[i].label;
         pushBack_Array(items,
-                       &(iMenuItem){ themes[i].label, 0, 0,
-                                     format_CStr("%s.set arg:%d", cmd, themes[i].theme) });
+                       &(iMenuItem) { label,
+                                      0,
+                                      0,
+                                      !equal_CStr(label, "---")
+                                          ? format_CStr("%s.set arg:%d", cmd, themes[i].theme)
+                                          : NULL });
     }
     pushBack_Array(items, &(iMenuItem){ NULL });
     return constData_Array(items);

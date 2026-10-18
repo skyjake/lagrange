@@ -764,6 +764,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             setHsl_Color(tmLinkText_ColorId,
                          addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0, isDarkUI ? 0.2f : -0.2f));
+            if (isArboreal) {
+                /* Bluish green to distinguish from Gopher links. */
+                const iHSLColor linkIcon = { 160, 0.7f, isDarkUI ? 0.45f : 0.27f, 1.0f };
+                setHsl_Color(tmLinkIcon_ColorId, linkIcon);
+                set_Color(tmLinkTextHover_ColorId, get_Color(tmLinkIcon_ColorId));
+                setHsl_Color(tmLinkIconVisited_ColorId,
+                             setLum_HSLColor(linkIcon, isDarkUI ? 0.25f : 0.45f));
+            }
             if (!isDarkUI) {
                 setHsl_Color(tmLinkIconVisited_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmLinkIconVisited_ColorId), 0.0f, -0.25f * (1-lum)));
