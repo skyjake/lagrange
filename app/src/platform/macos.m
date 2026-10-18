@@ -158,6 +158,18 @@ static void ignoreImmediateKeyDownEvents_(void) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static NSString *commandKey_(NSMenuItem *item) {
+#if defined (__MAC_14_0)
+    if (@available(macOS 14.0, *)) {
+        /* Items may differ only by subtitle. */
+        if (item.subtitle) {
+            return [NSString stringWithFormat:@"%@\n%@", item.title, item.subtitle];
+        }
+    }
+#endif
+    return item.title;
+}
+
 @interface MenuCommands : NSObject {
     NSMutableDictionary<NSString *, NSString *> *commands;
     iWidget *source;
@@ -174,7 +186,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
 }
 
 - (void)setCommand:(NSString * __nonnull)command forMenuItem:(NSMenuItem * __nonnull)menuItem {
-    [commands setObject:command forKey:[menuItem title]];
+    [commands setObject:command forKey:commandKey_(menuItem)];
 }
 
 - (void)setSource:(iWidget *)widget {
@@ -186,11 +198,11 @@ static void ignoreImmediateKeyDownEvents_(void) {
 }
 
 - (NSString *)commandForMenuItem:(NSMenuItem *)menuItem {
-    return [commands objectForKey:[menuItem title]];
+    return [commands objectForKey:commandKey_(menuItem)];
 }
 
 - (void)postMenuItemCommand:(id)sender {
-    NSString *command = [commands objectForKey:[(NSMenuItem *)sender title]];
+    NSString *command = [commands objectForKey:commandKey_((NSMenuItem *)sender)];
     if (command) {
         const char *cstr = [command cStringUsingEncoding:NSUTF8StringEncoding];
         if (source) {
@@ -887,10 +899,25 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
 //                prependCStr_String(&itemTitle, "\u26a0\ufe0f ");
             }
             NSMenuItem *item = [[NSMenuItem alloc] init];
-            /* Use attributed string to allow newlines. */
-            NSAttributedString *title = [[NSAttributedString alloc] initWithString:cleanString_(&itemTitle)];
-            item.attributedTitle = title;
-            [title release];
+            NSString *cleanTitle = cleanString_(&itemTitle);
+            iBool hasSubtitle = iFalse;
+#if defined (__MAC_14_0)
+            if (@available(macOS 14.0, *)) {
+                /* Additional lines are shown as a subtitle. An attributed title would hide it. */
+                const NSRange nl = [cleanTitle rangeOfString:@"\n"];
+                if (nl.location != NSNotFound) {
+                    item.title    = [cleanTitle substringToIndex:nl.location];
+                    item.subtitle = [cleanTitle substringFromIndex:NSMaxRange(nl)];
+                    hasSubtitle   = iTrue;
+                }
+            }
+#endif
+            if (!hasSubtitle) {
+                /* Use attributed string to allow newlines. */
+                NSAttributedString *title = [[NSAttributedString alloc] initWithString:cleanTitle];
+                item.attributedTitle = title;
+                [title release];
+            }
             if (submenuItems) {
                 NSMenu *sub = [[NSMenu alloc] init];
                 sub.autoenablesItems = YES;

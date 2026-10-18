@@ -1510,13 +1510,28 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
             if (imgName) {
                 img = [UIImage systemImageNamed:[NSString stringWithUTF8String:imgName]];
             }
+            NSString *title = [NSString stringWithUTF8String:cstr_String(&label)];
+            NSString *subtitle = nil;
+            if (@available(iOS 15.0, *)) {
+                /* Additional lines are shown as a subtitle. */
+                const NSRange nl = [title rangeOfString:@"\n"];
+                if (nl.location != NSNotFound) {
+                    subtitle = [title substringFromIndex:NSMaxRange(nl)];
+                    title = [title substringToIndex:nl.location];
+                }
+            }
             /* Create the UI action. */
-            UIAction *action = [UIAction actionWithTitle:[NSString stringWithUTF8String:cstr_String(&label)]
+            UIAction *action = [UIAction actionWithTitle:title
                                                    image:img
                                               identifier:nil
                                                  handler:^(UIAction *action) {
                 [data triggerCommand:action.identifier];
             }];
+            if (subtitle) {
+                if (@available(iOS 15.0, *)) {
+                    action.subtitle = subtitle;
+                }
+            }
             UIMenuElementAttributes attrs = 0;
             if (isDisabled) {
                 attrs |= UIMenuElementAttributesDisabled;
