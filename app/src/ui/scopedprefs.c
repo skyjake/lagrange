@@ -49,10 +49,10 @@ static iBool monospaceFonts_(const iFontSpec *spec) {
     return (spec->flags & monospace_FontSpecFlag) != 0 && ~spec->flags & auxiliary_FontSpecFlag;
 }
 
-/* Copy up to the first `numWords` space-delimited words of `name` into `out`. */
 static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, int numWords) {
-    const char *p = name;
-    int words = 0;
+    /* Copy up to the first `numWords` space-delimited words of `name` into `out`. */
+    const char *p         = name;
+    int         words     = 0;
     const char *underline = strchr(name, '_');
     if (underline) {
         size_t len = iMin(underline - name, outSize - 1);
@@ -72,32 +72,34 @@ static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, in
     out[len] = '\0';
 }
 
-/* `name` starts with `prefix` at a word boundary? (space or end of string) */
 static iBool hasFamilyPrefix_(const char *name, const char *prefix, size_t prefixLen) {
+    /* `name` starts with `prefix` at a word boundary? (space or end of string) */
     if (iCmpStrN(name, prefix, prefixLen) != 0) return iFalse;
     const char c = name[prefixLen];
     return c == '\0' || c == ' ' || c == '_';
 }
 
 static iString *midTruncated_(iRangecc range, size_t maxLen) {
-    iString *str = collectNewRange_String(range);
+    iString *str = newRange_String(range);
     const size_t len = length_String(str);
     if (len <= maxLen) {
         return str;
     }
     const size_t tailLen = (maxLen - 1) / 2;
-    iString *out  = collect_String(mid_String(str, 0, maxLen - 1 - tailLen));
-    iString *tail = collect_String(mid_String(str, len - tailLen, tailLen));
+    iString *out  = mid_String(str, 0, maxLen - 1 - tailLen);
+    iString *tail = mid_String(str, len - tailLen, tailLen);
     trimEnd_String(out);
     trimStart_String(tail);
     appendCStr_String(out, "\u2026");
     append_String(out, tail);
+    delete_String(tail);
+    delete_String(str);
     return out;
 }
 
-/* Long names are shortened in the middle. A disambiguating " [id]" suffix is shortened
-   separately to keep the brackets. */
 static const char *fontLabel_(const iString *name) {
+    /* Long names are shortened in the middle. A disambiguating " [id]" suffix is shortened
+       separately to keep the brackets. */
     const size_t maxLen = 40;
     const size_t len    = length_String(name);
     if (len <= maxLen) {
@@ -105,17 +107,18 @@ static const char *fontLabel_(const iString *name) {
     }
     const size_t idPos = lastIndexOfCStr_String(name, " [");
     if (idPos == iInvalidPos || !endsWith_String(name, "]")) {
-        return cstr_String(midTruncated_(range_String(name), maxLen));
+        return cstrCollect_String(midTruncated_(range_String(name), maxLen));
     }
     const iRangecc base    = { constBegin_String(name), constBegin_String(name) + idPos };
     const iRangecc id      = { base.end + 2, constEnd_String(name) - 1 };
     const size_t   avail   = maxLen - 3;
-    const size_t   baseLen = length_String(collectNewRange_String(base));
+    const size_t   baseLen = length_Rangecc(base);
     const size_t   idMax   = iMax(avail / 3, avail - iMin(baseLen, avail));
-    const iString *idStr   = midTruncated_(id, idMax);
+    iString       *idStr   = midTruncated_(id, idMax);
     iString       *label   = midTruncated_(base, avail - length_String(idStr));
     appendFormat_String(label, " [%s]", cstr_String(idStr));
-    return cstr_String(label);
+    delete_String(idStr);
+    return cstr_String(collect_String(label));
 }
 
 static void pushFontItem_(iArray *items, const iFontSpec *spec, const char *id) {
@@ -301,8 +304,8 @@ static const char *scopeBarId_(enum iDocPrefsGroup group) {
     return format_CStr("prefs.scope.%s", groupId_DocPrefs(group));
 }
 
-/* Dropdown contents are omitted when only the IDs of the controls are needed. */
 static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocols, iBool withMenus) {
+    /* Dropdown contents are omitted when only the IDs of the controls are needed. */
     iArray *items = collectNew_Array(sizeof(iMenuItem));
 #define menu_(expr)     (withMenus ? (const void *) (expr) : NULL)
 #define add_(...)       pushBack_Array(items, &(iMenuItem){ __VA_ARGS__ })
@@ -411,9 +414,9 @@ static iBool isPageUsed_(size_t index, iBool withProtocols) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-/* A row at the top of a page. */
 static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
-    const char *     id        = cstr_Command(item->label, "id");
+    /* A row at the top of a page. */
+    const char      *id        = cstr_Command(item->label, "id");
     const iMenuItem *protocols = item->data;
     iWidget *        toggle    = makeToggle_Widget(format_CStr("%s.toggle", id));
     iLabelWidget *   label     = makeHeading_Widget("");
@@ -437,9 +440,9 @@ static void makeScopeBar_(iWidget *page, const iMenuItem *item) {
                              resizeToParentWidth_WidgetFlag | resizeWidthOfChildren_WidgetFlag);
 }
 
-/* Without protocols to choose from, the toggle is the first row of the page. */
 static void makeScopeToggleRow_(iWidget *headings, iWidget *values, const iMenuItem *item) {
-    const char *  id    = cstr_Command(item->label, "id");
+    /* Without protocols to choose from, the toggle is the first row of the page. */
+    const char   *id    = cstr_Command(item->label, "id");
     iLabelWidget *label = makeHeading_Widget("");
     setId_Widget(as_Widget(label), format_CStr("%s.label", id));
     addChild_Widget(headings, iClob(label));
@@ -518,8 +521,8 @@ const char *scope_ScopedPrefs(const iWidget *dlg) {
     return scope ? cstr_String(scope) : "base";
 }
 
-/* Content settings are scoped only in Site Settings. */
 static const char *groupScope_(const iWidget *dlg, enum iDocPrefsGroup group) {
+    /* Content settings are scoped only in Site Settings. */
     const char *scope = scope_ScopedPrefs(dlg);
     return group == content_DocPrefsGroup && !startsWith_CStr(scope, "root:") ? "base" : scope;
 }
