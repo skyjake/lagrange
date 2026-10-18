@@ -20,6 +20,9 @@
 
 cmake_minimum_required (VERSION 3.15)
 
+#-------------------------------------------------------------------------------------------------
+# App build options
+
 # Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
 if (HAIKU OR ANDROID)
@@ -29,13 +32,7 @@ set (DEFAULT_IDLE_SLEEP OFF)
 if (IOS)
     set (DEFAULT_IDLE_SLEEP ON)
 endif ()
-if (NOT APPLE AND NOT IOS)
-    set (DEFAULT_FREETYPE ON)
-else ()
-    set (DEFAULT_FREETYPE OFF)
-endif ()
 
-# Build configuration.
 option (ENABLE_APP_BUNDLE       "Build an app bundle instead of a Unix-style install (macOS)" ON)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
@@ -51,43 +48,13 @@ option (ENABLE_MOBILE_TABLET    "Use the tablet mobile UI design instead of desk
 option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
-option (ENABLE_STATIC           "Prefer linking dependencies statically" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
-option (ENABLE_X11_XLIB         "Use Xlib directly, if available (X11)" ON)
+
 set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
 set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check when searching 'resources.lgr'")
 
-# Optional dependencies.
-option (ENABLE_CORETEXT         "Use Core Text for text rendering (macOS/iOS)" ${APPLE})
-option (ENABLE_FREETYPE         "Use FreeType for text rendering (Windows/Linux)" ${DEFAULT_FREETYPE})
-option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
-option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
-option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
-option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
-option (ENABLE_JXL              "Use libjxl to decode .jxl images (via pkg-config)" ON)
-option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
-option (ENABLE_OPUS             "Use llibopusfile for decoding Opus audio (via pkg-config)" ON)
-option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
-option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
-option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
-
-if (ENABLE_CORETEXT)
-    if (NOT APPLE)
-        message (FATAL_ERROR "Core Text is only available on Apple platforms")
-    endif ()
-    if (ENABLE_FREETYPE)
-        message (FATAL_ERROR "ENABLE_CORETEXT and ENABLE_FREETYPE are mutually exclusive")
-    endif ()
-    # Core Text replaces HarfBuzz and FriBidi on Apple platforms.
-    set (ENABLE_HARFBUZZ OFF)
-    set (ENABLE_FRIBIDI  OFF)
-endif ()
 if (ENABLE_FREETYPE)
-    # FreeType uses the system HarfBuzz (via hb-ft.h) which is co-installed with
-    # the system FreeType. Using lib/harfbuzz/ would produce an ABI-incompatible copy.
-    set (ENABLE_HARFBUZZ         ON  CACHE BOOL "" FORCE)
-    set (ENABLE_HARFBUZZ_MINIMAL OFF CACHE BOOL "" FORCE)
     find_package (Freetype REQUIRED)
     # FontConfig is only needed on non-Windows systems.
     if (UNIX AND NOT APPLE AND PKG_CONFIG_FOUND)
@@ -104,6 +71,8 @@ endif ()
 if (IOS)
     set (ENABLE_APP_BUNDLE ON)      # required
 endif ()
+
+#-------------------------------------------------------------------------------------------------
 
 check_c_compiler_flag (-Werror=incompatible-pointer-types CFLAG_INCOMPATIBLE_POINTER_TYPES)
 include (CheckCSourceCompiles)
@@ -178,7 +147,9 @@ if (IOS)
     )
 endif ()
 
-# Source files.
+#-------------------------------------------------------------------------------------------------
+# Source files
+
 set (AUDIO_SOURCES
     src/media/buf.c
     src/media/buf.h
@@ -516,6 +487,9 @@ if (MSYS OR MINGW OR WIN32)
         src/platform/win32.h
     )
 endif ()
+
+#-------------------------------------------------------------------------------------------------
+
 if (MOBILE)
     add_definitions (-DiPlatformMobile=1)
 else ()
