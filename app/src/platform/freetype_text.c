@@ -231,10 +231,11 @@ int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
         FT_Select_Size(fd->ftFace, fd->fixedSizeIndex);
         return 0;
     }
-    if (FT_Load_Glyph(fd->ftFace, glyphIndex, FT_LOAD_NO_BITMAP | FT_LOAD_NO_HINTING) != 0) {
+    /* Design units, regardless of the face's current char size. */
+    if (FT_Load_Glyph(fd->ftFace, glyphIndex, FT_LOAD_NO_SCALE) != 0) {
         return 0;
     }
-    return (int) (fd->ftFace->glyph->advance.x >> 6);
+    return (int) fd->ftFace->glyph->advance.x;
 }
 
 /* Vertical-only hinting keeps glyph shapes consistent with the unhinted HarfBuzz advances,
