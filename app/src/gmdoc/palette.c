@@ -409,11 +409,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBackground_ColorId, base);
             setHsl_Color(tmParagraph_ColorId, textBase);
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(textBase, 0.05f, -0.06f));
-            setHsl_Color(tmQuote_ColorId, (iHSLColor){ 32, 0.18f, 0.40f, 1.0f });
-            set_Color(tmPreformatted_ColorId, get_Color(tmQuote_ColorId));
-            setHsl_Color(tmHeading1_ColorId, (iHSLColor){ 28, 0.50f, 0.28f, 1.0f });
-            set_Color(tmHeading2_ColorId, getMixed_Color(tmHeading1_ColorId, tmParagraph_ColorId, 0.4f));
-            setHsl_Color(tmHeading3_ColorId, (iHSLColor){ 30, 0.06f, 0.36f, 1.0f });
+            setHsl_Color(tmQuote_ColorId, (iHSLColor){ 26, 0.35f, 0.45f, 1.0f });
+            setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ 32, 0.18f, 0.40f, 1.0f });
+            setHsl_Color(tmHeading1_ColorId, (iHSLColor){ 28, 0.15f, 0.52f, 1.0f });
+            setHsl_Color(tmHeading2_ColorId, (iHSLColor){ 29, 0.07f, 0.50f, 1.0f });
+            setHsl_Color(tmHeading3_ColorId, (iHSLColor){ 30, 0.15f, 0.40f, 1.0f });
             setHsl_Color(tmBannerBackground_ColorId, setLum_HSLColor(base, base.lum * 0.97f));
             setHsl_Color(tmBannerTitle_ColorId, (iHSLColor){ 32, 0.12f, 0.42f, 1.0f });
             setHsl_Color(tmBannerIcon_ColorId, (iHSLColor){ 28, 0.45f, 0.45f, 1.0f });
