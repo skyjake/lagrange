@@ -520,7 +520,7 @@ iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n,
         setPadding1_Widget(menu, 2 * gap_UI);
     }
     else {
-        setPadding1_Widget(menu, gap_UI / 2);
+        setPadding1_Widget(menu, gap_UI);
     }
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
