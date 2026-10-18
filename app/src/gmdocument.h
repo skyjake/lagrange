@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 
 iLocalDef enum iGmDocumentTheme docTheme_DocPrefs(const iDocPrefs *d, iBool isDark) {
-    if (d->pageView.value && !isTerminal_Platform()) {
+    if (d->pageView.value) {
         /* Paginated documents may have themes of their own. */
         const int pageTheme = isDark ? d->pageThemeDark.value : d->pageThemeLight.value;
         if (pageTheme != none_GmDocumentTheme) {

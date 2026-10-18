@@ -556,6 +556,9 @@ void loadPrefs_App_(iApp *d) {
     if (deviceType_App() != desktop_AppDeviceType) {
         d->prefs.menuBar = iFalse; /* not optional on mobile */
     }
+    if (isTerminal_Platform()) {
+        d->prefs.pageTurn = none_PageTurnAnimation;
+    }
     d->isLoadingPrefs = iFalse;
     updateActiveDocPrefs_App();
 }
@@ -978,7 +981,9 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "pageturn.set")) {
-        d->prefs.pageTurn = iClamp(arg_Command(cmd), none_PageTurnAnimation, curl_PageTurnAnimation);
+        d->prefs.pageTurn = isTerminal_Platform() /* forced in TUI */
+                                ? none_PageTurnAnimation
+                                : iClamp(arg_Command(cmd), none_PageTurnAnimation, curl_PageTurnAnimation);
         return iTrue;
     }
     else if (equal_Command(cmd, "syncinterval.set")) {

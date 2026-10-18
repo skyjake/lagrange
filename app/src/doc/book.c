@@ -304,7 +304,8 @@ void didFinishRequest_DocumentBook(iDocumentBook *d) {
         d->flags &= ~animateChapterSwipe_DocumentBookFlag;
         swipe->flags &= ~begun_DocumentSwipeFlag;
         const int to = isSwipingBack_DocumentSwipe(swipe) ? width_Widget(d->owner) : 0;
-        if (!prefs_App()->uiAnimations) {
+        if (!prefs_App()->uiAnimations ||
+            (isPaged_DocumentView(view) && prefs_App()->pageTurn == none_PageTurnAnimation)) {
             setValue_Anim(&swipe->offset, to, 0);
         }
         else if (swipe->flags & pageCurl_DocumentSwipeFlag) {

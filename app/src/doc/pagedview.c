@@ -65,8 +65,7 @@ static iBool isAlwaysScrolled_(const iString *url) {
 }
 
 iBool isPageViewAllowed_DocumentView(const iDocumentView *d) {
-    return !isTerminal_Platform() && !isCoverPage_GmDocument(d->doc) &&
-           !isAlwaysScrolled_(url_GmDocument(d->doc));
+    return !isCoverPage_GmDocument(d->doc) && !isAlwaysScrolled_(url_GmDocument(d->doc));
 }
 
 iBool wantsPaged_DocumentView(const iDocumentView *d) {
@@ -92,7 +91,10 @@ iRect pageViewport_DocumentView(const iDocumentView *d) {
 static int preferredWidth_DocumentView_(const iDocumentView *d, int columns) {
     /* Not zoomed: the zoom level only affects the text size. Lines are shorter in two
        columns than when scrolling. */
-    const int width = fontSize_UI * docPrefs_GmDocument(d->doc)->lineWidth.value;
+    float width = fontSize_UI * docPrefs_GmDocument(d->doc)->lineWidth.value;
+    if (isTerminal_Platform()) {
+        width /= aspect_UI * 0.8f;
+    }
     return columns > 1 ? width * 0.85f : width;
 }
 
