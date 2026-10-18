@@ -62,6 +62,7 @@ void    resume_Feeds            (void); /* retries requests interrupted by the p
 iBool   isRefreshing_Feeds      (void);
 void    remapBookmarkIds_Feeds  (const iArray *idMappings); /* SyncIdMapping elements */
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);
+void    removeUnsubscribedEntries_Feeds(void);
 void    markEntryAsRead_Feeds   (uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead);
 iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUrl);
 iBool   isEntryUrl_Feeds        (const iString *url); /* visited URL of any feed entry */

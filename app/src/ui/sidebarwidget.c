@@ -1879,10 +1879,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateItems_SidebarWidget_(d);
             }
         }
-        else if (equal_Command(cmd, "bookmarks.changed") &&
-                 (d->mode == bookmarks_SidebarMode || d->mode == feedEntries_SidebarMode ||
-                  d->mode == subscriptions_SidebarMode)) {
-            if (pointerLabel_Command(cmd, "nosidebar") != d) {
+        else if (equal_Command(cmd, "bookmarks.changed")) {
+            /* Unsubscribing removes feed entries. */
+            d->numUnreadEntries = numUnread_Feeds();
+            checkModeButtonLayout_SidebarWidget_(d);
+            if ((d->mode == bookmarks_SidebarMode || d->mode == feedEntries_SidebarMode ||
+                 d->mode == subscriptions_SidebarMode) &&
+                pointerLabel_Command(cmd, "nosidebar") != d) {
                 updateItems_SidebarWidget_(d);
                 if (hasLabel_Command(cmd, "added")) {
                     const size_t addedId    = argLabel_Command(cmd, "added");

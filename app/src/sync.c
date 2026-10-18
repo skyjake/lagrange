@@ -749,6 +749,7 @@ static void apply_Sync_(iSync *d, const iSyncData *result, const iArray *idMap) 
     reserveIds_Bookmarks(bookmarks_App(), final->maxBookmarkId);
     d->isApplying = iFalse;
     remapBookmarkIds_Feeds(finalMap);
+    removeUnsubscribedEntries_Feeds();
     delete_SyncData(final);
     delete_Array(mergeMap);
     delete_Array(finalMap);

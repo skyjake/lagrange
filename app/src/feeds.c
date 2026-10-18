@@ -1497,6 +1497,29 @@ void removeEntries_Feeds(uint32_t feedBookmarkId) {
     removeTinylogCaches_Feeds_(d, iTrue);
 }
 
+void removeUnsubscribedEntries_Feeds(void) {
+    iFeeds *d = &feeds_;
+    if (!isInitialized_Feeds_(d)) {
+        return;
+    }
+    iIntSet subs;
+    init_IntSet(&subs);
+    iConstForEach(PtrArray, i, listSubscriptions_()) {
+        insert_IntSet(&subs, id_Bookmark(i.ptr));
+    }
+    lock_Mutex(d->mtx);
+    iForEach(Array, j, &d->entries.values) {
+        iFeedEntry **entry = j.value;
+        if (!contains_IntSet(&subs, (*entry)->bookmarkId)) {
+            delete_FeedEntry(*entry);
+            remove_ArrayIterator(&j);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    deinit_IntSet(&subs);
+    removeTinylogCaches_Feeds_(d, iTrue);
+}
+
 void resetFeed_Feeds(uint32_t feedBookmarkId) {
     iFeeds *d = &feeds_;
     removeEntries_Feeds(feedBookmarkId);
