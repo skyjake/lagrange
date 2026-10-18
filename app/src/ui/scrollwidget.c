@@ -98,14 +98,19 @@ void init_ScrollWidget(iScrollWidget *d) {
     setId_Widget(w, "scroll");
     setFlags_Widget(w, verticalFlags_ScrollWidget_, iTrue);
     /* TODO: Enable touchdrag on long press. */
-    updateMetrics_ScrollWidget_(d);
+    d->range         = (iRangei){ 0, 0 };
+    d->thumb         = 0;
+    d->thumbSize     = 0;
+    d->startThumb    = 0;
+    d->fadeStart     = 0;
+    d->willCheckFade = iFalse;
+    d->fadeEnabled   = iTrue;
+    d->isProgress    = iFalse;
+    d->thumbColor    = uiTextAction_ColorId;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Anim(&d->opacity, minOpacity_());
     init_Anim(&d->progress, 0.0f);
-    d->willCheckFade = iFalse;
-    d->fadeEnabled = iTrue;
-    d->isProgress = iFalse;
-    d->thumbColor = uiTextAction_ColorId;
+    updateMetrics_ScrollWidget_(d);
 }
 
 void deinit_ScrollWidget(iScrollWidget *d) {
