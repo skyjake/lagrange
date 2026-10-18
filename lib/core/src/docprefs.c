@@ -479,7 +479,7 @@ const iDocPrefs *defaults_DocPrefs(void) {
         d->docThemeDark.value       = colorfulDark_GmDocumentTheme;
         d->docThemeLight.value      = white_GmDocumentTheme;
         d->pageThemeDark.value      = gray_GmDocumentTheme;
-        d->pageThemeLight.value     = paperwhite_GmDocumentTheme;
+        d->pageThemeLight.value     = paper_GmDocumentTheme;
         d->saturation.value         = 1.0f;
         d->imageStyle.value         = original_ImageStyle;
         d->ansiEscapes.value        = allowFg_AnsiFlag;

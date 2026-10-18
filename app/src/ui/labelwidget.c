@@ -56,17 +56,17 @@ struct Impl_LabelWidget {
         uint16_t allCaps             : 1;
         uint16_t removeTrailingColon : 1;
         uint16_t chevron             : 1;
-        
+
         uint16_t checkMark           : 1;
         uint16_t truncateToFit       : 1;
         uint16_t menuCanceling       : 1;
         uint16_t noLabel             : 1;
-        
+
         uint16_t untranslated        : 1;
         uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected */
         uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
         uint16_t centerWrapped       : 1;
-        
+
         uint16_t titleCase           : 1;
     } flags;
 };
@@ -324,7 +324,7 @@ static iBool areTabButtonsThemeColored_(void) {
     return (docTheme == colorfulLight_GmDocumentTheme ||
             docTheme == vibrantLight_GmDocumentTheme ||
             docTheme == sepia_GmDocumentTheme ||
-            docTheme == paperwhite_GmDocumentTheme ||
+            docTheme == paper_GmDocumentTheme ||
             ((docTheme == oceanic_GmDocumentTheme || docTheme == arboreal_GmDocumentTheme) &&
              !isDarkUI));
 }
@@ -391,7 +391,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                     *bg = (docTheme == oceanic_GmDocumentTheme ||
                                    docTheme == arboreal_GmDocumentTheme ||
                                    ((docTheme == sepia_GmDocumentTheme ||
-                                     docTheme == paperwhite_GmDocumentTheme) &&
+                                     docTheme == paper_GmDocumentTheme) &&
                                     colorTheme_App() == pureWhite_ColorTheme)
                                ? tmBackground_ColorId
                                : tmBannerBackground_ColorId);

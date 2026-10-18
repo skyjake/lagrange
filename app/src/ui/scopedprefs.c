@@ -224,7 +224,7 @@ static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
         { "${prefs.doctheme.name.white}", white_GmDocumentTheme },
         { "---" },
         { "${prefs.doctheme.name.sepia}", sepia_GmDocumentTheme },
-        { "${prefs.doctheme.name.paperwhite}", paperwhite_GmDocumentTheme },
+        { "${prefs.doctheme.name.paper}", paper_GmDocumentTheme },
         { "${prefs.doctheme.name.highcontrast}", highContrast_GmDocumentTheme },
     };
     iArray *items = collectNew_Array(sizeof(iMenuItem));
