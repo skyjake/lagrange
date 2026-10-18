@@ -777,7 +777,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
         SDL_Window *sdlWin = get_Window()->win;
         const float pixelRatio = get_Window()->pixelRatio;
         iInt2 winPos;
-        SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
+        winPos = screenPos_Window(get_Window());
         winRect = rootRect;
         winRect.pos.x /= pixelRatio;
         winRect.pos.y /= pixelRatio;
@@ -800,7 +800,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             setFlags2_Widget(parent_Widget(d), childMenuOpenedAsPopup_WidgetFlag2, iTrue);
             removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
             iInt2 winPos;
-            SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
+            winPos = screenPos_Window(get_Window());
             iInt2 menuPos = add_I2(winPos,
                                    divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
             iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);

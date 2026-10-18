@@ -651,6 +651,39 @@ SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos) {
 }
 #endif
 
+static iBool isPopup_SDLWindow_(SDL_Window *win) {
+    return (SDL_GetWindowFlags(win) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) != 0;
+}
+
+static iInt2 screenPos_SDLWindow_(SDL_Window *win) {
+    iInt2 pos = zero_I2();
+    for (; win; win = SDL_GetWindowParent(win)) {
+        iInt2 rel;
+        SDL_GetWindowPosition(win, &rel.x, &rel.y);
+        addv_I2(&pos, rel);
+        if (!isPopup_SDLWindow_(win)) break;
+    }
+    return pos;
+}
+
+iInt2 screenPos_Window(const iWindow *d) {
+    return screenPos_SDLWindow_(d->win);
+}
+
+static SDL_Window *createSDLWindow_(const iWindow *d, iRect rect, uint32_t flags) {
+    if (d->type == popup_WindowType) {
+        /* Parent to the toplevel window so popups don't get destroyed along with each other. */
+        SDL_Window *parent = get_Window()->win;
+        while (isPopup_SDLWindow_(parent)) {
+            parent = SDL_GetWindowParent(parent);
+        }
+        const iInt2 offset = sub_I2(rect.pos, screenPos_SDLWindow_(parent));
+        return SDL_CreatePopupWindow(
+            parent, offset.x, offset.y, width_Rect(rect), height_Rect(rect), flags);
+    }
+    return SDL_CreateWindow("", width_Rect(rect), height_Rect(rect), flags);
+}
+
 void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
     if (d->type == main_WindowType || d->type == extra_WindowType) {
@@ -663,22 +696,23 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 #endif
     }
     const iBool setPos = left_Rect(rect) >= 0 || top_Rect(rect) >= 0;
-    d->win = SDL_CreateWindow("", width_Rect(rect), height_Rect(rect), flags);
+    d->win = createSDLWindow_(d, rect, flags);
     if (!d->win) {
         if (flags & SDL_WINDOW_OPENGL) {
             /* Try without OpenGL support, then. */
             setForceSoftwareRender_App(iTrue);
-            d->win = SDL_CreateWindow("", width_Rect(rect), height_Rect(rect),
-                                      flags & ~SDL_WINDOW_OPENGL);
+            d->win = createSDLWindow_(d, rect, flags & ~SDL_WINDOW_OPENGL);
         }
         if (!d->win) {
             fprintf(stderr, "[window] failed to create window: %s\n", SDL_GetError());
             exit(-3);
         }
     }
-    SDL_SetWindowPosition(d->win,
-                          setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
-                          setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED);
+    if (d->type != popup_WindowType) {
+        SDL_SetWindowPosition(d->win,
+                              setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                              setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED);
+    }
     if (forceSoftwareRender_App()) {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
     }
@@ -2684,13 +2718,14 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
 #if !defined (iPlatformAppleDesktop)
                                   SDL_WINDOW_BORDERLESS |
 #endif
-                                  SDL_WINDOW_POPUP_MENU | SDL_WINDOW_UTILITY);
+                                  SDL_WINDOW_POPUP_MENU);
 #if defined (iPlatformAppleDesktop)
     hideTitleBar_MacOS(win); /* make it a borderless window, but retain shadow */
 #endif
     /* At least on macOS, with an external display on the left (negative coordinates), the
        window will not be correct placed during creation. Ensure it ends up on the right display. */
-    SDL_SetWindowPosition(win->win, winRect.pos.x, winRect.pos.y);
+    const iInt2 parentPos = screenPos_SDLWindow_(SDL_GetWindowParent(win->win));
+    SDL_SetWindowPosition(win->win, winRect.pos.x - parentPos.x, winRect.pos.y - parentPos.y);
     SDL_SetWindowSize(win->win, winRect.size.x, winRect.size.y);
     win->pixelRatio      = pixelRatio;
     iRoot *root          = new_Root();

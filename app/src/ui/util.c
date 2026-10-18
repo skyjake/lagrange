@@ -92,7 +92,7 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
         float mouseX, mouseY;
         iInt2 winPos;
         SDL_GetGlobalMouseState(&mouseX, &mouseY);
-        SDL_GetWindowPosition(win->win, &winPos.x, &winPos.y);
+        winPos = screenPos_Window(win);
         return coord_Window(win, (int) mouseX - winPos.x, (int) mouseY - winPos.y);
 # endif
     }

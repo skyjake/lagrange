@@ -162,6 +162,7 @@ uint32_t        serial_Window           (const iWindow *); /* stable window id; 
 void            setSerial_Window        (iWindow *, uint32_t serial); /* for state restoration only */
 void            advanceSerialCounter_Window(uint32_t pastValue); /* avoids colliding with restored serials */
 iInt2           size_Window             (const iWindow *);
+iInt2           screenPos_Window        (const iWindow *); /* popups are relative to parent in SDL */
 iInt2           maxTextureSize_Window   (const iWindow *);
 float           uiScale_Window          (const iWindow *);
 iInt2           coord_Window            (const iWindow *, int x, int y);
