@@ -49,12 +49,14 @@ struct Impl_GempubNavLink {
     iString url;
     iString label;
     iString heading; /* level 1 or 2 heading above the link on the index page */
+    iBool   hasLabel;
 };
 
 static void init_GempubNavLink(iGempubNavLink *d) {
     init_String(&d->url);
     init_String(&d->label);
     init_String(&d->heading);
+    d->hasLabel = iFalse;
 }
 
 static void deinit_GempubNavLink(iGempubNavLink *d) {
@@ -123,7 +125,8 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
                 set_String(&link.url, absoluteUrl_String(url_GmRequest(index), collectNewRange_String(url)));
                 setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
                 trim_String(&link.label);
-                if (isEmpty_String(&link.label)) {
+                link.hasLabel = !isEmpty_String(&link.label);
+                if (!link.hasLabel) {
                     setRange_String(&link.label, url);
                 }
                 setRange_String(&link.heading, heading);
@@ -408,10 +411,30 @@ static iRangecc lastHeading1_(iRangecc source) {
     return heading;
 }
 
+static iBool beginsWithHeading_(iRangecc source) {
+    iRangecc line = iNullRange;
+    while (nextSplit_Rangecc(source, "\n", &line)) {
+        iRangecc text = line;
+        trim_Rangecc(&text);
+        if (!isEmpty_Range(&text)) {
+            return startsWith_Rangecc(text, "#");
+        }
+    }
+    return iFalse;
+}
+
 const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
-    /* The last level 1 heading on the preceding pages, or else the heading above the link on
-       the index page. */
+    /* A page that does not begin with a heading is titled by its link on the index page.
+       Otherwise, the last level 1 heading on the preceding pages, or else the heading above
+       the link on the index page. */
     parseNavigationLinks_Gempub_(d);
+    if (navIndex < size_Array(d->navLinks)) {
+        const iGempubNavLink *nav  = constAt_Array(d->navLinks, navIndex);
+        const iBlock         *data = archiveData_Gempub_(d, &nav->url);
+        if (nav->hasLabel && data && !beginsWithHeading_(range_Block(data))) {
+            return &nav->label;
+        }
+    }
     for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
         const iBlock *data = archiveData_Gempub_(d, navLinkUrl_Gempub(d, i));
         if (data) {
