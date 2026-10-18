@@ -92,6 +92,29 @@ void doneFtLibrary_FtText(void) {
 /*----------------------------------------------------------------------------------------------*/
 /* FontFile backend API (declared in fontpack.h, called from fontpack.c). */
 
+/* Some color fonts (e.g. Segoe UI Emoji) have a low ascent, so the glyphs extend above the
+   line box. Returns the shift that centers a reference Emoji's ink in the line box. */
+static float colorVertShift_(FT_Face face, int ascent, int descent) {
+    const FT_UInt glyphIndex = FT_Get_Char_Index(face, 0x1F600); /* grinning face */
+    if (!glyphIndex) return 0.0f;
+    FT_Pos yMin = 0, yMax = 0;
+    iBool  found = iFalse;
+    FT_LayerIterator iter;
+    memset(&iter, 0, sizeof(iter));
+    FT_UInt layerGlyphIdx, layerColorIdx;
+    while (FT_Get_Color_Glyph_Layer(face, glyphIndex, &layerGlyphIdx, &layerColorIdx, &iter)) {
+        if (FT_Load_Glyph(face, layerGlyphIdx, FT_LOAD_NO_SCALE) != 0) continue;
+        FT_BBox bbox;
+        FT_Outline_Get_CBox(&face->glyph->outline, &bbox);
+        if (bbox.yMin >= bbox.yMax) continue;
+        yMin  = found ? iMin(yMin, bbox.yMin) : bbox.yMin;
+        yMax  = found ? iMax(yMax, bbox.yMax) : bbox.yMax;
+        found = iTrue;
+    }
+    if (!found) return 0.0f;
+    return (float) (yMin + yMax) / 2.0f - (float) (ascent + descent) / 2.0f;
+}
+
 void allocData_FontFile(iFontFile *d) {
     initFtLibrary_();
     iFtFontData *fd = calloc(1, sizeof(iFtFontData));
@@ -152,6 +175,9 @@ void allocData_FontFile(iFontFile *d) {
         }
         fd->fixedSizeIndex = best;
         fd->fixedSizePpem  = face->available_sizes[best].height;
+    }
+    else if (fd->hasColorGlyphs) {
+        fd->colorVertShift = colorVertShift_(face, d->ascent, d->descent);
     }
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     /* Raw blob (not hb_ft_font_create) gives design-unit advances, consistent with xScale. */
@@ -265,6 +291,37 @@ static FT_Error loadShiftedGlyph_(FT_Face face, uint32_t glyphIndex, FT_Int32 lo
     return err;
 }
 
+/* COLR v0 canvas bounds in FreeType coordinates (Y up). */
+static iBool colrV0Bounds_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
+                           int *x0, int *y0, int *x1, int *y1) {
+    FT_LayerIterator iter;
+    memset(&iter, 0, sizeof(iter));
+    FT_UInt layerGlyphIdx, layerColorIdx;
+    if (!FT_Get_Color_Glyph_Layer(face, glyphIndex, &layerGlyphIdx, &layerColorIdx, &iter)) {
+        return iFalse;
+    }
+    FT_Set_Pixel_Sizes(face, ppem, ppem);
+    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP) != 0) {
+        return iFalse;
+    }
+    /* Many COLR base glyphs have an empty outline; fall back to the scaled
+       ascender/descender range in that case. */
+    FT_BBox bbox;
+    FT_Outline_Get_CBox(&face->glyph->outline, &bbox);
+    *x0 = (int)(bbox.xMin >> 6);
+    *y0 = (int)(bbox.yMin >> 6);
+    *x1 = (int)((bbox.xMax + 63) >> 6);
+    *y1 = (int)((bbox.yMax + 63) >> 6);
+    if (*x0 >= *x1 || *y0 >= *y1) {
+        const float scale = (float) ppem / (float) face->units_per_EM;
+        *x0 = 0;
+        *y0 = (int)(face->descender * scale);
+        *x1 = (int)((face->glyph->metrics.horiAdvance >> 6) + 1);
+        *y1 = (int)(face->ascender * scale);
+    }
+    return *x1 > *x0 && *y1 > *y0;
+}
+
 static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
                                      float xScale, float yScale, float xShift,
                                      int *x0, int *y0, int *x1, int *y1, iBool *isBitmap_out) {
@@ -287,15 +344,29 @@ static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
         return;
     }
     if (fd->hasColorGlyphs && isColorGlyph_(d, glyphIndex)) {
-        const FT_UInt ppem = colorPpem_(d, xScale);
+        /* Measure the same bitmap that rasterizeGlyphEx_FontFile_() produces; the composited
+           layers may not match the base glyph's outline metrics. */
+        const FT_UInt ppem  = colorPpem_(d, xScale);
+        const int     shift = (int) roundf(fd->colorVertShift * yScale);
         FT_Set_Pixel_Sizes(face, ppem, ppem);
-        if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_BITMAP) != 0) return;
-        const FT_Glyph_Metrics *m = &face->glyph->metrics;
-        if (m->width == 0 || m->height == 0) return;
-        *x0 =  (int)(m->horiBearingX >> 6);
-        *y0 = -(int)(m->horiBearingY >> 6);
-        *x1 =  (int)((m->horiBearingX + m->width  + 63) >> 6);
-        *y1 =  (int)((m->height - m->horiBearingY + 63) >> 6);
+        if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) == 0) {
+            FT_GlyphSlot slot = face->glyph;
+            if (slot->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA &&
+                slot->bitmap.width > 0 && slot->bitmap.rows > 0) {
+                *x0 = slot->bitmap_left;
+                *y0 = shift - slot->bitmap_top;
+                *x1 = *x0 + (int) slot->bitmap.width;
+                *y1 = *y0 + (int) slot->bitmap.rows;
+                return;
+            }
+        }
+        int cx0, cy0, cx1, cy1;
+        if (colrV0Bounds_(face, glyphIndex, ppem, &cx0, &cy0, &cx1, &cy1)) {
+            *x0 = cx0;
+            *y0 = shift - cy1;
+            *x1 = cx1;
+            *y1 = shift - cy0;
+        }
         return;
     }
     setCharSize_(face, d, xScale, yScale);
@@ -321,38 +392,14 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
    Used when FT_LOAD_COLOR doesn't auto-produce BGRA (FreeType < 2.12). */
 static uint8_t *renderColrV0_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
                                int *w_out, int *h_out) {
-    /* Need at least one COLR layer to proceed. */
-    FT_LayerIterator iter;
-    memset(&iter, 0, sizeof(iter));
-    FT_UInt layerGlyphIdx, layerColorIdx;
-    if (!FT_Get_Color_Glyph_Layer(face, glyphIndex, &layerGlyphIdx, &layerColorIdx, &iter)) {
+    int x0, y0, x1, y1;
+    if (!colrV0Bounds_(face, glyphIndex, ppem, &x0, &y0, &x1, &y1)) {
         return NULL;
-    }
-    /* Determine canvas size from the composite glyph's metrics. */
-    FT_Set_Pixel_Sizes(face, ppem, ppem);
-    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP) != 0) {
-        return NULL;
-    }
-    /* Derive canvas bounds from the composite glyph's outline bbox.
-       Many COLR base glyphs have an empty outline; fall back to the scaled
-       ascender/descender range in that case. */
-    FT_BBox bbox;
-    FT_Outline_Get_CBox(&face->glyph->outline, &bbox);
-    int x0 = (int)(bbox.xMin >> 6);
-    int y0 = (int)(bbox.yMin >> 6);
-    int x1 = (int)((bbox.xMax + 63) >> 6);
-    int y1 = (int)((bbox.yMax + 63) >> 6);
-    if (x0 >= x1 || y0 >= y1) {
-        /* Empty outline: use scaled metrics from the face. */
-        const float scale = (float) ppem / (float) face->units_per_EM;
-        x0 = 0;
-        y0 = (int)(face->descender * scale);
-        x1 = (int)((face->glyph->metrics.horiAdvance >> 6) + 1);
-        y1 = (int)(face->ascender * scale);
     }
     const int cw = x1 - x0;
     const int ch = y1 - y0;
-    if (cw <= 0 || ch <= 0) return NULL;
+    FT_LayerIterator iter;
+    FT_UInt layerGlyphIdx, layerColorIdx;
 
     uint8_t *canvas = calloc((size_t) cw * ch * 4, 1); /* BGRA, pre-zeroed transparent */
 
@@ -449,9 +496,13 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
                 *w = (int) slot->bitmap.width;
                 *h = (int) slot->bitmap.rows;
                 *isColor_out = iTrue;
-                const size_t sz = (size_t)(*w) * (size_t)(*h) * 4;
-                uint8_t *buf = malloc(sz);
-                memcpy(buf, slot->bitmap.buffer, sz);
+                const size_t rowSize = (size_t)(*w) * 4;
+                uint8_t *buf = malloc(rowSize * (size_t)(*h));
+                for (int row = 0; row < *h; row++) {
+                    memcpy(buf + row * rowSize,
+                           slot->bitmap.buffer + row * slot->bitmap.pitch,
+                           rowSize);
+                }
                 return buf;
             }
         }
@@ -665,11 +716,13 @@ iBool rasterizeForCache_Font_(iRasterFont *font, iGlyph *glyph, SDL_Surface *sur
                 &w, &h, &isColor);
             if (isColor) {
                 /* colorRect was already reserved in glyphByIndex_Font_(); sizes must match. */
-                iAssert(bmp == NULL || (w == glyph->colorRect.size.x && h == glyph->colorRect.size.y));
-                if (bmp) {
+                const iBool sizeMatches =
+                    w == glyph->colorRect.size.x && h == glyph->colorRect.size.y;
+                iAssert(bmp == NULL || sizeMatches);
+                if (bmp && sizeMatches) {
                     uploadColorGlyph_(currentRaster_Text_(), bmp, glyph->colorRect);
-                    free(bmp);
                 }
+                free(bmp);
                 glyph->flags |= isColor_GlyphFlag | rasterized0_GlyphFlag;
                 break; /* color emoji handled; all subpixel slots share rect[0] */
             }

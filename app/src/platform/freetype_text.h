@@ -53,6 +53,7 @@ typedef struct {
                                    Color Emoji); FT_Set_Pixel_Sizes() only works at native size */
     int        fixedSizeIndex; /* best available_sizes[] index to select */
     int        fixedSizePpem;  /* native pixel height of that embedded strike */
+    float      colorVertShift; /* font units to move scalable color glyphs down */
 } iFtFontData;
 
 iLocalDef iFtFontData *ftData_FontFile(const iFontFile *d) {
