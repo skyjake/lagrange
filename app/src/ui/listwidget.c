@@ -150,7 +150,7 @@ void invalidateItem_ListWidget(iListWidget *d, size_t index) {
     refresh_Widget(d);
 }
 
-static void invalidateLayout_ListWidget_(iListWidget *d) {
+void invalidateLayout_ListWidget(iListWidget *d) {
     d->isLayoutValid   = iFalse;
     d->isLayoutPartial = iFalse;
 }
@@ -163,12 +163,12 @@ void clear_ListWidget(iListWidget *d) {
     d->hoverItem = iInvalidPos;
     d->numMultiSelected = 0;
     d->rangeSelect = none_ListRangeSelect;
-    invalidateLayout_ListWidget_(d);
+    invalidateLayout_ListWidget(d);
 }
 
 void addItem_ListWidget(iListWidget *d, iAnyObject *item) {
     pushBack_PtrArray(&d->items, ref_Object(item));
-    invalidateLayout_ListWidget_(d);
+    invalidateLayout_ListWidget(d);
 }
 
 iScrollWidget *scroll_ListWidget(iListWidget *d) {
@@ -349,7 +349,7 @@ void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
     }
     if (d->itemHeight != itemHeight) {
         d->itemHeight = itemHeight;
-        invalidateLayout_ListWidget_(d);
+        invalidateLayout_ListWidget(d);
         invalidate_ListWidget(d);
     }
 }
@@ -357,7 +357,7 @@ void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
 void setItemPadding_ListWidget(iListWidget *d, int itemPadding) {
     if (d->itemPadding != itemPadding) {
         d->itemPadding = itemPadding;
-        invalidateLayout_ListWidget_(d);
+        invalidateLayout_ListWidget(d);
         invalidate_ListWidget(d);
     }
 }
@@ -552,7 +552,7 @@ static void setCursorWithoutScroll_ListWidget_(iListWidget *d, size_t index) {
 void restoreCursorItem_ListWidget(iListWidget *d, size_t index) {
     /* Validated against the items on the next layout update. */
     d->cursorItem = index;
-    invalidateLayout_ListWidget_(d);
+    invalidateLayout_ListWidget(d);
     invalidate_ListWidget(d);
 }
 
@@ -630,7 +630,7 @@ void updateMouseHover_ListWidget(iListWidget *d) {
 
 void sort_ListWidget(iListWidget *d, int (*cmp)(const iListItem **item1, const iListItem **item2)) {
     sort_Array(&d->items, (iSortedArrayCompareElemFunc) cmp);
-    invalidateLayout_ListWidget_(d);
+    invalidateLayout_ListWidget(d);
 }
 
 static void redrawHoverItem_ListWidget_(iListWidget *d) {
@@ -839,7 +839,7 @@ static int cursorKeyStep_ListWidget_(const iListWidget *d, int sym) {
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
-        invalidateLayout_ListWidget_(d);
+        invalidateLayout_ListWidget(d);
         invalidate_ListWidget(d);
     }
     else if (!isScrollDisabled_ListWidget_(d, ev) && processEvent_SmoothScroll(&d->scrollY, ev)) {

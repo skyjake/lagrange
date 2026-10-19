@@ -115,6 +115,7 @@ void    setResizing_ListWidget      (iListWidget *, iBool isResizing);
 
 void    invalidate_ListWidget       (iListWidget *);
 void    invalidateItem_ListWidget   (iListWidget *, size_t index);
+void    invalidateLayout_ListWidget (iListWidget *); /* items are measured again */
 void    clear_ListWidget            (iListWidget *);
 void    addItem_ListWidget          (iListWidget *, iAnyObject *item);
 

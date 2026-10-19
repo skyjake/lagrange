@@ -47,20 +47,66 @@ static iBool isSubscribed_Bookmark_(void *context, const iBookmark *bm) {
     return (!isFolder_Bookmark(bm) && bm->flags & subscribed_BookmarkFlag) != 0;
 }
 
-static const iTinylogInfo *cachedTinylogInfo_(iArray *cache, const iFeedEntry *entry) {
-    /* Author and avatar are per-feed, so look them up once per bookmark. */
-    iConstForEach(Array, i, cache) {
-        const iTinylogInfo *info = i.value;
-        if (info->bookmarkId == entry->bookmarkId) {
-            return info;
-        }
+iDeclareType(FeedItemMeta)
+
+struct Impl_FeedItemMeta {
+    uint32_t bookmarkId;
+    iBool    isTinylog;
+    iChar    icon; /* zero if the bookmark is missing */
+    iString  meta; /* shared by all items of the feed */
+};
+
+static int cmp_FeedItemMeta_(const void *a, const void *b) {
+    const iFeedItemMeta *x = a, *y = b;
+    const int cmp = iCmp(x->bookmarkId, y->bookmarkId);
+    return cmp ? cmp : iCmp(x->isTinylog, y->isTinylog);
+}
+
+static void initEntry_FeedItemMeta_(iFeedItemMeta *d, const iFeedEntry *entry) {
+    d->bookmarkId = entry->bookmarkId;
+    d->isTinylog  = entry->isTinylog;
+    d->icon       = 0;
+    init_String(&d->meta);
+    const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
+    if (!bm) {
+        return;
     }
-    iTinylogInfo info;
-    init_TinylogInfo(&info);
-    tinylogInfo_Feeds(&entry->url, &info);
-    info.bookmarkId = entry->bookmarkId;
-    pushBack_Array(cache, &info);
-    return back_Array(cache);
+    d->icon = bm->icon ? bm->icon : 0x1f4ac; /* speech balloon */
+    if (entry->isTinylog) {
+        iTinylogInfo info;
+        init_TinylogInfo(&info);
+        tinylogInfo_Feeds(&entry->url, &info);
+        if (!isEmpty_String(&info.avatar)) {
+            d->icon = first_String(&info.avatar);
+        }
+        if (!isEmpty_String(&info.author) && !equal_String(&info.author, &bm->title)) {
+            const char *restoreCStr = "\x1b[0m" restore_ColorEscape;
+            appendFormat_String(&d->meta, "\x1b[1m%s", cstr_String(&info.author));
+            /* The domain name of the handle has normal styling. */
+            const size_t secondAtPos = indexOfCStrFrom_String(&d->meta, "@", 5);
+            if (secondAtPos != iInvalidPos) {
+                insertData_Block(&d->meta.chars, secondAtPos, restoreCStr, strlen(restoreCStr));
+            }
+            else {
+                appendCStr_String(&d->meta, restoreCStr);
+            }
+            appendCStr_String(&d->meta, " — ");
+        }
+        deinit_TinylogInfo(&info);
+    }
+    append_String(&d->meta, &bm->title);
+}
+
+static const iFeedItemMeta *cachedMeta_(iSortedArray *cache, const iFeedEntry *entry) {
+    /* Icon and meta are per-feed, so look them up once per bookmark. */
+    const iFeedItemMeta key = { .bookmarkId = entry->bookmarkId, .isTinylog = entry->isTinylog };
+    size_t pos;
+    if (!locate_SortedArray(cache, &key, &pos)) {
+        iFeedItemMeta meta;
+        initEntry_FeedItemMeta_(&meta, entry);
+        insert_SortedArray(cache, &meta);
+    }
+    return constAt_SortedArray(cache, pos);
 }
 
 const char *feedsRefreshAgeCStr_SidebarWidget_(void) {
@@ -79,6 +125,24 @@ const char *feedsRefreshAgeCStr_SidebarWidget_(void) {
         return format_CStr(cstr_Lang("sidebar.feeds.updated.hours"), elapsed / 60, elapsed % 60);
     }
     return formatCStr_Lang("sidebar.feeds.updated.days.n", elapsed / 1440);
+}
+
+iString *formatFeedsDate_SidebarWidget_(const iTime *posted) {
+    iDate today, on;
+    initCurrent_Date(&today);
+    init_Date(&on, posted);
+    iString *text = format_Date(
+        &on, cstr_Lang(on.year == today.year ? "sidebar.date.thisyear" : "sidebar.date.otheryear"));
+    if (today.year == on.year && today.month == on.month && today.day == on.day) {
+        appendCStr_String(text, " \u2014 ");
+        appendCStr_String(text, cstr_Lang("feeds.today"));
+    }
+    else if (elapsedSeconds_Time(posted) < 6 * 24 * 3600) {
+        iString *weekday = format_Date(&on, " \u2014 %A");
+        append_String(text, weekday);
+        delete_String(weekday);
+    }
+    return text;
 }
 
 static uint32_t postFeedsAge_SidebarWidget_(void *context, SDL_TimerID timerId,
@@ -107,90 +171,49 @@ static void startFeedsAgeTimer_SidebarWidget_(iSidebarWidget *d) {
 }
 
 iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
-    const iBool    isMobile = (deviceType_App() != desktop_AppDeviceType);
-    iBool          isEmpty  = iTrue;
-    const iString *docUrl   = feedEntryUrl_DocumentWidget(document_App());
-    iTime          now;
+    const iBool    isMobile   = (deviceType_App() != desktop_AppDeviceType);
+    const iBool    unreadOnly = (d->feedsMode == unread_FeedsMode);
+    iBool          isEmpty    = iTrue;
+    const iString *docUrl     = feedEntryUrl_DocumentWidget(document_App());
     iDate          on;
-    initCurrent_Time(&now);
-    init_Date(&on, &now);
-    const iDate today = on;
     iZap(on);
-    const iPtrArray *feedEntries  = listFeedEntries_SidebarWidget_(d);
-    iArray          *tinylogInfos = new_Array(sizeof(iTinylogInfo));
-    iConstForEach(PtrArray, i, listVisibleEntries_Feeds(d->feedsMode == unread_FeedsMode, docUrl)) {
+    iSortedArray *metaCache = new_SortedArray(sizeof(iFeedItemMeta), cmp_FeedItemMeta_);
+    iConstForEach(PtrArray, i, listVisibleEntries_Feeds(unreadOnly, docUrl)) {
         const iFeedEntry *entry     = i.ptr;
         const iBool       isOpen    = equal_String(docUrl, &entry->url);
-        const iBool       isUnread  = isUnread_FeedEntry(entry);
+        const iBool       isUnread  = (unreadOnly && !isOpen) || isUnread_FeedEntry(entry);
         const iBool       isTinylog = entry->isTinylog;
+        iDate             posted;
+        init_Date(&posted, &entry->posted);
         isEmpty = iFalse;
-        /* Insert date separators. */ {
-            iDate entryDate;
-            init_Date(&entryDate, &entry->posted);
-            if (on.year != entryDate.year || on.month != entryDate.month ||
-                on.day != entryDate.day) {
-                on                        = entryDate;
-                iSidebarItem *sep         = new_SidebarItem();
-                sep->listItem.flags.isSeparator = iTrue;
-                iString *text             = format_Date(&on,
-                                            cstr_Lang(on.year == today.year
-                                                          ? "sidebar.date.thisyear"
-                                                          : "sidebar.date.otheryear"));
-                if (today.year == on.year && today.month == on.month &&
-                    today.day == on.day) {
-                    appendCStr_String(text, " \u2014 ");
-                    appendCStr_String(text, cstr_Lang("feeds.today"));
-                }
-                else if (elapsedSeconds_Time(&entry->posted) < 6 * 24 * 3600) {
-                    iString *weekday = format_Date(&entryDate, " \u2014 %A");
-                    append_String(text, weekday);
-                    delete_String(weekday);
-                }
-                set_String(&sep->meta, text);
-                delete_String(text);
-                addItem_ListWidget(d->list, sep);
-                iRelease(sep);
-            }
+        if (on.year != posted.year || on.month != posted.month || on.day != posted.day) {
+            /* Date separator. The label is formatted when drawn. */
+            on                              = posted;
+            iSidebarItem *sep               = new_SidebarItem();
+            sep->listItem.flags.isSeparator = iTrue;
+            sep->ts                         = entry->posted;
+            addItem_ListWidget(d->list, sep);
+            iRelease(sep);
         }
         iSidebarItem *item              = new_SidebarItem();
         item->listItem.flags.isSelected = isOpen; /* currently being viewed */
         item->indent                    = isUnread | (isTinylog << 1); /* `indent` used for flags */
         set_String(&item->url, &entry->url);
         if (isTinylog) {
-            iDate posted;
-            init_Date(&posted, &entry->posted);
             format_String(&item->label,
                           uiTextAction_ColorEscape "\x1b[1m%02d:%02d\x1b[0m  ",
                           posted.hour,
                           posted.minute);
+            append_String(&item->label, &entry->title);
         }
-        append_String(&item->label, &entry->title);
-        const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
-        if (bm) {
+        else {
+            set_String(&item->label, &entry->title);
+        }
+        const iFeedItemMeta *meta = cachedMeta_(metaCache, entry);
+        if (meta->icon) {
             item->id   = entry->bookmarkId;
-            item->icon = bm->icon ? bm->icon : 0x1f4ac; /* speech balloon */
-            if (isTinylog) {
-                const iTinylogInfo *info = cachedTinylogInfo_(tinylogInfos, entry);
-                if (!isEmpty_String(&info->avatar)) {
-                    item->icon = first_String(&info->avatar);
-                }
-                if (!isEmpty_String(&info->author) && !equal_String(&info->author, &bm->title)) {
-                    const char *restoreCStr = "\x1b[0m" restore_ColorEscape;
-                    appendFormat_String(&item->meta,
-                                        "\x1b[1m%s",
-                                        cstr_String(&info->author));
-                    /* The domain name of the handle has normal styling. */
-                    const size_t secondAtPos = indexOfCStrFrom_String(&item->meta, "@", 5);
-                    if (secondAtPos != iInvalidPos) {
-                        insertData_Block(&item->meta.chars, secondAtPos, restoreCStr, strlen(restoreCStr));
-                    }
-                    else {
-                        appendCStr_String(&item->meta, restoreCStr);
-                    }
-                    appendCStr_String(&item->meta, " — ");
-                }
-            }
-            append_String(&item->meta, &bm->title);
+            item->icon = meta->icon;
+            set_String(&item->meta, &meta->meta);
         }
         addItem_ListWidget(d->list, item);
         iRelease(item);
@@ -205,13 +228,13 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         }
     #endif
     }
-    iForEach(Array, ti, tinylogInfos) {
-        deinit_TinylogInfo(ti.value);
+    iForEach(Array, mi, &metaCache->values) {
+        deinit_String(&((iFeedItemMeta *) mi.value)->meta);
     }
-    delete_Array(tinylogInfos);
+    delete_SortedArray(metaCache);
     /* Actions. */
     if (!isMobile) {
-        if (!keepActions && !isEmpty_PtrArray(feedEntries)) {
+        if (!keepActions && !isEmpty_PtrArray(listFeedEntries_SidebarWidget_(d))) {
             setId_Widget(as_Widget(addActionButton_SidebarWidget_(
                              d,
                              check_Icon " ${sidebar.action.feeds.markallread}",
@@ -311,6 +334,48 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
               "feeds.refresh" } },
         2);
     return !isEmpty;
+}
+
+iBool refreshFeedEntries_SidebarWidget_(iSidebarWidget *d) {
+    /* Updates the read and open states if the visible entries still match the items. */
+    if (flags_Widget(as_Widget(d)) & hidden_WidgetFlag) {
+        return iFalse;
+    }
+    const iBool    unreadOnly = (d->feedsMode == unread_FeedsMode);
+    const iString *docUrl     = feedEntryUrl_DocumentWidget(document_App());
+    const size_t   numItems   = numItems_ListWidget(d->list);
+    size_t         pos        = 0;
+    iBool          isResized  = iFalse;
+    iConstForEach(PtrArray, i, listVisibleEntries_Feeds(unreadOnly, docUrl)) {
+        const iFeedEntry *entry = i.ptr;
+        iSidebarItem     *item  = NULL;
+        while (!item && pos < numItems) {
+            item = item_ListWidget(d->list, pos++);
+            if (item->listItem.flags.isSeparator) {
+                item = NULL;
+            }
+        }
+        if (!item || !equal_String(&item->url, &entry->url)) {
+            return iFalse;
+        }
+        const iBool isOpen   = equal_String(docUrl, &entry->url);
+        const iBool isUnread = (unreadOnly && !isOpen) || isUnread_FeedEntry(entry);
+        const int   flags    = isUnread | (entry->isTinylog << 1);
+        if (item->indent != flags) {
+            item->indent = flags;
+            isResized    = iTrue; /* title font changes */
+        }
+        item->listItem.flags.isSelected = isOpen;
+    }
+    if (pos < numItems) {
+        return iFalse; /* a separator is always followed by an entry */
+    }
+    if (isResized) {
+        invalidateLayout_ListWidget(d->list);
+    }
+    updateVisible_ListWidget(d->list);
+    invalidate_ListWidget(d->list);
+    return iTrue;
 }
 
 static int cmpName_SidebarItem_(const void *a, const void *b) {

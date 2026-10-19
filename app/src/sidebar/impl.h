@@ -102,6 +102,7 @@ struct Impl_SidebarWidget {
     float             pendingWidth;  /* applied once per frame while resizing; negative if none */
     int               buttonFont;
     int               itemFonts[2];
+    int               itemCharWidths[2]; /* average for `itemFonts`, for estimating wrapping */
     size_t            numUnreadEntries;
     SDL_TimerID       feedsAgeTimer; /* redraws the time since the latest refresh */
     iWidget          *resizer;
@@ -150,12 +151,14 @@ iWidget *       bookmarkContextMenu_SidebarWidget_(iSidebarWidget *, const iSide
 
 /* Feeds (sidebar/feedlist.c). */
 iBool           updateFeedEntries_SidebarWidget_(iSidebarWidget *, iBool keepActions);
+iBool           refreshFeedEntries_SidebarWidget_(iSidebarWidget *); /* False if rebuild needed */
 iBool           updateSubscriptions_SidebarWidget_(iSidebarWidget *, iBool keepActions);
 iBool           handleFeedCommand_SidebarWidget_(iSidebarWidget *, const SDL_Event *,
                                                  const char *cmd);
 void            updateFeedContextMenu_SidebarWidget_(iSidebarWidget *);
 void            stopFeedsAgeTimer_SidebarWidget_(iSidebarWidget *);
 const char *    feedsRefreshAgeCStr_SidebarWidget_(void); /* NULL if never refreshed */
+iString *       formatFeedsDate_SidebarWidget_  (const iTime *posted); /* date separator label */
 
 /* Site structure (sidebar/sitestructure.c). */
 iBool           updateStructure_SidebarWidget_  (iSidebarWidget *, iBool keepActions);

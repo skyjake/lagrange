@@ -107,12 +107,12 @@ static void drawLines_(int font, iInt2 pos, int color, const iRangecc *lines, in
     }
 }
 
-static int estimateLines_(int font, const iString *text, int width, int maxLines) {
+static int estimateLines_(int charWidth, const iString *text, int width, int maxLines) {
     /* Undershooting is preferable to leaving empty lines. */
     if (width <= 0) {
         return 1;
     }
-    const int textWidth = (int) length_String(text) * measure_Text(font, "x").advance.x * 4 / 5;
+    const int textWidth = (int) length_String(text) * charWidth * 4 / 5;
     return iClamp(1 + textWidth / width, 1, maxLines);
 }
 
@@ -144,7 +144,7 @@ static int measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iL
     if (sidebar->mode == documentOutline_SidebarMode) {
         /* Top-level headings have a separator above. */
         const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
-        return estimateLines_(font,
+        return estimateLines_(sidebar->itemCharWidths[d->isBold ? 1 : 0],
                               &d->label,
                               outlineTextWidth_SidebarItem_(d, sidebar, width),
                               maxOutlineLines_SidebarItem_) *
@@ -158,7 +158,7 @@ static int measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iL
         const int   h1        = lineHeight_Text(uiLabel_FontId);
         const int   h2        = lineHeight_Text(titleFont);
         if (isTinylog) {
-            return h1 + estimateLines_(titleFont,
+            return h1 + estimateLines_(sidebar->itemCharWidths[isUnread ? 1 : 0],
                                        &d->label,
                                        feedTextWidth_SidebarItem_(width),
                                        maxTinylogLines_SidebarItem_) *
@@ -290,8 +290,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 add_I2(pos,
                        init_I2(3 * gap_UI * aspect_UI,
                                itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 2 * gap_UI));
-            drawRange_Text(
-                uiLabelLargeBold_FontId, headingPos, uiIcon_ColorId, range_String(&d->meta));
+            iString *date = formatFeedsDate_SidebarWidget_(&d->ts);
+            drawRange_Text(uiLabelLargeBold_FontId, headingPos, uiIcon_ColorId, range_String(date));
+            delete_String(date);
             const char *age = isFirstItem ? feedsRefreshAgeCStr_SidebarWidget_() : NULL;
             if (age) {
                 drawRange_Text(uiLabelSmall_FontId,

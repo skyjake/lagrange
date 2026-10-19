@@ -179,10 +179,11 @@ iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *feedsFilename_Feeds_    = "feeds.lgr";
-static const char *oldFeedsFilename_Feeds_ = "feeds.txt";
-static const char *magic_Feeds_            = "lgFd";
-static const int   maxEntryAge_Feeds_      = 30 * 24 * 3600; /* seconds since last seen */
+static const char  *feedsFilename_Feeds_     = "feeds.lgr";
+static const char  *oldFeedsFilename_Feeds_  = "feeds.txt";
+static const char  *magic_Feeds_             = "lgFd";
+static const int    maxEntryAge_Feeds_       = 30 * 24 * 3600; /* seconds since last seen */
+static const size_t maxVisibleEntries_Feeds_ = 1000; /* in the sidebar; all are in "about:feeds" */
 
 struct Impl_Feeds {
     iMutex *  mtx;
@@ -1665,9 +1666,7 @@ const iPtrArray *listVisibleEntries_Feeds(iBool unreadOnly, const iString *openU
             continue;
         }
         pushBack_PtrArray(list, entry);
-        if (size_PtrArray(list) == 100) {
-            /* For more items, one can always see "about:feeds". A large number of items
-               is a bit difficult to navigate in the sidebar. */
+        if (size_PtrArray(list) == maxVisibleEntries_Feeds_) {
             break;
         }
     }
@@ -1694,7 +1693,7 @@ iTime lastRefreshedAt_Feeds(void) {
 
 size_t numUnread_Feeds(void) {
     size_t count = 0;
-    size_t max = 100; /* match the number of items shown in the sidebar */
+    size_t max = maxVisibleEntries_Feeds_;
     iConstForEach(PtrArray, i, listEntries_Feeds()) {
         if (!max--) break;
         const iFeedEntry *entry = i.ptr;

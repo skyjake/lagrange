@@ -782,6 +782,9 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
         [history_SidebarMode] = 1,       [gempub_SidebarMode] = 2,
     };
 #endif
+    iForIndices(i, d->itemFonts) {
+        d->itemCharWidths[i] = measure_Text(d->itemFonts[i], "x").advance.x;
+    }
     if (d->list) {
         const int padding = d->mode == gempub_SidebarMode && !isTerminal_Platform() ? 2 * gap_UI : 0;
         setItemHeight_ListWidget(d->list,
@@ -1031,6 +1034,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0]     = uiContent_FontId;
     d->itemFonts[1]     = uiContentBold_FontId;
+    iZap(d->itemCharWidths);
     if (isMobile_Platform()) {
         if (deviceType_App() == phone_AppDeviceType) {
             d->itemFonts[0] = uiLabelBig_FontId;
@@ -1877,7 +1881,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             /* The Book mode is only available for books. */
             checkModeButtonLayout_SidebarWidget_(d);
             arrange_Widget(parent_Widget(d->modeButtons[0]));
-            if (d->mode != bookmarks_SidebarMode) {
+            if (d->mode != bookmarks_SidebarMode &&
+                (d->mode != feedEntries_SidebarMode || !refreshFeedEntries_SidebarWidget_(d))) {
                 updateItems_SidebarWidget_(d);
             }
             if (d->mode != siteStructure_SidebarMode) {
@@ -1924,7 +1929,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "visited.changed")) {
             d->numUnreadEntries = numUnread_Feeds();
             checkModeButtonLayout_SidebarWidget_(d);
-            if (d->mode == history_SidebarMode || d->mode == feedEntries_SidebarMode) {
+            if (d->mode == history_SidebarMode ||
+                (d->mode == feedEntries_SidebarMode && !refreshFeedEntries_SidebarWidget_(d))) {
                 updateItems_SidebarWidget_(d);
             }
         }
