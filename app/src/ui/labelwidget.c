@@ -692,7 +692,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
-    const int font = (bg == uiBackgroundSelected_ColorId && isTabButton_Widget(w))
+    const int font = (flags & selected_WidgetFlag && isTabButton_Widget(w))
                          ? fontWithStyle_Text(d->font, semiBold_FontStyle)
                          : d->font;
     /* Indicate focused label with an underline attribute. */
