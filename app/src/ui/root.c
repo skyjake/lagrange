@@ -2458,6 +2458,7 @@ void createUserInterface_Root(iRoot *d) {
             { hierarchy_Icon " ${sidebar.structure}", 0, 0, "toolbar.showview arg:5" },
             { openTabBg_Icon " ${sidebar.documents}", 0, 0, "toolbar.showview arg:6" },
             { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:7" },
+            { books_Icon " ${sidebar.gempub}", 0, 0, "toolbar.showview arg:8" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
