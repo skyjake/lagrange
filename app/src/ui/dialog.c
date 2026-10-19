@@ -838,7 +838,7 @@ void makeTwoColumnItems_Widget(iWidget *headings, iWidget *values, const iMenuIt
 iWidget *makeDialogVerticalTabs_Widget(iWidget *dlg, const char *tabsId, const char *title,
                                        const char *titleId, iWidget **content) {
     iWidget *tabs = makeTabs_Widget(dlg);
-    setPadding1_Widget(dlg, gap_UI / 4); /* sheet frame remains visible */
+    setPadding1_Widget(dlg, iMax((int) (frame_UI / aspect_UI), gap_UI / 4)); /* sheet frame remains visible */
     setVerticalTabBar_Widget(tabs);
     iWidget *tabButtons = findChild_Widget(tabs, "tabs.buttons");
     setBackgroundColor_Widget(tabButtons, uiBackgroundSidebar_ColorId);

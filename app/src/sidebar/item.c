@@ -132,7 +132,7 @@ static int outlineSeparatorHeight_SidebarItem_(const iSidebarWidget *sidebar) {
 }
 
 static int feedTextWidth_SidebarItem_(int itemWidth) {
-    return itemWidth - feedIconPad_SidebarItem_ - 3 * gap_UI;
+    return itemWidth - (feedIconPad_SidebarItem_ + 3 * gap_UI) * aspect_UI;
 }
 
 static int measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iListWidget *list) {
@@ -279,17 +279,20 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == feedEntries_SidebarMode) {
         const int iconPad = feedIconPad_SidebarItem_;
         if (d->listItem.flags.isSeparator) {
-            const iBool isFirstItem = (d == constItem_ListWidget(list, 0));
+            const iBool isFirstItem   = (d == constItem_ListWidget(list, 0));
+            const iBool isTerminal    = isTerminal_Platform();
+            const int   headingHeight = lineHeight_Text(uiLabelLargeBold_FontId);
             if (!isFirstItem) {
                 drawHLine_Paint(p,
-                                addY_I2(pos, 4 * gap_UI),
+                                addY_I2(pos, isTerminal ? 0 : 4 * gap_UI),
                                 width_Rect(itemRect) - blankWidth,
                                 uiSeparator_ColorId);
             }
             const iInt2 headingPos =
                 add_I2(pos,
                        init_I2(3 * gap_UI * aspect_UI,
-                               itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 2 * gap_UI));
+                               isTerminal ? headingHeight
+                                          : itemHeight - headingHeight - 2 * gap_UI));
             iString *date = formatFeedsDate_SidebarWidget_(&d->ts);
             drawRange_Text(uiLabelLargeBold_FontId, headingPos, uiIcon_ColorId, range_String(date));
             delete_String(date);
