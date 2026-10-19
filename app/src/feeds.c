@@ -199,6 +199,8 @@ struct Impl_Feeds {
     iAtomicInt numResumes;
     iPtrArray jobs; /* pending */
     iSortedArray entries; /* pointers to all discovered feed entries, sorted by entry ID (URL) */
+    iPtrArray *  sortedEntries; /* `entries` sorted by time, descending; NULL if invalid */
+    iPtrArray    deletedEntries; /* removed from `entries`; freed when the worker is stopped */
     iPtrArray tinylogFeeds; /* TinylogFeed */
 };
 
@@ -218,6 +220,25 @@ static iFeeds feeds_;
 
 static iBool isInitialized_Feeds_(const iFeeds *d) {
     return d->mtx != NULL;
+}
+
+static void invalidateSortedEntries_Feeds_(iFeeds *d) {
+    /* Caller must lock. */
+    delete_PtrArray(d->sortedEntries);
+    d->sortedEntries = NULL;
+}
+
+static void discardEntry_Feeds_(iFeeds *d, iFeedEntry *entry) {
+    /* Caller must lock. Other threads may still be accessing a listed entry. */
+    pushBack_PtrArray(&d->deletedEntries, entry);
+}
+
+static void releaseDeletedEntries_Feeds_(iFeeds *d) {
+    /* Called in the main thread while the worker is not running. */
+    iForEach(PtrArray, i, &d->deletedEntries) {
+        delete_FeedEntry(i.ptr);
+    }
+    clear_PtrArray(&d->deletedEntries);
 }
 
 static void submit_FeedJob_(iFeedJob *d) {
@@ -786,7 +807,7 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
             /* All known entries that are no longer present in source must be deleted.  */
             if (entry->bookmarkId == sourceId &&
                 !contains_StringSet(presentInSource, &entry->url)) {
-                delete_FeedEntry(entry);
+                discardEntry_Feeds_(d, entry);
                 remove_ArrayIterator(&e);
             }
             /* Remember the base page URL of heading entries; it is used for read-status
@@ -795,6 +816,7 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
                 headingsPageUrl = copy_String(url_FeedEntry(entry));
             }
         }
+        invalidateSortedEntries_Feeds_(d);
         iRelease(presentInSource);
         iRelease(known);
         unlock_Mutex(d->mtx);
@@ -858,6 +880,7 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
             }
             remove_PtrArrayIterator(&i);
         }
+        invalidateSortedEntries_Feeds_(d);
         unlock_Mutex(d->mtx);
         fflush(stdout);
         iRelease(handledUrls);
@@ -903,7 +926,7 @@ static iBool updateTinylogEntries_Feeds_(iFeeds *d, const iFeedJob *job, iPtrArr
     iForEach(Array, e, &d->entries.values) {
         iFeedEntry *entry = *(iFeedEntry **) e.value;
         if (entry->bookmarkId == job->bookmarkId && !contains_StringSet(present, &entry->url)) {
-            delete_FeedEntry(entry);
+            discardEntry_Feeds_(d, entry);
             remove_ArrayIterator(&e);
         }
     }
@@ -923,6 +946,7 @@ static iBool updateTinylogEntries_Feeds_(iFeeds *d, const iFeedJob *job, iPtrArr
             }
         }
     }
+    invalidateSortedEntries_Feeds_(d);
     delete_PtrArray(added);
     iRelease(present);
     iRelease(known);
@@ -1172,6 +1196,7 @@ static void stopWorker_Feeds_(iFeeds *d) {
         join_Thread(d->worker);
         iReleasePtr(&d->worker);
     }
+    releaseDeletedEntries_Feeds_(d);
     /* Clear remaining jobs. */
     iForEach(PtrArray, i, &d->jobs) {
         delete_FeedJob(i.ptr);
@@ -1372,6 +1397,8 @@ void init_Feeds(const char *saveDir) {
     set_Atomic(&d->numResumes, 0);
     init_PtrArray(&d->jobs);
     init_SortedArray(&d->entries, sizeof(iFeedEntry *), cmp_FeedEntryPtr_);
+    d->sortedEntries = NULL;
+    init_PtrArray(&d->deletedEntries);
     init_PtrArray(&d->tinylogFeeds);
     load_Feeds_(d);
     loadTinylogFeeds_Feeds_(d);
@@ -1389,6 +1416,7 @@ void deinit_Feeds(void) {
     deinit_String(&d->saveDir);
     delete_Condition(d->wakeup);
     delete_Mutex(d->mtx);
+    invalidateSortedEntries_Feeds_(d);
     iForEach(Array, i, &d->entries.values) {
         iFeedEntry **entry = i.value;
         delete_FeedEntry(*entry);
@@ -1404,6 +1432,7 @@ void deinit_Feeds(void) {
     }
     deinit_PtrArray(&d->tinylogFeeds);
     deinit_IntSet(&d->previouslyCheckedFeeds);
+    deinit_PtrArray(&d->deletedEntries);
     deinit_SortedArray(&d->entries);
 }
 
@@ -1483,18 +1512,25 @@ void remapBookmarkIds_Feeds(const iArray *idMappings) {
         entry->bookmarkId = mappedId_SyncIdMapping(idMappings, entry->bookmarkId);
         insert_SortedArray(&d->entries, &entry);
     }
+    invalidateSortedEntries_Feeds_(d);
     unlock_Mutex(d->mtx);
 }
 
 void removeEntries_Feeds(uint32_t feedBookmarkId) {
     iFeeds *d = &feeds_;
+    lock_Mutex(d->mtx);
     iForEach(Array, i, &d->entries.values) {
         iFeedEntry **entry = i.value;
         if ((*entry)->bookmarkId == feedBookmarkId) {
-            delete_FeedEntry(*entry);
+            discardEntry_Feeds_(d, *entry);
             remove_ArrayIterator(&i);
         }
     }
+    invalidateSortedEntries_Feeds_(d);
+    if (!d->worker) {
+        releaseDeletedEntries_Feeds_(d);
+    }
+    unlock_Mutex(d->mtx);
     removeTinylogCaches_Feeds_(d, iTrue);
 }
 
@@ -1512,9 +1548,13 @@ void removeUnsubscribedEntries_Feeds(void) {
     iForEach(Array, j, &d->entries.values) {
         iFeedEntry **entry = j.value;
         if (!contains_IntSet(&subs, (*entry)->bookmarkId)) {
-            delete_FeedEntry(*entry);
+            discardEntry_Feeds_(d, *entry);
             remove_ArrayIterator(&j);
         }
+    }
+    invalidateSortedEntries_Feeds_(d);
+    if (!d->worker) {
+        releaseDeletedEntries_Feeds_(d);
     }
     unlock_Mutex(d->mtx);
     deinit_IntSet(&subs);
@@ -1626,11 +1666,13 @@ static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
 const iPtrArray *listEntries_Feeds(void) {
     iFeeds *d = &feeds_;
     lock_Mutex(d->mtx);
-    /* The worker will never delete feed entries so we can use the same ones. Just make a copy
-       of the array in case the worker modifies it. */
-    iPtrArray *list = collect_PtrArray(copy_Array(&d->entries.values));
+    if (!d->sortedEntries) {
+        d->sortedEntries = copy_Array(&d->entries.values);
+        sort_Array(d->sortedEntries, cmpTimeDescending_FeedEntryPtr_);
+    }
+    /* The cached array may be invalidated by the worker. */
+    iPtrArray *list = collect_PtrArray(copy_PtrArray(d->sortedEntries));
     unlock_Mutex(d->mtx);
-    sort_Array(list, cmpTimeDescending_FeedEntryPtr_);
     return list;
 }
 
