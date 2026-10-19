@@ -48,6 +48,13 @@ enum iFeedsMode {
     unread_FeedsMode
 };
 
+enum iSubscriptionsSortOrder {
+    name_SubscriptionsSortOrder,
+    mostRecent_SubscriptionsSortOrder,
+    leastRecent_SubscriptionsSortOrder,
+    numEntries_SubscriptionsSortOrder,
+};
+
 iDeclareWidgetClass(SidebarWidget)
 iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 
@@ -61,6 +68,7 @@ enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
 int                 shelfSort_SidebarWidget     (const iSidebarWidget *); /* enum iBooksSortOrder */
 int                 identSort_SidebarWidget     (const iSidebarWidget *); /* enum iCertListSortOrder */
+int                 subSort_SidebarWidget       (const iSidebarWidget *); /* enum iSubscriptionsSortOrder */
 float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     openFolders_SidebarWidget   (const iSidebarWidget *);
 iBool               isShowingTrash_SidebarWidget(const iSidebarWidget *);

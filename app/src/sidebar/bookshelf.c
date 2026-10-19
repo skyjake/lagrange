@@ -171,59 +171,24 @@ iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     };
     d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
     /* Actions. */
-    if (deviceType_App() == desktop_AppDeviceType) {
-        if (!keepActions && !isEmpty_PtrArray(books)) {
-            addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
-            updateSize_LabelWidget(
-                addChildFlags_Widget(d->actions,
-                                     iClob(new_LabelWidget("${sidebar.action.sort}", NULL)),
-                                     frameless_WidgetFlag | tight_WidgetFlag));
-            const iMenuItem items[] = {
-                { "${sidebar.action.books.recent}", 0, 0, "books.sort arg:0" },
-                { "${sidebar.action.books.title}", 0, 0, "books.sort arg:1" },
-                { "${sidebar.action.books.author}", 0, 0, "books.sort arg:2" },
-            };
-            iWidget *dropButton = addChild_Widget(
-                d->actions,
-                iClob(makeMenuButton_LabelWidget(items[d->shelfSort].label, items, 3)));
-            setId_Widget(dropButton, "books.sortbutton");
-            checkIcon_LabelWidget((iLabelWidget *) dropButton);
-            setFixedSize_Widget(
-                dropButton,
-                init_I2(iMaxi(20 * gap_UI,
-                              measure_Text(default_FontId,
-                                           translateCStr_Lang(
-                                               items[findWidestLabel_MenuItem(items, 3)].label))
-                                      .advance.x +
-                                  13 * gap_UI),
-                        -1));
+    if (!keepActions && !isEmpty_PtrArray(books)) {
+        const iBool     isDesktop = (deviceType_App() == desktop_AppDeviceType);
+        const iMenuItem items[]   = {
+            { "${sidebar.action.books.recent}", 0, 0, "books.sort arg:0" },
+            { "${sidebar.action.books.title}", 0, 0, "books.sort arg:1" },
+            { "${sidebar.action.books.author}", 0, 0, "books.sort arg:2" },
+        };
+        if (isDesktop) {
             addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
         }
-        else if (keepActions) {
-            updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "books.sortbutton"),
-                                                format_CStr(" arg:%d", d->shelfSort));
+        addSortDropdown_SidebarWidget_(
+            d, d->actions, "books.sortbutton", items, iElemCount(items), d->shelfSort, 0);
+        if (isDesktop) {
+            addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
         }
     }
-    else {
-        if (!keepActions && !isEmpty_PtrArray(books)) {
-            const iMenuItem items[] = {
-                { upDownArrow_Icon " ${sidebar.action.books.recent}", 0, 0, "books.sort arg:0" },
-                { upDownArrow_Icon " ${sidebar.action.books.title}", 0, 0, "books.sort arg:1" },
-                { upDownArrow_Icon " ${sidebar.action.books.author}", 0, 0, "books.sort arg:2" },
-            };
-            iLabelWidget *dropButton =
-                makeMenuButton_LabelWidget(items[d->shelfSort].label, items, 3);
-            addChildFlags_Widget(d->actions, iClob(dropButton), frameless_WidgetFlag);
-            setId_Widget(as_Widget(dropButton), "books.sortbutton");
-            setFont_LabelWidget(dropButton, actionButtonFont_SidebarWidget_(d));
-            setTextColor_LabelWidget(dropButton, uiTextAction_ColorId);
-            setBackgroundColor_Widget(as_Widget(dropButton), uiBackgroundSidebar_ColorId);
-            checkIcon_LabelWidget(dropButton);
-        }
-        else if (keepActions) {
-            updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "books.sortbutton"),
-                                                format_CStr(" arg:%d", d->shelfSort));
-        }
+    else if (keepActions) {
+        updateSortDropdown_SidebarWidget_(d, "books.sortbutton", d->shelfSort);
     }
     return !isEmpty_PtrArray(books);
 }

@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Gempub)
 iDeclareType(IndicatorWidget)
 iDeclareType(LabelWidget)
+iDeclareType(MenuItem)
 iDeclareType(Root)
 iDeclareType(SimpleDocumentWidget)
 
@@ -72,6 +73,7 @@ struct Impl_SidebarWidget {
     enum iFeedsMode   feedsMode;
     enum iBooksSortOrder shelfSort;
     enum iCertListSortOrder identSort; /* also used by the identity list in mobile Settings */
+    enum iSubscriptionsSortOrder subSort;
     iStringArray     *shelfOrder;    /* book IDs as shown; kept while the shelf stays visible */
     iBool             isShelfOrderValid;
     iString           cmdPrefix;
@@ -131,6 +133,10 @@ iBool           isSlidingSheet_SidebarWidget_   (const iSidebarWidget *);
 enum iFontId    actionButtonFont_SidebarWidget_ (const iSidebarWidget *);
 iLabelWidget *  addActionButton_SidebarWidget_  (iSidebarWidget *, const char *label,
                                                  const char *command, int64_t flags);
+iLabelWidget *  addSortDropdown_SidebarWidget_  (iSidebarWidget *, iWidget *parent, const char *id,
+                                                 const iMenuItem *items, size_t numItems,
+                                                 int sortOrder, int64_t dropFlags);
+void            updateSortDropdown_SidebarWidget_(iSidebarWidget *, const char *id, int sortOrder);
 void            updateItems_SidebarWidget_      (iSidebarWidget *);
 void            updateItemsWithFlags_SidebarWidget_(iSidebarWidget *, iBool keepActions);
 
@@ -144,7 +150,7 @@ iWidget *       bookmarkContextMenu_SidebarWidget_(iSidebarWidget *, const iSide
 
 /* Feeds (sidebar/feedlist.c). */
 iBool           updateFeedEntries_SidebarWidget_(iSidebarWidget *, iBool keepActions);
-iBool           updateSubscriptions_SidebarWidget_(iSidebarWidget *);
+iBool           updateSubscriptions_SidebarWidget_(iSidebarWidget *, iBool keepActions);
 iBool           handleFeedCommand_SidebarWidget_(iSidebarWidget *, const SDL_Event *,
                                                  const char *cmd);
 void            updateFeedContextMenu_SidebarWidget_(iSidebarWidget *);

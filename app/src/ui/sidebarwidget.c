@@ -216,6 +216,53 @@ iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *labe
     return btn;
 }
 
+iLabelWidget *addSortDropdown_SidebarWidget_(iSidebarWidget *d, iWidget *parent, const char *id,
+                                             const iMenuItem *items, size_t numItems,
+                                             int sortOrder, int64_t dropFlags) {
+    iLabelWidget *dropButton;
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* No room for the label. */
+        iMenuItem iconItems[8];
+        iAssert(numItems <= iElemCount(iconItems));
+        for (size_t i = 0; i < numItems; i++) {
+            iconItems[i]       = items[i];
+            iconItems[i].label = format_CStr(upDownArrow_Icon " %s", items[i].label);
+        }
+        dropButton = makeMenuButton_LabelWidget(iconItems[0].label, iconItems, numItems);
+        addChildFlags_Widget(parent, iClob(dropButton), frameless_WidgetFlag | dropFlags);
+        setFont_LabelWidget(dropButton, actionButtonFont_SidebarWidget_(d));
+        setTextColor_LabelWidget(dropButton, uiTextAction_ColorId);
+        setBackgroundColor_Widget(as_Widget(dropButton), uiBackgroundSidebar_ColorId);
+    }
+    else {
+        updateSize_LabelWidget(
+            addChildFlags_Widget(parent,
+                                 iClob(new_LabelWidget("${sidebar.action.sort}", NULL)),
+                                 frameless_WidgetFlag | tight_WidgetFlag));
+        dropButton = makeMenuButton_LabelWidget(items[0].label, items, numItems);
+        addChildFlags_Widget(parent, iClob(dropButton), dropFlags);
+        if (~dropFlags & expand_WidgetFlag) {
+            const size_t widest = findWidestLabel_MenuItem(items, numItems);
+            setFixedSize_Widget(
+                as_Widget(dropButton),
+                init_I2(iMaxi(20 * gap_UI,
+                              measure_Text(default_FontId, translateCStr_Lang(items[widest].label))
+                                      .advance.x +
+                                  13 * gap_UI),
+                        -1));
+        }
+    }
+    setId_Widget(as_Widget(dropButton), id);
+    updateDropdownSelection_LabelWidget(dropButton, format_CStr(" arg:%d", sortOrder));
+    checkIcon_LabelWidget(dropButton);
+    return dropButton;
+}
+
+void updateSortDropdown_SidebarWidget_(iSidebarWidget *d, const char *id, int sortOrder) {
+    updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, id),
+                                        format_CStr(" arg:%d", sortOrder));
+}
+
 iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
     return isPortraitPhone_App();
 }
@@ -364,7 +411,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             isEmpty = !updateFeedEntries_SidebarWidget_(d, keepActions);
             break;
         case subscriptions_SidebarMode:
-            isEmpty = !updateSubscriptions_SidebarWidget_(d);
+            isEmpty = !updateSubscriptions_SidebarWidget_(d, keepActions);
             break;
         case documentOutline_SidebarMode:
             addOutlineItems_SidebarWidget_(d);
@@ -460,17 +507,15 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 { "${sidebar.action.ident.name}", 0, 0, "idents.sort arg:1" },
                 { "${sidebar.action.ident.manual}", 0, 0, "idents.sort arg:0" },
             };
-            const char *selectedSort = format_CStr(" arg:%d", d->identSort);
             if (!keepActions && !isEmpty) {
                 iWidget *sortRow = new_Widget();
-                updateSize_LabelWidget(
-                    addChildFlags_Widget(sortRow,
-                                         iClob(new_LabelWidget("${sidebar.action.sort}", NULL)),
-                                         frameless_WidgetFlag | tight_WidgetFlag));
-                iLabelWidget *dropButton = makeMenuButton_LabelWidget(sortItems[0].label, sortItems, 2);
-                setId_Widget(as_Widget(dropButton), "idents.sortbutton");
-                addChildFlags_Widget(sortRow, iClob(dropButton), expand_WidgetFlag);
-                updateDropdownSelection_LabelWidget(dropButton, selectedSort);
+                addSortDropdown_SidebarWidget_(d,
+                                               sortRow,
+                                               "idents.sortbutton",
+                                               sortItems,
+                                               iElemCount(sortItems),
+                                               d->identSort,
+                                               expand_WidgetFlag);
                 iWidget *buttonRow = new_Widget();
                 const iMenuItem buttons[] = {
                     { add_Icon " ${sidebar.action.ident.new}", 0, 0, "ident.new" },
@@ -495,8 +540,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                                          resizeWidthOfChildren_WidgetFlag | unhittable_WidgetFlag);
             }
             else if (keepActions) {
-                updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "idents.sortbutton"),
-                                                    selectedSort);
+                updateSortDropdown_SidebarWidget_(d, "idents.sortbutton", d->identSort);
             }
             break;
         }
@@ -852,6 +896,10 @@ int identSort_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->identSort : manual_CertListSortOrder;
 }
 
+int subSort_SidebarWidget(const iSidebarWidget *d) {
+    return d ? d->subSort : name_SubscriptionsSortOrder;
+}
+
 float width_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->widthAsGaps : 0;
 }
@@ -971,6 +1019,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->feedsMode        = all_FeedsMode;
     d->shelfSort        = recent_BooksSortOrder;
     d->identSort        = manual_CertListSortOrder;
+    d->subSort          = name_SubscriptionsSortOrder;
     d->shelfOrder       = new_StringArray();
     d->isShelfOrderValid = iFalse;
     d->midHeight        = 0;

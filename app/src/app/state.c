@@ -298,6 +298,12 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                     if ((bits >> 18) & 3) {
                         postCommand_Widget(sidebar2, "idents.sort arg:%d", (bits >> 18) & 3);
                     }
+                    if ((bits >> 20) & 3) {
+                        postCommand_Widget(sidebar, "subs.sort arg:%d", (bits >> 20) & 3);
+                    }
+                    if ((bits >> 22) & 3) {
+                        postCommand_Widget(sidebar2, "subs.sort arg:%d", (bits >> 22) & 3);
+                    }
                     if (deviceType_App() == desktop_AppDeviceType) {
                         /* Zero means the width was not available when saving. */
                         if (widths[0] > 0) setWidth_SidebarWidget(sidebar,  widths[0]);
@@ -473,7 +479,9 @@ void saveState_App_(const iApp *d, iBool withContent) {
                                       (shelfSort_SidebarWidget(sidebar)  << 12) |
                                       (shelfSort_SidebarWidget(sidebar2) << 14) |
                                       (identSort_SidebarWidget(sidebar)  << 16) |
-                                      (identSort_SidebarWidget(sidebar2) << 18));
+                                      (identSort_SidebarWidget(sidebar2) << 18) |
+                                      (subSort_SidebarWidget(sidebar)    << 20) |
+                                      (subSort_SidebarWidget(sidebar2)   << 22));
                         writeU8_File(f,
                                      mode_SidebarWidget(sidebar) |
                                      (mode_SidebarWidget(sidebar2) << 4));

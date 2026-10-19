@@ -313,7 +313,44 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     return !isEmpty;
 }
 
-iBool updateSubscriptions_SidebarWidget_(iSidebarWidget *d) {
+static int cmpName_SidebarItem_(const void *a, const void *b) {
+    const iSidebarItem *x = *(const iSidebarItem **) a;
+    const iSidebarItem *y = *(const iSidebarItem **) b;
+    return cmpStringCase_String(&x->label, &y->label);
+}
+
+static int cmpLatest_SidebarItem_(const void *a, const void *b) {
+    /* Feeds without entries are the least recent. */
+    const iSidebarItem *x  = *(const iSidebarItem **) a;
+    const iSidebarItem *y  = *(const iSidebarItem **) b;
+    const iBool         vx = isValid_Time(&x->ts);
+    const iBool         vy = isValid_Time(&y->ts);
+    if (vx != vy) {
+        return vx ? 1 : -1;
+    }
+    return vx ? cmp_Time(&x->ts, &y->ts) : 0;
+}
+
+static int cmpMostRecent_SidebarItem_(const void *a, const void *b) {
+    const int cmp = cmpLatest_SidebarItem_(b, a);
+    return cmp ? cmp : cmpName_SidebarItem_(a, b);
+}
+
+static int cmpLeastRecent_SidebarItem_(const void *a, const void *b) {
+    const int cmp = cmpLatest_SidebarItem_(a, b);
+    return cmp ? cmp : cmpName_SidebarItem_(a, b);
+}
+
+static int cmpNumEntries_SidebarItem_(const void *a, const void *b) {
+    const iSidebarItem *x = *(const iSidebarItem **) a;
+    const iSidebarItem *y = *(const iSidebarItem **) b;
+    if (x->count != y->count) {
+        return x->count > y->count ? -1 : 1;
+    }
+    return cmpName_SidebarItem_(a, b);
+}
+
+iBool updateSubscriptions_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     iDeclareType(FeedItem);
     struct Impl_FeedItem {
         iHashNode     node;
@@ -335,9 +372,7 @@ iBool updateSubscriptions_SidebarWidget_(iSidebarWidget *d) {
             item->id   = id_Bookmark(bm);
             item->icon = bm->icon;
         }
-        addItem_ListWidget(d->list, item);
-        iRelease(item);                 /* list owns it */
-        pushBack_PtrArray(items, item); /* we'll use this in the next phase */
+        pushBack_PtrArray(items, item); /* added to the list after sorting */
         /* Build a lookup hash from feeds to items. */ {
             iFeedItem *mapping = iMalloc(FeedItem);
             mapping->node.key  = item->id;
@@ -382,6 +417,16 @@ iBool updateSubscriptions_SidebarWidget_(iSidebarWidget *d) {
             appendCStr_String(&item->meta, cstr_Lang("sidebar.sub.empty"));
         }
     }
+    if (d->subSort != name_SubscriptionsSortOrder) {
+        sort_Array(items,
+                   d->subSort == mostRecent_SubscriptionsSortOrder    ? cmpMostRecent_SidebarItem_
+                   : d->subSort == leastRecent_SubscriptionsSortOrder ? cmpLeastRecent_SidebarItem_
+                                                                      : cmpNumEntries_SidebarItem_);
+    }
+    iForEach(PtrArray, ia, items) {
+        addItem_ListWidget(d->list, ia.ptr);
+        iRelease(ia.ptr); /* list owns it */
+    }
     const iBool isEmpty = isEmpty_PtrArray(items);
     delete_PtrArray(items);
     iForEach(Hash, h, &hash) {
@@ -406,6 +451,27 @@ iBool updateSubscriptions_SidebarWidget_(iSidebarWidget *d) {
         { "${feeds.reset}", 0, 0, "feeds.reset" },
     };
     d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
+    /* Actions. */
+    if (!keepActions && !isEmpty) {
+        const iBool     isDesktop   = (deviceType_App() == desktop_AppDeviceType);
+        const iMenuItem sortItems[] = {
+            { "${sidebar.action.subs.name}", 0, 0, "subs.sort arg:0" },
+            { "${sidebar.action.subs.recent}", 0, 0, "subs.sort arg:1" },
+            { "${sidebar.action.subs.leastrecent}", 0, 0, "subs.sort arg:2" },
+            { "${sidebar.action.subs.entries}", 0, 0, "subs.sort arg:3" },
+        };
+        if (isDesktop) {
+            addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
+        }
+        addSortDropdown_SidebarWidget_(
+            d, d->actions, "subs.sortbutton", sortItems, iElemCount(sortItems), d->subSort, 0);
+        if (isDesktop) {
+            addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
+        }
+    }
+    else if (keepActions) {
+        updateSortDropdown_SidebarWidget_(d, "subs.sortbutton", d->subSort);
+    }
     return !isEmpty;
 }
 
@@ -486,6 +552,13 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
     if (equalWidget_Command(cmd, w, "feeds.mode")) {
         d->feedsMode = arg_Command(cmd);
         updateItemsWithFlags_SidebarWidget_(d, iTrue);
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, w, "subs.sort")) {
+        d->subSort = iClamp(arg_Command(cmd), 0, numEntries_SubscriptionsSortOrder);
+        if (d->mode == subscriptions_SidebarMode) {
+            updateItemsWithFlags_SidebarWidget_(d, iTrue);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.markallread") && d->mode == feedEntries_SidebarMode) {

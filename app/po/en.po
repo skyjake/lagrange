@@ -709,7 +709,7 @@ msgstr "Read All"
 msgid "sidebar.action.show"
 msgstr "Show:"
 
-# Label before the dropdown that selects the order of books or identities.
+# Label before the dropdown that selects the order of books, identities, or subscriptions.
 msgid "sidebar.action.sort"
 msgstr "Sort:"
 
@@ -721,6 +721,19 @@ msgstr "Title"
 
 msgid "sidebar.action.books.author"
 msgstr "Author"
+
+msgid "sidebar.action.subs.name"
+msgstr "Name"
+
+msgid "sidebar.action.subs.recent"
+msgstr "Most Recent"
+
+msgid "sidebar.action.subs.leastrecent"
+msgstr "Least Recent"
+
+# Subscriptions with the most feed entries first.
+msgid "sidebar.action.subs.entries"
+msgstr "Most Entries"
 
 msgid "sidebar.action.feeds.showall"
 msgstr "All"
