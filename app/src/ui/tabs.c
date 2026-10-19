@@ -55,7 +55,42 @@ static void setFocusInsideTabPage_(iWidget *page) {
     }
 }
 
+static iBool isDocTabs_Widget_(const iWidget *tabs) {
+    return tabs && !cmp_String(id_Widget(tabs), "doctabs");
+}
+
+/* A temporary spacer after the doctabs buttons keeps the remaining tab buttons in place while
+   closing tabs with the mouse. */
+static void reserveClosedTabSpace_Widget_(iWidget *tabs, const iWidget *button) {
+    iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    if (deviceType_App() == desktop_AppDeviceType && isDocTabs_Widget_(tabs) &&
+        contains_Widget(buttons, mouseCoord_Window(window_Widget(tabs), 0))) {
+        iWidget *spacer = findChild_Widget(buttons, "tabs.spacer");
+        if (!spacer) {
+            spacer = addChildFlags_Widget(buttons, iClob(new_Widget()), unhittable_WidgetFlag);
+            setId_Widget(spacer, "tabs.spacer");
+        }
+        setFixedSize_Widget(spacer, init_I2(width_Widget(spacer) + width_Widget(button), -1));
+    }
+}
+
+static void releaseClosedTabSpace_Widget_(iWidget *tabs) {
+    if (isDocTabs_Widget_(tabs)) {
+        iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+        iWidget *spacer  = findChild_Widget(buttons, "tabs.spacer");
+        if (spacer) {
+            iRelease(removeChild_Widget(buttons, spacer));
+            arrange_Widget(buttons);
+            refresh_Widget(buttons);
+        }
+    }
+}
+
 static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
+    if (equal_Command(cmd, "window.mouse.exited") || equal_Command(cmd, "window.resized")) {
+        releaseClosedTabSpace_Widget_(tabs);
+        return iFalse;
+    }
     if (equal_Command(cmd, "tabs.switch")) {
         iWidget *target = pointerLabel_Command(cmd, "page");
         if (!target && hasLabel_Command(cmd, "id")) {
@@ -202,6 +237,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
     else {
         setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
     }
+    releaseClosedTabSpace_Widget_(tabs);
     addChildPos_Widget(pages, page, addPos);
     if (tabCount_Widget(tabs) > 1 && (cmp_String(id_Widget(tabs), "doctabs") ||
                                       !prefs_App()->hideTabBar)) {
@@ -235,14 +271,27 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
     iWidget *pages   = findChild_Widget(tabs, "tabs.pages");
     iWidget *button  = removeChild_Widget(buttons, child_Widget(buttons, index));
+    reserveClosedTabSpace_Widget_(tabs, button);
     iRelease(button);
     iWidget *page = child_Widget(pages, index);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
     removeChild_Widget(pages, page); /* `page` is now ours */
     if (tabCount_Widget(tabs) <= 1 && flags_Widget(buttons) & collapse_WidgetFlag) {
         setFlags_Widget(buttons, hidden_WidgetFlag, iTrue);
+        releaseClosedTabSpace_Widget_(tabs);
     }
     return page;
+}
+
+void updateClosedTabSpace_Widget(iWidget *tabs, iInt2 mouseCoord) {
+    if (isDocTabs_Widget_(tabs)) {
+        const iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+        if (findChild_Widget(buttons, "tabs.spacer") &&
+            !contains_Rect(expanded_Rect(bounds_Widget(buttons), init1_I2(3 * gap_UI)),
+                           mouseCoord)) {
+            releaseClosedTabSpace_Widget_(tabs);
+        }
+    }
 }
 
 void moveTabPage_Widget(iWidget *tabs, size_t index, size_t newIndex) {
@@ -312,7 +361,9 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
 static iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
     iForEach(ObjectList, i, buttons->children) {
-        iAssert(isInstance_Object(i.object, &Class_LabelWidget));
+        if (!isInstance_Object(i.object, &Class_LabelWidget)) {
+            continue;
+        }
         iAny *label = i.object;
         if (pointerLabel_Command(cstr_String(command_LabelWidget(label)), "page") == page) {
             return label;
@@ -358,7 +409,9 @@ void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
     /* Select the corresponding button. */ {
         iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
         iForEach(ObjectList, i, buttons->children) {
-            iAssert(isInstance_Object(i.object, &Class_LabelWidget));
+            if (!isInstance_Object(i.object, &Class_LabelWidget)) {
+                continue;
+            }
             iAny *label = i.object;
             const iBool isSel =
                 (pointerLabel_Command(cstr_String(command_LabelWidget(label)), "page") == page);

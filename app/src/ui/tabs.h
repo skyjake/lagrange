@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 /* Tab pages and the tab bar. */
 
 #include <the_Foundation/string.h>
+#include <the_Foundation/vec2.h>
 
 iDeclareType(LabelWidget)
 iDeclareType(Widget)
@@ -39,6 +40,7 @@ iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, 
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void            moveTabPage_Widget      (iWidget *tabs, size_t index, size_t newIndex);
+void            updateClosedTabSpace_Widget (iWidget *tabs, iInt2 mouseCoord);
 void            resizeToLargestPage_Widget  (iWidget *tabs);
 void            showTabPage_Widget      (iWidget *tabs, const iAnyObject *page);
 void            addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command);

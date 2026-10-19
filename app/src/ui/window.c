@@ -1738,6 +1738,14 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (handleMouse_Window_(d, &event, &wasUsed, &midClickPending)) {
                 return iTrue;
             }
+            if (event.type == SDL_EVENT_MOUSE_MOTION && mw) {
+                iForIndices(i, d->roots) {
+                    if (d->roots[i]) {
+                        updateClosedTabSpace_Widget(d->roots[i]->bars.docTabs,
+                                                    init_I2(event.motion.x, event.motion.y));
+                    }
+                }
+            }
             /* If there is a priority handler for key events, offer the event to it first.
                This is similar to mouse grabbing, but the handler can refuse the event. */
             if (d->keyPriority && (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_DOWN)) {
