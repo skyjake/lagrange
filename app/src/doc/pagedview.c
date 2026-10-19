@@ -422,7 +422,6 @@ void resetPage_DocumentView(iDocumentView *d) {
     removeTicker_App(animatePageTurn_DocumentView, d);
     d->paged.column      = 0;
     d->paged.anchor      = iInvalidPos;
-    d->paged.armedEdge   = 0;
     d->paged.turnFrom    = 0;
     d->paged.isDragging  = iFalse;
     d->paged.isReverting = iFalse;
@@ -485,7 +484,6 @@ void showColumn_DocumentView(iDocumentView *d, size_t column, iBool isAnimated) 
     }
     d->paged.column    = column;
     d->paged.anchor    = iInvalidPos;
-    d->paged.armedEdge = 0;
     updateVisible_DocumentView(d);
     refresh_Widget(d->owner);
 }
@@ -583,7 +581,6 @@ void dragPage_DocumentView(iDocumentView *d, int offset) {
     }
     if (d->paged.column != oldCol) {
         d->paged.anchor    = iInvalidPos;
-        d->paged.armedEdge = 0;
         updateVisible_DocumentView(d);
     }
     hostPagesMoved_DocumentView(d);
@@ -622,8 +619,6 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
     d->paged.isDragging = iFalse;
     if (d->paged.column == d->paged.turnFrom) {
         if (!isCancelled && d->paged.dragDir) {
-            /* Swiping this way again goes past the edge. */
-            d->paged.armedEdge = d->paged.dragDir;
             postCommand_Widget(d->owner, "document.page.overflow arg:%d", d->paged.dragDir);
         }
         finishDrag_DocumentView_(d, 0, iFalse); /* resisting pages spring back */
@@ -639,14 +634,6 @@ void endPageDrag_DocumentView(iDocumentView *d, iBool isCancelled) {
         hideReadingBars_DocumentView_(d);
     }
     addTicker_App(animatePageTurn_DocumentView, d);
-}
-
-iBool isEdgeArmed_DocumentView(const iDocumentView *d, int dir) {
-    return dir && d->paged.armedEdge == dir;
-}
-
-void disarmEdge_DocumentView(iDocumentView *d) {
-    d->paged.armedEdge = 0;
 }
 
 void wheelPage_DocumentView(iDocumentView *d, float amount) {

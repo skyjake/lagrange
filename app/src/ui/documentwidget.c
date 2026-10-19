@@ -123,7 +123,7 @@ enum iDocumentWidgetFlag {
     proxyRequest_DocumentWidgetFlag          = iBit(14),
     unseen_DocumentWidgetFlag                = iBit(15), /* user has not seen the contents */
     openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
-    historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe navigates history */
+    historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe moves the views */
     swipedUp_DocumentWidgetFlag              = iBit(18), /* touch gesture has opened the sidebar */
 };
 
@@ -1550,25 +1550,6 @@ static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page, for turns */
-static iBool isHistorySwipe_DocumentWidget_(const iDocumentWidget *d, const char *cmd) {
-    /* Swiping past the first or last page follows the scrolling mode settings. The first
-       attempt only bounces back, so the history is not navigated by accident. */
-    const iDocumentView *view   = d->view;
-    const int            side   = argLabel_Command(cmd, "side");
-    const size_t         column = currentColumn_DocumentView(view);
-    if (!((side == 1 && column == 0) ||
-          (side == 2 && column + numColumns_DocumentView(view) >= numColumns_GmDocument(view->doc)))) {
-        return iFalse;
-    }
-    if (!isEdgeArmed_DocumentView(view, side == 1 ? -1 : +1)) {
-        return iFalse;
-    }
-    if (argLabel_Command(cmd, "edge")) {
-        return prefs_App()->edgeSwipe;
-    }
-    return prefs_App()->pageSwipe && d->swipe->flags & navigable_DocumentSwipeFlag;
-}
-
 static iBool canRunTool_DocumentWidget_(const iDocumentWidget *d, const iTool *tool) {
     return tool && isUsable_Tool(tool) && !d->toolJob && !isRequestOngoing_DocumentFetch(d->fetch) &&
            !isEmpty_Block(&d->fetch->sourceContent) && matchMime_Tool(tool, &d->fetch->sourceMime);
@@ -2711,8 +2692,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
              isPaged_DocumentView(d->view)) {
-        /* Swipes turn pages, but past the first or last page they go to the adjacent chapter
-           or navigate history. */
+        /* Swipes turn pages, but past the first or last page they go to the adjacent chapter.
+           Without one, the pages bounce back. */
         if (equal_Command(cmd, "edgeswipe.moved") &&
             ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging) {
             if (isBegun_DocumentSwipe(d->swipe)) {
@@ -2725,9 +2706,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 /* The rest of the gesture moves the views like in a history swipe. */
                 d->flags |= historySwipe_DocumentWidgetFlag;
                 return iTrue;
-            }
-            if (isHistorySwipe_DocumentWidget_(d, cmd)) {
-                d->flags |= historySwipe_DocumentWidgetFlag;
             }
         }
         if (d->flags & historySwipe_DocumentWidgetFlag) {
@@ -3063,10 +3041,6 @@ static void revealReadingBars_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
-    if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN || ev->type == SDL_EVENT_KEY_DOWN) {
-        /* Swiping past the first or last page counts as a repeat only with nothing between. */
-        disarmEdge_DocumentView(view);
-    }
     if (ev->type == SDL_EVENT_MOUSE_WHEEL || ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
         ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_FINGER_DOWN) {
         settleLayout_DocumentWidget_(d);
@@ -3076,7 +3050,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
         finishWheelSwipe_DocumentSwipe(d->swipe, iFalse);
     }
-    if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchEnds_UserEventCode) {
+    if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchBegins_UserEventCode) {
+        /* Opening the sidebar cancels the touch, so it never ends. */
         d->swipeUpY = 0;
         d->flags &= ~swipedUp_DocumentWidgetFlag;
     }

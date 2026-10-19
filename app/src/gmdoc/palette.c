@@ -865,7 +865,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(i, color);
         }
     }
-    if (d->flags.isBookCover) {
+    if (d->flags.isBookCover && d->flags.isBookOpen) {
         int tint = tmHeading1_ColorId;
         for (int i = tmHeading1_ColorId; i <= tmHeading3_ColorId; i++) {
             const iHSLColor hsl = get_HSLColor(i);

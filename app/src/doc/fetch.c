@@ -313,6 +313,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
             book.title   = property_Gempub(d->sourceGempub, title_GempubProperty);
             book.isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             book.isContents = isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
+            book.isOpen  = !isRemote_Gempub(d->sourceGempub) && !isReader_DocumentWidget(d->owner);
             const size_t navIndex = navIndex_Gempub(d->sourceGempub, url_DocumentFetch_(d));
             if (navIndex != iInvalidPos) {
                 book.chapter      = (int) navIndex + 1;

@@ -563,7 +563,7 @@ iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
     if (equal_String(&d->bookTitle, pos->title) &&
         equal_String(&d->chapterTitle, pos->chapterTitle) && d->chapter == pos->chapter &&
         d->numChapters == pos->numChapters && d->flags.isBookCover == pos->isCover &&
-        d->flags.isBookContents == pos->isContents) {
+        d->flags.isBookContents == pos->isContents && d->flags.isBookOpen == pos->isOpen) {
         return iFalse;
     }
     set_String(&d->bookTitle, pos->title);
@@ -571,8 +571,9 @@ iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
     d->chapter            = pos->chapter;
     d->numChapters        = pos->numChapters;
     d->flags.isBookContents = pos->isContents;
-    if (d->flags.isBookCover != pos->isCover) {
+    if (d->flags.isBookCover != pos->isCover || d->flags.isBookOpen != pos->isOpen) {
         d->flags.isBookCover = pos->isCover;
+        d->flags.isBookOpen  = pos->isOpen;
         invalidatePalette_GmDocument(d);
     }
     return iTrue;

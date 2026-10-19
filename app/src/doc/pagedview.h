@@ -69,8 +69,6 @@ iBool   turnPage_DocumentView           (iDocumentView *, int dir); /* false if 
 int     pageTurnZone_DocumentView       (const iDocumentView *, iInt2 windowPos); /* -1, 0, +1 */
 void    dragPage_DocumentView           (iDocumentView *, int offset); /* from the start of the gesture */
 void    endPageDrag_DocumentView        (iDocumentView *, iBool isCancelled);
-iBool   isEdgeArmed_DocumentView        (const iDocumentView *, int dir); /* swiped past the edge before */
-void    disarmEdge_DocumentView         (iDocumentView *);
 void    wheelPage_DocumentView          (iDocumentView *, float amount); /* positive: backward */
 
 void    finishPageTurn_Anim             (iAnim *, float to, float gestureSpeed, uint32_t lastMoveTime, uint32_t maxSpan); /* after a gesture */

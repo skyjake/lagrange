@@ -259,6 +259,7 @@ struct Impl_GmBookPosition {
     int            numChapters;
     iBool          isCover;
     iBool          isContents;
+    iBool          isOpen;       /* being read, not just previewed */
 };
 
 /* Setup and processing: */
