@@ -559,8 +559,8 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         }
     }
     /* Take away parts if it doesn't fit. */
-    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI -
-                          width_Widget(readerIcon);
+    const int tabWidth  = bounds_Widget(as_Widget(tabButton)).size.x;
+    const int avail     = tabWidth - 7 * gap_UI - width_Widget(readerIcon);
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
     const int font      = fontWithStyle_Text(font_LabelWidget(tabButton), semiBold_FontStyle);
     for (;;) {
@@ -593,7 +593,10 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         if (tabCloseButton == constAs_Widget(readerIcon)) {
             tabCloseButton = NULL; /* phone tabs have no close button */
         }
-        const iBool tabCloseVisible = avail > width_Widget(tabCloseButton);
+        /* The reader icon only takes space from the title. */
+        const iBool tabCloseVisible =
+            tabWidth - 7 * gap_UI > width_Widget(tabCloseButton) &&
+            tabWidth >= width_Widget(readerIcon) + width_Widget(tabCloseButton);
         if (deviceType_App() == tablet_AppDeviceType && tabCloseButton) {
             setFlags2_Widget(tabCloseButton, visibleOnParentSelected_WidgetFlag2,
                              tabCloseVisible);

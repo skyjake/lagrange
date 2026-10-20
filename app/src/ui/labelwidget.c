@@ -885,28 +885,13 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             replace_String(recolored, escape_Color(uiIcon_ColorId), escape_Color(iconColor));
             label = recolored;
         }
-        const iInt2 iconPads = init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f),
-                                       -iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f));
-        iRect centerArea = adjusted_Rect(bounds, init_I2(iconPads.x, 0), init_I2(iconPads.y, 0));
-        if (width_Rect(textBounds) != width_Rect(bounds)) {
-            /* Centered on the full bounds unless that would overlap edge children. */
-            const iRect avail =
-                adjusted_Rect(textBounds, init_I2(iconPads.x, 0), init_I2(iconPads.y, 0));
-            const int textWidth =
-                width_Rect(d->flags.alignVisual ? visualBounds_Text(font, range_String(label))
-                                                : measureRange_Text(font, range_String(label)).bounds);
-            if (textWidth >= width_Rect(avail)) {
-                centerArea = avail;
-            }
-            else {
-                const int left = mid_Rect(centerArea).x - textWidth / 2;
-                centerArea.pos.x +=
-                    iClamp(left, left_Rect(avail), right_Rect(avail) - textWidth) - left;
-            }
-        }
         drawCentered_Text(
             font,
-            moved_Rect(centerArea, d->labelOffset),
+            moved_Rect(
+                adjusted_Rect(bounds,
+                              init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
+                              init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
+                d->labelOffset),
             d->flags.alignVisual,
             fg,
             "%s",
