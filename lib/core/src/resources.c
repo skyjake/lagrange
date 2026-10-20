@@ -35,6 +35,7 @@ iBlock blobVersion_0_13_Resources;
 iBlock blobVersion_1_5_Resources;
 iBlock blobVersion_1_10_Resources;
 iBlock blobVersion_1_15_Resources;
+iBlock blobVersion_1_21_Resources;
 iBlock blobVersion_Resources;
 iBlock blobArghelp_Resources;
 iBlock blobCs_Resources;
@@ -90,6 +91,7 @@ static struct {
     { &blobVersion_1_5_Resources, "about/version-1.5.gmi" },
     { &blobVersion_1_10_Resources, "about/version-1.10.gmi" },
     { &blobVersion_1_15_Resources, "about/version-1.15.gmi" },
+    { &blobVersion_1_21_Resources, "about/version-1.21.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },
 #endif
     { &blobArghelp_Resources, "arg-help.txt" },
@@ -191,6 +193,7 @@ const iBlock *aboutPageSource_Resources(iRangecc path, iRangecc query) {
         { "help",         &blobHelp_Resources },
         { "license",      &blobLicense_Resources },
         { "version",      &blobVersion_Resources },
+        { "version-1.21", &blobVersion_1_21_Resources },
         { "version-1.15", &blobVersion_1_15_Resources },
         { "version-1.10", &blobVersion_1_10_Resources },
         { "version-1.5",  &blobVersion_1_5_Resources },

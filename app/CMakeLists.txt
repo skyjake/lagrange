@@ -123,6 +123,7 @@ else ()
         res/about/version-1.5.gmi
         res/about/version-1.10.gmi
         res/about/version-1.15.gmi
+        res/about/version-1.21.gmi
         res/about/version.gmi
         res/arg-help.txt
     )

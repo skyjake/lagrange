@@ -1,6 +1,6 @@
 # Release notes
 
-=> about:version  Newer versions
+=> about:version-1.21  Newer versions
 
 ## 1.15.9
 * Added new UI translation: Basque (euskara).
