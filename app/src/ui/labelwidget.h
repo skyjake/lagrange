@@ -40,6 +40,7 @@ void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
 void    setKeyTrigger_LabelWidget   (iLabelWidget *, iBool keyTrigger); /* false: owner calls `triggerKey` */
 void    setMenuCanceling_LabelWidget(iLabelWidget *, iBool menuCanceling);
 void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
+void    setPadEdgeChildren_LabelWidget(iLabelWidget *, iBool padEdgeChildren);
 void    setParentTextColor_LabelWidget(iLabelWidget *, iBool parentTextColor);
 void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
 void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);

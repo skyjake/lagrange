@@ -68,6 +68,7 @@ struct Impl_LabelWidget {
         uint16_t centerWrapped       : 1;
 
         uint16_t titleCase           : 1;
+        uint16_t padEdgeChildren     : 1; /* content does not overlap children attached to edges */
     } flags;
 };
 
@@ -99,6 +100,19 @@ static iBool isHover_LabelWidget_(const iLabelWidget *d) {
     return isHover_Widget(d);
 }
 
+static int edgeChildrenWidth_LabelWidget_(const iLabelWidget *d, int64_t edge) {
+    int width = 0;
+    if (d->flags.padEdgeChildren) {
+        iConstForEach(ObjectList, i, d->widget.children) {
+            const iWidget *child = i.object;
+            if (child->flags & edge && !isSelfHidden_Widget(child)) {
+                width += width_Rect(child->rect);
+            }
+        }
+    }
+    return width;
+}
+
 static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
@@ -111,6 +125,9 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
             widgetPad.x += gap_UI * 5;
         }
     }
+    widgetPad.x += edgeChildrenWidth_LabelWidget_(d, corner == 0 || corner == 3
+                                                         ? moveToParentLeftEdge_WidgetFlag
+                                                         : moveToParentRightEdge_WidgetFlag);
     if (isTerminal_Platform()) {
         return add_I2(widgetPad, init_I2(1 + (d->icon ? 1 : 0), 0));
     }
@@ -780,7 +797,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                     d->flags.noTopFrame && !isFocused_Widget(w) && !isHover);
         }
     }
-    setClip_Paint(&p, rect);
+    const iRect textBounds =
+        adjusted_Rect(bounds,
+                      init_I2(edgeChildrenWidth_LabelWidget_(d, moveToParentLeftEdge_WidgetFlag), 0),
+                      init_I2(-edgeChildrenWidth_LabelWidget_(d, moveToParentRightEdge_WidgetFlag),
+                              0));
+    setClip_Paint(&p, intersect_Rect(rect, textBounds));
     const int iconPad = iconPadding_LabelWidget_(d);
     if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
         iString str;
@@ -863,13 +885,28 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             replace_String(recolored, escape_Color(uiIcon_ColorId), escape_Color(iconColor));
             label = recolored;
         }
+        const iInt2 iconPads = init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f),
+                                       -iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f));
+        iRect centerArea = adjusted_Rect(bounds, init_I2(iconPads.x, 0), init_I2(iconPads.y, 0));
+        if (width_Rect(textBounds) != width_Rect(bounds)) {
+            /* Centered on the full bounds unless that would overlap edge children. */
+            const iRect avail =
+                adjusted_Rect(textBounds, init_I2(iconPads.x, 0), init_I2(iconPads.y, 0));
+            const int textWidth =
+                width_Rect(d->flags.alignVisual ? visualBounds_Text(font, range_String(label))
+                                                : measureRange_Text(font, range_String(label)).bounds);
+            if (textWidth >= width_Rect(avail)) {
+                centerArea = avail;
+            }
+            else {
+                const int left = mid_Rect(centerArea).x - textWidth / 2;
+                centerArea.pos.x +=
+                    iClamp(left, left_Rect(avail), right_Rect(avail) - textWidth) - left;
+            }
+        }
         drawCentered_Text(
             font,
-            moved_Rect(
-                adjusted_Rect(bounds,
-                              init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
-                              init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
-                d->labelOffset),
+            moved_Rect(centerArea, d->labelOffset),
             d->flags.alignVisual,
             fg,
             "%s",
@@ -1113,6 +1150,10 @@ void setNoBottomFrame_LabelWidget(iLabelWidget *d, iBool noBottomFrame) {
 
 void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {
     d->flags.chevron = chevron;
+}
+
+void setPadEdgeChildren_LabelWidget(iLabelWidget *d, iBool padEdgeChildren) {
+    d->flags.padEdgeChildren = padEdgeChildren;
 }
 
 void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
