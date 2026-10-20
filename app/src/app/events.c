@@ -94,9 +94,10 @@ static bool wakeRunLoopOnEvent_App_(void *userdata, SDL_Event *event) {
 }
 #endif
 
-uint32_t postAutoReloadCommand_App_(void *userdata, SDL_TimerID timerID, uint32_t interval) {
+uint32_t notifyBackgroundRefresh_App_(void *userdata, SDL_TimerID timerID, uint32_t interval) {
     iUnused(userdata, timerID);
-    notify_Root(NULL, "document.autoreload");
+    notify_App("document.autoreload");
+    notify_App("feeds.autorefresh");
     return interval;
 }
 

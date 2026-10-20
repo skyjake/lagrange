@@ -354,6 +354,10 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         refresh_Feeds();
         return iTrue;
     }
+    else if (equal_Command(cmd, "feeds.autorefresh")) {
+        maybeRefresh_Feeds();
+        return iTrue;
+    }
     else if (equal_Command(cmd, "feeds.fetched")) {
         /* Results of the first fetch of a subscription. */
         iBookmark *bm = get_Bookmarks(bookmarks_App(), argLabel_Command(cmd, "bmid"));

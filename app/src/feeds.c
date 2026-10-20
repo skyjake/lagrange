@@ -43,7 +43,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/thread.h>
-#include <SDL3/SDL_timer.h>
 #include <ctype.h>
 
 iDeclareType(Feeds)
@@ -190,8 +189,6 @@ struct Impl_Feeds {
     iString   saveDir;
     iIntSet   previouslyCheckedFeeds; /* bookmark IDs */
     iTime     lastRefreshedAt;
-    int       refreshTimer;
-    uint32_t  refreshInterval; /* milliseconds, for refreshTimer */
     iThread * worker;
     iBool     stopWorker;
     iCondition *wakeup; /* signaled when the worker should stop */
@@ -1173,20 +1170,6 @@ static iBool startWorker_Feeds_(iFeeds *d) {
     return iFalse;
 }
 
-static uint32_t refresh_Feeds_(void *userdata, SDL_TimerID timerID, uint32_t interval) {
-    iUnused(userdata, timerID, interval);
-    /* Called in the SDL timer thread, so let's start a worker thread for running the refresh. */
-    startWorker_Feeds_(&feeds_);
-    return 0;
-}
-
-static void removeRefreshTimer_Feeds_(iFeeds *d) {
-    if (d->refreshTimer) {
-        SDL_RemoveTimer(d->refreshTimer);
-        d->refreshTimer = 0;
-    }
-}
-
 static void stopWorker_Feeds_(iFeeds *d) {
     if (d->worker) {
         lock_Mutex(d->mtx);
@@ -1386,7 +1369,6 @@ static const iBlock *tinylogPage_Feeds_(iRangecc path);
 
 void init_Feeds(const char *saveDir) {
     iFeeds *d = &feeds_;
-    d->refreshTimer = 0;
     d->mtx = new_Mutex();
     d->wakeup = new_Condition();
     initCStr_String(&d->saveDir, saveDir);
@@ -1402,14 +1384,12 @@ void init_Feeds(const char *saveDir) {
     init_PtrArray(&d->tinylogFeeds);
     load_Feeds_(d);
     loadTinylogFeeds_Feeds_(d);
-    setRefreshInterval_Feeds(prefs_App()->feedInterval);
     addAboutHandler_GmRequest(aboutFeedsPage_Feeds_);
     addLocalHandler_GmRequest(tinylogPage_Feeds_);
 }
 
 void deinit_Feeds(void) {
     iFeeds *d = &feeds_;
-    removeRefreshTimer_Feeds_(d);
     stopWorker_Feeds_(d);
     iAssert(isEmpty_PtrArray(&d->jobs));
     deinit_PtrArray(&d->jobs);
@@ -1451,23 +1431,23 @@ void refresh_Feeds(void) {
     startWorker_Feeds_(&feeds_);
 }
 
-void setRefreshInterval_Feeds(enum iFeedInterval feedInterval) {
+void maybeRefresh_Feeds(void) {
     iFeeds *d = &feeds_;
-    if (isInitialized_Feeds_(d)) {
-        removeRefreshTimer_Feeds_(d);
-        d->refreshInterval = feedInterval * 1000;
-        if (d->refreshInterval && isValid_Time(&d->lastRefreshedAt)) {
-            const double remaining = (double) feedInterval - elapsedSeconds_Time(&d->lastRefreshedAt);
-            d->refreshTimer =
-                SDL_AddTimer((uint32_t) (iMax(1.0, remaining) * 1000), refresh_Feeds_, NULL);
-        }
+    const int interval = prefs_App()->feedInterval;
+    if (!isInitialized_Feeds_(d) || interval == manual_FeedInterval ||
+        value_Atomic(&d->isPaused)) {
+        return;
+    }
+    const iTime refreshedAt = lastRefreshedAt_Feeds();
+    /* Wall clock time, so time spent sleeping/suspended is counted. */
+    if (isValid_Time(&refreshedAt) && elapsedSeconds_Time(&refreshedAt) >= interval) {
+        startWorker_Feeds_(d);
     }
 }
 
 void pause_Feeds(void) {
     iFeeds *d = &feeds_;
     if (isInitialized_Feeds_(d)) {
-        removeRefreshTimer_Feeds_(d);
         set_Atomic(&d->isPaused, iTrue);
     }
 }
@@ -1478,13 +1458,12 @@ void resume_Feeds(void) {
         if (exchange_Atomic(&d->isPaused, iFalse)) {
             add_Atomic(&d->numResumes, 1);
         }
-        setRefreshInterval_Feeds(prefs_App()->feedInterval);
+        maybeRefresh_Feeds();
     }
 }
 
 void refreshFinished_Feeds(void) {
     stopWorker_Feeds_(&feeds_);
-    setRefreshInterval_Feeds(prefs_App()->feedInterval); /* restart the timer */
 }
 
 iBool isRefreshing_Feeds(void) {

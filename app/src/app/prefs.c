@@ -993,7 +993,6 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "feedinterval.set")) {
         d->prefs.feedInterval = arg_Command(cmd);
-        setRefreshInterval_Feeds(d->prefs.feedInterval);
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {

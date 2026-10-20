@@ -706,8 +706,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("~window.unfreeze");
     postCommand_App("~focus.set id:"); /* clear focus */
     postCommand_App("font.reset");
-    d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
-    notify_Root(NULL, "document.autoreload");
+    d->refreshTimer = SDL_AddTimer(60 * 1000, notifyBackgroundRefresh_App_, NULL);
+    notifyBackgroundRefresh_App_(NULL, 0, 0);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     /* Initialize idle sleep. */ {
         d->isIdling      = iFalse;
@@ -773,7 +773,7 @@ void deinit_App_(iApp *d) {
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     SDL_RemoveTimer(d->sleepTimer);
 #endif
-    SDL_RemoveTimer(d->autoReloadTimer);
+    SDL_RemoveTimer(d->refreshTimer);
     saveState_App_(d, iTrue);
     savePrefs_App_(d);
     iReverseForEach(PtrArray, j, &d->mainWindows) {

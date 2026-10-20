@@ -55,7 +55,7 @@ iBool           isUnread_FeedEntry  (const iFeedEntry *);
 void    init_Feeds              (const char *saveDir);
 void    deinit_Feeds            (void);
 void    refresh_Feeds           (void);
-void    setRefreshInterval_Feeds(enum iFeedInterval feedInterval);
+void    maybeRefresh_Feeds      (void); /* if interval has elapsed */
 void    refreshFinished_Feeds   (void); /* called on "feeds.refresh.finished" */
 void    pause_Feeds             (void); /* app moved to background */
 void    resume_Feeds            (void); /* retries requests interrupted by the pause */

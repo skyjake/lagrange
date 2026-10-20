@@ -128,7 +128,7 @@ struct Impl_App {
     iTime        lastDropTime; /* for detecting drops of multiple items */
     uint32_t     lastVisitedSaveTime;
     iBool        pendingVisitedSave; /* need to save visited URLs soon */
-    int          autoReloadTimer; /* TODO: only start this when tabs are autoreloading */
+    int          refreshTimer;
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
     float        refreshRate; /* of the main window's display */
@@ -210,7 +210,7 @@ void            clearCache_App_         (void);
 /* events.c */
 int             cmp_Ticker_             (const void *a, const void *b);
 int             run_App_                (iApp *);
-uint32_t        postAutoReloadCommand_App_(void *userdata, SDL_TimerID, uint32_t interval);
+uint32_t        notifyBackgroundRefresh_App_(void *userdata, SDL_TimerID, uint32_t interval);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
 uint32_t        checkAsleep_App_        (void *param, SDL_TimerID, uint32_t interval);
 #endif
