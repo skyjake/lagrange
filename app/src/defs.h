@@ -51,15 +51,12 @@ iLocalDef iBool isTerminal_Platform(void) {
 #   define midEllipsis_Icon "..."
 #   define shift_Icon       "Sh"
 #   define shiftReturn_Icon "Sh-" return_Icon
-#   define bookmarks_Icon   bookmark_Icon
 #elif defined (iPlatformApple)
 #   define shift_Icon       "⇧"
 #   define shiftReturn_Icon shift_Icon return_Icon
-#   define bookmarks_Icon   book_Icon
 #else
 #   define shift_Icon       "Shift"
 #   define shiftReturn_Icon shift_Icon " " return_Icon
-#   define bookmarks_Icon   bookmark_Icon
 #endif
 
 int     keyMod_ReturnKeyFlag    (int flag);

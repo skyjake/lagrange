@@ -329,6 +329,7 @@ enum iAnsiFlag {
 #define barRightArrow_Icon  "\u21a6"
 #define book_Icon           "\U0001f56e"
 #define bookmark_Icon       "\U0001f516"
+#define bookmarks_Icon      bookmark_Icon
 #define books_Icon          "\U0001f4da"
 #define bug_Icon            "\U0001f41e"
 #define bullet_Icon         "\u2022"
