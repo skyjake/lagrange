@@ -672,6 +672,18 @@ static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
                                         : range_String(d->titleUser);
 }
 
+static const iString *navigationBaseUrl_DocumentWidget_(const iDocumentWidget *d) {
+    /* Tinylog entries are local; navigate relative to the tinylog itself. */
+    const uint32_t tinylogId = tinylogBookmark_Feeds(d->mod.url);
+    if (tinylogId) {
+        const iBookmark *bm = get_Bookmarks(bookmarks_App(), tinylogId);
+        if (bm) {
+            return &bm->url;
+        }
+    }
+    return d->mod.url;
+}
+
 static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
     if (deviceType_App() == phone_AppDeviceType) {
         return iFalse;
@@ -2335,8 +2347,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
+        const iString *baseUrl = navigationBaseUrl_DocumentWidget_(d);
         iUrl parts;
-        init_Url(&parts, d->mod.url);
+        init_Url(&parts, baseUrl);
         if (equalCase_Rangecc(parts.scheme, "gemini")) {
             /* Check for default index pages according to Gemini Best Practices ("Filenames"):
                gemini://geminiprotocol.net/docs/best-practices.gmi */
@@ -2356,7 +2369,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 if (parts.path.end[-1] == '/') break;
                 parts.path.end--;
             }
-            iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(d->mod.url),
+            iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(baseUrl),
                                                                     parts.path.end });
             /* Always go to a gophermap. */
             setUrlItemType_Gopher(parentUrl, '1');
@@ -2379,7 +2392,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        iString *rootUrl = collectNewRange_String(urlRoot_String(d->mod.url));
+        iString *rootUrl =
+            collectNewRange_String(urlRoot_String(navigationBaseUrl_DocumentWidget_(d)));
         /* Always go to a gophermap. */
         setUrlItemType_Gopher(rootUrl, '1');
         /* Hierarchical navigation doesn't make sense with Titan. */
