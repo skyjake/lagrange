@@ -1040,6 +1040,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         if (wasClosed) {
             arrange_Widget(tabs);
+            updateHover_Window(get_Window()); /* a tab button may be under the cursor */
             postCommand_Root(tabs->root, "tab.closed");
             return iTrue;
         }
@@ -1059,6 +1060,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             else {
                 arrange_Widget(tabs);
+                updateHover_Window(get_Window());
                 postCommand_Root(tabs->root, "tab.closed");
                 if (wasCurrent) {
                     size_t newIndex = index;

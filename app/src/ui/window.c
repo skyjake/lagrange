@@ -1507,7 +1507,16 @@ static void applyCursor_Window_(iWindow *d) {
 }
 
 void updateHover_Window(iWindow *d) {
-    d->hover = hitChild_Window(d, mouseCoord_Window(d, 0));
+    const iWidget *oldHover = d->hover;
+    const iInt2    coord    = mouseCoord_Window(d, 0);
+    d->hover = hitChild_Window(d, coord);
+    if (d->hover) {
+        /* Children may be visible only when the parent is hovered. */
+        d->hover = hitChild_Window(d, coord);
+    }
+    if (d->hover != oldHover) {
+        refresh_Widget(d->hover);
+    }
 }
 
 static void scrollOnMiddleDrag_Window_(void *context) {
