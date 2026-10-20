@@ -564,7 +564,8 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 item->id     = (isRequestOngoing_DocumentWidget(doc) ? 1 : 0) |
                                (isAutoReloading_DocumentWidget(doc) ? 4 : 0) |
                                (isReader_DocumentWidget(doc) ? 8 : 0) |
-                               (gempub_DocumentWidget(doc) ? 16 : 0);
+                               (gempub_DocumentWidget(doc) ? 16 : 0) |
+                               (isIdentityPinned_DocumentWidget(doc) ? 32 : 0);
                 if (numActivePlayers_Media(constMedia_GmDocument(document_DocumentWidget(doc)))) {
                     item->id |= 2;
                 }

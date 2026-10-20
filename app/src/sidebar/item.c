@@ -624,12 +624,28 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
     }
     else if (sidebar->mode == openDocuments_SidebarMode) {
-        const int fg = isSel       ? uiTextSelected_ColorId
-                       : d->isBold ? uiTextStrong_ColorId /* unseen */
-                       : isHover   ? uiTextFramelessHover_ColorId
-                                   : uiText_ColorId;
-        const iInt2 textPos = add_I2(topLeft_Rect(itemRect),
-                                     init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(font)) / 2));
+        const iBool isReader = (d->id & 8) != 0;
+        const iBool isBook   = (d->id & (8 | 16)) != 0; /* Reader or Gempub tab */
+        const int   fg       = isSel                  ? uiTextSelected_ColorId
+                               : isReader && !isHover ? uiTextAction_ColorId
+                               : d->isBold            ? uiTextStrong_ColorId /* unseen */
+                               : isHover              ? uiTextFramelessHover_ColorId
+                                                      : uiText_ColorId;
+        const int   tabFont  = isBook && !d->isBold ? fontWithStyle_Text(font, semiBold_FontStyle)
+                                                    : font;
+        const iRect iconArea = { addX_I2(itemRect.pos, aspect_UI * gap_UI),
+                                 init_I2(!isTerminal_Platform() ? 1.75f * lineHeight_Text(font) : 5,
+                                         itemHeight) };
+        const iInt2 textPos  = init_I2(right_Rect(iconArea),
+                                       top_Rect(itemRect) + (itemHeight - lineHeight_Text(font)) / 2);
+        if (isBook) {
+            drawCentered_Text(font,
+                              iconArea,
+                              iTrue,
+                              isSel ? uiTextSelected_ColorId : uiIcon_ColorId,
+                              "%s",
+                              isReader ? star_Icon : book_Icon);
+        }
         iString     label;
         init_String(&label);
         set_String(&label, &d->label);
@@ -642,7 +658,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                                      : uiTextShortcut_ColorId),
                             !isEmpty_Range(&host) ? "\u2014 " : "",
                             cstr_Rangecc(host));
-        drawRange_Text(font, textPos, fg, range_String(&label));
+        drawRange_Text(tabFont, textPos, fg, range_String(&label));
         deinit_String(&label);
         if (isMobile_Platform()) {
             drawDragHandle_(p, &itemRect, bg);
@@ -653,13 +669,13 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             init_I2(right_Rect(itemRect) - metaIconWidth + 0.5f * gap_UI * aspect_UI, textPos.y);
         iRect metaIconRect = initCorners_Rect(addX_I2(topRight_Rect(itemRect), -metaIconWidth),
                                               bottomRight_Rect(itemRect));
-        if (d->id & (8 | 16)) { /* Reader or Gempub tab */
+        if (d->id & 32) { /* pinned identity */
             const int offset = (d->id & 7 ? -metaIconWidth : 0);
             fillRect_Paint(p, moved_Rect(metaIconRect, init_I2(offset, 0)), bg);
-            drawRange_Text(font,
-                           addX_I2(metaIconPos, offset),
-                           isSel ? uiTextSelected_ColorId : uiIcon_ColorId,
-                           range_CStr(d->id & 8 ? star_Icon : book_Icon));
+            draw_Text(font,
+                      addX_I2(metaIconPos, offset),
+                      isSel ? uiTextSelected_ColorId : uiTextAction_ColorId,
+                      person_Icon);
         }
         if (d->id & 7) { /* used for status flags */
             const int statusFg = isSel ? uiTextSelected_ColorId : uiTextAction_ColorId;
