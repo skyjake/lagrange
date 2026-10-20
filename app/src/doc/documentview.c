@@ -1982,6 +1982,12 @@ static void extend_GmRunRange_(iGmRunRange *runs) {
     }
 }
 
+static iRangei drawRange_DocumentView_(const iDocumentView *d, iRangei range) {
+    /* Runs may draw slightly outside their visual bounds (e.g., open link backgrounds). */
+    const int margin = isPaged_DocumentView(d) ? 0 : gap_Text;
+    return (iRangei){ range.start - margin, range.end + margin };
+}
+
 static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBool prerenderExtra) {
     iBool       didDraw = iFalse;
     const iRect bounds  = bounds_Widget(constAs_Widget(d->owner));
@@ -2037,7 +2043,10 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         beginTarget_Paint(p, buf->texture);
                         fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
                         iZap(ctx->runsDrawn);
-                        render_GmDocument(d->doc, bufVisRange, drawRun_DrawContext_, ctx);
+                        render_GmDocument(d->doc,
+                                          drawRange_DocumentView_(d, bufVisRange),
+                                          drawRun_DrawContext_,
+                                          ctx);
                         meta->runsDrawn = ctx->runsDrawn;
                         extend_GmRunRange_(&meta->runsDrawn);
                         buf->validRange = bufVisRange;
@@ -2055,7 +2064,7 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                                                                               meta->runsDrawn.start,
                                                                               ctx->drawDir,
                                                                               iInvalidSize,
-                                                                              bufVisRange,
+                                                                              drawRange_DocumentView_(d, bufVisRange),
                                                                               drawRun_DrawContext_,
                                                                               ctx);
                         if (ctx->runsDrawn.start) {
@@ -2078,7 +2087,7 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         ctx->drawDir = +1;
                         meta->runsDrawn.end = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
                                                                            ctx->drawDir, iInvalidSize,
-                                                                           bufVisRange,
+                                                                           drawRange_DocumentView_(d, bufVisRange),
                                                                            drawRun_DrawContext_,
                                                                            ctx);
                         if (ctx->runsDrawn.start) {
@@ -2102,7 +2111,10 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                     fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
                     buf->validRange = (iRangei){ y, y + rh };
                     iZap(ctx->runsDrawn);
-                    render_GmDocument(d->doc, buf->validRange, drawRun_DrawContext_, ctx);
+                    render_GmDocument(d->doc,
+                                      drawRange_DocumentView_(d, buf->validRange),
+                                      drawRun_DrawContext_,
+                                      ctx);
                     meta->runsDrawn = ctx->runsDrawn;
                     extend_GmRunRange_(&meta->runsDrawn);
                     //                    printf("%zu: seeded, next %p:%p\n", i, meta->runsDrawn.start, meta->runsDrawn.end);
@@ -2115,7 +2127,8 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                             beginTarget_Paint(p, buf->texture);
                             ctx->drawDir = -1;
                             next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
-                                                                ctx->drawDir, 1, upper,
+                                                                ctx->drawDir, 1,
+                                                                drawRange_DocumentView_(d, upper),
                                                                 drawRun_DrawContext_,
                                                                 ctx);
                             if (next && meta->runsDrawn.start != next) {
@@ -2134,7 +2147,8 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                             beginTarget_Paint(p, buf->texture);
                             ctx->drawDir = +1;
                             next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
-                                                                ctx->drawDir, 1, lower,
+                                                                ctx->drawDir, 1,
+                                                                drawRange_DocumentView_(d, lower),
                                                                 drawRun_DrawContext_,
                                                                 ctx);
                             if (next && meta->runsDrawn.end != next) {
@@ -2168,9 +2182,10 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                     }
                 }
                 setAnsiFlags_Text(ansiEscapes_GmDocument(d->doc));
+                const iRangei drawRange = drawRange_DocumentView_(d, bufRange);
                 iConstForEach(PtrSet, r, d->invalidRuns) {
                     const iGmRun *run = *r.value;
-                    if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
+                    if (isOverlapping_Rangei(drawRange, ySpan_Rect(run->visBounds))) {
                         beginTarget_Paint(p, buf->texture);
                         drawRun_DrawContext_(ctx, run);
                     }
