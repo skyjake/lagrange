@@ -368,6 +368,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
     const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
+    const iBool    isHoverFill = isFrameless || isTabButton_Widget(w); /* instead of frame */
     const iBool    isButton    = d->click.buttons != 0;
     const iBool    isMenuItem  = !cmp_String(id_Widget(parent_Widget(d)), "menu");
     const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
@@ -482,7 +483,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     if (isHover) {
-        if (isFrameless) {
+        if (isHoverFill) {
             if (!isSel) {
                 *bg = uiBackgroundFramelessHover_ColorId;
                 *fg = uiTextFramelessHover_ColorId;
@@ -539,7 +540,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             *fg = *icon = *meta = uiTextPressed_ColorId | permanent_ColorId;
         }
     }
-    if (((isSel || isHover) && isFrameless) || isPress) {
+    if (((isSel || isHover) && isFrameless) || (isHover && !isSel && isHoverFill) || isPress) {
         /* Ensure that the full label text remains readable. */
         *fg |= permanent_ColorId;
     }
@@ -789,12 +790,13 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else if (!isRound && ~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         if (isButton) {
+            const iBool isHoverFrame = isHover && !isTabButton_Widget(w);
             drawEmbossedFrame_Paint(&p,
                                     frameRect,
                                     frame,
                                     frame2,
-                                    d->flags.noBottomFrame && !isFocused_Widget(w) && !isHover,
-                                    d->flags.noTopFrame && !isFocused_Widget(w) && !isHover);
+                                    d->flags.noBottomFrame && !isFocused_Widget(w) && !isHoverFrame,
+                                    d->flags.noTopFrame && !isFocused_Widget(w) && !isHoverFrame);
         }
     }
     const iRect textBounds =
