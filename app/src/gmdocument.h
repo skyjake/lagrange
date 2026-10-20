@@ -255,6 +255,7 @@ void    applyRunRange_GmRebase  (const iGmRebase *, iGmRunRange *runs);
 struct Impl_GmBookPosition {
     const iString *title;        /* of the book */
     const iString *chapterTitle; /* level 1 heading in effect where the document begins */
+    const iString *partTitle;    /* level 1 heading, if the chapter title is a lower level one */
     int            chapter;      /* zero if not a chapter */
     int            numChapters;
     iBool          isCover;
@@ -345,7 +346,7 @@ iBool           isHeaderBelowCutout_GmDocument  (const iGmDocument *);
 int             pageFooterHeight_GmDocument     (const iGmDocument *);
 iRangei         columnContentRange_GmDocument   (const iGmDocument *, size_t column); /* between header and footer */
 int             pageBandFont_GmDocument         (const iGmDocument *);
-iRangecc        pageHeader_GmDocument           (const iGmDocument *, size_t page, iBool isLeftPage);
+iRangecc        pageHeader_GmDocument           (const iGmDocument *, size_t page, iBool isSpread);
 iRangecc        pageFooter_GmDocument           (const iGmDocument *, size_t page);
 int             chapter_GmDocument              (const iGmDocument *, int *numChapters_out); /* zero if none */
 

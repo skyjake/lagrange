@@ -145,8 +145,18 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
        and on a page that begins with one. The first page of a book's chapter has it unless the
        heading is on the page or the page begins with a level 2 heading (the chapter title).
        A single-page chapter has the book's title instead. */
-    const iBool    isBook = !isEmpty_String(&d->bookTitle);
-    iRangecc       title  = auxText_GmDocument_(d, collect_String(upper_String(&d->chapterTitle)));
+    const iBool isBook     = !isEmpty_String(&d->bookTitle);
+    iString    *chapter    = upper_String(&d->chapterTitle);
+    iRangecc    rightTitle = iNullRange;
+    if (!isEmpty_String(&d->partTitle) && !equalCase_String(&d->partTitle, &d->chapterTitle)) {
+        /* The book title is already on the left page of a spread. */
+        if (equalCase_String(&d->partTitle, &d->bookTitle)) {
+            rightTitle = auxText_GmDocument_(d, chapter);
+        }
+        appendCStr_String(chapter, "   \u2022   ");
+        append_String(chapter, collect_String(upper_String(&d->partTitle)));
+    }
+    iRangecc       title     = auxText_GmDocument_(d, collect_String(chapter));
     const iRangecc bookTitle = auxText_GmDocument_(d, collect_String(upper_String(&d->bookTitle)));
     size_t         runPos    = 0;
     clear_Array(&d->pageBands);
@@ -174,16 +184,20 @@ static void setPageBands_GmDocument_(iGmDocument *d) {
             if (isHeading) {
                 hasHeading = iTrue;
                 iString *text = collectNewRange_String(headingText_GmDocument_(d, run));
-                title = auxText_GmDocument_(d, collect_String(upper_String(text)));
+                title      = auxText_GmDocument_(d, collect_String(upper_String(text)));
+                rightTitle = iNullRange;
             }
         }
-        iGmPageBands bands = { iNullRange, iNullRange, iNullRange };
+        iGmPageBands bands = { iNullRange, iNullRange, iNullRange, iNullRange };
         const iBool isCoverStart = d->flags.isBookCover && page == 0;
         const iBool hasHeader    = page > 0 ? !isChapterStart
                                             : isBook && !isCoverStart && !hasHeading &&
                                                   !isTitleStart;
         if (hasHeader && !isEmpty_Range(&title)) {
             bands.header = fitPageBandText_GmDocument_(d, title);
+            if (!isEmpty_Range(&rightTitle)) {
+                bands.rightHeader = fitPageBandText_GmDocument_(d, rightTitle);
+            }
         }
         else if (isBook && !isCoverStart && numPages == 1) {
             bands.header = fitPageBandText_GmDocument_(d, bookTitle);

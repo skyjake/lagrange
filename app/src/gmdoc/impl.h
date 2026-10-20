@@ -51,6 +51,7 @@ iDeclareType(GmPageBands)
 struct Impl_GmPageBands {
     iRangecc header;
     iRangecc bookHeader; /* for the left page of a two-page spread */
+    iRangecc rightHeader; /* for the right page of a two-page spread, if not the same as header */
     iRangecc footer;
 };
 
@@ -129,6 +130,7 @@ struct Impl_GmDocument {
     iArray    pageBands; /* GmPageBands of each page in a paginated layout */
     iString   bookTitle; /* shown in the page header */
     iString   chapterTitle; /* level 1 heading in effect where the document begins */
+    iString   partTitle; /* level 1 heading, if the chapter title is a lower level one */
     int       chapter;   /* position in a book, shown in the page footer; zero if none */
     int       numChapters;
     iGmLinkId coverImage; /* link shown only as its image */

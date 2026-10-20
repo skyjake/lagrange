@@ -308,7 +308,9 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
             setSource_DocumentWidget(d->owner, collect_String(coverPageSource_Gempub(d->sourceGempub)));
             setCStr_String(&d->sourceMime, mimeType_Gempub);
         }
-        iGmBookPosition book = { .title = collectNew_String(), .chapterTitle = collectNew_String() };
+        iGmBookPosition book = { .title        = collectNew_String(),
+                                 .chapterTitle = collectNew_String(),
+                                 .partTitle    = collectNew_String() };
         if (d->sourceGempub) {
             book.title   = property_Gempub(d->sourceGempub, title_GempubProperty);
             book.isCover = isCoverPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d));
@@ -319,6 +321,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
                 book.chapter      = (int) navIndex + 1;
                 book.numChapters  = (int) navSize_Gempub(d->sourceGempub);
                 book.chapterTitle = chapterTitle_Gempub(d->sourceGempub, navIndex);
+                book.partTitle    = partTitle_Gempub(d->sourceGempub, navIndex);
             }
         }
         /* Book pages show the title in the page header and the chapter in the footer. */

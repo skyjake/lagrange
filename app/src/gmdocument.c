@@ -270,6 +270,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->title);
     init_String(&d->bookTitle);
     init_String(&d->chapterTitle);
+    init_String(&d->partTitle);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_Array(&d->pageBands, sizeof(iGmPageBands));
     d->chapter     = 0;
@@ -291,6 +292,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_GmParser(&d->parser);
     iReleasePtr(&d->openURLs);
     delete_Media(d->media);
+    deinit_String(&d->partTitle);
     deinit_String(&d->chapterTitle);
     deinit_String(&d->bookTitle);
     deinit_String(&d->title);
@@ -392,6 +394,7 @@ void rebase_GmDocument_(iGmDocument *d, const iGmRebase *rebase) {
         iGmPageBands *bands = b.value;
         apply_GmRebase(rebase, &bands->header);
         apply_GmRebase(rebase, &bands->bookHeader);
+        apply_GmRebase(rebase, &bands->rightHeader);
         apply_GmRebase(rebase, &bands->footer);
     }
     apply_GmRebase(rebase, &d->parser.line);
@@ -561,13 +564,15 @@ size_t numPages_GmDocument(const iGmDocument *d) {
 
 iBool setBook_GmDocument(iGmDocument *d, const iGmBookPosition *pos) {
     if (equal_String(&d->bookTitle, pos->title) &&
-        equal_String(&d->chapterTitle, pos->chapterTitle) && d->chapter == pos->chapter &&
+        equal_String(&d->chapterTitle, pos->chapterTitle) &&
+        equal_String(&d->partTitle, pos->partTitle) && d->chapter == pos->chapter &&
         d->numChapters == pos->numChapters && d->flags.isBookCover == pos->isCover &&
         d->flags.isBookContents == pos->isContents && d->flags.isBookOpen == pos->isOpen) {
         return iFalse;
     }
     set_String(&d->bookTitle, pos->title);
     set_String(&d->chapterTitle, pos->chapterTitle);
+    set_String(&d->partTitle, pos->partTitle);
     d->chapter            = pos->chapter;
     d->numChapters        = pos->numChapters;
     d->flags.isBookContents = pos->isContents;
@@ -594,12 +599,21 @@ int chapter_GmDocument(const iGmDocument *d, int *numChapters_out) {
     return d->chapter;
 }
 
-iRangecc pageHeader_GmDocument(const iGmDocument *d, size_t page, iBool isLeftPage) {
+iRangecc pageHeader_GmDocument(const iGmDocument *d, size_t page, iBool isSpread) {
     if (page >= size_Array(&d->pageBands)) {
         return iNullRange;
     }
     const iGmPageBands *bands = constAt_Array(&d->pageBands, page);
-    return isLeftPage && !isEmpty_Range(&bands->bookHeader) ? bands->bookHeader : bands->header;
+    if (isSpread && page % 2 == 0) {
+        return !isEmpty_Range(&bands->bookHeader) ? bands->bookHeader : bands->header;
+    }
+    if (isSpread && !isEmpty_Range(&bands->rightHeader)) {
+        const iGmPageBands *left = constAt_Array(&d->pageBands, page - 1);
+        if (!isEmpty_Range(&left->bookHeader)) {
+            return bands->rightHeader;
+        }
+    }
+    return bands->header;
 }
 
 iRangecc pageFooter_GmDocument(const iGmDocument *d, size_t page) {

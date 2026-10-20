@@ -432,11 +432,22 @@ static int leadingHeading_(iRangecc source, iRangecc *text_out) {
     return 0;
 }
 
-const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
+static iRangecc precedingHeading1_Gempub_(const iGempub *d, size_t navIndex) {
+    for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
+        const iBlock *data = archiveData_Gempub_(d, navLinkUrl_Gempub(d, i));
+        if (data) {
+            const iRangecc heading = lastHeading1_(range_Block(data));
+            if (!isEmpty_Range(&heading)) {
+                return heading;
+            }
+        }
+    }
+    return iNullRange;
+}
+
+static iBool localTitle_Gempub_(const iGempub *d, size_t navIndex, const iString **title_out) {
     /* A level 2 heading that begins the page, or the page's link on the index page if there
-       is no heading. Otherwise, the last level 1 heading on the preceding pages, or else the
-       heading above the link on the index page. */
-    parseNavigationLinks_Gempub_(d);
+       is no heading. */
     if (navIndex < size_Array(d->navLinks)) {
         const iGempubNavLink *nav  = constAt_Array(d->navLinks, navIndex);
         const iBlock         *data = archiveData_Gempub_(d, &nav->url);
@@ -444,24 +455,42 @@ const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
             iRangecc  heading = iNullRange;
             const int level   = leadingHeading_(range_Block(data), &heading);
             if (level == 0 && nav->hasLabel) {
-                return &nav->label;
+                *title_out = &nav->label;
+                return iTrue;
             }
             if (level == 2 && !isEmpty_Range(&heading)) {
-                return collectNewRange_String(heading);
+                *title_out = collectNewRange_String(heading);
+                return iTrue;
             }
         }
     }
-    for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
-        const iBlock *data = archiveData_Gempub_(d, navLinkUrl_Gempub(d, i));
-        if (data) {
-            const iRangecc heading = lastHeading1_(range_Block(data));
-            if (!isEmpty_Range(&heading)) {
-                return collectNewRange_String(heading);
-            }
-        }
+    return iFalse;
+}
+
+const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
+    /* The page's local title, or else the last level 1 heading on the preceding pages, or else
+       the heading above the link on the index page. */
+    parseNavigationLinks_Gempub_(d);
+    const iString *title;
+    if (localTitle_Gempub_(d, navIndex, &title)) {
+        return title;
+    }
+    const iRangecc heading = precedingHeading1_Gempub_(d, navIndex);
+    if (!isEmpty_Range(&heading)) {
+        return collectNewRange_String(heading);
     }
     if (navIndex < size_Array(d->navLinks)) {
         return &constValue_Array(d->navLinks, navIndex, iGempubNavLink).heading;
+    }
+    return collectNew_String();
+}
+
+const iString *partTitle_Gempub(const iGempub *d, size_t navIndex) {
+    /* The last level 1 heading on the preceding pages, if the page has a local title. */
+    parseNavigationLinks_Gempub_(d);
+    const iString *title;
+    if (localTitle_Gempub_(d, navIndex, &title)) {
+        return collectNewRange_String(precedingHeading1_Gempub_(d, navIndex));
     }
     return collectNew_String();
 }

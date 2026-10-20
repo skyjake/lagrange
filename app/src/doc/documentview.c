@@ -2269,8 +2269,7 @@ static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
          page++) {
         const iRect    rect   = pageTextRect_DocumentView(d, page);
         /* In a two-page spread, a book's title is on the left. */
-        const iRangecc header =
-            pageHeader_GmDocument(doc, page, numPages_DocumentView(d) == 2 && page % 2 == 0);
+        const iRangecc header = pageHeader_GmDocument(doc, page, numPages_DocumentView(d) == 2);
         const iRangecc footer = pageFooter_GmDocument(doc, page);
         if (!isEmpty_Range(&header)) {
             drawRange_Text(font,
