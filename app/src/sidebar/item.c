@@ -636,7 +636,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const iRect iconArea = { addX_I2(itemRect.pos, aspect_UI * gap_UI),
                                  init_I2(!isTerminal_Platform() ? 1.75f * lineHeight_Text(font) : 5,
                                          itemHeight) };
-        const iInt2 textPos  = init_I2(right_Rect(iconArea),
+        const iInt2 textPos  = init_I2(sidebar->hasSpecialTabs ? right_Rect(iconArea)
+                                                               : left_Rect(itemRect) + 3 * gap_UI,
                                        top_Rect(itemRect) + (itemHeight - lineHeight_Text(font)) / 2);
         if (isBook) {
             drawCentered_Text(font,

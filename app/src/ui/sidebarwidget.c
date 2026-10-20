@@ -546,6 +546,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         }
         case openDocuments_SidebarMode: {
             iWidget *w = as_Widget(d);
+            d->hasSpecialTabs = iFalse;
             iConstForEach(ObjectList, i, listDocuments_App(w->root)) {
                 const iDocumentWidget *doc  = i.object;
                 iSidebarItem          *item = new_SidebarItem();
@@ -568,6 +569,9 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                                (isIdentityPinned_DocumentWidget(doc) ? 32 : 0);
                 if (numActivePlayers_Media(constMedia_GmDocument(document_DocumentWidget(doc)))) {
                     item->id |= 2;
+                }
+                if (item->id & (8 | 16)) {
+                    d->hasSpecialTabs = iTrue;
                 }
                 addItem_ListWidget(d->list, item);
                 item->listItem.flags.isDraggable = iTrue;
@@ -1029,6 +1033,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->midHeight        = 0;
     d->isEditing        = iFalse;
     d->isShowingUrls    = iFalse;
+    d->hasSpecialTabs   = iFalse;
     d->wasLandscape     = isLandscape_App();
     d->numUnreadEntries = 0;
     d->feedsAgeTimer    = 0;

@@ -92,6 +92,7 @@ struct Impl_SidebarWidget {
     int               midHeight;    /* on portrait phone, the height for the middle state */
     iBool             isEditing;    /* mobile edit mode */
     iBool             isShowingUrls; /* Alt held down in Bookmarks */
+    iBool             hasSpecialTabs; /* Reader or Gempub tabs are open */
     iBool             wasLandscape; /* orientation at the time of the previous resize */
     int               modeScroll[max_SidebarMode];
     size_t            modeCursor[max_SidebarMode];
