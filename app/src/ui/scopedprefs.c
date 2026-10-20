@@ -258,6 +258,7 @@ static const iMenuItem *docThemeItems_(const char *cmd, iBool withNone) {
         { "${prefs.doctheme.name.vibrantlight}", vibrantLight_GmDocumentTheme },
         { "${prefs.doctheme.name.oceanic}", oceanic_GmDocumentTheme },
         { "${prefs.doctheme.name.arboreal}", arboreal_GmDocumentTheme },
+        { "${prefs.doctheme.name.ember}", ember_GmDocumentTheme },
         { "---" },
         { "${prefs.doctheme.name.black}", black_GmDocumentTheme },
         { "${prefs.doctheme.name.gray}", gray_GmDocumentTheme },

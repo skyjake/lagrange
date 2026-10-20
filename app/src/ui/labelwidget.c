@@ -342,7 +342,8 @@ static iBool areTabButtonsThemeColored_(void) {
             docTheme == vibrantLight_GmDocumentTheme ||
             docTheme == sepia_GmDocumentTheme ||
             docTheme == paper_GmDocumentTheme ||
-            ((docTheme == oceanic_GmDocumentTheme || docTheme == arboreal_GmDocumentTheme) &&
+            ((docTheme == oceanic_GmDocumentTheme || docTheme == arboreal_GmDocumentTheme ||
+              docTheme == ember_GmDocumentTheme) &&
              !isDarkUI));
 }
 
@@ -408,6 +409,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 if (areTabButtonsThemeColored_() && isDocTabButton_(w)) {
                     *bg = (docTheme == oceanic_GmDocumentTheme ||
                                    docTheme == arboreal_GmDocumentTheme ||
+                                   docTheme == ember_GmDocumentTheme ||
                                    ((docTheme == sepia_GmDocumentTheme ||
                                      docTheme == paper_GmDocumentTheme) &&
                                     colorTheme_App() == pureWhite_ColorTheme)

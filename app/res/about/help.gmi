@@ -476,6 +476,7 @@ Page content color themes are selected on the "Theme" tab of Preferences. The "D
 * Paper: Light sepia background with gray and sepia toned text. Does not change depending on domain; this theme is designed for reading books.
 * Oceanic: Mostly teal/blue theme with a few orange/red accents. Brightness and saturation vary randomly based on domain.
 * Arboreal: Mostly green theme with a few brown/yellow accents. Brightness and saturation vary randomly based on domain.
+* Ember: Warm orange-tinted theme with red, orange, and yellow accents. Brightness and saturation vary randomly based on domain.
 * High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
 The "Saturation" setting can be used to tone down the theme colors for a more neutral appearance.

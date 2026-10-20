@@ -216,7 +216,8 @@ const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
 
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
     if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme ||
-        d == arboreal_GmDocumentTheme || d == sepia_GmDocumentTheme) {
+        d == arboreal_GmDocumentTheme || d == ember_GmDocumentTheme ||
+        d == sepia_GmDocumentTheme) {
         return isDark_ColorTheme(colorTheme_App());
     }
     return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
@@ -477,7 +478,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         d->themeSeed = 0;
     }
     /* Set up colors. */
-    if (d->themeSeed || theme == oceanic_GmDocumentTheme || theme == arboreal_GmDocumentTheme) {
+    if (d->themeSeed || theme == oceanic_GmDocumentTheme || theme == arboreal_GmDocumentTheme ||
+        theme == ember_GmDocumentTheme) {
         enum iHue {
             red_Hue,
             reddishOrange_Hue,
@@ -793,10 +795,100 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0.0f, isDarkUI ? 0.1f : -0.2f));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
+        else if (theme == ember_GmDocumentTheme) {
+            const float lum  = ((d->themeSeed >> 19) & 0xff) / 255.0f;
+            const float sat  = ((d->themeSeed >> 8) & 0xff) / 255.0f;
+            const float brnd = ((d->themeSeed >> 23) & 0xff) / 255.0f;
+            const int   hue  = 28 + (-10 * brnd);
+            iHSLColor   base = { hue, 0, 0, 1.0f };
+            if (isDarkUI) {
+                base.sat = iMax(0, -0.2f + sat * 0.5f);
+                base.lum = 0.015f + lum * 0.055f;
+                setHsl_Color(tmBackground_ColorId, base);
+                setHsl_Color(tmBannerBackground_ColorId,
+                             addSatLum_HSLColor(base, 0.05f, isBannerLighter ? 0.03f : -0.03f));
+                setHsl_Color(tmBannerTitle_ColorId, (iHSLColor){ hue - 3, 0.6f, 0.55f, 1.0f });
+                setHsl_Color(tmBannerIcon_ColorId, (iHSLColor){ hue, 0.95f, 0.55f, 1.0f });
+                setHsl_Color(tmParagraph_ColorId, setLum_HSLColor(base, 0.6f));
+                setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(setLum_HSLColor(base, 0.70f), 0.4f, 0.f));
+                setHsl_Color(tmQuote_ColorId, (iHSLColor){ hue + 6, 0.70f, 0.60f, 1.0f });
+                setHsl_Color(tmHeading1_ColorId, (iHSLColor){ hue - 23, 0.85f, 0.6f, 1.0f });
+                setHsl_Color(tmHeading2_ColorId, (iHSLColor){ hue + 2, 0.95f, 0.58f, 1.0f });
+                setHsl_Color(tmHeading3_ColorId, (iHSLColor){ hue + 20, 0.95f, 0.6f, 1.0f });
+                setHsl_Color(tmLinkIcon_ColorId, (iHSLColor){ hue + 12, 1.0f, 0.55f, 1.0f });
+                setHsl_Color(tmLinkText_ColorId, (iHSLColor){ hue + 12, 0.9f, 0.75f, 1.0f });
+                setHsl_Color(tmLinkIconVisited_ColorId, (iHSLColor){ hue + 2, 0.9f, 0.2f, 1.0f });
+                setHsl_Color(tmHypertextLinkIcon_ColorId, (iHSLColor){ hue - 13, 0.85f, 0.58f, 1.0f });
+                setHsl_Color(tmHypertextLinkText_ColorId, (iHSLColor){ hue - 13, 0.5f, 0.62f, 1.0f });
+                setHsl_Color(tmHypertextLinkIconVisited_ColorId, (iHSLColor){ hue - 28, 0.5f, 0.38f, 1.0f });
+                setHsl_Color(tmGopherLinkIcon_ColorId, (iHSLColor){ hue + 8, 0.45f, 0.6f, 1.0f });
+                setHsl_Color(tmGopherLinkIconVisited_ColorId, (iHSLColor){ hue + 8, 0.3f, 0.4f, 1.0f });
+            }
+            else {
+                base.sat = 0.6f + sat * 0.4f;
+                base.lum = 0.95f + lum * 0.05f;
+                setHsl_Color(tmBackground_ColorId, base);
+                setHsl_Color(tmBannerBackground_ColorId, setLum_HSLColor(base, base.lum * 0.97f));
+                setHsl_Color(tmBannerTitle_ColorId, (iHSLColor){ hue - 3, 0.4f, 0.4f, 1.0f });
+                setHsl_Color(tmBannerIcon_ColorId, (iHSLColor){ hue, 0.95f, 0.42f, 1.0f });
+                setHsl_Color(tmParagraph_ColorId, (iHSLColor){ hue, 0.3f, 0.2f, 1.0f });
+                setHsl_Color(tmFirstParagraph_ColorId, (iHSLColor){ hue, 0.3f, 0.14f, 1.0f });
+                setHsl_Color(tmQuote_ColorId, (iHSLColor){ hue, 0.45f, 0.32f, 1.0f });
+                setHsl_Color(tmHeading1_ColorId, (iHSLColor){ hue - 23, 0.5f, 0.38f, 1.0f });
+                setHsl_Color(tmHeading2_ColorId, (iHSLColor){ hue - 4, 0.55f, 0.34f, 1.0f });
+                setHsl_Color(tmHeading3_ColorId, (iHSLColor){ hue + 14, 0.55f, 0.20f, 1.0f });
+                setHsl_Color(tmLinkIcon_ColorId, (iHSLColor){ hue + 16, 1.0f, 0.33f, 1.0f });
+                setHsl_Color(tmLinkText_ColorId, (iHSLColor){ hue + 4, 0.9f, 0.27f, 1.0f });
+                setHsl_Color(tmLinkIconVisited_ColorId, (iHSLColor){ hue, 0.85f, 0.45f, 1.0f });
+                setHsl_Color(tmHypertextLinkIcon_ColorId, (iHSLColor){ hue - 12, 0.8f, 0.45f, 1.0f });
+                setHsl_Color(tmHypertextLinkText_ColorId, (iHSLColor){ hue - 12, 0.75f, 0.33f, 1.0f });
+                setHsl_Color(tmHypertextLinkIconVisited_ColorId, (iHSLColor){ hue - 28, 0.55f, 0.32f, 1.0f });
+                setHsl_Color(tmGopherLinkIcon_ColorId, (iHSLColor){ hue + 8, 0.5f, 0.33f, 1.0f });
+                setHsl_Color(tmGopherLinkIconVisited_ColorId, (iHSLColor){ hue + 8, 0.3f, 0.55f, 1.0f });
+            }            
+            int redHeading = tmHeading1_ColorId;
+            if (d->themeSeed & 0x1) {
+                const iColor h1 = get_Color(tmHeading1_ColorId);
+                set_Color(tmHeading1_ColorId, get_Color(tmHeading3_ColorId));
+                set_Color(tmHeading3_ColorId, h1);
+                redHeading = tmHeading3_ColorId;
+            }
+            for (int i = tmHeading1_ColorId; i <= tmHeading3_ColorId; i++) {
+                const float rnd = ((d->themeSeed >> (1 + 2 * (i - tmHeading1_ColorId))) & 0x3) / 3.0f;
+                iHSLColor   hsl = get_HSLColor(i);
+                if (i == tmHeading3_ColorId && i == redHeading) {
+                    hsl = get_HSLColor(tmParagraph_ColorId);
+                    hsl.sat += 0.1f;
+                    hsl.lum -= 0.1f;
+                }
+                else if (i == redHeading) {
+                    /*hsl.hue = 12;
+                    hsl.sat = 0.05f;
+                    hsl.lum *= 0.8f - 0.15f * rnd;*/
+                    hsl = get_HSLColor(tmParagraph_ColorId);
+                }
+                else {
+                    hsl.sat *= 0.7f + 0.3f * rnd;
+                }
+                setHsl_Color(i, hsl);
+            }
+            set_Color(tmPreformatted_ColorId, get_Color(tmQuote_ColorId));
+            if (isDarkUI) {
+                setHsl_Color(tmLinkTextHover_ColorId, (iHSLColor){ hue + 22, 1.0f, 0.8f, 1.0f });
+            }
+            else {
+                set_Color(tmLinkTextHover_ColorId, get_Color(tmLinkIcon_ColorId));
+            }
+            set_Color(tmHypertextLinkTextHover_ColorId, get_Color(tmHypertextLinkIcon_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(tmGopherLinkIcon_ColorId));
+            set_Color(tmGopherLinkText_ColorId,
+                      getMixed_Color(tmParagraph_ColorId, tmGopherLinkIcon_ColorId, 0.3f));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+        }
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if ((isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) &&
             theme != oceanic_GmDocumentTheme && theme != arboreal_GmDocumentTheme &&
-            theme != sepia_GmDocumentTheme) {
+            theme != ember_GmDocumentTheme && theme != sepia_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLums_[primIndex], 1.0f };
             if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,

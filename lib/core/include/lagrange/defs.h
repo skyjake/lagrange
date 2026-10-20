@@ -276,6 +276,7 @@ enum iGmDocumentTheme {
     vibrantLight_GmDocumentTheme,
     paper_GmDocumentTheme,
     arboreal_GmDocumentTheme,
+    ember_GmDocumentTheme,
     max_GmDocumentTheme
 };
 
