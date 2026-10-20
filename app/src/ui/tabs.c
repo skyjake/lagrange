@@ -391,6 +391,7 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
                               format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
         edge | tight_WidgetFlag | frameless_WidgetFlag | noBackground_WidgetFlag |
             hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+    setParentTextColor_LabelWidget(close, iTrue);
     setPadEdgeChildren_LabelWidget(tabButton, iTrue);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(close,

@@ -516,7 +516,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         /* A narrow doc tab shows only the site icon. */
         *fg = *meta = (d->forceFg == uiIcon_ColorId && isDocTabButton_(w) ? *icon : d->forceFg);
     }
-    if (d->flags.parentTextColor && isSelected_Widget(w->parent)) {
+    if (d->flags.parentTextColor && isSelected_Widget(w->parent) && !(isHover && isHoverFill)) {
         int other[5];
         getColors_LabelWidget_((const iLabelWidget *) w->parent, &other[0], fg, &other[1],
                                &other[2], &other[3], &other[4]);
