@@ -890,19 +890,21 @@ const iString *debugInfo_App(void) {
             ]);
 #endif
         appendFormat_String(msg, "%s BiDi text\n", enabled[
-#if defined (LAGRANGE_ENABLE_FRIBIDI)
+#if defined (LAGRANGE_ENABLE_FRIBIDI) || defined (LAGRANGE_ENABLE_CORETEXT)
             1
 #else
             0
 #endif
             ]);
+#if !defined (LAGRANGE_ENABLE_CORETEXT)
         appendFormat_String(msg, "%s HarfBuzz text shaping\n", enabled[
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+# if defined (LAGRANGE_ENABLE_HARFBUZZ)
             1
-#else
+# else
             0
-#endif
+# endif
             ]);
+#endif
         appendFormat_String(msg, "%s MPEG audio\n", enabled[
 #if defined (LAGRANGE_ENABLE_MPG123)
             1
