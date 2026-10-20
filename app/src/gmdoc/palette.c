@@ -418,15 +418,15 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerTitle_ColorId, (iHSLColor){ 32, 0.12f, 0.42f, 1.0f });
             setHsl_Color(tmBannerIcon_ColorId, (iHSLColor){ 28, 0.45f, 0.45f, 1.0f });
             setHsl_Color(tmInlineContentMetadata_ColorId, (iHSLColor){ 28, 0.40f, 0.40f, 1.0f });
-            /* Links in muted sepia and gray tones. */
+            /* Links in muted sepia and gray tones; web links in orange. */
             setHsl_Color(tmLinkText_ColorId, addSatLum_HSLColor(textBase, 0.05f, -0.08f));
-            set_Color(tmHypertextLinkText_ColorId, get_Color(tmLinkText_ColorId));
+            setHsl_Color(tmHypertextLinkText_ColorId, (iHSLColor){ 38, 0.85f, 0.38f, 1.0f });
             set_Color(tmGopherLinkText_ColorId, get_Color(tmLinkText_ColorId));
             setHsl_Color(tmLinkIcon_ColorId, (iHSLColor){ 28, 0.55f, 0.42f, 1.0f });
-            setHsl_Color(tmHypertextLinkIcon_ColorId, (iHSLColor){ 15, 0.45f, 0.45f, 1.0f });
+            setHsl_Color(tmHypertextLinkIcon_ColorId, (iHSLColor){ 38, 0.85f, 0.49f, 1.0f });
             setHsl_Color(tmGopherLinkIcon_ColorId, (iHSLColor){ 60, 0.25f, 0.36f, 1.0f });
             set_Color(tmLinkTextHover_ColorId, get_Color(tmLinkIcon_ColorId));
-            set_Color(tmHypertextLinkTextHover_ColorId, get_Color(tmHypertextLinkIcon_ColorId));
+            setHsl_Color(tmHypertextLinkTextHover_ColorId, (iHSLColor){ 36, 0.90f, 0.27f, 1.0f });
             set_Color(tmGopherLinkTextHover_ColorId, get_Color(tmGopherLinkIcon_ColorId));
             set_Color(tmLinkIconVisited_ColorId, getMixed_Color(tmLinkIcon_ColorId, tmBackground_ColorId, 0.5f));
             set_Color(tmHypertextLinkIconVisited_ColorId,
