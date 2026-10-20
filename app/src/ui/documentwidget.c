@@ -1868,7 +1868,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         destroy_Widget(oldTab);
         return iTrue;
     }
-    else if (equal_Command(cmd, "tab.created") || equal_Command(cmd, "tab.closed")) {
+    else if (equal_Command(cmd, "tab.created") || equal_Command(cmd, "tab.closed") ||
+             equal_Command(cmd, "tabs.resized")) {
         /* Space for tab buttons has changed. */
         updateWindowTitle_DocumentWidget(d);
         return iFalse;

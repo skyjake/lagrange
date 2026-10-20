@@ -82,6 +82,7 @@ static void releaseClosedTabSpace_Widget_(iWidget *tabs) {
             iRelease(removeChild_Widget(buttons, spacer));
             arrange_Widget(buttons);
             refresh_Widget(buttons);
+            notify_Root(tabs->root, "tabs.resized");
         }
     }
 }
