@@ -714,7 +714,13 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                                    1.0f };
             if (isArboreal) {
                 /* Saturated greens are overpowering. */
-                base.sat *= isDarkUI ? 0.6f : 0.75f;
+                if (isDarkUI) {
+                    /* Limit chroma so the lighter backgrounds are less saturated. */
+                    base.sat = iMin(iMin(base.sat, 0.7f) * 0.6f, 0.02f / base.lum);
+                }
+                else {
+                    base.sat *= 0.75f;
+                }
             }
             if (!isDarkUI) {
                 base.sat *= 0.66f;
