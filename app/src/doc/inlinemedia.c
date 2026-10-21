@@ -237,6 +237,64 @@ iBool request_InlineMedia(iInlineMedia *d, iGmLinkId linkId, iBool enableFilters
     return iFalse;
 }
 
+void download_InlineMedia(iInlineMedia *d, iGmLinkId linkId) {
+    iGmDocument *doc = doc_InlineMedia_(d);
+    setUrl_Media(media_GmDocument(doc), linkId, download_MediaType, linkUrl_GmDocument(doc, linkId));
+    request_InlineMedia(d, linkId, iFalse /* no filters */);
+    redoLayout_GmDocument(doc); /* inline downloader becomes visible */
+    updateVisible_DocumentView(view_InlineMedia_(d));
+    invalidate_DocumentWidget(d->owner);
+    refresh_Widget(d->owner);
+}
+
+iBool toggle_InlineMedia(iInlineMedia *d, iGmLinkId linkId) {
+    iDocumentView *view      = view_InlineMedia_(d);
+    const int      linkFlags = linkFlags_GmDocument(view->doc, linkId);
+    if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
+        /* We have the content and it cannot be dismissed, so nothing further to do. */
+        return iTrue;
+    }
+    if (!request_InlineMedia(d, linkId, iTrue)) {
+        if (linkFlags & content_GmLinkFlag) {
+            /* Dismiss shown content on click. */
+            setData_Media(media_GmDocument(view->doc), linkId, NULL, NULL, allowHide_MediaFlag);
+            /* Cancel a partially received request. */ {
+                iMediaRequest *req = findRequest_InlineMedia(d, linkId);
+                if (req && !isFinished_GmRequest(req->req)) {
+                    cancel_GmRequest(req->req);
+                    remove_InlineMedia(d, linkId);
+                    /* Note: Some of the audio IDs have changed now, layout must be redone. */
+                }
+            }
+            redoLayout_GmDocument(view->doc);
+            view->hoverLink = NULL;
+            clampScroll_DocumentView(view);
+            updateVisible_DocumentView(view);
+            invalidate_DocumentWidget(d->owner);
+            refresh_Widget(d->owner);
+            return iTrue;
+        }
+        else {
+            /* Show the existing content again if we have it. */
+            iMediaRequest *req = findRequest_InlineMedia(d, linkId);
+            if (req && isFinished_GmRequest(req->req)) {
+                setData_Media(media_GmDocument(view->doc),
+                              linkId,
+                              meta_GmRequest(req->req),
+                              body_GmRequest(req->req),
+                              allowHide_MediaFlag);
+                redoLayout_GmDocument(view->doc);
+                updateVisible_DocumentView(view);
+                invalidate_DocumentWidget(d->owner);
+                refresh_Widget(d->owner);
+                return iTrue;
+            }
+        }
+    }
+    refresh_Widget(d->owner);
+    return iFalse;
+}
+
 static iBool isDownloadRequest_InlineMedia_(const iInlineMedia *d, const iMediaRequest *req) {
     return findMediaForLink_Media(media_InlineMedia_(d), req->linkId, download_MediaType).type != 0;
 }

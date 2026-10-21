@@ -52,6 +52,8 @@ void            cancelRequests_InlineMedia      (iInlineMedia *);
 void            addRequest_InlineMedia          (iInlineMedia *, iMediaRequest *);
 void            remove_InlineMedia              (iInlineMedia *, iGmLinkId linkId);
 iBool           request_InlineMedia             (iInlineMedia *, iGmLinkId linkId, iBool enableFilters);
+void            download_InlineMedia            (iInlineMedia *, iGmLinkId linkId); /* inline downloader */
+iBool           toggle_InlineMedia              (iInlineMedia *, iGmLinkId linkId); /* True if fully handled */
 iBool           fetchNextUnfetchedImage_InlineMedia(iInlineMedia *);
 iBool           handleCommand_InlineMedia       (iInlineMedia *, const char *cmd);
 iBool           processEvent_InlineMedia        (iInlineMedia *, const SDL_Event *);

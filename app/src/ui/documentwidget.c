@@ -1817,16 +1817,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.downloadlink")) {
         if (d->contextLink) {
-            const iGmLinkId linkId = d->contextLink->linkId;
-            setUrl_Media(media_GmDocument(d->view->doc),
-                         linkId,
-                         download_MediaType,
-                         linkUrl_GmDocument(d->view->doc, linkId));
-            request_InlineMedia(d->media, linkId, iFalse /* no filters */);
-            redoLayout_GmDocument(d->view->doc); /* inline downloader becomes visible */
-            updateVisible_DocumentView(d->view);
-            invalidate_DocumentWidget(d);
-            refresh_Widget(w);
+            download_InlineMedia(d->media, d->contextLink->linkId);
         }
         return iTrue;
     }
@@ -3275,61 +3266,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                 }
                 if (view->hoverLink) {
-                    /* TODO: Move this to a method. */
                     const iGmLinkId linkId    = view->hoverLink->linkId;
                     const iMediaId  linkMedia = mediaId_GmRun(view->hoverLink);
                     const int       linkFlags = linkFlags_GmDocument(view->doc, linkId);
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
                     if (isMediaLink_GmDocument(view->doc, linkId)) {
-                        if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
-                            /* We have the content and it cannot be dismissed, so nothing
-                               further to do. */
+                        if (toggle_InlineMedia(d->media, linkId)) {
                             return iTrue;
                         }
-                        if (!request_InlineMedia(d->media, linkId, iTrue)) {
-                            if (linkFlags & content_GmLinkFlag) {
-                                /* Dismiss shown content on click. */
-                                setData_Media(media_GmDocument(view->doc),
-                                              linkId,
-                                              NULL,
-                                              NULL,
-                                              allowHide_MediaFlag);
-                                /* Cancel a partially received request. */ {
-                                    iMediaRequest *req = findRequest_InlineMedia(d->media, linkId);
-                                    if (req && !isFinished_GmRequest(req->req)) {
-                                        cancel_GmRequest(req->req);
-                                        remove_InlineMedia(d->media, linkId);
-                                        /* Note: Some of the audio IDs have changed now, layout must
-                                           be redone. */
-                                    }
-                                }
-                                redoLayout_GmDocument(view->doc);
-                                view->hoverLink = NULL;
-                                clampScroll_DocumentView(view);
-                                updateVisible_DocumentView(view);
-                                invalidate_DocumentWidget(d);
-                                refresh_Widget(w);
-                                return iTrue;
-                            }
-                            else {
-                                /* Show the existing content again if we have it. */
-                                iMediaRequest *req = findRequest_InlineMedia(d->media, linkId);
-                                if (req && isFinished_GmRequest(req->req)) {
-                                    setData_Media(media_GmDocument(view->doc),
-                                                  linkId,
-                                                  meta_GmRequest(req->req),
-                                                  body_GmRequest(req->req),
-                                                  allowHide_MediaFlag);
-                                    redoLayout_GmDocument(view->doc);
-                                    updateVisible_DocumentView(view);
-                                    invalidate_DocumentWidget(d);
-                                    refresh_Widget(w);
-                                    return iTrue;
-                                }
-                            }
-                        }
-                        refresh_Widget(w);
                     }
                     else if (linkMedia.type == download_MediaType ||
                              findRequest_InlineMedia(d->media, linkId)) {
