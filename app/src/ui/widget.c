@@ -1959,30 +1959,49 @@ static void handOverFade_Widget_(iWidget *d) {
     }
 }
 
+static iBool updateFade_Widget_(const iWidget *d) {
+    iAnim *fadeOpacity = iConstCast(iAnim *, &d->fadeOpacity);
+    const float fadeTarget = fadeTarget_Widget_(d);
+    if (value_Anim(fadeOpacity) < 0.0f) {
+        init_Anim(fadeOpacity, 0.0f); /* first time this widget is drawn */
+    }
+    if (targetValue_Anim(fadeOpacity) != fadeTarget) {
+        setFadeOpacity_Widget_(iConstCast(iWidget *, d), fadeTarget, 200);
+    }
+    if (value_Anim(fadeOpacity) > 0.0f) {
+        handOverFade_Widget_(iConstCast(iWidget *, d));
+    }
+    return (value_Anim(fadeOpacity) > 0.0f &&
+            (~d->flags & noFadeBackground_WidgetFlag ||
+             (d->flags2 & sheet_WidgetFlag2 && ~d->flags & destroyPending_WidgetFlag))) ||
+           (d->flags2 & fadeBackground_WidgetFlag2);
+}
+
+static void drawBackgroundFade_Widget_(const iWidget *d) {
+    iPaint p;
+    init_Paint(&p);
+    p.alpha = 0x50 * fadeAreaFactor_Widget_(d);
+    if (value_Anim(&d->fadeOpacity) > 0.0f) {
+        p.alpha *= value_Anim(&d->fadeOpacity);
+    }
+    SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+    fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
+    SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+}
+
+static void drawOccludedLayerEffects_Widget_(const iWidget *d) {
+    if (updateFade_Widget_(d)) {
+        drawBackgroundFade_Widget_(d);
+    }
+}
+
 void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
     iAssert(window_Widget(d) == get_Window());
     iBool shadowBorder = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
     const iBool isShadowStyle = (d->flags & keepOnTop_WidgetFlag) != 0;
-    /* Update the fade target. */ {
-        iAnim *fadeOpacity = iConstCast(iAnim *, &d->fadeOpacity);
-        const float fadeTarget = fadeTarget_Widget_(d);
-        if (value_Anim(fadeOpacity) < 0.0f) {
-            init_Anim(fadeOpacity, 0.0f); /* first time this widget is drawn */
-        }
-        if (targetValue_Anim(fadeOpacity) != fadeTarget) {
-            setFadeOpacity_Widget_(iConstCast(iWidget *, d), fadeTarget, 200);
-        }
-    }
-    if (value_Anim(&d->fadeOpacity) > 0.0f) {
-        handOverFade_Widget_(iConstCast(iWidget *, d));
-    }
-    const iBool isFaded =
-        (value_Anim(&d->fadeOpacity) > 0.0f &&
-         (~d->flags & noFadeBackground_WidgetFlag ||
-          (d->flags2 & sheet_WidgetFlag2 && ~d->flags & destroyPending_WidgetFlag))) ||
-        (d->flags2 & fadeBackground_WidgetFlag2);
+    const iBool isFaded = updateFade_Widget_(d);
     if (isShadowStyle && ~d->flags & noShadowBorder_WidgetFlag) {
         /* Smoothly fade the shadow in/out during a transition. */
         const int shadowAlpha = (int) (30 * (1.0f - value_Anim(&d->fadeOpacity)) *
@@ -2002,15 +2021,7 @@ void drawLayerEffects_Widget(const iWidget *d) {
         }
     }
     if (isFaded) {
-        iPaint p;
-        init_Paint(&p);
-        p.alpha = 0x50 * fadeAreaFactor_Widget_(d);
-        if (value_Anim(&d->fadeOpacity) > 0.0f) {
-            p.alpha *= value_Anim(&d->fadeOpacity);
-        }
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-        fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        drawBackgroundFade_Widget_(d);
     }
 #if defined (iPlatformAppleMobile)
     if (d->bgColor >= 0 && d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
@@ -2287,16 +2298,27 @@ iLocalDef iBool isFullyContainedByOther_Rect(const iRect d, const iRect other) {
     return equal_Rect(intersect_Rect(d, other), d);
 }
 
-static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iRect *fullyMasked) {
+iDeclareType(VisibleWidget)
+
+struct Impl_VisibleWidget {
+    const iWidget *widget;
+    iBool          isOccluded; /* only the background fade is visible */
+};
+
+static void addToPotentiallyVisible_Widget_(const iWidget *d, iArray *pvs, iRect *fullyMasked) {
     if (isDrawn_Widget_(d)) {
         iRect bounds = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
             bounds.size.y += size_Root(d->root).y;
         }
         if (isFullyContainedByOther_Rect(bounds, *fullyMasked)) {
-            return; /* can't be seen */
+            /* A background fade covers the whole root, so it is visible outside the mask. */
+            if (d->flags2 & fadeBackground_WidgetFlag2 || value_Anim(&d->fadeOpacity) > 0.0f) {
+                pushBack_Array(pvs, &(iVisibleWidget){ d, iTrue });
+            }
+            return;
         }
-        pushBack_PtrArray(pvs, d);
+        pushBack_Array(pvs, &(iVisibleWidget){ d, iFalse });
         if (d->bgColor >= 0 && ~d->flags & noBackground_WidgetFlag &&
             isFullyContainedByOther_Rect(*fullyMasked, bounds)) {
             *fullyMasked = bounds;
@@ -2304,7 +2326,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
     }
 }
 
-static void findPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs) {
+static void findPotentiallyVisible_Widget_(const iWidget *d, iArray *pvs) {
     iRect fullyMasked = zero_Rect();
     if (isRoot_Widget_(d)) {
         iReverseConstForEach(PtrArray, i, onTop_Root(d->root)) {
@@ -2359,14 +2381,19 @@ void drawChildren_Widget(const iWidget *d) {
 void drawRoot_Widget(const iWidget *d) {
     iAssert(d == d->root->widget);
     /* Root draws the on-top widgets on top of everything else. */
-    iPtrArray pvs;
-    init_PtrArray(&pvs);
+    iArray pvs;
+    init_Array(&pvs, sizeof(iVisibleWidget));
     findPotentiallyVisible_Widget_(d, &pvs);
-    iReverseConstForEach(PtrArray, i, &pvs) {
-        incrementDrawCount_(i.ptr);
-        class_Widget(i.ptr)->draw(i.ptr);
+    iReverseConstForEach(Array, i, &pvs) {
+        const iVisibleWidget *vis = i.value;
+        if (vis->isOccluded) {
+            drawOccludedLayerEffects_Widget_(vis->widget);
+            continue;
+        }
+        incrementDrawCount_(vis->widget);
+        class_Widget(vis->widget)->draw(vis->widget);
     }
-    deinit_PtrArray(&pvs);
+    deinit_Array(&pvs);
 }
 
 void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
