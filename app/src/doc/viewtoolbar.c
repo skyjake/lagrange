@@ -411,6 +411,13 @@ static int bottomBarsEdge_ViewToolbar_(iViewToolbar *d, const iRoot *root) {
     return iMin(safeBottom, edge);
 }
 
+int bottomSpace_ViewToolbar(const iViewToolbar *d) {
+    if (!d->widget || !isPortraitPhone_App() || !isAvailable_ViewToolbar_(d)) {
+        return 0;
+    }
+    return height_Widget(d->widget) + 3 * gap_UI;
+}
+
 void arrange_ViewToolbar(iViewToolbar *d) {
     iWidget *w = d->widget;
     if (!w) {

@@ -194,6 +194,8 @@ void pagedMetrics_DocumentView(const iDocumentView *d, iGmDocumentMetrics *metri
     }
     metrics->pageHeight      = height_Rect(viewport);
     metrics->lastPageInset   = footer ? height_Widget(footer) : 0;
+    const int clearance      = hostFooterClearance_DocumentView(d);
+    metrics->bottomClearance = clearance ? hostPhoneBarsHeight_DocumentView(d) + clearance : 0;
     /* The header and footer extend into the safe area insets. */
     const iRect safe         = safeRect_Root(constAs_Widget(d->owner)->root);
     metrics->topInset        = iMax(0, top_Rect(safe) - top_Rect(viewport));

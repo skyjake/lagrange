@@ -50,6 +50,7 @@ struct Impl_DocumentViewHost {
     /* Layout. */
     iWidget *       (*footerButtons)        (const iAnyObject *);
     int             (*footerHeight)         (const iAnyObject *);
+    int             (*footerClearance)      (const iAnyObject *); /* kept clear under the buttons */
     int             (*phoneToolbarHeight)   (const iAnyObject *);
     int             (*phoneBottomNavbarHeight)(const iAnyObject *);
     iScrollWidget * (*scrollBar)            (const iAnyObject *);
@@ -182,9 +183,11 @@ const iGmRun *lastVisibleLink_DocumentView(const iDocumentView *);
 size_t  visibleLinkOrdinal_DocumentView (const iDocumentView *, iGmLinkId linkId);
 
 uint32_t lastRenderTime_DocumentView    (const iDocumentView *);
+int     overscrollBottom_DocumentView   (const iDocumentView *); /* below content and timestamp */
 
 iWidget *hostFooterButtons_DocumentView     (const iDocumentView *);
 int     hostPhoneBarsHeight_DocumentView    (const iDocumentView *); /* toolbar and bottom navbar */
+int     hostFooterClearance_DocumentView    (const iDocumentView *);
 void    hostPagesMoved_DocumentView         (iDocumentView *);
 void    hostPageTurnBegins_DocumentView     (iDocumentView *);
 void    prerender_DocumentView          (iAny *); /* ticker */

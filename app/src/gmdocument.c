@@ -504,6 +504,7 @@ iBool equal_GmDocumentMetrics(const iGmDocumentMetrics *d, const iGmDocumentMetr
            d->maxContentWidth == other->maxContentWidth && d->pageHeight == other->pageHeight &&
            d->columnsPerPage == other->columnsPerPage &&
            d->firstPageInset == other->firstPageInset && d->lastPageInset == other->lastPageInset &&
+           d->bottomClearance == other->bottomClearance &&
            d->topInset == other->topInset && d->bottomInset == other->bottomInset &&
            d->singleColumnWidth == other->singleColumnWidth &&
            d->singleColumnMaxContentWidth == other->singleColumnMaxContentWidth;

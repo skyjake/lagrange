@@ -444,10 +444,11 @@ void paginate_GmDocument_(iGmDocument *d) {
     /* The last column with content is aligned to the top, unless it is the only one or on a
        cover. The inset at the bottom of the page's last column is needed only if the content
        reaches it. */
+    const int   inset          = d->metrics.lastPageInset + lastPageClearance_GmDocument(d);
     const iBool isLastOnPage   = (column + 1) % perPage == 0;
-    const iBool needsInsetPage = isLastOnPage && content.end - lastBottom < d->metrics.lastPageInset;
+    const iBool needsInsetPage = isLastOnPage && content.end - lastBottom < inset;
     if (isLastOnPage && !needsInsetPage) {
-        content.end -= d->metrics.lastPageInset;
+        content.end -= inset;
     }
     alignPage_GmDocument_(d, colStart, content,
                           column == 0 || d->flags.isBookCover ? centerContent_PageAlign
@@ -502,6 +503,13 @@ int pageFooterHeight_GmDocument(const iGmDocument *d) {
     }
     /* The reading progress bar and the find bar are below the footer. */
     return band + 3 * gap_UI + d->metrics.bottomInset;
+}
+
+int lastPageClearance_GmDocument(const iGmDocument *d) {
+    if (!d->metrics.lastPageInset) {
+        return 0;
+    }
+    return iMax(0, d->metrics.bottomClearance - pageFooterHeight_GmDocument(d));
 }
 
 iRangei columnContentRange_GmDocument(const iGmDocument *d, size_t column) {

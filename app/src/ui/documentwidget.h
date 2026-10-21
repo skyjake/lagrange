@@ -98,6 +98,7 @@ uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 int                 documentWidth_DocumentWidget        (const iDocumentWidget *);
 int                 footerHeight_DocumentWidget         (const iDocumentWidget *);
+int                 footerClearance_DocumentWidget      (const iDocumentWidget *);
 int                 phoneToolbarHeight_DocumentWidget   (const iDocumentWidget *);
 int                 phoneBottomNavbarHeight_DocumentWidget(const iDocumentWidget *);
 iRangecc            selectionMark_DocumentWidget        (const iDocumentWidget *);

@@ -244,11 +244,13 @@ enum iSmoothScrollFlags {
 
 struct Impl_SmoothScroll {
     iAnim    pos;
+    iAnim    settle; /* overscroll carried over from replaced content */
     int      max;
     int      overscroll;
     iWidget *widget;
     int      flags;
     int      pullActionTriggered;
+    int      pullActionDir; /* -1: top, +1: bottom */
     iSmoothScrollNotifyFunc notify;
 };
 
@@ -262,7 +264,7 @@ iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
 
 float   pos_SmoothScroll            (const iSmoothScroll *);
 iBool   isFinished_SmoothScroll     (const iSmoothScroll *);
-float   pullActionPos_SmoothScroll  (const iSmoothScroll *); /* 0...1 */
+float   pullActionPos_SmoothScroll  (const iSmoothScroll *, int dir); /* 0...1 */
 
 /*-----------------------------------------------------------------------------------------------*/
 

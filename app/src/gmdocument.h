@@ -221,6 +221,7 @@ struct Impl_GmDocumentMetrics {
     int columnsPerPage;    /* paginated layout is cut into columns of the page height */
     int firstPageInset;    /* space reserved at the top of the first page */
     int lastPageInset;     /* space reserved at the bottom of the last page */
+    int bottomClearance;   /* covered by overlays at the bottom; the last page's footer stays above */
     int topInset;          /* safe area above the page header */
     int bottomInset;       /* safe area below the page footer */
     int singleColumnWidth; /* used when the content fits in the first of two columns */
@@ -345,6 +346,7 @@ int             pageHeaderHeight_GmDocument     (const iGmDocument *);
 iBool           isHeaderBelowCutout_GmDocument  (const iGmDocument *);
 int             pageFooterHeight_GmDocument     (const iGmDocument *);
 iRangei         columnContentRange_GmDocument   (const iGmDocument *, size_t column); /* between header and footer */
+int             lastPageClearance_GmDocument    (const iGmDocument *); /* below the last page's inset */
 int             pageBandFont_GmDocument         (const iGmDocument *);
 iRangecc        pageHeader_GmDocument           (const iGmDocument *, size_t page, iBool isSpread);
 iRangecc        pageFooter_GmDocument           (const iGmDocument *, size_t page);

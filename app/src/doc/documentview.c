@@ -169,6 +169,10 @@ static int hostPhoneToolbarHeight_DocumentView_(const iDocumentView *d) {
     return d->host && d->host->phoneToolbarHeight ? d->host->phoneToolbarHeight(d->owner) : 0;
 }
 
+int hostFooterClearance_DocumentView(const iDocumentView *d) {
+    return d->host && d->host->footerClearance ? d->host->footerClearance(d->owner) : 0;
+}
+
 int hostPhoneBarsHeight_DocumentView(const iDocumentView *d) {
     return hostPhoneToolbarHeight_DocumentView_(d) +
            (d->host && d->host->phoneBottomNavbarHeight ? d->host->phoneBottomNavbarHeight(d->owner)
@@ -1902,6 +1906,12 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     SDL_SetTextureBlendMode(dbuf->sideIconBuf, SDL_BLENDMODE_BLEND);
 }
 
+static int contentBottom_DocumentView_(const iDocumentView *d) {
+    return bottom_Rect(bounds_Widget(constAs_Widget(d->owner))) -
+           (!prefs_App()->hideToolbarOnScroll ? hostPhoneBarsHeight_DocumentView(d) : 0) +
+           d->scrollY.max - pos_SmoothScroll(&d->scrollY);
+}
+
 static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffset) {
     if (size_GmDocument(d->doc).y == 0) {
         return;
@@ -1936,15 +1946,10 @@ static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffs
     if (dbuf->timestampBuf) {
         draw_TextBuf(
             dbuf->timestampBuf,
-            add_I2(
-                init_I2(horizOffset + mid_Rect(docBounds).x - dbuf->timestampBuf->size.x / 2,
-                        bottom_Rect(bounds)),
-                init_I2(0,
+            init_I2(horizOffset + mid_Rect(docBounds).x - dbuf->timestampBuf->size.x / 2,
+                    contentBottom_DocumentView_(d) +
                         (deviceType_App() != phone_AppDeviceType
-                             ? -margin + -dbuf->timestampBuf->size.y : 0) +
-                            -(!prefs_App()->hideToolbarOnScroll
-                                  ? hostPhoneBarsHeight_DocumentView(d) : 0) +
-                            d->scrollY.max - pos_SmoothScroll(&d->scrollY))),
+                             ? -margin + -dbuf->timestampBuf->size.y : 0)),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
@@ -2203,6 +2208,12 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
         }
     }
     return didDraw;
+}
+
+int overscrollBottom_DocumentView(const iDocumentView *d) {
+    const iTextBuf *ts = d->drawBufs->timestampBuf;
+    return contentBottom_DocumentView_(d) +
+           (ts && deviceType_App() == phone_AppDeviceType ? ts->size.y : 0);
 }
 
 uint32_t lastRenderTime_DocumentView(const iDocumentView *d) {

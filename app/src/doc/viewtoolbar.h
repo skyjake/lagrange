@@ -51,3 +51,4 @@ void    updateHover_ViewToolbar (iViewToolbar *); /* after the mouse moves */
 void    scrollBegan_ViewToolbar (iViewToolbar *, int offset, iBool isAtTop);
 void    reveal_ViewToolbar      (iViewToolbar *); /* undo dimming by scrolling */
 void    arrange_ViewToolbar     (iViewToolbar *); /* position and opacity, before drawing */
+int     bottomSpace_ViewToolbar (const iViewToolbar *); /* reserved under the page's footer */

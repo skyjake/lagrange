@@ -595,19 +595,10 @@ iInt2 delta_Click(const iClick *d) {
 /*----------------------------------------------------------------------------------------------*/
 
 void init_SmoothScroll(iSmoothScroll *d, iWidget *owner, iSmoothScrollNotifyFunc notify) {
-    reset_SmoothScroll(d);
+    iZap(*d);
     d->widget = owner;
     d->notify = notify;
-    d->pullActionTriggered = 0;
-    d->flags = 0;
-}
-
-void reset_SmoothScroll(iSmoothScroll *d) {
-    init_Anim(&d->pos, 0);
-    d->max = 0;
-    d->overscroll =
-        (deviceType_App() != desktop_AppDeviceType && !isHandheld_Platform() ? 100 * gap_UI : 0);
-    d->pullActionTriggered = 0;
+    reset_SmoothScroll(d);
 }
 
 void setMax_SmoothScroll(iSmoothScroll *d, int max) {
@@ -659,6 +650,21 @@ static float rawOverscroll_SmoothScroll_(const iSmoothScroll *d, float visible) 
     return visible / 0.333f;
 }
 
+void reset_SmoothScroll(iSmoothScroll *d) {
+    /* Replaced content continues the bounce back. */
+    const float settle = visibleOverscroll_SmoothScroll_(d);
+    init_Anim(&d->pos, 0);
+    init_Anim(&d->settle, settle);
+    if (settle != 0) {
+        setValue_Anim(&d->settle, 0, 173 * sqrtf(fabsf(settle) / gap_UI));
+        d->settle.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+    }
+    d->max = 0;
+    d->overscroll =
+        (deviceType_App() != desktop_AppDeviceType && !isHandheld_Platform() ? 100 * gap_UI : 0);
+    d->pullActionTriggered = 0;
+}
+
 static int overscrollLimit_SmoothScroll_(const iSmoothScroll *d) {
 #if defined (iPlatformAppleMobile)
     if (d->overscroll && d->widget) {
@@ -669,32 +675,33 @@ static int overscrollLimit_SmoothScroll_(const iSmoothScroll *d) {
 }
 
 float pos_SmoothScroll(const iSmoothScroll *d) {
-    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) + visibleOverscroll_SmoothScroll_(d);
+    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) + visibleOverscroll_SmoothScroll_(d) +
+           value_Anim(&d->settle);
 }
 
 iBool isFinished_SmoothScroll(const iSmoothScroll *d) {
-    return isFinished_Anim(&d->pos);
+    return isFinished_Anim(&d->pos) && isFinished_Anim(&d->settle);
 }
 
 iLocalDef int pullActionThreshold_SmoothScroll_(const iSmoothScroll *d) {
     return d->overscroll * 6 / 10;
 }
 
-float pullActionPos_SmoothScroll(const iSmoothScroll *d) {
+float pullActionPos_SmoothScroll(const iSmoothScroll *d, int dir) {
     if (d->pullActionTriggered >= 1) {
-        return 1.0f;
+        return d->pullActionDir == dir ? 1.0f : 0.0f;
     }
-    float pos = overscroll_SmoothScroll_(d);
-    if (pos >= 0.0f) {
+    float pos = dir * overscroll_SmoothScroll_(d);
+    if (pos <= 0.0f) {
         return 0.0f;
     }
-    pos = -pos / (float) pullActionThreshold_SmoothScroll_(d);
+    pos /= (float) pullActionThreshold_SmoothScroll_(d);
     return iMin(pos, 1.0f);
 }
 
 static void checkPullAction_SmoothScroll_(iSmoothScroll *d) {
     if (d->pullActionTriggered == 1 && d->widget) {
-        postCommand_Widget(d->widget, "pullaction");
+        postCommand_Widget(d->widget, "pullaction arg:%d", d->pullActionDir);
         d->pullActionTriggered = 2; /* pending handling */
     }
 }
@@ -729,10 +736,19 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
         span = 0; /* always instant */
     }
     int destY = targetValue_Anim(&d->pos) + offset;
-    if (d->flags & pullDownAction_SmoothScrollFlag && destY < -pullActionThreshold_SmoothScroll_(d) &&
-        offset < 0 && widgetMode_Touch(d->widget) != momentum_WidgetTouchMode) {
-        if (d->pullActionTriggered == 0) {
-            d->pullActionTriggered = iTrue;
+    if (d->pullActionTriggered == 0 && widgetMode_Touch(d->widget) != momentum_WidgetTouchMode) {
+        const int threshold = pullActionThreshold_SmoothScroll_(d);
+        int       dir       = 0;
+        if (d->flags & pullDownAction_SmoothScrollFlag && offset < 0 && destY < -threshold) {
+            dir = -1;
+        }
+        else if (d->flags & pullUpAction_SmoothScrollFlag && offset > 0 &&
+                 destY > d->max + threshold) {
+            dir = +1;
+        }
+        if (dir) {
+            d->pullActionTriggered = 1;
+            d->pullActionDir = dir;
 #if defined (iPlatformAppleMobile)
             playHapticEffect_iOS(tap_HapticEffect);
 #endif
@@ -779,6 +795,11 @@ void move_SmoothScroll(iSmoothScroll *d, int offset) {
 
 iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
     if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchBegins_UserEventCode) {
+        if (!isFinished_Anim(&d->settle)) {
+            const float y = value_Anim(&d->pos) + value_Anim(&d->settle);
+            init_Anim(&d->pos, y < 0 ? rawOverscroll_SmoothScroll_(d, y) : y);
+            init_Anim(&d->settle, 0);
+        }
         /* Catch an overscroll animation where it is currently shown. */
         const int osDelta = overscroll_SmoothScroll_(d);
         if (osDelta && !isFinished_Anim(&d->pos)) {

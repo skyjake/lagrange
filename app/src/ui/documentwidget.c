@@ -279,8 +279,14 @@ int phoneBottomNavbarHeight_DocumentWidget(const iDocumentWidget *d) {
     return height;
 }
 
+int footerClearance_DocumentWidget(const iDocumentWidget *d) {
+    return d->footerButtons ? bottomSpace_ViewToolbar(d->viewToolbar) : 0;
+}
+
 int footerHeight_DocumentWidget(const iDocumentWidget *d) {
-    int hgt = iMaxi(height_Widget(d->footerButtons),
+    int hgt = iMaxi(d->footerButtons ? height_Widget(d->footerButtons) +
+                                           footerClearance_DocumentWidget(d)
+                                     : 0,
                     /* page footer area (matches top banner, if present) */
                     !isEmpty_Banner(d->banner) && size_GmDocument(d->view->doc).y > 0
                         ? 2 * lineHeight_Text(banner_FontId) : 0);
@@ -885,6 +891,7 @@ static void pageTurnBegins_DocumentWidget_(iDocumentWidget *d) {
 static const iDocumentViewHost viewHost_DocumentWidget_ = {
     .footerButtons           = (iAny *) footerButtons_DocumentWidget,
     .footerHeight            = (iAny *) footerHeight_DocumentWidget,
+    .footerClearance         = (iAny *) footerClearance_DocumentWidget,
     .phoneToolbarHeight      = (iAny *) phoneToolbarHeight_DocumentWidget,
     .phoneBottomNavbarHeight = (iAny *) phoneBottomNavbarHeight_DocumentWidget,
     .scrollBar               = (iAny *) scrollBar_DocumentWidget,
@@ -1054,35 +1061,62 @@ static iBool isFeedsSidebarVisible_DocumentWidget_(const iDocumentWidget *d) {
     return iFalse;
 }
 
-static iBool updateReaderButtons_DocumentWidget_(iDocumentWidget *d) {
-    iWidget *showFeeds =
-        d->footerButtons ? findChild_Widget(d->footerButtons, "reader.showfeeds") : NULL;
-    if (!showFeeds) {
+static iBool setFooterButtonHidden_DocumentWidget_(iDocumentWidget *d, const char *id, iBool hide) {
+    iWidget *button = d->footerButtons ? findChild_Widget(d->footerButtons, id) : NULL;
+    if (!button || hide == ((flags_Widget(button) & hidden_WidgetFlag) != 0)) {
         return iFalse;
     }
-    const iBool hide = isFeedsSidebarVisible_DocumentWidget_(d);
-    if (hide == ((flags_Widget(showFeeds) & hidden_WidgetFlag) != 0)) {
-        return iFalse;
-    }
-    setFlags_Widget(showFeeds, hidden_WidgetFlag, hide);
-    arrange_Widget(d->footerButtons);
+    setFlags_Widget(button, hidden_WidgetFlag, hide);
     return iTrue;
+}
+
+static iBool updateReaderNavButtons_DocumentWidget_(iDocumentWidget *d) {
+    if (!d->footerButtons || !d->mod.isReader) {
+        return iFalse;
+    }
+    /* Scrolled pages on mobile navigate via overscroll. */
+    const iBool hide =
+        deviceType_App() != desktop_AppDeviceType && !wantsPaged_DocumentView(d->view);
+    return setFooterButtonHidden_DocumentWidget_(d, "reader.prev", hide) |
+           setFooterButtonHidden_DocumentWidget_(d, "reader.next", hide);
+}
+
+static iBool updateReaderButtons_DocumentWidget_(iDocumentWidget *d) {
+    if (!d->footerButtons || !d->mod.isReader) {
+        return iFalse;
+    }
+    const iBool changed = updateReaderNavButtons_DocumentWidget_(d) |
+                          setFooterButtonHidden_DocumentWidget_(
+                              d, "reader.showfeeds", isFeedsSidebarVisible_DocumentWidget_(d));
+    if (changed) {
+        arrange_Widget(d->footerButtons);
+    }
+    return changed;
 }
 
 void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items, size_t count) {
     iWidget *w = as_Widget(d);
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
+    iChangeFlags(d->view->scrollY.flags,
+                 pullUpAction_SmoothScrollFlag,
+                 d->mod.isReader && deviceType_App() != desktop_AppDeviceType);
     if (d->mod.isReader) {
         /* Entry navigation stays in place when the page-specific items change. */
         iArray *all = collectNew_Array(sizeof(iMenuItem));
         if (count) {
             pushBackN_Array(all, items, count);
         }
+        const iBinding *nextKey = findCommand_Keys("scroll.page arg:1");
+        const iBinding *prevKey = findCommand_Keys("scroll.page arg:-1");
         pushBackN_Array(
             all,
-            (iMenuItem[]){ { forwardArrow_Icon " ${reader.next}", SDLK_RIGHT, 0, "reader.next" },
-                           { backArrow_Icon " ${reader.prev}", SDLK_LEFT, 0, "reader.prev" },
+            (iMenuItem[]){ { upArrow_Icon " ${reader.prev}",
+                             prevKey ? prevKey->key : 0, prevKey ? prevKey->mods : 0,
+                             "reader.prev" },
+                           { downArrow_Icon " ${reader.next}",
+                             nextKey ? nextKey->key : 0, nextKey ? nextKey->mods : 0,
+                             "reader.next" },
                            { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "reader.markallread" },
                            { format_CStr("%s ${reader.showfeeds}",
                                          icon_SidebarMode(feedEntries_SidebarMode)),
@@ -1114,11 +1148,14 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
         setBackgroundColor_Widget(as_Widget(button), uiBackgroundSidebar_ColorId);
-        if (d->mod.isReader && items[i].command &&
-            (equal_CStr(items[i].command, "reader.markallread") ||
-             equal_CStr(items[i].command, "reader.showfeeds"))) {
+        if (d->mod.isReader && items[i].command && startsWith_CStr(items[i].command, "reader.")) {
             setId_Widget(as_Widget(button), items[i].command);
             setFlags_Widget(button, collapse_WidgetFlag, iTrue);
+            if (equal_CStr(items[i].command, "reader.next") ||
+                equal_CStr(items[i].command, "reader.prev")) {
+                /* Triggered via "scroll.page" at either end of the page. */
+                setKeyTrigger_LabelWidget(button, iFalse);
+            }
         }
     }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
@@ -3086,7 +3123,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
         if (isCommand_Widget(w, ev, "pullaction")) {
-            postCommand_Widget(w, "navigate.reload");
+            if (d->mod.isReader) {
+                if (!openAdjacentFeedEntry_DocumentWidget_(d, arg_Command(command_UserEvent(ev)))) {
+                    d->view->scrollY.pullActionTriggered = 0;
+                    if (!isFeedsSidebarVisible_DocumentWidget_(d)) {
+                        showSidebar_DocumentWidget(d);
+                    }
+                }
+            }
+            else {
+                postCommand_Widget(w, "navigate.reload");
+            }
             return iTrue;
         }
         if (!handleCommand_DocumentWidget_(d, command_UserEvent(ev))) {
@@ -3765,7 +3812,8 @@ static void positionPagedFooterButtons_DocumentWidget_(iDocumentWidget *d) {
                           left + hPad, 0, width_Rect(bounds) - left - colWidth + hPad, 3 * gap_UI);
         arrange_Widget(d->footerButtons);
         d->footerButtons->rect.pos.y = top_Rect(pageViewport_DocumentView(view)) - top_Rect(bounds) +
-                                       content.end - (int) lastCol * pageHeight_GmDocument(view->doc) -
+                                       content.end - lastPageClearance_GmDocument(view->doc) -
+                                       (int) lastCol * pageHeight_GmDocument(view->doc) -
                                        height_Widget(d->footerButtons);
     }
 }
@@ -3849,6 +3897,9 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
             showViewModeIndicator_DocumentWidget_(d);
         }
     }
+    if (updateReaderNavButtons_DocumentWidget_(d)) {
+        scrollMax = updateScrollMax_DocumentView(d->view); /* footer height changed */
+    }
     if (isPaged_DocumentView(d->view)) {
         updatePagedProgress_DocumentWidget_(d);
         return;
@@ -3881,7 +3932,7 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         setPadding_Widget(d->footerButtons, hPad, 0, hPad, vPad);
         d->footerButtons->rect.pos.y = height_Rect(bounds) -
                                        footerHeight_DocumentWidget(d) +
-                                       (scrollMax > 0 ? scrollMax - scrollPos : 0);
+                                       iMax(scrollMax, 0) - scrollPos;
     }
 }
 
@@ -4086,23 +4137,45 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     /* Pull action indicator. */
     if (deviceType_App() != desktop_AppDeviceType) {
-        float pullPos = pullActionPos_SmoothScroll(&d->view->scrollY);
-        /* Account for the part where the indicator isn't yet visible. */
-        pullPos = (pullPos - 0.2f) / 0.8f;
-        iRect indRect = initCentered_Rect(init_I2(mid_Rect(bounds).x,
-                                                  top_Rect(bounds) - 5 * gap_UI -
-                                                  pos_SmoothScroll(&d->view->scrollY)),
-                                          init_I2(20 * gap_UI, gap_UI / 2));
+        const iSmoothScroll *scrollY = &d->view->scrollY;
         setClip_Paint(&p, clipBounds);
-        int color = pullPos < 1.0f ? tmBannerItemFrame_ColorId : tmBannerItemText_ColorId;
-        //drawRect_Paint(&p, indRect, color);
-        fillRect_Paint(&p, indRect, color);
-        indRect.pos.y += gap_UI / 2;
-        indRect.size.y *= 2;
-        if (pullPos > 0) {
-            //shrink_Rect(&indRect, divi_I2(gap2_UI, 2));
-            indRect.size.x *= pullPos;
+        if (d->mod.isReader) {
+            /* Entry navigation in the overscroll areas. */
+            for (int dir = -1; dir <= 1; dir += 2) {
+                const float pullPos = pullActionPos_SmoothScroll(scrollY, dir);
+                if (pullPos > 0) {
+                    const int y = dir < 0 ? top_Rect(bounds) - 5 * gap_UI - pos_SmoothScroll(scrollY)
+                                          : overscrollBottom_DocumentView(d->view) + 5 * gap_UI;
+                    drawCentered_Text(uiLabelMediumBold_FontId,
+                                      initCentered_Rect(init_I2(mid_Rect(bounds).x, y),
+                                                        init_I2(width_Rect(bounds),
+                                                                lineHeight_Text(uiLabelMediumBold_FontId))),
+                                      iFalse,
+                                      pullPos < 1.0f ? tmQuoteIcon_ColorId
+                                                     : tmBannerItemText_ColorId,
+                                      "%s %s",
+                                      dir < 0 ? upArrow_Icon : downArrow_Icon,
+                                      cstr_Lang(dir < 0 ? "reader.prev" : "reader.next"));
+                }
+            }
+        }
+        else {
+            float pullPos = pullActionPos_SmoothScroll(scrollY, -1);
+            /* Account for the part where the indicator isn't yet visible. */
+            pullPos = (pullPos - 0.2f) / 0.8f;
+            iRect indRect = initCentered_Rect(
+                init_I2(mid_Rect(bounds).x, top_Rect(bounds) - 5 * gap_UI - pos_SmoothScroll(scrollY)),
+                init_I2(20 * gap_UI, gap_UI / 2));
+            int color = pullPos < 1.0f ? tmBannerItemFrame_ColorId : tmBannerItemText_ColorId;
+            //drawRect_Paint(&p, indRect, color);
             fillRect_Paint(&p, indRect, color);
+            indRect.pos.y += gap_UI / 2;
+            indRect.size.y *= 2;
+            if (pullPos > 0) {
+                //shrink_Rect(&indRect, divi_I2(gap2_UI, 2));
+                indRect.size.x *= pullPos;
+                fillRect_Paint(&p, indRect, color);
+            }
         }
         unsetClip_Paint(&p);
     }
