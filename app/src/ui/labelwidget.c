@@ -63,7 +63,7 @@ struct Impl_LabelWidget {
         uint16_t noLabel             : 1;
 
         uint16_t untranslated        : 1;
-        uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected */
+        uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected or pressed */
         uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
         uint16_t centerWrapped       : 1;
 
@@ -518,12 +518,18 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         /* A narrow doc tab shows only the site icon. */
         *fg = *meta = (d->forceFg == uiIcon_ColorId && isDocTabButton_(w) ? *icon : d->forceFg);
     }
-    if (d->flags.parentTextColor && isSelected_Widget(w->parent) && !(isHover && isHoverFill)) {
-        int other[5];
-        getColors_LabelWidget_((const iLabelWidget *) w->parent, &other[0], fg, &other[1],
-                               &other[2], &other[3], &other[4]);
-        if (d->forceFg == uiIcon_ColorId && isDocTabButton_(w->parent)) {
-            *fg = other[3];
+    if (d->flags.parentTextColor && !(isHover && isHoverFill)) {
+        const iWidget *owner = w->parent;
+        while (owner && !isInstance_Object(owner, &Class_LabelWidget)) {
+            owner = owner->parent;
+        }
+        if (owner && flags_Widget(owner) & (selected_WidgetFlag | pressed_WidgetFlag)) {
+            int other[5];
+            getColors_LabelWidget_((const iLabelWidget *) owner, &other[0], fg, &other[1],
+                                   &other[2], &other[3], &other[4]);
+            if (d->forceFg == uiIcon_ColorId && isDocTabButton_(owner)) {
+                *fg = other[3];
+            }
         }
     }
     if (isPress) {

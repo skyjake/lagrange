@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/snippets.h>
 #include "gamepad.h"
 #include "window.h"
+#include "../feeds.h"
 #include "../history.h"
 #include "../periodic.h"
 #include "../sync.h"
@@ -1005,10 +1006,12 @@ void updateToolbarColors_Root(iRoot *d) {
                                      !(prefs_App()->bottomTabBar && numPages > 1);
         const int bg = useThemeColors ? tmBannerBackground_ColorId : uiBackground_ColorId;
         setBackgroundColor_Widget(bottomBar, bg);
+        const int fg = useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId;
         iForEach(ObjectList, i, children_Widget(toolBar)) {
-            setTextColor_LabelWidget(i.object, useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId);
+            setTextColor_LabelWidget(i.object, fg);
             setBackgroundColor_Widget(i.object, bg);
         }
+        setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.view.icon"), fg);
         if (!useThemeColors) {
             /* Menu uses accent color. */
             setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.navmenu"), uiTextAction_ColorId);
@@ -1615,6 +1618,18 @@ static void updateToolBarActions_(iWidget *toolBar) {
     refresh_Widget(toolBar);
 }
 
+static void updateToolBarView_(iWidget *toolBar, int mode, size_t numUnread) {
+    iLabelWidget *icon       = findChild_Widget(toolBar, "toolbar.view.icon");
+    iLabelWidget *unread     = findChild_Widget(toolBar, "toolbar.unread");
+    const iBool   showUnread = mode == feedEntries_SidebarMode && numUnread;
+    updateTextAndResizeWidthCStr_LabelWidget(icon, icon_SidebarMode(mode));
+    updateTextAndResizeWidthCStr_LabelWidget(unread,
+                                             showUnread ? format_CStr("%zu", numUnread) : "");
+    setFlags_Widget(as_Widget(unread), hidden_WidgetFlag, !showUnread);
+    arrange_Widget(parent_Widget(icon));
+    refresh_Widget(toolBar);
+}
+
 static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     if (equalWidget_Command(cmd, toolBar, "mouse.clicked") && arg_Command(cmd) &&
         argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
@@ -1689,8 +1704,20 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "sidebar.mode.changed")) {
-        iLabelWidget *viewTool = findChild_Widget(toolBar, "toolbar.view");
-        updateTextCStr_LabelWidget(viewTool, icon_SidebarMode(arg_Command(cmd)));
+        updateToolBarView_(toolBar, arg_Command(cmd), numUnread_Feeds());
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "sidebar.update") || equal_Command(cmd, "visited.changed") ||
+             equal_Command(cmd, "bookmarks.changed") ||
+             equal_Command(cmd, "feeds.update.finished")) {
+        const iSidebarWidget *sidebar = findChild_Widget(root_Widget(toolBar), "sidebar");
+        if (sidebar) {
+            updateToolBarView_(toolBar,
+                               mode_SidebarWidget(sidebar),
+                               equal_Command(cmd, "feeds.update.finished")
+                                   ? (size_t) argLabel_Command(cmd, "unread")
+                                   : numUnread_Feeds());
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "toolbar.actions.changed")) {
@@ -1780,6 +1807,7 @@ void updateMetrics_Root(iRoot *d) {
     iWidget      *embedPad   = findChild_Widget(navBar, "url.embedpad");
     iWidget      *urlButtons = findChild_Widget(navBar, "url.buttons");
     iLabelWidget *idName     = findChild_Widget(d->widget, "toolbar.name");
+    iLabelWidget *unread     = findChild_Widget(d->widget, "toolbar.unread");
     if (navBar) {
         setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
         setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
@@ -1796,6 +1824,14 @@ void updateMetrics_Root(iRoot *d) {
     if (idName) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
+    }
+    if (unread) {
+        /* No horizontal label padding; the pair's width is just the icon and the count. */
+        iLabelWidget *viewIcon = findChild_Widget(d->widget, "toolbar.view.icon");
+        setPadding_Widget(as_Widget(viewIcon), -2 * gap_UI, 0, -2 * gap_UI, 0);
+        setPadding_Widget(as_Widget(unread), -2 * gap_UI, 0, -2 * gap_UI, 0);
+        updateSize_LabelWidget(viewIcon);
+        updateSize_LabelWidget(unread);
     }
     postRefresh_Window(get_Window());
 }
@@ -2424,11 +2460,37 @@ void createUserInterface_Root(iRoot *d) {
                          iClob(newLargeIcon_LabelWidget("\U0001f464", "identmenu.open")),
                          frameless_WidgetFlag | fixedHeight_WidgetFlag),
                      "toolbar.ident");
-        setId_Widget(addChildFlags_Widget(
+        iWidget *viewButton;
+        setId_Widget(viewButton = addChildFlags_Widget(
                          toolBar,
-                         iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
+                         iClob(newLargeIcon_LabelWidget("", "toolbar.showview arg:-1")),
                          frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
+        /* The icon and the unread count are centered as a pair. */
+        iWidget *viewPair = new_Widget();
+        addChildFlags_Widget(viewButton,
+                             iClob(viewPair),
+                             centerHorizontal_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                                 arrangeWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
+                                 unhittable_WidgetFlag);
+        iLabelWidget *viewIcon = newLargeIcon_LabelWidget(book_Icon, NULL);
+        setParentTextColor_LabelWidget(viewIcon, iTrue);
+        setId_Widget(addChildFlags_Widget(viewPair,
+                                          iClob(viewIcon),
+                                          frameless_WidgetFlag | noBackground_WidgetFlag |
+                                              tight_WidgetFlag | resizeToParentHeight_WidgetFlag |
+                                              unhittable_WidgetFlag),
+                     "toolbar.view.icon");
+        iLabelWidget *unreadCount = new_LabelWidget("", NULL);
+        setFont_LabelWidget(unreadCount, uiLabelMedium_FontId);
+        setTextColor_LabelWidget(unreadCount, uiTextAction_ColorId);
+        setId_Widget(addChildFlags_Widget(viewPair,
+                                          iClob(unreadCount),
+                                          frameless_WidgetFlag | noBackground_WidgetFlag |
+                                              tight_WidgetFlag | resizeToParentHeight_WidgetFlag |
+                                              unhittable_WidgetFlag | collapse_WidgetFlag |
+                                              hidden_WidgetFlag),
+                     "toolbar.unread");
         iLabelWidget *idName;
         setId_Widget(addChildFlags_Widget(identButton,
                                           iClob(idName = new_LabelWidget("", NULL)),
