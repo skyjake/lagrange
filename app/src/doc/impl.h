@@ -216,3 +216,13 @@ void            interactingWithLink_DocumentWidget      (iDocumentWidget *, iGmL
 
 /* Saving (doc/save.c). */
 iBool           handleSaveCommand_DocumentWidget        (iDocumentWidget *, const char *cmd);
+
+/* Reader mode (doc/reader.c). */
+iBool           updateReaderNavButtons_DocumentWidget   (iDocumentWidget *);
+iBool           updateReaderButtons_DocumentWidget      (iDocumentWidget *);
+const iArray *  readerFooterItems_DocumentWidget        (const iDocumentWidget *, const iMenuItem *items,
+                                                         size_t count);
+iBool           openAdjacentFeedEntry_DocumentWidget    (iDocumentWidget *, int dir);
+void            readerPullAction_DocumentWidget         (iDocumentWidget *, int dir);
+iBool           handleReaderCommand_DocumentWidget      (iDocumentWidget *, const char *cmd);
+void            drawReaderPullActions_DocumentWidget    (const iDocumentWidget *);

@@ -918,51 +918,6 @@ static iBool triggerFooterKey_DocumentWidget_(iDocumentWidget *d, int key) {
     return iFalse;
 }
 
-static iBool isFeedsSidebarVisible_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *root = root_Widget(constAs_Widget(d));
-    for (int i = 0; i < 2; i++) {
-        const iSidebarWidget *sidebar = findChild_Widget(root, i == 0 ? "sidebar" : "sidebar2");
-        if (sidebar && isVisible_Widget(sidebar) &&
-            mode_SidebarWidget(sidebar) == feedEntries_SidebarMode) {
-            return iTrue;
-        }
-    }
-    return iFalse;
-}
-
-static iBool setFooterButtonHidden_DocumentWidget_(iDocumentWidget *d, const char *id, iBool hide) {
-    iWidget *button = d->footerButtons ? findChild_Widget(d->footerButtons, id) : NULL;
-    if (!button || hide == ((flags_Widget(button) & hidden_WidgetFlag) != 0)) {
-        return iFalse;
-    }
-    setFlags_Widget(button, hidden_WidgetFlag, hide);
-    return iTrue;
-}
-
-static iBool updateReaderNavButtons_DocumentWidget_(iDocumentWidget *d) {
-    if (!d->footerButtons || !d->mod.isReader) {
-        return iFalse;
-    }
-    /* Scrolled pages on mobile navigate via overscroll. */
-    const iBool hide =
-        deviceType_App() != desktop_AppDeviceType && !wantsPaged_DocumentView(d->view);
-    return setFooterButtonHidden_DocumentWidget_(d, "reader.prev", hide) |
-           setFooterButtonHidden_DocumentWidget_(d, "reader.next", hide);
-}
-
-static iBool updateReaderButtons_DocumentWidget_(iDocumentWidget *d) {
-    if (!d->footerButtons || !d->mod.isReader) {
-        return iFalse;
-    }
-    const iBool changed = updateReaderNavButtons_DocumentWidget_(d) |
-                          setFooterButtonHidden_DocumentWidget_(
-                              d, "reader.showfeeds", isFeedsSidebarVisible_DocumentWidget_(d));
-    if (changed) {
-        arrange_Widget(d->footerButtons);
-    }
-    return changed;
-}
-
 void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items, size_t count) {
     iWidget *w = as_Widget(d);
     destroy_Widget(d->footerButtons);
@@ -971,26 +926,7 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
                  pullUpAction_SmoothScrollFlag,
                  d->mod.isReader && deviceType_App() != desktop_AppDeviceType);
     if (d->mod.isReader) {
-        /* Entry navigation stays in place when the page-specific items change. */
-        iArray *all = collectNew_Array(sizeof(iMenuItem));
-        if (count) {
-            pushBackN_Array(all, items, count);
-        }
-        const iBinding *nextKey = findCommand_Keys("scroll.page arg:1");
-        const iBinding *prevKey = findCommand_Keys("scroll.page arg:-1");
-        pushBackN_Array(
-            all,
-            (iMenuItem[]){ { upArrow_Icon " ${reader.prev}",
-                             prevKey ? prevKey->key : 0, prevKey ? prevKey->mods : 0,
-                             "reader.prev" },
-                           { downArrow_Icon " ${reader.next}",
-                             nextKey ? nextKey->key : 0, nextKey ? nextKey->mods : 0,
-                             "reader.next" },
-                           { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "reader.markallread" },
-                           { format_CStr("%s ${reader.showfeeds}",
-                                         icon_SidebarMode(feedEntries_SidebarMode)),
-                             0, 0, "reader.showfeeds" } },
-            4);
+        const iArray *all = readerFooterItems_DocumentWidget(d, items, count);
         items = constData_Array(all);
         count = size_Array(all);
     }
@@ -1028,52 +964,10 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
         }
     }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
-    updateReaderButtons_DocumentWidget_(d);
+    updateReaderButtons_DocumentWidget(d);
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
     updateVisible_DocumentView(d->view); /* final placement for the buttons */
-}
-
-static iBool openAdjacentFeedEntry_DocumentWidget_(iDocumentWidget *d, int dir) {
-    const iWidget *root = root_Widget(as_Widget(d));
-    const iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
-    if (mode_SidebarWidget(sidebar) != feedEntries_SidebarMode) {
-        const iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
-        if (sidebar2 && mode_SidebarWidget(sidebar2) == feedEntries_SidebarMode) {
-            sidebar = sidebar2;
-        }
-    }
-    const iString   *openUrl = feedEntryUrl_DocumentWidget(d);
-    const iPtrArray *entries = listVisibleEntries_Feeds(
-        feedsMode_SidebarWidget(sidebar) == unread_FeedsMode, openUrl);
-    size_t pos = iInvalidPos;
-    iConstForEach(PtrArray, i, entries) {
-        const iFeedEntry *entry = i.ptr;
-        if (equal_String(&entry->url, openUrl)) {
-            pos = index_PtrArrayConstIterator(&i);
-            break;
-        }
-    }
-    if (pos == iInvalidPos) {
-        /* Current entry is no longer listed, so start from the top. */
-        if (dir < 0) {
-            return iFalse;
-        }
-        pos = 0;
-    }
-    else if (dir < 0 && pos == 0) {
-        return iFalse;
-    }
-    else {
-        pos += dir;
-    }
-    if (pos >= size_PtrArray(entries)) {
-        return iFalse;
-    }
-    const iFeedEntry *entry = constAt_PtrArray(entries, pos);
-    postCommandString_Root(as_Widget(d)->root,
-                           feedEntryOpenCommand_String(&entry->url, 0, 0, iTrue));
-    return iTrue;
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
@@ -1612,7 +1506,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "sidebar.mode.changed") ||
              equal_Command(cmd, "sidebar2.mode.changed")) {
-        if (updateReaderButtons_DocumentWidget_(d)) {
+        if (updateReaderButtons_DocumentWidget(d)) {
             updateVisible_DocumentView(d->view);
             refresh_Widget(w);
         }
@@ -2180,7 +2074,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             isLayoutFinished_GmDocument(d->view->doc) &&
             (dir > 0 ? pos_SmoothScroll(&d->view->scrollY) >= d->view->scrollY.max
                      : pos_SmoothScroll(&d->view->scrollY) <= 0)) {
-            openAdjacentFeedEntry_DocumentWidget_(d, dir > 0 ? +1 : -1);
+            openAdjacentFeedEntry_DocumentWidget(d, dir > 0 ? +1 : -1);
             return iTrue;
         }
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
@@ -2192,30 +2086,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (startsWith_CStr(cmd, "reader.") && d->mod.isReader && document_Command(cmd) == d) {
-        if (equal_Command(cmd, "reader.next") || equal_Command(cmd, "reader.prev")) {
-            if (!openAdjacentFeedEntry_DocumentWidget_(d, equal_Command(cmd, "reader.next") ? +1 : -1) &&
-                !isFeedsSidebarVisible_DocumentWidget_(d)) {
-                /* No more entries this way; the list shows where we are. */
-                showSidebar_DocumentWidget(d);
-            }
-            return iTrue;
-        }
-        else if (equal_Command(cmd, "reader.markallread")) {
-            if (!argLabel_Command(cmd, "confirmed")) {
-                iWidget *button =
-                    d->footerButtons ? findChild_Widget(d->footerButtons, "reader.markallread") : NULL;
-                openMarkAllReadMenu_Widget(button ? button : w,
-                                           format_CStr("reader.markallread confirmed:1 doc:%p", d));
-                return iTrue;
-            }
-            markAllEntriesAsRead_Feeds();
-            notify_App("visited.changed");
-            return iTrue;
-        }
-        else if (equal_Command(cmd, "reader.showfeeds")) {
-            showSidebar_DocumentWidget(d);
-            return iTrue;
-        }
+        return handleReaderCommand_DocumentWidget(d, cmd);
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
         if (argLabel_Command(cmd, "smooth")) {
@@ -2788,12 +2659,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
         if (isCommand_Widget(w, ev, "pullaction")) {
             if (d->mod.isReader) {
-                if (!openAdjacentFeedEntry_DocumentWidget_(d, arg_Command(command_UserEvent(ev)))) {
-                    d->view->scrollY.pullActionTriggered = 0;
-                    if (!isFeedsSidebarVisible_DocumentWidget_(d)) {
-                        showSidebar_DocumentWidget(d);
-                    }
-                }
+                readerPullAction_DocumentWidget(d, arg_Command(command_UserEvent(ev)));
             }
             else {
                 postCommand_Widget(w, "navigate.reload");
@@ -3407,7 +3273,7 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
             showViewModeIndicator_DocumentWidget_(d);
         }
     }
-    if (updateReaderNavButtons_DocumentWidget_(d)) {
+    if (updateReaderNavButtons_DocumentWidget(d)) {
         scrollMax = updateScrollMax_DocumentView(d->view); /* footer height changed */
     }
     if (isPaged_DocumentView(d->view)) {
@@ -3507,24 +3373,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const iSmoothScroll *scrollY = &d->view->scrollY;
         setClip_Paint(&p, clipBounds);
         if (d->mod.isReader) {
-            /* Entry navigation in the overscroll areas. */
-            for (int dir = -1; dir <= 1; dir += 2) {
-                const float pullPos = pullActionPos_SmoothScroll(scrollY, dir);
-                if (pullPos > 0) {
-                    const int y = dir < 0 ? top_Rect(bounds) - 5 * gap_UI - pos_SmoothScroll(scrollY)
-                                          : overscrollBottom_DocumentView(d->view) + 5 * gap_UI;
-                    drawCentered_Text(uiLabelMediumBold_FontId,
-                                      initCentered_Rect(init_I2(mid_Rect(bounds).x, y),
-                                                        init_I2(width_Rect(bounds),
-                                                                lineHeight_Text(uiLabelMediumBold_FontId))),
-                                      iFalse,
-                                      pullPos < 1.0f ? tmQuoteIcon_ColorId
-                                                     : tmBannerItemText_ColorId,
-                                      "%s %s",
-                                      dir < 0 ? upArrow_Icon : downArrow_Icon,
-                                      cstr_Lang(dir < 0 ? "reader.prev" : "reader.next"));
-                }
-            }
+            drawReaderPullActions_DocumentWidget(d);
         }
         else {
             float pullPos = pullActionPos_SmoothScroll(scrollY, -1);
@@ -4089,7 +3938,7 @@ iBool showSidebar_DocumentWidget(iDocumentWidget *d) {
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
     iDocumentView *view = d->view;
-    updateReaderButtons_DocumentWidget_(d);
+    updateReaderButtons_DocumentWidget(d);
     updateDocumentWidthRetainingScrollPosition_DocumentView(view, iFalse);
     resetWideRuns_DocumentView(view);
     updateDrawBufs_DocumentView(view, updateSideBuf_DrawBufsFlag);

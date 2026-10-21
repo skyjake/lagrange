@@ -257,6 +257,7 @@ set (SOURCES
     src/doc/contextmenu.h
     src/doc/query.c
     src/doc/query.h
+    src/doc/reader.c
     src/doc/save.c
     src/doc/linkinfo.c
     src/doc/linkinfo.h
