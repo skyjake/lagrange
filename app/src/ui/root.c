@@ -712,6 +712,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "input.resized")) {
+        const iWidget *src = pointer_Command(cmd);
+        if (src && src->root != root->root) {
+            return iTrue; /* moved to another window, e.g., a promoted dialog */
+        }
         /* No parent handled this, so do a full rearrangement. */
         /* TODO: Defer this and do a single rearrangement later. */
         arrange_Widget(root);
