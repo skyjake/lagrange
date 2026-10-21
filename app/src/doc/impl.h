@@ -213,3 +213,6 @@ void            setLinkNumberMode_DocumentWidget        (iDocumentWidget *, iBoo
 const char *    setIdentArg_DocumentWidget              (const iDocumentWidget *, const iString *dstUrl);
 iBool           isSpartanQueryLink_DocumentWidget       (const iDocumentWidget *, iGmLinkId);
 void            interactingWithLink_DocumentWidget      (iDocumentWidget *, iGmLinkId);
+
+/* Saving (doc/save.c). */
+iBool           handleSaveCommand_DocumentWidget        (iDocumentWidget *, const char *cmd);
