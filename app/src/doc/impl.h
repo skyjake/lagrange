@@ -226,3 +226,7 @@ iBool           openAdjacentFeedEntry_DocumentWidget    (iDocumentWidget *, int 
 void            readerPullAction_DocumentWidget         (iDocumentWidget *, int dir);
 iBool           handleReaderCommand_DocumentWidget      (iDocumentWidget *, const char *cmd);
 void            drawReaderPullActions_DocumentWidget    (const iDocumentWidget *);
+
+/* Tools, translation, and uploads (doc/tools.c). */
+void            updateToolsMenu_DocumentWidget          (iDocumentWidget *);
+iBool           handleToolCommand_DocumentWidget        (iDocumentWidget *, const char *cmd);

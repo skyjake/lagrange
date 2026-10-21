@@ -288,6 +288,7 @@ iWidget *makePageContextMenu_DocumentWidget(iDocumentWidget *d) {
     const iBool    noUpload = !equalCase_Rangecc(scheme, "gemini") && !equalCase_Rangecc(scheme, "titan");
     setMenuItemDisabled_Widget(menu, "document.upload", noUpload);
     setMenuItemDisabled_Widget(menu, "document.upload copy:1", noUpload);
+    updateToolsMenu_DocumentWidget(d);
     return menu;
 }
 

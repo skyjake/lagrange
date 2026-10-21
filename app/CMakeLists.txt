@@ -269,6 +269,7 @@ set (SOURCES
     src/doc/persistentstate.h
     src/doc/swipe.c
     src/doc/swipe.h
+    src/doc/tools.c
     src/doc/viewtoolbar.c
     src/doc/viewtoolbar.h
     # Sidebar:
