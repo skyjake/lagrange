@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "book.h"
+#include "impl.h"
 
 #include "../app.h"
 #include "../books.h"
@@ -32,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "pagedview.h"
 #include "swipe.h"
 #include "ui/command.h"
-#include "ui/documentwidget.h"
 #include "ui/root.h"
 #include "ui/scrollwidget.h"
 #include "ui/util.h"
@@ -72,11 +72,11 @@ void setOwner_DocumentBook(iDocumentBook *d, iDocumentWidget *owner) {
 }
 
 static iDocumentView *view_DocumentBook_(const iDocumentBook *d) {
-    return view_DocumentWidget(d->owner);
+    return d->owner->view;
 }
 
 static iDocumentFetch *fetch_DocumentBook_(const iDocumentBook *d) {
-    return fetch_DocumentWidget(d->owner);
+    return d->owner->fetch;
 }
 
 static const iGempub *gempub_DocumentBook_(const iDocumentBook *d) {
@@ -159,7 +159,7 @@ iBool openAdjacentChapter_DocumentBook(iDocumentBook *d, int dir, iBool isGestur
     if (!url) {
         return iFalse;
     }
-    iDocumentSwipe *swipe = swipe_DocumentWidget(d->owner);
+    iDocumentSwipe *swipe = d->owner->swipe;
     iDocumentView  *view  = view_DocumentBook_(d);
     reset_DocumentSwipe(swipe);
     settlePageTurn_DocumentView(view); /* drawn as it is when sliding away */
@@ -300,7 +300,7 @@ void didFinishRequest_DocumentBook(iDocumentBook *d) {
     }
     if (d->flags & animateChapterSwipe_DocumentBookFlag) {
         /* The new chapter has arrived, so the views can slide. */
-        iDocumentSwipe *swipe = swipe_DocumentWidget(d->owner);
+        iDocumentSwipe *swipe = d->owner->swipe;
         d->flags &= ~animateChapterSwipe_DocumentBookFlag;
         swipe->flags &= ~begun_DocumentSwipeFlag;
         const int to = isSwipingBack_DocumentSwipe(swipe) ? width_Widget(d->owner) : 0;
@@ -533,7 +533,7 @@ void tidyShelf_DocumentBook(void) {
         /* An open book is updated or removed later. */
         iDocumentWidget *tab = findTab_DocumentBook(i.value, NULL);
         if (tab) {
-            checkEdition_DocumentBook(book_DocumentWidget(tab));
+            checkEdition_DocumentBook(tab->book);
         }
         else {
             removeDownload_Books(i.value);

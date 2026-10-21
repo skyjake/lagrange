@@ -24,7 +24,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "../gmdocument.h"
 #include "widget.h"
-#include "doc/swipe.h"
 #include <the_Foundation/stream.h>
 
 iDeclareType(Gempub)
@@ -33,16 +32,6 @@ iDeclareType(GmIdentity)
 iDeclareType(GmRequest)
 iDeclareType(GmResponse)
 iDeclareType(History)
-iDeclareType(Banner)
-iDeclareType(ScrollWidget)
-iDeclareType(DocumentView)
-iDeclareType(Click)
-iDeclareType(Query)
-iDeclareType(InlineMedia)
-iDeclareType(DocumentBook)
-iDeclareType(DocumentFetch)
-iDeclareType(PersistentDocumentState)
-iDeclareType(MenuItem)
 
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
@@ -54,40 +43,9 @@ void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs,
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 
 iHistory *          history_DocumentWidget          (iDocumentWidget *);
-iDocumentView *     view_DocumentWidget             (iDocumentWidget *);
-iClick *            click_DocumentWidget            (iDocumentWidget *);
-iDocumentView *     swipeView_DocumentWidget        (iDocumentWidget *);
-iQuery *            query_DocumentWidget            (iDocumentWidget *);
-iPersistentDocumentState *state_DocumentWidget      (iDocumentWidget *);
-iBanner *           banner_DocumentWidget           (iDocumentWidget *);
-iInlineMedia *      media_DocumentWidget            (iDocumentWidget *);
-iDocumentFetch *    fetch_DocumentWidget            (iDocumentWidget *);
-iDocumentSwipe *    swipe_DocumentWidget            (iDocumentWidget *);
-iDocumentBook *     book_DocumentWidget             (iDocumentWidget *);
-iGmLinkId           requestLinkId_DocumentWidget    (const iDocumentWidget *);
-iBool               isUrlChanged_DocumentWidget     (const iDocumentWidget *);
-void                setDrawDownloadCounter_DocumentWidget(iDocumentWidget *, iBool);
-const iString *     originId_DocumentWidget         (const iDocumentWidget *);
-iBool               isOriginToNewTab_DocumentWidget (const iDocumentWidget *);
-void                setFooterButtons_DocumentWidget (iDocumentWidget *, iWidget *buttons);
-iBool               setDocumentUrl_DocumentWidget   (iDocumentWidget *, const iString *url);
-const iString *     linePrecedingLink_DocumentWidget(const iDocumentWidget *);
-
-void    replaceDocument_DocumentWidget  (iDocumentWidget *, iGmDocument *newDoc);
-void    makeFooterButtons_DocumentWidget(iDocumentWidget *, const iMenuItem *items, size_t count);
-void    updateBanner_DocumentWidget     (iDocumentWidget *);
-void    setLinkNumberMode_DocumentWidget(iDocumentWidget *, iBool set);
-void    updateTheme_DocumentWidget      (iDocumentWidget *);
-iBool               isSwipeOverlay_DocumentWidget   (const iDocumentWidget *);
-int                 swipeOffsetOfView_DocumentWidget(const iDocumentWidget *, const iDocumentView *);
 const iGmIdentity * overrideIdentity_DocumentWidget (const iDocumentWidget *); /* NULL if not set */
-int                 redirectCount_DocumentWidget    (const iDocumentWidget *);
-void                invalidate_DocumentWidget       (iDocumentWidget *);
-iWidget *           footerButtons_DocumentWidget    (const iDocumentWidget *);
-iScrollWidget *     scrollBar_DocumentWidget        (const iDocumentWidget *);
 const iString *     url_DocumentWidget              (const iDocumentWidget *);
 const iBlock *      sourceContent_DocumentWidget    (const iDocumentWidget *);
-iTime               sourceTime_DocumentWidget       (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 void                updateDocPrefs_DocumentWidget   (iDocumentWidget *); /* resolves again */
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
@@ -96,38 +54,16 @@ const iString *     feedEntryUrl_DocumentWidget     (const iDocumentWidget *);
 const iGempub *     gempub_DocumentWidget           (const iDocumentWidget *); /* NULL if not a book */
 uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
-int                 documentWidth_DocumentWidget        (const iDocumentWidget *);
-int                 footerHeight_DocumentWidget         (const iDocumentWidget *);
-int                 footerClearance_DocumentWidget      (const iDocumentWidget *);
-int                 phoneToolbarHeight_DocumentWidget   (const iDocumentWidget *);
-int                 phoneBottomNavbarHeight_DocumentWidget(const iDocumentWidget *);
-iRangecc            selectionMark_DocumentWidget        (const iDocumentWidget *);
 const iGmIdentity * identity_DocumentWidget             (const iDocumentWidget *);
 int                 generation_DocumentWidget           (const iDocumentWidget *);
 iBool               isRequestOngoing_DocumentWidget     (const iDocumentWidget *);
 iBool               isFetchingOwnLink_DocumentWidget    (const iDocumentWidget *);
-iBool               isProxyRequest_DocumentWidget       (const iDocumentWidget *); /* last response came via a proxy */
-iBool               isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget     (const iDocumentWidget *);
 iBool               isIdentityPinned_DocumentWidget     (const iDocumentWidget *);
 iBool               isSetIdentityRetained_DocumentWidget(const iDocumentWidget *, const iString *dstUrl);
 iBool               isAutoReloading_DocumentWidget      (const iDocumentWidget *);
-iBool               isHoverAllowed_DocumentWidget       (const iDocumentWidget *);
-iBool               noHoverWhileScrolling_DocumentWidget(const iDocumentWidget *);
-iBool               isShowingLinkNumbers_DocumentWidget (const iDocumentWidget *);
-iBool               isBlank_DocumentWidget              (const iDocumentWidget *);
 iBool               isUnseen_DocumentWidget             (const iDocumentWidget *);
 iBool               isReader_DocumentWidget             (const iDocumentWidget *);
-iMediaRequest *     findMediaRequest_DocumentWidget     (const iDocumentWidget *, iGmLinkId linkId);
-
-const char *        setIdentArg_DocumentWidget          (const iDocumentWidget *, const iString *dstUrl);
-iBool               isSpartanQueryLink_DocumentWidget   (const iDocumentWidget *, iGmLinkId);
-void                interactingWithLink_DocumentWidget  (iDocumentWidget *, iGmLinkId);
-
-size_t              ordinalBase_DocumentWidget          (const iDocumentWidget *);
-iChar               linkOrdinalChar_DocumentWidget      (const iDocumentWidget *, size_t ord);
-
-enum iWheelSwipeState   wheelSwipeState_DocumentWidget  (const iDocumentWidget *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
@@ -152,16 +88,6 @@ void    setReaderEntry_DocumentWidget   (iDocumentWidget *, const iString *entry
 
 void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 
-void    documentRunsInvalidated_DocumentWidget  (iDocumentWidget *);
 void    updateSize_DocumentWidget               (iDocumentWidget *);
 iBool   showSidebar_DocumentWidget              (iDocumentWidget *); /* reader or book */
-void    updateWindowTitle_DocumentWidget        (const iDocumentWidget *);
-void    updateHoverLinkInfo_DocumentWidget      (iDocumentWidget *, iDocumentView *, uint16_t linkId);
-void    scrollBegan_DocumentWidget              (iAnyObject *, int, uint32_t); /* SmoothScroll callback */
-void    aboutToScrollView_DocumentWidget        (iDocumentWidget *, int scrollMax);
-void    pagesMoved_DocumentWidget               (iDocumentWidget *); /* paginated: horizontal position changed */
-void    repositionInlinePrompts_DocumentWidget  (iDocumentWidget *, iDocumentView *);
-void    didScrollView_DocumentWidget            (iDocumentWidget *);
 
-void    animate_DocumentWidget                  (iAny *); /* ticker */
-void    refreshWhileScrolling_DocumentWidget    (iAny *); /* ticker */

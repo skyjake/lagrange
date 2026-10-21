@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "swipe.h"
+#include "impl.h"
 #include "pagedview.h"
 
 #include "../app.h"
@@ -29,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentview.h"
 #include "query.h"
 #include "ui/command.h"
-#include "ui/documentwidget.h"
 #include "ui/touch.h"
 #include "ui/widget.h"
 #include "ui/window.h"
@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDefineTypeConstruction(DocumentSwipe)
 
 static iDocumentView *ownerView_(const iDocumentSwipe *d) {
-    return view_DocumentWidget(d->owner);
+    return d->owner->view;
 }
 
 static iBool checkTabletVerticalPosition_DocumentSwipe_(const iDocumentSwipe *d, int swipeY,
@@ -112,7 +112,7 @@ void reset_DocumentSwipe(iDocumentSwipe *d) {
         delete_DocumentView(d->view);
     }
     d->view = NULL;
-    resetAfterSwipe_Query(query_DocumentWidget(d->owner));
+    resetAfterSwipe_Query(d->owner->query);
     setValue_Anim(&d->offset, 0, 0);
     iChangeFlags(d->flags,
                  viewOverlay_DocumentSwipeFlag | aborted_DocumentSwipeFlag |

@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "viewtoolbar.h"
+#include "impl.h"
 #include "../app.h"
 #include "../color.h"
 #include "../gmdocument.h"
@@ -29,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "pagedview.h"
 #include "persistentstate.h"
 #include "render/paint.h"
-#include "ui/documentwidget.h"
 #include "ui/labelwidget.h"
 #include "ui/menu.h"
 #include "ui/mobile.h"
@@ -197,7 +197,7 @@ void update_ViewToolbar(iViewToolbar *d) {
         return;
     }
     iDocumentWidget                *doc   = d->owner;
-    const iPersistentDocumentState *state = state_DocumentWidget(doc);
+    const iPersistentDocumentState *state = &doc->mod;
     iLabelWidget                   *identButton  = findChild_Widget(w, "viewtools.ident");
     iLabelWidget                   *reloadButton = findChild_Widget(w, "viewtools.reload");
     iWidget                        *infoButton   = findChild_Widget(w, "viewtools.info");
@@ -241,7 +241,7 @@ void update_ViewToolbar(iViewToolbar *d) {
     }
     /* The button switches to the other mode. */ {
         iLabelWidget        *button = findChild_Widget(w, "viewtools.pagemode");
-        const iDocumentView *view   = view_DocumentWidget(doc);
+        const iDocumentView *view   = doc->view;
         const iBool isPagedByPrefs  = docPrefs_GmDocument(view->doc)->pageView.value != state->invertPageView;
         updateTextCStr_LabelWidget(button, isPagedByPrefs ? upDownArrow_Icon : book_Icon);
         const iBool isAllowed = isPageViewAllowed_DocumentView(view);
@@ -272,12 +272,12 @@ void reveal_ViewToolbar(iViewToolbar *d) {
 
 static iBool isAvailable_ViewToolbar_(const iViewToolbar *d) {
     iDocumentWidget     *doc  = d->owner;
-    const iDocumentView *view = view_DocumentWidget(doc);
+    const iDocumentView *view = doc->view;
     if (prefs_App()->hideViewTools ||
         equalCase_Rangecc(urlScheme_String(url_DocumentWidget(doc)), "about")) {
         return iFalse;
     }
-    return size_GmDocument(view->doc).y > 0 || !isEmpty_Banner(banner_DocumentWidget(doc));
+    return size_GmDocument(view->doc).y > 0 || !isEmpty_Banner(doc->banner);
 }
 
 static iBool isHovered_ViewToolbar_(const iViewToolbar *d) {
@@ -431,7 +431,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     }
     const iWidget       *owner    = constAs_Widget(d->owner);
     iRoot               *root     = owner->root;
-    const iDocumentView *view     = view_DocumentWidget(d->owner);
+    const iDocumentView *view     = d->owner->view;
     const iBool          paged    = isPaged_DocumentView(view);
     const iRect          bounds   = bounds_Widget(owner);
     const iRect          safe     = safeRect_Root(root);

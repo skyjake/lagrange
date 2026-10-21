@@ -21,14 +21,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "inlinemedia.h"
+#include "impl.h"
 
 #include "../app.h"
 #include "../defs.h"
 #include "../gmutil.h"
 #include "../media/player.h"
 #include "documentview.h"
+#include "fetch.h"
 #include "ui/command.h"
-#include "ui/documentwidget.h"
 #include "ui/mediaui.h"
 #include "ui/util.h"
 #include "ui/widget.h"
@@ -61,7 +62,7 @@ void setOwner_InlineMedia(iInlineMedia *d, iDocumentWidget *owner) {
 }
 
 static iDocumentView *view_InlineMedia_(const iInlineMedia *d) {
-    return view_DocumentWidget(d->owner);
+    return d->owner->view;
 }
 
 static iGmDocument *doc_InlineMedia_(const iInlineMedia *d) {
@@ -301,7 +302,7 @@ iBool handleCommand_InlineMedia(iInlineMedia *d, const char *cmd) {
             }
         }
         else if (category_GmStatusCode(code) == categoryRedirect_GmStatusCode) {
-            const int redirectCount = redirectCount_DocumentWidget(d->owner);
+            const int redirectCount = d->owner->fetch->redirectCount;
             setRedirectCount_DocumentWidget(d->owner, redirectCount + 1);
             if (redirectCount < 5) {
                 /* Redo the request. */
@@ -408,7 +409,7 @@ iBool processEvent_InlineMedia(iInlineMedia *d, const SDL_Event *ev) {
                                             init_I2(-height_Rect(ui.volumeAdjustRect), 0)),
                               mouse)) {
                 setGrabbedPlayer_InlineMedia(d, run);
-                processEvent_Click(click_DocumentWidget(d->owner), ev);
+                processEvent_Click(&d->owner->click, ev);
                 /* The rest is done in the DocumentWidget click responder. */
                 refresh_Widget(d->owner);
                 return iTrue;

@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "pageinfo.h"
+#include "impl.h"
 
 #include "../app.h"
 #include "../gmutil.h"
@@ -28,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../sync.h"
 #include "fetch.h"
 #include "ui/command.h"
-#include "ui/documentwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
 #include "ui/miscdialogs.h"
@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_clipboard.h>
 
 static void showPageInfo_DocumentWidget_(iDocumentWidget *d) {
-    const iDocumentFetch *fetch = fetch_DocumentWidget(d);
+    const iDocumentFetch *fetch = d->fetch;
     const iString *url          = url_DocumentWidget(d);
     const char *unchecked       = red_ColorEscape "☐";
     const char *checked         = green_ColorEscape "☑";
@@ -162,7 +162,7 @@ iBool handlePageInfoCommand_DocumentWidget(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     iWidget              *w     = as_Widget(d);
-    const iDocumentFetch *fetch = fetch_DocumentWidget(d);
+    const iDocumentFetch *fetch = d->fetch;
     const iString        *url   = url_DocumentWidget(d);
     if (equal_Command(cmd, "document.info")) {
         showPageInfo_DocumentWidget_(d);
@@ -202,7 +202,7 @@ iBool handlePageInfoCommand_DocumentWidget(iDocumentWidget *d, const char *cmd) 
         const iRangecc scheme = urlScheme_String(url);
         iRangecc host = urlHost_String(url);
         uint16_t port = urlPort_String(url);
-        if (isProxyRequest_DocumentWidget(d) && schemeProxy_Prefs(get_Prefs(), scheme)) {
+        if (d->flags & proxyRequest_DocumentWidgetFlag && schemeProxy_Prefs(get_Prefs(), scheme)) {
             const iString *proxyHost;
             schemeProxyHostAndPort_Prefs(get_Prefs(), scheme, &proxyHost, &port);
             host = range_String(proxyHost);

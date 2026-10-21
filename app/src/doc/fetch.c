@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fetch.h"
+#include "impl.h"
 
 #include "../app.h"
 #include "../defs.h"
@@ -39,7 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "query.h"
 #include "persistentstate.h"
 #include "ui/command.h"
-#include "ui/documentwidget.h"
 #include "ui/indicatorwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
@@ -98,25 +98,25 @@ void setOwner_DocumentFetch(iDocumentFetch *d, iDocumentWidget *owner) {
 }
 
 static iDocumentView *view_DocumentFetch_(const iDocumentFetch *d) {
-    return view_DocumentWidget(d->owner);
+    return d->owner->view;
 }
 
 static iGmDocument *doc_DocumentFetch_(const iDocumentFetch *d) {
-    return view_DocumentWidget(d->owner)->doc;
+    return d->owner->view->doc;
 }
 
 static iBanner *banner_DocumentFetch_(const iDocumentFetch *d) {
-    return banner_DocumentWidget(d->owner);
+    return d->owner->banner;
 }
 
 static const iString *url_DocumentFetch_(const iDocumentFetch *d) {
-    return state_DocumentWidget(d->owner)->url;
+    return d->owner->mod.url;
 }
 
 /*----------------------------------------------------------------------------------------------*/
 
 void requestUpdated_DocumentFetch(iAnyObject *obj) {
-    iDocumentFetch *d = fetch_DocumentWidget(obj);
+    iDocumentFetch *d = ((iDocumentWidget *) obj)->fetch;
     uint32_t now = SDL_GetTicks();
     iBool didLockUnlock = iFalse;
 #if defined (iPlatformAndroidMobile)
@@ -149,7 +149,7 @@ void requestUpdated_DocumentFetch(iAnyObject *obj) {
 }
 
 void requestFinished_DocumentFetch(iAnyObject *obj) {
-    iDocumentFetch *d = fetch_DocumentWidget(obj);
+    iDocumentFetch *d = ((iDocumentWidget *) obj)->fetch;
     notify_Widget(obj,
                   "document.request.finished doc:%p reqid:%u request:%p",
                   obj,
@@ -291,11 +291,11 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
             if (!linkUrl) break;
             if (scheme_GmLinkFlag(linkFlags) == data_GmLinkScheme &&
                 (linkFlags & imageFileExtension_GmLinkFlag)) {
-                request_InlineMedia(media_DocumentWidget(d->owner), linkId, 0);
+                request_InlineMedia(d->owner->media, linkId, 0);
             }
         }
     }
-    showForPromptUrls_Query(query_DocumentWidget(d->owner));
+    showForPromptUrls_Query(d->owner->query);
     /* Gempub page behavior and footer actions. */ {
         delete_Gempub(d->sourceGempub);
         d->sourceGempub = NULL;
@@ -359,7 +359,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
                 update_Books(d->sourceGempub, path);
                 postCommand_App("books.changed");
             }
-            if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentBook(book_DocumentWidget(d->owner)) &&
+            if (!isCached && !isRemote_Gempub(d->sourceGempub) && !isReadingOn_DocumentBook(d->owner->book) &&
                 (isCover || isIndexPageUrl_Gempub(d->sourceGempub, url_DocumentFetch_(d)))) {
                 /* Opening a book: a new book opens to the cover and the sidebar shows the
                    contents. The phone sidebar would cover the page, so it stays hidden. */
@@ -376,7 +376,7 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
                     const iBook   *book   = find_Books(id_Books(d->sourceGempub));
                     if (book && book->chapter >= 0 &&
                         (size_t) book->chapter < navSize_Gempub(d->sourceGempub)) {
-                        resume_DocumentBook(book_DocumentWidget(d->owner), book->chapter, book->chapterPos);
+                        resume_DocumentBook(d->owner->book, book->chapter, book->chapterPos);
                         target = navLinkUrl_Gempub(d->sourceGempub, book->chapter);
                     }
                     if (target) {
@@ -415,10 +415,10 @@ iBool fetch_DocumentFetch(iDocumentFetch *d) {
     notifyf_Root(as_Widget(d->owner)->root,
                  "document.request.started doc:%p urlchanged:%d url:%s",
                  d->owner,
-                 isUrlChanged_DocumentWidget(d->owner),
+                 (d->owner->flags & urlChanged_DocumentWidgetFlag) != 0,
                  cstr_String(url_DocumentFetch_(d)));
     setLinkNumberMode_DocumentWidget(d->owner, iFalse);
-    setDrawDownloadCounter_DocumentWidget(d->owner, iFalse);
+    iChangeFlags(d->owner->flags, drawDownloadCounter_DocumentWidgetFlag, iFalse);
     d->flags &= ~pendingRedirect_DocumentFetchFlag;
     d->state = fetching_RequestState;
     d->lastRequestUpdateAt = 0;
@@ -481,8 +481,8 @@ void restoreAddressBarAndHistory_DocumentFetch(iDocumentFetch *d, const iString 
        existing document instead of replacing it), so restore the address bar and history to
        match rather than leaving them pointed at the new request's URL. `fetchedUrl` is what the
        just-finished request was for, which may not equal the document's URL yet. */
-    if (equal_String(&mostRecentUrl_History(state_DocumentWidget(d->owner)->history)->url, fetchedUrl)) {
-        undo_History(state_DocumentWidget(d->owner)->history);
+    if (equal_String(&mostRecentUrl_History(d->owner->mod.history)->url, fetchedUrl)) {
+        undo_History(d->owner->mod.history);
     }
     if (setDocumentUrl_DocumentWidget(d->owner, url_GmDocument(doc_DocumentFetch_(d)))) {
         notify_Widget(d->owner, "!document.changed doc:%p urlchanged:1 url:%s", d->owner, cstr_String(url_DocumentFetch_(d)));
@@ -490,7 +490,7 @@ void restoreAddressBarAndHistory_DocumentFetch(iDocumentFetch *d, const iString 
 }
 
 void cleanupRedirected_DocumentFetch(iDocumentFetch *d) {
-    iAssert(!isOriginToNewTab_DocumentWidget(d->owner));
+    iAssert(!d->owner->originToNewTab);
     /* This is called in the special case where an input prompt becomes inlined
        (response does not contain a document body) so the previous document of
        the tab is retained. */
@@ -524,7 +524,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
             if (!isFinished_GmRequest(mr->req)) {
                 postCommand_Widget(d->owner, "document.request.cancelled doc:%p", d->owner);
             }
-            addRequest_InlineMedia(media_DocumentWidget(d->owner), mr);
+            addRequest_InlineMedia(d->owner->media, mr);
             iRelease(mr);
             /* Reset the fetch state, returning to the originating page. */
             d->state = ready_RequestState;
@@ -539,7 +539,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
         /* Get ready for the incoming new document. */
         d->state = receivedPartialResponse_RequestState;
         d->flags &= ~(fromCache_DocumentFetchFlag | goBackOnStop_DocumentFetchFlag);
-        clearRequests_InlineMedia(media_DocumentWidget(d->owner));
+        clearRequests_InlineMedia(d->owner->media);
         updateTrust_DocumentFetch(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
@@ -568,9 +568,9 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                    (the user did ask for a tab). */
                 iDocumentWidget *target = d->owner;
                 if (prefs_App()->promptPosition == inline_InputPromptPosition &&
-                    !d->requestLinkId && !isOriginToNewTab_DocumentWidget(d->owner) && !isEmpty_String(originId_DocumentWidget(d->owner))) {
-                    iDocumentWidget *origin = findWidget_App(cstr_String(originId_DocumentWidget(d->owner)));
-                    if (origin && requestLinkId_DocumentWidget(origin)) {
+                    !d->requestLinkId && !d->owner->originToNewTab && !isEmpty_String(&d->owner->originId)) {
+                    iDocumentWidget *origin = findWidget_App(cstr_String(&d->owner->originId));
+                    if (origin && origin->fetch->requestLinkId) {
                         target = origin;
                     }
                 }
@@ -578,11 +578,11 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                    again just to insert a prompt. */
                 const iBool useModal = deviceType_App() != desktop_AppDeviceType ||
                                        prefs_App()->promptPosition != inline_InputPromptPosition ||
-                                       !requestLinkId_DocumentWidget(target) ||
-                                       isPaged_DocumentView(view_DocumentWidget(target));
+                                       !target->fetch->requestLinkId ||
+                                       isPaged_DocumentView(target->view);
                 if (useModal) {
                     makeModal_Query(
-                        query_DocumentWidget(d->owner),
+                        d->owner->query,
                         url_DocumentFetch_(d),
                         statusCode == sensitiveInput_GmStatusCode,
                         isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
@@ -593,7 +593,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                     }
                 }
                 else if (target == d->owner) {
-                    show_Query(query_DocumentWidget(d->owner), d->requestLinkId, url_DocumentFetch_(d), resp,
+                    show_Query(d->owner->query, d->requestLinkId, url_DocumentFetch_(d), resp,
                                                           statusCode);
                     /* Same as the inline-image handling above. */
                     restoreAddressBarAndHistory_DocumentFetch(d, url_DocumentFetch_(d));
@@ -603,8 +603,8 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                        match target's root here (possibly a different split). */
                     iRoot *oldRoot = current_Root();
                     setCurrent_Root(as_Widget(target)->root);
-                    show_Query(query_DocumentWidget(target),
-                                      requestLinkId_DocumentWidget(target),
+                    show_Query(target->query,
+                                      target->fetch->requestLinkId,
                                       url_DocumentFetch_(d),
                                                           resp, statusCode);
                     setCurrent_Root(oldRoot);
@@ -625,7 +625,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
                 makeFooterButtons_DocumentWidget(d->owner, NULL, 0);
-                if (isUrlChanged_DocumentWidget(d->owner)) {
+                if (d->owner->flags & urlChanged_DocumentWidgetFlag) {
                     /* Keep scroll position when reloading the same page. */
                     resetScroll_DocumentView(view_DocumentFetch_(d));
                 }
@@ -733,7 +733,7 @@ iBool cancel_DocumentFetch(iDocumentFetch *d, iBool postBack) {
                 postCommand_Root(w->root, "navigate.back");
             }
         }
-        reenableAll_Query(query_DocumentWidget(d->owner));
+        reenableAll_Query(d->owner->query);
         updateProgress_DocumentFetch(d);
         return iTrue;
     }
@@ -773,7 +773,7 @@ void take_DocumentFetch(iDocumentFetch *d, iGmRequest *finishedRequest) {
     cancel_DocumentFetch(d, iFalse /* don't post anything */);
     const iString *url = url_GmRequest(finishedRequest);
 
-    add_History(state_DocumentWidget(d->owner)->history, url);
+    add_History(d->owner->mod.history, url);
     setDocumentUrl_DocumentWidget(d->owner, url);
     d->state = fetching_RequestState;
     iAssert(d->request == NULL);
@@ -1209,7 +1209,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
             }
             if (docFormat == undefined_SourceFormat) {
                 if (isRequestFinished) {
-                    setDrawDownloadCounter_DocumentWidget(d->owner, iFalse);
+                    iChangeFlags(d->owner->flags, drawDownloadCounter_DocumentWidgetFlag, iFalse);
                     if (isUtf8_Rangecc(range_Block(&response->body))) {
                         docFormat = plainText_SourceFormat;
                         charset = range_CStr("utf-8");
@@ -1223,7 +1223,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                     }
                 }
                 else {
-                    setDrawDownloadCounter_DocumentWidget(d->owner, iTrue);
+                    iChangeFlags(d->owner->flags, drawDownloadCounter_DocumentWidgetFlag, iTrue);
                     clear_PtrSet(view_DocumentFetch_(d)->invalidRuns);
                     documentRunsInvalidated_DocumentWidget(d->owner);
                     deinit_String(&str);

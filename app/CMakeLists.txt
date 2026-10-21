@@ -250,6 +250,7 @@ set (SOURCES
     src/doc/documentview.h
     src/doc/fetch.c
     src/doc/fetch.h
+    src/doc/impl.h
     src/doc/inlinemedia.c
     src/doc/inlinemedia.h
     src/doc/query.c

@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "query.h"
+#include "impl.h"
 
 #include "../app.h"
 #include "../defs.h"
@@ -29,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentview.h"
 #include "persistentstate.h"
 #include "ui/command.h"
-#include "ui/documentwidget.h"
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
@@ -47,7 +47,7 @@ static iWidget *ownerWidget_(const iQuery *d) {
 }
 
 static iDocumentView *ownerView_(const iQuery *d) {
-    return view_DocumentWidget(d->owner);
+    return d->owner->view;
 }
 
 static iGmDocument *ownerDoc_(const iQuery *d) {
@@ -76,7 +76,7 @@ static iString *makeQueryUrl_(const iString *queryUrl, const iString *userEntere
 
 static void inputQueryValidator_(iInputWidget *input, void *context) {
     iDocumentWidget *d = context;
-    iString *url = makeQueryUrl_(state_DocumentWidget(d)->url, text_InputWidget(input));
+    iString *url = makeQueryUrl_(d->mod.url, text_InputWidget(input));
     iWidget *dlg = parent_Widget(input);
     iLabelWidget *counter = findChild_Widget(dlg, "valueinput.counter");
     iAssert(counter);
@@ -227,7 +227,7 @@ static void setupDialog_Query_(iQuery *d, iWidget *dlg, const iString *url,
        for the keys as usual. */ {
         iMenuItem pasteItem;
         makePastePrecedingLineMenuItem_(
-            &pasteItem, buttons, cstr_String(linePrecedingLink_DocumentWidget(d->owner)));
+            &pasteItem, buttons, cstr_String(&d->owner->linePrecedingLink));
         addAction_Widget(dlg, pasteItem.key, pasteItem.kmods, pasteItem.command);
     }
     /* Menu for additional actions, past entries. */ {
@@ -240,8 +240,7 @@ static void setupDialog_Query_(iQuery *d, iWidget *dlg, const iString *url,
                    collectNewFormat_String("context buttons:%p url:%s preceding:%s",
                                            buttons,
                                            cstr_String(canonicalUrl_String(url)),
-                                           cstr_String(linePrecedingLink_DocumentWidget(
-                                               d->owner))));
+                                           cstr_String(&d->owner->linePrecedingLink)));
         if (deviceType_App() == desktop_AppDeviceType) {
             addChildPos_Widget(buttons, iClob(ellipsisButton), front_WidgetAddPos);
         }
@@ -345,7 +344,7 @@ void destroyAll_Query(iQuery *d) {
 void deferOutgoing_Query(iQuery *d) {
     /* Escape the "inputpromptN" id lookup and take these out of the normal draw pass. */
     iAssert(isEmpty_PtrArray(&d->outgoing));
-    iConstForEach(PtrArray, m, &swipeView_DocumentWidget(d->owner)->visibleMedia) {
+    iConstForEach(PtrArray, m, &view_DocumentSwipe(d->owner->swipe)->visibleMedia) {
         const iGmRun *run = m.ptr;
         if (run->mediaType != inputPrompt_MediaType) {
             continue;
@@ -456,7 +455,7 @@ void show_Query(iQuery *d, iGmLinkId linkId, const iString *baseUrl,
 }
 
 void repositionOutgoing_Query(iQuery *d) {
-    const int offset = swipeOffsetOfView_DocumentWidget(d->owner, swipeView_DocumentWidget(d->owner));
+    const int offset = offsetOfView_DocumentSwipe(d->owner->swipe, view_DocumentSwipe(d->owner->swipe));
     iForEach(PtrArray, i, &d->outgoing) {
         setVisualOffset_Widget(i.ptr, offset, 0, 0);
     }
@@ -465,12 +464,12 @@ void repositionOutgoing_Query(iQuery *d) {
 void reposition_Query(iQuery *d, iDocumentView *view) {
     /* Must run after render_GmDocument() repopulates visibleMedia for this frame. */
     iWidget *w = ownerWidget_(d);
-    const int swipeOffset = swipeOffsetOfView_DocumentWidget(d->owner, view);
+    const int swipeOffset = offsetOfView_DocumentSwipe(d->owner->swipe, view);
     /* Is `view` currently covered, or rubber-banding without a swipeView? */
     const iBool isCovered =
         view == ownerView_(d) &&
-        ((swipeView_DocumentWidget(d->owner) && isSwipeOverlay_DocumentWidget(d->owner)) ||
-         (!swipeView_DocumentWidget(d->owner) && swipeOffset != 0));
+        ((view_DocumentSwipe(d->owner->swipe) && isOverlay_DocumentSwipe(d->owner->swipe)) ||
+         (!view_DocumentSwipe(d->owner->swipe) && swipeOffset != 0));
     if (view == ownerView_(d)) {
         clear_PtrArray(&d->covered);
     }
@@ -610,7 +609,7 @@ iWidget *makeModal_Query(iQuery *d, const iString *url, iBool isSensitive,
 
 iBool handleCommand_Query(iQuery *d, const char *cmd) {
     if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d->owner) {
-        const iString *url = state_DocumentWidget(d->owner)->url;
+        const iString *url = d->owner->mod.url;
         if (hasLabel_Command(cmd, "link")) {
             /* Use the stored base URL (document URL may change). */
             const iGmLinkId linkId = argU32Label_Command(cmd, "link");

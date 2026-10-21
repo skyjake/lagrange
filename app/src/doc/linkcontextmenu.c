@@ -21,12 +21,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "linkcontextmenu.h"
+#include "impl.h"
 
 #include "../app.h"
 #include "../defs.h"
 #include "../gmutil.h"
 #include "linkinfo.h"
-#include "ui/documentwidget.h"
 #include "ui/simpledocumentwidget.h"
 #include "ui/util.h"
 #include "ui/widget.h"

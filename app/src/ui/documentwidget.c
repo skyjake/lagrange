@@ -20,7 +20,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "documentwidget.h"
+#include "doc/impl.h"
 
 #include "app.h"
 #include "media/player.h"
@@ -95,133 +95,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <errno.h>
 
 /*----------------------------------------------------------------------------------------------*/
-
-enum iDocumentLinkOrdinalMode {
-    numbersAndAlphabet_DocumentLinkOrdinalMode,
-    homeRow_DocumentLinkOrdinalMode,
-};
-
-enum iLinkUpdateFlags {
-    visited_LinkUpdateFlag = iBit(1),
-    open_LinkUpdateFlag    = iBit(2),
-};
-
-enum iDocumentWidgetFlag {
-    selecting_DocumentWidgetFlag             = iBit(1),
-    noHoverWhileScrolling_DocumentWidgetFlag = iBit(2),
-    showLinkNumbers_DocumentWidgetFlag       = iBit(3),
-    setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
-    newTabViaHomeKeys_DocumentWidgetFlag     = iBit(5),
-    selectWords_DocumentWidgetFlag           = iBit(6),
-    selectLines_DocumentWidgetFlag           = iBit(7),
-    movingSelectMarkStart_DocumentWidgetFlag = iBit(8),
-    movingSelectMarkEnd_DocumentWidgetFlag   = iBit(9),
-    otherRootByDefault_DocumentWidgetFlag    = iBit(10), /* links open to other root by default */
-    urlChanged_DocumentWidgetFlag            = iBit(11),
-    drawDownloadCounter_DocumentWidgetFlag   = iBit(12),
-    viewSource_DocumentWidgetFlag            = iBit(13),
-    proxyRequest_DocumentWidgetFlag          = iBit(14),
-    unseen_DocumentWidgetFlag                = iBit(15), /* user has not seen the contents */
-    openedExternally_DocumentWidgetFlag      = iBit(16), /* opened via an external URL event */
-    historySwipe_DocumentWidgetFlag          = iBit(17), /* paginated swipe moves the views */
-    swipedUp_DocumentWidgetFlag              = iBit(18), /* touch gesture has opened the sidebar */
-};
-
-enum iDocumentIndicator {
-    none_DocumentIndicator,
-    pinchZoom_DocumentIndicator,
-    viewMode_DocumentIndicator,
-};
-
-/* Note the following about swipes and keeping inline input prompts positioned:
-
-   An inline input prompt is a real widget, similar to what appears in a modal
-   dialog. During a back/forward swipe, up to two DocumentViews are visible at
-   once (the current view and DocumentSwipe's outgoing view, one drawn sliding over
-   the other), and either
-   one may have one or more prompt widgets as children. The prompts need to keep
-   tracking their documents as they shift, and all prompts need to be drawn at
-   the correct Z order alongside their view's content. This means a normal
-   `drawChildren_Widget()` is not possible, because children are drawn last, on
-   top of everything.
-
-   We use `deferredDraw_WidgetFlag2` that excludes a child from
-   `drawChildren_Widget()`. Each flagged bar is drawn manually so they appear in
-   the correct order vs. the DocumentViews.
-
-   The incoming/outgoing prompts are handled differently because of how the
-   underlying document is swapped:
-
-   - Incoming: d->view's own prompts are normal findable widgets, except when
-     covered by the outgoing view during a back-swipe, or offset by rubber-banding
-     at the ends of history.
-
-   - Outgoing: the outgoing view's prompts. `releaseViewDocument_DocumentWidget_()`
-     allocates a new DocumentView for the incoming document while the swipe
-     animates, and link IDs are per-document, so the incoming view may reuse the
-     same "inputpromptN" IDs. Therefore, the outgoing prompt widgets are renamed
-     to avoid clashing with the incoming live prompts. The horizontal positions
-     are driven by `visualOffset` rather than by moving `rect` itself, since
-     there is no longer a live document layout to reference. The prompts are
-     kept around, hidden and unfindable, until the swipe finishes.
-*/
-
-struct Impl_DocumentWidget {
-    iWidget        widget;
-    int            flags; /* internal behavior (enum iDocumentWidgetFlag) */
-
-    /* Components: */
-    iDocumentFetch *fetch;
-    iDocumentView *view;
-    iBanner *      banner;
-    iInlineMedia * media;
-    iQuery *       query;
-    iDocumentSwipe *swipe;
-    iDocumentBook *book;
-    iViewToolbar  *viewToolbar;
-    SDL_TimerID     readingBarsTimer; /* toggle unless the click becomes a double click */
-    SDL_TimerID     viewModeTimer;    /* view mode indicator is shown while running */
-    enum iDocumentIndicator indicator; /* remains set while fading out */
-    iAnim           indicatorOpacity;
-    iLinkInfo *    linkInfo;
-
-    /* Document: */
-    iPersistentDocumentState mod;
-    iString *      titleUser;
-    float          initNormScrollY;
-    iGmScrollAnchor initScrollAnchor;
-    enum iLinkUpdateFlags pendingLinkUpdates;
-
-    /* User interface: */
-    enum iDocumentLinkOrdinalMode ordinalMode;
-    size_t         ordinalBase;
-    iRangecc       selectMark;
-    iRangecc       initialSelectMark; /* for word/line selection */
-    iRangecc       foundMark;
-    const iGmRun * contextLink;
-    iClick         click;
-    iClick         midClick;   /* opens link */
-    iInt2          contextPos; /* coordinates of latest right click */
-    iString        pendingGotoHeading;
-    iString        linePrecedingLink;
-    iString        originId;       /* origin document's widget ID, if opened via cross-split nav */
-    iBool          originToNewTab; /* ...whether that navigation created a fresh tab */
-    iString        readerEntryUrl; /* feed entry being viewed (may have a fragment) */
-    int            swipeUpY;       /* vertical movement of the current paginated swipe */
-    uint32_t       swipeUpTime;
-    uint32_t       layoutHandoffTime; /* when continued layout was last shown */
-    size_t         numHeadings;
-
-    /* Widget structure: */
-    iScrollWidget *scroll;
-    iWidget *      footerButtons;
-    iWidget *      menu;
-    iWidget *      copyMenu;
-    iTranslation * translation;
-    iToolJob *     toolJob;
-    iIndicatorWidget *progress;
-    iWidget *      phoneToolbar;
-};
 
 iDefineObjectConstruction(DocumentWidget)
 
@@ -455,7 +328,7 @@ void animate_DocumentWidget(void *ticker) {
     repositionInlinePrompts_DocumentWidget(d, d->view);
     repositionOutgoing_Query(d->query);
     if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
-        !isFinished_Anim(offset_DocumentSwipe(d->swipe)) || swipeView_DocumentWidget(d) ||
+        !isFinished_Anim(offset_DocumentSwipe(d->swipe)) || view_DocumentSwipe(d->swipe) ||
         (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity)) ||
         !isFinished_Anim(&d->indicatorOpacity)) {
         addTicker_App(animate_DocumentWidget, d);
@@ -940,7 +813,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (isAborted_DocumentSwipe(d->swipe)) {
         reset_DocumentSwipe(d->swipe);
     }
-    if (d->view == swipeView_DocumentWidget(d)) {
+    if (d->view == view_DocumentSwipe(d->swipe)) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
         const uint32_t turnTime = d->view->paged.turnTime; /* turns continue in the next chapter */
@@ -963,7 +836,7 @@ void updateDocPrefs_DocumentWidget(iDocumentWidget *d) {
     const uint32_t diff = updateDocPrefs_GmDocument(d->view->doc);
     /* Cached documents, too. */
     updateDocPrefs_History(d->mod.history);
-    iDocumentView *swipeView = swipeView_DocumentWidget(d);
+    iDocumentView *swipeView = view_DocumentSwipe(d->swipe);
     if (swipeView && swipeView != d->view && swipeView->doc) {
         updateDocPrefs_GmDocument(swipeView->doc);
     }
@@ -1288,7 +1161,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     }
     d->fetch->state = ready_RequestState;
     resetSavedPosition_DocumentBook(d->book);
-    postProcessContent_DocumentFetch(d->fetch, iTrue, isUrlChanged_DocumentWidget(d));
+    postProcessContent_DocumentFetch(d->fetch, iTrue, (d->flags & urlChanged_DocumentWidgetFlag) != 0);
     resetScrollPosition_DocumentView(
         d->view, d->initNormScrollY, isAnchored ? &d->initScrollAnchor : NULL);
     applyResume_DocumentBook(d->book);
@@ -2101,7 +1974,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* Maybe there are other documents waiting to start their requests. */
             if (!isAnyDocumentRequestOngoing_MainWindow(as_MainWindow(window_Widget(w)))) {
                 iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
-                    if (tryWaiting_DocumentFetch(fetch_DocumentWidget(i.object))) {
+                    if (tryWaiting_DocumentFetch(((iDocumentWidget *) i.object)->fetch)) {
                         break;
                     }
                 }
@@ -2363,7 +2236,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             reset_DocumentSwipe(d->swipe);
             setViewSwipedAway_DocumentSwipe(d->swipe, iTrue);
             setOverlay_DocumentSwipe(d->swipe, iTrue);
-            iAssert(swipeView_DocumentWidget(d) == NULL);
+            iAssert(view_DocumentSwipe(d->swipe) == NULL);
             setOutgoingView_DocumentSwipe(d->swipe, d->view);
         }
         return iTrue;
@@ -2378,7 +2251,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             reset_DocumentSwipe(d->swipe);
             setViewSwipedAway_DocumentSwipe(d->swipe, iTrue);
             setOffset_DocumentSwipe(d->swipe, width_Widget(w));
-            iAssert(swipeView_DocumentWidget(d) == NULL);
+            iAssert(view_DocumentSwipe(d->swipe) == NULL);
             setOutgoingView_DocumentSwipe(d->swipe, d->view);
         }
         return iTrue;
@@ -2848,7 +2721,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->mod.invertPageView = !d->mod.invertPageView;
         setPageViewInverted_History(d->mod.history, d->mod.invertPageView);
         setPageViewInverted_GmDocument(d->view->doc, d->mod.invertPageView);
-        iDocumentView *swipeView = swipeView_DocumentWidget(d);
+        iDocumentView *swipeView = view_DocumentSwipe(d->swipe);
         if (swipeView && swipeView->doc) {
             setPageViewInverted_GmDocument(swipeView->doc, d->mod.invertPageView);
         }
@@ -4435,69 +4308,24 @@ const iString *url_DocumentWidget(const iDocumentWidget *d) {
     return d->mod.url;
 }
 
-iDocumentView *view_DocumentWidget(iDocumentWidget *d) {
-    return d->view;
-}
 
 iMediaRequest *findMediaRequest_DocumentWidget(const iDocumentWidget *d, iGmLinkId linkId) {
     return findRequest_InlineMedia(d->media, linkId);
 }
 
-iPersistentDocumentState *state_DocumentWidget(iDocumentWidget *d) {
-    return &d->mod;
-}
 
-iBanner *banner_DocumentWidget(iDocumentWidget *d) {
-    return d->banner;
-}
 
-iInlineMedia *media_DocumentWidget(iDocumentWidget *d) {
-    return d->media;
-}
 
-iGmLinkId requestLinkId_DocumentWidget(const iDocumentWidget *d) {
-    return d->fetch->requestLinkId;
-}
 
-iDocumentSwipe *swipe_DocumentWidget(iDocumentWidget *d) {
-    return d->swipe;
-}
 
-iDocumentBook *book_DocumentWidget(iDocumentWidget *d) {
-    return d->book;
-}
 
-iDocumentFetch *fetch_DocumentWidget(iDocumentWidget *d) {
-    return d->fetch;
-}
 
-iBool isUrlChanged_DocumentWidget(const iDocumentWidget *d) {
-    return (d->flags & urlChanged_DocumentWidgetFlag) != 0;
-}
 
-void setDrawDownloadCounter_DocumentWidget(iDocumentWidget *d, iBool show) {
-    iChangeFlags(d->flags, drawDownloadCounter_DocumentWidgetFlag, show);
-}
 
-const iString *linePrecedingLink_DocumentWidget(const iDocumentWidget *d) {
-    return &d->linePrecedingLink;
-}
 
-const iString *originId_DocumentWidget(const iDocumentWidget *d) {
-    return &d->originId;
-}
 
-iBool isOriginToNewTab_DocumentWidget(const iDocumentWidget *d) {
-    return d->originToNewTab;
-}
 
-void setFooterButtons_DocumentWidget(iDocumentWidget *d, iWidget *buttons) {
-    d->footerButtons = buttons;
-}
 
-iClick *click_DocumentWidget(iDocumentWidget *d) {
-    return &d->click;
-}
 
 const iBlock *sourceContent_DocumentWidget(const iDocumentWidget *d) {
     return sourceContent_DocumentFetch(d->fetch);
@@ -4511,9 +4339,6 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
     return isRequestOngoing_DocumentFetch(d->fetch);
 }
 
-iBool isProxyRequest_DocumentWidget(const iDocumentWidget *d) {
-    return (d->flags & proxyRequest_DocumentWidgetFlag) != 0;
-}
 
 iBool isFetchingOwnLink_DocumentWidget(const iDocumentWidget *d) {
     return isFetchingOwnLink_DocumentFetch(d->fetch);
@@ -4523,21 +4348,9 @@ void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest)
     take_DocumentFetch(d->fetch, finishedRequest);
 }
 
-iDocumentView *swipeView_DocumentWidget(iDocumentWidget *d) {
-    return view_DocumentSwipe(d->swipe);
-}
 
-iBool isSwipeOverlay_DocumentWidget(const iDocumentWidget *d) {
-    return isOverlay_DocumentSwipe(d->swipe);
-}
 
-int swipeOffsetOfView_DocumentWidget(const iDocumentWidget *d, const iDocumentView *view) {
-    return offsetOfView_DocumentSwipe(d->swipe, view);
-}
 
-iQuery *query_DocumentWidget(iDocumentWidget *d) {
-    return d->query;
-}
 
 void repositionInlinePrompts_DocumentWidget(iDocumentWidget *d, iDocumentView *view) {
     reposition_Query(d->query, view);
@@ -4547,9 +4360,6 @@ const iGmIdentity *overrideIdentity_DocumentWidget(const iDocumentWidget *d) {
     return d->mod.setIdentity ? identity_DocumentWidget(d) : NULL;
 }
 
-int redirectCount_DocumentWidget(const iDocumentWidget *d) {
-    return d->fetch->redirectCount;
-}
 
 iWidget *footerButtons_DocumentWidget(const iDocumentWidget *d) {
     return d->footerButtons;
@@ -4563,9 +4373,6 @@ const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
     return d->view->doc;
 }
 
-int documentWidth_DocumentWidget(const iDocumentWidget *d) {
-    return documentWidth_DocumentView(d->view);
-}
 
 iBool isSourceTextView_DocumentWidget(const iDocumentWidget *d) {
     return d && (d->flags & viewSource_DocumentWidgetFlag) != 0;
