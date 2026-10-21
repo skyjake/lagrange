@@ -530,15 +530,17 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    if (argLabel_Command(cmd, "switch")) {
-        iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));
-        if (doc) {
-            showTabPage_Widget(findWidget_Root("doctabs"), doc);
-            return iTrue;
-        }
-    }
     if (findWidget_App("prefs")) {
         postCommand_App("prefs.dismiss");
+    }
+    if (argLabel_Command(cmd, "switch")) {
+        const iDocumentWidget *cur  = document_Command(cmd);
+        const iRoot           *root = cur ? constAs_Widget(cur)->root : get_Root();
+        iDocumentWidget       *doc  = findDocument_Root(root, collectNewCStr_String(urlArg));
+        if (doc) {
+            showTabPage_Widget(findChild_Widget(root->widget, "doctabs"), doc);
+            return iTrue;
+        }
     }
     if (argLabel_Command(cmd, "newwindow")) {
         const iRangecc gotoheading = range_Command(cmd, "gotoheading");

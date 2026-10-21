@@ -671,7 +671,7 @@ iWidget *makePreferences_Widget(void) {
               format_CStr("docdlg.open url:%s",
                           cstrCollect_String(makeFileUrl_String(downloadDir_App()))) },
             { "padding" },
-            { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
+            { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open switch:1 url:about:fonts" },
             { NULL }
         };
         const iMenuItem supportPanelItems[] = {
@@ -1211,7 +1211,7 @@ iWidget *makePreferences_Widget(void) {
     }
 #endif /* LAGRANGE_USE_GAMEPAD */
     addChild_Widget(content, iClob(makePadding_Widget(gap_UI)));
-    const iMenuItem actions[] = { { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
+    const iMenuItem actions[] = { { "${menu.fonts}", 0, 0, "!open switch:1 url:about:fonts" },
                                 { "---" },
                                 { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } };
     const size_t actOffset = (isTerminal_Platform() ? 2 : 0);
