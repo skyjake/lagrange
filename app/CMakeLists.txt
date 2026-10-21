@@ -253,10 +253,10 @@ set (SOURCES
     src/doc/impl.h
     src/doc/inlinemedia.c
     src/doc/inlinemedia.h
+    src/doc/contextmenu.c
+    src/doc/contextmenu.h
     src/doc/query.c
     src/doc/query.h
-    src/doc/linkcontextmenu.c
-    src/doc/linkcontextmenu.h
     src/doc/linkinfo.c
     src/doc/linkinfo.h
     src/doc/pageinfo.c

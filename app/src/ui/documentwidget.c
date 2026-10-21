@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "keys.h"
 #include "labelwidget.h"
-#include "doc/linkcontextmenu.h"
+#include "doc/contextmenu.h"
 #include "doc/linkinfo.h"
 #include "doc/pageinfo.h"
 #include "media/media.h"
@@ -1464,14 +1464,6 @@ iBool isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *d) {
     return d->view != view_DocumentSwipe(d->swipe) &&
            d->view->visBuf->buffers[0].texture &&
            !isBegun_DocumentSwipe(d->swipe);
-}
-
-static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
-    iRangecc mark = d->selectMark;
-    if (mark.start > mark.end) {
-        iSwap(const char *, mark.start, mark.end);
-    }
-    return collect_String(newRange_String(mark));
 }
 
 static const int pageProgressUnit_DocumentWidget_ = 1000; /* fractions of a page, for turns */
@@ -3240,8 +3232,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d->menu = NULL;
                 }
                 setFocus_Widget(NULL);
-                iArray items;
-                init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     d->menu = makeLinkContextMenu_DocumentWidget(d, d->contextLink);
                 }
@@ -3252,104 +3242,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             d, urlRoot, urlRoot, 0, none_MediaType);
                     }
                 }
-                else {
-                    if (deviceType_App() == desktop_AppDeviceType) {
-                        if (!isEmpty_Range(&d->selectMark)) {
-                            pushBackN_Array(
-                                &items,
-                                (iMenuItem[]){
-                                    { "${menu.copy}", 0, 0, "copy" },
-                                    { "${menu.search}", 0, 0,
-                                      format_CStr("search newtab:1 query:%s",
-                                                  cstr_String(selectedText_DocumentWidget_(d))) },
-                                    { "${menu.snippet.add}", 0, 0,
-                                      format_CStr("!snippet.add content:%s",
-                                                  cstr_String(selectedText_DocumentWidget_(d))) },
-                                    { "---", 0, 0, NULL } },
-                                4);
-                    }
-#if (defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)) || defined (iPlatformTerminal)
-                    pushBackN_Array(
-                        &items,
-                        (iMenuItem[]){
-                            { backArrow_Icon " ${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
-                            { forwardArrow_Icon " ${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
-                            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
-                            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" }
-                        }, 4);
-#else
-                        /* Compact navigation actions. */
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){
-                                           { ">>>" backArrow_Icon, navigateBack_KeyShortcut, "navigate.back" },
-                                           { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
-                                           { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
-                                           { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
-                                           }, 4);
-#endif
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){
-                                { "---" },
-                                { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
-                                { "---" },
-                                { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
-                                { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
-                                { "---" },
-                                { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
-                                                                           : "${menu.viewformat.plain}",
-                                  0, 0, "document.viewformat" },
-                                { "${menu.sitespec}", 0, 0, "document.sitespec" },
-                                { hammer_Icon " ${menu.tools}", 0, 0, "submenu id:toolsmenu" },
-                                { "---" },
-                                { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
-                            11);
-                        if (isEmpty_Range(&d->selectMark)) {
-                            pushBackN_Array(
-                                &items,
-                                (iMenuItem[]){
-                                    { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                    { "---" },
-                                    { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" } },
-                                3);
-#if defined (LAGRANGE_FILE_DIALOGS)
-                            pushBack_Array(
-                                &items, &(iMenuItem){ "${menu.save.as}", 0, 0, "document.save saveas:1" });
-#endif
-                            pushBack_Array(
-                                &items,
-                                &(iMenuItem){ books_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" });
-                        }
-                    }
-                    else {
-                        /* Mobile text selection menu. */
-#if 0
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){
-                                { "${menu.select}", 0, 0, "document.select arg:1" },
-                                { "${menu.select.word}", 0, 0, "document.select arg:2" },
-                                { "${menu.select.par}", 0, 0, "document.select arg:3" },
-                            },
-                            3);
-#endif
-                        postCommand_Root(w->root, "document.select arg:1");
-                        return iTrue;
-                    }
-                    d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
-                    deinit_Array(&items);
-                    setMenuItemDisabled_Widget(
-                        d->menu,
-                        "document.upload",
-                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
-                            !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
-                    setMenuItemDisabled_Widget(
-                        d->menu,
-                        "document.upload copy:1",
-                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
-                            !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
+                else if (deviceType_App() == desktop_AppDeviceType) {
+                    d->menu = makePageContextMenu_DocumentWidget(d);
                     updateToolsMenu_DocumentWidget_(d);
+                }
+                else {
+                    /* Mobile text selection. */
+                    postCommand_Root(w->root, "document.select arg:1");
+                    return iTrue;
                 }
             }
             processContextMenuEvent_Widget(d->menu, ev, {});
@@ -3477,23 +3377,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             destroy_Widget(d->copyMenu);
                             d->copyMenu = NULL;
                         }
-                        const iMenuItem items[] = {
-                            { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
-                            { "---" },
-                            { magnifyingGlass_Icon " ${menu.search}", 0, 0,
-                                format_CStr("search newtab:1 query:%s",
-                                            cstr_String(selectedText_DocumentWidget_(d))) },
-                            { add_Icon " ${menu.snippet.add}", 0, 0,
-                                format_CStr("!snippet.add content:%s",
-                                            cstr_String(selectedText_DocumentWidget_(d))) },
-#if defined (iPlatformAppleMobile)
-                            { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
-#endif
-                            { "---" },
-                            { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
-                        };
-                        d->copyMenu = makeMenu_Widget(w, items, iElemCount(items));
-                        setFlags_Widget(d->copyMenu, noFadeBackground_WidgetFlag, iTrue);
+                        d->copyMenu = makeSelectionMenu_DocumentWidget(d);
                         openMenu_Widget(d->copyMenu, pos_Click(&d->click));
                         return iTrue;
                     }

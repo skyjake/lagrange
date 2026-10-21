@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "doc/banner.h"
 #include "doc/documentview.h"
-#include "doc/linkcontextmenu.h"
+#include "doc/contextmenu.h"
 #include "gmutil.h"
 #include "keys.h"
 #include "menu.h"

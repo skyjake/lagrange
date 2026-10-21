@@ -34,4 +34,6 @@ iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *, con
                                                           const iString  *linkLabel,
                                                           iGmLinkId       linkId,
                                                           enum iMediaType linkMediaType);
+iWidget *makePageContextMenu_DocumentWidget              (iDocumentWidget *);
+iWidget *makeSelectionMenu_DocumentWidget                (iDocumentWidget *); /* touch selection */
 iWidget *makeLinkContextMenu_SimpleDocumentWidget        (iSimpleDocumentWidget *, const iGmRun *link);

@@ -20,12 +20,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "linkcontextmenu.h"
+#include "contextmenu.h"
 #include "impl.h"
 
 #include "../app.h"
 #include "../defs.h"
 #include "../gmutil.h"
+#include "ui/keys.h"
 #include "linkinfo.h"
 #include "ui/simpledocumentwidget.h"
 #include "ui/util.h"
@@ -66,6 +67,14 @@ static void appendOpenItems_(iArray *items, const iString *linkUrl, const char *
               format_CStr("!open%s newtab:5 url:%s", openArgs, cstr_String(linkUrl)) },
         },
         5);
+}
+
+static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
+    iRangecc mark = d->selectMark;
+    if (mark.start > mark.end) {
+        iSwap(const char *, mark.start, mark.end);
+    }
+    return collect_String(newRange_String(mark));
 }
 
 iWidget *makeLinkContextMenuWithParameters_DocumentWidget(iDocumentWidget *d,
@@ -203,6 +212,102 @@ iWidget *makeLinkContextMenu_DocumentWidget(iDocumentWidget *d, const iGmRun *li
         collectNewRange_String(linkLabel_GmDocument(document_DocumentWidget(d), link->linkId)),
         link->linkId,
         link->mediaType);
+}
+
+iWidget *makePageContextMenu_DocumentWidget(iDocumentWidget *d) {
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    if (!isEmpty_Range(&d->selectMark)) {
+        pushBackN_Array(
+            items,
+            (iMenuItem[]){
+                { "${menu.copy}", 0, 0, "copy" },
+                { "${menu.search}", 0, 0,
+                  format_CStr("search newtab:1 query:%s",
+                              cstr_String(selectedText_DocumentWidget_(d))) },
+                { "${menu.snippet.add}", 0, 0,
+                  format_CStr("!snippet.add content:%s",
+                              cstr_String(selectedText_DocumentWidget_(d))) },
+                { "---", 0, 0, NULL } },
+            4);
+    }
+#if (defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)) || defined (iPlatformTerminal)
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { backArrow_Icon " ${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
+            { forwardArrow_Icon " ${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
+            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" }
+        }, 4);
+#else
+    /* Compact navigation actions. */
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { ">>>" backArrow_Icon, navigateBack_KeyShortcut, "navigate.back" },
+            { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
+            { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
+            { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
+        }, 4);
+#endif
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { "---" },
+            { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
+            { "---" },
+            { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
+            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+            { "---" },
+            { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
+                                                       : "${menu.viewformat.plain}",
+              0, 0, "document.viewformat" },
+            { "${menu.sitespec}", 0, 0, "document.sitespec" },
+            { hammer_Icon " ${menu.tools}", 0, 0, "submenu id:toolsmenu" },
+            { "---" },
+            { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
+        11);
+    if (isEmpty_Range(&d->selectMark)) {
+        pushBackN_Array(
+            items,
+            (iMenuItem[]){
+                { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                { "---" },
+                { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" } },
+            3);
+#if defined (LAGRANGE_FILE_DIALOGS)
+        pushBack_Array(
+            items, &(iMenuItem){ "${menu.save.as}", 0, 0, "document.save saveas:1" });
+#endif
+        pushBack_Array(
+            items,
+            &(iMenuItem){ books_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" });
+    }
+    iWidget       *menu     = makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));
+    const iRangecc scheme   = urlScheme_String(d->mod.url);
+    const iBool    noUpload = !equalCase_Rangecc(scheme, "gemini") && !equalCase_Rangecc(scheme, "titan");
+    setMenuItemDisabled_Widget(menu, "document.upload", noUpload);
+    setMenuItemDisabled_Widget(menu, "document.upload copy:1", noUpload);
+    return menu;
+}
+
+iWidget *makeSelectionMenu_DocumentWidget(iDocumentWidget *d) {
+    const iMenuItem items[] = {
+        { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
+        { "---" },
+        { magnifyingGlass_Icon " ${menu.search}", 0, 0,
+          format_CStr("search newtab:1 query:%s", cstr_String(selectedText_DocumentWidget_(d))) },
+        { add_Icon " ${menu.snippet.add}", 0, 0,
+          format_CStr("!snippet.add content:%s", cstr_String(selectedText_DocumentWidget_(d))) },
+#if defined (iPlatformAppleMobile)
+        { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
+#endif
+        { "---" },
+        { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
+    };
+    iWidget *menu = makeMenu_Widget(as_Widget(d), items, iElemCount(items));
+    setFlags_Widget(menu, noFadeBackground_WidgetFlag, iTrue);
+    return menu;
 }
 
 iWidget *makeLinkContextMenu_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iGmRun *link) {
