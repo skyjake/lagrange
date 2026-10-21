@@ -39,12 +39,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "doc/viewtoolbar.h"
 #include "doc/persistentstate.h"
 #include "gempub.h"
-#include "filedialog.h"
 #include <lagrange/gmcerts.h>
 #include "gmdocument.h"
 #include <lagrange/gmrequest.h>
 #include "gmutil.h"
-#include <lagrange/gopher.h>
 #include "history.h"
 #include "indicatorwidget.h"
 #include "inputwidget.h"
@@ -61,11 +59,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "sidebarwidget.h"
 #include <lagrange/sitespec.h>
-#include <lagrange/tools.h>
 #include "touch.h"
 #include "tooljob.h"
 #include "translation.h"
-#include "uploadwidget.h"
 #include "util.h"
 #include "visbuf.h"
 #include <lagrange/visited.h>
@@ -81,8 +77,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "platform/android.h"
 #endif
 
-#include <the_Foundation/file.h>
-#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
@@ -92,7 +86,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_render.h>
 #include <ctype.h>
-#include <errno.h>
 
 /*----------------------------------------------------------------------------------------------*/
 
