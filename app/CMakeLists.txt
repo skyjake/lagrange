@@ -5,7 +5,7 @@
 # It uses SDL for input and rendering and provides its own custom UI widgets.
 #
 # Notes:
-# - Required dependencies: SDL 2, OpenSSL 1.1.1 or later, libpcre,
+# - Required dependencies: SDL 3, OpenSSL 1.1.1 or later, libpcre,
 #   GNU libunistring, zlib.
 # - the_Foundation is built as a static library from 'lib/the_Foundation',
 #   if it exists in that location. The Git repository has it as a submodule.

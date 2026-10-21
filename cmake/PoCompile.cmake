@@ -1,5 +1,6 @@
 # Parses .po files and generates binary language strings like app/po/compile.py, except
 # that strings are terminated with 0x01 instead of NUL (CMake 3.15 cannot write NULs).
+#
 # Standalone usage: cmake -DPO_DIR=<dir> -DOUT_DIR=<dir> -DLANGS="en;fi;..." -P PoCompile.cmake
 
 if (CMAKE_SCRIPT_MODE_FILE STREQUAL CMAKE_CURRENT_LIST_FILE)

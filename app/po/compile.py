@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# NOTE: This is obsolete! The string compiling is done by CMake during
+# build configuration.
+#
 # Parses all the .po files and generates binary language strings to be loaded
 # at runtime via embedded data.
 
