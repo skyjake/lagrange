@@ -1031,7 +1031,7 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x1f50d,  "magnifyingglass"                }, /* magnifyingGlass_Icon */
         { 0x1f512,  "lock.fill"                      }, /* closedLock_Icon */
         { 0x1f513,  "lock.open.fill"                 }, /* openLock_Icon */
-        { 0x1f516,  "bookmark.fill"                  }, /* bookmark_Icon */
+        { 0x1f516,  "bookmark"                       }, /* bookmark_Icon */
         { 0x1f520,  "textformat.abc"                 }, /* fontpack_Icon */
         { 0x1f528,  "hammer"                         }, /* hammer_Icon */
         { 0x1f553,  "clock"                          }, /* clock_Icon */
