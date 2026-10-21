@@ -90,6 +90,9 @@ iBool   handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *, const char *cmd); /* 
 iBool   handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *, const char *cmd);
 iBool   handleWheelSwipe_DocumentSwipe(iDocumentSwipe *, const SDL_MouseWheelEvent *);
 
+void    draw_DocumentSwipe          (const iDocumentSwipe *); /* the current and outgoing views */
+void    drawSidebarIndicator_DocumentSwipe(const iDocumentSwipe *); /* tablet edge swipe */
+
 /* The outgoing view and banner are handed over when the document is replaced mid-swipe. */
 void    takeOutgoing_DocumentSwipe  (iDocumentSwipe *, iDocumentView *view, iBanner *banner);
 
@@ -105,6 +108,9 @@ iLocalDef enum iWheelSwipeState wheelState_DocumentSwipe(const iDocumentSwipe *d
 }
 iLocalDef iBool isOverlay_DocumentSwipe(const iDocumentSwipe *d) {
     return (d->flags & viewOverlay_DocumentSwipeFlag) != 0;
+}
+iLocalDef iBool isCurling_DocumentSwipe(const iDocumentSwipe *d) {
+    return d->view && d->flags & pageCurl_DocumentSwipeFlag;
 }
 iLocalDef iBool isBegun_DocumentSwipe(const iDocumentSwipe *d) {
     return (d->flags & begun_DocumentSwipeFlag) != 0;

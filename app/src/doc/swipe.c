@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "banner.h"
 #include "documentview.h"
 #include "query.h"
+#include "render/paint.h"
 #include "ui/command.h"
 #include "ui/touch.h"
 #include "ui/widget.h"
@@ -475,4 +476,162 @@ iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEven
             return iTrue;
     }
     return iFalse;
+}
+
+static void drawViewOrBlank_DocumentSwipe_(const iDocumentSwipe *d, const iDocumentView *view,
+                                           int offset, iBool isBlank) {
+    iRect bounds = bounds_Widget(constAs_Widget(d->owner));
+    if (view && !isBlank) {
+        draw_DocumentView(view, offset);
+    }
+    else {
+        if (isCoveringTopSafeArea_DocumentView(d->owner->view)) {
+            adjustEdges_Rect(&bounds, -top_Rect(bounds), 0, 0, 0);
+        }
+        iPaint p;
+        init_Paint(&p);
+        fillRect_Paint(&p,
+                       intersect_Rect(moved_Rect(bounds, init_I2(offset, 0)), bounds),
+                       uiBackground_ColorId);
+        drawLogo_MainWindow(get_MainWindow(), moved_Rect(bounds, init_I2(offset, 0)));
+    }
+}
+
+static iBool drawCurl_DocumentSwipe_(const iDocumentSwipe *d) {
+    /* The outgoing and the incoming chapter are both paginated. */
+    if (!isCurling_DocumentSwipe(d)) {
+        return iFalse;
+    }
+    const iDocumentView *current  = d->owner->view;
+    const iDocumentView *outgoing = d->view;
+    if (outgoing == current) {
+        draw_DocumentView(outgoing, 0); /* the next chapter is still loading */
+        return iTrue;
+    }
+    const iBool          isBack  = isOverlay_DocumentSwipe(d);
+    const iDocumentView *earlier = isBack ? current : outgoing;
+    const iDocumentView *later   = isBack ? outgoing : current;
+    if (!isPaged_DocumentView(earlier) || !isPaged_DocumentView(later)) {
+        return iFalse;
+    }
+    drawCurlBetween_DocumentView(
+        earlier,
+        later,
+        1.0f - value_Anim(&d->offset) / (float) width_Widget(d->owner));
+    makePaletteGlobal_GmDocument(current->doc);
+    return iTrue;
+}
+
+void draw_DocumentSwipe(const iDocumentSwipe *d) {
+    const iDocumentView *view       = d->owner->view;
+    const iDocumentView *swipeView  = d->view;
+    iQuery              *query      = d->owner->query;
+    const iRect          bounds     = bounds_Widget(constAs_Widget(d->owner));
+    const iRect          clipBounds = bounds;
+    iPaint p;
+    init_Paint(&p);
+    if (drawCurl_DocumentSwipe_(d)) {
+        /* Drawn as a page turn. */
+    }
+    else if (swipeView) {
+        const int swipeOffset    = value_Anim(&d->offset);
+        const int underlayOffset = 0.25f * (swipeOffset - width_Rect(bounds));
+        const int overlayOffset  = swipeOffset;
+        const iDocumentView *under, *over;
+        if (isOverlay_DocumentSwipe(d)) {
+            over  = swipeView;
+            under = view;
+            if (over == under) {
+                under = NULL;
+            }
+        }
+        else {
+            over  = view;
+            under = swipeView;
+            if (over == under) {
+                over = NULL;
+            }
+        }
+        drawViewOrBlank_DocumentSwipe_(d, under, underlayOffset, iFalse);
+        if (under == swipeView) {
+            drawOutgoing_Query(query, &clipBounds);
+        }
+        else if (under == view) {
+            drawCovered_Query(query, &clipBounds);
+        }
+        if (overlayOffset > 0) {
+            /* Dim the occluded view with a soft shadow. */
+            iRect safeBounds = bounds;
+            if (isCoveringTopSafeArea_DocumentView(view)) {
+                adjustEdges_Rect(&safeBounds, -top_Rect(safeBounds), 0, 0, 0);
+            }
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            iRect dimRect = initCorners_Rect(
+                topLeft_Rect(safeBounds),
+                addX_I2(bottomLeft_Rect(safeBounds), overlayOffset)
+            );
+            setClip_Paint(&p, dimRect);
+            const float relativeOffset =
+                iClamp(swipeOffset / (float) width_Rect(safeBounds), 0, 1);
+            const float darkness = isDark_ColorTheme(prefs_App()->theme) ? 0.4f : 0.25f;
+            drawSoftShadow_Paint(&p, moved_Rect(safeBounds, init_I2(overlayOffset, 0)),
+                                 gap_UI * 80,
+                                 black_ColorId,
+                                 255 * darkness * (1.0f - relativeOffset));
+            unsetClip_Paint(&p);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        }
+        drawViewOrBlank_DocumentSwipe_(d, over, overlayOffset, iFalse);
+        if (over == swipeView) {
+            drawOutgoing_Query(query, &clipBounds);
+        }
+    }
+    else {
+        int offset = value_Anim(&d->offset);
+        if (offset && isCoveringTopSafeArea_DocumentView(view)) {
+            /* Blank the safe area as well. */
+            fillRect_Paint(&p,
+                           initCorners_Rect(zero_I2(), topRight_Rect(bounds)),
+                           uiBackground_ColorId);
+        }
+        drawViewOrBlank_DocumentSwipe_(d, view, offset, wasViewSwipedAway_DocumentSwipe(d));
+        if (offset) {
+            /* Due to offset, inline prompts may shift outside the document area. */
+            drawCovered_Query(query, &clipBounds);
+        }
+    }
+}
+
+void drawSidebarIndicator_DocumentSwipe(const iDocumentSwipe *d) {
+    const iWidget *w      = constAs_Widget(d->owner);
+    const iRect    bounds = bounds_Widget(w);
+    iWindow       *win    = get_Window();
+    const int      gap    = 4 * win->pixelRatio; /* not dependent on UI scaling; cf. Home indicator */
+    const int      indGap = 6 * gap;
+    const int      indMar = 6 * gap / 3;
+    const iRangei  span   = sidebarAreaSpan_DocumentSwipe(d);
+    const int      indHgt = size_Range(&span) - 2 * indGap;
+    const int      indPos = span.start + indGap;
+    const int    indThick = 5 * gap / 3;
+    iRect indRect = (iRect){ init_I2(left_Rect(bounds) + indMar, indPos),
+                             init_I2(indThick, indHgt) };
+    iRoot *leftSideRoot  = win->roots[0];
+    iRoot *rightSideRoot = (win->roots[1] ? win->roots[1] : win->roots[0]);
+    /* TODO: Could look up and save these pointers ahead of time, they don't change. */
+    iWidget *sbar[2] = {
+        findChild_Widget(leftSideRoot->widget, "sidebar"),
+        findChild_Widget(rightSideRoot->widget, "sidebar2")
+    };
+    iPaint p;
+    init_Paint(&p);
+    SDL_SetRenderDrawBlendMode(renderer_Window(win), SDL_BLENDMODE_BLEND);
+    p.alpha = isDark_ColorTheme(prefs_App()->theme) ? 0x60 : 0x80;
+    if (w->root == leftSideRoot && !isVisible_Widget(sbar[0])) {
+        fillRect_Paint(&p, indRect, tmQuoteIcon_ColorId);
+    }
+    if (w->root == rightSideRoot && !isVisible_Widget(sbar[1])) {
+        indRect.pos.x = right_Rect(bounds) - indMar - indThick;
+        fillRect_Paint(&p, indRect, tmQuoteIcon_ColorId);
+    }
+    SDL_SetRenderDrawBlendMode(renderer_Window(win), SDL_BLENDMODE_NONE);
 }
