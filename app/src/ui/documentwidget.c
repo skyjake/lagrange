@@ -2102,42 +2102,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
-        const iString *baseUrl = navigationBaseUrl_DocumentWidget_(d);
-        iUrl parts;
-        init_Url(&parts, baseUrl);
-        if (equalCase_Rangecc(parts.scheme, "gemini")) {
-            /* Check for default index pages according to Gemini Best Practices ("Filenames"):
-               gemini://geminiprotocol.net/docs/best-practices.gmi */
-            if (endsWith_Rangecc(parts.path, "/index.gmi")) {
-                parts.path.end -= 9;
-            }
-            else if (endsWith_Rangecc(parts.path, "/index.gemini")) {
-                parts.path.end -= 12;
-            }
-        }
-        /* Remove the last path segment. */
-        if (size_Range(&parts.path) > 1) {
-            if (parts.path.end[-1] == '/') {
-                parts.path.end--;
-            }
-            while (parts.path.end > parts.path.start) {
-                if (parts.path.end[-1] == '/') break;
-                parts.path.end--;
-            }
-            iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(baseUrl),
-                                                                    parts.path.end });
-            /* Always go to a gophermap. */
-            setUrlItemType_Gopher(parentUrl, '1');
-            /* Hierarchical navigation doesn't make sense with Titan. */
-            if (startsWith_String(parentUrl, "titan://")) {
-                /* We have no way of knowing if the corresponding URL is valid for Gemini,
-                   but let's try anyway. */
-                set_String(parentUrl, withScheme_String(parentUrl, "gemini"));
-                stripUrlPort_String(parentUrl);
-            }
-            if (!cmpCase_String(parentUrl, "about:")) {
-                setCStr_String(parentUrl, "about:about");
-            }
+        const iString *parentUrl = navigationParentUrl_String(navigationBaseUrl_DocumentWidget_(d));
+        if (parentUrl) {
             cancel_DocumentFetch(d->fetch, iFalse);
             postCommandf_Root(w->root,
                               "open%s url:%s",
@@ -2147,23 +2113,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        iString *rootUrl =
-            collectNewRange_String(urlRoot_String(navigationBaseUrl_DocumentWidget_(d)));
-        /* Always go to a gophermap. */
-        setUrlItemType_Gopher(rootUrl, '1');
-        /* Hierarchical navigation doesn't make sense with Titan. */
-        if (startsWith_String(rootUrl, "titan://")) {
-            /* We have no way of knowing if the corresponding URL is valid for Gemini,
-               but let's try anyway. */
-            set_String(rootUrl, withScheme_String(rootUrl, "gemini"));
-            stripUrlPort_String(rootUrl);
-        }
-        if (!cmpCase_String(rootUrl, "about:")) {
-            setCStr_String(rootUrl, "about:about");
-        }
-        else {
-            appendCStr_String(rootUrl, "/");
-        }
+        const iString *rootUrl = navigationRootUrl_String(navigationBaseUrl_DocumentWidget_(d));
         cancel_DocumentFetch(d->fetch, iFalse);
         postCommandf_Root(w->root, "open%s url:%s",
                           setIdentArg_DocumentWidget(d, rootUrl),
