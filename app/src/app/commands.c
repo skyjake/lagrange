@@ -658,8 +658,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         }
         else {
             doc = newTab_App(NULL, switchTo_NewTabFlag);
-            iWidget *tabs = findWidget_Root("doctabs");
-            moveTabPage_Widget(tabs, tabPageIndex_Widget(tabs, doc), 0);
         }
         iString *entryUrl = copy_String(url);
         const iRangecc fragment = range_Command(cmd, "gotourlheading");
