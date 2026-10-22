@@ -114,9 +114,10 @@ iBool openAdjacentFeedEntry_DocumentWidget(iDocumentWidget *d, int dir) {
             sidebar = sidebar2;
         }
     }
-    const iString   *openUrl = feedEntryUrl_DocumentWidget(d);
-    const iPtrArray *entries = listVisibleEntries_Feeds(
-        feedsMode_SidebarWidget(sidebar) == unread_FeedsMode, openUrl);
+    const iString   *openUrl    = feedEntryUrl_DocumentWidget(d);
+    const iBool      unreadOnly = (feedsMode_SidebarWidget(sidebar) == unread_FeedsMode);
+    const iPtrArray *entries    = listVisibleEntries_Feeds(unreadOnly, openUrl);
+    const size_t     count      = size_PtrArray(entries);
     size_t pos = iInvalidPos;
     iConstForEach(PtrArray, i, entries) {
         const iFeedEntry *entry = i.ptr;
@@ -127,18 +128,22 @@ iBool openAdjacentFeedEntry_DocumentWidget(iDocumentWidget *d, int dir) {
     }
     if (pos == iInvalidPos) {
         /* Current entry is no longer listed, so start from the top. */
-        if (dir < 0) {
+        if (dir < 0 && !unreadOnly) {
             return iFalse;
         }
         pos = 0;
     }
-    else if (dir < 0 && pos == 0) {
-        return iFalse;
-    }
     else {
+        if (unreadOnly && (dir < 0 ? pos == 0 : pos + 1 >= count)) {
+            /* Turn around at the end so all unread entries are reachable in one direction. */
+            dir = -dir;
+        }
+        if (dir < 0 && pos == 0) {
+            return iFalse;
+        }
         pos += dir;
     }
-    if (pos >= size_PtrArray(entries)) {
+    if (pos >= count) {
         return iFalse;
     }
     const iFeedEntry *entry = constAt_PtrArray(entries, pos);
