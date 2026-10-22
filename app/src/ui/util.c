@@ -293,6 +293,24 @@ iBool isSelectionBreaking_Char(iChar c) {
     return isSpace_Char(c) || (c == '@' || c == '-' || c == '/' || c == '\\' || c == ',');
 }
 
+static iBool isTitleStrippable_Char_(iChar c) {
+    return isEmoji_Char(c) || isPictograph_Char(c) || isVariationSelector_Char(c) ||
+           isSpace_Char(c) || c == 0x200d /* ZWJ */ || c == 0x20e3 /* keycap */ ||
+           (c >= 0x2b00 && c <= 0x2bff) || (c >= 0x1f000 && c <= 0x1faff);
+}
+
+const iString *withoutLeadingPictographs_String(const iString *str) {
+    iStringConstIterator iter;
+    init_StringConstIterator(&iter, str);
+    while (iter.value && isTitleStrippable_Char_(iter.value)) {
+        next_StringConstIterator(&iter);
+    }
+    if (iter.pos == constBegin_String(str)) {
+        return str;
+    }
+    return collectNewRange_String((iRangecc){ iter.pos, constEnd_String(str) });
+}
+
 static const char *moveBackward_(const char *pos, iRangecc bounds, int mode) {
     iChar ch;
     while (pos > bounds.start) {

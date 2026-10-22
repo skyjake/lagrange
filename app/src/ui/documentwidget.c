@@ -391,8 +391,11 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         return;
     }
     iStringArray *title = iClob(new_StringArray());
-    if (!isEmpty_String(title_GmDocument(d->view->doc))) {
-        pushBack_StringArray(title, title_GmDocument(d->view->doc));
+    /* Leading emoji are left out; the site icon is shown separately. */ {
+        const iString *docTitle = withoutLeadingPictographs_String(title_GmDocument(d->view->doc));
+        if (!isEmpty_String(docTitle)) {
+            pushBack_StringArray(title, docTitle);
+        }
     }
     if (!isEmpty_String(d->titleUser)) {
         pushBack_StringArray(title, d->titleUser);

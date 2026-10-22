@@ -550,7 +550,8 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             iConstForEach(ObjectList, i, listDocuments_App(w->root)) {
                 const iDocumentWidget *doc  = i.object;
                 iSidebarItem          *item = new_SidebarItem();
-                set_String(&item->label, title_GmDocument(document_DocumentWidget(doc)));
+                set_String(&item->label, withoutLeadingPictographs_String(
+                                             title_GmDocument(document_DocumentWidget(doc))));
                 if (isEmpty_String(&item->label)) {
                     set_String(&item->label, url_DocumentWidget(doc));
                 }

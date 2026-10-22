@@ -158,6 +158,8 @@ void        extendRange_Rangecc     (iRangecc *, iRangecc bounds, int mode);
 
 iBool       isSelectionBreaking_Char(iChar);
 
+const iString *withoutLeadingPictographs_String(const iString *);
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Anim)

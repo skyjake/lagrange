@@ -1874,7 +1874,8 @@ static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
             const iWindow *win = i.ptr;
             iDocumentWidget *doc = document_Root(win->roots[0]);
             pushBack_Array(&winItems,
-                           &(iMenuItem){ .label = cstr_String(bookmarkTitle_DocumentWidget(doc)),
+                           &(iMenuItem){ .label = cstr_String(withoutLeadingPictographs_String(
+                                             bookmarkTitle_DocumentWidget(doc))),
                                          0,
                                          0,
                                          format_CStr("!window.activate ptr:%p", win) });
