@@ -45,6 +45,7 @@ iDeclareTypeConstruction(Media)
 enum iMediaFlags {
     allowHide_MediaFlag   = iBit(1),
     partialData_MediaFlag = iBit(2),
+    deferred_MediaFlag    = iBit(3), /* image is decoded when first drawn */
 };
 
 enum iMediaType { /* Note: There is a limited number of bits for these; see GmRun. */

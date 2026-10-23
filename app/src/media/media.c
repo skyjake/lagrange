@@ -86,6 +86,7 @@ struct Impl_GmImage {
     iInt2         size;
     size_t        numBytes;
     SDL_Texture  *texture;
+    iBool         isDeferred;
     iBool         didFail;
     iMedia       *media; /* backlink to owner */
 };
@@ -96,6 +97,7 @@ void init_GmImage(iGmImage *d, const iBlock *data) {
     d->size     = zero_I2();
     d->numBytes = 0;
     d->texture  = NULL;
+    d->isDeferred = iFalse;
     d->didFail  = iFalse;
     d->media    = NULL;
 }
@@ -226,6 +228,24 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
         clear_Block(data);
     }
     return isNew;
+}
+
+static iBool probeSize_GmImage_(iGmImage *d) {
+    /* Reads only the image header. */
+    const iBlock *data = &d->partialData;
+    d->numBytes = size_Block(data);
+    if (equalMediaType_String(&d->props.mime, "image/webp")) {
+#if defined (LAGRANGE_ENABLE_WEBP)
+        return WebPGetInfo(constData_Block(data), size_Block(data), &d->size.x, &d->size.y) != 0;
+#else
+        return iFalse;
+#endif
+    }
+    if (equalMediaType_String(&d->props.mime, "image/jxl")) {
+        return iFalse;
+    }
+    return stbi_info_from_memory(
+               constData_Block(data), (int) size_Block(data), &d->size.x, &d->size.y, NULL) != 0;
 }
 
 iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
@@ -463,6 +483,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             img = at_PtrArray(&d->items[image_MediaType], existingIndex);
             iAssert(equal_String(&img->props.mime, mime)); /* MIME cannot change */
             set_Block(&img->partialData, data);
+            img->isDeferred = iFalse;
             isNew = makeImageTexture_Media_(d, img, isPartial);
         }
     }
@@ -518,7 +539,13 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             img->props.isPermanent = !allowHide;
             set_String(&img->props.mime, mime);
             pushBack_PtrArray(&d->items[image_MediaType], img);
-            isNew = makeImageTexture_Media_(d, img, isPartial);
+            if (flags & deferred_MediaFlag && !isPartial && probeSize_GmImage_(img)) {
+                img->isDeferred = iTrue;
+                isNew = iTrue;
+            }
+            else {
+                isNew = makeImageTexture_Media_(d, img, isPartial);
+            }
         }
         else if (startsWith_String(mime, "audio/")) {
 #if defined (LAGRANGE_ENABLE_AUDIO)
@@ -597,7 +624,11 @@ SDL_Texture *imageTexture_Media(const iMedia *d, iMediaId imageId) {
     iAssert(imageId.type == image_MediaType);
     const size_t index = index_MediaId(imageId);
     if (index < size_PtrArray(&d->items[image_MediaType])) {
-        const iGmImage *img = constAt_PtrArray(&d->items[image_MediaType], index);
+        iGmImage *img = iConstCast(iGmImage *, constAt_PtrArray(&d->items[image_MediaType], index));
+        if (img->isDeferred) {
+            img->isDeferred = iFalse;
+            makeImageTexture_Media_(iConstCast(iMedia *, d), img, iFalse);
+        }
         return img->texture;
     }
     return NULL;
