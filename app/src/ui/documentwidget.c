@@ -3843,6 +3843,10 @@ static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
     if (document_Root(constAs_Widget(d)->root) != d) {
         return; /* background tabs are updated when shown */
     }
+    if (document_App() == d) {
+        /* May have just been switched to. Lay out with our fonts before the next frame. */
+        updateActiveDocPrefs_App();
+    }
     updateSize_DocumentWidget(d);
 }
 
