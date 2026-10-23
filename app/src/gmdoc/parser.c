@@ -57,6 +57,31 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
            (icon >= 0x1f191 && icon <= 0x1f19a) /* enclosed signs */;
 }
 
+static void loadEmbeddedImage_GmParser_(iGmDocument *d, iGmLinkId linkId, const iString *url) {
+    /* Images inside the book are part of the page. Only the size is needed for layout. */
+    const iString *entryPath = archiveEntryPath_GmDocument_(d, url);
+    if (!entryPath || findLinkImage_Media(d->media, linkId).type) {
+        return;
+    }
+    if (!d->archive) {
+        /* Kept open until the layout is finished. */
+        d->archive = new_Archive();
+        iString *path = localFilePathFromUrl_String(&d->archiveUrl);
+        if (path) {
+            openFile_Archive(d->archive, path);
+            delete_String(path);
+        }
+    }
+    const iBlock *data = data_Archive(d->archive, entryPath);
+    if (data) {
+        setData_Media(d->media,
+                      linkId,
+                      collectNewCStr_String(mediaType_Path(url)),
+                      data,
+                      allowHide_MediaFlag | deferred_MediaFlag);
+    }
+}
+
 static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
     /* Links are numbered in source order; invalid links are not added. */
     static iRegExp *pattern_;
@@ -202,6 +227,9 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
             }
         }
         pushBack_PtrArray(&d->links, link);
+        if (link->flags & imageFileExtension_GmLinkFlag) {
+            loadEmbeddedImage_GmParser_(d, size_PtrArray(&d->links), &link->url);
+        }
         iRangecc desc = capturedRange_RegExpMatch(&m, 2);
         trim_Rangecc(&desc);
         link->labelRange = desc;

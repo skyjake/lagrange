@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "color.h"
 #include "documentstyle.h"
 
+#include <the_Foundation/archive.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringset.h>
@@ -100,6 +101,8 @@ struct Impl_GmDocument {
     iString   source;     /* normalized (possibly converted) source */
     iString   url;        /* for resolving relative links */
     iString   themeUrl;   /* remote source of a book on the shelf, if any */
+    iString   archiveUrl; /* local Gempub containing the page, if any */
+    iArchive *archive;    /* open while images are being loaded from it */
     iString   mimeType;
     iString   localHost;
     iScopeKey scopeKey;
@@ -187,6 +190,7 @@ iBool                   isGopher_GmDocument_            (const iGmDocument *);
 iBool                   shouldBeNormalized_GmDocument_  (const iGmDocument *);
 enum iGmLineType        lineType_GmDocument_            (const iGmDocument *, const iRangecc line);
 void                    clearLinks_GmDocument_          (iGmDocument *);
+const iString *         archiveEntryPath_GmDocument_    (const iGmDocument *, const iString *url); /* NULL if not in the book */
 void                    updateOpenURLs_GmDocument_      (iGmDocument *);
 void                    rebase_GmDocument_              (iGmDocument *, const iGmRebase *);
 

@@ -201,6 +201,19 @@ void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
+const iString *archiveEntryPath_GmDocument_(const iGmDocument *d, const iString *url) {
+    if (isEmpty_String(&d->archiveUrl)) {
+        return NULL;
+    }
+    url = canonicalUrl_String(url);
+    if (!startsWith_String(url, cstr_String(&d->archiveUrl)) ||
+        cstr_String(url)[size_String(&d->archiveUrl)] != '/') {
+        return NULL;
+    }
+    return collect_String(
+        urlDecode_String(collectNewCStr_String(cstr_String(url) + size_String(&d->archiveUrl) + 1)));
+}
+
 iBool isGopherMenu_GmDocument(const iGmDocument *d) {
     if (d->flags.isGopherMenu) {
         /* We know from the URL that it's a menu. */
@@ -245,6 +258,8 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->themeUrl);
+    init_String(&d->archiveUrl);
+    d->archive = NULL;
     init_String(&d->fixedTitle);
     init_String(&d->mimeType);
     init_String(&d->localHost);
@@ -308,6 +323,8 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->localHost);
     deinit_String(&d->mimeType);
     deinit_String(&d->themeUrl);
+    deinit_String(&d->archiveUrl);
+    iReleasePtr(&d->archive);
     deinit_String(&d->fixedTitle);
     deinit_String(&d->url);
     deinit_String(&d->source);
@@ -798,9 +815,12 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     deinit_ScopeKey(&d->scopeKey);
     initUrl_ScopeKey(&d->scopeKey, url);
     clear_String(&d->themeUrl);
+    clear_String(&d->archiveUrl);
+    iReleasePtr(&d->archive);
     /* Pages of a local Gempub have a scope of their own, and each book is a site. */ {
         const iString *archive = localArchiveUrl_Gempub(url);
         if (archive) {
+            set_String(&d->archiveUrl, archive);
             setCStr_String(&d->scopeKey.scheme, "gempub");
             set_String(&d->scopeKey.site, archive);
             const iString *source =

@@ -863,6 +863,8 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
     const int    outsideMargin = d->outsideMargin;
     const iInt2 imgSize = imageSize_Media(doc->media, media);
     const iBool isCover = run->linkId == doc->coverImage;
+    const iBool hasInfo =
+        !isCover && !archiveEntryPath_GmDocument_(doc, linkUrl_GmDocument(doc, run->linkId));
     run->bounds.pos = d->pos;
     run->bounds.size.x = doc->size.x;
     const float aspect = (float) imgSize.y / (float) imgSize.x;
@@ -899,7 +901,7 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
         }
         const int maxHeight = doc->metrics.pageHeight - pageHeaderHeight_GmDocument(doc) -
                               pageFooterHeight_GmDocument(doc) -
-                              (isCover ? 0 : 2 * lineHeight_Text(paragraph_FontId)) - linkHeight;
+                              (hasInfo ? 2 * lineHeight_Text(paragraph_FontId) : 0) - linkHeight;
         if (height_Rect(run->visBounds) > maxHeight && maxHeight > 0) {
             run->visBounds.size.x =
                 width_Rect(run->visBounds) * maxHeight / height_Rect(run->visBounds);
@@ -915,7 +917,7 @@ static void addImage_Typesetter_(iTypesetter *d, iMediaId media, const iGmMediaI
     }
     pushBack_Array(d->layout, run);
     d->pos.y += run->bounds.size.y + margin / 2;
-    if (isCover) {
+    if (!hasInfo) {
         run->bounds.size.y = 0; /* already advanced */
         d->pos.y += margin / 2;
     }
@@ -1012,6 +1014,17 @@ static void addLinkContent_Typesetter_(iTypesetter *d) {
     }
 }
 
+static iBool isImageOnly_Typesetter_(const iTypesetter *d) {
+    const iGmDocument *doc    = d->doc;
+    const iGmLinkId    linkId = d->run.linkId;
+    if (!findLinkImage_Media(doc->media, linkId).type) {
+        return iFalse;
+    }
+    return linkId == doc->coverImage ||
+           (~linkFlags_GmDocument(doc, linkId) & humanReadable_GmLinkFlag &&
+            archiveEntryPath_GmDocument_(doc, linkUrl_GmDocument(doc, linkId)));
+}
+
 static void typesetLine_Typesetter_(iTypesetter *d) {
     parseUntil_GmDocument_(d->doc, d->contentLine.end);
     d->line = d->contentLine;
@@ -1027,8 +1040,7 @@ static void typesetLine_Typesetter_(iTypesetter *d) {
         addBlankLine_Typesetter_(d);
         return;
     }
-    if (d->type == link_GmLineType && d->run.linkId == d->doc->coverImage &&
-        findLinkImage_Media(d->doc->media, d->run.linkId).type) {
+    if (d->type == link_GmLineType && isImageOnly_Typesetter_(d)) {
         /* Just the image, without the link text. */
         addLinkContent_Typesetter_(d);
         d->prevType         = d->type;
@@ -1442,6 +1454,7 @@ const iGmRun *layoutUntilKept_Typesetter_(iTypesetter *d) {
 void finish_Typesetter_(iTypesetter *d) {
     iGmDocument *doc = d->doc;
     ensureParsed_GmDocument_(doc);
+    iReleasePtr(&doc->archive); /* all images loaded */
     setAnsiFlags_Text(doc->ansiEscapes);
     closeOpenPre_Typesetter_(d);
     if (d->isPaged) {
