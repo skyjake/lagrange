@@ -296,8 +296,23 @@ static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
                             : tightModeLabels_[d->mode],
                         NULL);
     setFont_LabelWidget(icon, uiLabelHuge_FontId);
-    setTextColor_LabelWidget(icon, uiTextDisabled_ColorId); /* dimmer than "dim" */
+    setTextColor_LabelWidget(icon, uiTextExtraDim_ColorId);
     addChildFlags_Widget(div, iClob(icon), frameless_WidgetFlag);
+}
+
+static iWidget *makeBlankDiv_SidebarWidget_(const iSidebarWidget *d) {
+    iWidget *div = makeVDiv_Widget();
+    setPadding_Widget(div, 3 * gap_UI, 0, isTerminal_Platform() ? 5 : (3 * gap_UI), 2 * gap_UI);
+    addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+    addBlankIcon_SidebarWidget_(d, div);
+    return div;
+}
+
+static iLabelWidget *addBlankMessage_SidebarWidget_(iWidget *div, const char *text) {
+    iLabelWidget *msg = new_LabelWidget(text, NULL);
+    setFont_LabelWidget(msg, uiLabelLarge_FontId);
+    setTextColor_LabelWidget(msg, uiTextExtraDim_ColorId);
+    return addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
 }
 
 static int actionsBottomInset_SidebarWidget_(const iSidebarWidget *d) {
@@ -641,30 +656,18 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     d->list->hideItemOnDrag = (isMobile_Platform() && d->mode == openDocuments_SidebarMode);
     /* Content for a blank tab. */
     if (isEmpty) {
-        const int rightPad = (isTerminal_Platform() ? 5 : (3 * gap_UI));
         if (d->mode == feedEntries_SidebarMode) {
-            iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
-            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            addBlankIcon_SidebarWidget_(d, div);
+            iWidget *div = makeBlankDiv_SidebarWidget_(d);
             if (d->feedsMode == all_FeedsMode) {
                 if (numSubscribed_Feeds() == 0) {
-                    iLabelWidget *msg =
-                        addChildFlags_Widget(div,
-                                             iClob(new_LabelWidget("${sidebar.empty.feeds}", NULL)),
-                                             frameless_WidgetFlag);
-                    setFont_LabelWidget(msg, uiLabelLarge_FontId);
+                    addBlankMessage_SidebarWidget_(div, "${sidebar.empty.feeds}");
                     addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
                 }
                 addChild_Widget(div,
                                 iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
             }
             else {
-                iLabelWidget *msg =
-                    addChildFlags_Widget(div,
-                                         iClob(new_LabelWidget("${sidebar.empty.unread}", NULL)),
-                                         frameless_WidgetFlag);
-                setFont_LabelWidget(msg, uiLabelLarge_FontId);
+                addBlankMessage_SidebarWidget_(div, "${sidebar.empty.unread}");
                 arrange_Widget(d->actions);
                 div->padding[3] = height_Widget(d->actions);
             }
@@ -673,19 +676,14 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         }
         else if (d->mode == subscriptions_SidebarMode || d->mode == siteStructure_SidebarMode ||
                  d->mode == bookmarks_SidebarMode) {
-            iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
-            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            addBlankIcon_SidebarWidget_(d, div);
-            iLabelWidget *msg = new_LabelWidget(
+            iWidget *div = makeBlankDiv_SidebarWidget_(d);
+            addBlankMessage_SidebarWidget_(
+                div,
                 d->mode == subscriptions_SidebarMode ? "${sidebar.empty.subs}"
                 : d->mode == bookmarks_SidebarMode
                     ? (isShowingTrash_SidebarWidget(d) ? "${sidebar.empty.trash}"
                                                        : "${sidebar.empty.bookmarks}")
-                    : "${sidebar.empty.links}",
-                NULL);
-            setFont_LabelWidget(msg, uiLabelLarge_FontId);
-            addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
+                    : "${sidebar.empty.links}");
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             if (d->mode == bookmarks_SidebarMode) {
                 arrange_Widget(d->actions);
@@ -694,27 +692,18 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             addChild_Widget(d->blank, iClob(div));
         }
         else if (d->mode == gempub_SidebarMode) {
-            iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
+            iWidget *div = makeBlankDiv_SidebarWidget_(d);
             setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
-            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            addBlankIcon_SidebarWidget_(d, div);
-            iLabelWidget *msg = new_LabelWidget("${sidebar.empty.books}", NULL);
-            setFont_LabelWidget(msg, uiLabelLarge_FontId);
+            iLabelWidget *msg = addBlankMessage_SidebarWidget_(div, "${sidebar.empty.books}");
             setWrap_LabelWidget(msg, iTrue);
             setCenterWrapped_LabelWidget(msg, iTrue);
-            addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag | fixedHeight_WidgetFlag);
+            setFlags_Widget(as_Widget(msg), fixedHeight_WidgetFlag, iTrue);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChild_Widget(d->blank, iClob(div));
         }
         else if (d->mode == identities_SidebarMode) {
-            iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, rightPad, 2 * gap_UI);
-            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            addBlankIcon_SidebarWidget_(d, div);
-            iLabelWidget *msg = new_LabelWidget("${sidebar.empty.idents}", NULL);
-            setFont_LabelWidget(msg, uiLabelLarge_FontId);
-            addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
+            iWidget *div = makeBlankDiv_SidebarWidget_(d);
+            addBlankMessage_SidebarWidget_(div, "${sidebar.empty.idents}");
             addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
             addChild_Widget(div, iClob(new_LabelWidget("${menu.identity.new}", "ident.new")));
             addChild_Widget(div, iClob(makePadding_Widget(gap_UI)));

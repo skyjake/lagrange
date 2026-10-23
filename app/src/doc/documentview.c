@@ -1650,7 +1650,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     if (!isTerminal_Platform()) {
                         drawRoundRectRadius_Paint(&d->paint,
                                                   frame,
-                                                  gap_Text,
+                                                  gap_Text * 3 / 2,
                                                   all_RoundCorner,
                                                   frame_UI,
                                                   none_ColorId,

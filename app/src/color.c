@@ -331,6 +331,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiMatching_ColorId, accentHi);
             break;
     }
+    set_Color(uiTextExtraDim_ColorId,
+              mix_Color(get_Color(uiTextDim_ColorId), get_Color(uiBackground_ColorId), 0.5f));
     set_Color(uiSubheading_ColorId,
               mix_Color(get_Color(uiText_ColorId),
                         get_Color(uiIcon_ColorId),
