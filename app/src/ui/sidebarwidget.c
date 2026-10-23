@@ -296,7 +296,7 @@ static void addBlankIcon_SidebarWidget_(const iSidebarWidget *d, iWidget *div) {
                             : tightModeLabels_[d->mode],
                         NULL);
     setFont_LabelWidget(icon, uiLabelHuge_FontId);
-    setTextColor_LabelWidget(icon, uiTextDim_ColorId);
+    setTextColor_LabelWidget(icon, uiTextDisabled_ColorId); /* dimmer than "dim" */
     addChildFlags_Widget(div, iClob(icon), frameless_WidgetFlag);
 }
 
