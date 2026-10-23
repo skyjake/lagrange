@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2026-08-08 04:58+0000\n"
+"PO-Revision-Date: 2026-10-24 22:06+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -52,14 +52,14 @@ msgid "n.bit"
 msgstr "%d bit"
 
 msgid "numbertype.integer"
-msgstr "tamsayı"
+msgstr "tam sayı"
 
 msgid "numbertype.float"
 msgstr "kayan noktalı değer"
 
 # Used in about:feeds.
 msgid "feeds.list.title"
-msgstr "Besleme girdileri"
+msgstr "Besleme Girdileri"
 
 #, c-format
 msgid "minutes.ago"
@@ -272,10 +272,10 @@ msgid "menu.identity.notactive"
 msgstr "Etkin Kimlik Yok"
 
 msgid "sidebar.bookmarks"
-msgstr "Yer imleri"
+msgstr "Yer İmleri"
 
 msgid "sidebar.feeds"
-msgstr "Besleme girdileri"
+msgstr "Besleme Girdileri"
 
 msgid "sidebar.history"
 msgstr "Geçmiş"
@@ -296,7 +296,7 @@ msgid "sidebar.action.ident.import"
 msgstr "İçe aktar…"
 
 msgid "toolbar.outline"
-msgstr "Sayfa ana hattı"
+msgstr "Sayfa Ana Hattı"
 
 msgid "hint.findtext"
 msgstr "sayfada metin bul"
@@ -329,8 +329,8 @@ msgstr[1] "%u dosya"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "%u yazıtipi"
-msgstr[1] "%u yazıtipi"
+msgstr[0] "%u font"
+msgstr[1] "%u font"
 
 # strftime() formatted
 #, c-format
@@ -346,22 +346,22 @@ msgid "feeds.today"
 msgstr "Bugün"
 
 msgid "sidebar.entry.bookmark"
-msgstr "Yer imi ekle…"
+msgstr "Yer İmi Koy…"
 
 msgid "feeds.entry.bookmark"
-msgstr "Yer imi ekle…"
+msgstr "Yer İmi Koy…"
 
 msgid "feeds.entry.openfeed"
-msgstr "Beslemeler sayfasını aç"
+msgstr "Beslemeler Sayfasını Aç"
 
 msgid "feeds.edit"
-msgstr "Beslemeyi düzenle…"
+msgstr "Beslemeyi Düzenle…"
 
 msgid "feeds.markallread"
-msgstr "Tümü okundu"
+msgstr "Tümünü Okundu Olarak İmle"
 
 msgid "feeds.refresh"
-msgstr "Beslemeleri yenile"
+msgstr "Beslemeleri Yenile"
 
 msgid "menu.opentab"
 msgstr "Yeni Sekmede Aç"
@@ -382,13 +382,13 @@ msgid "menu.copyurl"
 msgstr "URL’yi Kopyala"
 
 msgid "history.clear"
-msgstr "Geçmişi temizle…"
+msgstr "Geçmişi Temizle…"
 
 msgid "heading.history.clear"
 msgstr "Geçmişi Temizle"
 
 msgid "dlg.history.clear"
-msgstr "Geçmişi temizle"
+msgstr "Geçmişi Temizle"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -409,7 +409,7 @@ msgid "bookmark.untag.sub"
 msgstr "Abonelikten Çık"
 
 msgid "bookmark.untag.remote"
-msgstr "Yer imi Kaynağını Kaldır"
+msgstr "Yer İmi Kaynağını Kaldır"
 
 msgid "bookmark.delete"
 msgstr "Yer İmini Sil"
@@ -438,13 +438,13 @@ msgid "ident.expiry"
 msgstr "%b %d, %Y tarihinde süresi dolacak"
 
 msgid "ident.use"
-msgstr "Bu sayfada kullan"
+msgstr "Bu Sayfada Kullan"
 
 msgid "ident.stopuse.all"
-msgstr "Her yerde kullanmayı bırak"
+msgstr "Her Yerde Kullanmayı Bırak"
 
 msgid "ident.export"
-msgstr "Dışa aktar"
+msgstr "Dışa Aktar"
 
 msgid "heading.ident.use"
 msgstr "Kimlik Kullanımı"
@@ -903,7 +903,7 @@ msgid "heading.prefs.certs"
 msgstr "Sertifikalar"
 
 msgid "heading.prefs.fonts"
-msgstr "Yazıtipleri"
+msgstr "Fontlar"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1050,7 +1050,7 @@ msgid "prefs.imagestyle.text"
 msgstr "Metin rengi"
 
 msgid "prefs.font.ui"
-msgstr "Arayüz yazıtipi:"
+msgstr "Arayüz fontu:"
 
 msgid "prefs.font.heading"
 msgstr "Başlıklar:"
@@ -1059,7 +1059,7 @@ msgid "prefs.font.mono"
 msgstr "Önceden biçimlendirilmiş:"
 
 msgid "prefs.font"
-msgstr "Gövde yazıtipi:"
+msgstr "Gövde fontu:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -1075,13 +1075,13 @@ msgid "prefs.gemtext.ansi"
 msgstr "Gemtext ANSI kaçışları:"
 
 msgid "prefs.gemtext.ansi.fontstyle"
-msgstr "Yazıtipi biçemi"
+msgstr "Font biçemi"
 
 msgid "prefs.font.warnmissing"
-msgstr "Yazıtipi glif uyarıları:"
+msgstr "Font glif uyarıları:"
 
 msgid "prefs.font.smooth"
-msgstr "Yazıtipi düzleştirme:"
+msgstr "Font düzleştirme:"
 
 msgid "prefs.linewidth.normal"
 msgstr "Normal"
@@ -1356,13 +1356,13 @@ msgid "gempub.meta.license"
 msgstr "Lisans"
 
 msgid "heading.fontpack.meta"
-msgstr "Yazıtipleri"
+msgstr "Fontlar"
 
 msgid "heading.fontpack.meta.enabled"
-msgstr "Etkin Yazıtipi Paketleri"
+msgstr "Etkin Font Paketleri"
 
 msgid "heading.fontpack.meta.disabled"
-msgstr "Devre Dışı Yazıtipi Paketleri"
+msgstr "Devre Dışı Font Paketleri"
 
 # Action label
 msgid "fontpack.meta.viewfile"
@@ -1405,27 +1405,27 @@ msgid "fontpack.delete"
 msgstr "“%s” ögesini kalıcı olarak sil"
 
 msgid "heading.fontpack.delete"
-msgstr "Yazıtipi Paketini Sil"
+msgstr "Font Paketini Sil"
 
 msgid "dlg.fontpack.delete"
-msgstr "Yazıtipi paketini sil"
+msgstr "Font paketini sil"
 
 msgid "fontpack.install.ttf"
-msgstr "TrueType yazıtipi kur"
+msgstr "TrueType Font Kur"
 
 msgid "fontpack.open.fontsdir"
-msgstr "Kullanıcı yazıtipleri dizinini aç"
+msgstr "Kullanıcı Fontları Dizinini Aç"
 
 msgid "fontpack.open.aboutfonts"
-msgstr "Kurulu yazıtiplerini göster"
+msgstr "Kurulu Fontları Göster"
 
 msgid "truetype.help"
 msgstr ""
-"Lagrange, kullanıcı yazıtipleri dizinine kopyalanan tüm bireysel TrueType "
+"Lagrange, kullanıcı fontları dizinine kopyalanan tüm bireysel TrueType "
 "dosyalarını yüklemeyi dener."
 
 msgid "truetype.help.installed"
-msgstr "Bu yazıtipi, kullanıcı yazıtipleri dizinine kurulmuş."
+msgstr "Bu font, kullanıcı fontları dizinine kurulmuş."
 
 msgid "heading.dismiss.warning"
 msgstr "Uyarıyı Atla?"
@@ -1474,7 +1474,7 @@ msgstr "En son yenileme: %s."
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "ASCII sanatı: Büyükçe bir yazıtipi kullanarak “Lagrange” sözcüğü"
+msgstr "ASCII sanatı: Büyükçe bir font kullanarak “Lagrange” sözcüğü"
 
 msgid "about.powered"
 msgstr "SDL 2, OpenSSL ve ☕️ yardımıyla yazılmıştır"
@@ -1552,7 +1552,7 @@ msgid "menu.autoreload"
 msgstr "Kendiliğinden Yeniden Yükle…"
 
 msgid "menu.fonts"
-msgstr "Yazıtiplerini Yönet…"
+msgstr "Fontları Yönet…"
 
 msgid "panel.back"
 msgstr "Geri"
@@ -1567,7 +1567,7 @@ msgid "menu.bookmarks.refresh"
 msgstr "Uzak Yer İmlerini Yenile"
 
 msgid "sidebar.outline"
-msgstr "Ana hat"
+msgstr "Ana Hat"
 
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
@@ -1587,13 +1587,13 @@ msgstr ""
 "%I.%M %p"
 
 msgid "feeds.entry.markread"
-msgstr "Okundu olarak imle"
+msgstr "Okundu Olarak İmle"
 
 msgid "feeds.entry.markunread"
-msgstr "Okunmadı olarak imle"
+msgstr "Okunmadı Olarak İmle"
 
 msgid "feeds.unsubscribe"
-msgstr "Abonelikten çık…"
+msgstr "Abonelikten Çık…"
 
 msgid "feeds.atom.translated"
 msgstr ""
@@ -1623,7 +1623,7 @@ msgid "bookmark.tag.remote"
 msgstr "Yer imi Kaynağı Olarak Kullan"
 
 msgid "ident.stopuse"
-msgstr "Bu sayfada kullanmayı bırak"
+msgstr "Bu Sayfada Kullanmayı Bırak"
 
 # %s refers to name of an identity.
 #, c-format
@@ -1875,7 +1875,7 @@ msgstr "Şu protokollerle kullan:"
 
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
-msgstr "Eş aralıklı yazıtipi:"
+msgstr "Eş aralıklı font:"
 
 msgid "prefs.boldlink"
 msgstr "Kalın bağlantılar:"
@@ -2034,18 +2034,18 @@ msgstr ""
 msgid "error.glyphs.msg"
 msgstr ""
 "Bu sayfa tam olarak görüntülenemiyor; çünkü bazı karakterler eksik. Bu "
-"sorunu çözmek için ek yazıtipleri kurabilirsiniz."
+"sorunu çözmek için ek fontlar kurabilirsiniz."
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
-msgstr "“%s” yazıtipi paketini kalıcı olarak silmek istiyor musunuz?"
+msgstr "“%s” font paketini kalıcı olarak silmek istiyor musunuz?"
 
 msgid "fontpack.help"
 msgstr ""
-"Lagrange yazıtipi paketleri, bir yazıtipi paketini ve ilişkin yapılandırma "
-"parametrelerini içeren ZIP arşivleridir. Kurulduktan sonra yazıtipleri, "
-"belge içeriği ve kullanıcı arabirimi için kullanılabilir. Etkin "
-"yazıtiplerini Tercihler > Yazıtipleri bölümünden seçebilirsiniz."
+"Lagrange font paketleri, bir font paketini ve ilişkin yapılandırma "
+"parametrelerini içeren ZIP arşivleridir. Kurulduktan sonra fontlar, belge "
+"içeriği ve kullanıcı arabirimi için kullanılabilir. Etkin fontları, "
+"Tercihler > Fontlar bölümünden seçebilirsiniz."
 
 msgid "prefs.hoverlink"
 msgstr "Üzerine gelince URL’yi göster:"
@@ -2068,7 +2068,7 @@ msgstr "24 saat biçimi:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
-msgstr "Tümünü oku"
+msgstr "Tümünü Oku"
 
 msgid "menu.home"
 msgstr "Ana Sayfaya Git"
@@ -2091,7 +2091,7 @@ msgstr "Tamam"
 # The %s represents the name of an identity.
 #, c-format
 msgid "ident.switch"
-msgstr "%s kullan"
+msgstr "%s Kullan"
 
 msgid "menu.upload.delete.confirm"
 msgstr "Tümünü Gerçekten Sil (Geri Alınamaz)"
@@ -2107,7 +2107,7 @@ msgid "menu.hide.identities"
 msgstr "Kimlikleri Gizle"
 
 msgid "sidebar.action.bookmarks.newfolder"
-msgstr "Yeni klasör"
+msgstr "Yeni Klasör"
 
 msgid "sidebar.action.bookmarks.edit"
 msgstr "Düzenle"
@@ -2160,7 +2160,7 @@ msgstr "Araç Çubuğu Eylemleri"
 
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
-msgstr "Eylem ayarla:"
+msgstr "Eylem Ayarla:"
 
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
@@ -2189,9 +2189,8 @@ msgstr "Eksik Glifler"
 
 msgid "dlg.glyphfinder.help"
 msgstr ""
-"Bu karakterler için glifler sağlayan yazıtipleri için skyjake.fi Yazıtipi "
-"Kitaplığı’nı aramayı veya el ile yeni TrueType yazıtipleri kurmayı "
-"deneyebilirsiniz."
+"Bu karakterler için glifler sağlayan fontlar için skyjake.fi Font Kitaplığı’"
+"nı aramayı veya el ile yeni TrueType fontları kurmayı deneyebilirsiniz."
 
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"
@@ -2231,18 +2230,18 @@ msgid "dlg.glyphfinder.disable"
 msgstr "Uyarıları Devre Dışı Bırak"
 
 msgid "dlg.glyphfinder.search"
-msgstr "Yazıtipi Kitaplığı’nda Ara"
+msgstr "Font Kitaplığı’nda Ara"
 
 msgid "heading.glyphfinder.results"
 msgstr "Arama Sonuçları"
 
 msgid "glyphfinder.results"
 msgstr ""
-"Aşağıdaki yazıtipi paketleri bir veya daha fazla eksik glif için karakter "
+"Aşağıdaki font paketleri bir veya daha fazla eksik glif için karakter "
 "sağlıyor:"
 
 msgid "glyphfinder.results.empty"
-msgstr "Üzgünüm; eşleşen yazıtipi paketi bulunamadı."
+msgstr "Üzgünüm; eşleşen font paketi bulunamadı."
 
 msgid "prefs.tabwidth"
 msgstr "Sekme genişliği:"
@@ -2274,7 +2273,7 @@ msgid "menu.aboutapp"
 msgstr "Lagrange Hakkında"
 
 msgid "feeds.entry.markbelowread"
-msgstr "Aşağıdakini okundu olarak imle"
+msgstr "Aşağıdakini Okundu Olarak İmle"
 
 msgid "sitespec.tlscache"
 msgstr "TLS oturumunu sürdür:"
@@ -2433,7 +2432,7 @@ msgid "menu.folder.opentab"
 msgstr "Yeni Sekmelerde Aç"
 
 msgid "bookmark.folder.delete"
-msgstr "Yer imleri klasörünü sil"
+msgstr "Yer İmleri Klasörünü Sil"
 
 msgid "dlg.bookmark.notes"
 msgstr "Notlar:"
@@ -2451,7 +2450,7 @@ msgid "dlg.newident.scope.dir"
 msgstr "Geçerli dizin"
 
 msgid "ident.unset"
-msgstr "Sabitlemeyi kaldır"
+msgstr "Sabitlemeyi Kaldır"
 
 msgid "heading.prefs.user"
 msgstr "Kullanıcı Verisi"
@@ -2815,7 +2814,7 @@ msgid "misfin.changed"
 msgstr "Misfin sertifikanız, alıcı tarafından beklenenle eşleşmiyor."
 
 msgid "ident.sendmsg"
-msgstr "İletiyi farklı gönder…"
+msgstr "İletiyi Farklı Gönder…"
 
 msgid "heading.upload.misfin"
 msgstr "Misfin İletisi Gönder"
@@ -2906,7 +2905,7 @@ msgstr[0] "%u girdi"
 msgstr[1] "%u girdi"
 
 msgid "hint.filter.bookmark"
-msgstr "yer imlerini süz"
+msgstr "Yer imlerini süz"
 
 msgid "heading.prefs.theme"
 msgstr "Tema"
@@ -2915,7 +2914,7 @@ msgid "prefs.quote.italic"
 msgstr "Eğik alıntı metni:"
 
 msgid "feeds.reset"
-msgstr "Bilinen girdileri sıfırla"
+msgstr "Bilinen Girdileri Sıfırla"
 
 msgid "menu.show.structure"
 msgstr "Site Yapısını Göster"
@@ -2945,7 +2944,7 @@ msgid "menu.sidebar.configure"
 msgstr "Yapılandır…"
 
 msgid "heading.prefs.sidebars"
-msgstr "Kenar çubukları"
+msgstr "Kenar Çubukları"
 
 msgid "prefs.sidebar.left"
 msgstr "Sol"
