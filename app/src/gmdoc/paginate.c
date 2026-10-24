@@ -303,6 +303,37 @@ static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *group
     return first > 0 && (first < moved || isCaptionMoved) ? first : n;
 }
 
+static int shrinkImageToFit_GmDocument_(iArray *runs, size_t start, size_t end, int overflow) {
+    /* An image is scaled down by up to 25% to fit in the column. Returns the decrease in
+       height. */
+    size_t pos = start;
+    while (pos < end && ((const iGmRun *) constAt_Array(runs, pos))->flags & decoration_GmRunFlag) {
+        pos++;
+    }
+    if (pos == end) {
+        return 0;
+    }
+    iGmRun   *image  = at_Array(runs, pos);
+    const int height = height_Rect(image->visBounds);
+    if (image->mediaType != image_MediaType || overflow <= 0 || overflow > height / 4) {
+        return 0;
+    }
+    const int width = width_Rect(image->visBounds);
+    image->visBounds.size.y = height - overflow;
+    image->visBounds.size.x = width * (height - overflow) / height;
+    image->visBounds.pos.x += (width - width_Rect(image->visBounds)) / 2;
+    image->bounds.size.y    = height_Rect(image->visBounds);
+    /* The caption moves up. */
+    for (pos++; pos < end; pos++) {
+        iGmRun *run = at_Array(runs, pos);
+        run->visBounds.pos.y -= overflow;
+        if (!isEmpty_Rect(run->bounds)) {
+            run->bounds.pos.y -= overflow;
+        }
+    }
+    return overflow;
+}
+
 static size_t keptWithHeadingEnd_GmDocument_(const iArray *src, size_t start) {
     /* End of the headings beginning at `start`, and the first two lines of what follows. */
     const size_t numSrc = size_Array(src);
@@ -359,7 +390,7 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
 }
 
 void paginate_GmDocument_(iGmDocument *d) {
-    const iArray *src     = collect_Array(copy_Array(&d->layout));
+    iArray       *src     = collect_Array(copy_Array(&d->layout));
     const size_t  numSrc  = size_Array(src);
     const size_t  perPage = columnsPerPage_GmDocument(d);
     clear_Array(&d->layout);
@@ -376,9 +407,14 @@ void paginate_GmDocument_(iGmDocument *d) {
     iBool    hasTitle  = iFalse; /* the first level 1 heading is a title, not a chapter */
     init_Array(&colGroups, sizeof(iColumnGroup));
     for (size_t i = 0; i < numSrc;) {
-        size_t        end       = groupEnd_GmDocument_(src, i);
-        const iRangei span      = groupSpan_GmDocument_(src, i, end);
-        const iBool   isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || column > 0);
+        size_t      end       = groupEnd_GmDocument_(src, i);
+        iRangei     span      = groupSpan_GmDocument_(src, i, end);
+        const iBool isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || column > 0);
+        int         shrink    = 0;
+        if (i != firstGroup && !isChapter) {
+            shrink = shrinkImageToFit_GmDocument_(src, i, end, span.end + offset - content.end);
+            span.end -= shrink;
+        }
         if (i != firstGroup && (isChapter || span.end + offset > content.end)) {
             /* Continue in the next column. Some of the placed groups may move along. */
             const size_t moved = isChapter ? size_Array(&colGroups)
@@ -440,6 +476,9 @@ void paginate_GmDocument_(iGmDocument *d) {
             srcBottom  = iMax(srcBottom, bottom_Rect(run.visBounds) - offset);
             pushBack_Array(&d->layout, &run);
         }
+        /* The following runs were not moved up with the shrunk image. */
+        offset    -= shrink;
+        srcBottom += shrink;
     }
     /* The last column with content is aligned to the top, unless it is the only one or on a
        cover. The inset at the bottom of the page's last column is needed only if the content
