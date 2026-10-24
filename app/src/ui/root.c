@@ -290,6 +290,7 @@ static void     startCursorIdleCheck_Root_  (iRoot *);
 static void     finishHidingReadingBars_Root_(void *);
 static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
 static void     setReadingBarsVisible_Root_ (iRoot *, iBool show);
+static void     applyReadingBars_Root_      (iRoot *, iBool show);
 static void     updateReadingBarsOnTop_Root_(iRoot *);
 static void     showToolbar_Root_           (iRoot *, iBool show);
 
@@ -2963,7 +2964,8 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
         return;
     }
     if (!reading) {
-        showReadingBars_Root(d, iTrue);
+        /* Shown even under a sheet, since they can't be revealed after leaving. */
+        applyReadingBars_Root_(d, iTrue);
         if (readingBarsTimer_Root_(d)) {
             remove_Periodic(periodic_App(), readingBarsTimer_Root_(d));
         }
@@ -3095,6 +3097,10 @@ void showReadingBars_Root(iRoot *d, iBool show) {
     if (show && isSheetOpen_Root(d)) {
         show = iFalse; /* not drawn over sheets */
     }
+    applyReadingBars_Root_(d, show);
+}
+
+static void applyReadingBars_Root_(iRoot *d, iBool show) {
     const iBool animate = prefs_App()->uiAnimations && d->areReadingBarsHidden == show;
     d->areReadingBarsHidden = !show;
     if (deviceType_App() == phone_AppDeviceType) {
