@@ -299,8 +299,9 @@ static void updateActiveDocPrefs_MainWindow_(iMainWindow *mw) {
     }
     if (diff & font_DocPrefsSpecFlag) {
         /* Layouts made with other fonts are kept, and redone only when shown with the
-           wrong fonts. */
-        if (isFinishedLaunching_App()) {
+           wrong fonts. An existing freeze is ended by whoever began it. */
+        const iBool isFreezing = isFinishedLaunching_App() && !mw->isDrawFrozen;
+        if (isFreezing) {
             setFreezeDraw_MainWindow(mw, iTrue); /* no intermediate draws */
         }
         resetFonts_Window(win);
@@ -310,6 +311,8 @@ static void updateActiveDocPrefs_MainWindow_(iMainWindow *mw) {
                     postCommand_Root(win->roots[i], "font.changed active:1");
                 }
             }
+        }
+        if (isFreezing) {
             postCommand_Root(win->roots[0], "window.unfreeze");
         }
     }

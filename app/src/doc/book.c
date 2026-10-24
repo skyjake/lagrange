@@ -37,25 +37,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/scrollwidget.h"
 #include "ui/util.h"
 #include "ui/widget.h"
+#include "ui/window.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <SDL3/SDL_timer.h>
+#include <limits.h>
 #include <math.h>
 
 static const int progressUnit_DocumentBook_ = 10000; /* fractions of a chapter */
+static const int noChapter_DocumentBook_    = INT_MIN;
 
 iDefineTypeConstruction(DocumentBook)
+
+static void unfreeze_DocumentBook_(iDocumentBook *d) {
+    if (d->flags & drawFrozen_DocumentBookFlag) {
+        d->flags &= ~drawFrozen_DocumentBookFlag;
+        postCommand_App("window.unfreeze");
+    }
+}
 
 void init_DocumentBook(iDocumentBook *d) {
     d->owner             = NULL;
     d->flags             = 0;
-    d->pendingChapter    = iInvalidPos;
+    d->pendingChapter    = noChapter_DocumentBook_;
     d->progressChapter   = iInvalidPos;
     d->progressAnimEnd   = 0;
     d->pendingChapterPos = -1.0f;
     d->resumeChapterPos  = -1.0f;
-    d->savedChapter      = iInvalidPos;
+    d->savedChapter      = noChapter_DocumentBook_;
     d->savedColumn       = 0;
     init_String(&d->readingBookId);
     d->didTurnPage       = iFalse;
@@ -63,6 +73,7 @@ void init_DocumentBook(iDocumentBook *d) {
 }
 
 void deinit_DocumentBook(iDocumentBook *d) {
+    unfreeze_DocumentBook_(d); /* closed while the resumed chapter was opening */
     deinit_String(&d->offeredEdition);
     deinit_String(&d->readingBookId);
 }
@@ -135,6 +146,39 @@ static size_t chapter_DocumentBook_(const iDocumentBook *d, size_t *numChapters_
     return chapter - 1;
 }
 
+static iBool position_DocumentBook_(const iDocumentBook *d, int *chapter_out,
+                                    size_t *numChapters_out) {
+    /* The shown chapter, or the cover or contents page (see iBookChapter). */
+    const size_t chapter = chapter_DocumentBook_(d, numChapters_out);
+    if (chapter != iInvalidPos) {
+        *chapter_out = (int) chapter;
+        return iTrue;
+    }
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    const iString *url    = url_DocumentWidget(d->owner);
+    if (!gempub || isRemote_Gempub(gempub)) {
+        return iFalse;
+    }
+    if (isCoverPageUrl_Gempub(gempub, url)) {
+        *chapter_out = cover_BookChapter;
+    }
+    else if (isIndexPageUrl_Gempub(gempub, url)) {
+        *chapter_out = contents_BookChapter;
+    }
+    else {
+        return iFalse;
+    }
+    *numChapters_out = navSize_Gempub(gempub);
+    return iTrue;
+}
+
+static const iString *chapterUrl_DocumentBook_(const iDocumentBook *d, int chapter) {
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    return chapter == cover_BookChapter      ? coverPageUrl_Gempub(gempub)
+           : chapter == contents_BookChapter ? indexPageUrl_Gempub(gempub)
+                                             : navLinkUrl_Gempub(gempub, chapter);
+}
+
 static int progressThumbSize_DocumentBook_(const iDocumentBook *d) {
     /* A spread may extend past the last column of the chapter. */
     const iDocumentView *view    = view_DocumentBook_(d);
@@ -199,27 +243,48 @@ iBool isReadingOn_DocumentBook(const iDocumentBook *d) {
     return (d->flags & readingOn_DocumentBookFlag) != 0;
 }
 
-void resume_DocumentBook(iDocumentBook *d, size_t chapter, float chapterPos) {
+void resume_DocumentBook(iDocumentBook *d, int chapter, float chapterPos) {
     d->pendingChapter    = chapter;
     d->pendingChapterPos = -1.0f;
     d->resumeChapterPos  = chapterPos;
 }
 
+void freezeForResume_DocumentBook(iDocumentBook *d, const iString *url) {
+    /* A shelf book's cover is not shown if reading continues in another chapter. */
+    if (d->flags & readingOn_DocumentBookFlag || isReader_DocumentWidget(d->owner) ||
+        !isLocalFileScheme_Rangecc(urlScheme_String(url))) {
+        return;
+    }
+    const iBook *book = findByPath_Books(collect_String(localFilePathFromUrl_String(url)));
+    if (!book || (book->chapter != contents_BookChapter &&
+                  (book->chapter < 0 || book->chapter >= book->numChapters))) {
+        return;
+    }
+    iWindow *win = window_Widget(d->owner);
+    if (isDrawFrozen_Window(win)) {
+        return; /* someone else unfreezes */
+    }
+    setFreezeDraw_MainWindow(as_MainWindow(win), iTrue);
+    d->flags |= drawFrozen_DocumentBookFlag;
+}
+
 void resetSavedPosition_DocumentBook(iDocumentBook *d) {
-    d->savedChapter = iInvalidPos;
+    d->savedChapter = noChapter_DocumentBook_;
 }
 
 void applyResume_DocumentBook(iDocumentBook *d) {
     if (d->resumeChapterPos < 0.0f) {
+        unfreeze_DocumentBook_(d);
         return;
     }
-    const iGempub *gempub = gempub_DocumentBook_(d);
-    if (gempub && isCoverPageUrl_Gempub(gempub, url_DocumentWidget(d->owner))) {
+    iDocumentView *view = view_DocumentBook_(d);
+    int            chapter;
+    size_t         numChapters;
+    const iBool    isBook = position_DocumentBook_(d, &chapter, &numChapters);
+    if (isBook && chapter == cover_BookChapter && d->pendingChapter != cover_BookChapter) {
         return; /* the chapter is opened next */
     }
-    iDocumentView *view = view_DocumentBook_(d);
-    size_t numChapters;
-    if (chapter_DocumentBook_(d, &numChapters) == d->pendingChapter) {
+    if (isBook && chapter == d->pendingChapter) {
         if (isPaged_DocumentView(view)) {
             showSourcePosition_DocumentView(view, d->resumeChapterPos);
         }
@@ -228,13 +293,15 @@ void applyResume_DocumentBook(iDocumentBook *d) {
         }
     }
     d->resumeChapterPos = -1.0f;
+    unfreeze_DocumentBook_(d);
 }
 
 static void savePosition_DocumentBook_(iDocumentBook *d) {
     /* Positions are saved when chapters are opened and pages are turned. */
-    size_t       numChapters;
-    const size_t chapter = chapter_DocumentBook_(d, &numChapters);
-    if (chapter == iInvalidPos || d->savedChapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
+    int    chapter;
+    size_t numChapters;
+    if (!position_DocumentBook_(d, &chapter, &numChapters) ||
+        d->savedChapter == noChapter_DocumentBook_ || d->resumeChapterPos >= 0.0f) {
         return; /* no baseline yet */
     }
     const size_t column = currentColumn_DocumentBook_(d);
@@ -245,30 +312,31 @@ static void savePosition_DocumentBook_(iDocumentBook *d) {
     d->savedColumn  = column;
     d->didTurnPage  = iTrue;
     setPosition_Books(
-        gempub_DocumentBook_(d), (int) chapter, (int) numChapters, sourcePosition_DocumentBook_(d));
+        gempub_DocumentBook_(d), chapter, (int) numChapters, sourcePosition_DocumentBook_(d));
 }
 
 void beginPosition_DocumentBook(iDocumentBook *d) {
     /* Restored tabs and layout changes keep the saved position, but another chapter replaces it. */
-    size_t       numChapters;
-    const size_t chapter = chapter_DocumentBook_(d, &numChapters);
-    d->savedChapter      = chapter;
-    d->savedColumn       = currentColumn_DocumentBook_(d);
-    if (chapter != iInvalidPos) {
-        const iGempub *gempub = gempub_DocumentBook_(d);
-        const iString *bookId = id_Books(gempub);
-        if (!equal_String(&d->readingBookId, bookId)) {
-            /* The synced position may be more recent. */
-            set_String(&d->readingBookId, bookId);
-            d->didTurnPage = iFalse;
-            beginReading_Books(gempub);
-            notify_App("sync.recent");
-        }
-        const iBook *book = find_Books(bookId);
-        if (!book || book->chapter != (int) chapter) {
-            setPosition_Books(
-                gempub, (int) chapter, (int) numChapters, sourcePosition_DocumentBook_(d));
-        }
+    int    chapter;
+    size_t numChapters;
+    d->savedChapter = noChapter_DocumentBook_;
+    d->savedColumn  = currentColumn_DocumentBook_(d);
+    if (!position_DocumentBook_(d, &chapter, &numChapters) || d->resumeChapterPos >= 0.0f) {
+        return; /* the resumed chapter is opened next */
+    }
+    d->savedChapter       = chapter;
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    const iString *bookId = id_Books(gempub);
+    if (!equal_String(&d->readingBookId, bookId)) {
+        /* The synced position may be more recent. */
+        set_String(&d->readingBookId, bookId);
+        d->didTurnPage = iFalse;
+        beginReading_Books(gempub);
+        notify_App("sync.recent");
+    }
+    const iBook *book = find_Books(bookId);
+    if (!book || book->chapter != chapter) {
+        setPosition_Books(gempub, chapter, (int) numChapters, sourcePosition_DocumentBook_(d));
     }
 }
 
@@ -277,8 +345,9 @@ void didFinishRequest_DocumentBook(iDocumentBook *d) {
     d->flags &= ~readingOn_DocumentBookFlag;
     if (d->pendingChapterPos >= 0.0f) {
         /* Arrived via the progress bar. */
+        int    chapter;
         size_t numChapters;
-        if (chapter_DocumentBook_(d, &numChapters) == d->pendingChapter) {
+        if (position_DocumentBook_(d, &chapter, &numChapters) && chapter == d->pendingChapter) {
             if (isPaged_DocumentView(view)) {
                 showColumn_DocumentView(
                     view, columnEndingAt_DocumentBook_(d, d->pendingChapterPos), iFalse);
@@ -321,9 +390,13 @@ void didFinishRequest_DocumentBook(iDocumentBook *d) {
     }
 }
 
-void jumpToPosition_DocumentBook(iDocumentBook *d, size_t chapter, float pos) {
+void jumpToPosition_DocumentBook(iDocumentBook *d, int chapter, float pos) {
+    int    current;
     size_t numChapters;
-    if (chapter_DocumentBook_(d, &numChapters) == chapter) {
+    if (!position_DocumentBook_(d, &current, &numChapters)) {
+        return;
+    }
+    if (current == chapter) {
         resume_DocumentBook(d, chapter, pos);
         applyResume_DocumentBook(d);
         d->savedColumn = currentColumn_DocumentBook_(d);
@@ -332,20 +405,20 @@ void jumpToPosition_DocumentBook(iDocumentBook *d, size_t chapter, float pos) {
         }
         refresh_Widget(d->owner);
     }
-    else if (chapter < numChapters) {
+    else if (chapter >= contents_BookChapter && chapter < (int) numChapters) {
         resume_DocumentBook(d, chapter, pos);
         d->flags |= readingOn_DocumentBookFlag;
         postCommandf_Root(as_Widget(d->owner)->root,
                           "open doc:%p url:%s",
                           d->owner,
-                          cstr_String(navLinkUrl_Gempub(gempub_DocumentBook_(d), chapter)));
+                          cstr_String(chapterUrl_DocumentBook_(d, chapter)));
     }
 }
 
 void checkSyncedPosition_DocumentBook(iDocumentBook *d) {
-    size_t       numChapters;
-    const size_t chapter = chapter_DocumentBook_(d, &numChapters);
-    if (chapter == iInvalidPos || d->resumeChapterPos >= 0.0f) {
+    int    chapter;
+    size_t numChapters;
+    if (!position_DocumentBook_(d, &chapter, &numChapters) || d->resumeChapterPos >= 0.0f) {
         return;
     }
     const iGempub *gempub = gempub_DocumentBook_(d);
@@ -353,11 +426,11 @@ void checkSyncedPosition_DocumentBook(iDocumentBook *d) {
         return; /* the position is in the newer edition */
     }
     const iBook *book = find_Books(id_Books(gempub));
-    if (!book || book->chapter < 0 || (size_t) book->chapter >= numChapters) {
+    if (!book || book->chapter < contents_BookChapter || book->chapter >= (int) numChapters) {
         return;
     }
     const float pos = sourcePosition_DocumentBook_(d);
-    if ((size_t) book->chapter == chapter && fabsf(book->chapterPos - pos) < 0.001f) {
+    if (book->chapter == chapter && fabsf(book->chapterPos - pos) < 0.001f) {
         return;
     }
     if (!d->didTurnPage) {
@@ -369,7 +442,8 @@ void checkSyncedPosition_DocumentBook(iDocumentBook *d) {
     }
     makeQuestion_Widget(
         uiHeading_ColorEscape "${heading.book.synced}",
-        format_Lang("${dlg.book.synced}", book->chapter + 1),
+        book->chapter >= 0 ? format_Lang("${dlg.book.synced}", book->chapter + 1)
+                           : "${dlg.book.synced.frontmatter}",
         (iMenuItem[]){ { "${cancel}" },
                        { uiTextAction_ColorEscape "${dlg.book.synced.jump}",
                          SDLK_RETURN,
@@ -425,7 +499,7 @@ iBool moveProgress_DocumentBook(iDocumentBook *d, int thumb) {
     const float pos  = iClamp((float) (end - target * unit) / unit, 0.0f, 1.0f);
     const iBool isPending = d->pendingChapterPos >= 0.0f;
     if (isPending || (size_t) target != chapter) {
-        if ((size_t) target != (isPending ? d->pendingChapter : chapter)) {
+        if (target != (isPending ? d->pendingChapter : (int) chapter)) {
             d->pendingChapter = target;
             d->flags |= readingOn_DocumentBookFlag;
             postCommandf_Root(as_Widget(d->owner)->root,
@@ -445,6 +519,7 @@ iBool updateProgress_DocumentBook(iDocumentBook *d) {
     const size_t chapter = chapter_DocumentBook_(d, &numChapters);
     if (chapter == iInvalidPos) {
         d->progressChapter = iInvalidPos;
+        savePosition_DocumentBook_(d); /* the contents may have multiple pages */
         return iFalse;
     }
     /* Each chapter is an equal part of a book's progress. The bar moves to another

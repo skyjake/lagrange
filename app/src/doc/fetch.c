@@ -384,13 +384,17 @@ void postProcessContent_DocumentFetch(iDocumentFetch *d, iBool isCached, iBool i
                     /* Reading continues where it was left off. */
                     const iString *target = NULL;
                     const iBook   *book   = find_Books(id_Books(d->sourceGempub));
-                    if (book && book->chapter >= 0 &&
-                        (size_t) book->chapter < navSize_Gempub(d->sourceGempub)) {
+                    if (book && book->chapter == contents_BookChapter) {
+                        resume_DocumentBook(d->owner->book, book->chapter, book->chapterPos);
+                        target = indexPageUrl_Gempub(d->sourceGempub);
+                    }
+                    else if (book && book->chapter >= 0 &&
+                             (size_t) book->chapter < navSize_Gempub(d->sourceGempub)) {
                         resume_DocumentBook(d->owner->book, book->chapter, book->chapterPos);
                         target = navLinkUrl_Gempub(d->sourceGempub, book->chapter);
                     }
                     if (target) {
-                        postCommandf_Root(w->root, "open doc:%p url:%s", d->owner, cstr_String(target));
+                        postCommandf_Root(w->root, "open inbook:1 doc:%p url:%s", d->owner, cstr_String(target));
                     }
                 }
             }

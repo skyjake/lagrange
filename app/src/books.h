@@ -39,6 +39,12 @@ enum iBooksSortOrder {
     author_BooksSortOrder,
 };
 
+/* Reading positions in the front matter. */
+enum iBookChapter {
+    cover_BookChapter    = -1, /* also if not read yet */
+    contents_BookChapter = -2,
+};
+
 struct Impl_Book {
     iObject  object;
     iString  id;          /* from the title and author */
@@ -49,7 +55,7 @@ struct Impl_Book {
     iString  edition;     /* publication date of the latest known edition */
     iString  fileEdition; /* edition of the downloaded copy */
     uint64_t size;
-    int      chapter;     /* negative if not read yet */
+    int      chapter;     /* negative in the front matter (see iBookChapter) */
     int      numChapters;
     float    chapterPos;  /* fraction of the chapter where the visible pages begin */
     iTime    timestamp;   /* last opened or read */
@@ -80,6 +86,7 @@ const iString * id_Books            (const iGempub *);
 const iString * edition_Books       (const iGempub *); /* publication date */
 const iBook *   find_Books          (const iString *id);
 const iBook *   findBySource_Books  (const iString *url, iBool isDownloaded);
+const iBook *   findByPath_Books    (const iString *path); /* NULL if not on the shelf */
 iBool           isOutdated_Books    (const iGempub *); /* a newer edition is known */
 iBool           isOnShelf_Books     (const iString *path);
 const iString * sourceUrl_Books     (const iString *path); /* NULL if not on the shelf */

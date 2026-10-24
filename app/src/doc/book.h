@@ -32,6 +32,7 @@ enum iDocumentBookFlag {
     readingOn_DocumentBookFlag           = iBit(1), /* next chapter of a book is opening */
     showLastPage_DocumentBookFlag        = iBit(2), /* new document opens at its last page */
     animateChapterSwipe_DocumentBookFlag = iBit(3), /* chapter slides in when loaded */
+    drawFrozen_DocumentBookFlag          = iBit(4), /* window not drawn until resumed */
 };
 
 iDeclareType(DocumentBook)
@@ -40,12 +41,12 @@ iDeclareTypeConstruction(DocumentBook)
 struct Impl_DocumentBook {
     iDocumentWidget *owner;
     int              flags;             /* see enum iDocumentBookFlag */
-    size_t           pendingChapter;    /* being opened via the progress bar */
+    int              pendingChapter;    /* being opened via the progress bar, or resumed */
     size_t           progressChapter;   /* shown in the progress bar */
     uint32_t         progressAnimEnd;   /* moving to another chapter until this time */
     float            pendingChapterPos; /* where the visible pages end; negative if none */
     float            resumeChapterPos;  /* where the visible pages begin; negative if none */
-    size_t           savedChapter;      /* book position last saved */
+    int              savedChapter;      /* book position last saved */
     size_t           savedColumn;
     iString          readingBookId;     /* book being read in this tab */
     iBool            didTurnPage;       /* since the book was opened */
@@ -57,14 +58,15 @@ void    setOwner_DocumentBook           (iDocumentBook *, iDocumentWidget *owner
 iBool   isReadingOn_DocumentBook        (const iDocumentBook *); /* adjacent chapter opening */
 int     chapterSwipeDir_DocumentBook    (const iDocumentBook *, const char *cmd);
 
-void    resume_DocumentBook             (iDocumentBook *, size_t chapter, float chapterPos);
+void    resume_DocumentBook             (iDocumentBook *, int chapter, float chapterPos);
+void    freezeForResume_DocumentBook    (iDocumentBook *, const iString *url); /* when opening a URL */
 void    resetSavedPosition_DocumentBook (iDocumentBook *); /* new content is coming */
 void    applyResume_DocumentBook        (iDocumentBook *);
 void    beginPosition_DocumentBook      (iDocumentBook *);
 void    didFinishRequest_DocumentBook   (iDocumentBook *);
 void    checkSyncedPosition_DocumentBook(iDocumentBook *);
 void    checkEdition_DocumentBook       (iDocumentBook *); /* updates to a newer edition */
-void    jumpToPosition_DocumentBook     (iDocumentBook *, size_t chapter, float pos);
+void    jumpToPosition_DocumentBook     (iDocumentBook *, int chapter, float pos);
 iBool   openAdjacentChapter_DocumentBook(iDocumentBook *, int dir, iBool isGesture);
 iBool   moveProgress_DocumentBook       (iDocumentBook *, int thumb); /* progress bar dragged */
 iBool   updateProgress_DocumentBook     (iDocumentBook *); /* False if not showing a chapter */

@@ -581,6 +581,19 @@ iBool isOnShelf_Books(const iString *path) {
     return iFalse;
 }
 
+const iBook *findByPath_Books(const iString *path) {
+    if (!isOnShelf_Books(path)) {
+        return NULL;
+    }
+    iBooks *d = books_;
+    lock_Mutex(d->mtx);
+    const iShelfFile *file =
+        constValue_StringHash(d->files, collectNewRange_String(baseName_Path(path)));
+    const iBook *book = file ? file->book : NULL;
+    unlock_Mutex(d->mtx);
+    return book;
+}
+
 const iString *sourceUrl_Books(const iString *path) {
     if (!isOnShelf_Books(path)) {
         return NULL;
