@@ -3229,7 +3229,8 @@ static void hideCursorIfIdle_Root_(iRoot *d) {
     remove_Periodic(periodic_App(), d->widget);
 }
 
-iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *opacity_out) {
+static iBool readingBarsEdges_Root_(const iRoot *d, iBool bottom, int *edge_out, int *restEdge_out,
+                                    float *opacity_out) {
     if (!d->isReading) {
         return iFalse;
     }
@@ -3274,9 +3275,21 @@ iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *o
         const iRect rootRect = bounds_Widget(d->widget);
         const int   avail    = bottom ? bottom_Rect(rootRect) - restEdge : restEdge - top_Rect(rootRect);
         const int   left     = bottom ? bottom_Rect(rootRect) - *edge_out : *edge_out - top_Rect(rootRect);
-        *opacity_out = avail > 0 ? iClamp((float) left / avail, 0.0f, 1.0f) : 1.0f;
+        *opacity_out  = avail > 0 ? iClamp((float) left / avail, 0.0f, 1.0f) : 1.0f;
+        *restEdge_out = restEdge;
     }
     return found;
+}
+
+iBool readingBarsEdge_Root(const iRoot *d, iBool bottom, int *edge_out, float *opacity_out) {
+    int restEdge;
+    return readingBarsEdges_Root_(d, bottom, edge_out, &restEdge, opacity_out);
+}
+
+iBool readingBarsRestEdge_Root(const iRoot *d, iBool bottom, int *edge_out) {
+    int   edge;
+    float opacity;
+    return readingBarsEdges_Root_(d, bottom, &edge, edge_out, &opacity);
 }
 
 iRect readingRect_Root(const iRoot *d, iRect docBounds) {

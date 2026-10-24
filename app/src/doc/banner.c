@@ -160,6 +160,19 @@ int height_Banner(const iBanner *d) {
     return d->rect.size.y;
 }
 
+int siteTitleMid_Banner(const iBanner *d) {
+    if (isEmpty_String(&d->site)) {
+        return 0;
+    }
+    /* Same as in `draw_Banner`. */
+    const int lineHeight = lineHeight_Text(banner_FontId);
+    int       mid        = iMax(1, lineHeight / 2) + lineHeight / 2;
+    if (d->isCentered && !isEmpty_String(&d->icon)) {
+        mid += lineHeight_Text(iconFont_Banner_(d));
+    }
+    return mid;
+}
+
 size_t numItems_Banner(const iBanner *d) {
     return size_Array(&d->items);
 }

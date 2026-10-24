@@ -42,6 +42,10 @@ struct Impl_ViewToolbar {
     int              fullWidth;      /* with labels */
     iRect            headerArea;     /* hovering reveals the toolbar */
     int              shownBarsEdge;  /* phone's bottom bars when settled while shown; 0 if unknown */
+    iBool            followsScroll;  /* being scrolled by the user; programmatic jumps are ignored */
+    int              ownerWidth;     /* during the previous arrangement */
+    int              top;            /* in window coordinates; kept even if the owner moves */
+    int              barsPush;       /* paged: offset below the top reading bars, also while hidden */
     iRect            nativeMenuRect; /* identity button as given to the native menu; zero if unusable */
 };
 

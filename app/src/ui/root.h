@@ -79,6 +79,7 @@ void        toggleReadingBars_Root              (iRoot *);
 iBool       hasReadingBarAt_Root                (const iRoot *, iBool bottom);
 iRect       readingRect_Root                    (const iRoot *, iRect docBounds); /* area under the bars */
 iBool       readingBarsEdge_Root                (const iRoot *, iBool bottom, int *edge_out, float *opacity_out); /* drawn edge facing the document */
+iBool       readingBarsRestEdge_Root            (const iRoot *, iBool bottom, int *edge_out); /* where the bars settle when shown */
 
 void        notifyVisualOffsetChange_Root       (iRoot *);
 

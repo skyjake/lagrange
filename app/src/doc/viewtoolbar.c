@@ -59,6 +59,10 @@ void init_ViewToolbar(iViewToolbar *d) {
     d->fullWidth      = 0;
     d->headerArea     = zero_Rect();
     d->shownBarsEdge  = 0;
+    d->followsScroll  = iFalse;
+    d->ownerWidth     = 0;
+    d->top            = 0;
+    d->barsPush       = 0;
     d->nativeMenuRect = zero_Rect();
 }
 
@@ -261,6 +265,9 @@ void update_ViewToolbar(iViewToolbar *d) {
 }
 
 void scrollBegan_ViewToolbar(iViewToolbar *d, int offset, iBool isAtTop) {
+    if (offset) {
+        d->followsScroll = iTrue;
+    }
     if (iAbs(offset) > 5) {
         d->isScrolledAway = offset > 0 && !isAtTop;
     }
@@ -450,30 +457,60 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     }
     const int height = height_Widget(w);
     int       top;
-    int       barsEdge;
-    float     barsOpacity;
     d->headerArea = zero_Rect();
     if (atBottom) {
         top = bottomBarsEdge_ViewToolbar_(d, root) - 3 * gap_UI - height;
     }
-    else {
-        /* Below the bars and the safe area inset. */
-        top = paged ? top_Rect(area) + metrics_GmDocument(view->doc)->topInset
-                    : iMax(top_Rect(bounds), top_Rect(safe));
-        if (readingBarsEdge_Root(root, iFalse, &barsEdge, &barsOpacity)) {
-            top = iMax(top, barsEdge);
+    else if (paged) {
+        /* Centered on the page header, below the bars and the safe area inset. The bars' resting
+           position is used, so the toolbar doesn't slide along with them. While hidden, the bars
+           are assumed to have the same height as when last shown. */
+        const int bandTop = top_Rect(area) + metrics_GmDocument(view->doc)->topInset;
+        int       barsEdge;
+        if (readingBarsRestEdge_Root(root, iFalse, &barsEdge)) {
+            d->barsPush = iMax(0, barsEdge - bandTop);
         }
+        else if (!isReadingMode_Root(root) || !hasReadingBarAt_Root(root, iFalse)) {
+            d->barsPush = 0;
+        }
+        top = bandTop + d->barsPush;
         if (!isLandscapePhone_App()) {
-            /* Centered in the page header area, also when not paginated. */
-            const int band = pageBandHeightFor_GmDocument(
-                view->doc, height_Rect(readingRect_Root(root, bounds)));
-            d->headerArea = init_Rect(left_Rect(bounds), top, width_Rect(bounds), band);
-            top += (band - height) / 2;
+            /* Both the header and the toolbar's position below the bars can be hovered. */
+            const int band = pageBandHeight_GmDocument(view->doc);
+            d->headerArea  =
+                init_Rect(left_Rect(bounds), bandTop, width_Rect(bounds), d->barsPush + band);
+            top = top_Rect(area) + pageHeaderTextTop_DocumentView(view) + d->barsPush +
+                  (lineHeight_Text(pageBandFont_GmDocument(view->doc)) - height) / 2;
         }
     }
+    else {
+        /* Equally far from the top and right edges, but not above the site title. */
+        const int      areaTop  = iMax(top_Rect(bounds), top_Rect(safe));
+        const iBanner *banner   = d->owner->banner;
+        const int      titleMid = siteTitleMid_Banner(banner);
+        top = areaTop + iMin(right_Rect(bounds), right_Rect(safe)) - right;
+        if (titleMid > 0) {
+            const int mid = top_Rect(documentBounds_DocumentView(view)) -
+                            (int) floorf(pos_SmoothScroll(&view->scrollY)) + titleMid;
+            top = iMax(top, mid - height / 2);
+        }
+        d->headerArea =
+            init_Rect(left_Rect(bounds), areaTop, width_Rect(bounds), 2 * (top - areaTop) + height);
+    }
+    /* Only moves while unhiding, scrolling, or after a resize, so it doesn't shift around while
+       being used. Switching modes keeps the position, too. */
+    const iBool isShown    = d->wasAvailable && ~flags_Widget(w) & hidden_WidgetFlag;
+    const iBool isUnhiding = !isShown || value_Anim(&d->opacity) < targetValue_Anim(&d->opacity);
+    if (atBottom || isUnhiding || d->followsScroll || width_Rect(bounds) != d->ownerWidth) {
+        d->top = top;
+    }
+    if (isFinished_Anim(&view->scrollY.pos)) {
+        d->followsScroll = iFalse;
+    }
+    d->ownerWidth = width_Rect(bounds);
     w->rect.pos = sub_I2(init_I2(atBottom ? (left + right - width_Widget(w)) / 2
                                           : right - width_Widget(w),
-                                 top),
+                                 d->top),
                          topLeft_Rect(bounds));
     updateOpacity_ViewToolbar_(d);
     setFlags_Widget(w, hidden_WidgetFlag, value_Anim(&d->opacity) <= 0.0f);
