@@ -163,6 +163,8 @@ enum iWidgetFlag2 {
     yieldSwipeToParent_WidgetFlag2          = iBit(24), /* touch swipes starting on the widget
                                                            scroll the parent instead */
     dropTarget_WidgetFlag2                  = iBit(25), /* list items can be dragged onto this */
+    horizontalSwipes_WidgetFlag2            = iBit(26), /* touch swipes lock to the vertical axis
+                                                           only if at least 2:1 vertical */
 };
 
 enum iWidgetAddPos {

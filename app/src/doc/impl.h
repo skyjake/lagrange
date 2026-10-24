@@ -159,6 +159,7 @@ struct Impl_DocumentWidget {
     iString        readerEntryUrl; /* feed entry being viewed (may have a fragment) */
     int            swipeUpY;       /* vertical movement of the current paginated swipe */
     uint32_t       swipeUpTime;
+    iInt2          swipeUpStart;   /* finger position where the swipe began */
     uint32_t       layoutHandoffTime; /* when continued layout was last shown */
     size_t         numHeadings;
 

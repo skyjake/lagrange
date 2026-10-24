@@ -2427,13 +2427,21 @@ static void swipeVertically_DocumentWidget_(iDocumentWidget *d, const SDL_MouseW
         return;
     }
     const uint32_t now = SDL_GetTicks();
+    const iInt2 finger = fingerPosition_Touch();
+    if (finger.x < 0) {
+        return; /* not a single-finger touch */
+    }
     if (now - d->swipeUpTime > 200) {
-        d->swipeUpY = 0; /* only continuous movement counts */
+        d->swipeUpY     = 0; /* only continuous movement counts */
+        d->swipeUpStart = finger;
     }
     d->swipeUpTime = now;
     d->swipeUpY += ev->y;
+    /* Must be predominantly vertical (2:1) so page turns don't trigger it. */
+    const iInt2 delta = sub_I2(finger, d->swipeUpStart);
     if (~d->flags & swipedUp_DocumentWidgetFlag &&
-        -d->swipeUpY > height_Rect(pageViewport_DocumentView(d->view)) / 20) {
+        -d->swipeUpY > height_Rect(pageViewport_DocumentView(d->view)) / 20 &&
+        -delta.y >= 2 * iAbs(delta.x)) {
         d->flags |= swipedUp_DocumentWidgetFlag;
         showSidebar_DocumentWidget(d);
     }
@@ -2532,8 +2540,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     if (ev->type == SDL_EVENT_USER && ev->user.code == widgetTouchBegins_UserEventCode) {
         /* Opening the sidebar cancels the touch, so it never ends. */
-        d->swipeUpY = 0;
+        d->swipeUpY     = 0;
+        d->swipeUpStart = fingerPosition_Touch();
         d->flags &= ~swipedUp_DocumentWidgetFlag;
+        setFlags2_Widget(w, horizontalSwipes_WidgetFlag2, isPaged_DocumentView(view));
     }
     if (isMetricsChange_UserEvent(ev)) {
         if (document_Root(w->root) == d) {
@@ -3414,6 +3424,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->viewModeTimer     = 0;
     d->swipeUpY          = 0;
     d->swipeUpTime       = 0;
+    d->swipeUpStart      = zero_I2();
     d->layoutHandoffTime = 0;
     d->numHeadings       = 0;
     d->indicator        = none_DocumentIndicator;

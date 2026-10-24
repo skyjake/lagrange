@@ -821,8 +821,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             else if (!touch->axis &&
                      distance_Touch_(touch) > tapRadiusPt_ * 3 * window->pixelRatio) {
                 /* Lock swipe direction to an axis. */
+                const float xRatio =
+                    touch->affinity->flags2 & horizontalSwipes_WidgetFlag2 ? 0.5f : 1.5f;
                 if (iAbs(x_F3(touch->startPos) - x_F3(pos)) >
-                    iAbs(y_F3(touch->startPos) - y_F3(pos)) * 1.5f) {
+                    iAbs(y_F3(touch->startPos) - y_F3(pos)) * xRatio) {
                     touch->axis = x_TouchAxis;
                 }
                 else {
