@@ -61,6 +61,7 @@ void init_ViewToolbar(iViewToolbar *d) {
     d->shownBarsEdge  = 0;
     d->followsScroll  = iFalse;
     d->ownerWidth     = 0;
+    d->titleY         = 0;
     d->top            = 0;
     d->barsPush       = 0;
     d->nativeMenuRect = zero_Rect();
@@ -457,6 +458,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     }
     const int height = height_Widget(w);
     int       top;
+    int       titleY = 0; /* unscrolled, in scrolling mode */
     d->headerArea = zero_Rect();
     if (atBottom) {
         top = bottomBarsEdge_ViewToolbar_(d, root) - 3 * gap_UI - height;
@@ -488,26 +490,29 @@ void arrange_ViewToolbar(iViewToolbar *d) {
         const int      areaTop  = iMax(top_Rect(bounds), top_Rect(safe));
         const iBanner *banner   = d->owner->banner;
         const int      titleMid = siteTitleMid_Banner(banner);
-        top = areaTop + iMin(right_Rect(bounds), right_Rect(safe)) - right;
+        titleY = top_Rect(documentBounds_DocumentView(view)) + titleMid;
+        top    = areaTop + iMin(right_Rect(bounds), right_Rect(safe)) - right;
         if (titleMid > 0) {
-            const int mid = top_Rect(documentBounds_DocumentView(view)) -
-                            (int) floorf(pos_SmoothScroll(&view->scrollY)) + titleMid;
+            const int mid = titleY - (int) floorf(pos_SmoothScroll(&view->scrollY));
             top = iMax(top, mid - height / 2);
         }
         d->headerArea =
             init_Rect(left_Rect(bounds), areaTop, width_Rect(bounds), 2 * (top - areaTop) + height);
     }
-    /* Only moves while unhiding, scrolling, or after a resize, so it doesn't shift around while
-       being used. Switching modes keeps the position, too. */
+    /* Only moves while unhiding, scrolling, or after a resize or relayout, so it doesn't shift
+       around while being used. Switching modes keeps the position, too. */
     const iBool isShown    = d->wasAvailable && ~flags_Widget(w) & hidden_WidgetFlag;
     const iBool isUnhiding = !isShown || value_Anim(&d->opacity) < targetValue_Anim(&d->opacity);
-    if (atBottom || isUnhiding || d->followsScroll || width_Rect(bounds) != d->ownerWidth) {
+    const iBool isMoved    = width_Rect(bounds) != d->ownerWidth ||
+                             (titleY && d->titleY && titleY != d->titleY);
+    if (atBottom || isUnhiding || d->followsScroll || isMoved) {
         d->top = top;
     }
     if (isFinished_Anim(&view->scrollY.pos)) {
         d->followsScroll = iFalse;
     }
     d->ownerWidth = width_Rect(bounds);
+    d->titleY     = titleY;
     w->rect.pos = sub_I2(init_I2(atBottom ? (left + right - width_Widget(w)) / 2
                                           : right - width_Widget(w),
                                  d->top),
