@@ -71,6 +71,7 @@ enum iDocumentWidgetSetUrlFlags {
     waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag  = iBit(3),
     disallowCachedDocument_DocumentWidgetSetUrlFlag      = iBit(4),
     overwriteBook_DocumentWidgetSetUrlFlag               = iBit(5),
+    inBook_DocumentWidgetSetUrlFlag                      = iBit(6), /* moving between book pages */
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other, iBool isNewTab);

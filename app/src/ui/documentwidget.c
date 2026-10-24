@@ -3714,6 +3714,9 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
                  setUrlFlags & waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag);
     iChangeFlags(d->fetch->flags, overwriteBook_DocumentFetchFlag,
                  setUrlFlags & overwriteBook_DocumentWidgetSetUrlFlag);
+    if (setUrlFlags & inBook_DocumentWidgetSetUrlFlag) {
+        d->book->flags |= readingOn_DocumentBookFlag; /* the cover doesn't resume reading */
+    }
     d->fetch->flags |= goBackOnStop_DocumentFetchFlag;
     if (document_App() != d) {
         d->flags |= unseen_DocumentWidgetFlag;
