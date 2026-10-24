@@ -163,10 +163,10 @@ void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
     }
 }
 
-static void setUiThemeColors_(void) {
+static void setUiThemeColors_(int background) {
     /* Documents shown as part of the UI use UI colors. */
-    static const int map[][2] = {
-        { tmBackground_ColorId, uiBackgroundSidebar_ColorId },
+    const int map[][2] = {
+        { tmBackground_ColorId, background },
         { tmParagraph_ColorId, uiText_ColorId },
         { tmFirstParagraph_ColorId, uiText_ColorId },
         { tmQuote_ColorId, uiTextDim_ColorId },
@@ -174,7 +174,7 @@ static void setUiThemeColors_(void) {
         { tmHeading1_ColorId, uiHeading_ColorId },
         { tmHeading2_ColorId, uiHeading_ColorId },
         { tmHeading3_ColorId, uiSubheading_ColorId },
-        { tmBannerBackground_ColorId, uiBackgroundSidebar_ColorId },
+        { tmBannerBackground_ColorId, background },
         { tmBannerTitle_ColorId, uiTextStrong_ColorId },
         { tmBannerIcon_ColorId, uiIcon_ColorId },
         { tmInlineContentMetadata_ColorId, uiAnnotation_ColorId },
@@ -227,7 +227,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
     if (d->flags.isUiTheme) {
         /* No seed is used for a document that is part of the UI. */
         d->siteIcon = 0;
-        setUiThemeColors_();
+        setUiThemeColors_(d->flags.isUiDialog ? uiBackground_ColorId : uiBackgroundSidebar_ColorId);
         memcpy(d->palette, get_Root()->tmPalette, sizeof(d->palette));
         d->flags.isPaletteValid = iTrue;
         return;

@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "labelwidget.h"
 #include "mobile.h"
+#include "periodic.h"
 #include "render/text.h"
 #include "root.h"
 #include "simpledocumentwidget.h"
@@ -42,10 +43,8 @@ struct Impl_DocumentDialog {
     iWidget                widget;
     iString                url;
     int                    flags;
-    iBool                  isTitleFixed;
     iGmRequest            *request;
-    iWidget               *header;
-    iLabelWidget          *title;
+    iWidget               *header; /* mobile only */
     iLabelWidget          *back;
     iLabelWidget          *newTab;
     iSimpleDocumentWidget *doc;
@@ -88,8 +87,7 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
     init_Widget(w);
     setId_Widget(w, "docdlg");
     initCopy_String(&d->url, url);
-    d->flags        = flags;
-    d->isTitleFixed = iFalse;
+    d->flags = flags;
     useSheetStyle_Widget(w);
     /* The size is determined by the window, not the contents. */
     setFlags_Widget(w, arrangeSize_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
@@ -101,22 +99,14 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
                     frameless_WidgetFlag | leftEdgeDraggable_WidgetFlag,
                     isFullScreen_DocumentDialog_(d));
     setPadding1_Widget(w, 0);
+    d->header  = NULL;
     d->back    = NULL;
     d->newTab  = NULL;
     d->buttons = NULL;
-    /* Navigation bar with the title. */ {
-        d->header = addChildFlags_Widget(w, iClob(new_Widget()), 0);
-        d->title  = addChildFlags_Widget(d->header,
-                                        iClob(new_LabelWidget(cstr_String(url), NULL)),
-                                        frameless_WidgetFlag | noBackground_WidgetFlag |
-                                            resizeToParentWidth_WidgetFlag |
-                                            resizeToParentHeight_WidgetFlag);
-        setFont_LabelWidget(d->title, headerFont_DocumentDialog_(iTrue));
-        setTruncateToFit_LabelWidget(d->title, iTrue);
-    }
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Back and opening the page in a tab. Desktop uses dialog buttons instead. */
-        d->back = addChildFlags_Widget(
+        d->header = addChildFlags_Widget(w, iClob(new_Widget()), 0);
+        d->back   = addChildFlags_Widget(
             d->header,
             iClob(newKeyMods_LabelWidget(flags & popup_DocumentDialogFlag
                                              ? "${close}"
@@ -144,13 +134,15 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
                                       ? drawBackgroundToHorizontalSafeArea_WidgetFlag
                                       : 0);
     setFlags_SimpleDocumentWidget(d->doc,
-                                  reading_SimpleDocumentWidgetFlag |
+                                  (flags & uiTheme_DocumentDialogFlag
+                                       ? dialog_SimpleDocumentWidgetFlag
+                                       : reading_SimpleDocumentWidgetFlag) |
                                       newTabLinks_SimpleDocumentWidgetFlag |
                                       keyScrolling_SimpleDocumentWidgetFlag,
                                   iTrue);
     if (deviceType_App() == desktop_AppDeviceType) {
         const iMenuItem actions[] = {
-            { openTab_Icon " ${menu.opentab}", 0, 0, "docdlg.newtab" },
+            { "${menu.opentab}", 0, 0, "docdlg.newtab" },
             { "---" },
             { "${close}", 0, 0, "docdlg.close" },
         };
@@ -175,20 +167,21 @@ void deinit_DocumentDialog(iDocumentDialog *d) {
 static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
     iWidget    *w         = as_Widget(d);
     const iRect safe      = safeRect_Root(w->root);
-    const int   headerHgt = lineHeight_Text(headerFont_DocumentDialog_(iTrue)) + 4 * gap_UI;
+    const int   headerHgt =
+        d->header ? lineHeight_Text(headerFont_DocumentDialog_(iTrue)) + 4 * gap_UI : 0;
     iWidget    *doc       = as_Widget(d->doc);
     const iInt2 oldSize   = doc->rect.size;
     int         width, docHeight;
     if (deviceType_App() == desktop_AppDeviceType) {
-        width     = iMin(width_Rect(safe), 140 * gap_UI);
-        const int height = height_Rect(safe) * 4 / 5;
+        width            = iMin(width_Rect(safe), 140 * gap_UI);
+        const int height = iMini(height_Rect(safe), iMaxi(100 * gap_UI, height_Rect(safe) / 2));
         /* The page stays inside the frame. */
         const int frame  = iMax(1, gap_UI / 4);
-        setPadding_Widget(w, frame, 0, frame, 0);
+        setPadding_Widget(w, frame, gap_UI / 4, frame, 0);
         setFixedSize_Widget(w, init_I2(width, height));
         width -= 2 * frame;
         arrange_Widget(d->buttons);
-        docHeight = height - headerHgt - height_Widget(d->buttons);
+        docHeight = height - height_Widget(d->buttons);
     }
     else if (!isFullScreen_DocumentDialog_(d)) {
         width = deviceType_App() == phone_AppDeviceType ? width_Rect(safe)
@@ -211,7 +204,9 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
         setFixedSize_Widget(w, root.size);
         docHeight = bottom_Rect(root) - top_Rect(safe) - headerHgt; /* under bottom safe area */
     }
-    setFixedSize_Widget(d->header, init_I2(width, headerHgt));
+    if (d->header) {
+        setFixedSize_Widget(d->header, init_I2(width, headerHgt));
+    }
     setFixedSize_Widget(doc, init_I2(width, docHeight));
     setFlags_Widget(w, arrangeVertical_WidgetFlag, iTrue);
     arrange_Widget(w);
@@ -219,10 +214,6 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
         /* Resized before arranging, so the arrangement didn't notice. */
         class_Widget(doc)->sizeChanged(doc);
     }
-    /* The title stays centered and clear of the buttons. */
-    const int inset = d->back ? iMax(width_Widget(d->back), width_Widget(d->newTab)) : 3 * gap_UI;
-    setPadding_Widget(as_Widget(d->title), inset, 0, inset, 0);
-    arrange_Widget(d->header);
 }
 
 static void dismiss_DocumentDialog_(iDocumentDialog *d) {
@@ -249,16 +240,24 @@ static void showContent_DocumentDialog_(iDocumentDialog *d) {
     }
     setSource_SimpleDocumentWidget(d->doc, &d->url, source);
     delete_String(source);
-    const iString *title = title_GmDocument(document_SimpleDocumentWidget(d->doc));
-    if (!d->isTitleFixed && !isEmpty_String(title)) {
-        updateText_LabelWidget(d->title, title); /* keeps the size */
-    }
+}
+
+static void show_DocumentDialog_(iDocumentDialog *d) {
+    iWidget *w = as_Widget(d);
+    setFlags_Widget(w, hidden_WidgetFlag | disabledWhenHidden_WidgetFlag, iFalse);
+    setupSheetTransition_Mobile(w, incoming_TransitionFlag | transitionDir_DocumentDialog_(d));
+    postRefresh_Window(get_Window());
 }
 
 static iBool processEvent_DocumentDialog_(iDocumentDialog *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isResize_UserEvent(ev)) {
         updateLayout_DocumentDialog_(d);
+    }
+    else if (isCommand_Widget(w, ev, "docdlg.show")) {
+        remove_Periodic(periodic_App(), w); /* periodic commands repeat */
+        show_DocumentDialog_(d);
+        return iTrue;
     }
     else if (isCommand_Widget(w, ev, "docdlg.loaded")) {
         showContent_DocumentDialog_(d);
@@ -272,7 +271,7 @@ static iBool processEvent_DocumentDialog_(iDocumentDialog *d, const SDL_Event *e
         postCommandf_Root(w->root, "open newtab:1 url:%s", cstr_String(&d->url));
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "open")) {
+    else if (isCommand_UserEvent(ev, "open") && ~w->flags & hidden_WidgetFlag) {
         /* Links open in the main window, so everything over it is closed. */
         dismiss_DocumentDialog_(d);
         if (findWidget_App("prefs")) {
@@ -283,19 +282,20 @@ static iBool processEvent_DocumentDialog_(iDocumentDialog *d, const SDL_Event *e
     return processEvent_Widget(w, ev);
 }
 
-void setTitle_DocumentDialog(iDocumentDialog *d, const char *title) {
-    updateTextCStr_LabelWidget(d->title, title);
-    d->isTitleFixed = iTrue;
-}
-
 iWidget *makeDocumentDialog_Widget(const iString *url, int flags) {
     iDocumentDialog *d = new_DocumentDialog(url, flags);
     iWidget         *w = as_Widget(d);
     addChild_Widget(get_Root()->widget, iClob(d));
     updateLayout_DocumentDialog_(d);
-    setupSheetTransition_Mobile(w, incoming_TransitionFlag | transitionDir_DocumentDialog_(d));
     submit_GmRequest(d->request);
-    postRefresh_Window(get_Window());
+    if (flags & delayed_DocumentDialogFlag) {
+        /* The page loads while hidden. */
+        setFlags_Widget(w, hidden_WidgetFlag | disabledWhenHidden_WidgetFlag, iTrue);
+        addDelay_Periodic(periodic_App(), 1000, w, format_CStr("docdlg.show ptr:%p", w));
+    }
+    else {
+        show_DocumentDialog_(d);
+    }
     return w;
 }
 

@@ -36,6 +36,7 @@ enum iSimpleDocumentWidgetFlag {
     reading_SimpleDocumentWidgetFlag      = iBit(1), /* styled like a regular page */
     newTabLinks_SimpleDocumentWidgetFlag  = iBit(2), /* links open in a new tab */
     keyScrolling_SimpleDocumentWidgetFlag = iBit(3), /* handles the scrolling key bindings */
+    dialog_SimpleDocumentWidgetFlag       = iBit(4), /* UI-styled with the dialog background */
 };
 
 void            setFlags_SimpleDocumentWidget   (iSimpleDocumentWidget *, int flags, iBool set);

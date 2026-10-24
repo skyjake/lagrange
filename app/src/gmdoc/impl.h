@@ -160,6 +160,7 @@ struct Impl_GmDocument {
         iBool isBookContents : 1;
         iBool isBookOpen : 1;
         iBool isUiTheme : 1;
+        iBool isUiDialog : 1;
         iBool isDocPrefsPinned : 1;
         iBool isPageViewInverted : 1;
         iBool isTinylogEntry : 1;

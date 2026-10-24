@@ -157,7 +157,9 @@ void setFlags_SimpleDocumentWidget(iSimpleDocumentWidget *d, int flags, iBool se
     iChangeFlags(d->flags, flags, set);
     const iBool isReading = (d->flags & reading_SimpleDocumentWidgetFlag) != 0;
     d->view->pageMargin = isReading ? 5 : 1;
-    d->view->sideMargin = isReading ? 0 : uiSideMargin_SimpleDocumentWidget_();
+    d->view->sideMargin = isReading ? 0
+                          : uiSideMargin_SimpleDocumentWidget_() +
+                                (d->flags & dialog_SimpleDocumentWidgetFlag ? 2 : 0);
 }
 
 static void pinPrefs_SimpleDocumentWidget_(iGmDocument *doc) {
@@ -195,7 +197,9 @@ void setSource_SimpleDocumentWidget(iSimpleDocumentWidget *d, const iString *url
         deinit_DocPrefs(&prefs);
     }
     else {
-        setMode_GmDocument(doc, uiTheme_GmDocumentMode);
+        setMode_GmDocument(doc,
+                           d->flags & dialog_SimpleDocumentWidgetFlag ? uiDialog_GmDocumentMode
+                                                                      : uiTheme_GmDocumentMode);
         pinPrefs_SimpleDocumentWidget_(doc);
         setUrl_GmDocument(doc, url);
     }

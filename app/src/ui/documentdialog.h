@@ -28,12 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 enum iDocumentDialogFlags {
-    popup_DocumentDialogFlag = iBit(1), /* mobile: not full screen; closes instead of going back */
+    popup_DocumentDialogFlag   = iBit(1), /* mobile: not full screen; closes instead of going back */
+    uiTheme_DocumentDialogFlag = iBit(2), /* document uses UI fonts and colors */
+    delayed_DocumentDialogFlag = iBit(3), /* shown after a short delay */
 };
 
 iDeclareWidgetClass(DocumentDialog)
 iDeclareObjectConstructionArgs(DocumentDialog, const iString *url, int flags)
-
-void        setTitle_DocumentDialog     (iDocumentDialog *, const char *title); /* overrides page title */
 
 iWidget *   makeDocumentDialog_Widget   (const iString *url, int flags); /* added to the root and shown */

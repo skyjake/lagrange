@@ -405,10 +405,6 @@ msgstr "Help"
 msgid "menu.releasenotes"
 msgstr "Release Notes"
 
-# dialog title, shown after an app update
-msgid "heading.releasenotes"
-msgstr "What's New?"
-
 msgid "menu.website"
 msgstr "Project Website…"
 

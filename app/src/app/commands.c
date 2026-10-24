@@ -1108,10 +1108,9 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "releasenotes.popup")) {
         if (d->prefs.showReleaseNotes) {
-            setTitle_DocumentDialog(
-                (iDocumentDialog *) makeDocumentDialog_Widget(
-                    collectNewCStr_String("about:version"), popup_DocumentDialogFlag),
-                "${heading.releasenotes}");
+            makeDocumentDialog_Widget(collectNewCStr_String("about:version"),
+                                      popup_DocumentDialogFlag | uiTheme_DocumentDialogFlag |
+                                          delayed_DocumentDialogFlag);
         }
         return iTrue;
     }

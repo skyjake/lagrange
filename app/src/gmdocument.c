@@ -489,7 +489,8 @@ void setMimeType_GmDocument(iGmDocument *d, const iString *mimeType) {
 
 void setMode_GmDocument(iGmDocument *d, enum iGmDocumentMode mode) {
     d->flags.isCoverPage = (mode == coverPage_GmDocumentMode);
-    d->flags.isUiTheme   = (mode == uiTheme_GmDocumentMode);
+    d->flags.isUiTheme   = (mode == uiTheme_GmDocumentMode || mode == uiDialog_GmDocumentMode);
+    d->flags.isUiDialog  = (mode == uiDialog_GmDocumentMode);
     invalidatePalette_GmDocument(d);
 }
 

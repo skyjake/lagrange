@@ -208,6 +208,7 @@ enum iGmDocumentMode {
     coverPage_GmDocumentMode, /* document represents the actual data that cannot be
                                  directly presented */
     uiTheme_GmDocumentMode,   /* shown as part of the UI, with UI fonts and colors */
+    uiDialog_GmDocumentMode,  /* like uiTheme, but with the dialog background */
 };
 
 iDeclareType(GmDocumentMetrics)
