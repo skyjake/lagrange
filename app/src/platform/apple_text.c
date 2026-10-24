@@ -930,34 +930,27 @@ iBool isMonospace_FontFile(const iFontFile *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static iAppleText *sharedText_;
-
 iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
     if (!lagBgKey_) {
         lagBgKey_       = CFSTR("LagrangeBgColor");  /* per-run background CGColorRef */
         lagSfSymbolKey_ = CFSTR("LagrangeSfSymbol"); /* per-run SF Symbol CGImageRef */
     }
-    if (!sharedText_) {
-        sharedText_ = iNew(AppleText);
-        init_Text(&sharedText_->base, render, documentFontSizeFactor);
-        iText *oldActive = current_Text();
-        setCurrent_Text(&sharedText_->base);
-        init_Array(&sharedText_->fonts, sizeof(iAppleFont));
-        init_Array(&sharedText_->fontPriorityOrder, sizeof(iPrioMapItem));
-        sharedText_->overrideFontId = -1;
-        sharedText_->cascadeList    = NULL;
-        sharedText_->opacity        = 1.0f;
-        sharedText_->runCacheSerial = 0;
-        iZap(sharedText_->runCache);
-        iZap(sharedText_->sfSymbolCache);
-        sharedText_->sfSymbolCacheSerial = 0;
-        initFonts_AppleText_(sharedText_);
-        setCurrent_Text(oldActive);
-    }
-    else {
-        ref_Object(sharedText_); /* all windows use the same one */
-    }
-    return &sharedText_->base;
+    iAppleText *d = iNew(AppleText);
+    init_Text(&d->base, render, documentFontSizeFactor);
+    iText *oldActive = current_Text();
+    setCurrent_Text(&d->base);
+    init_Array(&d->fonts, sizeof(iAppleFont));
+    init_Array(&d->fontPriorityOrder, sizeof(iPrioMapItem));
+    d->overrideFontId = -1;
+    d->cascadeList    = NULL;
+    d->opacity        = 1.0f;
+    d->runCacheSerial = 0;
+    iZap(d->runCache);
+    iZap(d->sfSymbolCache);
+    d->sfSymbolCacheSerial = 0;
+    initFonts_AppleText_(d);
+    setCurrent_Text(oldActive);
+    return &d->base;
 }
 
 void deinit_AppleText(iAppleText *d) {
@@ -966,8 +959,6 @@ void deinit_AppleText(iAppleText *d) {
     deinit_Array(&d->fontPriorityOrder);
     deinit_Array(&d->fonts);
     deinit_Text(&d->base);
-    iAssert(sharedText_ == d);
-    sharedText_ = NULL;
 }
 
 void delete_Text(iText *d) {

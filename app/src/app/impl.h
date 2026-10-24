@@ -150,8 +150,8 @@ struct Impl_App {
     iArray       initialWindowRects;  /* one per window, indexed by placementIndex */
     iArray       initialWindowDesktops;
     iPrefs       prefs;
-    iDocPrefs    activeDocPrefs; /* of the front document */
-    uint32_t     fontKey;        /* identifies the fonts currently set up for documents */
+    iDocPrefs    activeDocPrefs; /* defaults, used when there is no current window */
+    uint32_t     fontKey;        /* of `activeDocPrefs` */
 };
 
 iDeclareClass(SavedWidth);

@@ -800,6 +800,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     iZap(d->roots);
     iZap(d->cursors);
     d->text = NULL;
+    initActiveDocPrefs_App(d);
     create_Window_(d, rect, flags);
     SDL_GetCurrentRenderOutputSize(d->render, &d->size.x, &d->size.y);
 #if !defined (iPlatformTerminal)
@@ -851,6 +852,7 @@ void deinit_Window(iWindow *d) {
     }
     deinitRoots_Window_(d);
     delete_Text(d->text);
+    deinit_DocPrefs(&d->docPrefs);
     iForIndices(i, d->roundCorners) {
         if (d->roundCorners[i].texture) {
             SDL_DestroyTexture(d->roundCorners[i].texture);
@@ -1134,6 +1136,21 @@ void invalidate_Window(iAnyWindow *d) {
     invalidate_Window_(d, iFalse);
 }
 
+void resetFonts_Window(iAnyWindow *d) {
+    /* Fonts are set up using the current window's document prefs and UI metrics. */
+    iMainWindow *oldMain = get_MainWindow();
+    iWindow     *oldWin  = get_Window();
+    iRoot       *oldRoot = current_Root();
+    iWindow     *w       = as_Window(d);
+    setCurrent_Window(w);
+    w->text->needRefresh = iTrue;
+    setDocumentFontSize_Text(w->text, (float) w->docPrefs.zoomPercent.value / 100.0f);
+    resetFontsIfNeeded_Text(w->text);
+    setCurrent_Window(oldMain);
+    setCurrent_Window(oldWin);
+    setCurrent_Root(oldRoot);
+}
+
 static void invalidate_MainWindow_(iMainWindow *d, iBool forced) {
     invalidate_Window_(as_Window(d), forced);
 }
@@ -1184,10 +1201,10 @@ static iBool unsnap_MainWindow_(iMainWindow *d, const iInt2 *newPos) {
     return iFalse;
 }
 
-static void notifyMetricsChange_Window_(const iWindow *d) {
+static void notifyMetricsChange_Window_(iWindow *d) {
     /* Dynamic UI metrics change. Widgets need to update themselves. */
+    resetFonts_Window(d);
     updateMetrics_Window_(d);
-    resetFonts_Text(d->text);
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             notify_Root(d->roots[i], "metrics.changed");
@@ -2356,12 +2373,6 @@ iWindow *get_Window(void) {
 
 void makeTextCurrent_Window(iAnyWindow *d) {
     setCurrent_Text(d ? as_Window(d)->text : NULL);
-    /* Backends that share one iText across all windows (e.g. CoreText/Apple) store the
-       renderer in the iText struct. Keep it pointing at the currently-active window so
-       that init_TextBuf / draw_TextBuf use the right SDL renderer. */
-    if (d && current_Text()) {
-        current_Text()->render = as_Window(d)->render;
-    }
 }
 
 void setCurrent_Window(iAnyWindow *d) {

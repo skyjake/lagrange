@@ -232,11 +232,13 @@ void updateCACertificates_App(void) {
 /*----------------------------------------------------------------------------------------------*/
 
 const iDocPrefs *activeDocPrefs_App(void) {
-    return &app_.activeDocPrefs;
+    const iWindow *win = get_Window();
+    return win ? &win->docPrefs : &app_.activeDocPrefs;
 }
 
 uint32_t fontKey_App(void) {
-    return app_.fontKey;
+    const iWindow *win = get_Window();
+    return win ? win->fontKey : app_.fontKey;
 }
 
 static uint32_t fontKey_DocPrefs_(const iDocPrefs *d) {
@@ -251,49 +253,74 @@ static uint32_t fontKey_DocPrefs_(const iDocPrefs *d) {
     return key;
 }
 
-void updateActiveDocPrefs_App(void) {
-    iApp *d = &app_;
+static void updateDefaultDocPrefs_App_(iApp *d) {
     iDocPrefs prefs;
-    const iDocumentWidget *doc = !isEmpty_PtrArray(&d->mainWindows) ? document_App() : NULL;
-    if (doc) {
-        initCopy_DocPrefs(&prefs, docPrefs_GmDocument(document_DocumentWidget(doc)));
-    }
-    else {
-        iScopeKey key;
-        init_ScopeKey(&key);
-        init_DocPrefs(&prefs);
-        resolve_DocPrefs(&prefs, &key, NULL, NULL);
-        deinit_ScopeKey(&key);
-    }
-    const uint32_t diff = diff_DocPrefs(&d->activeDocPrefs, &prefs);
+    iScopeKey key;
+    init_ScopeKey(&key);
+    init_DocPrefs(&prefs);
+    resolve_DocPrefs(&prefs, &key, NULL, NULL);
     set_DocPrefs(&d->activeDocPrefs, &prefs);
     deinit_DocPrefs(&prefs);
+    deinit_ScopeKey(&key);
     d->fontKey = fontKey_DocPrefs_(&d->activeDocPrefs);
+}
+
+void initActiveDocPrefs_App(iWindow *win) {
+    /* Until the front document is known, main windows use the defaults and other windows
+       the fonts of the current window. */
+    const iApp    *d   = &app_;
+    const iWindow *cur = get_Window();
+    if (cur && cur != win) {
+        initCopy_DocPrefs(&win->docPrefs, &cur->docPrefs);
+        win->fontKey = cur->fontKey;
+    }
+    else {
+        initCopy_DocPrefs(&win->docPrefs, &d->activeDocPrefs);
+        win->fontKey = d->fontKey;
+    }
+}
+
+static void updateActiveDocPrefs_MainWindow_(iMainWindow *mw) {
+    iWindow *win  = as_Window(mw);
+    iRoot   *root = win->keyRoot ? win->keyRoot : win->roots[0];
+    const iDocumentWidget *doc = root ? document_Root(root) : NULL;
+    if (!doc) {
+        return;
+    }
+    const iDocPrefs *prefs = docPrefs_GmDocument(document_DocumentWidget(doc));
+    const uint32_t   diff  = diff_DocPrefs(&win->docPrefs, prefs);
+    if (!diff) {
+        return;
+    }
+    set_DocPrefs(&win->docPrefs, prefs);
+    win->fontKey = fontKey_DocPrefs_(&win->docPrefs);
     if (diff & palette_DocPrefsSpecFlag) {
-        iConstForEach(PtrArray, wind, &d->mainWindows) {
-            invalidate_Window(wind.ptr); /* UI uses some of the document colors */
+        invalidate_Window(win); /* UI uses some of the document colors */
+    }
+    if (diff & font_DocPrefsSpecFlag) {
+        /* Layouts made with other fonts are kept, and redone only when shown with the
+           wrong fonts. */
+        if (isFinishedLaunching_App()) {
+            setFreezeDraw_MainWindow(mw, iTrue); /* no intermediate draws */
+        }
+        resetFonts_Window(win);
+        if (isFinishedLaunching_App()) {
+            iForIndices(i, win->roots) {
+                if (win->roots[i]) {
+                    postCommand_Root(win->roots[i], "font.changed active:1");
+                }
+            }
+            postCommand_Root(win->roots[0], "window.unfreeze");
         }
     }
-    if (diff & font_DocPrefsSpecFlag && !isEmpty_PtrArray(&d->mainWindows)) {
-        /* Text rendering only uses one set of active fonts (from the front document).
-           Layouts made with other fonts are kept, and redone only when shown with the
-           wrong fonts. */
-        const float fontSize = (float) d->activeDocPrefs.zoomPercent.value / 100.0f;
-        /* Windows may be sharing Text instances. */
-        iConstForEach(PtrArray, pre, &d->mainWindows) {
-            text_Window(pre.ptr)->needRefresh = iTrue;
-        }
-        iConstForEach(PtrArray, wind, &d->mainWindows) {
-            if (isFinishedLaunching_App()) {
-                setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws */
-            }
-            setDocumentFontSize_Text(text_Window(wind.ptr), fontSize);
-            resetFontsIfNeeded_Text(text_Window(wind.ptr));
-        }
-        if (isFinishedLaunching_App()) {
-            postCommand_App("font.changed active:1");
-            postCommand_App("window.unfreeze");
-        }
+}
+
+void updateActiveDocPrefs_App(void) {
+    iApp *d = &app_;
+    updateDefaultDocPrefs_App_(d);
+    /* Each window's fonts follow its own front document. */
+    iConstForEach(PtrArray, i, &d->mainWindows) {
+        updateActiveDocPrefs_MainWindow_(i.ptr);
     }
 }
 
@@ -725,7 +752,9 @@ void prefsBoolValueChanged_App_(iApp *d, enum iPrefsBool id, iBool isFrozen) {
             /* The glyphs must be redrawn, so hide the intermediate state. */
             if (!isFrozen && get_MainWindow()) {
                 setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-                resetFontCache_Text(text_Window(get_MainWindow()));
+                iConstForEach(PtrArray, i, listWindows_App_(d, collectNew_PtrArray())) {
+                    resetFontCache_Text(text_Window(i.ptr));
+                }
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
             }
@@ -922,7 +951,7 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         }
         if (wasChanged) {
             if (isFinishedLaunching_App() && get_MainWindow()) { /* there's a reset when launch is finished */
-                resetFonts_Text(text_Window(get_MainWindow()));
+                resetFonts_App();
                 postCommand_App("font.changed");
             }
         }

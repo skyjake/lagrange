@@ -505,13 +505,8 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 
 void resetFonts_App(void) {
     iApp *d = &app_;
-    iPtrArray *windows = listWindows_App_(d, collectNew_PtrArray());
-    /* Mark all Text instances for refresh first. Windows may be sharing them. */
-    iConstForEach(PtrArray, pre, windows) {
-        text_Window(pre.ptr)->needRefresh = iTrue;
-    }
-    iConstForEach(PtrArray, win, windows) {
-        resetFontsIfNeeded_Text(text_Window(win.ptr));
+    iConstForEach(PtrArray, win, listWindows_App_(d, collectNew_PtrArray())) {
+        resetFonts_Window(win.ptr);
     }
 }
 

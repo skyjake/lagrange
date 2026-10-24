@@ -136,7 +136,7 @@ static void init_TuiText(iTuiText *d, SDL_Renderer *render, float documentFontSi
             init_Font(d->fonts[s] + i, s == 1 ? 2 : 1);
         }
     }
-    gap_Text = gap_UI;
+    d->base.gap = gap_Text = gap_UI;
 }
 
 static void deinit_TuiText(iTuiText *d) {

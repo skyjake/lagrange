@@ -41,6 +41,7 @@ iDeclareType(Text)
 struct Impl_Text {
     SDL_Renderer *render;
     float         contentFontSize;
+    int           gap;          /* gap_Text for these fonts */
     iRegExp      *ansiEscape;
     int           ansiFlags;
     int           baseFontId; /* base attributes (for restoring via escapes) */

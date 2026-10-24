@@ -40,6 +40,7 @@ int   gap_Text;                           /* cf. gap_UI in metrics.h */
 void init_Text(iText *d, SDL_Renderer *render, float documentFontSizeFactor) {
     d->render          = render;
     d->contentFontSize = contentScale_Text * documentFontSizeFactor;
+    d->gap             = gap_Text;
     d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC prefix */);
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
@@ -53,6 +54,9 @@ void deinit_Text(iText *d) {
 
 void setCurrent_Text(iText *d) {
     current_Text_ = d;
+    if (d) {
+        gap_Text = d->gap;
+    }
 }
 
 iText *current_Text(void) {
@@ -150,7 +154,7 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
         *colorEmojiFontId = -1;
     }
     clear_Array(fontPriorityOrder);
-    const iDocPrefs *docPrefs = activeDocPrefs_App(); /* no document context here */
+    const iDocPrefs *docPrefs = activeDocPrefs_App(); /* of the current window */
     /* Mandatory fonts (must match the fixed slot IDs in font.h). */
     cb->setupSpec(d, tryFindSpec_(&prefs_App()->strings[uiFont_PrefsString], "default"),      default_FontId,           uiSize, textSize);
     cb->setupSpec(d, tryFindSpec_(docPrefs->monospaceFont,         "iosevka"),      monospace_FontId,         uiSize, textSize);
@@ -190,7 +194,7 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
     }
 #endif
     sort_Array(fontPriorityOrder, cmp_PrioMapItem_);
-    gap_Text = iRound(gap_UI * d->contentFontSize);
+    d->gap = gap_Text = iRound(gap_UI * d->contentFontSize);
 }
 
 /*----------------------------------------------------------------------------------------------*/

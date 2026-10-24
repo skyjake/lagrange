@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "root.h"
 
+#include <lagrange/docprefs.h>
+
 #include <the_Foundation/rect.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_render.h>
@@ -125,6 +127,8 @@ struct Impl_Window {
     SDL_Texture * falloffShadow; /* horizontal; exponential decay from the center to both edges */
     iRoundCornerAtlas roundCorners[8]; /* generated on demand for different radii */
     iText *       text;
+    iDocPrefs     docPrefs;     /* of the front document; `text` fonts are set up for these */
+    uint32_t      fontKey;      /* layouts made with `text` fonts */
     unsigned int  frameCount;
     iClick        midDrag;      /* middle mouse button drag-to-scroll gesture */
     uint32_t      midDragTime;  /* timestamp of last scroll drag event */
@@ -181,6 +185,7 @@ void        setTitle_Window         (iWindow *, const iString *title);
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
 iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
 void        invalidate_Window       (iAnyWindow *); /* discard all cached graphics */
+void        resetFonts_Window       (iAnyWindow *); /* set up fonts for the window's docPrefs */
 void        draw_Window             (iWindow *);
 void        setUiScale_Window       (iWindow *, float uiScale);
 iRangef     uiScaleRange_Window     (void); /* depends on device type */
