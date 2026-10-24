@@ -405,23 +405,41 @@ void enumerateSystemFonts_FontPack_(iFontPack *pack) {
 /*- System UI font -----------------------------------------------------------------------------*/
 
 /* Core Text substitutes another font when the system UI font is looked up by PostScript name. */
-static const char *systemUIFontIds_[max_FontStyle] = {
-    "system-ui/regular", "system-ui/italic", "system-ui/light", "system-ui/semibold", "system-ui/bold",
+static const char *systemFontDesigns_[max_SystemFontDesign] = {
+    "system-ui", "system-serif", "system-rounded",
+};
+static const char *systemFontStyles_[max_FontStyle] = {
+    "regular", "italic", "light", "semibold", "bold",
 };
 
-CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
-    /* Heavier than native, since glyphs are rendered without font smoothing. */
-    static const CGFloat weights_[max_FontStyle] = { 0.154, 0.154, -0.466, 0.367, 0.56 };
-    int style = -1;
-    for (int s = 0; s < max_FontStyle; s++) {
-        if (!cmp_String(fontFileId, systemUIFontIds_[s])) {
-            style = s;
-            break;
+static iBool parseSystemFontId_(const iString *fontFileId, int *design_out, int *style_out) {
+    const char *id = cstr_String(fontFileId);
+    for (int d = 0; d < max_SystemFontDesign; d++) {
+        const size_t len = strlen(systemFontDesigns_[d]);
+        if (strncmp(id, systemFontDesigns_[d], len) || id[len] != '/') {
+            continue;
+        }
+        for (int s = 0; s < max_FontStyle; s++) {
+            if (!iCmpStr(id + len + 1, systemFontStyles_[s])) {
+                *design_out = d;
+                *style_out  = s;
+                return iTrue;
+            }
         }
     }
-    if (style < 0) {
+    return iFalse;
+}
+
+CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
+    /* Heavier than native, since glyphs are rendered without font smoothing. The other designs
+       use the native weights, like the families enumerated on macOS. */
+    static const CGFloat uiWeights_[max_FontStyle]     = { 0.154, 0.154, -0.466, 0.367, 0.56 };
+    static const CGFloat designWeights_[max_FontStyle] = { 0.0, 0.0, -0.4, 0.3, 0.4 };
+    int design, style;
+    if (!parseSystemFontId_(fontFileId, &design, &style)) {
         return NULL;
     }
+    const CGFloat *weights = design == default_SystemFontDesign ? uiWeights_ : designWeights_;
     CTFontRef base = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 12.0, NULL);
     if (!base) {
         return NULL;
@@ -429,7 +447,7 @@ CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
     CTFontRef font = NULL;
     /* Apply the weight. */ {
         CFNumberRef weight =
-            CFNumberCreate(kCFAllocatorDefault, kCFNumberCGFloatType, &weights_[style]);
+            CFNumberCreate(kCFAllocatorDefault, kCFNumberCGFloatType, &weights[style]);
         CFMutableDictionaryRef traits = CFDictionaryCreateMutable(
             kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
         CFDictionarySetValue(traits, kCTFontWeightTrait, weight);
@@ -438,14 +456,28 @@ CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
         CFDictionarySetValue(attrs, kCTFontTraitsAttribute, traits);
         CTFontDescriptorRef baseDesc = CTFontCopyFontDescriptor(base);
         CTFontDescriptorRef desc     = CTFontDescriptorCreateCopyWithAttributes(baseDesc, attrs);
-        font = CTFontCreateWithFontDescriptor(desc, 12.0, NULL);
-        CFRelease(desc);
+#if defined (iPlatformAppleMobile)
+        if (design != default_SystemFontDesign) {
+            /* After the weight, because replacing the traits would drop the design. */
+            CTFontDescriptorRef designDesc = newSystemDesignFontDescriptor_iOS(desc, design);
+            CFRelease(desc);
+            desc = designDesc;
+        }
+#endif
+        if (desc) {
+            font = CTFontCreateWithFontDescriptor(desc, 12.0, NULL);
+            CFRelease(desc);
+        }
         CFRelease(baseDesc);
         CFRelease(attrs);
         CFRelease(traits);
         CFRelease(weight);
     }
     if (!font) {
+        if (design != default_SystemFontDesign) {
+            CFRelease(base);
+            return NULL;
+        }
         return base;
     }
     CFRelease(base);
@@ -460,11 +492,11 @@ CTFontRef newSystemUIFont_AppleText(const iString *fontFileId) {
     return font;
 }
 
-iFontSpec *newSystemUIFontSpec_AppleText(void) {
+static iFontSpec *newSystemFontSpec_(enum iSystemFontDesign design) {
     iFontFile *files[max_FontStyle];
     for (int s = 0; s < max_FontStyle; s++) {
         files[s] = new_FontFile();
-        setCStr_String(&files[s]->id, systemUIFontIds_[s]);
+        format_String(&files[s]->id, "%s/%s", systemFontDesigns_[design], systemFontStyles_[s]);
         allocData_FontFile(files[s]);
         if (!files[s]->data) {
             iReleasePtr(&files[s]);
@@ -477,14 +509,47 @@ iFontSpec *newSystemUIFontSpec_AppleText(void) {
         return NULL;
     }
     iFontSpec *spec = new_FontSpec();
-    setCStr_String(&spec->name, "System UI");
-    spec->glyphScale[0]  = 0.79f;
-    spec->glyphScale[1]  = 0.90f * glyphScaleFromMetrics_(files[regular_FontStyle]);
-    spec->heightScale[1] = 0.85f / spec->glyphScale[1]; /* keep glyph size unchanged */
     for (int s = 0; s < max_FontStyle; s++) {
         spec->styles[s] = files[s] ? files[s] : ref_Object(files[regular_FontStyle]);
     }
     return spec;
+}
+
+iFontSpec *newSystemUIFontSpec_AppleText(void) {
+    iFontSpec *spec = newSystemFontSpec_(default_SystemFontDesign);
+    if (!spec) {
+        return NULL;
+    }
+    setCStr_String(&spec->name, "System UI");
+    spec->glyphScale[0]  = 0.79f;
+    spec->glyphScale[1]  = 0.90f * glyphScaleFromMetrics_(spec->styles[regular_FontStyle]);
+    spec->heightScale[1] = 0.85f / spec->glyphScale[1]; /* keep glyph size unchanged */
+    return spec;
+}
+
+void addSystemDesignFontSpecs_AppleText(iFontPack *pack) {
+#if defined (iPlatformAppleMobile)
+    /* These are private families on iOS, so they aren't enumerated. Same IDs as on macOS. */
+    static const struct { enum iSystemFontDesign design; const char *id; const char *name; } fonts_[] = {
+        { serif_SystemFontDesign, "apple-new-york", "New York" },
+        { rounded_SystemFontDesign, "apple-sf-pro-rounded", "SF Pro Rounded" },
+    };
+    iForIndices(i, fonts_) {
+        iFontSpec *spec = newSystemFontSpec_(fonts_[i].design);
+        if (!spec) {
+            continue;
+        }
+        setCStr_String(&spec->id, fonts_[i].id);
+        setCStr_String(&spec->name, fonts_[i].name);
+        spec->priority = 1;
+        spec->flags   |= ignoreAsFallback_FontSpecFlag;
+        spec->glyphScale[0] = spec->glyphScale[1] =
+            glyphScaleFromMetrics_(spec->styles[regular_FontStyle]);
+        addSpec_FontPack(pack, spec);
+    }
+#else
+    iUnused(pack);
+#endif
 }
 
 /*----------------------------------------------------------------------------------------------*/

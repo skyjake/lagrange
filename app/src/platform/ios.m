@@ -21,6 +21,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ios.h"
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+#   include "apple_text.h"
+#endif
 #include "app.h"
 #include <lagrange/core.h>
 #include <lagrange/gmutil.h>
@@ -585,6 +588,19 @@ int displayRefreshRate_iOS(void) {
 float displayScale_iOS(const iWindow *window) {
     return uiWindow_(window).screen.nativeScale;
 }
+
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+CTFontDescriptorRef newSystemDesignFontDescriptor_iOS(CTFontDescriptorRef base,
+                                                      enum iSystemFontDesign design) {
+    UIFontDescriptorSystemDesign name = design == serif_SystemFontDesign
+                                            ? UIFontDescriptorSystemDesignSerif
+                                        : design == rounded_SystemFontDesign
+                                            ? UIFontDescriptorSystemDesignRounded
+                                            : UIFontDescriptorSystemDesignDefault;
+    UIFontDescriptor *desc = [(__bridge UIFontDescriptor *) base fontDescriptorWithDesign:name];
+    return desc ? (CTFontDescriptorRef) CFBridgingRetain(desc) : NULL;
+}
+#endif
 
 void updateStatusBarTapper_iOS(void) {
     if (!statusBarTapper_) {

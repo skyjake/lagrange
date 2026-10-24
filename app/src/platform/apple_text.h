@@ -79,8 +79,18 @@ iAppleFont *appleFont_AppleText_        (iAppleText *, int fontId);
 CGImageRef  sfSymbolImage_AppleText_    (iAppleText *, const char *symbolName, float pointSize,
                                          iColor color, int slotPixels); /* caller releases */
 
+enum iSystemFontDesign {
+    default_SystemFontDesign,
+    serif_SystemFontDesign,
+    rounded_SystemFontDesign,
+    max_SystemFontDesign
+};
+
 void        allocData_FontFile          (iFontFile *); /* backend-implemented */
-CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if not a system UI font */
+CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if not a system font */
+#if defined (iPlatformAppleMobile)
+CTFontDescriptorRef newSystemDesignFontDescriptor_iOS(CTFontDescriptorRef, enum iSystemFontDesign);
+#endif
 
 /* Render an SF Symbol glyph as a tinted CGImage (caller must CGImageRelease).
    `slotPixels`: height of the square slot in screen pixels in which to place the glyph. */

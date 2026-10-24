@@ -650,6 +650,7 @@ void init_Fonts(const char *userDir) {
            change that often. */
         extern void loadCachedFontPack_AppleText(const iString *cacheFile, iFontPack *pack);
         extern iFontSpec *newSystemUIFontSpec_AppleText(void);
+        extern void addSystemDesignFontSpecs_AppleText(iFontPack *pack);
         /* The system UI font is used as the default font. */
         iFontSpec *sysUI = newSystemUIFontSpec_AppleText();
         if (sysUI) {
@@ -670,6 +671,7 @@ void init_Fonts(const char *userDir) {
         if (sysUI) {
             addSpec_FontPack(pack, sysUI);
         }
+        addSystemDesignFontSpecs_AppleText(pack);
         if (!isEmpty_PtrArray(&pack->fonts)) {
             /* Apply overrides/tweaks from the curated metadata. */
             applyIniTweaks_FontPack(
