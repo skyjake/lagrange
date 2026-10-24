@@ -1447,7 +1447,8 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, const iMa
             w = boundWidth - x;
         }
         if (~run->flags & decoration_GmRunFlag) {
-            const iInt2 visPos = add_I2(run->bounds.pos, d->viewPos);
+            const iInt2 visPos = init_I2(left_Rect(run->visBounds) + d->viewPos.x,
+                                         top_Rect(run->bounds) + d->viewPos.y);
             const iRect rangeRect = { addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) };
             if (rangeRect.size.x) {
                 fillMark_DrawContext_(d, rangeRect, style);

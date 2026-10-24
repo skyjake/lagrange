@@ -1479,7 +1479,7 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     if (pos.y > bottom_Rect(d->bounds)) {
         return (iRangecc){ d->text.end, d->text.end };
     }
-    const int x = pos.x - left_Rect(d->bounds);
+    const int x = pos.x - left_Rect(d->visBounds); /* centered lines are moved visually */
     if (x <= 0) {
         return (iRangecc){ d->text.start, d->text.start };
     }
