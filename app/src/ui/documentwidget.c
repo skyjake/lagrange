@@ -2941,6 +2941,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         return iTrue;
                     }
                 }
+                /* Edge taps turn pages even over links, to avoid accidentally opening them. */
+                if (ev->button.which == SDL_TOUCH_MOUSEID && isPaged_DocumentView(view)) {
+                    const int zone = pageTurnZone_DocumentView(view, pos_Click(&d->click));
+                    if (zone) {
+                        turnPage_DocumentView(view, zone);
+                        return iTrue;
+                    }
+                }
                 /* When paginated, clicks only unfold to avoid accidental folding. */
                 if (view->hoverPre &&
                     (!isPaged_DocumentView(view) ||
