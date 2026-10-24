@@ -515,26 +515,30 @@ static iFontSpec *newSystemFontSpec_(enum iSystemFontDesign design) {
     return spec;
 }
 
+static void setSystemDocumentMetrics_(iFontSpec *spec) {
+    spec->glyphScale[1]  = 0.90f * glyphScaleFromMetrics_(spec->styles[regular_FontStyle]);
+    spec->heightScale[1] = 0.85f / spec->glyphScale[1]; /* keep glyph size unchanged */
+}
+
 iFontSpec *newSystemUIFontSpec_AppleText(void) {
     iFontSpec *spec = newSystemFontSpec_(default_SystemFontDesign);
     if (!spec) {
         return NULL;
     }
     setCStr_String(&spec->name, "System UI");
-    spec->glyphScale[0]  = 0.79f;
-    spec->glyphScale[1]  = 0.90f * glyphScaleFromMetrics_(spec->styles[regular_FontStyle]);
-    spec->heightScale[1] = 0.85f / spec->glyphScale[1]; /* keep glyph size unchanged */
+    spec->glyphScale[0] = 0.79f;
+    setSystemDocumentMetrics_(spec);
     return spec;
 }
 
 void addSystemDesignFontSpecs_AppleText(iFontPack *pack) {
-#if defined (iPlatformAppleMobile)
-    /* These are private families on iOS, so they aren't enumerated. Same IDs as on macOS. */
     static const struct { enum iSystemFontDesign design; const char *id; const char *name; } fonts_[] = {
         { serif_SystemFontDesign, "apple-new-york", "New York" },
         { rounded_SystemFontDesign, "apple-sf-pro-rounded", "SF Pro Rounded" },
     };
     iForIndices(i, fonts_) {
+#if defined (iPlatformAppleMobile)
+        /* These are private families on iOS, so they aren't enumerated. Same IDs as on macOS. */
         iFontSpec *spec = newSystemFontSpec_(fonts_[i].design);
         if (!spec) {
             continue;
@@ -543,13 +547,19 @@ void addSystemDesignFontSpecs_AppleText(iFontPack *pack) {
         setCStr_String(&spec->name, fonts_[i].name);
         spec->priority = 1;
         spec->flags   |= ignoreAsFallback_FontSpecFlag;
-        spec->glyphScale[0] = spec->glyphScale[1] =
-            glyphScaleFromMetrics_(spec->styles[regular_FontStyle]);
+        spec->glyphScale[0] = glyphScaleFromMetrics_(spec->styles[regular_FontStyle]);
+        setSystemDocumentMetrics_(spec);
         addSpec_FontPack(pack, spec);
-    }
 #else
-    iUnused(pack);
+        iConstForEach(PtrArray, j, listSpecs_FontPack(pack)) {
+            iFontSpec *spec = (iFontSpec *) j.ptr;
+            if (!cmp_String(&spec->id, fonts_[i].id)) {
+                setSystemDocumentMetrics_(spec);
+                break;
+            }
+        }
 #endif
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/
