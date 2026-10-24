@@ -404,7 +404,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         drawCentered_Text(uiLabelLarge_FontId,
                           adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
                           iTrue,
-                          iconColor,
+                          isDownloaded || isSel ? iconColor : uiTextDisabled_ColorId,
                           "%s",
                           cstr_String(&str));
         deinit_String(&str);
