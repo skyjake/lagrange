@@ -278,8 +278,9 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
                     setOpenFolders_SidebarWidget(sidebar, openFolders[0]);
                     setOpenFolders_SidebarWidget(sidebar2, openFolders[1]);
-                    postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
-                    postCommandf_Root(root, "sidebar2.mode arg:%u", (modes >> 4) & 0xf);
+                    /* Forced so a mode disabled on one side isn't redirected to the other. */
+                    postCommandf_Root(root, "sidebar.mode force:1 arg:%u", modes & 0xf);
+                    postCommandf_Root(root, "sidebar2.mode force:1 arg:%u", (modes >> 4) & 0xf);
                     if (flags & 4) {
                         postCommand_Widget(sidebar, "feeds.mode arg:%d", unread_FeedsMode);
                     }
