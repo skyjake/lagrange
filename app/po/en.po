@@ -857,13 +857,13 @@ msgstr[1] "Updated %d days ago"
 msgid "menu.opencurrent"
 msgstr "Open in Current Tab"
 
-# Button at the bottom of the Reader tab for viewing the next feed entry.
+# Button at the bottom of the Reader tab for viewing the older feed entry (next by descending time order).
 msgid "reader.next"
-msgstr "Next Entry"
+msgstr "Older Entry"
 
-# Button at the bottom of the Reader tab for viewing the previous feed entry.
+# Button at the bottom of the Reader tab for viewing the newer feed entry (previous by descending time order).
 msgid "reader.prev"
-msgstr "Previous Entry"
+msgstr "Newer Entry"
 
 # Button at the bottom of the Reader tab. Shows the Feeds sidebar.
 msgid "reader.showfeeds"
