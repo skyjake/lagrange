@@ -285,8 +285,6 @@ static void     setupMovableElements_Root_  (iRoot *);
 static void     updateNavBarSize_           (iWidget *navBar);
 static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 static void     hideReadingBarsIfIdle_Root_ (iRoot *);
-static void     hideCursorIfIdle_Root_      (iRoot *);
-static void     startCursorIdleCheck_Root_  (iRoot *);
 static void     finishHidingReadingBars_Root_(void *);
 static void     slideReadingBars_Root_      (iRoot *, iBool out, iBool animate);
 static void     setReadingBarsVisible_Root_ (iRoot *, iBool show);
@@ -553,14 +551,6 @@ static void updateTerminalStatus_(iLabelWidget *term) {
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     if (equal_Command(cmd, "root.reading")) {
         setReadingMode_Root(root->root, arg_Command(cmd) != 0);
-        return iTrue;
-    }
-    if (equal_Command(cmd, "window.mouse.active") || equal_Command(cmd, "window.mouse.entered")) {
-        startCursorIdleCheck_Root_(root->root);
-        return iFalse;
-    }
-    if (equal_Command(cmd, "root.cursor.idle")) {
-        hideCursorIfIdle_Root_(root->root);
         return iTrue;
     }
     if (equal_Command(cmd, "menu.open")) {
@@ -2038,6 +2028,7 @@ void createUserInterface_Root(iRoot *d) {
     setFlags_Widget(
         root, resizeChildren_WidgetFlag | fixedSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);
     setCommandHandler_Widget(root, handleRootCommands_Widget);
+    addChild_Widget(root, iClob(makeCursorIdle_Widget()));
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(root, iClob(div));
@@ -3139,7 +3130,6 @@ static void applyReadingBars_Root_(iRoot *d, iBool show) {
         }
         else {
             remove_Periodic(periodic_App(), timer);
-            startCursorIdleCheck_Root_(d);
         }
     }
     refresh_Widget(d->widget);
@@ -3157,7 +3147,7 @@ iBool hasReadingBarAt_Root(const iRoot *d, iBool bottom) {
            (tabBar && isTabBarWanted_Root_(d) && prefs->bottomTabBar == bottom);
 }
 
-static iBool isPopupOpen_Root_(const iRoot *d) {
+iBool isPopupOpen_Root(const iRoot *d) {
     iWidget *navBar, *tabBar;
     readingBars_Root_(d, &navBar, &tabBar);
     const iWidget *searchBar = findChild_Widget(d->widget, "search");
@@ -3188,7 +3178,7 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
             return; /* in use; check again later */
         }
     }
-    if (isPopupOpen_Root_(d)) {
+    if (isPopupOpen_Root(d)) {
         return;
     }
     if (mouseGrab_Widget()) {
@@ -3198,41 +3188,6 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
         return; /* mouse is moving */
     }
     showReadingBars_Root(d, iFalse);
-}
-
-static const uint32_t cursorIdleCheckInterval_Root_ = 500;
-
-static void startCursorIdleCheck_Root_(iRoot *d) {
-    /* The mouse cursor is hidden along with the bars when the mouse is not moved. */
-    if (d->isReading && d->areReadingBarsHidden && !isMobile_Platform()) {
-        addDelay_Periodic(periodic_App(), cursorIdleCheckInterval_Root_, d->widget, "*root.cursor.idle");
-    }
-}
-
-static iBool hasMouseFocus_(const iWindow *win) {
-#if defined (iPlatformTerminal)
-    iUnused(win);
-    return iTrue;
-#else
-    /* The cursor may be over another window, like a detached Preferences. */
-    return SDL_GetMouseFocus() == win->win;
-#endif
-}
-
-static void hideCursorIfIdle_Root_(iRoot *d) {
-    iWindow *win = window_Widget(d->widget);
-    if (!d->isReading || !d->areReadingBarsHidden || !win->isMouseInside || !hasMouseFocus_(win) ||
-        isCursorHidden_Window()) {
-        remove_Periodic(periodic_App(), d->widget);
-        return;
-    }
-    if (SDL_GetTicks() - win->mouseMotionTime < readingBarsDelay_Root_ ||
-        SDL_GetMouseState(NULL, NULL) || mouseGrab_Widget() || isPopupOpen_Root_(d) ||
-        !contains_Widget(d->widget, mouseCoord_Window(win, 0))) {
-        return; /* check again later */
-    }
-    hideCursor_Window(iTrue);
-    remove_Periodic(periodic_App(), d->widget);
 }
 
 static iBool readingBarsEdges_Root_(const iRoot *d, iBool bottom, int *edge_out, int *restEdge_out,

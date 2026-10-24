@@ -289,6 +289,11 @@ void            setToggle_Widget        (iWidget *toggle, iBool active);
 
 /*-----------------------------------------------------------------------------------------------*/
 
+/* Hides the mouse cursor along with the reading bars when the mouse is not moved. */
+iWidget *       makeCursorIdle_Widget   (void); /* hidden child of the root */
+
+/*-----------------------------------------------------------------------------------------------*/
+
 iChar           removeIconPrefix_String         (iString *);
 enum iColorId   removeColorEscapes_String       (iString *);
 

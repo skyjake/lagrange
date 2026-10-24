@@ -90,6 +90,7 @@ iRect       safeRect_Root                       (const iRoot *);
 iRect       visibleRect_Root                    (const iRoot *); /* may be obstructed by software keyboard */
 iBool       isNarrow_Root                       (const iRoot *);
 iBool       isSheetOpen_Root                    (const iRoot *);
+iBool       isPopupOpen_Root                    (const iRoot *); /* a menu or popup over the reading bars */
 int         appIconSize_Root                    (void);
 
 iBool       handleRootCommands_Widget           (iWidget *, const char *cmd);

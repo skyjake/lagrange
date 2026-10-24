@@ -27,11 +27,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
+#include "root.h"
 #include "touch.h"
 #include "widget.h"
 #include "window.h"
+#include "../periodic.h"
 
 #include <the_Foundation/math.h>
+#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_version.h>
 
@@ -970,6 +973,66 @@ iWidget *makeToggle_Widget(const char *id) {
     setFlags_Widget(toggle, fixedWidth_WidgetFlag, iTrue);
     setCommandHandler_Widget(toggle, toggleHandler_);
     return toggle;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+static const uint32_t cursorIdleCheckInterval_ = 500;
+static const uint32_t cursorIdleTime_          = 4000; /* same as the reading bars */
+
+static iBool hasMouseFocus_(const iWindow *win) {
+#if defined (iPlatformTerminal)
+    iUnused(win);
+    return iTrue;
+#else
+    /* The cursor may be over another window, like a detached Preferences. */
+    return SDL_GetMouseFocus() == win->win;
+#endif
+}
+
+static void startCursorIdleCheck_(iWidget *d) {
+    const iRoot *root = d->root;
+    if (root->isReading && root->areReadingBarsHidden && !isMobile_Platform()) {
+        addDelay_Periodic(periodic_App(), cursorIdleCheckInterval_, d, "*cursoridle.check");
+    }
+}
+
+static void hideCursorIfIdle_(iWidget *d) {
+    iRoot   *root = d->root;
+    iWindow *win  = window_Widget(d);
+    if (!root->isReading || !root->areReadingBarsHidden || !win->isMouseInside ||
+        !hasMouseFocus_(win) || isCursorHidden_Window()) {
+        remove_Periodic(periodic_App(), d);
+        return;
+    }
+    if (SDL_GetTicks() - win->mouseMotionTime < cursorIdleTime_ ||
+        SDL_GetMouseState(NULL, NULL) || mouseGrab_Widget() || isPopupOpen_Root(root) ||
+        !contains_Widget(root->widget, mouseCoord_Window(win, 0))) {
+        return; /* check again later */
+    }
+    hideCursor_Window(iTrue);
+    remove_Periodic(periodic_App(), d);
+}
+
+static iBool cursorIdleHandler_(iWidget *d, const char *cmd) {
+    if (equal_Command(cmd, "cursoridle.check")) {
+        hideCursorIfIdle_(d);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "window.mouse.active") || equal_Command(cmd, "window.mouse.entered") ||
+        (equal_Command(cmd, "readingbars.changed") && !arg_Command(cmd))) {
+        startCursorIdleCheck_(d);
+    }
+    return iFalse; /* notifications */
+}
+
+iWidget *makeCursorIdle_Widget(void) {
+    /* Also the Periodic context of the check. */
+    iWidget *d = new_Widget();
+    setId_Widget(d, "cursoridle");
+    setFlags_Widget(d, hidden_WidgetFlag, iTrue);
+    setCommandHandler_Widget(d, cursorIdleHandler_);
+    return d;
 }
 
 /*-----------------------------------------------------------------------------------------------*/
