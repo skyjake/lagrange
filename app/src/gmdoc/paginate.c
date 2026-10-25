@@ -303,35 +303,37 @@ static size_t firstMovedGroup_GmDocument_(const iArray *src, const iArray *group
     return first > 0 && (first < moved || isCaptionMoved) ? first : n;
 }
 
-static int shrinkImageToFit_GmDocument_(iArray *runs, size_t start, size_t end, int overflow) {
+static int imageShrink_GmDocument_(const iArray *runs, size_t start, size_t end, int overflow) {
     /* An image is scaled down by up to 25% to fit in the column. Returns the decrease in
        height. */
+    const iGmRun *image = firstContentRun_GmDocument_(runs, start, end);
+    if (!image || image->mediaType != image_MediaType || overflow <= 0 ||
+        overflow > height_Rect(image->visBounds) / 4) {
+        return 0;
+    }
+    return overflow;
+}
+
+static void shrinkImage_GmDocument_(iArray *runs, size_t start, size_t end, int shrink) {
     size_t pos = start;
-    while (pos < end && ((const iGmRun *) constAt_Array(runs, pos))->flags & decoration_GmRunFlag) {
+    while (((const iGmRun *) constAt_Array(runs, pos))->flags & decoration_GmRunFlag) {
         pos++;
     }
-    if (pos == end) {
-        return 0;
-    }
     iGmRun   *image  = at_Array(runs, pos);
+    const int width  = width_Rect(image->visBounds);
     const int height = height_Rect(image->visBounds);
-    if (image->mediaType != image_MediaType || overflow <= 0 || overflow > height / 4) {
-        return 0;
-    }
-    const int width = width_Rect(image->visBounds);
-    image->visBounds.size.y = height - overflow;
-    image->visBounds.size.x = width * (height - overflow) / height;
+    image->visBounds.size.y = height - shrink;
+    image->visBounds.size.x = width * (height - shrink) / height;
     image->visBounds.pos.x += (width - width_Rect(image->visBounds)) / 2;
     image->bounds.size.y    = height_Rect(image->visBounds);
     /* The caption moves up. */
     for (pos++; pos < end; pos++) {
         iGmRun *run = at_Array(runs, pos);
-        run->visBounds.pos.y -= overflow;
+        run->visBounds.pos.y -= shrink;
         if (!isEmpty_Rect(run->bounds)) {
-            run->bounds.pos.y -= overflow;
+            run->bounds.pos.y -= shrink;
         }
     }
-    return overflow;
 }
 
 static size_t keptWithHeadingEnd_GmDocument_(const iArray *src, size_t start) {
@@ -356,18 +358,22 @@ enum iPageAlign {
 
 static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
                                   enum iPageAlign align, uint16_t firstPreId, uint16_t lastPreId) {
-    /* Runs from `start` onwards are on the page and begin at the top of `content`. */
+    /* Runs from `start` onwards are on the page and begin at the top of `content`. Runs in
+       several columns are aligned together. */
     if (align == top_PageAlign ||
         (!d->docPrefs.centerShortDocs.value && !d->flags.isBookCover) ||
         start >= size_Array(&d->layout)) {
         return;
     }
-    int top    = content.end;
-    int bottom = content.start;
+    const int pageHeight = d->metrics.pageHeight;
+    const int colTop     = content.start / pageHeight * pageHeight;
+    int       top        = content.end;
+    int       bottom     = content.start;
     for (size_t i = start; i < size_Array(&d->layout); i++) {
-        const iRect vis = ((const iGmRun *) constAt_Array(&d->layout, i))->visBounds;
-        top    = iMin(top, top_Rect(vis));
-        bottom = iMax(bottom, bottom_Rect(vis));
+        const iRect vis   = ((const iGmRun *) constAt_Array(&d->layout, i))->visBounds;
+        const int   shift = top_Rect(vis) / pageHeight * pageHeight - colTop;
+        top    = iMin(top, top_Rect(vis) - shift);
+        bottom = iMax(bottom, bottom_Rect(vis) - shift);
     }
     if (align != centerContent_PageAlign) {
         top = content.start;
@@ -389,118 +395,223 @@ static void alignPage_GmDocument_(iGmDocument *d, size_t start, iRangei content,
     }
 }
 
+iDeclareType(PageState)
+
+struct Impl_PageState {
+    size_t   pos;        /* next group in the continuous layout */
+    size_t   column;
+    iRangei  content;
+    int      offset;     /* the continuous layout begins at zero */
+    int      lastBottom;
+    size_t   firstGroup;
+    size_t   colStart;   /* layout index of the first run in the column */
+    uint16_t lastPreId;
+    uint16_t colPreId;   /* first preformatted block that may begin in the column */
+    int      srcBottom;  /* bottom of the placed runs in the continuous layout */
+    iBool    hasTitle;   /* the first level 1 heading is a title, not a chapter */
+};
+
+iDeclareType(ColumnBalance)
+
+struct Impl_ColumnBalance {
+    iBool isActive;
+    iBool hasInsetPage; /* the unbalanced layout needed one */
+    int   height;       /* column height being tried */
+    int   tooLow;       /* tallest height known not to fit */
+    int   fits;         /* lowest height known to fit */
+};
+
+static iBool balanceColumns_GmDocument_(iGmDocument *d, iColumnBalance *balance, iPageState *s,
+                                        const iPageState *pageStart, iArray *colGroups,
+                                        const iArray *preTops, iBool fits) {
+    /* The columns on the last page with content in a chapter get the lowest height where the
+       content still fits on the page. Returns iTrue if the page is rewound for another
+       attempt. */
+    if (!balance->isActive) {
+        if (columnsPerPage_GmDocument(d) == 1 || d->flags.isBookCover) {
+            return iFalse;
+        }
+        /* A short single column is not split. */
+        if (s->column == pageStart->column &&
+            s->lastBottom - s->content.start < size_Range(&s->content) / 3) {
+            return iFalse;
+        }
+        balance->isActive = iTrue;
+        balance->tooLow   = 0;
+        balance->fits     = size_Range(&s->content);
+    }
+    else if (fits) {
+        balance->fits = balance->height;
+    }
+    else {
+        balance->tooLow = balance->height;
+    }
+    const iBool isFound = balance->fits - balance->tooLow <= 1;
+    if (isFound && (fits || balance->height == balance->fits)) {
+        balance->isActive = iFalse;
+        return iFalse;
+    }
+    balance->height = isFound ? balance->fits : (balance->tooLow + balance->fits) / 2;
+    resize_Array(&d->layout, pageStart->colStart);
+    for (uint16_t preId = pageStart->lastPreId + 1; preId <= s->lastPreId; preId++) {
+        ((iGmPreMeta *) at_Array(&d->preMeta, preId - 1))->pixelRect.pos.y =
+            *(const int *) constAt_Array(preTops, preId - 1);
+    }
+    clear_Array(colGroups);
+    *s = *pageStart;
+    return iTrue;
+}
+
 void paginate_GmDocument_(iGmDocument *d) {
     iArray       *src     = collect_Array(copy_Array(&d->layout));
     const size_t  numSrc  = size_Array(src);
     const size_t  perPage = columnsPerPage_GmDocument(d);
+    const int     inset   = d->metrics.lastPageInset + lastPageClearance_GmDocument(d);
     clear_Array(&d->layout);
-    size_t   column     = 0;
-    iRangei  content    = columnContentRange_GmDocument(d, column);
-    int      offset     = content.start; /* the continuous layout begins at zero */
-    int      lastBottom = content.start;
-    size_t   firstGroup = 0;
-    iArray   colGroups;     /* groups placed in the column */
-    size_t   colStart  = 0; /* layout index of the first run in the column */
-    uint16_t lastPreId = 0;
-    uint16_t colPreId  = 1;      /* first preformatted block that may begin in the column */
-    int      srcBottom = 0;      /* bottom of the placed runs in the continuous layout */
-    iBool    hasTitle  = iFalse; /* the first level 1 heading is a title, not a chapter */
+    iPageState s = { .content = columnContentRange_GmDocument(d, 0), .colPreId = 1 };
+    s.offset     = s.content.start;
+    s.lastBottom = s.content.start;
+    iPageState     pageStart = s;
+    iColumnBalance balance   = { .isActive = iFalse };
+    iBool          needsInsetPage;
+    iArray         colGroups; /* groups placed in the column */
+    iArray         preTops;   /* preformatted block positions in the continuous layout */
     init_Array(&colGroups, sizeof(iColumnGroup));
-    for (size_t i = 0; i < numSrc;) {
-        size_t      end       = groupEnd_GmDocument_(src, i);
-        iRangei     span      = groupSpan_GmDocument_(src, i, end);
-        const iBool isChapter = isChapterGroup_GmDocument_(src, i, end) && (hasTitle || column > 0);
-        int         shrink    = 0;
-        if (i != firstGroup && !isChapter) {
-            shrink = shrinkImageToFit_GmDocument_(src, i, end, span.end + offset - content.end);
-            span.end -= shrink;
-        }
-        if (i != firstGroup && (isChapter || span.end + offset > content.end)) {
-            /* Continue in the next column. Some of the placed groups may move along. */
-            const size_t moved = isChapter ? size_Array(&colGroups)
-                                           : firstMovedGroup_GmDocument_(src, &colGroups, i);
-            if (moved < size_Array(&colGroups)) {
-                const iColumnGroup *group = constAt_Array(&colGroups, moved);
-                i = group->src;
-                resize_Array(&d->layout, group->dest);
-                for (uint16_t preId = group->lastPreId + 1; preId <= lastPreId; preId++) {
-                    ((iGmPreMeta *) at_Array(&d->preMeta, preId - 1))->pixelRect.pos.y -= offset;
+    init_Array(&preTops, sizeof(int));
+    iConstForEach(Array, p, &d->preMeta) {
+        pushBack_Array(&preTops, &((const iGmPreMeta *) p.value)->pixelRect.pos.y);
+    }
+    for (;;) {
+        while (s.pos < numSrc) {
+            size_t      end    = groupEnd_GmDocument_(src, s.pos);
+            iRangei     span   = groupSpan_GmDocument_(src, s.pos, end);
+            const iBool isChapter =
+                isChapterGroup_GmDocument_(src, s.pos, end) && (s.hasTitle || s.column > 0);
+            const int   colEnd = balance.isActive ? s.content.start + balance.height
+                                                  : s.content.end;
+            int         shrink = 0;
+            if (s.pos != s.firstGroup && !isChapter) {
+                shrink = imageShrink_GmDocument_(src, s.pos, end, span.end + s.offset - colEnd);
+                span.end -= shrink;
+            }
+            if (s.pos != s.firstGroup && (isChapter || span.end + s.offset > colEnd)) {
+                const iBool isPageFull =
+                    !isChapter && balance.isActive && (s.column + 1) % perPage == 0;
+                if ((isChapter || isPageFull) &&
+                    balanceColumns_GmDocument_(
+                        d, &balance, &s, &pageStart, &colGroups, &preTops, !isPageFull)) {
+                    continue;
                 }
-                lastPreId = group->lastPreId;
+                /* Continue in the next column. Some of the placed groups may move along. */
+                const size_t moved =
+                    isChapter ? size_Array(&colGroups)
+                              : firstMovedGroup_GmDocument_(src, &colGroups, s.pos);
+                if (moved < size_Array(&colGroups)) {
+                    const iColumnGroup *group = constAt_Array(&colGroups, moved);
+                    s.pos = group->src;
+                    resize_Array(&d->layout, group->dest);
+                    for (uint16_t preId = group->lastPreId + 1; preId <= s.lastPreId; preId++) {
+                        ((iGmPreMeta *) at_Array(&d->preMeta, preId - 1))->pixelRect.pos.y -=
+                            s.offset;
+                    }
+                    s.lastPreId = group->lastPreId;
+                }
+                /* Columns are centered, but a chapter's last column and balanced columns are
+                   aligned to the top. */
+                alignPage_GmDocument_(d, s.colStart, s.content,
+                                      (isChapter && !d->flags.isBookCover) || balance.isActive
+                                          ? top_PageAlign
+                                          : center_PageAlign,
+                                      s.colPreId, s.lastPreId);
+                /* Chapters begin on a new page. */
+                breakColumn_GmDocument_(d, &s.column, isChapter);
+                s.colStart = size_Array(&d->layout);
+                s.colPreId = s.lastPreId + 1;
+                s.content  = columnContentRange_GmDocument(d, s.column);
+                end        = groupEnd_GmDocument_(src, s.pos);
+                const iRangei newSpan = groupSpan_GmDocument_(src, s.pos, end);
+                s.offset   = s.content.start - newSpan.start;
+                if (isChapter) {
+                    /* The margin above the heading remains at the top of the page, as far as
+                       the heading and the line following it fit. */
+                    const iRangei block = groupSpan_GmDocument_(
+                        src, s.pos, keptWithHeadingEnd_GmDocument_(src, s.pos));
+                    s.offset += iClamp(s.content.end - (block.end + s.offset), 0,
+                                       iMax(0, newSpan.start - s.srcBottom));
+                }
+                s.lastBottom = s.content.start;
+                s.firstGroup = s.pos;
+                clear_Array(&colGroups);
+                if (s.column % perPage == 0) {
+                    pageStart = s;
+                }
+                continue;
             }
-            /* Columns are centered, but a chapter's last column is aligned to the top. */
-            alignPage_GmDocument_(d, colStart, content,
-                                  isChapter && !d->flags.isBookCover ? top_PageAlign
-                                                                     : center_PageAlign,
-                                  colPreId, lastPreId);
-            /* Chapters begin on a new page. */
-            breakColumn_GmDocument_(d, &column, isChapter);
-            colStart   = size_Array(&d->layout);
-            colPreId   = lastPreId + 1;
-            content    = columnContentRange_GmDocument(d, column);
-            end        = groupEnd_GmDocument_(src, i);
-            const iRangei newSpan = groupSpan_GmDocument_(src, i, end);
-            offset     = content.start - newSpan.start;
-            if (isChapter) {
-                /* The margin above the heading remains at the top of the page, as far as the
-                   heading and the line following it fit. */
-                const iRangei block =
-                    groupSpan_GmDocument_(src, i, keptWithHeadingEnd_GmDocument_(src, i));
-                offset += iClamp(content.end - (block.end + offset), 0,
-                                 iMax(0, newSpan.start - srcBottom));
+            if (isChapterGroup_GmDocument_(src, s.pos, end)) {
+                s.hasTitle = iTrue;
             }
-            lastBottom = content.start;
-            firstGroup = i;
-            clear_Array(&colGroups);
-            continue;
+            const size_t dest = size_Array(&d->layout);
+            pushBack_Array(&colGroups,
+                           &(iColumnGroup){ .src = s.pos, .dest = dest, .lastPreId = s.lastPreId });
+            for (; s.pos < end; s.pos++) {
+                iGmRun run = *(const iGmRun *) constAt_Array(src, s.pos);
+                run.visBounds.pos.y += s.offset;
+                if (!isEmpty_Rect(run.bounds)) {
+                    run.bounds.pos.y += s.offset;
+                }
+                const uint16_t preId = preId_GmRun(&run);
+                if (preId > s.lastPreId) {
+                    /* First run of a preformatted block. */
+                    iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
+                    meta->pixelRect.pos.y += s.offset;
+                    s.lastPreId = preId;
+                }
+                s.lastBottom = iMax(s.lastBottom, bottom_Rect(run.visBounds));
+                s.srcBottom  = iMax(s.srcBottom, bottom_Rect(run.visBounds) - s.offset);
+                pushBack_Array(&d->layout, &run);
+            }
+            if (shrink) {
+                shrinkImage_GmDocument_(&d->layout, dest, size_Array(&d->layout), shrink);
+                s.lastBottom -= shrink;
+                /* The following runs were not moved up with the shrunk image. */
+                s.offset -= shrink;
+            }
         }
-        if (isChapterGroup_GmDocument_(src, i, end)) {
-            hasTitle = iTrue;
+        /* The inset at the bottom of the page's last column is needed only if the content
+           reaches it. Balancing may not add an inset page. */
+        needsInsetPage = (s.column + 1) % perPage == 0 && s.content.end - s.lastBottom < inset;
+        if (!balance.isActive) {
+            balance.hasInsetPage = needsInsetPage;
         }
-        pushBack_Array(&colGroups,
-                       &(iColumnGroup){ .src = i, .dest = size_Array(&d->layout), .lastPreId = lastPreId });
-        for (; i < end; i++) {
-            iGmRun run = *(const iGmRun *) constAt_Array(src, i);
-            run.visBounds.pos.y += offset;
-            if (!isEmpty_Rect(run.bounds)) {
-                run.bounds.pos.y += offset;
-            }
-            const uint16_t preId = preId_GmRun(&run);
-            if (preId > lastPreId) {
-                /* First run of a preformatted block. */
-                iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
-                meta->pixelRect.pos.y += offset;
-                lastPreId = preId;
-            }
-            lastBottom = iMax(lastBottom, bottom_Rect(run.visBounds));
-            srcBottom  = iMax(srcBottom, bottom_Rect(run.visBounds) - offset);
-            pushBack_Array(&d->layout, &run);
+        /* A document that fits in the first column is laid out in a single column instead. */
+        if ((s.column == 0 && !balance.isActive) ||
+            !balanceColumns_GmDocument_(d, &balance, &s, &pageStart, &colGroups, &preTops,
+                                        !needsInsetPage || balance.hasInsetPage)) {
+            break;
         }
-        /* The following runs were not moved up with the shrunk image. */
-        offset    -= shrink;
-        srcBottom += shrink;
     }
-    /* The last column with content is aligned to the top, unless it is the only one or on a
-       cover. The inset at the bottom of the page's last column is needed only if the content
-       reaches it. */
-    const int   inset          = d->metrics.lastPageInset + lastPageClearance_GmDocument(d);
-    const iBool isLastOnPage   = (column + 1) % perPage == 0;
-    const iBool needsInsetPage = isLastOnPage && content.end - lastBottom < inset;
-    if (isLastOnPage && !needsInsetPage) {
-        content.end -= inset;
+    /* The last column with content is aligned to the top, unless the content fits on the first
+       page or is on a cover. The balanced columns of a single page are centered together. */
+    if ((s.column + 1) % perPage == 0 && !needsInsetPage) {
+        s.content.end -= inset;
     }
-    alignPage_GmDocument_(d, colStart, content,
-                          column == 0 || d->flags.isBookCover ? centerContent_PageAlign
-                                                              : top_PageAlign,
-                          colPreId, lastPreId);
+    const iBool isSinglePage = pageStart.column == 0 && !d->flags.isBookCover;
+    alignPage_GmDocument_(d,
+                          isSinglePage ? pageStart.colStart : s.colStart,
+                          s.content,
+                          isSinglePage || d->flags.isBookCover ? centerContent_PageAlign
+                                                               : top_PageAlign,
+                          isSinglePage ? pageStart.colPreId : s.colPreId,
+                          s.lastPreId);
     if (needsInsetPage) {
-        breakColumn_GmDocument_(d, &column, iFalse);
+        breakColumn_GmDocument_(d, &s.column, iFalse);
     }
     /* The final page is complete, even if some of its columns are empty. */
-    d->numFilledColumns = column + 1;
-    const size_t numColumns = (column + perPage) / perPage * perPage;
+    d->numFilledColumns = s.column + 1;
+    const size_t numColumns = (s.column + perPage) / perPage * perPage;
     d->size.y = (int) numColumns * d->metrics.pageHeight;
     setPageBands_GmDocument_(d);
+    deinit_Array(&preTops);
     deinit_Array(&colGroups);
 }
 
