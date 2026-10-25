@@ -493,6 +493,8 @@ void arrange_ViewToolbar(iViewToolbar *d) {
         titleY = top_Rect(documentBounds_DocumentView(view)) + titleMid;
         top    = areaTop + iMin(right_Rect(bounds), right_Rect(safe)) - right;
         if (titleMid > 0) {
+            /* The edge distance may exceed the title's resting position (e.g., on mobile). */
+            top = iMin(top, iMax(areaTop, titleY - height / 2));
             const int mid = titleY - (int) floorf(pos_SmoothScroll(&view->scrollY));
             top = iMax(top, mid - height / 2);
         }
