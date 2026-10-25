@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gempub.h"
 #include "../gmutil.h"
 #include "../history.h"
+#include "../periodic.h"
 #include "banner.h"
 #include "book.h"
 #include "documentview.h"
@@ -68,6 +69,8 @@ void init_DocumentFetch(iDocumentFetch *d) {
     d->request             = NULL;
     d->requestLinkId       = 0;
     d->lastRequestUpdateAt = 0;
+    d->updateTimer         = NULL;
+    d->checkedBodySize     = 0;
     d->redirectCount       = 0;
     d->sourceStatus        = none_GmStatusCode;
     d->certFlags           = 0;
@@ -93,8 +96,29 @@ void deinit_DocumentFetch(iDocumentFetch *d) {
     delete_String(d->certSubject);
 }
 
+static iBool handleUpdateTimerCommands_DocumentFetch_(iWidget *timer, const char *cmd) {
+    if (equal_Command(cmd, "document.request.check")) {
+        /* Updates may be skipped during bursts, so content received before a stall is
+           checked here. */
+        iDocumentFetch *d = ((iDocumentWidget *) parent_Widget(timer))->fetch;
+        if (!d->request || isFinished_GmRequest(d->request)) {
+            remove_Periodic(periodic_App(), timer);
+        }
+        else if (bodySize_GmRequest(d->request) != d->checkedBodySize) {
+            checkResponse_DocumentFetch(d);
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
 void setOwner_DocumentFetch(iDocumentFetch *d, iDocumentWidget *owner) {
-    d->owner = owner;
+    d->owner       = owner;
+    d->updateTimer = new_Widget();
+    setId_Widget(d->updateTimer, "document.updatetimer");
+    setFlags_Widget(d->updateTimer, hidden_WidgetFlag | unhittable_WidgetFlag, iTrue);
+    setCommandHandler_Widget(d->updateTimer, handleUpdateTimerCommands_DocumentFetch_);
+    addChild_Widget(as_Widget(owner), iClob(d->updateTimer));
 }
 
 static iDocumentView *view_DocumentFetch_(const iDocumentFetch *d) {
@@ -436,6 +460,8 @@ iBool fetch_DocumentFetch(iDocumentFetch *d) {
     d->flags &= ~pendingRedirect_DocumentFetchFlag;
     d->state = fetching_RequestState;
     d->lastRequestUpdateAt = 0;
+    d->checkedBodySize = 0;
+    addDelay_Periodic(periodic_App(), 250, d->updateTimer, "*document.request.check");
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, url_DocumentFetch_(d));
     /* Overriding identity. */
@@ -515,6 +541,7 @@ void checkResponse_DocumentFetch(iDocumentFetch *d) {
     if (!d->request) {
         return;
     }
+    d->checkedBodySize = bodySize_GmRequest(d->request);
     enum iGmStatusCode statusCode = status_GmRequest(d->request);
     if (statusCode == none_GmStatusCode) {
         return;
@@ -961,6 +988,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
             iRangecc           charset     = range_CStr("utf-8");
+            iRangecc           lang        = iNullRange;
             enum iSourceFormat docFormat   = undefined_SourceFormat;
             iBool              isCoverPage = iFalse;
             const iString     *mimeStr =
@@ -1211,6 +1239,9 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                         clear_String(&str);
                     }
                 }
+                else if (startsWith_Rangecc(param, "lang=")) {
+                    lang = (iRangecc){ param.start + 5, param.end };
+                }
                 else if (startsWith_Rangecc(param, "charset=")) {
                     charset = (iRangecc){ param.start + 8, param.end };
                     /* Remove whitespace and quotes. */
@@ -1250,6 +1281,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
             }
             setFormat_GmDocument(doc_DocumentFetch_(d), docFormat);
             setMimeType_GmDocument(doc_DocumentFetch_(d), &d->sourceMime);
+            setLang_GmDocument(doc_DocumentFetch_(d), lang);
             /* Convert the source to UTF-8 if needed. */
             if (equalCase_Rangecc(charset, "utf-8")) {
                 /* Verify that it actually is valid UTF-8. */

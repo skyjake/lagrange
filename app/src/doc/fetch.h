@@ -32,6 +32,7 @@ iDeclareType(DocumentWidget)
 iDeclareType(Gempub)
 iDeclareType(GmRequest)
 iDeclareType(GmResponse)
+iDeclareType(Widget)
 
 enum iRequestState {
     blank_RequestState,
@@ -60,6 +61,8 @@ struct Impl_DocumentFetch {
     iGmRequest *       request;
     iGmLinkId          requestLinkId; /* ID of the link that initiated the current request */
     uint32_t           lastRequestUpdateAt;
+    iWidget *          updateTimer;     /* Periodic context while a request is ongoing */
+    size_t             checkedBodySize; /* received content that has been processed */
     int                certFlags;
     iBlock *           certFingerprint;     /* public key SHA-256 */
     iBlock *           certFullFingerprint; /* full certificate SHA-256 */
