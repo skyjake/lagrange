@@ -406,7 +406,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         }
         else if (theme == paper_GmDocumentTheme) {
             const iHSLColor base     = { 40, 0.22f, 0.965f, 1.0f };
-            const iHSLColor textBase = { 30, 0.10f, 0.21f, 1.0f };
+            const iHSLColor textBase = { 30, 0.10f, 0.15f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
             setHsl_Color(tmParagraph_ColorId, textBase);
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(textBase, 0.05f, -0.06f));
@@ -845,7 +845,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                 setHsl_Color(tmHypertextLinkIconVisited_ColorId, (iHSLColor){ hue - 28, 0.55f, 0.32f, 1.0f });
                 setHsl_Color(tmGopherLinkIcon_ColorId, (iHSLColor){ hue + 8, 0.5f, 0.33f, 1.0f });
                 setHsl_Color(tmGopherLinkIconVisited_ColorId, (iHSLColor){ hue + 8, 0.3f, 0.55f, 1.0f });
-            }            
+            }
             int redHeading = tmHeading1_ColorId;
             if (d->themeSeed & 0x1) {
                 const iColor h1 = get_Color(tmHeading1_ColorId);
