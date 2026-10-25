@@ -382,19 +382,85 @@ static void checkFeedsActionsLayout_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
-static void addOutlineItems_SidebarWidget_(iSidebarWidget *d) {
-    /* Appends the headings not yet in the list. */
-    const iGmDocument *doc      = document_DocumentWidget(document_App());
-    const iArray      *headings = headings_GmDocument(doc);
-    for (size_t i = numItems_ListWidget(d->list); i < size_Array(headings); i++) {
-        const iGmHeading *head = constAt_Array(headings, i);
-        iSidebarItem     *item = new_SidebarItem();
-        item->id               = i;
+static size_t outlineChapter_SidebarWidget_(const iGempub **gempub_out) {
+    /* Navigation index of the current document in its book. */
+    const iDocumentWidget *doc    = document_App();
+    const iGempub         *gempub = gempub_DocumentWidget(doc);
+    if (!gempub || isRemote_Gempub(gempub)) {
+        return iInvalidPos;
+    }
+    *gempub_out = gempub;
+    return navIndex_Gempub(gempub, url_DocumentWidget(doc));
+}
+
+static void addOutlineHeadings_SidebarWidget_(iSidebarWidget *d, const iArray *headings,
+                                              size_t start, int topLevel) {
+    for (size_t i = start; i < size_Array(headings); i++) {
+        const iGmHeading *head  = constAt_Array(headings, i);
+        const int         level = iMax(0, head->level - topLevel);
+        iSidebarItem     *item  = new_SidebarItem();
+        item->id                = i;
         setRange_String(&item->label, head->text);
-        item->indent = head->level * 5 * gap_UI;
-        item->isBold = head->level == 0;
+        item->indent = level * 5 * gap_UI;
+        item->isBold = level == 0;
         addItem_ListWidget(d->list, item);
         iRelease(item);
+    }
+}
+
+static void addOutlineItems_SidebarWidget_(iSidebarWidget *d) {
+    /* Appends the headings not yet in the list. A book is rebuilt because the current
+       chapter's headings are between the other chapters. */
+    const iGmDocument *doc      = document_DocumentWidget(document_App());
+    const iArray      *headings = headings_GmDocument(doc);
+    const iGempub     *gempub   = NULL;
+    const size_t       chapter  = outlineChapter_SidebarWidget_(&gempub);
+    if (chapter == iInvalidPos) {
+        addOutlineHeadings_SidebarWidget_(d, headings, numItems_ListWidget(d->list), 0);
+        return;
+    }
+    /* The chapter's highest headings are on the same level as the other chapters. */
+    int topLevel = 2;
+    iConstForEach(Array, h, headings) {
+        topLevel = iMin(topLevel, ((const iGmHeading *) h.value)->level);
+    }
+    clear_ListWidget(d->list);
+    for (size_t i = 0; i < navSize_Gempub(gempub); i++) {
+        if (i == chapter && !isEmpty_Array(headings)) {
+            addOutlineHeadings_SidebarWidget_(d, headings, 0, topLevel);
+            continue;
+        }
+        iSidebarItem *item = new_SidebarItem();
+        item->id           = i;
+        set_String(&item->label, navLinkLabel_Gempub(gempub, i));
+        if (i != chapter) {
+            set_String(&item->url, navLinkUrl_Gempub(gempub, i));
+        }
+        item->isBold = iTrue;
+        addItem_ListWidget(d->list, item);
+        iRelease(item);
+    }
+}
+
+static void scrollToOutlineChapter_SidebarWidget_(iSidebarWidget *d) {
+    /* A new chapter is scrolled to the top, or where it was clicked. It is kept there until
+       the list is scrolled. */
+    const iGempub *gempub  = NULL;
+    const size_t   chapter = outlineChapter_SidebarWidget_(&gempub);
+    if (chapter == iInvalidPos) {
+        clear_String(&d->outlineChapter);
+        return;
+    }
+    const iString *url = navLinkUrl_Gempub(gempub, chapter);
+    if (!equal_String(&d->outlineChapter, url)) {
+        set_String(&d->outlineChapter, url);
+        d->outlineChapterOffset = 0;
+        d->outlineChapterPos    = scrollPos_ListWidget(d->list);
+    }
+    if (scrollPos_ListWidget(d->list) == d->outlineChapterPos) {
+        scrollToItemTop_ListWidget(d->list, chapter, d->outlineChapterOffset);
+        restoreCursorItem_ListWidget(d->list, chapter); /* focusing scrolls to the cursor */
+        d->outlineChapterPos = scrollPos_ListWidget(d->list);
     }
 }
 
@@ -647,6 +713,9 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         }
     }
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
+    if (d->mode == documentOutline_SidebarMode) {
+        scrollToOutlineChapter_SidebarWidget_(d);
+    }
     updateVisible_ListWidget(list_SidebarWidget_(d));
     invalidate_ListWidget(list_SidebarWidget_(d));
     setDragHandleWidth_ListWidget(d->list, isMobile_Platform() &&
@@ -1182,6 +1251,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         d->gempubPage = 1;
         init_String(&d->gempubUrl);
         init_String(&d->gempubCentered);
+        init_String(&d->outlineChapter);
+        d->outlineChapterPos = 0;
+        d->outlineChapterOffset = 0;
     }
     d->feedsProgress = NULL;
     if (isPhone) {
@@ -1244,6 +1316,7 @@ void deinit_SidebarWidget(iSidebarWidget *d) {
     removeTicker_App(applyPendingWidth_SidebarWidget_, d);
     stopFeedsAgeTimer_SidebarWidget_(d);
     iRelease(d->shelfOrder);
+    deinit_String(&d->outlineChapter);
     deinit_String(&d->gempubCentered);
     deinit_String(&d->gempubUrl);
     iRelease(d->structureUnfolds);
@@ -1343,7 +1416,21 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
-            if (item->id < size_Array(headings_GmDocument(doc))) {
+            if (!isEmpty_String(&item->url)) {
+                /* The chapter stays under the mouse. */
+                set_String(&d->outlineChapter, &item->url);
+                d->outlineChapterOffset =
+                    top_Rect(itemRectWithoutVisualOffset_ListWidget(d->list, itemIndex)) -
+                    top_Rect(innerBoundsWithoutVisualOffset_Widget(as_Widget(d->list)));
+                d->outlineChapterPos = scrollPos_ListWidget(d->list);
+                postCommandf_Root(as_Widget(document_App())->root,
+                                  "open newtab:%d url:%s",
+                                  mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
+                                  cstr_String(&item->url));
+                dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+                setFocus_Widget(NULL);
+            }
+            else if (item->id < size_Array(headings_GmDocument(doc))) {
                 const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
                 postCommandf_App("document.goto loc:%p", head->text.start);
                 dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
@@ -1888,12 +1975,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "document.outline.changed")) {
             if (d->mode == documentOutline_SidebarMode && ~flags_Widget(w) & hidden_WidgetFlag &&
                 pointerLabel_Command(cmd, "doc") == document_App()) {
-                if (numItems_ListWidget(d->list) >
-                    size_Array(headings_GmDocument(document_DocumentWidget(document_App())))) {
+                const iGempub *gempub = NULL;
+                const iBool    isBook = outlineChapter_SidebarWidget_(&gempub) != iInvalidPos;
+                if (!isBook &&
+                    numItems_ListWidget(d->list) >
+                        size_Array(headings_GmDocument(document_DocumentWidget(document_App())))) {
                     updateItems_SidebarWidget_(d);
                 }
                 else {
                     addOutlineItems_SidebarWidget_(d);
+                    if (isBook) {
+                        scrollToOutlineChapter_SidebarWidget_(d);
+                    }
                     updateVisible_ListWidget(d->list);
                     invalidate_ListWidget(d->list);
                 }

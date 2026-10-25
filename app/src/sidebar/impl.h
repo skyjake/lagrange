@@ -68,58 +68,82 @@ iDeclareObjectConstruction(SidebarItem)
 
 struct Impl_SidebarWidget {
     iWidget           widget;
-    enum iSidebarSide side;
-    enum iSidebarMode mode;
-    enum iFeedsMode   feedsMode;
-    enum iBooksSortOrder shelfSort;
-    enum iCertListSortOrder identSort; /* also used by the identity list in mobile Settings */
-    enum iSubscriptionsSortOrder subSort;
-    iStringArray     *shelfOrder;    /* book IDs as shown; kept while the shelf stays visible */
-    iBool             isShelfOrderValid;
-    iString           cmdPrefix;
+
+    /* Widget structure. */
+    iLabelWidget     *modeButtons[max_SidebarMode];
     iWidget          *blank;
     iListWidget      *list;
-    iCertListWidget  *certList;
-    iWidget          *gempubTabArea; /* shown when the current document is a book */
-    iLabelWidget     *gempubTabs[3];
-    iWidget          *gempubArea;   /* a document for the current book */
-    iSimpleDocumentWidget *gempubDoc;
-    int               gempubPage;   /* 0: cover, 1: index, 2: shelf */
-    iString           gempubUrl;    /* page shown in `gempubDoc` */
-    iString           gempubCentered; /* document whose link was centered in the index */
     iWidget          *actions;      /* below the list, area for buttons */
-    iIndicatorWidget *feedsProgress; /* phone only: the sheet covers the navbar indicator */
-    int               midHeight;    /* on portrait phone, the height for the middle state */
-    iBool             isEditing;    /* mobile edit mode */
-    iBool             isShowingUrls; /* Alt held down in Bookmarks */
-    iBool             hasSpecialTabs; /* Reader or Gempub tabs are open */
-    iBool             wasLandscape; /* orientation at the time of the previous resize */
-    int               modeScroll[max_SidebarMode];
-    size_t            modeCursor[max_SidebarMode];
-    iLabelWidget     *modeButtons[max_SidebarMode];
-    iLabelWidget     *firstVisibleModeButton;
-    int               maxButtonLabelWidth;
-    float             widthAsGaps;
-    float             pendingWidth;  /* applied once per frame while resizing; negative if none */
-    int               buttonFont;
-    int               itemFonts[2];
-    int               itemCharWidths[2]; /* average for `itemFonts`, for estimating wrapping */
-    size_t            numUnreadEntries;
-    SDL_TimerID       feedsAgeTimer; /* redraws the time since the latest refresh */
     iWidget          *resizer;
+    iIndicatorWidget *feedsProgress; /* phone only: the sheet covers the navbar indicator */
     iWidget          *menu;          /* context menu for an item */
     iWidget          *modeMenu;      /* context menu for the sidebar mode (no item) */
     iWidget          *folderMenu;    /* context menu for bookmark folders */
     iWidget          *trashMenu;     /* context menu for trashed bookmarks */
     iWidget          *multiMenu;     /* context menu for multiple selected items */
+
+    /* State. */
+    enum iSidebarSide side;
+    enum iSidebarMode mode;
+    iString           cmdPrefix;
+    iBool             hasSpecialTabs; /* Reader or Gempub tabs are open */
+    int               buttonFont;
+    int               itemFonts[2];
+    iLabelWidget     *firstVisibleModeButton;
+    int               modeScroll[max_SidebarMode];
+    size_t            modeCursor[max_SidebarMode];
     iSidebarItem     *contextItem;   /* list item accessed in the context menu */
     size_t            contextIndex;  /* index of list item accessed in the context menu */
+
+    /* Metrics. */
+    int               midHeight;         /* on portrait phone, the height for the middle state */
+    iBool             wasLandscape;      /* orientation at the time of the previous resize */
+    float             widthAsGaps;
+    float             pendingWidth;      /* applied once per frame while resizing; <0 if none */
+    int               itemCharWidths[2]; /* average for `itemFonts`, for estimating wrapping */
+    int               maxButtonLabelWidth;
+
+    /* Bookmarks. */
     iIntSet          *openFolders;   /* otherwise folded */
+    iBool             isEditing;     /* mobile edit mode */
+    iBool             isShowingUrls; /* Alt held down in Bookmarks */
     iString           bookmarkFilter;
     iBool             showTrash;
+
+    /* Feeds. */
+    enum iFeedsMode   feedsMode;
+    size_t            numUnreadEntries;
+    SDL_TimerID       feedsAgeTimer; /* redraws the time since the latest refresh */
+
+    /* Subscriptions. */
+    enum iSubscriptionsSortOrder subSort;
+
+    /* Identitites. */
+    iCertListWidget  *certList;
+    enum iCertListSortOrder identSort; /* also used by the identity list in mobile Settings */
+
+    /* Books. */
+    enum iBooksSortOrder shelfSort;
+    iStringArray     *shelfOrder;     /* book IDs as shown; kept while the shelf stays visible */
+    iBool             isShelfOrderValid;
+    iWidget          *gempubTabArea;  /* shown when the current document is a book */
+    iLabelWidget     *gempubTabs[3];
+    int               gempubPage;     /* tab page: 0=cover, 1=index, 2=shelf */
+    iWidget          *gempubArea;     /* a document for the current book */
+    iSimpleDocumentWidget *gempubDoc;
+    iString           gempubUrl;      /* page shown in `gempubDoc` */
+    iString           gempubCentered; /* document (URL) whose link was centered in the index */
+
+    /* Outline. */
+    iString           outlineChapter;       /* book chapter scrolled to the top of the outline */
+    int               outlineChapterPos;    /* scroll position where the chapter was left */
+    int               outlineChapterOffset; /* chapter's first item from the top of the list */
+
+    /* Path structure. */
     iStringSet       *structureUrls;
     iString           structureHost;
     iStringSet       *structureUnfolds;
+
 };
 
 iLocalDef iListWidget *list_SidebarWidget_(iSidebarWidget *d) {

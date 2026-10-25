@@ -255,11 +255,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     iInt2 pos = itemRect.pos;
     if (sidebar->mode == documentOutline_SidebarMode) {
         const int level = d->indent / (5 * gap_UI);
-        const int fg = isSel        ? uiTextSelected_ColorId
-                       : isHover    ? uiTextFramelessHover_ColorId
-                       : level <= 1 ? uiTextStrong_ColorId
-                       : level == 2 ? uiText_ColorId
-                                    : uiTextDim_ColorId;
+        const int fg = isSel                      ? uiTextSelected_ColorId
+                       : isHover                  ? uiTextFramelessHover_ColorId
+                       : !isEmpty_String(&d->url) ? uiTextExtraDim_ColorId /* another chapter */
+                       : level <= 1               ? uiTextStrong_ColorId
+                       : level == 2               ? uiText_ColorId
+                                                  : uiTextDim_ColorId;
         const int width    = outlineTextWidth_SidebarItem_(d, sidebar, width_Rect(itemRect));
         const int maxLines = iClamp((itemHeight - list->itemPadding) / lineHeight_Text(font),
                                     1,

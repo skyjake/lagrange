@@ -130,6 +130,7 @@ void    setScrollMode_ListWidget    (iListWidget *, enum iScrollMode mode);
 void    setDragHandleWidth_ListWidget(iListWidget *, int dragHandleWidth);
 void    setMinVisBufHeight_ListWidget(iListWidget *, int height);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
+void    scrollToItemTop_ListWidget  (iListWidget *, size_t index, int offset); /* instantly, as far as possible */
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);
 void    updateVisible_ListWidget    (iListWidget *);

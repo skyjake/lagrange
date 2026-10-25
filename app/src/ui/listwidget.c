@@ -437,6 +437,14 @@ void scrollToItem_ListWidget(iListWidget *d, size_t index, uint32_t span) {
     }
 }
 
+void scrollToItemTop_ListWidget(iListWidget *d, size_t index, int offset) {
+    /* The item's top will be `offset` below the top of the list. */
+    if (index < size_PtrArray(&d->items)) {
+        setScrollPos_ListWidget(
+            d, iClamp(itemSpan_ListWidget_(d, index).start - offset, 0, scrollMax_ListWidget_(d)));
+    }
+}
+
 int visCount_ListWidget(const iListWidget *d) {
     return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight,
                 (int) size_PtrArray(&d->items));
