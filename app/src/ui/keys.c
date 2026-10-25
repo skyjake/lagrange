@@ -371,6 +371,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 110,{ "${menu.save.downloads}",       SDLK_S, KMOD_PRIMARY,           "document.save"                     }, 0 },
     { 111,{ "${menu.save.books}",           SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook"          }, 0 },
     { 115,{ "${LC:menu.page.translate}",    SDLK_X, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.translate"             }, 0 },
+    { 116,{ "${LC:menu.tool.unwrap}",       SDLK_U, KMOD_PRIMARY | SDL_KMOD_ALT, "tool.run id:builtin.unwrap" }, 0 },
     { 120,{ "${keys.upload}",               SDLK_U, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_E, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },

@@ -950,6 +950,8 @@ menu    = true
 key     = "primary+shift+e"
 ```
 
+Lagrange has a built-in "Unwrap Paragraphs" tool for all "text/*" pages. It joins hard-wrapped lines into paragraphs, guessing which line breaks were intentional.
+
 ## 4.4 Example: Converting from Atom to Gemini
 
 The following simple Python script demonstrates how a content filter could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
