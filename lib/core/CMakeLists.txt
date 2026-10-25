@@ -4,6 +4,7 @@ cmake_minimum_required (VERSION 3.10)
 project (lagrange-core)
 
 add_library (core STATIC
+    src/builtin.c
     src/command.c
     src/core.c
     src/docprefs.c

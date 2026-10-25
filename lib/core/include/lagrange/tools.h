@@ -27,7 +27,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/stringarray.h>
 
-/* External programs configured in "tools.ini". */
+/* Returns a complete "20" response, or NULL if the input was refused. */
+typedef iBlock *(*iToolFilterFunc)(const iString *mime, const iBlock *body,
+                                   const iString *requestUrl);
+
+/* External programs configured in "tools.ini", or built-in tools. */
 
 iDeclareType(Tool)
 iDeclareTypeConstruction(Tool)
@@ -42,6 +46,7 @@ struct Impl_Tool {
     iBool        isAuto;    /* filters responses automatically */
     iBool        inMenu;
     iString      key;       /* key shortcut, e.g., "ctrl+k" */
+    iToolFilterFunc builtin; /* used instead of a command */
 };
 
 iBool   isUsable_Tool   (const iTool *);
@@ -65,9 +70,6 @@ iBool   isCancelled_ToolProcess (const iToolProcess *);
 
 iDeclareType(Tools)
 iDeclareTypeConstruction(Tools)
-
-typedef iBlock *(*iToolFilterFunc)(const iString *mime, const iBlock *body,
-                                   const iString *requestUrl);
 
 void        addBuiltinFilter_Tools  (iTools *, iToolFilterFunc func);
 iBool       willTryFilter_Tools     (const iTools *, const iString *mime);

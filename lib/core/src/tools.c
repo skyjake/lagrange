@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/tools.h"
 
+#include <lagrange/builtin.h>
 #include <lagrange/lang.h>
 #include <lagrange/gmutil.h>
 
@@ -32,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/process.h>
 #include <the_Foundation/stringlist.h>
 #include <the_Foundation/toml.h>
-#include <the_Foundation/xml.h>
 
 iDefineTypeConstruction(Tool)
 
@@ -46,6 +46,7 @@ void init_Tool(iTool *d) {
     d->isAuto    = iTrue;
     d->inMenu    = iFalse;
     init_String(&d->key);
+    d->builtin   = NULL;
 }
 
 void deinit_Tool(iTool *d) {
@@ -64,7 +65,7 @@ static void setMimePattern_Tool_(iTool *d, const iString *pattern) {
 }
 
 iBool isUsable_Tool(const iTool *d) {
-    return d->isEnabled && !isEmpty_StringArray(d->command);
+    return d->isEnabled && (d->builtin || !isEmpty_StringArray(d->command));
 }
 
 static iBool hasPath_Tool_(const iTool *d) {
@@ -130,6 +131,9 @@ iBlock *run_ToolProcess(iToolProcess *d, const iTool *tool, const iString *mime,
     if (isCancelled_ToolProcess(d)) {
         return NULL;
     }
+    if (tool->builtin) {
+        return tool->builtin(mime, body, requestUrl);
+    }
     iStringList *args = newArray_StringList(tool->command);
     iStringList *env = new_StringList();
     pushBack_StringList(env, collectNewFormat_String("CONTENT_TYPE=%s", cstr_String(mime)));
@@ -175,115 +179,6 @@ iBool isCancelled_ToolProcess(const iToolProcess *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static iRegExp *xmlMimePattern_(void) {
-    static iRegExp *xmlMime_;
-    if (!xmlMime_) {
-        xmlMime_ = new_RegExp("(application|text)/(atom\\+)?xml", caseInsensitive_RegExpOption);
-    }
-    return xmlMime_;
-}
-
-static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *source,
-                                             const iString *requestUrl) {
-    iUnused(requestUrl); /* TODO: Use for what? */
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    if (!matchString_RegExp(xmlMimePattern_(), mime, &m)) {
-        return NULL;
-    }
-    iBlock *      output = NULL;
-    iXmlDocument *doc    = new_XmlDocument();
-    iString       src;
-    initBlock_String(&src, source); /* assume it's UTF-8 */
-    if (!parse_XmlDocument(doc, &src)) {
-        goto finished;
-    }
-    const iXmlElement *feed = &doc->root;
-    if (!equal_Rangecc(feed->name, "feed")) {
-        goto finished;
-    }
-    if (!equal_Rangecc(attribute_XmlElement(feed, "xmlns"), "http://www.w3.org/2005/Atom")) {
-        goto finished;
-    }
-    iString *title = collect_String(decodedContent_XmlElement(child_XmlElement(feed, "title")));
-    if (isEmpty_String(title)) {
-        goto finished;
-    }
-    iString *subtitle = collect_String(decodedContent_XmlElement(child_XmlElement(feed, "subtitle")));
-    iString out;
-    init_String(&out);
-    format_String(&out,
-                  "20 text/gemini\r\n"
-                  "# %s\n\n",
-                  cstr_String(title));
-    if (!isEmpty_String(subtitle)) {
-        appendFormat_String(&out, "## %s\n\n", cstr_String(subtitle));
-    }
-    appendCStr_String(&out, cstr_Lang("feeds.atom.translated"));
-    appendCStr_String(&out, "\n\n");
-    iRegExp *datePattern =
-        iClob(new_RegExp("^\\s*([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9])(T|\\s).*",
-                         caseSensitive_RegExpOption));
-    iBeginCollect();
-    iConstForEach(PtrArray, i, &feed->children) {
-        iEndCollect();
-        iBeginCollect();
-        const iXmlElement *entry = i.ptr;
-        if (!equal_Rangecc(entry->name, "entry")) {
-            continue;
-        }
-        title = collect_String(decodedContent_XmlElement(child_XmlElement(entry, "title")));
-        if (isEmpty_String(title)) {
-            continue;
-        }
-        const iString *published =
-            collect_String(decodedContent_XmlElement(child_XmlElement(entry, "published")));
-        const iString *updated =
-            collect_String(decodedContent_XmlElement(child_XmlElement(entry, "updated")));
-        iRegExpMatch m;
-        init_RegExpMatch(&m);
-        if (!matchString_RegExp(datePattern, updated, &m)) {
-            init_RegExpMatch(&m);
-            if (!matchString_RegExp(datePattern, published, &m)) {
-                continue;
-            }
-        }
-        iRangecc url = iNullRange;
-        iConstForEach(PtrArray, j, &entry->children) {
-            const iXmlElement *link = j.ptr;
-            if (!equal_Rangecc(link->name, "link")) {
-                continue;
-            }
-            const iRangecc href = attribute_XmlElement(link, "href");
-            const iRangecc rel  = attribute_XmlElement(link, "rel");
-            const iRangecc type = attribute_XmlElement(link, "type");
-            if (startsWithCase_Rangecc(href, "gemini:")) {
-                url = href;
-                /* We're happy with the first gemini URL. */
-                /* TODO: Are we? */
-                break;
-            }
-            url = href;
-            iUnused(rel, type);
-        }
-        if (isEmpty_Range(&url)) {
-            continue;
-        }
-        appendFormat_String(&out, "=> %s %s - %s\n",
-                            cstr_Rangecc(url),
-                            cstr_Rangecc(capturedRange_RegExpMatch(&m, 1)),
-                            cstr_String(title));
-    }
-    iEndCollect();
-    output = copy_Block(utf8_String(&out));
-    deinit_String(&out);
-finished:
-    delete_XmlDocument(doc);
-    deinit_String(&src);
-    return output;
-}
-
-
 static const char *fileName_Tools_ = "tools.ini";
 
 struct Impl_Tools {
@@ -305,7 +200,17 @@ void init_Tools(iTools *d) {
     init_PtrArray(&d->tools);
     init_PtrArray(&d->builtins);
     d->errors = new_StringList();
-    addBuiltinFilter_Tools(d, translateAtomXmlToGeminiFeed_);
+    addBuiltinFilter_Tools(d, translateAtomXml_Builtin);
+    /* Built-in tools. */ {
+        iTool *unwrap = new_Tool();
+        setCStr_String(&unwrap->id, "builtin.unwrap");
+        setCStr_String(&unwrap->name, "${menu.tool.unwrap}");
+        setMimePattern_Tool_(unwrap, collectNewCStr_String("^text/"));
+        unwrap->builtin = unwrapParagraphs_Builtin;
+        unwrap->isAuto  = iFalse;
+        unwrap->inMenu  = iTrue;
+        pushBack_PtrArray(&d->tools, unwrap);
+    }
 }
 
 void deinit_Tools(iTools *d) {
@@ -441,13 +346,7 @@ iBool willTryFilter_Tools(const iTools *d, const iString *mime) {
             return iTrue;
         }
     }
-    /* Built-in filters. */
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
-        return iTrue;
-    }
-    return iFalse;
+    return isAtomXml_Builtin(mime); /* built-in filters */
 }
 
 iBlock *tryFilter_Tools(const iTools *d, iToolProcess *proc, const iString *mime,
@@ -499,7 +398,8 @@ const iString *debugInfo_Tools(const iTools *d) {
     }
     iConstForEach(PtrArray, i, &d->tools) {
         const iTool *tool = i.ptr;
-        appendFormat_String(str, "### %s: %s\n", cstr_String(&tool->id), cstr_String(&tool->name));
+        appendFormat_String(str, "### %s: %s\n", cstr_String(&tool->id),
+                            translateCStr_Lang(cstr_String(&tool->name)));
         if (!tool->isEnabled) {
             appendCStr_String(str, "Disabled\n");
         }
@@ -511,6 +411,10 @@ const iString *debugInfo_Tools(const iTools *d) {
         appendFormat_String(str, "MIME regex:\n```\n%s\n```\n",
                             isEmpty_String(&tool->mimePattern) ? "(any)"
                                                                : cstr_String(&tool->mimePattern));
+        if (tool->builtin) {
+            appendCStr_String(str, "Built-in\n");
+            continue;
+        }
         if (isEmpty_StringArray(tool->command)) {
             appendCStr_String(str, "⚠ Command not specified!\n");
             continue;
