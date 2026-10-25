@@ -72,6 +72,7 @@ extern iBlock blobTr_Resources;
 extern iBlock blobUk_Resources;
 extern iBlock blobZh_Hans_Resources;
 extern iBlock blobZh_Hant_Resources;
+extern iBlock blobHyphenEnUs_Resources;
 extern iBlock imageLogo_Resources;
 extern iBlock imagePointer_Resources;
 extern iBlock imageShadow_Resources;

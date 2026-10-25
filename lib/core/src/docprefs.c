@@ -50,6 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 assertBoolLayout_(monospaceDocument);
 assertBoolLayout_(pageView);
+assertBoolLayout_(hyphenate);
 assertBoolLayout_(italicQuote);
 assertBoolLayout_(markdownAsSource);
 assertIntLayout_(lineWidth);
@@ -84,6 +85,8 @@ static const iDocPrefsSpec specs_[] = {
     { I_(tabWidth), layout_DocPrefsGroup, "tabWidth", "prefs.tabwidth", "tabwidth.set",
       reparse_DocPrefsSpecFlag }, /* spaces need renormalizing */
     { I_(justify), style_DocPrefsGroup, "justify", "prefs.justify", "justify.set",
+      relayout_DocPrefsSpecFlag },
+    { B_(hyphenate), style_DocPrefsGroup, "hyphenate", "prefs.hyphenate", NULL,
       relayout_DocPrefsSpecFlag },
     { B_(bigFirstParagraph), style_DocPrefsGroup, "bigFirstParagraph", "prefs.biglede", NULL,
       relayout_DocPrefsSpecFlag },
@@ -465,6 +468,7 @@ const iDocPrefs *defaults_DocPrefs(void) {
         d->tabWidth.value           = 8;
         d->justify.value            = pagesOnly_Justify;
         d->bigFirstParagraph.value  = iTrue;
+        d->hyphenate.value          = iFalse;
         d->plainTextWrap.value      = iTrue;
         d->expandToLongLines.value  = iTrue;
         d->centerShortDocs.value    = iTrue;
@@ -1232,6 +1236,7 @@ void init_ScopeRules(const char *saveDir) {
     d->loadMethod = all_ImportMethod;
     addBuiltIn_ScopeRules_(d, "gopher", monospaceDocument_DocPrefsBool, iTrue);
     addBuiltIn_ScopeRules_(d, "gempub", pageView_DocPrefsBool, iTrue);
+    addBuiltIn_ScopeRules_(d, "gempub", hyphenate_DocPrefsBool, iTrue);
     /* A missing file counts as empty. Custom rules affect what the others inherit. */
     loadFile_ScopeRules_(d, custom_ScopeRuleKind, customFileName_ScopeRules_);
     loadFile_ScopeRules_(d, base_ScopeRuleKind, baseFileName_ScopeRules_);

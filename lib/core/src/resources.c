@@ -65,6 +65,7 @@ iBlock blobTr_Resources;
 iBlock blobUk_Resources;
 iBlock blobZh_Hans_Resources;
 iBlock blobZh_Hant_Resources;
+iBlock blobHyphenEnUs_Resources;
 iBlock imageLogo_Resources;
 iBlock imagePointer_Resources;
 iBlock imageShadow_Resources;
@@ -122,6 +123,7 @@ static struct {
     { &blobUk_Resources, "lang/uk.bin" },
     { &blobZh_Hans_Resources, "lang/zh_Hans.bin" },
     { &blobZh_Hant_Resources, "lang/zh_Hant.bin" },
+    { &blobHyphenEnUs_Resources, "hyphen/en-us.txt" },
     { &imageLogo_Resources, "logo.png" },
     { &imagePointer_Resources, "pointer.png" },
     { &imageShadow_Resources, "shadow.png" },

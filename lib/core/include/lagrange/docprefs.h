@@ -79,6 +79,7 @@ enum iDocPrefsBool {
     centerShortDocs_DocPrefsBool,
     pageView_DocPrefsBool,
     /* Style */
+    hyphenate_DocPrefsBool,
     italicQuote_DocPrefsBool,
     quoteIcon_DocPrefsBool,
     sideIcon_DocPrefsBool,
@@ -140,6 +141,7 @@ struct Impl_DocPrefs {
             iOptBool expandToLongLines;
             iOptBool centerShortDocs;
             iOptBool pageView; /* paginated instead of scrolling */
+            iOptBool hyphenate;
             iOptBool italicQuote;
             iOptBool quoteIcon;
             iOptBool sideIcon;

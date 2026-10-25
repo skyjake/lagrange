@@ -94,6 +94,7 @@ set (RESOURCES
     res/logo.png
     res/shadow.png
     res/fontpack.ini
+    res/hyphen/en-us.txt
     res/macos-system-fonts.ini
 )
 foreach (lang ${LANGUAGES})

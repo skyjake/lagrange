@@ -1052,6 +1052,19 @@ static int cmp_FileInfoPtr_(const iFileInfo **a, const iFileInfo **b) {
     return cmpStringCase_String(path_FileInfo(*a), path_FileInfo(*b));
 }
 
+static iRangecc gempubLanguage_Archive_(const iArchive *d) {
+    const iBlock *metadata = dataCStr_Archive(d, "metadata.txt");
+    iRangecc      line     = iNullRange;
+    while (metadata && nextSplit_Rangecc(range_Block(metadata), "\n", &line)) {
+        if (startsWithCase_Rangecc(line, "language:")) {
+            iRangecc lang = { line.start + 9, line.end };
+            trim_Rangecc(&lang);
+            return lang;
+        }
+    }
+    return iNullRange;
+}
+
 static const iString *directoryIndexPage_Archive_(const iArchive *d, const iString *entryPath) {
     static const char *names[] = { "index.gmi", "index.gemini" };
     iForIndices(i, names) {
@@ -1236,6 +1249,14 @@ static void fileRequest_GmRequest_(iGmRequest *d) {
                         resp->statusCode = success_GmStatusCode;
                         setCStr_String(&resp->meta, mediaType_Path(entryPath));
                         set_Block(&resp->body, data);
+                        if (endsWithCase_String(container, ".gpub") &&
+                            startsWith_String(&resp->meta, "text/gemini")) {
+                            /* Gempub books specify their language. */
+                            const iRangecc lang = gempubLanguage_Archive_(arch);
+                            if (!isEmpty_Range(&lang)) {
+                                appendFormat_String(&resp->meta, "; lang=%s", cstr_Rangecc(lang));
+                            }
+                        }
                     }
                     else {
                         resp->statusCode = failedToOpenFile_GmStatusCode;

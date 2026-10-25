@@ -14,6 +14,7 @@ add_library (core STATIC
     src/gmutil.c
     src/gopher.c
     src/guppy.c
+    src/hyphenator.c
     src/lang.c
     src/listfile.c
     src/resources.c
