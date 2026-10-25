@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "color.h"
 #include "fontpack.h"
 
+#include <lagrange/hyphenator.h>
 #include <the_Foundation/rect.h>
 
 iDeclareType(BaseFont)
@@ -185,12 +186,16 @@ struct Impl_WrapText {
     int         baseDir;      /* set to +1 for LTR, -1 for RTL */
     iInt2       hitPoint;     /* sets hitChar_out */
     const char *hitChar;      /* sets hitAdvance_out */
+    const iHyphenator *hyphenator; /* word mode: break words that don't fit */
+    int         hyphenWidth;
     /* output */
     const char *hitChar_out;
     iInt2       hitAdvance_out;
     float       hitGlyphNormX_out; /* normalized X inside the glyph */
+    iBool       isHyphenBreak_out; /* during wrapFunc: line ends with a hyphenation break */
     /* internal */
     iRangecc    wrapRange_;
+    int         hyphenStreak_; /* consecutive lines ending in a hyphen */
 };
 
 struct Impl_TextMetrics {
@@ -206,6 +211,11 @@ iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
 iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
 iBool           notify_WrapText     (iWrapText *, const char *ending, iTextAttrib attrib, int origin, int advance);
+size_t          hyphenBreaks_WrapText(const iWrapText *, const iChar *word, size_t len,
+                                      const char *wordEnd, uint8_t *breaks_out);
+size_t          hyphenate_WrapText  (const iWrapText *, const iChar *word, size_t len,
+                                     const char *wordEnd, const float *prefixAdvance,
+                                     size_t numKnown, float maxAdvance);
 
 /*----------------------------------------------------------------------------------------------*/
 

@@ -104,6 +104,7 @@ struct Impl_GmDocument {
     iString   archiveUrl; /* local Gempub containing the page, if any */
     iArchive *archive;    /* open while images are being loaded from it */
     iString   mimeType;
+    iString   lang;       /* from the `lang` parameter of the MIME type */
     iString   localHost;
     iScopeKey scopeKey;
     iDocPrefs docPrefs;   /* resolved for the URL and MIME type */
@@ -167,6 +168,8 @@ struct Impl_GmDocument {
         iBool isSourceFinal : 1; /* all of the source has been received */
         iBool isLayoutCaughtUp : 1; /* all of the imported source is laid out */
         iBool isAnchoredLayout : 1; /* layout began at a visible line instead of the top */
+        iBool isLangGuessed : 1; /* enough of the source seen to tell if it is English */
+        iBool isNotEnglish : 1; /* guessed when there is no `lang` parameter */
     } flags;
 };
 

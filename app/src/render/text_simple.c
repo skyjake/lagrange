@@ -125,6 +125,12 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
     /* Text rendering is not very straightforward! Let's dive in... */
     iChar       prevCh[2] = { 0, 0 };
     const char *chPos;
+    /* The current word on the line, for hyphenation. */
+    const char *wordStart = NULL;
+    size_t      numWordChars = 0;
+    iChar       wordChars[maxWordLength_Hyphenator];
+    const char *wordPositions[maxWordLength_Hyphenator];
+    float       wordAdvances[maxWordLength_Hyphenator];
     for (chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
@@ -284,13 +290,59 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                     wrap->hitPoint.x < x2 ? (wrap->hitPoint.x - x1) / glyph->advance : 1.0f;
             }
         }
+        if (wrap && wrap->hyphenator && wrap->mode == word_WrapTextMode) {
+            if (!isAlpha_Char(ch)) {
+                wordStart = NULL;
+            }
+            else if (!wordStart) {
+                /* Not the rest of a word that was broken on the previous line. */
+                iChar prev = 0;
+                if (currentPos > args->text.start) {
+                    decodePrecedingBytes_MultibyteChar(currentPos, args->text.start, &prev);
+                }
+                if (!isAlpha_Char(prev)) {
+                    wordStart    = currentPos;
+                    numWordChars = 0;
+                }
+            }
+            if (wordStart && numWordChars < maxWordLength_Hyphenator) {
+                wordChars[numWordChars]     = ch;
+                wordPositions[numWordChars] = currentPos;
+                wordAdvances[numWordChars]  = x1 - orig.x;
+                numWordChars++;
+            }
+        }
         /* Out of the allotted space on the line? A glyph that doesn't fit even on an empty
            line is not wrapped, or no progress would be made. */
         if (xposLimit > 0 && x2 > xposLimit && x1 > orig.x) {
             iAssert(wrap);
             const char *wrapPos = currentPos;
             int advance = x1 - orig.x;
-            if (lastWordEnd && lastWordEnd > args->text.start && wrap->mode == word_WrapTextMode) {
+            size_t hyph = 0;
+            if (wordStart && isAlpha_Char(ch)) {
+                size_t      wordLen = numWordChars;
+                const char *rest    = chPos;
+                while (rest < args->text.end) {
+                    const char *next = rest;
+                    const iChar wch  = nextChar_(&next, args->text.end);
+                    if (!isAlpha_Char(wch)) break;
+                    if (wordLen == maxWordLength_Hyphenator) {
+                        wordLen = 0; /* too long */
+                        break;
+                    }
+                    wordChars[wordLen++] = wch;
+                    rest = next;
+                }
+                hyph = hyphenate_WrapText(
+                    wrap, wordChars, wordLen, rest, wordAdvances, numWordChars, wrap->maxWidth);
+            }
+            if (hyph) {
+                wrapPos = wordPositions[hyph];
+                advance = wordAdvances[hyph];
+                wrap->isHyphenBreak_out = iTrue;
+            }
+            else if (lastWordEnd && lastWordEnd > args->text.start &&
+                     wrap->mode == word_WrapTextMode) {
                 wrapPos = skipSpace_CStr(lastWordEnd); /* go back */
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;
@@ -302,6 +354,7 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                 break;
             }
             lastWordEnd = NULL;
+            wordStart = NULL;
             xpos = xposExtend = orig.x;
             ypos += d->font.height;
             prevCh[0] = prevCh[1] = 0;

@@ -343,6 +343,7 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
 #if defined (LAGRANGE_ENABLE_HARFBUZZ) || defined (LAGRANGE_ENABLE_CORETEXT)
             add_("dropdown id:prefs.justify except:finger", 0, 0, menu_(justifyItems_()));
 #endif
+            add_("toggle id:prefs.hyphenate except:finger");
             add_("toggle id:prefs.biglede except:finger");
             add_("padding id:prefs.pad.quoteicon except:finger");
             /* On mobile, the heading also covers the italic toggle. */

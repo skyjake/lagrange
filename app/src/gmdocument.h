@@ -117,7 +117,8 @@ enum iGmRunFlags {
     ruler_GmRunFlag        = iBit(5),
     wide_GmRunFlag         = iBit(6), /* horizontally scrollable */
     caption_GmRunFlag      = iBit(7),
-    altText_GmRunFlag      = iBit(8),
+    altText_GmRunFlag      = iBit(8), /* preformatted runs only */
+    hyphen_GmRunFlag       = iBit(8), /* other runs: ends in a hyphenation break */
 };
 
 /* This structure is tightly packed because GmDocuments are mostly composed of
@@ -165,6 +166,12 @@ iLocalDef iMediaId mediaId_GmRun(const iGmRun *d) {
 }
 iLocalDef uint32_t preId_GmRun(const iGmRun *d) {
     return d->mediaType == max_MediaType ? d->mediaId : 0;
+}
+iLocalDef iBool isAltText_GmRun(const iGmRun *d) {
+    return d->mediaType == max_MediaType && d->flags & altText_GmRunFlag;
+}
+iLocalDef iBool isHyphenated_GmRun(const iGmRun *d) {
+    return d->mediaType != max_MediaType && d->flags & hyphen_GmRunFlag;
 }
 
 iBool       isJustified_GmRun       (const iGmRun *);
@@ -293,6 +300,7 @@ void    makePaletteGlobal_GmDocument    (const iGmDocument *); /* copies documen
 /* Properties: */
 
 void    setMimeType_GmDocument          (iGmDocument *, const iString *mimeType); /* before setting the URL */
+void    setLang_GmDocument              (iGmDocument *, iRangecc langParam);
 void    setFormat_GmDocument            (iGmDocument *, enum iSourceFormat sourceFormat);
 void    setMode_GmDocument              (iGmDocument *, enum iGmDocumentMode mode);
 void    setDocPrefs_GmDocument          (iGmDocument *, const iDocPrefs *pinned); /* not resolved again */
@@ -316,6 +324,7 @@ enum iSourceFormat format_GmDocument        (const iGmDocument *);
 enum iSourceFormat viewFormat_GmDocument    (const iGmDocument *);
 const iString * source_GmDocument           (const iGmDocument *);
 const iString * title_GmDocument            (const iGmDocument *);
+iRangecc        lang_GmDocument             (const iGmDocument *); /* empty if not specified */
 iChar           siteIcon_GmDocument         (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 iBool           isCoverPage_GmDocument      (const iGmDocument *);

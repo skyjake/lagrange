@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/core.h>
 #include <lagrange/gmcerts.h>
 #include <lagrange/gmrequest.h>
+#include <lagrange/hyphenator.h>
 #include <lagrange/tools.h>
 #include <lagrange/resources.h>
 #include <lagrange/sitespec.h>
@@ -815,6 +816,7 @@ void deinit_App_(iApp *d) {
     deinit_SortedArray(&d->tickers);
     deinit_Periodic(&d->periodic);
     deinit_Lang();
+    deinit_Hyphenators();
     iRecycle();
     /* Delete all temporary files created while running. */
     iConstForEach(StringSet, tmp, d->tempFilesPendingDeletion) {

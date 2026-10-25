@@ -262,6 +262,7 @@ void init_GmDocument(iGmDocument *d) {
     d->archive = NULL;
     init_String(&d->fixedTitle);
     init_String(&d->mimeType);
+    init_String(&d->lang);
     init_String(&d->localHost);
     init_ScopeKey(&d->scopeKey);
     initCopy_DocPrefs(&d->docPrefs, activeDocPrefs_App());
@@ -321,6 +322,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_DocPrefs(&d->docPrefs);
     deinit_ScopeKey(&d->scopeKey);
     deinit_String(&d->localHost);
+    deinit_String(&d->lang);
     deinit_String(&d->mimeType);
     deinit_String(&d->themeUrl);
     deinit_String(&d->archiveUrl);
@@ -485,6 +487,18 @@ void setPageViewInverted_GmDocument(iGmDocument *d, iBool invert) {
 
 void setMimeType_GmDocument(iGmDocument *d, const iString *mimeType) {
     set_String(&d->mimeType, mimeType);
+}
+
+void setLang_GmDocument(iGmDocument *d, iRangecc langParam) {
+    /* Only the first of the listed languages is used. */
+    iRangecc lang = iNullRange;
+    nextSplit_Rangecc(langParam, ",", &lang);
+    trim_Rangecc(&lang);
+    if (size_Range(&lang) >= 2 && *lang.start == '"' && lang.end[-1] == '"') {
+        lang.start++;
+        lang.end--;
+    }
+    setRange_String(&d->lang, lang);
 }
 
 void setMode_GmDocument(iGmDocument *d, enum iGmDocumentMode mode) {
@@ -906,6 +920,102 @@ static void importMarkdown_GmDocument_(iGmDocument *d) {
     d->import.pos = size_String(&d->origSource);
 }
 
+#define langSampleSize_GmDocument_  8192
+
+static iBool isCommonEnglishWord_(const char *word) {
+    /* These are rare as words in other languages written in Latin script. */
+    static const char *words_[] = {
+        "the",  "and",  "with", "that",  "this", "are",  "you",   "have",  "from", "which",
+        "they", "their", "there", "were", "been", "would", "what", "about", "when", "your",
+    };
+    iForIndices(i, words_) {
+        if (!strcmp(word, words_[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static iBool isProbablyEnglish_GmDocument_(const iGmDocument *d) {
+    /* Common English words in mostly Latin text near the beginning of the document.
+       Preformatted blocks and link URLs are skipped. */
+    const char    *start      = constBegin_String(&d->source);
+    const size_t   sampleSize = iMin(size_String(&d->source), langSampleSize_GmDocument_);
+    const iRangecc sample     = { start, start + sampleSize };
+    size_t         numLetters = 0;
+    size_t         numLatin   = 0;
+    size_t         numWords   = 0;
+    size_t         numCommon  = 0;
+    iBool          isPre      = iFalse;
+    iRangecc       line       = iNullRange;
+    while (nextSplit_Rangecc(sample, "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+            continue;
+        }
+        if (isPre) {
+            continue;
+        }
+        const char *pos = line.start;
+        if (startsWith_Rangecc(line, "=>")) {
+            for (pos += 2; pos < line.end && isSpace_Char(*pos); pos++) {}
+            for (; pos < line.end && !isSpace_Char(*pos); pos++) {}
+        }
+        char   word[8]; /* lowercase ASCII; longer words are not checked */
+        size_t wordLen = 0;
+        iBool  isAsciiWord = iTrue;
+        for (;;) {
+            iChar ch  = 0;
+            int   len = 0;
+            if (pos < line.end) {
+                len = decodeBytes_MultibyteChar(pos, line.end, &ch);
+            }
+            if (len > 0 && isAlpha_Char(ch)) {
+                numLetters++;
+                if (ch < 0x250 || (ch >= 0x1e00 && ch < 0x1f00)) {
+                    numLatin++;
+                }
+                if (ch < 0x80 && wordLen < sizeof(word) - 1) {
+                    word[wordLen++] = (char) (ch | 0x20);
+                }
+                else {
+                    isAsciiWord = iFalse;
+                }
+            }
+            else {
+                if (wordLen || !isAsciiWord) {
+                    word[wordLen] = 0;
+                    numWords++;
+                    if (isAsciiWord && isCommonEnglishWord_(word)) {
+                        numCommon++;
+                    }
+                }
+                wordLen     = 0;
+                isAsciiWord = iTrue;
+                if (len <= 0) {
+                    break;
+                }
+            }
+            pos += len;
+        }
+    }
+    return numLatin * 10 >= numLetters * 9 && numCommon >= 2 && numCommon * 25 >= numWords;
+}
+
+static iBool updateLangGuess_GmDocument_(iGmDocument *d) {
+    /* Returns true if hyphenated text turned out not to be English. Until the sample is
+       complete, the text is assumed to be English. */
+    if (d->flags.isLangGuessed ||
+        (size_String(&d->source) < langSampleSize_GmDocument_ && !d->flags.isSourceFinal)) {
+        return iFalse;
+    }
+    d->flags.isLangGuessed = iTrue;
+    d->flags.isNotEnglish  = !isProbablyEnglish_GmDocument_(d);
+    const iRangecc lang    = lang_GmDocument(d);
+    return d->flags.isNotEnglish && d->docPrefs.hyphenate.value && !d->flags.isUiDialog &&
+           isEmpty_Range(&lang);
+}
+
 static void importMore_GmDocument_(iGmDocument *d) {
     /* Appends the newly received lines to the source. An incomplete last line is held back
        until the source is final. */
@@ -985,6 +1095,9 @@ static void import_GmDocument_(iGmDocument *d) {
     else {
         importMore_GmDocument_(d);
     }
+    d->flags.isLangGuessed = iFalse;
+    d->flags.isNotEnglish  = iFalse;
+    updateLangGuess_GmDocument_(d); /* layout is redone anyway */
 }
 
 iBool setSource_GmDocument(iGmDocument *d, const iString *source,
@@ -1017,6 +1130,9 @@ iBool setSource_GmDocument(iGmDocument *d, const iString *source,
     appendRange_String(&d->origSource, (iRangecc){ constBegin_String(source) + oldSize,
                                                    constEnd_String(source) });
     importMore_GmDocument_(d);
+    if (updateLangGuess_GmDocument_(d)) {
+        invalidateLayout_GmDocument(d);
+    }
 #if !defined (NDEBUG)
     logTiming_GmDocument_(d, "append", &startTime);
 #endif
@@ -1441,6 +1557,10 @@ const iString *title_GmDocument(const iGmDocument *d) {
     return &d->title;
 }
 
+iRangecc lang_GmDocument(const iGmDocument *d) {
+    return range_String(&d->lang);
+}
+
 iChar siteIcon_GmDocument(const iGmDocument *d) {
     return d->siteIcon;
 }
@@ -1470,7 +1590,11 @@ iBool isJustified_GmRun(const iGmRun *d) {
 }
 
 int drawBoundWidth_GmRun(const iGmRun *d) {
-    return (d->isRTL ? -1 : 1) * width_Rect(isJustified_GmRun(d) ? d->bounds : d->visBounds);
+    int width = width_Rect(isJustified_GmRun(d) ? d->bounds : d->visBounds);
+    if (isHyphenated_GmRun(d)) {
+        width -= measureRange_Text(d->font, range_CStr("-")).advance.x;
+    }
+    return (d->isRTL ? -1 : 1) * width;
 }
 
 iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {

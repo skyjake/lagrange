@@ -599,6 +599,66 @@ static void drawLine_AppleText_(iAppleText *d, CTLineRef line, iAppleFont *af, i
     free(pixels);
 }
 
+static iChar charAt_AppleTextRun_(const iAppleTextRun *d, const char *src, CFIndex index) {
+    iChar ch = 0;
+    decodeBytes_MultibyteChar(src + d->utf16ToSrc[index], src + d->rawTextLen, &ch);
+    return ch;
+}
+
+static CFIndex hyphenate_AppleTextRun_(const iAppleTextRun *d, const char *src, CFIndex startIdx,
+                                       CFIndex breakIdx, double wrapWidth, const iWrapText *wrap) {
+    /* Returns the end of a line that ends in a hyphenation break, or zero. The word that
+       didn't fit may begin before `breakIdx` if it was too long for a line by itself. */
+    if (breakIdx >= d->utf16Len || !isAlpha_Char(charAt_AppleTextRun_(d, src, breakIdx)) ||
+        (breakIdx > 0 && charAt_AppleTextRun_(d, src, breakIdx - 1) == '\n')) {
+        return 0;
+    }
+    CFIndex wordStart = breakIdx;
+    while (wordStart > 0) {
+        const iChar   prev    = charAt_AppleTextRun_(d, src, wordStart - 1);
+        const CFIndex prevIdx = wordStart - (prev >= 0x10000 ? 2 : 1);
+        if (!isAlpha_Char(prev)) {
+            break;
+        }
+        if (prevIdx < startIdx) {
+            return 0; /* rest of a word that was broken on the previous line */
+        }
+        wordStart = prevIdx;
+    }
+    iChar   chars[maxWordLength_Hyphenator];
+    CFIndex indices[maxWordLength_Hyphenator];
+    size_t  len = 0;
+    CFIndex idx = wordStart;
+    while (idx < d->utf16Len) {
+        const iChar ch = charAt_AppleTextRun_(d, src, idx);
+        if (!isAlpha_Char(ch)) {
+            break;
+        }
+        if (len == maxWordLength_Hyphenator) {
+            return 0;
+        }
+        indices[len] = idx;
+        chars[len++] = ch;
+        idx += (ch >= 0x10000 ? 2 : 1);
+    }
+    const char *wordEnd = src + (idx < d->utf16Len ? d->utf16ToSrc[idx] : d->rawTextLen);
+    uint8_t     breaks[maxWordLength_Hyphenator];
+    if (!hyphenBreaks_WrapText(wrap, chars, len, wordEnd, breaks)) {
+        return 0;
+    }
+    CFIndex   hyphEnd = 0;
+    CTLineRef line    = CTTypesetterCreateLine(d->typesetter, CFRangeMake(startIdx, idx - startIdx));
+    for (size_t i = len - 1; i > 0; i--) {
+        if (breaks[i] && CTLineGetOffsetForStringIndex(line, indices[i], NULL) + wrap->hyphenWidth <=
+                             wrapWidth) {
+            hyphEnd = indices[i];
+            break;
+        }
+    }
+    CFRelease(line);
+    return hyphEnd;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void run_Font(iBaseFont *d, const iRunArgs *args) {
@@ -679,6 +739,16 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             lineLen = CTTypesetterSuggestClusterBreak(run->typesetter, startIdx, wrapWidth);
         }
         if (lineLen <= 0) break;
+        iBool isHyphenBreak = iFalse;
+        if (wrap && wrap->hyphenator && wrap->mode == word_WrapTextMode && wrap->maxWidth > 0 &&
+            !run->isBaseRTL) {
+            const CFIndex hyphEnd = hyphenate_AppleTextRun_(
+                run, text.start, startIdx, startIdx + lineLen, wrapWidth, wrap);
+            if (hyphEnd > startIdx) {
+                lineLen       = hyphEnd - startIdx;
+                isHyphenBreak = iTrue;
+            }
+        }
         /* Shape the line. */
         CTLineRef line = CTTypesetterCreateLine(run->typesetter, CFRangeMake(startIdx, lineLen));
         /* Measure the line. */
@@ -749,8 +819,9 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
         const char   *lineStart = srcPtr_(startIdx);
         const char   *lineEnd   = (endIdx <= run->utf16Len) ? srcPtr_(endIdx) : text.end;
         if (wrap && wrap->wrapRange_.start) {
-            iTextAttrib attrib = { .fgColorId = args->color, .isBaseRTL = run->isBaseRTL };
-            keepGoing          = notify_WrapText(wrap, lineEnd, attrib, origin, lastLineW);
+            iTextAttrib attrib      = { .fgColorId = args->color, .isBaseRTL = run->isBaseRTL };
+            wrap->isHyphenBreak_out = isHyphenBreak;
+            keepGoing               = notify_WrapText(wrap, lineEnd, attrib, origin, lastLineW);
         }
         /* Draw the line (only when in draw mode). */
         if (isDraw) {

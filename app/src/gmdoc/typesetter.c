@@ -156,8 +156,14 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
         d->pos.y -= d->lineHeightReduction * lineHeight_Text(d->baseFont);
     }
     d->run.bounds.pos = addX_I2(d->pos, origin + d->indent);
-    const iInt2 dims = init_I2(advance, lineHeight_Text(d->baseFont));
-    iChangeFlags(d->run.flags, wide_GmRunFlag, (d->isPreformat && dims.x > d->layoutWidth));
+    const iInt2 dims = init_I2(advance + (wrap->isHyphenBreak_out ? wrap->hyphenWidth : 0),
+                               lineHeight_Text(d->baseFont));
+    if (d->isPreformat) {
+        iChangeFlags(d->run.flags, wide_GmRunFlag, dims.x > d->layoutWidth);
+    }
+    else {
+        iChangeFlags(d->run.flags, hyphen_GmRunFlag, wrap->isHyphenBreak_out);
+    }
     d->run.bounds.size.x    = iMax(wrap->maxWidth, dims.x) - origin; /* Extends to the right edge for selection. */
     d->run.bounds.size.y    = dims.y;
     d->run.visBounds        = d->run.bounds;
@@ -680,6 +686,7 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d, iBool hasDecoration) 
         (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType ||
          type == link_GmLineType);
     const iBool isParagraphJustified = d->isJustified && isTextType;
+    const iBool isHyphenated         = d->hyphenator && !d->isPreformat && isTextType;
     iRunTypesetter rts;
     init_RunTypesetter_(&rts);
     rts.run           = *run;
@@ -735,6 +742,10 @@ static size_t typesetParagraph_Typesetter_(iTypesetter *d, iBool hasDecoration) 
                                .mode            = word_WrapTextMode,
                                .wrapFunc        = typesetOneLine_RunTypesetter_,
                                .context         = &rts };
+        if (isHyphenated && wrapMaxWidth > 0) {
+            wrapText.hyphenator  = d->hyphenator;
+            wrapText.hyphenWidth = measureRange_Text(rts.run.font, range_CStr("-")).advance.x;
+        }
         measure_WrapText(&wrapText, rts.run.font);
         d->prevWrapParagraph = (size_Array(&rts.layout) > 1 && type == text_GmLineType);
         if (!rts.run.isLede || size_Array(&rts.layout) <= style->maxLedeLines) {
@@ -1196,6 +1207,13 @@ void init_Typesetter(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
     d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
     d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
     d->outsideMargin = outsideMargin_GmDocument_(doc);
+    if (d->prefs->hyphenate.value && !doc->flags.isUiDialog) {
+        iRangecc lang = lang_GmDocument(doc);
+        if (isEmpty_Range(&lang) && !doc->flags.isNotEnglish) {
+            lang = range_CStr("en");
+        }
+        d->hyphenator = forLanguage_Hyphenator(lang);
+    }
     init_String(&d->headingTitle);
     init_String(&d->firstContentLine);
 }

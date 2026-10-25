@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "impl.h"
+#include <lagrange/hyphenator.h>
 
 iDeclareType(TypesetterSeam)
 
@@ -55,6 +56,7 @@ struct Impl_Typesetter {
     iBool                 isPaged;
     iBool                 isNormalized;
     iBool                 isJustified;
+    const iHyphenator    *hyphenator; /* NULL if words are not hyphenated */
     int                   outsideMargin;
     iRangecc              content;
     iRangecc              contentLine;

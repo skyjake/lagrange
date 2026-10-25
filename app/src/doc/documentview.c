@@ -1627,7 +1627,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-    if (run->flags & altText_GmRunFlag) {
+    if (isAltText_GmRun(run)) {
         const iInt2 margin = preRunMargin_GmDocument(doc, preId_GmRun(run));
         fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmFrameAltText_ColorId);
@@ -1729,6 +1729,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             fg,
                             run->text);
     runDrawn:;
+        if (isHyphenated_GmRun(run)) {
+            /* The hyphen is not part of the source. */
+            drawRange_Text(
+                run->font, addX_I2(visPos, drawBoundWidth_GmRun(run)), fg, range_CStr("-"));
+        }
         setBaseAttributes_Text(-1, -1);
     }
     /* Presentation of links. */

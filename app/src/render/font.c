@@ -104,6 +104,8 @@ iBool notify_WrapText(iWrapText *d, const char *ending, iTextAttrib attrib, int 
         iRangecc    range = { d->wrapRange_.start, end };
         iAssert(range.start <= range.end);
         const iBool result = d->wrapFunc(d, range, attrib, origin, advance);
+        d->hyphenStreak_     = d->isHyphenBreak_out ? d->hyphenStreak_ + 1 : 0;
+        d->isHyphenBreak_out = iFalse;
         if (result) {
             d->wrapRange_.start = end;
         }
@@ -113,4 +115,44 @@ iBool notify_WrapText(iWrapText *d, const char *ending, iTextAttrib attrib, int 
         return result;
     }
     return iTrue;
+}
+
+static iBool isLastWord_(iRangecc rest) {
+    while (!isEmpty_Range(&rest)) {
+        iChar     ch;
+        const int len = decodeBytes_MultibyteChar(rest.start, rest.end, &ch);
+        if (len <= 0) break;
+        if (isAlphaNumeric_Char(ch)) {
+            return iFalse;
+        }
+        rest.start += len;
+    }
+    return iTrue;
+}
+
+size_t hyphenBreaks_WrapText(const iWrapText *d, const iChar *word, size_t len,
+                             const char *wordEnd, uint8_t *breaks_out) {
+    /* The last word of the text is not broken, and neither are words on more than two
+       consecutive lines. */
+    if (!d->hyphenator || len > maxWordLength_Hyphenator || d->hyphenStreak_ >= 2 ||
+        isLastWord_((iRangecc){ wordEnd, d->text.end })) {
+        return 0;
+    }
+    return hyphenate_Hyphenator(d->hyphenator, word, len, breaks_out);
+}
+
+size_t hyphenate_WrapText(const iWrapText *d, const iChar *word, size_t len, const char *wordEnd,
+                          const float *prefixAdvance, size_t numKnown, float maxAdvance) {
+    /* Returns the last break point where the prefix and a hyphen fit, or zero. Advances are
+       known for the first `numKnown` characters. */
+    uint8_t breaks[maxWordLength_Hyphenator];
+    if (numKnown == 0 || !hyphenBreaks_WrapText(d, word, len, wordEnd, breaks)) {
+        return 0;
+    }
+    for (size_t i = iMin(numKnown, len) - 1; i > 0; i--) {
+        if (breaks[i] && prefixAdvance[i] + d->hyphenWidth <= maxAdvance) {
+            return i;
+        }
+    }
+    return 0;
 }

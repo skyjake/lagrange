@@ -2868,6 +2868,9 @@ msgstr "Big 1st paragaph:"
 msgid "prefs.justify"
 msgstr "Justify:"
 
+msgid "prefs.hyphenate"
+msgstr "Hyphenate:"
+
 msgid "justify.never"
 msgstr "Never"
 

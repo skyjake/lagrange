@@ -1168,13 +1168,19 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
             xCursor = 0;
             yCursor += d->font.height;
         }
-        float     wrapAdvance = 0.0f;
-        const int lineIndent  = (yCursor == 0 && wrap ? wrap->firstLineIndent : 0);
+        float     wrapAdvance   = 0.0f;
+        const int lineIndent    = (yCursor == 0 && wrap ? wrap->firstLineIndent : 0);
+        iBool     isHyphenBreak = iFalse;
         if (wrap) {
             float  breakAdvance  = -1.0f;
             size_t breakRunIndex = iInvalidPos;
             iAssert(wrapPosRange.end == textLen);
             int safeBreakPos = -1;
+            /* Advances within the current word, for hyphenation. Negative start means
+               not in a hyphenatable word. */
+            int    wordStart = -1;
+            size_t numWordAdvances = 0;
+            float  wordAdvances[maxWordLength_Hyphenator];
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = constAt_Array(&attrText->runs, runIndex);
                 if (run->flags.isLineBreak) {
@@ -1239,9 +1245,52 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
                     if (ch == '\t') {
                         wrapAdvance = nextTabStop_Font_(d, wrapAdvance) - xAdvance;
                     }
+                    if (wrap->hyphenator && wrapMode == word_WrapTextMode) {
+                        if (!isAlpha_Char(ch) || run->attrib.isRTL) {
+                            wordStart = -1;
+                        }
+                        else if (wordStart < 0) {
+                            /* Not the rest of a word that was broken on the previous line. */
+                            const iBool isWordStart =
+                                logPos == 0 || !isAlpha_Char(logicalText[logPos - 1]);
+                            wordStart       = isWordStart ? logPos : -1;
+                            numWordAdvances = 0;
+                        }
+                        if (wordStart >= 0 && logPos - wordStart >= (int) numWordAdvances &&
+                            logPos - wordStart < maxWordLength_Hyphenator) {
+                            /* Positions inside a multi-character cluster can't be broken. */
+                            while ((int) numWordAdvances < logPos - wordStart) {
+                                wordAdvances[numWordAdvances++] = INFINITY;
+                            }
+                            wordAdvances[numWordAdvances++] = wrapAdvance;
+                        }
+                    }
                     if (wrap->maxWidth > 0 &&
                         wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
                         args->wrap->maxWidth - lineIndent) {
+                        if (wordStart >= 0 && isAlpha_Char(ch)) {
+                            int wordEnd = logPos;
+                            while (wordEnd < (int) textLen && isAlpha_Char(logicalText[wordEnd])) {
+                                wordEnd++;
+                            }
+                            const size_t hyph = hyphenate_WrapText(
+                                wrap,
+                                logicalText + wordStart,
+                                wordEnd - wordStart,
+                                sourcePtr_AttributedText(attrText, wordEnd),
+                                wordAdvances,
+                                numWordAdvances,
+                                wrap->maxWidth - lineIndent);
+                            if (hyph) {
+                                wrapPosRange.end   = wordStart + hyph;
+                                wrapResumePos      = wrapPosRange.end;
+                                wrapRuns.end       = runIndex + 1;
+                                wrapResumeRunIndex = runIndex;
+                                wrapAdvance        = wordAdvances[hyph];
+                                isHyphenBreak      = iTrue;
+                                break;
+                            }
+                        }
                         if (safeBreakPos > wrapPosRange.start) {
                             wrapPosRange.end = safeBreakPos;
                         }
@@ -1393,6 +1442,9 @@ static void run_Font_(iRasterFont *d, const iRunArgs *args) {
         iBool isRightAligned = attrText->isBaseRTL;
         if (isRightAligned && layoutBound > 0) {
             origin = layoutBound - wrapAdvance - lineIndent;
+        }
+        if (wrap) {
+            wrap->isHyphenBreak_out = isHyphenBreak;
         }
         if (wrap && wrap->wrapFunc &&
             !notify_WrapText(args->wrap,

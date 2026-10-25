@@ -49,6 +49,14 @@ Additional fonts:
 => https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
 => https://github.com/googlefonts/roboto  Roboto (Apache License 2.0)
 
+## Hyphenation patterns
+
+The American English hyphenation patterns are from the hyph-utf8 package. They are Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken, and include the original patterns by Frank M. Liang and Donald E. Knuth.
+
+> Copying and distribution of this file, with or without modification, are permitted in any medium without royalty provided the copyright notice and this notice are preserved.
+
+=> https://www.hyphenation.org/tex  hyph-utf8
+
 ## Root certificates
 
 This application may include a bundled copy of the Mozilla root CA certificate store (cacert.pem). It is distributed under the MPL-2.0:
