@@ -523,13 +523,7 @@ The "Fonts" tab of the Preferences dialog contains options that affect the appea
 
 To be precise, on the "Fonts" tab you can select which _typefaces_ to use for certain elements of the page; picking a particular font (including its size, weight, style, etc.) for specific elements is not possible. Lagrange controls the size and styling of text by choosing fonts according to your theme and typeface preferences. The term "font" is used to mean "typeface" in this document and in the app UI.
 
-There are three built-in fonts available:
-
-* "Roboto" is the default UI font that is also used for page content.
-* "Source Sans" is the previous default font. It has more personality than Roboto, but rarely matches the system fonts.
-* "Iosevka" is the monospaced font.
-
-There is also an "Iosevka (compact)" variant that actually uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text for better legibility.
+There are two built-in fonts available: "Roboto" (sans serif) and "Iosevka" (monospaced). There is also an "Iosevka (compact)" variant that uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text, for better legibility.
 
 See sections 2.4.4 and 5 for more details about font management, compatibility, and configuration.
 

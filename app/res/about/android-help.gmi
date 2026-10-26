@@ -115,12 +115,7 @@ To be precise, on this tab you can select which _typefaces_ to use for certain e
 
 The fonts for document headings, body text, preformatted blocks, and the user interface can be chosen separately. There is also a separate font for monospaced body text, used when the protocol-specific "Monospace body" option is enabled.
 
-There are two built-in fonts available:
-
-* "Source Sans" is the default UI font that is also used for page content.
-* "Iosevka" is the monospaced font.
-
-There is also an "Iosevka (compact)" variant that actually uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text for better legibility.
+There are two built-in fonts available: "Roboto" (sans serif) and "Iosevka" (monospaced). There is also an "Iosevka (compact)" variant that uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text, for better legibility.
 
 See sections 2.4.4 and 5 for more details about font management, compatibility, and configuration.
 
@@ -157,13 +152,13 @@ The "Glyph warnings" option controls whether a warning will be shown when a page
 
 Open "about:fonts" to see all the installed fonts, and enable, disable or uninstall individual fontpacks. At the top of the page, there is a link to the skyjake.fi Font Library: a curated collection of fontpacks that can be freely distributed. From there you can conveniently install more fonts specifically tuned for Lagrange.
 
-The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.) 
+The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.)
 
 Click on the "View file" links to see what each fontpack contains. The fontpack format is described in section 5: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
 
 About compatibility: fonts are complex, and while the TrueType format is not the most advanced one, it still has features that are not supported in Lagrange. The technical reason is that glyphs are rasterized using stb_truetype, a rather simple TrueType font library. (It's nice and small, though.) You may find that some fonts simply fail to load correctly, or look wrong in the app.
 
-* Hinting is not supported. 
+* Hinting is not supported.
 * Bitmap glyphs are not supported.
 * Multi-color glyphs are not supported.
 

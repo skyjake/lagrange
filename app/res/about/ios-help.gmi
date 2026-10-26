@@ -439,12 +439,7 @@ To be precise, on this tab you can select which typefaces to use for certain ele
 
 The fonts for document headings, body text, preformatted blocks, and the user interface can be chosen separately. There is also a separate font for monospaced body text, used when the protocol-specific "Monospace body" option is enabled.
 
-There are two built-in fonts available:
-
-* "Source Sans" is the default UI font that is also used for page content.
-* "Iosevka" is the monospaced font.
-
-There is also an "Iosevka (compact)" variant that actually uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text for better legibility.
+There are two built-in fonts available: "Roboto" (sans serif) and "Iosevka" (monospaced). There is also an "Iosevka (compact)" variant that uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text, for better legibility.
 
 See sections 2.4.4 and 5 for more details about font management, compatibility, and configuration.
 

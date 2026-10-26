@@ -42,7 +42,6 @@ This application uses fonts licensed under the Open Font License.
 => https://typeof.net/Iosevka/  Iosevka
 => https://github.com/googlefonts/noto-fonts  Noto Sans Symbols, Noto Sans Symbols 2
 => https://github.com/skyjake/lagrange/blob/dev/res/fonts/LICENSE_SmolEmoji.txt  Smol Emoji
-=> https://github.com/adobe-fonts/source-sans/blob/release/LICENSE.md  Source Sans 3
 
 Additional fonts:
 
