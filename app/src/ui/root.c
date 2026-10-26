@@ -1114,7 +1114,7 @@ static void updateNavBarSize_(iWidget *navBar) {
         int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI : (gap_UI * 3 / 2);
         int vPad   = gap_UI / 4 * 2;
         int botPad = vPad / 2;
-        int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
+        int topPad = !findChild_Widget(navBar->root->widget, "winbar") ? gap_UI / 2 : 0;
         if (!isPhone) {
             if (prefs_App()->bottomNavBar) {
                 topPad += vPad;
@@ -1169,8 +1169,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         const iBool arePaddingsNeeded = !isPortraitTablet;
         iWidget       *sbPad1       = findChild_Widget(navBar, "sbpad1");
         iWidget       *sbPad2       = findChild_Widget(navBar, "sbpad2");
-        const iWidget *sidebar      = findWidget_App("sidebar");
-        const iWidget *sidebar2     = findWidget_App("sidebar2");
+        const iWidget *sidebar      = findChild_Widget(navBar->root->widget, "sidebar");
+        const iWidget *sidebar2     = findChild_Widget(navBar->root->widget, "sidebar2");
         const int      barWidth     = (isVisible_Widget(sidebar) ? width_Widget(sidebar) : 0);
         const int      bar2Width    = (isVisible_Widget(sidebar2) ? width_Widget(sidebar2) : 0);
         const int      action1Width = width_Widget(findChild_Widget(navBar, "navbar.action1"));
