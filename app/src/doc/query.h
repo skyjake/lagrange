@@ -34,10 +34,42 @@ iDeclareType(Widget)
 iDeclareType(Query)
 iDeclareTypeConstruction(Query)
 
+/* Note the following about swipes and keeping inline input prompts positioned:
+
+   An inline input prompt is a real widget, similar to modal input dialogs.
+   During a back/forward swipe, up to two DocumentViews are visible at
+   once (the current view and DocumentSwipe's outgoing view, one drawn sliding over
+   the other), and either one may have one or more prompt widgets as children.
+   The prompts need to keep tracking their documents as they shift, and all
+   prompts need to be drawn at the correct Z order alongside their view's content.
+   This means a normal `drawChildren_Widget()` is not possible, because children
+   are drawn last, on top of everything.
+
+   We use `deferredDraw_WidgetFlag2` that excludes a child from
+   `drawChildren_Widget()`. Each flagged bar is drawn manually so they appear in
+   the correct order vs. the DocumentViews.
+
+   The incoming/outgoing prompts are handled differently because of how the
+   underlying document is swapped:
+
+   - Incoming: A DocumentWidget's current view's own prompts are normal findable
+     widgets, except when covered by the outgoing view during a back-swipe,
+     or offset by rubber-banding at the ends of history (in both cases,
+     `covered` in Query).
+
+   - Outgoing: The outgoing view's prompts (`outgoing` in Query).
+     `releaseViewDocument_DocumentWidget_()` allocates a new DocumentView for
+     the incoming document while the swipe animates, and link IDs are per-document,
+     so the incoming view may reuse the same "inputpromptN" IDs. Therefore, the
+     outgoing prompt widgets are renamed to avoid clashing with the incoming live
+     prompts. The horizontal positions are shifted by `visualOffset`.
+     The prompts are kept around, hidden and unfindable, until the swipe finishes.
+*/
+
 struct Impl_Query {
     iDocumentWidget *owner;
     iPtrArray        outgoing; /* bars of the outgoing document during a swipe */
-    iPtrArray        covered;  /* bars hidden underneath the outgoing view */
+    iPtrArray        covered;  /* bars covered by outgoing view, or shifted */
 };
 
 void        setOwner_Query          (iQuery *, iDocumentWidget *owner);
