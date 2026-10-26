@@ -518,7 +518,6 @@ static iBool drawCurl_DocumentSwipe_(const iDocumentSwipe *d) {
         earlier,
         later,
         1.0f - value_Anim(&d->offset) / (float) width_Widget(d->owner));
-    makePaletteGlobal_GmDocument(current->doc);
     return iTrue;
 }
 
@@ -600,6 +599,8 @@ void draw_DocumentSwipe(const iDocumentSwipe *d) {
             drawCovered_Query(query, &clipBounds);
         }
     }
+    /* The outgoing view may have been drawn last; widgets drawn after use the current palette. */
+    makePaletteGlobal_GmDocument(view->doc);
 }
 
 void drawSidebarIndicator_DocumentSwipe(const iDocumentSwipe *d) {
