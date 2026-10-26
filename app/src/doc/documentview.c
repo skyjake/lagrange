@@ -68,7 +68,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 struct Impl_DrawBufs {
     int          flags;
     SDL_Texture *sideIconBuf;
-    SDL_Texture *curlBuf;
+    SDL_Texture *curlBufs[2]; /* front and back of a curling page */
     iTextBuf    *timestampBuf;
     uint32_t     lastRenderTime;
 };
@@ -76,7 +76,7 @@ struct Impl_DrawBufs {
 static void init_DrawBufs(iDrawBufs *d) {
     d->flags = 0;
     d->sideIconBuf = NULL;
-    d->curlBuf = NULL;
+    iZap(d->curlBufs);
     d->timestampBuf = NULL;
     d->lastRenderTime = 0;
 }
@@ -86,8 +86,10 @@ static void deinit_DrawBufs(iDrawBufs *d) {
     if (d->sideIconBuf) {
         SDL_DestroyTexture(d->sideIconBuf);
     }
-    if (d->curlBuf) {
-        SDL_DestroyTexture(d->curlBuf);
+    iForIndices(i, d->curlBufs) {
+        if (d->curlBufs[i]) {
+            SDL_DestroyTexture(d->curlBufs[i]);
+        }
     }
 }
 
@@ -2428,33 +2430,69 @@ static void drawSpreads_DocumentView_(const iDocumentView *d, iDrawContext *ctx,
 
 enum { numCurlStrips_ = 10 };
 
-static float rolledEdge_(float u, float axis, float radius) {
-    /* Position of a point on a page rolled over a cylinder that touches the page at `axis`.
-       Past the cylinder, the page lies upside down on top of itself. */
-    const float arc = u - axis;
-    if (arc <= 0.0f) {
-        return u;
-    }
-    if (arc < iMathPif * radius) {
-        return axis + radius * sinf(arc / radius);
-    }
-    return axis - (arc - iMathPif * radius);
+static const float curlRadius_ = 0.25f; /* relative to page width */
+
+static float curlStart_(float axis, iBool isHinged) {
+    return isHinged ? iMax(0.0f, axis) : axis;
 }
 
-static float rolledExtent_(float axis, float radius) {
-    float extent = rolledEdge_(0.0f, axis, radius);
+static float curlEnd_(float axis, iBool isHinged) {
+    const float end = axis + iMathPif * curlRadius_;
+    return isHinged ? iMax(0.0f, end) : end;
+}
+
+static float rolledEdge_(float u, float axis, iBool isHinged) {
+    /* Position of a point on a page that is flat up to `axis` and then curves over a cylinder
+       until it lies upside down on top of itself. When the axis is past the hinge, the curved
+       part starts at the hinge. */
+    const float r     = curlRadius_;
+    const float start = curlStart_(axis, isHinged);
+    const float end   = curlEnd_(axis, isHinged);
+    float       x     = iMin(u, start);
+    if (u > start) {
+        x += r * (sinf((iMin(u, end) - axis) / r) - sinf((start - axis) / r));
+    }
+    if (u > end) {
+        x -= u - end;
+    }
+    return x;
+}
+
+static float rolledExtent_(float axis, iBool isHinged) {
+    float extent = rolledEdge_(0.0f, axis, isHinged);
     for (int i = 1; i <= numCurlStrips_; i++) {
-        extent = iMax(extent, rolledEdge_((float) i / numCurlStrips_, axis, radius));
+        extent = iMax(extent, rolledEdge_((float) i / numCurlStrips_, axis, isHinged));
     }
     return extent;
 }
 
-static float rollAxis_(float t, float radius) {
-    /* The page is rolled until it only covers 1 - t of its original width. */
-    float lo = -radius, hi = 1.0f;
-    for (int i = 0; i < 20; i++) {
+static float edgeProgress_(float axis) {
+    return (1.0f - rolledEdge_(1.0f, axis, iTrue)) / 2;
+}
+
+static float rollProgress_(float axis, iBool isHinged) {
+    /* A hinged page progresses as its edge moves over to the other side. Once the curve is
+       past the hinge the edge barely moves, so the lowering of the page counts as well.
+       A loose page progresses as it uncovers the page under it. */
+    if (!isHinged) {
+        return 1.0f - rolledExtent_(axis, iFalse);
+    }
+    const float edge = edgeProgress_(axis);
+    if (axis >= 0.0f) {
+        return edge;
+    }
+    const float atHinge = edgeProgress_(0.0f);
+    return atHinge +
+           ((edge - atHinge) + (1.0f - atHinge) * -axis / (iMathPif * curlRadius_)) / 2;
+}
+
+static float rollAxis_(float t, iBool isHinged) {
+    /* A hinged page turns until it lies flat on the other side of the hinge. A loose page
+       rolls until it no longer covers anything. */
+    float lo = isHinged ? -iMathPif * curlRadius_ : -curlRadius_, hi = 1.0f;
+    for (int i = 0; i < 24; i++) {
         const float mid = (lo + hi) / 2;
-        if (rolledExtent_(mid, radius) > 1.0f - t) {
+        if (rollProgress_(mid, isHinged) < t) {
             hi = mid;
         }
         else {
@@ -2464,53 +2502,76 @@ static float rollAxis_(float t, float radius) {
     return (lo + hi) / 2;
 }
 
-static SDL_Texture *curlBuf_DocumentView_(const iDocumentView *d, iInt2 size) {
-    iDrawBufs *dbuf = d->drawBufs;
-    if (dbuf->curlBuf && !isEqual_I2(size_SDLTexture(dbuf->curlBuf), size)) {
-        SDL_DestroyTexture(dbuf->curlBuf);
-        dbuf->curlBuf = NULL;
+static SDL_Texture *curlBuf_DocumentView_(const iDocumentView *d, int index, iInt2 size) {
+    SDL_Texture **buf = &d->drawBufs->curlBufs[index];
+    if (*buf && !isEqual_I2(size_SDLTexture(*buf), size)) {
+        SDL_DestroyTexture(*buf);
+        *buf = NULL;
     }
-    if (!dbuf->curlBuf) {
-        dbuf->curlBuf = SDL_CreateTexture(renderer_Window(get_Window()),
-                                          SDL_PIXELFORMAT_RGBA8888,
-                                          SDL_TEXTUREACCESS_TARGET,
-                                          size.x,
-                                          size.y);
-        SDL_SetTextureBlendMode(dbuf->curlBuf, SDL_BLENDMODE_NONE);
-        SDL_SetTextureScaleMode(dbuf->curlBuf, SDL_SCALEMODE_LINEAR);
+    if (!*buf) {
+        *buf = SDL_CreateTexture(renderer_Window(get_Window()),
+                                 SDL_PIXELFORMAT_RGBA8888,
+                                 SDL_TEXTUREACCESS_TARGET,
+                                 size.x,
+                                 size.y);
+        SDL_SetTextureBlendMode(*buf, SDL_BLENDMODE_NONE);
+        SDL_SetTextureScaleMode(*buf, SDL_SCALEMODE_LINEAR);
     }
-    return dbuf->curlBuf;
+    return *buf;
 }
 
-static void releaseCurlBuf_DocumentView_(const iDocumentView *d) {
-    if (d->drawBufs->curlBuf) {
-        SDL_DestroyTexture(d->drawBufs->curlBuf);
-        d->drawBufs->curlBuf = NULL;
+static void releaseCurlBufs_DocumentView_(const iDocumentView *d) {
+    iForIndices(i, d->drawBufs->curlBufs) {
+        if (d->drawBufs->curlBufs[i]) {
+            SDL_DestroyTexture(d->drawBufs->curlBufs[i]);
+            d->drawBufs->curlBufs[i] = NULL;
+        }
     }
 }
 
-static void drawPageCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
-                                       iDrawContext *laterCtx, iRangei later, float t,
-                                       iRect area) {
-    /* A single page rolls to the left over a cylinder, revealing the later page under it.
-       The page is drawn in vertical strips; flipped strips show the blank back side. */
-    const iDocumentView *d      = earlierCtx->view;
-    iPaint              *p      = &earlierCtx->paint;
-    SDL_Renderer        *render = renderer_Window(get_Window());
-    const int            n      = numCurlStrips_;
-    const iRect          page   = init_Rect(columnLeft_DocumentView(d, earlier.start),
-                                            top_Rect(area),
-                                            spreadWidth_DocumentView(d),
-                                            height_Rect(area));
-    const float          radius = 0.25f;
-    const float          axis   = rollAxis_(t, radius);
+static SDL_Texture *drawCurlBuf_DocumentView_(const iDocumentView *d, int index,
+                                              iDrawContext *ctx, iRangei cols, iRect rect) {
+    /* Pages are drawn normally into a buffer to be copied in strips. */
+    iPaint      *p   = &ctx->paint;
+    SDL_Texture *buf = curlBuf_DocumentView_(d, index, rect.size);
+    makePaletteGlobal_GmDocument(ctx->view->doc);
+    beginTarget_Paint(p, buf);
+    origin_Paint = neg_I2(rect.pos);
+    setClip_Paint(p, rect);
+    drawSpreads_DocumentView_(ctx->view, ctx, rect, cols);
+    unsetClip_Paint(p);
+    endTarget_Paint(p);
+    return buf;
+}
+
+static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
+                                   iDrawContext *laterCtx, iRangei later, float t, iRect area) {
+    /* The last page of the earlier spread rolls to the left over a cylinder, revealing the
+       later spread. A facing page is hinged at the crease and its back side is the left page
+       of the later spread, while a single page rolls away with a blank back side. The page is
+       drawn in vertical strips. The spreads may be in different views. */
+    const iDocumentView *d        = earlierCtx->view;
+    const iDocumentView *dl       = laterCtx->view;
+    iPaint              *p        = &earlierCtx->paint;
+    SDL_Renderer        *render   = renderer_Window(get_Window());
+    const int            n        = numCurlStrips_;
+    const iBool          isHinged = numPages_DocumentView(d) == 2;
+    const int            left     = columnLeft_DocumentView(d, earlier.start);
+    const int            pageLeft =
+        columnLeft_DocumentView(d, earlier.end - columnsPerPage_GmDocument(d->doc));
+    const iRect          page     = init_Rect(pageLeft,
+                                              top_Rect(area),
+                                              left + spreadWidth_DocumentView(d) - pageLeft,
+                                              height_Rect(area));
+    const float          axis     = rollAxis_(t, isHinged);
     float                edges[numCurlStrips_ + 1];
-    float                extent = left_Rect(page);
+    float                extent   = pageLeft;
     for (int i = 0; i <= n; i++) {
-        edges[i] = left_Rect(page) + width_Rect(page) * rolledEdge_((float) i / n, axis, radius);
+        edges[i] = pageLeft + width_Rect(page) * rolledEdge_((float) i / n, axis, isHinged);
         extent   = iMax(extent, edges[i]);
     }
     const int fold = (int) extent;
+    /* Shadows fade in as the curl begins and out as the page settles. */
     makePaletteGlobal_GmDocument(d->doc);
     iBool         isDarkPage;
     const iColor  shade       = pageShade_DocumentView_(d, &isDarkPage);
@@ -2518,149 +2579,102 @@ static void drawPageCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier
     const iColor  shadow      = { 0, 0, 0, 255 };
     const int     shadowAlpha = isDarkPage ? 140 : 90;
     const float   fadeIn      = iMin(1.0f, t / 0.15f);
-    if (left_Rect(page) > left_Rect(area)) {
+    const float   fade        = fadeIn * iMin(1.0f, (1.0f - t) / 0.15f);
+    if (pageLeft > left_Rect(area)) {
         setClip_Paint(p, init_Rect(left_Rect(area), top_Rect(area),
-                                   left_Rect(page) - left_Rect(area), height_Rect(area)));
+                                   pageLeft - left_Rect(area), height_Rect(area)));
         drawSpreads_DocumentView_(d, earlierCtx, area, earlier);
         unsetClip_Paint(p);
     }
     if (fold < right_Rect(area)) {
         setClip_Paint(p, init_Rect(fold, top_Rect(area), right_Rect(area) - fold,
                                    height_Rect(area)));
-        makePaletteGlobal_GmDocument(laterCtx->view->doc);
-        drawSpreads_DocumentView_(laterCtx->view, laterCtx, area, later);
+        makePaletteGlobal_GmDocument(dl->doc);
+        drawSpreads_DocumentView_(dl, laterCtx, area, later);
         makePaletteGlobal_GmDocument(d->doc);
+        /* The curling page casts a shadow on the revealed spread. On narrow pages the
+           shadow is also narrow, so it is lighter to keep it soft. */
         const float widthFactor = iClamp(width_Rect(page) / (250.0f * gap_UI), 0.3f, 1.0f);
         drawSoftEdge_Paint(p,
                            fold,
                            ySpan_Rect(area),
                            width_Rect(page) / 3,
                            shadow,
-                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.5f *
-                               widthFactor);
+                           shadowAlpha * fade * 0.5f * widthFactor);
         unsetClip_Paint(p);
     }
-    if (fold <= left_Rect(page)) {
+    if (fold <= left) {
         return;
     }
-    /* The page is drawn normally into a buffer and then copied in strips. */
-    SDL_Texture *buf = curlBuf_DocumentView_(d, page.size);
-    beginTarget_Paint(p, buf);
-    origin_Paint = neg_I2(page.pos);
-    setClip_Paint(p, page);
-    drawSpreads_DocumentView_(d, earlierCtx, page, earlier);
-    unsetClip_Paint(p);
-    endTarget_Paint(p);
-    setClip_Paint(p, init_Rect(left_Rect(page), top_Rect(page), fold - left_Rect(page),
-                               height_Rect(page)));
-    const iColor  back       = get_Color(tmBackground_ColorId);
-    const float   stripWidth = (float) width_Rect(page) / n;
+    SDL_Texture *front = drawCurlBuf_DocumentView_(d, 0, earlierCtx, earlier, page);
+    SDL_Texture *back  = NULL;
+    iRect        backRect = zero_Rect();
+    if (isHinged) {
+        const int laterLeft = columnLeft_DocumentView(dl, later.start);
+        backRect = init_Rect(laterLeft,
+                             top_Rect(area),
+                             columnLeft_DocumentView(
+                                 dl, later.start + columnsPerPage_GmDocument(dl->doc)) -
+                                 laterLeft,
+                             height_Rect(area));
+        back = drawCurlBuf_DocumentView_(d, 1, laterCtx, later, backRect);
+    }
+    makePaletteGlobal_GmDocument(d->doc);
+    setClip_Paint(p, init_Rect(left, top_Rect(area), fold - left, height_Rect(area)));
+    const iColor blank = get_Color(tmBackground_ColorId);
     SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
-    SDL_SetRenderDrawColor(render, back.r, back.g, back.b, 255);
+    SDL_SetRenderDrawColor(render, blank.r, blank.g, blank.b, 255);
     for (int i = 0; i < n; i++) {
         const SDL_FRect dst = { iMin(edges[i], edges[i + 1]) + origin_Paint.x,
-                                top_Rect(page) + origin_Paint.y,
+                                top_Rect(area) + origin_Paint.y,
                                 fabsf(edges[i + 1] - edges[i]),
-                                height_Rect(page) };
+                                height_Rect(area) };
         if (edges[i + 1] >= edges[i]) {
-            SDL_RenderTexture(render,
-                              buf,
-                              &(SDL_FRect){ i * stripWidth, 0, stripWidth, height_Rect(page) },
-                              &dst);
+            const float w = (float) width_Rect(page) / n;
+            SDL_RenderTexture(
+                render, front, &(SDL_FRect){ i * w, 0, w, height_Rect(area) }, &dst);
+        }
+        else if (back) {
+            /* Lands face up on the left. */
+            const float w = (float) width_Rect(backRect) / n;
+            SDL_RenderTexture(
+                render, back, &(SDL_FRect){ (n - 1 - i) * w, 0, w, height_Rect(area) }, &dst);
         }
         else {
             SDL_RenderFillRect(render, &dst);
         }
     }
-    /* The page darkens where it curves over. */
+    /* The page darkens where it curves over, most where it is the steepest. Past the hinge,
+       the steepest visible part of the curve is at the hinge. */
+    const float curveStart = curlStart_(axis, isHinged);
+    const float curveLeft  = iMin(rolledEdge_(curveStart, axis, isHinged),
+                                  rolledEdge_(iMin(1.0f, curlEnd_(axis, isHinged)), axis, isHinged));
+    const float steepAngle = (curveStart - axis) / curlRadius_;
+    const float steepness  = steepAngle > iMathPif / 2 ? sinf(steepAngle) * sinf(steepAngle)
+                                                       : 1.0f;
     drawSoftEdge_Paint(p,
                        fold,
-                       ySpan_Rect(page),
-                       -iMax(1, fold - (int) (left_Rect(page) + axis * width_Rect(page))),
+                       ySpan_Rect(area),
+                       -iMax(1, fold - (int) (pageLeft + curveLeft * width_Rect(page))),
                        shade,
-                       shadeAlpha * fadeIn);
-    /* The edge of the flipped part shadows the page under it. */
-    if (edges[n] < edges[n - 1]) {
+                       shadeAlpha * fadeIn * steepness);
+    /* The edge of the flipped part shadows the page under it. The shadow grows as the edge
+       moves away from the fold. A hinged page is lowered to the other side as the curve
+       passes the hinge. */
+    const int edgeShadowWidth = width_Rect(page) / 6;
+    if (edges[n] < edges[n - 1] && edgeShadowWidth > 0) {
+        /* Some separation remains toward the end. */
+        const float liftAxis = t < 0.9f ? axis : rollAxis_(0.9f, isHinged);
+        const float lift     = isHinged && liftAxis < 0.0f ? cosf(liftAxis / curlRadius_ / 2)
+                                                           : 1.0f;
+        const float grow     = iMin(1.0f, (extent - edges[n]) / edgeShadowWidth);
         drawFalloffShadow_Paint(p,
                                 (int) edges[n],
-                                ySpan_Rect(page),
-                                -width_Rect(page) / 12,
-                                shadow,
-                                shadowAlpha * fadeIn * 0.5f);
-    }
-    unsetClip_Paint(p);
-}
-
-static void drawCurl_DocumentView_(iDrawContext *earlierCtx, iRangei earlier,
-                                   iDrawContext *laterCtx, iRangei later, float t, iRect area) {
-    /* The last page of the earlier spread slides left over the later spread, its left side
-       curling under until nothing is left. The spreads may be in different views. */
-    const iDocumentView *d = earlierCtx->view;
-    if (numPages_DocumentView(d) == 1) {
-        drawPageCurl_DocumentView_(earlierCtx, earlier, laterCtx, later, t, area);
-        return;
-    }
-    iPaint       *p        = &earlierCtx->paint;
-    const int     left     = columnLeft_DocumentView(d, earlier.start);
-    const int     right    = left + spreadWidth_DocumentView(d);
-    const int     pageLeft = columnLeft_DocumentView(
-        d, earlier.start + numColumns_DocumentView(d) - columnsPerPage_GmDocument(d->doc));
-    const int     shift    = (int) (t * (right - left));
-    const iRangei strip    = { pageLeft - (int) (t * (pageLeft - left)), right - shift };
-    /* Shadows fade in as the curl begins and out as the page disappears. The curved part
-       is shaded like the crease, but the pages on either side are in shadow. */
-    makePaletteGlobal_GmDocument(d->doc);
-    iBool         isDarkPage;
-    const iColor  shade       = pageShade_DocumentView_(d, &isDarkPage);
-    const int     shadeAlpha  = isDarkPage ? 90 : 110;
-    const iColor  shadow      = { 0, 0, 0, 255 };
-    const int     shadowAlpha = isDarkPage ? 140 : 90;
-    const float   fadeIn      = iMin(1.0f, t / 0.15f);
-    if (strip.start > left_Rect(area)) {
-        setClip_Paint(p, init_Rect(left_Rect(area), top_Rect(area),
-                                   strip.start - left_Rect(area), height_Rect(area)));
-        drawSpreads_DocumentView_(d, earlierCtx, area, earlier);
-        /* The curling edge shadows the page it is advancing over. */
-        drawFalloffShadow_Paint(p,
-                                strip.start,
                                 ySpan_Rect(area),
-                                -(right - pageLeft) / 5,
+                                -iMax(1, (int) (edgeShadowWidth * grow)),
                                 shadow,
-                                shadowAlpha * fadeIn * 0.5f);
-        unsetClip_Paint(p);
+                                shadowAlpha * fadeIn * 0.3f * lift * grow);
     }
-    if (strip.end < right_Rect(area)) {
-        setClip_Paint(p, init_Rect(strip.end, top_Rect(area),
-                                   right_Rect(area) - strip.end, height_Rect(area)));
-        makePaletteGlobal_GmDocument(laterCtx->view->doc);
-        drawSpreads_DocumentView_(laterCtx->view, laterCtx, area, later);
-        makePaletteGlobal_GmDocument(d->doc);
-        /* The curling page casts a shadow on the revealed spread. On narrow pages the
-           shadow is also narrow, so it is lighter to keep it soft. */
-        const float widthFactor = iClamp((right - left) / (250.0f * gap_UI), 0.3f, 1.0f);
-        drawSoftEdge_Paint(p,
-                           strip.end,
-                           ySpan_Rect(area),
-                           (right - pageLeft) / 3,
-                           shadow,
-                           shadowAlpha * fadeIn * iMin(1.0f, (1.0f - t) / 0.15f) * 0.5f *
-                               widthFactor);
-        unsetClip_Paint(p);
-    }
-    if (isEmpty_Range(&strip)) {
-        return;
-    }
-    setClip_Paint(p, init_Rect(strip.start, top_Rect(area), size_Range(&strip), height_Rect(area)));
-    origin_Paint.x -= shift;
-    drawSpreads_DocumentView_(d, earlierCtx, area, earlier);
-    origin_Paint.x += shift;
-    /* The page darkens toward the curl. */
-    drawFalloffShadow_Paint(p,
-                            strip.start,
-                            ySpan_Rect(area),
-                            iMin(size_Range(&strip), (right - pageLeft) / 8),
-                            shade,
-                            shadeAlpha * fadeIn);
     unsetClip_Paint(p);
 }
 
@@ -2680,7 +2694,7 @@ static void drawPaged_DocumentView_(const iDocumentView *d, iDrawContext *ctx, i
                                curlProgress_DocumentView(d), area);
     }
     else {
-        releaseCurlBuf_DocumentView_(d);
+        releaseCurlBufs_DocumentView_(d);
         drawSpreads_DocumentView_(d, ctx, area, visibleColumns_DocumentView(d));
     }
     origin_Paint = zero_I2();
