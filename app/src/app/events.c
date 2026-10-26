@@ -101,6 +101,20 @@ uint32_t notifyBackgroundRefresh_App_(void *userdata, SDL_TimerID timerID, uint3
     return interval;
 }
 
+static void checkClockJump_App_(iApp *d) {
+    /* Ticks are paused while the system sleeps, but the wall clock keeps running. */
+    const uint32_t ticks = SDL_GetTicks();
+    iTime now;
+    initCurrent_Time(&now);
+    const double wallElapsed = secondsSince_Time(&now, &d->lastClockTime);
+    if (wallElapsed - (ticks - d->lastClockTicks) / 1000.0 > 10.0) {
+        notifyBackgroundRefresh_App_(NULL, 0, 0);
+        notify_App("clock.jumped");
+    }
+    d->lastClockTime  = now;
+    d->lastClockTicks = ticks;
+}
+
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     if (d->warmupFrames > 0) {
         return iFalse;
@@ -839,6 +853,7 @@ int run_App_(iApp *d) {
         beginFrame_FrameTiming();
         processEvents_App(waitForNewEvents_AppEventMode);
         endPhase_FrameTiming(events_FramePhase);
+        checkClockJump_App_(d);
         runTickers_App_(d);
         endPhase_FrameTiming(tickers_FramePhase);
         refresh_App();

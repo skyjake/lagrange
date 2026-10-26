@@ -614,6 +614,13 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
         }
         return iTrue;
     }
+    if (equal_Command(cmd, "clock.jumped")) {
+        if (d->mode == feedEntries_SidebarMode && numItems_ListWidget(d->list)) {
+            invalidateItem_ListWidget(d->list, 0);
+            startFeedsAgeTimer_SidebarWidget_(d);
+        }
+        return iFalse;
+    }
     if (equalWidget_Command(cmd, w, "feeds.mode")) {
         d->feedsMode = arg_Command(cmd);
         updateItemsWithFlags_SidebarWidget_(d, iTrue);

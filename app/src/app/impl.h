@@ -129,6 +129,8 @@ struct Impl_App {
     uint32_t     lastVisitedSaveTime;
     iBool        pendingVisitedSave; /* need to save visited URLs soon */
     int          refreshTimer;
+    iTime        lastClockTime; /* for detecting system sleep */
+    uint32_t     lastClockTicks;
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
     float        refreshRate; /* of the main window's display */

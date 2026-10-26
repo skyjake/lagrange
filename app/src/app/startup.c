@@ -708,6 +708,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("~focus.set id:"); /* clear focus */
     postCommand_App("font.reset");
     d->refreshTimer = SDL_AddTimer(60 * 1000, notifyBackgroundRefresh_App_, NULL);
+    initCurrent_Time(&d->lastClockTime);
+    d->lastClockTicks = SDL_GetTicks();
     notifyBackgroundRefresh_App_(NULL, 0, 0);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     /* Initialize idle sleep. */ {
