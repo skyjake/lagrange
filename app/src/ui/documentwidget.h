@@ -56,7 +56,7 @@ const iGempub *     gempub_DocumentWidget           (const iDocumentWidget *); /
 uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 const iGmIdentity * identity_DocumentWidget             (const iDocumentWidget *);
-int                 generation_DocumentWidget           (const iDocumentWidget *);
+int                 openerDepth_DocumentWidget          (const iDocumentWidget *);
 iBool               isRequestOngoing_DocumentWidget     (const iDocumentWidget *);
 iBool               isFetchingOwnLink_DocumentWidget    (const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget     (const iDocumentWidget *);

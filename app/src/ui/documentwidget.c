@@ -3664,8 +3664,8 @@ const iGmIdentity *identity_DocumentWidget(const iDocumentWidget *d) {
     return identityForUrl_GmCerts(certs_App(), url_DocumentWidget(d));
 }
 
-int generation_DocumentWidget(const iDocumentWidget *d) {
-    return d->mod.generation;
+int openerDepth_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.openerDepth;
 }
 
 iBool isIdentityPinned_DocumentWidget(const iDocumentWidget *d) {
@@ -3816,7 +3816,7 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
 
 void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other, iBool isNewTab) {
     if (d != other) {
-        d->mod.generation = other->mod.generation + 1;
+        d->mod.openerDepth = other->mod.openerDepth + 1;
         set_String(&d->linePrecedingLink, &other->linePrecedingLink);
         set_String(&d->originId, id_Widget(constAs_Widget(other)));
         d->originToNewTab = isNewTab;

@@ -54,7 +54,7 @@ struct Impl_PersistentDocumentState {
     iString * url;
     iBlock *setIdentity; /* identity (fingerprint) to use for requests, overriding default one */
     enum iReloadInterval reloadInterval;
-    int generation;
+    int openerDepth; /* tab's depth value (checked when closing tabs) */
     iBool isReader; /* dedicated to viewing feed entries */
     iBool invertPageView; /* paginated if prefs say scrolling, and vice versa */
 };

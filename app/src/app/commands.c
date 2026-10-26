@@ -1014,11 +1014,11 @@ iBool handleCommand_App(const char *cmd) {
         const iRangecc tabId = range_Command(cmd, "id");
         iWidget *      doc   = !isEmpty_Range(&tabId) ? findChild_Widget(tabs, cstr_Rangecc(tabId))
                                                       : document_App();
-        iBool          wasCurrent       = (doc == (iWidget *) document_App());
-        size_t         index            = tabPageIndex_Widget(tabs, doc);
-        const iBool    isRightmost      = (index == tabCount_Widget(tabs) - 1);
-        iBool          wasClosed        = iFalse;
-        const int      closedGeneration = generation_DocumentWidget((iDocumentWidget *) doc);
+        iBool          wasCurrent     = (doc == (iWidget *) document_App());
+        size_t         index          = tabPageIndex_Widget(tabs, doc);
+        const iBool    isRightmost    = (index == tabCount_Widget(tabs) - 1);
+        iBool          wasClosed      = iFalse;
+        const int      tabOpenerDepth = openerDepth_DocumentWidget((iDocumentWidget *) doc);
         notify_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
@@ -1069,8 +1069,8 @@ iBool handleCommand_App(const char *cmd) {
                         newIndex--;
                     }
                     else if (newIndex > 0) {
-                        if (generation_DocumentWidget((iDocumentWidget *) tabPage_Widget(
-                                tabs, newIndex)) != closedGeneration) {
+                        if (openerDepth_DocumentWidget((iDocumentWidget *) tabPage_Widget(
+                                tabs, newIndex)) != tabOpenerDepth) {
                             newIndex--;
                         }
                     }
