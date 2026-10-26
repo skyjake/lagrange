@@ -33,6 +33,7 @@ iDeclareType(FontFile)
 iDeclareClass(AppleText)
 
 #define defaultSystemGlyphScale_AppleText 0.866f   /* empirically determined */
+#define maxEmojiSequenceUtf16_AppleText   64
 
 /* Font variant (size + style) with a lazily-created CTFont. */
 struct Impl_AppleFont {
@@ -74,6 +75,8 @@ iDeclareTypeConstructionArgs(AppleTextRun,
 const iAppleFont *  constAppleFont_AppleText_   (const iAppleText *, int fontId);
 CFArrayRef          cascadeList_AppleText_      (const iAppleText *);
 CTFontRef           overrideFont_AppleText_     (const iAppleText *, iChar ch, float pointSize);
+CTFontRef           sequenceFont_AppleText_     (const iAppleText *, const UniChar *seq, CFIndex len,
+                                                 float pointSize); /* B&W Emoji ligature */
 
 iAppleFont *appleFont_AppleText_        (iAppleText *, int fontId);
 CGImageRef  sfSymbolImage_AppleText_    (iAppleText *, const char *symbolName, float pointSize,

@@ -129,6 +129,11 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
     return d;
 }
 
+iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
+    iUnused(d, seq, len);
+    return NULL;
+}
+
 static void init_TuiText(iTuiText *d, SDL_Renderer *render, float documentFontSizeFactor) {
     init_Text(&d->base, render, documentFontSizeFactor);
     iForIndices(s, d->fonts) {

@@ -98,6 +98,12 @@ iLocalDef iBool isCombining_Char(iChar c) {
     return isVariationSelector_Char(c) || isFitzpatrickType_Char(c);
 }
 
+iLocalDef iBool isRegionalIndicator_Char(iChar c) {
+    return c >= 0x1f1e6 && c <= 0x1f1ff;
+}
+
+size_t emojiSequenceLength_Char(const iChar *chars, size_t len); /* 0 if not a multi-char Emoji */
+
 struct Impl_BaseFont {
     const iFontSpec *spec;
     const iFontFile *file;
@@ -123,6 +129,7 @@ iBaseFont *     font_Text       (enum iFontId id);
 enum iFontId    fontId_Text     (const iAnyFont *font);
 
 iBaseFont *     characterFont_BaseFont  (iBaseFont *, iChar ch);
+iBaseFont *     sequenceFont_BaseFont   (iBaseFont *, const iChar *seq, size_t len); /* ligature */
 
 /*----------------------------------------------------------------------------------------------*/
 

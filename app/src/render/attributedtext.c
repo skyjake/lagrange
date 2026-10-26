@@ -340,6 +340,18 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             isPunct_Char(ch)) {
             currentFont = run.font; /* keep the current font */
         }
+        const size_t seqLen = emojiSequenceLength_Char(logicalText + pos, length - pos);
+        if (seqLen) {
+            iBaseFont *seqFont = sequenceFont_BaseFont(currentFont, logicalText + pos, seqLen);
+            if (seqFont) {
+                if (seqFont != run.font) {
+                    finishRun_AttributedText_(d, &run, pos);
+                    run.font = seqFont;
+                }
+                pos += seqLen - 1;
+                continue;
+            }
+        }
         iBaseFont *chFont = characterFont_BaseFont(currentFont, ch);
 //        const iGlyph *glyph = glyph_Font_(currentFont, ch);
         if (chFont && chFont != run.font) {

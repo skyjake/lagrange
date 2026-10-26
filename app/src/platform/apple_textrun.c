@@ -89,6 +89,50 @@ static CGColorRef fgCgColor_(int fgColorId, iColor fg, iColor bg) {
     return cgColorCreate_Apple(fgColor_(fgColorId, fg, bg));
 }
 
+static float pointSize_(const iAppleText *tx, const iTextSegment *segments, size_t segCount,
+                        CFIndex u16) {
+    for (size_t s = 0; s < segCount; s++) {
+        if (u16 >= segments[s].startUtf16 && u16 < segments[s].endUtf16) {
+            const iAppleFont *af = constAppleFont_AppleText_(tx, segments[s].fontId);
+            if (af && af->pointSize > 0.0f) {
+                return af->pointSize;
+            }
+            break;
+        }
+    }
+    return 16.0f;
+}
+
+static iBool isSequenceContinuation_(iChar c) {
+    return c == 0x200d || c == 0x20e3 || isVariationSelector_Char(c) ||
+           isFitzpatrickType_Char(c) || isRegionalIndicator_Char(c) ||
+           (c >= 0xe0020 && c <= 0xe007f);
+}
+
+static size_t emojiSequence_(const char *cp, const char *end, const char **seqEnd_out,
+                             CFIndex *seqUtf16Len_out) {
+    iChar       chars[maxEmojiSequenceUtf16_AppleText / 2];
+    const char *ends[iElemCount(chars)];
+    size_t      n = 0;
+    while (cp < end && n < iElemCount(chars)) {
+        const int nb = decodeBytes_MultibyteChar(cp, end, &chars[n]);
+        if (nb <= 0 || (n == 1 && !isSequenceContinuation_(chars[1]))) {
+            break;
+        }
+        cp += nb;
+        ends[n++] = cp;
+    }
+    const size_t len = emojiSequenceLength_Char(chars, n);
+    if (len) {
+        *seqEnd_out      = ends[len - 1];
+        *seqUtf16Len_out = 0;
+        for (size_t i = 0; i < len; i++) {
+            *seqUtf16Len_out += (chars[i] >= 0x10000 ? 2 : 1);
+        }
+    }
+    return len;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 CGColorRef cgColorCreate_Apple(iColor c) {
@@ -406,23 +450,43 @@ static iBool prepare_AppleTextRun_(
         const char *cp  = cleanBuf;
         const char *cpe = cleanBuf + cleanLen;
         CFIndex     u16 = 0;
+        CFStringRef textPresentation = NULL;
         while (cp < cpe) {
             iChar ch;
             int   nb = decodeBytes_MultibyteChar(cp, cpe, &ch);
             if (nb <= 0) { cp++; continue; }
             const CFIndex u16end = u16 + (ch >= 0x10000 ? 2 : 1);
-            if (isEmoji_Char(ch)) {
-                /* Determine point size from the segment covering this UTF-16 position. */
-                float pointSize = 0.0f;
-                for (size_t s = 0; s < segCount; s++) {
-                    if (u16 >= segments[s].startUtf16 && u16 < segments[s].endUtf16) {
-                        const iAppleFont *af = constAppleFont_AppleText_(tx, segments[s].fontId);
-                        if (af) pointSize = af->pointSize;
-                        break;
+            /* Sequences use a single font so that their ligature can form. */
+            const char *seqEnd;
+            CFIndex     seqLen;
+            if (emojiSequence_(cp, cpe, &seqEnd, &seqLen)) {
+                UniChar seq[maxEmojiSequenceUtf16_AppleText];
+                CFStringGetCharacters(CFAttributedStringGetString(mAttrStr),
+                                      CFRangeMake(u16, seqLen), seq);
+                CTFontRef font = sequenceFont_AppleText_(
+                    tx, seq, seqLen, pointSize_(tx, segments, segCount, u16));
+                if (font) {
+                    CFAttributedStringSetAttribute(
+                        mAttrStr, CFRangeMake(u16, seqLen), kCTFontAttributeName, font);
+                    CFRelease(font);
+                    for (CFIndex i = 0; i < seqLen; i++) {
+                        if (seq[i] == 0xfe0f) {
+                            if (!textPresentation) {
+                                textPresentation = CFStringCreateWithCharacters(
+                                    kCFAllocatorDefault, &(UniChar){ 0xfe0e }, 1);
+                            }
+                            CFAttributedStringReplaceString(
+                                mAttrStr, CFRangeMake(u16 + i, 1), textPresentation);
+                        }
                     }
+                    cp  = seqEnd;
+                    u16 += seqLen;
+                    continue;
                 }
-                if (pointSize <= 0.0f) pointSize = 16.0f;
-                CTFontRef font = overrideFont_AppleText_(tx, ch, pointSize);
+            }
+            if (isEmoji_Char(ch)) {
+                CTFontRef font =
+                    overrideFont_AppleText_(tx, ch, pointSize_(tx, segments, segCount, u16));
                 if (font) {
                     CFRange range = CFRangeMake(u16, u16end - u16);
                     CFAttributedStringSetAttribute(mAttrStr, range, kCTFontAttributeName, font);
@@ -431,6 +495,9 @@ static iBool prepare_AppleTextRun_(
             }
             cp += nb;
             u16  = u16end;
+        }
+        if (textPresentation) {
+            CFRelease(textPresentation);
         }
     }
     free(segments);

@@ -481,6 +481,73 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
     return glyphIndex ? (iBaseFont *) result : NULL;
 }
 
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+static iBool isLigature_RasterFont_(iRasterFont *d, const iChar *seq, size_t len) {
+    if (!d->font.file || !d->font.file->data) {
+        return iFalse;
+    }
+    /* Shaping drops missing ignorables (e.g., tags), so all must be mapped. */
+    for (size_t i = 0; i < len; i++) {
+        if (!isVariationSelector_Char(seq[i]) && !glyphIndex_Font_(d, seq[i])) {
+            return iFalse;
+        }
+    }
+    hb_font_t *hbFont = hbFont_FontFile(d->font.file);
+    if (!hbFont) {
+        return iFalse;
+    }
+    hb_buffer_t *buf = hb_buffer_create();
+    hb_buffer_add_utf32(buf, seq, (int) len, 0, (int) len);
+    hb_buffer_guess_segment_properties(buf);
+    hb_buffer_set_flags(buf, HB_BUFFER_FLAG_REMOVE_DEFAULT_IGNORABLES);
+    hb_shape(hbFont, buf, NULL, 0);
+    unsigned int           count = 0;
+    const hb_glyph_info_t *info  = hb_buffer_get_glyph_infos(buf, &count);
+    const iBool            isLig = (count == 1 && info[0].codepoint != 0);
+    hb_buffer_destroy(buf);
+    return isLig;
+}
+#endif
+
+iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+    iRasterFont          *font    = (iRasterFont *) d;
+    const enum iFontStyle styleId = styleId_Text_(font);
+    const enum iFontSize  sizeId  = sizeId_Text_(font);
+    iRasterText          *tx      = currentRaster_Text_();
+    if (tx->colorEmojiFontId >= 0 && !isColorEmojiDisabled_Text()) {
+        iRasterFont *colorFont =
+            (iRasterFont *) font_Text(FONT_ID(tx->colorEmojiFontId, styleId, sizeId));
+        if (isLigature_RasterFont_(colorFont, seq, len)) {
+            return (iBaseFont *) colorFont;
+        }
+        if (isEmoji_Char(seq[0]) && glyphIndex_Font_(colorFont, seq[0])) {
+            return NULL; /* rather show the individual color glyphs */
+        }
+    }
+    if (tx->overrideFontId >= 0) {
+        iRasterFont *overrideFont =
+            (iRasterFont *) font_Text(FONT_ID(tx->overrideFontId, styleId, sizeId));
+        if (isLigature_RasterFont_(overrideFont, seq, len)) {
+            return (iBaseFont *) overrideFont;
+        }
+    }
+    if (isLigature_RasterFont_(font, seq, len)) {
+        return d;
+    }
+    iConstForEach(Array, i, &tx->fontPriorityOrder) {
+        iRasterFont *other = (iRasterFont *) font_Text(
+            FONT_ID(((const iPrioMapItem *) i.value)->fontIndex, styleId, sizeId));
+        if (other != font && isLigature_RasterFont_(other, seq, len)) {
+            return (iBaseFont *) other;
+        }
+    }
+#else
+    iUnused(d, seq, len);
+#endif
+    return NULL;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 /* GlyphBuffer */
 
@@ -532,11 +599,12 @@ void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iRasterFont *baseFont) 
     for (unsigned int i = 0; i < d->glyphCount; ++i) {
         const hb_glyph_info_t *info = d->glyphInfo + i;
         if (d->glyphPos[i].x_advance > 0 && d->font != baseFont) {
-            const iChar ch = d->logicalText[info->cluster];
-            if (ch == 0x20 || isPictograph_Char(ch) || isEmoji_Char(ch) ||
+            const iChar ch     = d->logicalText[info->cluster];
+            const iBool isWide = isEmoji_Char(ch) || isRegionalIndicator_Char(ch);
+            if (ch == 0x20 || isPictograph_Char(ch) || isWide ||
                 (ch >= 0x1fb00 && ch <= 0x1fbff /* legacy computing */)) {
                 const float dw = d->font->xScale * d->glyphPos[i].x_advance -
-                                 (isEmoji_Char(ch) ? 2 : 1) * monoAdvance;
+                                 (isWide ? 2 : 1) * monoAdvance;
                 d->glyphPos[i].x_offset  -= dw / 2 / d->font->xScale - 1;
                 d->glyphPos[i].x_advance -= dw     / d->font->xScale - 1;
             }

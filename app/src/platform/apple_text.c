@@ -274,6 +274,74 @@ CTFontRef overrideFont_AppleText_(const iAppleText *d, iChar ch, float pointSize
     return CTFontCreateWithName(CFSTR("AppleColorEmoji"), (CGFloat) pointSize, NULL);
 }
 
+static iBool isSameFont_(CTFontRef a, CTFontRef b) {
+    CFStringRef na = CTFontCopyPostScriptName(a);
+    CFStringRef nb = CTFontCopyPostScriptName(b);
+    const iBool same = CFEqual(na, nb);
+    CFRelease(na);
+    CFRelease(nb);
+    return same;
+}
+
+static iBool isLigature_(CTFontRef font, CFStringRef seq, const UniChar *mapped, CFIndex numMapped) {
+    CGGlyph glyphs[maxEmojiSequenceUtf16_AppleText];
+    if (!CTFontGetGlyphsForCharacters(font, mapped, glyphs, numMapped)) {
+        return iFalse;
+    }
+    const void *key = kCTFontAttributeName, *value = font;
+    CFDictionaryRef attrs = CFDictionaryCreate(kCFAllocatorDefault, &key, &value, 1,
+                                               &kCFTypeDictionaryKeyCallBacks,
+                                               &kCFTypeDictionaryValueCallBacks);
+    CFAttributedStringRef str  = CFAttributedStringCreate(kCFAllocatorDefault, seq, attrs);
+    CTLineRef             line = CTLineCreateWithAttributedString(str);
+    CFArrayRef            runs = CTLineGetGlyphRuns(line);
+    iBool isLig = iFalse;
+    if (CFArrayGetCount(runs) == 1) {
+        CTRunRef  run     = CFArrayGetValueAtIndex(runs, 0);
+        CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+        isLig = (CTRunGetGlyphCount(run) == 1 && runFont && isSameFont_(runFont, font));
+    }
+    CFRelease(line);
+    CFRelease(str);
+    CFRelease(attrs);
+    return isLig;
+}
+
+CTFontRef sequenceFont_AppleText_(const iAppleText *d, const UniChar *seq, CFIndex len,
+                                  float pointSize) {
+    if ((get_Prefs()->colorEmoji && !isColorEmojiDisabled_Text()) ||
+        len > maxEmojiSequenceUtf16_AppleText) {
+        return NULL; /* cascade decides */
+    }
+    /* VS16 would make Core Text switch to the system Emoji font. */
+    UniChar probe[maxEmojiSequenceUtf16_AppleText];
+    UniChar mapped[maxEmojiSequenceUtf16_AppleText];
+    CFIndex numMapped = 0;
+    for (CFIndex i = 0; i < len; i++) {
+        probe[i] = (seq[i] == 0xfe0f ? 0xfe0e : seq[i]);
+        if (seq[i] != 0xfe0e && seq[i] != 0xfe0f) {
+            mapped[numMapped++] = seq[i];
+        }
+    }
+    CFStringRef probeStr = CFStringCreateWithCharacters(kCFAllocatorDefault, probe, len);
+    CTFontRef   result   = NULL;
+    iConstForEach(Array, it, &d->fontPriorityOrder) {
+        const iPrioMapItem *item = it.value;
+        const iAppleFont   *af =
+            constAppleFont_AppleText_(d, FONT_ID(item->fontIndex, regular_FontStyle, uiNormal_FontSize));
+        if (!af || !af->font.spec || !af->font.file || !af->font.file->data) continue;
+        if (af->font.spec->flags & ignoreAsFallback_FontSpecFlag) continue;
+        if (!(af->font.spec->flags & auxiliary_FontSpecFlag)) continue;
+        CTFontRef ref = (CTFontRef) (uintptr_t) af->font.file->data;
+        if (isLigature_(ref, probeStr, mapped, numMapped)) {
+            result = CTFontCreateCopyWithAttributes(ref, (CGFloat) pointSize, NULL, NULL);
+            break;
+        }
+    }
+    CFRelease(probeStr);
+    return result;
+}
+
 static void applyCascadeList_AppleText_(iAppleText *d) {
     /* Rebuild the cascade list and discard all existing CTFonts so they are recreated lazily
        with the updated cascade on next use. */
@@ -1100,6 +1168,12 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
        Return d unchanged; the cascade list ensures correct glyph selection. */
     iUnused(ch);
     return d;
+}
+
+iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
+    /* See sequenceFont_AppleText_(). */
+    iUnused(d, seq, len);
+    return NULL;
 }
 
 iDefineClass(AppleText)

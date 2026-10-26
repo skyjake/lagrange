@@ -102,6 +102,49 @@ iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
     return new_RegExp(pattern, 0);
 }
 
+static iBool isEmojiSequenceBase_(iChar c) {
+    return (c >= 0x2190 && c <= 0x2bff) || (c >= 0x1f000 && c <= 0x1faff) || c == 0xa9 ||
+           c == 0xae || c == 0x203c || c == 0x2049 || c == 0x2122 || c == 0x2139 ||
+           c == 0x3030 || c == 0x303d || c == 0x3297 || c == 0x3299;
+}
+
+size_t emojiSequenceLength_Char(const iChar *chars, size_t len) {
+    if (len < 2) {
+        return 0;
+    }
+    const iChar first = chars[0];
+    if (isRegionalIndicator_Char(first)) {
+        return isRegionalIndicator_Char(chars[1]) ? 2 : 0;
+    }
+    if ((first >= '0' && first <= '9') || first == '#' || first == '*') {
+        const size_t n = (chars[1] == 0xfe0f ? 2 : 1);
+        return n < len && chars[n] == 0x20e3 ? n + 1 : 0;
+    }
+    if (!isEmojiSequenceBase_(first)) {
+        return 0;
+    }
+    iBool  isSequence = iFalse;
+    size_t n          = 1;
+    for (;;) {
+        /* Skin tones, variation selectors, and tags extend the current element. */
+        for (; n < len; n++) {
+            const iChar c = chars[n];
+            if (isFitzpatrickType_Char(c) || (c >= 0xe0020 && c <= 0xe007f)) {
+                isSequence = iTrue;
+            }
+            else if (!isVariationSelector_Char(c)) {
+                break;
+            }
+        }
+        if (n + 1 < len && chars[n] == 0x200d && isEmojiSequenceBase_(chars[n + 1])) {
+            isSequence = iTrue;
+            n += 2;
+            continue;
+        }
+        return isSequence ? n : 0;
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static int cmp_PrioMapItem_(const void *a, const void *b) {
