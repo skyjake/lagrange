@@ -51,8 +51,7 @@ enum iDocumentSwipeFlag {
     rightWheel_DocumentSwipeFlag        = iBit(9),
     eitherWheel_DocumentSwipeFlag       = leftWheel_DocumentSwipeFlag |
                                           rightWheel_DocumentSwipeFlag,
-    pinchZoom_DocumentSwipeFlag         = iBit(10),
-    pageCurl_DocumentSwipeFlag          = iBit(11), /* views are drawn as a page curl */
+    pageCurl_DocumentSwipeFlag          = iBit(10), /* views are drawn as a page curl */
 };
 
 iDeclareType(DocumentSwipe)
@@ -63,8 +62,6 @@ struct Impl_DocumentSwipe {
     iDocumentView        *view;   /* outgoing old view (not owned) */
     iBanner              *banner; /* used by the outgoing view only (not owned) */
     int                   flags;
-    int                   pinchZoomInitial;
-    int                   pinchZoomPosted;
     float                 speed; /* points/sec */
     uint32_t              lastTime; /* of the latest curl gesture movement */
     float                 curlSpeed; /* pixels per second */
@@ -85,7 +82,6 @@ void    settle_DocumentSwipe        (iDocumentSwipe *); /* ongoing slide jumps t
 iBool   isSwipingBack_DocumentSwipe (const iDocumentSwipe *);
 int     offsetOfView_DocumentSwipe  (const iDocumentSwipe *, const iDocumentView *);
 
-iBool   handlePinch_DocumentSwipe   (iDocumentSwipe *, const char *cmd);
 iBool   handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *, const char *cmd); /* true if a sidebar takes it */
 iBool   handleEdgeSwipe_DocumentSwipe(iDocumentSwipe *, const char *cmd);
 iBool   handleWheelSwipe_DocumentSwipe(iDocumentSwipe *, const SDL_MouseWheelEvent *);
@@ -118,14 +114,8 @@ iLocalDef iBool isBegun_DocumentSwipe(const iDocumentSwipe *d) {
 iLocalDef iBool isAborted_DocumentSwipe(const iDocumentSwipe *d) {
     return (d->flags & aborted_DocumentSwipeFlag) != 0;
 }
-iLocalDef int pinchZoomPercent_DocumentSwipe(const iDocumentSwipe *d) {
-    return d->pinchZoomPosted;
-}
 iLocalDef void setOffset_DocumentSwipe(iDocumentSwipe *d, int offset) {
     setValue_Anim(&d->offset, offset, 0);
-}
-iLocalDef iBool isPinchZooming_DocumentSwipe(const iDocumentSwipe *d) {
-    return (d->flags & pinchZoom_DocumentSwipeFlag) != 0;
 }
 iLocalDef iBool wasViewSwipedAway_DocumentSwipe(const iDocumentSwipe *d) {
     return (d->flags & viewWasSwipedAway_DocumentSwipeFlag) != 0;

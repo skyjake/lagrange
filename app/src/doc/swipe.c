@@ -37,10 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL3/SDL_timer.h>
 
-#if defined (iPlatformAppleMobile)
-#   include "platform/ios.h"
-#endif
-
 iDefineTypeConstruction(DocumentSwipe)
 
 static iDocumentView *ownerView_(const iDocumentSwipe *d) {
@@ -76,8 +72,6 @@ void init_DocumentSwipe(iDocumentSwipe *d) {
     d->view             = NULL;
     d->banner           = NULL;
     d->flags            = 0;
-    d->pinchZoomInitial = 0;
-    d->pinchZoomPosted  = 0;
     d->speed            = 0.0f;
     d->lastTime         = 0;
     d->curlSpeed        = 0.0f;
@@ -190,33 +184,6 @@ int offsetOfView_DocumentSwipe(const iDocumentSwipe *d, const iDocumentView *vie
         return 0.25f * (swipeValue - width_Rect(bounds_Widget(constAs_Widget(d->owner))));
     }
     return 0;
-}
-
-iBool handlePinch_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
-    if (equal_Command(cmd, "pinch.began")) {
-        d->pinchZoomInitial = d->pinchZoomPosted = activeDocPrefs_App()->zoomPercent.value;
-        d->flags |= pinchZoom_DocumentSwipeFlag;
-        refresh_Widget(d->owner);
-    }
-    else if (equal_Command(cmd, "pinch.moved")) {
-        const float rel = argf_Command(cmd);
-        int zoom = iRound(d->pinchZoomInitial * rel / 5.0f) * 5;
-        zoom = iClamp(zoom, 50, 200);
-        if (d->pinchZoomPosted != zoom) {
-#if defined (iPlatformAppleMobile)
-            if (zoom == 100) {
-                playHapticEffect_iOS(tap_HapticEffect);
-            }
-#endif
-            d->pinchZoomPosted = zoom;
-            postCommandf_App("zoom.set arg:%d", zoom);
-        }
-    }
-    else if (equal_Command(cmd, "pinch.ended")) {
-        d->flags &= ~pinchZoom_DocumentSwipeFlag;
-        refresh_Widget(d->owner);
-    }
-    return iTrue;
 }
 
 int sidebarAreaHeight_DocumentSwipe(const iDocumentSwipe *d) {

@@ -191,7 +191,7 @@ iBool isHoverAllowed_DocumentWidget(const iDocumentWidget *d) {
     if (d->midClick.isActive && d->midClick.isDragging) {
         return iFalse;
     }
-    if (isPinchZooming_DocumentSwipe(d->swipe)) {
+    if (d->pinch.active) {
         return iFalse;
     }
     if (flags_Widget(d) & touchDrag_WidgetFlag) {
@@ -325,8 +325,7 @@ void animate_DocumentWidget(void *ticker) {
 }
 
 static void updateIndicator_DocumentWidget_(iDocumentWidget *d) {
-    const enum iDocumentIndicator ind = isPinchZooming_DocumentSwipe(d->swipe)
-                                            ? pinchZoom_DocumentIndicator
+    const enum iDocumentIndicator ind = d->pinch.active   ? pinchZoom_DocumentIndicator
                                         : d->viewModeTimer ? viewMode_DocumentIndicator
                                                            : none_DocumentIndicator;
     if (ind != none_DocumentIndicator) {
@@ -334,6 +333,32 @@ static void updateIndicator_DocumentWidget_(iDocumentWidget *d) {
     }
     setValue_Anim(&d->indicatorOpacity, ind != none_DocumentIndicator ? 1.0f : 0.0f, 120);
     addTicker_App(animate_DocumentWidget, d);
+}
+
+static void handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+    if (equal_Command(cmd, "pinch.began")) {
+        d->pinch.initial = d->pinch.posted = activeDocPrefs_App()->zoomPercent.value;
+        d->pinch.active  = iTrue;
+        refresh_Widget(d);
+    }
+    else if (equal_Command(cmd, "pinch.moved")) {
+        int zoom = iRound(d->pinch.initial * argf_Command(cmd) / 5.0f) * 5;
+        zoom = iClamp(zoom, 50, 200);
+        if (d->pinch.posted != zoom) {
+#if defined (iPlatformAppleMobile)
+            if (zoom == 100) {
+                playHapticEffect_iOS(tap_HapticEffect);
+            }
+#endif
+            d->pinch.posted = zoom;
+            postCommandf_App("zoom.set arg:%d", zoom);
+        }
+    }
+    else if (equal_Command(cmd, "pinch.ended")) {
+        d->pinch.active = iFalse;
+        refresh_Widget(d);
+    }
+    updateIndicator_DocumentWidget_(d);
 }
 
 static uint32_t postViewModeHide_DocumentWidget_(void *context, SDL_TimerID timerId,
@@ -2167,8 +2192,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (startsWith_Command(cmd, "pinch.") && document_Command(cmd) == d) {
-        handlePinch_DocumentSwipe(d->swipe, cmd);
-        updateIndicator_DocumentWidget_(d);
+        handlePinch_DocumentWidget_(d, cmd);
         return iTrue;
     }
     else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
@@ -3360,13 +3384,13 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                       2 * radius_UI,
                                       all_RoundCorner,
                                       1,
-                                      pinchZoomPercent_DocumentSwipe(d->swipe) == 100
+                                      d->pinch.posted == 100
                                           ? uiTextCaution_ColorId
                                           : uiTextAction_ColorId,
                                       none_ColorId,
                                       none_ColorId);
             drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
-                              pinchZoomPercent_DocumentSwipe(d->swipe));
+                              d->pinch.posted);
         }
         else if (d->indicator == viewMode_DocumentIndicator) {
             const int   font = uiLabelHuge_FontId;
@@ -3430,6 +3454,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->numHeadings       = 0;
     d->indicator        = none_DocumentIndicator;
     init_Anim(&d->indicatorOpacity, 0.0f);
+    iZap(d->pinch);
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
         setNavigable_DocumentSwipe(d->swipe, iTrue);
     }

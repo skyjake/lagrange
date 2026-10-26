@@ -249,6 +249,7 @@ set (SOURCES
     src/doc/book.h
     src/doc/documentview.c
     src/doc/documentview.h
+    src/doc/draw.c
     src/doc/fetch.c
     src/doc/fetch.h
     src/doc/impl.h

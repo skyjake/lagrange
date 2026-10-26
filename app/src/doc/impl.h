@@ -22,8 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-/* Private declarations shared by the DocumentWidget sources. The core is in
-   ui/documentwidget.c, and the components it owns are in the other sources under doc. */
+/* Private declarations shared by DocumentWidget components. */
 
 #include "ui/documentwidget.h"
 #include "ui/util.h"
@@ -42,6 +41,7 @@ iDeclareType(LinkInfo)
 iDeclareType(MenuItem)
 iDeclareType(Query)
 iDeclareType(ScrollWidget)
+iDeclareType(TextBuf)
 iDeclareType(ToolJob)
 iDeclareType(Translation)
 iDeclareType(ViewToolbar)
@@ -85,15 +85,14 @@ enum iDocumentIndicator {
 
 /* Note the following about swipes and keeping inline input prompts positioned:
 
-   An inline input prompt is a real widget, similar to what appears in a modal
-   dialog. During a back/forward swipe, up to two DocumentViews are visible at
+   An inline input prompt is a real widget, similar to modal input dialogs.
+   During a back/forward swipe, up to two DocumentViews are visible at
    once (the current view and DocumentSwipe's outgoing view, one drawn sliding over
-   the other), and either
-   one may have one or more prompt widgets as children. The prompts need to keep
-   tracking their documents as they shift, and all prompts need to be drawn at
-   the correct Z order alongside their view's content. This means a normal
-   `drawChildren_Widget()` is not possible, because children are drawn last, on
-   top of everything.
+   the other), and either one may have one or more prompt widgets as children.
+   The prompts need to keep tracking their documents as they shift, and all
+   prompts need to be drawn at the correct Z order alongside their view's content.
+   This means a normal `drawChildren_Widget()` is not possible, because children
+   are drawn last, on top of everything.
 
    We use `deferredDraw_WidgetFlag2` that excludes a child from
    `drawChildren_Widget()`. Each flagged bar is drawn manually so they appear in
@@ -133,6 +132,11 @@ struct Impl_DocumentWidget {
     SDL_TimerID     viewModeTimer;    /* view mode indicator is shown while running */
     enum iDocumentIndicator indicator; /* remains set while fading out */
     iAnim           indicatorOpacity;
+    struct {
+        iBool active;
+        int   initial; /* zoom percentage */
+        int   posted;
+    } pinch;
     iLinkInfo *    linkInfo;
 
     /* Document: */
@@ -231,3 +235,24 @@ void            drawReaderPullActions_DocumentWidget    (const iDocumentWidget *
 /* Tools, translation, and uploads (doc/tools.c). */
 void            updateToolsMenu_DocumentWidget          (iDocumentWidget *);
 iBool           handleToolCommand_DocumentWidget        (iDocumentWidget *, const char *cmd);
+
+/*-----------------------------------------------------------------------------------------------*/
+/* Document drawing. */
+
+struct Impl_DrawBufs {
+    int          flags;
+    SDL_Texture *sideIconBuf;
+    SDL_Texture *curlBufs[2]; /* front and back of a curling page */
+    iTextBuf    *timestampBuf;
+    uint32_t     lastRenderTime;
+};
+
+struct Impl_VisBufMeta {
+    iGmRunRange runsDrawn;
+};
+
+iScrollWidget * hostScrollBar_DocumentView              (const iDocumentView *);
+const iDocPrefs *docPrefs_DocumentView                  (const iDocumentView *);
+int             runOffset_DocumentView                  (const iDocumentView *, const iGmRun *run);
+iRangecc        currentHeading_DocumentView             (const iDocumentView *);
+void            allocDrawnVisBuffer_DocumentView        (const iDocumentView *);
