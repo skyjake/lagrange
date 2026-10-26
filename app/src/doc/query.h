@@ -53,9 +53,8 @@ iDeclareTypeConstruction(Query)
    underlying document is swapped:
 
    - Incoming: A DocumentWidget's current view's own prompts are normal findable
-     widgets, except when covered by the outgoing view during a back-swipe,
-     or offset by rubber-banding at the ends of history (in both cases,
-     `covered` in Query).
+     widgets, except when covered by the outgoing view during a back-swipe
+     (`covered` in Query).
 
    - Outgoing: The outgoing view's prompts (`outgoing` in Query).
      `releaseViewDocument_DocumentWidget_()` allocates a new DocumentView for
@@ -69,7 +68,7 @@ iDeclareTypeConstruction(Query)
 struct Impl_Query {
     iDocumentWidget *owner;
     iPtrArray        outgoing; /* bars of the outgoing document during a swipe */
-    iPtrArray        covered;  /* bars covered by outgoing view, or shifted */
+    iPtrArray        covered;  /* bars covered by the outgoing view */
 };
 
 void        setOwner_Query          (iQuery *, iDocumentWidget *owner);

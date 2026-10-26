@@ -465,11 +465,9 @@ void reposition_Query(iQuery *d, iDocumentView *view) {
     /* Must run after render_GmDocument() repopulates visibleMedia for this frame. */
     iWidget *w = ownerWidget_(d);
     const int swipeOffset = offsetOfView_DocumentSwipe(d->owner->swipe, view);
-    /* Is `view` currently covered, or rubber-banding without a swipeView? */
-    const iBool isCovered =
-        view == ownerView_(d) &&
-        ((view_DocumentSwipe(d->owner->swipe) && isOverlay_DocumentSwipe(d->owner->swipe)) ||
-         (!view_DocumentSwipe(d->owner->swipe) && swipeOffset != 0));
+    /* Is `view` currently covered by the outgoing view? */
+    const iBool isCovered = view == ownerView_(d) && view_DocumentSwipe(d->owner->swipe) &&
+                            isOverlay_DocumentSwipe(d->owner->swipe);
     if (view == ownerView_(d)) {
         clear_PtrArray(&d->covered);
     }

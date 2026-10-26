@@ -561,10 +561,6 @@ void draw_DocumentSwipe(const iDocumentSwipe *d) {
                            uiBackground_ColorId);
         }
         drawViewOrBlank_DocumentSwipe_(d, view, offset, wasViewSwipedAway_DocumentSwipe(d));
-        if (offset) {
-            /* Due to offset, inline prompts may shift outside the document area. */
-            drawCovered_Query(query, &clipBounds);
-        }
     }
     /* The outgoing view may have been drawn last; widgets drawn after use the current palette. */
     makePaletteGlobal_GmDocument(view->doc);
