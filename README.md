@@ -4,7 +4,7 @@ Lagrange is a cross-platform client for browsing [Geminispace](https://geminipro
 
 Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a small number of essential libraries. It is written in C and uses [SDL](https://libsdl.org/) for hardware-accelerated graphics. [OpenSSL](https://openssl.org/) is used for secure communications.
 
-![Lagrange window open on URL "about:lagrange"](lagrange_about.png)
+![Lagrange window open on URL "about:lagrange"](lagrange_about.webp)
 
 ## Features
 

@@ -738,13 +738,13 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 }
 
 static SDL_Surface *loadImage_(const iBlock *data, int resized) {
-    int      w = 0, h = 0, num = 4;
-    stbi_uc *pixels = stbi_load_from_memory(
-        constData_Block(data), (int) size_Block(data), &w, &h, &num, STBI_rgb_alpha);
+    const int num = 4;
+    int       w = 0, h = 0;
+    stbi_uc  *pixels = stbi_load_from_memory(
+        constData_Block(data), (int) size_Block(data), &w, &h, NULL, STBI_rgb_alpha);
     if (resized) {
         stbi_uc *rsPixels = malloc(num * resized * resized);
-        stbir_resize_uint8_linear(pixels, w, h, 0, rsPixels, resized, resized, 0,
-                                  (stbir_pixel_layout) num);
+        stbir_resize_uint8_linear(pixels, w, h, 0, rsPixels, resized, resized, 0, STBIR_RGBA);
         free(pixels);
         pixels = rsPixels;
         w = h = resized;
