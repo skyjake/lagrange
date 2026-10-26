@@ -1885,8 +1885,34 @@ static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
     return handleTopLevelMenuBarCommand_Widget(menuBarItem, cmd);
 }
 
+static void appendToolMenuItems_Root_(iArray *items, const iDocumentWidget *doc) {
+    /* If `doc` is given, tools that can't run on it are disabled. */
+    iBool isFirst = iTrue;
+    iConstForEach(PtrArray, i, list_Tools(tools_App())) {
+        const iTool *tool = i.ptr;
+        if (!tool->inMenu || !isUsable_Tool(tool)) {
+            continue;
+        }
+        if (isFirst) {
+            pushBack_Array(items, &(iMenuItem){ "---" });
+            isFirst = iFalse;
+        }
+        const char     *command = format_CStr("tool.run id:%s", cstr_String(&tool->id));
+        const iBinding *bind    = findCommand_Keys(command);
+        pushBack_Array(items,
+                       &(iMenuItem){ format_CStr("%s%s",
+                                                 doc && !canRunTool_DocumentWidget(doc, tool)
+                                                     ? "///" : "",
+                                                 cstr_String(&tool->name)),
+                                     bind ? bind->key : 0,
+                                     bind ? bind->mods : 0,
+                                     command });
+    }
+}
+
 static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    const iDocumentWidget *doc   = document_App();
+    iArray                *items = collectNew_Array(sizeof(iMenuItem));
     pushBackN_Array(items, (iMenuItem[]){
         { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
         { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
@@ -1902,15 +1928,18 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
         { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
         { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
-        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" } },
+    15);
+    appendToolMenuItems_Root_(items, doc);
+    pushBackN_Array(items, (iMenuItem[]){
         { "---" },
         { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
         { books_Icon " ${menu.save.books}", SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook" },
         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-        { isSourceTextView_DocumentWidget(document_App())
+        { isSourceTextView_DocumentWidget(doc)
             ? "${menu.viewformat.gemini}"
             : "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-    19);
+    5);
     return items;
 }
 
@@ -1996,27 +2025,6 @@ void recreateSnippetMenu_Root(iRoot *d) {
     destroy_Widget(menu);
     menu = makeMenuFlags_Widget(d->widget, data_Array(items), size_Array(items), iTrue);
     setId_Widget(menu, "snippetmenu");
-}
-
-static void appendToolMenuItems_Root_(iArray *items) {
-    iBool isFirst = iTrue;
-    iConstForEach(PtrArray, i, list_Tools(tools_App())) {
-        const iTool *tool = i.ptr;
-        if (!tool->inMenu || !isUsable_Tool(tool)) {
-            continue;
-        }
-        if (isFirst) {
-            pushBack_Array(items, &(iMenuItem){ "---" });
-            isFirst = iFalse;
-        }
-        const char     *command = format_CStr("tool.run id:%s", cstr_String(&tool->id));
-        const iBinding *bind    = findCommand_Keys(command);
-        pushBack_Array(items,
-                       &(iMenuItem){ cstr_String(&tool->name),
-                                     bind ? bind->key : 0,
-                                     bind ? bind->mods : 0,
-                                     command });
-    }
 }
 
 void createUserInterface_Root(iRoot *d) {
@@ -2575,7 +2583,7 @@ void createUserInterface_Root(iRoot *d) {
            { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
            { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
         }, 9);
-        appendToolMenuItems_Root_(toolsItems);
+        appendToolMenuItems_Root_(toolsItems, NULL);
         iWidget *toolsMenu = makeMenu_Widget(root, constData_Array(toolsItems), size_Array(toolsItems));
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");

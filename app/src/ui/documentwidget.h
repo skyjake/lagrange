@@ -32,6 +32,7 @@ iDeclareType(GmIdentity)
 iDeclareType(GmRequest)
 iDeclareType(GmResponse)
 iDeclareType(History)
+iDeclareType(Tool)
 
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
@@ -64,6 +65,7 @@ iBool               isSetIdentityRetained_DocumentWidget(const iDocumentWidget *
 iBool               isAutoReloading_DocumentWidget      (const iDocumentWidget *);
 iBool               isUnseen_DocumentWidget             (const iDocumentWidget *);
 iBool               isReader_DocumentWidget             (const iDocumentWidget *);
+iBool               canRunTool_DocumentWidget           (const iDocumentWidget *, const iTool *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),

@@ -37,13 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lagrange/tools.h>
 
-static iBool canRunTool_DocumentWidget_(const iDocumentWidget *d, const iTool *tool) {
-    return tool && isUsable_Tool(tool) && !d->toolJob && !isRequestOngoing_DocumentFetch(d->fetch) &&
-           !isEmpty_Block(&d->fetch->sourceContent) && matchMime_Tool(tool, &d->fetch->sourceMime);
-}
-
 static void runTool_DocumentWidget_(iDocumentWidget *d, const iTool *tool) {
-    if (!canRunTool_DocumentWidget_(d, tool)) {
+    if (!canRunTool_DocumentWidget(d, tool)) {
         return;
     }
     d->toolJob = new_ToolJob(tool, &d->fetch->sourceMime, &d->fetch->sourceContent, d->mod.url);
@@ -86,9 +81,14 @@ void updateToolsMenu_DocumentWidget(iDocumentWidget *d) {
         if (tool->inMenu) {
             setMenuItemDisabled_Widget(toolsMenu,
                                        format_CStr("tool.run id:%s", cstr_String(&tool->id)),
-                                       !canRunTool_DocumentWidget_(d, tool));
+                                       !canRunTool_DocumentWidget(d, tool));
         }
     }
+}
+
+iBool canRunTool_DocumentWidget(const iDocumentWidget *d, const iTool *tool) {
+    return tool && isUsable_Tool(tool) && !d->toolJob && !isRequestOngoing_DocumentFetch(d->fetch) &&
+           !isEmpty_Block(&d->fetch->sourceContent) && matchMime_Tool(tool, &d->fetch->sourceMime);
 }
 
 iBool handleToolCommand_DocumentWidget(iDocumentWidget *d, const char *cmd) {
