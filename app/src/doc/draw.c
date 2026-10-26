@@ -21,19 +21,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "impl.h"
-#include "pagedview.h"
 
 #include "app.h"
 #include "banner.h"
 #include "defs.h"
-#include <lagrange/gmrequest.h>
 #include "media/media.h"
+#include "pagedview.h"
 #include "render/paint.h"
 #include "render/text.h"
-#include "ui/root.h"
 #include "ui/mediaui.h"
+#include "ui/root.h"
 #include "ui/util.h"
 #include "ui/window.h"
+
+#include <lagrange/gmrequest.h>
 
 #include <the_Foundation/regexp.h>
 #include <SDL3/SDL_timer.h>
@@ -115,7 +116,6 @@ static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
 }
 
 iDeclareType(DrawContext)
-
 iDeclareType(MarkStyle)
 
 struct Impl_MarkStyle {
@@ -1108,6 +1108,8 @@ static void drawPageBands_DocumentView_(const iDocumentView *d, iRangei cols) {
     }
 }
 
+/*-----------------------------------------------------------------------------------------------*/
+
 static iColor pageShade_DocumentView_(const iDocumentView *d, iBool *isDarkPage_out) {
     /* A darker shade of the page itself. */
     const iBool isDarkPage = isDark_GmDocumentTheme(docTheme_DocPrefs(
@@ -1198,12 +1200,6 @@ static void drawSpreads_DocumentView_(const iDocumentView *d, iDrawContext *ctx,
                                 shadeColor);
             p->alpha = 255;
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-            /* Better without?
-            drawSoftEdge_Paint(p, columnLeft_DocumentView(d, col), ySpan,
-                               width_Rect(bounds) / 10, shadeColor, 10);
-            drawSoftEdge_Paint(p, columnLeft_DocumentView(d, col + 2 * perPage), ySpan,
-                               -width_Rect(bounds) / 10, shadeColor, 10);
-            */
         }
     }
 }
@@ -1530,6 +1526,8 @@ void drawCurlBetween_DocumentView(const iDocumentView *earlier, const iDocumentV
                            area);
     unsetClip_Paint(&earlierCtx.paint);
 }
+
+/*-----------------------------------------------------------------------------------------------*/
 
 void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     const iWidget *w          = constAs_Widget(d->owner);
