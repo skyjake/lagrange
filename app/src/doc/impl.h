@@ -96,15 +96,6 @@ struct Impl_DocumentWidget {
     iDocumentSwipe *swipe;
     iDocumentBook *book;
     iViewToolbar  *viewToolbar;
-    SDL_TimerID     readingBarsTimer; /* toggle unless the click becomes a double click */
-    SDL_TimerID     viewModeTimer;    /* view mode indicator is shown while running */
-    enum iDocumentIndicator indicator; /* remains set while fading out */
-    iAnim           indicatorOpacity;
-    struct {
-        iBool active;
-        int   initial; /* zoom percentage */
-        int   posted;
-    } pinch;
     iLinkInfo *    linkInfo;
 
     /* Document: */
@@ -123,6 +114,7 @@ struct Impl_DocumentWidget {
     const iGmRun * contextLink;
     iClick         click;
     iClick         midClick;   /* opens link */
+    SDL_TimerID    readingBarsTimer; /* toggle unless the click becomes a double click */
     iInt2          contextPos; /* coordinates of latest right click */
     iString        pendingGotoHeading;
     iString        linePrecedingLink;
@@ -134,6 +126,16 @@ struct Impl_DocumentWidget {
     iInt2          swipeUpStart;   /* finger position where the swipe began */
     uint32_t       layoutHandoffTime; /* when continued layout was last shown */
     size_t         numHeadings;
+
+    /* Indicators: */
+    SDL_TimerID    viewModeTimer; /* view mode indicator is shown while running */
+    enum iDocumentIndicator indicator; /* remains set while fading out */
+    iAnim          indicatorOpacity;
+    struct {
+        iBool active;
+        int   initial; /* zoom percentage */
+        int   posted;
+    } pinch;
 
     /* Widget structure: */
     iScrollWidget *scroll;
