@@ -46,6 +46,7 @@ void    setPos_Banner       (iBanner *, iInt2 pos);
 int     height_Banner       (const iBanner *);
 int     siteTitleMid_Banner (const iBanner *); /* from the top; zero if no site title */
 size_t  numItems_Banner     (const iBanner *);
+iBool   hasError_Banner     (const iBanner *);
 iBool   contains_Banner     (const iBanner *, iInt2 coord);
 size_t  itemAtCoord_Banner  (const iBanner *, iInt2 coord);
 const iString *message_Banner(const iBanner *, size_t itemIndex);

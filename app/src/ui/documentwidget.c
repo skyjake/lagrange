@@ -850,6 +850,7 @@ void replaceDocument_DocumentWidget(iDocumentWidget *d, iGmDocument *newDoc) {
 }
 
 void updateTheme_DocumentWidget(iDocumentWidget *d) {
+    refresh_Widget(d->viewToolbar->widget); /* buffered with theme colors */
     if (document_App() != d || category_GmStatusCode(d->fetch->sourceStatus) == categoryInput_GmStatusCode) {
         return;
     }

@@ -177,6 +177,15 @@ size_t numItems_Banner(const iBanner *d) {
     return size_Array(&d->items);
 }
 
+iBool hasError_Banner(const iBanner *d) {
+    iConstForEach(Array, i, &d->items) {
+        if (((const iBannerItem *) i.value)->type == error_BannerType) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iBool contains_Banner(const iBanner *d, iInt2 coord) {
     return contains_Rect(d->rect, coord);
 }

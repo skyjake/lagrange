@@ -44,6 +44,7 @@ struct Impl_LabelWidget {
     iChar   icon;
     int     forceFg;
     int     iconColor;
+    iLabelColors *colors;  /* explicit; NULL if automatic */
     iString command;
     iClick  click;
     struct {
@@ -360,8 +361,41 @@ static iBool isInSheet_(const iWidget *d) {
     return iFalse;
 }
 
+static void getExplicitColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1,
+                                           int *frame2, int *icon, int *meta) {
+    const iLabelColors *colors = d->colors;
+    const int64_t       flags  = flags_Widget(d);
+    const iBool         isSel  = (flags & selected_WidgetFlag) != 0;
+    if (flags & disabled_WidgetFlag) {
+        *bg = isSel ? colors->hoverBg : colors->bg;
+        *fg = colors->disabledFg;
+    }
+    else if (flags & pressed_WidgetFlag) {
+        *bg = colors->pressedBg;
+        *fg = colors->pressedFg;
+    }
+    else if (isSel) {
+        *bg = colors->selectedBg;
+        *fg = colors->selectedFg;
+    }
+    else if (isHover_LabelWidget_(d)) {
+        *bg = colors->hoverBg;
+        *fg = colors->hoverFg;
+    }
+    else {
+        *bg = colors->bg;
+        *fg = colors->fg;
+    }
+    *icon = *meta = *fg;
+    *frame1 = *frame2 = d->widget.frameColor;
+}
+
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2,
                                    int *icon, int *meta) {
+    if (d->colors) {
+        getExplicitColors_LabelWidget_(d, bg, fg, frame1, frame2, icon, meta);
+        return;
+    }
     const iWidget *w           = constAs_Widget(d);
     const int64_t  flags       = flags_Widget(w);
     const iBool    isHover     = isHover_LabelWidget_(d);
@@ -1040,6 +1074,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
     d->iconColor = none_ColorId;
+    d->colors = NULL;
     d->icon = 0;
     d->labelOffset = zero_I2();
     if (label) {
@@ -1068,6 +1103,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
 }
 
 void deinit_LabelWidget(iLabelWidget *d) {
+    free(d->colors);
     deinit_String(&d->label);
     deinit_String(&d->srcLabel);
     deinit_String(&d->command);
@@ -1253,6 +1289,20 @@ void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {
 
 void setIconColor_LabelWidget(iLabelWidget *d, int color) {
     d->iconColor = color;
+}
+
+void setColors_LabelWidget(iLabelWidget *d, const iLabelColors *colors) {
+    if (colors) {
+        if (!d->colors) {
+            d->colors = iMalloc(LabelColors);
+        }
+        *d->colors = *colors;
+    }
+    else {
+        free(d->colors);
+        d->colors = NULL;
+    }
+    refresh_Widget(d);
 }
 
 iBool checkIcon_LabelWidget(iLabelWidget *d) {

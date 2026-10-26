@@ -47,6 +47,18 @@ static const int      maxNameLength_ViewToolbar_ = 10;
 static const float    dimmedOpacity_ViewToolbar_ = 0.0f; /* fully hidden */
 static const uint32_t fadeSpan_ViewToolbar_      = 250;
 
+static const iLabelColors buttonColors_ViewToolbar_ = {
+    .bg         = none_ColorId,
+    .fg         = tmBannerIcon_ColorId,
+    .hoverBg    = tmBannerItemBackground_ColorId,
+    .hoverFg    = tmBannerIcon_ColorId,
+    .selectedBg = tmBannerIcon_ColorId,
+    .selectedFg = tmBannerBackground_ColorId,
+    .pressedBg  = tmBannerItemFrame_ColorId,
+    .pressedFg  = tmBannerItemTitle_ColorId,
+    .disabledFg = tmBannerItemFrame_ColorId,
+};
+
 iDefineTypeConstruction(ViewToolbar)
 
 void init_ViewToolbar(iViewToolbar *d) {
@@ -144,6 +156,7 @@ static iLabelWidget *addButton_ViewToolbar_(iViewToolbar *d, iLabelWidget *butto
     addChildIdFlags_Widget(
         d->widget, iClob(button), id, frameless_WidgetFlag | noBackground_WidgetFlag);
     setFlags2_Widget(button, alwaysRound_WidgetFlag2, iTrue);
+    setColors_LabelWidget(button, &buttonColors_ViewToolbar_);
     return button;
 }
 
@@ -156,8 +169,8 @@ void setOwner_ViewToolbar(iViewToolbar *d, iDocumentWidget *owner) {
     setId_Widget(w, "viewtools");
     setFlags_Widget(w, hidden_WidgetFlag | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     setFlags2_Widget(w, roundFreeEdges_WidgetFlag2 | floating_WidgetFlag2 | yieldSwipeToParent_WidgetFlag2, iTrue);
-    setBackgroundColor_Widget(w, uiBackgroundSidebar_ColorId);
-    setFrameColor_Widget(w, uiSeparator_ColorId);
+    setBackgroundColor_Widget(w, tmBannerBackground_ColorId);
+    setFrameColor_Widget(w, tmBannerIcon_ColorId);
     const float hPad = 1.66f * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);
     const float vPad = 1.0f  * gap_UI * (isMobile_Platform() ? 1.5f : 1.0f);
     setPadding_Widget(w, hPad, vPad, hPad, vPad);
@@ -235,8 +248,6 @@ void update_ViewToolbar(iViewToolbar *d) {
         }
         setLabel_ViewToolbar_(identButton, person_Icon, name);
         setFlags_Widget(identButton, selected_WidgetFlag, isPinned);
-        setTextColor_LabelWidget(identButton, !isPinned && ident ? uiTextAction_ColorId
-                                 : none_ColorId /* default */);
     }
     /* Auto-reload. */ {
         setLabel_ViewToolbar_(reloadButton,
@@ -281,7 +292,7 @@ void reveal_ViewToolbar(iViewToolbar *d) {
 static iBool isAvailable_ViewToolbar_(const iViewToolbar *d) {
     iDocumentWidget     *doc  = d->owner;
     const iDocumentView *view = doc->view;
-    if (prefs_App()->hideViewTools ||
+    if (prefs_App()->hideViewTools || hasError_Banner(doc->banner) ||
         equalCase_Rangecc(urlScheme_String(url_DocumentWidget(doc)), "about")) {
         return iFalse;
     }

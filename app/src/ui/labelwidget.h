@@ -29,10 +29,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareWidgetClass(LabelWidget)
 iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *command)
 
+/* Colors for each state, replacing the automatic ones. */
+iDeclareType(LabelColors)
+
+struct Impl_LabelColors {
+    int bg, fg;
+    int hoverBg, hoverFg;
+    int selectedBg, selectedFg;
+    int pressedBg, pressedFg;
+    int disabledFg; /* a selected disabled label has the hover background */
+};
+
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
 void    setCheckMark_LabelWidget    (iLabelWidget *, iBool checkMark);
 void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
+void    setColors_LabelWidget       (iLabelWidget *, const iLabelColors *colors); /* NULL: automatic */
 void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setIconColor_LabelWidget    (iLabelWidget *, int color);
