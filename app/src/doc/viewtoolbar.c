@@ -225,9 +225,10 @@ void update_ViewToolbar(iViewToolbar *d) {
     const iBool    isReader = isReader_DocumentWidget(doc);
     const iBool    isLocal  = isLocalFileScheme_Rangecc(scheme);
     const iBool    isTls    = isTlsScheme_Rangecc(scheme);
+    const iBool    isAbout  = equalCase_Rangecc(scheme, "about");
 
     setFlags_Widget(identButton, hidden_WidgetFlag | collapse_WidgetFlag, isBook || isLocal || !isTls);
-    setFlags_Widget(reloadButton, hidden_WidgetFlag | collapse_WidgetFlag, isBook ||isReader);
+    setFlags_Widget(reloadButton, hidden_WidgetFlag | collapse_WidgetFlag, isBook || isReader || isAbout);
     setFlags_Widget(findChild_Widget(w, "viewtools.sitespec"), hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     setFlags_Widget(infoButton, hidden_WidgetFlag | collapse_WidgetFlag, !isBook);
     /* A book's information is in the sidebar. */
@@ -289,11 +290,26 @@ void reveal_ViewToolbar(iViewToolbar *d) {
     d->isScrolledAway = iFalse;
 }
 
+static iBool isAllowedUrl_ViewToolbar_(const iString *url) {
+    iUrl parts;
+    init_Url(&parts, url);
+    if (!equalCase_Rangecc(parts.scheme, "about")) {
+        return iTrue;
+    }
+    static const char *pages_[] = { "help", "protocols", "reference" };
+    iForIndices(i, pages_) {
+        if (equalCase_Rangecc(parts.path, pages_[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static iBool isAvailable_ViewToolbar_(const iViewToolbar *d) {
     iDocumentWidget     *doc  = d->owner;
     const iDocumentView *view = doc->view;
     if (prefs_App()->hideViewTools || hasError_Banner(doc->banner) ||
-        equalCase_Rangecc(urlScheme_String(url_DocumentWidget(doc)), "about")) {
+        !isAllowedUrl_ViewToolbar_(url_DocumentWidget(doc))) {
         return iFalse;
     }
     return size_GmDocument(view->doc).y > 0 || !isEmpty_Banner(doc->banner);
