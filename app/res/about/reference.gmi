@@ -3,10 +3,10 @@
 This page has technical information about the file formats and configuration files used by Lagrange. For instructions on using the app, see the Help page.
 
 => about:help       Help
-=> about:protocols  Protocols
+=> about:protocols  Protocol cheatsheet
 => about:licenses   Open source licenses
 
-# 1. Runtime files and environment
+# 1. User data
 
 ## 1.1 User directory
 
@@ -132,8 +132,8 @@ green:      0       150     0
 ### prefs.cfg
 Persistent configuration variables. The file is rewritten when the application is closed. Each line is interpreted as an internal UI event like those printed with the --echo command line option.
 
-### state.lgr
-A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
+### prefs/custom.ini
+Optional user-written rules for document preferences. The application never writes this file. See section 5.
 
 ### prefs/document.ini
 Document preferences that apply to all protocols. Only the values that differ from the defaults are stored. Deleting this file resets document preferences to defaults.
@@ -142,18 +142,10 @@ Document preferences that apply to all protocols. Only the values that differ fr
 Document preferences customized for specific protocols. Deleting this file removes all protocol-specific customization.
 
 ### prefs/sitespec.ini
-Site-specific settings. In addition to document preferences customized for a site, this includes the Titan upload settings (port, identity, and token), identities used on the site, and input prompt paths. Deleting this file forgets all of these. Note that Titan upload tokens are stored as plain text.
+Site-specific settings. In addition to document theme customization, this includes the Titan upload settings (port, identity, and token), identities previously used on the site (for quick access via the navbar Identities button), and input prompt paths (for which input popup opens automatically before requesting the path). Deleting this file forgets all of these. Note that Titan upload tokens are stored as plain text.
 
-### prefs/custom.ini
-Optional user-written rules for document preferences. The application never writes this file. Each `[[scope]]` table sets values for URLs and/or media types matching a regular expression:
-```
-[[scope]]
-mime = "^text/markdown"
-order = 50
-markdownAsSource = false
-```
-* "uri" and "mime" are regular expressions. If both are given, both must match unless "matchMode" is set to "either".
-* "order" is required and must be less than 900. Lower numbers take precedence. Site-specific settings have order 100 and protocol-specific settings have order 500.
+### state.lgr
+A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
 
 ### tools.ini
 Configuration of external tools, such as content filters. See section 2.
@@ -186,16 +178,19 @@ The Kept flag is used for preventing the URL from being discarded due to old age
 
 Content filters enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
 
-Filters are configured using the file "tools.ini" in Lagrange's config directory. Each filter has a regexp that is matched against the response MIME type and parameters, and each matching filter is offered the response body via stdin. The called external programs are free to rewrite the entire response, including the MIME type. If one of the filters returns a valid response, it is used as the final response of the Gemini request.
+Filters are configured using the file "tools.ini" in Lagrange's config directory. Each filter has a regular expression that is matched against the response MIME type and parameters, and each matching filter is offered the response body via stdin. The called external programs are free to rewrite the entire response, including the MIME type. If one of the filters returns a valid response, it is used as the final response of the Gemini request.
 
 Example use cases:
+
 * Parsing an Atom XML feed and generating a Gemini feed index page
 * Rendering a MIDI file using Timidity as PCM WAV
-* Generate a graph PNG based on values in a CSV
+* Generating a graph PNG based on values in a CSV
 * Converting HTML or Markdown to 'text/gemini'
 * Language translations
 
 Earlier versions of Lagrange used a file called "mimehooks.txt" for configuring filters (then called "MIME hooks"). It is no longer used; any existing hooks must be manually rewritten in tools.ini.
+
+There is a built-in "Unwrap Paragraphs" tool for all "text/*" pages. It joins hard-wrapped lines into paragraphs, guessing which line breaks were intentional.
 
 ## 2.1 Interface
 
@@ -211,7 +206,7 @@ Output from the program (via stdout) must be a valid "20" Gemini response that i
 {...body...}
 ```
 
-Any output that does not follow this format is considered to mean that the filter refused to process the contents. The next filter will be offered the response instead.
+Any output that does not follow this format is considered to mean that the filter refused to process the contents. The next available filter will be offered the response instead.
 
 ## 2.2 tools.ini syntax
 
@@ -256,8 +251,6 @@ auto    = false
 menu    = true
 key     = "primary+shift+e"
 ```
-
-Lagrange has a built-in "Unwrap Paragraphs" tool for all "text/*" pages. It joins hard-wrapped lines into paragraphs, guessing which line breaks were intentional.
 
 ## 2.4 Example: Converting from Atom to Gemini
 
@@ -381,3 +374,107 @@ timestamp = 1648809264
 ```
 * `version` (string): Version of the app that generated the archive.
 * `timestamp` (integer): Time of generation as a UNIX timestamp.
+
+# 5. Custom document preferences
+
+Document preferences can be set for URLs and media types matching regular expressions using the file "prefs/custom.ini" in the user directory (see section 1.1). This complements the global, site-specific, and protocol-specific settings that are edited in the app.
+
+Lagrange never writes "prefs/custom.ini". The file is only checked at launch, so the app must be restarted for changes to take effect.
+
+The file uses TOML syntax. Each `[[scope]]` table defines one rule. Tables with other names are ignored.
+
+```custom.ini
+[[scope]]
+mime        = "^text/markdown"
+order       = 50
+markdownAsSource = false
+
+[[scope]]
+uri         = '^gemini://example\.com/fiction/'
+order       = 150
+lineWidth   = 32
+italicQuote = false
+```
+
+When a page is opened, the rules that match it are checked in order of precedence. The first rule that defines a property determines its value. Properties not defined by any rule use the built-in defaults.
+
+## 5.1 Rule properties
+
+* `uri` (string): Regular expression that is matched against the page URL, ignoring case.
+* `mime` (string): Regular expression that is matched against the media type of the page, ignoring case.
+* `matchMode` (string): "both" = all the given patterns must match. "either" = the rule applies when either of the patterns matches. Defaults to "both".
+* `order` (integer): Precedence of the rule. Rules with lower values take precedence. This is required and must be in the range 0...899; other rules are ignored.
+
+A rule with neither `uri` nor `mime` applies to all pages. A malformed regular expression never matches. Single-quoted strings are convenient for regular expressions because backslashes are not treated as escape characters.
+
+The settings edited in the app have fixed orders:
+```Orders of built-in scopes (table)
+100 : Site-specific settings
+500 : Protocol-specific settings
+900 : "All protocols" settings
+```
+A built-in scope takes precedence over a custom rule that has the same order. Custom rules with the same order are checked in the order they appear in the file.
+
+## 5.2 Document properties
+
+The keys and values are the same as in "prefs/document.ini", "prefs/protocols.ini", and "prefs/sitespec.ini". Booleans can also be given as integers (0 or 1). Out-of-range values are clamped to the valid range.
+
+### 5.2.1 Typography
+* `headingFont` (string): ID of the typeface used for headings. Typeface IDs are defined in fontpacks (see section 3). Defaults to "default".
+* `bodyFont` (string): ID of the typeface used for body text. Defaults to "default".
+* `monospaceFont` (string): ID of the typeface used for preformatted blocks. Defaults to "iosevka".
+* `monospaceDocumentFont` (string): ID of the typeface used for body text when `monospaceDocument` is enabled. Defaults to "iosevka-body".
+* `monospaceDocument` (bool): Use a monospace typeface for body text. Defaults to false.
+
+### 5.2.2 Layout
+* `lineWidth` (integer): Width of the text column as a multiple of the font size. At least 20. A value of 1000 or more fills the available width. Defaults to 38 (1000 on phones).
+* `lineSpacing` (float): Multiplier for line spacing. At least 0.5. Defaults to 1.0.
+* `tabWidth` (integer): Number of spaces between tab stops. At least 1. Defaults to 8.
+* `plainTextWrap` (bool): Wrap long lines in plain text documents. Defaults to true.
+* `expandToLongLines` (bool): Let the text column expand up to the window width when the content has long lines that cannot be wrapped. Defaults to true.
+* `centerShortDocs` (bool): Center documents vertically when they are shorter than the window. Defaults to true.
+* `pageView` (bool): Show the document as pages instead of a scrolling view. Defaults to false.
+* `collapsePre` (integer): When preformatted blocks are collapsed: 0 (never), 1 (manually), 2 (at page load), 3 (always). Defaults to 1.
+
+### 5.2.3 Style
+* `justify` (integer): When paragraphs are justified: 0 (never), 1 (in the paginated view only), 2 (always). Defaults to 1.
+* `hyphenate` (bool): Hyphenate words when wrapping lines. Defaults to false.
+* `bigFirstParagraph` (bool): Show the first paragraph in a larger font. Defaults to true.
+* `italicQuote` (bool): Show quote text in italics. Defaults to true.
+* `quoteIcon` (bool): Indicate quotes with a quote icon; if false, with a vertical line. Defaults to true.
+* `sideIcon` (bool): Show the capsule icon on the left side of the page. Defaults to true.
+* `boldLinkVisited` (bool): Use bold text also for visited links. Defaults to false.
+* `boldLinkDark` (bool): Use bold text for links on dark backgrounds. Defaults to false.
+* `boldLinkLight` (bool): Use bold text for links on light backgrounds. Defaults to true.
+
+### 5.2.4 Theme
+* `docThemeDark` (integer): Page color theme in dark mode. Defaults to 0.
+* `docThemeLight` (integer): Page color theme in light mode. Defaults to 4.
+* `pageThemeDark` (integer): Page color theme in dark mode when using the paginated view. -1 means the same as `docThemeDark`. Defaults to 3.
+* `pageThemeLight` (integer): Page color theme in light mode when using the paginated view. -1 means the same as `docThemeLight`. Defaults to 9.
+* `saturation` (float): Color saturation of the page theme, in the range 0.0...1.0. Defaults to 1.0.
+* `imageStyle` (integer): How images are colorized: 0 (none), 1 (grayscale), 2 (background to foreground), 3 (text color), 4 (preformatted color). Defaults to 0.
+
+```Page color themes (table)
+ 0 : Colorful Dark
+ 1 : Colorful Light
+ 2 : Black
+ 3 : Gray
+ 4 : White
+ 5 : Sepia
+ 6 : High Contrast
+ 7 : Oceanic
+ 8 : Vibrant Light
+ 9 : Paper
+10 : Arboreal
+11 : Ember
+```
+
+### 5.2.5 Content
+* `ansiEscapes` (integer): Which ANSI escape sequences are applied in Gemtext, as a sum of flags: 1 (foreground color), 2 (background color), 4 (font style). 0 means all escapes are ignored. Defaults to 1.
+* `geminiStyledGopher` (bool): Autodetect when Gopher menus can be styled like Gemtext. Defaults to false.
+* `markdownAsSource` (bool): Show Markdown documents as source text instead of rendering them. Defaults to true.
+
+### 5.2.6 Other
+* `paletteSeed` (string): Text used for generating the page theme colors instead of the URL's host name. Empty means that the host name is used. Has no effect on local files.
+* `zoomPercent` (integer): Zoom level as a percentage, in the range 50...200. Defaults to 100.

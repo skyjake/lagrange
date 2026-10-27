@@ -1,8 +1,10 @@
 # Open source licenses
 
+# 1. Lagrange
+
 Lagrange is distributed under the BSD 2-clause license.
 => https://opensource.org/licenses/BSD-2-Clause  The 2-Clause BSD License
-=> https://git.skyjake.fi/skyjake/lagrange.git  Lagrange Git Repository
+=> https://git.skyjake.fi/skyjake/lagrange.git   Lagrange Git Repository
 
 > Copyright 2020 Jaakko Keränen
 >
@@ -34,10 +36,8 @@ ${endif}
 ${if:iPlatformTerminal}
 ## SEALCurses
 
-SEALCurses is an emulation of the SDL API on top of Curses, by Jaakko Keränen. It is under the BSD 2-clause license.
+SEALCurses emulates the SDL API on top of Curses. It is distributed under the BSD 2-clause license.
 => https://git.skyjake.fi/skyjake/sealcurses  SEALCurses Git Repository
-
-## ncurses
 
 ncurses is distributed under an MIT-style license.
 => https://invisible-island.net/ncurses/ncurses-license.html  ncurses license
@@ -56,7 +56,7 @@ ${if:LAGRANGE_ENABLE_STB_TRUETYPE}
 * stb_truetype (font rendering)
 ${endif}
 
-They are available under the public domain or the MIT license, whichever you prefer.
+They are available under the MIT license (or public domain).
 => https://github.com/nothings/stb  stb Git Repository
 
 > Copyright (c) 2017 Sean Barrett
@@ -107,7 +107,7 @@ ${endif}
 ${if:LAGRANGE_ENABLE_MPG123}
 ## mpg123
 
-mpg123 is a fast console MPEG audio player and decoder library. It is licensed under LGPL 2.1. Lagrange uses the libmpg123 decoder library when playing back MPEG audio.
+mpg123 is an MPEG audio player and decoder library. It is licensed under LGPL 2.1. Lagrange uses the libmpg123 decoder library when playing back MPEG audio.
 => https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html GNU LGPL version 2.1
 => https://mpg123.org/ mpg123
 
@@ -178,10 +178,10 @@ This application may include a bundled copy of the Mozilla root CA certificate s
 
 => https://www.mozilla.org/en-US/MPL/2.0/  Mozilla Public License 2.0
 
-## the_Foundation
+# 2. the_Foundation
 
-the_Foundation is an opinionated C11 library by Jaakko Keränen. It is under the BSD 2-clause license. Note that the rest of the libraries in this section are used by the_Foundation, and not directly by Lagrange.
-=> https://opensource.org/licenses/BSD-2-Clause  The 2-Clause BSD License
+the_Foundation is an opinionated C11 utility library by Jaakko Keränen. It is under the BSD 2-clause license.
+=> https://opensource.org/licenses/BSD-2-Clause       The 2-Clause BSD License
 => https://git.skyjake.fi/skyjake/the_Foundation.git  the_Foundation Git Repository
 
 ## OpenSSL
