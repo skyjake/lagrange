@@ -391,7 +391,7 @@ Page content color themes are selected on the "Colors" page of Settings, under "
 * White: Colored headings on a white background.
 * Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
 * Oceanic: Mostly teal/blue theme with a few orange/red accents. Brightness and saturation vary randomly based on domain.
-* High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
+* High Contrast: White background with black text, or black background with white text when using a dark UI theme. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
 The "Saturation" setting can be used to tone down the theme colors for a more neutral appearance.
 

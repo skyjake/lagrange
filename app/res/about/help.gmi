@@ -668,7 +668,7 @@ Single-color:
 * Black: Gray body text and brightly colored headings on a black background.
 * Gray: Slightly brighter version of Black, i.e., gray body text and colored headings on a gray background.
 * White: Colored headings on a white background.
-* High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
+* High Contrast: White background with black text, or black background with white text when using a dark UI theme. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
 Thematic:
 

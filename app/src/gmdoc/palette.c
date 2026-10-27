@@ -217,7 +217,7 @@ const iBlock *paletteSeed_GmDocument_(const iGmDocument *d) {
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
     if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme ||
         d == arboreal_GmDocumentTheme || d == ember_GmDocumentTheme ||
-        d == sepia_GmDocumentTheme) {
+        d == sepia_GmDocumentTheme || d == highContrast_GmDocumentTheme) {
         return isDark_ColorTheme(colorTheme_App());
     }
     return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
@@ -450,17 +450,30 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
         }
         else if (theme == highContrast_GmDocumentTheme) {
-            set_Color(tmBackground_ColorId, get_Color(white_ColorId));
-            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
-            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
-            set_Color(tmQuote_ColorId, get_Color(black_ColorId));
-            set_Color(tmPreformatted_ColorId, get_Color(black_ColorId));
-            set_Color(tmHeading1_ColorId, get_Color(black_ColorId));
-            set_Color(tmHeading2_ColorId, get_Color(black_ColorId));
-            set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
-            set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.75f));
-            set_Color(tmBannerTitle_ColorId, get_Color(black_ColorId));
-            set_Color(tmBannerIcon_ColorId, get_Color(black_ColorId));
+            const int bg = isDarkUI ? black_ColorId : white_ColorId;
+            const int fg = isDarkUI ? white_ColorId : black_ColorId;
+            set_Color(tmBackground_ColorId, get_Color(bg));
+            set_Color(tmParagraph_ColorId, get_Color(fg));
+            set_Color(tmFirstParagraph_ColorId, get_Color(fg));
+            set_Color(tmQuote_ColorId, get_Color(fg));
+            set_Color(tmPreformatted_ColorId, get_Color(fg));
+            set_Color(tmHeading1_ColorId, get_Color(fg));
+            set_Color(tmHeading2_ColorId, get_Color(fg));
+            set_Color(tmHeading3_ColorId, get_Color(fg));
+            set_Color(tmBannerBackground_ColorId,
+                      mix_Color(get_Color(isDarkUI ? gray25_ColorId : gray75_ColorId),
+                                get_Color(bg),
+                                0.75f));
+            set_Color(tmBannerTitle_ColorId, get_Color(fg));
+            set_Color(tmBannerIcon_ColorId, get_Color(fg));
+            static const int icons_[] = {
+                tmLinkIcon_ColorId,          tmLinkIconVisited_ColorId,
+                tmHypertextLinkIcon_ColorId, tmHypertextLinkIconVisited_ColorId,
+                tmGopherLinkIcon_ColorId,    tmGopherLinkIconVisited_ColorId,
+            };
+            iForIndices(i, icons_) {
+                set_Color(icons_[i], getMixed_Color(icons_[i], fg, 0.33f));
+            }
         }
         /* Apply the saturation setting. */
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
@@ -888,7 +901,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if ((isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) &&
             theme != oceanic_GmDocumentTheme && theme != arboreal_GmDocumentTheme &&
-            theme != ember_GmDocumentTheme && theme != sepia_GmDocumentTheme) {
+            theme != ember_GmDocumentTheme && theme != sepia_GmDocumentTheme &&
+            theme != highContrast_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLums_[primIndex], 1.0f };
             if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,
