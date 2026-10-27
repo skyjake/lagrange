@@ -1452,7 +1452,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                                                format_CStr(cstr_Lang("ident.gotohelp"),
                                                            uiTextStrong_ColorEscape,
                                                            restore_ColorEscape),
-                                               "!open newtab:1 gotoheading:1.6 url:about:help")),
+                                               "!open newtab:1 gotoheading:1.5 url:about:help")),
                                      frameless_WidgetFlag | fixedHeight_WidgetFlag),
                 uiBackgroundSidebar_ColorId);
             setWrap_LabelWidget(linkLabel, iTrue);

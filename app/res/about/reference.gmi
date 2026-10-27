@@ -58,7 +58,7 @@ order = 288
 A binary file that contains the cached state of feed subscriptions: all the known entries and when feeds were last refreshed. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
 
 ### fonts.ini
-This file is loaded as fontpack metadata (see section 3). It must be manually created.
+This file is loaded as fontpack metadata (see section 5). It must be manually created.
 
 ### idents.lgr and idents/
 idents.lgr is a binary file that contains metadata about the client certificates known to the application, for example on which URLs a particular certificate should be active.
@@ -129,7 +129,7 @@ green:      0       150     0
 Persistent configuration variables. The file is rewritten when the application is closed. Each line is interpreted as an internal UI event like those printed with the --echo command line option.
 
 ### prefs/custom.ini
-Optional user-written rules for document preferences. The application never writes this file. See section 5.
+Optional user-written rules for document preferences. The application never writes this file. See section 2.
 
 ### prefs/document.ini
 Document preferences that apply to all protocols. Only the values that differ from the defaults are stored. Deleting this file resets document preferences to defaults.
@@ -144,7 +144,7 @@ Site-specific settings. In addition to document theme customization, this includ
 A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
 
 ### tools.ini
-Configuration of external tools, such as content filters. See section 2.
+Configuration of external tools, such as content filters. See section 3.
 
 ### trusted.lst
 Trusted server certificates. Each line specifies the certificate fingerprint of one server:
@@ -170,7 +170,111 @@ The Transient flag is used to indicate redirections and for marking feed entries
 
 The Kept flag is used for preventing the URL from being discarded due to old age. Normally URLs in the navigation history become stale after several months and are removed from the file.
 
-# 2. Content filters
+# 2. Custom document preferences
+
+Document preferences can be set for URLs and media types matching regular expressions using the file "prefs/custom.ini" in the user directory (see section 1.1). This complements the global, site-specific, and protocol-specific settings that are edited in the app.
+
+Lagrange never writes "prefs/custom.ini". The file is only checked at launch, so the app must be restarted for changes to take effect.
+
+The file uses TOML syntax. Each `[[scope]]` table defines one rule. Tables with other names are ignored.
+
+```custom.ini
+[[scope]]
+mime        = "^text/markdown"
+order       = 50
+markdownAsSource = false
+
+[[scope]]
+uri         = '^gemini://example\.com/fiction/'
+order       = 150
+lineWidth   = 32
+italicQuote = false
+```
+
+When a page is opened, the rules that match it are checked in order of precedence. The first rule that defines a property determines its value. Properties not defined by any rule use the built-in defaults.
+
+## 2.1 Rule properties
+
+* `uri` (string): Regular expression that is matched against the page URL, ignoring case.
+* `mime` (string): Regular expression that is matched against the media type of the page, ignoring case.
+* `matchMode` (string): "both" = all the given patterns must match. "either" = the rule applies when either of the patterns matches. Defaults to "both".
+* `order` (integer): Precedence of the rule. Rules with lower values take precedence. This is required and must be in the range 0...899; other rules are ignored.
+
+A rule with neither `uri` nor `mime` applies to all pages. A malformed regular expression never matches. Single-quoted strings are convenient for regular expressions because backslashes are not treated as escape characters.
+
+The settings edited in the app have fixed orders:
+```Orders of built-in scopes (table)
+100 : Site-specific settings
+500 : Protocol-specific settings
+900 : "All protocols" settings
+```
+A built-in scope takes precedence over a custom rule that has the same order. Custom rules with the same order are checked in the order they appear in the file.
+
+## 2.2 Document properties
+
+The keys and values are the same as in "prefs/document.ini", "prefs/protocols.ini", and "prefs/sitespec.ini". Booleans can also be given as integers (0 or 1). Out-of-range values are clamped to the valid range.
+
+### 2.2.1 Typography
+* `headingFont` (string): ID of the typeface used for headings. Typeface IDs are defined in fontpacks (see section 5). Defaults to "default".
+* `bodyFont` (string): ID of the typeface used for body text. Defaults to "default".
+* `monospaceFont` (string): ID of the typeface used for preformatted blocks. Defaults to "iosevka".
+* `monospaceDocumentFont` (string): ID of the typeface used for body text when `monospaceDocument` is enabled. Defaults to "iosevka-body".
+* `monospaceDocument` (bool): Use a monospace typeface for body text. Defaults to false.
+
+### 2.2.2 Layout
+* `lineWidth` (integer): Width of the text column as a multiple of the font size. At least 20. A value of 1000 or more fills the available width. Defaults to 38 (1000 on phones).
+* `lineSpacing` (float): Multiplier for line spacing. At least 0.5. Defaults to 1.0.
+* `tabWidth` (integer): Number of spaces between tab stops. At least 1. Defaults to 8.
+* `plainTextWrap` (bool): Wrap long lines in plain text documents. Defaults to true.
+* `expandToLongLines` (bool): Let the text column expand up to the window width when the content has long lines that cannot be wrapped. Defaults to true.
+* `centerShortDocs` (bool): Center documents vertically when they are shorter than the window. Defaults to true.
+* `pageView` (bool): Show the document as pages instead of a scrolling view. Defaults to false.
+* `collapsePre` (integer): When preformatted blocks are collapsed: 0 (never), 1 (manually), 2 (at page load), 3 (always). Defaults to 1.
+
+### 2.2.3 Style
+* `justify` (integer): When paragraphs are justified: 0 (never), 1 (in the paginated view only), 2 (always). Defaults to 1.
+* `hyphenate` (bool): Hyphenate words when wrapping lines. Defaults to false.
+* `bigFirstParagraph` (bool): Show the first paragraph in a larger font. Defaults to true.
+* `italicQuote` (bool): Show quote text in italics. Defaults to true.
+* `quoteIcon` (bool): Indicate quotes with a quote icon; if false, with a vertical line. Defaults to true.
+* `sideIcon` (bool): Show the capsule icon on the left side of the page. Defaults to true.
+* `boldLinkVisited` (bool): Use bold text also for visited links. Defaults to false.
+* `boldLinkDark` (bool): Use bold text for links on dark backgrounds. Defaults to false.
+* `boldLinkLight` (bool): Use bold text for links on light backgrounds. Defaults to true.
+
+### 2.2.4 Theme
+* `docThemeDark` (integer): Page color theme in dark mode. Defaults to 0.
+* `docThemeLight` (integer): Page color theme in light mode. Defaults to 4.
+* `pageThemeDark` (integer): Page color theme in dark mode when using the paginated view. -1 means the same as `docThemeDark`. Defaults to 3.
+* `pageThemeLight` (integer): Page color theme in light mode when using the paginated view. -1 means the same as `docThemeLight`. Defaults to 9.
+* `saturation` (float): Color saturation of the page theme, in the range 0.0...1.0. Defaults to 1.0.
+* `imageStyle` (integer): How images are colorized: 0 (none), 1 (grayscale), 2 (background to foreground), 3 (text color), 4 (preformatted color). Defaults to 0.
+
+```Page color themes (table)
+ 0 : Colorful Dark
+ 1 : Colorful Light
+ 2 : Black
+ 3 : Gray
+ 4 : White
+ 5 : Sepia
+ 6 : High Contrast
+ 7 : Oceanic
+ 8 : Vibrant Light
+ 9 : Paper
+10 : Arboreal
+11 : Ember
+```
+
+### 2.2.5 Content
+* `ansiEscapes` (integer): Which ANSI escape sequences are applied in Gemtext, as a sum of flags: 1 (foreground color), 2 (background color), 4 (font style). 0 means all escapes are ignored. Defaults to 1.
+* `geminiStyledGopher` (bool): Autodetect when Gopher menus can be styled like Gemtext. Defaults to false.
+* `markdownAsSource` (bool): Show Markdown documents as source text instead of rendering them. Defaults to true.
+
+### 2.2.6 Other
+* `paletteSeed` (string): Text used for generating the page theme colors instead of the URL's host name. Empty means that the host name is used. Has no effect on local files.
+* `zoomPercent` (integer): Zoom level as a percentage, in the range 50...200. Defaults to 100.
+
+# 3. Content filters
 
 Content filters enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
 
@@ -188,7 +292,7 @@ Earlier versions of Lagrange used a file called "mimehooks.txt" for configuring 
 
 There is a built-in "Unwrap Paragraphs" tool for all "text/*" pages. It joins hard-wrapped lines into paragraphs, guessing which line breaks were intentional.
 
-## 2.1 Interface
+## 3.1 Interface
 
 The response body is provided to the filter program via stdin. The program is run with a minimal CGI-like environment:
 * CONTENT_TYPE is the MIME type and parameters of the response, for example "text/gemini; lang=ja".
@@ -204,7 +308,7 @@ Output from the program (via stdout) must be a valid "20" Gemini response that i
 
 Any output that does not follow this format is considered to mean that the filter refused to process the contents. The next available filter will be offered the response instead.
 
-## 2.2 tools.ini syntax
+## 3.2 tools.ini syntax
 
 tools.ini uses TOML syntax. Each tool is defined as a table whose name is a unique ID for the tool. Lagrange must be restarted for changes to the configuration file to take effect.
 
@@ -233,7 +337,7 @@ On macOS, apps launched via Finder or the Dock are given a minimal PATH that doe
 
 Errors in tools.ini are reported at launch, and the details are shown in "about:debug".
 
-## 2.3 Running tools manually
+## 3.3 Running tools manually
 
 A tool can also be run manually on the current page via the context menu or a keyboard shortcut. The tool is only available when the page's MIME type matches the tool's `mime` regexp. The page source is passed to the tool like for content filters (see 4.1), and the tool runs in the background. When the tool finishes, its output replaces the page contents, possibly changing the MIME type. Reloading the page restores the original contents.
 
@@ -248,7 +352,7 @@ menu    = true
 key     = "primary+shift+e"
 ```
 
-## 2.4 Example: Converting from Atom to Gemini
+## 3.4 Example: Converting from Atom to Gemini
 
 The following simple Python script demonstrates how a content filter could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
 ```python
@@ -285,7 +389,21 @@ for entry in feed_entries:
     print(f'=> {entry_link} {entry_date} {entry_title}')
 ```
 
-# 3. Fontpacks
+# 4. User data archives
+
+Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, text snippets, site-specific settings, and/or trusted server certificate fingerprints.
+
+An export archive largely mirrors the contents of the runtime directory (section 1). However, the "lagrange-export.ini" metadata file must also be present:
+
+```lagrange-export.ini
+# Lagrange user data exported on 2022-04-01 13:34
+version = "1.12.0"
+timestamp = 1648809264
+```
+* `version` (string): Version of the app that generated the archive.
+* `timestamp` (integer): Time of generation as a UNIX timestamp.
+
+# 5. Fontpacks
 
 Fontpack is a file format defined by Lagrange that is used to combine a set of font files with configuration metadata. The (unregistered) media type for .fontpack files is 'application/lagrange-fontpack+zip'.
 
@@ -312,16 +430,16 @@ Fontpacks are versioned, i.e., they have a version number in their metadata. Thi
 
 The "fontpack.ini" file uses TOML syntax and can specify any number of typefaces. In the example above, the line `[firasans]` begins the definition of a typeface called "firasans". If the same typeface is found in multiple fontpacks, only the first one that gets loaded is used; the rest are ignored. Typeface IDs can be the same or different than fontpack IDs; they exist in different namespaces. The typeface ID is what is actually used in "prefs.cfg" to save your font preferences.
 
-## 3.1 Fontpack properties
+## 5.1 Fontpack properties
 
 `version` defines the version number of the fontpack. It is a single integer, and if omitted, defaults to zero. It has no specific meaning except that larger values are considered newer versions.
 
-## 3.2 Typeface properties
+## 5.2 Typeface properties
 
-### 3.2.1 General
+### 5.2.1 General
 * `name` (string) is the human-readable name of the typeface. This is used in the Preferences dialog and elsewhere in the UI.
 
-### 3.2.2 Prioritization and exclusion
+### 5.2.2 Prioritization and exclusion
 The same character's glyph(s) may be found in several fonts, so a prioritization is applied to pick the most appropriate font. Font selection may also depend on the context, for example preformatted blocks must be displayed using monospace fonts. These properties control when and if the typeface will be used.
 
 * `priority` (integer) defines a sort order for typefaces. The ones with the highest priority are checked first.
@@ -330,7 +448,7 @@ The same character's glyph(s) may be found in several fonts, so a prioritization
 * `auxiliary` (bool): if true, this typeface is not included in Preferences as a font choice, but is still checked for glyphs if other fonts do not provide them. Suitable for miscellaneous symbols or additional languages, for examples.
 * `allowspace` (bool): if true, an auxiliary font's metrics for space characters are used. Sometimes symbol fonts have extra wide spaces, so for example a space next to an Emoji would be too wide. This has no effect for non-auxiliary typefaces.
 
-### 3.2.3 Metrics
+### 5.2.3 Metrics
 These properties can be used to modify the height and spacing of the font.
 
 * `height` (float) is a multiplier to alter the height of the font. It can be at most 2.0, to double the height. This simply scales the font smaller or larger without altering spacing.
@@ -341,7 +459,7 @@ Changing only the `glyphscale` property is the recommended way to alter line spa
 
 Each of these properties can be set separately for UI text and page content by using the prefixes `ui.` and `doc.`. For example, to only scale the font when used in the UI, set `ui.height` instead of `height`.
 
-### 3.2.4 Font files
+### 5.2.4 Font files
 A single typeface can use up to five font files.
 
 * `regular` (string): path of a font file for the regular style. A relative path means that the file is loaded from inside the fontpack archive. Absolute paths can be used to refer to files on the local system.
@@ -357,125 +475,61 @@ When the path refers to a TrueType Collection (.ttc), the font index to use must
 regular = "NotoSansCJK-Regular.ttc:2"
 ```
 
-# 4. User data archives
+# 6. Gempub
 
-Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, text snippets, site-specific settings, and/or trusted server certificate fingerprints.
+Gempub is an e-book format for Gemtext content. A Gempub book is a ZIP archive with the extension ".gpub" and the media type 'application/gpub+zip'. It contains Gemtext files, an index page that lists the chapters, supporting files like images, and a "metadata.txt" file.
 
-An export archive largely mirrors the contents of the runtime directory (section 1). However, the "lagrange-export.ini" metadata file must also be present:
+=> https://codeberg.org/oppenlab/gempub  Gempub specification
 
-```lagrange-export.ini
-# Lagrange user data exported on 2022-04-01 13:34
-version = "1.12.0"
-timestamp = 1648809264
-```
-* `version` (string): Version of the app that generated the archive.
-* `timestamp` (integer): Time of generation as a UNIX timestamp.
+## 6.1 Requirements
 
-# 5. Custom document preferences
+* All text content must be Gemtext, encoded in UTF-8. Images can be PNG or JPEG.
+* The index page is the table of contents. By default, it is "index.gmi" but the book metadata may specify a different path.
+* The reading order of the chapters is the order of the local links on the index page. Remote links (with a scheme, like "gemini://") are not chapters, and linked chapters are not searched for further links.
+* Links between files in the book are relative paths inside the archive.
 
-Document preferences can be set for URLs and media types matching regular expressions using the file "prefs/custom.ini" in the user directory (see section 1.1). This complements the global, site-specific, and protocol-specific settings that are edited in the app.
+Lagrange only recognizes an archive as a Gempub book if it has a "metadata.txt" at the root. Otherwise, it is viewed as a plain ZIP archive.
 
-Lagrange never writes "prefs/custom.ini". The file is only checked at launch, so the app must be restarted for changes to take effect.
+## 6.2 metadata.txt
 
-The file uses TOML syntax. Each `[[scope]]` table defines one rule. Tables with other names are ignored.
+Each line has a key and a value, separated by a colon. Whitespace around the value is ignored, and keys can be in any order. Unknown keys are ignored.
 
-```custom.ini
-[[scope]]
-mime        = "^text/markdown"
-order       = 50
-markdownAsSource = false
-
-[[scope]]
-uri         = '^gemini://example\.com/fiction/'
-order       = 150
-lineWidth   = 32
-italicQuote = false
+```metadata.txt example
+gpubVersion: 1.0.0
+title: An Example Book
+author: Jane Doe
+language: en
+publishDate: 2026-01-31
+cover: images/cover.png
 ```
 
-When a page is opened, the rules that match it are checked in order of precedence. The first rule that defines a property determines its value. Properties not defined by any rule use the built-in defaults.
+Required keys:
+* `gpubVersion`: Version of the Gempub format, "1.0.0".
+* `title`: Title of the book.
 
-## 5.1 Rule properties
+Optional keys:
+* `author`: Author of the book.
+* `charset`: Character set of the text. Defaults to UTF-8. Lagrange only supports UTF-8.
+* `copyright`: Copyright notice.
+* `cover`: Path of the cover image (JPEG or PNG). If omitted, Lagrange uses "cover.jpg" or "cover.png" at the root of the archive, if present.
+* `description`: Short description of the book.
+* `index`: Path of the index page. Defaults to "index.gmi".
+* `language`: Language of the book as a BCP 47 code (for example, "en" or "fi").
+* `license`: License of the book.
+* `publishDate`: Date of publication (YYYY-MM-DD).
+* `published`: Year of publication (YYYY), when the exact date is not known.
+* `revisionDate`: Date of the latest revision (YYYY-MM-DD).
+* `version`: Human-readable version of the book. It is not meant to be parsed.
 
-* `uri` (string): Regular expression that is matched against the page URL, ignoring case.
-* `mime` (string): Regular expression that is matched against the media type of the page, ignoring case.
-* `matchMode` (string): "both" = all the given patterns must match. "either" = the rule applies when either of the patterns matches. Defaults to "both".
-* `order` (integer): Precedence of the rule. Rules with lower values take precedence. This is required and must be in the range 0...899; other rules are ignored.
+## 6.3 Books in Lagrange
 
-A rule with neither `uri` nor `mime` applies to all pages. A malformed regular expression never matches. Single-quoted strings are convenient for regular expressions because backslashes are not treated as escape characters.
+The following implementation details should be noted:
 
-The settings edited in the app have fixed orders:
-```Orders of built-in scopes (table)
-100 : Site-specific settings
-500 : Protocol-specific settings
-900 : "All protocols" settings
-```
-A built-in scope takes precedence over a custom rule that has the same order. Custom rules with the same order are checked in the order they appear in the file.
+* A book on the bookshelf is identified by its title and author. A book with the same title and author is considered to be a copy of the same book.
+* `publishDate` (or `published`) determines the edition of the book. When a book is opened, a later date than the one on the bookshelf means it is a newer edition.
+* The book's cover page is generated by Lagrange from the metadata: the cover image, title, author, description, version, dates, language, license, and copyright. The index page is shown as the book's table of contents.
 
-## 5.2 Document properties
-
-The keys and values are the same as in "prefs/document.ini", "prefs/protocols.ini", and "prefs/sitespec.ini". Booleans can also be given as integers (0 or 1). Out-of-range values are clamped to the valid range.
-
-### 5.2.1 Typography
-* `headingFont` (string): ID of the typeface used for headings. Typeface IDs are defined in fontpacks (see section 3). Defaults to "default".
-* `bodyFont` (string): ID of the typeface used for body text. Defaults to "default".
-* `monospaceFont` (string): ID of the typeface used for preformatted blocks. Defaults to "iosevka".
-* `monospaceDocumentFont` (string): ID of the typeface used for body text when `monospaceDocument` is enabled. Defaults to "iosevka-body".
-* `monospaceDocument` (bool): Use a monospace typeface for body text. Defaults to false.
-
-### 5.2.2 Layout
-* `lineWidth` (integer): Width of the text column as a multiple of the font size. At least 20. A value of 1000 or more fills the available width. Defaults to 38 (1000 on phones).
-* `lineSpacing` (float): Multiplier for line spacing. At least 0.5. Defaults to 1.0.
-* `tabWidth` (integer): Number of spaces between tab stops. At least 1. Defaults to 8.
-* `plainTextWrap` (bool): Wrap long lines in plain text documents. Defaults to true.
-* `expandToLongLines` (bool): Let the text column expand up to the window width when the content has long lines that cannot be wrapped. Defaults to true.
-* `centerShortDocs` (bool): Center documents vertically when they are shorter than the window. Defaults to true.
-* `pageView` (bool): Show the document as pages instead of a scrolling view. Defaults to false.
-* `collapsePre` (integer): When preformatted blocks are collapsed: 0 (never), 1 (manually), 2 (at page load), 3 (always). Defaults to 1.
-
-### 5.2.3 Style
-* `justify` (integer): When paragraphs are justified: 0 (never), 1 (in the paginated view only), 2 (always). Defaults to 1.
-* `hyphenate` (bool): Hyphenate words when wrapping lines. Defaults to false.
-* `bigFirstParagraph` (bool): Show the first paragraph in a larger font. Defaults to true.
-* `italicQuote` (bool): Show quote text in italics. Defaults to true.
-* `quoteIcon` (bool): Indicate quotes with a quote icon; if false, with a vertical line. Defaults to true.
-* `sideIcon` (bool): Show the capsule icon on the left side of the page. Defaults to true.
-* `boldLinkVisited` (bool): Use bold text also for visited links. Defaults to false.
-* `boldLinkDark` (bool): Use bold text for links on dark backgrounds. Defaults to false.
-* `boldLinkLight` (bool): Use bold text for links on light backgrounds. Defaults to true.
-
-### 5.2.4 Theme
-* `docThemeDark` (integer): Page color theme in dark mode. Defaults to 0.
-* `docThemeLight` (integer): Page color theme in light mode. Defaults to 4.
-* `pageThemeDark` (integer): Page color theme in dark mode when using the paginated view. -1 means the same as `docThemeDark`. Defaults to 3.
-* `pageThemeLight` (integer): Page color theme in light mode when using the paginated view. -1 means the same as `docThemeLight`. Defaults to 9.
-* `saturation` (float): Color saturation of the page theme, in the range 0.0...1.0. Defaults to 1.0.
-* `imageStyle` (integer): How images are colorized: 0 (none), 1 (grayscale), 2 (background to foreground), 3 (text color), 4 (preformatted color). Defaults to 0.
-
-```Page color themes (table)
- 0 : Colorful Dark
- 1 : Colorful Light
- 2 : Black
- 3 : Gray
- 4 : White
- 5 : Sepia
- 6 : High Contrast
- 7 : Oceanic
- 8 : Vibrant Light
- 9 : Paper
-10 : Arboreal
-11 : Ember
-```
-
-### 5.2.5 Content
-* `ansiEscapes` (integer): Which ANSI escape sequences are applied in Gemtext, as a sum of flags: 1 (foreground color), 2 (background color), 4 (font style). 0 means all escapes are ignored. Defaults to 1.
-* `geminiStyledGopher` (bool): Autodetect when Gopher menus can be styled like Gemtext. Defaults to false.
-* `markdownAsSource` (bool): Show Markdown documents as source text instead of rendering them. Defaults to true.
-
-### 5.2.6 Other
-* `paletteSeed` (string): Text used for generating the page theme colors instead of the URL's host name. Empty means that the host name is used. Has no effect on local files.
-* `zoomPercent` (integer): Zoom level as a percentage, in the range 50...200. Defaults to 100.
-
-# 6. gmget
+# 7. gmget
 
 The Core library comes with `gmget`, a simple curl-like utility for making network requests on the command line. It is a thin command line interface on top of the same code that Lagrange uses for requests, so it can be useful in scripts that need access to Lagrange's identities and other user data.
 
@@ -496,9 +550,9 @@ Options:
 * IDENT can be a partial client certificate fingerprint or common name, ignoring case.
 * Status and meta are always printed to stderr if the request fails.
 * Identities and trusted server certificates are read from the user directory, but gmget never modifies them.
-* Content filters (see section 2) are not applied.
+* Content filters (see section 3) are not applied.
 
-# 7. Self-hosted sync server
+# 8. Self-hosted sync server
 
 Lagrange syncs user data via a sync server. By default, the public server at sync.skyjake.fi:1966 is used, but you can also run your own with `lgrsyncd` (Lagrange Sync Daemon).
 
@@ -509,7 +563,7 @@ cmake -S sync -B build-sync
 cmake --build build-sync
 ```
 
-## 7.1 Running the server
+## 8.1 Running the server
 
 ```lgrsyncd --help
 Usage: lgrsyncd [options]

@@ -70,7 +70,7 @@ If one seeks to just read text and view images, this is absurd overkill. Having 
 
 One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the software runs well even on simple hardware like the Raspberry Pi.
 
-# 1. User interface
+# 1. Browsing
 
 Lagrange's user interface is modeled after web browsers:
 
@@ -103,7 +103,7 @@ Note that the navigation stack is saved to a file when Lagrange is shut down and
 
 You can also make online search queries via the URL input field. When a search URL is configured on the "General" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [Search Query] indicator is visible. One way to configure the search URL is to right-click on a search engine's "Search" link — say, when you are on the engine's front page — and select "Use as Search URL" from the context menu.
 
-See section 2.5 about further customizing the search behavior.
+See section 3.5 about further customizing the search behavior.
 
 ### 1.1.2 Links
 
@@ -114,7 +114,7 @@ The type and destination of a link are indicated by the link's icon and color: �
 * Orange for HTTP(S)
 * Red for other/unknown/invalid (cannot be opened)
 
-Links colors may change depending on the page color theme. (See section 2.3.1 "Color themes".)
+Links colors may change depending on the page color theme. (See section 3.3.1 "Color themes".)
 
 The "Show URL on hover" option can be enabled in Preferences to show additional information when you move the mouse cursor over a link: the destination domain, URL scheme for non-Gemini links, date of the last visit to the URL, and the identity that will be used when opening the link.
 
@@ -143,7 +143,7 @@ Right-clicking on a link shows a link-specific context menu. From there, you can
 
 ### 1.1.5 Opening links to the side
 
-Holding down ${SHIFT} when left-clicking on a link opens it in split view mode on the other side of the split. When in split view mode, your tab pinning preference will determine the tab on which clicked links will open. See section 1.9 for more information about split view modes.
+Holding down ${SHIFT} when left-clicking on a link opens it in split view mode on the other side of the split. When in split view mode, your tab pinning preference will determine the tab on which clicked links will open. See section 2.3 for more information about split view modes.
 
 ### 1.1.6 Opening links using the keyboard
 
@@ -185,7 +185,7 @@ The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHI
 * Structure: Directory tree compiled from known URIs related to the current site, for quick navigation.
 * Tabs: List of all open tabs. You can close and reorder tabs using this list.
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
-* Books: The bookshelf, and the cover and contents of the currently open book (see section 1.11).
+* Books: The bookshelf, and the cover and contents of the currently open book (see section 2.4).
 
 The visible tabs are configurable. You can go to "Preferences > Sidebars" to enable or disable each one individually. The disabled ones can still be accessed via the [⋯] button in the sidebar header. The tabs can be reordered by dragging them.
 
@@ -249,7 +249,7 @@ The generated page can be saved to Downloads or you can copy all or parts of it 
 
 To import all links on a page as bookmarks, select "Import Links as Bookmarks..." in the Tools submenu of the page context menu. You can also right-click on individual links and select "Bookmark Link...".
 
-Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.13.
+Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 2.6.
 
 ### 1.4.3 Remote bookmarks
 
@@ -284,7 +284,70 @@ At the bottom of the sidebar is an input field for filtering the contents of the
 
 The special behavioral tags listed in the previous section can also be used for finding special-purpose bookmarks more easily. It is not needed to type the full tag; a partial match from the beginning is sufficient (for example, ".su" for subscriptions).
 
-## 1.5 Subscribing to feeds
+## 1.5 Identities (client certificates)
+
+Gemini uses TLS client certificates for user/session identification purposes. Unlike on the web where user identity tracking is covert and automatic, client certificates must be manually taken into use, and you are able to define how long each certificate remains valid. The term "Identity" is used in Lagrange to refer to client certificates.
+
+The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}4 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
+
+### 1.5.1 Creating a new identity
+
+Click on the 👤 button in the navigation bar and select "New Identity..." or "New Identity for Domain...". The shortcut for this is ${SHIFT+}${CTRL+}N.
+
+The key type can be ECDSA (P-256), Ed25519, or 2048-bit RSA. ECDSA is the default.
+
+Consider any information you enter in the certificate as public — only the Common Name is required to be non-empty. The generated certificate will use the Common Name as the issuer and subject of the certificate, making it clear that the certificate is self-signed. The other required field is the expiration date in "Valid until". Entering a year is sufficient, and means that the certificate is valid until the end of that year.
+
+The "Temporary" option prevents the identity from being saved persistently — it will be deleted as soon as you quit Lagrange. Otherwise, the certificate and its private key are written to .crt and .key files.
+
+### 1.5.2 Using an identity
+
+You will need to select an identity when you encounter this error message:
+
+> 🔑 Certificate Required
+
+Clicking on an identity in the sidebar shows a menu where you can control usage of the identity for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
+
+Identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
+
+Identities may also be pinned to a tab, either via the 👤 button in the view toolbar, or by pinning one to a bookmark. Whenever the bookmark is then opened, the associated identity is taken into use. The identity also gets permanently "pinned" to the opened tab. This means that the tab keeps using the identity for all subsequent requests, but can only switch to URLs inside the same capsule. If a link leads elsewhere, that link gets opened in a new tab with no identity pinned. This way, one can navigate freely inside the capsule while keeping the identity in use, while not accidentally sending it to any other capsule, for example if you forget you are using an identity and manually enter some other capsule's URL. To end use of the identity, it has to be manually unpinned from the tab (via the Identity button in the navbar), or the tab has to be closed. Keeping the pinned identity tab-specific is also useful because then the same URL can be simultaneously opened with several different identities, in separate tabs.
+
+### 1.5.3 Importing existing certificates
+
+To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I or click on 👤 and select "Import..." (macOS: Identity menu → Import...).
+
+When the Import Identity dialog opens, it checks the currently open page for any certificates and private keys in PEM format. If found, these are automatically loaded in. You can also press ${CTRL+}V to paste PEM-formatted certificates and/or private keys, select the files with a file dialog, or drag-and-drop PEM-formatted .crt/.key files on the Lagrange window while the dialog is open.
+
+Alternatively, you can manually copy the certificate files so Lagrange can find them. At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See the Reference, section 1.1, for the location; it is platform-specific.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
+* mycert.crt
+* mycert.key
+Lagrange will add a note to the imported identities to mark them as "Imported".
+
+Note that you can find the certificates of any exported identities inside a user data ZIP archive. See section 2.6 of this page and section 4 of the Reference for details.
+
+## 1.6 Downloads
+
+Press ${CTRL+}S to save the contents of the current page to the Downloads folder, or use "Save As..." in the File menu to choose where the file is saved. This works on all pages regardless of whether Lagrange can display the contents or not.
+
+Pages can also be saved to the bookshelf with ${SHIFT+}${CTRL+}S as Gempub books (see section 2.4).
+
+When image or audio content is displayed inline, you can right-click on it and select "Save to Downloads" in the context menu.
+
+The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
+
+The location where downloaded files are saved can be changed in Preferences. The default location is "Downloads" in your home directory.
+
+## 1.7 Viewing local files and directories
+
+"file://" URLs can be used for accessing local files and directories. File types known to Lagrange, such as .gmi, .txt., .png, .jpg, and .zip, can be viewed inside the application. Types of local files are detected solely based on the file extension. Use "Open File..." or "Open Folder..." in the File menu to select a file or directory with a file dialog.
+
+When viewing a directory, its contents are shown as a list of links. A similar page is shown when viewing a directory inside a ZIP archive.
+
+Note that ZIP archives are not decompressed while browsing their directory structure. Each request that accesses a compressed file in an archive will cause only that particular file to be decompressed. This may cause slow response times when dealing with large compressed files.
+
+# 2. Advanced usage
+
+## 2.1 Subscribing to feeds
 
 You may be familiar with XML-based RSS and Atom feeds from the web. The Gemini equivalent of these is Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way. This makes it very easy to write pages that clients can subscribe to.
 => gemini://geminiprotocol.net/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
@@ -302,60 +365,7 @@ The feed refresh interval can be set in "Preferences > Behavior".
 To see a list of all entries from all feeds, open the "Feed entries" page. This page also shows how long has it been since the previous feed refresh.
 => about:feeds
 
-## 1.6 Identities (client certificates)
-
-Gemini uses TLS client certificates for user/session identification purposes. Unlike on the web where user identity tracking is covert and automatic, client certificates must be manually taken into use, and you are able to define how long each certificate remains valid. The term "Identity" is used in Lagrange to refer to client certificates.
-
-The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}4 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
-
-### 1.6.1 Creating a new identity
-
-Click on the 👤 button in the navigation bar and select "New Identity..." or "New Identity for Domain...". The shortcut for this is ${SHIFT+}${CTRL+}N.
-
-The key type can be ECDSA (P-256), Ed25519, or 2048-bit RSA. ECDSA is the default.
-
-Consider any information you enter in the certificate as public — only the Common Name is required to be non-empty. The generated certificate will use the Common Name as the issuer and subject of the certificate, making it clear that the certificate is self-signed. The other required field is the expiration date in "Valid until". Entering a year is sufficient, and means that the certificate is valid until the end of that year.
-
-The "Temporary" option prevents the identity from being saved persistently — it will be deleted as soon as you quit Lagrange. Otherwise, the certificate and its private key are written to .crt and .key files.
-
-### 1.6.2 Using an identity
-
-You will need to select an identity when you encounter this error message:
-
-> 🔑 Certificate Required
-
-Clicking on an identity in the sidebar shows a menu where you can control usage of the identity for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
-
-Identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
-
-Identities may also be pinned to a tab, either via the 👤 button in the view toolbar, or by pinning one to a bookmark. Whenever the bookmark is then opened, the associated identity is taken into use. The identity also gets permanently "pinned" to the opened tab. This means that the tab keeps using the identity for all subsequent requests, but can only switch to URLs inside the same capsule. If a link leads elsewhere, that link gets opened in a new tab with no identity pinned. This way, one can navigate freely inside the capsule while keeping the identity in use, while not accidentally sending it to any other capsule, for example if you forget you are using an identity and manually enter some other capsule's URL. To end use of the identity, it has to be manually unpinned from the tab (via the Identity button in the navbar), or the tab has to be closed. Keeping the pinned identity tab-specific is also useful because then the same URL can be simultaneously opened with several different identities, in separate tabs.
-
-### 1.6.3 Importing existing certificates
-
-To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I or click on 👤 and select "Import..." (macOS: Identity menu → Import...).
-
-When the Import Identity dialog opens, it checks the currently open page for any certificates and private keys in PEM format. If found, these are automatically loaded in. You can also press ${CTRL+}V to paste PEM-formatted certificates and/or private keys, select the files with a file dialog, or drag-and-drop PEM-formatted .crt/.key files on the Lagrange window while the dialog is open.
-
-Alternatively, you can manually copy the certificate files so Lagrange can find them. At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See the Reference, section 1.1, for the location; it is platform-specific.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
-* mycert.crt
-* mycert.key
-Lagrange will add a note to the imported identities to mark them as "Imported".
-
-Note that you can find the certificates of any exported identities inside a user data ZIP archive. See section 1.13 of this page and section 4 of the Reference for details.
-
-## 1.7 Downloads
-
-Press ${CTRL+}S to save the contents of the current page to the Downloads folder, or use "Save As..." in the File menu to choose where the file is saved. This works on all pages regardless of whether Lagrange can display the contents or not.
-
-Pages can also be saved to the bookshelf with ${SHIFT+}${CTRL+}S as Gempub books (see section 1.11).
-
-When image or audio content is displayed inline, you can right-click on it and select "Save to Downloads" in the context menu.
-
-The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
-
-The location where downloaded files are saved can be changed in Preferences. The default location is "Downloads" in your home directory.
-
-## 1.8 Uploads (with Titan)
+## 2.2 Uploads (with Titan)
 
 Titan is a sister protocol to Gemini that enables sending arbitrary amounts of data from a client to a server. The Gemini protocol itself only enables sending up to 1024 bytes of data in a request. Furthermore, the request URL also counts against that limit, and the sent data must be percent-encoded so it can be parsed as a valid URL. Consequently, Gemini clients can only send very limited amounts of data to a server. Titan solves this by expanding the request so that the request URL is followed by a payload field. When it comes to TLS, Titan is equivalent to Gemini, so the same server and client certificates can be used with both.
 
@@ -375,7 +385,7 @@ Gemtext syntax highlighting is supported in the upload dialog's text field. You 
 
 The text entered into the upload dialog's main text field is protected against accidental closing of the dialog or the application, or a crash. The previous text is restored when the dialog is reopened. The text field contents are only cleared when the submitted Titan request has been successfully completed.
 
-## 1.9 Split view mode
+## 2.3 Split view mode
 
 By default, only one tab is visible at a time in the application window. However, sometimes it is beneficial to see two pages at once. For example, many capsules have top-level menus or lists of articles, and keeping the menu/index visible on the side makes navigation less cumbersome.
 
@@ -387,7 +397,7 @@ Another way to activate split view mode is to click on a link while holding ${SH
 
 Each split has its own sidebars, which means that in split view mode you can have a total of four sidebars open at the same time.
 
-### 1.9.1 Switching focus
+### 2.3.1 Switching focus
 
 At any given time, one of the splits has keyboard focus. This is indicated by a colored line at the top of the section, and some UI elements will be dimmed out on the unfocused side.
 
@@ -395,7 +405,7 @@ To switch keyboard focus between the sections, you can use the Next/Previous Tab
 
 You may also press Tab to cycle input focus between all the URL input fields.
 
-### 1.9.2 Pinning
+### 2.3.2 Pinning
 
 While it is sometimes useful to simply have two independent browsers open side by side, by default view splitting is meant to assist in navigating hierarchies and lists. In the typical use case, you'll have a menu or an index page on the left, and a content page open on the right. Links clicked on the left will automatically open on the right.
 
@@ -409,15 +419,7 @@ The default pinning mode is "Left Tab".
 
 The ◧ indicator is shown in the URL input field when the current tab is pinned.
 
-## 1.10 Viewing local files and directories
-
-"file://" URLs can be used for accessing local files and directories. File types known to Lagrange, such as .gmi, .txt., .png, .jpg, and .zip, can be viewed inside the application. Types of local files are detected solely based on the file extension. Use "Open File..." or "Open Folder..." in the File menu to select a file or directory with a file dialog.
-
-When viewing a directory, its contents are shown as a list of links. A similar page is shown when viewing a directory inside a ZIP archive.
-
-Note that ZIP archives are not decompressed while browsing their directory structure. Each request that accesses a compressed file in an archive will cause only that particular file to be decompressed. This may cause slow response times when dealing with large compressed files.
-
-## 1.11 Gempub books
+## 2.4 Gempub books
 
 Gempub is an e-book format that is essentially a set of Gemtext files stored in a ZIP archive. In addition to traditional books, it can also be used for archiving Gemini pages.
 
@@ -431,9 +433,9 @@ The "Books" sidebar lists the books on the bookshelf. While a book is open, the 
 
 Any Gemtext page can also be saved to the bookshelf with "Save to Bookshelf" in the File menu or the page context menu. This creates a single-chapter book, which is convenient for reading longer articles over multiple sessions or on multiple devices. The other devices need to download their own separate copy of the source URL.
 
-The appearance of books can be customized separately from other pages by selecting "Gempub" in the "Applies to:" setting in Preferences (see section 2.3).
+The appearance of books can be customized separately from other pages by selecting "Gempub" in the "Applies to:" setting in Preferences (see section 3.3).
 
-## 1.12 Input prompt
+## 2.5 Input prompt
 
 An input prompt is shown when the server asks for input from the user. By default, the prompt appears inline below the link that was opened, so the rest of the page remains accessible. Alternatively, the prompt can be shown at the top or bottom of the window ("Input prompt position" in "Preferences > General"). Typically, you would enter just a word or two, e.g., the search terms for a search engine. However, input prompts have a few advanced features that can help with more sophisticated use cases.
 
@@ -450,19 +452,19 @@ The dialog has a context menu for additional functionality. Click on the Ellipsi
 * "Assume This URL Requires Input" modifies what happens when the prompt's URL is opened. Normally, it takes two requests to submit input: the first one causes the prompt to open, and the second one sends the user's input to the server. To make this more efficient, you can assume the URL requires input and Lagrange will prompt you automatically before sending anything to the server. (It is possible that some applications may expect the two requests to arrive in a sequence, however usually there are no problems submitting query strings directly.)
 * Restoring past entries: The rest of the items in the menu are for input that has been submitted previously. Selecting one will cause it be inserted into the input field.
 
-## 1.13 Export/import user data
+## 2.6 Export/import user data
 
 The export/import feature allows one to manually export and import identities, bookmarks, books (including reading positions), text snippets, browsing history, document and site-specific settings, and trusted server certificates via a ZIP archive.
 
 "User Data > Export" can be found in the File menu or the hamburger menu. In practice, this creates a compressed archive that you can then save to the Downloads folder or open in an external application. From there, you can transfer the archive manually onto another device, or just put in a safe place for backup.
 
-To import data, select "User Data > Import..." and choose the archive, or open the archive in the app. Opening the exported archive works similar to fontpacks (see section 2.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
+To import data, select "User Data > Import..." and choose the archive, or open the archive in the app. Opening the exported archive works similar to fontpacks (see section 3.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
 
 Note that browsing history also contains the read status of feed entries, because those are tracked based on whether entry URLs have been visited. This means a transfer of user data includes the up-to-date status of each subscription as well.
 
 To keep your user data automatically up to date on all your devices, enable sync in "Preferences > Sync".
 
-## 1.14 Sending messages (with Misfin)
+## 2.7 Sending messages (with Misfin)
 
 Misfin is a messaging protocol that has been in the works since May 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
 
@@ -484,13 +486,13 @@ When you click on a Misfin link, the dialog opens automatically with the recipie
 => gemini://misfin.org/  Original Misfin specification
 => gemini://bbs.geminispace.org/s/misfin  s/Misfin on BBS
 
-# 2. Customization
+# 3. Customization
 
 You can find a number of settings in Preferences to customize the user interface and page contents.
 
-## 2.1 Browsing behavior
+## 3.1 Browsing behavior
 
-On the "General" tab, "Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 1.9.
+On the "General" tab, "Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 2.3.
 
 On the "Content" tab, the "Open images in Data URLs" option determines if image data embedded into links using data URLs is automatically shown after the page has finished loading. This only applies to a handful of common image media types: JPEG, PNG, GIF, and WebP. Note that the maximum size of an URL has a limit, so these embedded images have to fit under the configured limit to be recognized as valid links. Image from data URLs are displayed as links' inline content, just like with any other URL scheme.
 
@@ -498,7 +500,7 @@ The "Open index.gmi in ZIP archives" option controls whether index.gmi pages are
 
 One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load next image on scroll key" option on the "Behavior" tab is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓ (or whichever keys are bound to the scroll actions), it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
-## 2.2 UI appearance
+## 3.2 UI appearance
 
 There are four different color schemes for the UI: two for dark mode, and two for light mode. These can be selected on the "Appearance" tab of the Preferences dialog:
 
@@ -509,13 +511,13 @@ Lagrange automatically switches between dark and light modes according to the op
 
 On Windows, an option is provided to use a custom window frame. This provides a more consistent visual style for the application. However, the custom frame overrides default behaviors of the window, so if you are a Windows power user expect it to not support all the special interactions. For example, when pressing the Windows+Left/Right key, the window is resized to take over one half of the screen. Normally, Windows would then prompt to select another window to fill the rest of the screen, but this does not happen with the custom window frame.
 
-## 2.3 Page style and layout
+## 3.3 Page style and layout
 
 The "Fonts", "Colors", "Page Style", and "Layout" tabs of the Preferences dialog let you customize the appearance and arrangement of page contents.
 
 At the top of each of these tabs, "Applies to:" determines which pages the settings are for: "All protocols", or only Gemini, Spartan, Gopher, Finger, or Gempub. When a specific protocol is selected, enable the toggle below it to give that protocol its own settings; otherwise, the "All protocols" settings are used. By default, Gopher pages use monospace body text, and Gempub books use the paginated view and hyphenation.
 
-### 2.3.1 Color themes
+### 3.3.1 Color themes
 
 Page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode. "Paginated dark" and "Paginated light" are the themes used in the paginated view.
 
@@ -534,7 +536,7 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 
 The "Saturation" setting can be used to tone down the theme colors for a more neutral appearance. "Colorize images" can be used to tint images with the theme colors, or show them in grayscale.
 
-### 2.3.2 Site-specific settings
+### 3.3.2 Site-specific settings
 
 You can customize the appearance of a site separately from other pages. Select "Site Settings..." in the page context menu, or click on the ⚙ button in the view toolbar, to open the Site-Specific Settings dialog. The default keyboard shortcut for this is ${SHIFT+}${CTRL+}Comma.
 
@@ -547,13 +549,13 @@ You can enter any text as the palette seed. By default, the seed is the site's h
 * Enter a word or phrase, or just random characters, to find a theme that you like.
 * To copy the theme of another site, enter the hostname of that site as the seed.
 
-### 2.3.3 Text styling
+### 3.3.3 Text styling
 
-The fonts for document headings, body text, and preformatted blocks can be chosen separately. There is also a separate font for monospaced body text that is used when the "Monospace body" option is enabled. See section 2.4 for more details about using fonts.
+The fonts for document headings, body text, and preformatted blocks can be chosen separately. There is also a separate font for monospaced body text that is used when the "Monospace body" option is enabled. See section 3.4 for more details about using fonts.
 
 The "Bold links" option determines whether links use a bold font. Enabling "Visited" means that the bold font is used also for visited links, not just unvisited ones. "On Dark" and "On Light" enable bold links on a dark/light background. For readability, using bold fonts on a light background is recommended because differences in text color and link icon color are less noticeable.
 
-### 2.3.4 Layout options
+### 3.3.4 Layout options
 
 Options on the "Layout" tab:
 
@@ -573,10 +575,10 @@ Options on the "Page Style" tab:
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font. (The leading paragraph is autodetected by Lagrange, so it is not guaranteed to always be appropriately chosen.)
 
 * Quote indicator: Select between a quotation mark icon and the traditional vertical line along the left edge of the quote. "Quote text in italics" shows quoted text in an italic font.
-* Bold links: See section 2.3.3.
+* Bold links: See section 3.3.3.
 * Capsule icon on left side: When the window is wide enough, show the capsule icon on the left side of the page at a fixed position together with the current level 1 heading.
 
-## 2.4 Fonts
+## 3.4 Fonts
 
 Fonts installed on the operating system can be selected in the font menus. In addition, you can install TrueType fonts and fontpacks for Lagrange. To use a new font, simply view a .ttf/.otf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf/.otf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see the Reference, section 1.1).
 
@@ -586,15 +588,15 @@ To be precise, on the "Fonts" tab you can select which _typefaces_ to use for ce
 
 There are two built-in fonts available: "Roboto" (sans serif) and "Iosevka" (monospaced). The default font is the system UI font on macOS and Windows, and Roboto on other platforms. There is also an "Iosevka (compact)" variant that uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text, for better legibility.
 
-See section 2.4.4 and the Reference, section 3, for more details about font management, compatibility, and configuration.
+See section 3.4.4 and the Reference, section 5, for more details about font management, compatibility, and configuration.
 
-### 2.4.1 Monospace body
+### 3.4.1 Monospace body
 
 The "Monospace body" option causes all pages to be displayed in a monospace font. For example, most Gopher content has been written with the assumption of a monospace font, so it may provide a better reading experience to enable this for Gopher pages. The selected "Monospace font" is applied to the entire document.
 
 Handling of whitespace in page content also changes when this option is enabled: spaces are no longer normalized so if the source uses multiple spaces somewhere, those are shown as-is.
 
-### 2.4.2 ANSI escapes
+### 3.4.2 ANSI escapes
 
 => https://en.wikipedia.org/wiki/ANSI_escape_code  ANSI escape code (Wikipedia):
 > ANSI escape sequences are a standard for in-band signaling to control cursor location, color, font styling, and other options on video text terminals and terminal emulators.
@@ -611,7 +613,7 @@ A warning banner is displayed if any codes are detected on a page. This helps yo
 
 If you serve content via Gemini, please be aware that ANSI escapes may not be supported by clients, and may in fact disrupt the behavior of a client in unexpected ways. For instance, consider a screen reader or a web proxy that doesn't filter out the codes. Only employ ANSI escapes when the user has somehow indicated that is their preference.
 
-### 2.4.3 Other font options
+### 3.4.3 Other font options
 
 On the "Content" tab, the "Font glyph warnings" option controls whether a warning will be shown when a page is missing one or more characters. This is typically due to the page being in a language that is not covered by any of the installed fonts. Clicking on the glyph warning banner opens the font management page.
 
@@ -619,13 +621,13 @@ On the "Appearance" tab, "Color Emoji" determines whether Emoji are shown in col
 
 Also on the "Appearance" tab, "Font smoothing" enables or disables glyph antialiasing (not on macOS). It is recommended that smoothing is enabled. You may still want to try disabling this option if antialiasing causes eye strain for you, or you are using a special font that is designed to not be smoothed.
 
-### 2.4.4 Managing fonts
+### 3.4.4 Managing fonts
 
 Open "about:fonts" to see all the installed fonts, and enable, disable or uninstall individual fontpacks. At the top of the page, there is a link to the skyjake.fi Font Library that contains a curated collection of fontpacks that can be freely distributed. From there you can conveniently install more fonts specifically tuned for Lagrange.
 
 The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.)
 
-Click on the "View file" links to see what each fontpack contains. The fontpack format is described in the Reference, section 3: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
+Click on the "View file" links to see what each fontpack contains. The fontpack format is described in the Reference, section 5: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
 
 There are multiple locations where Lagrange looks for fontpacks at launch:
 
@@ -638,7 +640,7 @@ There are multiple locations where Lagrange looks for fontpacks at launch:
 
 Individual TrueType fonts are automatically loaded only from the last one, (CFG_DIR)/fonts.
 
-If a "fonts.ini" file is present in the user configuration directory, it will be loaded as fontpack metadata (see the Reference, section 3). This way you can manually configure fonts without creating a ZIP archive. For example:
+If a "fonts.ini" file is present in the user configuration directory, it will be loaded as fontpack metadata (see the Reference, section 5). This way you can manually configure fonts without creating a ZIP archive. For example:
 
 ```fonts.ini example
 [couriercode]
@@ -659,7 +661,7 @@ TrueType Collections (.ttc) can be used, with the restriction that each declared
 regular = "NotoSansCJK-Regular.ttc:2"
 ```
 
-## 2.5 Text snippets and custom queries
+## 3.5 Text snippets and custom queries
 
 Gemlogs are often written entirely manually, so you may find yourself typing or copy-pasting the same headers, footers, or other small snippets into each post. You may also need to repeatedly enter specific pieces of text in a game or another interactive capsule. On desktop operating systems, there are multiple existing utilities that facilitate these use cases. While you may be able to use these with Lagrange, the app also has a built-in text snippet manager that works on any platform.
 
@@ -673,7 +675,7 @@ The additional words following the "!w" bang snippet are appended as a query str
 
 The keybinding ${SHIFT+}1 ("Enter a snippet query") focuses the URL field and inserts the leading '!' character so you can save a few keystrokes when using query snippets.
 
-## 2.6 Proxies
+## 3.6 Proxies
 
 Gemini allows proxying requests via a third-party Gemini server. On the "Proxies" tab, you can configure such proxy servers for Gemini, Gopher, and HTTP/HTTPS requests. Note that these proxies are all Gemini servers themselves: they listen for Gemini requests but are able to respond with content fetched from other domains or via other protocols.
 
@@ -681,7 +683,7 @@ When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in
 
 The SOCKS5 proxy works differently. It is protocol-agnostic and affects all network requests that Lagrange makes. When the SOCKS5 proxy server address is configured, network requests and DNS resolution are handled via the proxy.
 
-## 2.7 URL handling
+## 3.7 URL handling
 
 The "Network" tab of Preferences has a few options related to handling URLs.
 
@@ -693,7 +695,7 @@ Having a length limit is necessary due the special case of Data URLs:
 => https://datatracker.ietf.org/doc/html/rfc2397  RFC 2397: The "data" URL scheme
 With Data URLs, one is able to embed arbitrary data into a Gemtext file using link lines. This makes it possible to circumvent the intentional limitations of Gemini and override the clients' ability to choose which linked resources should be loaded and when. Without a limit, a server could for example send an arbitrarily large image attachment as part of the page, with no regard to the user's or client's preferences or abilities to view images. Also note that like any non-Gemini scheme, "data" is not expected to be supported by Gemini clients.
 
-## 2.8 Keybindings
+## 3.8 Keybindings
 
 The "Keys" tab lets you change which keys are bound to UI commands. The bindings are grouped under headings, and the filter field can be used to narrow down the list. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
@@ -701,7 +703,7 @@ Erasing a binding can be useful to disable certain features. For example, if you
 
 To reset all bindings to their defaults, quit Lagrange and delete the "bindings.lst" file (and "bindings.txt", if present) in Lagrange's runtime directory. This is a platform-dependent location; see the Reference, section 1.1.
 
-## 2.9 Gopher
+## 3.9 Gopher
 
 Lagrange converts Gopher menus to Gemtext for presentation. There are a couple of settings that control the conversion.
 
@@ -709,9 +711,9 @@ On the "Content" tab, the "Autodetect Gopher menu styling" option controls wheth
 
 Gopher pages use monospace body text by default ("Monospace body" on the "Fonts" tab, with "Applies to: Gopher"). This faithfully presents the Gopher source text, with original whitespaces intact, while also using the chosen monospace font for all text.
 
-# 3. OS integration
+# 4. OS integration
 
-## 3.1 Command line options
+## 4.1 Command line options
 
 Here are some of the commonly needed command line options. Check the "lagrange.1" manual page or the output of --help for a more complete listing.
 
@@ -736,23 +738,23 @@ Disable hardware accelerated graphics. Note that software rendering is anyway us
 ### -V, --version
 Print the application version.
 
-## 3.2 Opening Gemini links
+## 4.2 Opening Gemini links
 
 On macOS and Windows, Lagrange registers itself as a "gemini" URL scheme handler, so you can click on Gemini links in any application to open Lagrange with that URL.
 
 Likewise (on macOS), .gmi/.gemini file extensions are registered as file formats that Lagrange can view so Finder will know how to open those automatically using Lagrange.
 
-## 3.3 Drag and drop
+## 4.3 Drag and drop
 
 You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. You can also use "Open File..." in the File menu (not in the terminal version), or type "file://" URLs in the URL field.
 
-## 3.4 Controlling a running instance
+## 4.4 Controlling a running instance
 
 Only one instance of the application is allowed to run at once. This is because each instance uses the same runtime files (see the Reference, section 1) without any synchronization. A second instance of the application would overwrite any changes made by the first one, leading to lost bookmarks and other state.
 
 If there already is a running instance you can still use the command line to interact with it: you can open and close tabs, change the currently open URL, or list all the open URLs. See --help for a list of the available options.
 
-## 3.5 Environment variables
+## 4.5 Environment variables
 
 ### LAGRANGE_OVERRIDE_DPI
 Override display DPI detection with a user-provided value. The same value is applied to all displays. This is useful if your display's DPI value is not being detected correctly. Example:
