@@ -35,6 +35,17 @@ const iString * dataDir_Core    (void); /* absolute; empty if not set */
 
 void    commitFile_Core (const char *path, const char *tempPathWithNewContents); /* latter will be removed */
 
+/* Build configuration of the application, e.g., LAGRANGE_ENABLE_* defines. */
+iDeclareType(BuildFlag)
+
+struct Impl_BuildFlag {
+    const char *name;
+    iBool       isEnabled;
+};
+
+void    setBuildFlags_Core  (const iBuildFlag *flags); /* terminated by a NULL name */
+iBool   buildFlag_Core      (const char *name);
+
 /* User data change notifications, for syncing. May be called in any thread. */
 enum iUserDataType {
     bookmarks_UserDataType,

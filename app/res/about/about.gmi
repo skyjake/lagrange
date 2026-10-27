@@ -24,13 +24,19 @@ List of all entries from subscribed feeds.
 Installed fonts, and actions for viewing and managing fontpacks.
 
 => about:help
-User manual.
+User guide.
 
 => about:lagrange
 Default home page with a large "Lagrange" ASCII art logo.
 
-=> about:license
+=> about:licenses
 Open source licenses.
+
+=> about:protocols
+Cheatsheets for the Gemini and Titan protocols.
+
+=> about:reference
+Technical reference: runtime files, configuration files, content filters, fontpacks, and user data archives.
 
 => about:version
 Release notes for each version.

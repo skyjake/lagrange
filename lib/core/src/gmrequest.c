@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lagrange/gmrequest.h"
 
+#include <lagrange/core.h>
 #include <lagrange/gmcerts.h>
 #include <lagrange/gmutil.h>
 #include <lagrange/gopher.h>
@@ -411,7 +412,58 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
+static iBool isConditionMet_(iRangecc flag) {
+    const iBool isNegated = startsWith_Rangecc(flag, "!");
+    if (isNegated) {
+        flag.start++;
+    }
+    return buildFlag_Core(cstr_Rangecc(flag)) != isNegated;
+}
+
+static const iBlock *applyConditionals_(const iBlock *block) {
+    /* Remove ${if:FLAG}...${endif} blocks whose condition is not met. */
+    iRegExp *cond = new_RegExp("\\$\\{(if:[^}]+|endif)\\}\\n?", 0);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    iBlock *out = NULL;
+    size_t pos = 0;
+    int depth = 0;
+    int skipDepth = 0; /* depth of the outermost unmet condition */
+    while (matchRange_RegExp(cond, range_Block(block), &m)) {
+        if (!out) {
+            out = collect_Block(new_Block(0));
+        }
+        if (!skipDepth) {
+            appendData_Block(out, constBegin_Block(block) + pos, m.range.start - pos);
+        }
+        pos = m.range.end;
+        iRangecc directive = capturedRange_RegExpMatch(&m, 1);
+        if (startsWith_Rangecc(directive, "if:")) {
+            depth++;
+            directive.start += 3;
+            if (!skipDepth && !isConditionMet_(directive)) {
+                skipDepth = depth;
+            }
+        }
+        else if (depth > 0) {
+            if (skipDepth == depth) {
+                skipDepth = 0;
+            }
+            depth--;
+        }
+    }
+    iRelease(cond);
+    if (!out) {
+        return block;
+    }
+    if (!skipDepth) {
+        appendData_Block(out, constBegin_Block(block) + pos, size_Block(block) - pos);
+    }
+    return out;
+}
+
 static const iBlock *replaceVariables_(const iBlock *block) {
+    block = applyConditionals_(block);
     iRegExp *var = new_RegExp("\\$\\{([^}]+)\\}", 0);
     iRegExpMatch m;
     init_RegExpMatch(&m);

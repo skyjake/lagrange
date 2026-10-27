@@ -30,7 +30,9 @@ static iArchive *archive_;
 iBlock blobAbout_Resources;
 iBlock blobHelp_Resources;
 iBlock blobLagrange_Resources;
-iBlock blobLicense_Resources;
+iBlock blobLicenses_Resources;
+iBlock blobProtocols_Resources;
+iBlock blobReference_Resources;
 iBlock blobVersion_0_13_Resources;
 iBlock blobVersion_1_5_Resources;
 iBlock blobVersion_1_10_Resources;
@@ -79,7 +81,9 @@ static struct {
 } entries_[] = {
     { &blobAbout_Resources, "about/about.gmi" },
     { &blobLagrange_Resources, "about/lagrange.gmi" },
-    { &blobLicense_Resources, "about/license.gmi" },
+    { &blobLicenses_Resources, "about/licenses.gmi" },
+    { &blobProtocols_Resources, "about/protocols.gmi" },
+    { &blobReference_Resources, "about/reference.gmi" },
 #if defined (iPlatformAppleMobile)
     { &blobHelp_Resources, "about/ios-help.gmi" },
     { &blobVersion_Resources, "about/ios-version.gmi" },
@@ -191,15 +195,18 @@ const iBlock *aboutPageSource_Resources(iRangecc path, iRangecc query) {
     iUnused(query);
     const struct { const char *name; const iBlock *data; } pages[] = {
         { "about",        &blobAbout_Resources },
-        { "lagrange",     &blobLagrange_Resources },
         { "help",         &blobHelp_Resources },
-        { "license",      &blobLicense_Resources },
+        { "lagrange",     &blobLagrange_Resources },
+        { "license",      &blobLicenses_Resources },
+        { "licenses",     &blobLicenses_Resources },
+        { "protocols",    &blobProtocols_Resources },
+        { "reference",    &blobReference_Resources },
         { "version",      &blobVersion_Resources },
-        { "version-1.21", &blobVersion_1_21_Resources },
-        { "version-1.15", &blobVersion_1_15_Resources },
-        { "version-1.10", &blobVersion_1_10_Resources },
-        { "version-1.5",  &blobVersion_1_5_Resources },
         { "version-0.13", &blobVersion_0_13_Resources },
+        { "version-1.10", &blobVersion_1_10_Resources },
+        { "version-1.15", &blobVersion_1_15_Resources },
+        { "version-1.21", &blobVersion_1_21_Resources },
+        { "version-1.5",  &blobVersion_1_5_Resources },
     };
     iForIndices(i, pages) {
         if (equalCase_Rangecc(path, pages[i].name)) {

@@ -95,6 +95,43 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <SDL3/SDL_misc.h>
 #endif
 
+/* Enabled flags are defined as 1, so only they stringify to a single character. */
+#define iBuildFlagValue_(def)   (sizeof(#def) == 2)
+#define iBuildFlag_(def)        { #def, iBuildFlagValue_(def) }
+
+static const iBuildFlag buildFlags_[] = {
+    iBuildFlag_(iPlatformTerminal),
+    iBuildFlag_(LAGRANGE_ENABLE_AUDIO),
+    iBuildFlag_(LAGRANGE_ENABLE_CORETEXT),
+    iBuildFlag_(LAGRANGE_ENABLE_CUSTOM_FRAME),
+    iBuildFlag_(LAGRANGE_ENABLE_DIRECTWRITE),
+    iBuildFlag_(LAGRANGE_ENABLE_DOWNLOAD_EDIT),
+    iBuildFlag_(LAGRANGE_ENABLE_FONTCONFIG),
+    iBuildFlag_(LAGRANGE_ENABLE_FRAME_TIMING),
+    iBuildFlag_(LAGRANGE_ENABLE_FREETYPE),
+    iBuildFlag_(LAGRANGE_ENABLE_FRIBIDI),
+    iBuildFlag_(LAGRANGE_ENABLE_GAMEPAD),
+    iBuildFlag_(LAGRANGE_ENABLE_HARFBUZZ),
+    iBuildFlag_(LAGRANGE_ENABLE_IDLE_SLEEP),
+    iBuildFlag_(LAGRANGE_ENABLE_IPC),
+    iBuildFlag_(LAGRANGE_ENABLE_JXL),
+    iBuildFlag_(LAGRANGE_ENABLE_KERNING),
+    iBuildFlag_(LAGRANGE_ENABLE_MAC_MENUS),
+    iBuildFlag_(LAGRANGE_ENABLE_MPG123),
+    iBuildFlag_(LAGRANGE_ENABLE_OPUS),
+    iBuildFlag_(LAGRANGE_ENABLE_POPUP_MENUS),
+    iBuildFlag_(LAGRANGE_ENABLE_RESIZE_DRAW),
+    iBuildFlag_(LAGRANGE_ENABLE_SPARKLE),
+    iBuildFlag_(LAGRANGE_ENABLE_STB_TRUETYPE),
+    iBuildFlag_(LAGRANGE_ENABLE_WEBP),
+    iBuildFlag_(LAGRANGE_ENABLE_WINDOWPOS_FIX),
+    iBuildFlag_(LAGRANGE_ENABLE_WINSPARKLE),
+    iBuildFlag_(LAGRANGE_ENABLE_X11_SWRENDER),
+    iBuildFlag_(LAGRANGE_ENABLE_X11_XLIB),
+    iBuildFlag_(LAGRANGE_OPENSSL_3_OR_LATER),
+    { NULL, iFalse }
+};
+
 static void terminate_App_(int rc) {
     SDL_Quit();
     deinit_Foundation();
@@ -401,6 +438,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
     init_Lang();
+    setBuildFlags_Core(buildFlags_);
     /* Register "about:" page handlers. The Lagrange page must be checked before the
        generic resource handler, which would also serve it. */
     addAboutHandler_GmRequest(aboutLagrangePage_);
@@ -853,94 +891,51 @@ const iString *debugInfo_App(void) {
                             : deviceType_App() == desktop_AppDeviceType ? "desktop"
                             : deviceType_App() == tablet_AppDeviceType  ? "tablet"
                                                                         : "phone");
-#if defined (LAGRANGE_ENABLE_MAC_MENUS) && defined (iPlatformAppleDesktop)
-        appendFormat_String(msg, "%s Native macOS menus\n", enabled[1]);
-#elif defined (iPlatformAppleMobile)
-        appendFormat_String(msg, "%s Native iOS menus\n", enabled[1]);
-#elif !defined (iPlatformMobile) && !defined (iPlatformTerminal)
-        appendFormat_String(msg, "%s Context menus are separate windows\n", enabled[
-# if defined (LAGRANGE_ENABLE_POPUP_MENUS)
-            1
-# else
-            0
-# endif
-            ]);
-#endif
-        appendFormat_String(msg, "%s Gamepad support\n", enabled[
-#if defined (LAGRANGE_ENABLE_GAMEPAD)
-            1
-#else
-            0
-#endif
-        ]);
-#if defined (LAGRANGE_ENABLE_CORETEXT)
-        appendFormat_String(msg, "%s Core Text fonts (vector, color glyphs, system fonts)\n",
-                            enabled[1]);
-#elif defined (LAGRANGE_ENABLE_FREETYPE)
-        appendFormat_String(msg, "%s FreeType fonts (vector, color glyphs%s)\n", enabled[1],
-# if defined (LAGRANGE_ENABLE_FONTCONFIG) || defined (LAGRANGE_ENABLE_DIRECTWRITE)
-                            ", system fonts"
-# else
-                            ""
-# endif
-                            );
-#else
-        appendFormat_String(msg, "%s TrueType fonts (vector, monochrome)\n", enabled[
-# if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
-            1
-# else
-            0
-# endif
-            ]);
-#endif
-        appendFormat_String(msg, "%s BiDi text\n", enabled[
-#if defined (LAGRANGE_ENABLE_FRIBIDI) || defined (LAGRANGE_ENABLE_CORETEXT)
-            1
-#else
-            0
-#endif
-            ]);
-#if !defined (LAGRANGE_ENABLE_CORETEXT)
-        appendFormat_String(msg, "%s HarfBuzz text shaping\n", enabled[
-# if defined (LAGRANGE_ENABLE_HARFBUZZ)
-            1
-# else
-            0
-# endif
-            ]);
-#endif
-        appendFormat_String(msg, "%s MPEG audio\n", enabled[
-#if defined (LAGRANGE_ENABLE_MPG123)
-            1
-#elif defined (iPlatformAndroidMobile)
-            1
-#else
-            0
-#endif
-            ]);
-        appendFormat_String(msg, "%s Opus audio\n", enabled[
-#if defined (LAGRANGE_ENABLE_OPUS)
-            1
-#elif defined (iPlatformAndroidMobile)
-            1
-#else
-            0
-#endif
-            ]);
-        appendFormat_String(msg, "%s JPEG XL images\n", enabled[
-#if defined (LAGRANGE_ENABLE_JXL)
-            1
-#else
-            0
-#endif
-            ]);
-        appendFormat_String(msg, "%s WebP images\n", enabled[
-#if defined (LAGRANGE_ENABLE_WEBP)
-            1
-#else
-            0
-#endif
-            ]);
+        if (isAppleDesktop_Platform() && buildFlag_Core("LAGRANGE_ENABLE_MAC_MENUS")) {
+            appendFormat_String(msg, "%s Native macOS menus\n", enabled[1]);
+        }
+        else if (isAppleMobile_Platform()) {
+            appendFormat_String(msg, "%s Native iOS menus\n", enabled[1]);
+        }
+        else if (!isMobile_Platform() && !isTerminal_Platform()) {
+            appendFormat_String(msg, "%s Context menus are separate windows\n",
+                                enabled[buildFlag_Core("LAGRANGE_ENABLE_POPUP_MENUS")]);
+        }
+        appendFormat_String(msg, "%s Gamepad support\n",
+                            enabled[buildFlag_Core("LAGRANGE_ENABLE_GAMEPAD")]);
+        const iBool isCoreText = buildFlag_Core("LAGRANGE_ENABLE_CORETEXT");
+        if (isCoreText) {
+            appendFormat_String(msg, "%s Core Text fonts (vector, color glyphs, system fonts)\n",
+                                enabled[1]);
+        }
+        else if (buildFlag_Core("LAGRANGE_ENABLE_FREETYPE")) {
+            appendFormat_String(msg, "%s FreeType fonts (vector, color glyphs%s)\n", enabled[1],
+                                buildFlag_Core("LAGRANGE_ENABLE_FONTCONFIG") ||
+                                        buildFlag_Core("LAGRANGE_ENABLE_DIRECTWRITE")
+                                    ? ", system fonts"
+                                    : "");
+        }
+        else {
+            appendFormat_String(msg, "%s TrueType fonts (vector, monochrome)\n",
+                                enabled[buildFlag_Core("LAGRANGE_ENABLE_STB_TRUETYPE")]);
+        }
+        appendFormat_String(msg, "%s BiDi text\n",
+                            enabled[isCoreText || buildFlag_Core("LAGRANGE_ENABLE_FRIBIDI")]);
+        if (!isCoreText) {
+            appendFormat_String(msg, "%s HarfBuzz text shaping\n",
+                                enabled[buildFlag_Core("LAGRANGE_ENABLE_HARFBUZZ")]);
+        }
+        /* Android has system decoders. */
+        appendFormat_String(msg, "%s MPEG audio\n",
+                            enabled[isAndroid_Platform() ||
+                                    buildFlag_Core("LAGRANGE_ENABLE_MPG123")]);
+        appendFormat_String(msg, "%s Opus audio\n",
+                            enabled[isAndroid_Platform() ||
+                                    buildFlag_Core("LAGRANGE_ENABLE_OPUS")]);
+        appendFormat_String(msg, "%s JPEG XL images\n",
+                            enabled[buildFlag_Core("LAGRANGE_ENABLE_JXL")]);
+        appendFormat_String(msg, "%s WebP images\n",
+                            enabled[buildFlag_Core("LAGRANGE_ENABLE_WEBP")]);
     }
     appendFormat_String(msg, "\n## Memory usage\n"); {
         iMemInfo total = { 0, 0 };

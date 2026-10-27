@@ -661,4 +661,4 @@ When you click on a link with a "misfin://" URI, the dialog opens automatically 
 
 # Open source licenses
 
-=> about:license
+=> about:licenses

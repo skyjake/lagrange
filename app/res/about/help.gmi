@@ -66,7 +66,7 @@ If one seeks to just read text and view images, this is absurd overkill. Having 
 
 One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the software runs well even on simple hardware like the Raspberry Pi.
 
-# 1 User interface
+# 1. User interface
 
 Lagrange's user interface is modeled after web browsers:
 
@@ -240,7 +240,7 @@ The generated page can be saved to Downloads or you can copy all or parts of it 
 
 To import all links on a page as bookmarks, use the page context menu to select "Tools > Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
 
-Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.12.
+Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.13.
 
 ### 1.4.3 Remote bookmarks
 
@@ -319,12 +319,12 @@ To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I
 
 When the Import Identity dialog opens, it checks the currently open page for any certificates and private keys in PEM format. If found, these are automatically loaded in. You can also press ${CTRL+}V to paste PEM-formatted certificates and/or private keys, or drag-and-drop a PEM-formatted .crt/.key files on the Lagrange window while the dialog is open.
 
-Alternatively, you can manually copy the certificate files so Lagrange can find them. At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See "Runtime files" below for the location; it is platform-specific) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
+Alternatively, you can manually copy the certificate files so Lagrange can find them. At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See the Reference, section 1.1, for the location; it is platform-specific.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
 * mycert.crt
 * mycert.key
 Lagrange will add a note to the imported identities to mark them as "Imported".
 
-Note that you can find the certificates of any exported identities inside a user data ZIP archive. See sections 1.12 and 6 for details.
+Note that you can find the certificates of any exported identities inside a user data ZIP archive. See section 1.13 of this page and section 4 of the Reference for details.
 
 ## 1.7 Downloads
 
@@ -434,7 +434,29 @@ Note that browsing history also contains the read status of feed entries, becaus
 
 There is no automatic sync service to share user data between multiple devices.
 
-# 2 Customization
+## 1.14 Sending messages (with Misfin)
+
+Misfin is a messaging protocol that has been in the works since May 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
+
+Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server.
+
+A Misfin identity certificate is a TLS client certificate where:
+
+* UID field specifies the mailbox name
+* subject alternative name(s) specify the domain name(s)
+* Common Name is the human-readable name
+
+You will need to import one or more of these before sending any messages.
+
+When sending a message, the Upload dialog opens in Misfin mode with "To" and "From" fields. As usual, the text editor in the dialog has basic Gemtext syntax highlighting, but otherwise the editor has nothing Misfin-specific. A toggle is provided if you want to send a copy of the message to yourself. Lagrange does not keep copies of sent messages because it does not maintain a local Misfin mailbox.
+
+When you click on a link with a "misfin://" URI, the dialog opens automatically with the recipient address prefilled.
+
+=> gemini://satch.xyz/misfin/  Misfin specification(s) and resources
+=> gemini://misfin.org/  Original Misfin specification
+=> gemini://bbs.geminispace.org/s/misfin  s/Misfin on BBS
+
+# 2. Customization
 
 You can find a number of settings in Preferences to customize the user interface and page contents.
 
@@ -517,7 +539,7 @@ Other layout options:
 
 ## 2.4 Fonts
 
-This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5).
+This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see the Reference, section 1.1).
 
 The "Fonts" tab of the Preferences dialog contains options that affect the appearance of text in page content. The user interface font can also be changed on this tab.
 
@@ -525,7 +547,7 @@ To be precise, on the "Fonts" tab you can select which _typefaces_ to use for ce
 
 There are two built-in fonts available: "Roboto" (sans serif) and "Iosevka" (monospaced). There is also an "Iosevka (compact)" variant that uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text, for better legibility.
 
-See sections 2.4.4 and 5 for more details about font management, compatibility, and configuration.
+See section 2.4.4 and the Reference, section 3, for more details about font management, compatibility, and configuration.
 
 ### 2.4.1 Monospace body
 
@@ -562,7 +584,7 @@ Open "about:fonts" to see all the installed fonts, and enable, disable or uninst
 
 The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.)
 
-Click on the "View file" links to see what each fontpack contains. The fontpack format is described in section 5: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
+Click on the "View file" links to see what each fontpack contains. The fontpack format is described in the Reference, section 3: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
 
 There are multiple locations where Lagrange looks for fontpacks at launch:
 
@@ -571,12 +593,12 @@ There are multiple locations where Lagrange looks for fontpacks at launch:
 * (BIN_DIR)/../share/lagrange
 * (BIN_DIR)/../../share/lagrange
 * macOS: Lagrange.app/Contents/Resources
-* User configuration directory (CFG_DIR; see section 3.5)
+* User configuration directory (CFG_DIR; see the Reference, section 1.1)
 * (CFG_DIR)/fonts
 
 Individual TrueType fonts are automatically loaded only from the last one, (CFG_DIR)/fonts.
 
-If a "fonts.ini" file is present in the user configuration directory, it will be loaded as fontpack metadata (see section 5). This way you can manually configure fonts without creating a ZIP archive. For example:
+If a "fonts.ini" file is present in the user configuration directory, it will be loaded as fontpack metadata (see the Reference, section 3). This way you can manually configure fonts without creating a ZIP archive. For example:
 
 ```fonts.ini example
 [couriercode]
@@ -637,7 +659,7 @@ The "Keys" tab lets you change which keys are bound to UI commands. Click on an 
 
 Erasing a binding can be useful to disable certain features. For example, if you have no use for keyboard navigation of links via a modifier key, that binding can be erased and use of the modifier key for other purposes will no longer distract you by showing the link shortcuts.
 
-To reset all bindings to their defaults, quit Lagrange and delete the "bindings.lst" file (and "bindings.txt", if present) in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
+To reset all bindings to their defaults, quit Lagrange and delete the "bindings.lst" file (and "bindings.txt", if present) in Lagrange's runtime directory. This is a platform-dependent location; see the Reference, section 1.1.
 
 ## 2.9 Gopher
 
@@ -647,7 +669,7 @@ On the "Content" tab, the "Autodetect Gopher menu styling" option controls wheth
 
 Enabling monospace body text for Gopher (in the "Page Style" tab) will faithfully present the Gopher source text, with original whitespaces intact, while also using the chosen monospace font for all text.
 
-# 3 OS integration
+# 3. OS integration
 
 ## 3.1 Command line options
 
@@ -686,412 +708,14 @@ You can drag and drop .gmi files on the Lagrange window to open them in the curr
 
 ## 3.4 Controlling a running instance
 
-Only one instance of the application is allowed to run at once. This is because each instance uses the same runtime files (section 3.5) without any synchronization. A second instance of the application would overwrite any changes made by the first one, leading to lost bookmarks and other state.
+Only one instance of the application is allowed to run at once. This is because each instance uses the same runtime files (see the Reference, section 1) without any synchronization. A second instance of the application would overwrite any changes made by the first one, leading to lost bookmarks and other state.
 
 If there already is a running instance you can still use the command line to interact with it: you can open and close tabs, change the currently open URL, or list all the open URLs. See --help for a list of the available options.
 
-## 3.5 Runtime files
-
-The location of user data files can be changed with the --user option. By default, Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
-
-```Location of user-specific files on different operating systems (table)
-   Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange
-     macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
-Other Unix : ~/.config/lagrange/
-```
-
-Files with the .lst extension are lists where each line is one item. The first line of the file is a header that identifies the format version:
-```
-list fmt:1
-```
-Empty lines and lines beginning with "#" are ignored.
-
-Older versions of Lagrange used .txt files instead (for example, "visited.2.txt"). These are converted to the corresponding .lst files when first loaded, and they are left unchanged in the runtime directory. An old file is only read if the corresponding new file does not exist.
-
-### bindings.lst
-Each line specifies one keybinding:
-> {binding-id} {shortcut}
-* Binding IDs are defined in src/ui/keys.c. The file has a comment above each binding showing the corresponding UI command.
-* Shortcut is a key name preceded by zero or more modifiers, separated with "+". For example: "ctrl+shift+k".
-* Key names are SDL key names (case-insensitive), for example "pageup" or "f5". A key can also be specified as a hexadecimal SDL keycode, for example "0x4000004b".
-* The modifiers are: "shift", "ctrl", "alt", "gui" (Windows/Command/Meta key), and "caps" (Caps Lock). "primary" means Command on macOS and Ctrl on other platforms.
-* "none" means that no key is bound.
-
-The terminal version uses "cbindings.lst" instead.
-
-### bookmarks.ini
-This file stores all bookmarks and bookmark folders. The format is a subset of TOML: the only supported value types are strings and integers.
-```Example bookmark
-[51]
-url = "gemini://geminiprotocol.net/"
-title = "Project Gemini"
-tags = ""
-icon = 0x264a
-created = 1609936844  # 2021-01-06
-parent = 99
-order = 288
-```
-* The table name (51) is the unique identifier of the bookmark.
-* "url", "title", and "tags" are used as-is. C-style backslash escapes must be used for quotes (for example: \"), and may optionally be used for Unicode characters as well.
-* "icon" is a UTF-32 codepoint as a hexadecimal number.
-* "created" is a UNIX timestamp for when the bookmark was created. Following the timestamp, a human-readable date is also provided but it is just a comment — that part will be ignored when parsing the file.
-* "parent" is the ID of the parent folder. Folders are stored as similar bookmark entries, but their URL value is always an empty string.
-* "order" is for sorting the bookmarks list. The list is sorted by ascending order. This value is updated automatically when bookmarks are reordered in the sidebar.
-
-### feeds.lgr
-A binary file that contains the cached state of feed subscriptions: all the known entries and when feeds were last refreshed. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
-
-### fonts.ini
-This file is loaded as fontpack metadata (see section 5). It must be manually created.
-
-### idents.lgr and idents/
-idents.lgr is a binary file that contains metadata about the client certificates known to the application, for example on which URLs a particular certificate should be active.
-
-The "idents" subdirectory is where the actual client certificates are stored. Each certificate comprises a .crt and a .key file in PEM format. Certificates generated inside the application use the certificate fingerprint as the file name.
-
-### modmap.lst
-Translation table for keyboard modifiers. For example, one could swap the Alt and Ctrl keys by changing their mappings. See the comment in the file that explains the format and usage.
-
-### palette.txt
-Palette for UI color themes. This configuration file does not exist by default and must be created manually.
-
-The actual colors used in the user interface are derived from the base palette. Therefore, you should not change the colors too drastically, but instead follow the expected pattern: a range of 5 intensities (black-white), followed by two accent color pairs (dim, bright). The last five colors are reserved for certain specific uses, e.g., the green is used for the navbar lock icon to indicate a trusted server certificate. The palettes defined here do not affect page color themes, only the UI. Note that link icons are considered part of the UI, so you may find that changing the palette will reduce visibility of the icons with some of the page color themes.
-
-The file specifies two palettes: one for dark mode and one for light mode. The current palette is selected with the lines:
-```
-# Dark
-```
-and
-```
-# Light
-```
-
-The other lines specify colors:
-> {label}: {rgb-hex}
-> {label}: {red} {green} {blue}
-* {rgb-hex} must use the form "#RRGGBB"
-* {red}, {green}, {blue} are decimal numbers in the range 0...255
-
-The configuration below defines the built-in default palette:
-```palette.txt with the default UI palette
-# Dark
-
-black:      #000000
-gray25:     #282828
-gray50:     #505050
-gray75:     #A0A0A0
-white:      #FFFFFF
-brown:      106     80      0
-orange:     255     192     0
-teal:       0       96      128
-cyan:       0       192     255
-yellow:     255     255     32
-red:        255     64      64
-magenta:    255     0       255
-blue:       132     132     255
-green:      0       200     0
-
-# Light
-
-black:      0       0       0
-gray25:     75      75      75
-gray50:     150     150     150
-gray75:     235     235     235
-white:      255     255     255
-brown:      210     120      10
-orange:     235     215     200
-teal:       10      110     130
-cyan:       170     215     220
-yellow:     255     255     32
-red:        255     64      64
-magenta:    255     0       255
-blue:       132     132     255
-green:      0       150     0
-```
-
-### prefs.cfg
-Persistent configuration variables. The file is rewritten when the application is closed. Each line is interpreted as an internal UI event like those printed with the --echo command line option.
-
-### state.lgr
-A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
-
-### prefs/document.ini
-Document preferences that apply to all protocols. Only the values that differ from the defaults are stored. Deleting this file resets document preferences to defaults.
-
-### prefs/protocols.ini
-Document preferences customized for specific protocols. Deleting this file removes all protocol-specific customization.
-
-### prefs/sitespec.ini
-Site-specific settings. In addition to document preferences customized for a site, this includes the Titan upload settings (port, identity, and token), identities used on the site, and input prompt paths. Deleting this file forgets all of these. Note that Titan upload tokens are stored as plain text.
-
-### prefs/custom.ini
-Optional user-written rules for document preferences. The application never writes this file. Each `[[scope]]` table sets values for URLs and/or media types matching a regular expression:
-```
-[[scope]]
-mime = "^text/markdown"
-order = 50
-markdownAsSource = false
-```
-* "uri" and "mime" are regular expressions. If both are given, both must match unless "matchMode" is set to "either".
-* "order" is required and must be less than 900. Lower numbers take precedence. Site-specific settings have order 100 and protocol-specific settings have order 500.
-
-### tools.ini
-Configuration of external tools, such as content filters. See section 4.
-
-### trusted.lst
-Trusted server certificates. Each line specifies the certificate fingerprint of one server:
-> {domain};{port} {valid-until} {fingerprint}
-* Domain names are stored in punycode format if they contain non-ASCII characters.
-* The "valid until" expiration date is a UNIX timestamp.
-* The fingerprint is an SHA256 checksum of the server certificate's public key in DER format.
-
-### uploadbackup.txt
-Backup of the text entered into the Upload with Titan dialog.
-
-### visited.lst
-The combined navigation history of all tabs. Each line specifies one URL:
-> {last-visited} {flags} {url}
-* The last visited time is stored as a UNIX timestamp.
-* Flags is always four bytes long:
-```URL flags (table)
-0000 : No flags set
-0001 : Transient
-0002 : Kept
-```
-The Transient flag is used to indicate redirections and for marking feed entries as read without actually visiting the URL. URLs with the Transient flag do not appear in the History sidebar tab.
-
-The Kept flag is used for preventing the URL from being discarded due to old age. Normally URLs in the navigation history become stale after several months and are removed from the file.
-
-## 3.6 Environment variables
+## 3.5 Environment variables
 
 ### LAGRANGE_OVERRIDE_DPI
 Override display DPI detection with a user-provided value. The same value is applied to all displays. This is useful if your display's DPI value is not being detected correctly. Example:
 ```96 is the default DPI value
 LAGRANGE_OVERRIDE_DPI=96
 ```
-
-# 4 Content filters
-
-Content filters enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
-
-Filters are configured using the file "tools.ini" in Lagrange's config directory. Each filter has a regexp that is matched against the response MIME type and parameters, and each matching filter is offered the response body via stdin. The called external programs are free to rewrite the entire response, including the MIME type. If one of the filters returns a valid response, it is used as the final response of the Gemini request.
-
-Example use cases:
-* Parsing an Atom XML feed and generating a Gemini feed index page
-* Rendering a MIDI file using Timidity as PCM WAV
-* Generate a graph PNG based on values in a CSV
-* Converting HTML or Markdown to 'text/gemini'
-* Language translations
-
-Earlier versions of Lagrange used a file called "mimehooks.txt" for configuring filters (then called "MIME hooks"). It is no longer used; any existing hooks must be manually rewritten in tools.ini.
-
-## 4.1 Interface
-
-The response body is provided to the filter program via stdin. The program is run with a minimal CGI-like environment:
-* CONTENT_TYPE is the MIME type and parameters of the response, for example "text/gemini; lang=ja".
-* REQUEST_URL is the URL of the request.
-
-The rest of the environment variables are inherited from Lagrange.
-
-Output from the program (via stdout) must be a valid "20" Gemini response that includes the new MIME type:
-```
-20 text/gemini; lang=en\r\n
-{...body...}
-```
-
-Any output that does not follow this format is considered to mean that the filter refused to process the contents. The next filter will be offered the response instead.
-
-## 4.2 tools.ini syntax
-
-tools.ini uses TOML syntax. Each tool is defined as a table whose name is a unique ID for the tool. Lagrange must be restarted for changes to the configuration file to take effect.
-
-For example:
-```tools.ini
-[atom2gmi]
-name    = "Convert Atom to Gemini feed"
-command = ["/usr/bin/python3", "/home/jaakko/atomconv.py"]
-mime    = '^application/(atom\+)?xml'
-```
-
-The following properties are supported:
-* `name` (string): Human-readable label for reporting to the user. Defaults to the tool ID.
-* `command` (array of strings): The program to execute, followed by its arguments. The program is executed directly without involving the shell. This means scripts must be invoked via the interpreter executable. A program name without a directory is searched for in PATH.
-* `mime` (string): Regular expression that is matched against the MIME type and parameters, ignoring case. If omitted, the tool applies to all content.
-* `enabled` (boolean): Set to false to disable the tool without removing its definition. Defaults to true.
-* `auto` (boolean): Whether the tool is used as a content filter, i.e., run automatically on matching responses. Set to false for tools that are only run manually. Defaults to true.
-* `menu` (boolean): Show the tool in the "Tools" submenu of the page context menu. Defaults to false.
-* `key` (string): Keyboard shortcut for running the tool on the current page, for example "ctrl+shift+t". The syntax is the same as in "bindings.lst" (see section 3.5). Tool shortcuts take precedence over other key bindings, and they are not shown in Preferences.
-
-Filters are tried in the order they are defined in the file. Lagrange's built-in filters (e.g., for Atom feeds) are tried after the configured ones.
-
-Single-quoted strings are literal, i.e., backslashes are not treated as escape characters. This is convenient for regular expressions and Windows paths. In double-quoted strings, backslashes must be escaped ("\\").
-
-On macOS, apps launched via Finder or the Dock are given a minimal PATH that does not include, for example, Homebrew's installation directory. Using absolute program paths is therefore recommended.
-
-Errors in tools.ini are reported at launch, and the details are shown in "about:debug".
-
-## 4.3 Running tools manually
-
-A tool can also be run manually on the current page via the context menu or a keyboard shortcut. The tool is only available when the page's MIME type matches the tool's `mime` regexp. The page source is passed to the tool like for content filters (see 4.1), and the tool runs in the background. When the tool finishes, its output replaces the page contents, possibly changing the MIME type. Reloading the page restores the original contents.
-
-For example, a tool that is not used as a content filter but appears in the context menu of Gemtext pages:
-```tools.ini
-[translate]
-name    = "Translate to English"
-command = ["/usr/bin/python3", "/home/jaakko/translate.py", "en"]
-mime    = '^text/gemini'
-auto    = false
-menu    = true
-key     = "primary+shift+e"
-```
-
-Lagrange has a built-in "Unwrap Paragraphs" tool for all "text/*" pages. It joins hard-wrapped lines into paragraphs, guessing which line breaks were intentional.
-
-## 4.4 Example: Converting from Atom to Gemini
-
-The following simple Python script demonstrates how a content filter could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
-```python
-import sys
-import xml.etree.ElementTree as ET
-
-def atomtag(n):
-    return '{http://www.w3.org/2005/Atom}' + n
-
-root = ET.fromstring(sys.stdin.read())
-if root.tag != atomtag('feed'):
-    sys.exit(0)
-feed_title = ''
-feed_author = ''
-feed_entries = []
-for child in root:
-    if child.tag == atomtag('title'):
-        feed_title = child.text
-    elif child.tag == atomtag('entry'):
-        feed_entries.append(child)
-print("20 text/gemini\r")
-print(f'# {feed_title}')
-for entry in feed_entries:
-    entry_date = ''
-    entry_title = ''
-    entry_link = ''
-    for child in entry:
-        if child.tag == atomtag('updated'):
-            entry_date = child.text[:10]
-        elif child.tag == atomtag('title'):
-            entry_title = child.text
-        elif child.tag == atomtag('link'):
-            entry_link = child.attrib['href']
-    print(f'=> {entry_link} {entry_date} {entry_title}')
-```
-
-# 5 Fontpacks
-
-Fontpack is a file format defined by Lagrange that is used to combine a set of font files with configuration metadata. The (unregistered) media type for .fontpack files is 'application/lagrange-fontpack+zip'.
-
-A fontpack is a ZIP archive that must have a "fontpack.ini" file at the root level.
-
-```fontpack.ini from firasans.fontpack
-version = 1
-
-[firasans]
-name        = "Fira Sans"
-glyphscale  = 0.85
-regular     = "FiraSans-Regular.ttf"
-italic      = "FiraSans-Italic.ttf"
-light       = "FiraSans-Light.ttf"
-semibold    = "FiraSans-SemiBold.ttf"
-bold        = "FiraSans-Bold.ttf"
-```
-
-Fontpacks may use the Deflate compression method, but that can slow down launching the app because each font must then be decompressed before loading. Therefore, it is recommended to use the -0 (--compression-method store) option when creating the archive. You may also find the -j (--junk-paths) option helpful if the current working directory is not the one where fontpack.ini is located.
-
-Each fontpack has an ID that comes from the file name: the ID of "firasans.fontpack" would be "firasans". Space characters are not allowed in the ID.
-
-Fontpacks are versioned, i.e., they have a version number in their metadata. This makes it possible to tell when a fontpack is an updated version of an existing one. The fontpack ID (file name) must remain the same, though, regardless of the version number.
-
-The "fontpack.ini" file uses TOML syntax and can specify any number of typefaces. In the example above, the line `[firasans]` begins the definition of a typeface called "firasans". If the same typeface is found in multiple fontpacks, only the first one that gets loaded is used; the rest are ignored. Typeface IDs can be the same or different than fontpack IDs; they exist in different namespaces. The typeface ID is what is actually used in "prefs.cfg" to save your font preferences.
-
-## 5.1 Fontpack properties
-
-`version` defines the version number of the fontpack. It is a single integer, and if omitted, defaults to zero. It has no specific meaning except that larger values are considered newer versions.
-
-## 5.2 Typeface properties
-
-### 5.2.1 General
-* `name` (string) is the human-readable name of the typeface. This is used in the Preferences dialog and elsewhere in the UI.
-
-### 5.2.2 Prioritization and exclusion
-The same character's glyph(s) may be found in several fonts, so a prioritization is applied to pick the most appropriate font. Font selection may also depend on the context, for example preformatted blocks must be displayed using monospace fonts. These properties control when and if the typeface will be used.
-
-* `priority` (integer) defines a sort order for typefaces. The ones with the highest priority are checked first.
-* `override` (bool): whether this typeface is always checked first before any other one, in any context. Only one typeface can use this flag.
-* `monospace` (bool): is this a monospace typeface and therefore suitable for preformatted blocks and monospace body text.
-* `auxiliary` (bool): if true, this typeface is not included in Preferences as a font choice, but is still checked for glyphs if other fonts do not provide them. Suitable for miscellaneous symbols or additional languages, for examples.
-* `allowspace` (bool): if true, an auxiliary font's metrics for space characters are used. Sometimes symbol fonts have extra wide spaces, so for example a space next to an Emoji would be too wide. This has no effect for non-auxiliary typefaces.
-
-### 5.2.3 Metrics
-These properties can be used to modify the height and spacing of the font.
-
-* `height` (float) is a multiplier to alter the height of the font. It can be at most 2.0, to double the height. This simply scales the font smaller or larger without altering spacing.
-* `glyphscale` (float) scales glyphs smaller without changing the height of the font. The value must be 1.0 or smaller. In effect, this lets you increase the spacing between consecutive lines of text. It can be combined with `height` to keep glyphs the same size but just increase line spacing. For example, `glyphscale` 0.833 would counter the scaling caused by `height` 1.2, increasing line spacing by 1.2x.
-* `voffset` (float) is multiplier applied to the vertical offset that normally centers scaled glyphs on the line. This allows fine-tuning where the baseline of scaled glyphs ends up. Setting this to 1.0 means that glyphs are vertically centered after scaling with `glyphscale`; 0.0 would disable the centering. Reasonable values are likely in the 0.5…1.5 range, depending on the amount of scaling.
-
-Changing only the `glyphscale` property is the recommended way to alter line spacing. This makes it easier to mix and match fonts on a single line without having to deal with changes in text height. Compare your adjusted scaling to see if it looks suitable next to normal body text.
-
-Each of these properties can be set separately for UI text and page content by using the prefixes `ui.` and `doc.`. For example, to only scale the font when used in the UI, set `ui.height` instead of `height`.
-
-### 5.2.4 Font files
-A single typeface can use up to five font files.
-
-* `regular` (string): path of a font file for the regular style. A relative path means that the file is loaded from inside the fontpack archive. Absolute paths can be used to refer to files on the local system.
-* `italic` (string): path of a font file for the italic style.
-* `light` (string): path of a font file for the light weight.
-* `semibold` (string): path of a font file for the semibold weight.
-* `bold` (string): path of a font file for the bold weight.
-
-Only the regular style is required. Undefined styles fall back to the closest available style. The same file path can be used in multiple styles; only one copy of the file will be loaded to memory.
-
-When the path refers to a TrueType Collection (.ttc), the font index to use must be appended to the file name:
-```.ttc example
-regular = "NotoSansCJK-Regular.ttc:2"
-```
-
-# 6 User data archives
-
-Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, text snippets, site-specific settings, and/or trusted server certificate fingerprints.
-
-An export archive largely mirrors the contents of the runtime directory (section 3.5). However, the "lagrange-export.ini" metadata file must also be present:
-
-```lagrange-export.ini
-# Lagrange user data exported on 2022-04-01 13:34
-version = "1.12.0"
-timestamp = 1648809264
-```
-* `version` (string): Version of the app that generated the archive.
-* `timestamp` (integer): Time of generation as a UNIX timestamp.
-
-# 7 Misfin
-
-Misfin is a messaging protocol that has been in the works since May 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
-
-Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server.
-
-A Misfin identity certificate is a TLS client certificate where:
-
-* UID field specifies the mailbox name
-* subject alternative name(s) specify the domain name(s)
-* Common Name is the human-readable name
-
-You will need to import one or more of these before sending any messages.
-
-When sending a message, the Upload dialog opens in Misfin mode with "To" and "From" fields. As usual, the text editor in the dialog has basic Gemtext syntax highlighting, but otherwise the editor has nothing Misfin-specific. A toggle is provided if you want to send a copy of the message to yourself. Lagrange does not keep copies of sent messages because it does not maintain a local Misfin mailbox.
-
-When you click on a link with a "misfin://" URI, the dialog opens automatically with the recipient address prefilled.
-
-=> gemini://satch.xyz/misfin/  Misfin specification(s) and resources
-=> gemini://misfin.org/  Original Misfin specification
-=> gemini://bbs.geminispace.org/s/misfin  s/Misfin on BBS
-
-# Open source licenses
-
-=> about:license

@@ -241,7 +241,11 @@ static const iMenuItem helpMenuItems_[] = {
 #else
     { "${menu.help}", 0, 0, "!open newtab:1 switch:1 url:about:help" },
 #endif
+    { "${menu.reference}", 0, 0, "!open newtab:1 switch:1 url:about:reference" },
+    { "${menu.protocols}", 0, 0, "!open newtab:1 switch:1 url:about:protocols" },
+    { "---" },
     { "${menu.releasenotes}", 0, 0, "!open newtab:1 switch:1 url:about:version" },
+    { "${menu.licenses}", 0, 0, "!open newtab:1 switch:1 url:about:licenses" },
     { "---" },
     { "${menu.aboutpages}", 0, 0, "!open newtab:1 switch:1 url:about:about" },
     { "${menu.debug}", 0, 0, "!open newtab:1 switch:1 url:about:debug" },

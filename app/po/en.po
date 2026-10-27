@@ -405,6 +405,15 @@ msgstr "Help"
 msgid "menu.releasenotes"
 msgstr "Release Notes"
 
+msgid "menu.reference"
+msgstr "Technical Reference"
+
+msgid "menu.protocols"
+msgstr "Protocol Cheatsheet"
+
+msgid "menu.licenses"
+msgstr "Open Source Licenses"
+
 msgid "menu.website"
 msgstr "Project Website…"
 

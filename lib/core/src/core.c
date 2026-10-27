@@ -43,8 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Core)
 
 struct Impl_Core {
-    iBool   isPhone;
-    iString dataDir;
+    iBool             isPhone;
+    iString           dataDir;
+    const iBuildFlag *buildFlags;
 };
 
 static iCore core_;
@@ -53,6 +54,7 @@ void init_Core(void) {
     iCore *d = &core_;
     d->isPhone = iFalse;
     init_String(&d->dataDir);
+    d->buildFlags = NULL;
 }
 
 void deinit_Core(void) {
@@ -75,6 +77,21 @@ void setPhone_Core(iBool isPhone) {
 
 iBool isPhone_Core(void) {
     return core_.isPhone;
+}
+
+void setBuildFlags_Core(const iBuildFlag *flags) {
+    core_.buildFlags = flags;
+}
+
+iBool buildFlag_Core(const char *name) {
+    if (core_.buildFlags) {
+        for (const iBuildFlag *f = core_.buildFlags; f->name; f++) {
+            if (!iCmpStr(f->name, name)) {
+                return f->isEnabled;
+            }
+        }
+    }
+    return iFalse;
 }
 
 static void syncFile_Core_(const char *path) {

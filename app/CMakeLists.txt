@@ -90,7 +90,9 @@ compile_lang_strings (${CMAKE_CURRENT_SOURCE_DIR}/po ${LANG_DIR} ${LANGUAGES})
 set (RESOURCES
     res/about/about.gmi
     res/about/lagrange.gmi
-    res/about/license.gmi
+    res/about/licenses.gmi
+    res/about/protocols.gmi
+    res/about/reference.gmi
     res/logo.png
     res/shadow.png
     res/fontpack.ini
@@ -366,7 +368,9 @@ set (SOURCES
     res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
-    res/about/license.gmi
+    res/about/licenses.gmi
+    res/about/protocols.gmi
+    res/about/reference.gmi
     res/about/version.gmi
     ${EMB_BIN}
 )
@@ -522,6 +526,32 @@ endif ()
 get_directory_property (PLATFORM_DEFINITIONS COMPILE_DEFINITIONS)
 target_compile_definitions (core PRIVATE ${PLATFORM_DEFINITIONS})
 
+# The OpenSSL license changed in version 3.0. Prebuilt mobile dependencies have no version
+# information, so check the header instead.
+set (_opensslVersion ${OPENSSL_VERSION})
+if (NOT _opensslVersion)
+    foreach (_dir ${OPENSSL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${IOS_DIR}/include
+                  ${ANDROID_DIR}/openssl-android/${ANDROID_ABI}/include)
+        if (NOT _opensslVersion AND EXISTS ${_dir}/openssl/opensslv.h)
+            file (STRINGS ${_dir}/openssl/opensslv.h _major
+                  REGEX "^#[ \t]*define[ \t]+OPENSSL_VERSION_MAJOR[ \t]+[0-9]+")
+            if (_major)
+                string (REGEX REPLACE ".*[ \t]([0-9]+)$" "\\1" _opensslVersion "${_major}")
+            else ()
+                set (_opensslVersion 1)
+            endif ()
+        endif ()
+    endforeach ()
+endif ()
+if (NOT _opensslVersion)
+    message (WARNING "Could not determine the OpenSSL version, assuming 3.0 or later")
+    set (_opensslVersion 3)
+endif ()
+message (STATUS "OpenSSL version: ${_opensslVersion}")
+if (_opensslVersion VERSION_GREATER_EQUAL 3)
+    set (OPENSSL_3_OR_LATER YES)
+endif ()
+
 macro (set_common_app_properties target)
     set_property (TARGET ${target} PROPERTY C_STANDARD 11)
     if (TARGET ext-deps)
@@ -604,6 +634,9 @@ macro (set_common_app_properties target)
     endif ()
     if (ENABLE_FRAME_TIMING)
         target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_FRAME_TIMING=1)
+    endif ()
+    if (OPENSSL_3_OR_LATER)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_OPENSSL_3_OR_LATER=1)
     endif ()
 
     # Common dependencies.
