@@ -2872,7 +2872,7 @@ msgid "prefs.quote.italic"
 msgstr "Quote text in italics:"
 
 msgid "prefs.biglede"
-msgstr "Big 1st paragaph:"
+msgstr "Big 1st paragraph:"
 
 msgid "prefs.justify"
 msgstr "Justify:"
