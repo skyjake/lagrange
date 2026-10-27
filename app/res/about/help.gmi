@@ -173,6 +173,21 @@ The interval can be set via the ⏲ button in the view toolbar, or with "Set Aut
 
 You can open as many tabs as you want, but it becomes challenging to switch between them and locate them because the tab bar will only show a series of tiny buttons. Right-clicking on the tab bar opens a context menu that lets you close multiple tabs at once. You can also open the Tabs sidebar (see the next section) to list all the open tabs and access them conveniently.
 
+### 1.2.4 View toolbar
+
+The view toolbar floats in the top right corner of a tab. Its buttons apply to the current tab only:
+
+* 👤 shows the identity used on the current page, and lets you pin an identity to the tab (see section 1.5.2).
+* ⏲ sets the tab's auto-reload interval.
+* 📖 toggles between the scrolling and paginated views (see section 1.8).
+
+Gempub-specific actions:
+
+* ⚙ opens the book-specific settings (see section 3.3.2).
+* ℹ opens (or closes) the table of contents in the sidebar.
+
+If you find the view toolbar distracting, you can hide it with "Preferences > General > Hide view tools".
+
 ## 1.3 Sidebars
 
 The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHIFT+}${CTRL+}P (for the left/right sidebar, respectively). Both sidebars can have up to nine tabs:
@@ -288,7 +303,7 @@ The special behavioral tags listed in the previous section can also be used for 
 
 Gemini uses TLS client certificates for user/session identification purposes. Unlike on the web where user identity tracking is covert and automatic, client certificates must be manually taken into use, and you are able to define how long each certificate remains valid. The term "Identity" is used in Lagrange to refer to client certificates.
 
-The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}4 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
+The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}4 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates. The list can be sorted by name, or arranged manually by dragging the items.
 
 ### 1.5.1 Creating a new identity
 
@@ -345,6 +360,29 @@ When viewing a directory, its contents are shown as a list of links. A similar p
 
 Note that ZIP archives are not decompressed while browsing their directory structure. Each request that accesses a compressed file in an archive will cause only that particular file to be decompressed. This may cause slow response times when dealing with large compressed files.
 
+## 1.8 Paginated view
+
+Pages are normally shown in a vertically scrolling view. Alternatively, any page can be shown in a paginated view that works like an e-reader. This is intended for focused reading of longer texts. Click on the 📖 button in the view toolbar to switch the current page to the paginated view, and click it again to return to scrolling.
+
+To use the paginated view by default, enable "Paginated" on the "Layout" tab of Preferences. With the "Applies to:" setting, you can choose the protocols where this applies, and the site-specific settings can enable it on individual sites. Gempub books are paginated by default.
+
+In the paginated view, text is laid out in one or two columns per page, and if the window is wide enough, two pages are shown side by side. The page header shows the current top-level heading, and the footer shows the page numbers. Images are fitted inside a page, and paragraphs are justified (see the "Justify" option on the "Page Style" tab).
+
+The progress bar at the bottom edge shows the position inside the whole document. You can drag it to jump to a different position.
+
+The navigation bar, tab bar, and mouse cursor are automatically hidden while reading. Click in the middle of the page to bring the bars back.
+
+There are several ways to turn pages:
+
+* Click near the left or right edge of the page.
+* Press ← or →, Space or ${SHIFT+}Space, Page Up or Page Down, or ↑ or ↓. In other words, the keys that normally scroll the page turn the pages instead.
+* Press Home or End to go to the first or last page. (In a book, this goes to the chapter's first/last page.)
+* Use the mouse wheel, or swipe horizontally on a trackpad.
+
+The page turning animation can be chosen in "Preferences > Behavior > Page turning": "Curl" emulates the pages of a paper book, "Scroll" slides the pages horizontally, and "None" turns pages instantly.
+
+The paginated view has its own color themes ("Paginated dark" and "Paginated light" on the "Colors" tab of Preferences). These can be used to give paginated pages a more book-like appearance, for example with the Paper theme.
+
 # 2. Advanced usage
 
 ## 2.1 Subscribing to feeds
@@ -356,14 +394,44 @@ Lagrange supports Gemini, Atom, and Tinylog feed subscriptions. Atom feeds are a
 
 Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special ".subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as a subscription and Lagrange will look through it for feed-style links. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
 
-Feeds are refreshed periodically while Lagrange is running, and also immediately after launching if it has been a while since the previous refresh. You may also manually refresh all feeds via the menus or by pressing ${SHIFT+}${CTRL+}R.
+Feeds are refreshed periodically while Lagrange is running, and also immediately after launching if it has been a while since the previous refresh. You may also manually refresh all feeds via the menus or by pressing ${SHIFT+}${CTRL+}R. The feed refresh interval can be set in "Preferences > Behavior".
 
-The Feeds sidebar tab displays recent feed entries. From there you can open entries and mark them as read/unread. Entries open in a reader tab (marked with ★) that is reused for all feed entries. Links on an entry page open in new tabs. At the bottom of the entry page, there are buttons for moving to the next and previous entries.
+When subscribing, the type of the feed is detected automatically. You can change it later with "Feed Settings..." in the context menu of the Feeds or Subscriptions sidebar. The "Entry type" can be:
 
-The feed refresh interval can be set in "Preferences > Behavior".
+* "YYYY-MM-DD Links": a Gemini feed.
+* "New Headings": each new heading on the page is considered an entry.
+* "Tinylog": a Tinylog feed (see section 2.1.2).
+
+### 2.1.1 Reading feed entries
+
+The Feeds sidebar tab displays the most recent feed entries (up to 1000 items). You can show all entries or only the unread ones (U and ${SHIFT+}U). From there you can open entries and mark them as read/unread.
+
+Entries open in a dedicated reader tab that is marked with ★ in the tab bar and the Tabs sidebar. The same reader tab is reused for all feed entries, keeping feed reading separate from regular browsing. Links on an entry page open in new tabs. At the top of the entry page, a banner shows the source feed and the date of the entry. At the bottom of the entry page, there are buttons for moving to the previous and next entries in the Feeds sidebar. You can also press Space when you have reached the bottom of the page to move to the next entry, and ${SHIFT+}Space at the top of the page to move to the previous one.
 
 To see a list of all entries from all feeds, open the "Feed entries" page. This page also shows how long has it been since the previous feed refresh.
 => about:feeds
+
+### 2.1.2 Tinylogs
+
+Tinylog is a simple microblogging format: a Gemtext page where each entry begins with a level 2 heading containing the entry's timestamp. You can publish a Tinylog by putting a "tinylog.gmi" file on your capsule, and some services generate Tinylog feeds for their users. Tinylogs can be subscribed to like any other feed.
+
+=> https://codeberg.org/bacardi55/gemini-tinylog-rfc  Gemini Tinylog specification
+
+The contents of subscribed Tinylogs are cached locally, so the entries can be viewed instantly, even when offline. The Feeds sidebar shows the exact time of each Tinylog entry, and a longer excerpt of its text.
+
+When a Tinylog entry is a response to an entry in another subscribed Tinylog, the original entry is quoted below the response link. This way you can follow the context of a conversation on the entry page.
+
+The maximum size of a locally cached Tinylog page can be set in "Preferences > Content > Tinylog cache size". The oldest entries are dropped from the cached copy if the page exceeds the limit.
+
+### 2.1.3 Subscribing to many feeds at once
+
+Aggregators and directories often publish lists of feed URLs. To subscribe to all the feeds listed on such a page, select "Subscribe to All..." in the Tools submenu of the page context menu. The dialog shows how many new feeds were found, and lets you choose the feed type, or leave it to be detected automatically. The titles of the new subscriptions are taken from the feeds when they are first refreshed. This works, for example, with Tinylog directories and the feed list of the CAPCOM aggregator.
+
+=> gemini://gemini.circumlunar.space/capcom/feeds.txt  CAPCOM feed list
+
+### 2.1.4 Managing subscriptions
+
+The Subscriptions sidebar tab lists all subscribed feeds. The list can be sorted by name, by the most or least recent update, or by the number of entries. Sorting by least recent update is a good way to find feeds that have been discontinued or are no longer reachable.
 
 ## 2.2 Uploads (with Titan)
 
@@ -425,15 +493,35 @@ Gempub is an e-book format that is essentially a set of Gemtext files stored in 
 
 => https://codeberg.org/oppenlab/gempub  Gempub specification
 
-Lagrange can be used as a Gempub reader. When you open a .gpub file, the book gets automatically saved to your bookshelf.
+Lagrange can be used as a Gempub reader. When you open a .gpub file, the book gets automatically saved to your bookshelf, i.e., your Gempub book collection.
 
-Books open in a tab of their own in paginated view. Chapter switching is automatic when turning pages. The progress bar at the bottom shows the position inside the whole book. The reading position is remembered, and it is synced between your devices if sync is enabled.
-
-The "Books" sidebar lists the books on the bookshelf. While a book is open, the sidebar also shows the book's cover and contents pages.
-
-Any Gemtext page can also be saved to the bookshelf with "Save to Bookshelf" in the File menu or the page context menu. This creates a single-chapter book, which is convenient for reading longer articles over multiple sessions or on multiple devices. The other devices need to download their own separate copy of the source URL.
+Books open in a tab of their own in the paginated view (see section 1.8). Chapter switching is automatic when turning pages, so the entire book flows together like a printed book. The progress bar at the bottom shows the position inside the whole book. The reading position is remembered, and it is synced between your devices if sync is enabled (see section 2.7). Otherwise, a book tab works like any other tab: for example, you can select and copy text, and the page context menu is available as usual.
 
 The appearance of books can be customized separately from other pages by selecting "Gempub" in the "Applies to:" setting in Preferences (see section 3.3).
+
+### 2.4.1 Bookshelf
+
+The "Books" sidebar has three tabs:
+
+* Cover: The cover page of the currently open book.
+* Contents: The index page of the currently open book, for jumping to a particular chapter.
+* Shelf: All the books on the bookshelf. The list can be sorted by the most recently read, title, or author.
+
+With sync enabled, the bookshelf shows the books saved on your other devices as well. The book files themselves are not synced, though. Opening a book that is not available locally first downloads a copy from the book's source URL, and you can continue reading from the synced position.
+
+The context menu of the Shelf has the following actions, in addition to opening the book:
+
+* "Copy Source URL" copies the URL where the book was downloaded from.
+* "Save As..." saves a copy of the book file to a location of your choosing.
+* "Redownload" fetches the book again from its source URL, replacing the local copy. (This is useful if the source has a newer edition available.)
+* "Remove Download" deletes the local copy, but keeps the book on the shelf so it can be downloaded again.
+* "Delete Book" removes the book from the bookshelf entirely. The book will be removed from all synced devices, too.
+
+### 2.4.2 Saving pages as books
+
+Any Gemtext page can be saved to the bookshelf with "Save to Bookshelf" in the File menu or the page context menu (${SHIFT+}${CTRL+}S). This creates a single-chapter book, which is convenient for reading longer articles over multiple sessions or on multiple devices.
+
+Synced devices need to download the source page before they can open the saved book; the saved page content is not part of the sync data.
 
 ## 2.5 Input prompt
 
@@ -462,13 +550,52 @@ To import data, select "User Data > Import..." and choose the archive, or open t
 
 Note that browsing history also contains the read status of feed entries, because those are tracked based on whether entry URLs have been visited. This means a transfer of user data includes the up-to-date status of each subscription as well.
 
-To keep your user data automatically up to date on all your devices, enable sync in "Preferences > Sync".
+To keep your user data automatically up to date on all your devices, enable sync (see the next section).
 
-## 2.7 Sending messages (with Misfin)
+## 2.7 Syncing user data
 
-Misfin is a messaging protocol that has been in the works since May 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
+If you use Lagrange on more than one device, sync keeps your user data the same on all of them. For example, a bookmark created on your phone also appears on your laptop, and a feed entry read on one device is marked as read on the others.
 
-Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server.
+The following data is synced:
+
+* Bookmarks, including feed subscriptions
+* Identities (except temporary ones)
+* The bookshelf: book metadata and reading positions, but not the book files themselves
+* Visited URLs (also determines the read status of feed entries)
+* Trusted server certificates
+* Site-specific settings
+* Text snippets
+
+Other preferences are not synced, so each device can have its own app-wide appearance and behavior settings.
+
+### 2.7.1 Setting up sync
+
+Sync is configured on the "Sync" tab of Preferences. You can also find "Configure Sync..." in the "User Data" submenu.
+
+1. Toggle "Sync enabled" on.
+2. Choose the server. The default is the public sync server at "sync.skyjake.fi:1966". You can also run your own server (see the Reference, section 8).
+3. Choose the identity to use for syncing. If you don't have one yet, click on "New Sync Identity" to create it. A sync identity must use an Ed25519 key.
+4. Choose the interval for checking the server for updates from your other devices.
+
+The same sync identity must be present on all the devices that sync with each other. Devices that use different sync identities do not see each other's data. After creating the sync identity on the first device, copy it to the other devices before enabling sync on them. One way to do this is to select "Export" in the Identities sidebar context menu: this opens a page with the certificate and private key in PEM format, which can then be imported on another device (see section 1.5.3). Alternatively, export your user data and import it on the other device (see section 2.6).
+
+It is recommended to use the sync identity only for syncing, and not for signing in to any other service.
+
+### 2.7.2 How syncing works
+
+All data is encrypted on your device before it is uploaded, using a key derived from the sync identity's private key. The server only stores the encrypted data and cannot decrypt it. The connection to the server is protected with TLS 1.3.
+
+Note that if you lose the sync identity, the data on the server cannot be decrypted any more. Your devices still have full copies of the data, though, so you can create a new sync identity and switch all your devices to use it. The server eventually deletes data that has not been accessed in a long time.
+
+When you make changes to your bookmarks, identities, or other synced data, they are uploaded a few minutes later. Visited URLs are uploaded more frequently, so the read status of feed entries stays up to date. Your other devices check the server for updates at the chosen interval, download the new data, and merge it with any local changes. If the interval is set to "Never", syncing only happens when you select "Sync Now", which can be found in the "User Data" submenu and on the "Sync" tab of Preferences. The "Status" field on the "Sync" tab shows when the latest sync occurred, and the details of any errors.
+
+The sync server's certificate is checked the same way as any other server's. If the certificate changes or does not match the server's address, you are asked whether to trust it. Only trust the new certificate if its fingerprint matches the one given by the server's administrator.
+
+## 2.8 Sending messages (with Misfin)
+
+Misfin is a messaging protocol whose first version was published in 2023. Like Gemini, it relies on TLS and simple text-based requests, with 'text/gemini' as the content format.
+
+Lagrange has supported Misfin since version 1.18. You can import Misfin identity certificates and send messages using them. You will still need a Misfin mailbox on a Misfin server where you can receive messages — servers are expected to verify the identity of unknown senders by checking if the sender's certificate matches the one provided by their server.
 
 A Misfin identity certificate is a TLS client certificate where:
 
@@ -478,13 +605,22 @@ A Misfin identity certificate is a TLS client certificate where:
 
 You will need to import one or more of these before sending any messages.
 
-When sending a message, the Upload dialog opens in Misfin mode with "To" and "From" fields. As usual, the text editor in the dialog has basic Gemtext syntax highlighting, but otherwise the editor has nothing Misfin-specific. A toggle is provided if you want to send a copy of the message to yourself. Lagrange does not keep copies of sent messages because it does not maintain a local Misfin mailbox.
+When sending a message, the Upload dialog opens in Misfin mode with "To" and "From" fields. The text editor in the dialog supports basic Gemtext syntax highlighting. A toggle is provided if you want to send a copy of the message to yourself. Lagrange does not keep copies of sent messages because it does not maintain a local Misfin mailbox.
 
 When you click on a Misfin link, the dialog opens automatically with the recipient address prefilled. Both the "misfin:user@example.com" and "misfin://user@example.com" URI forms are supported. An optional query string in the URI (for example, "misfin:user@example.com?Hello") is used as the initial message text if the text field is empty.
 
 => gemini://satch.xyz/misfin/  Misfin specification(s) and resources
-=> gemini://misfin.org/  Original Misfin specification
+=> gemini://misfin.org/        Original Misfin specification
 => gemini://bbs.geminispace.org/s/misfin  s/Misfin on BBS
+
+## 2.9 Tools
+
+The Tools submenu of the page context menu has actions that operate on the current page, for example translation, auto-reloading, Titan uploads, "Import Links as Bookmarks...", and "Subscribe to All...".
+
+"Unwrap Paragraphs" (${ALT+}${CTRL+}U) is useful on plain text and Gemtext pages where the author has used hard line breaks inside paragraphs. It joins the lines of each paragraph so that the text wraps correctly to the width of the page. Reloading the page restores the original text.
+
+You can also define your own tools that pass the page through external programs. Such tools can be run automatically on matching content (for example, to convert a file format to Gemtext), or manually via the Tools submenu or a keyboard shortcut. Custom tools are configured in a "tools.ini" file in the user directory.
+=> about:reference  See the Technical Reference, section 3, for details.
 
 # 3. Customization
 
@@ -521,18 +657,26 @@ At the top of each of these tabs, "Applies to:" determines which pages the setti
 
 Page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode. "Paginated dark" and "Paginated light" are the themes used in the paginated view.
 
+Multicolor:
+
 * Colorful Dark: All elements of the page are colored; the background is dark and text is light. This mode provides the best visual distinction between different domains because more color combinations are available.
 * Colorful Light: A single, bright background color with black text. Note that colored backgrounds may reduce readability.
 * Vibrant Light: Like Colorful Light, but with fully saturated background colors. This is the most colorful light theme.
+
+Single-color:
+
 * Black: Gray body text and brightly colored headings on a black background.
 * Gray: Slightly brighter version of Black, i.e., gray body text and colored headings on a gray background.
 * White: Colored headings on a white background.
-* Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
-* Paper: Light sepia background with gray and sepia toned text. Does not change depending on domain; this theme is designed for reading books.
+* High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
+
+Thematic:
+
 * Oceanic: Mostly teal/blue theme with a few orange/red accents. Brightness and saturation vary randomly based on domain.
 * Arboreal: Mostly green theme with a few brown/yellow accents. Brightness and saturation vary randomly based on domain.
 * Ember: Warm orange-tinted theme with red, orange, and yellow accents. Brightness and saturation vary randomly based on domain.
-* High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
+* Paper: Light sepia background with gray and sepia toned text. Does not change depending on domain; this theme is designed for reading books. Light mode only.
+* Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience. Supports both light and dark modes.
 
 The "Saturation" setting can be used to tone down the theme colors for a more neutral appearance. "Colorize images" can be used to tint images with the theme colors, or show them in grayscale.
 

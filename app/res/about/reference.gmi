@@ -339,7 +339,7 @@ Errors in tools.ini are reported at launch, and the details are shown in "about:
 
 ## 3.3 Running tools manually
 
-A tool can also be run manually on the current page via the context menu or a keyboard shortcut. The tool is only available when the page's MIME type matches the tool's `mime` regexp. The page source is passed to the tool like for content filters (see 4.1), and the tool runs in the background. When the tool finishes, its output replaces the page contents, possibly changing the MIME type. Reloading the page restores the original contents.
+A tool can also be run manually on the current page via the context menu or a keyboard shortcut. The tool is only available when the page's MIME type matches the tool's `mime` regexp. The page source is passed to the tool like for content filters (see section 3.1), and the tool runs in the background. When the tool finishes, its output replaces the page contents, possibly changing the MIME type. Reloading the page restores the original contents.
 
 For example, a tool that is not used as a content filter but appears in the context menu of Gemtext pages:
 ```tools.ini
