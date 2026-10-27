@@ -155,7 +155,7 @@ Trusted server certificates. Each line specifies the certificate fingerprint of 
 > {domain};{port} {valid-until} {fingerprint}
 * Domain names are stored in punycode format if they contain non-ASCII characters.
 * The "valid until" expiration date is a UNIX timestamp.
-* The fingerprint is an SHA256 checksum of the server certificate's public key in DER format.
+* The fingerprint is an SHA-256 checksum of the server certificate's public key in DER format.
 
 ### uploadbackup.txt
 Backup of the text entered into the Upload with Titan dialog.
@@ -478,3 +478,73 @@ The keys and values are the same as in "prefs/document.ini", "prefs/protocols.in
 ### 5.2.6 Other
 * `paletteSeed` (string): Text used for generating the page theme colors instead of the URL's host name. Empty means that the host name is used. Has no effect on local files.
 * `zoomPercent` (integer): Zoom level as a percentage, in the range 50...200. Defaults to 100.
+
+# 6. gmget
+
+The Core library comes with `gmget`, a simple curl-like utility for making network requests on the command line. It is a thin command line interface on top of the same code that Lagrange uses for requests, so it can be useful in scripts that need access to Lagrange's identities and other user data.
+
+`gmget` is built from the "lib/core" directory of the Lagrange source tree. It is not included in the app packages.
+
+```gmget --help
+Usage: gmget [OPTIONS] URL...
+
+Options:
+  -o FILE, --output=FILE  Write response body to FILE instead of stdout
+  -I IDENT, --ident=IDENT Use the Lagrange identity matching IDENT
+  -U DIR, --user=DIR      User data directory (default: platform-specific)
+  -p, --print             Print response status and meta string to stderr
+  -h, --help              Print this help and exit
+```
+
+* URLs without a scheme are assumed to be "gemini://" URLs. When multiple URLs are given, the response bodies are written one after another.
+* IDENT can be a partial client certificate fingerprint or common name, ignoring case.
+* Status and meta are always printed to stderr if the request fails.
+* Identities and trusted server certificates are read from the user directory, but gmget never modifies them.
+* Content filters (see section 2) are not applied.
+
+# 7. Self-hosted sync server
+
+Lagrange syncs user data via a sync server. By default, the public server at sync.skyjake.fi:1966 is used, but you can also run your own with `lgrsyncd` (Lagrange Sync Daemon).
+
+`lgrsyncd` can be found in the "sync" directory of the Lagrange source tree. It can be compiled separately from the app.
+
+```Building lgrsyncd
+cmake -S sync -B build-sync
+cmake --build build-sync
+```
+
+## 7.1 Running the server
+
+```lgrsyncd --help
+Usage: lgrsyncd [options]
+
+  -d, --dir DIR        Data directory (default: current directory)
+  -p, --port N         Listening port (default: 1965)
+  -h, --host NAME      Host name for a generated server certificate
+      --cert FILE      Server certificate (PEM, Ed25519); generated if missing
+      --key FILE       Server private key (PEM); generated if missing
+      --max-size N     Max stored data per account in bytes (default: 1048576)
+      --max-accounts N Max number of accounts; 0 for no limit (default: 5000)
+      --expire-days N  Remove accounts inactive for N days; 0 to keep forever
+                       (default: 365)
+      --max-per-ip N   Max simultaneous connections per IP address; 0 for no
+                       limit (default: 4)
+      --allow FILE     Allowed client certificate fingerprints (SHA-256, hex),
+                       one per line; if omitted, anyone with an Ed25519
+                       certificate can sync
+  -v, --verbose        Log all requests (default: only errors and daily stats)
+```
+
+* If the certificate and key files are missing, a self-signed Ed25519 certificate is generated for the given host name and saved in the data directory as "server.crt" and "server.key".
+* Account data is stored in the "accounts" subdirectory of the data directory.
+* The allow list file has one fingerprint per line. Empty lines and lines beginning with "#" are ignored.
+
+For example:
+```
+lgrsyncd \
+    --dir ~/.local/share/lgrsyncd \
+    --port 1966 \
+    --host sync.example.com
+```
+
+On Linux, the server can be run as a systemd user service. See "sync/lgrsyncd.service.example" for a template.
