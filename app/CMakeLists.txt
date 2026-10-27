@@ -1,8 +1,8 @@
 # Lagrange - A Beautiful Gemini Client
 # Copyright: 2020-2026 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
-# This is the portable cross-platform GUI shell for Lagrange.
-# It uses SDL for input and rendering and provides its own custom UI widgets.
+# This is the portable cross-platform GUI application. It uses SDL for
+# input and rendering and implements its own custom UI widgets.
 #
 # Notes:
 # - Required dependencies: SDL 3, OpenSSL 1.1.1 or later, libpcre,
@@ -12,10 +12,10 @@
 # - Windows builds require MSYS2. In theory, Clang could be set up on
 #   Windows for compiling everything, but the_Foundation still lacks
 #   native Win32 implementations for the Socket and Process classes.
-# - Windows builds should use the SDL 2 library precompiled for native
-#   Windows (MSVC variant) instead of the version from MSYS2 (get it from
-#   https://libsdl.org/). To make configuration easier, consider writing
-#   for your personal use a pkg-config sdl2.pc file that uses the Windows
+# - Non-vcpkg Windows builds should use the SDL 3 library precompiled for
+#   native Windows (MSVC variant) instead of the version from MSYS2 (get it
+#   from https://libsdl.org/). To make configuration easier, consider writing
+#   for your personal use a pkg-config sdl3.pc file that uses the Windows
 #   version of the library.
 
 cmake_minimum_required (VERSION 3.15)
