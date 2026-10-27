@@ -1,10 +1,6 @@
 # Technical Reference
 
-This page has technical information about the file formats and configuration files used by Lagrange. For instructions on using the app, see the Help page.
-
-=> about:help       Help
-=> about:protocols  Protocol cheatsheet
-=> about:licenses   Open source licenses
+This page has technical information about Lagrange's configuration files, custom file formats, and related utilities. For instructions on using the app, see the Help page.
 
 # 1. User data
 
