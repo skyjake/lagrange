@@ -2253,17 +2253,20 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                   : (d->flags & viewSource_DocumentWidgetFlag) != 0; /* toggle */
         iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
         /* The source text changes, so the reading position is kept by line. */
-        const size_t anchor    = isPaged_DocumentView(d->view) ? anchor_DocumentView(d->view)
-                                                               : iInvalidPos;
-        iInt2        anchorPos = zero_I2();
-        int          numLines  = 0;
-        if (anchor != iInvalidPos) {
-            anchorPos = linePos_DocumentWidget_(source_GmDocument(d->view->doc), anchor, &numLines);
+        const iBool     isPaged   = isPaged_DocumentView(d->view);
+        iGmScrollAnchor anchor    = isPaged
+                                        ? (iGmScrollAnchor){ anchor_DocumentView(d->view), 0.0f }
+                                        : scrollAnchor_DocumentView(d->view);
+        iInt2           anchorPos = zero_I2();
+        int             numLines  = 0;
+        if (anchor.pos != iInvalidPos) {
+            anchorPos =
+                linePos_DocumentWidget_(source_GmDocument(d->view->doc), anchor.pos, &numLines);
         }
         if (setViewFormat_GmDocument(
                 d->view->doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
             documentRunsInvalidated_DocumentWidget(d);
-            if (anchor != iInvalidPos) {
+            if (anchor.pos != iInvalidPos) {
                 const iString *source = source_GmDocument(d->view->doc);
                 int            newLines;
                 linePos_DocumentWidget_(source, size_String(source), &newLines);
@@ -2271,11 +2274,20 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     /* Converted, so lines do not match. */
                     anchorPos = init_I2(anchorPos.y * newLines / iMax(1, numLines), 0);
                 }
-                setAnchor_DocumentView(d->view, sourceOffset_DocumentWidget_(source, anchorPos));
+                anchor.pos = sourceOffset_DocumentWidget_(source, anchorPos);
+            }
+            if (anchor.pos == iInvalidPos) {
+                updateWidthAndRedoLayout_DocumentWidget_(d);
+            }
+            else if (isPaged) {
+                setAnchor_DocumentView(d->view, anchor.pos);
                 updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, iTrue);
             }
             else {
+                setLayoutScrollAnchor_DocumentView(d->view, d->view->doc, &anchor);
                 updateWidthAndRedoLayout_DocumentWidget_(d);
+                clearLayoutAnchor_GmDocument(d->view->doc);
+                resetScrollPosition_DocumentView(d->view, 0.0f, &anchor);
             }
             updateSize_DocumentWidget(d);
         }
