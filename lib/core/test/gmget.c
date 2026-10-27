@@ -60,7 +60,7 @@ static void printUsage_(const char *prog) {
             "\n"
             "Options:\n"
             "  -o FILE, --output=FILE  Write response body to FILE instead of stdout\n"
-            "  -I NAME, --ident=NAME   Use the Lagrange identity matching NAME\n"
+            "  -I IDENT, --ident=IDENT Use the Lagrange identity matching IDENT\n"
             "  -U DIR, --user=DIR      User data directory (default: platform-specific)\n"
             "  -p, --print             Print response status and meta string to stderr\n"
             "  -h, --help              Print this help and exit\n",
