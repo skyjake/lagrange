@@ -732,6 +732,9 @@ iWidget *makePreferences_Widget(void) {
         }, 10);
         appendPanels_ScopedPrefs(mainItems, iTrue, green_ColorId);
         appendToPanel_(mainItems, "heading.prefs.typography", (iMenuItem[]){
+#if defined (LAGRANGE_ENABLE_CORETEXT) || defined (LAGRANGE_ENABLE_FREETYPE)
+            { "toggle id:prefs.font.coloremoji" },
+#endif
             { "toggle id:prefs.font.warnmissing" },
             { "padding" },
             { NULL }
