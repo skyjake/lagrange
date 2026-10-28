@@ -57,10 +57,8 @@ if (ENABLE_CORETEXT)
     set (ENABLE_FRIBIDI  OFF)
 endif ()
 if (ENABLE_FREETYPE)
-    # FreeType uses the system HarfBuzz (via hb-ft.h) which is co-installed with
-    # the system FreeType. Using lib/harfbuzz/ would produce an ABI-incompatible copy.
-    set (ENABLE_HARFBUZZ         ON  CACHE BOOL "" FORCE)
-    set (ENABLE_HARFBUZZ_MINIMAL OFF CACHE BOOL "" FORCE)
+    # Shaping with FreeType requires HarfBuzz.
+    set (ENABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
 endif ()
 
 #-------------------------------------------------------------------------------------------------

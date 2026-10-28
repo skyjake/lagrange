@@ -107,6 +107,12 @@ endif ()
 if (ENABLE_HARFBUZZ AND VCPKG_TOOLCHAIN)
     find_package (harfbuzz CONFIG REQUIRED)
     set (HARFBUZZ_FOUND YES)
+    # The config package does not export the raster library.
+    find_library (HARFBUZZ_RASTER_LIBRARY harfbuzz-raster)
+    if (HARFBUZZ_RASTER_LIBRARY)
+        set (HARFBUZZ_RASTER_FOUND YES)
+        set (HARFBUZZ_RASTER_LDFLAGS ${HARFBUZZ_RASTER_LIBRARY})
+    endif ()
 elseif (ENABLE_HARFBUZZ)
     # Find HarfBuzz with pkg-config.
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
@@ -127,6 +133,13 @@ elseif (ENABLE_HARFBUZZ)
             else ()
                 set (_extraCppOpts)
             endif ()
+            # The raster library renders COLRv1 color glyphs for FreeType.
+            if (ENABLE_FREETYPE)
+                set (_hbRaster enabled)
+                set (HARFBUZZ_RASTER_FOUND YES)
+            else ()
+                set (_hbRaster disabled)
+            endif ()
             ExternalProject_Add (harfbuzz-ext
                 PREFIX              ${CMAKE_BINARY_DIR}/harfbuzz-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/harfbuzz
@@ -137,13 +150,15 @@ elseif (ENABLE_HARFBUZZ)
                                         -Dlibdir=lib
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
-                                        -Ddocs=disabled
+                                        -Ddocs=disabled -Draster=${_hbRaster}
+                                        -Dvector=disabled -Dgpu=disabled
+                                        -Dpng=disabled -Dzlib=disabled
                                         ${_dependMacOpts}
                                         ${_extraCppOpts}
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
                 INSTALL_COMMAND     ""
-                BUILD_BYPRODUCTS    ${_dst}/lib/libharfbuzz.a
+                BUILD_BYPRODUCTS    ${_dst}/lib/libharfbuzz.a ${_dst}/lib/libharfbuzz-raster.a
             )
             list (APPEND _dependsToBuild harfbuzz-ext)
             add_library (harfbuzz-lib INTERFACE)
@@ -152,8 +167,13 @@ elseif (ENABLE_HARFBUZZ)
                 # Link dynamically.
                 target_link_libraries (harfbuzz-lib INTERFACE -L${_dst}/lib harfbuzz)
                 install (PROGRAMS ${_dst}/bin/msys-harfbuzz-0.dll DESTINATION .)
+                set (HARFBUZZ_RASTER_LDFLAGS -L${_dst}/lib harfbuzz-raster)
+                if (HARFBUZZ_RASTER_FOUND)
+                    install (PROGRAMS ${_dst}/bin/msys-harfbuzz-raster-0.dll DESTINATION .)
+                endif ()
             elseif (MINGW)
                 target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/lib/libharfbuzz.a)
+                set (HARFBUZZ_RASTER_LDFLAGS ${_dst}/lib/libharfbuzz-raster.a)
             else ()
                 if (APPLE)
                     target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/lib/libharfbuzz.0.dylib)
@@ -161,6 +181,7 @@ elseif (ENABLE_HARFBUZZ)
                 else ()
                     target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/lib/libharfbuzz.a)
                     target_link_libraries (harfbuzz-lib INTERFACE stdc++)
+                    set (HARFBUZZ_RASTER_LDFLAGS ${_dst}/lib/libharfbuzz-raster.a)
                 endif ()
             endif ()
             set (HARFBUZZ_FOUND YES)
@@ -172,15 +193,24 @@ elseif (ENABLE_HARFBUZZ)
             set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
             set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
             set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
+            set (HB_BUILD_RASTER  ${ENABLE_FREETYPE} CACHE BOOL "" FORCE)
+            set (HB_BUILD_VECTOR  OFF CACHE BOOL "" FORCE)
+            set (HB_BUILD_GPU     OFF CACHE BOOL "" FORCE)
             set (SKIP_INSTALL_ALL YES CACHE BOOL "" FORCE)
             set (CMAKE_CXX_FLAGS)
+            set (CMAKE_DISABLE_FIND_PACKAGE_PNG YES) # only for loading PNGs in hb-raster
             add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
-            set (HARFBUZZ_LIBRARIES harfbuzz)
+            unset (CMAKE_DISABLE_FIND_PACKAGE_PNG)
+            set (HARFBUZZ_LDFLAGS harfbuzz)
+            if (ENABLE_FREETYPE)
+                set (HARFBUZZ_RASTER_FOUND YES)
+                set (HARFBUZZ_RASTER_LDFLAGS harfbuzz-raster)
+            endif ()
             # HarfBuzz is C++ so must link with the standard library.
             if (APPLE)
-                list (APPEND HARFBUZZ_LIBRARIES c++)
+                list (APPEND HARFBUZZ_LDFLAGS c++)
             else ()
-                list (APPEND HARFBUZZ_LIBRARIES stdc++)
+                list (APPEND HARFBUZZ_LDFLAGS stdc++)
             endif ()
             set (HARFBUZZ_FOUND YES)
             set (SKIP_INSTALL_ALL NO CACHE BOOL "" FORCE)
