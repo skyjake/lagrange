@@ -1199,6 +1199,7 @@ iChar systemIconChar_Windows(iChar ch) {
         { 0x2700,  0xe8c6 },    /* scissor_Icon */
         { 0x270e,  0xe70f },    /* edit_Icon */
         { 0x2714,  0xe73e },    /* check_Icon */
+        { 0x2750,  0xf5ed },    /* openTabBg_Icon */
         { 0x2795,  0xe710 },    /* add_Icon */
         { 0x279e,  0xe72a },    /* rightArrow_Icon */
         { 0x27a4,  0xe76c },    /* rightArrowhead_Icon */
