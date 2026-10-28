@@ -1894,7 +1894,7 @@ static void appendToolMenuItems_Root_(iArray *items, const iDocumentWidget *doc)
             continue;
         }
         if (isFirst) {
-            pushBack_Array(items, &(iMenuItem){ "---" });
+            pushBack_Array(items, &(iMenuItem){ "___" }); /* may be inside a submenu */
             isFirst = iFalse;
         }
         const char     *command = format_CStr("tool.run id:%s", cstr_String(&tool->id));

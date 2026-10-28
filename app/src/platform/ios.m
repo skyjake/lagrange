@@ -1471,7 +1471,8 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
             if (!checkDevice_MenuItem(item)) {
                 continue;
             }
-            if (startsWith_CStr(item->label, "---")) { /* separator or submenu */
+            if (startsWith_CStr(item->label, "---") || equal_CStr(item->label, "___")) {
+                /* separator or submenu */
                 if ([subElems count] > 0) {
                     haveSep = iTrue;
                     addMenuElementGroup_(elems, &sepTitle, subElems);
@@ -1482,6 +1483,19 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
                 translate_Lang(&sepTitle);
                 if (endsWith_String(&sepTitle, ":")) {
                     removeEnd_String(&sepTitle, 1);
+                }
+                if (!isEmpty_String(&sepTitle)) {
+                    /* Submenu items continue until the next "---". */
+                    const size_t start = i + 1;
+                    for (i++; i < n && items[i].label && !startsWith_CStr(items[i].label, "---"); i++) {}
+                    NSArray<UIMenuElement *> *groupElems =
+                        makeMenuElements_(owner, data, items + start, i - start);
+                    i--;
+                    if ([groupElems count] > 0) {
+                        haveSep = iTrue;
+                        addMenuElementGroup_(elems, &sepTitle, groupElems);
+                    }
+                    clear_String(&sepTitle);
                 }
                 continue;
             }

@@ -861,7 +861,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             continue;
         }
         const char *label = translateCStr_Lang(items[i].label);
-        if (equal_CStr(label, "---")) {
+        if (equal_CStr(label, "---") || equal_CStr(label, "___")) {
             [menu insertItem:[NSMenuItem separatorItem] atIndex:atIndex++];
         }
         else {

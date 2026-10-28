@@ -257,7 +257,8 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
         if (!startsWith_CStr(labelText, ">>>")) {
             horizGroup = NULL;
         }
-        if (equal_CStr(labelText, "---")) {
+        if (equal_CStr(labelText, "---") || equal_CStr(labelText, "___")) {
+            /* "___" does not end a submenu. */
             addChild_Widget(menu, iClob(makeMenuSeparator_()));
         }
         else {
@@ -1245,7 +1246,7 @@ size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
     int widest = 0;
     size_t widestPos = iInvalidPos;
     for (size_t i = 0; i < num && items[i].label; i++) {
-        if (startsWith_CStr(items[i].label, "---")) {
+        if (startsWith_CStr(items[i].label, "---") || equal_CStr(items[i].label, "___")) {
             continue; /* skip separators and submenu headers */
         }
         const int width =
