@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
+#   include "ui/util.h"
 #endif
 
 #include <the_Foundation/archive.h>
@@ -82,7 +83,8 @@ void init_FontFile(iFontFile *d) {
     d->ascent    = 0;
     d->descent   = 0;
     init_Block(&d->sourceData, 0);
-    d->data = NULL;
+    d->data    = NULL;
+    d->charMap = NULL;
 }
 
 static void load_FontFile_(iFontFile *d, const iBlock *data) {
@@ -635,6 +637,40 @@ void init_Fonts(const char *userDir) {
                 delete_FontPack(sys);
             }
         }
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+        /* Segoe Fluent Icons (Windows 11) or MDL2 Assets for UI icons, like SF Symbols on
+           Apple platforms. */
+        static const char *iconFonts_[] = { "SegoeIcons.ttf", "segmdl2.ttf" };
+        iForIndices(f, iconFonts_) {
+            if (!fileExists_FileInfo(collect_String(concatCStr_Path(
+                    collect_String(concatCStr_Path(winPath, "Fonts")), iconFonts_[f])))) {
+                continue;
+            }
+            iFontPack *icons = new_FontPack();
+            icons->loadPath = concatCStr_Path(winPath, "Fonts");
+            setCStr_String(&icons->id, "windows-icons");
+            setReadOnly_FontPack(icons, iTrue);
+            if (load_FontPack_(icons, collectNewFormat_String(
+                    "[windows-icons]\n"
+                    "name       = \"%s\"\n"
+                    "regular    = \"%s\"\n"
+                    "auxiliary  = true\n"
+                    "uioverride = true\n",
+                    f == 0 ? "Segoe Fluent Icons" : "Segoe MDL2 Assets",
+                    iconFonts_[f]))) {
+                iConstForEach(PtrArray, i, &icons->fonts) {
+                    const iFontSpec *spec = i.ptr;
+                    setCharMap_FontFile((iFontFile *) spec->styles[regular_FontStyle],
+                                        systemIconChar_Windows);
+                }
+                pushBack_PtrArray(&d->packs, icons);
+            }
+            else {
+                delete_FontPack(icons);
+            }
+            break;
+        }
+#endif
 #endif
 #if defined (iPlatformAndroidMobile)
         /* Material Symbols for UI icons, like SF Symbols on Apple platforms. */ {

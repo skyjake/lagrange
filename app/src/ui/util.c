@@ -1168,3 +1168,110 @@ const char *systemImageName_Apple(iChar ch) {
 }
 
 #endif
+
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+
+/* Maps UI icon codepoints (see defs.h) to Segoe Fluent Icons. Most of these are also in
+   Segoe MDL2 Assets. Returns 0 for unmapped characters. */
+iChar systemIconChar_Windows(iChar ch) {
+    /* clang-format off */
+    static const struct { iChar c, icon; } icons[] = { /* sorted by `c` */
+        { 0x2139,  0xe946 },    /* info_Icon */
+        { 0x2191,  0xe74a },    /* keyUpArrow_Icon */
+        { 0x2197,  0xe8a7 },    /* openInTab_Icon */
+        { 0x21a6,  0xede1 },    /* barRightArrow_Icon */
+        { 0x21c5,  0xe8cb },    /* upDownArrow_Icon */
+        { 0x21e8,  0xe72a },    /* rightArrowWhite_Icon */
+        { 0x2328,  0xe765 },    /* keyboard_Icon */
+        { 0x232b,  0xe750 },    /* delete_Icon */
+        { 0x2398,  0xe8c8 },    /* clipCopy_Icon / copy_Icon */
+        { 0x23ce,  0xe751 },    /* return_Icon */
+        { 0x23ea,  0xe7a7 },    /* undo_Icon */
+        { 0x23f2,  0xe81c },    /* timer_Icon */
+        { 0x25e7,  0xe90c },    /* leftHalf_Icon */
+        { 0x25e8,  0xe90d },    /* rightHalf_Icon */
+        { 0x2605,  0xe735 },    /* star_Icon */
+        { 0x2606,  0xe734 },    /* whiteStar_Icon */
+        { 0x2610,  0xe739 },    /* ballotUnchecked_Icon */
+        { 0x2611,  0xe73a },    /* ballotChecked_Icon */
+        { 0x2699,  0xe713 },    /* gear_Icon */
+        { 0x26a0,  0xe7ba },    /* warning_Icon */
+        { 0x2700,  0xe8c6 },    /* scissor_Icon */
+        { 0x270e,  0xe70f },    /* edit_Icon */
+        { 0x2714,  0xe73e },    /* check_Icon */
+        { 0x2795,  0xe710 },    /* add_Icon */
+        { 0x279e,  0xe72a },    /* rightArrow_Icon */
+        { 0x27a4,  0xe76c },    /* rightArrowhead_Icon */
+        { 0x27e8,  0xe76b },    /* leftAngle_Icon */
+        { 0x27e9,  0xe76c },    /* rightAngle_Icon */
+        { 0x2912,  0xe898 },    /* upArrowBar_Icon */
+        { 0x2913,  0xe896 },    /* downArrowBar_Icon */
+        { 0x2a2f,  0xe711 },    /* close_Icon */
+        { 0x2b13,  0xe90e },    /* toolbar_Icon */
+        { 0x2b71,  0xe898 },
+        { 0x2b9c,  0xe76b },    /* leftArrowhead_Icon */
+        { 0x2ba5,  0xe724 },    /* upload_Icon */
+        { 0x2ba7,  0xe896 },    /* download_Icon */
+        { 0xfe40,  0xe70d },    /* downAngle_Icon */
+        { 0x10117, 0xe8fd },    /* page_Icon */
+        { 0x1d362, 0xe700 },    /* menu_Icon */
+        { 0x1f310, 0xe774 },    /* globe_Icon */
+        { 0x1f3a8, 0xe790 },    /* palette_Icon */
+        { 0x1f3ae, 0xe7fc },    /* gamepad_Icon */
+        { 0x1f3e0, 0xe80f },    /* home_Icon */
+        { 0x1f3f7, 0xe8ec },    /* tag_Icon */
+        { 0x1f41e, 0xebe8 },    /* bug_Icon */
+        { 0x1f441, 0xe890 },    /* eye_Icon */
+        { 0x1f464, 0xe77b },    /* person_Icon */
+        { 0x1f4c1, 0xe8b7 },    /* folder_Icon */
+        { 0x1f4c4, 0xed5e },    /* Layout settings */
+        { 0x1f4cb, 0xe77f },    /* clipboard_Icon */
+        { 0x1f4ce, 0xe723 },    /* paperclip_Icon */
+        { 0x1f4da, 0xe8f1 },    /* books_Icon */
+        { 0x1f4e4, 0xede1 },    /* export_Icon */
+        { 0x1f4e5, 0xe8b5 },    /* import_Icon */
+        { 0x1f4e6, 0xe7b8 },    /* package_Icon */
+        { 0x1f4e7, 0xe715 },    /* envelope_Icon */
+        { 0x1f4f1, 0xe8ea },    /* User Interface settings */
+        { 0x1f503, 0xe72c },    /* reload_Icon */
+        { 0x1f50d, 0xe721 },    /* magnifyingGlass_Icon */
+        { 0x1f511, 0xe8d7 },    /* key_Icon */
+        { 0x1f512, 0xe72e },    /* closedLock_Icon */
+        { 0x1f513, 0xe785 },    /* openLock_Icon */
+        { 0x1f516, 0xe728 },    /* bookmark_Icon */
+        { 0x1f520, 0xe8d2 },    /* fontpack_Icon */
+        { 0x1f528, 0xe90f },    /* hammer_Icon */
+        { 0x1f553, 0xe917 },    /* clock_Icon */
+        { 0x1f56e, 0xe736 },    /* book_Icon */
+        { 0x1f588, 0xe718 },    /* pin_Icon */
+        { 0x1f5a7, 0xe968 },    /* network_Icon */
+        { 0x1f5b3, 0xec4e },    /* computer_Icon */
+        { 0x1f5bc, 0xe91b },    /* photo_Icon */
+        { 0x1f5ce, 0xe8a5 },    /* file_Icon */
+        { 0x1f5d1, 0xe74d },    /* trash_Icon */
+        { 0x1f5da, 0xe8e9 },    /* fonts_Icon */
+        { 0x1f660, 0xe7e6 },    /* pageStyle_Icon */
+        { 0x1f870, 0xe72b },    /* backArrow_Icon */
+        { 0x1f871, 0xe74a },    /* upArrow_Icon */
+        { 0x1f872, 0xe72a },    /* forwardArrow_Icon */
+        { 0x1f873, 0xe74b },    /* downArrow_Icon */
+        { 0x1fa90, 0xe909 },    /* planet_Icon */
+    };
+    /* clang-format on */
+    size_t lo = 0, hi = iElemCount(icons);
+    while (lo < hi) {
+        const size_t mid = (lo + hi) / 2;
+        if (icons[mid].c == ch) {
+            return icons[mid].icon;
+        }
+        if (icons[mid].c < ch) {
+            lo = mid + 1;
+        }
+        else {
+            hi = mid;
+        }
+    }
+    return 0;
+}
+
+#endif

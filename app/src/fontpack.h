@@ -78,6 +78,7 @@ struct Impl_FontFile {
     enum iFontStyle style;
     iBlock          sourceData;
     void *          data; /* internal data managed by Text (backend-specific)*/
+    iChar        (* charMap)(iChar); /* optional remapping of characters (e.g., icon fonts) */
 
     /* Metrics (design units): */
     int ascent;
@@ -90,6 +91,9 @@ struct Impl_FontFile {
 };
 
 uint32_t    findGlyphIndex_FontFile     (const iFontFile *, iChar ch);
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+void        setCharMap_FontFile         (iFontFile *, iChar (*charMap)(iChar));
+#endif
 iBool       isMonospace_FontFile        (const iFontFile *);
 iBool       hasColorGlyphs_FontFile     (const iFontFile *); /* font-wide COLR/CBDT/sbix presence */
 float       scaleForPixelHeight_FontFile(const iFontFile *, int pixelHeight);

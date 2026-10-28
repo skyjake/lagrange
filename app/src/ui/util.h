@@ -319,3 +319,9 @@ void        print_PerfTimer                 (const iPerfTimer *, const char *msg
 const char *    systemImageName_Apple   (iChar ch);
 
 #endif
+
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+
+iChar           systemIconChar_Windows  (iChar ch);
+
+#endif

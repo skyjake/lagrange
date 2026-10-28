@@ -264,7 +264,41 @@ hb_font_t *hbFont_FontFile(const iFontFile *d) {
 uint32_t findGlyphIndex_FontFile(const iFontFile *d, iChar ch) {
     const iFtFontData *fd = ftData_FontFile(d);
     if (!fd || !fd->ftFace) return 0;
+    if (d->charMap && (ch = d->charMap(ch)) == 0) {
+        return 0;
+    }
     return FT_Get_Char_Index(fd->ftFace, ch);
+}
+
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+static hb_bool_t mappedNominalGlyph_(hb_font_t *font, void *fontData, hb_codepoint_t unicode,
+                                     hb_codepoint_t *glyph, void *userData) {
+    const iFontFile *d      = fontData;
+    const iChar      mapped = d->charMap(unicode);
+    iUnused(userData);
+    return mapped && hb_font_get_nominal_glyph(hb_font_get_parent(font), mapped, glyph);
+}
+#endif
+
+void setCharMap_FontFile(iFontFile *d, iChar (*charMap)(iChar)) {
+    iAssert(!d->charMap);
+    d->charMap = charMap;
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+    /* Shaping must see the remapped characters, too. */
+    iFtFontData *fd = ftData_FontFile(d);
+    if (charMap && fd && fd->hbFont) {
+        static hb_font_funcs_t *funcs_;
+        if (!funcs_) {
+            funcs_ = hb_font_funcs_create();
+            hb_font_funcs_set_nominal_glyph_func(funcs_, mappedNominalGlyph_, NULL, NULL);
+            hb_font_funcs_make_immutable(funcs_);
+        }
+        hb_font_t *mapped = hb_font_create_sub_font(fd->hbFont);
+        hb_font_set_funcs(mapped, funcs_, d, NULL);
+        hb_font_destroy(fd->hbFont);
+        fd->hbFont = mapped;
+    }
+#endif
 }
 
 iBool isMonospace_FontFile(const iFontFile *d) {
