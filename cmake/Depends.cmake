@@ -111,6 +111,7 @@ elseif (ENABLE_HARFBUZZ)
     # Find HarfBuzz with pkg-config.
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
         pkg_check_modules (HARFBUZZ IMPORTED_TARGET harfbuzz)
+        pkg_check_modules (HARFBUZZ_RASTER IMPORTED_TARGET harfbuzz-raster)
     endif ()
     if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND
             (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))

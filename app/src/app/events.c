@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lagrange/core.h>
 #include <the_Foundation/thread.h>
+#include "bookmarks.h"
 #include "feeds.h"
 #include "periodic.h"
 #include "sync.h"

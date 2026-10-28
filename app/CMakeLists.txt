@@ -52,9 +52,11 @@ set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to in
 set    (RESOURCES_LGR_PATH      "" CACHE STRING "Additional location to check when searching 'resources.lgr'")
 
 if (ENABLE_FREETYPE)
-    find_package (Freetype REQUIRED)
+    if (NOT TARGET Freetype::Freetype) # Android: pre-built
+        find_package (Freetype REQUIRED)
+    endif ()
     # FontConfig is only needed on non-Windows systems.
-    if (UNIX AND NOT APPLE AND PKG_CONFIG_FOUND)
+    if (UNIX AND NOT APPLE AND NOT ANDROID AND PKG_CONFIG_FOUND)
         pkg_check_modules (FONTCONFIG IMPORTED_TARGET fontconfig)
         if (FONTCONFIG_FOUND)
             message (STATUS "Using fontconfig: ${FONTCONFIG_LIBRARIES}")
@@ -735,6 +737,15 @@ if (ENABLE_GUI)
     # SDL3 always supports extended text editing (candidate list) events.
     target_compile_definitions (app PUBLIC LAGRANGE_HAVE_SDL_TEXTEDITING=1)
     if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
+        if (ENABLE_FREETYPE AND HARFBUZZ_RASTER_FOUND)
+            # Renders COLRv1 color glyphs. Must precede HarfBuzz itself when linking statically.
+            if (TARGET PkgConfig::HARFBUZZ_RASTER)
+                target_link_libraries (app PUBLIC PkgConfig::HARFBUZZ_RASTER)
+            else ()
+                target_link_libraries (app PUBLIC ${HARFBUZZ_RASTER_LDFLAGS})
+            endif ()
+            target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_HB_RASTER=1)
+        endif ()
         if (VCPKG_TOOLCHAIN)
             target_link_libraries (app PRIVATE harfbuzz::harfbuzz-subset)
             target_link_libraries (app PRIVATE harfbuzz::harfbuzz)

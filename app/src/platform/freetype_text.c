@@ -20,8 +20,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* Text rendering backend using FreeType for Windows and Linux.
-   Uses HarfBuzz (via hb-ft.h) for shaping and the shared text_backend
+/* Text rendering backend using FreeType for Windows, Linux, and Android.
+   Uses HarfBuzz for shaping and the shared text_backend
    infrastructure for GlyphBuffer/FontRun management. Color emoji is supported
    via FreeType's CBDT/CBLC and COLR v0 facilities. */
 
@@ -53,6 +53,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_version.h>
 
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+#   include <hb-ot.h>
+#   include <hb-raster.h>
+#endif
+
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -62,6 +67,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static FT_Library ftLibrary_     = NULL;
 static int        ftLibraryRefs_ = 0;
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+static hb_raster_paint_t *rasterPaint_ = NULL; /* reused for all COLRv1 glyphs */
+#endif
 
 static void initFtLibrary_(void) {
     if (!ftLibrary_) {
@@ -82,6 +90,12 @@ static void doneFtLibrary_(void) {
     if (ftLibrary_ && --ftLibraryRefs_ == 0) {
         FT_Done_FreeType(ftLibrary_);
         ftLibrary_ = NULL;
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+        if (rasterPaint_) {
+            hb_raster_paint_destroy(rasterPaint_);
+            rasterPaint_ = NULL;
+        }
+#endif
     }
 }
 
@@ -113,6 +127,31 @@ static float colorVertShift_(FT_Face face, int ascent, int descent) {
     }
     if (!found) return 0.0f;
     return (float) (yMin + yMax) / 2.0f - (float) (ascent + descent) / 2.0f;
+}
+
+/* Bitmap strikes (CBDT, sbix) and COLR v0 layers can be rendered, and COLRv1 paint graphs
+   with hb-raster. Otherwise COLRv1 fonts (e.g., Noto Color Emoji on Android 13+) would
+   produce empty glyphs. */
+static iBool hasRenderableColor_(FT_Face face, iBool *hasColrV1_out) {
+    *hasColrV1_out = iFalse;
+    if (!FT_HAS_COLOR(face)) {
+        return iFalse;
+    }
+    if (FT_HAS_FIXED_SIZES(face)) {
+        return iTrue;
+    }
+    FT_Byte  header[4];
+    FT_ULong len = sizeof(header);
+    if (FT_Load_Sfnt_Table(face, TTAG_COLR, 0, header, &len) == 0) {
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+        if (((header[0] << 8) | header[1]) >= 1) {
+            *hasColrV1_out = iTrue;
+            return iTrue;
+        }
+#endif
+        return ((header[2] << 8) | header[3]) > 0; /* numBaseGlyphRecords */
+    }
+    return iFalse;
 }
 
 void allocData_FontFile(iFontFile *d) {
@@ -162,7 +201,7 @@ void allocData_FontFile(iFontFile *d) {
     else {
         d->emAdvance = (int) face->units_per_EM;
     }
-    fd->hasColorGlyphs = FT_HAS_COLOR(face);
+    fd->hasColorGlyphs = hasRenderableColor_(face, &fd->hasColrV1);
     /* Some color fonts (e.g. Noto Color Emoji) have only fixed-size bitmap strikes;
        FT_Set_Pixel_Sizes() only works at their native size, so pick the best one now. */
     fd->isFixedSize = !FT_IS_SCALABLE(face) && face->num_fixed_sizes > 0;
@@ -323,6 +362,85 @@ static iBool colrV0Bounds_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
     return *x1 > *x0 && *y1 > *y0;
 }
 
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+static iBool isColrV1Glyph_(const iFtFontData *fd, uint32_t glyphIndex) {
+    return fd->hasColrV1 && fd->hbFont &&
+           hb_ot_color_glyph_has_paint(hb_font_get_face(fd->hbFont), glyphIndex);
+}
+
+static hb_raster_paint_t *rasterPaint_FtText_(void) {
+    if (!rasterPaint_) {
+        rasterPaint_ = hb_raster_paint_create_or_fail();
+    }
+    return rasterPaint_;
+}
+
+/* Sets up the paint extents of a COLRv1 glyph at `ppem` pixels; font units become pixels. */
+static hb_font_t *prepareColrV1_(const iFtFontData *fd, uint32_t glyphIndex, FT_UInt ppem,
+                                 hb_raster_extents_t *ext_out) {
+    hb_raster_paint_t *paint = rasterPaint_FtText_();
+    if (!paint) return NULL;
+    hb_font_t *font = hb_font_create_sub_font(fd->hbFont);
+    hb_font_set_scale(font, (int) ppem, (int) ppem);
+    hb_glyph_extents_t gext;
+    if (!hb_font_get_glyph_extents(font, glyphIndex, &gext) ||
+        !hb_raster_paint_set_glyph_extents(paint, &gext) ||
+        !hb_raster_paint_get_extents(paint, ext_out)) {
+        hb_font_destroy(font);
+        return NULL;
+    }
+    return font;
+}
+
+static iBool colrV1Bounds_(const iFtFontData *fd, uint32_t glyphIndex, FT_UInt ppem,
+                           int *x0, int *y0, int *x1, int *y1) {
+    hb_raster_extents_t ext;
+    hb_font_t *font = prepareColrV1_(fd, glyphIndex, ppem, &ext);
+    if (!font) return iFalse;
+    hb_font_destroy(font);
+    hb_raster_paint_clear(rasterPaint_);
+    /* Y up, like colrV0Bounds_(). */
+    *x0 = ext.x_origin;
+    *y0 = ext.y_origin;
+    *x1 = ext.x_origin + (int) ext.width;
+    *y1 = ext.y_origin + (int) ext.height;
+    return ext.width > 0 && ext.height > 0;
+}
+
+/* Returns a top-down BGRA bitmap with premultiplied alpha. */
+static uint8_t *renderColrV1_(const iFtFontData *fd, uint32_t glyphIndex, FT_UInt ppem,
+                              int *w_out, int *h_out) {
+    hb_raster_extents_t ext;
+    hb_font_t *font = prepareColrV1_(fd, glyphIndex, ppem, &ext);
+    if (!font) return NULL;
+    hb_raster_paint_t *paint = rasterPaint_;
+    uint8_t *buf = NULL;
+    if (hb_raster_paint_glyph_or_fail(paint, font, glyphIndex)) {
+        hb_raster_image_t *img = hb_raster_paint_render(paint);
+        if (img) {
+            hb_raster_image_get_extents(img, &ext);
+            const uint8_t *src = hb_raster_image_get_buffer(img);
+            if (src && ext.width > 0 && ext.height > 0) {
+                const size_t rowSize = (size_t) ext.width * 4;
+                buf = malloc(rowSize * ext.height);
+                for (unsigned int row = 0; row < ext.height; row++) {
+                    /* Image rows are stored bottom-to-top. */
+                    memcpy(buf + row * rowSize, src + (ext.height - 1 - row) * ext.stride, rowSize);
+                }
+                *w_out = (int) ext.width;
+                *h_out = (int) ext.height;
+            }
+            hb_raster_paint_recycle_image(paint, img);
+        }
+    }
+    else {
+        hb_raster_paint_clear(paint);
+    }
+    hb_font_destroy(font);
+    return buf;
+}
+#endif /* LAGRANGE_ENABLE_HB_RASTER */
+
 static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
                                      float xScale, float yScale, float xShift,
                                      int *x0, int *y0, int *x1, int *y1, iBool *isBitmap_out) {
@@ -349,6 +467,18 @@ static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
            layers may not match the base glyph's outline metrics. */
         const FT_UInt ppem  = colorPpem_(d, xScale);
         const int     shift = (int) roundf(fd->colorVertShift * yScale);
+        int cx0, cy0, cx1, cy1;
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+        if (isColrV1Glyph_(fd, glyphIndex)) {
+            if (colrV1Bounds_(fd, glyphIndex, ppem, &cx0, &cy0, &cx1, &cy1)) {
+                *x0 = cx0;
+                *y0 = shift - cy1;
+                *x1 = cx1;
+                *y1 = shift - cy0;
+            }
+            return;
+        }
+#endif
         FT_Set_Pixel_Sizes(face, ppem, ppem);
         if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) == 0) {
             FT_GlyphSlot slot = face->glyph;
@@ -361,7 +491,6 @@ static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
                 return;
             }
         }
-        int cx0, cy0, cx1, cy1;
         if (colrV0Bounds_(face, glyphIndex, ppem, &cx0, &cy0, &cx1, &cy1)) {
             *x0 = cx0;
             *y0 = shift - cy1;
@@ -489,6 +618,15 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
     /* First try FT_LOAD_COLOR which on FreeType >= 2.12 renders both CBDT and COLR as BGRA. */
     if (fd->hasColorGlyphs) {
         const FT_UInt ppem = colorPpem_(d, xScale);
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+        if (isColrV1Glyph_(fd, glyphIndex)) {
+            uint8_t *colr = renderColrV1_(fd, glyphIndex, ppem, w, h);
+            if (colr) {
+                *isColor_out = iTrue;
+                return colr;
+            }
+        }
+#endif
         FT_Set_Pixel_Sizes(face, ppem, ppem);
         if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_COLOR | FT_LOAD_RENDER) == 0) {
             FT_GlyphSlot slot = face->glyph;
@@ -677,6 +815,11 @@ iBool hasColorGlyphs_FontFile(const iFontFile *d) {
 iBool isColorGlyph_(const iFontFile *d, uint32_t glyphIndex) {
     const iFtFontData *fd = ftData_FontFile(d);
     if (!fd || !fd->ftFace || !fd->hasColorGlyphs) return iFalse;
+#if defined (LAGRANGE_ENABLE_HB_RASTER)
+    if (isColrV1Glyph_(fd, glyphIndex)) {
+        return iTrue;
+    }
+#endif
     /* Check COLR v0: glyph has color layers. */
     FT_LayerIterator iter;
     memset(&iter, 0, sizeof(iter));

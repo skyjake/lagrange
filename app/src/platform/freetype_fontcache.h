@@ -49,3 +49,11 @@ iBool loadCachedSystemFonts_FontPack_(iFontPack *);
 
 /** Stop the background font cache validation thread (call on shutdown). */
 void stopFontWorker_FtFontCache(void);
+
+/** System fonts to use as fallbacks for missing glyphs, in the system's order of preference.
+    Currently only available on Android (from fonts.xml). */
+void systemFallbackSpecs_FtFontCache(iPtrArray *specs_out);
+
+/** System Emoji fonts in the system's order of preference. Fonts after the first one
+    are supplementary, like Android's separate flags font. */
+void systemEmojiSpecs_FtFontCache(iPtrArray *specs_out);

@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include FT_FREETYPE_H
 #include FT_SFNT_NAMES_H
 #include FT_TRUETYPE_TABLES_H
+#include FT_TRUETYPE_TAGS_H /* TTAG_COLR */
 #include FT_COLOR_H        /* FT_Palette_Select, FT_Get_Color_Glyph_Layer */
 #include FT_LCD_FILTER_H   /* FT_Library_SetLcdFilter */
 #include FT_GLYPH_H        /* FT_Glyph_Get_CBox, FT_GLYPH_BBOX_PIXELS */
@@ -38,17 +39,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 #   include <hb.h>
-#   include <hb-ft.h>
 #endif
 
 /*----------------------------------------------------------------------------------------------*/
 
 typedef struct {
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    hb_font_t *hbFont; /* created via hb_ft_font_create; matches system FT ABI */
+    hb_font_t *hbFont;
 #endif
     FT_Face    ftFace;
     iBool      hasColorGlyphs; /* FT_HAS_COLOR: CBDT/CBLC or COLR table */
+    iBool      hasColrV1;      /* COLRv1 paint graphs, rendered with hb-raster */
     iBool      isFixedSize;    /* no scalable outline, only fixed bitmap strikes (e.g. Noto
                                    Color Emoji); FT_Set_Pixel_Sizes() only works at native size */
     int        fixedSizeIndex; /* best available_sizes[] index to select */

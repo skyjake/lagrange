@@ -95,8 +95,10 @@ struct Impl_FontInitCallbacks {
 
 void    initFonts_Text          (iText *, iArray *fontPriorityOrder, int *overrideFontId,
                                  iFontSpec *monoFallback, int *colorEmojiFontId,
-                                 iFontSpec *colorEmojiSpec, const iFontInitCallbacks *);
-                                 /* called from backend; last two may both be NULL (e.g., CoreText) */
+                                 iFontSpec *colorEmojiSpec, iArray *systemFallbacks,
+                                 const iFontInitCallbacks *);
+                                 /* called from backend; colorEmojiFontId, colorEmojiSpec, and
+                                    systemFallbacks (iFontSpec[]) may be NULL (e.g., CoreText) */
 
 /*----------------------------------------------------------------------------------------------*/
 

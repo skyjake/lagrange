@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/stringhash.h>
 #include <the_Foundation/stringlist.h>
@@ -211,6 +212,7 @@ static uint64_t fontDirMtimeMillis_(void) {
         }
         iRelease(fi);
     }
+#if defined (LAGRANGE_ENABLE_FONTCONFIG)
     /* Also watch user-local font directories. */ {
         iString *home = home_Path();
         const char *userFontDirs[] = { ".fonts", ".local/share/fonts", NULL };
@@ -226,6 +228,7 @@ static uint64_t fontDirMtimeMillis_(void) {
         }
         delete_String(home);
     }
+#endif
     return timeMillis_(&maxTime);
 }
 
@@ -701,10 +704,18 @@ static void startWorker_(const iString *cachePath) {
 
 #if defined (__ANDROID__)
 
+static iFontCacheEntry *findEntry_(iArray *entries, const iString *id) {
+    iForEach(Array, i, entries) {
+        iFontCacheEntry *e = i.value;
+        if (equal_String(&e->id, id)) {
+            return e;
+        }
+    }
+    return NULL;
+}
+
 static void enumerateAndroid_(iArray *entries_out) {
     const char *androidFontDirs[] = { "/system/fonts", "/system/product/fonts", NULL };
-    iStringHash familyMap;
-    init_StringHash(&familyMap);
     for (int di = 0; androidFontDirs[di]; di++) {
         iString *dir = newCStr_String(androidFontDirs[di]);
         iFileInfo *fi = new_FileInfo(dir);
@@ -747,22 +758,14 @@ static void enumerateAndroid_(iArray *entries_out) {
                     appendChar_String(&specId, '-');
                 }
             }
-            /* Find or create entry. */
-            iAnyObject *existing = value_StringHash(&familyMap, &specId);
-            iFontCacheEntry *entry;
-            if (existing) {
-                entry = at_Array(entries_out, (size_t) existing);
-            }
-            else {
+            iFontCacheEntry *entry = findEntry_(entries_out, &specId);
+            if (!entry) {
                 iFontCacheEntry newEntry;
                 init_FontCacheEntry(&newEntry);
                 set_String(&newEntry.id, &specId);
                 set_String(&newEntry.name, stem);
-                const size_t idx = size_Array(entries_out);
                 pushBack_Array(entries_out, &newEntry);
-                entry = at_Array(entries_out, idx);
-                insertCStr_StringHash(&familyMap, cstr_String(&specId),
-                                      (iAnyObject *)(size_t) idx);
+                entry = back_Array(entries_out);
             }
             deinit_String(&specId);
             /* Determine style from filename and populate the style slot. */
@@ -815,7 +818,75 @@ static void enumerateAndroid_(iArray *entries_out) {
             }
         }
     }
-    deinit_StringHash(&familyMap);
+}
+
+static iBool hasAttr_(iRangecc attrs, const char *attr) {
+    return iStrStrN(attrs.start, attr, size_Range(&attrs)) != NULL;
+}
+
+/* Font files of the unnamed fallback families in fonts.xml, in the system's order of
+   preference. Emoji families are listed separately. */
+static void androidFallbackPaths_(iStringList *paths_out, iStringList *emojiPaths_out) {
+    iFile *f = newCStr_File("/system/etc/fonts.xml");
+    if (!open_File(f, readOnly_FileMode)) {
+        iRelease(f);
+        return;
+    }
+    iBlock *xml = readAll_File(f);
+    iRelease(f);
+    /* Comments may contain markup. */
+    iString *src = new_String();
+    const char *pos = constData_Block(xml);
+    for (const char *open; (open = strstr(pos, "<!--")) != NULL; ) {
+        appendRange_String(src, (iRangecc){ pos, open });
+        const char *close = strstr(open + 4, "-->");
+        pos = close ? close + 3 : open + strlen(open);
+    }
+    appendCStr_String(src, pos);
+    delete_Block(xml);
+    iRegExp *familyPattern = new_RegExp("(?s)<family\\b([^>]*)>(.*?)</family>", 0);
+    iRegExp *fontPattern   = new_RegExp("<font\\b([^>]*)>\\s*([^<\\s]+)", 0);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    while (matchString_RegExp(familyPattern, src, &m)) {
+        const iRangecc attrs = capturedRange_RegExpMatch(&m, 1);
+        /* Named families are the generic ones (sans-serif, serif, etc.). The "compact"
+           variants are the defaults, like in Android's own text rendering. */
+        if (hasAttr_(attrs, "name=") || hasAttr_(attrs, "ignore=\"true\"") ||
+            hasAttr_(attrs, "variant=\"elegant\"")) {
+            continue;
+        }
+        iStringList *list = hasAttr_(attrs, "und-Zsye") ? emojiPaths_out : paths_out;
+        iRangecc file = iNullRange;
+        iRegExpMatch fm;
+        init_RegExpMatch(&fm);
+        while (matchRange_RegExp(fontPattern, capturedRange_RegExpMatch(&m, 2), &fm)) {
+            const iRangecc fontAttrs = capturedRange_RegExpMatch(&fm, 1);
+            const iBool    isRegular = hasAttr_(fontAttrs, "weight=\"400\"") &&
+                                       hasAttr_(fontAttrs, "style=\"normal\"");
+            if (isRegular || isEmpty_Range(&file)) {
+                file = capturedRange_RegExpMatch(&fm, 2);
+            }
+            if (isRegular) break;
+        }
+        if (isEmpty_Range(&file)) continue;
+        iString *path = newCStr_String("/system/fonts/");
+        appendRange_String(path, file);
+        iBool isListed = iFalse;
+        iConstForEach(StringList, i, list) {
+            if (equal_String(i.value, path)) {
+                isListed = iTrue;
+                break;
+            }
+        }
+        if (!isListed) {
+            pushBack_StringList(list, path);
+        }
+        delete_String(path);
+    }
+    iRelease(fontPattern);
+    iRelease(familyPattern);
+    delete_String(src);
 }
 
 #endif /* __ANDROID__ */
@@ -856,4 +927,53 @@ void stopFontWorker_FtFontCache(void) {
         delete_FtFontWorker(worker_);
         worker_ = NULL;
     }
+}
+
+#if defined (__ANDROID__)
+static const iFontSpec *findSpecByPath_(const iString *path) {
+    iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
+        const iFontSpec *spec = i.ptr;
+        for (int s = 0; s < max_FontStyle; s++) {
+            if (spec->styles[s] && equal_String(&spec->styles[s]->id, path)) {
+                return spec;
+            }
+        }
+    }
+    return NULL;
+}
+
+static const iStringList *androidPaths_(iBool emoji) {
+    static iStringList *paths_[2]; /* fonts.xml does not change while running */
+    if (!paths_[0]) {
+        paths_[0] = new_StringList();
+        paths_[1] = new_StringList();
+        androidFallbackPaths_(paths_[0], paths_[1]);
+    }
+    return paths_[emoji ? 1 : 0];
+}
+
+static void appendSpecs_(const iStringList *paths, iPtrArray *specs_out) {
+    iConstForEach(StringList, i, paths) {
+        const iFontSpec *spec = findSpecByPath_(i.value);
+        if (spec && indexOf_PtrArray(specs_out, spec) == iInvalidPos) {
+            pushBack_PtrArray(specs_out, spec);
+        }
+    }
+}
+#endif
+
+void systemFallbackSpecs_FtFontCache(iPtrArray *specs_out) {
+#if defined (__ANDROID__)
+    appendSpecs_(androidPaths_(iFalse), specs_out);
+#else
+    iUnused(specs_out);
+#endif
+}
+
+void systemEmojiSpecs_FtFontCache(iPtrArray *specs_out) {
+#if defined (__ANDROID__)
+    appendSpecs_(androidPaths_(iTrue), specs_out);
+#else
+    iUnused(specs_out);
+#endif
 }

@@ -33,6 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/prefs.h>
 #include <SDL3/SDL_hints.h>
 
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+#   include "../platform/freetype_fontcache.h"
+#endif
+
 static iText *current_Text_;
 
 int   gap_Text;                           /* cf. gap_UI in metrics.h */
@@ -164,23 +168,30 @@ static const char *colorEmojiNames_[] = {
     "JoyPixels", "OpenMoji Color", "Blobmoji", NULL
 };
 
-static const iFontSpec *findColorEmojiSpec_(void) {
+static iBool hasColorGlyphs_FontSpec_(const iFontSpec *spec) {
+    const iFontFile *file = spec->styles[regular_FontStyle];
+    return file && hasColorGlyphs_FontFile(file);
+}
+
+static const iFontSpec *findColorEmojiSpec_(const iPtrArray *systemEmoji) {
+    iConstForEach(PtrArray, e, systemEmoji) {
+        if (hasColorGlyphs_FontSpec_(e.ptr)) {
+            return e.ptr;
+        }
+    }
     for (size_t k = 0; colorEmojiNames_[k]; k++) {
         iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
             const iFontSpec *spec = i.ptr;
-            const iFontFile *file = spec->styles[regular_FontStyle];
-            if (file && !cmpCase_String(&spec->name, colorEmojiNames_[k]) &&
-                hasColorGlyphs_FontFile(file)) {
+            if (!cmpCase_String(&spec->name, colorEmojiNames_[k]) &&
+                hasColorGlyphs_FontSpec_(spec)) {
                 return spec;
             }
         }
     }
     /* No well-known name matched; fall back to any font with color glyphs. */
     iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
-        const iFontSpec *spec = i.ptr;
-        const iFontFile *file = spec->styles[regular_FontStyle];
-        if (file && hasColorGlyphs_FontFile(file)) {
-            return spec;
+        if (hasColorGlyphs_FontSpec_(i.ptr)) {
+            return i.ptr;
         }
     }
     return NULL;
@@ -189,7 +200,7 @@ static const iFontSpec *findColorEmojiSpec_(void) {
 
 void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
                     iFontSpec *monoFallback, int *colorEmojiFontId, iFontSpec *colorEmojiSpec,
-                    const iFontInitCallbacks *cb) {
+                    iArray *systemFallbacks, const iFontInitCallbacks *cb) {
     const float uiSize   = fontSize_UI * (isMobile_Platform() ? 1.1f : 1.0f);
     const float textSize = fontSize_UI * d->contentFontSize;
     *overrideFontId = -1;
@@ -221,8 +232,11 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
 #if defined (LAGRANGE_ENABLE_FREETYPE)
     /* Find an installed color Emoji font (e.g. Noto Color Emoji) so glyph lookup can
        prefer it over the bundled monochrome fonts. */
+    iPtrArray systemEmoji;
+    init_PtrArray(&systemEmoji);
+    systemEmojiSpecs_FtFontCache(&systemEmoji);
     if (colorEmojiFontId && colorEmojiSpec && prefs_App()->colorEmoji) {
-        const iFontSpec *colorEmoji = findColorEmojiSpec_();
+        const iFontSpec *colorEmoji = findColorEmojiSpec_(&systemEmoji);
         if (colorEmoji && !cb->hasSpec(d, colorEmoji)) {
             /* Local copy tagged auxiliary so a trailing space/punctuation isn't measured
                with this font's metrics (attributedtext.c resets such runs to the base font). */
@@ -235,6 +249,43 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
 #endif
         }
     }
+    if (systemFallbacks) {
+        clear_Array(systemFallbacks);
+        /* Supplementary color Emoji fonts (e.g., Android's flags) come before all other
+           fallbacks, for sequences missing from the main color Emoji font. */
+        if (colorEmojiFontId && *colorEmojiFontId >= 0) {
+            iConstForEach(PtrArray, e, &systemEmoji) {
+                const iFontSpec *spec = e.ptr;
+                if (equal_String(&spec->id, &colorEmojiSpec->id) ||
+                    !hasColorGlyphs_FontSpec_(spec) || cb->hasSpec(d, spec)) continue;
+                iFontSpec copy = *spec;
+                copy.flags   |= auxiliary_FontSpecFlag;
+                copy.priority = 1000 - (int) size_Array(systemFallbacks);
+                pushBack_Array(systemFallbacks, &copy);
+            }
+        }
+        /* System fonts are the last resort for missing glyphs. The copies have the lowest
+           priorities, in the system's order of preference. */
+        iPtrArray specs;
+        init_PtrArray(&specs);
+        systemFallbackSpecs_FtFontCache(&specs);
+        iConstForEach(PtrArray, i, &specs) {
+            const iFontSpec *spec = i.ptr;
+            if (spec->flags & ignoreAsFallback_FontSpecFlag || cb->hasSpec(d, spec)) continue;
+            iFontSpec copy = *spec;
+            copy.flags   |= auxiliary_FontSpecFlag;
+            copy.priority = -1000 - (int) size_Array(systemFallbacks);
+            pushBack_Array(systemFallbacks, &copy);
+        }
+        deinit_PtrArray(&specs);
+        /* Set up only after all copies are in place, so they won't move in memory. */
+        iForEach(Array, f, systemFallbacks) {
+            cb->setupSpec(d, f.value, cb->alloc(d), uiSize, textSize);
+        }
+    }
+    deinit_PtrArray(&systemEmoji);
+#else
+    iUnused(systemFallbacks);
 #endif
     sort_Array(fontPriorityOrder, cmp_PrioMapItem_);
     d->gap = gap_Text = iRound(gap_UI * d->contentFontSize);

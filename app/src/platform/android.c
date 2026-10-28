@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "export.h"
 #include <lagrange/resources.h>
 #include "media/player.h"
+#include "render/text.h"
 #include "ui/command.h"
 #include "ui/metrics.h"
 #include "ui/mobile.h"

@@ -45,6 +45,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"
 #endif
+#if defined (iPlatformAndroidMobile)
+#   include <fcntl.h>
+#   include <unistd.h>
+#endif
 
 iBool isPlacementUnused_App_(const iApp *d, size_t index) {
     iConstForEach(PtrArray, i, &d->mainWindows) {

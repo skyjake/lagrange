@@ -205,6 +205,7 @@ struct Impl_RasterText {
     int          colorEmojiFontId;  /* detected system color-Emoji font (-1 if none/disabled) */
     iFontSpec    colorEmojiSpec;    /* copy of the detected color-Emoji FontSpec, tagged auxiliary */
     iFontSpec    monoFallback;      /* copy of Iosevka as low-priority monospace spec */
+    iArray       systemFallbacks;   /* iFontSpec[] copies of system fonts, lowest priority */
     iArray       fontPriorityOrder; /* iPrioMapItem[] sorted by priority */
     iGlyphCache  grayscaleCache;    /* 8-bit INDEX8 atlas; used by both backends */
     iGlyphCache  colorCache;        /* RGBA atlas; texture==NULL in STB backend */

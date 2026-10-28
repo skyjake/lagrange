@@ -404,6 +404,7 @@ static void initFonts_AppleText_(iAppleText *d) {
                    &d->overrideFontId,
                    &d->monoFallback,
                    NULL, NULL, /* CoreText handles color Emoji via its own cascade; see overrideFont_AppleText_() */
+                   NULL,       /* system fonts are in the cascade list */
                    &(iFontInitCallbacks) {
                        .setupSpec = setupVariants_AppleText_,
                        .hasSpec   = hasVariant_AppleText_,

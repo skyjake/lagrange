@@ -40,6 +40,8 @@ set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include/
 set (HARFBUZZ_FOUND YES)
 set (HARFBUZZ_LDFLAGS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz.a)
 set (HARFBUZZ_INCLUDE_DIRS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/include/harfbuzz)
+set (HARFBUZZ_RASTER_FOUND YES)
+set (HARFBUZZ_RASTER_LDFLAGS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz-raster.a)
 
 if (ENABLE_FREETYPE)
     # FreeType pre-built for Android; hb-ft.h comes from the HarfBuzz include dir above.
@@ -47,6 +49,7 @@ if (ENABLE_FREETYPE)
     set_target_properties (Freetype::Freetype PROPERTIES
         IMPORTED_LOCATION   ${ANDROID_DIR}/freetype-android/${ANDROID_ABI}/lib/libfreetype.a
         INTERFACE_INCLUDE_DIRECTORIES ${ANDROID_DIR}/freetype-android/${ANDROID_ABI}/include/freetype2
+        INTERFACE_LINK_LIBRARIES "${ANDROID_DIR}/libpng-android/${ANDROID_ABI}/lib/libpng16.a;z"
     )
     set (Freetype_FOUND YES)
 endif ()

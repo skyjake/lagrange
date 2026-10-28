@@ -201,6 +201,7 @@ void init_RasterText(iRasterText *d, SDL_Renderer *render, float documentFontSiz
     init_Text(&d->base, render, documentFontSizeFactor);
     init_Array(&d->fonts, sizeof(iRasterFont));
     init_Array(&d->fontPriorityOrder, sizeof(iPrioMapItem));
+    init_Array(&d->systemFallbacks, sizeof(iFontSpec));
     d->overrideFontId = -1;
     d->missingGlyphs  = iFalse;
     iZap(d->missingChars);
@@ -241,6 +242,7 @@ void deinit_RasterText(iRasterText *d) {
 #endif
     SDL_DestroyPalette(d->blackAndWhite);
     SDL_DestroyPalette(d->grayscale);
+    deinit_Array(&d->systemFallbacks);
     deinit_Array(&d->fontPriorityOrder);
     deinit_Array(&d->fonts);
     deinit_Text(&d->base);
@@ -330,6 +332,7 @@ void initFonts_RasterText(iRasterText *d) {
                    &d->monoFallback,
                    &d->colorEmojiFontId,
                    &d->colorEmojiSpec,
+                   &d->systemFallbacks,
                    &(iFontInitCallbacks){
                        .setupSpec = setupFontVariants_RasterText_,
                        .hasSpec   = hasVariant_RasterText_,
@@ -346,6 +349,7 @@ void deinitFonts_RasterText(iRasterText *d) {
     }
     clear_Array(&d->fonts);
     clear_Array(&d->fontPriorityOrder);
+    clear_Array(&d->systemFallbacks);
     d->overrideFontId   = -1;
     d->colorEmojiFontId = -1;
 }
@@ -522,6 +526,18 @@ iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
             return (iBaseFont *) colorFont;
         }
         if (isEmoji_Char(seq[0]) && glyphIndex_Font_(colorFont, seq[0])) {
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+            /* A supplementary color font may have it (e.g., Android's flags). */
+            iConstForEach(Array, i, &tx->fontPriorityOrder) {
+                iRasterFont *other = (iRasterFont *) font_Text(
+                    FONT_ID(((const iPrioMapItem *) i.value)->fontIndex, styleId, sizeId));
+                if (other != colorFont && other->font.file &&
+                    hasColorGlyphs_FontFile(other->font.file) &&
+                    isLigature_RasterFont_(other, seq, len)) {
+                    return (iBaseFont *) other;
+                }
+            }
+#endif
             return NULL; /* rather show the individual color glyphs */
         }
     }
