@@ -1476,8 +1476,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.changed")) {
         /* Update navbar according to the current tab. */
-        iDocumentWidget *doc = document_App();
-        iAssert(doc);
+        /* May be NULL if the current tab was closed and a tab switch is pending. */
+        iDocumentWidget *doc = document_Root(navBar->root);
         if (doc) {
             iInputWidget *url = findChild_Widget(navBar, "url");
             setText_InputWidget(url, url_DocumentWidget(doc));
@@ -1492,8 +1492,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 !cmp_String(id_Widget(as_Widget(doc)), suffixPtr_Command(cmd, "id"))) {
                 showReadingBars_Root(navBar->root, iTrue);
             }
+            makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         }
-        makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
     }
     else if (equal_Command(cmd, "mouse.clicked")) {
