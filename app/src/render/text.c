@@ -174,6 +174,12 @@ static iBool hasColorGlyphs_FontSpec_(const iFontSpec *spec) {
 }
 
 static const iFontSpec *findColorEmojiSpec_(const iPtrArray *systemEmoji) {
+    iConstForEach(PtrArray, u, listSpecsByPriority_Fonts()) {
+        if (((const iFontSpec *) u.ptr)->flags & user_FontSpecFlag &&
+            hasColorGlyphs_FontSpec_(u.ptr)) {
+            return u.ptr;
+        }
+    }
     iConstForEach(PtrArray, e, systemEmoji) {
         if (hasColorGlyphs_FontSpec_(e.ptr)) {
             return e.ptr;
@@ -215,10 +221,19 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
     cb->setupSpec(d, tryFindSpec_(docPrefs->headingFont,           "default"),      documentHeading_FontId,   uiSize, textSize);
     cb->setupSpec(d, tryFindSpec_(docPrefs->bodyFont,              "default"),      documentBody_FontId,      uiSize, textSize);
     cb->setupSpec(d, tryFindSpec_(docPrefs->monospaceDocumentFont, "iosevka-body"), documentMonospace_FontId, uiSize, textSize);
-    /* Auxiliary and user-installed fonts. */
+    const iFontSpec *colorEmoji = NULL;
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+    iPtrArray systemEmoji;
+    init_PtrArray(&systemEmoji);
+    systemEmojiSpecs_FtFontCache(&systemEmoji);
+    if (colorEmojiFontId && colorEmojiSpec && prefs_App()->colorEmoji) {
+        colorEmoji = findColorEmojiSpec_(&systemEmoji);
+    }
+#endif
+    /* Auxiliary and user-installed fonts. The color Emoji font is set up separately. */
     iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
         const iFontSpec *spec = s.ptr;
-        if (spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
+        if (spec != colorEmoji && spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
             cb->setupSpec(d, spec, cb->alloc(d), uiSize, textSize);
         }
     }
@@ -230,24 +245,18 @@ void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
         cb->setupSpec(d, monoFallback, cb->alloc(d), uiSize, textSize);
     }
 #if defined (LAGRANGE_ENABLE_FREETYPE)
-    /* Find an installed color Emoji font (e.g. Noto Color Emoji) so glyph lookup can
-       prefer it over the bundled monochrome fonts. */
-    iPtrArray systemEmoji;
-    init_PtrArray(&systemEmoji);
-    systemEmojiSpecs_FtFontCache(&systemEmoji);
-    if (colorEmojiFontId && colorEmojiSpec && prefs_App()->colorEmoji) {
-        const iFontSpec *colorEmoji = findColorEmojiSpec_(&systemEmoji);
-        if (colorEmoji && !cb->hasSpec(d, colorEmoji)) {
-            /* Local copy tagged auxiliary so a trailing space/punctuation isn't measured
-               with this font's metrics (attributedtext.c resets such runs to the base font). */
-            *colorEmojiSpec = *colorEmoji;
-            colorEmojiSpec->flags |= auxiliary_FontSpecFlag;
-            *colorEmojiFontId = cb->alloc(d);
-            cb->setupSpec(d, colorEmojiSpec, *colorEmojiFontId, uiSize, textSize);
+    /* An installed color Emoji font (e.g. Noto Color Emoji) is preferred in glyph lookup
+       over the bundled monochrome fonts. */
+    if (colorEmoji && !cb->hasSpec(d, colorEmoji)) {
+        /* Local copy tagged auxiliary so a trailing space/punctuation isn't measured
+           with this font's metrics (attributedtext.c resets such runs to the base font). */
+        *colorEmojiSpec = *colorEmoji;
+        colorEmojiSpec->flags |= auxiliary_FontSpecFlag;
+        *colorEmojiFontId = cb->alloc(d);
+        cb->setupSpec(d, colorEmojiSpec, *colorEmojiFontId, uiSize, textSize);
 #if !defined (NDEBUG)
-            printf("[Text] Color Emoji font: %s\n", cstr_String(&colorEmoji->name));
+        printf("[Text] Color Emoji font: %s\n", cstr_String(&colorEmoji->name));
 #endif
-        }
     }
     if (systemFallbacks) {
         clear_Array(systemFallbacks);
