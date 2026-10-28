@@ -298,9 +298,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
             setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.5f, 0.5f));
             setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 1.0f, 0.4f));
-            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.05f));
-            set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
-            set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.02f));
+            set_Color(tmBannerTitle_ColorId, get_Color(tmHeading3_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(tmHeading3_ColorId));
         }
         else if (theme == colorfulLight_GmDocumentTheme ||
                  theme == vibrantLight_GmDocumentTheme) {
