@@ -845,7 +845,9 @@ iWidget *makeDialogVerticalTabs_Widget(iWidget *dlg, const char *tabsId, const c
     setPadding_Widget(tabButtons, 3 * gap_UI, 3 * gap_UI, 0, 3 * gap_UI);
     setId_Widget(tabs, tabsId);
     *content = findChild_Widget(tabs, "tabs.content");
-    setPadding1_Widget(*content, 3 * gap_UI);
+    /* In the terminal, the sheet padding already separates the buttons from the frame. */
+    setPadding_Widget(*content, 3 * gap_UI, 3 * gap_UI, 3 * gap_UI,
+                      isTerminal_Platform() ? 0 : 3 * gap_UI);
     changeChildIndex_Widget(*content, addDialogTitle_Widget(*content, title, titleId), 0);
     return tabs;
 }

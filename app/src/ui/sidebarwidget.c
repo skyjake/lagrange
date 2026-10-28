@@ -1730,9 +1730,10 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
-    if (isTerminal_Platform() && side == left_SidebarSide) {
+    if (isTerminal_Platform()) {
         /* Keep clear of the separator line. */
-        setPadding_Widget(content, 0, 0, 2, 0);
+        setPadding_Widget(content, side == right_SidebarSide ? 2 : 0, 0,
+                          side == left_SidebarSide ? 2 : 0, 0);
     }
     iWidget *listAndActions = makeVDiv_Widget();
     addChild_Widget(content, iClob(listAndActions));
@@ -2578,9 +2579,11 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     }
     draw_Widget(w);
     if (isVisible_Widget(w)) {
+        /* In the terminal, the separator is inside the bounds on both sides, under the resizer. */
         drawVLine_Paint(
             &p,
-            addX_I2(d->side == left_SidebarSide ? topRight_Rect(bounds) : topLeft_Rect(bounds), -1),
+            d->side == left_SidebarSide ? addX_I2(topRight_Rect(bounds), -1)
+                                        : addX_I2(topLeft_Rect(bounds), isTerminal_Platform() ? 0 : -1),
             height_Rect(bounds),
             uiSeparator_ColorId);
     }

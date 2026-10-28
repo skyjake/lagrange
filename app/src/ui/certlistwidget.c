@@ -484,7 +484,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const 
                    metaFg,
                    range_String(&d->meta));
     if (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) {
-        drawCursor_ListWidget(list, p, itemRect, isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
+        drawCursor_ListWidget(list, p, bgRect, isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
     }
 }
 

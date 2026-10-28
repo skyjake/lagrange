@@ -99,6 +99,13 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
         closeSiteSpecific_(dlg);
         return iTrue;
     }
+    else if (equal_Command(cmd, "tabs.changed")) {
+        if (isTerminal_Platform()) {
+            iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
+            setFocus_Widget((iWidget *) tabPageButton_Widget(tabs, currentTabPage_Widget(tabs)));
+        }
+        return iFalse;
+    }
     if ((equal_Command(cmd, "focus.gained") || equal_Command(cmd, "focus.lost")) &&
         pointer_Command(cmd) == findChild_Widget(dlg, "sitespec.palette")) {
         /* Theme changes are visible while editing the seed. */
@@ -213,6 +220,9 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
         if (tabs && (size_t) prefs_App()->siteDialogTab < tabCount_Widget(tabs)) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, prefs_App()->siteDialogTab));
+        }
+        if (tabs && isTerminal_Platform()) {
+            setFocus_Widget((iWidget *) tabPageButton_Widget(tabs, currentTabPage_Widget(tabs)));
         }
         if (!isUsingPanelLayout_Mobile()) {
             setValidator_InputWidget(palSeed, updateSiteSpecificTheme_, dlg);
