@@ -396,6 +396,11 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,             "navigate.forward"     }, 0 },
     { 1100, { NULL, SDLK_SPACE,        KMOD_PRIMARY | SDL_KMOD_CTRL, "emojipicker"          }, 0 },
 #endif
+#if defined (iPlatformTerminal)
+    /* Plain arrow keys turn pages in the paged view. */
+    { 1012, { NULL, SDLK_LEFT,  SDL_KMOD_ALT,           "navigate.back"                 }, 0 },
+    { 1013, { NULL, SDLK_RIGHT, SDL_KMOD_ALT,           "navigate.forward"              }, 0 },
+#endif
     { 1004, { NULL, SDLK_F5, 0,                         "document.reload"               }, 0 },
     /* Media keys. */
     { 1005, { NULL, SDLK_AC_SEARCH, 0,                  "focus.set id:find.input id2:filter.bookmark.input"       }, 0 },

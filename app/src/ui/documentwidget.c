@@ -3420,8 +3420,13 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         else if (d->indicator == viewMode_DocumentIndicator) {
             const int   font = uiLabelHuge_FontId;
-            const int   size = lineHeight_Text(font) * 2;
-            const iRect rect = initCentered_Rect(mid_Rect(bounds), init1_I2(size));
+            const char *icon = wantsPaged_DocumentView(d->view) ? book_Icon : upDownArrow_Icon;
+            iInt2       size = init1_I2(lineHeight_Text(font) * 2);
+            if (isTerminal_Platform()) {
+                /* One empty cell above and below, two on each side. */
+                size = init_I2(measure_Text(font, icon).advance.x + 4, 3);
+            }
+            const iRect rect = initCentered_Rect(mid_Rect(bounds), size);
             drawRoundRectRadius_Paint(&p,
                                       rect,
                                       2 * radius_UI,
@@ -3435,7 +3440,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                               iTrue,
                               uiTextSelected_ColorId,
                               "%s",
-                              wantsPaged_DocumentView(d->view) ? book_Icon : upDownArrow_Icon);
+                              icon);
         }
         setOpacity_Text(1.0f);
         p.alpha = 0xff;
@@ -3522,8 +3527,10 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, bookmarkPage_KeyShortcut, "bookmark.add");
     addAction_Widget(w, subscribeToPage_KeyShortcut, "feeds.subscribe");
 #endif
+#if !defined (iPlatformTerminal) /* plain arrow keys; page turns take precedence */
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
+#endif
     addAction_Widget(w, navigateParent_KeyShortcut, "navigate.parent");
     addAction_Widget(w, navigateRoot_KeyShortcut, "navigate.root");
 }

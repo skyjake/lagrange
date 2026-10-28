@@ -428,14 +428,19 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const 
     const iBool isHover      = isHoverItem && !isSel;
     const int itemHeight     = height_Rect(itemRect);
     const int font = certList->itemFonts[0];
+    iRect bgRect   = itemRect;
+    if (isTerminal_Platform()) {
+        /* Blank line between items, outside the item's highlight. */
+        adjustEdges_Rect(&bgRect, 0, 0, -lineHeight_Text(font), 0);
+    }
     int bg         = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
-        fillRect_Paint(p, itemRect, bg);
+        fillRect_Paint(p, bgRect, bg);
     }
     else if (isHover) {
         bg = uiBackgroundFramelessHover_ColorId;
-        fillRect_Paint(p, itemRect, bg);
+        fillRect_Paint(p, bgRect, bg);
     }
 //    iInt2 pos = itemRect.pos;
     const int fg = isSel     ? uiTextSelected_ColorId

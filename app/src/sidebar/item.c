@@ -220,6 +220,13 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                         uiSeparator_ColorId);
         adjustEdges_Rect(&itemRect, sepHeight, 0, 0, 0);
     }
+    iRect bgRect = itemRect;
+    if (isTerminal_Platform() && !d->listItem.flags.isSeparator &&
+        (sidebar->mode == feedEntries_SidebarMode || sidebar->mode == subscriptions_SidebarMode ||
+         sidebar->mode == gempub_SidebarMode)) {
+        /* Blank line between multi-line items, outside the item's highlight. */
+        adjustEdges_Rect(&bgRect, 0, 0, -lineHeight_Text(sidebar->itemFonts[0]), 0);
+    }
     const int itemHeight     = height_Rect(itemRect);
     const int font           = sidebar->itemFonts[d->isBold ? 1 : 0];
     const int iconColor = isSel     ? uiTextSelected_ColorId
@@ -229,26 +236,26 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     int bg = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
-        fillRect_Paint(p, itemRect, bg);
+        fillRect_Paint(p, bgRect, bg);
     }
     else if (isMarked) {
         bg = uiBackgroundUnfocusedSelection_ColorId;
-        fillRect_Paint(p, itemRect, bg);
+        fillRect_Paint(p, bgRect, bg);
     }
     else if (isHover) {
         bg = uiBackgroundFramelessHover_ColorId;
-        fillRect_Paint(p, itemRect, bg);
+        fillRect_Paint(p, bgRect, bg);
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         if (d->indent) /* remote icon */ {
             bg = uiBackgroundFolder_ColorId;
-            fillRect_Paint(p, itemRect, bg);
+            fillRect_Paint(p, bgRect, bg);
         }
     }
     else if (sidebar->mode == siteStructure_SidebarMode) {
         if (d->indent >= 2) {
             bg = uiBackgroundFolder_ColorId;
-            fillRect_Paint(p, itemRect, bg);
+            fillRect_Paint(p, bgRect, bg);
         }
     }
     /* Draw item contents. */
@@ -399,7 +406,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int labelFg = isSel     ? uiTextSelected_ColorId
                             : isHover ? uiTextFramelessHover_ColorId
                                       : uiText_ColorId;
-        const iRect iconArea = { pos, init_I2(iconPad * aspect_UI, itemHeight) };
+        const int top = pos.y + (itemHeight - h1 - h2) / 2;
+        /* In the TUI, the icon is on the title line. */
+        const iRect iconArea = isTerminal_Platform()
+                                   ? (iRect){ init_I2(pos.x, top), init_I2(iconPad * aspect_UI, h2) }
+                                   : (iRect){ pos, init_I2(iconPad * aspect_UI, itemHeight) };
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
         drawCentered_Text(uiLabelLarge_FontId,
@@ -428,7 +439,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               (blankWidth ? blankWidth - 1.5f * gap_UI : (gap_UI / 2));
         const int colWidth  = iMax(measureRange_Text(uiLabel_FontId, range_String(progress)).advance.x,
                                    measureRange_Text(uiLabel_FontId, range_String(size)).advance.x);
-        const int top = pos.y + (itemHeight - h1 - h2) / 2;
         pos.x += iconPad * aspect_UI;
         const int avail = rightEdge - colWidth - 2 * gap_UI * aspect_UI - pos.x;
         const char *endPos;

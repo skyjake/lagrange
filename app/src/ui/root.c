@@ -682,24 +682,11 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         if (menubar) {
             setFocus_Widget(child_Widget(menubar, prefs_App()->recentMenuBarIndex));
             postCommand_Widget(focus_Widget(), "trigger");
-            if (isTerminal_Platform()) {
-                setFlags_Widget(findChild_Widget(root, "termstatus"), hidden_WidgetFlag, iTrue);
-            }
         }
         return iTrue;
     }
-    else if (isTerminal_Platform() && equal_Command(cmd, "focus.gained")) {
-        if (!cmp_String(id_Widget(parent_Widget(focus_Widget())), "menubar")) {
-            setFlags_Widget(findChild_Widget(root, "termstatus"), hidden_WidgetFlag, iTrue);
-        }
-        return iFalse;
-    }
-    else if (isTerminal_Platform() && equal_Command(cmd, "menu.closed")) {
-        if (!focus_Widget()) {
-            iLabelWidget *status = findChild_Widget(root, "termstatus");
-            setFlags_Widget(status, hidden_WidgetFlag, iFalse);
-            updateTerminalStatus_(status);
-        }
+    else if (isTerminal_Platform() && equal_Command(cmd, "bindings.changed")) {
+        updateTerminalStatus_(findChild_Widget(root, "termstatus"));
         return iFalse;
     }
     else if (equal_Command(cmd, "input.resized")) {
@@ -1259,6 +1246,8 @@ static void updateNavBarActions_(iWidget *navBar) {
             setFlags_Widget(button, disabled_WidgetFlag, iFalse);
             updateTextCStr_LabelWidget(button, toolbarActions_Mobile[action].icon);
             setCommand_LabelWidget(button, collectNewCStr_String(toolbarActions_Mobile[action].command));
+            /* Keybindings apply after the document, so plain arrow keys can turn pages. */
+            setKeyTrigger_LabelWidget(button, !isTerminal_Platform());
         }
         iEndCollect();
     }
@@ -1795,8 +1784,6 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(appIcon, init_I2(appIconSize_Root(), appMin->rect.size.y));
     }
     iWidget      *navBar     = findChild_Widget(d->widget, "navbar");
-    iWidget      *menuBar    = findChild_Widget(d->widget, "menubar");
-    iWidget      *termStatus = findChild_Widget(d->widget, "termstatus");
     iWidget      *url        = findChild_Widget(d->widget, "url");
     iWidget      *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     iWidget      *embedPad   = findChild_Widget(navBar, "url.embedpad");
@@ -1812,9 +1799,6 @@ void updateMetrics_Root(iRoot *d) {
     arrange_Widget(d->widget);
     if (navBar) {
         updateUrlInputContentPadding_(navBar);
-    }
-    if (termStatus) {
-        setFixedSize_Widget(menuBar, menuBar->rect.size);
     }
     if (idName) {
         setFixedSize_Widget(as_Widget(idName),
@@ -2115,8 +2099,8 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *termStatus =
             addChildFlags_Widget(div,
                                  iClob(new_LabelWidget("", NULL)),
-                                 fixedPosition_WidgetFlag | fixedHeight_WidgetFlag |
-                                 resizeToParentWidth_WidgetFlag | frameless_WidgetFlag);
+                                 fixedHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                                     frameless_WidgetFlag);
         setBackgroundColor_Widget(termStatus, uiBackground_ColorId);
         updateTerminalStatus_((iLabelWidget *) termStatus);
         setId_Widget(termStatus, "termstatus");
@@ -2636,6 +2620,7 @@ static void setupMovableElements_Root_(iRoot *d) {
     iWidget *tabBar    = findChild_Widget(docTabs, "tabs.buttons");
     iWidget *menuBar   = findChild_Widget(d->widget, "menubar");
     iWidget *navMenu   = findChild_Widget(d->widget, "navbar.menu");
+    iWidget *termStatus = findChild_Widget(div, "termstatus");
     if (d->isReading) {
         /* The current reading bars may stop being ones when moved. */
         setReadingBarsVisible_Root_(d, iTrue);
@@ -2681,6 +2666,12 @@ static void setupMovableElements_Root_(iRoot *d) {
         }
         iRelease(navBar);
     }
+    if (termStatus) {
+        /* Always at the very bottom. */
+        removeChild_Widget(div, termStatus);
+        addChildPos_Widget(div, termStatus, back_WidgetAddPos);
+        iRelease(termStatus);
+    }
     if (tabBar) {
         /* On the phone, a bottom tab bar is drawn over the page like the toolbar, so the page
            size does not change when the bars are shown or hidden. */
@@ -2689,7 +2680,8 @@ static void setupMovableElements_Root_(iRoot *d) {
                             resizeToParentWidth_WidgetFlag,
                         deviceType_App() == phone_AppDeviceType && prefs->bottomTabBar);
         setFlags2_Widget(tabBar, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
-        iChangeFlags(tabBar->flags, drawBackgroundToBottom_WidgetFlag, prefs->bottomTabBar);
+        iChangeFlags(tabBar->flags, drawBackgroundToBottom_WidgetFlag,
+                     prefs->bottomTabBar && !termStatus);
         /* Tab button frames. */
         iForEach(ObjectList, i, children_Widget(tabBar)) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
@@ -3093,7 +3085,10 @@ void showReadingBars_Root(iRoot *d, iBool show) {
     if (!d->isReading) {
         return;
     }
-    if (show && isSheetOpen_Root(d)) {
+    if (isTerminal_Platform()) {
+        show = iTrue; /* never hidden */
+    }
+    else if (show && isSheetOpen_Root(d)) {
         show = iFalse; /* not drawn over sheets */
     }
     applyReadingBars_Root_(d, show);
@@ -3132,7 +3127,7 @@ static void applyReadingBars_Root_(iRoot *d, iBool show) {
         updateNavBarSize_Root(d);
     }
     iWidget *timer = readingBarsTimer_Root_(d);
-    if (timer) {
+    if (timer && !isTerminal_Platform()) {
         if (show) {
             addDelay_Periodic(periodic_App(), readingBarsDelay_Root_, timer, "readingbars.hide");
         }

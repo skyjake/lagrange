@@ -221,7 +221,7 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
         [bookmarks_SidebarMode] = 1,     [feedEntries_SidebarMode] = 3,
         [subscriptions_SidebarMode] = 3, [documentOutline_SidebarMode] = 1,
         [siteStructure_SidebarMode] = 1, [openDocuments_SidebarMode] = 1,
-        [history_SidebarMode] = 1,       [gempub_SidebarMode] = 2,
+        [history_SidebarMode] = 1,       [gempub_SidebarMode] = 3, /* includes a blank line */
     };
 #endif
     iForIndices(i, d->itemFonts) {
@@ -818,6 +818,11 @@ static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static iBool isListShown_SidebarWidget_(iSidebarWidget *d) {
+    /* A book page is shown instead of the list. */
+    return (flags_Widget(list_SidebarWidget_(d)) & hidden_WidgetFlag) == 0;
+}
+
 static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "width")) {
@@ -862,12 +867,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (d->side == right_SidebarSide && side != right_SidebarSide) {
             return iTrue;
         }
+        const iWidget *src = pointer_Command(cmd); /* actions are triggered with keys */
         postCommand_Widget(w,
                            "%s.mode force:1 arg:%d toggle:%d keydown:%d",
                            side == left_SidebarSide ? "sidebar" : "sidebar2",
                            mode,
                            argLabel_Command(cmd, "toggle"),
-                           argLabel_Command(cmd, "keydown"));
+                           argLabel_Command(cmd, "keydown") || (src && isAction_Widget(src)));
         return iTrue;
     }
     else if (equal_Command(cmd, "mode")) {
@@ -911,6 +917,10 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             postCommandf_App("%s.toggle keydown:%d",
                              cstr_String(id_Widget(w)),
                              argLabel_Command(cmd, "keydown"));
+        }
+        else if (isVisible_Widget(w) && isListShown_SidebarWidget_(d) && !isMobile_Platform() &&
+                 argLabel_Command(cmd, "keydown")) {
+            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
         scrollOffset_ListWidget(d->list, 0);
         if (argLabel_Command(cmd, "current")) {
@@ -1031,9 +1041,11 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (isDesktop_Platform() && prefs_App()->evenSplit) {
             resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
         }
-        if (!isHiding && d->mode != gempub_SidebarMode /* keys are for turning pages */ &&
-            (isTerminal_Platform() || isPointerHidden_Gamepad(gamepad_App()) ||
-             (!isMobile_Platform() && argLabel_Command(cmd, "keydown")))) {
+        const iBool isKeyDown = !isMobile_Platform() && argLabel_Command(cmd, "keydown");
+        if (!isHiding && isListShown_SidebarWidget_(d) &&
+            (isKeyDown ||
+             (d->mode != gempub_SidebarMode /* keys are for turning pages */ &&
+              (isTerminal_Platform() || isPointerHidden_Gamepad(gamepad_App()))))) {
             setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
         else {
