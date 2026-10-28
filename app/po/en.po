@@ -2524,7 +2524,7 @@ msgstr "Open images in Data URLs:"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Open index.gmi in ZIP archives:"
+msgstr "Open ZIP index.gmi:"
 
 msgid "prefs.markdown.viewsource"
 msgstr "View Markdown as source:"
@@ -2770,7 +2770,7 @@ msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
 msgid "prefs.tui.simple"
-msgstr "Force ASCII character set:"
+msgstr "Force ASCII characters:"
 
 msgid "prefs.font.ui"
 msgstr "UI font:"
@@ -2796,7 +2796,7 @@ msgid "prefs.mono.doc"
 msgstr "Monospace body:"
 
 msgid "prefs.gopher.gemstyle"
-msgstr "Autodetect Gopher menu styling:"
+msgstr "Autodetect Gopher styling:"
 
 msgid "prefs.boldlink"
 msgstr "Bold links:"
