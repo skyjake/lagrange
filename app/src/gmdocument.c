@@ -769,7 +769,7 @@ static void normalizeLine_GmDocument_(iGmDocument *d, iRangecc line, iString *ou
     /* The normalized line is never longer than the original. */
     const size_t start = size_String(out);
     resize_Block(&out->chars, start + size_Range(&line) + 1);
-    char  *dst         = data_Block(&out->chars) + start;
+    char  *dst         = (char *) data_Block(&out->chars) + start;
     iBool  isPrevSpace = iFalse;
     int    spaceCount  = 0;
     for (const char *ch = line.start; ch != line.end; ch++) {

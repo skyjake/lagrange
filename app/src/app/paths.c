@@ -83,8 +83,9 @@ const char *dataDir_App_(void) {
         return SDL_GetAndroidExternalStoragePath();
     }
 #endif
-    if (defaultDataDir_App_) {
-        return defaultDataDir_App_;
+    const char *defaultDir = defaultDataDir_App_;
+    if (defaultDir) {
+        return defaultDir;
     }
     return SDL_GetPrefPath("Jaakko Keränen", "fi.skyjake.lagrange");
 }

@@ -25,6 +25,12 @@ add_library (core STATIC
 )
 
 set_property (TARGET core PROPERTY C_STANDARD 11)
+if (MSVC)
+    target_compile_options (core PUBLIC
+        /utf-8 /std:c11 /experimental:c11atomics
+        /D_CRT_SECURE_NO_WARNINGS
+    )
+endif ()
 
 target_include_directories (core PUBLIC
     include

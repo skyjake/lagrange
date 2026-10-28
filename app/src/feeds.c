@@ -1839,7 +1839,7 @@ static iBool readTinylogSection_Feeds_(const iFeeds *d, const iString *feedUrl, 
         seek_File(f, range.start);
         iBlock *data = read_File(f, size + 2);
         if (size_Block(data) == size ||
-            (size_Block(data) == size + 2 && !memcmp(constData_Block(data) + size, "##", 2))) {
+            (size_Block(data) == size + 2 && !memcmp(constBegin_Block(data) + size, "##", 2))) {
             truncate_Block(data, size);
             setBlock_String(section_out, data);
             ok = iTrue;
