@@ -113,12 +113,12 @@ endif ()
 list (APPEND RESOURCES ${FONTS})
 if (IOS)
     list (APPEND RESOURCES
-        res/about/ios-help.gmi
+        res/about/mobile-help.gmi
         res/about/ios-version.gmi
     )
 elseif (ANDROID)
     list (APPEND RESOURCES
-        res/about/android-help.gmi
+        res/about/mobile-help.gmi
         res/about/android-version.gmi
     )
 else ()
@@ -371,6 +371,7 @@ set (SOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/licenses.gmi
+    res/about/mobile-help.gmi
     res/about/protocols.gmi
     res/about/reference.gmi
     res/about/version.gmi

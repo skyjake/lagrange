@@ -85,10 +85,10 @@ static struct {
     { &blobProtocols_Resources, "about/protocols.gmi" },
     { &blobReference_Resources, "about/reference.gmi" },
 #if defined (iPlatformAppleMobile)
-    { &blobHelp_Resources, "about/ios-help.gmi" },
+    { &blobHelp_Resources, "about/mobile-help.gmi" },
     { &blobVersion_Resources, "about/ios-version.gmi" },
 #elif defined (iPlatformAndroidMobile)
-    { &blobHelp_Resources, "about/android-help.gmi" },
+    { &blobHelp_Resources, "about/mobile-help.gmi" },
     { &blobVersion_Resources, "about/android-version.gmi" },
 #else
     { &blobHelp_Resources, "about/help.gmi" },

@@ -1,8 +1,8 @@
 # Lagrange
 
-Lagrange is a cross-platform client for browsing [Geminispace](https://geminiprotocol.net/). It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
+Lagrange is a versatile client for browsing [Geminispace](https://geminiprotocol.net/). It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
 
-Lagrange depends on a small number of essential libraries. It is written in C and uses [SDL](https://libsdl.org/) for hardware-accelerated graphics. [OpenSSL](https://openssl.org/) is used for secure communications.
+Lagrange is designed to be platform-independent. It relies on a small number of essential libraries for complex features like text rendering and cryptography. It is written in C and uses [SDL 3](https://libsdl.org/) for hardware-accelerated graphics and [OpenSSL](https://openssl.org/) for secure communications.
 
 ![Lagrange window open on URL "about:lagrange"](lagrange_about.webp)
 

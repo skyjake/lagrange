@@ -102,6 +102,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const iBuildFlag buildFlags_[] = {
     iBuildFlag_(iPlatformAndroidMobile),
+    iBuildFlag_(iPlatformAppleMobile),
     iBuildFlag_(iPlatformTerminal),
     iBuildFlag_(LAGRANGE_ENABLE_AUDIO),
     iBuildFlag_(LAGRANGE_ENABLE_CORETEXT),

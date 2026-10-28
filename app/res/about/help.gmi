@@ -15,9 +15,9 @@ Gemini is a simple protocol for serving content over the internet. It specifies 
 
 ## What is Lagrange
 
-Lagrange is a cross-platform client for browsing Geminispace. It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
+Lagrange is a versatile client for browsing Geminispace. It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
 
-Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a small number of essential libraries. It is written in C and uses SDL 3 for hardware-accelerated graphics. OpenSSL is used for secure communications.
+Lagrange is designed to be platform-independent. It relies on a small number of essential libraries for complex features like text rendering and cryptography. It is written in C and uses SDL 3 for hardware-accelerated graphics and OpenSSL for secure communications.
 
 => about:lagrange            About Lagrange
 => https://www.libsdl.org/   SDL: Simple DirectMedia Layer
@@ -409,7 +409,7 @@ You may be familiar with XML-based RSS and Atom feeds from the web. The Gemini e
 
 Lagrange supports Gemini, Atom, and Tinylog feed subscriptions. Atom feeds are automatically translated to the Gemini feed format so they can be viewed and subscribed to like a normal 'text/gemini' page. RSS feeds are not supported.
 
-Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special ".subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as a subscription and Lagrange will look through it for feed-style links. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
+Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special ".subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as a subscription and Lagrange will look through it for feed entries. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
 
 Feeds are refreshed periodically while Lagrange is running, and also immediately after launching if it has been a while since the previous refresh. You may also manually refresh all feeds via the menus or by pressing ${SHIFT+}${CTRL+}R. The feed refresh interval can be set in "Preferences > Behavior".
 
@@ -463,7 +463,7 @@ As far as Lagrange is concerned, Titan is just one of the supported URL schemes.
 * You can type text into the input field on the "Text" tab. It will be sent to the server using 'text/plain' as the media type.
 * You can drag and drop a file on the dialog, or select one with a file dialog. The details of the file to be uploaded are visible on the "File" tab. The media type can be specified manually if Lagrange does not correctly detect it.
 
-The upload token is a feature of Titan where servers can require a certain token text/passphrase for uploads. It is up to the server how this is interpreted. It could be used as a simple password, or even a command to further instruct the server about what to do with the uploaded data. Please refer to the server's instructions about what to enter here. The token may also be left empty.
+The upload token is a feature of Titan where servers can require a certain token text/passphrase for uploads. It could be used as a simple password, or even a command to further instruct the server about what to do with the uploaded data. Please refer to the server's instructions about what to enter here. The token may also be left empty.
 
 Gemtext syntax highlighting is supported in the upload dialog's text field. You can toggle this feature in "Preferences > Appearance". If the monospace font has no bold and italic styles, the syntax highlighting will only use different colors for the Gemtext line types. The built-in Iosevka font only has a regular style. You can select a system monospace font that has more styles, or install this fontpack to enable bold and italic fonts for highlighting:
 => gemini://skyjake.fi/fonts/mono/iosevka-term-extended.fontpack  Iosevka Term Extended (7.6 MB)
@@ -559,15 +559,15 @@ The dialog has a context menu for additional functionality. Click on the Ellipsi
 
 ## 2.6 Export/import user data
 
-The export/import feature allows one to manually export and import identities, bookmarks, books (including reading positions), text snippets, browsing history, document and site-specific settings, and trusted server certificates via a ZIP archive.
+To keep your user data automatically up to date on all your devices, enable sync (see the next section). Instead of syncing, you can also export and import user data manually.
+
+The export/import feature allows exporting and importing identities, bookmarks, books (including reading positions), text snippets, browsing history, document and site-specific settings, and trusted server certificates via a ZIP archive.
 
 "User Data > Export" can be found in the File menu or the hamburger menu. In practice, this creates a compressed archive that you can then save to the Downloads folder or open in an external application. From there, you can transfer the archive manually onto another device, or just put in a safe place for backup.
 
 To import data, select "User Data > Import..." and choose the archive, or open the archive in the app. Opening the exported archive works similar to fontpacks (see section 3.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
 
 Note that browsing history also contains the read status of feed entries, because those are tracked based on whether entry URLs have been visited. This means a transfer of user data includes the up-to-date status of each subscription as well.
-
-To keep your user data automatically up to date on all your devices, enable sync (see the next section).
 
 ## 2.7 Syncing user data
 
@@ -590,7 +590,7 @@ Other preferences are not synced, so each device can have its own app-wide appea
 Sync is configured on the "Sync" tab of Preferences. You can also find "Configure Sync..." in the "User Data" submenu.
 
 1. Toggle "Sync enabled" on.
-2. Choose the server. The default is the public sync server at "sync.skyjake.fi:1966". You can also run your own server (see the Reference, section 8).
+2. Choose the server. The default is the public sync server at "sync.skyjake.fi:1966". You can also run your own server (see the Technical Reference, section 8).
 3. Choose the identity to use for syncing. If you don't have one yet, click on "New Sync Identity" to create it. A sync identity must use an Ed25519 key.
 4. Choose the interval for checking the server for updates from your other devices.
 
@@ -866,11 +866,9 @@ To reset all bindings to their defaults, quit Lagrange and delete the "bindings.
 
 ## 3.9 Gopher
 
-Lagrange converts Gopher menus to Gemtext for presentation. There are a couple of settings that control the conversion.
-
-On the "Content" tab, the "Autodetect Gopher menu styling" option controls whether Gopher menus should use autodetected Gemtext styling. By default, the app's Gopher experience mimics that of Gemini, where preformatted ASCII art is in separate blocks and paragraph text has its own (variable-width) font. However, the autodetection does not always get it right. Menus with meticulously crafted ASCII may sometimes be misinterpreted. Disabling the style autodetection makes all text lines equal in appearance.
-
 Gopher pages use monospace body text by default ("Monospace body" on the "Fonts" tab, with "Applies to: Gopher"). This faithfully presents the Gopher source text, with original whitespaces intact, while also using the chosen monospace font for all text.
+
+In "Preferences > Content", the "Autodetect Gopher menu styling" option controls whether Gopher menus should use autodetected Gemtext styling. Enabling this causes certain elements to be converted to Gemtext: ASCII art becomes preformatted blocks, and paragraph text has its own (variable-width) font. However, the autodetection does not always get it right. Menus with meticulously crafted ASCII may sometimes be misinterpreted.
 
 # 4. OS integration
 
