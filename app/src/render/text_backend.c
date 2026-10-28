@@ -538,7 +538,10 @@ iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
                 }
             }
 #endif
-            return NULL; /* rather show the individual color glyphs */
+            if (!isRegionalIndicator_Char(seq[0])) {
+                return NULL; /* rather show the individual color glyphs */
+            }
+            /* A monochrome flag is better than two color letters. */
         }
     }
     if (tx->overrideFontId >= 0) {
