@@ -115,6 +115,7 @@ enum iFontSpecFlags {
     auxiliary_FontSpecFlag        = iBit(4),  /* only used for looking up glyphs missing from other fonts */
     allowSpacePunct_FontSpecFlag  = iBit(5),  /* space/punctuation glyphs from this auxiliary font can be used */
     ignoreAsFallback_FontSpecFlag = iBit(6),  /* exclude from fallback list; selectable only explicitly */
+    uiOverride_FontSpecFlag       = iBit(7),  /* like override, but only in UI text (e.g., icons) */
     fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
 };
 

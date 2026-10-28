@@ -444,6 +444,7 @@ The same character's glyph(s) may be found in several fonts, so a prioritization
 
 * `priority` (integer) defines a sort order for typefaces. The ones with the highest priority are checked first.
 * `override` (bool): whether this typeface is always checked first before any other one, in any context. Only one typeface can use this flag.
+* `uioverride` (bool): like `override`, but only applies to UI text. This is useful for icon fonts. Only one typeface can use this flag.
 * `monospace` (bool): is this a monospace typeface and therefore suitable for preformatted blocks and monospace body text.
 * `auxiliary` (bool): if true, this typeface is not included in Preferences as a font choice, but is still checked for glyphs if other fonts do not provide them. Suitable for miscellaneous symbols or additional languages, for examples.
 * `allowspace` (bool): if true, an auxiliary font's metrics for space characters are used. Sometimes symbol fonts have extra wide spaces, so for example a space next to an Emoji would be too wide. This has no effect for non-auxiliary typefaces.
@@ -504,10 +505,12 @@ cover: images/cover.png
 ```
 
 Required keys:
+
 * `gpubVersion`: Version of the Gempub format, "1.0.0".
 * `title`: Title of the book.
 
 Optional keys:
+
 * `author`: Author of the book.
 * `charset`: Character set of the text. Defaults to UTF-8. Lagrange only supports UTF-8.
 * `copyright`: Copyright notice.

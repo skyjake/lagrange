@@ -107,6 +107,9 @@ if (EXISTS ${CACERT_PEM_PATH})
     list (APPEND RESOURCES ${CACERT_PEM_PATH})
 endif ()
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
+if (NOT ANDROID)
+    list (FILTER FONTS EXCLUDE REGEX "MaterialSymbols") # UI icons on Android
+endif ()
 list (APPEND RESOURCES ${FONTS})
 if (IOS)
     list (APPEND RESOURCES
@@ -935,7 +938,14 @@ elseif (HAIKU)
     endif ()
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
-    file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
+    # Gradle packages the assets after the native build (see build.gradle).
+    set (_assetBin ${CMAKE_SOURCE_DIR}/../src/main/assets/resources.lgr)
+    add_custom_command (OUTPUT ${_assetBin}
+        COMMAND ${CMAKE_COMMAND} -E copy ${EMB_BIN} ${_assetBin}
+        DEPENDS ${EMB_BIN}
+    )
+    add_custom_target (android-assets DEPENDS ${_assetBin})
+    add_dependencies (app android-assets) # Gradle only builds the library targets
 elseif ((UNIX AND NOT APPLE) OR (APPLE AND NOT ENABLE_APP_BUNDLE))
     include (GNUInstallDirs)
     if (TARGET app)

@@ -100,6 +100,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define iBuildFlag_(def)        { #def, iBuildFlagValue_(def) }
 
 static const iBuildFlag buildFlags_[] = {
+    iBuildFlag_(iPlatformAndroidMobile),
     iBuildFlag_(iPlatformTerminal),
     iBuildFlag_(LAGRANGE_ENABLE_AUDIO),
     iBuildFlag_(LAGRANGE_ENABLE_CORETEXT),

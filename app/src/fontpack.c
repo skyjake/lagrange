@@ -346,6 +346,9 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
     else if (!cmp_String(key, "override") && value->type == boolean_TomlType) {
         iChangeFlags(d->loadSpec->flags, override_FontSpecFlag, value->value.boolean);
     }
+    else if (!cmp_String(key, "uioverride") && value->type == boolean_TomlType) {
+        iChangeFlags(d->loadSpec->flags, uiOverride_FontSpecFlag, value->value.boolean);
+    }
     else if (!cmp_String(key, "monospace") && value->type == boolean_TomlType) {
         iChangeFlags(d->loadSpec->flags, monospace_FontSpecFlag, value->value.boolean);
     }
@@ -630,6 +633,27 @@ void init_Fonts(const char *userDir) {
             }
             else {
                 delete_FontPack(sys);
+            }
+        }
+#endif
+#if defined (iPlatformAndroidMobile)
+        /* Material Symbols for UI icons, like SF Symbols on Apple platforms. */ {
+            iFontPack *icons = new_FontPack();
+            setCStr_String(&icons->id, "android-icons");
+            setReadOnly_FontPack(icons, iTrue);
+            icons->archive = archive_Resources();
+            const iBool ok = load_FontPack_(icons, collectNewCStr_String(
+                "[material-symbols]\n"
+                "name       = \"Material Symbols\"\n"
+                "regular    = \"fonts/MaterialSymbolsLagrange.ttf\"\n"
+                "auxiliary  = true\n"
+                "uioverride = true\n"));
+            icons->archive = NULL;
+            if (ok) {
+                pushBack_PtrArray(&d->packs, icons);
+            }
+            else {
+                delete_FontPack(icons);
             }
         }
 #endif
@@ -994,6 +1018,7 @@ static const iString *exportFontPackIni_Fonts_(const iFonts *d, const iRangecc p
         appendFormat_String(str, "name = \"%s\"\n", cstrCollect_String(quote_String(&spec->name, iFalse)));
         appendFormat_String(str, "priority = %d\n", spec->priority);
         appendFormat_String(str, "override = %s\n", boolStr_(spec->flags & override_FontSpecFlag));
+        appendFormat_String(str, "uioverride = %s\n", boolStr_(spec->flags & uiOverride_FontSpecFlag));
         appendFormat_String(str, "monospace = %s\n", boolStr_(spec->flags & monospace_FontSpecFlag));
         appendFormat_String(str, "auxiliary = %s\n", boolStr_(spec->flags & auxiliary_FontSpecFlag));
         appendFormat_String(str, "allowspace = %s\n", boolStr_(spec->flags & allowSpacePunct_FontSpecFlag));

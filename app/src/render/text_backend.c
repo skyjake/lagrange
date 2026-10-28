@@ -202,8 +202,9 @@ void init_RasterText(iRasterText *d, SDL_Renderer *render, float documentFontSiz
     init_Array(&d->fonts, sizeof(iRasterFont));
     init_Array(&d->fontPriorityOrder, sizeof(iPrioMapItem));
     init_Array(&d->systemFallbacks, sizeof(iFontSpec));
-    d->overrideFontId = -1;
-    d->missingGlyphs  = iFalse;
+    d->overrideFontId   = -1;
+    d->uiOverrideFontId = -1;
+    d->missingGlyphs    = iFalse;
     iZap(d->missingChars);
     iZap(d->cachedFontRuns);
     init_GlyphCache(&d->colorCache);
@@ -296,6 +297,9 @@ static void setupFontVariants_RasterText_(iText *base, const iFontSpec *spec, in
     if (spec->flags & override_FontSpecFlag && d->overrideFontId < 0) {
         d->overrideFontId = baseId;
     }
+    if (spec->flags & uiOverride_FontSpecFlag && d->uiOverrideFontId < 0) {
+        d->uiOverrideFontId = baseId;
+    }
     pushBack_Array(&d->fontPriorityOrder, &(iPrioMapItem){ spec->priority, baseId });
     for (enum iFontStyle style = 0; style < max_FontStyle; style++) {
         for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {
@@ -351,6 +355,7 @@ void deinitFonts_RasterText(iRasterText *d) {
     clear_Array(&d->fontPriorityOrder);
     clear_Array(&d->systemFallbacks);
     d->overrideFontId   = -1;
+    d->uiOverrideFontId = -1;
     d->colorEmojiFontId = -1;
 }
 
@@ -425,6 +430,13 @@ iRasterFont *characterFont_Font_(iRasterFont *d, iChar ch, uint32_t *glyphIndex)
             (iRasterFont *) font_Text(FONT_ID(tx->colorEmojiFontId, styleId, sizeId));
         if (colorFont != d && (*glyphIndex = glyphIndex_Font_(colorFont, ch)) != 0) {
             return colorFont;
+        }
+    }
+    if (tx->uiOverrideFontId >= 0 && sizeId < contentRegular_FontSize) {
+        iRasterFont *uiFont =
+            (iRasterFont *) font_Text(FONT_ID(tx->uiOverrideFontId, styleId, sizeId));
+        if (uiFont != d && (*glyphIndex = glyphIndex_Font_(uiFont, ch)) != 0) {
+            return uiFont;
         }
     }
     if (ch != 0x20 && tx->overrideFontId >= 0) {
