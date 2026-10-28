@@ -743,9 +743,11 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
         return;
     }
     const iBook   *known        = find_Books(id);
-    const iBool    isNewEdition = gempub && existingPath && isNewEdition_(gempub, existingPath) &&
-                                  /* the synced position may be in this edition already */
-                                  (!known || !equal_String(&known->edition, edition_Books(gempub)));
+    /* The synced position may be in this edition already. Without a file, the known edition
+       tells which edition the position is in. */
+    const iBool    isNewEdition = gempub && known &&
+                                  !equal_String(&known->edition, edition_Books(gempub)) &&
+                                  (!existingPath || isNewEdition_(gempub, existingPath));
     const iString *savedPath    = add_Books(data, fileName, existingPath, sourceUrl);
     delete_Block(data);
     if (!savedPath) {
