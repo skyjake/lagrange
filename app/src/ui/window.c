@@ -2537,6 +2537,11 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 }
             }
             if (!isEmpty_String(d->pendingSplitUrl)) {
+                if (~splitMode & vertical_WindowSplit) {
+                    /* Dismiss the old root's sidebar that is adjacent to the new split. */
+                    postCommand_Root(w->roots[newRootIndex ^ 1],
+                                     addToLeft ? "sidebar.toggle hide:1" : "sidebar2.toggle hide:1");
+                }
                 postCommandf_Root(
                     w->roots[newRootIndex],
                     "open origin:%s%s url:%s",
