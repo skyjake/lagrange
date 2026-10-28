@@ -722,6 +722,9 @@ static void layoutContinued_DocumentWidget_(iDocumentWidget *d, iGmRebase *rebas
 static void continueLayout_DocumentWidget_(iAny *ptr) {
     iDocumentWidget *d   = ptr;
     iGmDocument     *doc = d->view->doc;
+    if (flags_Widget(d) & destroyPending_WidgetFlag) {
+        return;
+    }
     if (!doc || !isLayoutPending_GmDocument(doc) || !isVisible_Widget(d)) {
         return; /* resumed when drawn */
     }
