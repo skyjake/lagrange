@@ -978,8 +978,8 @@ void makeFooterButtons_DocumentWidget(iDocumentWidget *d, const iMenuItem *items
         if (d->mod.isReader && items[i].command && startsWith_CStr(items[i].command, "reader.")) {
             setId_Widget(as_Widget(button), items[i].command);
             setFlags_Widget(button, collapse_WidgetFlag, iTrue);
-            if (equal_CStr(items[i].command, "reader.next") ||
-                equal_CStr(items[i].command, "reader.prev")) {
+            if (!isTerminal_Platform() && (equal_CStr(items[i].command, "reader.next") ||
+                                           equal_CStr(items[i].command, "reader.prev"))) {
                 /* Triggered via "scroll.page" at either end of the page. */
                 setKeyTrigger_LabelWidget(button, iFalse);
             }

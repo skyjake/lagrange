@@ -381,6 +381,9 @@ static void draw_BindingItem_(const iBindingItem *d, iPaint *p, iRect itemRect,
                    right_Alignment,
                    "%s",
                    d->isWaitingForEvent ? "\U0001F449 \u2328" : cstr_String(&d->key));
+    if (isCursor && isTerminal_Platform()) {
+        drawCursor_ListWidget(list, p, itemRect, uiTextAction_ColorId);
+    }
 }
 
 iBeginDefineSubclass(BindingsWidget, Widget)

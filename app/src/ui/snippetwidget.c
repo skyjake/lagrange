@@ -239,9 +239,8 @@ static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
     drawRange_Text(parent->itemFonts[1], pos, fg, range_String(&d->label));
     pos.y += line;
     drawRange_Text(font, pos, fg2, range_String(&d->content));
-    if (isListFocus && isHover && constCursorItem_ListWidget(list) == d && !isTerminal_Platform()) {
-        /* Visualize the keyboard cursor. */
-        drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), uiTextAction_ColorId);
+    if (isListFocus && isHover && constCursorItem_ListWidget(list) == d) {
+        drawCursor_ListWidget(list, p, itemRect, uiTextAction_ColorId);
     }
 }
 

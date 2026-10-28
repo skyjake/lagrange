@@ -485,6 +485,17 @@ const iAnyObject *constCursorItem_ListWidget(const iListWidget *d) {
     return constItem_ListWidget(d, d->cursorItem);
 }
 
+void drawCursor_ListWidget(const iListWidget *d, iPaint *p, iRect itemRect, int color) {
+    if (isTerminal_Platform()) {
+        const int right = right_Rect(itemRect) - scrollBarWidth_ListWidget(d) - 1;
+        drawVLine_Paint(p, topLeft_Rect(itemRect), height_Rect(itemRect), color);
+        drawVLine_Paint(p, init_I2(right, top_Rect(itemRect)), height_Rect(itemRect), color);
+    }
+    else {
+        drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), color);
+    }
+}
+
 iAnyObject *item_ListWidget(iListWidget *d, size_t index) {
     if (index < size_PtrArray(&d->items)) {
         return at_PtrArray(&d->items, index);

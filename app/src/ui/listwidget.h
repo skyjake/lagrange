@@ -142,6 +142,7 @@ void    cancelDrag_ListWidget       (iListWidget *);
 void    setMultiSelectEnabled_ListWidget(iListWidget *, iBool enabled);
 void    setMultiSelected_ListWidget (iListWidget *, size_t index, iBool isSelected);
 void    clearMultiSelection_ListWidget(iListWidget *);
+void    drawCursor_ListWidget       (const iListWidget *, iPaint *p, iRect itemRect, int color);
 
 void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
 

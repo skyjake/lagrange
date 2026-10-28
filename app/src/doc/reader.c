@@ -87,15 +87,18 @@ const iArray *readerFooterItems_DocumentWidget(const iDocumentWidget *d, const i
     if (count) {
         pushBackN_Array(all, items, count);
     }
-    const iBinding *nextKey = findCommand_Keys("scroll.page arg:1");
-    const iBinding *prevKey = findCommand_Keys("scroll.page arg:-1");
+    const iBinding *nextKey    = findCommand_Keys("scroll.page arg:1");
+    const iBinding *prevKey    = findCommand_Keys("scroll.page arg:-1");
+    const iBool     isTerminal = isTerminal_Platform(); /* Shift+Space is not detectable */
     pushBackN_Array(
         all,
         (iMenuItem[]){ { upArrow_Icon " ${reader.prev}",
-                         prevKey ? prevKey->key : 0, prevKey ? prevKey->mods : 0,
+                         isTerminal ? SDLK_PAGEUP : prevKey ? prevKey->key : 0,
+                         isTerminal ? SDL_KMOD_SHIFT : prevKey ? prevKey->mods : 0,
                          "reader.prev" },
                        { downArrow_Icon " ${reader.next}",
-                         nextKey ? nextKey->key : 0, nextKey ? nextKey->mods : 0,
+                         isTerminal ? SDLK_PAGEDOWN : nextKey ? nextKey->key : 0,
+                         isTerminal ? SDL_KMOD_SHIFT : nextKey ? nextKey->mods : 0,
                          "reader.next" },
                        { check_Icon " ${feeds.markallread}", SDLK_A, SDL_KMOD_SHIFT, "reader.markallread" },
                        { format_CStr("%s ${reader.showfeeds}",

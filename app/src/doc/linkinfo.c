@@ -35,6 +35,10 @@ iDefineTypeConstruction(LinkInfo)
 #define hPad_LinkInfo_      (2 * gap_UI)
 #define vPad_LinkInfo_      (1 * gap_UI)
 
+static iBool isAnimated_LinkInfo_(void) {
+    return prefs_App()->uiAnimations && !isTerminal_Platform();
+}
+
 void init_LinkInfo(iLinkInfo *d) {
     d->buf = NULL;
     init_Anim(&d->opacity, 0.0f);
@@ -135,7 +139,7 @@ iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId
     if (!d) {
         return iFalse;
     }
-    const iBool isAnimated = prefs_App()->uiAnimations && !isTerminal_Platform();
+    const iBool isAnimated = isAnimated_LinkInfo_();
     if (d->linkId != linkId || d->maxWidth != maxWidth) {
         d->linkId   = linkId;
         d->maxWidth = maxWidth;
@@ -168,7 +172,7 @@ iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId
 
 void invalidate_LinkInfo(iLinkInfo *d) {
     if (targetValue_Anim(&d->opacity) > 0) {
-        setValue_Anim(&d->opacity, 0, prefs_App()->uiAnimations ? 150 : 0);
+        setValue_Anim(&d->opacity, 0, isAnimated_LinkInfo_() ? 150 : 0);
     }
 }
 

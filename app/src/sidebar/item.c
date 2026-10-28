@@ -223,7 +223,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     iRect bgRect = itemRect;
     if (isTerminal_Platform() && !d->listItem.flags.isSeparator &&
         (sidebar->mode == feedEntries_SidebarMode || sidebar->mode == subscriptions_SidebarMode ||
-         sidebar->mode == gempub_SidebarMode)) {
+         sidebar->mode == gempub_SidebarMode || sidebar->mode == documentOutline_SidebarMode)) {
         /* Blank line between multi-line items, outside the item's highlight. */
         adjustEdges_Rect(&bgRect, 0, 0, -lineHeight_Text(sidebar->itemFonts[0]), 0);
     }
@@ -735,11 +735,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         drawRange_Text(font2, pos, fg2, range_String(&str));
         deinit_String(&str);
     }
-    if (isListFocus && isHoverItem && constCursorItem_ListWidget(list) == d && !isTerminal_Platform()) {
-        /* Visualize the keyboard cursor. */
-        drawRect_Paint(p,
-                       shrunk_Rect(itemRect, one_I2()),
-                       isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
+    if (isListFocus && isHoverItem && constCursorItem_ListWidget(list) == d) {
+        drawCursor_ListWidget(list, p, bgRect, isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
     }
 }
 

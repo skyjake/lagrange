@@ -233,7 +233,7 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
                                  heights[d->mode] * lineHeight_Text(d->itemFonts[0]) + padding);
         int itemPadding = 0;
         if (d->mode == documentOutline_SidebarMode) {
-            itemPadding = isTerminal_Platform() ? 0 : 2 * gap_UI;
+            itemPadding = isTerminal_Platform() ? lineHeight_Text(d->itemFonts[0]) : 2 * gap_UI;
         }
         else if (d->mode == feedEntries_SidebarMode) {
             itemPadding = isTerminal_Platform() ? lineHeight_Text(d->itemFonts[0]) : 3 * gap_UI;
@@ -1730,6 +1730,10 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
+    if (isTerminal_Platform() && side == left_SidebarSide) {
+        /* Keep clear of the separator line. */
+        setPadding_Widget(content, 0, 0, 2, 0);
+    }
     iWidget *listAndActions = makeVDiv_Widget();
     addChild_Widget(content, iClob(listAndActions));
     iWidget *listArea = new_Widget();
