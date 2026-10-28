@@ -48,6 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/gamepad.h"
 #include "ui/keys.h"
 #include "ui/root.h"
+#include "ui/sidebarwidget.h"
 #include "ui/touch.h"
 #include "ui/util.h"
 #include "ui/window.h"
@@ -576,6 +577,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     init_Prefs(&d->prefs);
+    setDefaultOrder_SidebarMode();
 #if defined (iPlatformTerminal)
     d->prefs.bottomNavBar    = iTrue;
     d->prefs.bottomTabBar    = iTrue;

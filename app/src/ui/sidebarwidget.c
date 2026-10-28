@@ -1474,6 +1474,23 @@ enum iSidebarMode orderedMode_SidebarMode(enum iSidebarSide side, size_t pos) {
     return tabOrder_[side][pos];
 }
 
+void setDefaultOrder_SidebarMode(void) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        static const int phoneOrder_[max_SidebarMode] = {
+            bookmarks_SidebarMode,
+            feedEntries_SidebarMode,
+            gempub_SidebarMode,
+            documentOutline_SidebarMode,
+            history_SidebarMode,
+            openDocuments_SidebarMode,
+            subscriptions_SidebarMode,
+            identities_SidebarMode,
+            siteStructure_SidebarMode,
+        };
+        memcpy(tabOrder_[left_SidebarSide], phoneOrder_, sizeof(phoneOrder_));
+    }
+}
+
 void serializeOrder_SidebarMode(iStream *outs) {
     for (int s = 0; s < 2; s++) {
         writeU8_Stream(outs, max_SidebarMode);

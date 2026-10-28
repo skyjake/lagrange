@@ -254,7 +254,7 @@ void init_Prefs(iPrefs *d) {
         iForIndices(i, d->sidebarModeEnabled[0]) {
             d->sidebarModeEnabled[0][i] = (i != subscriptions_SidebarMode &&
                                            i != identities_SidebarMode &&
-                                           i != openDocuments_SidebarMode);
+                                           i != siteStructure_SidebarMode);
         }
     }
     else {

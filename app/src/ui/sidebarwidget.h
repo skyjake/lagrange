@@ -40,6 +40,7 @@ iBool           tab_SidebarMode     (size_t index, enum iSidebarSide *side, enum
 
 /* Tab order is shared by all sidebars on the same side. */
 enum iSidebarMode orderedMode_SidebarMode       (enum iSidebarSide side, size_t pos);
+void            setDefaultOrder_SidebarMode     (void);
 void            serializeOrder_SidebarMode      (iStream *outs);
 void            deserializeOrder_SidebarMode    (iStream *ins, iBool apply);
 
