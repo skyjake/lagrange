@@ -1501,6 +1501,32 @@ void setDefaultOrder_SidebarMode(void) {
         };
         memcpy(tabOrder_[left_SidebarSide], phoneOrder_, sizeof(phoneOrder_));
     }
+    else {
+        static const int leftOrder_[max_SidebarMode] = {
+            bookmarks_SidebarMode,
+            feedEntries_SidebarMode,
+            gempub_SidebarMode,
+            identities_SidebarMode,
+            documentOutline_SidebarMode,
+            openDocuments_SidebarMode,
+            history_SidebarMode,
+            subscriptions_SidebarMode,
+            siteStructure_SidebarMode,
+        };
+        static const int rightOrder_[max_SidebarMode] = {
+            openDocuments_SidebarMode,
+            history_SidebarMode,
+            subscriptions_SidebarMode,
+            siteStructure_SidebarMode,
+            bookmarks_SidebarMode,
+            feedEntries_SidebarMode,
+            gempub_SidebarMode,
+            identities_SidebarMode,
+            documentOutline_SidebarMode,
+        };
+        memcpy(tabOrder_[left_SidebarSide], leftOrder_, sizeof(leftOrder_));
+        memcpy(tabOrder_[right_SidebarSide], rightOrder_, sizeof(rightOrder_));
+    }
 }
 
 void serializeOrder_SidebarMode(iStream *outs) {
