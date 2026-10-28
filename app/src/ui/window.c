@@ -2354,7 +2354,7 @@ iInt2 mouseCoord_Window(const iWindow *d, int whichDevice) {
         return pointerCoord_Gamepad(gamepad_App());
     }
     if (!d->isMouseInside) {
-        return init_I2(-1000000, -1000000);
+        return outsideCoord_Window();
     }
     float x, y;
     SDL_GetMouseState(&x, &y);

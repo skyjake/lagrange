@@ -2563,6 +2563,15 @@ static void revealReadingBars_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos
     }
 }
 
+static void updatePointerHover_DocumentWidget_(iDocumentWidget *d, iInt2 pos, int device) {
+    if (device == SDL_TOUCH_MOUSEID && isPaged_DocumentView(d->view) &&
+        pageTurnZone_DocumentView(d->view, pos)) {
+        /* Taps here turn the page instead of opening links. */
+        pos = outsideCoord_Window();
+    }
+    updateHover_DocumentView(d->view, pos);
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -2783,7 +2792,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             if (value_Anim(&view->altTextOpacity) < 0.833f) {
                 setValue_Anim(&view->altTextOpacity, 0, 0); /* keep it hidden while moving */
             }
-            updateHover_DocumentView(view, mpos);
+            updatePointerHover_DocumentWidget_(d, mpos, ev->motion.which);
         }
         if (ev->motion.which != SDL_TOUCH_MOUSEID) {
             revealReadingBars_DocumentWidget_(d, mpos);
@@ -2826,6 +2835,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             contains_DocumentWidget_(d, init_I2(ev->button.x, ev->button.y))) {
             const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
             if (!isVisible_Widget(d->menu)) {
+                if (ev->button.which == SDL_TOUCH_MOUSEID) {
+                    /* Long-pressing works on links in page turn zones, too. */
+                    updateHover_DocumentView(view, mousePos);
+                }
                 d->contextLink     = view->hoverLink;
                 d->contextPos      = mousePos;
                 view->hoverKeyLink = NULL; /* after this we'll need a new key-hover action */
@@ -2879,7 +2892,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             /* Enable hover state now that scrolling has surely finished. */
             if (d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
                 d->flags &= ~noHoverWhileScrolling_DocumentWidgetFlag;
-                updateHover_DocumentView(view, mouseCoord_Window(get_Window(), ev->button.which));
+                updatePointerHover_DocumentWidget_(
+                    d, mouseCoord_Window(get_Window(), ev->button.which), ev->button.which);
             }
             if (~flags_Widget(w) & touchDrag_WidgetFlag) {
                 iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);

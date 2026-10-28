@@ -154,6 +154,10 @@ struct Impl_MainWindow {
     SDL_Texture * backBuf; /* enables refreshing the window without redrawing anything */
 };
 
+iLocalDef iInt2 outsideCoord_Window(void) {
+    return init_I2(-1000000, -1000000); /* pointer is not over any window */
+}
+
 iLocalDef enum iWindowType type_Window(const iAnyWindow *d) {
     if (d) {
         return ((const iWindow *) d)->type;
