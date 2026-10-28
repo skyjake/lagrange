@@ -2023,7 +2023,7 @@ void drawLayerEffects_Widget(const iWidget *d) {
     if (isFaded) {
         drawBackgroundFade_Widget_(d);
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     if (d->bgColor >= 0 && d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
                                        drawBackgroundToVerticalSafeArea_WidgetFlag)) {
         iPaint p;
