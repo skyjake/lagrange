@@ -157,6 +157,7 @@ typedef void (*iTickerFunc)(iAny *);
 void        addTicker_App           (iTickerFunc ticker, iAny *context);
 void        addTickerRoot_App       (iTickerFunc ticker, iRoot *root, iAny *context);
 void        removeTicker_App        (iTickerFunc ticker, iAny *context);
+void        retargetTickers_App     (const iRoot *oldRoot, iRoot *newRoot);
 
 void        addWindow_App           (iMainWindow *win);
 void        removeWindow_App        (iMainWindow *win);

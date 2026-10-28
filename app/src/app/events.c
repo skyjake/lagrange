@@ -993,3 +993,13 @@ void removeTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     remove_SortedArray(&d->tickers, &(iTicker){ context, NULL, ticker });
 }
+
+void retargetTickers_App(const iRoot *oldRoot, iRoot *newRoot) {
+    iApp *d = &app_;
+    iForEach(Array, i, &d->tickers.values) {
+        iTicker *ticker = i.value;
+        if (ticker->root == oldRoot) {
+            ticker->root = newRoot;
+        }
+    }
+}

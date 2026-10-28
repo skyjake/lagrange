@@ -2508,6 +2508,8 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             setFlags_Widget(findWidget_Root("navbar.unsplit"), hidden_WidgetFlag, iTrue);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
             iRelease(tabs);
+            /* Moved tabs may have tickers registered on the deleted root. */
+            retargetTickers_App(rootBeingDeleted, w->roots[0]);
             delete_Root(rootBeingDeleted);
         }
         else if (oldCount == 1 && splitMode) {
