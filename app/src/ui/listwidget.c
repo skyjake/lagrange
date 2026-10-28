@@ -335,8 +335,9 @@ void updateVisible_ListWidget(iListWidget *d) {
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, d->scrollY.max });
     setThumb_ScrollWidget(d->scroll,
                           pos_SmoothScroll(&d->scrollY),
-                          contentSize > 0 ? height_Rect(bounds_Widget(as_Widget(d->scroll))) *
-                                                height_Rect(bounds) / contentSize
+                          contentSize > 0 ? iMax(1, /* zero would hide the scroll bar */
+                                                 height_Rect(bounds_Widget(as_Widget(d->scroll))) *
+                                                     height_Rect(bounds) / contentSize)
                                           : 0);
     if (wasVisible != isVisible_Widget(d->scroll)) {
         invalidate_ListWidget(d); /* clip margins changed */
