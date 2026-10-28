@@ -308,7 +308,7 @@ iBool isMonospace_FontFile(const iFontFile *d) {
 }
 
 float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
-    if (!d->ascent || !d->descent) return 1.0f;
+    if (d->ascent - d->descent <= 0) return 1.0f;
     return (float) pixelHeight / (float) (d->ascent - d->descent);
 }
 

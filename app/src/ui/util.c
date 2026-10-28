@@ -1238,7 +1238,7 @@ iChar systemIconChar_Windows(iChar ch) {
         { 0x1f511, 0xe8d7 },    /* key_Icon */
         { 0x1f512, 0xe72e },    /* closedLock_Icon */
         { 0x1f513, 0xe785 },    /* openLock_Icon */
-        { 0x1f516, 0xe728 },    /* bookmark_Icon */
+        { 0x1f516, 0xe8ec },    /* bookmark_Icon */
         { 0x1f520, 0xe8d2 },    /* fontpack_Icon */
         { 0x1f528, 0xe90f },    /* hammer_Icon */
         { 0x1f553, 0xe917 },    /* clock_Icon */

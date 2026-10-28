@@ -655,7 +655,8 @@ void init_Fonts(const char *userDir) {
                     "name       = \"%s\"\n"
                     "regular    = \"%s\"\n"
                     "auxiliary  = true\n"
-                    "uioverride = true\n",
+                    "uioverride = true\n"
+                    "glyphscale = 0.75\n",
                     f == 0 ? "Segoe Fluent Icons" : "Segoe MDL2 Assets",
                     iconFonts_[f]))) {
                 iConstForEach(PtrArray, i, &icons->fonts) {
