@@ -523,6 +523,12 @@ static int cmpPtr_LookupResult_(const void *p1, const void *p2) {
         return iCmp(a->type, b->type);
     }
     if (fabsf(a->relevance - b->relevance) < 0.0001f) {
+        if (a->type == bookmark_LookupResultType) {
+            const int cmp = cmpStringCase_String(&a->label, &b->label);
+            if (cmp) {
+                return cmp;
+            }
+        }
         return cmpString_String(&a->url, &b->url);
     }
     return -iCmp(a->relevance, b->relevance);
