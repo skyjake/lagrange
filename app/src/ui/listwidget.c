@@ -1399,7 +1399,7 @@ static void draw_ListWidget_(const iListWidget *d) {
     if (isEmpty_ListWidget(d) && isFocused_Widget(d)) {
         drawRectThickness_Paint(
             &p,
-            adjusted_Rect(bounds, zero_I2(), init_I2(isTerminal_Platform() ? -2 : -gap_UI, 0)),
+            adjusted_Rect(bounds, zero_I2(), init_I2(isTerminal_Platform() ? -2 : -gap_UI, -1)),
             gap_UI / 4,
             uiTextAction_ColorId);
     }
