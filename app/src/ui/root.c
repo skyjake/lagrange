@@ -688,6 +688,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "menubar.focus")) {
         iWidget *menubar = findWidget_App("menubar");
         if (menubar) {
+            showReadingBars_Root(menubar->root, iTrue);
             setFocus_Widget(child_Widget(menubar, prefs_App()->recentMenuBarIndex));
             postCommand_Widget(focus_Widget(), "trigger");
         }
@@ -2102,6 +2103,7 @@ void createUserInterface_Root(iRoot *d) {
         /* TODO: Use Widget's `updateMenuItems` callback. */
         setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);
         setId_Widget(menuBar, "menubar");
+        d->bars.menuBar = menuBar;
     }
 #endif
     /* Terminal status/help indicator. */
@@ -2910,17 +2912,36 @@ static iWidget *readingBarsTimer_Root_(const iRoot *d) {
     return findChild_Widget(d->widget, "navbar");
 }
 
-static void readingBars_Root_(const iRoot *d, iWidget **navBar, iWidget **tabBar) {
+enum iReadingBar {
+    nav_ReadingBar,
+    tab_ReadingBar,
+    menu_ReadingBar,
+    max_ReadingBar,
+};
+
+static void readingBars_Root_(const iRoot *d, iWidget *bars[max_ReadingBar]) {
     /* Bars in the phone's bottom bar are hidden along with the toolbar. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-    *navBar = d->bars.navBar;
-    *tabBar = d->bars.tabButtons;
-    if (*navBar && parent_Widget(*navBar) != d->bars.navDiv) {
-        *navBar = NULL;
+    bars[nav_ReadingBar]  = d->bars.navBar;
+    bars[tab_ReadingBar]  = d->bars.tabButtons;
+    bars[menu_ReadingBar] = prefs_App()->menuBar ? d->bars.menuBar : NULL;
+    if (bars[nav_ReadingBar] && parent_Widget(bars[nav_ReadingBar]) != d->bars.navDiv) {
+        bars[nav_ReadingBar] = NULL;
     }
     if (isPhone && prefs_App()->bottomTabBar) {
-        *tabBar = NULL;
+        bars[tab_ReadingBar] = NULL;
     }
+}
+
+static iBool isReadingBar_Root_(const iRoot *d, const iWidget *widget) {
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
+    for (int i = 0; i < max_ReadingBar; i++) {
+        if (bars[i] && bars[i] == widget) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 static iBool isTabBarWanted_Root_(const iRoot *d) {
@@ -2931,26 +2952,31 @@ static iBool isTabBarWanted_Root_(const iRoot *d) {
 static void updateReadingBarsOnTop_Root_(iRoot *d) {
     /* Visible bars are drawn over the document. The bar nearer to the window edge is drawn
        last, and lookup results are over the navbar's shadow. */
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
     iWidget *lookup = findChild_Widget(d->widget, "lookup");
-    iWidget *order[4] = { navBar, tabBar, findChild_Widget(d->widget, "search"), lookup };
+    iWidget *order[5] = { bars[nav_ReadingBar],
+                          bars[tab_ReadingBar],
+                          bars[menu_ReadingBar],
+                          findChild_Widget(d->widget, "search"),
+                          lookup };
     if (prefs_App()->bottomTabBar) {
-        order[0] = tabBar;
-        order[1] = navBar;
+        order[0] = bars[tab_ReadingBar];
+        order[1] = bars[nav_ReadingBar];
     }
     /* Bars moved elsewhere (e.g., into the phone's bottom bar) are no longer reading bars. */
-    iWidget *all[4] = { d->bars.navBar, d->bars.tabButtons, order[2], order[3] };
-    for (int i = 0; i < 4; i++) {
+    iWidget *all[5] = { d->bars.navBar, d->bars.tabButtons, d->bars.menuBar, order[3], order[4] };
+    for (int i = 0; i < 5; i++) {
         if (all[i]) {
             setFlags_Widget(all[i], keepOnTop_WidgetFlag | noShadowBorder_WidgetFlag, iFalse);
         }
     }
     if (d->bars.navBar) {
         /* Hidden bars give their space to the document. */
-        setFlags_Widget(d->bars.navBar, collapse_WidgetFlag, d->isReading && navBar != NULL);
+        setFlags_Widget(
+            d->bars.navBar, collapse_WidgetFlag, d->isReading && bars[nav_ReadingBar] != NULL);
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
         if (order[i] && d->isReading) {
             /* The document draws the shadows of the bars. */
             setFlags_Widget(order[i], noShadowBorder_WidgetFlag | keepOnTop_WidgetFlag, iTrue);
@@ -2988,13 +3014,16 @@ void setReadingMode_Root(iRoot *d, iBool reading) {
 static const uint32_t readingBarsSlideSpan_Root_ = 200;
 
 static void setReadingBarsVisible_Root_(iRoot *d, iBool show) {
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
-    if (navBar) {
-        setFlags_Widget(navBar, hidden_WidgetFlag, !show);
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
+    if (bars[nav_ReadingBar]) {
+        setFlags_Widget(bars[nav_ReadingBar], hidden_WidgetFlag, !show);
     }
-    if (tabBar) {
-        setFlags_Widget(tabBar, hidden_WidgetFlag, !show || !isTabBarWanted_Root_(d));
+    if (bars[tab_ReadingBar]) {
+        setFlags_Widget(bars[tab_ReadingBar], hidden_WidgetFlag, !show || !isTabBarWanted_Root_(d));
+    }
+    if (bars[menu_ReadingBar]) {
+        setFlags_Widget(bars[menu_ReadingBar], hidden_WidgetFlag, !show);
     }
     arrange_Widget(d->widget);
     notifyf_Root(d, "readingbars.changed arg:%d", show);
@@ -3008,12 +3037,12 @@ static iBool isAtBottom_Root_(const iRoot *d, const iWidget *bar) {
 static void readingBarsSlideDistances_Root_(const iRoot *d, int *top, int *bottom) {
     /* Bars slide off their edge until they and their shadow are out of view. Bars on the
        same edge move together. */
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
     const iRect rootRect = bounds_Widget(d->widget);
     int topEdge = top_Rect(rootRect), bottomEdge = bottom_Rect(rootRect);
-    for (int i = 0; i < 2; i++) {
-        const iWidget *bar = i == 0 ? navBar : tabBar;
+    for (int i = 0; i < max_ReadingBar; i++) {
+        const iWidget *bar = bars[i];
         if (bar && isVisible_Widget(bar)) {
             const iRect rect = boundsWithoutVisualOffset_Widget(bar);
             if (isAtBottom_Root_(d, bar)) {
@@ -3029,13 +3058,13 @@ static void readingBarsSlideDistances_Root_(const iRoot *d, int *top, int *botto
 }
 
 static void slideReadingBars_Root_(iRoot *d, iBool out, iBool animate) {
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
     int top, bottom;
     readingBarsSlideDistances_Root_(d, &top, &bottom);
     const uint32_t span = animate ? readingBarsSlideSpan_Root_ : 0;
-    for (int i = 0; i < 2; i++) {
-        iWidget *bar = i == 0 ? navBar : tabBar;
+    for (int i = 0; i < max_ReadingBar; i++) {
+        iWidget *bar = bars[i];
         /* A hidden bar with a visual offset would still be drawn. */
         if (bar && (isVisible_Widget(bar) || (!out && !animate))) {
             const int rest = d->readingBarsRest[i];
@@ -3051,10 +3080,10 @@ static void slideReadingBars_Root_(iRoot *d, iBool out, iBool animate) {
 
 static void keepReadingBarsRest_Root_(iRoot *d) {
     /* Bars may have a visual offset of their own while shown (e.g., moved for the keyboard). */
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
-    for (int i = 0; i < 2; i++) {
-        const iWidget *bar = i == 0 ? navBar : tabBar;
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
+    for (int i = 0; i < max_ReadingBar; i++) {
+        const iWidget *bar = bars[i];
         if (bar && isVisible_Widget(bar) && isFinished_Anim(&bar->visualOffset)) {
             d->readingBarsRest[i] =
                 bar->flags & visualOffset_WidgetFlag || bar->flags2 & permanentVisualOffset_WidgetFlag2
@@ -3069,12 +3098,13 @@ static void finishHidingReadingBars_Root_(void *ptr) {
     if (!d->isReading || !d->areReadingBarsHidden) {
         return;
     }
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
-    if ((navBar && !isFinished_Anim(&navBar->visualOffset)) ||
-        (tabBar && !isFinished_Anim(&tabBar->visualOffset))) {
-        addTickerRoot_App(finishHidingReadingBars_Root_, d, d);
-        return;
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
+    for (int i = 0; i < max_ReadingBar; i++) {
+        if (bars[i] && !isFinished_Anim(&bars[i]->visualOffset)) {
+            addTickerRoot_App(finishHidingReadingBars_Root_, d, d);
+            return;
+        }
     }
     slideReadingBars_Root_(d, iFalse, iFalse);
     setReadingBarsVisible_Root_(d, iFalse);
@@ -3113,9 +3143,13 @@ static void applyReadingBars_Root_(iRoot *d, iBool show) {
         showToolbar_Root_(d, show);
     }
     if (show) {
-        iWidget *navBar, *tabBar;
-        readingBars_Root_(d, &navBar, &tabBar);
-        const iBool wasHidden = navBar ? !isVisible_Widget(navBar) : (tabBar && !isVisible_Widget(tabBar));
+        iWidget *bars[max_ReadingBar];
+        readingBars_Root_(d, bars);
+        /* The tab bar may be hidden regardless of reading. */
+        const iWidget *probe = bars[nav_ReadingBar]    ? bars[nav_ReadingBar]
+                               : bars[menu_ReadingBar] ? bars[menu_ReadingBar]
+                                                       : bars[tab_ReadingBar];
+        const iBool wasHidden = probe && !isVisible_Widget(probe);
         setReadingBarsVisible_Root_(d, iTrue);
         if (animate && wasHidden) {
             slideReadingBars_Root_(d, iTrue, iFalse);
@@ -3155,20 +3189,19 @@ void toggleReadingBars_Root(iRoot *d) {
 }
 
 iBool hasReadingBarAt_Root(const iRoot *d, iBool bottom) {
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *bars[max_ReadingBar];
+    readingBars_Root_(d, bars);
     const iPrefs *prefs = prefs_App();
-    return (navBar && prefs->bottomNavBar == bottom) ||
-           (tabBar && isTabBarWanted_Root_(d) && prefs->bottomTabBar == bottom);
+    return (bars[nav_ReadingBar] && prefs->bottomNavBar == bottom) ||
+           (bars[tab_ReadingBar] && isTabBarWanted_Root_(d) && prefs->bottomTabBar == bottom) ||
+           (bars[menu_ReadingBar] && !bottom);
 }
 
 iBool isPopupOpen_Root(const iRoot *d) {
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
     const iWidget *searchBar = findChild_Widget(d->widget, "search");
     iConstForEach(PtrArray, i, d->onTop) {
         const iWidget *top = i.ptr;
-        if (top != navBar && top != tabBar && top != searchBar && isVisible_Widget(top)) {
+        if (top != searchBar && !isReadingBar_Root_(d, top) && isVisible_Widget(top)) {
             return iTrue; /* a menu or popup */
         }
     }
@@ -3177,16 +3210,16 @@ iBool isPopupOpen_Root(const iRoot *d) {
 }
 
 static void hideReadingBarsIfIdle_Root_(iRoot *d) {
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *bars[max_ReadingBar + 1];
+    readingBars_Root_(d, bars);
     iWindow       *win     = window_Widget(d->widget);
     const iBool    isMouse = win->isMouseInside;
     const iInt2    mouse   = mouseCoord_Window(win, 0);
     const iWidget *focus   = focus_Widget();
     const iWidget *doc     = document_Root(d) ? constAs_Widget(document_Root(d)) : NULL;
-    const iWidget *tools   = doc ? findChild_Widget(doc, "viewtools") : NULL;
-    for (int i = 0; i < 3; i++) {
-        const iWidget *bar = i == 0 ? navBar : i == 1 ? tabBar : tools;
+    bars[max_ReadingBar] = doc ? findChild_Widget(doc, "viewtools") : NULL;
+    for (int i = 0; i < max_ReadingBar + 1; i++) {
+        const iWidget *bar = bars[i];
         if (bar && isVisible_Widget(bar) &&
             ((isMouse && contains_Widget(bar, mouse)) ||
              (focus && (focus == bar || hasParent_Widget(focus, bar))))) {
@@ -3210,26 +3243,26 @@ static iBool readingBarsEdges_Root_(const iRoot *d, iBool bottom, int *edge_out,
     if (!d->isReading) {
         return iFalse;
     }
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
     /* The phone's bottom bar is hidden along with the reading bars, and the bottom tab bar
        rests on top of it. */
-    iWidget *bottomBar   = NULL;
-    iWidget *phoneTabBar = NULL;
+    enum { bottomBar_Index = max_ReadingBar, phoneTabBar_Index, num_Index };
+    iWidget *bars[num_Index];
+    readingBars_Root_(d, bars);
+    iWidget *bottomBar = bars[bottomBar_Index] = bars[phoneTabBar_Index] = NULL;
     if (bottom && deviceType_App() == phone_AppDeviceType) {
-        bottomBar = d->bars.bottomBar;
+        bottomBar = bars[bottomBar_Index] = d->bars.bottomBar;
         if (bottomBar && isVisible_Widget(bottomBar) && prefs_App()->bottomTabBar) {
-            phoneTabBar = d->bars.tabButtons;
+            bars[phoneTabBar_Index] = d->bars.tabButtons;
         }
     }
     iBool found    = iFalse;
     int   restEdge = 0;
-    for (int i = 0; i < 4; i++) {
-        const iWidget *bar = i == 0 ? navBar : i == 1 ? tabBar : i == 2 ? bottomBar : phoneTabBar;
+    for (int i = 0; i < num_Index; i++) {
+        const iWidget *bar = bars[i];
         if (bar && isVisible_Widget(bar) && isAtBottom_Root_(d, bar) == bottom) {
-            const int   restOffset = i < 2  ? d->readingBarsRest[i]
-                                     : i == 3 ? -height_Widget(bottomBar)
-                                              : 0;
+            const int   restOffset = i < max_ReadingBar        ? d->readingBarsRest[i]
+                                     : i == phoneTabBar_Index ? -height_Widget(bottomBar)
+                                                              : 0;
             const iRect rect = bounds_Widget(bar);
             const iRect rest = moved_Rect(boundsWithoutVisualOffset_Widget(bar),
                                           init_I2(0, restOffset));
@@ -3269,14 +3302,14 @@ iBool readingBarsRestEdge_Root(const iRoot *d, iBool bottom, int *edge_out) {
 }
 
 iRect readingRect_Root(const iRoot *d, iRect docBounds) {
-    iWidget *navBar, *tabBar;
-    readingBars_Root_(d, &navBar, &tabBar);
+    iWidget *bars[max_ReadingBar + 1];
+    readingBars_Root_(d, bars);
     /* The find bar is also drawn over the page, so it does not change the page height. */
-    const iWidget *searchBar = d->bars.searchBar;
+    bars[max_ReadingBar] = d->bars.searchBar;
     int top    = top_Rect(docBounds);
     int bottom = bottom_Rect(docBounds);
-    for (int i = 0; i < 3; i++) {
-        const iWidget *bar = i == 0 ? navBar : i == 1 ? tabBar : searchBar;
+    for (int i = 0; i < max_ReadingBar + 1; i++) {
+        const iWidget *bar = bars[i];
         if (bar && isVisible_Widget(bar)) {
             const iRect rect = boundsWithoutVisualOffset_Widget(bar);
             if (bottom_Rect(rect) <= top_Rect(docBounds)) {
