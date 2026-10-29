@@ -1205,7 +1205,7 @@ void init_Typesetter(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
     d->isGopher      = isGopher_GmDocument_(doc);
     d->isPaged       = isPaged_GmDocument(doc);
     d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
-    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged) && !isTerminal_Platform();
+    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
     d->outsideMargin = outsideMargin_GmDocument_(doc);
     if (d->prefs->hyphenate.value && !doc->flags.isUiDialog) {
         iRangecc lang = lang_GmDocument(doc);
@@ -1373,7 +1373,7 @@ iBool typesetLines_Typesetter_(iTypesetter *d, int minHeight, double maxSeconds)
     }
     for (size_t i = firstRun; i < size_Array(d->layout); i++) {
         iGmRun *run = at_Array(d->layout, i);
-        if (!d->isJustified) {
+        if (!d->isJustified || !isJustifiable_BaseFont(font_Text(run->font))) {
             run->flags |= notJustified_GmRunFlag;
         }
         d->maxRunHeight = iMax(d->maxRunHeight, height_Rect(run->visBounds));

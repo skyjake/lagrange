@@ -1171,6 +1171,11 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
     return d;
 }
 
+iBool isJustifiable_BaseFont(const iBaseFont *d) {
+    iUnused(d);
+    return iTrue;
+}
+
 iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
     /* See sequenceFont_AppleText_(). */
     iUnused(d, seq, len);

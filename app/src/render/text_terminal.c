@@ -134,6 +134,11 @@ iBaseFont *sequenceFont_BaseFont(iBaseFont *d, const iChar *seq, size_t len) {
     return NULL;
 }
 
+iBool isJustifiable_BaseFont(const iBaseFont *d) {
+    iUnused(d);
+    return iFalse;
+}
+
 static void init_TuiText(iTuiText *d, SDL_Renderer *render, float documentFontSizeFactor) {
     init_Text(&d->base, render, documentFontSizeFactor);
     iForIndices(s, d->fonts) {

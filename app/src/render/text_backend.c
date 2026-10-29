@@ -497,6 +497,10 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
     return glyphIndex ? (iBaseFont *) result : NULL;
 }
 
+iBool isJustifiable_BaseFont(const iBaseFont *d) {
+    return !isMonospaced_Font(d);
+}
+
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 static iBool isLigature_RasterFont_(iRasterFont *d, const iChar *seq, size_t len) {
     if (!d->font.file || !d->font.file->data) {

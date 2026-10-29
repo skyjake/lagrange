@@ -130,6 +130,7 @@ enum iFontId    fontId_Text     (const iAnyFont *font);
 
 iBaseFont *     characterFont_BaseFont  (iBaseFont *, iChar ch);
 iBaseFont *     sequenceFont_BaseFont   (iBaseFont *, const iChar *seq, size_t len); /* ligature */
+iBool           isJustifiable_BaseFont  (const iBaseFont *);
 
 /*----------------------------------------------------------------------------------------------*/
 
