@@ -173,10 +173,19 @@ static const iPrefsStringSpec stringSpecs_[max_PrefsString] = {
     [caPath_PrefsString]         = { "ca.path", "path", NULL, "prefs.ca.path" },
     [geminiProxy_PrefsString]    = { "proxy.gemini", "address", NULL, "prefs.proxy.gemini" },
     [gopherProxy_PrefsString]    = { "proxy.gopher", "address", NULL, "prefs.proxy.gopher" },
+    [fingerProxy_PrefsString]    = { "proxy.finger", "address", NULL, "prefs.proxy.finger" },
+    [spartanProxy_PrefsString]   = { "proxy.spartan", "address", NULL, "prefs.proxy.spartan" },
+    [nexProxy_PrefsString]       = { "proxy.nex", "address", NULL, "prefs.proxy.nex" },
     [httpProxy_PrefsString]      = { "proxy.http", "address", NULL, "prefs.proxy.http" },
     [socksServer_PrefsString]    = { "proxy.socks", "address", "noupdate:1", "prefs.socks.server" },
     [socksUser_PrefsString]      = { "proxy.socks", "user", "noupdate:1", "prefs.socks.user" },
     [socksPassword_PrefsString]  = { "proxy.socks", "password", NULL, "prefs.socks.password" },
+#if defined (iPlatformEmscripten)
+    [relayUrl_PrefsString]       = { "relay", "url", "noupdate:1", "prefs.relay.url" },
+    [relayUser_PrefsString]      = { "relay", "user", "noupdate:1", "prefs.relay.user" },
+    [relayPassword_PrefsString]  = { "relay", "password", NULL, "prefs.relay.password" },
+    [relayProxy_PrefsString]     = { "relay.proxy", "address", NULL, NULL, noSerialize_PrefsSpecFlag | noDispatch_PrefsSpecFlag },
+#endif
     [syncServer_PrefsString]     = { "sync.server", "url", NULL, "prefs.sync.server" },
     [syncIdentity_PrefsString]   = { "sync.identity", "fp" },
     /* Style */
@@ -345,10 +354,27 @@ const iString *schemeProxy_Prefs(const iPrefs *d, iRangecc scheme) {
     else if (isGopherScheme_Rangecc(scheme)) {
         proxy = &d->strings[gopherProxy_PrefsString];
     }
+    else if (equalCase_Rangecc(scheme, "finger")) {
+        proxy = &d->strings[fingerProxy_PrefsString];
+    }
+    else if (equalCase_Rangecc(scheme, "spartan")) {
+        proxy = &d->strings[spartanProxy_PrefsString];
+    }
+    else if (equalCase_Rangecc(scheme, "nex")) {
+        proxy = &d->strings[nexProxy_PrefsString];
+    }
     else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
         proxy = &d->strings[httpProxy_PrefsString];
     }
-    return isEmpty_String(proxy) ? NULL : proxy;
+#if defined (iPlatformEmscripten)
+    /* Browsers cannot connect to plaintext servers, but the relay has a proxy for them. */
+    if (proxy && isEmpty_String(proxy) &&
+        (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger") ||
+         equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "nex"))) {
+        proxy = &d->strings[relayProxy_PrefsString];
+    }
+#endif
+    return !proxy || isEmpty_String(proxy) ? NULL : proxy;
 }
 
 iBool schemeProxyHostAndPort_Prefs(const iPrefs *d, iRangecc scheme, const iString **host,

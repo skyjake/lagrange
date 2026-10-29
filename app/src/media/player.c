@@ -1152,6 +1152,17 @@ iBool start_Player(iPlayer *d) {
     }
     d->device = SDL_GetAudioStreamDevice(d->stream);
     d->spec   = content.output;
+    /* The device may use larger buffers than requested, or a different sample rate. The
+       decoder's output buffer must hold what the device asks for at once. */ {
+        SDL_AudioSpec deviceSpec;
+        int           deviceFrames = 0;
+        if (SDL_GetAudioDeviceFormat(d->device, &deviceSpec, &deviceFrames) &&
+            deviceSpec.freq > 0) {
+            const int needed =
+                (int) ((int64_t) deviceFrames * content.output.freq / deviceSpec.freq) + 1;
+            content.samples = iMax(content.samples, needed);
+        }
+    }
     d->decoder = new_Decoder(d->data, &content);
     d->decoder->gain = d->volume;
     resumeDevice_Player_(d);

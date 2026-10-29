@@ -222,6 +222,18 @@ After these utilities are available, the scripts in _platform/_ can be used as a
 5. Now you can `make install` to build and deploy the_Foundation to `IOS_DIR`.
 6. Finally, you can run CMake like in _platform/cmake-ios-lagrange.sh_ to generate an Xcode project that builds the app.
 
+### Compiling for the web
+
+Lagrange can be compiled to WebAssembly with [Emscripten](https://emscripten.org/) and run in a web browser. You will need the Emscripten SDK, CMake, Ninja, and Meson (for HarfBuzz and FriBidi, which are built from the _lib/_ submodules).
+
+1. Activate the Emscripten environment: `source /path/to/emsdk/emsdk_env.sh`
+2. Run _platform/wasm-deps.sh_ to download and compile the dependencies. They are installed in _$HOME/SDK/wasm/_ by default; give a different prefix as an argument if needed, and set `WASM_DIR` to match when building the app.
+3. Run _platform/wasm-site.sh_ to build the desktop, phone, and tablet variants of the app and assemble them into a static site under _build-web/site/_.
+
+Alternatively, a single variant can be configured manually with `emcmake cmake -S . -B build-web -G Ninja` and built with `cmake --build build-web`. The output files are in _build-web/app/_.
+
+The app uses threads, so the web server must send the `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` headers for the page to be cross-origin isolated. Browsers cannot open direct connections to Gemini servers, so network traffic goes through a WebSocket relay; see [lagrange-relay](https://git.skyjake.fi/skyjake/lagrange-relay) for the server.
+
 ## User files
 
 One instance of Lagrange can be running at a time per user directory.

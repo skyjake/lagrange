@@ -35,6 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/widget.h"
 #include "ui/window.h"
 
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
+
 #include <SDL3/SDL_timer.h>
 
 iDefineTypeConstruction(DocumentSwipe)
@@ -439,6 +443,13 @@ iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEven
                 //printf("swipe moved to %d, side %d\n", d->wheelDistance, side);
                 postCommand_Widget(d->owner, "edgeswipe.moved arg:%d side:%d", d->wheelDistance,
                                    wheelSide_DocumentSwipe_(d));
+#if defined (iPlatformEmscripten)
+                /* The end of the gesture is only known after the momentum stops. */
+                if (iAbs(d->wheelDistance) >= width_Widget(d->owner)) {
+                    finishWheelSwipe_DocumentSwipe(d, iFalse);
+                    endWheelGesture_Web();
+                }
+#endif
             }
             return iTrue;
     }

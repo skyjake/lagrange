@@ -29,6 +29,7 @@ static iArchive *archive_;
 
 iBlock blobAbout_Resources;
 iBlock blobHelp_Resources;
+iBlock blobWeb_Resources;
 iBlock blobLagrange_Resources;
 iBlock blobLicenses_Resources;
 iBlock blobProtocols_Resources;
@@ -98,6 +99,9 @@ static struct {
     { &blobVersion_1_15_Resources, "about/version-1.15.gmi" },
     { &blobVersion_1_21_Resources, "about/version-1.21.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },
+#endif
+#if defined (iPlatformEmscripten)
+    { &blobWeb_Resources, "about/web.gmi" },
 #endif
     { &blobArghelp_Resources, "arg-help.txt" },
     { &blobCs_Resources, "lang/cs.bin" },
@@ -196,6 +200,9 @@ const iBlock *aboutPageSource_Resources(iRangecc path, iRangecc query) {
     const struct { const char *name; const iBlock *data; } pages[] = {
         { "about",        &blobAbout_Resources },
         { "help",         &blobHelp_Resources },
+#if defined (iPlatformEmscripten)
+        { "web",          &blobWeb_Resources },
+#endif
         { "lagrange",     &blobLagrange_Resources },
         { "license",      &blobLicenses_Resources },
         { "licenses",     &blobLicenses_Resources },

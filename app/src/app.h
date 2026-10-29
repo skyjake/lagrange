@@ -75,6 +75,7 @@ enum iUserEventCode {
     widgetTouchEnds_UserEventCode, /* finger lifted, but momentum may continue */
     widgetTouchBegins_UserEventCode,
     releaseObject_UserEventCode,   /* object that needs releasing in the main thread */
+    wheelGestureEnds_UserEventCode, /* pause in trackpad scrolling (web) */
 };
 
 enum iNewTabFlag {
@@ -143,6 +144,7 @@ void                trimCache_App               (void);
 void                trimMemory_App              (void);
 void                saveState_App               (void); /* full save including cached content */
 void                saveStateQuickly_App        (void); /* excluding cached content */
+void                saveUserData_App            (iBool withContent); /* everything saved when quitting */
 void                deferVisitedSave_App        (void);
 void                setTextInputActive_App      (iBool);
 

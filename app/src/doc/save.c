@@ -38,6 +38,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 #include <lagrange/gmrequest.h>
 #include <the_Foundation/file.h>
@@ -63,6 +66,10 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, const i
 #elif defined (iPlatformAndroidMobile)
             if (showDialog) {
                 exportDownloadedFile_Android(savePath, mime);
+            }
+#elif defined (iPlatformEmscripten)
+            if (showDialog) {
+                exportDownloadedFile_Web(savePath, mime);
             }
 #else
             if (showDialog) {

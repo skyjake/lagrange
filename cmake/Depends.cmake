@@ -28,6 +28,11 @@ if (ANDROID)
     return ()
 endif ()
 
+if (EMSCRIPTEN)
+    include (Depends-Emscripten)
+    return ()
+endif ()
+
 find_program (MESON_EXECUTABLE meson DOC "Meson build system")
 find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
 include (ExternalProject)

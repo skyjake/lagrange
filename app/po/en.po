@@ -533,6 +533,9 @@ msgstr "Bookmark Page…"
 msgid "menu.page.subscribe"
 msgstr "Subscribe to Page…"
 
+msgid "menu.aboutweb"
+msgstr "Lagrange on the Web"
+
 msgid "menu.aboutpages"
 msgstr "About Pages"
 
@@ -1185,6 +1188,13 @@ msgstr "(cached content)"
 
 msgid "pageinfo.cert.status"
 msgstr "Certificate Status:"
+
+# Page Information for content received via a proxy server.
+msgid "pageinfo.proxy"
+msgstr "Received via Proxy:"
+
+msgid "pageinfo.proxy.cert.status"
+msgstr "Proxy Certificate Status:"
 
 msgid "pageinfo.cert.ca.verified"
 msgstr "Verified by CA"
@@ -2392,6 +2402,10 @@ msgstr "Proxies"
 msgid "heading.prefs.socks"
 msgstr "SOCKS5"
 
+# Web version: server that relays network connections.
+msgid "heading.prefs.relay"
+msgstr "WebSocket Relay"
+
 msgid "heading.prefs.paragraph"
 msgstr "Paragraph"
 
@@ -2567,6 +2581,18 @@ msgstr "Hide tab bar:"
 
 msgid "prefs.hideviewtools"
 msgstr "Hide view tools:"
+
+msgid "prefs.webvariant"
+msgstr "Web UI:"
+
+msgid "prefs.webvariant.desktop"
+msgstr "Desktop"
+
+msgid "prefs.webvariant.tablet"
+msgstr "Tablet"
+
+msgid "prefs.webvariant.phone"
+msgstr "Phone"
 
 msgid "prefs.menubar"
 msgstr "Menu Bar"
@@ -2928,6 +2954,19 @@ msgstr "Gemini proxy:"
 msgid "prefs.proxy.gopher"
 msgstr "Gopher proxy:"
 
+msgid "prefs.proxy.finger"
+msgstr "Finger proxy:"
+
+msgid "prefs.proxy.spartan"
+msgstr "Spartan proxy:"
+
+msgid "prefs.proxy.nex"
+msgstr "Nex proxy:"
+
+# Web version: an empty proxy setting means the proxy built into the relay server is used.
+msgid "hint.proxy.relay"
+msgstr "relay's built-in proxy"
+
 msgid "prefs.proxy.http"
 msgstr "HTTP proxy:"
 
@@ -2945,6 +2984,28 @@ msgstr "Username:"
 
 msgid "prefs.socks.password"
 msgstr "Password:"
+
+msgid "prefs.relay.url"
+msgstr "Custom relay:"
+
+msgid "hint.relay.url"
+msgstr "wss://hostname/wisp/"
+
+msgid "prefs.relay.user"
+msgstr "Username:"
+
+msgid "prefs.relay.password"
+msgstr "Password:"
+
+# Public key that identifies this browser to a custom relay.
+msgid "prefs.relay.key"
+msgstr "Public key:"
+
+msgid "heading.storage.unavailable"
+msgstr "Storage Not Available"
+
+msgid "dlg.storage.unavailable"
+msgstr "This browser did not allow Lagrange to use persistent storage. Nothing will be saved after the page is closed."
 
 msgid "prefs.gamepad"
 msgstr "Gamepad enabled:"

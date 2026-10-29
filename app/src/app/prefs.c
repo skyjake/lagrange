@@ -68,6 +68,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "platform/x11.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
@@ -468,6 +471,12 @@ void loadPrefs_App_(iApp *d) {
                 handleCommand_App(cmd);
                 haveCA = iTrue;
             }
+#if defined (iPlatformEmscripten)
+            else if (equal_Command(cmd, "relay")) {
+                /* Background requests may be started before the event loop runs. */
+                handleCommand_App(cmd);
+            }
+#endif
             else if (equal_Command(cmd, "prefs.socks.changed")) {
                 /* This will affect the proxy setup later during loading of prefs. */
                 d->prefs.useProxy = arg_Command(cmd) != 0;
@@ -520,7 +529,7 @@ void loadPrefs_App_(iApp *d) {
             else if (equal_Command(cmd, "feedinterval.set")) {
                 handleNonWindowRelatedCommand_App_(d, cmd);
             }
-#if defined (iPlatformAndroidMobile)
+#if defined (iPlatformAndroidMobile) || (defined (iPlatformEmscripten) && defined (iPlatformMobile))
             else if (equal_Command(cmd, "returnkey.set")) {
                 /* Hardcoded to avoid accidental presses of the virtual Return key. */
                 d->prefs.returnKey = default_ReturnKeyBehavior;
@@ -691,6 +700,15 @@ static void prefsStringValueChanged_App_(iApp *d, enum iPrefsString id, iBool is
                 updateNetworkProxy_App_(d);
             }
             break;
+#if defined (iPlatformEmscripten)
+        case relayUrl_PrefsString:
+        case relayUser_PrefsString:
+        case relayPassword_PrefsString:
+            if (!isDeferred) {
+                updateRelay_Web(&d->prefs);
+            }
+            break;
+#endif
         default:
             break;
     }

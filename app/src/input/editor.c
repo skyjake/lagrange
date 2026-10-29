@@ -984,7 +984,7 @@ enum iEventResult processKeyDown_InputWidget_(iInputWidget *d, const SDL_Event *
                 return true_EventResult;
         }
     }
-    if (isApple_Platform() && (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | SDL_KMOD_SHIFT))) {
+    if (isAppleKeyboard_Keys() && (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | SDL_KMOD_SHIFT))) {
         switch (key) {
             case SDLK_UP:
             case SDLK_DOWN:
@@ -1052,7 +1052,7 @@ enum iEventResult processKeyDown_InputWidget_(iInputWidget *d, const SDL_Event *
             refresh_Widget(w);
             return true_EventResult;
         case SDLK_D:
-            if (mods != SDL_KMOD_CTRL) break;
+            if (mods != control_KeyModifier) break;
         case SDLK_DELETE:
             if (!isEmpty_Range(&d->buf.mark)) {
                 pushUndo_EditBuf(&d->buf);
@@ -1078,7 +1078,7 @@ enum iEventResult processKeyDown_InputWidget_(iInputWidget *d, const SDL_Event *
             refresh_Widget(w);
             return true_EventResult;
         case SDLK_K:
-            if (mods == SDL_KMOD_CTRL) {
+            if (mods == control_KeyModifier) {
                 if (!isEmpty_Range(&d->buf.mark)) {
                     pushUndo_EditBuf(&d->buf);
                     deleteMarked_InputWidget_(d);
@@ -1111,14 +1111,14 @@ enum iEventResult processKeyDown_InputWidget_(iInputWidget *d, const SDL_Event *
             return true_EventResult;
         case SDLK_A:
         case SDLK_E:
-            if (mods == SDL_KMOD_CTRL || mods == (SDL_KMOD_CTRL | SDL_KMOD_SHIFT)) {
+            if (mods == control_KeyModifier || mods == (control_KeyModifier | SDL_KMOD_SHIFT)) {
                 if (isTerminal_Platform()) {
                     /* Move to the start/end of the current wrapped line. */
                     moveCursorByLine_InputWidget_(d, 0, key == 'a' ? -1 : +1);
                     refresh_Widget(w);
                     return true_EventResult;
                 }
-                if (isApple_Platform()) {
+                if (isAppleKeyboard_Keys()) {
                     /* Move to the start/end of the current paragraph. */
                     setCursor_InputWidget_(d, key == 'a' ? lineFirst : lineLast);
                     refresh_Widget(w);

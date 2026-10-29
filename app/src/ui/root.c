@@ -64,13 +64,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/text.h"
 
 static const iMenuItem desktopNavMenuItems_[] = {
+#if !defined (iPlatformEmscripten)
     { openWindow_Icon " ${menu.newwindow}", SDLK_N, KMOD_PRIMARY, "window.new" },
+#endif
     { add_Icon " ${menu.newtab}", SDLK_T, KMOD_PRIMARY, "tabs.new append:1" },
     { close_Icon " ${menu.closetab}", SDLK_W, KMOD_PRIMARY, "tabs.close" },
     { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
 #if defined (LAGRANGE_FILE_DIALOGS)
     { folder_Icon " ${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
     { "${menu.openfolder}", 0, 0, "file.open folder:1" },
+#elif defined (iPlatformEmscripten)
+    { folder_Icon " ${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
 #endif
     { "---" },
     { download_Icon " " saveToDownloads_Label, SDLK_S, KMOD_PRIMARY, "document.save" },
@@ -95,14 +99,18 @@ static const iMenuItem desktopNavMenuItems_[] = {
  #endif
     { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
     { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
+#if defined (iPlatformEmscripten)
+    { "${menu.aboutweb}", 0, 0, "!open url:about:web" },
+#else
     { "---" },
     { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+#endif
     { NULL }
 };
 
 static const iMenuItem userDataMenuItems_[] = {
     { "${menu.export}", 0, 0, "export" },
-#if defined (LAGRANGE_FILE_DIALOGS)
+#if defined (LAGRANGE_FILE_DIALOGS) || defined (iPlatformEmscripten)
     { "${menu.import}", 0, 0, "import" },
 #endif
     { "---" },
@@ -173,7 +181,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { "${menu.page.copyurl}", 0, 0, "document.copylink" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
-#if defined (iPlatformMobileHandheld)
+#if defined (iPlatformMobileHandheld) && !defined (iPlatformEmscripten)
     { "---" },
     { "${menu.quit}", 0, 0, "quit" },
 #endif
@@ -585,7 +593,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "submenu")) {
-        if (isAndroid_Platform()) {
+        if (isAndroid_Platform() || (isWeb_Platform() && isMobile_Platform())) {
             iWidget *menu = findWidget_App(cstr_Command(cmd, "id"));
             postCommand_Widget(menu, "menu.open self:1");
         }
@@ -2541,7 +2549,7 @@ void createUserInterface_Root(iRoot *d) {
             pushBack_Array(tabsItems, &(iMenuItem){ "${menu.movetab.split}", 0, 0, "tabs.swap" });
         }
         if (deviceType_App() == desktop_AppDeviceType) {
-            pushBack_Array(tabsItems, &(iMenuItem){ "${menu.movetab.newwindow}", 0, 0, "tabs.swap newwindow:1" });
+            pushBack_Array(tabsItems, &(iMenuItem){ "${menu.movetab.newwindow}", 0, KMOD_NEWWINDOW, "tabs.swap newwindow:1" });
         }
         iWidget *tabsMenu = makeMenu_Widget(root, data_Array(tabsItems), size_Array(tabsItems));
         /* TODO: .newwindow is only for desktop; .split is not for phone */
@@ -2597,7 +2605,9 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, '9', rightSidebarTab_KeyModifier, "sidebar2.tab arg:8 toggle:1");
         addAction_Widget(root, 'j', KMOD_PRIMARY, "splitmenu.open");
         addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
+#if !defined (iPlatformEmscripten)
         addAction_Widget(root, 't', KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1");
+#endif
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);

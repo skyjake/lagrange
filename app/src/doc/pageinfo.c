@@ -70,16 +70,31 @@ static void showPageInfo_DocumentWidget_(iDocumentWidget *d) {
                 msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&fetch->sourceContent)));
         }
     }
-    if (equalCase_Rangecc(urlScheme_String(url), "gemini") ||
+    /* With a proxy, the certificate is the proxy's. */
+    const iString *proxy = d->flags & proxyRequest_DocumentWidgetFlag
+                               ? schemeProxy_Prefs(get_Prefs(), urlScheme_String(url))
+                               : NULL;
+    if (proxy) {
+        appendFormat_String(msg, "\n%s${pageinfo.proxy}\n%s%s", uiHeading_ColorEscape,
+                            uiText_ColorEscape, cstr_String(proxy));
+#if defined (iPlatformEmscripten)
+        if (equal_String(proxy, &get_Prefs()->strings[relayProxy_PrefsString])) {
+            appendCStr_String(msg, " (${hint.proxy.relay})");
+        }
+#endif
+        appendCStr_String(msg, "\n");
+    }
+    if (proxy || equalCase_Rangecc(urlScheme_String(url), "gemini") ||
         equalCase_Rangecc(urlScheme_String(url), "gophers")) {
         appendFormat_String(
             msg,
-            "\n%s${pageinfo.cert.status}\n"
+            "\n%s%s\n"
             "%s%s  %s\n"
             "%s%s  %s%s\n"
             "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
             "%s%s  %s",
             uiHeading_ColorEscape,
+            proxy ? "${pageinfo.proxy.cert.status}" : "${pageinfo.cert.status}",
             fetch->certFlags & authorityVerified_GmCertFlag ? checked
                                                             : uiText_ColorEscape "☐",
             uiText_ColorEscape,

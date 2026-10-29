@@ -139,15 +139,18 @@ static const iString *url_DocumentFetch_(const iDocumentFetch *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-void requestUpdated_DocumentFetch(iAnyObject *obj) {
+void requestUpdated_DocumentFetch(iAnyObject *obj, iGmRequest *req) {
+    iUnused(req);
     iDocumentFetch *d = ((iDocumentWidget *) obj)->fetch;
     uint32_t now = SDL_GetTicks();
     iBool didLockUnlock = iFalse;
-#if defined (iPlatformAndroidMobile)
+#if defined (iPlatformAndroidMobile) || defined (iPlatformEmscripten)
     /* On Android, the SDL main thread may be suspended when the app is backgrounded,
-       causing the posting of "document.request.updated" to stall. Streaming audio data
-       must be forwarded directly on the network thread to keep the audio buffer filled. */
-    if (d->state != ready_RequestState) {
+       causing the posting of "document.request.updated" to stall. Browsers likewise
+       stop the main loop in hidden tabs. Streaming audio data must be forwarded directly
+       on the network thread to keep the audio buffer filled. Until the response has been
+       handled, the document is still the previous one. */
+    if (d->state == receivedPartialResponse_RequestState) {
         iGmResponse *resp = lockResponse_GmRequest(d->request);
         if (startsWith_String(&resp->meta, "audio/")) {
             const iGmLinkId imgLinkId = 1; /* navigation audio always uses link ID 1 */
@@ -172,7 +175,8 @@ void requestUpdated_DocumentFetch(iAnyObject *obj) {
     }
 }
 
-void requestFinished_DocumentFetch(iAnyObject *obj) {
+void requestFinished_DocumentFetch(iAnyObject *obj, iGmRequest *req) {
+    iUnused(req);
     iDocumentFetch *d = ((iDocumentWidget *) obj)->fetch;
     notify_Widget(obj,
                   "document.request.finished doc:%p reqid:%u request:%p",

@@ -37,11 +37,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define outputPath_CommandLineOption "output;o"
 #define identity_CommandLineOption   "ident;I"
 #define dataDir_CommandLineOption    "user;U"
 #define printMeta_CommandLineOption  "print;p"
+#define proxy_CommandLineOption      "proxy;X"
 #define help_CommandLineOption       "help;h"
 
 iDeclareType(State)
@@ -63,6 +65,7 @@ static void printUsage_(const char *prog) {
             "  -I IDENT, --ident=IDENT Use the Lagrange identity matching IDENT\n"
             "  -U DIR, --user=DIR      User data directory (default: platform-specific)\n"
             "  -p, --print             Print response status and meta string to stderr\n"
+            "  -X LIST, --proxy=LIST   Use Gemini proxies: SCHEME=HOST[:PORT],...\n"
             "  -h, --help              Print this help and exit\n",
             prog);
 }
@@ -112,6 +115,24 @@ static void requestFinished_(iAnyObject *obj, iGmRequest *req) {
     unlock_Mutex(d->mutex);
 }
 
+static iBool setProxy_(iPrefs *prefs, iRangecc scheme, iRangecc address) {
+    static const struct { const char *scheme; enum iPrefsString pref; } proxies[] = {
+        { "gemini",  geminiProxy_PrefsString },
+        { "gopher",  gopherProxy_PrefsString },
+        { "finger",  fingerProxy_PrefsString },
+        { "spartan", spartanProxy_PrefsString },
+        { "nex",     nexProxy_PrefsString },
+        { "http",    httpProxy_PrefsString },
+    };
+    iForIndices(i, proxies) {
+        if (equalCase_Rangecc(scheme, proxies[i].scheme)) {
+            setRange_String(&prefs->strings[proxies[i].pref], address);
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static void printError_(const char *format, ...) {
     va_list args;
     va_start(args, format);
@@ -130,6 +151,7 @@ int main(int argc, char *argv[]) {
         defineValues_CommandLine(&cl, identity_CommandLineOption,   1);
         defineValues_CommandLine(&cl, dataDir_CommandLineOption,    1);
         defineValues_CommandLine(&cl, printMeta_CommandLineOption,  0);
+        defineValues_CommandLine(&cl, proxy_CommandLineOption,      1);
         defineValues_CommandLine(&cl, help_CommandLineOption,       0);
     }
     if (contains_CommandLine(&cl, help_CommandLineOption)) {
@@ -176,6 +198,16 @@ int main(int argc, char *argv[]) {
     init_ScopeRules(cstr_String(dataDir));
     init_SiteSpec(cstr_String(dataDir));
     iPrefs   *prefs = new_Prefs();
+    if ((arg = iClob(checkArgumentValues_CommandLine(&cl, proxy_CommandLineOption, 1))) !=
+        NULL) {
+        iRangecc entry = iNullRange;
+        while (nextSplit_Rangecc(range_String(value_CommandLineArg(arg, 0)), ",", &entry)) {
+            const char *eq = memchr(entry.start, '=', size_Range(&entry));
+            if (!eq || !setProxy_(prefs, (iRangecc){ entry.start, eq }, (iRangecc){ eq + 1, entry.end })) {
+                printError_("invalid proxy: %s", cstr_Rangecc(entry));
+            }
+        }
+    }
     iGmCerts *certs = new_GmCerts(cstr_String(dataDir));
     setReadOnly_GmCerts(certs, iTrue);
     /* Optional client identity. */

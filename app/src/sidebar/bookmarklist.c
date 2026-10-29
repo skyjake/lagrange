@@ -88,7 +88,7 @@ static void setupFromBookmark_SidebarItem_(iSidebarItem *d, const iBookmark *bm)
 static const iMenuItem bookmarkMenuItems_[] = {
     { openTab_Icon " ${menu.opentab}", 0, 0, "bookmark.open newtab:1" },
     { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "bookmark.open newtab:2" },
-    { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "bookmark.open newwindow:1" },
+    { openWindow_Icon " ${menu.openwindow}", 0, KMOD_NEWWINDOW, "bookmark.open newwindow:1" },
     { "---", 0, 0, NULL },
     { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
     { copy_Icon " ${menu.dup}", 0, 0, "bookmark.dup" },
@@ -157,7 +157,7 @@ static void updateBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
             (iMenuItem[]) {
                 { openTab_Icon " ${menu.folder.opentab}", 0, 0, "bookmark.open newtab:1" },
 #if !defined (iPlatformTerminal)
-                { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "bookmark.open newwindow:1" },
+                { openWindow_Icon " ${menu.openwindow}", 0, KMOD_NEWWINDOW, "bookmark.open newwindow:1" },
 #endif
                 { "---" },
                 { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
@@ -180,7 +180,7 @@ static void updateBookmarkItems_SidebarWidget_(iSidebarWidget *d) {
             { "---" },
             { openTab_Icon " ${menu.folder.opentab}", 0, 0, "bookmark.open newtab:1" },
 #if !defined (iPlatformTerminal)
-            { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "bookmark.open newwindow:1" },
+            { openWindow_Icon " ${menu.openwindow}", 0, KMOD_NEWWINDOW, "bookmark.open newwindow:1" },
 #endif
             { "---" },
             { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },

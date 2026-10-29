@@ -70,6 +70,13 @@ endif ()
 if (IOS)
     set (ENABLE_APP_BUNDLE ON)      # required
 endif ()
+if (EMSCRIPTEN)
+    # Features that are not available in web browsers.
+    set (ENABLE_DOWNLOAD_EDIT   OFF)
+    set (ENABLE_IPC             OFF)
+    set (ENABLE_POPUP_MENUS     OFF)
+    set (ENABLE_RESIZE_DRAW     OFF)
+endif ()
 
 #-------------------------------------------------------------------------------------------------
 
@@ -132,6 +139,9 @@ else ()
         res/about/version.gmi
         res/arg-help.txt
     )
+    if (EMSCRIPTEN)
+        list (APPEND RESOURCES res/about/web.gmi)
+    endif ()
 endif ()
 if ((UNIX AND NOT APPLE) OR MSYS OR MINGW)
     list (APPEND RESOURCES res/lagrange-64.png)
@@ -140,6 +150,9 @@ if (ENABLE_GAMEPAD)
     list (APPEND RESOURCES res/pointer.png)
 endif ()
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
+if (EMSCRIPTEN)
+    set (RESOURCES_ZIP_LEVEL -0) # the web server compresses the whole file better
+endif ()
 make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 add_custom_target (resources DEPENDS ${EMB_BIN})
@@ -450,6 +463,12 @@ if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
         src/platform/x11.h
     )
 endif ()
+if (EMSCRIPTEN)
+    list (APPEND SOURCES
+        src/platform/web.c
+        src/platform/web.h
+    )
+endif ()
 if (ANDROID)
     set (MOBILE 1)
     add_definitions (-DiPlatformAndroidMobile=1)
@@ -534,7 +553,7 @@ target_compile_definitions (core PRIVATE ${PLATFORM_DEFINITIONS})
 set (_opensslVersion ${OPENSSL_VERSION})
 if (NOT _opensslVersion)
     foreach (_dir ${OPENSSL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${IOS_DIR}/include
-                  ${ANDROID_DIR}/openssl-android/${ANDROID_ABI}/include)
+                  ${ANDROID_DIR}/openssl-android/${ANDROID_ABI}/include ${WASM_DIR}/include)
         if (NOT _opensslVersion AND EXISTS ${_dir}/openssl/opensslv.h)
             file (STRINGS ${_dir}/openssl/opensslv.h _major
                   REGEX "^#[ \t]*define[ \t]+OPENSSL_VERSION_MAJOR[ \t]+[0-9]+")
@@ -864,6 +883,34 @@ if [ -d \"\$dsym\" ]; then cp -r \"\$dsym\" \"\$BUILT_PRODUCTS_DIR/\"; fi
             )
         endif ()
     endif ()
+    if (EMSCRIPTEN)
+        target_link_options (app PUBLIC
+            -sWASMFS
+            -sALLOW_MEMORY_GROWTH
+            -sPTHREAD_POOL_SIZE=24
+            -sSTACK_SIZE=2MB
+            -sDEFAULT_PTHREAD_STACK_SIZE=1MB
+            -sENVIRONMENT=web,worker
+            -sFORCE_FILESYSTEM         # SDL uses the JS file API for dropped files
+            -sEXPORTED_FUNCTIONS=_main,_malloc,_free
+            -sEXPORTED_RUNTIME_METHODS=ccall,FS,addRunDependency,removeRunDependency
+            --preload-file ${EMB_BIN}@/resources.lgr
+        )
+        set_property (TARGET app APPEND PROPERTY LINK_DEPENDS ${EMB_BIN})
+        # The UI variant: desktop at the site root, phone and tablet in subdirectories.
+        if (ENABLE_MOBILE_PHONE)
+            set (WEB_VARIANT phone)
+        elseif (ENABLE_MOBILE_TABLET)
+            set (WEB_VARIANT tablet)
+        else ()
+            set (WEB_VARIANT desktop)
+        endif ()
+        file (SIZE ${EMB_BIN} WEB_DATA_SIZE) # for load progress
+        configure_file (res/web/index.html ${CMAKE_CURRENT_BINARY_DIR}/index.html @ONLY)
+        configure_file (res/web/storage.js ${CMAKE_CURRENT_BINARY_DIR}/storage.js COPYONLY)
+        configure_file (res/web/shell.js ${CMAKE_CURRENT_BINARY_DIR}/shell.js COPYONLY)
+        configure_file (res/web/shell.css ${CMAKE_CURRENT_BINARY_DIR}/shell.css COPYONLY)
+    endif ()
     if (ANDROID)
         if (CMAKE_SIZEOF_VOID_P EQUAL 4)
             target_compile_options (app PUBLIC -mfpu=neon-vfpv4) # 32-bit stb_image_resize2
@@ -1059,6 +1106,7 @@ print_summary (
     ENABLE_FRIBIDI_BUILD
     ENABLE_GAMEPAD
     ENABLE_GUI
+    ENABLE_GUPPY
     ENABLE_HARFBUZZ
     ENABLE_HARFBUZZ_MINIMAL
     ENABLE_IDLE_SLEEP

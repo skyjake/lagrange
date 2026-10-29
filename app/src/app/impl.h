@@ -56,6 +56,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define EMB_BIN "resources.lgr" /* loaded from assets with SDL_rwops */
 #define defaultDataDir_App_ NULL /* will ask SDL */
 
+#elif defined (iPlatformEmscripten)
+#define EMB_BIN "/resources.lgr" /* preloaded into the virtual file system */
+#define defaultDataDir_App_ "/data"
+
 #elif defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
 #define EMB_BIN   "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"

@@ -78,6 +78,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
 #endif
@@ -289,7 +292,16 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.new")) {
-#if !defined (iPlatformTerminal)
+#if defined (iPlatformEmscripten)
+        /* There is only one window, so open a new tab instead. */
+        const char *url = suffixPtr_Command(cmd, "url");
+        if (url && *url) {
+            postCommandf_App("open newtab:1 %s", cmd + 11);
+        }
+        else {
+            postCommand_App("tabs.new append:1");
+        }
+#elif !defined (iPlatformTerminal)
         iMainWindow *newWin = newMainWindow_App();
         if (hasLabel_Command(cmd, "url")) {
             const char *urlAndArgs = cmd + 11; /* all arguments to "window.new" passed on */
@@ -937,6 +949,8 @@ iBool handleCommand_App(const char *cmd) {
         pickFile_iOS("file.open");
 #elif defined (iPlatformAndroidMobile)
         pickFile_Android("file.open");
+#elif defined (iPlatformEmscripten)
+        pickFile_Web("file.open temp:1");
 #else
         const iBool isFolder = argLabel_Command(cmd, "folder") != 0;
         open_FileDialog("file.open newtab:1",
@@ -1364,7 +1378,7 @@ iBool handleCommand_App(const char *cmd) {
             0);
         iRelease(zip);
         delete_Export(export);
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile) || defined (iPlatformEmscripten)
         /* Straight to the save sheet. */
         postCommand_App("document.save");
 #endif
@@ -1372,7 +1386,11 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "import")) {
         if (!hasLabel_Command(cmd, "path")) {
+#if defined (iPlatformEmscripten)
+            pickFile_Web("import");
+#else
             open_FileDialog("import", "${heading.import.userdata}", "${filter.zip}", "zip", 0);
+#endif
             return iTrue;
         }
         const iString *path = collect_String(suffix_Command(cmd, "path"));

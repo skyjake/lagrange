@@ -3,6 +3,13 @@ cmake_minimum_required (VERSION 3.10)
 
 project (lagrange-core)
 
+if (EMSCRIPTEN)
+    set (DEFAULT_GUPPY OFF) # browsers have no UDP
+else ()
+    set (DEFAULT_GUPPY ON)
+endif ()
+option (ENABLE_GUPPY "Support the Guppy protocol" ${DEFAULT_GUPPY})
+
 add_library (core STATIC
     src/builtin.c
     src/command.c
@@ -13,7 +20,6 @@ add_library (core STATIC
     src/tools.c
     src/gmutil.c
     src/gopher.c
-    src/guppy.c
     src/hyphenator.c
     src/lang.c
     src/listfile.c
@@ -23,6 +29,10 @@ add_library (core STATIC
     src/snippets.c
     src/visited.c
 )
+if (ENABLE_GUPPY)
+    target_sources (core PRIVATE src/guppy.c)
+    target_compile_definitions (core PUBLIC LAGRANGE_ENABLE_GUPPY=1)
+endif ()
 
 set_property (TARGET core PROPERTY C_STANDARD 11)
 if (MSVC)

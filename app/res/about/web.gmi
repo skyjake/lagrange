@@ -1,0 +1,38 @@
+# Lagrange on the Web
+
+Lagrange is platform-independent software. It can be compiled for many different environments, for instance mobile phones and text-mode terminals. The version you are currently using has been compiled using Emscripten into WebAssembly, so it can be run as binary code inside a web browser.
+
+## User data
+
+The app runs locally inside the browser, much like native programs run on the computer's operating system. All of your user data (identities and their private keys, bookmarks, settings, etc.) is stored locally in your browser. Your data is NOT uploaded to lagrange.skyjake.fi; the website cannot access your data at all.
+
+If you clear the local site data in the web browser settings, all of your Lagrange user data is deleted. YOUR IDENTITIES WILL BE LOST. Note that a private browser window clears its data when closed, and browsers may also sometimes delete site data on their own if the device is low on space.
+
+You should either use the import/export feature to make a backup copy of any important data (identities and bookmarks), or enable sync so a copy of the data is available on the sync server. Sync works across native and web builds of Lagrange, and the exported data is compatible with all variants as well.
+
+## Network connections and privacy
+
+A web page cannot open arbitrary network connections to Gemini servers. Therefore, Lagrange needs a relay through which network connections are made. The default relay runs on lagrange.skyjake.fi (where this app was loaded from).
+
+* TLS-based traffic (Gemini, Titan, Misfin) is encrypted locally by Lagrange and remains encrypted all the way to the destination server. The relay only passes the encrypted data along. It can see the name of the destination server and how much data is transferred, which is information that any part of the network routing your traffic can also see.
+* Network requests made using plaintext protocols (Gopher, Finger, Spartan, Nex) are fully visible to the relay. The connection between you and the relay is still protected by TLS.
+* No logging: the relay does not log the servers being connected to or the clients accessing the relay.
+
+## Getting started
+
+If you have already used Lagrange on another device, you can just enable sync in Preferences, or export user data from another device and import it into the web app. Use the "Open File" menu action, or on the desktop, drag and drop the user data archive onto the browser window.
+
+## Self-hosting a relay
+
+Private self-hosted relays are supported. The relay server address is specified in Preferences > Proxies > WebSocket Relay (or under Settings > Network on mobile devices). A private relay can require a username and password, or a specific client public key (which can be found on the Proxies page in Preferences).
+
+=> https://git.skyjake.fi/skyjake/lagrange-relay  Lagrange relay server
+
+## Other limitations
+
+* The app can run in one browser tab (and one window) at a time. (Opening it in a second tab will offer to move it there.)
+* Web links open in a new browser tab.
+* Some key combinations are reserved by the web browser and never reach Lagrange, for instance the keys for opening and closing browser tabs and windows (Ctrl/Command + T, W, N). Other keys can be assigned in Preferences > Keys. Viewing Lagrange in fullscreen mode may prevent the browser from intercepting as many keys.
+* Input methods that compose text (for example, for Chinese, Japanese, or Korean) are not supported in desktop browsers. Text can still be pasted from the clipboard.
+* External tools (content filters, media handlers) are not available.
+* The Guppy protocol is not supported.

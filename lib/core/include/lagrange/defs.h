@@ -96,6 +96,14 @@ iLocalDef iBool isAndroid_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isWeb_Platform(void) {
+#if defined (iPlatformEmscripten)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isWindows_Platform(void) {
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
     return iTrue;
@@ -230,7 +238,7 @@ enum iReturnKeyBehavior {
 #else
         RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, control_ReturnKeyFlag),
 #endif
-#if defined (iPlatformAndroidMobile)
+#if defined (iPlatformAndroidMobile) || (defined (iPlatformEmscripten) && defined (iPlatformMobile))
     default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
 #else
     default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, 0),

@@ -25,6 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gamepad.h"
 #include "window.h"
 #include "app.h"
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 #include <lagrange/listfile.h>
 #include <the_Foundation/file.h>
@@ -109,10 +112,23 @@ int mapMods_Keys(int modFlags) {
 
 int modState_Keys(void) {
     int state = SDL_GetModState() & ~(SDL_KMOD_NUM | SDL_KMOD_MODE | SDL_KMOD_CAPS);
+#if defined (iPlatformEmscripten)
+    state = swapAppleMods_Web(state);
+#endif
     state |= modState_Gamepad(gamepad_App());
     /* Treat capslock as a modifier key. */
     if (capsLockDown_) state |= SDL_KMOD_CAPS;
     return mapMods_Keys(state);
+}
+
+iBool isAppleKeyboard_Keys(void) {
+#if defined (iPlatformApple)
+    return iTrue;
+#elif defined (iPlatformEmscripten)
+    return isApple_Web();
+#else
+    return iFalse;
+#endif
 }
 
 void setCapsLockDown_Keys(iBool isDown) {
@@ -356,7 +372,9 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
     { 85, { "${LC:menu.movetab.right}",     moveTabRight_KeyShortcut,       "tabs.move arg:1"                   }, 0 },
+#if !defined (iPlatformEmscripten)
     { 86, { "${LC:menu.movetab.newwindow}", SDLK_T, KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1"        }, 0 },
+#endif
     { 90, { "${keys.split.menu}",           SDLK_J, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
     { 91, { "${keys.split.next}",           SDLK_TAB, SDL_KMOD_CTRL,        "keyroot.next",                     }, 0 },
     { 92, { "${keys.split.item} ${menu.split.merge}",           '1', 0,     "ui.split arg:0",                   }, noDirectTrigger_BindFlag },
@@ -391,9 +409,11 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 258,{ "${keys.sidebar.tab} 9",       '9', leftSidebarTab_KeyModifier, "sidebar.tab arg:8 toggle:1"        }, 0 },
 
     /* The following cannot currently be changed (built-in duplicates). */
-#if defined (iPlatformApple)
+#if defined (iPlatformApple) || defined (iPlatformEmscripten)
     { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
     { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,             "navigate.forward"     }, 0 },
+#endif
+#if defined (iPlatformApple)
     { 1100, { NULL, SDLK_SPACE,        KMOD_PRIMARY | SDL_KMOD_CTRL, "emojipicker"          }, 0 },
 #endif
 #if defined (iPlatformTerminal)
@@ -417,6 +437,14 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 1011, { NULL, SDLK_AC_BOOKMARKS, 0,               "sidebar.mode arg:0 toggle:1"   }, 0 },
 };
 
+static void defaultKey_Keys_(size_t index, int *key, int *mods) {
+    *key  = defaultBindings_[index].bind.key;
+    *mods = defaultBindings_[index].bind.kmods;
+#if defined (iPlatformEmscripten)
+    appleDefaultKey_Web(defaultBindings_[index].id, key, mods);
+#endif
+}
+
 static iBinding *findId_Keys_(iKeys *d, int id) {
     iForEach(Array, i, &d->bindings) {
         iBinding *bind = i.value;
@@ -438,7 +466,9 @@ static void bindDefaults_(void) {
     iForIndices(i, defaultBindings_) {
         const int       id   = defaultBindings_[i].id;
         const iMenuItem bind = defaultBindings_[i].bind;
-        bind_Keys(id, bind.command, bind.key, bind.kmods);
+        int key, mods;
+        defaultKey_Keys_(i, &key, &mods);
+        bind_Keys(id, bind.command, key, mods);
         if (bind.label) {
             setLabel_Keys(id, bind.label);
         }
@@ -495,8 +525,7 @@ void reset_Binding(int id) {
     if (bind) {
         iForIndices(i, defaultBindings_) {
             if (defaultBindings_[i].id == id) {
-                bind->key  = defaultBindings_[i].bind.key;
-                bind->mods = defaultBindings_[i].bind.kmods;
+                defaultKey_Keys_(i, &bind->key, &bind->mods);
                 updateLookup_Keys_(&keys_);
                 break;
             }

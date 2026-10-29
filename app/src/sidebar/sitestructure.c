@@ -274,7 +274,7 @@ iBool updateStructure_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         { "---" },
         { openTab_Icon " ${menu.opentab}", 0, 0, "sideitem.open newtab:1" },
         { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "sideitem.open newtab:2" },
-        { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "sideitem.open newwindow:1" },
+        { openWindow_Icon " ${menu.openwindow}", 0, KMOD_NEWWINDOW, "sideitem.open newwindow:1" },
         { "---" },
         { "${menu.copyurl}", 0, 0, "sideitem.copy" },
     };

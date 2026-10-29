@@ -62,6 +62,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "platform/x11.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 #if SDL_VERSION_ATLEAST(2, 0, 14)
 #   include <SDL3/SDL_misc.h>
 #endif
@@ -467,6 +470,9 @@ void setTextInputActive_App(iBool active) {
     else {
         SDL_StopTextInput(win);
     }
+#if defined (iPlatformEmscripten)
+    setTextInputActive_Web(active);
+#endif
 }
 
 iBool isTextInputActive_App(void) {

@@ -42,6 +42,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define pickFile_Mobile pickFile_Android
 #endif
 
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#   define pickFile_Mobile pickFile_Web
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/path.h>
@@ -122,6 +127,9 @@ void init_CertImportWidget(iCertImportWidget *d) {
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
         { "${dlg.certimport.pickfile}", 0, 0, "certimport.pickfile" },
         { "${dlg.certimport.paste}", 0, 0, "certimport.paste" },
+        { "---" },
+#elif defined (iPlatformEmscripten)
+        { "${dlg.certimport.pickfile}", 0, 0, "certimport.pickfile" },
         { "---" },
 #elif defined (iPlatformMobile)
         { "${dlg.certimport.paste}", 0, 0, "certimport.paste" },
@@ -306,12 +314,12 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         if (hasLabel_Command(cmd, "path")) {
             const iString *path = collect_String(suffix_Command(cmd, "path"));
             tryImportFromFile_CertImportWidget_(d, path);
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile) || defined (iPlatformEmscripten)
             remove(cstr_String(path)); /* it is a temporary copy */
 #endif
         }
         else {
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile) || defined (iPlatformEmscripten)
             pickFile_Mobile("certimport.pickfile");
 #else
             open_FileDialog("certimport.pickfile", "${heading.certimport}", NULL, NULL, 0);

@@ -151,7 +151,7 @@ static iBool checkModifiers_(int have, int req) {
 }
 
 static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
-    if (isAndroid_Platform()) {
+    if (isAndroid_Platform() || (isWeb_Platform() && isMobile_Platform())) {
         /* On Android, we don't have system menus nor do we want actual submenu popups
            to appear. The "submenu" command will cause the submenu to open as a normal
            menu. */

@@ -99,8 +99,8 @@ void    showErrorPage_DocumentFetch     (iDocumentFetch *, enum iGmStatusCode co
                                          const iString *meta);
 void    addBannerWarnings_DocumentFetch (iDocumentFetch *);
 
-void    requestUpdated_DocumentFetch (iAnyObject *); /* GmRequest audience */
-void    requestFinished_DocumentFetch(iAnyObject *);
+void    requestUpdated_DocumentFetch (iAnyObject *, iGmRequest *); /* GmRequest audience */
+void    requestFinished_DocumentFetch(iAnyObject *, iGmRequest *);
 
 iBool           isRequestOngoing_DocumentFetch  (const iDocumentFetch *);
 iBool           isFetchingOwnLink_DocumentFetch (const iDocumentFetch *);

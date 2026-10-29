@@ -1231,7 +1231,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             const iMenuItem menuItems[] = {
                 { openTab_Icon " ${menu.opentab}", 0, 0, "history.open newtab:1" },
                 { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "history.open newtab:2" },
-                { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "history.open newwindow:1" },
+                { openWindow_Icon " ${menu.openwindow}", 0, KMOD_NEWWINDOW, "history.open newwindow:1" },
                 { "---" },
                 { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
                 { "${menu.copyurl}", 0, 0, "sideitem.copy canon:1" },
@@ -1347,7 +1347,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 { "${menu.closetab.other}", 0, 0, "opendocs.close toleft:1 toright:1" },
                 { "---" , 0, KMOD_DESKTOP | KMOD_TABLET },
                 { "${menu.movetab.split}", 0, KMOD_DESKTOP | KMOD_TABLET, "opendocs.swap" },
-                { "${menu.movetab.newwindow}", 0, KMOD_DESKTOP, "opendocs.swap newwindow:1" },
+                { "${menu.movetab.newwindow}", 0, KMOD_NEWWINDOW, "opendocs.swap newwindow:1" },
                 { "---" },
                 { copy_Icon " ${menu.duptab}", 0, 0, "opendocs.dup" },
                 { "${menu.copyurl}", 0, 0, "sideitem.copy" },

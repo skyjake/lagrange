@@ -26,7 +26,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/gmcerts.h>
 #include <lagrange/gmutil.h>
 #include <lagrange/gopher.h>
-#include <lagrange/guppy.h>
+#if defined (LAGRANGE_ENABLE_GUPPY)
+#   include <lagrange/guppy.h>
+#endif
 #include <lagrange/lang.h>
 #include <lagrange/tools.h>
 #include <lagrange/prefs.h>
@@ -201,6 +203,13 @@ void deinit_UploadData(iUploadData *d) {
 
 static iAtomicInt idGen_;
 
+enum iGmRawProtocol {
+    none_GmRawProtocol,
+    gopher_GmRawProtocol, /* also Finger */
+    spartan_GmRawProtocol,
+    nex_GmRawProtocol,
+};
+
 struct Impl_GmRequest {
     iObject              object;
     uint32_t             id;
@@ -213,10 +222,15 @@ struct Impl_GmRequest {
     iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
+#if defined (LAGRANGE_ENABLE_GUPPY)
     iGuppy *             guppy;
+#endif
     iSocket *            plainSocket; /* non-TLS socket for Spartan, Nex */
     iGmResponse *        resp;
+    enum iGmRawProtocol  rawProtocol; /* plaintext protocol, directly or via a proxy */
+    iBool                isRaw;       /* proxy is passing on the server's response as is */
     iBool                isProxy;
+    iBool                isRelayProxy;
     iBool                isFilterEnabled;
     iBool                isRespLocked;
     iBool                isRespFiltered;
@@ -263,10 +277,18 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     }
 }
 
+static iBool isRawProxyResponse_GmRequest_  (const iGmRequest *);
+static int   beginRawProxyResponse_GmRequest_(iGmRequest *);
+static int   processRawData_GmRequest_       (iGmRequest *, const iBlock *data);
+
 static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
     iBool        notifyUpdate = iFalse;
     iBool        notifyDone   = iFalse;
     iGmResponse *resp         = d->resp;
+    if (d->isRaw) {
+        /* The request finishes when the proxy closes the connection. */
+        return processRawData_GmRequest_(d, data) & 1;
+    }
     if (d->state == receivingHeader_GmRequestState) {
         appendCStrN_String(&resp->meta, constData_Block(data), size_Block(data));
         /* Check if the header line is complete. */
@@ -307,6 +329,10 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
             }
             checkServerCertificate_GmRequest_(d);
             iRelease(metaPattern);
+            if (isRawProxyResponse_GmRequest_(d)) {
+                d->isRespFiltered = iFalse;
+                notifyUpdate = (beginRawProxyResponse_GmRequest_(d) & 1) != 0;
+            }
         }
         else if (size_String(&resp->meta) > 1024) {
             /* The Gemini "tech overview" caps <META> at 1024 bytes; formal specification leaves
@@ -409,6 +435,12 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     if (d->isRespFiltered && d->state == finished_GmRequestState) {
         applyFilter_GmRequest_(d);
     }
+    if (d->isRaw && d->rawProtocol == gopher_GmRawProtocol && d->state == finished_GmRequestState) {
+        /* This may change the media type and content of the page. */
+        if (checkFormat_Gopher(&d->gopher)) {
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
+    }
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
@@ -510,6 +542,15 @@ static const iBlock *replaceVariables_(const iBlock *block) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static void notify_GmRequest_(iGmRequest *d, int bits) {
+    if (bits & 1) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (bits & 2) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
 static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
     iUnused(socket);
     iBool notify = iFalse;
@@ -535,10 +576,12 @@ static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int erro
     iUnused(socket);
     lock_Mutex(d->mtx);
     initCurrent_Time(&d->resp->when);
+#if defined (LAGRANGE_ENABLE_GUPPY)
     if (d->guppy) {
         cancel_Guppy(d->guppy);
         iReleasePtr(&d->guppy);
     }
+#endif
     d->state = failure_GmRequestState;
     d->resp->statusCode = tlsFailure_GmStatusCode; /* TODO: add a plain socket error message */
     format_String(&d->resp->meta, "%s (errno %d)", msg, error);
@@ -547,38 +590,119 @@ static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int erro
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
-static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
-    iBool notifyUpdate = iFalse;
-    lock_Mutex(d->mtx);
+/* The functions below process data received from a server of a plaintext protocol, either
+   directly or via a proxy in raw mode. The mutex must be held. They return 1 if the
+   response was updated and 2 if the request is finished. */
+
+static int processGopherData_GmRequest_(iGmRequest *d, const iBlock *data) {
     d->resp->statusCode = success_GmStatusCode;
-    iBlock *data = readAll_Socket(socket);
-    if (!isEmpty_Block(data)) {
-        if (processResponse_Gopher(&d->gopher, data)) {
-            notifyUpdate = iTrue;
+    return !isEmpty_Block(data) && processResponse_Gopher(&d->gopher, data) ? 1 : 0;
+}
+
+static int processNexData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    d->resp->statusCode = success_GmStatusCode;
+    if (isEmpty_Block(data)) {
+        return 0;
+    }
+    append_Block(&d->resp->body, data);
+    return 1;
+}
+
+static int processSpartanData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iFalse;
+    if (isEmpty_Block(data)) {
+        return 0;
+    }
+    if (d->state == receivingHeader_GmRequestState) {
+        append_Block(&d->resp->meta.chars, data);
+        size_t crlf = indexOfCStr_String(&d->resp->meta, "\r\n");
+        if (crlf != iInvalidPos) {
+            setData_Block(&d->resp->body, constBegin_String(&d->resp->meta) + crlf + 2,
+                          size_Block(&d->resp->meta.chars) - crlf - 2);
+            if (!isEmpty_Block(&d->resp->body)) {
+                notifyUpdate = iTrue;
+            }
+            truncate_Block(&d->resp->meta.chars, crlf);
+            d->state = receivingBody_GmRequestState;
+            iRegExp *metaPattern = new_RegExp("^([0-9]) (.*)", 0);
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            if (matchString_RegExp(metaPattern, &d->resp->meta, &m)) {
+                switch (toInt_String(collect_String(captured_RegExpMatch(&m, 1)))) {
+                    case 2:
+                        d->resp->statusCode = success_GmStatusCode;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        break;
+                    case 3:
+                        d->resp->statusCode = redirectTemporary_GmStatusCode;
+                        d->state = finished_GmRequestState;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        notifyDone = iTrue;
+                        break;
+                    case 4:
+                        d->resp->statusCode = badRequest_GmStatusCode;
+                        d->state = finished_GmRequestState;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        notifyDone = iTrue;
+                        break;
+                    case 5:
+                        d->resp->statusCode = permanentFailure_GmStatusCode;
+                        d->state = finished_GmRequestState;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        notifyDone = iTrue;
+                        break;
+                    default:
+                        d->resp->statusCode = invalidHeader_GmStatusCode;
+                        d->state            = finished_GmRequestState;
+                        notifyDone          = iTrue;
+                        break;
+                }
+            }
+            else {
+                d->resp->statusCode = invalidHeader_GmStatusCode;
+                d->state            = finished_GmRequestState;
+                notifyDone          = iTrue;
+            }
+            iRelease(metaPattern);
         }
     }
-    delete_Block(data);
-    unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
+    else if (d->state == receivingBody_GmRequestState) {
+        append_Block(&d->resp->body, data);
+        notifyUpdate = iTrue;
+    }
+    return (notifyUpdate ? 1 : 0) | (notifyDone ? 2 : 0);
+}
+
+static int processRawData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    switch (d->rawProtocol) {
+        case gopher_GmRawProtocol:
+            return processGopherData_GmRequest_(d, data);
+        case spartan_GmRawProtocol:
+            return processSpartanData_GmRequest_(d, data);
+        case nex_GmRawProtocol:
+            return processNexData_GmRequest_(d, data);
+        default:
+            return 0;
     }
 }
 
-static void tlsGopherRead_GmRequest_(iGmRequest *d, iTlsRequest *req) {
-    iBool notifyUpdate = iFalse;
+static void plainSocketRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     lock_Mutex(d->mtx);
-    d->resp->statusCode = success_GmStatusCode;
-    iBlock *data = readAll_TlsRequest(req);
-    if (!isEmpty_Block(data)) {
-        if (processResponse_Gopher(&d->gopher, data)) {
-            notifyUpdate = iTrue;
-        }
-    }
+    iBlock *data = readAll_Socket(socket);
+    const int bits = processRawData_GmRequest_(d, data);
     delete_Block(data);
     unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
-    }
+    notify_GmRequest_(d, bits);
+}
+
+static void tlsGopherRead_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    lock_Mutex(d->mtx);
+    iBlock *data = readAll_TlsRequest(req);
+    const int bits = processGopherData_GmRequest_(d, data);
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    notify_GmRequest_(d, bits);
 }
 
 static void tlsGopherFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
@@ -618,21 +742,34 @@ static void tlsGopherFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
-static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port,
-                                             iBool useTls) {
+static void initGopher_GmRequest_(iGmRequest *d) {
     clear_Block(&d->gopher.source);
-    iGmResponse *resp = d->resp;
-    d->gopher.meta   = &resp->meta;
-    d->gopher.output = &resp->body;
-    d->gopher.isTls  = useTls;
+    d->gopher.meta   = &d->resp->meta;
+    d->gopher.output = &d->resp->body;
     d->gopher.isGeminiStyled = d->docPrefs.geminiStyledGopher.value;
-    d->state         = receivingBody_GmRequestState;
+}
+
+/* Asks for the query parameters of a Gopher search. Returns iFalse if the request was
+   finished. */
+static iBool openGopher_GmRequest_(iGmRequest *d) {
     open_Gopher(&d->gopher, &d->url);
     if (d->gopher.needQueryArgs) {
-        resp->statusCode = input_GmStatusCode;
-        setCStr_String(&resp->meta, "Enter query:");
+        d->resp->statusCode = input_GmStatusCode;
+        setCStr_String(&d->resp->meta, "Enter query:");
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
+        return iFalse;
+    }
+    return iTrue;
+}
+
+static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port,
+                                             iBool useTls) {
+    initGopher_GmRequest_(d);
+    d->gopher.isTls  = useTls;
+    d->rawProtocol   = gopher_GmRawProtocol;
+    d->state         = receivingBody_GmRequestState;
+    if (!openGopher_GmRequest_(d)) {
         return;
     }
     if (useTls) {
@@ -645,7 +782,7 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     }
     else {
         d->gopher.socket = new_Socket(cstr_String(host), port);
-        iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
+        iConnect(Socket, d->gopher.socket, readyRead,    d, plainSocketRead_GmRequest_);
         iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
         iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
         open_Socket(d->gopher.socket);
@@ -654,33 +791,10 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     }
 }
 
-static void nexRead_GmRequest_(iGmRequest *d, iSocket *socket) {
-    iBool notifyUpdate = iFalse;
-    lock_Mutex(d->mtx);
-    d->resp->statusCode = success_GmStatusCode;
-    iBlock *data = readAll_Socket(socket);
-    if (!isEmpty_Block(data)) {
-        append_Block(&d->resp->body, data);
-        notifyUpdate = iTrue;
-    }
-    delete_Block(data);
-    unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
-    }
-}
-
-static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
-    d->state = receivingBody_GmRequestState;
-    setCStr_String(&d->resp->meta, "text/plain");
-    d->plainSocket = new_Socket(cstr_String(host), port);
-    iConnect(Socket, d->plainSocket, readyRead,    d, nexRead_GmRequest_);
-    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
-    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
-    open_Socket(d->plainSocket);
+static void setNexMediaType_GmRequest_(iGmRequest *d) {
     iUrl url;
     init_Url(&url, &d->url);
-    /* Check the media type. */
+    setCStr_String(&d->resp->meta, "text/plain");
     if (!isEmpty_Range(&url.path)) {
         iString path;
         initRange_String(&path, url.path);
@@ -690,6 +804,19 @@ static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, ui
         }
         deinit_String(&path);
     }
+}
+
+static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    d->state       = receivingBody_GmRequestState;
+    d->rawProtocol = nex_GmRawProtocol;
+    setNexMediaType_GmRequest_(d);
+    d->plainSocket = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->plainSocket, readyRead,    d, plainSocketRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
+    open_Socket(d->plainSocket);
+    iUrl url;
+    init_Url(&url, &d->url);
     iBlock message;
     init_Block(&message, 0);
     printf_Block(&message,
@@ -699,6 +826,7 @@ static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, ui
     deinit_Block(&message);
 }
 
+#if defined (LAGRANGE_ENABLE_GUPPY)
 static void guppyRead_GmRequest_(iGmRequest *d, iDatagram *datagram) {
     iUnused(datagram);
     iBool notifyUpdate = iFalse;
@@ -714,7 +842,8 @@ static void guppyRead_GmRequest_(iGmRequest *d, iDatagram *datagram) {
     }
 }
 
-static void guppyTimeout_GmRequest_(iGmRequest *d) {
+static void guppyTimeout_GmRequest_(iGmRequest *d, iGuppy *guppy) {
+    iUnused(guppy);
     lock_Mutex(d->mtx);
     cancel_Guppy(d->guppy);
     d->state = failure_GmRequestState;
@@ -725,7 +854,8 @@ static void guppyTimeout_GmRequest_(iGmRequest *d) {
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
-static void guppyError_GmRequest_(iGmRequest *d) {
+static void guppyError_GmRequest_(iGmRequest *d, iGuppy *guppy) {
+    iUnused(guppy);
     plainSocketError_GmRequest_(d, NULL, ECONNABORTED, "Address lookup failed");
 }
 
@@ -745,100 +875,34 @@ static void beginGuppyConnection_GmRequest_(iGmRequest *d, const iString *host, 
     iConnect(Guppy,    d->guppy,           error,   d, guppyError_GmRequest_);
     open_Guppy(d->guppy, host, port);
 }
+#endif /* LAGRANGE_ENABLE_GUPPY */
 
-static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
-    iBool notifyUpdate = iFalse;
-    iBool notifyDone   = iFalse;
-    lock_Mutex(d->mtx);
-    iBlock *data = readAll_Socket(socket);
-    if (!isEmpty_Block(data)) {
-        if (d->state == receivingHeader_GmRequestState) {
-            append_Block(&d->resp->meta.chars, data);
-            size_t crlf = indexOfCStr_String(&d->resp->meta, "\r\n");
-            if (crlf != iInvalidPos) {
-                setData_Block(&d->resp->body, constBegin_String(&d->resp->meta) + crlf + 2,
-                              size_Block(&d->resp->meta.chars) - crlf - 2);
-                if (!isEmpty_Block(&d->resp->body)) {
-                    notifyUpdate = iTrue;
-                }
-                truncate_Block(&d->resp->meta.chars, crlf);
-                d->state = receivingBody_GmRequestState;
-                iRegExp *metaPattern = new_RegExp("^([0-9]) (.*)", 0);
-                iRegExpMatch m;
-                init_RegExpMatch(&m);
-                if (matchString_RegExp(metaPattern, &d->resp->meta, &m)) {
-                    switch (toInt_String(collect_String(captured_RegExpMatch(&m, 1)))) {
-                        case 2:
-                            d->resp->statusCode = success_GmStatusCode;
-                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
-                            break;
-                        case 3:
-                            d->resp->statusCode = redirectTemporary_GmStatusCode;
-                            d->state = finished_GmRequestState;
-                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
-                            notifyDone = iTrue;
-                            break;
-                        case 4:
-                            d->resp->statusCode = badRequest_GmStatusCode;
-                            d->state = finished_GmRequestState;
-                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
-                            notifyDone = iTrue;
-                            break;
-                        case 5:
-                            d->resp->statusCode = permanentFailure_GmStatusCode;
-                            d->state = finished_GmRequestState;
-                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
-                            notifyDone = iTrue;
-                            break;
-                        default:
-                            d->resp->statusCode = invalidHeader_GmStatusCode;
-                            d->state            = finished_GmRequestState;
-                            notifyDone          = iTrue;
-                            break;
-                    }
-                }
-                else {
-                    d->resp->statusCode = invalidHeader_GmStatusCode;
-                    d->state            = finished_GmRequestState;
-                    notifyDone          = iTrue;
-                }
-                iRelease(metaPattern);
-            }
-        }
-        else if (d->state == receivingBody_GmRequestState) {
-            append_Block(&d->resp->body, data);
-            notifyUpdate = iTrue;
-        }
+/* Spartan sends the URL query or an upload as the request data. */
+static iBlock *newSpartanData_GmRequest_(const iGmRequest *d, const iUrl *url) {
+    iBlock *data = new_Block(0);
+    if (!isEmpty_Range(&url->query)) {
+        set_Block(data,
+                  utf8_String(collect_String(urlDecode_String(
+                      collectNewRange_String((iRangecc){ url->query.start + 1, url->query.end })))));
     }
-    delete_Block(data);
-    unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
+    if (d->upload) {
+        set_Block(data, &d->upload->data);
     }
-    if (notifyDone) {
-        iNotifyAudience(d, finished, GmRequestFinished);
-    }
+    return data;
 }
 
 static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
-    d->state = receivingHeader_GmRequestState;
+    d->state       = receivingHeader_GmRequestState;
+    d->rawProtocol = spartan_GmRawProtocol;
     d->plainSocket = new_Socket(cstr_String(host), port);
-    iConnect(Socket, d->plainSocket, readyRead,    d, spartanRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, readyRead,    d, plainSocketRead_GmRequest_);
     iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
     open_Socket(d->plainSocket);
     iUrl url;
     init_Url(&url, &d->url);
     iBlock *message = new_Block(0);
-    iBlock *data    = new_Block(0);
-    if (!isEmpty_Range(&url.query)) {
-        set_Block(data,
-                  utf8_String(collect_String(urlDecode_String(
-                      collectNewRange_String((iRangecc){ url.query.start + 1, url.query.end })))));
-    }
-    if (d->upload) {
-        set_Block(data, &d->upload->data);
-    }
+    iBlock *data    = newSpartanData_GmRequest_(d, &url);
     printf_Block(message,
                  "%s %s %zu\r\n",
                  cstr_Rangecc(url.host),
@@ -850,6 +914,93 @@ static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host
     delete_Block(message);
 }
 
+/* Proxies may pass on the plaintext server's response as is, with this media type. */
+static const char *rawProxyMediaType_GmRequest_ = "application/x-lagrange-raw";
+
+static iBool isRawProxyResponse_GmRequest_(const iGmRequest *d) {
+    iRangecc mime = iNullRange;
+    if (!d->isRelayProxy ||
+        d->rawProtocol == none_GmRawProtocol ||
+        d->resp->statusCode != success_GmStatusCode ||
+        !nextSplit_Rangecc(range_String(&d->resp->meta), ";", &mime)) {
+        return iFalse;
+    }
+    trim_Rangecc(&mime);
+    return equalCase_Rangecc(mime, rawProxyMediaType_GmRequest_);
+}
+
+/* Switches to processing the rest of the response body as raw protocol data. The mutex
+   must be held. */
+static int beginRawProxyResponse_GmRequest_(iGmRequest *d) {
+    iBlock *pending = copy_Block(&d->resp->body);
+    clear_Block(&d->resp->body);
+    clear_String(&d->resp->meta);
+    d->isRaw = iTrue;
+    switch (d->rawProtocol) {
+        case gopher_GmRawProtocol:
+            initGopher_GmRequest_(d);
+            open_Gopher(&d->gopher, &d->url);
+            d->state = receivingBody_GmRequestState;
+            break;
+        case spartan_GmRawProtocol:
+            d->state = receivingHeader_GmRequestState; /* Spartan's own header follows */
+            break;
+        case nex_GmRawProtocol:
+            setNexMediaType_GmRequest_(d);
+            d->state = receivingBody_GmRequestState;
+            break;
+        default:
+            break;
+    }
+    const int bits = processRawData_GmRequest_(d, pending);
+    delete_Block(pending);
+    return bits;
+}
+
+/* Prepares a Gemini proxy request for a plaintext protocol. Returns iFalse if the request
+   was finished without contacting the proxy. */
+static iBool beginPlaintextProxyRequest_GmRequest_(iGmRequest *d, iRangecc scheme) {
+    if (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger")) {
+        d->rawProtocol = gopher_GmRawProtocol;
+        initGopher_GmRequest_(d);
+        if (!openGopher_GmRequest_(d)) {
+            return iFalse;
+        }
+        clear_String(&d->resp->meta); /* the proxy's response header is parsed first */
+    }
+    else if (equalCase_Rangecc(scheme, "spartan")) {
+        d->rawProtocol = spartan_GmRawProtocol;
+    }
+    else if (equalCase_Rangecc(scheme, "nex")) {
+        d->rawProtocol = nex_GmRawProtocol;
+    }
+    return iTrue;
+}
+
+/* A Spartan proxy request carries the request data like a Titan upload:
+   "spartan://host/path;size=N" followed by N bytes. */
+static void composeSpartanProxyRequest_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    iBlock *data = newSpartanData_GmRequest_(d, &url);
+    const char *end = !isEmpty_Range(&url.query)      ? url.query.start
+                      : !isEmpty_Range(&url.fragment) ? url.fragment.start
+                                                      : constEnd_String(&d->url);
+    iBlock *request = new_Block(0);
+    appendData_Block(request, constBegin_String(&d->url), end - constBegin_String(&d->url));
+    if (isEmpty_Range(&url.path)) {
+        appendCStr_Block(request, "/");
+    }
+    if (!isEmpty_Block(data)) {
+        appendCStr_Block(request, format_CStr(";size=%zu", size_Block(data)));
+    }
+    appendCStr_Block(request, "\r\n");
+    append_Block(request, data);
+    setContent_TlsRequest(d->req, request);
+    delete_Block(request);
+    delete_Block(data);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
@@ -857,7 +1008,10 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->id              = add_Atomic(&idGen_, 1) + 1;
     d->identity        = NULL;
     d->resp            = new_GmResponse();
+    d->rawProtocol     = none_GmRawProtocol;
+    d->isRaw           = iFalse;
     d->isProxy         = iFalse;
+    d->isRelayProxy    = iFalse;
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
     d->isRespFiltered  = iFalse;
@@ -866,7 +1020,9 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     init_String(&d->url);
     initCopy_DocPrefs(&d->docPrefs, defaults_DocPrefs());
     init_Gopher(&d->gopher);
+#if defined (LAGRANGE_ENABLE_GUPPY)
     d->guppy        = NULL;
+#endif
     d->plainSocket  = NULL;
     d->upload       = NULL;
     d->certs        = certs;
@@ -899,10 +1055,12 @@ void deinit_GmRequest(iGmRequest *d) {
     delete_ToolProcess(d->filterProc);
     delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
+#if defined (LAGRANGE_ENABLE_GUPPY)
     if (d->guppy) {
         iDisconnectObject(Guppy, d->guppy, timeout, d);
         iRelease(d->guppy);
     }
+#endif
     iRelease(d->plainSocket);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
@@ -1367,6 +1525,13 @@ void submit_GmRequest(iGmRequest *d) {
         /* User has configured a proxy server for this scheme. */
         schemeProxyHostAndPort_Prefs(get_Prefs(), url.scheme, &host, &port);
         d->isProxy = iTrue;
+#if defined (iPlatformEmscripten)
+        d->isRelayProxy = equal_String(schemeProxy_Prefs(get_Prefs(), url.scheme),
+                                       &get_Prefs()->strings[relayProxy_PrefsString]);
+#endif
+        if (!beginPlaintextProxyRequest_GmRequest_(d, url.scheme)) {
+            return;
+        }
     }
     else if (isGopherScheme_Rangecc(url.scheme)) {
         beginGopherConnection_GmRequest_(d, host, port ? port : 70,
@@ -1385,10 +1550,12 @@ void submit_GmRequest(iGmRequest *d) {
         beginNexConnection_GmRequest_(d, host, port ? port : 1900);
         return;
     }
+#if defined (LAGRANGE_ENABLE_GUPPY)
     else if (equalCase_Rangecc(url.scheme, "guppy")) {
         beginGuppyConnection_GmRequest_(d, host, port ? port : 6775);
         return;
     }
+#endif
     else if (!equalCase_Rangecc(url.scheme, "gemini") &&
              !equalCase_Rangecc(url.scheme, "titan") &&
              !equalCase_Rangecc(url.scheme, "misfin")) {
@@ -1424,6 +1591,9 @@ void submit_GmRequest(iGmRequest *d) {
     }
     else if (isMisfin_GmRequest_(d)) {
         composeMisfinRequest_GmRequest_(d);
+    }
+    else if (d->isProxy && d->rawProtocol == spartan_GmRawProtocol) {
+        composeSpartanProxyRequest_GmRequest_(d);
     }
     else {
         /* Normal Gemini request. */

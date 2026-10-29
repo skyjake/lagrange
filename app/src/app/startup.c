@@ -89,6 +89,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "platform/x11.h"
 #endif
@@ -114,6 +117,7 @@ static const iBuildFlag buildFlags_[] = {
     iBuildFlag_(LAGRANGE_ENABLE_FREETYPE),
     iBuildFlag_(LAGRANGE_ENABLE_FRIBIDI),
     iBuildFlag_(LAGRANGE_ENABLE_GAMEPAD),
+    iBuildFlag_(LAGRANGE_ENABLE_GUPPY),
     iBuildFlag_(LAGRANGE_ENABLE_HARFBUZZ),
     iBuildFlag_(LAGRANGE_ENABLE_IDLE_SLEEP),
     iBuildFlag_(LAGRANGE_ENABLE_IPC),
@@ -317,6 +321,10 @@ void updateSystemTheme_App_(iApp *d) {
     isHighContrast = contrast;
 #elif defined (iPlatformMsys) || defined (iPlatformWindows)
     isDark = isDarkSystemTheme_Win32();
+#elif defined (iPlatformEmscripten)
+    iBool contrast;
+    isDark = isDarkSystemTheme_Web(&contrast);
+    isHighContrast = contrast;
 #elif !defined (iPlatformTerminal)
     switch (SDL_GetSystemTheme()) {
         case SDL_SYSTEM_THEME_LIGHT:
@@ -585,7 +593,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->prefs.smoothScrolling = iFalse;
     d->prefs.returnKey       = appDefault_ReturnKeyBehavior;
 #endif
-    d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
+    d->prefs.detachedPrefs = !isWeb_Platform() && !contains_CommandLine(&d->args, "prefs-sheet");
     setDataDir_Core(dataDir_App_());
     init_ScopeRules(dataDir_App_());
     init_SiteSpec(dataDir_App_());
@@ -670,6 +678,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
     migrateBackupsToSubdir_App_();
     loadPrefs_App_(d);
+#if defined (iPlatformEmscripten)
+    updateRelay_Web(&d->prefs); /* before any requests are made */
+#endif
     updateSystemTheme_App_(d); /* before the first window is created */
 #if defined (iPlatformAppleDesktop)
     localizeApplicationMenu_MacOS();
@@ -729,7 +740,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
-        postCommand_Root(NULL, "open url:about:help");
+        postCommand_Root(NULL, isWeb_Platform() ? "open url:about:web" : "open url:about:help");
     }
     else if (!d->prefs.retainTabs) {
         /* All roots will just show home. */
@@ -791,6 +802,13 @@ static void init_App_(iApp *d, int argc, char **argv) {
             postCommandf_App("~window.setdesktop window:%u arg:%d",
                              id_Window(d->window), mw->place.desktop);
         }
+    }
+#endif
+#if defined (iPlatformEmscripten)
+    init_Web();
+    if (isFirstRun) {
+        /* The page may be closed without a chance to save. */
+        saveUserData_App(iFalse);
     }
 #endif
 }
@@ -890,11 +908,19 @@ const iString *debugInfo_App(void) {
     appendFormat_String(msg, "\n## Features\n"); {
         const char *enabled[2] = { ballotUnchecked_Icon, ballotChecked_Icon };
         appendFormat_String(msg,
-                            "Device type: %s\n\n",
+                            "Device type: %s\n",
                             isTerminal_Platform()                       ? "terminal"
                             : deviceType_App() == desktop_AppDeviceType ? "desktop"
                             : deviceType_App() == tablet_AppDeviceType  ? "tablet"
                                                                         : "phone");
+#if !defined (iPlatformTerminal)
+        if (get_MainWindow()) {
+            appendFormat_String(msg,
+                                "Renderer: %s\n",
+                                SDL_GetRendererName(renderer_Window(as_Window(get_MainWindow()))));
+        }
+#endif
+        appendFormat_String(msg, "\n");
         if (isAppleDesktop_Platform() && buildFlag_Core("LAGRANGE_ENABLE_MAC_MENUS")) {
             appendFormat_String(msg, "%s Native macOS menus\n", enabled[1]);
         }
@@ -940,6 +966,8 @@ const iString *debugInfo_App(void) {
                             enabled[buildFlag_Core("LAGRANGE_ENABLE_JXL")]);
         appendFormat_String(msg, "%s WebP images\n",
                             enabled[buildFlag_Core("LAGRANGE_ENABLE_WEBP")]);
+        appendFormat_String(msg, "%s Guppy protocol\n",
+                            enabled[buildFlag_Core("LAGRANGE_ENABLE_GUPPY")]);
     }
     appendFormat_String(msg, "\n## Memory usage\n"); {
         iMemInfo total = { 0, 0 };

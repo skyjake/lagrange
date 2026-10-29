@@ -55,7 +55,7 @@ static void appendOpenItems_(iArray *items, const iString *linkUrl, const char *
               format_CStr("!open%s newtab:2 url:%s", openArgs, cstr_String(linkUrl)) },
             { openWindow_Icon " ${link.newwindow}",
               0,
-              KMOD_DESKTOP,
+              KMOD_NEWWINDOW,
               format_CStr("!open%s newwindow:1 url:%s", openArgs, cstr_String(linkUrl)) },
             { "${link.side}",
               0,

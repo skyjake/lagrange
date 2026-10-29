@@ -45,11 +45,20 @@ enum iPrefsString {
     caPath_PrefsString,
     geminiProxy_PrefsString,
     gopherProxy_PrefsString,
+    fingerProxy_PrefsString,
+    spartanProxy_PrefsString,
+    nexProxy_PrefsString,
     httpProxy_PrefsString,
 
     socksServer_PrefsString,
     socksUser_PrefsString,
     socksPassword_PrefsString,
+#if defined (iPlatformEmscripten)
+    relayUrl_PrefsString, /* empty for the default relay */
+    relayUser_PrefsString,
+    relayPassword_PrefsString,
+    relayProxy_PrefsString, /* built-in proxy of the relay; not saved */
+#endif
 
     syncServer_PrefsString,
     syncIdentity_PrefsString, /* fingerprint (hex) */

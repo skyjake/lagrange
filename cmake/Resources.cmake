@@ -1,4 +1,8 @@
+# RESOURCES_ZIP_LEVEL is the zip compression level (-0 stores the files uncompressed).
 function (make_resources dst)
+    if (NOT DEFINED RESOURCES_ZIP_LEVEL)
+        set (RESOURCES_ZIP_LEVEL -1)
+    endif ()
     find_program (ZIP_EXECUTABLE zip DOC "ZIP archiver")
     if (NOT ZIP_EXECUTABLE)
         message (FATAL_ERROR "Please install 'zip' for packaging resources.")
@@ -35,19 +39,19 @@ function (make_resources dst)
     set (versionTempPath ${CMAKE_CURRENT_SOURCE_DIR}/res/VERSION)
     file (WRITE ${versionTempPath} ${PROJECT_VERSION})
     execute_process (
-        COMMAND ${ZIP_EXECUTABLE} -1 -X ${dst} VERSION ${files}
+        COMMAND ${ZIP_EXECUTABLE} ${RESOURCES_ZIP_LEVEL} -X ${dst} VERSION ${files}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
         OUTPUT_QUIET
     )
     if (genfiles)
         execute_process (
-            COMMAND ${ZIP_EXECUTABLE} -1 -X ${dst} ${genfiles}
+            COMMAND ${ZIP_EXECUTABLE} ${RESOURCES_ZIP_LEVEL} -X ${dst} ${genfiles}
             WORKING_DIRECTORY ${genDir}
             OUTPUT_QUIET
         )
     endif ()
     execute_process (
-        COMMAND ${ZIP_EXECUTABLE} -1 -X -j ${dst} ${absfiles}
+        COMMAND ${ZIP_EXECUTABLE} ${RESOURCES_ZIP_LEVEL} -X -j ${dst} ${absfiles}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
         OUTPUT_QUIET
     )

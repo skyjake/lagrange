@@ -46,6 +46,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 iBool updateGempub_SidebarWidget_(iSidebarWidget *d) {
     /* Shows the cover or the index of the current book. Returns False if there is none. */
@@ -153,12 +156,12 @@ iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iMenuItem menuItems[] = {
         { openTab_Icon " ${menu.opentab}", 0, 0, "book.open newtab:1" },
         { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "book.open newtab:2" },
-        { openWindow_Icon " ${menu.openwindow}", 0, KMOD_DESKTOP, "book.open newwindow:1" },
+        { openWindow_Icon " ${menu.openwindow}", 0, KMOD_NEWWINDOW, "book.open newwindow:1" },
         { "---" },
         { "${book.copysource}", 0, 0, "book.copysource" },
 #if defined (iPlatformMobile)
         { download_Icon " ${menu.save.files}", 0, 0, "book.saveas" },
-#elif defined (LAGRANGE_FILE_DIALOGS)
+#elif defined (LAGRANGE_FILE_DIALOGS) || defined (iPlatformEmscripten)
         { download_Icon " ${menu.save.as}", 0, 0, "book.saveas" },
 #endif
 #if defined (LAGRANGE_HAVE_FILE_REVEAL)
@@ -288,12 +291,16 @@ iBool handleShelfCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, 
         const iBook   *book = d->contextItem ? find_Books(&d->contextItem->bookId) : NULL;
         const iString *path = book ? path_Book(book) : NULL;
         if (path) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformEmscripten)
             /* The exported file is removed afterwards. */
             const iString *tmpPath = temporaryPathForUrl_App(
                 collect_String(makeFileUrl_String(path)), collectNewCStr_String(mimeType_Gempub));
             if (copyFile_SidebarWidget_(path, tmpPath)) {
+#   if defined (iPlatformEmscripten)
+                exportDownloadedFile_Web(tmpPath, collectNewCStr_String(mimeType_Gempub));
+#   else
                 exportDownloadedFile_iOS(tmpPath);
+#   endif
             }
 #elif defined (iPlatformAndroidMobile)
             exportDownloadedFile_Android(path, collectNewCStr_String(mimeType_Gempub));

@@ -50,9 +50,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
+
+#if defined (iPlatformEmscripten)
+#   define PLAINTEXT_PROXY_HINT " hint:hint.proxy.relay" /* empty means the relay's proxy */
+#else
+#   define PLAINTEXT_PROXY_HINT ""
+#endif
 
 static const char *urlSizeSliderSpec_ =
     "slider id:prefs.urlsize min:1 max:32 step:0.5 bigstep:4 prec:1 unit:kb";
@@ -169,10 +178,16 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
         "prefs.ca.path",
         "prefs.proxy.gemini",
         "prefs.proxy.gopher",
+        "prefs.proxy.finger",
+        "prefs.proxy.spartan",
+        "prefs.proxy.nex",
         "prefs.proxy.http",
         "prefs.socks.server",
         "prefs.socks.user",
         "prefs.socks.password",
+        "prefs.relay.url",
+        "prefs.relay.user",
+        "prefs.relay.password",
         "prefs.sync.server",
     };
     iWidget *tabs = findChild_Widget(prefs, "prefs.tabs");
@@ -529,9 +544,21 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { NULL }
         };
+#if defined (iPlatformEmscripten)
+        const iMenuItem webVariantItems[] = {
+            { "button id:prefs.webvariant.0 label:prefs.webvariant.desktop", 0, 0, "web.variant arg:0" },
+            { "button id:prefs.webvariant.1 label:prefs.webvariant.tablet",  0, 0, "web.variant arg:1" },
+            { "button id:prefs.webvariant.2 label:prefs.webvariant.phone",   0, 0, "web.variant arg:2" },
+            { NULL }
+        };
+#endif
         const iMenuItem uiPanelItems[] = {
             { "title id:heading.prefs.ui" },
             { "padding arg:0.667" },
+#if defined (iPlatformEmscripten)
+            { "radio id:prefs.webvariant", 0, 0, (const void *) webVariantItems },
+            { "padding" },
+#endif
             { "toggle id:prefs.ostheme" },
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
             { "radio horizontal:1 rowlen:3 id:prefs.accent", 0, 0, (const void *) accentItems },
@@ -585,14 +612,30 @@ iWidget *makePreferences_Widget(void) {
             { "heading text:${prefs.proxy.gemini}" },
             { "input id:prefs.proxy.gemini noheading:1" },
             { "heading text:${prefs.proxy.gopher}" },
-            { "input id:prefs.proxy.gopher noheading:1" },
+            { "input id:prefs.proxy.gopher noheading:1" PLAINTEXT_PROXY_HINT },
+            { "heading text:${prefs.proxy.finger}" },
+            { "input id:prefs.proxy.finger noheading:1" PLAINTEXT_PROXY_HINT },
+            { "heading text:${prefs.proxy.spartan}" },
+            { "input id:prefs.proxy.spartan noheading:1" PLAINTEXT_PROXY_HINT },
+            { "heading text:${prefs.proxy.nex}" },
+            { "input id:prefs.proxy.nex noheading:1" PLAINTEXT_PROXY_HINT },
             { "heading text:${prefs.proxy.http}" },
             { "input id:prefs.proxy.http noheading:1" },
+#if defined (iPlatformEmscripten)
+            { "heading id:heading.prefs.relay" },
+            { "input id:prefs.relay.url hint:hint.relay.url" },
+            { "input id:prefs.relay.user hint:hint.optional" },
+            { "input id:prefs.relay.password sensitive:1 hint:hint.optional" },
+            { "heading id:prefs.relay.key" },
+            { format_CStr("label id:prefs.relay.key.value text:%s", cstr_String(relayPublicKey_Web())) },
+            { "button text:${menu.copy}", 0, 0, "prefs.relay.key.copy" },
+#else
             { "heading id:heading.prefs.socks" },
             { "toggle id:prefs.socks" },
             { "input id:prefs.socks.server hint:hint.socks.server" },
             { "input id:prefs.socks.user" },
             { "input id:prefs.socks.password sensitive:1" },
+#endif
             { "padding" },
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
@@ -872,7 +915,7 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_Widget(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.retaintabs}", "prefs.retaintabs");
-        if (!isTerminal_Platform()) {
+        if (!isTerminal_Platform() && !isWeb_Platform()) {
             addDialogToggle_Widget(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
         }
 #if defined (LAGRANGE_RELEASE_NOTES_POPUP)
@@ -1062,9 +1105,11 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
         makeTwoColumnItems_Widget(headings, values, (iMenuItem[]){ { urlSizeSliderSpec_ }, { NULL } });
-        makeTwoColumnHeading_Widget("${heading.prefs.certs}", headings, values);
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
+        if (!isWeb_Platform()) {
+            makeTwoColumnHeading_Widget("${heading.prefs.certs}", headings, values);
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
+            addPrefsInputWithHeading_Widget(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
+        }
     }
     /* Proxy configuration. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -1077,8 +1122,20 @@ iWidget *makePreferences_Widget(void) {
         /* Gemini proxies. */
         makeTwoColumnHeading_Widget("${heading.prefs.proxies}", headings, values);
         addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
-        addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));
+        static const char *plaintextProxies[] = {
+            "prefs.proxy.gopher", "prefs.proxy.finger", "prefs.proxy.spartan", "prefs.proxy.nex"
+        };
+        iForIndices(i, plaintextProxies) {
+            iInputWidget *proxy = new_InputWidget(0);
+            if (isWeb_Platform()) {
+                setHint_InputWidget(proxy, "${hint.proxy.relay}");
+            }
+            addPrefsInputWithHeading_Widget(headings, values, plaintextProxies[i], iClob(proxy));
+        }
         addPrefsInputWithHeading_Widget(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
+#if defined (iPlatformEmscripten)
+        addRelayPrefs_Web(headings, values);
+#else
         /* SOCKS configuration. */
         makeTwoColumnHeading_Widget("${heading.prefs.socks}", headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.socks}", "prefs.socks");
@@ -1092,6 +1149,7 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_Widget(headings, values, "prefs.socks.password", iClob(field = new_InputWidget(0)));
         setSensitiveContent_InputWidget(field, iTrue);
         setHint_InputWidget(field, "${hint.optional}");
+#endif
     }
     /* Content. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
@@ -1537,6 +1595,13 @@ void showPreferences_Widget(const char *cmd) {
         }
     }
     updatePrefsPinSplitButtons_(dlg, prefs->pinSplit);
+#if defined (iPlatformEmscripten)
+    for (int i = 0; i < 3; i++) {
+        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.webvariant.%d", i)),
+                        selected_WidgetFlag,
+                        i == deviceType_App());
+    }
+#endif
     updatePrefsPromptPositionButtons_(dlg, prefs->promptPosition);
     updatePrefsPageTurnButtons_(dlg, prefs->pageTurn);
     iForIndices(type, prefs->smoothScrollSpeed) {

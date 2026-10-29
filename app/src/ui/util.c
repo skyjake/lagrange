@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "command.h"
+#include "keys.h"
 #include "defs.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
@@ -159,17 +160,17 @@ void toString_Sym(int key, int kmods, iString *str) {
             return;
         }
     }
-    else if (isApple_Platform()) {
-        if (kmods & SDL_KMOD_CTRL) {
+    else if (isAppleKeyboard_Keys()) {
+        if (kmods & control_KeyModifier) {
             appendChar_String(str, 0x2303);
         }
         if (kmods & SDL_KMOD_ALT) {
             appendChar_String(str, 0x2325);
         }
         if (kmods & SDL_KMOD_SHIFT) {
-            appendCStr_String(str, shift_Icon);
+            appendCStr_String(str, "\u21e7");
         }
-        if (kmods & SDL_KMOD_GUI) {
+        if (kmods & KMOD_PRIMARY) {
             appendChar_String(str, 0x2318);
         }
     }

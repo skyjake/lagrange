@@ -534,6 +534,9 @@ size_t count_MenuItem(const iMenuItem *itemsNullTerminated) {
 }
 
 iBool checkDevice_MenuItem(const iMenuItem *d) {
+    if (d->kmods & KMOD_NODEVICE) {
+        return iFalse;
+    }
     if (d->kmods & (KMOD_DESKTOP | KMOD_TABLET | KMOD_PHONE)) {
         return (d->kmods & KMOD_DESKTOP && deviceType_App() == desktop_AppDeviceType) ||
                (d->kmods & KMOD_TABLET && deviceType_App() == tablet_AppDeviceType) ||

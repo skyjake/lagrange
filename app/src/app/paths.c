@@ -151,6 +151,12 @@ void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
 #endif
 
 const char *downloadDir_App_(void) {
+#if defined (iPlatformEmscripten)
+    /* Files are kept here only until they have been handed to the browser. */
+    const char *dir = "/tmp/downloads";
+    makeDirs_Path(collectNewCStr_String(dir));
+    return dir;
+#endif
 #if defined (iPlatformAndroidMobile)
     const char *dir = concatPath_CStr(SDL_GetAndroidExternalStoragePath(), "Downloads");
     makeDirs_Path(collectNewCStr_String(dir));

@@ -58,6 +58,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
 #   include "platform/win32.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "platform/x11.h"
 #endif
@@ -117,6 +120,10 @@ static void checkClockJump_App_(iApp *d) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
+#if defined (iPlatformEmscripten)
+    iUnused(d);
+    return iFalse; /* the browser's event loop must not be blocked */
+#endif
     if (d->warmupFrames > 0) {
         return iFalse;
     }
@@ -331,6 +338,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     /* Controller events are eaten and turned into key/button and wheel events. */
                     continue;
                 }
+#if defined (iPlatformEmscripten)
+                if (processEvent_Web(&ev)) {
+                    continue;
+                }
+#endif
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_EVENT_KEY_DOWN || ev.type == SDL_EVENT_KEY_UP) {
                     if (d->prefs.capsLockKeyModifier) {
@@ -554,7 +566,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (!wasUsed) {
                     /* ^G is an alternative for Escape. */
                     if (ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == 'g' &&
-                        keyMods_Sym(ev.key.mod) == SDL_KMOD_CTRL) {
+                        keyMods_Sym(ev.key.mod) == control_KeyModifier) {
                         SDL_KeyboardEvent esc = ev.key;
                         esc.key = SDLK_ESCAPE;
                         esc.mod = 0;
@@ -579,6 +591,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #   endif
 #   if defined (LAGRANGE_ENABLE_X11_XLIB)
                     handleCommand_X11(command_UserEvent(&ev));
+#   endif
+#   if defined (iPlatformEmscripten)
+                    handleCommand_Web(command_UserEvent(&ev));
 #   endif
 #endif /* !defined (iPlatformTerminal )*/
                     if (isMetricsChange_UserEvent(&ev)) {
@@ -653,6 +668,8 @@ static void handleLifecycleEvent_App_(iApp *d, const SDL_Event *ev) {
                so deinitialize everything immediately. */
             deinit_App_(d);
             d->isRunning = iFalse; /* stop the main loop; no further event processing */
+#  elif defined (iPlatformEmscripten)
+            saveUserData_App(iTrue); /* the page is being closed */
 #  else
             savePrefs_App_(d);
             saveState_App_(d, iTrue);
@@ -767,6 +784,13 @@ static bool lifecycleWatcher_App_(void *user, SDL_Event *event) {
         case SDL_EVENT_WILL_ENTER_BACKGROUND:
             handleLifecycleEvent_App_(user, event);
             break;
+#if defined (iPlatformEmscripten)
+        case SDL_EVENT_WINDOW_HIDDEN:
+            /* The browser tab was hidden. The main loop stops running, and the page may be
+               closed without further notice. */
+            saveUserData_App(iFalse);
+            break;
+#endif
     }
     return false;
 }
@@ -833,6 +857,25 @@ static void deleteClosedWindows_App_(iApp *d) {
     clear_PtrArray(&d->closedWindows);
 }
 
+static void iterate_App_(void *app) {
+    iApp *d = app;
+    beginFrame_FrameTiming();
+    processEvents_App(waitForNewEvents_AppEventMode);
+    endPhase_FrameTiming(events_FramePhase);
+    checkClockJump_App_(d);
+    runTickers_App_(d);
+    endPhase_FrameTiming(tickers_FramePhase);
+    refresh_App();
+    endPhase_FrameTiming(draw_FramePhase);
+    /* Change the widget tree while we are not iterating through it. */
+    if (d->window && d->window->type == main_WindowType) {
+        checkPendingSplit_MainWindow(as_MainWindow(d->window));
+    }
+    recycle_Garbage();
+    deleteClosedWindows_App_(d);
+    endFrame_FrameTiming();
+}
+
 int run_App_(iApp *d) {
     /* Initial arrangement. */
     iForIndices(i, d->window->roots) {
@@ -850,22 +893,11 @@ int run_App_(iApp *d) {
     /* Wakeup hook for the CFRunLoop-based event wait in nextEvent_App_(). */
     SDL_AddEventWatch(wakeRunLoopOnEvent_App_, NULL);
 #endif
+#if defined (iPlatformEmscripten)
+    runMainLoop_Web(iterate_App_, d); /* never returns */
+#endif
     while (d->isRunning) {
-        beginFrame_FrameTiming();
-        processEvents_App(waitForNewEvents_AppEventMode);
-        endPhase_FrameTiming(events_FramePhase);
-        checkClockJump_App_(d);
-        runTickers_App_(d);
-        endPhase_FrameTiming(tickers_FramePhase);
-        refresh_App();
-        endPhase_FrameTiming(draw_FramePhase);
-        /* Change the widget tree while we are not iterating through it. */
-        if (d->window && d->window->type == main_WindowType) {
-            checkPendingSplit_MainWindow(as_MainWindow(d->window));
-        }
-        recycle_Garbage();
-        deleteClosedWindows_App_(d);
-        endFrame_FrameTiming();
+        iterate_App_(d);
     }
     SDL_RemoveEventWatch(resizeWatcher_, d);
     SDL_RemoveEventWatch(lifecycleWatcher_App_, d);

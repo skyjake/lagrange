@@ -76,6 +76,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAndroidMobile)
 #   include "platform/android.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
@@ -1541,7 +1544,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "tabs.swap") && d == document_App()) {
-        if (!argLabel_Command(cmd, "newwindow") && numRoots_Window(get_Window()) == 1) {
+        const iBool toNewWindow = argLabel_Command(cmd, "newwindow") && !isWeb_Platform();
+        if (!toNewWindow && numRoots_Window(get_Window()) == 1) {
             /* Duplicate this tab and activate split mode to move the duplicated tab to the
                new split. */
             postCommandf_App("ui.split arg:3 axis:%d",
@@ -1554,7 +1558,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iWidget     *docTabs   = findParent_Widget(w, "doctabs");
         size_t       tabIndex  = tabPageIndex_Widget(docTabs, d);
         iMainWindow *newWin    = NULL;
-        if (argLabel_Command(cmd, "newwindow")) {
+        if (toNewWindow) {
             newWin    = newMainWindow_App();
             otherRoot = newWin->base.roots[0];
         }
@@ -2756,7 +2760,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 postCommandf_App("zoom.delta arg:%d", amount.y > 0 ? 10 : -10);
                 return iTrue;
             }
-            if (!isApple_Platform() && kmods == SDL_KMOD_SHIFT) {
+            if (!isAppleKeyboard_Keys() && kmods == SDL_KMOD_SHIFT) {
                 /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
                 iSwap(int, amount.x, amount.y);
             }
@@ -3492,6 +3496,11 @@ void init_DocumentWidget(iDocumentWidget *d) {
     if (isAppleDesktop_Platform() || deviceType_App() != desktop_AppDeviceType) {
         setNavigable_DocumentSwipe(d->swipe, iTrue);
     }
+#if defined (iPlatformEmscripten)
+    if (isApple_Web()) {
+        setNavigable_DocumentSwipe(d->swipe, iTrue); /* trackpad swipes */
+    }
+#endif
     d->phoneToolbar       = findWidget_App("bottombar");
     d->footerButtons      = NULL;
     d->titleUser          = new_String();

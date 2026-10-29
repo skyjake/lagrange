@@ -840,7 +840,8 @@ void setInputPromptHeight_Media(iMedia *d, iMediaId promptId, int heightPx) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static void updated_MediaRequest_(iAnyObject *obj) {
+static void updated_MediaRequest_(iAnyObject *obj, iGmRequest *req) {
+    iUnused(req);
     iMediaRequest *d = obj;
     if (d->media) {
         iGmResponse *resp = lockResponse_GmRequest(d->req);
@@ -850,7 +851,8 @@ static void updated_MediaRequest_(iAnyObject *obj) {
     notifyf_App("media.updated link:%u request:%p", d->linkId, d);
 }
 
-static void finished_MediaRequest_(iAnyObject *obj) {
+static void finished_MediaRequest_(iAnyObject *obj, iGmRequest *req) {
+    iUnused(req);
     iMediaRequest *d = obj;
     if (d->media) {
         iGmResponse *resp = lockResponse_GmRequest(d->req);

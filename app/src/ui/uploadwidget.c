@@ -46,6 +46,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define pickFile_Mobile pickFile_Android
 #endif
 
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#   define pickFile_Mobile pickFile_Web
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
@@ -101,7 +106,7 @@ struct Impl_UploadWidget {
 static void filePathValidator_UploadWidget_(iInputWidget *, void *);
 
 static void releaseFile_UploadWidget_(iUploadWidget *d) {
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile) || defined (iPlatformEmscripten)
     if (!isEmpty_String(&d->filePath)) {
         /* Delete the temporary file that was copied for uploading. */
         remove(cstr_String(&d->filePath));
@@ -689,7 +694,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
                 setHint_InputWidget(d->filePathInput, "${upload.file.drophere}");
             }
             setValidator_InputWidget(d->filePathInput, filePathValidator_UploadWidget_, d);
-#if defined (LAGRANGE_FILE_DIALOGS)
+#if defined (LAGRANGE_FILE_DIALOGS) || defined (iPlatformEmscripten)
             iLabelWidget *pickButton = new_LabelWidget("${dlg.upload.pickfile}", "upload.pickfile");
             iWidget *pickHeading = addChild_Widget(headings, iClob(makeHeading_Widget("")));
             pickHeading->sizeRef = as_Widget(pickButton);
@@ -1608,7 +1613,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             setFilePath_UploadWidget_(d, suffixPtr_Command(cmd, "path"));
         }
         else {
-#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile) || defined (iPlatformEmscripten)
             pickFile_Mobile(format_CStr("upload.pickfile ptr:%p", d));
 #else
             open_FileDialog(format_CStr("upload.pickfile ptr:%p", d),

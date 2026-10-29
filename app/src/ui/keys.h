@@ -106,9 +106,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define bang_KeyShortcut             SDLK_1,             SDL_KMOD_SHIFT
 #   define trustServerCertificate_KeyShortcut   SDLK_U,     KMOD_PRIMARY | SDL_KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
-#   define byWord_KeyModifier           SDL_KMOD_CTRL
-#   define byLine_KeyModifier           0
-#   define rightSidebarTab_KeyModifier  SDL_KMOD_SHIFT | SDL_KMOD_CTRL
+#   if defined (iPlatformEmscripten)
+/* Apple devices use the macOS modifiers. Command and Control are swapped (see swapAppleMods_Web). */
+#       define byWord_KeyModifier           (isAppleKeyboard_Keys() ? SDL_KMOD_ALT : SDL_KMOD_CTRL)
+#       define byLine_KeyModifier           (isAppleKeyboard_Keys() ? KMOD_PRIMARY : 0)
+#       define rightSidebarTab_KeyModifier  (isAppleKeyboard_Keys() ? SDL_KMOD_GUI : SDL_KMOD_SHIFT | SDL_KMOD_CTRL)
+#   else
+#       define byWord_KeyModifier           SDL_KMOD_CTRL
+#       define byLine_KeyModifier           0
+#       define rightSidebarTab_KeyModifier  SDL_KMOD_SHIFT | SDL_KMOD_CTRL
+#   endif
+#endif
+
+/* The physical Control key. */
+#if defined (iPlatformEmscripten)
+#   define control_KeyModifier          (isAppleKeyboard_Keys() ? SDL_KMOD_GUI : SDL_KMOD_CTRL)
+#else
+#   define control_KeyModifier          SDL_KMOD_CTRL
 #endif
 
 #define showIdentities_KeyShortcut      SDLK_4,             leftSidebarTab_KeyModifier
@@ -156,6 +170,7 @@ iBool           shortcutFromString_Keys (iRangecc str, int *key, int *mods);
 
 int             mapMods_Keys        (int modFlags);
 int             modState_Keys       (void); /* current modifier key state */
+iBool           isAppleKeyboard_Keys(void); /* Command is the primary modifier */
 void            setCapsLockDown_Keys(iBool isDown);
 
 iBool           isDown_Keys         (const iBinding *binding);

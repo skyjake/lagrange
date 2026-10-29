@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "ui/documentwidget.h"
 #include "ui/inputwidget.h"
+#include "ui/keys.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
 #include "ui/window.h"
@@ -35,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
+#include <lagrange/snippets.h>
 #include <lagrange/visited.h>
 
 #include <errno.h>
@@ -48,6 +50,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAndroidMobile)
 #   include <fcntl.h>
 #   include <unistd.h>
+#endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
 #endif
 
 iBool isPlacementUnused_App_(const iApp *d, size_t index) {
@@ -570,6 +575,25 @@ void saveStateQuickly_App(void) {
 void saveState_App(void) {
     saveState_App_(&app_, iTrue /* including cache */);
     savePrefs_App_(&app_);
+}
+
+void saveUserData_App(iBool withContent) {
+    iApp *d = &app_;
+#if defined (iPlatformEmscripten)
+    if (isStopped_Web()) {
+        return; /* another browser tab owns the data now */
+    }
+#endif
+    savePrefs_App_(d);
+    saveState_App_(d, withContent);
+    save_Keys(dataDir_App_());
+    save_Snippets(dataDir_App_());
+    save_Bookmarks(d->bookmarks, dataDir_App_());
+    save_Visited(d->visited, dataDir_App_());
+    d->pendingVisitedSave = iFalse;
+#if defined (iPlatformEmscripten)
+    syncStorage_Web();
+#endif
 }
 
 void eraseBackupsForWindowSerial_App_(uint32_t serial) {

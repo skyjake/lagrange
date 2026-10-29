@@ -21,7 +21,7 @@ set (LAGRANGE_APP_VERSION ${PROJECT_VERSION}) # subprojects have their own PROJE
 #-------------------------------------------------------------------------------------------------
 # Project-wide build options
 
-if (NOT APPLE AND NOT IOS)
+if (NOT APPLE AND NOT IOS AND NOT EMSCRIPTEN)
     set (DEFAULT_FREETYPE ON)
 else ()
     set (DEFAULT_FREETYPE OFF)
@@ -44,6 +44,12 @@ option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 option (ENABLE_X11_XLIB         "Use Xlib directly, if available (X11)" ON)
+
+if (EMSCRIPTEN)
+    # Features that are not available in web browsers.
+    set (ENABLE_TUI OFF)
+    set (ENABLE_JXL OFF)
+endif ()
 
 if (ENABLE_CORETEXT)
     if (NOT APPLE)

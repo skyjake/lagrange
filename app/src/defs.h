@@ -66,6 +66,14 @@ int     keyMod_ReturnKeyFlag    (int flag);
 #define KMOD_TABLET     0x20000
 #define KMOD_PHONE      0x40000
 #define KMOD_MOBILE     (KMOD_TABLET | KMOD_PHONE)
+#define KMOD_NODEVICE   0x80000 /* hidden everywhere */
+
+/* Menu items that open a new window. */
+#if defined (iPlatformEmscripten)
+#   define KMOD_NEWWINDOW   KMOD_NODEVICE
+#else
+#   define KMOD_NEWWINDOW   KMOD_DESKTOP
+#endif
 
 iLocalDef int lineBreakKeyMod_ReturnKeyBehavior(int behavior) {
     return keyMod_ReturnKeyFlag(behavior & mask_ReturnKeyFlag);
@@ -84,7 +92,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define LAGRANGE_MENUBAR
 #endif
 
-#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal) && !defined (iPlatformEmscripten)
 #   define LAGRANGE_MULTIPLE_WINDOWS
 #   define LAGRANGE_FILE_DIALOGS
 #endif

@@ -58,6 +58,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "platform/x11.h"
 #endif
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
@@ -103,6 +106,8 @@ static const iMenuItem fileMenuItems_[] = {
 #if defined (LAGRANGE_FILE_DIALOGS)
     { "${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
     { "${menu.openfolder}", 0, 0, "file.open folder:1" },
+#elif defined (iPlatformEmscripten)
+    { "${menu.openfile}", SDLK_O, KMOD_PRIMARY, "file.open" },
 #endif
     { "${menu.openlocation}", SDLK_L, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
@@ -125,8 +130,10 @@ static const iMenuItem fileMenuItems_[] = {
 # if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
 # endif
+# if !defined (iPlatformEmscripten)
     { "---" },
     { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+# endif
 #endif
     { NULL }
 };
@@ -224,11 +231,14 @@ static const iMenuItem windowMenuItems_[] = {
     { "${menu.tab.next}", 0, 0, "tabs.next" },
     { "${menu.tab.prev}", 0, 0, "tabs.prev" },
     { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
-#if !defined (iPlatformTerminal)
+#if !defined (iPlatformTerminal) && !defined (iPlatformEmscripten)
     { "${menu.movetab.newwindow}", 0, 0, "tabs.swap newwindow:1" },
     { "---" },
     { "${menu.window.min}", 0, 0, "window.minimize" },
     { "${menu.window.max}", 0, 0, "window.maximize" },
+    { "${menu.window.full}", 0, 0, "window.fullscreen" },
+#elif defined (iPlatformEmscripten)
+    { "---" },
     { "${menu.window.full}", 0, 0, "window.fullscreen" },
 #endif
     { "---" },
@@ -242,6 +252,9 @@ static const iMenuItem helpMenuItems_[] = {
     { "${menu.help}", 0, 0, "!open newtab:1 switch:1 url:about:help" },
 #endif
     { "${menu.releasenotes}", 0, 0, "!open newtab:1 switch:1 url:about:version" },
+#if defined (iPlatformEmscripten)
+    { "${menu.aboutweb}", 0, 0, "!open newtab:1 switch:1 url:about:web" },
+#endif
     { "---" },
     { "${menu.reference}", 0, 0, "!open newtab:1 switch:1 url:about:reference" },
     { "${menu.protocols}", 0, 0, "!open newtab:1 switch:1 url:about:protocols" },
@@ -698,6 +711,9 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
             flags |= SDL_WINDOW_BORDERLESS;
         }
 #endif
+#if defined (iPlatformEmscripten)
+        flags |= SDL_WINDOW_FILL_DOCUMENT; /* canvas follows the browser window size */
+#endif
     }
     const iBool setPos = left_Rect(rect) >= 0 || top_Rect(rect) >= 0;
     d->win = createSDLWindow_(d, rect, flags);
@@ -912,6 +928,12 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->base.isExposed = iTrue;
 #elif defined (iPlatformAndroidMobile)
     d->base.isExposed = iTrue;
+#elif defined (iPlatformEmscripten)
+    /* WebGL, or software rendering if WebGL is unavailable (see create_Window_). */
+    if (!forceSoftwareRender_App()) {
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+        flags |= SDL_WINDOW_OPENGL;
+    }
 #else
     if (!forceSoftwareRender_App()) {
         flags |= SDL_WINDOW_OPENGL;
@@ -2625,6 +2647,10 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
 }
 
 void setSnap_MainWindow(iMainWindow *d, int snapMode) {
+#if defined (iPlatformEmscripten)
+    setFullscreen_Web(snapMode == fullscreen_WindowSnap);
+    return;
+#endif
     if (!prefs_App()->customFrame) {
         if (snapMode == maximized_WindowSnap) {
             SDL_MaximizeWindow(d->base.win);
@@ -2717,6 +2743,9 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
 }
 
 int snap_MainWindow(const iMainWindow *d) {
+#if defined (iPlatformEmscripten)
+    return isFullscreen_Web() ? fullscreen_WindowSnap : none_WindowSnap;
+#endif
     if (!prefs_App()->customFrame) {
         const int flags = SDL_GetWindowFlags(d->base.win);
         if (flags & SDL_WINDOW_FULLSCREEN) {

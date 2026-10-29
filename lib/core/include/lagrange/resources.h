@@ -36,6 +36,7 @@ const iBlock *      aboutPageSource_Resources   (iRangecc path, iRangecc query);
 
 extern iBlock blobAbout_Resources;
 extern iBlock blobHelp_Resources;
+extern iBlock blobWeb_Resources;
 extern iBlock blobLagrange_Resources;
 extern iBlock blobLicenses_Resources;
 extern iBlock blobProtocols_Resources;
