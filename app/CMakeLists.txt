@@ -753,7 +753,12 @@ if (ENABLE_GUI)
         else ()
             target_include_directories (app PUBLIC ${SDL3_INCLUDE_DIRS})
             target_compile_options (app PUBLIC ${SDL3_CFLAGS})
-            target_link_libraries (app PUBLIC ${SDL3_LDFLAGS})
+            set (sdlLdFlags ${SDL3_LDFLAGS})
+            if (APPLE AND NOT IOS)
+                # BUILD_RPATH is set below; a second identical runpath makes ld warn.
+                list (FILTER sdlLdFlags EXCLUDE REGEX "^-Wl,-rpath")
+            endif ()
+            target_link_libraries (app PUBLIC ${sdlLdFlags})
         endif ()
     endif ()
 
