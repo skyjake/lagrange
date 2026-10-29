@@ -459,13 +459,19 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         if (run->flags & ruler_GmRunFlag) {
             if (height_Rect(run->visBounds) > 0) {
                 /* This is used for block quotes. */
-                drawVLine_Paint(&d->paint,
-                                addX_I2(visPos,
-                                        !run->isRTL
-                                            ? -gap_Text * 5 / 2
-                                            : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
-                                height_Rect(run->visBounds),
-                                tmQuoteIcon_ColorId);
+                const iInt2 linePos =
+                    addX_I2(visPos,
+                            !run->isRTL ? -gap_Text * 5 / 2
+                                        : (width_Rect(run->visBounds) + gap_Text * 5 / 2));
+                const int lineHeight = height_Rect(run->visBounds);
+                if (isTerminal_Platform()) {
+                    drawVLine_Paint(&d->paint, linePos, lineHeight, tmQuoteIcon_ColorId);
+                }
+                else {
+                    fillRect_Paint(&d->paint,
+                                   (iRect) { linePos, init_I2(gap_UI / 4, lineHeight) },
+                                   tmQuoteIcon_ColorId);
+                }
             }
             else {
                 drawHLine_Paint(&d->paint, visPos, width_Rect(run->visBounds), tmQuoteIcon_ColorId);
