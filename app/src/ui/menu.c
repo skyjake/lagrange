@@ -1231,7 +1231,9 @@ iWidget *makeMenuBar_Widget(const iMenuItem *topLevelMenus, size_t num) {
         setCommand_LabelWidget(submenuButton, submenuCmd);
         iWidget *submenu = findChild_Widget(as_Widget(submenuButton), "menu");
         setFrameColor_Widget(submenu, uiSeparator_ColorId);
-        as_Widget(submenuButton)->padding[0] = gap_UI;
+        if (!isTerminal_Platform()) {
+            as_Widget(submenuButton)->padding[0] = gap_UI;
+        }
         setCommandHandler_Widget(as_Widget(submenuButton), handleTopLevelMenuBarCommand_Widget);
         updateSize_LabelWidget(submenuButton);
         setFlags2_Widget(submenuButton, commandOnHover_WidgetFlag2, iTrue);

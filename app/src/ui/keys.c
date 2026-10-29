@@ -332,7 +332,12 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 2,  { "${LC:keys.bottom}",            SDLK_END, 0,                    "scroll.bottom"                     }, 0 },
     { 10, { "${keys.scroll.up}",            SDLK_UP, 0,                     "scroll.step arg:-1"                }, argRepeat_BindFlag },
     { 11, { "${keys.scroll.down}",          SDLK_DOWN, 0,                   "scroll.step arg:1"                 }, argRepeat_BindFlag },
+#if defined (iPlatformTerminal)
+    /* Terminals can't distinguish Shift+Space. */
+    { 22, { "${keys.scroll.halfpage.up}",   SDLK_B, 0,                      "scroll.page arg:-1"                }, argRepeat_BindFlag },
+#else
     { 22, { "${keys.scroll.halfpage.up}",   SDLK_SPACE, SDL_KMOD_SHIFT,     "scroll.page arg:-1"                }, argRepeat_BindFlag },
+#endif
     { 23, { "${keys.scroll.halfpage.down}", SDLK_SPACE, 0,                  "scroll.page arg:1"                 }, argRepeat_BindFlag },
     { 24, { "${keys.scroll.page.up}",       SDLK_PAGEUP, 0,                 "scroll.page arg:-1 full:1"         }, argRepeat_BindFlag },
     { 25, { "${keys.scroll.page.down}",     SDLK_PAGEDOWN, 0,               "scroll.page arg:1 full:1"          }, argRepeat_BindFlag },

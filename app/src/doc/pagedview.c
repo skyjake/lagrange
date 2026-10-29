@@ -351,8 +351,12 @@ int pageHeaderTextTop_DocumentView(const iDocumentView *d) {
 }
 
 int pageFooterTextTop_DocumentView(const iDocumentView *d) {
-    return height_Rect(pageViewport_DocumentView(d)) - pageFooterHeight_GmDocument(d->doc) +
-           (pageBandHeight_GmDocument(d->doc) - lineHeight_Text(pageBandFont_GmDocument(d->doc))) / 2;
+    const int band       = pageBandHeight_GmDocument(d->doc);
+    const int lineHeight = lineHeight_Text(pageBandFont_GmDocument(d->doc));
+    /* A minimal band in the TUI has the text right above the progress bar. */
+    const int offset = isTerminal_Platform() && band <= 2 * lineHeight ? band - lineHeight
+                                                                       : (band - lineHeight) / 2;
+    return height_Rect(pageViewport_DocumentView(d)) - pageFooterHeight_GmDocument(d->doc) + offset;
 }
 
 iInt2 pagedDocumentPos_DocumentView(const iDocumentView *d, iInt2 windowPos) {

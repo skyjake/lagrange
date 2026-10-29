@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrset.h>
 #include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_version.h>
 
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"
