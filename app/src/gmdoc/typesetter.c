@@ -1205,7 +1205,7 @@ void init_Typesetter(iTypesetter *d, iGmDocument *doc, iBool isOwnLayout) {
     d->isGopher      = isGopher_GmDocument_(doc);
     d->isPaged       = isPaged_GmDocument(doc);
     d->isNormalized  = shouldBeNormalized_GmDocument_(doc);
-    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged);
+    d->isJustified   = isJustified_DocPrefs(d->prefs, d->isPaged) && !isTerminal_Platform();
     d->outsideMargin = outsideMargin_GmDocument_(doc);
     if (d->prefs->hyphenate.value && !doc->flags.isUiDialog) {
         iRangecc lang = lang_GmDocument(doc);

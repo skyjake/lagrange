@@ -513,7 +513,7 @@ iBool isRemote_Gempub(const iGempub *d) {
 iString *coverPageSource_Gempub(const iGempub *d) {
     iAssert(!isEmpty_String(&d->baseUrl));
     iString *out = new_String();
-    if (hasProperty_Gempub_(d, cover_GempubProperty)) {
+    if (hasProperty_Gempub_(d, cover_GempubProperty) && !isTerminal_Platform()) {
         appendFormat_String(out, "=> %s  ${gempub.cover.image}\n\n",
                             cstrCollect_String(concat_Path(withSpacesEncoded_String(&d->baseUrl),
                                                            &d->props[cover_GempubProperty])));
