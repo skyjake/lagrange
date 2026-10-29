@@ -242,6 +242,14 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
             }
         }
         setItemPadding_ListWidget(d->list, itemPadding);
+        /* Blank line between multi-line items. */
+        setItemSpacing_ListWidget(d->list,
+                                  isTerminal_Platform() &&
+                                          (d->mode == feedEntries_SidebarMode ||
+                                           d->mode == subscriptions_SidebarMode ||
+                                           d->mode == gempub_SidebarMode ||
+                                           d->mode == documentOutline_SidebarMode)
+                                      ? 1 : 0);
         /* Variable-height items: three default heights would be too much. */
         int wheelStep = 0;
         if (d->mode == documentOutline_SidebarMode) {

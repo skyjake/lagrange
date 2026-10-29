@@ -137,6 +137,7 @@ void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
 void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
+void    drawTruncatedRange_Text (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* lines end with an ellipsis */
 
 /*-----------------------------------------------------------------------------------------------*/
 

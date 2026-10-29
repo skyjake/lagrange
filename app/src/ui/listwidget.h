@@ -77,6 +77,7 @@ struct Impl_ListWidget {
     iSmoothScroll  scrollY;
     int            itemHeight; /* default */
     int            itemPadding; /* added to measured item heights */
+    int            itemSpacing; /* blank space at the bottom of items, shared by highlights */
     int            wheelStep; /* zero: three default item heights */
     iPtrArray      items;
     iArray         itemTops; /* top of each item, followed by the total height */
@@ -110,6 +111,7 @@ void    init_ListWidget             (iListWidget *);
 
 void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
 void    setItemPadding_ListWidget   (iListWidget *, int itemPadding);
+void    setItemSpacing_ListWidget   (iListWidget *, int itemSpacing);
 void    setWheelStep_ListWidget     (iListWidget *, int wheelStep);
 void    setResizing_ListWidget      (iListWidget *, iBool isResizing);
 
@@ -143,6 +145,10 @@ void    setMultiSelectEnabled_ListWidget(iListWidget *, iBool enabled);
 void    setMultiSelected_ListWidget (iListWidget *, size_t index, iBool isSelected);
 void    clearMultiSelection_ListWidget(iListWidget *);
 void    drawCursor_ListWidget       (const iListWidget *, iPaint *p, iRect itemRect, int color);
+iRect   highlightRect_ListWidget    (const iListWidget *, iRect itemRect);
+iRect   contentRect_ListWidget      (const iListWidget *, iRect itemRect);
+void    drawItemText_ListWidget     (const iListWidget *, iRect itemRect, int font, iInt2 pos,
+                                     int color, iRangecc text); /* TUI: truncated inside the cursor */
 
 void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
 

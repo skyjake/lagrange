@@ -462,6 +462,32 @@ void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, iBool justify, i
     drawBounded_Text_(fontId, pos, boundWidth, justify, color, text);
 }
 
+static void drawTruncatedLine_Text_(int fontId, iInt2 pos, int maxWidth, int color, iRangecc line) {
+    const char *endPos;
+    tryAdvanceNoWrap_Text(fontId, line, maxWidth, &endPos);
+    if (endPos == line.end) {
+        drawRange_Text(fontId, pos, color, line);
+        return;
+    }
+    tryAdvanceNoWrap_Text(fontId, line, maxWidth - measure_Text(fontId, "…").advance.x, &endPos);
+    iRangecc visible = { line.start, endPos };
+    trimEnd_Rangecc(&visible);
+    iString str;
+    initRange_String(&str, visible);
+    appendCStr_String(&str, "…");
+    drawRange_Text(fontId, pos, color, range_String(&str));
+    deinit_String(&str);
+}
+
+void drawTruncatedRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
+    /* Each line is truncated separately. */
+    iRangecc line = iNullRange;
+    while (nextSplit_Rangecc(text, "\n", &line)) {
+        drawTruncatedLine_Text_(fontId, pos, maxWidth, color, line);
+        pos.y += lineHeight_Text(fontId);
+    }
+}
+
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
     /* TODO: Use WrapText here, too */
     const char *endp;

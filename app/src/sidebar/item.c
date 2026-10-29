@@ -87,18 +87,7 @@ static void drawLines_(int font, iInt2 pos, int color, const iRangecc *lines, in
     /* If there is text remaining, the last line is truncated with an ellipsis. */
     for (int i = 0; i < numLines; i++) {
         if (i == numLines - 1 && !isEmpty_Range(&rest)) {
-            const char *endPos;
-            tryAdvanceNoWrap_Text(font,
-                                  (iRangecc){ lines[i].start, rest.end },
-                                  width - measure_Text(font, "…").advance.x,
-                                  &endPos);
-            iRangecc line = { lines[i].start, endPos };
-            trimEnd_Rangecc(&line);
-            iString str;
-            initRange_String(&str, line);
-            appendCStr_String(&str, "…");
-            drawRange_Text(font, pos, color, range_String(&str));
-            deinit_String(&str);
+            drawTruncatedRange_Text(font, pos, width, color, (iRangecc){ lines[i].start, rest.end });
         }
         else {
             drawRange_Text(font, pos, color, lines[i]);
@@ -118,7 +107,7 @@ static int estimateLines_(int charWidth, const iString *text, int width, int max
 
 #define maxOutlineLines_SidebarItem_    3
 #define maxTinylogLines_SidebarItem_    3 /* excerpt; the author line is separate */
-#define feedIconPad_SidebarItem_        (12 * gap_UI)
+#define feedIconPad_SidebarItem_        ((isTerminal_Platform() ? 10 : 12) * gap_UI)
 
 static int outlineTextWidth_SidebarItem_(const iSidebarItem *d, const iSidebarWidget *sidebar,
                                          int listWidth) {
@@ -131,8 +120,19 @@ static int outlineSeparatorHeight_SidebarItem_(const iSidebarWidget *sidebar) {
     return lineHeight_Text(sidebar->itemFonts[0]) / (isTerminal_Platform() ? 1 : 2);
 }
 
+static iBool hasOutlineSeparator_SidebarItem_(const iSidebarItem *d, const iListWidget *list) {
+    /* In the TUI, the first heading has the list's leading space above it instead. */
+    return d->isBold && !(isTerminal_Platform() && d == constItem_ListWidget(list, 0));
+}
+
 static int feedTextWidth_SidebarItem_(int itemWidth) {
     return itemWidth - (feedIconPad_SidebarItem_ + 3 * gap_UI) * aspect_UI;
+}
+
+static iRect feedIconRect_SidebarItem_(iInt2 pos, int height) {
+    /* In the TUI, aligned with bookmark icons. */
+    const iRect area = { pos, init_I2(feedIconPad_SidebarItem_ * aspect_UI, height) };
+    return isTerminal_Platform() ? area : adjusted_Rect(area, init_I2(gap_UI, 0), zero_I2());
 }
 
 static int measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iListWidget *list) {
@@ -143,13 +143,16 @@ static int measureHeight_SidebarItem_(const iSidebarItem *d, int width, const iL
     }
     if (sidebar->mode == documentOutline_SidebarMode) {
         /* Top-level headings have a separator above. */
-        const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
+        const int font      = sidebar->itemFonts[d->isBold ? 1 : 0];
+        const int sepHeight = hasOutlineSeparator_SidebarItem_(d, list)
+                                  ? outlineSeparatorHeight_SidebarItem_(sidebar)
+                                  : 0;
         return estimateLines_(sidebar->itemCharWidths[d->isBold ? 1 : 0],
                               &d->label,
                               outlineTextWidth_SidebarItem_(d, sidebar, width),
                               maxOutlineLines_SidebarItem_) *
                    lineHeight_Text(font) +
-               (d->isBold ? outlineSeparatorHeight_SidebarItem_(sidebar) : 0);
+               sepHeight;
     }
     if (sidebar->mode == feedEntries_SidebarMode) {
         const iBool isUnread  = (d->indent & 1) != 0;
@@ -211,8 +214,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
     const int blankWidth     = isApple_Platform() ? 0 : scrollBarWidth;
     int       sepHeight      = 0;
-    if (sidebar->mode == documentOutline_SidebarMode && d->isBold) {
-        /* Top-level headings have a separator above, outside the item's highlight. */
+    if (sidebar->mode == documentOutline_SidebarMode && hasOutlineSeparator_SidebarItem_(d, list)) {
+        /* Top-level headings have a separator above. */
         sepHeight = outlineSeparatorHeight_SidebarItem_(sidebar);
         drawHLine_Paint(p,
                         addY_I2(itemRect.pos, sepHeight / 2),
@@ -220,13 +223,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                         uiSeparator_ColorId);
         adjustEdges_Rect(&itemRect, sepHeight, 0, 0, 0);
     }
-    iRect bgRect = itemRect;
-    if (isTerminal_Platform() && !d->listItem.flags.isSeparator &&
-        (sidebar->mode == feedEntries_SidebarMode || sidebar->mode == subscriptions_SidebarMode ||
-         sidebar->mode == gempub_SidebarMode || sidebar->mode == documentOutline_SidebarMode)) {
-        /* Blank line between multi-line items, outside the item's highlight. */
-        adjustEdges_Rect(&bgRect, 0, 0, -lineHeight_Text(sidebar->itemFonts[0]), 0);
-    }
+    const iRect bgRect = highlightRect_ListWidget(list, itemRect);
     const int itemHeight     = height_Rect(itemRect);
     const int font           = sidebar->itemFonts[d->isBold ? 1 : 0];
     const int iconColor = isSel     ? uiTextSelected_ColorId
@@ -323,7 +320,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const iInt2 metaSize =
                 measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
             pos.x += iconPad * aspect_UI;
-            const int avail = feedTextWidth_SidebarItem_(width_Rect(itemRect));
+            const int avail = iMin(feedTextWidth_SidebarItem_(width_Rect(itemRect)),
+                                   right_Rect(contentRect_ListWidget(list, itemRect)) - pos.x);
             const int labelFg = isSel      ? uiTextSelected_ColorId | permanent_ColorId
                                 : isUnread ? uiTextStrong_ColorId
                                            : uiText_ColorId;
@@ -370,14 +368,15 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 }
                 else {
                     pos.y += (itemHeight - h1 - numLines * h2) / 2;
-                    drawRange_Text(uiLabel_FontId, pos, metaFg, range_String(&d->meta));
+                    drawItemText_ListWidget(
+                        list, itemRect, uiLabel_FontId, pos, metaFg, range_String(&d->meta));
                     drawLines_(titleFont, addY_I2(pos, h1), labelFg, lines, numLines, rest, avail);
                 }
             }
             /* Icon. */ {
                 /* TODO: Use the primary hue from the theme of this site. */
-                const iRect iconArea = { init_I2(left_Rect(itemRect), pos.y),
-                                         init_I2(iconPad * aspect_UI, iconHeight) };
+                const iRect iconArea =
+                    feedIconRect_SidebarItem_(init_I2(left_Rect(itemRect), pos.y), iconHeight);
                 iString str;
                 initUnicodeN_String(&str, &d->icon, 1);
                 /* TODO: Add to palette. */
@@ -385,7 +384,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 const int readIconColor =
                     isDark_ColorTheme(colorTheme_App()) ? uiText_ColorId : uiAnnotation_ColorId;
                 drawCentered_Text(uiLabelLarge_FontId,
-                                  adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
+                                  iconArea,
                                   iTrue,
                                   isSel      ? iconColor
                                   : isUnread ? unreadIconColor
@@ -409,12 +408,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int top = pos.y + (itemHeight - h1 - h2) / 2;
         /* In the TUI, the icon is on the title line. */
         const iRect iconArea = isTerminal_Platform()
-                                   ? (iRect){ init_I2(pos.x, top), init_I2(iconPad * aspect_UI, h2) }
-                                   : (iRect){ pos, init_I2(iconPad * aspect_UI, itemHeight) };
+                                   ? feedIconRect_SidebarItem_(init_I2(pos.x, top), h2)
+                                   : feedIconRect_SidebarItem_(pos, itemHeight);
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
         drawCentered_Text(uiLabelLarge_FontId,
-                          adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
+                          iconArea,
                           iTrue,
                           isDownloaded || isSel ? iconColor : uiTextDisabled_ColorId,
                           "%s",
@@ -564,28 +563,22 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const iInt2 textPos =
                 add_I2(topLeft_Rect(itemRect),
                        init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(font)) / 2));
-            if (isData) {
-                drawRange_Text(
-                    font, textPos, fg, range_String(prettyDataUrl_String(&d->label, queryColor)));
-            }
-            else {
-                draw_Text(font,
-                          textPos,
-                          fg,
-                          "%s%s%s%s%s%s%s%s",
-                          isGemini ? "" : cstr_Rangecc(parts.scheme),
-                          isGemini  ? ""
-                          : isAbout ? ":"
-                                    : "://",
-                          escape_Color(isSel     ? uiTextSelected_ColorId
-                                       : isHover ? uiTextFramelessHover_ColorId
-                                                 : uiTextStrong_ColorId),
-                          cstr_Rangecc(parts.host),
-                          escape_Color(fg),
-                          cstr_Rangecc(parts.path),
-                          !isEmpty_Range(&parts.query) ? escape_Color(queryColor) : "",
-                          !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
-            }
+            const char *text =
+                isData ? cstr_String(prettyDataUrl_String(&d->label, queryColor))
+                       : format_CStr("%s%s%s%s%s%s%s%s",
+                                     isGemini ? "" : cstr_Rangecc(parts.scheme),
+                                     isGemini  ? ""
+                                     : isAbout ? ":"
+                                               : "://",
+                                     escape_Color(isSel     ? uiTextSelected_ColorId
+                                                  : isHover ? uiTextFramelessHover_ColorId
+                                                            : uiTextStrong_ColorId),
+                                     cstr_Rangecc(parts.host),
+                                     escape_Color(fg),
+                                     cstr_Rangecc(parts.path),
+                                     !isEmpty_Range(&parts.query) ? escape_Color(queryColor) : "",
+                                     !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
+            drawItemText_ListWidget(list, itemRect, font, textPos, fg, range_CStr(text));
         }
         iEndCollect();
     }
@@ -670,7 +663,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                                      : uiTextShortcut_ColorId),
                             !isEmpty_Range(&host) ? "\u2014 " : "",
                             cstr_Rangecc(host));
-        drawRange_Text(tabFont, textPos, fg, range_String(&label));
+        drawItemText_ListWidget(list, itemRect, tabFont, textPos, fg, range_String(&label));
         deinit_String(&label);
         if (isMobile_Platform()) {
             drawDragHandle_(p, &itemRect, bg);
@@ -730,9 +723,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             setCStr_String(&str, formatCStr_Lang("num.entries.n", d->count));
         }
         append_String(&str, &d->meta);
-        drawRange_Text(font, pos, fg1, range_String(&d->label));
+        drawItemText_ListWidget(list, itemRect, font, pos, fg1, range_String(&d->label));
         pos.y += lineHeight_Text(font);
-        drawRange_Text(font2, pos, fg2, range_String(&str));
+        drawItemText_ListWidget(list, itemRect, font2, pos, fg2, range_String(&str));
         deinit_String(&str);
     }
     if (isListFocus && isHoverItem && constCursorItem_ListWidget(list) == d) {

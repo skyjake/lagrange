@@ -428,11 +428,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const 
     const iBool isHover      = isHoverItem && !isSel;
     const int itemHeight     = height_Rect(itemRect);
     const int font = certList->itemFonts[0];
-    iRect bgRect   = itemRect;
-    if (isTerminal_Platform()) {
-        /* Blank line between items, outside the item's highlight. */
-        adjustEdges_Rect(&bgRect, 0, 0, -lineHeight_Text(font), 0);
-    }
+    const iRect bgRect = highlightRect_ListWidget(list, itemRect);
     int bg         = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
@@ -475,14 +471,18 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const 
     }
     drawRange_Text(font, cPos, isActive ? bg : iconColor, range_String(&icon));
     deinit_String(&icon);
-    drawRange_Text(certList->itemFonts[d->isBold ? 1 : 0],
-                   add_I2(cPos, init_I2(indent, 0)),
-                   fg,
-                   range_String(&d->label));
-    drawRange_Text(uiLabel_FontId,
-                   add_I2(cPos, init_I2(indent, lineHeight_Text(font))),
-                   metaFg,
-                   range_String(&d->meta));
+    drawItemText_ListWidget(list,
+                            itemRect,
+                            certList->itemFonts[d->isBold ? 1 : 0],
+                            add_I2(cPos, init_I2(indent, 0)),
+                            fg,
+                            range_String(&d->label));
+    drawItemText_ListWidget(list,
+                            itemRect,
+                            uiLabel_FontId,
+                            add_I2(cPos, init_I2(indent, lineHeight_Text(font))),
+                            metaFg,
+                            range_String(&d->meta));
     if (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) {
         drawCursor_ListWidget(list, p, bgRect, isSel ? uiTextSelected_ColorId : uiTextAction_ColorId);
     }
@@ -510,6 +510,9 @@ void init_CertListWidget(iCertListWidget *d) {
 void updateItemHeight_CertListWidget(iCertListWidget *d) {
     const float height = isTerminal_Platform() ? 4.0f : 3.5f;
     setItemHeight_ListWidget(&d->list, height * lineHeight_Text(d->itemFonts[0]));
+    if (isTerminal_Platform()) {
+        setItemSpacing_ListWidget(&d->list, lineHeight_Text(d->itemFonts[0]));
+    }
     setWheelStep_ListWidget(&d->list, itemHeight_ListWidget(&d->list));
 }
 

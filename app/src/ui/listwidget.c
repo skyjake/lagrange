@@ -98,6 +98,7 @@ void init_ListWidget(iListWidget *d) {
     init_SmoothScroll(&d->scrollY, w, scrollBegan_ListWidget_);
     d->itemHeight = 0;
     d->itemPadding = 0;
+    d->itemSpacing = 0;
     d->wheelStep = 0;
     init_Array(&d->itemTops, sizeof(int));
     d->isLayoutValid = iFalse;
@@ -147,6 +148,13 @@ void invalidate_ListWidget(iListWidget *d) {
 
 void invalidateItem_ListWidget(iListWidget *d, size_t index) {
     insert_IntSet(&d->invalidItems, (int) index);
+    if (d->itemSpacing && index != iInvalidPos) {
+        /* Highlights overlap the neighbors' spacing. */
+        if (index > 0) {
+            insert_IntSet(&d->invalidItems, (int) index - 1);
+        }
+        insert_IntSet(&d->invalidItems, (int) index + 1);
+    }
     refresh_Widget(d);
 }
 
@@ -217,13 +225,20 @@ static size_t nearestCursor_ListWidget_(const iListWidget *d, size_t index, int 
     return iInvalidPos;
 }
 
+static int leadingSpace_ListWidget_(const iListWidget *d) {
+    /* Room for the first item's highlight. */
+    const iListItem *first = constItem_ListWidget(d, 0);
+    return first && !first->flags.isSeparator ? d->itemSpacing : 0;
+}
+
 static void updateTops_ListWidget_(iListWidget *d) {
     const size_t count = size_PtrArray(&d->items);
     resize_Array(&d->itemTops, count + 1);
     int *tops = data_Array(&d->itemTops);
+    const int lead = leadingSpace_ListWidget_(d);
     tops[0] = 0;
     for (size_t i = 0; i < count; i++) {
-        tops[i + 1] = tops[i] + heightAt_ListWidget_(d, i);
+        tops[i + 1] = tops[i] + heightAt_ListWidget_(d, i) + (i == 0 ? lead : 0);
     }
     d->isLayoutValid = iTrue;
     /* Items may have changed under the cursor. */
@@ -262,6 +277,13 @@ static iRangei itemSpan_ListWidget_(const iListWidget *d, size_t index) {
     }
     const int *tops = tops_ListWidget_(d);
     return (iRangei){ tops[index], index < count ? tops[index + 1] : tops[index] + d->itemHeight };
+}
+
+static iRangei drawSpan_ListWidget_(const iListWidget *d, size_t index) {
+    /* Highlights extend over the spacing of the previous item. */
+    iRangei span = itemSpan_ListWidget_(d, index);
+    span.start -= d->itemSpacing;
+    return span;
 }
 
 static size_t indexAt_ListWidget_(const iListWidget *d, int y) {
@@ -358,6 +380,14 @@ void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
 void setItemPadding_ListWidget(iListWidget *d, int itemPadding) {
     if (d->itemPadding != itemPadding) {
         d->itemPadding = itemPadding;
+        invalidateLayout_ListWidget(d);
+        invalidate_ListWidget(d);
+    }
+}
+
+void setItemSpacing_ListWidget(iListWidget *d, int itemSpacing) {
+    if (d->itemSpacing != itemSpacing) {
+        d->itemSpacing = itemSpacing;
         invalidateLayout_ListWidget(d);
         invalidate_ListWidget(d);
     }
@@ -486,9 +516,44 @@ const iAnyObject *constCursorItem_ListWidget(const iListWidget *d) {
     return constItem_ListWidget(d, d->cursorItem);
 }
 
+static int cursorRight_ListWidget_(const iListWidget *d, iRect itemRect) {
+    /* The right edge of the TUI cursor. */
+    return right_Rect(itemRect) - scrollBarWidth_ListWidget(d) - 1;
+}
+
+iRect contentRect_ListWidget(const iListWidget *d, iRect itemRect) {
+    if (isTerminal_Platform()) {
+        /* Inside the cursor. */
+        return initCorners_Rect(addX_I2(topLeft_Rect(itemRect), 1),
+                                init_I2(cursorRight_ListWidget_(d, itemRect), bottom_Rect(itemRect)));
+    }
+    return itemRect;
+}
+
+void drawItemText_ListWidget(const iListWidget *d, iRect itemRect, int font, iInt2 pos, int color,
+                             iRangecc text) {
+    if (isTerminal_Platform()) {
+        drawTruncatedRange_Text(
+            font, pos, right_Rect(contentRect_ListWidget(d, itemRect)) - pos.x, color, text);
+    }
+    else {
+        drawRange_Text(font, pos, color, text);
+    }
+}
+
+iRect highlightRect_ListWidget(const iListWidget *d, iRect itemRect) {
+    /* Includes the spacing above and below the item. */
+    return adjusted_Rect(itemRect, init_I2(0, -d->itemSpacing), zero_I2());
+}
+
 void drawCursor_ListWidget(const iListWidget *d, iPaint *p, iRect itemRect, int color) {
     if (isTerminal_Platform()) {
-        const int right = right_Rect(itemRect) - scrollBarWidth_ListWidget(d) - 1;
+        const int right = cursorRight_ListWidget_(d, itemRect);
+        if (d->itemSpacing) {
+            drawRect_Paint(p, initCorners_Rect(topLeft_Rect(itemRect),
+                                               init_I2(right + 1, bottom_Rect(itemRect))), color);
+            return;
+        }
         drawVLine_Paint(p, topLeft_Rect(itemRect), height_Rect(itemRect), color);
         drawVLine_Paint(p, init_I2(right, top_Rect(itemRect)), height_Rect(itemRect), color);
     }
@@ -520,10 +585,9 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
         }
     }
     if (d->hoverItem != index) {
-        insert_IntSet(&d->invalidItems, d->hoverItem);
-        insert_IntSet(&d->invalidItems, index);
+        invalidateItem_ListWidget(d, d->hoverItem);
+        invalidateItem_ListWidget(d, index);
         d->hoverItem = index;
-        refresh_Widget(as_Widget(d));
     }
 }
 
@@ -654,8 +718,7 @@ void sort_ListWidget(iListWidget *d, int (*cmp)(const iListItem **item1, const i
 }
 
 static void redrawHoverItem_ListWidget_(iListWidget *d) {
-    insert_IntSet(&d->invalidItems, d->hoverItem);
-    refresh_Widget(as_Widget(d));
+    invalidateItem_ListWidget(d, d->hoverItem);
 }
 
 static void sizeChanged_ListWidget_(iListWidget *d) {
@@ -1185,7 +1248,9 @@ static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index,
                                    init_I2(d->visBuf->texSize.x, size_Range(&span)) };
         fillRect_Paint(p, itemRect, bg);
         if (index != d->dragItem && !(d->isMultiDrag && item->flags.isMultiSelected)) {
-            class_ListItem(item)->draw(item, p, itemRect, d);
+            const int lead = (index == 0 ? leadingSpace_ListWidget_(d) : 0);
+            class_ListItem(item)->draw(
+                item, p, adjusted_Rect(itemRect, init_I2(0, lead), zero_I2()), d);
         }
         fillRect_Paint(p,
                        (iRect){ init_I2(d->visBuf->texSize.x - blankWidth, top_Rect(itemRect)),
@@ -1247,10 +1312,17 @@ static void draw_ListWidget_(const iListWidget *d) {
 #else
             const int blankWidth = scrollBarWidth_ListWidget(d);
 #endif
+            /* The cursor frame goes on top of the neighbors' highlights. */
+            const size_t deferred   = d->itemSpacing ? d->cursorItem : iInvalidPos;
+            iBool        isDeferred = iFalse;
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
                 if (index < count &&
-                    !isEmpty_Rangei(intersect_Rangei(itemSpan_ListWidget_(d, index), bufRange))) {
+                    !isEmpty_Rangei(intersect_Rangei(drawSpan_ListWidget_(d, index), bufRange))) {
+                    if (index == deferred) {
+                        isDeferred = iTrue;
+                        continue;
+                    }
                     beginTarget_Paint(&p, buf->texture);
                     drawItem_ListWidget_(d, &p, index, buf, bg[i], blankWidth);
                 }
@@ -1258,10 +1330,19 @@ static void draw_ListWidget_(const iListWidget *d) {
             /* Visible range is not fully covered. Fill in the new items. */
             if (!isEmpty_Rangei(invalidRange[i])) {
                 beginTarget_Paint(&p, buf->texture);
-                size_t j = indexAt_ListWidget_(d, iMax(0, invalidRange[i].start));
-                for (; j < count && itemSpan_ListWidget_(d, j).start < invalidRange[i].end; j++) {
+                size_t j = indexAt_ListWidget_(
+                    d, iMax(0, invalidRange[i].start - d->itemSpacing));
+                for (; j < count && drawSpan_ListWidget_(d, j).start < invalidRange[i].end; j++) {
+                    if (j == deferred) {
+                        isDeferred = iTrue;
+                        continue;
+                    }
                     drawItem_ListWidget_(d, &p, j, buf, bg[i], blankWidth);
                 }
+            }
+            if (isDeferred) {
+                beginTarget_Paint(&p, buf->texture);
+                drawItem_ListWidget_(d, &p, deferred, buf, bg[i], blankWidth);
             }
             endTarget_Paint(&p);
         }
