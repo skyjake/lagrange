@@ -165,6 +165,8 @@ enum iWidgetFlag2 {
     dropTarget_WidgetFlag2                  = iBit(25), /* list items can be dragged onto this */
     horizontalSwipes_WidgetFlag2            = iBit(26), /* touch swipes lock to the vertical axis
                                                            only if at least 2:1 vertical */
+    arrowScrolling_WidgetFlag2              = iBit(27), /* focus root passes unused up/down arrow
+                                                           keys on for scrolling */
 };
 
 enum iWidgetAddPos {

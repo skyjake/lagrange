@@ -426,7 +426,11 @@ iBool moveFocusWithArrows_App(const void *sdlEvent) {
         setFocusWithMethod_Widget(nextFocus, arrowKeys_FocusMethod);
         return iTrue;
     }
-    return focusRoot_Widget(focus_Widget()) != root_Widget(focus_Widget());
+    const iWidget *focusRoot = focusRoot_Widget(focus_Widget());
+    if ((key == SDLK_UP || key == SDLK_DOWN) && focusRoot->flags2 & arrowScrolling_WidgetFlag2) {
+        return iFalse;
+    }
+    return focusRoot != root_Widget(focus_Widget());
 }
 
 iTools *tools_App(void) {

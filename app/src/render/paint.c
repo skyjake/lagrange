@@ -171,9 +171,11 @@ void unsetClip_Paint(iPaint *d) {
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
     addv_I2(&rect.pos, origin_Paint);
     iInt2 br = bottomRight_Rect(rect);
-    /* Keep the right/bottom edge visible in the window. */
-    if (br.x == d->dst->size.x) br.x--;
-    if (br.y == d->dst->size.y) br.y--;
+    /* Keep the right/bottom edge visible in the window. Terminal rects are end-exclusive. */
+    if (!isTerminal_Platform()) {
+        if (br.x == d->dst->size.x) br.x--;
+        if (br.y == d->dst->size.y) br.y--;
+    }
     SDL_FPoint edges[] = {
         { left_Rect(rect),  top_Rect(rect) },
         { br.x,             top_Rect(rect) },

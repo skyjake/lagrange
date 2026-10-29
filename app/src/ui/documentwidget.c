@@ -1509,8 +1509,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             iChangeFlags(d->flags, unseen_DocumentWidgetFlag, iFalse); /* has been seen now */
             reveal_ViewToolbar(d->viewToolbar);
             update_ViewToolbar(d->viewToolbar);
+            /* The terminal sidebar would take keyboard focus. */
             if (d->mod.isReader && deviceType_App() != phone_AppDeviceType &&
-                isFinishedLaunching_App()) {
+                !isTerminal_Platform() && isFinishedLaunching_App()) {
                 showSidebar_DocumentWidget(d);
             }
             checkEdition_DocumentBook(d->book);

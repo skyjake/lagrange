@@ -89,6 +89,7 @@ void init_DocumentDialog(iDocumentDialog *d, const iString *url, int flags) {
     initCopy_String(&d->url, url);
     d->flags = flags;
     useSheetStyle_Widget(w);
+    setFlags2_Widget(w, arrowScrolling_WidgetFlag2, iTrue);
     /* The size is determined by the window, not the contents. */
     setFlags_Widget(w, arrangeSize_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
     setFlags_Widget(w,
@@ -173,15 +174,18 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
     const iInt2 oldSize   = doc->rect.size;
     int         width, docHeight;
     if (deviceType_App() == desktop_AppDeviceType) {
-        width            = iMin(width_Rect(safe), 140 * gap_UI);
-        const int height = iMini(height_Rect(safe), iMaxi(100 * gap_UI, height_Rect(safe) / 2));
+        width      = iMin(width_Rect(safe), isTerminal_Platform() ? 80 : 140 * gap_UI);
+        int height = iMini(height_Rect(safe), iMaxi(100 * gap_UI, height_Rect(safe) / 2));
+        if (isTerminal_Platform()) {
+            height = iMin(height, 25);
+        }
         /* The page stays inside the frame. */
-        const int frame  = iMax(1, gap_UI / 4);
-        setPadding_Widget(w, frame, gap_UI / 4, frame, 0);
+        const int frame = iMax((int) (frame_UI / aspect_UI), gap_UI / 4);
+        setPadding_Widget(w, frame, frame, frame, 0);
         setFixedSize_Widget(w, init_I2(width, height));
-        width -= 2 * frame;
+        width -= w->padding[0] + w->padding[2];
         arrange_Widget(d->buttons);
-        docHeight = height - height_Widget(d->buttons);
+        docHeight = height - w->padding[1] - height_Widget(d->buttons);
     }
     else if (!isFullScreen_DocumentDialog_(d)) {
         width = deviceType_App() == phone_AppDeviceType ? width_Rect(safe)
@@ -246,6 +250,9 @@ static void show_DocumentDialog_(iDocumentDialog *d) {
     iWidget *w = as_Widget(d);
     setFlags_Widget(w, hidden_WidgetFlag | disabledWhenHidden_WidgetFlag, iFalse);
     setupSheetTransition_Mobile(w, incoming_TransitionFlag | transitionDir_DocumentDialog_(d));
+    if (isTerminal_Platform()) {
+        setFocus_Widget(findChild_Widget(d->buttons, "default"));
+    }
     postRefresh_Window(get_Window());
 }
 

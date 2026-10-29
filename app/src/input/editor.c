@@ -1168,6 +1168,10 @@ enum iEventResult processKeyDown_InputWidget_(iInputWidget *d, const SDL_Event *
                 return true_EventResult;
             }
             if (d->inFlags & arrowFocusNavigable_InputWidgetFlag) {
+                if (!cmp_String(id_Widget(as_Widget(d)), "url") &&
+                    isVisible_Widget(findWidget_App("lookup"))) {
+                    return false_EventResult; /* lookup results take precedence */
+                }
                 return moveFocusWithArrows_App(ev) ? true_EventResult : false_EventResult;
             }
             return true_EventResult;
