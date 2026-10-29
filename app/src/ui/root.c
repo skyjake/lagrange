@@ -1915,13 +1915,15 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { gear_Icon " ${menu.sitespec}", 0, 0, "document.sitespec" },
         { "---${menu.tools}" },
         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+        { "___" },
         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
         { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+        { "___" },
         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
         { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
-        { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
-        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" } },
-    15);
+        { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" } },
+    17);
     appendToolMenuItems_Root_(items, doc);
     pushBackN_Array(items, (iMenuItem[]){
         { "---" },

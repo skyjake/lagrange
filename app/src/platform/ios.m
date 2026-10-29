@@ -1580,8 +1580,10 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
             [subElems addObject:action];
             deinit_String(&label);
         }
-        if (haveSep && [subElems count] > 0) {
-            addMenuElementGroup_(elems, &sepTitle, subElems);
+        if (haveSep) {
+            if ([subElems count] > 0) {
+                addMenuElementGroup_(elems, &sepTitle, subElems);
+            }
         }
         else {
             elems = subElems;
