@@ -658,6 +658,8 @@ static void applyType_Sync_(const iSyncData *data, enum iUserDataType type,
             /* Unsynced visits are too old to be kept anyway. */
             clear_Visited(visited_App());
             deserialize_Visited(visited_App(), nativeStream_(data, type), iFalse);
+            /* Must be on disk before the pristine data, or missing visits become deletions. */
+            save_Visited(visited_App(), cstr_String(dataDir_App()));
             notify_App("visited.changed");
             break;
         case identities_UserDataType:
