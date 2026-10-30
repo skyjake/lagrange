@@ -421,8 +421,10 @@ static int bottomBarsEdge_ViewToolbar_(iViewToolbar *d, const iRoot *root) {
     const iWidget *bottomBar  = root->bars.bottomBar;
     const iWidget *tabBar     = prefs_App()->bottomTabBar ? root->bars.tabButtons : NULL;
     const int      safeBottom = bottom_Rect(safeRect_Root(root));
+    /* Without the bars, the toolbar can extend halfway into the bottom safe area. */
+    const int      hiddenEdge = (safeBottom + bottom_Rect(rect_Root(root))) / 2;
     if (!bottomBar) {
-        return safeBottom;
+        return hiddenEdge;
     }
     if (flags_Widget(bottomBar) & visualOffset_WidgetFlag &&
         !isFinished_Anim(&bottomBar->visualOffset)) {
@@ -433,10 +435,10 @@ static int bottomBarsEdge_ViewToolbar_(iViewToolbar *d, const iRoot *root) {
         const float pos    = height > 0 ? iClamp(value_Anim(&bottomBar->visualOffset) / height,
                                                  0.0f, 1.0f)
                                         : 1.0f;
-        return iMin(safeBottom, shown + (int) (pos * (safeBottom - shown)));
+        return iMin(hiddenEdge, shown + (int) (pos * (hiddenEdge - shown)));
     }
     if (!isVisible_Widget(bottomBar)) {
-        return safeBottom;
+        return hiddenEdge;
     }
     int edge = top_Rect(bounds_Widget(bottomBar));
     if (tabBar && isVisible_Widget(tabBar)) {
