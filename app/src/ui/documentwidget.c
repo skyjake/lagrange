@@ -3335,8 +3335,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
     }
     else if (colorTheme_App() == pureWhite_ColorTheme &&
-             !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar)) {
-        /* A subtle separator between UI and content. */
+             !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar) &&
+             !(!prefs_App()->bottomTabBar && isVisible_Widget(w->root->bars.tabButtons))) {
+        /* A subtle separator between UI and content. The tab bar joins the content. */
         drawHLine_Paint(&p, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
     if (deviceType_App() == tablet_AppDeviceType && prefs_App()->edgeSwipe) {

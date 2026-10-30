@@ -2696,13 +2696,6 @@ static void setupMovableElements_Root_(iRoot *d) {
         setFlags2_Widget(tabBar, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
         iChangeFlags(tabBar->flags, drawBackgroundToBottom_WidgetFlag,
                      prefs->bottomTabBar && !termStatus);
-        /* Tab button frames. */
-        iForEach(ObjectList, i, children_Widget(tabBar)) {
-            if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                setNoTopFrame_LabelWidget(i.object, !prefs->bottomTabBar);
-                setNoBottomFrame_LabelWidget(i.object, prefs->bottomTabBar);
-            }
-        }
         /* Adjust safe area paddings. */
         if (deviceType_App() == tablet_AppDeviceType && prefs->bottomTabBar && !prefs->bottomNavBar) {
             tabBar->padding[3] = bottomSafeInset_Mobile();

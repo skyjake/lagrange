@@ -332,22 +332,6 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
     toString_Sym(d->key, d->kmods, str);
 }
 
-static iBool areTabButtonsThemeColored_(void) {
-    if (type_Window(get_Window()) != main_WindowType) {
-        /* Only the main window has themes available, since it has DocumentWidgets. */
-        return iFalse;
-    }
-    const enum iGmDocumentTheme docTheme = docTheme_DocPrefs(activeDocPrefs_App(), isDark_ColorTheme(colorTheme_App()));
-    const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
-    return (docTheme == colorfulLight_GmDocumentTheme ||
-            docTheme == vibrantLight_GmDocumentTheme ||
-            docTheme == sepia_GmDocumentTheme ||
-            docTheme == paper_GmDocumentTheme ||
-            ((docTheme == oceanic_GmDocumentTheme || docTheme == arboreal_GmDocumentTheme ||
-              docTheme == ember_GmDocumentTheme) &&
-             !isDarkUI));
-}
-
 static iBool isDocTabButton_(const iWidget *d) {
     return isTabButton_Widget(d) && !cmp_String(id_Widget(d->parent->parent), "doctabs");
 }
@@ -408,6 +392,8 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isMenuItem  = !cmp_String(id_Widget(parent_Widget(d)), "menu");
     const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
     const iBool    isDarkTheme = isDark_ColorTheme(colorTheme_App());
+    const iBool    isDocTab    = isDocTabButton_(w);
+    const iBool    isBottomTabs = prefs_App()->bottomTabBar;
     /* Default color state. */
     *bg     = isButton && ~flags & noBackground_WidgetFlag ? (d->widget.bgColor != none_ColorId ?
                                                               d->widget.bgColor : uiBackground_ColorId)
@@ -426,6 +412,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
     *icon   = uiIcon_ColorId;
     *meta   = uiTextShortcut_ColorId;
+    if (isDocTab && !isSel) {
+        *bg = uiBackgroundFolder_ColorId;
+        *fg = uiTextExtraDim_ColorId;
+    }
     if (flags & disabled_WidgetFlag && isButton) {
         *icon = uiTextDisabled_ColorId;
         *fg   = uiTextDisabled_ColorId;
@@ -438,26 +428,13 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             if (isMenuItem) {
                 *bg = uiBackgroundUnfocusedSelection_ColorId;
             }
+            else if (isDocTab && isKeyRoot) {
+                /* Looks like a part of the document. */
+                *bg = isBottomTabs ? tmBackground_ColorId : tmBannerBackground_ColorId;
+                isThemeBackground = iTrue;
+            }
             else {
-                const enum iGmDocumentTheme docTheme = docTheme_DocPrefs(activeDocPrefs_App(), isDark_ColorTheme(colorTheme_App()));
-                if (areTabButtonsThemeColored_() && isDocTabButton_(w)) {
-                    *bg = (docTheme == oceanic_GmDocumentTheme ||
-                                   docTheme == arboreal_GmDocumentTheme ||
-                                   docTheme == ember_GmDocumentTheme ||
-                                   ((docTheme == sepia_GmDocumentTheme ||
-                                     docTheme == paper_GmDocumentTheme) &&
-                                    colorTheme_App() == pureWhite_ColorTheme)
-                               ? tmBackground_ColorId
-                               : tmBannerBackground_ColorId);
-                    isThemeBackground = iTrue;
-                    /* Use the page background if the banner blends into the tab bar. */
-                    if (delta_Color(get_Color(*bg), get_Color(uiBackground_ColorId)) < 30) {
-                        *bg = tmBackground_ColorId;
-                    }
-                }
-                else {
-                    *bg = uiBackgroundSelected_ColorId;
-                }
+                *bg = uiBackgroundSelected_ColorId;
             }
             if (!isKeyRoot) {
                 *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
@@ -471,9 +448,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
         if (isThemeBackground) {
-            *fg = tmParagraph_ColorId;
+            *fg     = isBottomTabs ? tmParagraph_ColorId : tmBannerTitle_ColorId;
+            *frame1 = *frame2 = tmBannerItemFrame_ColorId;
         }
-        if (isButton) {
+        else if (isButton) {
             *frame1 = d->flags.noTopFrame    ? uiEmboss1_ColorId : uiEmbossSelected1_ColorId;
             *frame2 = d->flags.noBottomFrame ? uiEmboss2_ColorId : uiEmbossSelected2_ColorId;
             if (!isKeyRoot) {
@@ -510,12 +488,12 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     if (*bg == uiBackgroundSelected_ColorId && prefs_App()->accent == system_ColorAccent) {
         *icon = *meta = uiTextSelected_ColorId;
     }
-    if (isSel && isDocTabButton_(w)) {
+    if (isSel && isDocTab) {
         if (*bg == uiBackgroundSelected_ColorId) {
             *icon = uiTextSelected_ColorId;
         }
         else if (isThemeBackground) {
-            *icon = uiTextStrong_ColorId;
+            *icon = isBottomTabs ? tmParagraph_ColorId : tmBannerIcon_ColorId;
         }
     }
     if (isHover) {
@@ -523,6 +501,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             if (!isSel) {
                 *bg = uiBackgroundFramelessHover_ColorId;
                 *fg = uiTextFramelessHover_ColorId;
+            }
+            else if (isThemeBackground) {
+                *frame1 = *frame2 =
+                    luma_Color(get_Color(*bg)) > 0.5f ? black_ColorId : white_ColorId;
             }
         }
         else {
@@ -744,9 +726,24 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const iRect   bounds   = bounds_Widget(w);
     iRect         rect     = bounds;
     const iBool   isHover  = isHover_LabelWidget_(d);
+    const iBool   isDocTab = isDocTabButton_(w);
+    const iBool   isBottomTabs = prefs_App()->bottomTabBar;
     if (isButton) {
         shrink_Rect(&rect, divi_I2(gap2_UI, 4));
         adjustEdges_Rect(&rect, gap_UI / 8, 0, -gap_UI / 8, 0);
+    }
+    /* Document tabs reach the document, apart from a separator under unselected ones. */
+    const iBool isJoinedTab = isDocTab && (flags & selected_WidgetFlag) != 0;
+    const int   docSepThick = isDocTab && !isJoinedTab ? gap_UI / 4 : 0;
+    if (isDocTab) {
+        rect.pos.x  = bounds.pos.x;
+        rect.size.x = bounds.size.x;
+        if (isBottomTabs) {
+            adjustEdges_Rect(&rect, top_Rect(bounds) + docSepThick - top_Rect(rect), 0, 0, 0);
+        }
+        else {
+            adjustEdges_Rect(&rect, 0, 0, bottom_Rect(bounds) - docSepThick - bottom_Rect(rect), 0);
+        }
     }
     iPaint p;
     init_Paint(&p);
@@ -819,6 +816,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     if (isGroupItem && bg >= 0) {
         drawBorders_Widget(w); /* the background covers the full bounds */
     }
+    if (docSepThick) {
+        fillRect_Paint(&p,
+                       (iRect){ init_I2(left_Rect(bounds),
+                                        isBottomTabs ? top_Rect(bounds)
+                                                     : bottom_Rect(bounds) - docSepThick),
+                                init_I2(width_Rect(bounds), docSepThick) },
+                       uiSeparator_ColorId);
+    }
     if (isDrag) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
@@ -829,7 +834,16 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                 isHover ? gap_UI / 2 : (gap_UI / 4),
                                 focusColor);
     }
-    else if (!isRound && ~flags & frameless_WidgetFlag) {
+    else if (isJoinedTab) {
+        /* Open towards the document. */
+        const iRect fr       = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
+        const iInt2 points[] = { isBottomTabs ? topLeft_Rect(fr) : bottomLeft_Rect(fr),
+                                 isBottomTabs ? bottomLeft_Rect(fr) : topLeft_Rect(fr),
+                                 isBottomTabs ? bottomRight_Rect(fr) : topRight_Rect(fr),
+                                 isBottomTabs ? topRight_Rect(fr) : bottomRight_Rect(fr) };
+        drawLines_Paint(&p, points, iElemCount(points), frame);
+    }
+    else if (!isRound && !isDocTab && ~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         if (isButton) {
             const iBool isHoverFrame = isHover && !isTabButton_Widget(w);

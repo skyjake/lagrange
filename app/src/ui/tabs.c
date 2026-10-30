@@ -232,11 +232,13 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
             button->flags |= touchDrag_WidgetFlag;
         }
     }
-    if (prefs_App()->bottomTabBar) {
-        setNoBottomFrame_LabelWidget((iLabelWidget *) button, iTrue);
-    }
-    else {
-        setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
+    if (!isDocTabs_Widget_(tabs)) {
+        if (prefs_App()->bottomTabBar) {
+            setNoBottomFrame_LabelWidget((iLabelWidget *) button, iTrue);
+        }
+        else {
+            setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
+        }
     }
     releaseClosedTabSpace_Widget_(tabs);
     addChildPos_Widget(pages, page, addPos);
