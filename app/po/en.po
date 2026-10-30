@@ -1552,6 +1552,9 @@ msgstr "Open Link"
 msgid "menu.banner.copy"
 msgstr "Copy Message"
 
+msgid "menu.copyresponse"
+msgstr "Copy Response Link"
+
 msgid "dlg.certwarn.title"
 msgstr "Security Issue"
 

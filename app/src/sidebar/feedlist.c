@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 
 #include <lagrange/lang.h>
+#include <SDL3/SDL_clipboard.h>
 #include <math.h>
 
 static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) {
@@ -309,7 +310,9 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
           0,
           "feed.entry.markread below:1" },
         { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
+        { "---", 0, 0, NULL },
         { "${menu.copyurl}", 0, 0, "sideitem.copy" },
+        { "${menu.copyresponse}", 0, 0, "feed.entry.copyresponse" },
         { "---", 0, 0, NULL },
         { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
         { edit_Icon " ${menu.feed.edit}", 0, 0, "feed.entry.edit" },
@@ -588,6 +591,8 @@ void updateFeedContextMenu_SidebarWidget_(iSidebarWidget *d) {
                             isRead ? circle_Icon " ${feeds.entry.markunread}"
                                    : circleWhite_Icon " ${feeds.entry.markread}",
                             0);
+    setMenuItemDisabled_Widget(
+        d->menu, "feed.entry.copyresponse", !hasResponseLink_Feeds(&d->contextItem->url));
 }
 
 void openMarkAllReadMenu_Widget(iWidget *anchor, const char *command) {
@@ -706,6 +711,14 @@ iBool handleFeedCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, c
                     }
                 }
                 notify_App("visited.changed");
+                return iTrue;
+            }
+            else if (isCommand_Widget(w, ev, "feed.entry.copyresponse")) {
+                iString *link = responseLink_Feeds(&item->url);
+                if (link) {
+                    SDL_SetClipboardText(cstr_String(link));
+                    delete_String(link);
+                }
                 return iTrue;
             }
             else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {

@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/paint.h"
 #include "ui/util.h"
 #include "app.h"
+#include "feeds.h"
 
 iDeclareType(BannerItem)
 
@@ -426,8 +427,16 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                 !ev->button.down) {
                 const size_t index = itemAtCoord_Banner(d, coord);
                 if (index < iInvalidPos) {
-                    //const iBannerItem *item = constAt_Array(&d->items, index);
+                    const iBannerItem *item = constAt_Array(&d->items, index);
                     iArray *menuItems = new_Array(sizeof(iMenuItem));
+                    if (item->type == notice_BannerType &&
+                        hasResponseLink_Feeds(feedEntryUrl_DocumentWidget(d->doc))) {
+                        pushBack_Array(menuItems,
+                                       &(iMenuItem){ "${menu.copyresponse}", 0, 0,
+                                                     format_CStr("!banner.copyresponse ptr:%p",
+                                                                 d->doc) });
+                        pushBack_Array(menuItems, &(iMenuItem){ "---" });
+                    }
                     pushBack_Array(menuItems, &(iMenuItem){ "${menu.banner.copy}", 0, 0,
                                                             format_CStr("!banner.copy ptr:%p arg:%u",
                                                                         d->doc, index) });

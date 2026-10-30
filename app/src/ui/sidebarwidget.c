@@ -597,14 +597,13 @@ static void copyContextItems_SidebarWidget_(iSidebarWidget *d, iBool isCanonical
         if (!isEmpty_String(text)) {
             appendCStr_String(text, "\n");
         }
-        iString *link = responseLink_Feeds(&item->url);
-        if (link) {
-            append_String(text, link);
-            delete_String(link);
-        }
-        else {
-            append_String(text, isCanonical ? canonicalUrl_String(&item->url) : &item->url);
-        }
+        /* Virtual tinylog entry URLs are only meaningful locally. */
+        const uint32_t   tinylogId = tinylogBookmark_Feeds(&item->url);
+        const iBookmark *tinylog   = tinylogId ? get_Bookmarks(bookmarks_App(), tinylogId) : NULL;
+        append_String(text,
+                      tinylog       ? &tinylog->url
+                      : isCanonical ? canonicalUrl_String(&item->url)
+                                    : &item->url);
     }
     SDL_SetClipboardText(cstr_String(text));
     delete_String(text);

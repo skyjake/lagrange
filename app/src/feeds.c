@@ -1797,7 +1797,7 @@ void deinit_TinylogInfo(iTinylogInfo *d) {
     deinit_String(&d->author);
 }
 
-static const iFeedEntry *findTinylogEntry_Feeds_(const iFeeds *d, const iString *url) {
+static const iFeedEntry *findEntry_Feeds_(const iFeeds *d, const iString *url) {
     /* Caller must lock. Entries are sorted by URL, so the first one at or after `url` is
        checked. */
     const iFeedEntry  entry    = { .url = *url };
@@ -1806,11 +1806,16 @@ static const iFeedEntry *findTinylogEntry_Feeds_(const iFeeds *d, const iString 
     locate_SortedArray(&d->entries, &entryPtr, &pos);
     if (pos < size_SortedArray(&d->entries)) {
         const iFeedEntry *found = *(const iFeedEntry **) constAt_SortedArray(&d->entries, pos);
-        if (found->isTinylog && equal_String(&found->url, url)) {
+        if (equal_String(&found->url, url)) {
             return found;
         }
     }
     return NULL;
+}
+
+static const iFeedEntry *findTinylogEntry_Feeds_(const iFeeds *d, const iString *url) {
+    const iFeedEntry *entry = findEntry_Feeds_(d, url);
+    return entry && entry->isTinylog ? entry : NULL;
 }
 
 uint32_t tinylogBookmark_Feeds(const iString *entryUrl) {
@@ -1946,7 +1951,7 @@ iBool tinylogInfo_Feeds(const iString *entryUrl, iTinylogInfo *info_out) {
     return iTrue;
 }
 
-iString *responseLink_Feeds(const iString *entryUrl) {
+static iString *tinylogResponseLink_Feeds_(const iString *entryUrl) {
     iFeeds          *d    = &feeds_;
     const uint32_t   bmId = tinylogBookmark_Feeds(entryUrl);
     const iBookmark *bm   = bmId ? get_Bookmarks(bookmarks_App(), bmId) : NULL;
@@ -1975,6 +1980,39 @@ iString *responseLink_Feeds(const iString *entryUrl) {
                                 cstr_String(collect_String(format_TinylogStamp(&entry->stamp))));
     }
     delete_Tinylog(log);
+    return link;
+}
+
+iBool hasResponseLink_Feeds(const iString *entryUrl) {
+    iFeeds *d = &feeds_;
+    if (!isInitialized_Feeds_(d)) {
+        return iFalse;
+    }
+    lock_Mutex(d->mtx);
+    const iFeedEntry *entry = findEntry_Feeds_(d, canonicalUrl_String(entryUrl));
+    const iBool       has   = entry && !entry->isHeading;
+    unlock_Mutex(d->mtx);
+    return has;
+}
+
+iString *responseLink_Feeds(const iString *entryUrl) {
+    iString *link = tinylogResponseLink_Feeds_(entryUrl);
+    if (link) {
+        return link;
+    }
+    iFeeds *d = &feeds_;
+    if (!isInitialized_Feeds_(d)) {
+        return NULL;
+    }
+    lock_Mutex(d->mtx);
+    const iFeedEntry *entry = findEntry_Feeds_(d, canonicalUrl_String(entryUrl));
+    if (entry && !entry->isHeading && !entry->isTinylog) {
+        link = newFormat_String("=> %s", cstr_String(&entry->url));
+        if (!isEmpty_String(&entry->title)) {
+            appendFormat_String(link, " Re: %s", cstr_String(&entry->title));
+        }
+    }
+    unlock_Mutex(d->mtx);
     return link;
 }
 

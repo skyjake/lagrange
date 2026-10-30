@@ -86,7 +86,10 @@ void            deinit_TinylogInfo      (iTinylogInfo *);
 
 uint32_t        tinylogBookmark_Feeds   (const iString *entryUrl); /* zero if not an entry */
 iBool           tinylogInfo_Feeds       (const iString *entryUrl, iTinylogInfo *info_out);
-iString *       responseLink_Feeds      (const iString *entryUrl); /* NULL if not an entry */
+
+/* Response links for tinylog and non-heading Gemini feed entries. */
+iBool           hasResponseLink_Feeds   (const iString *entryUrl);
+iString *       responseLink_Feeds      (const iString *entryUrl); /* NULL if none */
 
 /* Gemini URLs on a page that could be subscribed to. Returns a collected array. */
 const iStringArray *listSubscribableUrls_Feeds(const iString *source, iBool isPlainText,

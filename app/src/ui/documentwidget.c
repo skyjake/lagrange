@@ -1353,6 +1353,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    if (equalWidget_Command(cmd, w, "banner.copyresponse")) {
+        iString *link = responseLink_Feeds(feedEntryUrl_DocumentWidget(d));
+        if (link) {
+            SDL_SetClipboardText(cstr_String(link));
+            delete_String(link);
+        }
+        return iTrue;
+    }
     if (equal_Command(cmd, "visited.changed")) {
         updateLinkStatus_DocumentWidget_(d, visited_LinkUpdateFlag);
         return iFalse;
