@@ -279,7 +279,7 @@ void init_Prefs(iPrefs *d) {
     }
     d->hideToolbarOnScroll = iTrue;
     d->hideTabBar          = iFalse;
-    d->hideViewTools       = iFalse;
+    d->hideViewTools       = deviceType_App() == phone_AppDeviceType; /* cramped */
     d->blinkingCursor      = iTrue;
     if (deviceType_App() == phone_AppDeviceType) {
         d->bottomNavBar = iTrue;
