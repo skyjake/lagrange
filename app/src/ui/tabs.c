@@ -213,6 +213,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         buttons,
         iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
+    updateSize_LabelWidget((iLabelWidget *) button); /* size may depend on the parent */
     checkIcon_LabelWidget((iLabelWidget *) button);
     if (isTerminal_Platform()) {
         setIcon_LabelWidget((iLabelWidget *) button, 0); /* no icon in the terminal (lack of room) */

@@ -413,6 +413,7 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         const int x = 0;
 #endif
         icon->rect.pos = init_I2(x, (height_Widget(tabButton) - height_Widget(icon)) / 2);
+        setFlags_Widget(icon, hidden_WidgetFlag, iFalse);
     }
     if (d->fetch->flags & waitForIdle_DocumentFetchFlag) {
         updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
@@ -510,6 +511,12 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         }
         if (size_StringArray(title) == 1) {
             /* Just truncate to fit. */
+            if (d->mod.isReader && avail <= 4 * ellipsisWidth) {
+                setFlags_Widget(readerIcon, hidden_WidgetFlag, iTrue);
+                updateTextCStr_LabelWidget(tabButton, star_Icon);
+                setTextColor_LabelWidget(tabButton, uiIcon_ColorId);
+                break;
+            }
             if (siteIcon && avail <= 4 * ellipsisWidth) {
                 updateText_LabelWidget(tabButton, collect_String(newUnicodeN_String(&siteIcon, 1)));
                 setTextColor_LabelWidget(tabButton, uiIcon_ColorId);

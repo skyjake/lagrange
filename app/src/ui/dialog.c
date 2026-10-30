@@ -302,7 +302,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
             { "${menu.input.copyprompt}", 0, 0, format_CStr("valueinput.prompt.copy dlg:%p", dlg) },
         };
         openMenu_Widget(makeMenu_Widget(get_Root()->widget, items, iElemCount(items)),
-                        mouseCoord_Window(get_Window(), 0));
+                        coord_Command(cmd));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.prompt.copy") &&

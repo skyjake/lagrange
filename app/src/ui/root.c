@@ -1224,6 +1224,14 @@ static void updateNavBarSize_(iWidget *navBar) {
                 updateSize_LabelWidget(btn);
             }
         }
+        /* Tab button height depends on the orientation. */
+        iForEach(ObjectList, i,
+                 children_Widget(findChild_Widget(
+                     findChild_Widget(navBar->root->widget, "doctabs"), "tabs.buttons"))) {
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                updateSize_LabelWidget(i.object);
+            }
+        }
         showOrHideNewTabButton_Root(navBar->root);
         arrange_Widget(navBar->root->widget);
     }

@@ -1036,6 +1036,9 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
         deinit_String(&str);
     }
     size.x += iconPadding_LabelWidget_(d);
+    if (isPortraitPhone_App() && isDocTabButton_(w)) {
+        size.y = size.y * 5 / 4; /* bigger tap targets */
+    }
     if (isTerminal_Platform()) {
         size.x = iMax(size.x, 3);
     }
