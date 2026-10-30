@@ -1018,7 +1018,8 @@ iBool handleCommand_App(const char *cmd) {
            last window, since the app cannot keep running without any windows open. */
         if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1 &&
             (isMobile_Platform() ||
-             ((isWindows_Platform() || isLinux_Platform()) && numWindows_App() == 1))) {
+             ((isWindows_Platform() || isLinux_Platform() || isTerminal_Platform()) &&
+              numWindows_App() == 1))) {
             postCommand_App("document.unsetident"); /* implicit unpinning since a tab is closing */
             /* On mobile, we go home because the Home action isn't readily available
                elsewhere, unless the user has it in the toolbar. */
