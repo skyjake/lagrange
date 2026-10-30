@@ -426,8 +426,11 @@ static int bottomBarsEdge_ViewToolbar_(iViewToolbar *d, const iRoot *root) {
     if (!bottomBar) {
         return hiddenEdge;
     }
+    /* Keyboard slides pad the bar or start below the resting offset; follow the actual bounds. */
+    const iBool isKeyboardSlide =
+        bottomBar->padding[3] > 0 || value_Anim(&bottomBar->visualOffset) < 0;
     if (flags_Widget(bottomBar) & visualOffset_WidgetFlag &&
-        !isFinished_Anim(&bottomBar->visualOffset)) {
+        !isFinished_Anim(&bottomBar->visualOffset) && !isKeyboardSlide) {
         /* The bars slide separately, so follow the toolbar between the resting positions. */
         const int   shown = d->shownBarsEdge ? d->shownBarsEdge
                                              : top_Rect(boundsWithoutVisualOffset_Widget(bottomBar));
