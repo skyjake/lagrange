@@ -311,6 +311,11 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
     if (isMetricsChange_UserEvent(ev)) {
         updateWidth_SimpleDocumentWidget_(d);
     }
+    else if (ev->type == SDL_EVENT_USER && ev->user.data1 == w &&
+             processEvent_SmoothScroll(&d->view->scrollY, ev)) {
+        /* Ignore touch notifications meant for a parent. */
+        return iTrue;
+    }
     else if (isCommand_UserEvent(ev, "document.openurls.changed")) {
         /* The current page is highlighted. */
         if (updateOpenURLs_GmDocument(d->view->doc)) {
