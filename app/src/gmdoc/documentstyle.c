@@ -102,6 +102,14 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         d->indents[preformatted_GmLineType] -= 5;
     }
     if (isPaged && isNarrow) {
+        if (!isExtremelyNarrow) {
+            /* The same margin is used on the right side, so keep it tight. */
+            d->indents[text_GmLineType] -= 1;
+            d->indents[heading3_GmLineType] -= 1;
+            d->indents[bullet_GmLineType] -= 1;
+            d->indents[preformatted_GmLineType] -= 1;
+            d->indents[link_GmLineType] -= 1;
+        }
         /* Headings are aligned with paragraphs instead of extending into the margin. */
         d->indents[heading1_GmLineType] = d->indents[text_GmLineType];
         d->indents[heading2_GmLineType] = d->indents[text_GmLineType];
@@ -126,6 +134,11 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
         }
         else {
             d->rightMargins[i] = isTextType ? 4 : 0;
+        }
+        if (isPaged && isNarrow && (isTextType || (i >= heading1_GmLineType &&
+                                                   i <= heading3_GmLineType))) {
+            /* Paragraphs are centered on the page. */
+            d->rightMargins[i] = d->indents[text_GmLineType];
         }
     }
     /* Vertical margins. */
