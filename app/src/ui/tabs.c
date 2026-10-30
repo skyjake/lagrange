@@ -67,8 +67,16 @@ static void reserveClosedTabSpace_Widget_(iWidget *tabs, const iWidget *button) 
         contains_Widget(buttons, mouseCoord_Window(window_Widget(tabs), 0))) {
         iWidget *spacer = findChild_Widget(buttons, "tabs.spacer");
         if (!spacer) {
-            spacer = addChildFlags_Widget(buttons, iClob(new_Widget()), unhittable_WidgetFlag);
+            spacer = addChildFlags_Widget(buttons,
+                                          iClob(new_Widget()),
+                                          unhittable_WidgetFlag | resizeToParentHeight_WidgetFlag);
             setId_Widget(spacer, "tabs.spacer");
+            /* Looks like an unselected tab. */
+            setBackgroundColor_Widget(spacer, uiBackgroundFolder_ColorId);
+            setFlags_Widget(spacer,
+                            prefs_App()->bottomTabBar ? borderTop_WidgetFlag
+                                                      : borderBottom_WidgetFlag,
+                            iTrue);
         }
         setFixedSize_Widget(spacer, init_I2(width_Widget(spacer) + width_Widget(button), -1));
     }

@@ -2362,8 +2362,8 @@ void createUserInterface_Root(iRoot *d) {
         setFlags_Widget(docTabs, expand_WidgetFlag, iTrue);
         d->bars.docTabs    = docTabs;
         d->bars.tabButtons = findChild_Widget(docTabs, "tabs.buttons");
-        /* Opaque, also between the inset tab buttons (e.g., over the page in reading mode). */
-        setBackgroundColor_Widget(d->bars.tabButtons, uiBackground_ColorId);
+        /* Opaque where no button covers it (safe areas, drag gaps), matching unselected tabs. */
+        setBackgroundColor_Widget(d->bars.tabButtons, uiBackgroundFolder_ColorId);
         iDocumentWidget *doc;
         appendTabPage_Widget(docTabs, iClob(doc = new_DocumentWidget()), "Document", 0, 0);
         addTabCloseButton_Widget(docTabs, as_Widget(doc), "tabs.close");
