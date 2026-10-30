@@ -336,6 +336,12 @@ static iBool isDocTabButton_(const iWidget *d) {
     return isTabButton_Widget(d) && !cmp_String(id_Widget(d->parent->parent), "doctabs");
 }
 
+static iBool isParagraphColoredTab_(void) {
+    /* Banner colors distinguish the tab if the backgrounds are similar. */
+    return prefs_App()->bottomTabBar && delta_Color(get_Color(tmBackground_ColorId),
+                                                    get_Color(uiBackgroundFolder_ColorId)) >= 40;
+}
+
 static iBool isInSheet_(const iWidget *d) {
     for (const iWidget *w = d; w; w = w->parent) {
         if (w->flags2 & sheet_WidgetFlag2) {
@@ -414,7 +420,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *meta   = uiTextShortcut_ColorId;
     if (isDocTab && !isSel) {
         *bg = uiBackgroundFolder_ColorId;
-        *fg = uiTextExtraDim_ColorId;
+        *fg = *icon = uiTextExtraDim_ColorId;
     }
     if (flags & disabled_WidgetFlag && isButton) {
         *icon = uiTextDisabled_ColorId;
@@ -448,7 +454,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
         if (isThemeBackground) {
-            *fg     = isBottomTabs ? tmParagraph_ColorId : tmBannerTitle_ColorId;
+            *fg     = isParagraphColoredTab_() ? tmParagraph_ColorId : tmBannerTitle_ColorId;
             *frame1 = *frame2 = tmBannerItemFrame_ColorId;
         }
         else if (isButton) {
@@ -493,7 +499,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             *icon = uiTextSelected_ColorId;
         }
         else if (isThemeBackground) {
-            *icon = isBottomTabs ? tmParagraph_ColorId : tmBannerIcon_ColorId;
+            *icon = isParagraphColoredTab_() ? tmParagraph_ColorId : tmBannerIcon_ColorId;
         }
     }
     if (isHover) {
@@ -501,10 +507,13 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             if (!isSel) {
                 *bg = uiBackgroundFramelessHover_ColorId;
                 *fg = uiTextFramelessHover_ColorId;
+                if (isDocTab) {
+                    *icon = *fg;
+                }
             }
             else if (isThemeBackground) {
-                *frame1 = *frame2 =
-                    luma_Color(get_Color(*bg)) > 0.5f ? black_ColorId : white_ColorId;
+                *frame1 = *frame2 = luma_Color(get_Color(*bg)) > 0.5f ? black_ColorId
+                                                                      : tmBannerIcon_ColorId;
             }
         }
         else {
@@ -522,7 +531,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *frame2 = uiEmbossHover2_ColorId;
             }
         }
-        if (colorEscape > 0) {
+        if (colorEscape > 0 && !isDocTab) { /* doc tabs escape the site icon */
             *frame1 = accent_Color(isDarkTheme);
         }
         if (colorEscape == uiTextCaution_ColorId) {
@@ -836,12 +845,17 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     else if (isJoinedTab) {
         /* Open towards the document. */
-        const iRect fr       = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
-        const iInt2 points[] = { isBottomTabs ? topLeft_Rect(fr) : bottomLeft_Rect(fr),
-                                 isBottomTabs ? bottomLeft_Rect(fr) : topLeft_Rect(fr),
-                                 isBottomTabs ? bottomRight_Rect(fr) : topRight_Rect(fr),
-                                 isBottomTabs ? topRight_Rect(fr) : bottomRight_Rect(fr) };
-        drawLines_Paint(&p, points, iElemCount(points), frame);
+        const int thick = gap_UI / 4;
+        fillRect_Paint(&p, (iRect){ rect.pos, init_I2(thick, height_Rect(rect)) }, frame);
+        fillRect_Paint(&p,
+                       (iRect){ init_I2(right_Rect(rect) - thick, top_Rect(rect)),
+                                init_I2(thick, height_Rect(rect)) },
+                       frame);
+        fillRect_Paint(&p,
+                       (iRect){ init_I2(left_Rect(rect),
+                                        isBottomTabs ? bottom_Rect(rect) - thick : top_Rect(rect)),
+                                init_I2(width_Rect(rect), thick) },
+                       frame);
     }
     else if (!isRound && !isDocTab && ~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
@@ -937,7 +951,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     else {
         const iString *label = &d->label;
-        if (flags & selected_WidgetFlag && iconColor != uiIcon_ColorId && isDocTabButton_(w)) {
+        if (iconColor != uiIcon_ColorId && isDocTab) {
             /* Site icon is color-escaped in the label. */
             iString *recolored = collect_String(copy_String(label));
             replace_String(recolored, escape_Color(uiIcon_ColorId), escape_Color(iconColor));
