@@ -172,6 +172,9 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     else {
         iWidget *headings, *values, *content;
         dlg = makeSheet_Widget(sheetId);
+        if (deviceType_App() == desktop_AppDeviceType) {
+            setFlags_Widget(dlg, moveToParentBottomEdge_WidgetFlag, iTrue);
+        }
         iWidget *tabs = makeDialogVerticalTabs_Widget(dlg, "sitespec.tabs", "${heading.sitespec}",
                                                       "heading.sitespec", &content);
         changeChildIndex_Widget(

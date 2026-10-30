@@ -187,6 +187,9 @@ void animateToRootVisibleTop_Widget(iWidget *widget, uint32_t span) {
 
 int dialogTransitionDir_Widget(const iWidget *dlg) {
     if (deviceType_App() == desktop_AppDeviceType) {
+        if (startsWith_String(id_Widget(dlg), "sitespec ")) {
+            return bottom_TransitionDir; /* keep banner visible for theming */
+        }
         return top_TransitionDir;
     }
     return isFullSizePanel_Mobile(dlg) ? right_TransitionDir : bottom_TransitionDir;
