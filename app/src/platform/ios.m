@@ -48,7 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #import <MediaPlayer/MediaPlayer.h>
 
 static iBool isSystemDarkMode_      = iFalse;
-static iBool isPhone_               = iFalse;
 static iBool isRemoteCenterInited_  = iFalse;
 
 /* How long a newly appeared text field ignores input, to avoid spill-over key events. */
@@ -528,11 +527,7 @@ static void setupRemoteCommandCenter_(void) {
 
 void setupApplication_iOS(void) {
     enableMouse_(iFalse);
-    NSString *deviceModel = [[UIDevice currentDevice] model];
-    if ([deviceModel isEqualToString:@"iPhone"]) {
-        setPhone_Core(iTrue);
-    }
-    appState_ = [[AppState alloc] init];
+    appState_ =[[AppState alloc] init];
     [appState_ setupHaptics];
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:appState_
@@ -575,6 +570,10 @@ void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom)
         if (right) *right = 0.0f;
         if (bottom) *bottom = 0.0f;
     }
+}
+
+iBool isPhone_iOS(void) {
+    return [[[UIDevice currentDevice] model] isEqualToString:@"iPhone"];
 }
 
 int displayRefreshRate_iOS(void) {

@@ -585,6 +585,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         enableConsoleOutput_Win32();
     }
 #endif
+#if defined (iPlatformAppleMobile)
+    setPhone_Core(isPhone_iOS()); /* affects the default prefs */
+#endif
     init_Prefs(&d->prefs);
     setDefaultOrder_SidebarMode();
 #if defined (iPlatformTerminal)
