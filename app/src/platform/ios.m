@@ -1472,11 +1472,9 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
                 continue;
             }
             if (startsWith_CStr(item->label, "---") || equal_CStr(item->label, "___")) {
-                /* separator or submenu */
-                if ([subElems count] > 0) {
-                    haveSep = iTrue;
-                    addMenuElementGroup_(elems, &sepTitle, subElems);
-                    [subElems removeAllObjects];
+                /* separator, submenu, or submenu terminator */
+                if (equal_CStr(item->label, "---:")) {
+                    continue;
                 }
                 setCStr_String(&sepTitle, item->label + 3);
                 removeIconPrefix_String(&sepTitle);
@@ -1492,19 +1490,18 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
                         makeMenuElements_(owner, data, items + start, i - start);
                     i--;
                     if ([groupElems count] > 0) {
-                        haveSep = iTrue;
-                        addMenuElementGroup_(elems, &sepTitle, groupElems);
+                        addMenuElementGroup_(subElems, &sepTitle, groupElems);
                     }
                     clear_String(&sepTitle);
                 }
-                continue;
-            }
-            if (item->command && startsWith_CStr(item->command, "submenu id:")) {
-                if ([subElems count] > 0) {
+                else if ([subElems count] > 0) {
                     haveSep = iTrue;
                     addMenuElementGroup_(elems, &sepTitle, subElems);
                     [subElems removeAllObjects];
                 }
+                continue;
+            }
+            if (item->command && startsWith_CStr(item->command, "submenu id:")) {
                 const char *subId = suffixPtr_Command(item->command, "id");
                 iWidget *submenu = findWidget_App(subId);
                 iAssert(submenu);
@@ -1512,7 +1509,7 @@ static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *su
                 removeIconPrefix_String(&sepTitle);
                 translate_Lang(&sepTitle);
                 const iArray *submenuItems = userData_Object(submenu);
-                addMenuElementGroup_(elems, &sepTitle,
+                addMenuElementGroup_(subElems, &sepTitle,
                                      makeMenuElements_(submenu, data,
                                                        constData_Array(submenuItems), size_Array(submenuItems)));
                 continue;
