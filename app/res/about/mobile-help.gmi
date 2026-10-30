@@ -6,9 +6,6 @@
 ```
 # Help
 
-Lagrange runs on desktop computers, phones, and tablets. This page describes the phone and tablet versions. The desktop version of this page also covers keyboard shortcuts, command line options, and other desktop-specific features:
-=> gemini://git.skyjake.fi/lagrange/release/res/about/help.gmi  Help page (desktop version)
-
 ## What is Gemini
 
 Gemini is a simple protocol for serving content over the internet. It specifies a Markdown inspired format allowing basic plain text document markup. Compared to HTTP and HTML, Gemini is vastly simpler and easier to work with.
@@ -86,6 +83,11 @@ Modern web browsers are complex beasts. In fact, they are so complex that one ca
 If one seeks to just read text and view images, this is absurd overkill. Having a universal platform that runs everywhere and on everything is clearly a valuable notion, but it comes with a hefty price tag. The software stack towers ever higher, and hardware needs to be ever more powerful and complicated to run it well. However, everything on the internet doesn't have to rely on this behemoth.
 
 One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the app stays light on battery and memory.
+
+## More information
+
+This Help page describes the phone and tablet versions of the app. The desktop Help also covers keyboard shortcuts, command line options, and other desktop-specific features:
+=> gemini://git.skyjake.fi/lagrange/release/res/about/help.gmi  Help page (desktop version)
 
 # 1. Browsing
 
