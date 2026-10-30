@@ -75,15 +75,27 @@ enum iMisfinStage {
 
 struct Impl_UploadWidget {
     iWidget          widget;
+    iDocumentWidget *viewer;
+
+    /* Configuration: */
     enum iUploadProtocol protocol;
+    enum iUploadIdentity idMode;
     iString          originalUrl;
     iString          url;
-    iDocumentWidget *viewer;
+    iString          filePath;
+    size_t           fileSize;
+
+    /* Network requests: */
     iGmRequest *     request;
+    iBlock           idFingerprint;
+    enum iMisfinStage misfinStage;
+
+    /* Titan edits: */
     iGmRequest *     editRequest; /* when editing, fetch the existing contents first */
     int              editRedirectCount;
     iBool            allowRetryEdit;
-    enum iMisfinStage misfinStage;
+
+    /* Widget structure: */
     iWidget *        tabs;
     iLabelWidget *   info;
     iInputWidget *   path;
@@ -96,11 +108,6 @@ struct Impl_UploadWidget {
     iLabelWidget *   fileSizeLabel;
     iLabelWidget *   editLabel;
     iLabelWidget *   counter;
-    iString          filePath;
-    size_t           fileSize;
-    enum iUploadIdentity idMode;
-    iBlock           idFingerprint;
-    iAtomicInt       isRequestUpdated;
 };
 
 static void filePathValidator_UploadWidget_(iInputWidget *, void *);
