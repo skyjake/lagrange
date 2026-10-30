@@ -441,7 +441,7 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                                                             format_CStr("!banner.copy ptr:%p arg:%u",
                                                                         d->doc, index) });
                     openMenu_Widget(makeMenu_Widget(get_Root()->widget, constData_Array(menuItems), size_Array(menuItems)),
-                                    mouseCoord_Window(get_Window(), 0));
+                                    coord);
                     delete_Array(menuItems);
                 }
             }
