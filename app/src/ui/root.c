@@ -3226,6 +3226,14 @@ static void hideReadingBarsIfIdle_Root_(iRoot *d) {
             return; /* in use; check again later */
         }
     }
+    if (!isMobile_Platform() && isMouse && contains_Widget(d->widget, mouse)) {
+        /* Avoid shifting the UI under the mouse, e.g., in the sidebars. */
+        const iWidget *hover = hitChild_Widget(d->widget, mouse);
+        if (!hover || (!isInstance_Object(hover, &Class_DocumentWidget) &&
+                       !findParentClass_Widget(hover, &Class_DocumentWidget))) {
+            return;
+        }
+    }
     if (isPopupOpen_Root(d)) {
         return;
     }
