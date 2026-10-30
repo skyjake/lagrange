@@ -402,8 +402,8 @@ static const struct {
     const char *mobileTitle; /* NULL if same as `title` */
     const char *pageId;
 } pages_[] = {
-    { typography_DocPrefsGroup, fonts_Icon, 0x1f5da, "heading.prefs.typography", NULL, "prefs.page.fonts" },
     { theme_DocPrefsGroup, palette_Icon, 0x1f3a8, "heading.prefs.theme", "heading.prefs.colors", "prefs.page.theme" },
+    { typography_DocPrefsGroup, fonts_Icon, 0x1f5da, "heading.prefs.typography", NULL, "prefs.page.fonts" },
     { style_DocPrefsGroup, pageStyle_Icon, 0x1f660, "heading.prefs.style", NULL, "prefs.page.style" },
     { layout_DocPrefsGroup, pageLayout_Icon, 0x1f4c4, "heading.prefs.layout", NULL, "prefs.page.layout" },
     /* Global in Preferences; can only be overridden for a site. */
