@@ -209,18 +209,11 @@ The following build options are recommended on Raspberry Pi 2/3:
 
 ### Compiling on iOS
 
-Compiling Lagrange on iOS is moderately difficult.
+You will need Xcode and CMake. The dependencies are compiled separately for the device and the simulator (arm64 only). HarfBuzz and GNU FriBidi are not needed because text is rendered with Core Text.
 
-As a prerequisite, you will need to have an [iOS toolchain configuration for CMake](https://github.com/leetal/ios-cmake). CMake is required for Lagrange itself and for the\_Foundation. You will also need [Autotools helpers for iOS](https://github.com/szanni/ios-autotools.git) because libiconv, libunistring, and libpcre use Automake. The _iconfigure_ script in the Autotools helpers needs to be [patched](platform/iconfigure-osminver.patch). HarfBuzz and GNU FriBidi are not needed because text is rendered with Core Text.
-
-After these utilities are available, the scripts in _platform/_ can be used as a basis for the build. Unfortunately there is no ready-made high-level script for performing all these steps, so you'll need to adapt them individually to your needs.
-
-1. _platform/ios-deps.sh_ compiles most of the dependencies using _iconfigure_. Note that the simulator build has not been set up in these scripts, only the `os` build.
-2. Clone [OpenSSL for iPhone](https://github.com/x2on/OpenSSL-for-iPhone.git) and build it. Deploy the static libraries in _$HOME/SDK/ios/$arch/_, or wherever you've set `IOS_DIR` to be.
-3. Build SDL 3 as a framework and place SDL3.framework and the SDL headers (_include/SDL3_) in `IOS_DIR`.
-4. Create an empty build directory for the\_Foundation and run _platform/cmake-ios-tf.sh_ from there. You may need to adjust the source directory path in the script depending on where you place your build directory.
-5. Now you can `make install` to build and deploy the_Foundation to `IOS_DIR`.
-6. Finally, you can run CMake like in _platform/cmake-ios-lagrange.sh_ to generate an Xcode project that builds the app.
+1. Get the dependency sources. _platform/ios-deps.sh_ expects to find libiconv, libunistring, pcre-8.44, libwebp, libjxl (with its submodules), and SDL 3 in _$HOME/src/libs/_ (set `IOS_SRC` to use another directory), and the\_Foundation in _$HOME/src/the\_Foundation/_ (`TFDN_SRC`). OpenSSL 3 is downloaded automatically. The Autotools-based sources must have a _configure_ script.
+2. Run `platform/ios-deps.sh os` for the device or `platform/ios-deps.sh simulator` for the simulator. The libraries are installed in _$HOME/SDK/ios/arm64/_ or _$HOME/SDK/ios-sim/arm64/_, respectively. To rebuild only some of the dependencies, list the steps after the target, for example: `platform/ios-deps.sh os foundation`.
+3. In an empty build directory, run `platform/cmake-ios-lagrange.sh os -DXCODE_DEVELOPMENT_TEAM=<team ID>` or `platform/cmake-ios-lagrange.sh simulator` to generate an Xcode project that builds the app. Additional CMake options can be appended to the command.
 
 ### Compiling for the web
 

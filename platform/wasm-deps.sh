@@ -17,7 +17,7 @@ JOBS=${JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc)}
 BUILD_TRIPLET=$(cc -dumpmachine | sed 's/^arm64-/aarch64-/')
 
 ZLIB_VER=1.3.1
-OPENSSL_VER=3.5.4
+OPENSSL_VER=3.5.9
 PCRE2_VER=10.45
 UNISTRING_VER=1.3
 SDL3_VER=3.4.10
