@@ -1,0 +1,516 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "miscdialogs.h"
+#include "gempub.h"
+
+#include "app.h"
+#include "command.h"
+#include "defs.h"
+#include "dialog.h"
+#include "documentwidget.h"
+#include "gmutil.h"
+#include "inputwidget.h"
+#include "labelwidget.h"
+#include "render/text.h"
+#include "root.h"
+#include "scopedprefs.h"
+#include "tabs.h"
+#include "uploadwidget.h"
+#include <lagrange/sitespec.h>
+#include <lagrange/snippets.h>
+#include "util.h"
+#include "widget.h"
+
+static const iString *siteSpecificRoot_(const iWidget *dlg) {
+    return collect_String(suffix_Command(cstr_String(id_Widget(dlg)), "site"));
+}
+
+static const iString *siteSpecificPaletteSeed_(const iString *siteRoot) {
+    const iScopeRule *rule = constRule_SiteSpec(siteRoot);
+    return rule && rule->prefs.paletteSeed ? rule->prefs.paletteSeed : collectNew_String();
+}
+
+static void setSiteSpecificPaletteSeed_(const iWidget *dlg, const iString *seed) {
+    if (setString_ScopeRules(scope_ScopedPrefs(dlg), paletteSeed_DocPrefsString, seed)) {
+        docPrefsChanged_App();
+    }
+}
+
+static void updateSiteSpecificTheme_(iInputWidget *palSeed, void *context) {
+    setSiteSpecificPaletteSeed_(context, text_InputWidget(palSeed));
+}
+
+static void commitSiteSpecificInputs_(iWidget *dlg) {
+    const iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
+    const iInputWidget *token   = findChild_Widget(dlg, "sitespec.titantoken");
+    if (palSeed) {
+        setSiteSpecificPaletteSeed_(dlg, text_InputWidget(palSeed));
+    }
+    if (token) {
+        setValueString_SiteSpec(titanSiteRoot_UploadWidget(siteSpecificRoot_(dlg)),
+                                titanToken_SiteSpecKey,
+                                text_InputWidget(token));
+    }
+}
+
+static void closeSiteSpecific_(iWidget *dlg) {
+    commitSiteSpecificInputs_(dlg);
+    saveDirty_ScopeRules();
+    const iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
+    if (tabs) {
+        postCommandf_App("sitespec.dialogtab arg:%u",
+                         tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
+    }
+    setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+    deinit_ScopedPrefs(dlg);
+    destroy_Widget(dlg);
+}
+
+static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
+    if (handleCommand_ScopedPrefs(dlg, cmd)) {
+        return iTrue;
+    }
+    const iString *siteRoot = siteSpecificRoot_(dlg);
+    /* Dropdown menus also post "cancel" commands. */
+    if (equal_Command(cmd, "sitespec.close") ||
+        (isUsingPanelLayout_Mobile() && equalWidget_Command(cmd, dlg, "cancel") &&
+         !hasLabel_Command(cmd, "menu"))) {
+        /* Note: The active DocumentWidget may actually be different than when opening the dialog. */
+        closeSiteSpecific_(dlg);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "tabs.changed")) {
+        if (isTerminal_Platform()) {
+            iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
+            setFocus_Widget((iWidget *) tabPageButton_Widget(tabs, currentTabPage_Widget(tabs)));
+        }
+        return iFalse;
+    }
+    if ((equal_Command(cmd, "focus.gained") || equal_Command(cmd, "focus.lost")) &&
+        pointer_Command(cmd) == findChild_Widget(dlg, "sitespec.palette")) {
+        /* Theme changes are visible while editing the seed. */
+        setFlags_Widget(dlg, noFadeBackground_WidgetFlag, equal_Command(cmd, "focus.gained"));
+        refresh_Widget(dlg);
+        return iFalse;
+    }
+    if (equalArg_Command(cmd, "input.ended", "id", "sitespec.palette") ||
+        equalArg_Command(cmd, "input.ended", "id", "sitespec.titantoken")) {
+        commitSiteSpecificInputs_(dlg);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.ansi.changed")) {
+        int dismissed = value_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey);
+        iChangeFlags(dismissed, ansiEscapes_GmDocumentWarning, !arg_Command(cmd));
+        setValue_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey, dismissed);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.tlscache.changed")) {
+        setValue_SiteSpec(siteRoot, tlsSessionCache_SiteSpeckey, arg_Command(cmd) != 0);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.reset")) {
+        /* Titan settings, identities, prompts, and warning flags are kept. */
+        reset_ScopeRules(scope_ScopedPrefs(dlg));
+        docPrefsChanged_App();
+        setTextCStr_InputWidget(findChild_Widget(dlg, "sitespec.palette"), "");
+        update_ScopedPrefs(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
+    iWidget *dlg;
+    const iString *archive    = localArchiveUrl_Gempub(url); /* each book is a site */
+    const iString *site       = archive ? archive : collectNewRange_String(urlRoot_String(url));
+    const char *   sheetId    = format_CStr("sitespec site:%s", cstr_String(site));
+    const iString *siteLabel  = collect_String(urlDecode_String(site));
+    const iRangecc scheme     = urlScheme_String(site);
+    const iBool    isTitanSite = equalCase_Rangecc(scheme, "gemini") ||
+                                 equalCase_Rangecc(scheme, "titan");
+    const iMenuItem actions[] = { { "${sitespec.reset}", 0, 0, "sitespec.reset" },
+                                  { "---" },
+                                  { "${close}", SDLK_ESCAPE, 0, "sitespec.close" } };
+    if (isUsingPanelLayout_Mobile()) {
+        iArray *items = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(items, (iMenuItem[]){
+            { "title id:heading.sitespec" },
+            { format_CStr("heading text:%s", cstr_String(siteLabel)) },
+            { "input id:sitespec.palette" },
+            { "padding" },
+            { "toggle id:sitespec.ansi" },
+            { "toggle id:sitespec.tlscache" },
+        }, 6);
+        if (isTitanSite) {
+            pushBack_Array(items, &(iMenuItem){ "input id:sitespec.titantoken sensitive:1" });
+        }
+        pushBack_Array(items, &(iMenuItem){ "padding" });
+        appendPanels_ScopedPrefs(items, iFalse, none_ColorId);
+        pushBack_Array(items, &(iMenuItem){ NULL });
+        dlg = makePanels_Mobile(sheetId, constData_Array(items), actions, iElemCount(actions));
+    }
+    else {
+        iWidget *headings, *values, *content;
+        dlg = makeSheet_Widget(sheetId);
+        if (deviceType_App() == desktop_AppDeviceType) {
+            setFlags_Widget(dlg, moveToParentBottomEdge_WidgetFlag, iTrue);
+        }
+        iWidget *tabs = makeDialogVerticalTabs_Widget(dlg, "sitespec.tabs", "${heading.sitespec}",
+                                                      "heading.sitespec", &content);
+        changeChildIndex_Widget(
+            content,
+            addChildFlags_Widget(content, iClob(new_LabelWidget(cstr_String(siteLabel), NULL)),
+                                 frameless_WidgetFlag | alignLeft_WidgetFlag),
+            1);
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, globe_Icon " ${heading.sitespec.site}",
+                                                   uiIcon_ColorId, 0, &headings, &values),
+                     "sitespec.page.site");
+        iInputWidget *palSeed = new_InputWidget(0);
+        addPrefsInputWithHeading_Widget(headings, values, "sitespec.palette", iClob(palSeed));
+        as_Widget(palSeed)->rect.size.x = aspect_UI * 60 * gap_UI;
+        addDialogToggle_Widget(headings, values, "${sitespec.ansi}", "sitespec.ansi");
+        addDialogToggle_Widget(headings, values, "${sitespec.tlscache}", "sitespec.tlscache");
+        if (isTitanSite) {
+            iInputWidget *token = new_InputWidget(0);
+            setSensitiveContent_InputWidget(token, iTrue);
+            addPrefsInputWithHeading_Widget(headings, values, "sitespec.titantoken", iClob(token));
+            as_Widget(token)->rect.size.x = aspect_UI * 60 * gap_UI;
+        }
+        appendTabPages_ScopedPrefs(tabs, iFalse, uiIcon_ColorId, 0);
+        addChild_Widget(content, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(content, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        resizeToLargestPage_Widget(tabs);
+        arrange_Widget(dlg);
+    }
+    /* Initialize. */ {
+        setToggle_Widget(findChild_Widget(dlg, "sitespec.ansi"),
+                         ~value_SiteSpec(site, dismissWarnings_SiteSpecKey) & ansiEscapes_GmDocumentWarning);
+        setToggle_Widget(findChild_Widget(dlg, "sitespec.tlscache"),
+                         value_SiteSpec(site, tlsSessionCache_SiteSpeckey));
+        iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
+        setText_InputWidget(palSeed, siteSpecificPaletteSeed_(site));
+        setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
+        iInputWidget *token = findChild_Widget(dlg, "sitespec.titantoken");
+        if (token) {
+            const iString *value =
+                valueString_SiteSpec(titanSiteRoot_UploadWidget(site), titanToken_SiteSpecKey);
+            if (value) {
+                setText_InputWidget(token, value);
+            }
+        }
+        init_ScopedPrefs(dlg, format_CStr("root:%s", cstr_String(site)));
+        iWidget *tabs = findChild_Widget(dlg, "sitespec.tabs");
+        if (tabs && (size_t) prefs_App()->siteDialogTab < tabCount_Widget(tabs)) {
+            showTabPage_Widget(tabs, tabPage_Widget(tabs, prefs_App()->siteDialogTab));
+        }
+        if (tabs && isTerminal_Platform()) {
+            setFocus_Widget((iWidget *) tabPageButton_Widget(tabs, currentTabPage_Widget(tabs)));
+        }
+        if (!isUsingPanelLayout_Mobile()) {
+            setValidator_InputWidget(palSeed, updateSiteSpecificTheme_, dlg);
+        }
+    }
+    setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    return dlg;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+static iBool handleSnippetCreationCommands_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "widget.resized")) {
+        iWidget  *headings   = findChild_Widget(dlg, "snip.columns.head");
+        iWidget  *name       = findChild_Widget(dlg, "snip.name");
+        iWidget  *content    = findChild_Widget(dlg, "snip.content");
+        const int newWidth   = width_Widget(dlg) - width_Widget(headings) - 6 * gap_UI;
+        name->rect.size.x    = newWidth;
+        content->rect.size.x = newWidth;
+        return iTrue;
+    }
+    if (equalWidget_Command(cmd, dlg, "cancel")) {
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, dlg, "snip.accept")) {
+        iInputWidget *name    = findChild_Widget(dlg, "snip.name");
+        iInputWidget *content = findChild_Widget(dlg, "snip.content");
+        if (!set_Snippets(text_InputWidget(name), text_InputWidget(content))) {
+            return iTrue;
+        }
+        postCommandf_App("snippets.changed added:%s", cstr_String(text_InputWidget(name)));
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeSnippetCreation_Widget(void) {
+    const iMenuItem actions[] = {
+        { "${cancel}" },
+        { uiTextAction_ColorEscape "${snip.accept}", SDLK_RETURN, KMOD_ACCEPT, "snip.accept" }
+    };
+    iWidget *dlg = NULL;
+    if (isUsingPanelLayout_Mobile()) {
+        dlg = makePanels_Mobile("snip", (iMenuItem[]){
+            { "title id:heading.snip text:${heading.snip.new}" },
+            { "input id:snip.name nolinebreaks:1" },
+            { "label text:${sniped.help}" },
+            { "heading text:${snip.content}"},
+            { "input id:snip.content noheading:1" },
+            { NULL }
+        }, actions, iElemCount(actions));
+        setCommandHandler_Widget(dlg, handleSnippetCreationCommands_);
+    }
+    else {
+        iWidget *headings, *values;
+        dlg = makeSheet_Widget("snip");
+        addDialogTitle_Widget(dlg, "${heading.snip.new}", "heading.snip");
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        setId_Widget(headings, "snip.columns.head");
+        iInputWidget *name    = new_InputWidget(0);
+        iInputWidget *content = new_InputWidget(0);
+        setLineBreaksEnabled_InputWidget(name, iFalse);
+        addPrefsInputWithHeading_Widget(headings, values, "snip.name", iClob(name));
+        addPrefsInputWithHeading_Widget(headings, values, "snip.content", iClob(content));
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addWrappedLabel_Widget(dlg, "${sniped.help}", NULL);
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        as_Widget(name)->rect.size.x = 60 * gap_UI;
+        as_Widget(content)->rect.size.x = 60 * gap_UI;
+        arrange_Widget(dlg);
+        setCommandHandler_Widget(dlg, handleSnippetCreationCommands_);
+        enableResizing_Widget(dlg, width_Widget(dlg), "snip");
+    }
+    setFocus_Widget(findChild_Widget(dlg, "snip.name"));
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    return dlg;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+iWidget *makeSyncIdentityCreation_Widget(void) {
+    iWidget *dlg = makeValueInput_Widget(get_Root()->widget,
+                                         collectNewCStr_String(cstr_Lang("sync.identity.name")),
+                                         uiHeading_ColorEscape "${heading.sync.newidentity}",
+                                         "${dlg.sync.newidentity}",
+                                         uiTextAction_ColorEscape "${dlg.newident.create}",
+                                         "sync.newidentity");
+    iInputWidget *input = findChild_Widget(dlg, "input");
+    setSelectAllOnFocus_InputWidget(input, iTrue);
+    /* The note goes below the input field. */
+    const size_t  pos  = indexOfChild_Widget(dlg, input);
+    iLabelWidget *info = new_LabelWidget(uiTextDim_ColorEscape "${dlg.sync.newidentity.info}", NULL);
+    setWrap_LabelWidget(info, iTrue);
+    insertChildAfterFlags_Widget(dlg,
+                                 iClob(info),
+                                 pos,
+                                 frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                                     fixedHeight_WidgetFlag);
+    insertChildAfter_Widget(dlg, iClob(makePadding_Widget(gap_UI)), pos);
+    /* The first pass wraps the note, the second lays out the dialog. */
+    arrange_Widget(dlg);
+    arrange_Widget(dlg);
+    return dlg;
+}
+
+iWidget *makeIdentityCreation_Widget(void) {
+    const iMenuItem actions[] = { { "${dlg.newident.more}", 0, 0, "ident.showmore" },
+                                  { "---" },
+                                  { "${cancel}", SDLK_ESCAPE, 0, "ident.cancel" },
+                                  { uiTextAction_ColorEscape "${dlg.newident.create}",
+                                    SDLK_RETURN,
+                                    KMOD_ACCEPT,
+                                    "ident.accept" } };
+    const iString *docUrl = url_DocumentWidget(document_App());
+    iUrl url;
+    init_Url(&url, docUrl);
+    const iMenuItem scopeItems[] = {
+        { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:0" },
+        { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:1" },
+        { format_CStr("${dlg.newident.scope.dir}:\n%s", cstr_Rangecc(urlDirectory_String(docUrl))), 0, 0, "ident.scope arg:2" },
+        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:3" },
+        { NULL }
+    };
+    const iMenuItem keyTypeItems[] = {
+        { "${dlg.newident.keytype.ecdsa}", 0, 0,
+          format_CStr("ident.keytype arg:%d", ecdsaP256_TlsCertificateKeyType) },
+        { "${dlg.newident.keytype.ed25519}", 0, 0,
+          format_CStr("ident.keytype arg:%d", ed25519_TlsCertificateKeyType) },
+        { "${dlg.newident.keytype.rsa}", 0, 0,
+          format_CStr("ident.keytype arg:%d", rsa_TlsCertificateKeyType) },
+        { NULL }
+    };
+    iWidget *dlg;
+    if (isUsingPanelLayout_Mobile()) {
+        dlg = makePanels_Mobile("ident", (iMenuItem[]){
+            { "title id:ident.heading text:${heading.newident}" },
+            { "label text:${dlg.newident.selfsign}" },
+            { "dropdown id:ident.scope text:${dlg.newident.scope}", 0, 0,
+              (const void *) scopeItems },
+            { "dropdown id:ident.keytype text:${dlg.newident.keytype}", 0, 0,
+              (const void *) keyTypeItems },
+            { "input id:ident.until hint:hint.newident.date maxlen:10 text:${dlg.newident.until}" },
+            //{ "padding" },
+            //{ "toggle id:ident.temp text:${dlg.newident.temp}" },
+            //{ "label text:${help.ident.temp}" },
+            { "heading id:dlg.newident.commonname" },
+            { "input id:ident.common noheading:1" },
+            { "padding collapse:1" },
+            { "input collapse:1 id:ident.email hint:hint.optional text:${dlg.newident.email}" },
+            { "input collapse:1 id:ident.userid hint:hint.optional text:${dlg.newident.userid}" },
+            { "input collapse:1 id:ident.domain hint:hint.optional text:${dlg.newident.domain}" },
+            { "input collapse:1 id:ident.org hint:hint.optional text:${dlg.newident.org}" },
+            { "input collapse:1 id:ident.country hint:hint.optional text:${dlg.newident.country}" },
+            { NULL }
+        }, actions, iElemCount(actions));
+    }
+    else {
+        dlg = makeSheet_Widget("ident");
+        addDialogTitle_Widget(dlg, "${heading.newident}", "ident.heading");
+        iWidget *page = new_Widget();
+        addChildFlags_Widget(
+            dlg, iClob(new_LabelWidget("${dlg.newident.selfsign}", NULL)), frameless_WidgetFlag);
+        /* TODO: Use makeTwoColumnWidget_? */
+        addChild_Widget(dlg, iClob(page));
+        setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        iWidget *headings = addChildFlags_Widget(
+            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        iWidget *values = addChildFlags_Widget(
+            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        setId_Widget(headings, "headings");
+        setId_Widget(values, "values");
+        iInputWidget *inputs[6];
+        /* Where will the new identity be active on? */ {
+            iWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.scope}")));
+            iWidget *val;
+            setId_Widget(
+                addChild_Widget(values,
+                                val = iClob(makeMenuButton_LabelWidget(
+                                    scopeItems[0].label, scopeItems, iElemCount(scopeItems)))),
+                "ident.scope");
+            head->sizeRef = val;
+        }
+        /* Signature scheme. */ {
+            iWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.keytype}")));
+            iWidget *val;
+            setId_Widget(
+                addChild_Widget(values,
+                                val = iClob(makeMenuButton_LabelWidget(
+                                    keyTypeItems[0].label, keyTypeItems, iElemCount(keyTypeItems)))),
+                "ident.keytype");
+            head->sizeRef = val;
+        }
+        addDialogInputWithHeading_Widget(headings,
+                                   values,
+                                   "${dlg.newident.until}",
+                                   "ident.until",
+                                   iClob(newHint_InputWidget(19, "${hint.newident.date}")));
+        addDialogInputWithHeading_Widget(headings,
+                                   values,
+                                   "${dlg.newident.commonname}",
+                                   "ident.common",
+                                   iClob(inputs[0] = new_InputWidget(0)));
+        /* Temporary? */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.temp}")));
+            iWidget *tmpGroup = new_Widget();
+            setFlags_Widget(tmpGroup, arrangeSize_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+            addChild_Widget(tmpGroup, iClob(makeToggle_Widget("ident.temp")));
+            setId_Widget(
+                addChildFlags_Widget(tmpGroup,
+                                     iClob(new_LabelWidget(uiTextCaution_ColorEscape warning_Icon
+                                                           "  ${dlg.newident.notsaved}",
+                                                           NULL)),
+                                     hidden_WidgetFlag | frameless_WidgetFlag),
+                "ident.temp.note");
+            addChild_Widget(values, iClob(tmpGroup));
+        }
+        addChildFlags_Widget(headings, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
+        addChildFlags_Widget(values, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_Widget(headings, values, "${dlg.newident.email}",   "ident.email",   iClob(inputs[1] = newHint_InputWidget(0, "${hint.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_Widget(headings, values, "${dlg.newident.userid}",  "ident.userid",  iClob(inputs[2] = newHint_InputWidget(0, "${hint.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_Widget(headings, values, "${dlg.newident.domain}",  "ident.domain",  iClob(inputs[3] = newHint_InputWidget(0, "${hint.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_Widget(headings, values, "${dlg.newident.org}",     "ident.org",     iClob(inputs[4] = newHint_InputWidget(0, "${hint.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_Widget(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        arrange_Widget(dlg);
+        for (size_t i = 0; i < iElemCount(inputs); ++i) {
+            as_Widget(inputs[i])->rect.size.x = 100 * gap_UI * aspect_UI - headings->rect.size.x;
+        }
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+    }
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    return dlg;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+iWidget *makeGlyphFinder_Widget(void) {
+    iString msg;
+    iString command;
+    init_String(&msg);
+    initCStr_String(&command, "!font.find chars:");
+    for (size_t i = 0; ; i++) {
+        iChar ch = missing_Text(i);
+        if (!ch) break;
+        appendFormat_String(&msg, " U+%04X", ch);
+        appendChar_String(&command, ch);
+    }
+    iArray items;
+    init_Array(&items, sizeof(iMenuItem));
+    if (!isEmpty_String(&msg)) {
+        prependCStr_String(&msg, "${dlg.glyphfinder.missing} ");
+        appendCStr_String(&msg, "\n\n${dlg.glyphfinder.help}");
+        pushBackN_Array(
+            &items,
+            (iMenuItem[]){
+                { "${menu.fonts}", 0, 0, "!open newtab:1 url:about:fonts" },
+                { "${dlg.glyphfinder.disable}", 0, 0, "prefs.font.warnmissing.changed arg:0" },
+                { "---" },
+                { uiTextAction_ColorEscape magnifyingGlass_Icon " ${dlg.glyphfinder.search}",
+                  0,
+                  0,
+                  cstr_String(&command) },
+                { "${close}", 0, 0, "cancel" } },
+            5);
+    }
+    else {
+        setCStr_String(&msg, "${dlg.glyphfinder.help.empty}");
+        pushBackN_Array(&items,
+                        (iMenuItem[]){ { "${menu.reload}", 0, 0, "navigate.reload" },
+                                       { "${close}", 0, 0, "cancel" } },
+                        2);
+    }
+    iWidget *dlg = makeQuestion_Widget("${heading.glyphfinder}", cstr_String(&msg),
+                                       constData_Array(&items),
+                                       size_Array(&items));
+    arrange_Widget(dlg);
+    deinit_Array(&items);
+    deinit_String(&command);
+    deinit_String(&msg);
+    return dlg;
+}

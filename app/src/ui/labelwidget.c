@@ -1,0 +1,1395 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "labelwidget.h"
+#include "inputwidget.h"
+#include "menu.h"
+#include "render/text.h"
+#include "render/paint.h"
+#include "app.h"
+#include "gmdocument.h"
+#include "util.h"
+#include "keys.h"
+#include "touch.h"
+
+#include <SDL3/SDL_version.h>
+
+struct Impl_LabelWidget {
+    iWidget widget;
+    iString srcLabel;
+    iString label;
+    iInt2   labelOffset;
+    int     font;
+    int     key;
+    int     kmods;
+    iChar   icon;
+    int     forceFg;
+    int     iconColor;
+    iLabelColors *colors;  /* explicit; NULL if automatic */
+    iString command;
+    iClick  click;
+    struct {
+        uint16_t alignVisual         : 1; /* align according to visible bounds, not font metrics */
+        uint16_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
+        uint16_t noTopFrame          : 1;
+        uint16_t noBottomFrame       : 1;
+
+        uint16_t wrap                : 1;
+        uint16_t allCaps             : 1;
+        uint16_t removeTrailingColon : 1;
+        uint16_t chevron             : 1;
+
+        uint16_t checkMark           : 1;
+        uint16_t truncateToFit       : 1;
+        uint16_t menuCanceling       : 1;
+        uint16_t noLabel             : 1;
+
+        uint16_t untranslated        : 1;
+        uint16_t parentTextColor     : 1; /* use parent label's text color when it is selected or pressed */
+        uint16_t noKeyTrigger        : 1; /* key is shown, but the owner triggers the label */
+        uint16_t centerWrapped       : 1;
+
+        uint16_t titleCase           : 1;
+        uint16_t padEdgeChildren     : 1; /* content does not overlap children attached to edges */
+    } flags;
+};
+
+iDeclareType(CenteredLines)
+
+struct Impl_CenteredLines {
+    int   font;
+    int   color;
+    iRect rect;
+};
+
+static iBool drawCenteredLine_LabelWidget_(iWrapText *wt, iRangecc text, iTextAttrib attrib,
+                                           int origin, int advance) {
+    iUnused(attrib, origin);
+    iCenteredLines *lines = wt->context;
+    drawRange_Text(lines->font,
+                   init_I2(left_Rect(lines->rect) + (width_Rect(lines->rect) - advance) / 2,
+                           top_Rect(lines->rect)),
+                   lines->color,
+                   text);
+    lines->rect.pos.y += lineHeight_Text(lines->font);
+    return iTrue;
+}
+
+static iBool isHover_LabelWidget_(const iLabelWidget *d) {
+    if (isMobile_Platform() && !isHovering_Touch()) {
+        return iFalse;
+    }
+    return isHover_Widget(d);
+}
+
+static int edgeChildrenWidth_LabelWidget_(const iLabelWidget *d, int64_t edge) {
+    int width = 0;
+    if (d->flags.padEdgeChildren) {
+        iConstForEach(ObjectList, i, d->widget.children) {
+            const iWidget *child = i.object;
+            if (child->flags & edge && !isSelfHidden_Widget(child)) {
+                width += width_Rect(child->rect);
+            }
+        }
+    }
+    return width;
+}
+
+static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
+    const iWidget *w = constAs_Widget(d);
+    const int64_t flags = flags_Widget(w);
+    iInt2          widgetPad = (corner == 0   ? init_I2(w->padding[0], w->padding[1])
+                                : corner == 1 ? init_I2(w->padding[2], w->padding[1])
+                                : corner == 2 ? init_I2(w->padding[2], w->padding[3])
+                                              : init_I2(w->padding[0], w->padding[3]));
+    if (d->flags.chevron) {
+        if (corner == 1 || corner == 2) {
+            widgetPad.x += gap_UI * 5;
+        }
+    }
+    widgetPad.x += edgeChildrenWidth_LabelWidget_(d, corner == 0 || corner == 3
+                                                         ? moveToParentLeftEdge_WidgetFlag
+                                                         : moveToParentRightEdge_WidgetFlag);
+    if (isTerminal_Platform()) {
+        return add_I2(widgetPad, init_I2(1 + (d->icon ? 1 : 0), 0));
+    }
+    if (isMobile_Platform()) {
+        return add_I2(widgetPad,
+                      init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
+                              (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
+    }
+    return add_I2(widgetPad,
+                  init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
+                          gap_UI * aspect_UI));
+}
+
+iDefineObjectConstructionArgs(LabelWidget,
+                              (const char *label, const char *cmd),
+                              label, cmd)
+
+static iBool checkModifiers_(int have, int req) {
+    return keyMods_Sym(req) == keyMods_Sym(have);
+}
+
+static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
+    if (isAndroid_Platform() || (isWeb_Platform() && isMobile_Platform())) {
+        /* On Android, we don't have system menus nor do we want actual submenu popups
+           to appear. The "submenu" command will cause the submenu to open as a normal
+           menu. */
+        return iFalse;
+    }
+    return startsWith_String(&d->command, "submenu id:");
+}
+
+static void trigger_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    if ((isTerminal_Platform() || isHandheld_Platform()) && isSubmenuItem_LabelWidget_(d)) {
+        postCommand_Widget(w, "submenu.open");
+        return;
+    }
+    else {
+        postCommand_Widget(w, "%s", cstr_String(&d->command));
+    }
+    if (flags_Widget(w) & radio_WidgetFlag) {
+        iForEach(ObjectList, i, children_Widget(w->parent)) {
+            setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
+        }
+    }
+    /* Triggering a menu item will always close all popup menus. */
+    if (d->flags.menuCanceling) {
+        postCommand_Root(NULL, "menu.cancel");
+    }
+}
+
+static void updateKey_LabelWidget_(iLabelWidget *d) {
+    if (!isEmpty_String(&d->command)) {
+        const iBinding *bind = findCommand_Keys(cstr_String(&d->command));
+        if (bind && bind->id < builtIn_BindingId) {
+            d->key   = bind->key;
+            d->kmods = bind->mods;
+        }
+    }
+}
+
+static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    if ((w->flags2 & siblingOrderDraggable_WidgetFlag2) && (flags_Widget(w) & dragged_WidgetFlag)) {
+        float dragAmount = (float) w->visualOffset.to / (float) width_Widget(w);
+        if (dragAmount > -0.5f && dragAmount < -0.1f) {
+            dragAmount = -0.5f;
+        }
+        else if (dragAmount < 0.5f && dragAmount > 0.1f) {
+            dragAmount = 0.5f;
+        }
+        postCommand_Widget(w, "tabs.move arg:%d dragged:1", iRound(dragAmount));
+        setVisualOffset_Widget(w, 0, 0, 0);
+        setFlags_Widget(w, dragged_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
+    }
+}
+
+static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
+    iWidget *w = &d->widget;
+    if (isMetricsChange_UserEvent(ev)) {
+        updateSize_LabelWidget(d);
+    }
+    else if (isCommand_UserEvent(ev, "lang.changed")) {
+        const iChar oldIcon = d->icon; /* icon will be retained */
+        setText_LabelWidget(d, &d->srcLabel);
+        checkIcon_LabelWidget(d); /* strip it */
+        d->icon = oldIcon;
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "bindings.changed")) {
+        /* Update the key used to trigger this label. */
+        updateKey_LabelWidget_(d);
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "cancel")) {
+        if (flags_Widget(w) & pressed_WidgetFlag) {
+            setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+            endSiblingOrderDrag_LabelWidget_(d);
+            refresh_Widget(w);
+        }
+        return iFalse;
+    }
+    else if (isCommand_Widget(w, ev, "focus.gained") ||
+             isCommand_Widget(w, ev, "focus.lost")) {
+        iWidget *scr = findOverflowScrollable_Widget(w);
+        if (scr) {
+            const iRect root   = visibleRect_Root(w->root);
+            const iRect bounds = boundsWithoutVisualOffset_Widget(w);
+            int delta = top_Rect(root) - top_Rect(bounds);
+            if (delta > 0) {
+                scrollOverflow_Widget(scr, delta);
+            }
+            else {
+                delta = bottom_Rect(bounds) - bottom_Rect(root);
+                if (delta > 0) {
+                    scrollOverflow_Widget(scr, -delta);
+                }
+            }
+        }
+        refresh_Widget(d);
+        return iFalse;
+    }
+    else if (isCommand_Widget(w, ev, "trigger")) {
+        trigger_LabelWidget_(d);
+        return iTrue;
+    }
+    if (!isEmpty_String(&d->command)) {
+#if 0 && defined (iPlatformAppleMobile)
+        /* Touch allows activating any button on release. */
+        switch (ev->type) {
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
+                const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
+                if (contains_Widget(w, mouse)) {
+                    trigger_LabelWidget_(d);
+                    refresh_Widget(w);
+                }
+                break;
+            }
+        }
+#endif
+        if (isSubmenuItem_LabelWidget_(d) && ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+                contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+            /* Submenus are triggered by hovering over the item. Clicking down nothing. */
+            postCommand_Widget(d, "submenu.open");
+            return iTrue;
+        }
+        switch (processEvent_Click(&d->click, ev)) {
+            case started_ClickResult:
+                setFlags_Widget(w, pressed_WidgetFlag, iTrue);
+                refresh_Widget(w);
+                return iTrue;
+            case drag_ClickResult:
+                if (w->flags2 & siblingOrderDraggable_WidgetFlag2) {
+                    setFlags_Widget(w, dragged_WidgetFlag | keepOnTop_WidgetFlag, iTrue);
+                    setVisualOffset_Widget(w, delta_Click(&d->click).x, 0, 0);
+                    refresh_Widget(w);
+                    return iTrue;
+                }
+                break;
+            case aborted_ClickResult:
+                setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+                endSiblingOrderDrag_LabelWidget_(d);
+                refresh_Widget(w);
+                return iTrue;
+//            case double_ClickResult:
+            case finished_ClickResult:
+                setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+                endSiblingOrderDrag_LabelWidget_(d);
+                trigger_LabelWidget_(d);
+                refresh_Widget(w);
+                if (focus_Widget() == w) {
+                    setFocus_Widget(NULL);
+                }
+                return iTrue;
+            default:
+                break;
+        }
+        switch (ev->type) {
+            case SDL_EVENT_KEY_DOWN: {
+                const int mods = ev->key.mod;
+                const int sym  = ev->key.key;
+                if (d->key && !d->flags.noKeyTrigger && sym == d->key &&
+                    checkModifiers_(mods, d->kmods)) {
+                    trigger_LabelWidget_(d);
+                    return iTrue;
+                }
+                if (isFocused_Widget(d) && mods == 0 &&
+                    (sym == SDLK_RETURN || sym == SDLK_KP_ENTER)) {
+                    trigger_LabelWidget_(d);
+                    refresh_Widget(d);
+                    return iTrue;
+                }
+                break;
+            }
+        }
+    }
+    return processEvent_Widget(&d->widget, ev);
+}
+
+static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
+    toString_Sym(d->key, d->kmods, str);
+}
+
+static iBool isDocTabButton_(const iWidget *d) {
+    return isTabButton_Widget(d) && !cmp_String(id_Widget(d->parent->parent), "doctabs");
+}
+
+static iBool isParagraphColoredTab_(void) {
+    /* Banner colors distinguish the tab if the backgrounds are similar. */
+    return prefs_App()->bottomTabBar && delta_Color(get_Color(tmBackground_ColorId),
+                                                    get_Color(uiBackgroundFolder_ColorId)) >= 40;
+}
+
+static iBool isInSheet_(const iWidget *d) {
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->flags2 & sheet_WidgetFlag2) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static void getExplicitColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1,
+                                           int *frame2, int *icon, int *meta) {
+    const iLabelColors *colors = d->colors;
+    const int64_t       flags  = flags_Widget(d);
+    const iBool         isSel  = (flags & selected_WidgetFlag) != 0;
+    if (flags & disabled_WidgetFlag) {
+        *bg = isSel ? colors->hoverBg : colors->bg;
+        *fg = colors->disabledFg;
+    }
+    else if (flags & pressed_WidgetFlag) {
+        *bg = colors->pressedBg;
+        *fg = colors->pressedFg;
+    }
+    else if (isSel) {
+        *bg = colors->selectedBg;
+        *fg = colors->selectedFg;
+    }
+    else if (isHover_LabelWidget_(d)) {
+        *bg = colors->hoverBg;
+        *fg = colors->hoverFg;
+    }
+    else {
+        *bg = colors->bg;
+        *fg = colors->fg;
+    }
+    *icon = *meta = *fg;
+    *frame1 = *frame2 = d->widget.frameColor;
+}
+
+static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2,
+                                   int *icon, int *meta) {
+    if (d->colors) {
+        getExplicitColors_LabelWidget_(d, bg, fg, frame1, frame2, icon, meta);
+        return;
+    }
+    const iWidget *w           = constAs_Widget(d);
+    const int64_t  flags       = flags_Widget(w);
+    const iBool    isHover     = isHover_LabelWidget_(d);
+    const iBool    isFocus     = (flags & focusable_WidgetFlag && isFocused_Widget(d));
+    const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
+    const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
+    const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
+    const iBool    isHoverFill = isFrameless || isTabButton_Widget(w); /* instead of frame */
+    const iBool    isButton    = d->click.buttons != 0;
+    const iBool    isMenuItem  = !cmp_String(id_Widget(parent_Widget(d)), "menu");
+    const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
+    const iBool    isDarkTheme = isDark_ColorTheme(colorTheme_App());
+    const iBool    isDocTab    = isDocTabButton_(w);
+    const iBool    isBottomTabs = prefs_App()->bottomTabBar;
+    /* Default color state. */
+    *bg     = isButton && ~flags & noBackground_WidgetFlag ? (d->widget.bgColor != none_ColorId ?
+                                                              d->widget.bgColor : uiBackground_ColorId)
+                                                           : none_ColorId;
+    if (d->flags.checkMark) {
+        *bg = none_ColorId;
+    }
+    else if (*bg == uiBackground_ColorId && !isSel && !isFrameless &&
+             (colorTheme_App() == pureWhite_ColorTheme ||
+              colorTheme_App() == pureBlack_ColorTheme) &&
+             isInSheet_(w)) {
+        *bg = contrastingBackgroundColor_Widget(w);
+    }
+    *fg     = uiText_ColorId;
+    *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
+    *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
+    *icon   = uiIcon_ColorId;
+    *meta   = uiTextShortcut_ColorId;
+    if (isDocTab && !isSel) {
+        *bg = uiBackgroundFolder_ColorId;
+        *fg = *icon = uiTextExtraDim_ColorId;
+    }
+    if (flags & disabled_WidgetFlag && isButton) {
+        *icon = uiTextDisabled_ColorId;
+        *fg   = uiTextDisabled_ColorId;
+        *meta = uiTextDisabled_ColorId;
+    }
+    iBool isThemeBackground = iFalse;
+    if (isSel) {
+        *fg = uiTextStrong_ColorId;
+        if (!d->flags.checkMark) {
+            if (isMenuItem) {
+                *bg = uiBackgroundUnfocusedSelection_ColorId;
+            }
+            else if (isDocTab && isKeyRoot) {
+                /* Looks like a part of the document. */
+                *bg = isBottomTabs ? tmBackground_ColorId : tmBannerBackground_ColorId;
+                isThemeBackground = iTrue;
+            }
+            else {
+                *bg = uiBackgroundSelected_ColorId;
+            }
+            if (!isKeyRoot) {
+                *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
+                                                          : uiMarked_ColorId;
+            }
+            if (*bg == uiBackgroundSelected_ColorId) {
+                *fg = uiTextSelected_ColorId;
+                if (isTabButton_Widget(w)) {
+                    *fg |= permanent_ColorId; /* site icon has a color escape */
+                }
+            }
+        }
+        if (isThemeBackground) {
+            *fg     = isParagraphColoredTab_() ? tmParagraph_ColorId : tmBannerTitle_ColorId;
+            *frame1 = *frame2 = tmBannerItemFrame_ColorId;
+        }
+        else if (isButton) {
+            *frame1 = d->flags.noTopFrame    ? uiEmboss1_ColorId : uiEmbossSelected1_ColorId;
+            *frame2 = d->flags.noBottomFrame ? uiEmboss2_ColorId : uiEmbossSelected2_ColorId;
+            if (!isKeyRoot) {
+                *frame1 = *bg;
+            }
+        }
+    }
+    if (isSel && flags & disabled_WidgetFlag && isButton) {
+        /* Dimmed, but still distinct from an unselected disabled button. */
+        *fg = *icon = *meta = uiTextDim_ColorId;
+        if (!d->flags.checkMark && !isThemeBackground) {
+            *bg = isDarkTheme ? uiBackgroundUnfocusedSelection_ColorId : uiMarked_ColorId;
+        }
+        *frame1 = uiEmboss1_ColorId;
+        *frame2 = uiEmboss2_ColorId;
+    }
+    if (isFocus) {
+        *frame1 = *frame2 = (isSel ? uiText_ColorId : uiInputFrameFocused_ColorId);
+    }
+    int colorEscape = none_ColorId;
+    if (startsWith_String(&d->label, "\v")) {
+        colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
+    }
+    if (colorEscape == uiTextCaution_ColorId) {
+        *icon = *meta = colorEscape;
+    }
+    if (d->iconColor != none_ColorId) {
+        *icon = d->iconColor;
+        if ((*icon >= brown_ColorId && *icon <= blue_ColorId) && !isDarkTheme) {
+            /* Auto-adjust absolute color IDs to suit the UI theme. */
+            (*icon)--; /* make it darker */
+        }
+    }
+    if (*bg == uiBackgroundSelected_ColorId && prefs_App()->accent == system_ColorAccent) {
+        *icon = *meta = uiTextSelected_ColorId;
+    }
+    if (isSel && isDocTab) {
+        if (*bg == uiBackgroundSelected_ColorId) {
+            *icon = uiTextSelected_ColorId;
+        }
+        else if (isThemeBackground) {
+            *icon = isParagraphColoredTab_() ? tmParagraph_ColorId : tmBannerIcon_ColorId;
+        }
+    }
+    if (isHover) {
+        if (isHoverFill) {
+            if (!isSel) {
+                *bg = uiBackgroundFramelessHover_ColorId;
+                *fg = uiTextFramelessHover_ColorId;
+                if (isDocTab) {
+                    *icon = *fg;
+                }
+            }
+            else if (isThemeBackground) {
+                *frame1 = *frame2 = luma_Color(get_Color(*bg)) > 0.5f ? black_ColorId
+                                                                      : tmBannerIcon_ColorId;
+            }
+        }
+        else {
+            /* Frames matching color escaped text. */
+            if (colorEscape == uiTextCaution_ColorId) {
+                *frame1 = colorEscape;
+                *frame2 = isDarkTheme ? black_ColorId : white_ColorId;
+            }
+            else if (isSel) {
+                *frame1 = uiEmbossSelectedHover1_ColorId;
+                *frame2 = uiEmbossSelectedHover2_ColorId;
+            }
+            else {
+                *frame1 = uiEmbossHover1_ColorId;
+                *frame2 = uiEmbossHover2_ColorId;
+            }
+        }
+        if (colorEscape > 0 && !isDocTab) { /* doc tabs escape the site icon */
+            *frame1 = accent_Color(isDarkTheme);
+        }
+        if (colorEscape == uiTextCaution_ColorId) {
+            *icon = *meta = *fg = permanent_ColorId | (isDarkTheme ? black_ColorId : white_ColorId);
+            *bg = accent_Color(isDarkTheme);
+        }
+    }
+    if (d->forceFg >= 0) {
+        /* A narrow doc tab shows only the site icon. */
+        *fg = *meta = (d->forceFg == uiIcon_ColorId && isDocTabButton_(w) ? *icon : d->forceFg);
+    }
+    if (d->flags.parentTextColor && !(isHover && isHoverFill)) {
+        const iWidget *owner = w->parent;
+        while (owner && !isInstance_Object(owner, &Class_LabelWidget)) {
+            owner = owner->parent;
+        }
+        if (owner && flags_Widget(owner) & (selected_WidgetFlag | pressed_WidgetFlag)) {
+            int other[5];
+            getColors_LabelWidget_((const iLabelWidget *) owner, &other[0], fg, &other[1],
+                                   &other[2], &other[3], &other[4]);
+            if (d->forceFg == uiIcon_ColorId && isDocTabButton_(owner)) {
+                *fg = other[3];
+            }
+        }
+    }
+    if (isPress) {
+        if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {
+            *bg = colorEscape;
+            *frame1 = *bg;
+            *frame2 = *bg;
+            *fg = *icon = *meta = (isDarkTheme ? black_ColorId : white_ColorId) | permanent_ColorId;
+        }
+        else {
+            *bg = uiBackgroundPressed_ColorId | permanent_ColorId;
+            if (isButton) {
+                *frame1 = uiEmbossPressed1_ColorId;
+                *frame2 = colorEscape != none_ColorId ? colorEscape : uiEmbossPressed2_ColorId;
+            }
+            *fg = *icon = *meta = uiTextPressed_ColorId | permanent_ColorId;
+        }
+    }
+    if (((isSel || isHover) && isFrameless) || (isHover && !isSel && isHoverFill) || isPress) {
+        /* Ensure that the full label text remains readable. */
+        *fg |= permanent_ColorId;
+    }
+}
+
+iLocalDef int iconPadding_LabelWidget_(const iLabelWidget *d) {
+    const float amount = flags_Widget(d) & extraPadding_WidgetFlag ? 1.5f : 1.15f;
+    return d->icon ? iRound(lineHeight_Text(d->font) * amount) : 0;
+}
+
+int textOffset_LabelWidget(const iLabelWidget *d) {
+    return padding_LabelWidget_(d, 0).x + iconPadding_LabelWidget_(d);
+}
+
+static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
+    iRect content = adjusted_Rect(bounds_Widget(constAs_Widget(d)),
+                                  padding_LabelWidget_(d, 0),
+                                  neg_I2(padding_LabelWidget_(d, 2)));
+    adjustEdges_Rect(&content, 0, 0, 0, iconPadding_LabelWidget_(d));
+    return content;
+}
+
+static iBool isRoundButton_LabelWidget_(const iWidget *w) {
+    return !isTerminal_Platform() && isInstance_Object(w, &Class_LabelWidget) &&
+           ((const iLabelWidget *) w)->click.buttons && ~w->flags & frameless_WidgetFlag &&
+           ~w->flags2 & noRound_WidgetFlag2;
+}
+
+static iBool isJoinable_LabelWidget_(const iWidget *w) {
+    return isRoundButton_LabelWidget_(w) && ~w->flags & hidden_WidgetFlag &&
+           ~w->flags2 & alwaysRound_WidgetFlag2;
+}
+
+/* Edges touching a horizontally adjacent button have sharp corners. */
+static int sharpCorners_LabelWidget_(const iWidget *d, const iWidget *sib) {
+    const iRect own   = d->rect;
+    const iRect other = sib->rect;
+    if (top_Rect(other) >= bottom_Rect(own) || top_Rect(own) >= bottom_Rect(other)) {
+        return 0;
+    }
+    if (right_Rect(other) == left_Rect(own)) {
+        return topLeft_RoundCorner | bottomLeft_RoundCorner;
+    }
+    if (left_Rect(other) == right_Rect(own)) {
+        return topRight_RoundCorner | bottomRight_RoundCorner;
+    }
+    return 0;
+}
+
+static int roundCorners_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    if (w->flags2 & alwaysRound_WidgetFlag2 || !w->parent) {
+        return all_RoundCorner;
+    }
+    const iWidget *prev = NULL, *next = NULL;
+    iBool          isFound = iFalse;
+    iConstForEach(ObjectList, i, w->parent->children) {
+        const iWidget *sib = i.object;
+        if (sib == w) {
+            isFound = iTrue;
+        }
+        else if (~sib->flags & hidden_WidgetFlag) {
+            if (!isFound) {
+                prev = sib;
+            }
+            else {
+                next = sib;
+                break;
+            }
+        }
+    }
+    int sharp = 0;
+    if (prev && isJoinable_LabelWidget_(prev)) {
+        sharp |= sharpCorners_LabelWidget_(w, prev);
+    }
+    if (next && isJoinable_LabelWidget_(next)) {
+        sharp |= sharpCorners_LabelWidget_(w, next);
+    }
+    return all_RoundCorner & ~sharp;
+}
+
+static iBool isPopupMenuItem_LabelWidget_(const iWidget *w) {
+    if (isTerminal_Platform() || !w->parent) {
+        return iFalse;
+    }
+    /* Items may also be in a horizontal group inside the menu. */
+    const iWidget *p = w->parent;
+    return p->commandHandler == handleMenuCommand_Widget ||
+           (p->parent && p->parent->commandHandler == handleMenuCommand_Widget);
+}
+
+/* Frameless buttons embedded in a rounded input field match its corners. */
+static int flushCorners_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    if (isTerminal_Platform() || ~w->flags & frameless_WidgetFlag) {
+        return 0;
+    }
+    for (const iWidget *p = w->parent; p; p = p->parent) {
+        if (isInstance_Object(p, &Class_InputWidget)) {
+            if (p->flags2 & noRound_WidgetFlag2) {
+                return 0;
+            }
+            const iRect own   = bounds_Widget(w);
+            const iRect field = bounds_Widget(p);
+            int corners = 0;
+            if (left_Rect(own) == left_Rect(field)) {
+                corners |= topLeft_RoundCorner | bottomLeft_RoundCorner;
+            }
+            if (right_Rect(own) == right_Rect(field)) {
+                corners |= topRight_RoundCorner | bottomRight_RoundCorner;
+            }
+            return corners;
+        }
+    }
+    return 0;
+}
+
+/* Color of the area surrounding the widget. */
+static iColor backdropColor_LabelWidget_(const iWidget *w) {
+    for (const iWidget *p = w->parent; p; p = p->parent) {
+        if (p->bgColor >= 0 && ~p->flags & noBackground_WidgetFlag) {
+            return get_Color(p->bgColor);
+        }
+    }
+    return get_Color(uiBackground_ColorId);
+}
+
+/* A secondary frame separates an emboss color from a backdrop of similar lightness. */
+static iColor contrastFrameColor_(iColor emboss, iColor backdrop) {
+    const iBool isDarker = hsl_Color(emboss).lum <= hsl_Color(backdrop).lum;
+    return mix_Color(backdrop,
+                     isDarker ? (iColor){ 255, 255, 255, 255 } : (iColor){ 0, 0, 0, 255 },
+                     0.07f);
+}
+
+/* The focus frame must stand out from the button background (e.g., system accent). */
+static int focusColor_LabelWidget_(const iLabelWidget *d, int bg) {
+    if (bg >= 0 && flags_Widget(d) & pressed_WidgetFlag) {
+        return bg;
+    }
+    if (bg >= 0 && perceptualDelta_Color(get_Color(bg & mask_ColorId),
+                                         get_Color(uiTextAction_ColorId)) < 100) {
+        /* Blend into a highlighted hover background. */
+        return isHover_LabelWidget_(d) ? bg : uiTextStrong_ColorId;
+    }
+    return uiTextAction_ColorId;
+}
+
+static void draw_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    if (isRoundButton_LabelWidget_(w)) {
+        drawBorders_Widget(w); /* the background is drawn rounded below, not as a square */
+    }
+    else {
+        drawBackground_Widget(w);
+    }
+    const iBool   isButton = d->click.buttons != 0;
+    const int64_t flags    = flags_Widget(w);
+    const iRect   bounds   = bounds_Widget(w);
+    iRect         rect     = bounds;
+    const iBool   isHover  = isHover_LabelWidget_(d);
+    const iBool   isDocTab = isDocTabButton_(w);
+    const iBool   isBottomTabs = prefs_App()->bottomTabBar;
+    if (isButton) {
+        shrink_Rect(&rect, divi_I2(gap2_UI, 4));
+        adjustEdges_Rect(&rect, gap_UI / 8, 0, -gap_UI / 8, 0);
+    }
+    /* Document tabs reach the document, apart from a separator under unselected ones. */
+    const iBool isJoinedTab = isDocTab && (flags & selected_WidgetFlag) != 0;
+    const int   docSepThick = isDocTab && !isJoinedTab ? gap_UI / 4 : 0;
+    if (isDocTab) {
+        rect.pos.x  = bounds.pos.x;
+        rect.size.x = bounds.size.x;
+        if (isBottomTabs) {
+            adjustEdges_Rect(&rect, top_Rect(bounds) + docSepThick - top_Rect(rect), 0, 0, 0);
+        }
+        else {
+            adjustEdges_Rect(&rect, 0, 0, bottom_Rect(bounds) - docSepThick - bottom_Rect(rect), 0);
+        }
+    }
+    iPaint p;
+    init_Paint(&p);
+    int bg, fg, frame, frame2, iconColor, metaColor;
+    getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
+    const int font = (flags & selected_WidgetFlag && isTabButton_Widget(w))
+                         ? fontWithStyle_Text(d->font, semiBold_FontStyle)
+                         : d->font;
+    /* Indicate focused label with an underline attribute. */
+    if (isTerminal_Platform() && isFocused_Widget(w)) {
+        fg |= underline_ColorId;
+    }
+    setBaseAttributes_Text(font, fg);
+    /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
+    setDisableColorEmoji_Text(!isTabButton_Widget(w));
+    const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
+    const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
+    const iBool isFramedRound = isRoundButton_LabelWidget_(w);
+    int         radius        = radius_UI;
+    int         corners       = isFramedRound                     ? roundCorners_LabelWidget_(d)
+                                : !isButton                       ? 0
+                                : isPopupMenuItem_LabelWidget_(w) ? all_RoundCorner
+                                : w->flags2 & alwaysRound_WidgetFlag2 && !isTerminal_Platform()
+                                    ? all_RoundCorner
+                                    : flushCorners_LabelWidget_(d);
+    /* Group items are highlighted edge to edge, up to the separators. */
+    const iBool isGroupItem = isButton && flags & frameless_WidgetFlag &&
+                              (w->flags2 & groupItem_WidgetFlag2) != 0;
+    const iRect bgRect      = isGroupItem ? bounds : rect;
+    if (!corners && isButton && (corners = groupCorners_Widget(w, &radius)) != 0) {
+        if (!isGroupItem) {
+            radius -= gap_UI / 4; /* concentric with the inset `rect` */
+        }
+    }
+    const iBool isRound       = isFramedRound || corners != 0;
+    const iBool isDrag        = (flags & dragged_WidgetFlag) && bg >= 0;
+    if (isDrag) {
+        p.alpha = 0x70;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+    }
+    const int focusColor = focusColor_LabelWidget_(d, bg);
+    if (isRound) {
+        const iBool isFocus = isFocused_Widget(w);
+#if 0
+        if (isFramedRound && !isFocus && frame >= 0 && flags & selected_WidgetFlag) {
+            const iColor backdrop = backdropColor_LabelWidget_(w);
+            const int ctrThick = frame_UI * 2;
+            drawRoundFrameColor_Paint(&p,
+                                      expanded_Rect(rect, init1_I2(ctrThick)),
+                                      radius + ctrThick,
+                                      corners,
+                                      ctrThick,
+                                      contrastFrameColor_(get_Color(frame), backdrop),
+                                      contrastFrameColor_(get_Color(frame2 >= 0 ? frame2 : frame),
+                                                          backdrop));
+        }
+#endif
+        drawRoundRectRadius_Paint(&p,
+                                  bgRect,
+                                  radius,
+                                  corners,
+                                  frame_UI * (!isFocus ? 1 : isHover ? gap_UI / 2 : gap_UI / 4),
+                                  bg,
+                                  isFocus ? focusColor : isFramedRound ? frame : none_ColorId,
+                                  isFocus ? focusColor : isFramedRound ? frame2 : none_ColorId);
+    }
+    else if (bg >= 0) {
+        fillRect_Paint(&p, bgRect, bg);
+    }
+    if (isGroupItem && bg >= 0) {
+        drawBorders_Widget(w); /* the background covers the full bounds */
+    }
+    if (docSepThick) {
+        fillRect_Paint(&p,
+                       (iRect){ init_I2(left_Rect(bounds),
+                                        isBottomTabs ? top_Rect(bounds)
+                                                     : bottom_Rect(bounds) - docSepThick),
+                                init_I2(width_Rect(bounds), docSepThick) },
+                       uiSeparator_ColorId);
+    }
+    if (isDrag) {
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
+    if (!isRound && isFocused_Widget(w)) {
+        iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
+        drawRectThickness_Paint(&p,
+                                frameRect,
+                                isHover ? gap_UI / 2 : (gap_UI / 4),
+                                focusColor);
+    }
+    else if (isJoinedTab) {
+        /* Open towards the document. */
+        const int thick = gap_UI / 4;
+        fillRect_Paint(&p, (iRect){ rect.pos, init_I2(thick, height_Rect(rect)) }, frame);
+        fillRect_Paint(&p,
+                       (iRect){ init_I2(right_Rect(rect) - thick, top_Rect(rect)),
+                                init_I2(thick, height_Rect(rect)) },
+                       frame);
+        fillRect_Paint(&p,
+                       (iRect){ init_I2(left_Rect(rect),
+                                        isBottomTabs ? bottom_Rect(rect) - thick : top_Rect(rect)),
+                                init_I2(width_Rect(rect), thick) },
+                       frame);
+    }
+    else if (!isRound && !isDocTab && ~flags & frameless_WidgetFlag) {
+        iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
+        if (isButton) {
+            const iBool isHoverFrame = isHover && !isTabButton_Widget(w);
+            drawEmbossedFrame_Paint(&p,
+                                    frameRect,
+                                    frame,
+                                    frame2,
+                                    d->flags.noBottomFrame && !isFocused_Widget(w) && !isHoverFrame,
+                                    d->flags.noTopFrame && !isFocused_Widget(w) && !isHoverFrame);
+        }
+    }
+    const iRect textBounds =
+        adjusted_Rect(bounds,
+                      init_I2(edgeChildrenWidth_LabelWidget_(d, moveToParentLeftEdge_WidgetFlag), 0),
+                      init_I2(-edgeChildrenWidth_LabelWidget_(d, moveToParentRightEdge_WidgetFlag),
+                              0));
+    setClip_Paint(&p, intersect_Rect(rect, textBounds));
+    const int iconPad = iconPadding_LabelWidget_(d);
+    if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
+        iString str;
+        initUnicodeN_String(&str, &d->icon, 1);
+        drawCentered_Text(
+            d->font,
+            (iRect){
+                /* The icon position is fine-tuned; c.f. high baseline of Source Sans Pro. */
+                add_I2(add_I2(bounds.pos, padding_LabelWidget_(d, 0)),
+                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI / aspect_UI +
+                               (deviceType_App() == tablet_AppDeviceType ? -gap_UI : 0),
+                               -gap_UI / 8)),
+                init_I2(iconPad, lineHeight_Text(d->font)) },
+            iTrue,
+            iconColor,
+            "%s",
+            cstr_String(&str));
+        deinit_String(&str);
+    }
+    if (d->flags.wrap) {
+        const iRect cont = contentBounds_LabelWidget_(d);
+        iWrapText wt = {
+            .text = range_String(&d->label),
+            .maxWidth = width_Rect(cont),
+            .mode = word_WrapTextMode,
+        };
+        if (d->flags.centerWrapped) {
+            iCenteredLines lines = { font, fg, cont };
+            wt.wrapFunc = drawCenteredLine_LabelWidget_;
+            wt.context  = &lines;
+            measure_WrapText(&wt, font);
+        }
+        else {
+            draw_WrapText(&wt, font, topLeft_Rect(cont), fg);
+        }
+    }
+    else if (flags & alignLeft_WidgetFlag) {
+        const iInt2 topLeft = add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad));
+        if (d->flags.truncateToFit) {
+            const char *endPos;
+            tryAdvanceNoWrap_Text(font,
+                                  range_String(&d->label),
+                                  width_Rect(rect) - padding_LabelWidget_(d, 0).x -
+                                      padding_LabelWidget_(d, 1).x - iconPad,
+                                  &endPos);
+            drawRange_Text(font, topLeft, fg, (iRangecc){ constBegin_String(&d->label), endPos });
+        }
+        else {
+            draw_Text(font, topLeft, fg, "%s", cstr_String(&d->label));
+        }
+        if ((flags & drawKey_WidgetFlag) && d->key) {
+            iString str;
+            init_String(&str);
+            keyStr_LabelWidget_(d, &str);
+            drawAlign_Text(uiShortcuts_FontId,
+                           add_I2(topRight_Rect(bounds),
+                                  addX_I2(negX_I2(padding_LabelWidget_(d, 1)),
+                                          deviceType_App() == tablet_AppDeviceType ? gap_UI : 0)),
+                           metaColor,
+                           right_Alignment,
+                           "%s",
+                           cstr_String(&str));
+            deinit_String(&str);
+        }
+    }
+    else if (flags & alignRight_WidgetFlag) {
+        drawAlign_Text(
+            font,
+            add_I2(topRight_Rect(bounds), negX_I2(padding_LabelWidget_(d, 1))),
+            fg,
+            right_Alignment,
+            "%s",
+            cstr_String(&d->label));
+    }
+    else {
+        const iString *label = &d->label;
+        if (iconColor != uiIcon_ColorId && isDocTab) {
+            /* Site icon is color-escaped in the label. */
+            iString *recolored = collect_String(copy_String(label));
+            replace_String(recolored, escape_Color(uiIcon_ColorId), escape_Color(iconColor));
+            label = recolored;
+        }
+        drawCentered_Text(
+            font,
+            moved_Rect(
+                adjusted_Rect(bounds,
+                              init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
+                              init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
+                d->labelOffset),
+            d->flags.alignVisual,
+            fg,
+            "%s",
+            cstr_String(label));
+    }
+    if (d->flags.chevron || (flags & selected_WidgetFlag && d->flags.checkMark)) {
+        const iRect chRect = rect;
+        const int chSize = lineHeight_Text(d->font);
+        int offset = 0;
+        if (isMobile_Platform()) {
+            /* These are used in the sub-panel buttons. */
+            if (d->flags.chevron && iconPad) {
+                offset = -iconPad;
+            }
+            else {
+                offset = -10 * gap_UI;
+            }
+        }
+        else if (isTerminal_Platform()) {
+            offset = -2;
+        }
+        else {
+            offset = -6 * gap_UI;
+        }
+        drawCentered_Text(d->font,
+                          (iRect){ addX_I2(topRight_Rect(chRect), offset),
+                                   init_I2(chSize, height_Rect(chRect)) },
+                          iTrue,
+                          iconColor,
+                          d->flags.chevron ? rightAngle_Icon : check_Icon);
+    }
+    setBaseAttributes_Text(-1, -1);
+    setDisableColorEmoji_Text(iFalse);
+    unsetClip_Paint(&p);
+    drawChildren_Widget(w);
+}
+
+static void sizeChanged_LabelWidget_(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    if (d->flags.wrap) {
+        if (flags_Widget(w) & fixedHeight_WidgetFlag) {
+            /* Calculate a new height based on the wrapping. */
+            setDisableColorEmoji_Text(!isTabButton_Widget(w)); /* must match draw_LabelWidget_ */
+            const iRect cont = contentBounds_LabelWidget_(d);
+            w->rect.size.y =
+                measureWrapRange_Text(d->font, width_Rect(cont), range_String(&d->label))
+                    .bounds.size.y +
+                padding_LabelWidget_(d, 0).y + padding_LabelWidget_(d, 2).y;
+            setDisableColorEmoji_Text(iFalse);
+        }
+    }
+}
+
+void updateWrappedHeight_LabelWidget(iLabelWidget *d) {
+    sizeChanged_LabelWidget_(d);
+}
+
+iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    const int64_t flags = flags_Widget(w);
+    const iBool hasKey = (flags & drawKey_WidgetFlag) != 0 && d->key != 0;
+    /* Action widgets have nothing to measure, and are created before the fonts exist. */
+    const iBool isMeasured = !d->flags.noLabel || hasKey;
+    if (isMeasured) {
+        /* Tab labels show a site's Emoji icon in color; other labels stay monochrome. */
+        setDisableColorEmoji_Text(!isTabButton_Widget(w)); /* must match draw_LabelWidget_ */
+    }
+    iInt2 size;
+    if (!d->flags.noLabel) {
+        /* Selected tabs use a heavier font. */
+        const int font =
+            isTabButton_Widget(w) ? fontWithStyle_Text(d->font, semiBold_FontStyle) : d->font;
+        size = add_I2(measure_Text(font, cstr_String(&d->label)).bounds.size,
+                      add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
+    }
+    else {
+        size = zero_I2();
+    }
+    if (hasKey) {
+        iString str;
+        init_String(&str);
+        keyStr_LabelWidget_(d, &str);
+        size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).bounds.size.x;
+        deinit_String(&str);
+    }
+    size.x += iconPadding_LabelWidget_(d);
+    if (isPortraitPhone_App() && isDocTabButton_(w)) {
+        size.y = size.y * 5 / 4; /* bigger tap targets */
+    }
+    if (isTerminal_Platform()) {
+        size.x = iMax(size.x, 3);
+    }
+    if (isMeasured) {
+        setDisableColorEmoji_Text(iFalse);
+    }
+    return size;
+}
+
+int font_LabelWidget(const iLabelWidget *d) {
+    return d->font;
+}
+
+void updateSize_LabelWidget(iLabelWidget *d) {
+    if (!d) return;
+    iWidget      *w     = as_Widget(d);
+    const int64_t flags = flags_Widget(w);
+    const iInt2   size  = defaultSize_LabelWidget(d);
+    if (!d->flags.noAutoMinHeight) {
+        w->minSize.y = size.y; /* vertically text must remain visible */
+    }
+    /* Wrapped text implies that width must be defined by arrangement. */
+    if (~flags & fixedWidth_WidgetFlag && !d->flags.wrap) {
+        w->rect.size.x = size.x;
+    }
+    if (~flags & fixedHeight_WidgetFlag) {
+        w->rect.size.y = size.y;
+    }
+}
+
+static void replaceVariables_LabelWidget_(iLabelWidget *d) {
+    if (!d->flags.untranslated) {
+        translate_Lang(&d->label);
+    }
+    if (d->flags.allCaps) {
+        set_String(&d->label, collect_String(upperLang_String(&d->label, code_Lang())));
+    }
+    if (d->flags.removeTrailingColon && endsWith_String(&d->label, ":")) {
+        removeEnd_String(&d->label, 1);
+    }
+    if (d->flags.titleCase) {
+        titleCase_Lang(&d->label);
+    }
+}
+
+void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
+    iWidget *w = &d->widget;
+    init_Widget(w);
+    iZap(d->flags);
+    d->font = uiLabel_FontId;
+    d->forceFg = none_ColorId;
+    d->iconColor = none_ColorId;
+    d->colors = NULL;
+    d->icon = 0;
+    d->labelOffset = zero_I2();
+    if (label) {
+        initCStr_String(&d->srcLabel, label);
+        initCopy_String(&d->label, &d->srcLabel);
+        replaceVariables_LabelWidget_(d);
+    }
+    else {
+        d->flags.noLabel = iTrue;
+        init_String(&d->srcLabel);
+        init_String(&d->label);
+    }
+    if (cmd) {
+        initCStr_String(&d->command, cmd);
+    }
+    else {
+        setFrameColor_Widget(w, uiFrame_ColorId);
+        init_String(&d->command);
+    }
+    d->key   = 0;
+    d->kmods = 0;
+    init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
+    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, d->click.buttons != 0);
+    updateSize_LabelWidget(d);
+    updateKey_LabelWidget_(d); /* could be bound to another key */
+}
+
+void deinit_LabelWidget(iLabelWidget *d) {
+    free(d->colors);
+    deinit_String(&d->label);
+    deinit_String(&d->srcLabel);
+    deinit_String(&d->command);
+}
+
+void setFont_LabelWidget(iLabelWidget *d, int fontId) {
+    if (updateFont_LabelWidget(d, fontId)) {
+        updateSize_LabelWidget(d);
+    }
+}
+
+iBool updateFont_LabelWidget(iLabelWidget *d, int fontId) {
+    if (d->font != fontId) {
+        d->font = fontId;
+        refresh_Widget(d);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+void updateFontStyle_LabelWidget(iLabelWidget *d, int fontStyle) {
+    updateFont_LabelWidget(d, fontWithStyle_Text(d->font, fontStyle));
+}
+
+void setTextColor_LabelWidget(iLabelWidget *d, int color) {
+    if (d && d->forceFg != color) {
+        d->forceFg = color;
+        refresh_Widget(d);
+    }
+}
+
+void setText_LabelWidget(iLabelWidget *d, const iString *text) {
+    if (d) {
+        updateText_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
+        }
+    }
+}
+
+void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
+    if (d) {
+        updateTextCStr_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
+        }
+    }
+}
+
+void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
+    d->flags.alignVisual = alignVisual;
+}
+
+void setParentTextColor_LabelWidget(iLabelWidget *d, iBool parentTextColor) {
+    d->flags.parentTextColor = parentTextColor;
+}
+
+void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
+    /* By default all labels use a minimum height determined by the text dimensions. */
+    d->flags.noAutoMinHeight = noAutoMinHeight;
+    if (noAutoMinHeight) {
+        d->widget.minSize.y = 0;
+    }
+}
+
+void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
+    d->flags.noTopFrame = noTopFrame;
+}
+
+void setNoBottomFrame_LabelWidget(iLabelWidget *d, iBool noBottomFrame) {
+    d->flags.noBottomFrame = noBottomFrame;
+}
+
+void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {
+    d->flags.chevron = chevron;
+}
+
+void setPadEdgeChildren_LabelWidget(iLabelWidget *d, iBool padEdgeChildren) {
+    d->flags.padEdgeChildren = padEdgeChildren;
+}
+
+void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
+    d->flags.checkMark = checkMark;
+}
+
+void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
+    d->flags.wrap = wrap;
+}
+
+void setCenterWrapped_LabelWidget(iLabelWidget *d, iBool centerWrapped) {
+    d->flags.centerWrapped = centerWrapped;
+}
+
+void setTranslation_LabelWidget(iLabelWidget *d, iBool translation) {
+    d->flags.untranslated = !translation;
+}
+
+void setTruncateToFit_LabelWidget (iLabelWidget *d, iBool truncateToFit) {
+    d->flags.truncateToFit = truncateToFit;
+}
+
+void setAllCaps_LabelWidget(iLabelWidget *d, iBool allCaps) {
+    if (d) {
+        d->flags.allCaps = allCaps;
+        replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingColon) {
+    if (d) {
+        d->flags.removeTrailingColon = removeTrailingColon;
+        replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setTitleCase_LabelWidget(iLabelWidget *d, iBool titleCase) {
+    if (d) {
+        d->flags.titleCase = titleCase;
+        replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setKeyTrigger_LabelWidget(iLabelWidget *d, iBool keyTrigger) {
+    if (d) {
+        d->flags.noKeyTrigger = !keyTrigger;
+    }
+}
+
+iBool triggerKey_LabelWidget(iLabelWidget *d, int key, int kmods) {
+    if (d && d->key && key == d->key && checkModifiers_(kmods, d->kmods)) {
+        trigger_LabelWidget_(d);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+void setMenuCanceling_LabelWidget(iLabelWidget *d, iBool menuCanceling) {
+    if (d) {
+        d->flags.menuCanceling = menuCanceling;
+    }
+}
+
+void setTextOffset_LabelWidget(iLabelWidget *d, iInt2 offset) {
+    d->labelOffset = offset;
+}
+
+void updateText_LabelWidget(iLabelWidget *d, const iString *text) {
+    set_String(&d->label, text);
+    set_String(&d->srcLabel, text);
+    replaceVariables_LabelWidget_(d);
+    refresh_Widget(&d->widget);
+}
+
+void updateTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
+    if (d) {
+        setCStr_String(&d->label, text);
+        set_String(&d->srcLabel, &d->label);
+        replaceVariables_LabelWidget_(d);
+        refresh_Widget(&d->widget);
+    }
+}
+
+void updateTextAndResizeWidthCStr_LabelWidget(iLabelWidget *d, const char *text) {
+    updateTextCStr_LabelWidget(d, text);
+    d->widget.rect.size.x = defaultSize_LabelWidget(d).x;
+}
+
+void setCommand_LabelWidget(iLabelWidget *d, const iString *command) {
+    set_String(&d->command, command);
+    /* Make it clickable. */
+    init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
+    setFlags_Widget(&d->widget, focusable_WidgetFlag | hover_WidgetFlag, d->click.buttons != 0);
+}
+
+void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {
+    if (d->icon != icon) {
+        d->icon = icon;
+        updateSize_LabelWidget(d);
+    }
+}
+
+void setIconColor_LabelWidget(iLabelWidget *d, int color) {
+    d->iconColor = color;
+}
+
+void setColors_LabelWidget(iLabelWidget *d, const iLabelColors *colors) {
+    if (colors) {
+        if (!d->colors) {
+            d->colors = iMalloc(LabelColors);
+        }
+        *d->colors = *colors;
+    }
+    else {
+        free(d->colors);
+        d->colors = NULL;
+    }
+    refresh_Widget(d);
+}
+
+iBool checkIcon_LabelWidget(iLabelWidget *d) {
+    if (isEmpty_String(&d->label)) {
+        d->icon = 0;
+        return iFalse;
+    }
+    d->icon = removeIconPrefix_String(&d->label);
+    if (isTerminal_Platform() && prefs_App()->simpleChars) {
+        d->icon = 0; /* ASCII icons may get confused with key shortcuts */
+    }
+    return d->icon != 0;
+}
+
+int textColor_LabelWidget(const iLabelWidget *d) {
+    return d->forceFg;
+}
+
+iChar icon_LabelWidget(const iLabelWidget *d) {
+    return d->icon;
+}
+
+iBool isWrapped_LabelWidget(const iLabelWidget *d) {
+    return d->flags.wrap;
+}
+
+const iString *text_LabelWidget(const iLabelWidget *d) {
+    if (!d) return collectNew_String();
+    return &d->label;
+}
+
+const iString *sourceText_LabelWidget(const iLabelWidget *d) {
+    if (!d) return collectNew_String();
+    return &d->srcLabel;
+}
+
+const iString *command_LabelWidget(const iLabelWidget *d) {
+    return &d->command;
+}
+
+iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command) {
+    iLabelWidget *d = new_LabelWidget(label, command);
+    d->key = key;
+    d->kmods = kmods;
+    updateKey_LabelWidget_(d); /* could be bound to a different key */
+    return d;
+}
+
+iLabelWidget *newColor_LabelWidget(const char *text, int color) {
+    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), NULL);
+    setFlags_Widget(d, frameless_WidgetFlag, iTrue);
+    return d;
+}
+
+iBeginDefineSubclass(LabelWidget, Widget)
+    .processEvent = (iAny *) processEvent_LabelWidget_,
+    .draw         = (iAny *) draw_LabelWidget_,
+    .sizeChanged  = (iAny *) sizeChanged_LabelWidget_,
+iEndDefineSubclass(LabelWidget)

@@ -1,0 +1,98 @@
+# Protocol Cheatsheet
+
+Brief technical summary of the protocols supported by Lagrange.
+
+# 1. Gemini
+=> gemini://geminiprotocol.net/docs/protocol-specification.gmi  Gemini protocol specification
+=> gemini://geminiprotocol.net/docs/gemtext-specification.gmi   Gemtext specification
+
+## 1.1 Response syntax and status codes
+
+```Gemini response
+<STATUS><SPACE><META><CR><LF>
+[<BODY>]
+```
+
+Status codes:
+```
+10  Input                        META: prompt for the user
+11  Sensitive input              META: prompt; input is not echoed
+20  Success                      META: media type of the body
+30  Temporary redirect           META: new URL (may be relative)
+31  Permanent redirect           META: new URL (may be relative)
+40  Temporary failure
+41  Server unavailable
+42  CGI error
+43  Proxy error
+44  Slow down
+50  Permanent failure
+51  Not found
+52  Gone
+53  Proxy request refused
+59  Bad request
+60  Client certificate required
+61  Certificate not authorized
+62  Certificate not valid
+```
+
+* META is at most 1024 bytes of UTF-8. Its meaning depends on the status code.
+* In a 20 response, META is the media type of the body, with optional "charset" and "lang" parameters. An empty META means "text/gemini; charset=utf-8".
+* In 4x, 5x, and 6x responses, META may contain an error message to show to the user.
+
+## 1.2 Request syntax
+
+```Gemini request
+<URL><CR><LF>
+```
+* The URL can be at most 1024 bytes long.
+* The URL must be absolute and use UTF-8 encoding (STD66).
+* The URL must not contain a userinfo part or a fragment.
+* User input is sent as the query string, percent-encoded (for example, spaces as "%20").
+
+## 1.3 Connection
+
+* The default port is 1965.
+* TLS 1.3 is recommended, minimum TLS 1.2. The client must use SNI.
+* Server certificates are usually self-signed. Clients verify them with TOFU (Trust On First Use): the certificate fingerprint seen on the first visit is remembered and later connections are checked against it. (Lagrange stores the fingerprints in "trusted.lst".)
+* A client certificate is only sent when the user has chosen to use one. Servers ask for one with a 6x status code.
+
+## 1.4 Examples
+
+Making a request on the command line with OpenSSL:
+```
+printf 'gemini://geminiprotocol.net/\r\n' | \
+    openssl s_client -quiet -connect geminiprotocol.net:1965 \
+    -servername geminiprotocol.net
+```
+
+# 2. Titan
+=> gemini://transjovian.org/titan  Titan protocol (by Alex Schroeder)
+
+Titan is a sister protocol of Gemini for uploading data to a server. Connections work the same way as in Gemini, so the same server and client certificates can be used. The request line is followed by a payload of arbitrary size, and the server replies with a Gemini response.
+
+## 2.1 Request syntax
+
+```Titan request
+titan://<host>[:<port>]/<path>;size=<N>[;mime=<type>][;token=<token>]<CR><LF>
+<payload of N bytes>
+```
+
+Parameters are appended to the URL path, separated with ";":
+
+* "size" (required) is the number of bytes in the payload. A size of zero may be interpreted by the server as a request to delete the resource.
+* "mime" (optional) is the media type of the payload. The default is "text/gemini".
+* "token" (optional) is a percent-encoded passphrase or a text value whose meaning is defined by the server.
+
+Servers commonly accept Titan requests on the same port as Gemini (1965).
+
+## 2.2 Response
+
+The response is a Gemini response header (see section 1.1). After a successful upload, servers typically reply with a 30/31 redirect to the "gemini://" URL of the uploaded resource, or with a 20 response describing the result.
+
+## 2.3 Edit requests
+
+```Titan edit request
+titan://<host>[:<port>]/<path>[;token=<token>];edit<CR><LF>
+```
+
+Instead of "size" and "mime", the request may use an "edit" parameter. This signals that the client wants to begin editing a resource. The server may apply an edit lock on the resource. The server responds to an "edit" request with the raw resource contents. The client can then modify the contents and upload them via a normal Titan request using the same path. This signals that the edit lock should be released.

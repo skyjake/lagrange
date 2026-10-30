@@ -1,0 +1,16 @@
+# Copy to ~/.config/systemd/user/lgrsyncd.service and run:
+#   systemctl --user enable --now lgrsyncd
+# Run "loginctl enable-linger" to start it at boot without logging in.
+
+[Unit]
+Description=Lagrange Sync
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/lgrsyncd --dir %h/.local/share/lgrsyncd --port 1966 --host sync.example.com
+Restart=always
+SyslogIdentifier=lgrsyncd
+
+[Install]
+WantedBy=default.target

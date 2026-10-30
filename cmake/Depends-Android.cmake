@@ -22,7 +22,7 @@ set (TFDN_ENABLE_INSTALL    OFF CACHE BOOL "")
 set (TFDN_ENABLE_TESTS      OFF CACHE BOOL "")
 set (TFDN_ENABLE_WEBREQUEST OFF CACHE BOOL "")
 set (TFDN_ENABLE_SSE41      OFF CACHE BOOL "")
-add_subdirectory (lib/the_Foundation)  
+add_subdirectory (lib/the_Foundation)
 add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
 if (NOT OPENSSL_FOUND)
     message (FATAL_ERROR "Lagrange requires OpenSSL for TLS. Please check if pkg-config can find 'openssl'.")
@@ -31,6 +31,8 @@ if (NOT ZLIB_FOUND)
     message (FATAL_ERROR "Lagrange requires zlib for reading compressed archives. Please check if pkg-config can find 'zlib'.")
 endif ()
 
+set (SDL3_FOUND YES)
+
 set (FRIBIDI_FOUND YES)
 set (FRIBIDI_LDFLAGS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/lib/libfribidi.a)
 set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include/fribidi)
@@ -38,6 +40,19 @@ set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include/
 set (HARFBUZZ_FOUND YES)
 set (HARFBUZZ_LDFLAGS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz.a)
 set (HARFBUZZ_INCLUDE_DIRS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/include/harfbuzz)
+set (HARFBUZZ_RASTER_FOUND YES)
+set (HARFBUZZ_RASTER_LDFLAGS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz-raster.a)
+
+if (ENABLE_FREETYPE)
+    # FreeType pre-built for Android; hb-ft.h comes from the HarfBuzz include dir above.
+    add_library (Freetype::Freetype STATIC IMPORTED)
+    set_target_properties (Freetype::Freetype PROPERTIES
+        IMPORTED_LOCATION   ${ANDROID_DIR}/freetype-android/${ANDROID_ABI}/lib/libfreetype.a
+        INTERFACE_INCLUDE_DIRECTORIES ${ANDROID_DIR}/freetype-android/${ANDROID_ABI}/include/freetype2
+        INTERFACE_LINK_LIBRARIES "${ANDROID_DIR}/libpng-android/${ANDROID_ABI}/lib/libpng16.a;z"
+    )
+    set (Freetype_FOUND YES)
+endif ()
 
 set (WEBP_FOUND YES)
 set (WEBP_LIBRARIES ${ANDROID_DIR}/libwebp-android/${ANDROID_ABI}/lib/libwebpdecoder.a)

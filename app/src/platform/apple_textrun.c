@@ -1,0 +1,613 @@
+/* Copyright 2026 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+/* CTTypesetter run construction with inline `\v` and ANSI escape parsing.
+   Builds a CFMutableAttributedString with per-segment CoreText font and color
+   attributes, enabling native CoreText styling. */
+
+#include "apple_text.h"
+#include "render/text.h"
+#include "render/font.h"
+#include "color.h"
+#include "ui/util.h"
+
+#include <lagrange/defs.h>
+#include <lagrange/prefs.h>
+#include <the_Foundation/regexp.h>
+#include <the_Foundation/string.h>
+
+#include <stdlib.h>
+#include <string.h>
+
+iDeclareType(TextSegment)
+
+/* One attributed run between two escape sequences. */
+struct Impl_TextSegment {
+    CFIndex startUtf16;
+    CFIndex endUtf16;
+    int     fontId;
+    int     fgColorId;
+    iColor  fgColor;   /* .a > 0: use this RGB directly; .a == 0: use fgColorId */
+    iColor  bgColor;   /* .a > 0: fill background with this RGB */
+};
+
+CFStringRef lagBgKey_       = NULL; /* initialized in new_Text() */
+CFStringRef lagSfSymbolKey_ = NULL; /* initialized in new_Text() */
+
+static iBool isUiFontId_(int fontId) {
+    /* Returns true if the font ID refers to a UI-sized font (not document content).
+       UI fonts use size indices 0–(contentRegular_FontSize-1). */
+    return (fontId % maxVariants_Fonts) % max_FontSize < contentRegular_FontSize;
+}
+
+/* SF Symbol inline image: metrics for CTRunDelegate and the CGImage for compositing. */
+typedef struct {
+    CFIndex    u16Pos;
+    CGImageRef image;
+    CGFloat    ascent, descent, width;
+} iSfSymbolInfo;
+
+static CGFloat sfAscent_ (void *r) { return ((iSfSymbolInfo *)r)->ascent;  }
+static CGFloat sfDescent_(void *r) { return ((iSfSymbolInfo *)r)->descent; }
+static CGFloat sfWidth_  (void *r) { return ((iSfSymbolInfo *)r)->width;   }
+static void    sfDealloc_(void *r) {
+    iSfSymbolInfo *info = (iSfSymbolInfo *)r;
+    if (info->image) CGImageRelease(info->image);
+    free(info);
+}
+static const CTRunDelegateCallbacks kSfDelegateCallbacks_ = {
+    kCTRunDelegateVersion1, sfDealloc_, sfAscent_, sfDescent_, sfWidth_
+};
+
+static iColor fgColor_(int fgColorId, iColor fg, iColor bg) {
+    if (fg.a > 0) {
+        return bg.a > 0 ? fg : legibleAnsiFg_Color(fg);
+    }
+    return get_Color(fgColorId);
+}
+
+static CGColorRef fgCgColor_(int fgColorId, iColor fg, iColor bg) {
+    return cgColorCreate_Apple(fgColor_(fgColorId, fg, bg));
+}
+
+static float pointSize_(const iAppleText *tx, const iTextSegment *segments, size_t segCount,
+                        CFIndex u16) {
+    for (size_t s = 0; s < segCount; s++) {
+        if (u16 >= segments[s].startUtf16 && u16 < segments[s].endUtf16) {
+            const iAppleFont *af = constAppleFont_AppleText_(tx, segments[s].fontId);
+            if (af && af->pointSize > 0.0f) {
+                return af->pointSize;
+            }
+            break;
+        }
+    }
+    return 16.0f;
+}
+
+static iBool isSequenceContinuation_(iChar c) {
+    return c == 0x200d || c == 0x20e3 || isVariationSelector_Char(c) ||
+           isFitzpatrickType_Char(c) || isRegionalIndicator_Char(c) ||
+           (c >= 0xe0020 && c <= 0xe007f);
+}
+
+static size_t emojiSequence_(const char *cp, const char *end, const char **seqEnd_out,
+                             CFIndex *seqUtf16Len_out) {
+    iChar       chars[maxEmojiSequenceUtf16_AppleText / 2];
+    const char *ends[iElemCount(chars)];
+    size_t      n = 0;
+    while (cp < end && n < iElemCount(chars)) {
+        const int nb = decodeBytes_MultibyteChar(cp, end, &chars[n]);
+        if (nb <= 0 || (n == 1 && !isSequenceContinuation_(chars[1]))) {
+            break;
+        }
+        cp += nb;
+        ends[n++] = cp;
+    }
+    const size_t len = emojiSequenceLength_Char(chars, n);
+    if (len) {
+        *seqEnd_out      = ends[len - 1];
+        *seqUtf16Len_out = 0;
+        for (size_t i = 0; i < len; i++) {
+            *seqUtf16Len_out += (chars[i] >= 0x10000 ? 2 : 1);
+        }
+    }
+    return len;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+CGColorRef cgColorCreate_Apple(iColor c) {
+    const CGFloat   comps[4] = { c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0 };
+    CGColorSpaceRef cs       = CGColorSpaceCreateDeviceRGB();
+    CGColorRef      ref      = CGColorCreate(cs, comps);
+    CGColorSpaceRelease(cs);
+    return ref;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDefineTypeConstructionArgs(AppleTextRun,
+    (const char *rawText, size_t rawLen, int fontId, int colorId, iColor resolvedColor,
+     int baseDir, iChar overrideChar, iAppleText *tx),
+    rawText, rawLen, fontId, colorId, resolvedColor, baseDir, overrideChar, tx)
+
+static iBool prepare_AppleTextRun_(
+    iAppleText                   *tx,
+    const char                   *rawText,
+    size_t                        rawLen,
+    int                           baseFontId,
+    int                           baseColorId,
+    int                           baseDir,
+    iChar                         overrideChar,
+    char                        **clean_out,
+    size_t                       *cleanLen_out,
+    size_t                      **utf16ToSrc_out,
+    CFIndex                      *utf16Len_out,
+    CFMutableAttributedStringRef *mAttrStr_out)
+{
+    *clean_out      = NULL;
+    *cleanLen_out   = 0;
+    *utf16ToSrc_out = NULL;
+    *utf16Len_out   = 0;
+    *mAttrStr_out   = NULL;
+
+    /* Upper-bound allocations: each raw byte can produce at most 4 UTF-8 bytes in the
+       clean buffer (won't happen in practice, but keeps the logic simple), and at most
+       one UTF-16 unit per raw byte. */
+    char     *cleanBuf = malloc(rawLen * 4 + 1);
+    size_t   *utf16Map = malloc((rawLen * 4 + 2) * sizeof(size_t));
+    iTextSegment  *segments = malloc((rawLen + 1) * sizeof(iTextSegment));
+    iSfSymbolInfo *sfInfos  = malloc((rawLen + 1) * sizeof(iSfSymbolInfo));
+    if (!cleanBuf || !utf16Map || !segments || !sfInfos) {
+        free(cleanBuf);
+        free(utf16Map);
+        free(segments);
+        free(sfInfos);
+        return iFalse;
+    }
+    int sfInfoCount = 0;
+
+    size_t  cleanLen  = 0;
+    CFIndex utf16Idx  = 0;
+    size_t  segCount  = 0;
+    CFIndex segStartUtf16 = 0;
+
+    /* Escapes cannot change a permanent color. */
+    const iBool isPermanent = (baseColorId & permanent_ColorId) != 0;
+    baseColorId &= mask_ColorId;
+    /* Current styling state. */
+    int    curFontId    = baseFontId;
+    int    curFgColorId = baseColorId;
+    iColor curFgColor   = { 0, 0, 0, 0 }; /* .a == 0: use curFgColorId */
+    iColor curBgColor   = { 0, 0, 0, 0 }; /* .a == 0: no background */
+    iBool  isBold       = iFalse; /* SGR 1 selects high-intensity ANSI colors */
+    /* SGR styles and default colors are relative to the current base attributes. */
+    const int styleFontId    = current_Text()->baseFontId >= 0 ? current_Text()->baseFontId
+                                                               : baseFontId;
+    const int styleFgColorId = current_Text()->baseFgColorId;
+
+    const char *p   = rawText;
+    const char *end = rawText + rawLen;
+    while (p < end) {
+        if (*p == '\v') {
+            /* Flush current segment before changing state. */
+            if (utf16Idx > segStartUtf16) {
+                segments[segCount++] = (iTextSegment) { segStartUtf16, utf16Idx,   curFontId,
+                                                        curFgColorId,  curFgColor, curBgColor };
+            }
+            p++; /* skip the leading \v byte */
+            if (p >= end) break;
+            uint8_t esc = (uint8_t) *p++;
+            if (esc == '\v') { /* extended color range */
+                if (p < end) {
+                    uint8_t nextByte = (uint8_t) *p++;
+                    curFgColorId =
+                        (int) nextByte + asciiExtended_ColorEscape - asciiBase_ColorEscape;
+                }
+                curFgColor.a = 0;
+            }
+            else if (esc == '$') { /* restore default colors */
+                curFgColorId = baseColorId;
+                curFgColor.a = 0;
+                curBgColor.a = 0;
+            }
+            else { /* normal color index */
+                curFgColorId = (int) esc - asciiBase_ColorEscape;
+                curFgColor.a = 0;
+            }
+            if (isPermanent) {
+                curFgColorId = baseColorId;
+            }
+            segStartUtf16 = utf16Idx;
+            continue;
+        }
+        /* ANSI escapes. */
+        if (*p == 0x1b) {
+            const char *ansiStart = p + 1; /* skip past \x1b; pattern excludes it */
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            if (match_RegExp(
+                    current_Text()->ansiEscape, ansiStart, (size_t) (end - ansiStart), &m)) {
+                /* Flush current segment before changing state. */
+                if (utf16Idx > segStartUtf16) {
+                    segments[segCount++] = (iTextSegment) { segStartUtf16, utf16Idx,   curFontId,
+                                                            curFgColorId,  curFgColor, curBgColor };
+                }
+                const int      ansi     = current_Text()->ansiFlags;
+                const char     mode     = capturedRange_RegExpMatch(&m, 2).start[0];
+                const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
+                if (ansi && mode == 'm') { /* Select Graphic Rendition */
+                    for (const char *seqPos = sequence.start; seqPos < sequence.end;) {
+                        char     *argEnd;
+                        const int arg = (int) strtoul(seqPos, &argEnd, 10);
+                        if (arg == 0) { /* reset all */
+                            curFontId = styleFontId;
+                            if (!isPermanent) {
+                                curFgColorId =
+                                    styleFgColorId != none_ColorId ? styleFgColorId : baseColorId;
+                            }
+                            curFgColor.a = 0;
+                            curBgColor.a = 0;
+                            isBold       = iFalse;
+                        }
+                        else if (arg == 1 && (ansi & allowFontStyle_AnsiFlag)) {
+                            curFontId = fontWithStyle_Text(styleFontId, bold_FontStyle);
+                            isBold    = iTrue;
+                            if (styleFgColorId == tmParagraph_ColorId && !isPermanent) {
+                                curFgColorId = tmFirstParagraph_ColorId;
+                                curFgColor.a = 0;
+                            }
+                        }
+                        else if (arg == 2 && (ansi & allowFontStyle_AnsiFlag)) {
+                            curFontId = fontWithStyle_Text(styleFontId, light_FontStyle);
+                            isBold    = iFalse;
+                        }
+                        else if (arg == 3 && (ansi & allowFontStyle_AnsiFlag)) {
+                            curFontId = fontWithStyle_Text(styleFontId, italic_FontStyle);
+                        }
+                        else if (arg == 10 && (ansi & allowFontStyle_AnsiFlag)) {
+                            curFontId = fontWithStyle_Text(styleFontId, regular_FontStyle);
+                            isBold    = iFalse;
+                        }
+                        else if (arg == 11 && (ansi & allowFontStyle_AnsiFlag)) {
+                            curFontId = fontWithFamily_Text(styleFontId, monospace_FontId);
+                            if (!isPermanent) {
+                                curFgColorId = tmPreformatted_ColorId;
+                                curFgColor.a = 0;
+                            }
+                        }
+                        else {
+                            /* Color code (30+, 38;2/5, etc.). SGR 39/49 may set a transparent
+                               color, which reverts to curFgColorId. */
+                            iColor      fgColor = curFgColor;
+                            iColor      bgColor = curBgColor;
+                            const char *seqEnd  = seqPos;
+                            ansiColors_Color((iRangecc) { seqPos, sequence.end },
+                                             styleFgColorId,
+                                             none_ColorId,
+                                             isBold,
+                                             (ansi & allowFg_AnsiFlag) ? &fgColor : NULL,
+                                             (ansi & allowBg_AnsiFlag) ? &bgColor : NULL,
+                                             &seqEnd);
+                            argEnd = (char *) seqEnd;
+                            if (!isPermanent) {
+                                curFgColor = fgColor;
+                                curBgColor = bgColor;
+                            }
+                        }
+                        seqPos = argEnd;
+                        if (seqPos < sequence.end) {
+                            if (*seqPos == ';')
+                                seqPos++;
+                            else
+                                break; /* malformed or unrecognized */
+                        }
+                    }
+                }
+                p             = ansiStart + length_Rangecc(capturedRange_RegExpMatch(&m, 0));
+                segStartUtf16 = utf16Idx;
+                continue;
+            }
+            /* Not a recognized ANSI escape: fall through and treat \x1b as a regular char. */
+        }
+        /* Regular character: decode UTF-8 codepoint and copy to clean buffer. */
+        iChar ch     = 0;
+        int   nbytes = decodeBytes_MultibyteChar(p, end, &ch);
+        if (nbytes <= 0) {
+            p++; /* skip unrecognized byte */
+            continue;
+        }
+        if (overrideChar) {
+            ch = overrideChar;
+        }
+        /* SF Symbol substitution: replace UI icon chars with inline images (U+FFFC placeholder).
+           Only applies for UI-sized fonts; document fonts pass through unchanged. */
+        const char *symbolName = isUiFontId_(curFontId) ? systemImageName_Apple(ch) : NULL;
+        if (symbolName) {
+            const iAppleFont *af = constAppleFont_AppleText_(tx, curFontId);
+            /* Metrics. */
+            float      pts  = af ? af->pointSize : 16.0f;
+            CGFloat    asc  = af ? (CGFloat) af->font.baseline : pts * 0.8f;
+            CGFloat    desc = af ? (CGFloat) (af->font.height - af->font.baseline) : pts * 0.2f;
+            /* Render at ~80% of the line height so the symbol fits comfortably inside the
+               slot with natural margins. */
+            const float symbolScale = 0.8f;
+            CGImageRef  img = sfSymbolImage_AppleText_(tx,
+                                                       symbolName,
+                                                       pts,
+                                                       fgColor_(curFgColorId, curFgColor, curBgColor),
+                                                       (int) ceilf((asc + desc) * symbolScale));
+            if (img) {
+                CGFloat wid = asc + desc; /* square slot; image is fit-inside at draw time */
+                sfInfos[sfInfoCount++] = (iSfSymbolInfo){ utf16Idx, img, asc, desc, wid };
+                /* Encode U+FFFC (object replacement character) as BMP placeholder. */
+                iMultibyteChar encMb;
+                init_MultibyteChar(&encMb, 0xFFFC);
+                const int encLen = (int) strlen(encMb.bytes);
+                memcpy(cleanBuf + cleanLen, encMb.bytes, encLen);
+                cleanLen += (size_t) encLen;
+                utf16Map[utf16Idx++] = (size_t)(p - rawText);
+                p += nbytes;
+                continue;
+            }
+            /* Image unavailable: fall through to render original character. */
+        }
+        /* Regular character: encode into clean buffer. */
+        utf16Map[utf16Idx++] = (size_t)(p - rawText);
+        if (ch >= 0x10000) {
+            utf16Map[utf16Idx++] = (size_t)(p - rawText);
+        }
+        iMultibyteChar encMb;
+        init_MultibyteChar(&encMb, ch);
+        const int encLen = (int) strlen(encMb.bytes);
+        memcpy(cleanBuf + cleanLen, encMb.bytes, encLen);
+        cleanLen += (size_t) encLen;
+        p += nbytes;
+    }
+    /* Flush the final segment. */
+    if (utf16Idx > segStartUtf16) {
+        segments[segCount++] = (iTextSegment) { segStartUtf16, utf16Idx,   curFontId,
+                                                curFgColorId,  curFgColor, curBgColor };
+    }
+    utf16Map[utf16Idx] = rawLen; /* sentinel: past-end offset */
+    cleanBuf[cleanLen] = '\0';
+    /* Build a CFString from the clean UTF-8 buffer. */
+    CFStringRef cfStr = CFStringCreateWithBytes(kCFAllocatorDefault,
+                                                (const UInt8 *) cleanBuf,
+                                                (CFIndex) cleanLen,
+                                                kCFStringEncodingUTF8,
+                                                false);
+    if (!cfStr) {
+        for (int i = 0; i < sfInfoCount; i++) {
+            if (sfInfos[i].image) CGImageRelease(sfInfos[i].image);
+        }
+        free(cleanBuf);
+        free(utf16Map);
+        free(segments);
+        free(sfInfos);
+        return iFalse;
+    }
+    /* Apply per-segment font, foreground color, and optional background color attributes. */
+    CFMutableAttributedStringRef mAttrStr = CFAttributedStringCreateMutable(kCFAllocatorDefault, 0);
+    CFAttributedStringReplaceString(mAttrStr, CFRangeMake(0, 0), cfStr);
+    CFRelease(cfStr);
+    CFArrayRef cascadeList = cascadeList_AppleText_(tx);
+    for (size_t si = 0; si < segCount; si++) {
+        const iTextSegment *seg   = &segments[si];
+        CFRange             range = CFRangeMake(seg->startUtf16, seg->endUtf16 - seg->startUtf16);
+        if (range.length <= 0) {
+            continue;
+        }
+        /* Resolve CTFont for this segment. */
+        iAppleFont *af = appleFont_AppleText_(tx, seg->fontId);
+        ensureCtFont_AppleFont_(af, cascadeList);
+        if (!af->ctFont) {
+            continue;
+        }
+        /* Build fg CGColor. */
+        CGColorRef fgCg = fgCgColor_(seg->fgColorId, seg->fgColor, seg->bgColor);
+
+        /* Populate the attributes dict. */
+        CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
+                                                                 3,
+                                                                 &kCFTypeDictionaryKeyCallBacks,
+                                                                 &kCFTypeDictionaryValueCallBacks);
+        CFDictionarySetValue(attrs, kCTFontAttributeName, af->ctFont);
+        CFDictionarySetValue(attrs, kCTForegroundColorAttributeName, fgCg);
+        if (seg->bgColor.a > 0) {
+            CGColorRef bgCg = cgColorCreate_Apple(seg->bgColor);
+            CFDictionarySetValue(attrs, lagBgKey_, bgCg);
+            CFRelease(bgCg);
+        }
+        CFAttributedStringSetAttributes(mAttrStr, range, attrs, true);
+        CFRelease(attrs);
+        CFRelease(fgCg);
+    }
+    /* Override kCTFontAttributeName for Emoji codepoints that need explicit font selection.
+       When colorEmoji=false: all Emoji get B&W font or AppleColorEmoji as last resort.
+       When colorEmoji=true: only select codepoints get a B&W override.
+       Setting the font via attribute bypasses the cascade and CoreText's system
+       Emoji-presentation override. */ {
+        const char *cp  = cleanBuf;
+        const char *cpe = cleanBuf + cleanLen;
+        CFIndex     u16 = 0;
+        CFStringRef textPresentation = NULL;
+        while (cp < cpe) {
+            iChar ch;
+            int   nb = decodeBytes_MultibyteChar(cp, cpe, &ch);
+            if (nb <= 0) { cp++; continue; }
+            const CFIndex u16end = u16 + (ch >= 0x10000 ? 2 : 1);
+            /* Sequences use a single font so that their ligature can form. */
+            const char *seqEnd;
+            CFIndex     seqLen;
+            if (emojiSequence_(cp, cpe, &seqEnd, &seqLen)) {
+                UniChar seq[maxEmojiSequenceUtf16_AppleText];
+                CFStringGetCharacters(CFAttributedStringGetString(mAttrStr),
+                                      CFRangeMake(u16, seqLen), seq);
+                CTFontRef font = sequenceFont_AppleText_(
+                    tx, seq, seqLen, pointSize_(tx, segments, segCount, u16));
+                if (font) {
+                    CFAttributedStringSetAttribute(
+                        mAttrStr, CFRangeMake(u16, seqLen), kCTFontAttributeName, font);
+                    CFRelease(font);
+                    for (CFIndex i = 0; i < seqLen; i++) {
+                        if (seq[i] == 0xfe0f) {
+                            if (!textPresentation) {
+                                textPresentation = CFStringCreateWithCharacters(
+                                    kCFAllocatorDefault, &(UniChar){ 0xfe0e }, 1);
+                            }
+                            CFAttributedStringReplaceString(
+                                mAttrStr, CFRangeMake(u16 + i, 1), textPresentation);
+                        }
+                    }
+                    cp  = seqEnd;
+                    u16 += seqLen;
+                    continue;
+                }
+            }
+            if (isEmoji_Char(ch)) {
+                CTFontRef font =
+                    overrideFont_AppleText_(tx, ch, pointSize_(tx, segments, segCount, u16));
+                if (font) {
+                    CFRange range = CFRangeMake(u16, u16end - u16);
+                    CFAttributedStringSetAttribute(mAttrStr, range, kCTFontAttributeName, font);
+                    CFRelease(font);
+                }
+            }
+            cp += nb;
+            u16  = u16end;
+        }
+        if (textPresentation) {
+            CFRelease(textPresentation);
+        }
+    }
+    free(segments);
+    /* Apply CTRunDelegate and image attributes for each collected SF Symbol inline object. */
+    for (int i = 0; i < sfInfoCount; i++) {
+        iSfSymbolInfo *info       = iMalloc(SfSymbolInfo);
+        *info                     = sfInfos[i];
+        sfInfos[i].image          = NULL; /* ownership transferred to delegate refCon */
+        CTRunDelegateRef delegate = CTRunDelegateCreate(&kSfDelegateCallbacks_, info);
+        CFRange          r        = CFRangeMake(info->u16Pos, 1);
+        /* Transparent foreground color suppresses CT rendering of the placeholder glyph. */
+        const CGFloat   zero[4] = { 0.0, 0.0, 0.0, 0.0 };
+        CGColorSpaceRef cs      = CGColorSpaceCreateDeviceRGB();
+        CGColorRef      clr     = CGColorCreate(cs, zero);
+        CGColorSpaceRelease(cs);
+        CFAttributedStringSetAttribute(mAttrStr, r, kCTRunDelegateAttributeName, delegate);
+        CFAttributedStringSetAttribute(mAttrStr, r, kCTForegroundColorAttributeName, clr);
+        if (info->image) {
+            CFAttributedStringSetAttribute(mAttrStr, r, lagSfSymbolKey_, info->image);
+        }
+        CFRelease(delegate);
+        CFRelease(clr);
+    }
+    free(sfInfos);
+    if (baseDir) {
+        const CTWritingDirection wd = (baseDir < 0 ? kCTWritingDirectionRightToLeft
+                                                   : kCTWritingDirectionLeftToRight);
+        const CTParagraphStyleSetting setting = {
+            kCTParagraphStyleSpecifierBaseWritingDirection, sizeof(wd), &wd
+        };
+        CTParagraphStyleRef paraStyle = CTParagraphStyleCreate(&setting, 1);
+        CFAttributedStringSetAttribute(mAttrStr,
+                                       CFRangeMake(0, CFAttributedStringGetLength(mAttrStr)),
+                                       kCTParagraphStyleAttributeName,
+                                       paraStyle);
+        CFRelease(paraStyle);
+    }
+    *clean_out      = cleanBuf;
+    *cleanLen_out   = cleanLen;
+    *utf16ToSrc_out = utf16Map;
+    *utf16Len_out   = utf16Idx;
+    *mAttrStr_out   = mAttrStr;
+    return iTrue;
+}
+
+static iBool isNaturalRTL_(CTTypesetterRef typesetter) {
+    /* Glyph runs are in visual order. In an RTL paragraph, the logically first run ends up
+       last because the whole line is reversed at the paragraph level. */
+    const CFIndex len = CTTypesetterSuggestLineBreak(typesetter, 0, 1e9);
+    if (len <= 0) {
+        return iFalse;
+    }
+    CTLineRef     line     = CTTypesetterCreateLine(typesetter, CFRangeMake(0, len));
+    CFArrayRef    runs     = CTLineGetGlyphRuns(line);
+    const CFIndex runCount = CFArrayGetCount(runs);
+    iBool         isRTL    = iFalse;
+    if (runCount > 0) {
+        CTRunRef lastRun = CFArrayGetValueAtIndex(runs, runCount - 1);
+        if (runCount == 1) {
+            isRTL = (CTRunGetStatus(lastRun) & kCTRunStatusRightToLeft) != 0;
+        }
+        else {
+            isRTL = (CTRunGetStringRange(lastRun).location == 0);
+        }
+    }
+    CFRelease(line);
+    return isRTL;
+}
+
+void init_AppleTextRun(iAppleTextRun *d, const char *rawText, size_t rawLen,
+                       int fontId, int colorId, iColor resolvedColor, int baseDir,
+                       iChar overrideChar, iAppleText *tx) {
+    iZap(*d);
+    uint32_t colorPacked;
+    memcpy(&colorPacked, &resolvedColor, 4);
+    d->hash          = iCrc32(rawText, rawLen)
+                       ^ (uint32_t)((unsigned)fontId << 8)
+                       ^ colorPacked;
+    d->rawTextLen    = rawLen;
+    d->fontId        = fontId;
+    d->colorId       = colorId;
+    d->resolvedColor = resolvedColor;
+    d->baseDir       = baseDir;
+    d->overrideChar  = overrideChar;
+    CFMutableAttributedStringRef mAttrStr = NULL;
+    if (!prepare_AppleTextRun_(tx,
+                               rawText,
+                               rawLen,
+                               fontId,
+                               colorId,
+                               baseDir,
+                               overrideChar,
+                               &d->text,
+                               &d->textLen,
+                               &d->utf16ToSrc,
+                               &d->utf16Len,
+                               &mAttrStr)) {
+        return;
+    }
+    d->typesetter = CTTypesetterCreateWithAttributedString(mAttrStr);
+    CFRelease(mAttrStr);
+    if (!d->typesetter) {
+        deinit_AppleTextRun(d);
+        return;
+    }
+    d->isBaseRTL = (baseDir ? baseDir < 0 : isNaturalRTL_(d->typesetter));
+}
+
+void deinit_AppleTextRun(iAppleTextRun *d) {
+    if (d->typesetter) CFRelease(d->typesetter);
+    if (d->utf16ToSrc) free(d->utf16ToSrc);
+    if (d->text)       free(d->text);
+}

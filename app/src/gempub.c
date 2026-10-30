@@ -1,0 +1,657 @@
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "gempub.h"
+#include <lagrange/tools.h>
+#include "gmutil.h"
+#include "defs.h"
+#include "gmdocument.h"
+#include <lagrange/gmrequest.h>
+#include "ui/util.h"
+
+#include <lagrange/lang.h>
+#include <lagrange/gmcerts.h>
+
+#include <the_Foundation/archive.h>
+#include <the_Foundation/buffer.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
+#include <the_Foundation/time.h>
+
+const char *mimeType_Gempub = "application/gpub+zip";
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(GempubNavLink)
+
+struct Impl_GempubNavLink {
+    iString url;
+    iString label;
+    iString heading; /* level 1 or 2 heading above the link on the index page */
+    iBool   hasLabel;
+};
+
+static void init_GempubNavLink(iGempubNavLink *d) {
+    init_String(&d->url);
+    init_String(&d->label);
+    init_String(&d->heading);
+    d->hasLabel = iFalse;
+}
+
+static void deinit_GempubNavLink(iGempubNavLink *d) {
+    deinit_String(&d->url);
+    deinit_String(&d->label);
+    deinit_String(&d->heading);
+}
+
+iDefineTypeConstruction(GempubNavLink)
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_Gempub {
+    iArchive *arch;
+    iString baseUrl;
+    iString props[max_GempubProperty];
+    iArray *navLinks; /* from index page */
+};
+
+iDefineTypeConstruction(Gempub)
+
+static void parseNavigationLinks_Gempub_(const iGempub *d) {
+    /* Only the cover page of a remote book is viewable. */
+    if (!isEmpty_Array(d->navLinks) || isRemote_Gempub(d)) {
+        return;
+    }
+    iGmRequest *index = iClob(new_GmRequest(get_GmCerts()));
+    setUrl_GmRequest(index, indexPageUrl_Gempub(d));
+    submit_GmRequest(index); /* this is just a local file read */
+    iAssert(isFinished_GmRequest(index));
+    iRangecc src     = iNullRange;
+    iRangecc heading = iNullRange;
+    iBool    isPre   = iFalse;
+    iRegExp *linkPattern = iClob(newGemtextLink_RegExp());
+    while (nextSplit_Rangecc(range_Block(body_GmRequest(index)), "\n", &src)) {
+        iRangecc line = src;
+        trim_Rangecc(&line);
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+            continue;
+        }
+        if (isPre) {
+            continue;
+        }
+        if (startsWith_Rangecc(line, "#") && !startsWith_Rangecc(line, "###")) {
+            iRangecc text = line;
+            while (text.start < text.end && *text.start == '#') {
+                text.start++;
+            }
+            trim_Rangecc(&text);
+            if (!isEmpty_Range(&text)) {
+                heading = text;
+            }
+            continue;
+        }
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (matchRange_RegExp(linkPattern, line, &m)) {
+            iBeginCollect();
+            const iRangecc url = capturedRange_RegExpMatch(&m, 1);
+            iUrl parts;
+            init_Url(&parts, collectNewRange_String(url));
+            if (isEmpty_Range(&parts.scheme)) {
+                iGempubNavLink link;
+                init_GempubNavLink(&link);
+                set_String(&link.url, absoluteUrl_String(url_GmRequest(index), collectNewRange_String(url)));
+                setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
+                trim_String(&link.label);
+                link.hasLabel = !isEmpty_String(&link.label);
+                if (!link.hasLabel) {
+                    setRange_String(&link.label, url);
+                }
+                setRange_String(&link.heading, heading);
+                pushBack_Array(d->navLinks, &link);
+            }
+            iEndCollect();
+        }
+    }
+}
+
+void init_Gempub(iGempub *d) {
+    d->arch = NULL;
+    init_String(&d->baseUrl);
+    iForIndices(i, d->props) {
+        init_String(&d->props[i]);
+    }
+    d->navLinks = new_Array(sizeof(iGempubNavLink));
+}
+
+void deinit_Gempub(iGempub *d) {
+    iForEach(Array, n, d->navLinks) {
+        deinit_GempubNavLink(n.value);
+    }
+    delete_Array(d->navLinks);
+    iForIndices(i, d->props) {
+        deinit_String(&d->props[i]);
+    }
+    deinit_String(&d->baseUrl);
+    iRelease(d->arch);
+}
+
+static iBool parseMetadata_Gempub_(iGempub *d) {
+    iAssert(isOpen_Archive(d->arch));
+    /* Parse the metadata and check if the required contents are present. */
+    const iBlock *metadata = dataCStr_Archive(d->arch, "metadata.txt");
+    if (!metadata) {
+        return iFalse;
+    }
+    static const char *labels[max_GempubProperty] = {
+        "title:",
+        "index:",
+        "author:",
+        "language:",
+        "description:",
+        "published:",
+        "publishDate:",
+        "revisionDate:",
+        "copyright:",
+        "license:",
+        "version:",
+        "cover:",
+    };
+    /* Default values. */
+    setCStr_String(&d->props[title_GempubProperty], "${gempub.cover.untitled}");
+    setCStr_String(&d->props[cover_GempubProperty],
+                   entryCStr_Archive(d->arch, "cover.jpg") ? "cover.jpg" :
+                   entryCStr_Archive(d->arch, "cover.png") ? "cover.png" : "");
+    setCStr_String(&d->props[index_GempubProperty], "index.gmi");
+    iRangecc line = iNullRange;
+    while (nextSplit_Rangecc(range_Block(metadata), "\n", &line)) {
+        iRangecc clean = line;
+        trim_Rangecc(&clean);
+        iForIndices(i, d->props) {
+            if (startsWithCase_Rangecc(clean, labels[i])) {
+                setRange_String(&d->props[i],
+                                (iRangecc){ clean.start + strlen(labels[i]), clean.end });
+                trim_String(&d->props[i]);
+            }
+        }
+    }
+    return iTrue;
+}
+
+iBool open_Gempub(iGempub *d, const iBlock *data) {
+    close_Gempub(d);
+    d->arch = new_Archive();
+    if (openData_Archive(d->arch, data) && parseMetadata_Gempub_(d)) {
+        return iTrue;
+    }
+    close_Gempub(d);
+    return iFalse;
+}
+
+iGempub *openForContent_Gempub(const iBlock *content, const iString *mime, const iString *url) {
+    if (cmpCase_String(mime, "application/octet-stream") && cmpCase_String(mime, mimeType_Gempub) &&
+        !endsWithCase_String(url, ".gpub")) {
+        return NULL;
+    }
+    iGempub *d = new_Gempub();
+    if (open_Gempub(d, content)) {
+        setBaseUrl_Gempub(d, url);
+        return d;
+    }
+    delete_Gempub(d);
+    return NULL;
+}
+
+iGempub *openForLocalUrl_Gempub(const iString *url, iBool *isInsideArchive_out) {
+    *isInsideArchive_out = iFalse;
+    const iString *localPath = collect_String(localFilePathFromUrl_String(url));
+    if (localPath && !fileExists_FileInfo(localPath)) {
+        /* This URL may refer to a file inside the archive. */
+        localPath = findContainerArchive_Path(localPath);
+        *isInsideArchive_out = iTrue;
+    }
+    if (!localPath || !equal_CStr(mediaType_Path(localPath), mimeType_Gempub)) {
+        return NULL;
+    }
+    iGempub *d = new_Gempub();
+    if (openFile_Gempub(d, localPath)) {
+        setBaseUrl_Gempub(d, collect_String(makeFileUrl_String(localPath)));
+        return d;
+    }
+    delete_Gempub(d);
+    return NULL;
+}
+
+const iString *localArchiveUrl_Gempub(const iString *url) {
+    /* Only the file system is checked; the archive is not read. */
+    if (!isLocalFileScheme_Rangecc(urlScheme_String(url))) {
+        return NULL;
+    }
+    iString *localPath = localFilePathFromUrl_String(url);
+    if (!localPath) {
+        return NULL;
+    }
+    const iString *path = collect_String(localPath);
+    if (!fileExists_FileInfo(path)) {
+        path = findContainerArchive_Path(path);
+    }
+    if (!path || !equal_CStr(mediaType_Path(path), mimeType_Gempub)) {
+        return NULL;
+    }
+    return canonicalUrl_String(collect_String(makeFileUrl_String(path)));
+}
+
+iBool openFile_Gempub(iGempub *d, const iString *path) {
+    close_Gempub(d);
+    iFile *f = new_File(path);
+    if (open_File(f, readOnly_FileMode)) {
+        iBlock *data = readAll_File(f);
+        open_Gempub(d, data);
+        delete_Block(data);
+        setBaseUrl_Gempub(d, collect_String(makeFileUrl_String(path)));
+    }
+    iRelease(f);
+    return isOpen_Gempub(d);
+}
+
+iBool openUrl_Gempub(iGempub *d, const iString *url) {
+    if (!openFile_Gempub(d, collect_String(localFilePathFromUrl_String(url)))) {
+        setBaseUrl_Gempub(d, url);
+        close_Gempub(d);
+        return iFalse;
+    }
+    return iTrue;
+}
+
+void close_Gempub(iGempub *d) {
+    if (d->arch) {
+        iReleasePtr(&d->arch);
+    }
+    iForIndices(i, d->props) {
+        clear_String(&d->props[i]);
+    }
+}
+
+void setBaseUrl_Gempub(iGempub *d, const iString *url) {
+    /* Canonical, so it matches document URLs (e.g., "local:" for the user's books). */
+    set_String(&d->baseUrl,
+               collect_String(urlDecodeExclude_String(canonicalUrl_String(url), "/:")));
+}
+
+iBool isOpen_Gempub(const iGempub *d) {
+    return d->arch != NULL;
+}
+
+const iString *property_Gempub(const iGempub *d, enum iGempubProperty prop) {
+    return &d->props[prop];
+}
+
+const iString *coverPageUrl_Gempub(const iGempub *d) {
+    return &d->baseUrl;
+}
+
+const iString *indexPageUrl_Gempub(const iGempub *d) {
+    iAssert(!isEmpty_String(&d->baseUrl));
+    iString *dir = collect_String(copy_String(&d->baseUrl));
+    appendCStr_String(dir, "/");
+    return absoluteUrl_String(dir, &d->props[index_GempubProperty]);
+}
+
+static iBool isSameUrl_(const iString *a, const iString *b) {
+    /* File URLs may or may not be percent-encoded. */
+    return equalCase_String(collect_String(urlDecodeExclude_String(a, "/:")),
+                            collect_String(urlDecodeExclude_String(b, "/:")));
+}
+
+iBool isCoverPageUrl_Gempub(const iGempub *d, const iString *url) {
+    return isSameUrl_(url, &d->baseUrl);
+}
+
+iBool isIndexPageUrl_Gempub(const iGempub *d, const iString *url) {
+    return isSameUrl_(url, indexPageUrl_Gempub(d));
+}
+
+iBool isInside_Gempub(const iGempub *d, const iString *url) {
+    url = canonicalUrl_String(url);
+    if (isCoverPageUrl_Gempub(d, url)) {
+        return iTrue;
+    }
+    const iString *path   = collect_String(urlDecodeExclude_String(url, "/:"));
+    const iString *prefix = collectNewFormat_String("%s/", cstr_String(&d->baseUrl));
+    return startsWithCase_String(path, cstr_String(prefix));
+}
+
+const iString *navStartLinkUrl_Gempub(const iGempub *d) {
+    parseNavigationLinks_Gempub_(d);
+    if (isEmpty_Array(d->navLinks)) {
+        return NULL; /* has no navigation structure */
+    }
+    return &((const iGempubNavLink *) constFront_Array(d->navLinks))->url;
+}
+
+size_t navSize_Gempub(const iGempub *d) {
+    parseNavigationLinks_Gempub_(d);
+    return size_Array(d->navLinks);
+}
+
+size_t navIndex_Gempub(const iGempub *d, const iString *url) {
+    parseNavigationLinks_Gempub_(d);
+    iConstForEach(Array, i, d->navLinks) {
+        const iGempubNavLink *nav = i.value;
+        if (isSameUrl_(&nav->url, url)) {
+            return index_ArrayConstIterator(&i);
+        }
+    }
+    return iInvalidPos;
+}
+
+const iString *navLinkUrl_Gempub(const iGempub *d, size_t index) {
+    parseNavigationLinks_Gempub_(d);
+    if (index < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, index, iGempubNavLink).url;
+    }
+    return NULL;
+}
+
+const iString *navLinkLabel_Gempub(const iGempub *d, size_t index) {
+    parseNavigationLinks_Gempub_(d);
+    if (index < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, index, iGempubNavLink).label;
+    }
+    return NULL;
+}
+
+static const iBlock *archiveData_Gempub_(const iGempub *d, const iString *url) {
+    const iString *path   = collect_String(urlDecodeExclude_String(url, "/:"));
+    const iString *prefix = collectNewFormat_String("%s/", cstr_String(&d->baseUrl));
+    if (!d->arch || !startsWith_String(path, cstr_String(prefix))) {
+        return NULL;
+    }
+    return dataCStr_Archive(d->arch, cstr_String(path) + size_String(prefix));
+}
+
+static iRangecc lastHeading1_(iRangecc source) {
+    iRangecc heading = iNullRange;
+    iRangecc line    = iNullRange;
+    iBool    isPre   = iFalse;
+    while (nextSplit_Rangecc(source, "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+        }
+        else if (!isPre && startsWith_Rangecc(line, "#") && !startsWith_Rangecc(line, "##")) {
+            iRangecc text = { line.start + 1, line.end };
+            trim_Rangecc(&text);
+            if (!isEmpty_Range(&text)) {
+                heading = text;
+            }
+        }
+    }
+    return heading;
+}
+
+static int leadingHeading_(iRangecc source, iRangecc *text_out) {
+    /* Level of the heading on the first line, or zero. */
+    iRangecc line = iNullRange;
+    while (nextSplit_Rangecc(source, "\n", &line)) {
+        iRangecc text = line;
+        trim_Rangecc(&text);
+        if (isEmpty_Range(&text)) {
+            continue;
+        }
+        int level = 0;
+        while (level < 3 && text.start < text.end && *text.start == '#') {
+            text.start++;
+            level++;
+        }
+        trim_Rangecc(&text);
+        *text_out = text;
+        return level;
+    }
+    return 0;
+}
+
+static iRangecc precedingHeading1_Gempub_(const iGempub *d, size_t navIndex) {
+    for (size_t i = iMin(navIndex, size_Array(d->navLinks)); i-- > 0; ) {
+        const iBlock *data = archiveData_Gempub_(d, navLinkUrl_Gempub(d, i));
+        if (data) {
+            const iRangecc heading = lastHeading1_(range_Block(data));
+            if (!isEmpty_Range(&heading)) {
+                return heading;
+            }
+        }
+    }
+    return iNullRange;
+}
+
+static iBool localTitle_Gempub_(const iGempub *d, size_t navIndex, const iString **title_out) {
+    /* A level 2 heading that begins the page, or the page's link on the index page if there
+       is no heading. */
+    if (navIndex < size_Array(d->navLinks)) {
+        const iGempubNavLink *nav  = constAt_Array(d->navLinks, navIndex);
+        const iBlock         *data = archiveData_Gempub_(d, &nav->url);
+        if (data) {
+            iRangecc  heading = iNullRange;
+            const int level   = leadingHeading_(range_Block(data), &heading);
+            if (level == 0 && nav->hasLabel) {
+                *title_out = &nav->label;
+                return iTrue;
+            }
+            if (level == 2 && !isEmpty_Range(&heading)) {
+                *title_out = collectNewRange_String(heading);
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
+}
+
+const iString *chapterTitle_Gempub(const iGempub *d, size_t navIndex) {
+    /* The page's local title, or else the last level 1 heading on the preceding pages, or else
+       the heading above the link on the index page. */
+    parseNavigationLinks_Gempub_(d);
+    const iString *title;
+    if (localTitle_Gempub_(d, navIndex, &title)) {
+        return title;
+    }
+    const iRangecc heading = precedingHeading1_Gempub_(d, navIndex);
+    if (!isEmpty_Range(&heading)) {
+        return collectNewRange_String(heading);
+    }
+    if (navIndex < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, navIndex, iGempubNavLink).heading;
+    }
+    return collectNew_String();
+}
+
+const iString *partTitle_Gempub(const iGempub *d, size_t navIndex) {
+    /* The last level 1 heading on the preceding pages, if the page has a local title. */
+    parseNavigationLinks_Gempub_(d);
+    const iString *title;
+    if (localTitle_Gempub_(d, navIndex, &title)) {
+        return collectNewRange_String(precedingHeading1_Gempub_(d, navIndex));
+    }
+    return collectNew_String();
+}
+
+static iBool hasProperty_Gempub_(const iGempub *d, enum iGempubProperty prop) {
+    return !isEmpty_String(&d->props[prop]);
+}
+
+static void appendProperty_Gempub_(const iGempub *d, const char *label,
+                                   enum iGempubProperty prop, iString *out) {
+    if (hasProperty_Gempub_(d, prop)) {
+        appendFormat_String(out, "%s %s\n", label, cstr_String(&d->props[prop]));
+    }
+}
+
+iBool isRemote_Gempub(const iGempub *d) {
+    return !isLocalFileScheme_Rangecc(urlScheme_String(&d->baseUrl));
+}
+
+iString *coverPageSource_Gempub(const iGempub *d) {
+    iAssert(!isEmpty_String(&d->baseUrl));
+    iString *out = new_String();
+    if (hasProperty_Gempub_(d, cover_GempubProperty) && !isTerminal_Platform()) {
+        appendFormat_String(out, "=> %s  ${gempub.cover.image}\n\n",
+                            cstrCollect_String(concat_Path(withSpacesEncoded_String(&d->baseUrl),
+                                                           &d->props[cover_GempubProperty])));
+    }
+    appendFormat_String(out, "# %s\n", cstr_String(&d->props[title_GempubProperty]));
+    appendProperty_Gempub_(d, "\n## ", author_GempubProperty, out);
+    appendCStr_String(out, "\n### ${gempub.cover.aboutbook}\n");
+    if (hasProperty_Gempub_(d, description_GempubProperty)) {
+        appendFormat_String(out, "%s\n\n", cstr_String(&d->props[description_GempubProperty]));
+    }
+    appendProperty_Gempub_(d, "${gempub.meta.version}:", version_GempubProperty, out);
+    appendProperty_Gempub_(d, "${gempub.meta.revdate}:", revisionDate_GempubProperty, out);
+    if (hasProperty_Gempub_(d, publishDate_GempubProperty)) {
+        appendProperty_Gempub_(d, "${gempub.meta.pubdate}:", publishDate_GempubProperty, out);
+    }
+    else {
+        appendProperty_Gempub_(d, "${gempub.meta.pub}:", published_GempubProperty, out);
+    }
+    appendProperty_Gempub_(d, "${gempub.meta.lang}:", language_GempubProperty, out);
+    appendProperty_Gempub_(d, "${gempub.meta.license}:", license_GempubProperty, out);
+    appendProperty_Gempub_(d, "\u00a9", copyright_GempubProperty, out);
+    translate_Lang(out);
+    return out;
+}
+
+iString *indexPageSource_Gempub(const iGempub *d) {
+    const iBlock *data = d->arch ? data_Archive(d->arch, &d->props[index_GempubProperty]) : NULL;
+    return data ? newBlock_String(data) : new_String();
+}
+
+iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
+    /* The cover image is the first link of the cover page. */
+    const iGmLinkId linkId  = 1;
+    const iString  *linkUrl = linkUrl_GmDocument(doc, linkId);
+    if (!hasProperty_Gempub_(d, cover_GempubProperty) || !linkUrl ||
+        ~linkFlags_GmDocument(doc, linkId) & imageFileExtension_GmLinkFlag) {
+        return iFalse;
+    }
+    iBool changed = setCoverImage_GmDocument(doc, linkId);
+    if (!findLinkImage_Media(media_GmDocument(doc), linkId).type) {
+        const iBlock *data = archiveData_Gempub_(d, linkUrl);
+        if (data) {
+            setData_Media(media_GmDocument(doc),
+                          linkId,
+                          collectNewCStr_String(mediaType_Path(linkUrl)),
+                          data,
+                          0);
+            changed = iTrue;
+        }
+    }
+    return changed;
+}
+
+static iString *absoluteLinks_(const iString *source, const iString *baseUrl) {
+    /* Relative links would otherwise point inside the archive. */
+    iString *out         = new_String();
+    iRegExp *linkPattern = newGemtextLink_RegExp();
+    iBool    isPre       = iFalse;
+    iRangecc line        = iNullRange;
+    while (nextSplit_Rangecc(range_String(source), "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
+            isPre = !isPre;
+        }
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (!isPre && startsWith_Rangecc(line, "=>") && matchRange_RegExp(linkPattern, line, &m)) {
+            const iString *url =
+                absoluteUrl_String(baseUrl, collectNewRange_String(capturedRange_RegExpMatch(&m, 1)));
+            appendFormat_String(out, "=> %s", cstr_String(url));
+            appendRange_String(out, capturedRange_RegExpMatch(&m, 2));
+        }
+        else {
+            appendRange_String(out, line);
+        }
+        appendCStr_String(out, "\n");
+    }
+    iRelease(linkPattern);
+    return out;
+}
+
+iBlock *newPageArchive_Gempub(const iString *url, const iString *title, const iString *author,
+                              const iString *source) {
+    iArchive *arch = new_Archive();
+    openWritable_Archive(arch);
+    iString *str = new_String();
+    iDate    today;
+    initCurrent_Date(&today);
+    format_String(str,
+                  "gpubVersion: 1.0.0\n"
+                  "title: %s\n"
+                  "author: %s\n"
+                  "revisionDate: %s\n",
+                  cstr_String(title),
+                  cstr_String(author),
+                  cstrCollect_String(format_Date(&today, "%Y-%m-%d")));
+    setDataCStr_Archive(arch, "metadata.txt", utf8_String(str));
+    format_String(str,
+                  "## %s\n\n=> page.gmi %s\n\n### %s\n=> %s\n",
+                  cstr_Lang("gempub.page.contents"),
+                  cstr_String(title),
+                  cstr_Lang("gempub.page.source"),
+                  cstr_String(url));
+    setDataCStr_Archive(arch, "index.gmi", utf8_String(str));
+    delete_String(str);
+    iString *page = absoluteLinks_(source, url);
+    setDataCStr_Archive(arch, "page.gmi", utf8_String(page));
+    delete_String(page);
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    serialize_Archive(arch, stream_Buffer(buf));
+    iBlock *data = copy_Block(data_Buffer(buf));
+    iRelease(buf);
+    iRelease(arch);
+    return data;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static iBlock *filter_Gempub_(const iString *mime, const iBlock *body,
+                              const iString *requestUrl) {
+    /* Only process Gempub for local files. */
+    if (!isLocalFileScheme_Rangecc(urlScheme_String(requestUrl)) ||
+        !startsWithCase_String(mime, mimeType_Gempub)) {
+        return NULL;
+    }
+    iBlock * output = NULL;
+    iGempub *gempub = new_Gempub();
+    if (open_Gempub(gempub, body)) {
+        setBaseUrl_Gempub(gempub, requestUrl);
+        output       = newCStr_Block("20 text/gemini; charset=utf-8\r\n");
+        iString *src = coverPageSource_Gempub(gempub);
+        append_Block(output, utf8_String(src));
+        delete_String(src);
+    }
+    delete_Gempub(gempub);
+    return output;
+}
+
+void setup_Gempub(void) {
+    addBuiltinFilter_Tools(get_Tools(), filter_Gempub_);
+}

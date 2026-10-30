@@ -1,0 +1,60 @@
+/* Copyright 2026 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#pragma once
+
+#include <the_Foundation/block.h>
+#include <the_Foundation/string.h>
+#include <the_Foundation/stringset.h>
+
+/* Per-account data files. The account is identified by the client certificate fingerprint. */
+
+iDeclareType(Storage)
+iDeclareTypeConstructionArgs(Storage, const iString *rootDir)
+
+enum iStoreResult {
+    ok_StoreResult,
+    stale_StoreResult, /* the generation has changed */
+    full_StoreResult,  /* no more accounts can be created */
+    noAccount_StoreResult, /* the account must have data before other blobs */
+    error_StoreResult,
+};
+
+/* Each account has its data, and optionally its recent changes. */
+enum iStorageBlob {
+    data_StorageBlob,
+    recent_StorageBlob,
+};
+
+void                setAllowList_Storage(iStorage *, const iStringSet *fingerprints); /* NULL: anyone */
+iBool               isAllowed_Storage   (const iStorage *, const iString *fingerprint);
+void                setMaxAccounts_Storage(iStorage *, size_t maxAccounts); /* zero: no limit */
+iBool               isFull_Storage      (iStorage *, const iString *fingerprint);
+void                touch_Storage       (iStorage *, const iString *fingerprint);
+size_t              expire_Storage      (iStorage *, double maxIdleSeconds); /* returns number removed */
+size_t              numAccounts_Storage (iStorage *, uint64_t *totalSize_out); /* all blobs */
+iBlock *            load_Storage        (iStorage *, const iString *fingerprint,
+                                         enum iStorageBlob,
+                                         uint64_t *generation_out); /* NULL if no data */
+enum iStoreResult   store_Storage       (iStorage *, const iString *fingerprint,
+                                         enum iStorageBlob, uint64_t baseGeneration,
+                                         const iBlock *data, uint64_t *newGeneration_out);

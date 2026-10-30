@@ -1,0 +1,356 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "lagrange/visited.h"
+#include "lagrange/core.h"
+#include "lagrange/gmutil.h"
+#include "lagrange/listfile.h"
+
+#include <the_Foundation/buffer.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/mutex.h>
+#include <the_Foundation/path.h>
+#include <the_Foundation/ptrarray.h>
+#include <the_Foundation/sortedarray.h>
+
+const int maxAge_Visited          = 6 * 3600 * 24 * 30; /* six months */
+const int maxTransientAge_Visited = 7 * 3600 * 24;
+
+static const char *fileName_Visited_    = "visited.lst";
+static const char *oldFileName_Visited_ = "visited.2.txt";
+
+iBool isTransientOnly_VisitedUrlFlags(uint16_t flags) {
+    const uint16_t mask =
+        transient_VisitedUrlFlag | kept_VisitedUrlFlag | markedAsRead_VisitedUrlFlag;
+    return (flags & mask) == transient_VisitedUrlFlag;
+}
+
+void init_VisitedUrl(iVisitedUrl *d) {
+    initCurrent_Time(&d->when);
+    init_String(&d->url);
+    d->flags = 0;
+}
+
+void deinit_VisitedUrl(iVisitedUrl *d) {
+    deinit_String(&d->url);
+}
+
+static int cmpUrl_VisitedUrl_(const void *a, const void *b) {
+    return cmpString_String(&((const iVisitedUrl *) a)->url, &((const iVisitedUrl *) b)->url);
+}
+
+static int cmpNewer_VisitedUrl_(const void *insert, const void *existing) {
+    return seconds_Time(&((const iVisitedUrl *) insert  )->when) >=
+           seconds_Time(&((const iVisitedUrl *) existing)->when);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_Visited {
+    iMutex *mtx;
+    iSortedArray visited;
+};
+
+iDefineTypeConstruction(Visited)
+
+void init_Visited(iVisited *d) {
+    d->mtx = new_Mutex();
+    init_SortedArray(&d->visited, sizeof(iVisitedUrl), cmpUrl_VisitedUrl_);
+}
+
+void deinit_Visited(iVisited *d) {
+    iGuardMutex(d->mtx, {
+        clear_Visited(d);
+        deinit_SortedArray(&d->visited);
+    });
+    delete_Mutex(d->mtx);
+}
+
+void serialize_Visited(const iVisited *d, iStream *out) {
+    iString *line = new_String();
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->visited.values) {
+        const iVisitedUrl *item = i.value;
+        if (startsWithCase_String(&item->url, "data:")) {
+            continue;
+        }
+        format_String(line,
+                      "%llu %04x %s\n",
+                      (unsigned long long) integralSeconds_Time(&item->when),
+                      item->flags,
+                      cstr_String(&item->url));
+        writeData_Stream(out, cstr_String(line), size_String(line));
+    }
+    unlock_Mutex(d->mtx);
+    delete_String(line);
+}
+
+void save_Visited(const iVisited *d, const char *dirPath) {
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    serialize_Visited(d, stream_Buffer(buf));
+    save_ListFile(concatPath_CStr(dirPath, fileName_Visited_), data_Buffer(buf));
+    iRelease(buf);
+}
+
+void deserialize_Visited(iVisited *d, iStream *ins, iBool mergeKeepingLatest) {
+    const iRangecc src  = range_Block(collect_Block(readAll_Stream(ins)));
+    iRangecc       line = iNullRange;
+    iTime          now;
+    initCurrent_Time(&now);
+    lock_Mutex(d->mtx);
+    while (nextLine_ListFile(src, &line)) {
+        if (size_Range(&line) < 8) continue;
+        char *endp = NULL;
+        const unsigned long long ts = strtoull(line.start, &endp, 10);
+        if (ts == 0) break;
+        const uint32_t flags = (uint32_t) strtoul(skipSpace_CStr(endp), &endp, 16);
+        const char *urlStart = skipSpace_CStr(endp);
+        iVisitedUrl item;
+        item.when.ts = (struct timespec){ .tv_sec = ts };
+        if (~flags & kept_VisitedUrlFlag) {
+            const double age = secondsSince_Time(&now, &item.when);
+            if (age > maxAge_Visited ||
+                (isTransientOnly_VisitedUrlFlags(flags) && age > maxTransientAge_Visited)) {
+                continue; /* Too old. */
+            }
+        }
+        item.flags = flags;
+        initRange_String(&item.url, (iRangecc){ urlStart, line.end });
+        set_String(&item.url, &item.url);
+        if (mergeKeepingLatest) {
+            /* Check if we already have this. */
+            size_t existingPos;
+            if (locate_SortedArray(&d->visited, &item, &existingPos)) {
+                iVisitedUrl *existing = at_SortedArray(&d->visited, existingPos);
+                max_Time(&existing->when, &item.when);
+                existing->flags = item.flags;
+                continue;
+            }
+        }
+        insert_SortedArray(&d->visited, &item);
+    }
+    unlock_Mutex(d->mtx);
+}
+
+void load_Visited(iVisited *d, const char *dirPath) {
+    iFile *f = newCStr_File(migrate_ListFile(dirPath, fileName_Visited_, oldFileName_Visited_));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        deserialize_Visited(d, stream_File(f), iFalse /* no merge */);
+    }
+    iRelease(f);
+}
+
+void clear_Visited(iVisited *d) {
+    lock_Mutex(d->mtx);
+    iForEach(Array, v, &d->visited.values) {
+        deinit_VisitedUrl(v.value);
+    }
+    clear_SortedArray(&d->visited);
+    unlock_Mutex(d->mtx);
+    notifyUserDataChanged_Core(visited_UserDataType);
+}
+
+static size_t find_Visited_(const iVisited *d, const iString *url) {
+    iVisitedUrl visit;
+    init_VisitedUrl(&visit);
+    set_String(&visit.url, url);
+    size_t pos = iInvalidPos;
+    iGuardMutex(d->mtx, {
+        locate_SortedArray(&d->visited, &visit, &pos);
+        deinit_VisitedUrl(&visit);
+    });
+    return pos;
+}
+
+void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
+    iTime when;
+    initCurrent_Time(&when);
+    visitUrlTime_Visited(d, url, visitFlags, when);
+}
+
+static void visit_Visited_(iVisited *d, const iString *url, uint16_t visitFlags, iTime when,
+                           iBool notify) {
+    if (isEmpty_String(url)) return;
+    url = canonicalUrl_String(urlDefaultPortStripped_String(url));
+    iVisitedUrl visit;
+    init_VisitedUrl(&visit);
+    visit.when = when;
+    visit.flags = visitFlags;
+    set_String(&visit.url, url);
+    size_t pos;
+    lock_Mutex(d->mtx);
+    if (locate_SortedArray(&d->visited, &visit, &pos)) {
+        iVisitedUrl *old = at_SortedArray(&d->visited, pos);
+        /* Must continue to be kept and marked. */
+        visitFlags |= old->flags & (kept_VisitedUrlFlag | markedAsRead_VisitedUrlFlag);
+        if (cmpNewer_VisitedUrl_(&visit, old)) {
+            old->when = visit.when;
+            old->flags = visitFlags;
+            unlock_Mutex(d->mtx);
+            deinit_VisitedUrl(&visit);
+            if (notify) {
+                notifyUserDataChanged_Core(visited_UserDataType);
+                notifyVisitedUrlChanged_Core(url, iFalse);
+            }
+            return;
+        }
+    }
+    insert_SortedArray(&d->visited, &visit);
+    unlock_Mutex(d->mtx);
+    if (notify) {
+        notifyUserDataChanged_Core(visited_UserDataType);
+        notifyVisitedUrlChanged_Core(url, iFalse);
+    }
+}
+
+void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, iTime when) {
+    visit_Visited_(d, url, visitFlags, when, iTrue);
+}
+
+void visitUrlsTime_Visited(iVisited *d, const iStringArray *urls, uint16_t visitFlags,
+                           iTime when) {
+    if (isEmpty_StringArray(urls)) return;
+    iConstForEach(StringArray, i, urls) {
+        visit_Visited_(d, i.value, visitFlags, when, iFalse);
+    }
+    notifyUserDataChanged_Core(visited_UserDataType);
+}
+
+void setUrlKept_Visited(iVisited *d, const iString *url, iBool isKept) {
+    if (isEmpty_String(url)) return;
+    iVisitedUrl visit;
+    init_VisitedUrl(&visit);
+    set_String(&visit.url, canonicalUrl_String(url));
+    size_t pos;
+    lock_Mutex(d->mtx);
+    if (locate_SortedArray(&d->visited, &visit, &pos)) {
+        iVisitedUrl *vis = at_SortedArray(&d->visited, pos);
+        iChangeFlags(vis->flags, kept_VisitedUrlFlag, isKept);
+    }
+    unlock_Mutex(d->mtx);
+    deinit_VisitedUrl(&visit);
+    notifyUserDataChanged_Core(visited_UserDataType);
+}
+
+void removeUrl_Visited(iVisited *d, const iString *url) {
+    url = canonicalUrl_String(url);
+    iBool removed = iFalse;
+    iGuardMutex(d->mtx, {
+        size_t pos = find_Visited_(d, url);
+        if (pos < size_SortedArray(&d->visited)) {
+            iVisitedUrl *visUrl = at_SortedArray(&d->visited, pos);
+            if (equal_String(&visUrl->url, url)) {
+                deinit_VisitedUrl(visUrl);
+                remove_Array(&d->visited.values, pos);
+                removed = iTrue;
+            }
+        }
+    });
+    notifyUserDataChanged_Core(visited_UserDataType);
+    if (removed) {
+        notifyVisitedUrlChanged_Core(url, iTrue);
+    }
+}
+
+iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
+    iVisitedUrl item;
+    size_t pos;
+    iZap(item);
+    initCopy_String(&item.url, canonicalUrl_String(url));
+    lock_Mutex(d->mtx);
+    if (locate_SortedArray(&d->visited, &item, &pos)) {
+        item.when = ((const iVisitedUrl *) constAt_SortedArray(&d->visited, pos))->when;
+    }
+    unlock_Mutex(d->mtx);
+    deinit_String(&item.url);
+    return item.when;
+}
+
+uint16_t urlVisitFlags_Visited(const iVisited *d, const iString *url) {
+    iVisitedUrl item;
+    size_t pos;
+    uint16_t flags = 0;
+    iZap(item);
+    initCopy_String(&item.url, canonicalUrl_String(url));
+    lock_Mutex(d->mtx);
+    if (locate_SortedArray(&d->visited, &item, &pos)) {
+        flags = ((const iVisitedUrl *) constAt_SortedArray(&d->visited, pos))->flags;
+    }
+    unlock_Mutex(d->mtx);
+    deinit_String(&item.url);
+    return flags;
+}
+
+iBool containsUrl_Visited(const iVisited *d, const iString *url) {
+    const iTime time = urlVisitTime_Visited(d, url);
+    return isValid_Time(&time);
+}
+
+static int cmpWhenDescending_VisitedUrlPtr_(const void *a, const void *b) {
+    const iVisitedUrl *s = *(const void **) a, *t = *(const void **) b;
+    return -cmp_Time(&s->when, &t->when);
+}
+
+static const iPtrArray *list_Visited_(const iVisited *d, size_t count, const char *prefix,
+                                      int (*sortFunc)(const void *, const void *)) {
+    iPtrArray *urls = collectNew_PtrArray();
+    iGuardMutex(d->mtx, {
+        iConstForEach(Array, i, &d->visited.values) {
+            const iVisitedUrl *vis = i.value;
+            if (prefix && !startsWith_String(&vis->url, prefix)) {
+                continue;
+            }
+            if (~vis->flags & transient_VisitedUrlFlag) {
+                pushBack_PtrArray(urls, vis);
+            }
+        }
+    });
+    if (sortFunc) {
+        sort_Array(urls, sortFunc);
+    }
+    if (count > 0 && size_Array(urls) > count) {
+        resize_Array(urls, count);
+    }
+    return urls;
+}
+
+const iPtrArray *listMatching_Visited(const iVisited *d, const char *prefix) {
+    return list_Visited_(d, 0, prefix, NULL /* not sorted */);
+}
+
+const iPtrArray *list_Visited(const iVisited *d, size_t count) {
+    return list_Visited_(d, count, NULL, cmpWhenDescending_VisitedUrlPtr_);
+}
+
+const iPtrArray *listKept_Visited(const iVisited *d) {
+    iPtrArray *urls = collectNew_PtrArray();
+    iGuardMutex(d->mtx, {
+        iConstForEach(Array, i, &d->visited.values) {
+            const iVisitedUrl *vis = i.value;
+            if (vis->flags & kept_VisitedUrlFlag) {
+                pushBack_PtrArray(urls, vis);
+            }
+        }
+    });
+    return urls;
+}

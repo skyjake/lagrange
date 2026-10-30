@@ -2,9 +2,10 @@ message (STATUS "iOS dependency directory: ${IOS_DIR}")
 
 find_package (the_Foundation REQUIRED)
 
-set (SDL2_INCLUDE_DIRS ${IOS_DIR}/include/SDL2)
-set (SDL2_LDFLAGS
-    ${IOS_DIR}/SDL2.framework/SDL2
+set (SDL3_FOUND YES)
+set (SDL3_INCLUDE_DIRS ${IOS_DIR}/include/SDL3)
+set (SDL3_LDFLAGS
+    ${IOS_DIR}/SDL3.framework/SDL3
     "-framework AudioToolbox"
     "-framework AVFoundation"
     "-framework AVFAudio"
@@ -21,7 +22,21 @@ set (SDL2_LDFLAGS
     "-framework UIKit"
 )
 
-pkg_check_modules (WEBP IMPORTED_TARGET libwebpdecoder)
+if (EXISTS ${IOS_DIR}/lib/libwebpdecoder.a)
+    set (WEBP_FOUND YES)
+    set (WEBP_INCLUDE_DIRS ${IOS_DIR}/include)
+    set (WEBP_LIBRARIES ${IOS_DIR}/lib/libwebpdecoder.a)
+endif ()
+
+if (EXISTS ${IOS_DIR}/lib/libjxl.a)
+    set (JXL_FOUND YES)
+    set (JXL_INCLUDE_DIRS ${IOS_DIR}/include)
+    set (JXL_LIBRARIES)
+    foreach (lib jxl jxl_threads jxl_cms hwy brotlienc brotlidec brotlicommon)
+        list (APPEND JXL_LIBRARIES ${IOS_DIR}/lib/lib${lib}.a)
+    endforeach ()
+    list (APPEND JXL_LIBRARIES c++)
+endif ()
 
 set (FRIBIDI_FOUND YES)
 set (FRIBIDI_LDFLAGS ${IOS_DIR}/lib/libfribidi.a)

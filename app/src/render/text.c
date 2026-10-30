@@ -1,0 +1,614 @@
+/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "text.h"
+#include "color.h"
+#include "paint.h"
+#include "../fontpack.h"
+#include "../app.h"
+
+#include <the_Foundation/array.h>
+#include <the_Foundation/ptrarray.h>
+#include <the_Foundation/regexp.h>
+#include <lagrange/defs.h>
+#include <lagrange/prefs.h>
+#include <SDL3/SDL_hints.h>
+
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+#   include "../platform/freetype_fontcache.h"
+#endif
+
+static iText *current_Text_;
+
+int   gap_Text;                           /* cf. gap_UI in metrics.h */
+
+void init_Text(iText *d, SDL_Renderer *render, float documentFontSizeFactor) {
+    d->render          = render;
+    d->contentFontSize = contentScale_Text * documentFontSizeFactor;
+    d->gap             = gap_Text;
+    d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC prefix */);
+    d->baseFontId      = -1;
+    d->baseFgColorId   = -1;
+    d->disableColorEmoji = iFalse;
+}
+
+void deinit_Text(iText *d) {
+    d->render = NULL;
+    iRelease(d->ansiEscape);
+}
+
+void setCurrent_Text(iText *d) {
+    current_Text_ = d;
+    if (d) {
+        gap_Text = d->gap;
+    }
+}
+
+iText *current_Text(void) {
+    return current_Text_;
+}
+
+void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
+    fontSizeFactor *= contentScale_Text;
+    iAssert(fontSizeFactor > 0);
+    if (iAbs(d->contentFontSize - fontSizeFactor) > 0.001f) {
+        d->contentFontSize = fontSizeFactor;
+        resetFonts_Text(d);
+    }
+}
+
+void setBaseAttributes_Text(int fontId, int fgColorId) {
+    iText *d = current_Text_;
+    d->baseFontId    = fontId;
+    d->baseFgColorId = fgColorId;
+}
+
+void setAnsiFlags_Text(int ansiFlags) {
+    current_Text_->ansiFlags = ansiFlags;
+}
+
+void setDisableColorEmoji_Text(iBool disable) {
+    current_Text_->disableColorEmoji = disable;
+}
+
+iBool isColorEmojiDisabled_Text(void) {
+    return current_Text_->disableColorEmoji;
+}
+
+int ansiFlags_Text(void) {
+    return current_Text_->ansiFlags;
+}
+
+iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
+    const char *pattern = "\x1b[[\\(\\)][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])";
+    if (!includeEscChar) {
+        pattern++;
+    }
+    return new_RegExp(pattern, 0);
+}
+
+static iBool isEmojiSequenceBase_(iChar c) {
+    return (c >= 0x2190 && c <= 0x2bff) || (c >= 0x1f000 && c <= 0x1faff) || c == 0xa9 ||
+           c == 0xae || c == 0x203c || c == 0x2049 || c == 0x2122 || c == 0x2139 ||
+           c == 0x3030 || c == 0x303d || c == 0x3297 || c == 0x3299;
+}
+
+size_t emojiSequenceLength_Char(const iChar *chars, size_t len) {
+    if (len < 2) {
+        return 0;
+    }
+    const iChar first = chars[0];
+    if (isRegionalIndicator_Char(first)) {
+        return isRegionalIndicator_Char(chars[1]) ? 2 : 0;
+    }
+    if ((first >= '0' && first <= '9') || first == '#' || first == '*') {
+        const size_t n = (chars[1] == 0xfe0f ? 2 : 1);
+        return n < len && chars[n] == 0x20e3 ? n + 1 : 0;
+    }
+    if (!isEmojiSequenceBase_(first)) {
+        return 0;
+    }
+    iBool  isSequence = iFalse;
+    size_t n          = 1;
+    for (;;) {
+        /* Skin tones, variation selectors, and tags extend the current element. */
+        for (; n < len; n++) {
+            const iChar c = chars[n];
+            if (isFitzpatrickType_Char(c) || (c >= 0xe0020 && c <= 0xe007f)) {
+                isSequence = iTrue;
+            }
+            else if (!isVariationSelector_Char(c)) {
+                break;
+            }
+        }
+        if (n + 1 < len && chars[n] == 0x200d && isEmojiSequenceBase_(chars[n + 1])) {
+            isSequence = iTrue;
+            n += 2;
+            continue;
+        }
+        return isSequence ? n : 0;
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static int cmp_PrioMapItem_(const void *a, const void *b) {
+    const iPrioMapItem *i = a, *j = b;
+    return -iCmp(i->priority, j->priority); /* descending */
+}
+
+static const iFontSpec *tryFindSpec_(const iString *name, const char *fallback) {
+    const iFontSpec *spec = findSpec_Fonts(cstr_String(name));
+    return spec ? spec : findSpec_Fonts(fallback);
+}
+
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+/* Well-known color Emoji font names, in preference order; see findColorEmojiSpec_(). */
+static const char *colorEmojiNames_[] = {
+    "Noto Color Emoji", "Twemoji Mozilla", "Segoe UI Emoji",
+    "JoyPixels", "OpenMoji Color", "Blobmoji", NULL
+};
+
+static iBool hasColorGlyphs_FontSpec_(const iFontSpec *spec) {
+    const iFontFile *file = spec->styles[regular_FontStyle];
+    return file && hasColorGlyphs_FontFile(file);
+}
+
+static const iFontSpec *findColorEmojiSpec_(const iPtrArray *systemEmoji) {
+    iConstForEach(PtrArray, u, listSpecsByPriority_Fonts()) {
+        if (((const iFontSpec *) u.ptr)->flags & user_FontSpecFlag &&
+            hasColorGlyphs_FontSpec_(u.ptr)) {
+            return u.ptr;
+        }
+    }
+    iConstForEach(PtrArray, e, systemEmoji) {
+        if (hasColorGlyphs_FontSpec_(e.ptr)) {
+            return e.ptr;
+        }
+    }
+    for (size_t k = 0; colorEmojiNames_[k]; k++) {
+        iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
+            const iFontSpec *spec = i.ptr;
+            if (!cmpCase_String(&spec->name, colorEmojiNames_[k]) &&
+                hasColorGlyphs_FontSpec_(spec)) {
+                return spec;
+            }
+        }
+    }
+    /* No well-known name matched; fall back to any font with color glyphs. */
+    iConstForEach(PtrArray, i, listSpecsByPriority_Fonts()) {
+        if (hasColorGlyphs_FontSpec_(i.ptr)) {
+            return i.ptr;
+        }
+    }
+    return NULL;
+}
+#endif
+
+void initFonts_Text(iText *d, iArray *fontPriorityOrder, int *overrideFontId,
+                    iFontSpec *monoFallback, int *colorEmojiFontId, iFontSpec *colorEmojiSpec,
+                    iArray *systemFallbacks, const iFontInitCallbacks *cb) {
+    const float uiSize   = fontSize_UI * (isMobile_Platform() ? 1.1f : 1.0f);
+    const float textSize = fontSize_UI * d->contentFontSize;
+    *overrideFontId = -1;
+    if (colorEmojiFontId) {
+        *colorEmojiFontId = -1;
+    }
+    clear_Array(fontPriorityOrder);
+    const iDocPrefs *docPrefs = activeDocPrefs_App(); /* of the current window */
+    /* Mandatory fonts (must match the fixed slot IDs in font.h). */
+    cb->setupSpec(d, tryFindSpec_(&prefs_App()->strings[uiFont_PrefsString], "default"),      default_FontId,           uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->monospaceFont,         "iosevka"),      monospace_FontId,         uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->headingFont,           "default"),      documentHeading_FontId,   uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->bodyFont,              "default"),      documentBody_FontId,      uiSize, textSize);
+    cb->setupSpec(d, tryFindSpec_(docPrefs->monospaceDocumentFont, "iosevka-body"), documentMonospace_FontId, uiSize, textSize);
+    const iFontSpec *colorEmoji = NULL;
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+    iPtrArray systemEmoji;
+    init_PtrArray(&systemEmoji);
+    systemEmojiSpecs_FtFontCache(&systemEmoji);
+    if (colorEmojiFontId && colorEmojiSpec && prefs_App()->colorEmoji) {
+        colorEmoji = findColorEmojiSpec_(&systemEmoji);
+    }
+#endif
+    /* Auxiliary and user-installed fonts. The color Emoji font is set up separately. */
+    iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
+        const iFontSpec *spec = s.ptr;
+        if (spec != colorEmoji && spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
+            cb->setupSpec(d, spec, cb->alloc(d), uiSize, textSize);
+        }
+    }
+    /* Iosevka as a low-priority fallback if not already the monospace font. */
+    const iFontSpec *iosevka = findSpec_Fonts("iosevka");
+    if (iosevka && !cb->hasSpec(d, iosevka)) {
+        *monoFallback          = *iosevka;
+        monoFallback->priority = 20;
+        cb->setupSpec(d, monoFallback, cb->alloc(d), uiSize, textSize);
+    }
+#if defined (LAGRANGE_ENABLE_FREETYPE)
+    /* An installed color Emoji font (e.g. Noto Color Emoji) is preferred in glyph lookup
+       over the bundled monochrome fonts. */
+    if (colorEmoji && !cb->hasSpec(d, colorEmoji)) {
+        /* Local copy tagged auxiliary so a trailing space/punctuation isn't measured
+           with this font's metrics (attributedtext.c resets such runs to the base font). */
+        *colorEmojiSpec = *colorEmoji;
+        colorEmojiSpec->flags |= auxiliary_FontSpecFlag;
+        *colorEmojiFontId = cb->alloc(d);
+        cb->setupSpec(d, colorEmojiSpec, *colorEmojiFontId, uiSize, textSize);
+#if !defined (NDEBUG)
+        printf("[Text] Color Emoji font: %s\n", cstr_String(&colorEmoji->name));
+#endif
+    }
+    if (systemFallbacks) {
+        clear_Array(systemFallbacks);
+        /* Supplementary color Emoji fonts (e.g., Android's flags) come before all other
+           fallbacks, for sequences missing from the main color Emoji font. */
+        if (colorEmojiFontId && *colorEmojiFontId >= 0) {
+            iConstForEach(PtrArray, e, &systemEmoji) {
+                const iFontSpec *spec = e.ptr;
+                if (equal_String(&spec->id, &colorEmojiSpec->id) ||
+                    !hasColorGlyphs_FontSpec_(spec) || cb->hasSpec(d, spec)) continue;
+                iFontSpec copy = *spec;
+                copy.flags   |= auxiliary_FontSpecFlag;
+                copy.priority = 1000 - (int) size_Array(systemFallbacks);
+                pushBack_Array(systemFallbacks, &copy);
+            }
+        }
+        /* System fonts are the last resort for missing glyphs. The copies have the lowest
+           priorities, in the system's order of preference. */
+        iPtrArray specs;
+        init_PtrArray(&specs);
+        systemFallbackSpecs_FtFontCache(&specs);
+        iConstForEach(PtrArray, i, &specs) {
+            const iFontSpec *spec = i.ptr;
+            if (spec->flags & ignoreAsFallback_FontSpecFlag || cb->hasSpec(d, spec)) continue;
+            iFontSpec copy = *spec;
+            copy.flags   |= auxiliary_FontSpecFlag;
+            copy.priority = -1000 - (int) size_Array(systemFallbacks);
+            pushBack_Array(systemFallbacks, &copy);
+        }
+        deinit_PtrArray(&specs);
+        /* Set up only after all copies are in place, so they won't move in memory. */
+        iForEach(Array, f, systemFallbacks) {
+            cb->setupSpec(d, f.value, cb->alloc(d), uiSize, textSize);
+        }
+    }
+    deinit_PtrArray(&systemEmoji);
+#else
+    iUnused(systemFallbacks);
+#endif
+    sort_Array(fontPriorityOrder, cmp_PrioMapItem_);
+    d->gap = gap_Text = iRound(gap_UI * d->contentFontSize);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+int lineHeight_Text(int fontId) {
+    return font_Text(fontId)->height;
+}
+
+int ascent_Text(int fontId) {
+    return font_Text(fontId)->baseline;
+}
+
+iTextMetrics measureRange_Text(int fontId, iRangecc text) {
+    if (isEmpty_Range(&text)) {
+        return (iTextMetrics){ init_Rect(0, 0, 0, lineHeight_Text(fontId)), zero_I2() };
+    }
+    iTextMetrics tm;
+    run_Font(font_Text(fontId),
+             &(iRunArgs){ .mode = measure_RunMode, .text = text, .metrics_out = &tm });
+    return tm;
+}
+
+iRect visualBounds_Text(int fontId, iRangecc text) {
+    iTextMetrics tm;
+    run_Font(font_Text(fontId),
+             &(iRunArgs){
+                 .mode = measure_RunMode | visualFlag_RunMode, .text = text, .metrics_out = &tm });
+    return tm.bounds;
+}
+
+int runFlags_FontId(enum iFontId fontId) {
+    int runFlags = 0;
+    if (fontId & alwaysVariableFlag_FontId) {
+        runFlags |= alwaysVariableWidthFlag_RunMode;
+    }
+    return runFlags;
+}
+
+static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, iTextAttrib attrib, int origin,
+                               int advance) {
+    iUnused(attrib, origin, advance);
+    *((const char **) d->context) = range.end;
+    return iFalse; /* just one line */
+}
+
+iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    *endPos = text.end;
+    iWrapText wrap = { .mode     = word_WrapTextMode,
+                       .text     = text,
+                       .maxWidth = width,
+                       .wrapFunc = cbAdvanceOneLine_,
+                       .context  = endPos };
+    /* The return value is expected to be the horizontal/vertical bounds. */
+    return measure_WrapText(&wrap, fontId).bounds.size;
+}
+
+iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    if (width && width <= 1) {
+        *endPos = text.start;
+        return zero_I2();
+    }
+    *endPos = text.end;
+    /* "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
+    iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
+                       .text     = text,
+                       .maxWidth = width,
+                       .wrapFunc = cbAdvanceOneLine_,
+                       .context  = endPos };
+    iTextMetrics tm = measure_WrapText(&wrap, fontId);
+    return init_I2(maxWidth_TextMetrics(tm), tm.bounds.size.y);
+}
+
+iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
+    if (n == 0) {
+        return (iTextMetrics){ init_Rect(0, 0, 0, lineHeight_Text(fontId)),
+                               zero_I2() };
+    }
+    iTextMetrics tm;
+    run_Font(font_Text(fontId),
+             &(iRunArgs){ .mode        = measure_RunMode | runFlags_FontId(fontId),
+                          .text        = range_CStr(text),
+                          .maxLen      = n,
+                          .metrics_out = &tm });
+    return tm;
+}
+
+static void drawBoundedN_Text_(int fontId, iInt2 pos, int boundWidth, iBool justify,
+                               int color, iRangecc text, size_t maxLen) {
+    run_Font(font_Text(fontId),
+              &(iRunArgs){ .mode = draw_RunMode |
+                                   (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                   (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
+                                   (color & underline_ColorId ? underline_RunMode : 0) |
+                                   runFlags_FontId(fontId),
+                           .text        = text,
+                           .maxLen      = maxLen,
+                           .pos         = pos,
+                           .layoutBound = iAbs(boundWidth),
+                           .justify     = justify,
+                           .color       = color & mask_ColorId,
+                           .baseDir     = iSign(boundWidth) });
+}
+
+static void drawBounded_Text_(int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text) {
+    drawBoundedN_Text_(fontId, pos, boundWidth, justify, color, text, 0);
+}
+
+static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
+    drawBounded_Text_(fontId, pos, 0, iFalse, color, text);
+}
+
+void drawAlign_Text(int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, text);
+        vprintf_Block(&chars, text, args);
+        va_end(args);
+    }
+    if (align == center_Alignment) {
+        pos.x -= measure_Text(fontId, cstr_Block(&chars)).bounds.size.x / 2;
+    }
+    else if (align == right_Alignment) {
+        pos.x -= measure_Text(fontId, cstr_Block(&chars)).bounds.size.x;
+    }
+    draw_Text_(fontId, pos, color, range_Block(&chars));
+    deinit_Block(&chars);
+}
+
+void draw_Text(int fontId, iInt2 pos, int color, const char *text, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, text);
+        vprintf_Block(&chars, text, args);
+        va_end(args);
+    }
+    draw_Text_(fontId, pos, color, range_Block(&chars));
+    deinit_Block(&chars);
+}
+
+void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
+    draw_Text_(fontId, pos, color, range_String(text));
+}
+
+void drawRange_Text(int fontId, iInt2 pos, int color, iRangecc text) {
+    draw_Text_(fontId, pos, color, text);
+}
+
+void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t maxChars) {
+    drawBoundedN_Text_(fontId, pos, 0, iFalse, color, text, maxChars);
+}
+
+iTextMetrics measureWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
+    iWrapText wrap = { .text = text, .maxWidth = maxWidth, .mode = word_WrapTextMode };
+    return measure_WrapText(&wrap, fontId);
+}
+
+void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text) {
+    /* This function is used together with text that has already been wrapped, so we'll know
+       the bound width but don't have to re-wrap the text. */
+    drawBounded_Text_(fontId, pos, boundWidth, justify, color, text);
+}
+
+static void drawTruncatedLine_Text_(int fontId, iInt2 pos, int maxWidth, int color, iRangecc line) {
+    const char *endPos;
+    tryAdvanceNoWrap_Text(fontId, line, maxWidth, &endPos);
+    if (endPos == line.end) {
+        drawRange_Text(fontId, pos, color, line);
+        return;
+    }
+    tryAdvanceNoWrap_Text(fontId, line, maxWidth - measure_Text(fontId, "…").advance.x, &endPos);
+    iRangecc visible = { line.start, endPos };
+    trimEnd_Rangecc(&visible);
+    iString str;
+    initRange_String(&str, visible);
+    appendCStr_String(&str, "…");
+    drawRange_Text(fontId, pos, color, range_String(&str));
+    deinit_String(&str);
+}
+
+void drawTruncatedRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
+    /* Each line is truncated separately. */
+    iRangecc line = iNullRange;
+    while (nextSplit_Rangecc(text, "\n", &line)) {
+        drawTruncatedLine_Text_(fontId, pos, maxWidth, color, line);
+        pos.y += lineHeight_Text(fontId);
+    }
+}
+
+int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
+    /* TODO: Use WrapText here, too */
+    const char *endp;
+    while (!isEmpty_Range(&text)) {
+        iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
+        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
+        if (text.start == endp) {
+            adv = tryAdvanceNoWrap_Text(fontId, text, maxWidth, &endp);
+            if (text.start == endp) {
+                break; /* let's not get stuck */
+            }
+        }
+        text.start = endp;
+        pos.y += iMax(adv.y, lineHeight_Text(fontId));
+    }
+    return pos.y;
+}
+
+void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, const char *format, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, format);
+        vprintf_Block(&chars, format, args);
+        va_end(args);
+    }
+    drawCenteredRange_Text(fontId, rect, alignVisual, color, range_Block(&chars));
+    deinit_Block(&chars);
+}
+
+#if 0
+void drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor,
+                              int fillColor, const char *format, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, format);
+        vprintf_Block(&chars, format, args);
+        va_end(args);
+    }
+    if (outlineColor != none_ColorId) {
+        for (int off = 0; off < 4; ++off) {
+            drawCenteredRange_Text(
+                fontId,
+                moved_Rect(rect, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                alignVisual,
+                outlineColor,
+                range_Block(&chars));
+        }
+    }
+    if (fillColor != none_ColorId) {
+        drawCenteredRange_Text(fontId, rect, alignVisual, fillColor, range_Block(&chars));
+    }
+    deinit_Block(&chars);
+}
+#endif
+
+void drawCenteredRange_Text(int fontId, iRect rect, iBool alignVisual, int color, iRangecc text) {
+    iRect textBounds = alignVisual ? visualBounds_Text(fontId, text)
+                                   : measureRange_Text(fontId, text).bounds;
+    textBounds.pos = sub_I2(mid_Rect(rect), mid_Rect(textBounds));
+    textBounds.pos.x = iMax(textBounds.pos.x, left_Rect(rect)); /* keep left edge visible */
+    draw_Text_(fontId, textBounds.pos, color, text);
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+iDefineTypeConstructionArgs(TextBuf, (iWrapText *wrapText, int font, int color), wrapText, font, color)
+
+void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
+    SDL_Renderer *render = current_Text()->render;
+    d->size = measure_WrapText(wrapText, font).bounds.size;
+    if (d->size.x * d->size.y) {
+        d->texture = SDL_CreateTexture(render,
+                                       SDL_PIXELFORMAT_ARGB8888,
+                                       SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                       d->size.x,
+                                       d->size.y);
+        SDL_SetTextureScaleMode(d->texture, SDL_SCALEMODE_NEAREST);
+    }
+    else {
+        d->texture = NULL;
+    }
+    if (d->texture) {
+        SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
+        const iInt2 oldOrigin = origin_Paint;
+        origin_Paint = zero_I2();
+        setBaseAttributes_Text(font, color);
+        SDL_SetRenderTarget(render, d->texture);
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+        /* Glyphs are composited as premultiplied color. */
+        const SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND_PREMULTIPLIED;
+        SDL_SetRenderDrawColor(render, 0, 0, 0, 0);
+#else
+        const SDL_BlendMode blendMode = SDL_BLENDMODE_BLEND;
+        SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
+#endif
+        SDL_RenderClear(render);
+        draw_WrapText(wrapText, font, zero_I2(), color | fillBackground_ColorId);
+        SDL_SetRenderTarget(render, oldTarget);
+        origin_Paint = oldOrigin;
+        SDL_SetTextureBlendMode(d->texture, blendMode);
+        setBaseAttributes_Text(-1, -1);
+    }
+}
+
+void deinit_TextBuf(iTextBuf *d) {
+    SDL_DestroyTexture(d->texture);
+}
+
+iTextBuf *newRange_TextBuf(int font, int color, iRangecc text) {
+    return new_TextBuf(&(iWrapText){ .text = text }, font, color);
+}
+
+void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {
+    addv_I2(&pos, origin_Paint);
+    const iColor clr = get_Color(color);
+    SDL_SetTextureColorMod(d->texture, clr.r, clr.g, clr.b);
+    SDL_RenderTexture(current_Text()->render,
+                   d->texture,
+                   &(SDL_FRect){ 0, 0, d->size.x, d->size.y },
+                   &(SDL_FRect){ pos.x, pos.y, d->size.x, d->size.y });
+}

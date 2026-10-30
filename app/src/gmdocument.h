@@ -1,0 +1,407 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#pragma once
+
+#include <lagrange/docprefs.h>
+#include "defs.h"
+#include "gmutil.h"
+#include "media/media.h"
+
+#include <the_Foundation/array.h>
+#include <the_Foundation/object.h>
+#include <the_Foundation/rect.h>
+#include <the_Foundation/string.h>
+#include <the_Foundation/time.h>
+
+iLocalDef enum iGmDocumentTheme docTheme_DocPrefs(const iDocPrefs *d, iBool isDark) {
+    if (d->pageView.value) {
+        /* Paginated documents may have themes of their own. */
+        const int pageTheme = isDark ? d->pageThemeDark.value : d->pageThemeLight.value;
+        if (pageTheme != none_GmDocumentTheme) {
+            return pageTheme;
+        }
+    }
+    return isDark ? d->docThemeDark.value : d->docThemeLight.value;
+}
+
+iDeclareType(GmHeading)
+iDeclareType(GmPreMeta)
+iDeclareType(GmRun)
+
+enum iGmLineType {
+    undefined_GmLineType = -1,
+    text_GmLineType = 0,
+    bullet_GmLineType,
+    preformatted_GmLineType,
+    quote_GmLineType,
+    heading1_GmLineType,
+    heading2_GmLineType,
+    heading3_GmLineType,
+    link_GmLineType,
+    max_GmLineType,
+};
+
+enum iGmLineType    lineType_Rangecc   (const iRangecc line);
+void                trimLine_Rangecc   (iRangecc *line, enum iGmLineType type, iBool normalize);
+
+iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
+
+typedef uint16_t iGmLinkId;
+
+enum iGmLinkScheme {
+    gemini_GmLinkScheme = 1,
+    titan_GmLinkScheme,
+    gopher_GmLinkScheme,
+    finger_GmLinkScheme,
+    http_GmLinkScheme,
+    file_GmLinkScheme,
+    data_GmLinkScheme,
+    about_GmLinkScheme,
+    mailto_GmLinkScheme,
+    spartan_GmLinkScheme,
+    nex_GmLinkScheme,
+    misfin_GmLinkScheme,
+    guppy_GmLinkScheme,
+};
+
+enum iGmLinkFlag {
+    supportedScheme_GmLinkFlag    = 0x3f, /* mask of bits 1...6 */
+    remote_GmLinkFlag             = iBit(7),
+    humanReadable_GmLinkFlag      = iBit(8), /* link has a human-readable description */
+    imageFileExtension_GmLinkFlag = iBit(9),
+    audioFileExtension_GmLinkFlag = iBit(10),
+    content_GmLinkFlag            = iBit(11), /* content visible below */
+    visited_GmLinkFlag            = iBit(12), /* in the history */
+    permanent_GmLinkFlag          = iBit(13), /* content cannot be dismissed; media link */
+    query_GmLinkFlag              = iBit(14), /* Gopher/Spartan query link */
+    iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
+    isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
+    fontpackFileExtension_GmLinkFlag = iBit(17),
+    inline_GmLinkFlag             = iBit(18),
+};
+
+iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
+    return flags & supportedScheme_GmLinkFlag;
+}
+
+struct Impl_GmHeading {
+    iRangecc text;
+    int level; /* 0, 1, 2 */
+};
+
+enum iGmRunFlags {
+    decoration_GmRunFlag   = iBit(1), /* not part of the source */
+    startOfLine_GmRunFlag  = iBit(2),
+    endOfLine_GmRunFlag    = iBit(3),
+    notJustified_GmRunFlag = iBit(4),
+    ruler_GmRunFlag        = iBit(5),
+    wide_GmRunFlag         = iBit(6), /* horizontally scrollable */
+    caption_GmRunFlag      = iBit(7),
+    altText_GmRunFlag      = iBit(8), /* preformatted runs only */
+    hyphen_GmRunFlag       = iBit(8), /* other runs: ends in a hyphenation break */
+};
+
+/* This structure is tightly packed because GmDocuments are mostly composed of
+   a large number of GmRuns. */
+struct Impl_GmRun {
+    iRangecc  text;
+    iRect     bounds;    /* used for hit testing, may extend to edges */
+    iRect     visBounds; /* actual visual bounds */
+    struct {
+        uint32_t linkId    : 16; /* GmLinkId; zero for non-links */
+        uint32_t flags     : 8; /* GmRunFlags */
+        uint32_t isRTL     : 1;
+        uint32_t color     : 7; /* see max_ColorId */
+
+        uint32_t font      : 14;
+        uint32_t mediaType : 3; /* note: max_MediaType means preformatted block */
+        uint32_t mediaId   : 11;
+        uint32_t lineType  : 3;
+        uint32_t isLede    : 1;
+    };
+};
+
+iDeclareType(GmRunRange)
+
+struct Impl_GmRunRange {
+    const iGmRun *start;
+    const iGmRun *end;
+};
+
+iDeclareType(GmScrollAnchor)
+
+struct Impl_GmScrollAnchor {
+    size_t pos;   /* source offset of the run at the top of the viewport; none: invalid */
+    float  normY; /* top of the viewport inside the run, normalized to its height */
+};
+
+iLocalDef iBool isMedia_GmRun(const iGmRun *d) {
+    return d->mediaType > 0 && d->mediaType < max_MediaType;
+}
+iLocalDef iMediaId mediaId_GmRun(const iGmRun *d) {
+    if (d->mediaType < max_MediaType) {
+        return (iMediaId){ .type = d->mediaType, .id = d->mediaId };
+    }
+    return iInvalidMediaId;
+}
+iLocalDef uint32_t preId_GmRun(const iGmRun *d) {
+    return d->mediaType == max_MediaType ? d->mediaId : 0;
+}
+iLocalDef iBool isAltText_GmRun(const iGmRun *d) {
+    return d->mediaType == max_MediaType && d->flags & altText_GmRunFlag;
+}
+iLocalDef iBool isHyphenated_GmRun(const iGmRun *d) {
+    return d->mediaType != max_MediaType && d->flags & hyphen_GmRunFlag;
+}
+
+iBool       isJustified_GmRun       (const iGmRun *);
+int         drawBoundWidth_GmRun    (const iGmRun *);
+iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
+
+enum iGmPreMetaFlag {
+    folded_GmPreMetaFlag   = iBit(1),
+    topLeft_GmPreMetaFlag  = iBit(2),
+};
+
+struct Impl_GmPreMeta {
+    iRangecc bounds;   /* including ``` markers */
+    iRangecc altText;  /* range in source */
+    iRangecc contents; /* just the content lines */
+    iGmRunRange runRange;
+    int      flags;
+    /* TODO: refactor old code to incorporate wide scroll handling here */
+    int      initialOffset;
+    iRect    pixelRect;
+};
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareClass(GmDocument)
+iDeclareObjectConstruction(GmDocument)
+
+enum iGmDocumentWarning {
+    ansiEscapes_GmDocumentWarning = iBit(1),
+    missingGlyphs_GmDocumentWarning = iBit(2),
+    unsupportedMediaTypeShownAsUtf8_GmDocumentWarning = iBit(3),
+};
+
+enum iGmDocumentUpdate {
+    partial_GmDocumentUpdate, /* appending more content */
+    final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
+};
+
+enum iGmDocumentMode {
+    normal_GmDocumentMode,
+    coverPage_GmDocumentMode, /* document represents the actual data that cannot be
+                                 directly presented */
+    uiTheme_GmDocumentMode,   /* shown as part of the UI, with UI fonts and colors */
+    uiDialog_GmDocumentMode,  /* like uiTheme, but with the dialog background */
+};
+
+iDeclareType(GmDocumentMetrics)
+iDeclareType(GmBookPosition)
+
+struct Impl_GmDocumentMetrics {
+    int width;             /* layout width */
+    int canvasWidth;       /* width of the view; content may extend past the margins */
+    int maxContentWidth;   /* unwrappable lines may extend up to this */
+    int pageHeight;        /* non-zero for a paginated layout */
+    int columnsPerPage;    /* paginated layout is cut into columns of the page height */
+    int firstPageInset;    /* space reserved at the top of the first page */
+    int lastPageInset;     /* space reserved at the bottom of the last page */
+    int bottomClearance;   /* covered by overlays at the bottom; the last page's footer stays above */
+    int topInset;          /* safe area above the page header */
+    int bottomInset;       /* safe area below the page footer */
+    int singleColumnWidth; /* used when the content fits in the first of two columns */
+    int singleColumnMaxContentWidth;
+};
+
+iBool   equal_GmDocumentMetrics (const iGmDocumentMetrics *, const iGmDocumentMetrics *other);
+
+/* Appending to a document may move the source and the runs in memory. Pointers into them
+   can be rebased by recording the locations before the change. */
+iDeclareType(GmRebase)
+
+struct Impl_GmRebase {
+    iRangecc      oldSource;
+    const char   *newSource;
+    iGmRunRange   oldRuns;
+    const iGmRun *newRuns;     /* new location of the first old run */
+    uint32_t      layoutGen;
+    size_t        layoutInserted;
+    int           layoutShift;
+    size_t        numInserted; /* runs added in front of the old runs */
+    int           dy;          /* vertical offset of the old runs */
+    iBool         isLayoutRedone; /* runs are all new and cannot be rebased */
+};
+
+void    init_GmRebase           (iGmRebase *, const iGmDocument *doc);
+iBool   update_GmRebase         (iGmRebase *, const iGmDocument *doc); /* returns True if moved */
+void    apply_GmRebase          (const iGmRebase *, iRangecc *range);
+void    applyRun_GmRebase       (const iGmRebase *, const iGmRun **run);
+void    applyRunRange_GmRebase  (const iGmRebase *, iGmRunRange *runs);
+
+struct Impl_GmBookPosition {
+    const iString *title;        /* of the book */
+    const iString *chapterTitle; /* level 1 heading in effect where the document begins */
+    const iString *partTitle;    /* level 1 heading, if the chapter title is a lower level one */
+    int            chapter;      /* zero if not a chapter */
+    int            numChapters;
+    iBool          isCover;
+    iBool          isContents;
+    iBool          isOpen;       /* being read, not just previewed */
+};
+
+/* Setup and processing: */
+
+void    setUrl_GmDocument               (iGmDocument *, const iString *url);
+iBool   setSource_GmDocument            (iGmDocument *, const iString *source,
+                                         const iGmDocumentMetrics *metrics,
+                                         enum iGmDocumentUpdate updateType); /* returns True if appended */
+iBool   setViewFormat_GmDocument        (iGmDocument *, enum iSourceFormat viewFormat); /* returns True if changed */
+uint32_t updateDocPrefs_GmDocument      (iGmDocument *); /* resolves again; returns DocPrefsSpecFlags of changes */
+void    setMetrics_GmDocument           (iGmDocument *, const iGmDocumentMetrics *metrics); /* redoes layout */
+iBool   updateMetrics_GmDocument        (iGmDocument *, const iGmDocumentMetrics *metrics); /* returns True if layout redone */
+void    redoLayout_GmDocument           (iGmDocument *);
+void    invalidateLayout_GmDocument     (iGmDocument *); /* will have to be redone later */
+void    setLayoutAnchor_GmDocument      (iGmDocument *, const char *startPos, int startTop,
+                                         const char *pos, int top, int bottom); /* for the next layout */
+void    setLayoutAnchorOffset_GmDocument(iGmDocument *, size_t pos, int top, int bottom);
+iBool   clearLayoutAnchor_GmDocument    (iGmDocument *); /* True if it was not used by a layout */
+iBool   continueLayout_GmDocument       (iGmDocument *, int minHeight, double maxSeconds); /* True if changed */
+iBool   settleLayout_GmDocument         (iGmDocument *); /* lays out the content above; True if changed */
+void    finishLayout_GmDocument         (iGmDocument *); /* lays out all of the received source */
+iBool   updateOpenURLs_GmDocument       (iGmDocument *);
+void    updateVisitedLinks_GmDocument   (iGmDocument *); /* check all links for visited status */
+void    foldPre_GmDocument              (iGmDocument *, uint16_t preId);
+void    invalidatePalette_GmDocument    (iGmDocument *);
+void    makePaletteGlobal_GmDocument    (const iGmDocument *); /* copies document colors to the global palette */
+
+/* Properties: */
+
+void    setMimeType_GmDocument          (iGmDocument *, const iString *mimeType); /* before setting the URL */
+void    setLang_GmDocument              (iGmDocument *, iRangecc langParam);
+void    setFormat_GmDocument            (iGmDocument *, enum iSourceFormat sourceFormat);
+void    setMode_GmDocument              (iGmDocument *, enum iGmDocumentMode mode);
+void    setDocPrefs_GmDocument          (iGmDocument *, const iDocPrefs *pinned); /* not resolved again */
+void    setPageViewInverted_GmDocument  (iGmDocument *, iBool invert); /* applied when resolving prefs */
+void    setThemeSeed_GmDocument         (iGmDocument *,
+                                         const iBlock *paletteSeed,
+                                         const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
+void    setLayoutSyncHeight_GmDocument  (iGmDocument *, int height); /* below it, layout continues in slices; zero: none */
+iBool   setBook_GmDocument              (iGmDocument *, const iGmBookPosition *); /* returns True if changed */
+iBool   setCoverImage_GmDocument        (iGmDocument *, iGmLinkId linkId); /* no link text or image info; returns True if changed */
+void    setWarning_GmDocument           (iGmDocument *, int warning, iBool set);
+
+/* Accessors: */
+
+iMedia *        media_GmDocument            (iGmDocument *);
+const iMedia *  constMedia_GmDocument       (const iGmDocument *);
+const iString * url_GmDocument              (const iGmDocument *);
+const iDocPrefs *docPrefs_GmDocument        (const iGmDocument *);
+const iScopeKey *scopeKey_GmDocument        (const iGmDocument *);
+enum iSourceFormat format_GmDocument        (const iGmDocument *);
+enum iSourceFormat viewFormat_GmDocument    (const iGmDocument *);
+const iString * source_GmDocument           (const iGmDocument *);
+const iString * title_GmDocument            (const iGmDocument *);
+iRangecc        lang_GmDocument             (const iGmDocument *); /* empty if not specified */
+iChar           siteIcon_GmDocument         (const iGmDocument *);
+const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
+iBool           isCoverPage_GmDocument      (const iGmDocument *);
+iBool           isGopherMenu_GmDocument     (const iGmDocument *);
+enum iFontId    font_GmDocument             (const iGmDocument *, enum iGmLineType lineType);
+int             ansiEscapes_GmDocument      (const iGmDocument *);
+int             warnings_GmDocument         (const iGmDocument *);
+size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */
+
+iBool           isLayoutPending_GmDocument      (const iGmDocument *); /* there is more to lay out in slices */
+iBool           isLayoutFinished_GmDocument     (const iGmDocument *); /* all of the source laid out */
+iBool           isLayoutIndeterminate_GmDocument(const iGmDocument *); /* content above not yet known */
+iBool           isLayoutOutdated_GmDocument     (const iGmDocument *); /* invalidated, or made with other fonts */
+const iGmDocumentMetrics *metrics_GmDocument    (const iGmDocument *);
+const iGmDocumentMetrics *requestedMetrics_GmDocument(const iGmDocument *);
+iInt2           size_GmDocument                 (const iGmDocument *);
+int             contentWidth_GmDocument         (const iGmDocument *); /* may exceed the layout width; unwrappable lines */
+iGmRunRange     runRange_GmDocument             (const iGmDocument *);
+
+iBool           isPaged_GmDocument              (const iGmDocument *);
+int             pageHeight_GmDocument           (const iGmDocument *); /* zero if not paginated */
+size_t          numColumns_GmDocument           (const iGmDocument *);
+size_t          columnAt_GmDocument             (const iGmDocument *, int documentY);
+int             columnsPerPage_GmDocument       (const iGmDocument *);
+size_t          numPages_GmDocument             (const iGmDocument *);
+int             pageBandHeight_GmDocument       (const iGmDocument *); /* header and footer text area */
+int             pageBandHeightFor_GmDocument    (const iGmDocument *, int pageHeight); /* not yet paginated */
+int             pageHeaderHeight_GmDocument     (const iGmDocument *);
+iBool           isHeaderBelowCutout_GmDocument  (const iGmDocument *);
+int             pageFooterHeight_GmDocument     (const iGmDocument *);
+iRangei         columnContentRange_GmDocument   (const iGmDocument *, size_t column); /* between header and footer */
+int             lastPageClearance_GmDocument    (const iGmDocument *); /* below the last page's inset */
+int             pageBandFont_GmDocument         (const iGmDocument *);
+iRangecc        pageHeader_GmDocument           (const iGmDocument *, size_t page, iBool isSpread);
+iRangecc        pageFooter_GmDocument           (const iGmDocument *, size_t page);
+int             chapter_GmDocument              (const iGmDocument *, int *numChapters_out); /* zero if none */
+
+typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
+
+void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
+                                             iGmDocumentRenderFunc render, void *); /* includes partial overlaps */
+const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *first, int dir,
+                                             size_t maxCount,
+                                             iRangei visRangeY, iGmDocumentRenderFunc render,
+                                             void *context);
+void            runBaseAttributes_GmDocument(const iGmDocument *, const iGmRun *run,
+                                             int *fontId_out, int *colorId_out);
+
+iRangecc        findText_GmDocument             (const iGmDocument *, const iString *text, const char *start);
+iRangecc        findTextBefore_GmDocument       (const iGmDocument *, const iString *text, const char *before);
+const iGmRun *  findRun_GmDocument              (const iGmDocument *, iInt2 pos);
+iRangecc        findLoc_GmDocument              (const iGmDocument *, iInt2 pos);
+const iGmRun *  findRunAtLoc_GmDocument         (const iGmDocument *, const char *loc);
+const iGmRun *  precedingRun_GmDocument         (const iGmDocument *, const iGmRun *run);
+const iGmRun *  findInputPromptRun_GmDocument   (const iGmDocument *, iGmLinkId linkId);
+iGmRunRange     findPreformattedRange_GmDocument(const iGmDocument *, const iGmRun *run);
+const char *    sourceLoc_GmDocument            (const iGmDocument *, const iGmRun *run); /* on the run's line */
+
+enum iGmLinkPart {
+    icon_GmLinkPart,
+    text_GmLinkPart,
+    textHover_GmLinkPart,
+};
+
+size_t          numLinks_GmDocument     (const iGmDocument *); /* link IDs: 1...numLinks (inclusive) */
+const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
+iRangecc        linkUrlRange_GmDocument (const iGmDocument *, iGmLinkId linkId);
+iRangecc        linkLabel_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+iMediaId        linkImage_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+iMediaId        linkAudio_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId, enum iGmLinkPart part);
+const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
+iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
+
+size_t          numPre_GmDocument       (const iGmDocument *);
+const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
+iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
+iBool           preIsFolded_GmDocument  (const iGmDocument *, uint16_t preId);
+iBool           preHasAltText_GmDocument(const iGmDocument *, uint16_t preId);

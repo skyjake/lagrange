@@ -1,0 +1,14 @@
+# Release notes
+
+## 2.0
+
+New features:
+*
+
+Changes and enhancements:
+*
+
+Fixes:
+*
+
+=> about:version-1.21  Older versions

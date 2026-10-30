@@ -1,0 +1,76 @@
+:root {
+    color-scheme: dark light;
+    --background: #1b1b1f;
+    --text: #c8c8d0;
+    --button: #2c2c33;
+    --border: #50505a;
+    --error: #ff8080;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --background: #ececec;
+        --text: #303038;
+        --button: #fafafa;
+        --border: #b0b0b8;
+        --error: #c02020;
+    }
+}
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--background);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+}
+/* The canvas must not be sized with CSS: SDL resizes it to fill the page. */
+canvas {
+    display: block;
+    outline: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+#status, .error {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    text-align: center;
+}
+.error {
+    z-index: 1000;
+    background: color-mix(in srgb, var(--background) 90%, transparent);
+    color: var(--error);
+}
+/* Receive pasted text and text from on-screen keyboards. They are inside the viewport so
+   that focusing them does not scroll the page. */
+.paste-target, .text-target, .file-target {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    pointer-events: none;
+    caret-color: transparent;
+    resize: none;
+    font-size: 16px; /* smaller text makes iOS zoom in when focused */
+}
+button {
+    font: inherit;
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--button);
+    color: inherit;
+    cursor: pointer;
+}

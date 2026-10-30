@@ -1,0 +1,433 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#pragma once
+
+#include <the_Foundation/defs.h>
+
+iLocalDef iBool isDesktop_Platform(void) {
+#if defined (iPlatformDesktop)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isMobile_Platform(void) {
+#if defined (iPlatformMobile) /* defined on iOS and Android */
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isMobileLinux_Platform(void) {
+#if defined (iPlatformMobile) && defined (iPlatformLinux)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isHandheld_Platform(void) {
+#if defined (iPlatformMobileHandheld)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isApple_Platform(void) {
+#if defined (iPlatformApple)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isAppleDesktop_Platform(void) {
+#if defined (iPlatformAppleDesktop)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isAppleMobile_Platform(void) {
+#if defined (iPlatformAppleMobile)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isLinux_Platform(void) {
+#if defined (iPlatformLinux)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isAndroid_Platform(void) {
+#if defined (iPlatformAndroid)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isWeb_Platform(void) {
+#if defined (iPlatformEmscripten)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isWindows_Platform(void) {
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iBool isPhone_Core(void); /* determined at runtime (iOS) */
+
+enum iGmRequestState {
+    initialized_GmRequestState,
+    receivingHeader_GmRequestState,
+    receivingBody_GmRequestState,
+    finished_GmRequestState,
+    failure_GmRequestState,
+};
+
+enum iSourceFormat {
+    undefined_SourceFormat = -1,
+    gemini_SourceFormat    = 0,
+    plainText_SourceFormat,
+    markdown_SourceFormat,
+};
+
+enum iImportMethod {
+    none_ImportMethod = 0,
+    ifMissing_ImportMethod,
+    all_ImportMethod,
+};
+
+enum iFileVersion {
+    initial_FileVersion                 = 0,
+    addedResponseTimestamps_FileVersion = 1,
+    multipleRoots_FileVersion           = 2,
+    serializedSidebarState_FileVersion  = 3,
+    addedRecentUrlFlags_FileVersion     = 4,
+    bookmarkFolderState_FileVersion     = 5,
+    multipleWindows_FileVersion         = 6,
+    documentSetIdentity_FileVersion     = 7,
+    responseIdentity_FileVersion        = 8,
+    recentUrlSetIdentity_FileVersion    = 9,
+    recentlySubmittedInput_FileVersion  = 10,
+    persistentWindowSerial_FileVersion  = 11,
+    windowPlacementIndex_FileVersion    = 12,
+    recentUrlPrefsCacheKey_FileVersion  = 13,
+    openBookmarkFolders_FileVersion     = 14,
+    sidebarTabOrder_FileVersion         = 15,
+    wideSidebarState_FileVersion        = 16,
+    recentUrlScrollAnchor_FileVersion   = 17,
+    /* meta */
+    latest_FileVersion = 17, /* used by state.lgr */
+    idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
+    feeds_FileVersion  = 1, /* used by Feeds/feeds.lgr */
+};
+
+enum iImageStyle {
+    original_ImageStyle           = 0,
+    grayscale_ImageStyle          = 1,
+    bgFg_ImageStyle               = 2,
+    textColorized_ImageStyle      = 3,
+    preformatColorized_ImageStyle = 4,
+};
+
+enum iFeedInterval {
+    manual_FeedInterval          = 0,
+    thirtyMinutes_FeedInterval   = 60 * 30,
+    oneHour_FeedInterval         = 60 * 60,
+    twoHours_FeedInterval        = 60 * 60 * 2,
+    fourHours_FeedInterval       = 60 * 60 * 4,
+    eightHours_FeedInterval      = 60 * 60 * 8,
+    oneDay_FeedInterval          = 60 * 60 * 24,
+};
+
+enum iDirection {
+    none_Direction,
+    up_Direction,
+    right_Direction,
+    down_Direction,
+    left_Direction,
+};
+
+enum iScrollType {
+    keyboard_ScrollType,
+    mouse_ScrollType,
+    max_ScrollType
+};
+
+enum iToolbarAction {
+    back_ToolbarAction        = 0,
+    forward_ToolbarAction     = 1,
+    home_ToolbarAction        = 2,
+    parent_ToolbarAction      = 3,
+    reload_ToolbarAction      = 4,
+    newTab_ToolbarAction      = 5,
+    closeTab_ToolbarAction    = 6,
+    addBookmark_ToolbarAction = 7,
+    translate_ToolbarAction   = 8,
+    upload_ToolbarAction      = 9,
+    editPage_ToolbarAction    = 10,
+    findText_ToolbarAction    = 11,
+    settings_ToolbarAction    = 12,
+    leftSidebar_ToolbarAction    = 13,
+    rightSidebar_ToolbarAction   = 14,
+    scrollToTop_ToolbarAction    = 15,
+    scrollToBottom_ToolbarAction = 16,
+    max_ToolbarAction
+};
+
+enum iReturnKeyFlag {
+    noMod_ReturnKeyFlag   = 0,
+    shift_ReturnKeyFlag   = 1,
+    control_ReturnKeyFlag = 2,
+    gui_ReturnKeyFlag     = 3,
+    mask_ReturnKeyFlag    = 0xf,
+    accept_ReturnKeyFlag  = 4, /* shift */
+};
+
+#define RETURN_KEY_BEHAVIOR(newlineFlag, acceptFlag) \
+    ((newlineFlag) & 3 | ((acceptFlag) << accept_ReturnKeyFlag))
+
+enum iReturnKeyBehavior {
+    acceptWithPrimaryMod_ReturnKeyBehavior =
+#if defined (iPlatformApple)
+        RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
+#else
+        RETURN_KEY_BEHAVIOR(control_ReturnKeyFlag, 0),
+#endif
+    onlyWithMods_ReturnKeyBehavior =
+#if defined (iPlatformApple)
+        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, gui_ReturnKeyFlag),
+#else
+        RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, control_ReturnKeyFlag),
+#endif
+#if defined (iPlatformAndroidMobile) || (defined (iPlatformEmscripten) && defined (iPlatformMobile))
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
+#else
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, 0),
+#endif
+};
+
+enum iColorTheme {
+    pureBlack_ColorTheme,
+    dark_ColorTheme,
+    light_ColorTheme,
+    pureWhite_ColorTheme,
+    max_ColorTheme
+};
+
+iLocalDef iBool isDark_ColorTheme(enum iColorTheme d) {
+    return d == pureBlack_ColorTheme || d == dark_ColorTheme;
+}
+iLocalDef iBool isLight_ColorTheme(enum iColorTheme d) {
+    return !isDark_ColorTheme(d);
+}
+
+enum iColorAccent {
+    cyan_ColorAccent,
+    orange_ColorAccent,
+    red_ColorAccent,
+    green_ColorAccent,
+    blue_ColorAccent,
+    gray_ColorAccent,
+    system_ColorAccent,
+    max_ColorAccent
+};
+
+enum iGmDocumentTheme {
+    none_GmDocumentTheme = -1,
+    colorfulDark_GmDocumentTheme,
+    colorfulLight_GmDocumentTheme,
+    black_GmDocumentTheme,
+    gray_GmDocumentTheme,
+    white_GmDocumentTheme,
+    sepia_GmDocumentTheme,
+    highContrast_GmDocumentTheme,
+    oceanic_GmDocumentTheme,
+    vibrantLight_GmDocumentTheme,
+    paper_GmDocumentTheme,
+    arboreal_GmDocumentTheme,
+    ember_GmDocumentTheme,
+    max_GmDocumentTheme
+};
+
+enum iAppDeviceType {
+    desktop_AppDeviceType,
+    tablet_AppDeviceType,
+    phone_AppDeviceType,
+};
+
+iLocalDef enum iAppDeviceType deviceType_App(void) {
+#if defined (iPlatformMobilePhone)
+    return phone_AppDeviceType;
+#elif defined (iPlatformMobileTablet)
+    return tablet_AppDeviceType;
+#elif defined (iPlatformAppleMobile)
+    return isPhone_Core() ? phone_AppDeviceType : tablet_AppDeviceType;
+#elif defined (iPlatformAndroidMobile)
+    return phone_AppDeviceType;
+#else
+    return desktop_AppDeviceType;
+#endif
+}
+
+enum iSidebarMode {
+    bookmarks_SidebarMode,
+    feedEntries_SidebarMode,
+    subscriptions_SidebarMode,
+    identities_SidebarMode,
+    documentOutline_SidebarMode,
+    siteStructure_SidebarMode,
+    openDocuments_SidebarMode,
+    history_SidebarMode,
+    gempub_SidebarMode, /* only when the current document is part of a book */
+    max_SidebarMode
+};
+
+enum iAnsiFlag {
+    allowFg_AnsiFlag        = iBit(1),
+    allowBg_AnsiFlag        = iBit(2),
+    allowFontStyle_AnsiFlag = iBit(3),
+    allowAll_AnsiFlag       = 0x7,
+};
+
+/* Icons */
+
+#define add_Icon            "\u2795"
+#define backArrow_Icon      "\U0001f870"
+#define ballotChecked_Icon  "\u2611"
+#define ballotUnchecked_Icon "\u2610"
+#define barLeftArrow_Icon   "\u21a4"
+#define barRightArrow_Icon  "\u21a6"
+#define book_Icon           "\U0001f56e"
+#define bookmark_Icon       "\U0001f516"
+#define bookmarks_Icon      bookmark_Icon
+#define books_Icon          "\U0001f4da"
+#define bug_Icon            "\U0001f41e"
+#define bullet_Icon         "\u2022"
+#define check_Icon          "\u2714"
+#define circleWhite_Icon    "\u25cb"
+#define circle_Icon         "\u25cf"
+#define clipCopy_Icon       "\u2398"
+#define clipboard_Icon      "\U0001f4cb"
+#define clock_Icon          "\U0001f553"
+#define close_Icon          "\u2a2f"
+#define closedLock_Icon     "\U0001f512"
+#define computer_Icon       "\U0001f5b3"
+#define copy_Icon           "\u2398" //"\u2bba"
+#define delete_Icon         "\u232b"
+#define downAngle_Icon      "\ufe40"
+#define downArrowBar_Icon   "\u2913"
+#define downArrow_Icon      "\U0001f873"
+#define download_Icon       "\u2ba7"
+#define edit_Icon           "\u270e"
+#define envelope_Icon       "\U0001f4e7"
+#define explosion_Icon      "\U0001f4a5"
+#define export_Icon         "\U0001f4e4"
+#define eye_Icon            "\U0001f441"
+#define file_Icon           "\U0001f5ce"
+#define folder_Icon         "\U0001f4c1"
+#define fontpack_Icon       "\U0001f520"
+#define fonts_Icon          "\U0001f5da"
+#define forwardArrow_Icon   "\U0001f872"
+#define gamepad_Icon        "\U0001f3ae"
+#define gear_Icon           "\u2699"
+#define globe_Icon          "\U0001f310"
+#define guppy_Icon          "\U0001f41f"
+#define hammer_Icon         "\U0001f528"
+#define hierarchy_Icon      "\u22f0"
+#define home_Icon           "\U0001f3e0"
+#define hourglass_Icon      "\u231b"
+#define import_Icon          "\U0001f4e5"
+#define info_Icon           "\u2139"
+#define keyUpArrow_Icon     "\u2191"
+#define key_Icon            "\U0001f511"
+#define keyboard_Icon       "\u2328"
+#define leftAngle_Icon      "\u27e8"
+#define leftArrowhead_Icon  "\u2b9c"
+#define leftHalf_Icon       "\u25e7"
+#define magnifyingGlass_Icon "\U0001f50d"
+#define menu_Icon           "\U0001d362"
+#define midEllipsis_Icon    "\u2022\u2022\u2022"
+#define network_Icon        "\U0001f5a7"
+#define networkProxy_Icon   "\u27a0"
+#define nex_Icon            "\U0001f687"
+#define openExt_Icon        "\u27a0"
+#define openLock_Icon       "\U0001f513"
+#define openTabBg_Icon      "\u2750" //"\u2b1a"
+#define openTab_Icon        add_Icon
+#define openInTab_Icon      "\u2197"
+#define openWindow_Icon     "\u2b1a" //"\U0001F5d4"
+#define package_Icon        "\U0001f4e6"
+#define page_Icon           "\U00010117"
+#define pageLayout_Icon     page_Icon //"\u21b9" //"\U0001F5B9"
+#define pageStyle_Icon      "\U0001f660"
+#define palette_Icon        "\U0001f3a8"
+#define paperclip_Icon      "\U0001f4ce"
+#define person_Icon         "\U0001f464"
+#define photo_Icon          "\U0001f5bc"
+#define pin_Icon            "\U0001f588"
+#define planet_Icon         "\U0001fa90"
+#define reload_Icon         "\U0001f503"
+#define return_Icon         "\u23ce"
+#define rightAngle_Icon     "\u27e9"
+#define rightArrowWhite_Icon "\u21e8"
+#define rightArrow_Icon     "\u279e"
+#define rightArrowhead_Icon "\u27a4"
+#define rightHalf_Icon      "\u25e8"
+#define scissor_Icon        "\u2700"
+#define select_Icon         "\u2b1a"
+#define spartan_Icon        "\U0001f4aa"
+#define star_Icon           "\u2605"
+#define tag_Icon            "\U0001f3f7"
+#define timer_Icon          "\u23f2"
+#define toolbar_Icon        "\u2b13"
+#define toggleNo_Icon       bullet_Icon
+#define toggleYes_Icon      check_Icon
+#define trash_Icon          "\U0001f5d1"
+#define undo_Icon           "\u23ea"
+#define unhappy_Icon        "\U0001f641"
+#define upArrowBar_Icon     "\u2912"
+#define upArrow_Icon        "\U0001f871"
+#define upDownArrow_Icon    "\u21c5"
+#define upload_Icon         "\u2ba5"
+#define warning_Icon        "\u26a0"
+#define whiteStar_Icon      "\u2606"
+

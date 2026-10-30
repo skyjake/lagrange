@@ -1,0 +1,177 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#pragma once
+
+#include "scrollwidget.h"
+#include "render/paint.h"
+
+#include <the_Foundation/array.h>
+#include <the_Foundation/intset.h>
+#include <the_Foundation/ptrarray.h>
+
+iDeclareType(ListWidget)
+
+iBeginDeclareClass(ListItem)
+    void    (*draw) (const iAnyObject *, iPaint *p, iRect rect, const iListWidget *list);
+    int     (*measureHeight)(const iAnyObject *, int width, const iListWidget *list); /* optional; zero for default */
+iEndDeclareClass(ListItem)
+
+iDeclareType(ListItem)
+
+struct Impl_ListItem {
+    iObject object;
+    struct {
+        iBool   isSeparator : 1;
+        iBool   isSelected : 1;
+        iBool   isDraggable : 1;
+        iBool   isDropTarget : 1; /* may drag-and-drop another item on this */
+        iBool   isHidden : 1;
+        iBool   isMultiSelected : 1;
+    } flags;
+    int height; /* zero: the list's default item height */
+};
+
+iDeclareObjectConstruction(ListItem)
+
+iDeclareWidgetClass(ListWidget)
+iDeclareObjectConstruction(ListWidget)
+
+iDeclareType(VisBuf)
+
+enum iListRangeSelect {
+    none_ListRangeSelect,
+    mouse_ListRangeSelect,
+    keyboard_ListRangeSelect,
+};
+
+enum iScrollMode {
+    normal_ScrollMode,
+    disabledAtTopBothDirections_ScrollMode,
+    disabledAtTopUpwards_ScrollMode,
+    disabled_ScrollMode,
+};
+
+struct Impl_ListWidget {
+    iWidget        widget;
+    iScrollWidget *scroll;
+    iSmoothScroll  scrollY;
+    int            itemHeight; /* default */
+    int            itemPadding; /* added to measured item heights */
+    int            itemSpacing; /* blank space at the bottom of items, shared by highlights */
+    int            wheelStep; /* zero: three default item heights */
+    iPtrArray      items;
+    iArray         itemTops; /* top of each item, followed by the total height */
+    iBool          isLayoutValid;
+    iBool          isResizing; /* only visible items are measured */
+    iBool          isLayoutPartial; /* some items were measured for an earlier width */
+    size_t         cursorItem; /* when has focus */
+    size_t         hoverItem;
+    size_t         dragItem;
+    iInt2          dragOrigin; /* offset from mouse to drag item's top-left corner */
+    int            dragHandleWidth;
+    iClick         click;    /* left button: item dragging */
+    iClick         midClick; /* middle button: open item in background tab */
+    iIntSet        invalidItems;
+    iVisBuf       *visBuf;
+    int            minVisBufHeight; /* avoids texture realloc while height is animating */
+    int            lastWidth; /* avoids invalidating cached items when only height changes */
+    enum iScrollMode scrollMode;
+    iBool          noHoverWhileScrolling;
+//    iBool          freezeOnDrag; /* freeze drawing when item dragged, to avoid glitching */
+    iBool          hideItemOnDrag;
+    iBool          isMultiSelectEnabled; /* Shift selects multiple items */
+    size_t         numMultiSelected;
+    enum iListRangeSelect rangeSelect;
+    size_t         rangeAnchor;
+    iBool          isShiftClick;
+    iBool          isMultiDrag; /* dragging all the selected items */
+};
+
+void    init_ListWidget             (iListWidget *);
+
+void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
+void    setItemPadding_ListWidget   (iListWidget *, int itemPadding);
+void    setItemSpacing_ListWidget   (iListWidget *, int itemSpacing);
+void    setWheelStep_ListWidget     (iListWidget *, int wheelStep);
+void    setResizing_ListWidget      (iListWidget *, iBool isResizing);
+
+void    invalidate_ListWidget       (iListWidget *);
+void    invalidateItem_ListWidget   (iListWidget *, size_t index);
+void    invalidateLayout_ListWidget (iListWidget *); /* items are measured again */
+void    clear_ListWidget            (iListWidget *);
+void    addItem_ListWidget          (iListWidget *, iAnyObject *item);
+
+iScrollWidget * scroll_ListWidget   (iListWidget *);
+
+int     scrollBarWidth_ListWidget   (const iListWidget *); /* returns zero if hidden */
+int     itemHeight_ListWidget       (const iListWidget *);
+int     scrollPos_ListWidget        (const iListWidget *);
+
+void    setScrollPos_ListWidget     (iListWidget *, int pos);
+void    setScrollMode_ListWidget    (iListWidget *, enum iScrollMode mode);
+void    setDragHandleWidth_ListWidget(iListWidget *, int dragHandleWidth);
+void    setMinVisBufHeight_ListWidget(iListWidget *, int height);
+void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
+void    scrollToItemTop_ListWidget  (iListWidget *, size_t index, int offset); /* instantly, as far as possible */
+void    scrollOffset_ListWidget     (iListWidget *, int offset);
+void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);
+void    updateVisible_ListWidget    (iListWidget *);
+void    updateMouseHover_ListWidget (iListWidget *);
+void    setHoverItem_ListWidget     (iListWidget *, size_t index);
+void    setCursorItem_ListWidget    (iListWidget *, size_t index);
+void    restoreCursorItem_ListWidget(iListWidget *, size_t index); /* no scrolling */
+void    cancelDrag_ListWidget       (iListWidget *);
+void    setMultiSelectEnabled_ListWidget(iListWidget *, iBool enabled);
+void    setMultiSelected_ListWidget (iListWidget *, size_t index, iBool isSelected);
+void    clearMultiSelection_ListWidget(iListWidget *);
+void    drawCursor_ListWidget       (const iListWidget *, iPaint *p, iRect itemRect, int color);
+iRect   highlightRect_ListWidget    (const iListWidget *, iRect itemRect);
+iRect   contentRect_ListWidget      (const iListWidget *, iRect itemRect);
+void    drawItemText_ListWidget     (const iListWidget *, iRect itemRect, int font, iInt2 pos,
+                                     int color, iRangecc text); /* TUI: truncated inside the cursor */
+
+void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
+
+iAnyObject *        item_ListWidget             (iListWidget *, size_t index);
+iAnyObject *        hoverItem_ListWidget        (iListWidget *);
+
+size_t              numItems_ListWidget         (const iListWidget *);
+int                 visCount_ListWidget         (const iListWidget *);
+size_t              itemIndex_ListWidget        (const iListWidget *, iInt2 pos);
+iRect               itemRect_ListWidget         (const iListWidget *, size_t index);
+iRect               itemRectWithoutVisualOffset_ListWidget(const iListWidget *, size_t index);
+const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t index);
+const iAnyObject *  constDragItem_ListWidget    (const iListWidget *);
+const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
+size_t              hoverItemIndex_ListWidget   (const iListWidget *);
+size_t              cursorItemIndex_ListWidget  (const iListWidget *);
+const iAnyObject *  constCursorItem_ListWidget  (const iListWidget *);
+size_t              numMultiSelected_ListWidget (const iListWidget *);
+
+iLocalDef iBool isEmpty_ListWidget(const iListWidget *d) { return numItems_ListWidget(d) == 0; }
+
+iLocalDef iAnyObject *backItem_ListWidget       (iListWidget *d) {
+    return item_ListWidget(d, numItems_ListWidget(d) - 1);
+}
+
+iBool   isMouseDown_ListWidget      (const iListWidget *);

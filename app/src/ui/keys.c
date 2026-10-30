@@ -1,0 +1,706 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "keys.h"
+#include "util.h"
+#include "gamepad.h"
+#include "window.h"
+#include "app.h"
+#if defined (iPlatformEmscripten)
+#   include "platform/web.h"
+#endif
+
+#include <lagrange/listfile.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/path.h>
+#include <the_Foundation/ptrset.h>
+#include <SDL3/SDL_keyboard.h>
+
+enum iModMap {
+    none_ModMap,
+    leftShift_ModMap,
+    leftControl_ModMap,
+    leftAlt_ModMap,
+    leftGui_ModMap,
+    rightShift_ModMap,
+    rightControl_ModMap,
+    rightAlt_ModMap,
+    rightGui_ModMap,
+    capsLock_ModMap,
+    max_ModMap
+};
+
+static const char *modToStr_[max_ModMap] = {
+    "none",
+    "Lshift",
+    "Lctrl",
+    "Lalt",
+    "Lgui",
+    "Rshift",
+    "Rctrl",
+    "Ralt",
+    "Rgui",
+    "caps",
+};
+
+static int strToMod_(iRangecc str) {
+    trim_Rangecc(&str);
+    for (int i = 0; i < max_ModMap; i++) {
+        if (equalCase_Rangecc(str, modToStr_[i])) {
+            return i;
+        }
+    }
+    return none_ModMap;
+}
+
+static int modMap_[max_ModMap];
+static iBool capsLockDown_;
+
+static void init_ModMap_(void) {
+    for (int i = 0; i < max_ModMap; i++) {
+        modMap_[i] = i;
+    }
+}
+
+int mapMods_Keys(int modFlags) {
+    static const int bits[max_ModMap] = {
+        0,
+        SDL_KMOD_LSHIFT,
+        SDL_KMOD_LCTRL,
+        SDL_KMOD_LALT,
+        SDL_KMOD_LGUI,
+        SDL_KMOD_RSHIFT,
+        SDL_KMOD_RCTRL,
+        SDL_KMOD_RALT,
+        SDL_KMOD_RGUI,
+        SDL_KMOD_CAPS,
+    };
+    int mapped = 0;
+    if (prefs_App()->capsLockKeyModifier) {
+        /* Treat capslock as a modifier key. */
+        modFlags |= (capsLockDown_ ? SDL_KMOD_CAPS : 0);
+    }
+    else {
+        modFlags &= ~SDL_KMOD_CAPS;
+    }
+    for (int i = 0; i < max_ModMap; ++i) {
+        if (modFlags & bits[i]) {
+            mapped |= bits[modMap_[i]];
+        }
+    }
+    return mapped;
+}
+
+int modState_Keys(void) {
+    int state = SDL_GetModState() & ~(SDL_KMOD_NUM | SDL_KMOD_MODE | SDL_KMOD_CAPS);
+#if defined (iPlatformEmscripten)
+    state = swapAppleMods_Web(state);
+#endif
+    state |= modState_Gamepad(gamepad_App());
+    /* Treat capslock as a modifier key. */
+    if (capsLockDown_) state |= SDL_KMOD_CAPS;
+    return mapMods_Keys(state);
+}
+
+iBool isAppleKeyboard_Keys(void) {
+#if defined (iPlatformApple)
+    return iTrue;
+#elif defined (iPlatformEmscripten)
+    return isApple_Web();
+#else
+    return iFalse;
+#endif
+}
+
+void setCapsLockDown_Keys(iBool isDown) {
+    capsLockDown_ = isDown;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static const struct {
+    int         mod;
+    const char *name;
+} modNames_[] = {
+    { SDL_KMOD_CTRL, "ctrl" },
+    { SDL_KMOD_ALT, "alt" },
+    { SDL_KMOD_SHIFT, "shift" },
+    { SDL_KMOD_GUI, "gui" },
+    { SDL_KMOD_CAPS, "caps" },
+};
+
+static iBool isCharKey_(int key) {
+    return key > 0x20 && key < 0x40000000 && key != 0x7f && !isSpace_Char(key);
+}
+
+static iBool modFromName_(iRangecc name, int *mod) {
+    /* Note: Some modifiers have no bits in the terminal. */
+    trim_Rangecc(&name);
+    if (equalCase_Rangecc(name, "primary")) {
+        *mod = KMOD_PRIMARY;
+        return iTrue;
+    }
+    iForIndices(i, modNames_) {
+        if (equalCase_Rangecc(name, modNames_[i].name)) {
+            *mod = modNames_[i].mod;
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static int keyFromName_(iRangecc name) {
+    trim_Rangecc(&name);
+    if (isEmpty_Range(&name)) {
+        return -1;
+    }
+    if (equalCase_Rangecc(name, "none")) {
+        return 0;
+    }
+    if (size_Range(&name) > 2 && startsWithCase_Rangecc(name, "0x")) {
+        char *end = NULL;
+        const long key = strtol(cstr_Rangecc(name), &end, 16);
+        return *end == 0 ? (int) key : -1;
+    }
+    /* SDL would map characters via the keyboard layout. */
+    const iString *str = collectNewRange_String(name);
+    if (length_String(str) == 1 && isCharKey_(first_String(str))) {
+        return lower_Char(first_String(str));
+    }
+    const SDL_Keycode key = SDL_GetKeyFromName(cstr_String(str));
+    return key != SDLK_UNKNOWN ? (int) key : -1;
+}
+
+static void appendKeyName_(iString *str, int key) {
+    if (key == 0) {
+        appendCStr_String(str, "none");
+        return;
+    }
+    if (isCharKey_(key)) {
+        if (lower_Char(key) == key) {
+            appendChar_String(str, key);
+            return;
+        }
+    }
+    else {
+        const iString *name =
+            collect_String(lower_String(collectNewCStr_String(SDL_GetKeyName(key))));
+        if (!isEmpty_String(name) && SDL_GetKeyFromName(cstr_String(name)) == (SDL_Keycode) key) {
+            append_String(str, name);
+            return;
+        }
+    }
+    appendFormat_String(str, "0x%x", key);
+}
+
+void shortcutToString_Keys(int key, int mods, iString *str) {
+    if (key) {
+        /* In the terminal, GUI and Alt are the same modifier. */
+        iForIndices(i, modNames_) {
+            if (mods & modNames_[i].mod) {
+                appendFormat_String(str, "%s+", modNames_[i].name);
+                mods &= ~modNames_[i].mod;
+            }
+        }
+    }
+    appendKeyName_(str, key);
+}
+
+iBool shortcutFromString_Keys(iRangecc str, int *key, int *mods) {
+    trim_Rangecc(&str);
+    int parsedMods = 0;
+    /* A leading or lone "+" is the key itself. */
+    for (;;) {
+        const char *plus =
+            size_Range(&str) > 1 ? memchr(str.start + 1, '+', size_Range(&str) - 1) : NULL;
+        int mod = 0;
+        if (!plus || !modFromName_((iRangecc){ str.start, plus }, &mod)) {
+            break;
+        }
+        parsedMods |= mod;
+        str.start = plus + 1;
+    }
+    const int parsedKey = keyFromName_(str);
+    if (parsedKey < 0) {
+        return iFalse;
+    }
+    *key  = parsedKey;
+    *mods = parsedKey ? parsedMods : 0;
+    return iTrue;
+}
+
+static void loadModMap_Keys_(const char *saveDir) {
+    iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, "modmap.lst", "modmap.txt")));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        const iString *text = collect_String(readString_File(f));
+        iRangecc textLine = iNullRange;
+        while (nextLine_ListFile(range_String(text), &textLine)) {
+            iRangecc line = textLine;
+            trim_Rangecc(&line);
+            iRangecc seg = iNullRange;
+            if (nextSplit_Rangecc(line, "->", &seg)) {
+                const int fromMod = strToMod_(seg);
+                if (fromMod && nextSplit_Rangecc(line, "->", &seg)) {
+                    const int toMod = strToMod_(seg);
+                    modMap_[fromMod] = toMod;
+                }
+            }
+        }
+        close_File(f);
+    }
+    else {
+        iString *defaults = collectNew_String();
+        appendCStr_String(defaults,
+                          "# This is a translation table for keyboard modifiers. The syntax is:\n"
+                          "#\n"
+                          "# (hardware key) -> (effective modifier)\n"
+                          "#\n"
+                          "# A modifier can be mapped to \"none\" to disable it. For example:\n"
+                          "#\n"
+                          "# Lalt -> none\n"
+                          "#\n"
+                          "# When using CapsLock as a modifier key, its toggled state will still affect\n"
+                          "# text entry. You may need to remap or disable CapsLock in your window system.\n"
+                          "#\n"
+                          "# You may delete this file and it will be recreated with the default mapping.\n\n");
+        for (int i = 1; i < max_ModMap; i++) {
+            appendFormat_String(defaults, "%s -> %s\n", modToStr_[i], modToStr_[i]);
+        }
+        save_ListFile(concatPath_CStr(saveDir, "modmap.lst"), utf8_String(defaults));
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(Keys)
+
+static int cmpPtr_Binding_(const void *a, const void *b) {
+    const iBinding *d = *(const void **) a, *other = *(const void **) b;
+    const int cmp = iCmp(d->key, other->key);
+    if (cmp == 0) {
+        return iCmp(d->mods, other->mods);
+    }
+    return cmp;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_Keys {
+    iArray  bindings;
+    iPtrSet lookup; /* quick key/mods lookup */
+};
+
+static iKeys keys_;
+
+static void clear_Keys_(iKeys *d) {
+    iForEach(Array, i, &d->bindings) {
+        iBinding *bind = i.value;
+        deinit_String(&bind->command);
+        deinit_String(&bind->label);
+    }
+}
+
+enum iBindFlag {
+    argRepeat_BindFlag  = iBit(1),
+    argRelease_BindFlag = iBit(2),
+    noDirectTrigger_BindFlag = iBit(3), /* can only be triggered via LabelWidget */
+};
+
+/* TODO: This indirection could be used for localization, although all UI strings
+   would need to be similarly handled. */
+static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = {
+    { 1,  { "${LC:keys.top}",               SDLK_HOME, 0,                   "scroll.top"                        }, 0 },
+    { 2,  { "${LC:keys.bottom}",            SDLK_END, 0,                    "scroll.bottom"                     }, 0 },
+    { 10, { "${keys.scroll.up}",            SDLK_UP, 0,                     "scroll.step arg:-1"                }, argRepeat_BindFlag },
+    { 11, { "${keys.scroll.down}",          SDLK_DOWN, 0,                   "scroll.step arg:1"                 }, argRepeat_BindFlag },
+#if defined (iPlatformTerminal)
+    /* Terminals can't distinguish Shift+Space. */
+    { 22, { "${keys.scroll.halfpage.up}",   SDLK_B, 0,                      "scroll.page arg:-1"                }, argRepeat_BindFlag },
+#else
+    { 22, { "${keys.scroll.halfpage.up}",   SDLK_SPACE, SDL_KMOD_SHIFT,     "scroll.page arg:-1"                }, argRepeat_BindFlag },
+#endif
+    { 23, { "${keys.scroll.halfpage.down}", SDLK_SPACE, 0,                  "scroll.page arg:1"                 }, argRepeat_BindFlag },
+    { 24, { "${keys.scroll.page.up}",       SDLK_PAGEUP, 0,                 "scroll.page arg:-1 full:1"         }, argRepeat_BindFlag },
+    { 25, { "${keys.scroll.page.down}",     SDLK_PAGEDOWN, 0,               "scroll.page arg:1 full:1"          }, argRepeat_BindFlag },
+    { 30, { "${keys.back}",                 navigateBack_KeyShortcut,       "navigate.back"                     }, 0 },
+    { 31, { "${keys.forward}",              navigateForward_KeyShortcut,    "navigate.forward"                  }, 0 },
+    { 32, { "${keys.parent}",               navigateParent_KeyShortcut,     "navigate.parent"                   }, 0 },
+    { 33, { "${keys.root}",                 navigateRoot_KeyShortcut,       "navigate.root"                     }, 0 },
+    { 35, { "${keys.reload}",               reload_KeyShortcut,             "document.reload"                   }, 0 },
+    { 36, { "${LC:menu.openlocation}",      SDLK_L, KMOD_PRIMARY,           "navigate.focus"                    }, 0 },
+    { 37, { "${keys.bang}",                 bang_KeyShortcut,               "navigate.focus text:!"             }, 0 },
+#if !defined (iPlatformTerminal)
+    { 38, { "${LC:menu.openfile}",          SDLK_O, KMOD_PRIMARY,           "file.open"                         }, 0 },
+#endif
+    { 41, { "${keys.link.modkey}",          SDLK_LALT, 0,                   "document.linkkeys arg:0"           }, argRelease_BindFlag },
+    { 42, { "${keys.link.homerow}",         'f', 0,                         "document.linkkeys arg:1"           }, 0 },
+    { 45, { "${keys.link.homerow.newtab}",  'f', SDL_KMOD_SHIFT,            "document.linkkeys arg:1 newtab:1"  }, 0 },
+    { 46, { "${keys.link.homerow.hover}",   'h', 0,                         "document.linkkeys arg:1 hover:1"   }, 0 },
+    { 47, { "${keys.link.homerow.next}",    '.', 0,                         "document.linkkeys more:1"          }, 0 },
+    { 50, { "${keys.bookmark.add}",         bookmarkPage_KeyShortcut,       "bookmark.add"                      }, 0 },
+    { 51, { "${keys.bookmark.addfolder}",   'n', SDL_KMOD_SHIFT,            "bookmarks.addfolder"               }, 0 },
+    { 55, { "${keys.subscribe}",            subscribeToPage_KeyShortcut,    "feeds.subscribe"                   }, 0 },
+    { 56, { "${keys.feeds.showall}",        SDLK_U, SDL_KMOD_SHIFT,         "feeds.mode arg:0"                  }, 0 },
+    { 57, { "${keys.feeds.showunread}",     SDLK_U, 0,                      "feeds.mode arg:1"                  }, 0 },
+    { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input id2:filter.bookmark.input" }, 0 },
+    { 65, { "${LC:menu.viewformat.plain}",  SDLK_Y, KMOD_PRIMARY,           "document.viewformat"               }, 0 },
+    { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_ZOOM,         "zoom.delta arg:10"                 }, 0 },
+    { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_ZOOM,          "zoom.delta arg:-10"                }, 0 },
+    { 72, { "${keys.zoom.reset}",           SDLK_0, KMOD_ZOOM,              "zoom.set arg:100"                  }, 0 },
+#if !defined (iPlatformApple) /* Ctrl-Cmd-F on macOS */
+    { 73, { "${keys.fullscreen}",           SDLK_F11, 0,                    "window.fullscreen"                 }, 0 },
+#endif
+    { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new append:1"                 }, 0 },
+    { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
+    { 78, { "${keys.tab.close.other}",      SDLK_W, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
+    { 79, { "${LC:menu.reopentab}",         SDLK_T, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },
+    { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
+    { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
+    { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
+    { 85, { "${LC:menu.movetab.right}",     moveTabRight_KeyShortcut,       "tabs.move arg:1"                   }, 0 },
+#if !defined (iPlatformEmscripten)
+    { 86, { "${LC:menu.movetab.newwindow}", SDLK_T, KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1"        }, 0 },
+#endif
+    { 90, { "${keys.split.menu}",           SDLK_J, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
+    { 91, { "${keys.split.next}",           SDLK_TAB, SDL_KMOD_CTRL,        "keyroot.next",                     }, 0 },
+    { 92, { "${keys.split.item} ${menu.split.merge}",           '1', 0,     "ui.split arg:0",                   }, noDirectTrigger_BindFlag },
+    { 93, { "${keys.split.item} ${menu.split.swap}",            SDLK_X, 0,  "ui.split swap:1",                  }, noDirectTrigger_BindFlag },
+    { 94, { "${keys.split.item} ${menu.split.horizontal}",      '3', 0,     "ui.split arg:3 axis:0",            }, noDirectTrigger_BindFlag },
+    { 95, { "${keys.split.item} ${menu.split.horizontal} 1:2",  SDLK_D, 0,  "ui.split arg:1 axis:0",            }, noDirectTrigger_BindFlag },
+    { 96, { "${keys.split.item} ${menu.split.horizontal} 2:1",  SDLK_E, 0,  "ui.split arg:2 axis:0",            }, noDirectTrigger_BindFlag },
+    { 97, { "${keys.split.item} ${menu.split.vertical}",        '2', 0,     "ui.split arg:3 axis:1",            }, noDirectTrigger_BindFlag },
+    { 98, { "${keys.split.item} ${menu.split.vertical} 1:2",    SDLK_F, 0,  "ui.split arg:1 axis:1",            }, noDirectTrigger_BindFlag },
+    { 99, { "${keys.split.item} ${menu.split.vertical} 2:1",    SDLK_R, 0,  "ui.split arg:2 axis:1",            }, noDirectTrigger_BindFlag },
+    { 100,{ "${keys.hoverurl}",             '/', KMOD_PRIMARY,              "prefs.hoverlink.toggle"            }, 0 },
+    { 110,{ "${menu.save.downloads}",       SDLK_S, KMOD_PRIMARY,           "document.save"                     }, 0 },
+    { 111,{ "${menu.save.books}",           SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook"          }, 0 },
+    { 115,{ "${LC:menu.page.translate}",    SDLK_X, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.translate"         }, 0 },
+    { 116,{ "${LC:menu.tool.unwrap}",       SDLK_U, KMOD_PRIMARY | SDL_KMOD_ALT, "tool.run id:builtin.unwrap"   }, 0 },
+    { 120,{ "${keys.upload}",               SDLK_U, KMOD_PRIMARY,           "document.upload"                   }, 0 },
+    { 121,{ "${keys.upload.edit}",          SDLK_E, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
+    { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
+    { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY,            "document.sitespec"                 }, 0 },
+    { 130,{ "${keys.input.precedingline}",  SDLK_V, KMOD_SECONDARY,         "input.precedingline"               }, 0 },
+    { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },
+    { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
+    { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
+    { 250,{ "${keys.sidebar.tab} 1",       '1', leftSidebarTab_KeyModifier, "sidebar.tab arg:0 toggle:1"        }, 0 },
+    { 251,{ "${keys.sidebar.tab} 2",       '2', leftSidebarTab_KeyModifier, "sidebar.tab arg:1 toggle:1"        }, 0 },
+    { 252,{ "${keys.sidebar.tab} 3",       '3', leftSidebarTab_KeyModifier, "sidebar.tab arg:2 toggle:1"        }, 0 },
+    { 253,{ "${keys.sidebar.tab} 4",       '4', leftSidebarTab_KeyModifier, "sidebar.tab arg:3 toggle:1"        }, 0 },
+    { 254,{ "${keys.sidebar.tab} 5",       '5', leftSidebarTab_KeyModifier, "sidebar.tab arg:4 toggle:1"        }, 0 },
+    { 255,{ "${keys.sidebar.tab} 6",       '6', leftSidebarTab_KeyModifier, "sidebar.tab arg:5 toggle:1"        }, 0 },
+    { 256,{ "${keys.sidebar.tab} 7",       '7', leftSidebarTab_KeyModifier, "sidebar.tab arg:6 toggle:1"        }, 0 },
+    { 257,{ "${keys.sidebar.tab} 8",       '8', leftSidebarTab_KeyModifier, "sidebar.tab arg:7 toggle:1"        }, 0 },
+    { 258,{ "${keys.sidebar.tab} 9",       '9', leftSidebarTab_KeyModifier, "sidebar.tab arg:8 toggle:1"        }, 0 },
+
+    /* The following cannot currently be changed (built-in duplicates). */
+#if defined (iPlatformApple) || defined (iPlatformEmscripten)
+    { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
+    { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,             "navigate.forward"     }, 0 },
+#endif
+#if defined (iPlatformApple)
+    { 1100, { NULL, SDLK_SPACE,        KMOD_PRIMARY | SDL_KMOD_CTRL, "emojipicker"          }, 0 },
+#endif
+#if defined (iPlatformTerminal)
+    /* Plain arrow keys turn pages in the paged view. */
+    { 1012, { NULL, SDLK_LEFT,  SDL_KMOD_ALT,           "navigate.back"                 }, 0 },
+    { 1013, { NULL, SDLK_RIGHT, SDL_KMOD_ALT,           "navigate.forward"              }, 0 },
+#endif
+    { 1004, { NULL, SDLK_F5, 0,                         "document.reload"               }, 0 },
+    /* Media keys. */
+    { 1005, { NULL, SDLK_AC_SEARCH, 0,                  "focus.set id:find.input id2:filter.bookmark.input"       }, 0 },
+    { 1006, { NULL, SDLK_AC_HOME, 0,                    "navigate.home"                 }, 0 },
+#if defined (iPlatformAndroidMobile)
+    /* The system Back button/gesture. */
+    { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back backbutton:1"    }, 0 },
+#else
+    { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back"                 }, 0 },
+#endif
+    { 1008, { NULL, SDLK_AC_FORWARD, 0,                 "navigate.forward"              }, 0 },
+    { 1009, { NULL, SDLK_AC_STOP, 0,                    "document.stop"                 }, 0 },
+    { 1010, { NULL, SDLK_AC_REFRESH, 0,                 "document.reload"               }, 0 },
+    { 1011, { NULL, SDLK_AC_BOOKMARKS, 0,               "sidebar.mode arg:0 toggle:1"   }, 0 },
+};
+
+static void defaultKey_Keys_(size_t index, int *key, int *mods) {
+    *key  = defaultBindings_[index].bind.key;
+    *mods = defaultBindings_[index].bind.kmods;
+#if defined (iPlatformEmscripten)
+    appleDefaultKey_Web(defaultBindings_[index].id, key, mods);
+#endif
+}
+
+static iBinding *findId_Keys_(iKeys *d, int id) {
+    iForEach(Array, i, &d->bindings) {
+        iBinding *bind = i.value;
+        if (bind->id == id) {
+            return bind;
+        }
+    }
+    return NULL;
+}
+
+static void setFlags_Keys_(int id, int bindFlags) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        bind->flags = bindFlags;
+    }
+}
+
+static void bindDefaults_(void) {
+    iForIndices(i, defaultBindings_) {
+        const int       id   = defaultBindings_[i].id;
+        const iMenuItem bind = defaultBindings_[i].bind;
+        int key, mods;
+        defaultKey_Keys_(i, &key, &mods);
+        bind_Keys(id, bind.command, key, mods);
+        if (bind.label) {
+            setLabel_Keys(id, bind.label);
+        }
+        setFlags_Keys_(id, defaultBindings_[i].flags);
+    }
+}
+
+static iBinding *find_Keys_(iKeys *d, int key, int mods) {
+    size_t pos;
+    /* Do not differentiate between left and right modifier keys. */
+    key = normalizedMod_Sym(key);
+    if (isMod_Sym(key)) {
+        mods = 0;
+    }
+    const iBinding elem = { .key = key, .mods = mods };
+    if (locate_PtrSet(&d->lookup, &elem, &pos)) {
+        return at_PtrSet(&d->lookup, pos);
+    }
+    return NULL;
+}
+
+static iBinding *findCommand_Keys_(iKeys *d, const char *command) {
+    /* Note: O(n) */
+    iForEach(Array, i, &d->bindings) {
+        iBinding *bind = i.value;
+        if (!cmp_String(&bind->command, command)) {
+            return bind;
+        }
+    }
+    return NULL;
+}
+
+static void updateLookup_Keys_(iKeys *d) {
+    clear_PtrSet(&d->lookup);
+    iConstForEach(Array, i, &d->bindings) {
+        const iBinding *bind = i.value;
+        if (~bind->flags & noDirectTrigger_BindFlag) {
+            insert_PtrSet(&d->lookup, i.value);
+        }
+    }
+}
+
+void setKey_Binding(int id, int key, int mods) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        bind->key  = normalizedMod_Sym(key);
+        bind->mods = isMod_Sym(key) ? 0 : mods;
+        updateLookup_Keys_(&keys_);
+    }
+}
+
+void reset_Binding(int id) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        iForIndices(i, defaultBindings_) {
+            if (defaultBindings_[i].id == id) {
+                defaultKey_Keys_(i, &bind->key, &bind->mods);
+                updateLookup_Keys_(&keys_);
+                break;
+            }
+        }
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+#if defined (iPlatformTerminal)
+static const char *filename_Keys_    = "cbindings.lst";
+static const char *oldFilename_Keys_ = "cbindings.txt";
+#else
+static const char *filename_Keys_    = "bindings.lst";
+static const char *oldFilename_Keys_ = "bindings.txt";
+#endif
+
+static iBool parseBinding_Keys_(iRangecc line, int format, int *id, int *key, int *mods) {
+    if (format == v1_ListFileFormat) {
+        char modBits[5];
+        iZap(modBits);
+        if (sscanf(line.start, "%d %x %4s", id, key, modBits) < 2) {
+            return iFalse;
+        }
+        *mods = 0;
+        const char *m = modBits;
+        for (int i = 0; i < 4 && *m; i++, m++) {
+            if (*m == 's') *mods |= SDL_KMOD_SHIFT;
+            if (*m == 'a') *mods |= SDL_KMOD_ALT;
+            if (*m == 'c') *mods |= SDL_KMOD_CTRL;
+            if (*m == 'g') *mods |= SDL_KMOD_GUI;
+            if (*m == 'k') *mods |= SDL_KMOD_CAPS;
+        }
+        return iTrue;
+    }
+    char *end = NULL;
+    *id = (int) strtol(line.start, &end, 10);
+    if (end == line.start || end >= line.end || !isSpace_Char(*end)) {
+        return iFalse;
+    }
+    return shortcutFromString_Keys((iRangecc){ end, line.end }, key, mods);
+}
+
+void init_Keys(void) {
+    iKeys *d = &keys_;
+    init_ModMap_();
+    init_Array(&d->bindings, sizeof(iBinding));
+    initCmp_PtrSet(&d->lookup, cmpPtr_Binding_);
+    bindDefaults_();
+    updateLookup_Keys_(d);
+}
+
+void deinit_Keys(void) {
+    iKeys *d = &keys_;
+    clear_Keys_(d);
+    deinit_PtrSet(&d->lookup);
+    deinit_Array(&d->bindings);
+}
+
+void load_Keys(const char *saveDir) {
+    iKeys *d = &keys_;
+    loadModMap_Keys_(saveDir);
+    iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, filename_Keys_, oldFilename_Keys_)));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        iBlock   *src    = collect_Block(readAll_File(f));
+        const int format = format_ListFile(range_Block(src));
+        iRangecc  line   = iNullRange;
+        while (nextLine_ListFile(range_Block(src), &line)) {
+            int id, key, mods;
+            if (!parseBinding_Keys_(line, format, &id, &key, &mods)) {
+                continue;
+            }
+            iBinding *bind = findId_Keys_(d, id);
+            if (bind) {
+                bind->key  = key;
+                bind->mods = mods;
+            }
+        }
+    }
+    updateLookup_Keys_(d);
+}
+
+void save_Keys(const char *saveDir) {
+    iKeys *d = &keys_;
+    iString *lines = collectNewCStr_String(
+        "# This file is generated automatically. Keys are specified using SDL key names\n"
+        "# or hexadecimal SDL keycodes, for example \"ctrl+shift+k\" or \"ctrl+0x4000004a\".\n");
+    iConstForEach(Array, i, &d->bindings) {
+        const iBinding *bind = i.value;
+        if (bind->id >= tool_BindingId) {
+            continue;
+        }
+        appendFormat_String(lines, "\n# %s\n%d ", cstr_String(&bind->command), bind->id);
+        shortcutToString_Keys(bind->key, bind->mods, lines);
+        appendChar_String(lines, '\n');
+    }
+    saveFormat_ListFile(
+        concatPath_CStr(saveDir, filename_Keys_), v2_ListFileFormat, utf8_String(lines));
+}
+
+void bind_Keys(int id, const char *command, int key, int mods) {
+    iKeys *d = &keys_;
+    iBinding *bind = findId_Keys_(d, id);
+    if (!bind) {
+        iBinding elem = { .id = id, .key = key, .mods = mods };
+        initCStr_String(&elem.command, command);
+        init_String(&elem.label);
+        pushBack_Array(&d->bindings, &elem);
+    }
+    else {
+        setCStr_String(&bind->command, command);
+        bind->key  = key;
+        bind->mods = mods;
+    }
+}
+
+void setLabel_Keys(int id, const char *label) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        setCStr_String(&bind->label, label);
+    }
+}
+
+iBool processEvent_Keys(const SDL_Event *ev) {
+    iKeys *d = &keys_;
+    iRoot *root = get_Window() ? get_Window()->keyRoot : NULL;
+    if (ev->type == SDL_EVENT_KEY_DOWN || ev->type == SDL_EVENT_KEY_UP) {
+        const iBinding *bind = find_Keys_(d, ev->key.key, keyMods_Sym(ev->key.mod));
+        if (bind) {
+            if (ev->type == SDL_EVENT_KEY_UP) {
+                if (bind->flags & argRelease_BindFlag) {
+                    postCommandf_Root(root, "%s release:1", cstr_String(&bind->command));
+                    return iTrue;
+                }
+                return iFalse;
+            }
+            if (ev->key.repeat && (bind->flags & argRepeat_BindFlag)) {
+                postCommandf_Root(root, "%s repeat:1", cstr_String(&bind->command));
+            }
+            else {
+                postCommandf_Root(root, "%s keydown:1", cstr_String(&bind->command));
+            }
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+const iBinding *findCommand_Keys(const char *command) {
+    return findCommand_Keys_(&keys_, command);
+}
+
+const iPtrArray *list_Keys(void) {
+    iKeys *d = &keys_;
+    iPtrArray *list = collectNew_PtrArray();
+    iConstForEach(Array, i, &d->bindings) {
+        pushBack_PtrArray(list, i.value);
+    }
+    return list;
+}
+
+iBool isDown_Keys(const iBinding *binding) {
+#if defined (iPlatformTerminal)
+    return iFalse;
+#else
+    int numKeys = 0;
+    const bool *keys = SDL_GetKeyboardState(&numKeys);
+    const int scancode = SDL_GetScancodeFromKey(binding->key, NULL);
+    const int scancode2 = (scancode == SDL_SCANCODE_RALT ? SDL_SCANCODE_LALT :
+                           scancode == SDL_SCANCODE_LALT ? SDL_SCANCODE_RALT : scancode);
+    return (scancode < numKeys && keys[scancode]) || (scancode2 < numKeys && keys[scancode2]);
+#endif
+}

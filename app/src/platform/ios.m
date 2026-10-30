@@ -1,0 +1,1626 @@
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "ios.h"
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+#   include "apple_text.h"
+#endif
+#include "app.h"
+#include <lagrange/core.h>
+#include <lagrange/gmutil.h>
+#include "media/player.h"
+#include "render/text.h"
+#include "ui/command.h"
+#include "ui/keys.h"
+#include "ui/window.h"
+#include "ui/touch.h"
+
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_properties.h>
+#include <SDL3/SDL_timer.h>
+
+#import <AVFAudio/AVFAudio.h>
+#import <CoreHaptics/CoreHaptics.h>
+#import <UIKit/UIKit.h>
+#import <MediaPlayer/MediaPlayer.h>
+
+static iBool isSystemDarkMode_      = iFalse;
+static iBool isRemoteCenterInited_  = iFalse;
+
+/* How long a newly appeared text field ignores input, to avoid spill-over key events. */
+static const uint32_t inputSpillOverDelay_ = 500;
+
+static UIWindow *uiWindow_(const iWindow *window) {
+    UIWindow *win = (__bridge UIWindow *) SDL_GetPointerProperty(
+        SDL_GetWindowProperties(window->win), SDL_PROP_WINDOW_UIKIT_WINDOW_POINTER, NULL);
+    iAssert(win != nil);
+    return win;
+}
+
+static UIViewController *viewController_(iWindow *window) {
+    UIWindow *uiWin = uiWindow_(window);
+    if (uiWin) {
+        return uiWin.rootViewController;
+    }
+    iAssert(false);
+    return NULL;
+}
+
+static void notifyChange_SystemTextInput_(iSystemTextInput *);
+static BOOL isNewlineAllowed_SystemTextInput_(const iSystemTextInput *);
+
+/*----------------------------------------------------------------------------------------------*/
+
+API_AVAILABLE(ios(13.0))
+@interface HapticState : NSObject
+@property (nonatomic, strong) CHHapticEngine *engine;
+@property (nonatomic, strong) NSDictionary   *tapDef;
+@property (nonatomic, strong) NSDictionary   *gentleTapDef;
+@end
+
+@implementation HapticState
+
+-(void)setup {
+    NSError *error;
+    self.engine = [[CHHapticEngine alloc] initAndReturnError:&error];
+    __weak HapticState *hs = self;
+    [self.engine setResetHandler:^{
+        NSLog(@"Haptic engine reset");
+        NSError *startupError;
+        [hs.engine startAndReturnError:&startupError];
+        if (startupError) {
+            NSLog(@"Engine couldn't restart");
+        }
+        else {
+            // TODO: Create pattern players.
+        }
+    }];
+    [self.engine setStoppedHandler:^(CHHapticEngineStoppedReason reason){
+        NSLog(@"Haptic engine stopped");
+        switch (reason) {
+            case CHHapticEngineStoppedReasonAudioSessionInterrupt:
+                break;
+            case CHHapticEngineStoppedReasonApplicationSuspended:
+                break;
+            case CHHapticEngineStoppedReasonIdleTimeout:
+                break;
+            case CHHapticEngineStoppedReasonSystemError:
+                break;
+            default:
+                break;
+        }
+    }];
+    self.tapDef = @{
+        CHHapticPatternKeyPattern:
+            @[
+                @{
+                    CHHapticPatternKeyEvent: @{
+                        CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
+                        CHHapticPatternKeyTime:         @0.0,
+                        CHHapticPatternKeyEventDuration:@0.1,
+                        CHHapticPatternKeyEventParameters: @[
+                            @{
+                                CHHapticPatternKeyParameterID: CHHapticEventParameterIDHapticIntensity,
+                                CHHapticPatternKeyParameterValue: @1.0
+                            }
+                        ]
+                    },
+                },
+            ]
+    };
+    self.gentleTapDef = @{
+        CHHapticPatternKeyPattern:
+            @[
+                @{
+                    CHHapticPatternKeyEvent: @{
+                        CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
+                        CHHapticPatternKeyTime:         @0.0,
+                        CHHapticPatternKeyEventDuration:@0.1,
+                        CHHapticPatternKeyEventParameters: @[
+                            @{
+                                CHHapticPatternKeyParameterID: CHHapticEventParameterIDHapticIntensity,
+                                CHHapticPatternKeyParameterValue: @0.33
+                            }
+                        ]
+                    },
+                },
+            ]
+    };
+}
+
+-(void)playHapticEffect:(NSDictionary *)def {
+    NSError *error = nil;
+    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:def
+                                                                     error:&error];
+    // TODO: Check the error.
+    id<CHHapticPatternPlayer> player = [self.engine createPlayerWithPattern:pattern error:&error];
+    // TODO: Check the error.
+    [self.engine startWithCompletionHandler:^(NSError *err){
+        if (err == nil) {
+            NSError *startError = nil;
+            [player startAtTime:0.0 error:&startError];
+        }
+    }];
+}
+
+@end
+
+/*----------------------------------------------------------------------------------------------*/
+
+#if 0
+
+API_AVAILABLE(ios(13.0))
+@interface ContextMenuDelegate : NSObject<UIContextMenuInteractionDelegate> {
+}
+- (nullable UIContextMenuConfiguration *)contextMenuInteraction:(UIContextMenuInteraction *)interaction configurationForMenuAtLocation:(CGPoint)location;
+@end
+
+@implementation ContextMenuDelegate
+
+- (nullable UIContextMenuConfiguration *)contextMenuInteraction:(UIContextMenuInteraction *)interaction configurationForMenuAtLocation:(CGPoint)location {
+    printf("need context config at %d, %d\n", (int)location.x, (int)location.y);
+    return nil;
+}
+
+@end
+
+#endif
+
+/*----------------------------------------------------------------------------------------------*/
+
+@interface PopupData : NSObject {
+    iWidget *owner;
+    NSMutableDictionary<NSString *, NSString *> *commands;
+    int idNum;
+}
+@property (nonatomic, weak) UIButton *menuButton;
+@end
+
+@implementation PopupData
+
+-(id)initWithMenuButton:(UIButton *)button owningWidget:(iWidget *)ownerWidget {
+    self = [super init];
+    commands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
+    static int idGen = 1;
+    self.menuButton = button;
+    owner = ownerWidget;
+    idNum = idGen++;
+    return self;
+}
+
+-(int)popupId {
+    return idNum;
+}
+
+-(iWidget *)owningWidget {
+    return owner;
+}
+
+-(void)clearCommands {
+    [commands removeAllObjects];
+}
+
+-(void)setCommand:(NSString *)cmd forActionIdentifier:(NSString *)actionIdentifier {
+    [commands setObject:cmd forKey:actionIdentifier];
+}
+
+-(void)triggerCommand:(NSString *)actionIdentifier {
+    NSString *cmd = [commands objectForKey:actionIdentifier];
+    if (cmd) {
+        postCommand_Widget(owner, "%s", [cmd cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+}
+
+@end
+
+/*----------------------------------------------------------------------------------------------*/
+
+@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate, UITextViewDelegate,
+                               UIScrollViewDelegate, NSLayoutManagerDelegate> {
+    iString *fileBeingSaved;
+    iString *pickFileCommand;
+    iSystemTextInput *sysCtrl;
+    float sysCtrlLineSpacing;
+    NSMutableArray<PopupData *> *popupMenus;
+    uint64_t ignoreInputUntil; /* SDL ticks */
+}
+@property (nonatomic, assign) BOOL isHapticsAvailable;
+@property (nonatomic, strong) NSObject *haptic;
+@end
+
+static AppState *appState_;
+static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting notified of taps */
+static uint32_t lastAppTouchTime_;     /* finger down/up below the top safe area */
+
+@implementation AppState
+
+-(instancetype)init {
+    self = [super init];
+    fileBeingSaved = NULL;
+    pickFileCommand = NULL;
+    sysCtrl = NULL;
+    sysCtrlLineSpacing = 0.0f;
+    popupMenus = [[NSMutableArray<PopupData *> alloc] init];
+    ignoreInputUntil = 0;
+    return self;
+}
+
+-(void)setPickFileCommand:(const char *)command {
+    if (!pickFileCommand) {
+        pickFileCommand = new_String();
+    }
+    setCStr_String(pickFileCommand, command);
+}
+
+-(void)setFileBeingSaved:(const iString *)path {
+    fileBeingSaved = copy_String(path);
+}
+
+-(void)removeSavedFile {
+    /* The file was copied to an external location, so the cached copy is not needed. */
+    remove(cstr_String(fileBeingSaved));
+    delete_String(fileBeingSaved);
+    fileBeingSaved = NULL;
+}
+
+-(void)setupHaptics {
+    if (@available(iOS 13.0, *)) {
+        self.isHapticsAvailable = CHHapticEngine.capabilitiesForHardware.supportsHaptics;
+        if (self.isHapticsAvailable) {
+            HapticState *hs = [[HapticState alloc] init];
+            [hs setup];
+            self.haptic = hs;
+            /* We start the engine and keep it running. */
+            NSError *err;
+            [hs.engine startAndReturnError:&err];
+        }
+    } else {
+        self.isHapticsAvailable = NO;
+    }
+}
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller
+didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    if (fileBeingSaved) {
+        [self removeSavedFile];
+    }
+    else {
+        /* A file is being opened. */
+        NSURL *url = [urls firstObject];
+        iString *path = localFilePathFromUrl_String(collectNewCStr_String([[url absoluteString]
+                                                                           UTF8String]));
+        postCommandf_App("%s temp:1 path:%s",
+                         cstr_String(pickFileCommand),
+                         cstrCollect_String(path));
+        delete_String(pickFileCommand);
+        pickFileCommand = NULL;
+    }
+}
+
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
+    if (fileBeingSaved) {
+        [self removeSavedFile];
+    }
+    if (pickFileCommand) {
+        delete_String(pickFileCommand);
+        pickFileCommand = NULL;
+    }
+}
+
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
+    postCommand_App("statusbar.tapped");
+    return NO;
+}
+
+-(void)powerStateChanged:(NSNotification *)notification {
+    iUnused(notification);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        notify_App("~display.refreshrate.check");
+    });
+}
+
+-(void)keyboardOnScreen:(NSNotification *)notification {
+    NSDictionary *info   = notification.userInfo;
+    NSValue      *value  = info[UIKeyboardFrameEndUserInfoKey];
+    CGRect rawFrame      = [value CGRectValue];
+    UIView *view         = [viewController_(get_Window()) view];
+    CGRect keyboardFrame = [view convertRect:rawFrame fromView:nil];
+//    NSLog(@"keyboardFrame: %@", NSStringFromCGRect(keyboardFrame));
+    iMainWindow *window = get_MainWindow();
+    /* Root size may lag behind the view during rotation. A hardware keyboard has zero height. */
+    const CGRect overlap = CGRectIntersection(view.bounds, keyboardFrame);
+    const float height = CGRectIsNull(overlap) ? 0.0f : overlap.size.height;
+    setKeyboardHeight_MainWindow(window, height * window->base.pixelRatio);
+}
+
+-(void)keyboardOffScreen:(NSNotification *)notification {
+    setKeyboardHeight_MainWindow(get_MainWindow(), 0);
+}
+
+static void sendReturnKeyPress_(int kmods) {
+    SDL_Event ev = { .type = SDL_EVENT_KEY_DOWN };
+    ev.key.timestamp = SDL_GetTicksNS();
+    ev.key.key = SDLK_RETURN;
+    ev.key.mod = kmods;
+    ev.key.down = true;
+    SDL_PushEvent(&ev);
+    ev.type = SDL_EVENT_KEY_UP;
+    ev.key.down = false;
+    SDL_PushEvent(&ev);
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if ([self isIgnoringInput]) {
+        return NO; /* e.g., a link was just activated by pressing Return */
+    }
+    sendReturnKeyPress_(0);
+    return NO;
+}
+
+-(void)setSystemTextInput:(iSystemTextInput *)sys {
+    sysCtrl = sys;
+    /* Ignore input for a moment so that key events spilling over from whatever caused the
+       text field to appear (e.g., activating a link with the keyboard) don't insert spurious
+       characters. UIKit may deliver them over several run loop iterations. */
+    ignoreInputUntil = sys ? SDL_GetTicks() + inputSpillOverDelay_ : 0;
+}
+
+-(BOOL)isIgnoringInput {
+    return ignoreInputUntil && SDL_GetTicks() < ignoreInputUntil;
+}
+
+-(void)setSystemTextLineSpacing:(float)height {
+    sysCtrlLineSpacing = height;
+}
+
+-(iSystemTextInput *)systemTextInput {
+    return sysCtrl;
+}
+
+- (CGFloat)layoutManager:(NSLayoutManager *)layoutManager
+        lineSpacingAfterGlyphAtIndex:(NSUInteger)glyphIndex
+        withProposedLineFragmentRect:(CGRect)rect {
+    return sysCtrlLineSpacing / get_MainWindow()->base.pixelRatio;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string {
+    if ([self isIgnoringInput]) {
+        return NO;
+    }
+    iSystemTextInput *sysCtrl = [appState_ systemTextInput];
+    notifyChange_SystemTextInput_(sysCtrl);
+    return YES;
+}
+
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range
+ replacementText:(NSString *)text {
+    if ([self isIgnoringInput]) {
+        return NO;
+    }
+    if ([text isEqualToString:@"\n"]) {
+        const iBool isCommandKeyDown = (modState_Keys() & KMOD_PRIMARY) != 0;
+        if (isCommandKeyDown ||
+            !isNewlineAllowed_SystemTextInput_([appState_ systemTextInput])) {
+            sendReturnKeyPress_(isCommandKeyDown ? KMOD_PRIMARY : 0);
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)textViewDidChange:(UITextView *)textView {
+    iSystemTextInput *sysCtrl = [appState_ systemTextInput];
+    notifyChange_SystemTextInput_(sysCtrl);
+}
+
+- (int)addPopupMenu:(UIButton *)menuButton owningWidget:(iWidget*)owner {
+    PopupData *data = [[PopupData alloc] initWithMenuButton:menuButton
+                                               owningWidget:owner];
+    [popupMenus addObject:data];
+    //printf("[ios] added sysmenu %p\n", owner);
+    return [data popupId];
+}
+
+-(PopupData *)findPopupMenu:(iWidget *)owner {
+    for (PopupData *data in popupMenus) {
+        if ([data owningWidget] == owner) {
+            return data;
+        }
+    }
+    return nil;
+}
+
+- (void)removePopupMenu:(iWidget *)owner {
+    PopupData *data = nil;
+    while ((data = [self findPopupMenu:owner])) {
+        //printf("[ios] removing system menu %d\n", [data popupId]);
+        [data.menuButton removeFromSuperview];
+        [popupMenus removeObject:data];
+    }
+}
+
+@end
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void enableMouse_(iBool yes) {
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_BUTTON_DOWN, yes);
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_MOTION, yes);
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_BUTTON_UP, yes);
+}
+
+static void setupRemoteCommandCenter_(void) {
+    if (isRemoteCenterInited_) return; /* one-time */
+    isRemoteCenterInited_ = iTrue;
+    MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+    [[commandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            setPaused_Player(player, iTrue);
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            if (isPaused_Player(player)) {
+                setPaused_Player(player, iFalse);
+            }
+            else {
+                start_Player(player);
+            }
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter stopCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            stop_Player(player);
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter togglePlayPauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            setPaused_Player(player, !isPaused_Player(player));
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter nextTrackCommand] setEnabled:NO];
+    [[commandCenter previousTrackCommand] setEnabled:NO];
+    [[commandCenter changeRepeatModeCommand] setEnabled:NO];
+    [[commandCenter changeShuffleModeCommand] setEnabled:NO];
+    [[commandCenter changePlaybackRateCommand] setEnabled:NO];
+    [[commandCenter seekForwardCommand] setEnabled:NO];
+    [[commandCenter seekBackwardCommand] setEnabled:NO];
+    [[commandCenter skipForwardCommand] setEnabled:NO];
+    [[commandCenter skipBackwardCommand] setEnabled:NO];
+    [[commandCenter changePlaybackPositionCommand] setEnabled:NO];
+}
+
+void setupApplication_iOS(void) {
+    enableMouse_(iFalse);
+    appState_ =[[AppState alloc] init];
+    [appState_ setupHaptics];
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:appState_
+               selector:@selector(keyboardOnScreen:)
+                   name:UIKeyboardWillShowNotification
+                 object:nil];
+    [center addObserver:appState_
+               selector:@selector(keyboardOffScreen:)
+                   name:UIKeyboardWillHideNotification
+                 object:nil];
+    [center addObserver:appState_
+               selector:@selector(powerStateChanged:)
+                   name:NSProcessInfoPowerStateDidChangeNotification
+                 object:nil];
+}
+
+static iBool isDarkMode_(iWindow *window) {
+    UIViewController *ctl = viewController_(window);
+    if (ctl) {
+        UITraitCollection *traits = ctl.traitCollection;
+        if (@available(iOS 12.0, *)) {
+            return (traits.userInterfaceStyle == UIUserInterfaceStyleDark);
+        }
+    }
+    return iFalse;
+}
+
+void safeAreaInsets_Mobile(float *left, float *top, float *right, float *bottom) {
+    iWindow *window = get_Window();
+    UIViewController *ctl = viewController_(window);
+    if (@available(iOS 11.0, *)) {
+        const UIEdgeInsets safe = ctl.view.safeAreaInsets;
+        if (left) *left = safe.left * window->pixelRatio;
+        if (top) *top = safe.top * window->pixelRatio;
+        if (right) *right = safe.right * window->pixelRatio;
+        if (bottom) *bottom = safe.bottom * window->pixelRatio;
+    } else {
+        if (left) *left = 0.0f;
+        if (top) *top = 0.0f;
+        if (right) *right = 0.0f;
+        if (bottom) *bottom = 0.0f;
+    }
+}
+
+iBool isPhone_iOS(void) {
+    return [[[UIDevice currentDevice] model] isEqualToString:@"iPhone"];
+}
+
+int displayRefreshRate_iOS(void) {
+    int rate = (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+    if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
+        rate = iMin(rate, 60); /* ProMotion is limited to 60 Hz */
+    }
+    return rate;
+}
+
+float displayScale_iOS(const iWindow *window) {
+    return uiWindow_(window).screen.nativeScale;
+}
+
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+CTFontDescriptorRef newSystemDesignFontDescriptor_iOS(CTFontDescriptorRef base,
+                                                      enum iSystemFontDesign design) {
+    UIFontDescriptorSystemDesign name = design == serif_SystemFontDesign
+                                            ? UIFontDescriptorSystemDesignSerif
+                                        : design == rounded_SystemFontDesign
+                                            ? UIFontDescriptorSystemDesignRounded
+                                            : UIFontDescriptorSystemDesignDefault;
+    UIFontDescriptor *desc = [(__bridge UIFontDescriptor *) base fontDescriptorWithDesign:name];
+    return desc ? (CTFontDescriptorRef) CFBridgingRetain(desc) : NULL;
+}
+#endif
+
+void updateStatusBarTapper_iOS(void) {
+    if (!statusBarTapper_) {
+        return;
+    }
+    UIView *view = [viewController_(get_Window()) view];
+    CGRect frame = CGRectZero;
+    if (@available(iOS 13.0, *)) {
+        UIStatusBarManager *sbm = view.window.windowScene.statusBarManager;
+        if (sbm && !sbm.isStatusBarHidden) {
+            frame = [view convertRect:sbm.statusBarFrame fromView:nil];
+        }
+    }
+    /* Never cover the app's own UI below the safe area. */
+    frame = CGRectIntersection(frame, CGRectMake(0, 0, view.bounds.size.width,
+                                                 view.safeAreaInsets.top));
+    /* Only cover the document area, excluding open sidebars. */ {
+        const iMainWindow *mw   = get_MainWindow();
+        iRoot             *root = mw ? mw->base.keyRoot : NULL;
+        if (!root && mw) {
+            root = mw->base.roots[0];
+        }
+        const iWidget *doc =
+            root && root->bars.docTabs ? constAs_Widget(document_Root(root)) : NULL;
+        if (doc) {
+            const iRect bounds = bounds_Widget(doc);
+            const float ratio  = mw->base.pixelRatio;
+            frame = CGRectIntersection(frame, CGRectMake(left_Rect(bounds) / ratio, 0,
+                                                         width_Rect(bounds) / ratio,
+                                                         view.bounds.size.height));
+        }
+    }
+    if (CGRectIsEmpty(frame)) {
+        frame = CGRectZero;
+    }
+    if (!CGRectEqualToRect(frame, statusBarTapper_.frame)) {
+        [statusBarTapper_ setFrame:frame];
+    }
+    [statusBarTapper_ setHidden:CGRectIsEmpty(frame)];
+}
+
+static bool SDLCALL watchFingers_(void *user, SDL_Event *ev) {
+    iUnused(user);
+    if (ev->type == SDL_EVENT_FINGER_DOWN || ev->type == SDL_EVENT_FINGER_UP) {
+        UIView *view = [viewController_(get_Window()) view];
+        if (ev->tfinger.y * view.bounds.size.height > view.safeAreaInsets.top) {
+            lastAppTouchTime_ = (uint32_t) SDL_GetTicks();
+        }
+    }
+    return true;
+}
+
+void setupWindow_iOS(iWindow *window) {
+    UIViewController *ctl = viewController_(window);
+    isSystemDarkMode_ = isDarkMode_(window);
+    postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+    /* A hack to get notified on status bar taps. We create a thin dummy UIScrollView
+       that occupies the top of the screen where the status bar is located. */ {
+        statusBarTapper_ = [[UIScrollView alloc] initWithFrame:CGRectZero];
+//        [statusBarTapper_ setBackgroundColor:[UIColor greenColor]]; /* to see where it is */
+        [statusBarTapper_ setShowsVerticalScrollIndicator:NO];
+        [statusBarTapper_ setShowsHorizontalScrollIndicator:NO];
+        [statusBarTapper_ setContentSize:(CGSize){ 10000, 10000 }];
+        [statusBarTapper_ setContentOffset:(CGPoint){ 0, 1000 }];
+        [statusBarTapper_ setScrollsToTop:YES];
+        [statusBarTapper_ setDelegate:appState_];
+        [ctl.view addSubview:statusBarTapper_];
+        updateStatusBarTapper_iOS();
+        SDL_AddEventWatch(watchFingers_, NULL);
+    }
+}
+
+void playHapticEffect_iOS(enum iHapticEffect effect) {
+    if (@available(iOS 13.0, *)) {
+        HapticState *hs = (HapticState *) appState_.haptic;
+        switch(effect) {
+            case tap_HapticEffect:
+                [hs playHapticEffect:hs.tapDef];
+                break;
+            case gentleTap_HapticEffect:
+                [hs playHapticEffect:hs.gentleTapDef];
+                break;
+        }
+    }
+}
+
+static void callVoidMethod(id target, NSString *selectorName) {
+    SEL sel = NSSelectorFromString(selectorName);
+    if ([target respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"v@:"]];
+        [call setSelector:sel];
+        [call invokeWithTarget:target];
+    }
+}
+
+static NSString *callStringMethod(id target, NSString *selectorName) {
+    SEL sel = NSSelectorFromString(selectorName);
+    if ([target respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"@@:"]];
+        [call setSelector:sel];
+        [call invokeWithTarget:target];
+        NSString *retVal;
+        [call getReturnValue:&retVal];
+        return retVal;
+    }
+    return NULL;
+}
+
+static void callVoidMethodWithIntArgument(id target, NSString *selectorName, int argValue) {
+    SEL sel = NSSelectorFromString(selectorName);
+    if ([target respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"v@:i"]];
+        [call setSelector:sel];
+        int style = argValue;
+        [call setArgument:&style atIndex:2];
+        [call invokeWithTarget:target];
+    }
+}
+
+static iBool isSheetOpen_iOS_(void) {
+    const iMainWindow *mw = get_MainWindow();
+    if (mw) {
+        iForIndices(i, mw->base.roots) {
+            if (mw->base.roots[i] && isSheetOpen_Root(mw->base.roots[i])) {
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
+}
+
+iBool processEvent_iOS(const SDL_Event *ev) {
+    if (ev->type == SDL_EVENT_DISPLAY_ORIENTATION ||
+        ev->type == SDL_EVENT_WINDOW_RESIZED ||
+        ev->type == SDL_EVENT_WINDOW_SAFE_AREA_CHANGED) {
+        updateStatusBarTapper_iOS();
+        return iFalse;
+    }
+    if (ev->type == SDL_EVENT_WINDOW_RESTORED) {
+        const iBool isDark = isDarkMode_(get_Window());
+        if (isDark != isSystemDarkMode_) {
+            isSystemDarkMode_ = isDark;
+            postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+        }
+    }
+    else if (ev->type == SDL_EVENT_USER && ev->user.code == command_UserEventCode) {
+        const char *cmd = command_UserEvent(ev);
+        //NSLog(@"%s", cmd);
+        if (equal_Command(cmd, "window.unfreeze")) {
+            /* Under the UIScene life cycle the launch window is owned by the scene
+               delegate, not the application delegate, so dismiss it there. */
+            id dlg = nil;
+            if (@available(iOS 13.0, *)) {
+                for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                    if ([scene isKindOfClass:[UIWindowScene class]]) {
+                        dlg = ((UIWindowScene *) scene).delegate;
+                        if (dlg) break;
+                    }
+                }
+            }
+            if (!dlg) {
+                dlg = [UIApplication sharedApplication].delegate;
+            }
+            callVoidMethod(dlg, @"hideLaunchScreen");
+            updateStatusBarTapper_iOS();
+            /* When the application is launching, it is too early to post a SDL_EVENT_DROP_FILE
+               event. The customized SDL application delegate saves the launch URL, so
+               we can use it now to */
+            static iBool didCheckLaunchURL = iFalse;
+            if (!didCheckLaunchURL) {
+                didCheckLaunchURL = iTrue;
+                NSString *launchURL = callStringMethod(dlg, @"getLaunchOptionsURL");
+                if (launchURL) {
+                    postCommandf_App("open newtab:1 url:%s", [launchURL UTF8String]);
+                }
+            }
+        }
+        else if (equal_Command(cmd, "statusbar.tapped")) {
+            /* The system may treat taps on the app's own UI near the top as status bar taps. */
+            /* Scrolling would dismiss an open sheet. */
+            if ((uint32_t) SDL_GetTicks() - lastAppTouchTime_ > 300 && !isSheetOpen_iOS_()) {
+                postCommand_App("scroll.top smooth:1");
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "ostheme")) {
+            if (arg_Command(cmd)) {
+                postCommandf_App("os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+            }
+        }
+        else if (equal_Command(cmd, "theme.changed")) {
+            if (@available(iOS 13.0, *)) {
+                /* SDL doesn't expose this as a setting, so we'll rely on a hack.
+                   Adding an SDL hint for this would be a cleaner solution than calling
+                   a private method. */
+                callVoidMethodWithIntArgument(viewController_(get_Window()),
+                                              @"setStatusStyle:",
+                                              isDark_ColorTheme(colorTheme_App())
+                                                ? UIStatusBarStyleLightContent
+                                                : UIStatusBarStyleDarkContent);
+            }
+        }
+    }
+    return iFalse; /* allow normal processing */
+}
+
+void updateNowPlayingInfo_iOS(void) {
+    const iPlayer *player = active_Player();
+    if (!player) {
+        clearNowPlayingInfo_iOS();
+        return;
+    }
+    setupRemoteCommandCenter_();
+    NSMutableDictionary<NSString *, id> *info = [[NSMutableDictionary<NSString *, id> alloc] init];
+    [info setObject:[NSNumber numberWithDouble:time_Player(player)]
+            forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    [info setObject:[NSNumber numberWithInt:MPNowPlayingInfoMediaTypeAudio]
+            forKey:MPNowPlayingInfoPropertyMediaType];
+    [info setObject:[NSNumber numberWithDouble:duration_Player(player)]
+             forKey:MPMediaItemPropertyPlaybackDuration];
+    const iString *title  = tag_Player(player, title_PlayerTag);
+    const iString *artist = tag_Player(player, artist_PlayerTag);
+    if (isEmpty_String(title)) {
+        title = collectNewCStr_String("Audio"); /* TODO: Use link label or URL file name */
+    }
+    if (isEmpty_String(artist)) {
+        artist = collectNewCStr_String("Lagrange"); /* TODO: Use domain or base URL */
+    }
+    [info setObject:[NSString stringWithUTF8String:cstr_String(title)]
+             forKey:MPMediaItemPropertyTitle];
+    [info setObject:[NSString stringWithUTF8String:cstr_String(artist)]
+             forKey:MPMediaItemPropertyArtist];
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:info];
+}
+
+void clearNowPlayingInfo_iOS(void) {
+    if (isRemoteCenterInited_) {
+        [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
+    }
+}
+
+void exportDownloadedFile_iOS(const iString *path) {
+    NSURL *url = [NSURL fileURLWithPath:[[NSString alloc] initWithCString:cstr_String(path)
+                                                                 encoding:NSUTF8StringEncoding]];
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                              initWithURL:url
+                                              inMode:UIDocumentPickerModeExportToService];
+    picker.delegate = appState_;
+    [appState_ setFileBeingSaved:path];
+    [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
+}
+
+void pickFile_iOS(const char *command) {
+    [appState_ setPickFileCommand:command];
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                              initWithDocumentTypes:@[@"public.data"]
+                                              inMode:UIDocumentPickerModeImport];
+    picker.delegate = appState_;
+    [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
+}
+
+static void openActivityView_(NSArray *activityItems) {
+    UIActivityViewController *actView =
+        [[UIActivityViewController alloc]
+         initWithActivityItems:activityItems
+         applicationActivities:nil];
+    iWindow *win = get_Window();
+    UIViewController *viewCtl = viewController_(win);
+    UIPopoverPresentationController *popover = [actView popoverPresentationController];
+    if (popover) {
+        [popover setSourceView:[viewCtl view]];
+        iInt2 tapPos = latestTapPosition_Touch();
+        tapPos.x /= win->pixelRatio;
+        tapPos.y /= win->pixelRatio;
+        [popover setSourceRect:(CGRect){{tapPos.x - 10, tapPos.y - 10}, {20, 20}}];
+        [popover setCanOverlapSourceViewRect:YES];
+    }
+    [viewCtl presentViewController:actView animated:YES completion:nil];
+}
+
+void openTextActivityView_iOS(const iString *text) {
+    openActivityView_(@[[NSString stringWithUTF8String:cstr_String(text)]]);
+}
+
+void openFileActivityView_iOS(const iString *path) {
+    NSURL *url = [NSURL fileURLWithPath:[[NSString alloc] initWithCString:cstr_String(path)
+                                                                 encoding:NSUTF8StringEncoding]];
+    openActivityView_(@[url]);
+}
+
+static UIBackgroundTaskIdentifier backgroundTask_;
+static iBool                      hasBackgroundTask_;
+
+void endBackgroundTask_iOS(void) {
+    if (hasBackgroundTask_) {
+        [[UIApplication sharedApplication] endBackgroundTask:backgroundTask_];
+        hasBackgroundTask_ = iFalse;
+    }
+}
+
+void beginBackgroundTask_iOS(void) {
+    endBackgroundTask_iOS();
+    backgroundTask_ = [[UIApplication sharedApplication]
+        beginBackgroundTaskWithName:@"Sync"
+                  expirationHandler:^{
+                      endBackgroundTask_iOS();
+                  }];
+    hasBackgroundTask_ = (backgroundTask_ != UIBackgroundTaskInvalid);
+}
+
+iBool openUri_iOS(const iString *uri) {
+    NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:cstr_String(uri)]];
+    if ([[UIApplication sharedApplication] canOpenURL:url]) {
+        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+        return iTrue;
+    }
+    return iFalse;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+enum iAVFAudioPlayerState {
+    initialized_AVFAudioPlayerState,
+    playing_AVFAudioPlayerState,
+    paused_AVFAudioPlayerState
+};
+
+struct Impl_AVFAudioPlayer {
+    iString cacheFilePath;
+    void *player; /* AVAudioPlayer *, no ARC */
+    float volume;
+    enum iAVFAudioPlayerState state;
+};
+
+iDefineTypeConstruction(AVFAudioPlayer)
+
+void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    init_String(&d->cacheFilePath);
+    d->player = NULL;
+    d->volume = 1.0f;
+    d->state = initialized_AVFAudioPlayerState;
+}
+
+void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    setInput_AVFAudioPlayer(d, NULL, NULL);
+    if (d->player) {
+        CFBridgingRelease(d->player);
+        d->player = nil;
+    }
+    if (d->state != initialized_AVFAudioPlayerState) {
+        [[AVAudioSession sharedInstance] setActive:NO
+                                       withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                             error:nil];
+    }
+}
+
+static const char *cacheDir_ = "~/Library/Caches/Audio";
+
+static const char *fileExt_(const iString *mimeType) {
+    /* Media types that AVFAudioPlayer will try to play. */
+    if (startsWithCase_String(mimeType, "audio/aiff") ||
+        startsWithCase_String(mimeType, "audio/x-aiff")) {
+        return ".aiff";
+    }
+    if (startsWithCase_String(mimeType, "audio/3gpp"))  return ".3gpp";
+    if (startsWithCase_String(mimeType, "audio/mpeg"))  return ".mp3";
+    if (startsWithCase_String(mimeType, "audio/mp3"))   return ".mp3";
+    if (startsWithCase_String(mimeType, "audio/mp4"))   return ".mp4";
+    if (startsWithCase_String(mimeType, "audio/mpeg4")) return ".mp4";
+    if (startsWithCase_String(mimeType, "audio/aac"))   return ".aac";
+    return "";
+}
+
+#define REF_d_player    (__bridge AVAudioPlayer *)d->player
+
+iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const iBlock *audioFileData) {
+    if (!isEmpty_String(&d->cacheFilePath)) {
+        remove(cstr_String(&d->cacheFilePath));
+        clear_String(&d->cacheFilePath);
+    }
+    if (d->player) {
+        CFBridgingRelease(d->player);
+        d->player = nil;
+    }
+    if (mimeType && audioFileData && iCmpStr(fileExt_(mimeType), "")) {
+        makeDirs_Path(collectNewCStr_String(cacheDir_));
+        iFile *f = new_File(collectNewFormat_String("%s/%u%s", cacheDir_, SDL_GetTicks(), fileExt_(mimeType)));
+        if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, audioFileData);
+            set_String(&d->cacheFilePath, path_File(f));
+            NSError *error = nil;
+            d->player = (void *) CFBridgingRetain([[AVAudioPlayer alloc]
+                         initWithContentsOfURL:[NSURL fileURLWithPath:
+                                                [NSString stringWithUTF8String:cstr_String(&d->cacheFilePath)]]
+                         error:&error]);
+            if (error) {
+                d->player = nil;
+            }
+            [REF_d_player setVolume:d->volume];
+        }
+        iRelease(f);
+    }
+    return d->player != nil;
+}
+
+void play_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    if (d->state != playing_AVFAudioPlayerState) {
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+        [[AVAudioSession sharedInstance] setActive:YES error:nil];
+        [REF_d_player play];
+        d->state = playing_AVFAudioPlayerState;
+    }
+}
+
+void stop_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    [REF_d_player stop];
+    d->state = initialized_AVFAudioPlayerState;
+    [[AVAudioSession sharedInstance] setActive:NO
+                                   withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                         error:nil];
+}
+
+iBool isFinished_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    /* AVAudioPlayer has no completion callback, so we poll:
+       if the state is still 'playing' but the player is no longer playing,
+       it reached the end of the audio naturally. */
+    if (d->state == playing_AVFAudioPlayerState && d->player) {
+        return ![REF_d_player isPlaying];
+    }
+    return iFalse;
+}
+
+void setPaused_AVFAudioPlayer(iAVFAudioPlayer *d, iBool paused) {
+    if (paused && d->state != paused_AVFAudioPlayerState) {
+        [REF_d_player pause];
+        d->state = paused_AVFAudioPlayerState;
+    }
+    else if (!paused && d->state != playing_AVFAudioPlayerState) {
+        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+        [[AVAudioSession sharedInstance] setActive:YES error:nil];
+        [REF_d_player play];
+        d->state = playing_AVFAudioPlayerState;
+    }
+}
+
+void setVolume_AVFAudioPlayer(iAVFAudioPlayer *d, float volume) {
+    d->volume = volume;
+    if (d->player) {
+        [REF_d_player setVolume:volume];
+    }
+}
+
+double currentTime_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return [REF_d_player currentTime];
+}
+
+double duration_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return [REF_d_player duration];
+}
+
+iBool isStarted_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return d->state != initialized_AVFAudioPlayerState;
+}
+
+iBool isPaused_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return d->state == paused_AVFAudioPlayerState;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_SystemTextInput {
+    int flags;
+    void *field; /* single-line text field */
+    void *view;  /* multi-line text view */
+    iBool pendingSelectAll;
+    void (*textChangedFunc)(iSystemTextInput *, void *);
+    void *textChangedContext;
+    iBool keepKeyboard;
+};
+
+/* A removed input that still has the keyboard, so it doesn't hide while switching inputs. */
+static UIView *retiredInput_;
+
+static void releaseRetiredInput_(void) {
+    if (retiredInput_) {
+        [retiredInput_ resignFirstResponder];
+        [retiredInput_ removeFromSuperview];
+        retiredInput_ = nil;
+    }
+}
+
+static void retireInput_(UIView *input) {
+    releaseRetiredInput_();
+    retiredInput_ = input;
+    [input setHidden:YES];
+    if ([input isKindOfClass:[UITextField class]]) {
+        [(UITextField *) input setDelegate:nil];
+    }
+    else {
+        [[(UITextView *) input layoutManager] setDelegate:nil];
+        [(UITextView *) input setDelegate:nil];
+    }
+    /* In case no other input appears. */
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (0.25 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        if (retiredInput_ == input) {
+            releaseRetiredInput_();
+        }
+    });
+}
+
+iDefineTypeConstructionArgs(SystemTextInput, (iRect rect, int flags), rect, flags)
+
+#define REF_d_field  (__bridge UITextField *)d->field
+#define REF_d_view   (__bridge UITextView *)d->view
+
+static CGRect pixelsToPoints_(const iRect *pixelRect) {
+    CGRect frame;
+    const iWindow *win = get_Window();
+    frame.origin.x = pixelRect->pos.x / win->pixelRatio;
+    frame.origin.y = pixelRect->pos.y / win->pixelRatio;
+    frame.size.width = pixelRect->size.x / win->pixelRatio;
+    frame.size.height = pixelRect->size.y / win->pixelRatio;
+    return frame;
+}
+
+static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
+    const iWindow *win = get_Window();
+    CGRect frame;
+    /* TODO: Convert coordinates properly! */
+    frame.origin.x = rect->pos.x / win->pixelRatio;
+    frame.origin.y = (rect->pos.y - gap_UI * 0.875f) / win->pixelRatio;
+    frame.size.width = rect->size.x / win->pixelRatio;
+    frame.size.height = rect->size.y / win->pixelRatio;
+    /* Some padding to account for insets. If we just zero out the insets, the insertion point
+       may be clipped at the edges. */
+    const float inset = gap_UI / get_Window()->pixelRatio;
+    if (expanded) {
+        frame.origin.x -= 2 * inset;
+        frame.origin.y -= inset;
+        frame.size.width += 4 * inset;
+        frame.size.height += 2.5f * inset;
+    }
+    return frame;
+}
+
+static UIColor *makeUIColor_(enum iColorId colorId) {
+    iColor color = get_Color(colorId);
+    return [UIColor colorWithRed:color.r / 255.0
+                           green:color.g / 255.0
+                            blue:color.b / 255.0
+                           alpha:color.a / 255.0];
+}
+
+void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
+    d->flags = flags;
+    d->field = NULL;
+    d->view  = NULL;
+    d->pendingSelectAll = iFalse;
+    d->keepKeyboard = iFalse;
+    CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
+    if (flags & multiLine_SystemTextInputFlags) {
+        d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
+        [[viewController_(get_Window()) view] addSubview:REF_d_view];
+    }
+    else {
+        d->field = (void *) CFBridgingRetain([[UITextField alloc] initWithFrame:frame]);
+        [[viewController_(get_Window()) view] addSubview:REF_d_field];
+    }
+    UIControl<UITextInputTraits> *traits = (UIControl<UITextInputTraits> *) (d->view ? REF_d_view : REF_d_field);
+    if (~flags & insertNewlines_SystemTextInputFlag) {
+        [traits setReturnKeyType:UIReturnKeyDone];
+    }
+    if (flags & returnGo_SystemTextInputFlags) {
+        [traits setReturnKeyType:UIReturnKeyGo];
+    }
+    if (flags & returnSend_SystemTextInputFlags) {
+        [traits setReturnKeyType:UIReturnKeySend];
+    }
+    if (flags & disableAutocorrect_SystemTextInputFlag) {
+        [traits setAutocorrectionType:UITextAutocorrectionTypeNo];
+        [traits setSpellCheckingType:UITextSpellCheckingTypeNo];
+    }
+    if (flags & disableAutocapitalize_SystemTextInputFlag) {
+        [traits setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+    }
+    if (flags & alignRight_SystemTextInputFlag) {
+        if (d->field) {
+            [REF_d_field setTextAlignment:NSTextAlignmentRight];
+        }
+        if (d->view) {
+            [REF_d_view setTextAlignment:NSTextAlignmentRight];
+        }
+    }
+    UIColor *textColor       = makeUIColor_(uiInputTextFocused_ColorId);
+    UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
+    UIColor *tintColor       = makeUIColor_(uiInputCursor_ColorId);
+    [appState_ setSystemTextInput:d];
+    const float inset = gap_UI / get_Window()->pixelRatio;
+    if (d->field) {
+        UITextField *field = REF_d_field;
+        [field setTextColor:textColor];
+        [field setTintColor:tintColor];
+//        [field setBackgroundColor:[UIColor colorWithRed:1.0f green:0.0f blue:0.0f alpha:0.5f]];
+        [field setDelegate:appState_];
+        [field becomeFirstResponder];
+    }
+    else {
+        UITextView *view = REF_d_view;
+        [[view layoutManager] setDelegate:appState_];
+        [view setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.0f]];
+//        [view setBackgroundColor:[UIColor colorWithRed:1.0f green:0.0f blue:0.0f alpha:0.5f]];
+        [view setTextColor:textColor];
+        [view setTintColor:tintColor];
+        if (flags & extraPadding_SystemTextInputFlag) {
+            [view setContentInset:(UIEdgeInsets){ -inset * 0.125f, inset * 0.875f, 3 * inset, 0}];
+        }
+        else {
+            [view setContentInset:(UIEdgeInsets){ inset / 2, inset * 0.875f, -inset / 2, inset / 2 }];
+        }
+        [view setEditable:YES];
+        [view setDelegate:appState_];
+        [view becomeFirstResponder];
+    }
+    releaseRetiredInput_(); /* the keyboard now belongs to this input */
+    d->textChangedFunc = NULL;
+    d->textChangedContext = NULL;
+}
+
+void deinit_SystemTextInput(iSystemTextInput *d) {
+    [appState_ setSystemTextInput:nil];
+    UIView *input = d->field ? (UIView *) REF_d_field : (UIView *) REF_d_view;
+    if (input) {
+        if (d->keepKeyboard && [input isFirstResponder]) {
+            retireInput_(input);
+        }
+        else {
+            [input removeFromSuperview];
+        }
+    }
+    if (d->field) {
+        CFBridgingRelease(d->field);
+        d->field = nil;
+    }
+    if (d->view) {
+        CFBridgingRelease(d->view);
+        d->view = nil;
+    }
+}
+
+void keepKeyboard_SystemTextInput(iSystemTextInput *d) {
+    d->keepKeyboard = iTrue;
+}
+
+static UIView<UITextInput> *textInput_SystemTextInput_(const iSystemTextInput *d) {
+    return d->field ? (UIView<UITextInput> *) REF_d_field : (UIView<UITextInput> *) REF_d_view;
+}
+
+void selectAll_SystemTextInput(iSystemTextInput *d) {
+    [textInput_SystemTextInput_(d) selectAll:nil];
+    /* The frame may still change, leaving the selection highlight out of date. */
+    d->pendingSelectAll = iTrue;
+}
+
+static iBool isAllSelected_SystemTextInput_(const iSystemTextInput *d) {
+    UIView<UITextInput> *input = textInput_SystemTextInput_(d);
+    UITextRange *sel = [input selectedTextRange];
+    return sel && !sel.empty &&
+           [input comparePosition:sel.start toPosition:input.beginningOfDocument] == NSOrderedSame &&
+           [input comparePosition:sel.end toPosition:input.endOfDocument] == NSOrderedSame;
+}
+
+void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool allowUndo) {
+    NSString *str = [NSString stringWithUTF8String:cstr_String(text)];
+    if (d->field) {
+        [REF_d_field setText:str];
+        if (d->flags & selectAll_SystemTextInputFlags) {
+            selectAll_SystemTextInput(d);
+        }
+    }
+    else {
+        UITextView *view = REF_d_view;
+//        if (allowUndo) {
+//            [view selectAll:nil];
+//            if ([view shouldChangeTextInRange:[view selectedTextRange] replacementText:@""]) {
+//                [[view textStorage] beginEditing];
+//                [[view textStorage] replaceCharactersInRange:[view selectedRange] withString:@""];
+//                [[view textStorage] endEditing];
+//            }
+//        }
+//        else {
+        // TODO: How to implement `allowUndo`, given that UITextView does not exist when unfocused?
+        // Maybe keep the UITextStorage (if it has the undo?)?
+        [view setText:str];
+//        }
+        if (d->flags & selectAll_SystemTextInputFlags) {
+            selectAll_SystemTextInput(d);
+        }
+    }
+}
+
+void insert_SystemTextInput(iSystemTextInput *d, const iString *text) {
+    NSString *str = [NSString stringWithUTF8String:cstr_String(text)];
+    if (d->view) {
+        UITextView *view = REF_d_view;
+        NSUndoManager *undo = [view undoManager];
+        [undo beginUndoGrouping];
+        [undo setActionName:@"Insertion"];
+        NSRange sel = [view selectedRange];
+        [view replaceRange:[view selectedTextRange] withText:str];
+        sel.length = [str length];
+        view.selectedRange = sel;
+        [undo endUndoGrouping];
+    }
+}
+
+int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
+    if (d->view) {
+        CGRect usedRect = [[REF_d_view layoutManager] usedRectForTextContainer:[REF_d_view textContainer]];
+        return usedRect.size.height * get_Window()->pixelRatio;
+    }
+    return 0;
+}
+
+void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
+    float height = lineHeight_Text(fontId) / get_Window()->pixelRatio;
+    UIFont *font;
+//            for (NSString *name in [UIFont familyNames]) {
+//                printf("family: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//            }
+    if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
+//        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
+//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Fixed"]) {
+//            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//        }
+        font = [UIFont fontWithName:@"Iosevka-Fixed-Extended" size:height * 0.82f];
+        [appState_ setSystemTextLineSpacing:0.0f];
+    }
+    else {
+        font = [UIFont fontWithName:@"Roboto-Regular" size:height * 0.66f];
+        [appState_ setSystemTextLineSpacing:height * 0.66f];
+    }
+    if (d->field) {
+        [REF_d_field setFont:font];
+    }
+    if (d->view) {
+        [REF_d_view setFont:font];
+    }
+}
+
+const iString *text_SystemTextInput(const iSystemTextInput *d) {
+    if (d->field) {
+        return collectNewCStr_String([[REF_d_field text] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    if (d->view) {
+        return collectNewCStr_String([[REF_d_view text] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    return NULL;
+}
+
+void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
+    CGRect frame = convertToCGRect_(&rect, (d->flags & multiLine_SystemTextInputFlags) != 0);
+    UIView<UITextInput> *input = textInput_SystemTextInput_(d);
+    if (CGRectEqualToRect([input frame], frame)) {
+        return;
+    }
+    [input setFrame:frame];
+    if (d->pendingSelectAll) {
+        d->pendingSelectAll = iFalse;
+        if (isAllSelected_SystemTextInput_(d)) {
+            [input setSelectedTextRange:[input textRangeFromPosition:input.endOfDocument
+                                                          toPosition:input.endOfDocument]];
+            [input selectAll:nil];
+        }
+    }
+}
+
+void setTextChangedFunc_SystemTextInput(iSystemTextInput *d,
+                                        void (*textChangedFunc)(iSystemTextInput *, void *),
+                                        void *context) {
+    d->textChangedFunc = textChangedFunc;
+    d->textChangedContext = context;
+}
+
+static void notifyChange_SystemTextInput_(iSystemTextInput *d) {
+    if (d && d->textChangedFunc) {
+        d->textChangedFunc(d, d->textChangedContext);
+    }
+}
+
+static BOOL isNewlineAllowed_SystemTextInput_(const iSystemTextInput *d) {
+    return (d->flags & insertNewlines_SystemTextInputFlag) != 0;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iBool isSupported_SystemMenu(void) {
+    if (@available(iOS 14.0, *)) {
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iBool makePopup_SystemMenu(iWidget *owner) {
+    /* Setup a context menu handler. */
+    if (@available(iOS 14.0, *)) {
+        UIButton *button = [[UIButton alloc] init];
+//        button.backgroundColor = [UIColor redColor]; /* debug */
+        button.showsMenuAsPrimaryAction = YES;
+        [viewController_(get_Window()).view addSubview:button];
+        [appState_ addPopupMenu:button owningWidget:owner];
+        iConnect(Root, owner->root, arrangementChanged, owner, updateAfterBoundsChange_SystemMenu);
+        iConnect(Root, owner->root, visualOffsetsChanged, owner, updateAfterBoundsChange_SystemMenu);
+        return iTrue;
+    }
+    /* TODO: Must use non-native popups on iOS 13 and older. */
+    return iFalse;
+}
+
+void setHidden_SystemMenu(iWidget *owner, iBool hide) {
+    if (@available(iOS 14.0, *)) {
+        PopupData *data = [appState_ findPopupMenu:owner];
+        data.menuButton.hidden = hide ? YES : NO;
+    }
+}
+
+void setRect_SystemMenu(iWidget *owner, iRect rect) {
+    if (@available(iOS 14.0, *)) {
+        PopupData *data = [appState_ findPopupMenu:owner];
+        data.menuButton.hidden = NO;
+        [data.menuButton setFrame:pixelsToPoints_(&rect)];
+    }
+}
+
+API_AVAILABLE(ios(13.0))
+static void addMenuElementGroup_(NSMutableArray<UIMenuElement *> *elems,
+                                 iString *subTitle,
+                                 NSArray<UIMenuElement *> *subElems) {
+    [elems addObject:[UIMenu menuWithTitle:[NSString stringWithUTF8String:cstr_String(subTitle)]
+                                     image:nil
+                                identifier:nil
+                                   options:isEmpty_String(subTitle)
+                                            ? UIMenuOptionsDisplayInline
+                                            : 0
+                                  children:[NSArray arrayWithArray:subElems]]];
+    clear_String(subTitle);
+}
+
+API_AVAILABLE(ios(13.0))
+static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *superData,
+                                                   const iMenuItem *items, size_t n) {
+    if (@available(iOS 14.0, *)) {
+        iRegExp *ansi = makeAnsiEscapePattern_Text(iTrue /* with ESC */);
+        PopupData *data = superData ? superData : [appState_ findPopupMenu:owner];
+        if (!superData) {
+            [data clearCommands];
+        }
+        NSMutableArray<UIMenuElement *> *elems    = [[NSMutableArray<UIMenuElement *> alloc] init];
+        NSMutableArray<UIMenuElement *> *subElems = [[NSMutableArray<UIMenuElement *> alloc] init];
+        iBool haveSep = iFalse;
+        iString sepTitle;
+        init_String(&sepTitle);
+        for (size_t i = 0; i < n && items[i].label; i++) {
+            const iMenuItem *item = &items[i];
+            if (!checkDevice_MenuItem(item)) {
+                continue;
+            }
+            if (startsWith_CStr(item->label, "---") || equal_CStr(item->label, "___")) {
+                /* separator, submenu, or submenu terminator */
+                if (equal_CStr(item->label, "---:")) {
+                    continue;
+                }
+                setCStr_String(&sepTitle, item->label + 3);
+                removeIconPrefix_String(&sepTitle);
+                translate_Lang(&sepTitle);
+                if (endsWith_String(&sepTitle, ":")) {
+                    removeEnd_String(&sepTitle, 1);
+                }
+                if (!isEmpty_String(&sepTitle)) {
+                    /* Submenu items continue until the next "---". */
+                    const size_t start = i + 1;
+                    for (i++; i < n && items[i].label && !startsWith_CStr(items[i].label, "---"); i++) {}
+                    NSArray<UIMenuElement *> *groupElems =
+                        makeMenuElements_(owner, data, items + start, i - start);
+                    i--;
+                    if ([groupElems count] > 0) {
+                        addMenuElementGroup_(subElems, &sepTitle, groupElems);
+                    }
+                    clear_String(&sepTitle);
+                }
+                else if ([subElems count] > 0) {
+                    haveSep = iTrue;
+                    addMenuElementGroup_(elems, &sepTitle, subElems);
+                    [subElems removeAllObjects];
+                }
+                continue;
+            }
+            if (item->command && startsWith_CStr(item->command, "submenu id:")) {
+                const char *subId = suffixPtr_Command(item->command, "id");
+                iWidget *submenu = findWidget_App(subId);
+                iAssert(submenu);
+                setCStr_String(&sepTitle, item->label);
+                removeIconPrefix_String(&sepTitle);
+                translate_Lang(&sepTitle);
+                const iArray *submenuItems = userData_Object(submenu);
+                addMenuElementGroup_(subElems, &sepTitle,
+                                     makeMenuElements_(submenu, data,
+                                                       constData_Array(submenuItems), size_Array(submenuItems)));
+                continue;
+            }
+            const char *itemLabel = item->label;
+            iBool isDisabled = iFalse;
+            iBool isSelected = iFalse;
+            if (startsWith_CStr(itemLabel, "///") || startsWith_CStr(itemLabel, "```")) {
+                isDisabled = iTrue;
+                itemLabel += 3;
+            }
+            if (startsWith_CStr(itemLabel, "###")) {
+                isSelected = iTrue;
+                itemLabel += 3;
+            }
+            iString label;
+            initCStr_String(&label, itemLabel);
+            iChar icon = removeIconPrefix_String(&label);
+            int color = removeColorEscapes_String(&label);
+            translate_Lang(&label);
+            /* TODO: Convert to an attributed string. */
+            replaceRegExp_String(&label, ansi, "", NULL, NULL); /* remove ANSI stylings */
+            UIImage *img = nil;
+            const char *imgName = systemImageName_Apple(icon);
+            if (imgName) {
+                img = [UIImage systemImageNamed:[NSString stringWithUTF8String:imgName]];
+            }
+            NSString *title = [NSString stringWithUTF8String:cstr_String(&label)];
+            NSString *subtitle = nil;
+            if (@available(iOS 15.0, *)) {
+                /* Additional lines are shown as a subtitle. */
+                const NSRange nl = [title rangeOfString:@"\n"];
+                if (nl.location != NSNotFound) {
+                    subtitle = [title substringFromIndex:NSMaxRange(nl)];
+                    title = [title substringToIndex:nl.location];
+                }
+            }
+            /* Create the UI action. */
+            UIAction *action = [UIAction actionWithTitle:title
+                                                   image:img
+                                              identifier:nil
+                                                 handler:^(UIAction *action) {
+                [data triggerCommand:action.identifier];
+            }];
+            if (subtitle) {
+                if (@available(iOS 15.0, *)) {
+                    action.subtitle = subtitle;
+                }
+            }
+            UIMenuElementAttributes attrs = 0;
+            if (isDisabled) {
+                attrs |= UIMenuElementAttributesDisabled;
+            }
+            if (color == uiTextCaution_ColorId) {
+                attrs |= UIMenuElementAttributesDestructive;
+            }
+            [action setAttributes:attrs];
+            if (isSelected) {
+                [action setState:UIMenuElementStateOn];
+            }
+            if (item->command) {
+                [data setCommand:[NSString stringWithUTF8String:item->command]
+                    forActionIdentifier:action.identifier];
+            }
+            [subElems addObject:action];
+            deinit_String(&label);
+        }
+        if (haveSep) {
+            if ([subElems count] > 0) {
+                addMenuElementGroup_(elems, &sepTitle, subElems);
+            }
+        }
+        else {
+            elems = subElems;
+        }
+        deinit_String(&sepTitle);
+        iRelease(ansi);
+        return elems;
+    }
+    return nil;
+}
+
+void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
+    if (@available(iOS 14.0, *)) {
+        iAssert(flags_Widget(owner) & nativeMenu_WidgetFlag);
+        PopupData *data = [appState_ findPopupMenu:owner];
+        if (owner->updateMenuItems) {
+            if (@available(iOS 15.0, *)) {
+                data.menuButton.menu = [UIMenu menuWithChildren:@[
+                    [UIDeferredMenuElement elementWithUncachedProvider:^(void (^completion)(NSArray<UIMenuElement *> *)) {
+                    /* We're being called outside the app event loop. */
+                    setCurrent_Root(owner->root);
+                    iArray updatedItems;
+                    initCopy_Array(&updatedItems, owner->updateMenuItems(owner));
+                    completion(makeMenuElements_(owner, NULL,
+                                                 constData_Array(&updatedItems),
+                                                 size_Array(&updatedItems)));
+                    deinit_Array(&updatedItems);
+                }]]];
+            }
+        }
+        else {
+            data.menuButton.menu = [UIMenu menuWithChildren:makeMenuElements_(owner, NULL, items, n)];
+        }
+    }
+}
+
+void releasePopup_SystemMenu(iWidget *owner) {
+    if (@available(iOS 14.0, *)) {
+        iDisconnect(Root, owner->root, arrangementChanged, owner, updateAfterBoundsChange_SystemMenu);
+        iDisconnect(Root, owner->root, visualOffsetsChanged, owner, updateAfterBoundsChange_SystemMenu);
+        [appState_ removePopupMenu:owner];
+    }
+}

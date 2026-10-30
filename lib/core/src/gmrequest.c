@@ -1,0 +1,1701 @@
+/* Copyright 2020-2024 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+#include "lagrange/gmrequest.h"
+
+#include <lagrange/core.h>
+#include <lagrange/gmcerts.h>
+#include <lagrange/gmutil.h>
+#include <lagrange/gopher.h>
+#if defined (LAGRANGE_ENABLE_GUPPY)
+#   include <lagrange/guppy.h>
+#endif
+#include <lagrange/lang.h>
+#include <lagrange/tools.h>
+#include <lagrange/prefs.h>
+#include <lagrange/sitespec.h>
+
+#include <the_Foundation/archive.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/mutex.h>
+#include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
+#include <the_Foundation/socket.h>
+#include <the_Foundation/tlsrequest.h>
+#include <errno.h>
+
+static iAboutHandlerFunc aboutHandlers_[16];
+static size_t            numAboutHandlers_;
+
+void addAboutHandler_GmRequest(iAboutHandlerFunc func) {
+    iAssert(numAboutHandlers_ < iElemCount(aboutHandlers_));
+    iForIndices(i, aboutHandlers_) {
+        if (aboutHandlers_[i] == func) {
+            return; /* don't add the same handler twice */
+        }
+    }
+    aboutHandlers_[numAboutHandlers_++] = func;
+}
+
+static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
+    for (size_t i = 0; i < numAboutHandlers_; i++) {
+        const iBlock *result = aboutHandlers_[i](path, query);
+        if (result) return result;
+    }
+    return NULL;
+}
+
+static iLocalHandlerFunc localHandlers_[4];
+static size_t            numLocalHandlers_;
+
+void addLocalHandler_GmRequest(iLocalHandlerFunc func) {
+    iAssert(numLocalHandlers_ < iElemCount(localHandlers_));
+    iForIndices(i, localHandlers_) {
+        if (localHandlers_[i] == func) {
+            return;
+        }
+    }
+    localHandlers_[numLocalHandlers_++] = func;
+}
+
+static const iBlock *localPageSource_(iRangecc path) {
+    for (size_t i = 0; i < numLocalHandlers_; i++) {
+        const iBlock *result = localHandlers_[i](path);
+        if (result) return result;
+    }
+    return NULL;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDefineTypeConstruction(GmResponse)
+
+void init_GmResponse(iGmResponse *d) {
+    d->statusCode = none_GmStatusCode;
+    init_String(&d->meta);
+    init_Block(&d->body, 0);
+    d->certFlags = 0;
+    init_Block(&d->certFingerprint, 0);
+    init_Block(&d->certFullFingerprint, 0);
+    iZap(d->certValidUntil);
+    init_String(&d->certSubject);
+    iZap(d->when);
+    init_Block(&d->identityFingerprint, 0);
+}
+
+void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
+    d->statusCode = other->statusCode;
+    initCopy_String(&d->meta, &other->meta);
+    initCopy_Block(&d->body, &other->body);
+    d->certFlags = other->certFlags;
+    initCopy_Block(&d->certFingerprint, &other->certFingerprint);
+    initCopy_Block(&d->certFullFingerprint, &other->certFullFingerprint);
+    d->certValidUntil = other->certValidUntil;
+    initCopy_String(&d->certSubject, &other->certSubject);
+    d->when = other->when;
+    initCopy_Block(&d->identityFingerprint, &other->identityFingerprint);
+}
+
+void deinit_GmResponse(iGmResponse *d) {
+    deinit_String(&d->certSubject);
+    deinit_Block(&d->body);
+    deinit_Block(&d->certFullFingerprint);
+    deinit_Block(&d->certFingerprint);
+    deinit_String(&d->meta);
+    deinit_Block(&d->identityFingerprint);
+}
+
+void clear_GmResponse(iGmResponse *d) {
+    d->statusCode = none_GmStatusCode;
+    clear_String(&d->meta);
+    clear_Block(&d->body);
+    d->certFlags = 0;
+    clear_Block(&d->certFingerprint);
+    clear_Block(&d->certFullFingerprint);
+    iZap(d->certValidUntil);
+    clear_String(&d->certSubject);
+    iZap(d->when);
+    clear_Block(&d->identityFingerprint);
+}
+
+iGmResponse *copy_GmResponse(const iGmResponse *d) {
+    iGmResponse *copied = iMalloc(GmResponse);
+    initCopy_GmResponse(copied, d);
+    return copied;
+}
+
+void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
+    write32_Stream(outs, d->statusCode);
+    serialize_String(&d->meta, outs);
+    serialize_Block(&d->body, outs);
+    /* TODO: Add certificate fingerprints, but need to bump file version first. */
+    write32_Stream(outs, d->certFlags & ~haveFingerprint_GmCertFlag);
+    serialize_Date(&d->certValidUntil, outs);
+    serialize_String(&d->certSubject, outs);
+    writeU64_Stream(outs, d->when.ts.tv_sec);
+    serialize_Block(&d->identityFingerprint, outs);
+}
+
+void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
+    d->statusCode = read32_Stream(ins);
+    deserialize_String(&d->meta, ins);
+    deserialize_Block(&d->body, ins);
+    d->certFlags = read32_Stream(ins);
+    deserialize_Date(&d->certValidUntil, ins);
+    deserialize_String(&d->certSubject, ins);
+    iZap(d->when);
+    clear_Block(&d->certFingerprint);
+    clear_Block(&d->certFullFingerprint);
+    if (version_Stream(ins) >= addedResponseTimestamps_FileVersion) {
+        d->when.ts.tv_sec = readU64_Stream(ins);
+    }
+    if (version_Stream(ins) >= responseIdentity_FileVersion) {
+        deserialize_Block(&d->identityFingerprint, ins);
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(UploadData)
+iDeclareTypeConstruction(UploadData)
+
+struct Impl_UploadData {
+    iBlock  data;
+    iString mime;
+    iString token;
+};
+
+iDefineTypeConstruction(UploadData)
+
+void init_UploadData(iUploadData *d) {
+    init_Block(&d->data, 0);
+    init_String(&d->mime);
+    init_String(&d->token);
+}
+
+void deinit_UploadData(iUploadData *d) {
+    deinit_String(&d->token);
+    deinit_String(&d->mime);
+    deinit_Block(&d->data);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static iAtomicInt idGen_;
+
+enum iGmRawProtocol {
+    none_GmRawProtocol,
+    gopher_GmRawProtocol, /* also Finger */
+    spartan_GmRawProtocol,
+    nex_GmRawProtocol,
+};
+
+struct Impl_GmRequest {
+    iObject              object;
+    uint32_t             id;
+    iMutex *             mtx;
+    iGmCerts *           certs; /* not owned */
+    const iGmIdentity *  identity;
+    enum iGmRequestState state;
+    iString              url;
+    iDocPrefs            docPrefs; /* resolved when the URL is set */
+    iUploadData *        upload;
+    iTlsRequest *        req;
+    iGopher              gopher;
+#if defined (LAGRANGE_ENABLE_GUPPY)
+    iGuppy *             guppy;
+#endif
+    iSocket *            plainSocket; /* non-TLS socket for Spartan, Nex */
+    iGmResponse *        resp;
+    enum iGmRawProtocol  rawProtocol; /* plaintext protocol, directly or via a proxy */
+    iBool                isRaw;       /* proxy is passing on the server's response as is */
+    iBool                isProxy;
+    iBool                isRelayProxy;
+    iBool                isFilterEnabled;
+    iBool                isRespLocked;
+    iBool                isRespFiltered;
+    iToolProcess *       filterProc;
+    iAtomicInt           allowUpdate;
+    iAudience *          updated;
+    iAudience *          finished;
+    iGmRequestProgressFunc sendProgress;
+};
+
+iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
+iDefineAudienceGetter(GmRequest, updated)
+iDefineAudienceGetter(GmRequest, finished)
+
+static uint16_t port_GmRequest_(iGmRequest *d) {
+    return urlPort_String(&d->url);
+}
+
+static void checkServerCertificate_GmRequest_(iGmRequest *d) {
+    const iTlsCertificate *cert = d->req ? serverCertificate_TlsRequest(d->req) : NULL;
+    iGmResponse *resp = d->resp;
+    resp->certFlags = 0;
+    if (cert) {
+        const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
+        const uint16_t port   = port_Address(address_TlsRequest(d->req));
+        resp->certFlags |= available_GmCertFlag;
+        set_Block(&resp->certFingerprint, collect_Block(publicKeyFingerprint_TlsCertificate(cert)));
+        set_Block(&resp->certFullFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
+        resp->certFlags |= haveFingerprint_GmCertFlag;
+        if (!isExpired_TlsCertificate(cert)) {
+            resp->certFlags |= timeVerified_GmCertFlag;
+        }
+        if (verifyDomain_GmCerts(cert, domain)) {
+            resp->certFlags |= domainVerified_GmCertFlag;
+        }
+        if (checkTrust_GmCerts(d->certs, domain, port, cert)) {
+            resp->certFlags |= trusted_GmCertFlag;
+        }
+        if (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus) {
+            resp->certFlags |= authorityVerified_GmCertFlag;
+        }
+        validUntil_TlsCertificate(cert, &resp->certValidUntil);
+        set_String(&resp->certSubject, collect_String(subject_TlsCertificate(cert)));
+    }
+}
+
+static iBool isRawProxyResponse_GmRequest_  (const iGmRequest *);
+static int   beginRawProxyResponse_GmRequest_(iGmRequest *);
+static int   processRawData_GmRequest_       (iGmRequest *, const iBlock *data);
+
+static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    iBool        notifyUpdate = iFalse;
+    iBool        notifyDone   = iFalse;
+    iGmResponse *resp         = d->resp;
+    if (d->isRaw) {
+        /* The request finishes when the proxy closes the connection. */
+        return processRawData_GmRequest_(d, data) & 1;
+    }
+    if (d->state == receivingHeader_GmRequestState) {
+        appendCStrN_String(&resp->meta, constData_Block(data), size_Block(data));
+        /* Check if the header line is complete. */
+        size_t endPos = indexOfCStr_String(&resp->meta, "\r\n");
+        if (endPos != iInvalidPos) {
+            /* Move remainder to the body. */
+            setData_Block(&resp->body,
+                          constBegin_String(&resp->meta) + endPos + 2,
+                          size_String(&resp->meta) - endPos - 2);
+            remove_Block(&resp->meta.chars, endPos, iInvalidSize);
+            /* Parse and remove the code. */
+            iRegExp *metaPattern = new_RegExp("^([0-9][0-9])(( )(.*))?$", 0);
+            /* Empty <META> means no <SPACE>. */
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            int code = 0;
+            if (matchString_RegExp(metaPattern, &resp->meta, &m)) {
+                code = atoi(capturedRange_RegExpMatch(&m, 1).start);
+                /* Leave just the <META>. */
+                set_String(&resp->meta, collect_String(captured_RegExpMatch(&m, 4)));
+            }
+            if (code == 0) {
+                clear_String(&resp->meta);
+                resp->statusCode = invalidHeader_GmStatusCode;
+                d->state         = finished_GmRequestState;
+                notifyDone       = iTrue;
+            }
+            else {
+                if (code == success_GmStatusCode && isEmpty_String(&resp->meta)) {
+                    setCStr_String(&resp->meta, "text/gemini; charset=utf-8"); /* default */
+                }
+                resp->statusCode = code;
+                d->state         = receivingBody_GmRequestState;
+                notifyUpdate     = iTrue;
+                if (d->isFilterEnabled && willTryFilter_Tools(get_Tools(), &resp->meta)) {
+                    d->isRespFiltered = iTrue;
+                }
+            }
+            checkServerCertificate_GmRequest_(d);
+            iRelease(metaPattern);
+            if (isRawProxyResponse_GmRequest_(d)) {
+                d->isRespFiltered = iFalse;
+                notifyUpdate = (beginRawProxyResponse_GmRequest_(d) & 1) != 0;
+            }
+        }
+        else if (size_String(&resp->meta) > 1024) {
+            /* The Gemini "tech overview" caps <META> at 1024 bytes; formal specification leaves
+               it currently undefined. */
+            clear_String(&resp->meta);
+            resp->statusCode = invalidHeader_GmStatusCode;
+            d->state         = finished_GmRequestState;
+            notifyDone       = iTrue;
+        }
+    }
+    else if (d->state == receivingBody_GmRequestState) {
+        append_Block(&resp->body, data);
+        notifyUpdate = iTrue;
+    }
+    return (notifyUpdate ? 1 : 0) | (notifyDone ? 2 : 0);
+}
+
+static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    lock_Mutex(d->mtx);
+    iGmResponse *resp = d->resp;
+    if (d->state == finished_GmRequestState || d->state == failure_GmRequestState) {
+        /* The request has already finished or been aborted (e.g., invalid header). */
+        delete_Block(readAll_TlsRequest(req));
+        unlock_Mutex(d->mtx);
+        return;
+    }
+    iBlock *  data         = readAll_TlsRequest(req);
+    const int ubits        = processIncomingData_GmRequest_(d, data);
+    iBool     notifyUpdate = (ubits & 1) != 0;
+    iBool     notifyDone   = (ubits & 2) != 0;
+    initCurrent_Time(&resp->when);
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate && !d->isRespFiltered) {
+        const iBool allowed = exchange_Atomic(&d->allowUpdate, iFalse);
+        if (allowed) {
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
+    }
+    if (notifyDone) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void applyFilter_GmRequest_(iGmRequest *d) {
+    iAssert(d->state == finished_GmRequestState);
+    iBlock *xbody =
+        tryFilter_Tools(get_Tools(), d->filterProc, &d->resp->meta, &d->resp->body, &d->url);
+    if (xbody) {
+        lock_Mutex(d->mtx);
+        clear_String(&d->resp->meta);
+        clear_Block(&d->resp->body);
+        d->state = receivingHeader_GmRequestState;
+        processIncomingData_GmRequest_(d, xbody);
+        d->state = finished_GmRequestState;
+        unlock_Mutex(d->mtx);
+    }
+}
+
+static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    iAssert(req == d->req);
+    lock_Mutex(d->mtx);
+    /* There shouldn't be anything left to read. */ {
+        iBlock *data = readAll_TlsRequest(req);
+        iAssert(isEmpty_Block(data));
+        delete_Block(data);
+        initCurrent_Time(&d->resp->when);
+    }
+    if (d->state == receivingHeader_GmRequestState &&
+        status_TlsRequest(req) != error_TlsRequestStatus) {
+        d->state = failure_GmRequestState;
+        d->resp->statusCode = incompleteHeader_GmStatusCode;
+        setCStr_String(&d->resp->meta, "");
+    }
+    else {
+        d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
+                                                                     : finished_GmRequestState);
+        if (d->state == failure_GmRequestState) {
+            if (!isVerified_TlsRequest(req)) {
+                if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
+                    d->resp->statusCode = d->isProxy ? proxyCertificateExpired_GmStatusCode
+                                                     : tlsServerCertificateExpired_GmStatusCode;
+                    setCStr_String(&d->resp->meta, get_GmError(d->resp->statusCode)->title);
+                }
+                else {
+                    d->resp->statusCode = d->isProxy ? proxyCertificateNotVerified_GmStatusCode
+                                                     : tlsServerCertificateNotVerified_GmStatusCode;
+                    setCStr_String(&d->resp->meta, get_GmError(d->resp->statusCode)->title);
+                }
+            }
+            else {
+                d->resp->statusCode = tlsFailure_GmStatusCode;
+                set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+            }
+        }
+    }
+    checkServerCertificate_GmRequest_(d);
+    unlock_Mutex(d->mtx);
+    /* Check for content filters. */
+    if (d->isRespFiltered && d->state == finished_GmRequestState) {
+        applyFilter_GmRequest_(d);
+    }
+    if (d->isRaw && d->rawProtocol == gopher_GmRawProtocol && d->state == finished_GmRequestState) {
+        /* This may change the media type and content of the page. */
+        if (checkFormat_Gopher(&d->gopher)) {
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
+    }
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static iBool isConditionMet_(iRangecc flag) {
+    const iBool isNegated = startsWith_Rangecc(flag, "!");
+    if (isNegated) {
+        flag.start++;
+    }
+    return buildFlag_Core(cstr_Rangecc(flag)) != isNegated;
+}
+
+static const iBlock *applyConditionals_(const iBlock *block) {
+    /* Remove ${if:FLAG}...${endif} blocks whose condition is not met. */
+    iRegExp *cond = new_RegExp("\\$\\{(if:[^}]+|endif)\\}\\n?", 0);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    iBlock *out = NULL;
+    size_t pos = 0;
+    int depth = 0;
+    int skipDepth = 0; /* depth of the outermost unmet condition */
+    while (matchRange_RegExp(cond, range_Block(block), &m)) {
+        if (!out) {
+            out = collect_Block(new_Block(0));
+        }
+        if (!skipDepth) {
+            appendData_Block(out, constBegin_Block(block) + pos, m.range.start - pos);
+        }
+        pos = m.range.end;
+        iRangecc directive = capturedRange_RegExpMatch(&m, 1);
+        if (startsWith_Rangecc(directive, "if:")) {
+            depth++;
+            directive.start += 3;
+            if (!skipDepth && !isConditionMet_(directive)) {
+                skipDepth = depth;
+            }
+        }
+        else if (depth > 0) {
+            if (skipDepth == depth) {
+                skipDepth = 0;
+            }
+            depth--;
+        }
+    }
+    iRelease(cond);
+    if (!out) {
+        return block;
+    }
+    if (!skipDepth) {
+        appendData_Block(out, constBegin_Block(block) + pos, size_Block(block) - pos);
+    }
+    return out;
+}
+
+static const iBlock *replaceVariables_(const iBlock *block) {
+    block = applyConditionals_(block);
+    iRegExp *var = new_RegExp("\\$\\{([^}]+)\\}", 0);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    if (matchRange_RegExp(var, range_Block(block), &m)) {
+        iBlock *replaced = collect_Block(copy_Block(block));
+        do {
+            const iRangei span = m.range;
+            const iRangecc name = capturedRange_RegExpMatch(&m, 1);
+            iRangecc repl = iNullRange;
+            if (equal_Rangecc(name, "APP_VERSION")) {
+                repl = range_CStr(LAGRANGE_APP_VERSION);
+            }
+            else if (equal_Rangecc(name, "ALT")) {
+                repl = range_CStr(isApple_Platform() ? "\u2325" : "Alt");
+            }
+            else if (equal_Rangecc(name, "ALT+")) {
+                repl = range_CStr(isApple_Platform() ? "\u2325" : "Alt+");
+            }
+            else if (equal_Rangecc(name, "CTRL")) {
+                repl = range_CStr(isApple_Platform() ? "\u2318" : "Ctrl");
+            }
+            else if (equal_Rangecc(name, "CTRL+")) {
+                repl = range_CStr(isApple_Platform() ? "\u2318" : "Ctrl+");
+            }
+            else if (equal_Rangecc(name, "SHIFT")) {
+                repl = range_CStr(isApple_Platform() ? "\u21e7" : "Shift");
+            }
+            else if (equal_Rangecc(name, "SHIFT+")) {
+                repl = range_CStr(isApple_Platform() ? "\u21e7" : "Shift+");
+            }
+            else {
+                /* Translated string. */
+                repl = range_String(string_Lang(cstr_Rangecc(name)));
+            }
+            remove_Block(replaced, span.start, size_Range(&span));
+            insertData_Block(replaced, span.start, repl.start, size_Range(&repl));
+            iZap(m);
+        } while (matchRange_RegExp(var, range_Block(replaced), &m));
+        block = replaced;
+    }
+    iRelease(var);
+    return block;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void notify_GmRequest_(iGmRequest *d, int bits) {
+    if (bits & 1) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (bits & 2) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iUnused(socket);
+    iBool notify = iFalse;
+    lock_Mutex(d->mtx);
+    initCurrent_Time(&d->resp->when);
+    if (d->state != failure_GmRequestState) {
+        d->state = finished_GmRequestState;
+        notify = iTrue;
+    }
+    unlock_Mutex(d->mtx);
+    if (d->gopher.type) {
+        /* This may change the media type and content of the page. */
+        if (checkFormat_Gopher(&d->gopher)) {
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
+    }
+    if (notify) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
+    iUnused(socket);
+    lock_Mutex(d->mtx);
+    initCurrent_Time(&d->resp->when);
+#if defined (LAGRANGE_ENABLE_GUPPY)
+    if (d->guppy) {
+        cancel_Guppy(d->guppy);
+        iReleasePtr(&d->guppy);
+    }
+#endif
+    d->state = failure_GmRequestState;
+    d->resp->statusCode = tlsFailure_GmStatusCode; /* TODO: add a plain socket error message */
+    format_String(&d->resp->meta, "%s (errno %d)", msg, error);
+    clear_Block(&d->resp->body);
+    unlock_Mutex(d->mtx);
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+/* The functions below process data received from a server of a plaintext protocol, either
+   directly or via a proxy in raw mode. The mutex must be held. They return 1 if the
+   response was updated and 2 if the request is finished. */
+
+static int processGopherData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    d->resp->statusCode = success_GmStatusCode;
+    return !isEmpty_Block(data) && processResponse_Gopher(&d->gopher, data) ? 1 : 0;
+}
+
+static int processNexData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    d->resp->statusCode = success_GmStatusCode;
+    if (isEmpty_Block(data)) {
+        return 0;
+    }
+    append_Block(&d->resp->body, data);
+    return 1;
+}
+
+static int processSpartanData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iFalse;
+    if (isEmpty_Block(data)) {
+        return 0;
+    }
+    if (d->state == receivingHeader_GmRequestState) {
+        append_Block(&d->resp->meta.chars, data);
+        size_t crlf = indexOfCStr_String(&d->resp->meta, "\r\n");
+        if (crlf != iInvalidPos) {
+            setData_Block(&d->resp->body, constBegin_String(&d->resp->meta) + crlf + 2,
+                          size_Block(&d->resp->meta.chars) - crlf - 2);
+            if (!isEmpty_Block(&d->resp->body)) {
+                notifyUpdate = iTrue;
+            }
+            truncate_Block(&d->resp->meta.chars, crlf);
+            d->state = receivingBody_GmRequestState;
+            iRegExp *metaPattern = new_RegExp("^([0-9]) (.*)", 0);
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            if (matchString_RegExp(metaPattern, &d->resp->meta, &m)) {
+                switch (toInt_String(collect_String(captured_RegExpMatch(&m, 1)))) {
+                    case 2:
+                        d->resp->statusCode = success_GmStatusCode;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        break;
+                    case 3:
+                        d->resp->statusCode = redirectTemporary_GmStatusCode;
+                        d->state = finished_GmRequestState;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        notifyDone = iTrue;
+                        break;
+                    case 4:
+                        d->resp->statusCode = badRequest_GmStatusCode;
+                        d->state = finished_GmRequestState;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        notifyDone = iTrue;
+                        break;
+                    case 5:
+                        d->resp->statusCode = permanentFailure_GmStatusCode;
+                        d->state = finished_GmRequestState;
+                        set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                        notifyDone = iTrue;
+                        break;
+                    default:
+                        d->resp->statusCode = invalidHeader_GmStatusCode;
+                        d->state            = finished_GmRequestState;
+                        notifyDone          = iTrue;
+                        break;
+                }
+            }
+            else {
+                d->resp->statusCode = invalidHeader_GmStatusCode;
+                d->state            = finished_GmRequestState;
+                notifyDone          = iTrue;
+            }
+            iRelease(metaPattern);
+        }
+    }
+    else if (d->state == receivingBody_GmRequestState) {
+        append_Block(&d->resp->body, data);
+        notifyUpdate = iTrue;
+    }
+    return (notifyUpdate ? 1 : 0) | (notifyDone ? 2 : 0);
+}
+
+static int processRawData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    switch (d->rawProtocol) {
+        case gopher_GmRawProtocol:
+            return processGopherData_GmRequest_(d, data);
+        case spartan_GmRawProtocol:
+            return processSpartanData_GmRequest_(d, data);
+        case nex_GmRawProtocol:
+            return processNexData_GmRequest_(d, data);
+        default:
+            return 0;
+    }
+}
+
+static void plainSocketRead_GmRequest_(iGmRequest *d, iSocket *socket) {
+    lock_Mutex(d->mtx);
+    iBlock *data = readAll_Socket(socket);
+    const int bits = processRawData_GmRequest_(d, data);
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    notify_GmRequest_(d, bits);
+}
+
+static void tlsGopherRead_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    lock_Mutex(d->mtx);
+    iBlock *data = readAll_TlsRequest(req);
+    const int bits = processGopherData_GmRequest_(d, data);
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    notify_GmRequest_(d, bits);
+}
+
+static void tlsGopherFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    iAssert(req == d->req);
+    lock_Mutex(d->mtx);
+    /* There shouldn't be anything left to read. */ {
+        iBlock *data = readAll_TlsRequest(req);
+        iAssert(isEmpty_Block(data));
+        delete_Block(data);
+        initCurrent_Time(&d->resp->when);
+    }
+    if (status_TlsRequest(req) == error_TlsRequestStatus) {
+        d->state = failure_GmRequestState;
+        if (!isVerified_TlsRequest(req)) {
+            if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
+                d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
+            }
+            else {
+                d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+            }
+            setCStr_String(&d->resp->meta, get_GmError(d->resp->statusCode)->title);
+        }
+        else {
+            d->resp->statusCode = tlsFailure_GmStatusCode;
+            set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+        }
+    }
+    else {
+        d->state = finished_GmRequestState;
+    }
+    checkServerCertificate_GmRequest_(d);
+    unlock_Mutex(d->mtx);
+    /* This may change the media type and content of the page. */
+    if (checkFormat_Gopher(&d->gopher)) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void initGopher_GmRequest_(iGmRequest *d) {
+    clear_Block(&d->gopher.source);
+    d->gopher.meta   = &d->resp->meta;
+    d->gopher.output = &d->resp->body;
+    d->gopher.isGeminiStyled = d->docPrefs.geminiStyledGopher.value;
+}
+
+/* Asks for the query parameters of a Gopher search. Returns iFalse if the request was
+   finished. */
+static iBool openGopher_GmRequest_(iGmRequest *d) {
+    open_Gopher(&d->gopher, &d->url);
+    if (d->gopher.needQueryArgs) {
+        d->resp->statusCode = input_GmStatusCode;
+        setCStr_String(&d->resp->meta, "Enter query:");
+        d->state = finished_GmRequestState;
+        iNotifyAudience(d, finished, GmRequestFinished);
+        return iFalse;
+    }
+    return iTrue;
+}
+
+static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port,
+                                             iBool useTls) {
+    initGopher_GmRequest_(d);
+    d->gopher.isTls  = useTls;
+    d->rawProtocol   = gopher_GmRawProtocol;
+    d->state         = receivingBody_GmRequestState;
+    if (!openGopher_GmRequest_(d)) {
+        return;
+    }
+    if (useTls) {
+        d->req = new_TlsRequest();
+        iConnect(TlsRequest, d->req, readyRead, d, tlsGopherRead_GmRequest_);
+        iConnect(TlsRequest, d->req, finished,  d, tlsGopherFinished_GmRequest_);
+        setHost_TlsRequest(d->req, host, port);
+        setContent_TlsRequest(d->req, &d->gopher.request);
+        submit_TlsRequest(d->req);
+    }
+    else {
+        d->gopher.socket = new_Socket(cstr_String(host), port);
+        iConnect(Socket, d->gopher.socket, readyRead,    d, plainSocketRead_GmRequest_);
+        iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
+        iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
+        open_Socket(d->gopher.socket);
+        writeData_Socket(d->gopher.socket, constData_Block(&d->gopher.request),
+                         size_Block(&d->gopher.request));
+    }
+}
+
+static void setNexMediaType_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    setCStr_String(&d->resp->meta, "text/plain");
+    if (!isEmpty_Range(&url.path)) {
+        iString path;
+        initRange_String(&path, url.path);
+        const char *mime = mediaTypeFromFileExtension_String(&path);
+        if (iCmpStr(mime, "application/octet-stream")) {
+            setCStr_String(&d->resp->meta, mime);
+        }
+        deinit_String(&path);
+    }
+}
+
+static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    d->state       = receivingBody_GmRequestState;
+    d->rawProtocol = nex_GmRawProtocol;
+    setNexMediaType_GmRequest_(d);
+    d->plainSocket = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->plainSocket, readyRead,    d, plainSocketRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
+    open_Socket(d->plainSocket);
+    iUrl url;
+    init_Url(&url, &d->url);
+    iBlock message;
+    init_Block(&message, 0);
+    printf_Block(&message,
+                 "%s\n",
+                 !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/");
+    write_Socket(d->plainSocket, &message);
+    deinit_Block(&message);
+}
+
+#if defined (LAGRANGE_ENABLE_GUPPY)
+static void guppyRead_GmRequest_(iGmRequest *d, iDatagram *datagram) {
+    iUnused(datagram);
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iTrue;
+    lock_Mutex(d->mtx);
+    processResponse_Guppy(d->guppy, &d->state, &d->resp->statusCode, &notifyUpdate, &notifyDone);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (notifyDone) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void guppyTimeout_GmRequest_(iGmRequest *d, iGuppy *guppy) {
+    iUnused(guppy);
+    lock_Mutex(d->mtx);
+    cancel_Guppy(d->guppy);
+    d->state = failure_GmRequestState;
+    d->resp->statusCode = temporaryFailure_GmStatusCode;
+    setCStr_String(&d->resp->meta, strerror(ETIMEDOUT));
+    clear_Block(&d->resp->body);
+    unlock_Mutex(d->mtx);
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void guppyError_GmRequest_(iGmRequest *d, iGuppy *guppy) {
+    iUnused(guppy);
+    plainSocketError_GmRequest_(d, NULL, ECONNABORTED, "Address lookup failed");
+}
+
+static void beginGuppyConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    iAssert(!d->guppy);
+    d->guppy = new_Guppy();
+    d->state = receivingHeader_GmRequestState;
+    setCStr_String(&d->resp->meta, "text/gemini");
+    d->guppy->mtx  = d->mtx;
+    d->guppy->url  = &d->url;
+    d->guppy->meta = &d->resp->meta;
+    d->guppy->body = &d->resp->body;
+    iConnect(Datagram, d->guppy->datagram, message, d, guppyRead_GmRequest_);
+    iConnect(Datagram, d->guppy->datagram, error,   d, plainSocketError_GmRequest_
+             /* socket not used by error handler, so this is fine */);
+    iConnect(Guppy,    d->guppy,           timeout, d, guppyTimeout_GmRequest_);
+    iConnect(Guppy,    d->guppy,           error,   d, guppyError_GmRequest_);
+    open_Guppy(d->guppy, host, port);
+}
+#endif /* LAGRANGE_ENABLE_GUPPY */
+
+/* Spartan sends the URL query or an upload as the request data. */
+static iBlock *newSpartanData_GmRequest_(const iGmRequest *d, const iUrl *url) {
+    iBlock *data = new_Block(0);
+    if (!isEmpty_Range(&url->query)) {
+        set_Block(data,
+                  utf8_String(collect_String(urlDecode_String(
+                      collectNewRange_String((iRangecc){ url->query.start + 1, url->query.end })))));
+    }
+    if (d->upload) {
+        set_Block(data, &d->upload->data);
+    }
+    return data;
+}
+
+static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    d->state       = receivingHeader_GmRequestState;
+    d->rawProtocol = spartan_GmRawProtocol;
+    d->plainSocket = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->plainSocket, readyRead,    d, plainSocketRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
+    open_Socket(d->plainSocket);
+    iUrl url;
+    init_Url(&url, &d->url);
+    iBlock *message = new_Block(0);
+    iBlock *data    = newSpartanData_GmRequest_(d, &url);
+    printf_Block(message,
+                 "%s %s %zu\r\n",
+                 cstr_Rangecc(url.host),
+                 !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/",
+                 size_Block(data));
+    write_Socket(d->plainSocket, message);
+    write_Socket(d->plainSocket, data);
+    delete_Block(data);
+    delete_Block(message);
+}
+
+/* Proxies may pass on the plaintext server's response as is, with this media type. */
+static const char *rawProxyMediaType_GmRequest_ = "application/x-lagrange-raw";
+
+static iBool isRawProxyResponse_GmRequest_(const iGmRequest *d) {
+    iRangecc mime = iNullRange;
+    if (!d->isRelayProxy ||
+        d->rawProtocol == none_GmRawProtocol ||
+        d->resp->statusCode != success_GmStatusCode ||
+        !nextSplit_Rangecc(range_String(&d->resp->meta), ";", &mime)) {
+        return iFalse;
+    }
+    trim_Rangecc(&mime);
+    return equalCase_Rangecc(mime, rawProxyMediaType_GmRequest_);
+}
+
+/* Switches to processing the rest of the response body as raw protocol data. The mutex
+   must be held. */
+static int beginRawProxyResponse_GmRequest_(iGmRequest *d) {
+    iBlock *pending = copy_Block(&d->resp->body);
+    clear_Block(&d->resp->body);
+    clear_String(&d->resp->meta);
+    d->isRaw = iTrue;
+    switch (d->rawProtocol) {
+        case gopher_GmRawProtocol:
+            initGopher_GmRequest_(d);
+            open_Gopher(&d->gopher, &d->url);
+            d->state = receivingBody_GmRequestState;
+            break;
+        case spartan_GmRawProtocol:
+            d->state = receivingHeader_GmRequestState; /* Spartan's own header follows */
+            break;
+        case nex_GmRawProtocol:
+            setNexMediaType_GmRequest_(d);
+            d->state = receivingBody_GmRequestState;
+            break;
+        default:
+            break;
+    }
+    const int bits = processRawData_GmRequest_(d, pending);
+    delete_Block(pending);
+    return bits;
+}
+
+/* Prepares a Gemini proxy request for a plaintext protocol. Returns iFalse if the request
+   was finished without contacting the proxy. */
+static iBool beginPlaintextProxyRequest_GmRequest_(iGmRequest *d, iRangecc scheme) {
+    if (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger")) {
+        d->rawProtocol = gopher_GmRawProtocol;
+        initGopher_GmRequest_(d);
+        if (!openGopher_GmRequest_(d)) {
+            return iFalse;
+        }
+        clear_String(&d->resp->meta); /* the proxy's response header is parsed first */
+    }
+    else if (equalCase_Rangecc(scheme, "spartan")) {
+        d->rawProtocol = spartan_GmRawProtocol;
+    }
+    else if (equalCase_Rangecc(scheme, "nex")) {
+        d->rawProtocol = nex_GmRawProtocol;
+    }
+    return iTrue;
+}
+
+/* A Spartan proxy request carries the request data like a Titan upload:
+   "spartan://host/path;size=N" followed by N bytes. */
+static void composeSpartanProxyRequest_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    iBlock *data = newSpartanData_GmRequest_(d, &url);
+    const char *end = !isEmpty_Range(&url.query)      ? url.query.start
+                      : !isEmpty_Range(&url.fragment) ? url.fragment.start
+                                                      : constEnd_String(&d->url);
+    iBlock *request = new_Block(0);
+    appendData_Block(request, constBegin_String(&d->url), end - constBegin_String(&d->url));
+    if (isEmpty_Range(&url.path)) {
+        appendCStr_Block(request, "/");
+    }
+    if (!isEmpty_Block(data)) {
+        appendCStr_Block(request, format_CStr(";size=%zu", size_Block(data)));
+    }
+    appendCStr_Block(request, "\r\n");
+    append_Block(request, data);
+    setContent_TlsRequest(d->req, request);
+    delete_Block(request);
+    delete_Block(data);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
+    d->mtx             = new_Mutex();
+    d->id              = add_Atomic(&idGen_, 1) + 1;
+    d->identity        = NULL;
+    d->resp            = new_GmResponse();
+    d->rawProtocol     = none_GmRawProtocol;
+    d->isRaw           = iFalse;
+    d->isProxy         = iFalse;
+    d->isRelayProxy    = iFalse;
+    d->isFilterEnabled = iTrue;
+    d->isRespLocked    = iFalse;
+    d->isRespFiltered  = iFalse;
+    d->filterProc      = new_ToolProcess();
+    set_Atomic(&d->allowUpdate, iTrue);
+    init_String(&d->url);
+    initCopy_DocPrefs(&d->docPrefs, defaults_DocPrefs());
+    init_Gopher(&d->gopher);
+#if defined (LAGRANGE_ENABLE_GUPPY)
+    d->guppy        = NULL;
+#endif
+    d->plainSocket  = NULL;
+    d->upload       = NULL;
+    d->certs        = certs;
+    d->req          = NULL;
+    d->updated      = NULL;
+    d->finished     = NULL;
+    d->sendProgress = NULL;
+    d->state        = initialized_GmRequestState;
+}
+
+void deinit_GmRequest(iGmRequest *d) {
+    /* Filters run during the TlsRequest "finished" notification, after the state is already
+       finished, so they must be stopped before disconnecting. */
+    cancel_ToolProcess(d->filterProc);
+    if (d->req) {
+        iDisconnectObject(TlsRequest, d->req, sent, d);
+        iDisconnectObject(TlsRequest, d->req, readyRead, d);
+        iDisconnectObject(TlsRequest, d->req, finished, d);
+    }
+    lock_Mutex(d->mtx);
+    if (!isFinished_GmRequest(d)) {
+        unlock_Mutex(d->mtx);
+        cancel_GmRequest(d);
+        d->state = finished_GmRequestState;
+    }
+    else {
+        unlock_Mutex(d->mtx);
+    }
+    iReleasePtr(&d->req);
+    delete_ToolProcess(d->filterProc);
+    delete_UploadData(d->upload);
+    deinit_Gopher(&d->gopher);
+#if defined (LAGRANGE_ENABLE_GUPPY)
+    if (d->guppy) {
+        iDisconnectObject(Guppy, d->guppy, timeout, d);
+        iRelease(d->guppy);
+    }
+#endif
+    iRelease(d->plainSocket);
+    delete_Audience(d->finished);
+    delete_Audience(d->updated);
+    delete_GmResponse(d->resp);
+    deinit_DocPrefs(&d->docPrefs);
+    deinit_String(&d->url);
+    delete_Mutex(d->mtx);
+}
+
+void enableFilters_GmRequest(iGmRequest *d, iBool enable) {
+    d->isFilterEnabled = enable;
+}
+
+void setUrl_GmRequest(iGmRequest *d, const iString *url) {
+    set_String(&d->url, canonicalUrl_String(urlFragmentStripped_String(url)));
+    /* Encode hostname to Punycode here because we want to submit the Punycode domain name
+       in the request. (TODO: Pending possible Gemini spec change.) */
+    punyEncodeUrlHost_String(&d->url);
+    /* TODO: Gemini spec allows UTF-8 encoded URLs, but still need to percent-encode non-ASCII
+       characters? Could be a server-side issue, e.g., if they're using a URL parser meant for
+       the web. */
+    /* Encode everything except already-percent encoded characters. */
+    iString *enc = urlEncodeExclude_String(&d->url, URL_ENCODE_EXCLUDE_CHARS);
+    /* Normalize empty paths to /. */ {
+        iUrl parts;
+        init_Url(&parts, enc);
+        if (isEmpty_Range(&parts.path) && equalCase_Rangecc(parts.scheme, "gemini") &&
+            parts.path.start) {
+            /* Normalize to "/" as per specification (November 2021 update). */
+            insertData_Block(&enc->chars, parts.path.start - constBegin_String(enc), "/", 1);
+        }
+    }
+    set_String(&d->url, enc);
+    delete_String(enc);
+    resolveUrl_DocPrefs(&d->docPrefs, &d->url, NULL); /* not accessed later in background */
+    d->identity = identityForUrl_GmCerts(d->certs, &d->url);
+}
+
+void setIdentity_GmRequest(iGmRequest *d, const iGmIdentity *id) {
+    d->identity = id;
+}
+
+static iBool isTitan_GmRequest_(const iGmRequest *d) {
+    return isTitanUrl_String(&d->url);
+}
+
+static iBool isMisfin_GmRequest_(const iGmRequest *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "misfin");
+}
+
+void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
+                             const iString *token) {
+    if (!d->upload) {
+        d->upload = new_UploadData();
+    }
+    set_Block(&d->upload->data, payload);
+    if (mime) {
+        set_String(&d->upload->mime, mime);
+    }
+    if (token) {
+        set_String(&d->upload->token, token);
+    }
+}
+
+void setSendProgressFunc_GmRequest(iGmRequest *d, iGmRequestProgressFunc func) {
+    d->sendProgress = func;
+}
+
+static void bytesSent_GmRequest_(iGmRequest *d, iTlsRequest *req, size_t sent, size_t toSend) {
+    iUnused(req);
+    if (d->sendProgress) {
+        d->sendProgress(d, sent, toSend);
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void aboutRequest_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    iGmResponse *resp = d->resp;
+    const iBlock *src = aboutPageSource_(url.path, url.query);
+    if (src) {
+        resp->statusCode = success_GmStatusCode;
+        setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+        set_Block(&resp->body, replaceVariables_(src));
+        d->state = receivingBody_GmRequestState;
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    else {
+        resp->statusCode = invalidLocalResource_GmStatusCode;
+    }
+    d->state = finished_GmRequestState;
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+void dataRequest_GmRequest_(iGmRequest *d) {
+    iUrl url;
+    init_Url(&url, &d->url);
+    iGmResponse *resp = d->resp;
+    resp->statusCode = success_GmStatusCode;
+    iString *src = collectNewCStr_String(url.scheme.start + 5);
+    iRangecc header = { constBegin_String(src), constBegin_String(src) };
+    while (header.end < constEnd_String(src) && *header.end != ',') {
+        header.end++;
+    }
+    iBool isBase64 = iFalse;
+    setRange_String(&resp->meta, header);
+    /* Check what's in the header. */ {
+        iRangecc entry = iNullRange;
+        while (nextSplit_Rangecc(header, ";", &entry)) {
+            if (equal_Rangecc(entry, "base64")) {
+                isBase64 = iTrue;
+            }
+        }
+    }
+    remove_Block(&src->chars, 0, size_Range(&header) + 1);
+    if (isBase64) {
+        set_Block(&src->chars, collect_Block(base64Decode_Block(&src->chars)));
+    }
+    else {
+        set_String(src, collect_String(urlDecode_String(src)));
+    }
+    set_Block(&resp->body, &src->chars);
+    d->state = receivingBody_GmRequestState;
+    iNotifyAudience(d, updated, GmRequestUpdated);
+    d->state = finished_GmRequestState;
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void composeTitanRequest_GmRequest_(iGmRequest *d) {
+    iBlock content;
+    init_Block(&content, 0);
+    /* Titan requests can have an arbitrary payload. */
+    if (d->upload) {
+        const iBool hasToken = !isEmpty_String(&d->upload->token);
+        iString *titanUrl = withUrlParameters_String(
+            &d->url,
+            "mime",
+            cstr_String(&d->upload->mime),
+            "size",
+            format_CStr("%zu", size_Block(&d->upload->data)),
+            hasToken ? "token" : NULL,
+            hasToken ? cstrCollect_String(urlEncode_String(&d->upload->token)) : NULL,
+            NULL);
+        printf_Block(&content, "%s\r\n", cstr_String(titanUrl));
+        delete_String(titanUrl);
+        append_Block(&content, &d->upload->data);
+    }
+    else if (endsWithCase_Rangecc(urlPath_String(&d->url), ";edit")) {
+        printf_Block(&content, "%s\r\n", cstr_String(&d->url));
+    }
+    else {
+        /* Empty data. */
+        printf_Block(&content,
+                     "%s\r\n",
+                     cstrCollect_String(withUrlParameters_String(
+                         &d->url, "mime", "application/octet-stream", "size", "0", NULL)));
+    }
+    setContent_TlsRequest(d->req, &content);
+    deinit_Block(&content);
+}
+
+static void composeMisfinRequest_GmRequest_(iGmRequest *d) {
+    /* We will use Misfin(B) for best compatibility with servers. */
+    iBlock content;
+    init_Block(&content, 0);
+    const size_t misfinBMaxLength_ = 2048;
+    const size_t misfinCMaxContentLength_ = 16384;
+    if (size_String(&d->url) + 1 + size_Block(&d->upload->data) + 2 <= misfinBMaxLength_) {
+        printf_Block(&content, "%s %s\r\n", cstr_String(&d->url),
+                     d->upload ? cstr_Block(&d->upload->data) : "");
+    }
+    else {
+        /* Use the Misfin(C) format, then. */
+        /* Force the data to fit the maximum size. */
+        truncate_Block(&d->upload->data, misfinCMaxContentLength_);
+        printf_Block(&content,
+                     "%s\t%u\r\n%s",
+                     cstr_String(&d->url),
+                     size_Block(&d->upload->data),
+                     cstr_Block(&d->upload->data));
+    }
+    setContent_TlsRequest(d->req, &content);
+    deinit_Block(&content);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static iBool isDirectory_(const iString *path) {
+    /* TODO: move this to the_Foundation */
+    iFileInfo *info = new_FileInfo(path);
+    const iBool isDir = isDirectory_FileInfo(info);
+    iRelease(info);
+    return isDir;
+}
+
+static int cmp_FileInfoPtr_(const iFileInfo **a, const iFileInfo **b) {
+    return cmpStringCase_String(path_FileInfo(*a), path_FileInfo(*b));
+}
+
+static iRangecc gempubLanguage_Archive_(const iArchive *d) {
+    const iBlock *metadata = dataCStr_Archive(d, "metadata.txt");
+    iRangecc      line     = iNullRange;
+    while (metadata && nextSplit_Rangecc(range_Block(metadata), "\n", &line)) {
+        if (startsWithCase_Rangecc(line, "language:")) {
+            iRangecc lang = { line.start + 9, line.end };
+            trim_Rangecc(&lang);
+            return lang;
+        }
+    }
+    return iNullRange;
+}
+
+static const iString *directoryIndexPage_Archive_(const iArchive *d, const iString *entryPath) {
+    static const char *names[] = { "index.gmi", "index.gemini" };
+    iForIndices(i, names) {
+        iString *path = !isEmpty_String(entryPath) ?
+            concatCStr_Path(entryPath, names[i]) : newCStr_String(names[i]);
+        if (entry_Archive(d, path)) {
+            return collect_String(path);
+        }
+        delete_String(path);
+    }
+    return NULL;
+}
+
+static void fileRequest_GmRequest_(iGmRequest *d) {
+    iGmResponse *resp = d->resp;
+    /* Virtual paths. */ {
+        iUrl url;
+        init_Url(&url, &d->url);
+        if (equalCase_Rangecc(url.scheme, "local")) {
+            const iBlock *src = localPageSource_(url.path);
+            if (src) {
+                resp->statusCode = success_GmStatusCode;
+                setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+                set_Block(&resp->body, src);
+                d->state = receivingBody_GmRequestState;
+                iNotifyAudience(d, updated, GmRequestUpdated);
+                d->state = finished_GmRequestState;
+                iNotifyAudience(d, finished, GmRequestFinished);
+                return;
+            }
+        }
+    }
+    iString *path = collect_String(localFilePathFromUrl_String(&d->url));
+    /* Note: As a local file path, `path` uses the OS directory separators
+       (i.e., \ on Windows). `Archive` accepts both. */
+    iFile *f = new_File(path);
+    if (isDirectory_(path)) {
+        if (endsWith_String(path, iPathSeparator)) {
+            removeEnd_String(path, 1);
+        }
+        resp->statusCode = success_GmStatusCode;
+        setCStr_String(&resp->meta, "text/gemini");
+        iString *page = collectNew_String();
+        iString *parentDir = collectNewRange_String(dirName_Path(path));
+        if (!isMobile_Platform()) {
+            appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
+                                cstrCollect_String(makeFileUrl_String(parentDir)),
+                                cstr_String(parentDir));
+        }
+        appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
+        /* Make a directory index page. */
+        iPtrArray *sortedInfo = collectNew_PtrArray();
+        iForEach(DirFileInfo, entry,
+                 iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
+            /* Ignore some files. */
+            if (isApple_Platform()) {
+                const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+                if (equal_Rangecc(name, ".DS_Store") ||
+                    equal_Rangecc(name, ".localized")) {
+                    continue;
+                }
+            }
+            pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
+        }
+        sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
+        iForEach(PtrArray, s, sortedInfo) {
+            const iFileInfo *entry = s.ptr;
+            appendFormat_String(page, "=> %s %s%s%s\n",
+                                cstrCollect_String(makeFileUrl_String(path_FileInfo(entry))),
+                                isDirectory_FileInfo(entry) ? folder_Icon " " : "",
+                                cstr_Rangecc(baseName_Path(path_FileInfo(entry))),
+                                isDirectory_FileInfo(entry) ? iPathSeparator : "");
+            iRelease(entry);
+        }
+        set_Block(&resp->body, utf8_String(page));
+    }
+    else if (open_File(f, readOnly_FileMode)) {
+        resp->statusCode = success_GmStatusCode;
+        setCStr_String(&resp->meta, mediaType_Path(path));
+        /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
+        set_Block(&resp->body, collect_Block(readAll_File(f)));
+        d->state = receivingBody_GmRequestState;
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    else {
+        /* It could be a path inside an archive. */
+        const iString *container = findContainerArchive_Path(path);
+        if (container) {
+            iArchive *arch = iClob(new_Archive());
+            if (openFile_Archive(arch, container)) {
+                iString *entryPath = collect_String(copy_String(path));
+                remove_Block(&entryPath->chars, 0, size_String(container) + 1); /* last slash, too */
+                iBool isDir = isDirectory_Archive(arch, entryPath);
+                if (isDir && !isEmpty_String(entryPath) &&
+                    !endsWith_String(entryPath, iPathSeparator)) {
+                    /* Must have a slash for directories, otherwise relative navigation
+                       will not work. */
+                    resp->statusCode = redirectPermanent_GmStatusCode;
+                    set_String(&resp->meta, withSpacesEncoded_String(collect_String(makeFileUrl_String(container))));
+                    appendCStr_String(&resp->meta, "/");
+                    append_String(&resp->meta, entryPath);
+                    appendCStr_String(&resp->meta, "/");
+                    goto fileRequestFinished;
+                }
+                /* Check for a Gemini index page. */
+                if (isDir && get_Prefs()->openArchiveIndexPages) {
+                    const iString *indexPath = directoryIndexPage_Archive_(arch, entryPath);
+                    if (indexPath) {
+                        set_String(entryPath, indexPath);
+                        isDir = iFalse;
+                    }
+                }
+                /* Show an archive index page if this is a directory. */
+                /* TODO: Use a built-in content filter for this? */
+                if (isDir) {
+                    iString *page = new_String();
+                    const iRangecc containerName = baseName_Path(container);
+                    const iString *containerUrl =
+                        withSpacesEncoded_String(collect_String(makeFileUrl_String(container)));
+                    const iBool isRoot = isEmpty_String(entryPath);
+                    if (!isRoot) {
+                        const iRangecc curDir = dirName_Path(entryPath);
+                        const iRangecc parentDir = dirName_Path(collectNewRange_String(curDir));
+                        if (!equal_Rangecc(parentDir, ".")) {
+                            /* A subdirectory. */
+                            appendFormat_String(page,
+                                                "=> ../ " keyUpArrow_Icon " %s" iPathSeparator
+                                                "\n",
+                                                cstr_Rangecc(parentDir));
+                        }
+                        else {
+                            /* Top-level directory. */
+                            appendFormat_String(page,
+                                                "=> %s/ " keyUpArrow_Icon " Root\n",
+                                                cstr_String(containerUrl));
+                        }
+                        appendFormat_String(page, "# %s\n\n", cstr_Rangecc(baseName_Path(collectNewRange_String(curDir))));
+                    }
+                    else {
+                        /* The root directory. */
+                        appendFormat_String(page, "=> %s " close_Icon " ${archive.exit}\n",
+                                            cstr_String(containerUrl));
+                        appendFormat_String(page, "# %s\n\n", cstr_Rangecc(containerName));
+                        appendFormat_String(page,
+                                            cstrCount_Lang("archive.summary.n",
+                                                           (int) numEntries_Archive(arch)),
+                                            numEntries_Archive(arch),
+                                            (double) sourceSize_Archive(arch) / 1.0e6);
+                        appendCStr_String(page, "\n\n");
+                    }
+                    iStringSet *contents = iClob(listDirectory_Archive(arch, entryPath));
+                    if (!isRoot) {
+                        if (isEmpty_StringSet(contents)) {
+                            appendCStr_String(page, "${dir.empty}\n");
+                        }
+                        else if (size_StringSet(contents) > 1) {
+                            appendFormat_String(page, cstrCount_Lang("dir.summary.n",
+                                                                     (int) size_StringSet(contents)),
+                                                size_StringSet(contents));
+                            appendCStr_String(page, "\n\n");
+                        }
+                    }
+                    translate_Lang(page);
+                    iConstForEach(StringSet, e, contents) {
+                        const iString *subPath = e.value;
+                        iRangecc relSub = range_String(subPath);
+                        relSub.start += size_String(entryPath);
+                        appendFormat_String(page, "=> %s/%s %s%s\n",
+                                            cstr_String(&d->url),
+                                            cstr_String(withSpacesEncoded_String(collectNewRange_String(relSub))),
+                                            endsWith_Rangecc(relSub, "/") ? folder_Icon " " : "",
+                                            cstr_Rangecc(relSub));
+                    }
+                    resp->statusCode = success_GmStatusCode;
+                    setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+                    set_Block(&resp->body, utf8_String(page));
+                    delete_String(page);
+                }
+                else {
+                    const iBlock *data = data_Archive(arch, entryPath);
+                    if (data) {
+                        resp->statusCode = success_GmStatusCode;
+                        setCStr_String(&resp->meta, mediaType_Path(entryPath));
+                        set_Block(&resp->body, data);
+                        if (endsWithCase_String(container, ".gpub") &&
+                            startsWith_String(&resp->meta, "text/gemini")) {
+                            /* Gempub books specify their language. */
+                            const iRangecc lang = gempubLanguage_Archive_(arch);
+                            if (!isEmpty_Range(&lang)) {
+                                appendFormat_String(&resp->meta, "; lang=%s", cstr_Rangecc(lang));
+                            }
+                        }
+                    }
+                    else {
+                        resp->statusCode = failedToOpenFile_GmStatusCode;
+                        setCStr_String(&resp->meta, cstr_String(path));
+                    }
+                }
+            fileRequestFinished:;
+            }
+        }
+        else {
+            resp->statusCode = failedToOpenFile_GmStatusCode;
+            setCStr_String(&resp->meta, cstr_String(path));
+        }
+    }
+    iRelease(f);
+    d->state = finished_GmRequestState;
+    /* Content filters may apply to this content. */
+    if (d->isFilterEnabled && resp->statusCode == success_GmStatusCode) {
+        /* TODO: Use a background thread, the hook may take some time to run. */
+        applyFilter_GmRequest_(d);
+    }
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void submit_GmRequest(iGmRequest *d) {
+    iAssert(d->state == initialized_GmRequestState);
+    if (d->state != initialized_GmRequestState) {
+        return;
+    }
+    set_Atomic(&d->allowUpdate, iTrue);
+    iGmResponse *resp = d->resp;
+    clear_GmResponse(resp);
+#if !defined (NDEBUG)
+    fprintf(stderr, "[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stderr);
+#endif
+    iUrl url;
+    init_Url(&url, &d->url);
+    const iString *host = collect_String(newRange_String(url.host));
+    uint16_t       port = toInt_String(collect_String(newRange_String(url.port)));
+    /* Process the request submission depending on the URI scheme. */
+    if (equalCase_Rangecc(url.scheme, "about")) {
+        aboutRequest_GmRequest_(d);
+        return;
+    }
+    else if (isLocalFileScheme_Rangecc(url.scheme)) {
+        fileRequest_GmRequest_(d);
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "data")) {
+        dataRequest_GmRequest_(d);
+        return;
+    }
+    else if (schemeProxy_Prefs(get_Prefs(), url.scheme)) {
+        /* User has configured a proxy server for this scheme. */
+        schemeProxyHostAndPort_Prefs(get_Prefs(), url.scheme, &host, &port);
+        d->isProxy = iTrue;
+#if defined (iPlatformEmscripten)
+        d->isRelayProxy = equal_String(schemeProxy_Prefs(get_Prefs(), url.scheme),
+                                       &get_Prefs()->strings[relayProxy_PrefsString]);
+#endif
+        if (!beginPlaintextProxyRequest_GmRequest_(d, url.scheme)) {
+            return;
+        }
+    }
+    else if (isGopherScheme_Rangecc(url.scheme)) {
+        beginGopherConnection_GmRequest_(d, host, port ? port : 70,
+                                         isTlsScheme_Rangecc(url.scheme));
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "finger")) {
+        beginGopherConnection_GmRequest_(d, host, port ? port : 79, iFalse);
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "spartan")) {
+        beginSpartanConnection_GmRequest_(d, host, port ? port : 300);
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "nex")) {
+        beginNexConnection_GmRequest_(d, host, port ? port : 1900);
+        return;
+    }
+#if defined (LAGRANGE_ENABLE_GUPPY)
+    else if (equalCase_Rangecc(url.scheme, "guppy")) {
+        beginGuppyConnection_GmRequest_(d, host, port ? port : 6775);
+        return;
+    }
+#endif
+    else if (!equalCase_Rangecc(url.scheme, "gemini") &&
+             !equalCase_Rangecc(url.scheme, "titan") &&
+             !equalCase_Rangecc(url.scheme, "misfin")) {
+        /* This scheme is unrecognized so cannot submit the request. */
+        resp->statusCode = unsupportedProtocol_GmStatusCode;
+        d->state = finished_GmRequestState;
+        iNotifyAudience(d, finished, GmRequestFinished);
+        return;
+    }
+    /* Submitting a Gemini-compatible request. */
+    d->state = receivingHeader_GmRequestState;
+    d->req = new_TlsRequest();
+    if (d->identity) {
+        setCertificate_TlsRequest(d->req, d->identity->cert);
+        set_Block(&resp->identityFingerprint, &d->identity->fingerprint);
+    }
+    /* Site-specific settings. */ {
+        iString siteRoot;
+        initRange_String(&siteRoot, urlRoot_String(&d->url));
+        setSessionCacheEnabled_TlsRequest(
+            d->req, value_SiteSpec(&siteRoot, tlsSessionCache_SiteSpeckey) != 0);
+        deinit_String(&siteRoot);
+    }
+    iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
+    iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);
+    iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
+    if (port == 0) {
+        port = isMisfin_GmRequest_(d) ? MISFIN_DEFAULT_PORT : GEMINI_DEFAULT_PORT;
+    }
+    setHost_TlsRequest(d->req, host, port);
+    if (isTitan_GmRequest_(d)) {
+        composeTitanRequest_GmRequest_(d);
+    }
+    else if (isMisfin_GmRequest_(d)) {
+        composeMisfinRequest_GmRequest_(d);
+    }
+    else if (d->isProxy && d->rawProtocol == spartan_GmRawProtocol) {
+        composeSpartanProxyRequest_GmRequest_(d);
+    }
+    else {
+        /* Normal Gemini request. */
+        iString content;
+        init_String(&content);
+        format_String(&content, "%s\r\n", cstr_String(&d->url));
+        truncate_Block(&content.chars, 1024 /* maximum permitted URI length */ + 2 /* \r\n */);
+        setContent_TlsRequest(d->req, utf8_String(&content));
+        deinit_String(&content);
+    }
+    submit_TlsRequest(d->req);
+}
+
+void cancel_GmRequest(iGmRequest *d) {
+    cancel_ToolProcess(d->filterProc);
+    if (d->req) {
+        cancel_TlsRequest(d->req);
+    }
+    cancel_Gopher(&d->gopher);
+}
+
+iGmResponse *lockResponse_GmRequest(iGmRequest *d) {
+    lock_Mutex(d->mtx);
+    iAssert(!d->isRespLocked); /* assert inside mutex: safe for concurrent callers */
+    d->isRespLocked = iTrue;
+    return d->resp;
+}
+
+void unlockResponse_GmRequest(iGmRequest *d) {
+    if (d) {
+        iAssert(d->isRespLocked);
+        d->isRespLocked = iFalse;
+        set_Atomic(&d->allowUpdate, iTrue);
+        unlock_Mutex(d->mtx);
+    }
+}
+
+uint32_t id_GmRequest(const iGmRequest *d) {
+    return d ? d->id : 0;
+}
+
+iBool isFinished_GmRequest(const iGmRequest *d) {
+    if (d) {
+        iBool done;
+        iGuardMutex(d->mtx,
+                    done = (d->state == finished_GmRequestState || d->state == failure_GmRequestState));
+        return done;
+    }
+    return iTrue;
+}
+
+iBool filtersEnabled_GmRequest(const iGmRequest *d) {
+    return d->isFilterEnabled;
+}
+
+enum iGmStatusCode status_GmRequest(const iGmRequest *d) {
+    if (d) {
+        enum iGmStatusCode code;
+        iGuardMutex(d->mtx, code = d->resp->statusCode);
+        return code;
+    }
+    return none_GmStatusCode;
+}
+
+const iString *meta_GmRequest(const iGmRequest *d) {
+    iAssert(isFinished_GmRequest(d));
+    return &d->resp->meta;
+}
+
+const iBlock *body_GmRequest(const iGmRequest *d) {
+    iAssert(isFinished_GmRequest(d));
+    return &d->resp->body;
+}
+
+size_t bodySize_GmRequest(const iGmRequest *d) {
+    size_t size;
+    iGuardMutex(d->mtx, size = size_Block(&d->resp->body));
+    return size;
+}
+
+const iString *url_GmRequest(const iGmRequest *d) {
+    return &d->url;
+}
+
+iBool isProxy_GmRequest(const iGmRequest *d) {
+    return d->isProxy;
+}
+
+const iAddress *address_GmRequest(const iGmRequest *d) {
+    return d && d->req ? address_TlsRequest(d->req) : NULL;
+}
+
+int certFlags_GmRequest(const iGmRequest *d) {
+    int flags;
+    iGuardMutex(d->mtx, flags = d->resp->certFlags);
+    return flags;
+}
+
+iDate certExpirationDate_GmRequest(const iGmRequest *d) {
+    iDate expr;
+    iGuardMutex(d->mtx, expr = d->resp->certValidUntil);
+    return expr;
+}
+
+iDefineClass(GmRequest)
