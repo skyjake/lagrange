@@ -483,7 +483,9 @@ static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->base.size;
     const iInt2 oldSize = *size;
     SDL_GetCurrentRenderOutputSize(d->base.render, &size->x, &size->y);
+#if !defined (iPlatformAppleMobile)
     size->y -= d->keyboardHeight;
+#endif
     const iBool hasChanged = !isEqual_I2(oldSize, *size);
     if (hasChanged) {
         windowSizeChanged_MainWindow_(d);

@@ -350,9 +350,10 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     CGRect keyboardFrame = [view convertRect:rawFrame fromView:nil];
 //    NSLog(@"keyboardFrame: %@", NSStringFromCGRect(keyboardFrame));
     iMainWindow *window = get_MainWindow();
-    const iInt2 rootSize = size_Root(window->base.roots[0]);
-    const int keyTop = keyboardFrame.origin.y * window->base.pixelRatio;
-    setKeyboardHeight_MainWindow(window, rootSize.y - keyTop);
+    /* Root size may lag behind the view during rotation. A hardware keyboard has zero height. */
+    const CGRect overlap = CGRectIntersection(view.bounds, keyboardFrame);
+    const float height = CGRectIsNull(overlap) ? 0.0f : overlap.size.height;
+    setKeyboardHeight_MainWindow(window, height * window->base.pixelRatio);
 }
 
 -(void)keyboardOffScreen:(NSNotification *)notification {

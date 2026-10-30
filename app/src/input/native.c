@@ -218,6 +218,14 @@ enum iEventResult processCommand_InputWidget_(iInputWidget *d, const SDL_Event *
     iWidget *w = as_Widget(d);
     if (isResize_UserEvent(ev)) {
         if (d->sysCtrl) {
+#if defined (iPlatformAppleMobile)
+            const char *cmd = command_UserEvent(ev);
+            if (isFocused_Widget(d) && !cmp_String(id_Widget(w), "url") &&
+                argLabel_Command(cmd, "horiz") && argLabel_Command(cmd, "vert")) {
+                setFocus_Widget(NULL); /* orientation changed */
+                return ignored_EventResult;
+            }
+#endif
             updateAfterVisualOffsetChange_InputWidget_(d, w->root);
         }
     }
