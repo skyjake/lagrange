@@ -2205,7 +2205,7 @@ void draw_MainWindow(iMainWindow *d) {
                         w->render,
                         d->appIcon,
                         NULL,
-                        &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
+                        &(SDL_FRect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
                 }
 #endif
                 /* Root separator and keyboard focus indicator. */
