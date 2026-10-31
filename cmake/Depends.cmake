@@ -35,6 +35,10 @@ endif ()
 
 find_program (MESON_EXECUTABLE meson DOC "Meson build system")
 find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
+if (MESON_EXECUTABLE)
+    execute_process (COMMAND ${MESON_EXECUTABLE} --version
+        OUTPUT_VARIABLE MESON_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif ()
 include (ExternalProject)
 set (_dependsToBuild)
 
@@ -127,7 +131,7 @@ elseif (ENABLE_HARFBUZZ)
     if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND
             (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))
         # Build HarfBuzz with minimal dependencies.
-        if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
+        if (MESON_EXECUTABLE AND NINJA_EXECUTABLE AND MESON_VERSION VERSION_GREATER_EQUAL 0.60)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
             if (ENABLE_LIBCPP_HARDENING_MODE) # libc++ v20+
                 set (_extraCppOpts "-Dcpp_args=-U_LIBCPP_ENABLE_ASSERTIONS -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST"
