@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2026-08-20 11:40+0000\n"
+"PO-Revision-Date: 2026-10-31 16:42+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -867,9 +867,6 @@ msgstr "Saturaatio:"
 msgid "prefs.font"
 msgstr "Leipäteksti:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.linewidth"
 msgstr "Rivin leveys:"
 
@@ -1320,7 +1317,7 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "yhteensä %u artikkelin"
+msgstr[0] "yhteensä %u artikkeli"
 msgstr[1] "yhteensä %u artikkelia"
 
 msgid "feeds.list.refreshtime.now"
@@ -3019,3 +3016,50 @@ msgstr "Paksut vierityspalkit:"
 
 msgid "ident.use.domain"
 msgstr "Käytä tällä palvelimella"
+
+# Page footer in paginated view mode: current page and number of pages.
+#, c-format
+msgid "doc.page.number"
+msgstr "Sivu %d / %d"
+
+# Page footer in a book: current page, number of pages, current chapter, number of chapters.
+#, c-format
+msgid "doc.page.chapter"
+msgstr "Sivu %d / %d   •   Luku %d / %d"
+
+# Page footer in a single-page chapter of a book: current chapter, number of chapters.
+#, c-format
+msgid "doc.chapter.number"
+msgstr "Luku %d / %d"
+
+msgid "feeds.tinylog.notfound"
+msgstr ""
+"Tätä Tinylog-viestiä ei löydy. Ehkä se on poistettu Tinylog-syötteestä, tai "
+"syötteen tilaus on peruttu."
+
+msgid "feeds.tinylog.unavailable"
+msgstr "Tämän Tinylog-viestin sisältöä ei ole saatavilla."
+
+# Arguments: author, timestamp.
+msgid "feeds.tinylog.wrote"
+msgstr "%s kirjoitti %s:"
+
+# Saves the current page or Gempub book to the bookshelf in the Book sidebar.
+msgid "menu.save.books"
+msgstr "Talleta kirjahyllyyn"
+
+# Opens a dialog for choosing where to save the file.
+msgid "menu.save.as"
+msgstr "Talleta nimellä…"
+
+msgid "menu.trash.restore"
+msgstr "Palauta"
+
+msgid "menu.trash.empty"
+msgstr "Tyhjennä roskakori"
+
+msgid "menu.sync.now"
+msgstr "Synkronoi nyt"
+
+msgid "menu.sync.configure"
+msgstr "Synkronointiasetukset…"
