@@ -155,7 +155,7 @@ elseif (ENABLE_HARFBUZZ)
                                         -Dlibdir=lib
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
-                                        -Ddocs=disabled -Draster=${_hbRaster}
+                                        -Ddocs=disabled -Dutilities=disabled -Draster=${_hbRaster}
                                         -Dvector=disabled -Dgpu=disabled
                                         -Dpng=disabled -Dzlib=disabled
                                         ${_dependMacOpts}
@@ -198,6 +198,7 @@ elseif (ENABLE_HARFBUZZ)
             set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
             set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
             set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
+            set (HB_BUILD_UTILS   OFF CACHE BOOL "" FORCE)
             set (HB_BUILD_RASTER  ${ENABLE_FREETYPE} CACHE BOOL "" FORCE)
             set (HB_BUILD_VECTOR  OFF CACHE BOOL "" FORCE)
             set (HB_BUILD_GPU     OFF CACHE BOOL "" FORCE)
