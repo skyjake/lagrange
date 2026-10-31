@@ -10,6 +10,7 @@
 set -e
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+source $SCRIPT_DIR/status-line.sh
 OSMINVER=15.0
 OPENSSL_VER=3.5.9
 ALL_STEPS="openssl iconv unistring pcre foundation webp jxl sdl3"
@@ -74,8 +75,10 @@ function autotools_build() {
     cd $1
     shift
     if [ -f Makefile ]; then
+        status_phase clean
         make clean
     fi
+    status_phase configure
     # Differing build/host triples force cross-compilation mode.
     CC="xcrun --sdk $KIND clang" \
     CXX="xcrun --sdk $KIND clang++" \
@@ -90,11 +93,14 @@ function autotools_build() {
         --enable-static \
         --disable-shared \
         "$@"
+    status_phase build
     make -j$JOBS
+    status_phase install
     make install
 }
 
 function cmake_ios() {
+    status_phase configure
     cmake \
         -DCMAKE_SYSTEM_NAME=iOS \
         -DCMAKE_OSX_SYSROOT=$KIND \
@@ -108,17 +114,22 @@ function cmake_ios() {
 function build_openssl() {
     local tarball=$SRC_LIBS/openssl-$OPENSSL_VER.tar.gz
     if [ ! -f $tarball ]; then
+        status_phase download
         curl -fL -o $tarball https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VER/openssl-$OPENSSL_VER.tar.gz
     fi
     fresh_build_dir openssl
+    status_phase unpack
     tar xzf $tarball --strip-components=1
+    status_phase configure
     # Configure only accepts single-token compiler flags.
     ./Configure $OPENSSL_TARGET \
         no-shared no-tests no-apps no-docs \
         --target=$TRIPLE \
         --prefix=$PREFIX \
         --libdir=lib
+    status_phase build
     make -j$JOBS build_libs
+    status_phase install
     rm -rf $PREFIX/include/openssl
     make install_dev
 }
@@ -133,6 +144,7 @@ function build_foundation() {
             -DTFDN_ENABLE_WEBREQUEST=NO \
             -DTFDN_ENABLE_DEBUG_OUTPUT=NO \
             -DIOS_DIR=$PREFIX
+        status_phase "build ($config)"
         make -j$JOBS install
     done
 }
@@ -152,6 +164,7 @@ function build_webp() {
         -DWEBP_BUILD_LIBWEBPMUX=OFF \
         -DWEBP_BUILD_WEBPMUX=OFF \
         -DWEBP_BUILD_EXTRAS=OFF
+    status_phase build
     make -j$JOBS install
 }
 
@@ -173,6 +186,7 @@ function build_jxl() {
         -DJPEGXL_ENABLE_SJPEG=OFF \
         -DJPEGXL_ENABLE_OPENEXR=OFF \
         -DJPEGXL_BUNDLE_LIBPNG=OFF
+    status_phase build
     make -j$JOBS install
 }
 
@@ -188,15 +202,19 @@ function build_sdl3() {
         -DSDL_TEST_LIBRARY=OFF \
         -DSDL_EXAMPLES=OFF \
         -DSDL_UNINSTALL=OFF
+    status_phase build
     cmake --build . --config RelWithDebInfo -- -quiet
+    status_phase install
     cmake --install . --config RelWithDebInfo
     rm -rf $PREFIX/lib/libSDL3.0.dylib.dSYM
     cp -R RelWithDebInfo-$KIND/libSDL3.0.dylib.dSYM $PREFIX/lib/
+    status_phase "package framework"
     $SCRIPT_DIR/package-sdl3-ios-framework.sh $PREFIX $DIR_SDL3
 }
 
+status_begin $BUILD_ROOT/.status $STEPS
 for step in $STEPS; do
-    echo "=== $step ==="
+    status_step $step
     case $step in
         openssl)    build_openssl ;;
         iconv)      autotools_build $DIR_ICONV --enable-extra-encodings ;;
@@ -209,4 +227,4 @@ for step in $STEPS; do
         *)          echo "Unknown step: $step"; exit 1 ;;
     esac
 done
-echo "Done: $PREFIX"
+echo "Done: $PREFIX (total $(status_total))"
