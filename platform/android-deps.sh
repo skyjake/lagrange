@@ -53,6 +53,7 @@ if [ -t 0 ]; then
 fi
 
 export PATH=$ANDROID_NDK_TOOLCHAIN_BIN:$PATH
+export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME # OpenSSL 3
 mkdir -p $BUILD_ROOT
 
 function set_toolchain() {
@@ -92,7 +93,12 @@ function set_toolchain() {
 
     export CC=$ANDROID_NDK_TOOLCHAIN_BIN/${BINARY}-linux-${ABI}-clang
     export CXX=$ANDROID_NDK_TOOLCHAIN_BIN/${BINARY}-linux-${ABI}-clang++
-    export LD=$ANDROID_NDK_TOOLCHAIN_BIN/${LD_BINARY}-linux-${LD_ABI}-ld
+    # NDK r23+ has no target-prefixed binutils; configure would pick the host's.
+    export LD=$ANDROID_NDK_TOOLCHAIN_BIN/ld.lld
+    export AR=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-ar
+    export RANLIB=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-ranlib
+    export STRIP=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-strip
+    export NM=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-nm
     export CFLAGS=-D__ANDROID_API__=${API_LEVEL}
 }
 
@@ -257,8 +263,8 @@ for arch in $ARCHS; do
             freetype)   build_freetype ;;
             openssl)    build_openssl ;;
             iconv)      KEEP_GOING=1 autotools_build $ICONV_DIR libiconv --enable-extra-encodings ;;
-            unistring)  KEEP_GOING=1 autotools_build $UNISTRING_DIR libunistring --with-libiconv-prefix=$DEST/libiconv-android/${LIB_DIR} ;;
-            pcre)       KEEP_GOING=1 autotools_build $PCRE_DIR libpcre --enable-unicode-properties --disable-cpp ;;
+            unistring)  KEEP_GOING=1 autotools_build $UNISTRING_DIR libunistring --disable-shared --with-libiconv-prefix=$DEST/libiconv-android/${LIB_DIR} ;;
+            pcre)       KEEP_GOING=1 autotools_build $PCRE_DIR libpcre --disable-shared --enable-unicode-properties --disable-cpp ;;
             *)          echo "Unknown step: $step"; exit 1 ;;
         esac
     done
