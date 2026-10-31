@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2026-10-31 17:39+0000\n"
+"PO-Revision-Date: 2026-10-31 18:44+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -3249,3 +3249,145 @@ msgstr "Sulje välilehdet"
 
 msgid "menu.multi.bookmarks.delete"
 msgstr "Poista kirjanmerkit"
+
+msgid "ident.expiry.years"
+msgid_plural "ident.expiry.years.n"
+msgstr[0] "Vanhenee vuoden päästä"
+msgstr[1] "Vanhenee %zu vuodessa"
+
+#, c-format
+msgid "dlg.confirm.unsub.multi"
+msgid_plural "dlg.confirm.unsub.multi.n"
+msgstr[0] "Peruuta syötteen tilaus?"
+msgstr[1] "Peruuta %u syötteen tilaus?"
+
+#, c-format
+msgid "dlg.subscribeall.add"
+msgid_plural "dlg.subscribeall.add.n"
+msgstr[0] "%sTilaa syöte"
+msgstr[1] "%sTilaa %d syötettä"
+
+msgid "dlg.book.exists"
+msgstr ""
+"Toinen kopio kirjasta \"%s\" on jo kirjahyllyllä. Haluatko korvata sen tällä "
+"kirjalla?"
+
+#, c-format
+msgid "dlg.subscribeall.found"
+msgid_plural "dlg.subscribeall.found.n"
+msgstr[0] ""
+"Sivulta löytyi yksi uusi syöte-URL. Se lisätään uuteen kirjanmerkkikansioon."
+msgstr[1] ""
+"Sivulta löytyi %d uutta syöte-URL:ia. Ne lisätään uuteen "
+"kirjanmerkkikansioon."
+
+msgid "dlg.confirm.bookmarks.multidelete"
+msgstr ""
+"Valituissa kansioissa on kirjanmerkkejä. Haluatko varmasti poistaa ne kaikki?"
+
+msgid "hint.filter.bindings"
+msgstr "suodata komennot"
+
+msgid "ident.syncing"
+msgstr "Käytetään synkronointiin"
+
+msgid "ident.misfin"
+msgstr "Misfin-sertifikaatti"
+
+msgid "ident.expired"
+msgstr "Vanhentunut"
+
+# Submenu with the list of identities in the view toolbar's identity menu.
+msgid "viewtools.ident.pin"
+msgstr "Kiinnitä tähän välilehteen"
+
+msgid "sidebar.empty.bookmarks"
+msgstr "Ei kirjanmerkkejä"
+
+msgid "sidebar.empty.trash"
+msgstr "Ei roskia"
+
+msgid "sidebar.empty.feeds"
+msgstr "Ei syötteitä"
+
+msgid "sidebar.empty.subs"
+msgstr "Ei tilauksia"
+
+msgid "sidebar.empty.links"
+msgstr "Ei linkkejä"
+
+# Page Information for content received via a proxy server.
+msgid "pageinfo.proxy"
+msgstr "Vastaanotettu välipalvelimen kautta:"
+
+msgid "pageinfo.proxy.cert.status"
+msgstr "Välipalvelimen sertifikaatin tila:"
+
+msgid "heading.sitespec.site"
+msgstr "Palvelin"
+
+msgid "sitespec.titantoken"
+msgstr "Titan-avainsana:"
+
+msgid "sitespec.reset"
+msgstr "Nollaa asetukset"
+
+# Followed by a number: the position of the tab, counting from the left sidebar to the right one.
+msgid "keys.sidebar.tab"
+msgstr "Sivupalkin välilehti"
+
+msgid "dlg.book.save.unsupported"
+msgstr "Vain Gemtext-sivuja ja Gempub-kirjoja voi tallettaa kirjahyllyyn."
+
+msgid "heading.book.save"
+msgstr "Talleta kirjahyllyyn"
+
+msgid "dlg.book.save.error"
+msgstr "Tätä kirjaa ei voitu tallettaa kirjahyllyyn."
+
+msgid "heading.book.saved"
+msgstr "Talletettu kirjahyllyyn"
+
+msgid "dlg.book.saved"
+msgstr "\"%s\" on nyt kirjahyllyllä."
+
+msgid "dlg.book.open"
+msgstr "Avaa kirja"
+
+msgid "heading.book.exists"
+msgstr "Kirja on jo talletettu"
+
+msgid "heading.book.synced"
+msgstr "Snkronoitu lukukohta"
+
+# %d is a chapter number.
+msgid "dlg.book.synced"
+msgstr "Tällä kirjalla on uudempi lukukohta toisella laitteella, luvussa %d."
+
+msgid "dlg.book.synced.frontmatter"
+msgstr "Tällä kirjalla on uudempi lukukohta toisella laitteella, kirjan alussa."
+
+msgid "dlg.book.synced.jump"
+msgstr "Siirry synkronoituun kohtaan"
+
+msgid "heading.book.newedition"
+msgstr "Päivitys tarjolla"
+
+# %s is the book's title.
+msgid "dlg.book.newedition"
+msgstr "Uudempi versio kirjasta \"%s\" on ladattu toiseen laitteeseen."
+
+msgid "dlg.book.newedition.update"
+msgstr "Päivitä"
+
+msgid "dlg.book.overwrite"
+msgstr "Ylikirjoita"
+
+msgid "heading.subscribeall"
+msgstr "Tilaa kaikki"
+
+msgid "dlg.subscribeall.type"
+msgstr "Syötteen tyyppi:"
+
+msgid "dlg.subscribeall.type.auto"
+msgstr "Automaattinen"
