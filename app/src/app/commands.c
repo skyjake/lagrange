@@ -1237,29 +1237,39 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (startsWith_Command(cmd, "feeds.update.")) {
-        const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
-        iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
-        if (!navBar || !prog) {
-            return iFalse;
-        }
-        if (equal_Command(cmd, "feeds.update.started") ||
-            equal_Command(cmd, "feeds.update.progress")) {
-            const int num   = arg_Command(cmd);
-            const int total = argLabel_Command(cmd, "total");
-            updateTextAndResizeWidthCStr_LabelWidget(prog,
-                                                     flags_Widget(navBar) & tight_WidgetFlag ||
-                                                             deviceType_App() == phone_AppDeviceType
-                                                         ? star_Icon
-                                                         : star_Icon " ${status.feeds}");
-            showCollapsed_Widget(prog, iTrue);
-            setFixedSize_Widget(findChild_Widget(prog, "feeds.progressbar"),
-                                init_I2(total ? width_Widget(prog) * num / total : 0, -1));
-        }
-        else if (equal_Command(cmd, "feeds.update.finished")) {
-            showCollapsed_Widget(prog, iFalse);
+        const iBool isFinished = equal_Command(cmd, "feeds.update.finished");
+        if (isFinished) {
             refreshFinished_Feeds();
+        }
+        /* The active window may be one without a navbar (e.g., Preferences). */
+        iWindow *oldWin = get_Window();
+        iConstForEach(PtrArray, i, mainWindows_App()) {
+            iWindow *win = i.ptr;
+            const iWidget *navBar = findChild_Widget(win->roots[0]->widget, "navbar");
+            iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
+            if (!navBar || !prog) {
+                continue;
+            }
+            setCurrent_Window(win);
+            if (isFinished) {
+                showCollapsed_Widget(prog, iFalse);
+            }
+            else {
+                const int num   = arg_Command(cmd);
+                const int total = argLabel_Command(cmd, "total");
+                updateTextAndResizeWidthCStr_LabelWidget(prog,
+                                                         flags_Widget(navBar) & tight_WidgetFlag ||
+                                                                 deviceType_App() == phone_AppDeviceType
+                                                             ? star_Icon
+                                                             : star_Icon " ${status.feeds}");
+                showCollapsed_Widget(prog, iTrue);
+                setFixedSize_Widget(findChild_Widget(prog, "feeds.progressbar"),
+                                    init_I2(total ? width_Widget(prog) * num / total : 0, -1));
+            }
+        }
+        setCurrent_Window(oldWin);
+        if (isFinished) {
             refresh_Widget(findWidget_App("url"));
-            return iFalse;
         }
         return iFalse;
     }
