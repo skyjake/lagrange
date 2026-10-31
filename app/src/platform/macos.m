@@ -159,8 +159,8 @@ static void ignoreImmediateKeyDownEvents_(void) {
 /*----------------------------------------------------------------------------------------------*/
 
 static NSString *commandKey_(NSMenuItem *item) {
-#if defined (__MAC_14_0)
-    if (@available(macOS 14.0, *)) {
+#if defined (__MAC_14_4)
+    if (@available(macOS 14.4, *)) {
         /* Items may differ only by subtitle. */
         if (item.subtitle) {
             return [NSString stringWithFormat:@"%@\n%@", item.title, item.subtitle];
@@ -901,8 +901,8 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             NSMenuItem *item = [[NSMenuItem alloc] init];
             NSString *cleanTitle = cleanString_(&itemTitle);
             iBool hasSubtitle = iFalse;
-#if defined (__MAC_14_0)
-            if (@available(macOS 14.0, *)) {
+#if defined (__MAC_14_4)
+            if (@available(macOS 14.4, *)) {
                 /* Additional lines are shown as a subtitle. An attributed title would hide it. */
                 const NSRange nl = [cleanTitle rangeOfString:@"\n"];
                 if (nl.location != NSNotFound) {
