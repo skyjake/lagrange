@@ -12,6 +12,7 @@ set -e
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/status-line.sh
+source $SCRIPT_DIR/jxl-dec.sh
 
 OPENSSL_VER=3.5.9
 ICONV_VER=1.19
@@ -183,35 +184,21 @@ function jxl_third_party() {
 
 function build_jxl() {
     unpack libjxl https://github.com/libjxl/libjxl/archive/refs/tags/v$JXL_VER.tar.gz libjxl-$JXL_VER.tar.gz
+    # Brotli is not used by the decoder, but configuring requires it.
     jxl_third_party brotli  https://github.com/google/brotli/archive/ --strip-components=1
     jxl_third_party highway https://github.com/google/highway/archive/ --strip-components=1
     jxl_third_party skcms   https://skia.googlesource.com/skcms/+archive/
-    # Static libraries only; remove any shared ones from earlier installs.
-    rm -f $PREFIX/lib/lib{jxl,jxl_cms,jxl_threads,jxl_jni,brotlicommon,brotlidec,brotlienc}.*dylib
-    cmake_macos . build \
+    status_phase configure
+    cmake -S . -B build \
+        -DCMAKE_OSX_ARCHITECTURES=$ARCH \
+        -DCMAKE_OSX_DEPLOYMENT_TARGET=$OSMINVER \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DBUILD_TESTING=OFF \
-        -DJPEGXL_ENABLE_TOOLS=OFF \
-        -DJPEGXL_ENABLE_DEVTOOLS=OFF \
-        -DJPEGXL_ENABLE_JPEGLI=OFF \
-        -DJPEGXL_ENABLE_DOXYGEN=OFF \
-        -DJPEGXL_ENABLE_MANPAGES=OFF \
-        -DJPEGXL_ENABLE_BENCHMARK=OFF \
-        -DJPEGXL_ENABLE_EXAMPLES=OFF \
-        -DJPEGXL_ENABLE_JNI=OFF \
-        -DJPEGXL_ENABLE_SJPEG=OFF \
-        -DJPEGXL_ENABLE_OPENEXR=OFF \
-        -DJPEGXL_ENABLE_SKCMS=ON \
-        -DJPEGXL_ENABLE_VIEWERS=OFF \
-        -DJPEGXL_ENABLE_TCMALLOC=OFF \
-        -DJPEGXL_ENABLE_PLUGINS=OFF \
-        -DJPEGXL_ENABLE_FUZZERS=OFF \
-        -DJPEGXL_WARNINGS_AS_ERRORS=OFF
-    # Static libs are unusable via plain (non-static) pkg-config queries otherwise.
-    perl -pi -e 's/^(Libs: .*-ljxl_cms)\s*$/$1 -lc++\n/' $PREFIX/lib/pkgconfig/libjxl_cms.pc
-    perl -pi -e 's/^Requires\.private: (libbrotlicommon.*)/Requires: $1/' \
-        $PREFIX/lib/pkgconfig/libbrotlienc.pc $PREFIX/lib/pkgconfig/libbrotlidec.pc
+        "${JXL_DEC_OPTS[@]}"
+    status_phase build
+    cmake --build build --parallel $JOBS --target $JXL_DEC_TARGETS
+    status_phase install
+    jxl_dec_install build $PREFIX
 }
 
 function build_sdl3() {

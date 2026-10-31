@@ -11,6 +11,7 @@ set -e
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/status-line.sh
+source $SCRIPT_DIR/jxl-dec.sh
 OSMINVER=15.0
 OPENSSL_VER=3.5.9
 ALL_STEPS="openssl iconv unistring pcre foundation webp jxl sdl3"
@@ -172,22 +173,12 @@ function build_jxl() {
     fresh_build_dir libjxl
     cmake_ios $DIR_JXL \
         -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DBUILD_TESTING=OFF \
         -DCMAKE_MACOSX_BUNDLE=OFF \
-        -DJPEGXL_ENABLE_TOOLS=OFF \
-        -DJPEGXL_ENABLE_DEVTOOLS=OFF \
-        -DJPEGXL_ENABLE_JPEGLI=OFF \
-        -DJPEGXL_ENABLE_DOXYGEN=OFF \
-        -DJPEGXL_ENABLE_MANPAGES=OFF \
-        -DJPEGXL_ENABLE_BENCHMARK=OFF \
-        -DJPEGXL_ENABLE_EXAMPLES=OFF \
-        -DJPEGXL_ENABLE_JNI=OFF \
-        -DJPEGXL_ENABLE_SJPEG=OFF \
-        -DJPEGXL_ENABLE_OPENEXR=OFF \
-        -DJPEGXL_BUNDLE_LIBPNG=OFF
+        "${JXL_DEC_OPTS[@]}"
     status_phase build
-    make -j$JOBS install
+    make -j$JOBS $JXL_DEC_TARGETS
+    status_phase install
+    jxl_dec_install . $PREFIX
 }
 
 function build_sdl3() {
