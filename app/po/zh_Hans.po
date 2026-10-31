@@ -1085,9 +1085,6 @@ msgstr "色彩饱和度："
 msgid "prefs.font"
 msgstr "正文字体："
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.linewidth"
 msgstr "线宽："
 

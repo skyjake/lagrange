@@ -998,9 +998,6 @@ msgstr "Saturación:"
 msgid "prefs.font"
 msgstr "Fuente para el Cuerpo:"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.linewidth"
 msgstr "Ancho de linea:"
 

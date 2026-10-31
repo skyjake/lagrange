@@ -1451,9 +1451,6 @@ msgstr "Кольором тексту"
 msgid "prefs.font"
 msgstr "Шрифт вмісту:"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.boldlink"
 msgstr "Жирні посилання:"
 

@@ -1509,9 +1509,6 @@ msgstr "Předformátovaný text:"
 msgid "prefs.font"
 msgstr "Písmo těla:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.linewidth.fill"
 msgstr "Vyplnit"
 

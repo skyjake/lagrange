@@ -1061,9 +1061,6 @@ msgstr "Önceden biçimlendirilmiş:"
 msgid "prefs.font"
 msgstr "Gövde fontu:"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "Koyu temada"

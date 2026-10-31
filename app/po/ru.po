@@ -876,9 +876,6 @@ msgstr "Насыщенность:"
 msgid "prefs.font"
 msgstr "Шрифт основного текста:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.linewidth"
 msgstr "Длина строки:"
 

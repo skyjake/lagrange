@@ -849,9 +849,6 @@ msgstr "nimi tawa li suli lon:"
 msgid "prefs.boldlink.dark"
 msgstr "lipu pimeja"
 
-msgid "prefs.mono.gopher"
-msgstr "lupa Gopher"
-
 msgid "prefs.linewidth"
 msgstr "suli linja:"
 

@@ -778,9 +778,6 @@ msgstr "Parsiunstė faila nūruoduo"
 msgid "dlg.bookmark.icon"
 msgstr "Ikuona:"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "menu.opentab.background"
 msgstr "Atvertė fuonini taba"
 

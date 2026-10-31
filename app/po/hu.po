@@ -1120,9 +1120,6 @@ msgstr "Szövegtörzs betűtípusa:"
 msgid "prefs.font.monodoc"
 msgstr "Fix szélességű betűtípus:"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.boldlink"
 msgstr "Félkövér hivatkozások:"
 

@@ -173,9 +173,6 @@ msgstr "五彩斑斕的白"
 msgid "prefs.hoverlink"
 msgstr "游標懸停時顯示地址："
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.linewidth.fill"
 msgstr "填充"
 

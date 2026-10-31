@@ -553,9 +553,6 @@ msgstr "Saturation:"
 msgid "prefs.font"
 msgstr "Typo de characteres del corpore:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.linewidth"
 msgstr "Largessa de linea:"
 

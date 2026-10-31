@@ -917,9 +917,6 @@ msgstr "Wysoki kontrast"
 msgid "prefs.font"
 msgstr "Czcionka treści:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.boldlink"
 msgstr "Pogrubione linki:"
 

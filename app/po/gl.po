@@ -1259,9 +1259,6 @@ msgstr "Saturación:"
 msgid "prefs.font"
 msgstr "Letra do corpo:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "No escuro"

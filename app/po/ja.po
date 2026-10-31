@@ -1036,9 +1036,6 @@ msgstr "見出し:"
 msgid "prefs.font.body"
 msgstr "本文:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.gemtext.ansi"
 msgstr "Gemtext ANSI Esc コード:"
 

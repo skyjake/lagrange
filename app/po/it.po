@@ -1654,9 +1654,6 @@ msgstr "Font UI:"
 msgid "prefs.font.monodoc"
 msgstr "Font Monospace:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.boldlink"
 msgstr "Link in grossetto:"
 
