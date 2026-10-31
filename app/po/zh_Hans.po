@@ -1085,9 +1085,6 @@ msgstr "色彩饱和度："
 msgid "prefs.font"
 msgstr "正文字体："
 
-msgid "prefs.mono"
-msgstr "等宽字体："
-
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
@@ -1114,9 +1111,6 @@ msgstr "纯文本折行："
 
 msgid "menu.binding.reset"
 msgstr "重置为默认值"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
 
 msgid "error.schemeredirect"
 msgstr "跨协议重定向"

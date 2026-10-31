@@ -553,9 +553,6 @@ msgstr "Saturation:"
 msgid "prefs.font"
 msgstr "Typo de characteres del corpore:"
 
-msgid "prefs.mono"
-msgstr "Corpore mono-spatial:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
 
@@ -797,9 +794,6 @@ msgstr "Rolamento"
 
 msgid "heading.prefs.sizing"
 msgstr "Dimensionamento"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "keys.zoom.in"
 msgstr "Ampliar"
@@ -1924,9 +1918,6 @@ msgstr "Aperir in un nove fenestra"
 
 msgid "sitespec.tlscache"
 msgstr "Reprender le session TLS:"
-
-msgid "sitespec.accept"
-msgstr "Salvar parametros"
 
 msgid "keys.pageinfo"
 msgstr "Monstrar information re le pagina"

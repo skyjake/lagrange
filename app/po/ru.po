@@ -876,14 +876,8 @@ msgstr "Насыщенность:"
 msgid "prefs.font"
 msgstr "Шрифт основного текста:"
 
-msgid "prefs.mono"
-msgstr "Использовать с протоколами:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "prefs.linewidth"
 msgstr "Длина строки:"
@@ -2157,9 +2151,6 @@ msgstr "Вставить и перейти"
 
 msgid "pageinfo.settings"
 msgstr "Настройки"
-
-msgid "sitespec.accept"
-msgstr "Сохранить настройки"
 
 msgid "keys.pageinfo"
 msgstr "Показать информацию о странице"

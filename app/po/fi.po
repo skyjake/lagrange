@@ -867,14 +867,8 @@ msgstr "Saturaatio:"
 msgid "prefs.font"
 msgstr "Leipäteksti:"
 
-msgid "prefs.mono"
-msgstr "Käytössä protokollien kanssa:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "prefs.linewidth"
 msgstr "Rivin leveys:"
@@ -2141,9 +2135,6 @@ msgstr "ANSI-varoitukset:"
 
 msgid "sitespec.palette"
 msgstr "Teemapaletin siemen:"
-
-msgid "sitespec.accept"
-msgstr "Talleta asetukset"
 
 msgid "keys.pageinfo"
 msgstr "Näytä sivun tiedot"

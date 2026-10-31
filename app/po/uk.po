@@ -1451,9 +1451,6 @@ msgstr "Кольором тексту"
 msgid "prefs.font"
 msgstr "Шрифт вмісту:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
@@ -1503,9 +1500,6 @@ msgstr "Забарвлювати зображення:"
 
 msgid "prefs.imagestyle.preformat"
 msgstr "Преформатованим кольором"
-
-msgid "prefs.mono"
-msgstr "Текст сталої ширини в:"
 
 msgid "prefs.ca.file"
 msgstr "Файл CA:"
@@ -2232,9 +2226,6 @@ msgstr "Попередження про помилки символів ANSI:"
 
 msgid "sitespec.palette"
 msgstr "Сід палітри теми:"
-
-msgid "sitespec.accept"
-msgstr "Збрегти налаштування"
 
 msgid "keys.pageinfo"
 msgstr "Показати інформацію про сторінку"

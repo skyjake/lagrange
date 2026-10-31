@@ -917,14 +917,8 @@ msgstr "Wysoki kontrast"
 msgid "prefs.font"
 msgstr "Czcionka treści:"
 
-msgid "prefs.mono"
-msgstr "Tekst o stałej szerokości:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "prefs.boldlink"
 msgstr "Pogrubione linki:"

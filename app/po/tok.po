@@ -849,9 +849,6 @@ msgstr "nimi tawa li suli lon:"
 msgid "prefs.boldlink.dark"
 msgstr "lipu pimeja"
 
-msgid "prefs.mono.gemini"
-msgstr "mun Kemini"
-
 msgid "prefs.mono.gopher"
 msgstr "lupa Gopher"
 
@@ -1136,9 +1133,6 @@ msgstr "walo pimeja"
 
 msgid "prefs.doctheme.name.highcontrast"
 msgstr "sitelen pimeja lon lipu walo"
-
-msgid "prefs.mono"
-msgstr "o kepeken e sitelen pi suli sama lon:"
 
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
@@ -2200,9 +2194,6 @@ msgstr "ijo ante lipu"
 
 msgid "sitespec.palette"
 msgstr "ijo ante kule:"
-
-msgid "sitespec.accept"
-msgstr "o awen"
 
 msgid "sitespec.ansi"
 msgstr "sitelen moli tawa namako ANSI:"

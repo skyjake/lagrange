@@ -1259,14 +1259,8 @@ msgstr "Saturación:"
 msgid "prefs.font"
 msgstr "Letra do corpo:"
 
-msgid "prefs.mono"
-msgstr "Usar cos protocolos:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
@@ -2160,9 +2154,6 @@ msgstr "Panel lateral: mostra as entradas de todas as canles"
 
 msgid "keys.feeds.showunread"
 msgstr "Panel lateral: mostra entradas non lidas"
-
-msgid "sitespec.accept"
-msgstr "Gardar Axustes"
 
 msgid "keys.pageinfo"
 msgstr "Mostra páxina de información"

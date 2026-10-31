@@ -1509,9 +1509,6 @@ msgstr "Předformátovaný text:"
 msgid "prefs.font"
 msgstr "Písmo těla:"
 
-msgid "prefs.mono"
-msgstr "Používat neproporcionální písmo pro tělo:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
 
@@ -1783,9 +1780,6 @@ msgstr "Vysoký kontrast"
 
 msgid "prefs.saturation"
 msgstr "Sytost:"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "prefs.boldlink"
 msgstr "Tlusté odkazy:"

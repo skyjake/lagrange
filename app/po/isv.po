@@ -433,14 +433,8 @@ msgstr "Sěry"
 msgid "prefs.accent.orange"
 msgstr "Oranževy"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.accent.green"
 msgstr "Zeleny"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "heading.prefs.content"
 msgstr "Sodržanje"

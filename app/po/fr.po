@@ -692,9 +692,6 @@ msgstr ""
 "Échec durant la génération de contenu dynamique sur le serveur. Cela peut "
 "être dû au dysfonctionnement d'un logiciel côté serveur."
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.cachesize"
 msgstr "Taille du cache :"
 
@@ -898,9 +895,6 @@ msgstr "Thème clair :"
 
 msgid "prefs.doctheme.name.gray"
 msgstr "Gris"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
 
 msgid "keys.zoom.in"
 msgstr "Zoomer"
@@ -1389,9 +1383,6 @@ msgstr ""
 
 msgid "keys.link.homerow"
 msgstr "Ouvrir un lien via une touche de repos"
-
-msgid "prefs.mono"
-msgstr "Chasse fixe :"
 
 msgid "hint.newident.date"
 msgstr "AAAA ou AAAA-MM-JJ"
@@ -2230,9 +2221,6 @@ msgstr "Nouvelle fenêtre"
 
 msgid "pageinfo.settings"
 msgstr "Paramètres"
-
-msgid "sitespec.accept"
-msgstr "Enregistrer les paramètres"
 
 msgid "keys.pageinfo"
 msgstr "Afficher les informations de la page"

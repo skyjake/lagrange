@@ -1061,9 +1061,6 @@ msgstr "Önceden biçimlendirilmiş:"
 msgid "prefs.font"
 msgstr "Gövde fontu:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
@@ -1870,9 +1867,6 @@ msgstr "Önceden biçimlendirilmiş renk"
 msgid "prefs.font.body"
 msgstr "Gövde:"
 
-msgid "prefs.mono"
-msgstr "Şu protokollerle kullan:"
-
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
 msgstr "Eş aralıklı font:"
@@ -2207,9 +2201,6 @@ msgstr "ANSI kaçış uyarıları:"
 
 msgid "sitespec.palette"
 msgstr "Tema paleti beslemesi:"
-
-msgid "sitespec.accept"
-msgstr "Ayarları Kaydet"
 
 msgid "keys.pageinfo"
 msgstr "Sayfa bilgisini göster"

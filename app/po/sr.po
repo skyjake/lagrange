@@ -639,9 +639,6 @@ msgstr "Засићење:"
 msgid "prefs.font"
 msgstr "Фонт тела странице:"
 
-msgid "prefs.mono.gemini"
-msgstr "Џемини"
-
 msgid "prefs.linewidth"
 msgstr "Ширина реда:"
 
@@ -1133,14 +1130,8 @@ msgstr "Заиста желите да очистите историју сви�
 msgid "dlg.history.clear"
 msgstr "Очисти историју"
 
-msgid "prefs.mono"
-msgstr "Користити за протоколе:"
-
 msgid "bookmark.tag.sub"
 msgstr "Претплати се на фид"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "bookmark.untag.sub"
 msgstr "Уклони претплату на фид"
@@ -2213,9 +2204,6 @@ msgstr "Упозорења ANSI секвенци:"
 
 msgid "sitespec.palette"
 msgstr "Семе палете тема:"
-
-msgid "sitespec.accept"
-msgstr "Сачувај подешавања"
 
 msgid "keys.pageinfo"
 msgstr "Приказ информација о страници"

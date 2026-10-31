@@ -796,9 +796,6 @@ msgstr "新しいウインドウで開く"
 msgid "bookmarks.reload"
 msgstr "リモートソースの更新"
 
-msgid "sitespec.accept"
-msgstr "設定を保存"
-
 msgid "keys.pageinfo"
 msgstr "ページ情報を表示"
 
@@ -1039,14 +1036,8 @@ msgstr "見出し:"
 msgid "prefs.font.body"
 msgstr "本文:"
 
-msgid "prefs.mono"
-msgstr "等幅フォントの本文:"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "prefs.gemtext.ansi"
 msgstr "Gemtext ANSI Esc コード:"

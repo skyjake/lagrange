@@ -516,14 +516,8 @@ msgstr "%b. %d"
 msgid "feeds.entry.openfeed"
 msgstr "Feed-Seite öffnen"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.linewidth.normal"
 msgstr "Normal"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
 
 msgid "menu.binding.clear"
 msgstr "Entfernen"
@@ -1056,9 +1050,6 @@ msgstr "Sepia"
 
 msgid "prefs.font"
 msgstr "Schriftart des Körpers:"
-
-msgid "prefs.mono"
-msgstr "Körper in Monospace:"
 
 msgid "prefs.linewidth"
 msgstr "Zeilenbreite:"
@@ -2185,9 +2176,6 @@ msgstr "Seitenspezifische Einstellungen"
 
 msgid "sitespec.ansi"
 msgstr "ANSI-Escapesequenz Warnungen:"
-
-msgid "sitespec.accept"
-msgstr "Einstellungen speichern"
 
 msgid "keys.pageinfo"
 msgstr "Zeige Seiteninformationen"

@@ -31,9 +31,6 @@ msgstr "Tamaños"
 msgid "prefs.uiscale"
 msgstr "Factor de escalamiento de la Interfaz:"
 
-msgid "prefs.mono"
-msgstr "Usar con protocolos:"
-
 msgid "prefs.biglede"
 msgstr "Primer párrafo más grande:"
 
@@ -1000,9 +997,6 @@ msgstr "Saturación:"
 
 msgid "prefs.font"
 msgstr "Fuente para el Cuerpo:"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
 
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
@@ -2196,9 +2190,6 @@ msgstr "Advertencia de escapes ANSI:"
 
 msgid "sitespec.palette"
 msgstr "Semilla para la paleta del tema:"
-
-msgid "sitespec.accept"
-msgstr "Guardar Configuraciones"
 
 msgid "keys.pageinfo"
 msgstr "Mostrar información de la página"

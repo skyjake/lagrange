@@ -778,9 +778,6 @@ msgstr "Parsiunstė faila nūruoduo"
 msgid "dlg.bookmark.icon"
 msgstr "Ikuona:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
@@ -1153,9 +1150,6 @@ msgstr "Poslapė specėfėnē nustatīmā"
 
 msgid "sitespec.palette"
 msgstr "Temas paletės šaltinis:"
-
-msgid "sitespec.accept"
-msgstr "Ėšsauguotė nustatīmus"
 
 msgid "dlg.file.delete"
 msgstr "Ėštrintė"
@@ -2127,9 +2121,6 @@ msgstr "Nauduotuojė interfeisos"
 
 msgid "prefs.doctheme.name.colorfullight"
 msgstr "Švėisiuoji vėsū barvu"
-
-msgid "prefs.mono"
-msgstr "Vėinatūris teksts:"
 
 msgid "prefs.cachesize"
 msgstr "Kešavėma dėdoms:"

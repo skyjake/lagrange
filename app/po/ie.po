@@ -167,9 +167,6 @@ msgstr "Sepia"
 msgid "prefs.doctheme.name.highcontrast"
 msgstr "Alt contraste"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.linewidth"
 msgstr "Largore de linea:"
 
@@ -795,9 +792,6 @@ msgstr "Saturation:"
 msgid "prefs.font"
 msgstr "Fonde de textu:"
 
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
-
 msgid "prefs.linewidth.fill"
 msgstr "Plenar"
 
@@ -1239,9 +1233,6 @@ msgstr "CONTENETE DE PÁGINE"
 
 msgid "prefs.imageloadscroll"
 msgstr "Cargar li sequent image vice de rulament:"
-
-msgid "prefs.mono"
-msgstr "Usar con protocoles:"
 
 msgid "keys.top"
 msgstr "Ear al inicie"
@@ -2147,9 +2138,6 @@ msgstr "Archive del data de usator"
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
 msgstr "Pri Lagrange"
-
-msgid "sitespec.accept"
-msgstr "Gardar li parametres"
 
 msgid "keys.pageinfo"
 msgstr "Monstrar information pri li págine"

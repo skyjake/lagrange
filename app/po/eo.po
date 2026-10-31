@@ -429,9 +429,6 @@ msgstr "Blanka"
 msgid "heading.prefs.userinterface"
 msgstr "Fasado"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "menu.binding.clear"
 msgstr "Forigi"
 
@@ -517,9 +514,6 @@ msgstr "Konservi legosignon"
 # tab button
 msgid "heading.prefs.style"
 msgstr "Paĝa stilo"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
 
 msgid "keys.bookmark.add"
 msgstr "Aldoni legosignon"
@@ -892,9 +886,6 @@ msgstr "Forigi legosignojn"
 
 msgid "pageinfo.settings"
 msgstr "Agordoj"
-
-msgid "sitespec.accept"
-msgstr "Konservi agordojn"
 
 msgid "link.file.delete"
 msgstr "Forigi dosieron"

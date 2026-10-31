@@ -405,9 +405,6 @@ msgstr "Fidatu"
 msgid "pageinfo.settings"
 msgstr "Ezarpenak"
 
-msgid "sitespec.accept"
-msgstr "Gorde ezarpenak"
-
 msgid "keys.menubar.focus"
 msgstr "Fokatu menu barra"
 
@@ -1242,9 +1239,6 @@ msgstr "Corpusa:"
 msgid "prefs.font"
 msgstr "Corpuseko letra-tipoa:"
 
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
-
 msgid "prefs.boldlink.visited"
 msgstr "Ikusitakoak"
 
@@ -1500,9 +1494,6 @@ msgstr "Koloreztatu irudiak:"
 
 msgid "prefs.imagestyle.text"
 msgstr "Testuaren kolorea"
-
-msgid "prefs.mono.gemini"
-msgstr "Gemini"
 
 msgid "prefs.boldlink"
 msgstr "Nabarmendu estekak:"
@@ -2466,9 +2457,6 @@ msgstr "Interfazeko eskala:"
 # Abbrevation: background-to-foreground
 msgid "prefs.imagestyle.bgfg"
 msgstr "Hondotik lehenengo planora"
-
-msgid "prefs.mono"
-msgstr "Tarte bakarreko corpusa:"
 
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"

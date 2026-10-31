@@ -1415,9 +1415,6 @@ msgstr "Avviso sui codici di escape ANSI:"
 msgid "sitespec.palette"
 msgstr "Seed per la palette del Tema:"
 
-msgid "sitespec.accept"
-msgstr "Salva Impostazioni"
-
 msgid "keys.pageinfo"
 msgstr "Mostra le informazioni sulla pagina"
 
@@ -1488,9 +1485,6 @@ msgstr "Seleziona un File"
 
 msgid "heading.glyphfinder"
 msgstr "Glifi Mancanti"
-
-msgid "prefs.mono.gopher"
-msgstr "gopher"
 
 # Abbrevation: background-to-foreground
 msgid "prefs.imagestyle.bgfg"
@@ -1659,9 +1653,6 @@ msgstr "Font UI:"
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
 msgstr "Font Monospace:"
-
-msgid "prefs.mono"
-msgstr "Contenuto Monospace:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"

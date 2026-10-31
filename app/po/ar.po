@@ -718,9 +718,6 @@ msgstr "أسود"
 msgid "prefs.doctheme.name.gray"
 msgstr "رمادي"
 
-msgid "prefs.mono.gemini"
-msgstr "جميني"
-
 # Color of text background.
 msgid "prefs.gemtext.ansi.bg"
 msgstr "لون الخلفية"
@@ -977,9 +974,6 @@ msgstr "اشترك بمصدر التغذية"
 msgid "heading.sitespec"
 msgstr "إعدادات متعلقة بموقع محدد"
 
-msgid "sitespec.accept"
-msgstr "حفظ الاعدادات"
-
 msgid "keys.pageinfo"
 msgstr "عرض معلومات الصفحة"
 
@@ -1093,9 +1087,6 @@ msgstr "مؤقت:"
 #, fuzzy
 msgid "dlg.newident.notsaved"
 msgstr "غير محفوظ على القرص"
-
-msgid "prefs.mono.gopher"
-msgstr "جوفر"
 
 msgid "dlg.newident.create"
 msgstr "إنشاء هوية"

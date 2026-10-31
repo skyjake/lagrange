@@ -173,14 +173,8 @@ msgstr "五彩斑斕的白"
 msgid "prefs.hoverlink"
 msgstr "游標懸停時顯示地址："
 
-msgid "prefs.mono"
-msgstr "等寬字型："
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
-
-msgid "prefs.mono.gopher"
-msgstr "Gopher"
 
 msgid "prefs.linewidth.fill"
 msgstr "填充"
@@ -1965,9 +1959,6 @@ msgstr "以純文字形式檢視"
 
 msgid "sitespec.tlscache"
 msgstr "回復TLS作業階段："
-
-msgid "sitespec.accept"
-msgstr "儲存設定"
 
 msgid "keys.input.precedingline"
 msgstr "輸入提示：貼上上一行"
