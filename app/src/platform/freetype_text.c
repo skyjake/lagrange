@@ -109,6 +109,10 @@ void doneFtLibrary_FtText(void) {
 /* Some color fonts (e.g. Segoe UI Emoji) have a low ascent, so the glyphs extend above the
    line box. Returns the shift that centers a reference Emoji's ink in the line box. */
 static float colorVertShift_(FT_Face face, int ascent, int descent) {
+#if !defined (LAGRANGE_HAVE_FT_COLOR)
+    iUnused(face, ascent, descent);
+    return 0.0f;
+#else
     const FT_UInt glyphIndex = FT_Get_Char_Index(face, 0x1F600); /* grinning face */
     if (!glyphIndex) return 0.0f;
     FT_Pos yMin = 0, yMax = 0;
@@ -127,6 +131,7 @@ static float colorVertShift_(FT_Face face, int ascent, int descent) {
     }
     if (!found) return 0.0f;
     return (float) (yMin + yMax) / 2.0f - (float) (ascent + descent) / 2.0f;
+#endif
 }
 
 /* Bitmap strikes (CBDT, sbix) and COLR v0 layers can be rendered, and COLRv1 paint graphs
@@ -149,7 +154,9 @@ static iBool hasRenderableColor_(FT_Face face, iBool *hasColrV1_out) {
             return iTrue;
         }
 #endif
+#if defined (LAGRANGE_HAVE_FT_COLOR)
         return ((header[2] << 8) | header[3]) > 0; /* numBaseGlyphRecords */
+#endif
     }
     return iFalse;
 }
@@ -365,6 +372,7 @@ static FT_Error loadShiftedGlyph_(FT_Face face, uint32_t glyphIndex, FT_Int32 lo
     return err;
 }
 
+#if defined (LAGRANGE_HAVE_FT_COLOR)
 /* COLR v0 canvas bounds in FreeType coordinates (Y up). */
 static iBool colrV0Bounds_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
                            int *x0, int *y0, int *x1, int *y1) {
@@ -395,6 +403,7 @@ static iBool colrV0Bounds_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
     }
     return *x1 > *x0 && *y1 > *y0;
 }
+#endif
 
 #if defined (LAGRANGE_ENABLE_HB_RASTER)
 static iBool isColrV1Glyph_(const iFtFontData *fd, uint32_t glyphIndex) {
@@ -525,12 +534,14 @@ static void measureGlyphEx_FontFile_(const iFontFile *d, uint32_t glyphIndex,
                 return;
             }
         }
+#if defined (LAGRANGE_HAVE_FT_COLOR)
         if (colrV0Bounds_(face, glyphIndex, ppem, &cx0, &cy0, &cx1, &cy1)) {
             *x0 = cx0;
             *y0 = shift - cy1;
             *x1 = cx1;
             *y1 = shift - cy0;
         }
+#endif
         return;
     }
     setCharSize_(face, d, xScale, yScale);
@@ -552,6 +563,7 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
     measureGlyphEx_FontFile_(d, glyphIndex, xScale, yScale, xShift, x0, y0, x1, y1, &isBitmap);
 }
 
+#if defined (LAGRANGE_HAVE_FT_COLOR)
 /* COLR v0: composite all layers into a BGRA canvas.
    Used when FT_LOAD_COLOR doesn't auto-produce BGRA (FreeType < 2.12). */
 static uint8_t *renderColrV0_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
@@ -620,6 +632,7 @@ static uint8_t *renderColrV0_(FT_Face face, FT_UInt glyphIndex, FT_UInt ppem,
     *h_out = ch;
     return canvas;
 }
+#endif
 
 /* Variant that also reports whether the returned bitmap is BGRA color. */
 static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, float yScale,
@@ -679,6 +692,7 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
                 return buf;
             }
         }
+#if defined (LAGRANGE_HAVE_FT_COLOR)
         /* FT_LOAD_COLOR didn't produce BGRA. Try COLR v0 manual compositing.
            This covers FreeType < 2.12 where COLR is not auto-rendered. */
         uint8_t *colr = renderColrV0_(face, glyphIndex, ppem, w, h);
@@ -686,6 +700,7 @@ static uint8_t *rasterizeGlyphEx_FontFile_(const iFontFile *d, float xScale, flo
             *isColor_out = iTrue;
             return colr;
         }
+#endif
     }
     setCharSize_(face, d, xScale, yScale);
     if (loadShiftedGlyph_(face, glyphIndex, outlineLoadFlags_ | FT_LOAD_RENDER, xShift) != 0) {
@@ -854,6 +869,7 @@ iBool isColorGlyph_(const iFontFile *d, uint32_t glyphIndex) {
         return iTrue;
     }
 #endif
+#if defined (LAGRANGE_HAVE_FT_COLOR)
     /* Check COLR v0: glyph has color layers. */
     FT_LayerIterator iter;
     memset(&iter, 0, sizeof(iter));
@@ -862,6 +878,7 @@ iBool isColorGlyph_(const iFontFile *d, uint32_t glyphIndex) {
                                   &layerGlyphIdx, &layerColorIdx, &iter)) {
         return iTrue;
     }
+#endif
     /* Check CBDT/CBLC: glyph has an embedded color bitmap. Fixed-size faces must select their
        native strike directly; FT_Set_Pixel_Sizes() with an arbitrary size yields an empty bitmap. */
     if (fd->isFixedSize) {

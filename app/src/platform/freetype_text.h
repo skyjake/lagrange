@@ -32,7 +32,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include FT_SFNT_NAMES_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_TRUETYPE_TAGS_H /* TTAG_COLR */
-#include FT_COLOR_H        /* FT_Palette_Select, FT_Get_Color_Glyph_Layer */
+#if !defined (TTAG_COLR)
+#   define TTAG_COLR FT_MAKE_TAG('C', 'O', 'L', 'R')
+#endif
+#if FREETYPE_MAJOR > 2 || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR >= 10)
+#   define LAGRANGE_HAVE_FT_COLOR /* COLR v0 layers and palettes */
+#   include FT_COLOR_H        /* FT_Palette_Select, FT_Get_Color_Glyph_Layer */
+#endif
 #include FT_LCD_FILTER_H   /* FT_Library_SetLcdFilter */
 #include FT_GLYPH_H        /* FT_Glyph_Get_CBox, FT_GLYPH_BBOX_PIXELS */
 #include FT_OUTLINE_H      /* FT_Outline_Get_CBox */
