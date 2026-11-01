@@ -54,8 +54,8 @@ static void init_Book(iBook *d) {
     d->chapter     = -1;
     d->numChapters = 0;
     d->chapterPos  = 0.0f;
-    iZap(d->timestamp);
-    iZap(d->positionTime);
+    iZap(d->accessed);
+    iZap(d->posChanged);
     iZap(d->shelved);
     iZap(d->deleted);
     iZap(d->openedAt);
@@ -106,8 +106,8 @@ static void migrateShelved_Book_(iBook *d) {
     /* Books used to be on the shelf if downloaded or downloadable. */
     if (!isValid_Time(&d->shelved) && !isValid_Time(&d->deleted) &&
         (!isEmpty_String(&d->fileName) || !isEmpty_String(&d->url))) {
-        if (isValid_Time(&d->timestamp)) {
-            d->shelved = d->timestamp;
+        if (isValid_Time(&d->accessed)) {
+            d->shelved = d->accessed;
         }
         else {
             initCurrent_Time(&d->shelved);
@@ -220,7 +220,7 @@ void serialize_Books(iStream *outs) {
                                 (unsigned long long) book->size);
             if (!isEmpty_String(&book->fileEdition)) {
                 appendFormat_String(str,
-                                    "fileedition = \"%s\"\n",
+                                    "fileEdition = \"%s\"\n",
                                     cstrCollect_String(quote_String(&book->fileEdition, iFalse)));
             }
         }
@@ -243,13 +243,13 @@ void serialize_Books(iStream *outs) {
                                 (long long) integralSeconds_Time(&book->deleted));
         }
         appendFormat_String(str,
-                            "chapter = %d\nchapters = %d\npos = %f\ntimestamp = %lld\n"
-                            "positiontime = %lld\n\n",
+                            "chapter = %d\nnumChapters = %d\npos = %f\naccessed = %lld\n"
+                            "posChanged = %lld\n\n",
                             book->chapter,
                             book->numChapters,
                             book->chapterPos,
-                            (long long) integralSeconds_Time(&book->timestamp),
-                            (long long) integralSeconds_Time(&book->positionTime));
+                            (long long) integralSeconds_Time(&book->accessed),
+                            (long long) integralSeconds_Time(&book->posChanged));
         write_Stream(outs, utf8_String(str));
     }
     delete_String(str);
@@ -316,15 +316,15 @@ static void handleTable_BooksLoader_(void *context, const iString *table, iBool 
         max_Time(&old->deleted, &book->deleted);
     }
     if (d->isSync || (d->method == all_ImportMethod &&
-        integralSeconds_Time(&book->timestamp) > integralSeconds_Time(&old->timestamp))) {
+        integralSeconds_Time(&book->accessed) > integralSeconds_Time(&old->accessed))) {
         /* The newer position is kept. */
         set_String(&old->title, &book->title);
         set_String(&old->author, &book->author);
         old->chapter     = book->chapter;
         old->numChapters = book->numChapters;
         old->chapterPos  = book->chapterPos;
-        old->timestamp   = book->timestamp;
-        old->positionTime = book->positionTime;
+        old->accessed    = book->accessed;
+        old->posChanged  = book->posChanged;
     }
     migrateShelved_Book_(old);
     iReleasePtr(&d->book);
@@ -354,7 +354,7 @@ static void handleKeyValue_BooksLoader_(void *context, const iString *table, con
         else if (!cmp_String(key, "edition")) {
             set_String(&book->edition, value->value.string);
         }
-        else if (!cmp_String(key, "fileedition")) {
+        else if (!cmp_String(key, "fileEdition")) {
             set_String(&book->fileEdition, value->value.string);
         }
         return;
@@ -366,17 +366,17 @@ static void handleKeyValue_BooksLoader_(void *context, const iString *table, con
     else if (!cmp_String(key, "chapter")) {
         book->chapter = (int) num;
     }
-    else if (!cmp_String(key, "chapters")) {
+    else if (!cmp_String(key, "numChapters")) {
         book->numChapters = (int) num;
     }
     else if (!cmp_String(key, "pos")) {
         book->chapterPos = iClamp((float) num, 0.0f, 1.0f);
     }
-    else if (!cmp_String(key, "timestamp")) {
-        initSeconds_Time(&book->timestamp, num);
+    else if (!cmp_String(key, "accessed")) {
+        initSeconds_Time(&book->accessed, num);
     }
-    else if (!cmp_String(key, "positiontime")) {
-        initSeconds_Time(&book->positionTime, num);
+    else if (!cmp_String(key, "posChanged")) {
+        initSeconds_Time(&book->posChanged, num);
     }
     else if (!cmp_String(key, "shelved")) {
         initSeconds_Time(&book->shelved, num);
@@ -455,7 +455,7 @@ const iPtrArray *listPositions_Books(iTime since) {
     lock_Mutex(d->mtx);
     iConstForEach(StringHash, i, d->books) {
         const iBook *book = value_StringHashNode(i.value);
-        if (cmp_Time(&book->positionTime, &since) > 0) {
+        if (cmp_Time(&book->posChanged, &since) > 0) {
             pushBack_PtrArray(list, book);
         }
     }
@@ -464,17 +464,17 @@ const iPtrArray *listPositions_Books(iTime since) {
 }
 
 iBool setSyncedPosition_Books(const iString *id, int chapter, int numChapters, float pos,
-                              iTime positionTime) {
+                              iTime posChanged) {
     iBooks *d = books_;
     iBool   isChanged = iFalse;
     lock_Mutex(d->mtx);
     iBook *book = value_StringHash(d->books, id);
-    if (book && integralSeconds_Time(&positionTime) > integralSeconds_Time(&book->positionTime)) {
+    if (book && integralSeconds_Time(&posChanged) > integralSeconds_Time(&book->posChanged)) {
         book->chapter      = chapter;
         book->numChapters  = numChapters;
         book->chapterPos   = iClamp(pos, 0.0f, 1.0f);
-        book->positionTime = positionTime;
-        max_Time(&book->timestamp, &positionTime);
+        book->posChanged   = posChanged;
+        max_Time(&book->accessed, &posChanged);
         isChanged = iTrue;
     }
     unlock_Mutex(d->mtx);
@@ -646,8 +646,8 @@ static void setFile_Books_(iBooks *d, iBook *book, const iString *fileName, uint
 static int cmpTimestamp_Book_(const void *a, const void *b) {
     const iBook *x = *(const iBook **) a;
     const iBook *y = *(const iBook **) b;
-    const int64_t tx = integralSeconds_Time(&x->timestamp);
-    const int64_t ty = integralSeconds_Time(&y->timestamp);
+    const int64_t tx = integralSeconds_Time(&x->accessed);
+    const int64_t ty = integralSeconds_Time(&y->accessed);
     if (tx != ty) {
         return tx > ty ? -1 : 1;
     }
@@ -713,8 +713,8 @@ static iBool scan_Books_(iBooks *d) {
             iGempub *gempub = new_Gempub();
             if (openFile_Gempub(gempub, path)) {
                 iBook *book = bookForGempub_Books_(d, gempub);
-                if (!isValid_Time(&book->timestamp)) {
-                    book->timestamp = lastModified_FileInfo(i.value);
+                if (!isValid_Time(&book->accessed)) {
+                    book->accessed = lastModified_FileInfo(i.value);
                 }
                 setFile_Books_(d, book, name, size, edition_Books(gempub));
                 if (!isShelved_Book(book)) {
@@ -776,7 +776,7 @@ void prune_Books(void) {
     iBool changed = scan_Books_(d);
     iConstForEach(StringHash, i, d->books) {
         const iBook *book = value_StringHashNode(i.value);
-        iTime latest = book->timestamp;
+        iTime latest = book->accessed;
         max_Time(&latest, &book->deleted);
         if (!isShelved_Book(book) && !hasFiles_Books_(d, book) &&
             secondsSince_Time(&now, &latest) > expiry_Books_) {
@@ -831,7 +831,7 @@ static iBook *update_Books_(iBooks *d, const iGempub *gempub, const iString *pat
                        edition_Books(gempub));
         initCurrent_Time(&book->shelved); /* also if deleted on another device earlier */
     }
-    initCurrent_Time(&book->timestamp);
+    initCurrent_Time(&book->accessed);
     return book;
 }
 
@@ -867,9 +867,9 @@ void setPosition_Books(const iGempub *gempub, int chapter, int numChapters, floa
         book->chapter     = chapter;
         book->numChapters = numChapters;
         book->chapterPos  = pos;
-        initCurrent_Time(&book->timestamp);
+        initCurrent_Time(&book->accessed);
         if (isPositionUpToDate_Book_(book)) {
-            book->positionTime = book->timestamp;
+            book->posChanged = book->accessed;
         }
     }
     unlock_Mutex(d->mtx);
@@ -882,8 +882,8 @@ static void resetPosition_Book_(iBook *d) {
     d->chapter     = -1;
     d->numChapters = 0;
     d->chapterPos  = 0.0f;
-    initCurrent_Time(&d->timestamp);
-    d->positionTime = d->timestamp;
+    initCurrent_Time(&d->accessed);
+    d->posChanged = d->accessed;
 }
 
 static void setSource_Book_(iBook *d, const iString *url) {

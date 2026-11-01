@@ -51,10 +51,10 @@ enum iSyncBookField {
     author_SyncBookField,
     url_SyncBookField,
     chapter_SyncBookField,
-    chapters_SyncBookField,
+    numChapters_SyncBookField,
     pos_SyncBookField,
-    timestamp_SyncBookField,
-    positionTime_SyncBookField,
+    accessed_SyncBookField,
+    posChanged_SyncBookField,
     edition_SyncBookField,
     shelved_SyncBookField,
     deleted_SyncBookField,
@@ -186,7 +186,7 @@ iDeclareType(SyncRecentBook)
 
 struct Impl_SyncRecentBook {
     iString id;
-    int64_t positionTime; /* seconds */
+    int64_t posChanged; /* seconds */
     int32_t chapter;
     int32_t numChapters;
     float   pos;

@@ -576,7 +576,7 @@ static iSyncRecent *takeRecentSnapshot_Sync_(iSync *d) {
         const iBook *book = j.ptr;
         setBook_SyncRecent(snap,
                            &(iSyncRecentBook){ .id           = book->id,
-                                               .positionTime = integralSeconds_Time(&book->positionTime),
+                                               .posChanged   = integralSeconds_Time(&book->posChanged),
                                                .chapter      = book->chapter,
                                                .numChapters  = book->numChapters,
                                                .pos          = book->chapterPos });
@@ -791,10 +791,10 @@ static void applyRecent_Sync_(iSync *d, const iSyncRecent *recent) {
     }
     iConstForEach(Array, j, &recent->books.values) {
         const iSyncRecentBook *book = j.value;
-        iTime positionTime;
-        initSeconds_Time(&positionTime, (double) book->positionTime);
+        iTime posChanged;
+        initSeconds_Time(&posChanged, (double) book->posChanged);
         if (setSyncedPosition_Books(
-                &book->id, book->chapter, book->numChapters, book->pos, positionTime)) {
+                &book->id, book->chapter, book->numChapters, book->pos, posChanged)) {
             isBooksChanged = iTrue;
         }
     }

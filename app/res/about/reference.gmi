@@ -64,25 +64,25 @@ title = "The Time Machine"
 author = "H. G. Wells"
 file = "The Time Machine.gpub"
 size = 182044
-fileedition = "1895-05-07"
+fileEdition = "1895-05-07"
 url = "gemini://example.com/books/time-machine.gpub"
 edition = "1895-05-07"
-shelved = 1761900000
 chapter = 3
-chapters = 12
+numChapters = 12
 pos = 0.250000
-timestamp = 1761986400
-positiontime = 1761986400
+shelved = 1761900000
+accessed = 1761986400
+posChanged = 1761986400
 ```
 * The table name is the book ID: the first 8 bytes of the MD5 hash of the lowercase title and author (trimmed, joined with a newline) as hexadecimal.
 * "file" is the name of the .gpub file in the "books" directory, and "size" is its size in bytes. These are omitted if the book has not been downloaded.
 * "url" is where the book can be downloaded from (if known).
-* "edition" is the publication date of the latest known edition, and "fileedition" is that of the downloaded copy. Editions are compared as strings, so dates must be in ISO 8601 format.
+* "edition" is the publication date of the latest known edition, and "fileEdition" is that of the downloaded copy. Editions are compared as strings, so dates must be in ISO 8601 format.
 * "shelved" and "deleted" are UNIX timestamps for when the book was put on or removed from the bookshelf. The book is on the bookshelf if "shelved" is later than "deleted".
-* "chapter" is the current chapter index (0 is the first chapter of the reading order), or -1 for the cover page and -2 for the table of contents. "chapters" is the total number of chapters.
+* "chapter" is the current chapter index (0 is the first chapter of the reading order), or -1 for the cover page and -2 for the table of contents. "numChapters" is the total number of chapters.
 * "pos" is the fraction (0...1) of the chapter where the visible part begins.
-* "timestamp" is a UNIX timestamp for when the book was last opened or read.
-* "positiontime" is a UNIX timestamp for when the reading position last changed. It is used for resolving conflicts when syncing.
+* "accessed" is a UNIX timestamp for when the book was last opened or read.
+* "posChanged" is a UNIX timestamp for when the reading position last changed. It is used for resolving conflicts when syncing.
 
 When a book is removed from the bookshelf, its reading position is kept for 30 days in case it is opened again.
 

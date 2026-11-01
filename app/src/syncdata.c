@@ -49,10 +49,10 @@ static const iSyncFieldInfo bookFields_[] = {
     { "author" },
     { "url" },
     { "chapter", iTrue },
-    { "chapters", iTrue },
+    { "numChapters", iTrue },
     { "pos", iTrue },
-    { "timestamp", iTrue },
-    { "positiontime", iTrue },
+    { "accessed", iTrue },
+    { "posChanged", iTrue },
     { "edition" },
     { "shelved", iTrue },
     { "deleted", iTrue },
@@ -440,7 +440,7 @@ void setBook_SyncRecent(iSyncRecent *d, const iSyncRecentBook *book) {
     size_t pos;
     if (locate_SortedArray(&d->books, book, &pos)) {
         iSyncRecentBook *old = at_SortedArray(&d->books, pos);
-        old->positionTime = book->positionTime;
+        old->posChanged   = book->posChanged;
         old->chapter      = book->chapter;
         old->numChapters  = book->numChapters;
         old->pos          = book->pos;
@@ -480,7 +480,7 @@ iBool equal_SyncRecent(const iSyncRecent *d, const iSyncRecent *other) {
     for (size_t i = 0; i < size_SortedArray(&d->books); i++) {
         const iSyncRecentBook *a = constAt_SortedArray(&d->books, i);
         const iSyncRecentBook *b = constAt_SortedArray(&other->books, i);
-        if (!equal_String(&a->id, &b->id) || a->positionTime != b->positionTime ||
+        if (!equal_String(&a->id, &b->id) || a->posChanged != b->posChanged ||
             a->chapter != b->chapter || a->numChapters != b->numChapters || a->pos != b->pos) {
             return iFalse;
         }
@@ -507,7 +507,7 @@ void merge_SyncRecent(iSyncRecent *d, const iSyncRecent *other) {
     iConstForEach(Array, j, &other->books.values) {
         const iSyncRecentBook *book = j.value;
         const iSyncRecentBook *old  = findBook_SyncRecent_(d, &book->id);
-        if (!old || book->positionTime > old->positionTime) {
+        if (!old || book->posChanged > old->posChanged) {
             setBook_SyncRecent(d, book);
         }
     }
@@ -523,7 +523,7 @@ void prune_SyncRecent(iSyncRecent *d, int64_t cutoff) {
     }
     iForEach(Array, j, &d->books.values) {
         iSyncRecentBook *book = j.value;
-        if (book->positionTime < cutoff) {
+        if (book->posChanged < cutoff) {
             deinit_String(&book->id);
             remove_ArrayIterator(&j);
         }
@@ -549,7 +549,7 @@ iBlock *serialize_SyncRecent(const iSyncRecent *d) {
     iConstForEach(Array, j, &d->books.values) {
         const iSyncRecentBook *book = j.value;
         serialize_String(&book->id, outs);
-        write64_Stream(outs, book->positionTime);
+        write64_Stream(outs, book->posChanged);
         write32_Stream(outs, book->chapter);
         write32_Stream(outs, book->numChapters);
         writef_Stream(outs, book->pos);
@@ -586,7 +586,7 @@ iBool deserialize_SyncRecent(iSyncRecent *d, const iBlock *data) {
             iSyncRecentBook book;
             init_String(&book.id);
             deserialize_String(&book.id, ins);
-            book.positionTime = read64_Stream(ins);
+            book.posChanged   = read64_Stream(ins);
             book.chapter      = read32_Stream(ins);
             book.numChapters  = read32_Stream(ins);
             book.pos          = readf_Stream(ins);
@@ -1046,21 +1046,21 @@ static iSyncRecord *mergeRecord_SyncMerge_(const iSyncMerge *d, const iSyncRecor
     }
     else if (d->type == books_UserDataType) {
         /* The reading position is a single unit. */
-        const iBool lc = isAnyChanged_(base, local, chapter_SyncBookField, positionTime_SyncBookField);
-        const iBool rc = isAnyChanged_(base, remote, chapter_SyncBookField, positionTime_SyncBookField);
+        const iBool lc = isAnyChanged_(base, local, chapter_SyncBookField, posChanged_SyncBookField);
+        const iBool rc = isAnyChanged_(base, remote, chapter_SyncBookField, posChanged_SyncBookField);
         const iSyncRecord *pos = remote;
         if (lc && rc) {
-            const int64_t lt = number_SyncRecord_(local, positionTime_SyncBookField);
-            const int64_t rt = number_SyncRecord_(remote, positionTime_SyncBookField);
+            const int64_t lt = number_SyncRecord_(local, posChanged_SyncBookField);
+            const int64_t rt = number_SyncRecord_(remote, posChanged_SyncBookField);
             pos = lt > rt || (lt == rt && d->preferLocal) ? local : remote;
         }
         else if (lc) {
             pos = local;
         }
-        for (size_t i = chapter_SyncBookField; i <= positionTime_SyncBookField; i++) {
+        for (size_t i = chapter_SyncBookField; i <= posChanged_SyncBookField; i++) {
             setField_SyncRecord(out, i, field_SyncRecord(pos, i));
         }
-        static const enum iSyncBookField latest[] = { timestamp_SyncBookField,
+        static const enum iSyncBookField latest[] = { accessed_SyncBookField,
                                                        shelved_SyncBookField,
                                                        deleted_SyncBookField };
         iForIndices(i, latest) {

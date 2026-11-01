@@ -58,8 +58,8 @@ struct Impl_Book {
     int      chapter;     /* negative in the front matter (see iBookChapter) */
     int      numChapters;
     float    chapterPos;  /* fraction of the chapter where the visible pages begin */
-    iTime    timestamp;   /* last opened or read */
-    iTime    positionTime; /* position last changed while up to date with synced data */
+    iTime    accessed;    /* last opened or read */
+    iTime    posChanged;  /* position last changed while up to date with synced data */
     iTime    shelved;     /* put on the shelf; on it if later than `deleted` */
     iTime    deleted;     /* removed from the shelf */
     iTime    openedAt;    /* runtime only: when the current reading session began */
@@ -100,7 +100,7 @@ void            setPosition_Books   (const iGempub *, int chapter, int numChapte
 void            applySync_Books     (iStream *ins); /* replaces everything except local files */
 const iPtrArray*listPositions_Books (iTime since); /* books whose position changed after `since` */
 iBool           setSyncedPosition_Books(const iString *id, int chapter, int numChapters,
-                                        float pos, iTime positionTime); /* if newer */
+                                        float pos, iTime posChanged); /* if newer */
 void            setSource_Books     (const iString *id, const iString *url);
 void            resetPosition_Books (const iString *id); /* read from the beginning */
 const iString * add_Books           (const iBlock *gempubData, const iString *fileName,
