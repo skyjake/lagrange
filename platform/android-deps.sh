@@ -99,7 +99,9 @@ function set_toolchain() {
     export RANLIB=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-ranlib
     export STRIP=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-strip
     export NM=$ANDROID_NDK_TOOLCHAIN_BIN/llvm-nm
-    export CFLAGS=-D__ANDROID_API__=${API_LEVEL}
+    # The target-prefixed clang defines __ANDROID_API__. Redefining it causes a warning that
+    # fails libtool's PIC check.
+    export CFLAGS=
 }
 
 function fresh_build_dir() {
@@ -126,7 +128,8 @@ function autotools_build() {
         make_keep_going maintainer-clean
     fi
     status_phase configure
-    ./configure --prefix=$DEST/${name}-android/${LIB_DIR} --host=${CFG_HOST} "$@"
+    # Static libraries are linked into a shared library; 32-bit x86 requires PIC.
+    ./configure --prefix=$DEST/${name}-android/${LIB_DIR} --host=${CFG_HOST} --with-pic "$@"
     status_phase build
     $make
     status_phase install
@@ -239,10 +242,14 @@ function build_openssl() {
         make_keep_going distclean
     fi
     status_phase configure
+    # Hidden visibility lets the armv7 assembly refer to OPENSSL_armcap_P PC-relatively
+    # inside liblagrange.so.
     ./Configure \
         --prefix=$DEST/openssl-android/${LIB_DIR} \
         android-${TOOLCHAIN} \
-        -D__ANDROID_API__=${API_LEVEL}
+        no-shared \
+        -D__ANDROID_API__=${API_LEVEL} \
+        -fvisibility=hidden
     status_phase build
     make
     status_phase install
