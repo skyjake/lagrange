@@ -336,6 +336,12 @@ static iBool isDocTabButton_(const iWidget *d) {
     return isTabButton_Widget(d) && !cmp_String(id_Widget(d->parent->parent), "doctabs");
 }
 
+static iBool isNextToLeftSidebar_(const iWidget *d) {
+    const iWidget *sidebar = findChild_Widget(d->parent->parent->parent, "sidebar");
+    return sidebar && isVisible_Widget(sidebar) &&
+           right_Rect(bounds_Widget(sidebar)) == left_Rect(bounds_Widget(d));
+}
+
 static iBool isParagraphColoredTab_(void) {
     /* Banner colors distinguish the tab if the backgrounds are similar. */
     return prefs_App()->bottomTabBar && delta_Color(get_Color(tmBackground_ColorId),
@@ -843,10 +849,15 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                 isHover ? gap_UI / 2 : (gap_UI / 4),
                                 focusColor);
     }
+    else if (isJoinedTab && isTerminal_Platform()) {
+        drawRect_Paint(&p, rect, frame);
+    }
     else if (isJoinedTab) {
         /* Open towards the document. */
         const int thick = gap_UI / 4;
-        fillRect_Paint(&p, (iRect){ rect.pos, init_I2(thick, height_Rect(rect)) }, frame);
+        if (!isNextToLeftSidebar_(w)) { /* the sidebar has its own separator */
+            fillRect_Paint(&p, (iRect){ rect.pos, init_I2(thick, height_Rect(rect)) }, frame);
+        }
         fillRect_Paint(&p,
                        (iRect){ init_I2(right_Rect(rect) - thick, top_Rect(rect)),
                                 init_I2(thick, height_Rect(rect)) },
