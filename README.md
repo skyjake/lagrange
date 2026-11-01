@@ -1,4 +1,4 @@
-# Lagrange
+# Lagrange 2
 
 Lagrange is a versatile client for browsing [Geminispace](https://geminiprotocol.net/). It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
 
