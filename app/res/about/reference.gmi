@@ -54,6 +54,38 @@ order = 288
 * "parent" is the ID of the parent folder. Folders are stored as similar bookmark entries, but their URL value is always an empty string.
 * "order" is for sorting the bookmarks list. The list is sorted by ascending order. This value is updated automatically when bookmarks are reordered in the sidebar.
 
+### books.ini and books/
+books.ini stores the bookshelf metadata and book reading positions (see section 6). The "books" subdirectory is where the actual Gempub files are kept. Files can also be added to the subdirectory manually.
+
+ books.ini uses a subset of TOML with only string and number values.
+```Example book
+[68ab99d7dca93279]
+title = "The Time Machine"
+author = "H. G. Wells"
+file = "The Time Machine.gpub"
+size = 182044
+fileedition = "1895-05-07"
+url = "gemini://example.com/books/time-machine.gpub"
+edition = "1895-05-07"
+shelved = 1761900000
+chapter = 3
+chapters = 12
+pos = 0.250000
+timestamp = 1761986400
+positiontime = 1761986400
+```
+* The table name is the book ID: the first 8 bytes of the MD5 hash of the lowercase title and author (trimmed, joined with a newline) as hexadecimal.
+* "file" is the name of the .gpub file in the "books" directory, and "size" is its size in bytes. These are omitted if the book has not been downloaded.
+* "url" is where the book can be downloaded from (if known).
+* "edition" is the publication date of the latest known edition, and "fileedition" is that of the downloaded copy. Editions are compared as strings, so dates must be in ISO 8601 format.
+* "shelved" and "deleted" are UNIX timestamps for when the book was put on or removed from the bookshelf. The book is on the bookshelf if "shelved" is later than "deleted".
+* "chapter" is the current chapter index (0 is the first chapter of the reading order), or -1 for the cover page and -2 for the table of contents. "chapters" is the total number of chapters.
+* "pos" is the fraction (0...1) of the chapter where the visible part begins.
+* "timestamp" is a UNIX timestamp for when the book was last opened or read.
+* "positiontime" is a UNIX timestamp for when the reading position last changed. It is used for resolving conflicts when syncing.
+
+When a book is removed from the bookshelf, its reading position is kept for 30 days in case it is opened again.
+
 ### feeds.lgr
 A binary file that contains the cached state of feed subscriptions: all the known entries and when feeds were last refreshed. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
 
@@ -64,6 +96,12 @@ This file is loaded as fontpack metadata (see section 5). It must be manually cr
 idents.lgr is a binary file that contains metadata about the client certificates known to the application, for example on which URLs a particular certificate should be active.
 
 The "idents" subdirectory is where the actual client certificates are stored. Each certificate comprises a .crt and a .key file in PEM format. Certificates generated inside the application use the certificate fingerprint as the file name.
+
+### misfin.lst
+List of trusted Misfin recipients (TOFU). Each line specifies the certificate fingerprint of one mailbox:
+> {fingerprint} {address}
+* The fingerprint is an SHA-256 checksum as 64 lowercase hexadecimal digits. It is the one the recipient's server returned on the last successful delivery.
+* The address is the recipient's Misfin address, for example "user@example.com".
 
 ### modmap.lst
 Translation table for keyboard modifiers. For example, one could swap the Alt and Ctrl keys by changing their mappings. See the comment in the file that explains the format and usage.
@@ -140,8 +178,22 @@ Document preferences customized for specific protocols. Deleting this file remov
 ### prefs/sitespec.ini
 Site-specific settings. In addition to document theme customization, this includes the Titan upload settings (port, identity, and token), identities previously used on the site (for quick access via the navbar Identities button), and input prompt paths (for which input popup opens automatically before requesting the path). Deleting this file forgets all of these. Note that Titan upload tokens are stored as plain text.
 
+### snippets.ini
+```Example snippet
+[!w]
+content = "gemini://gemi.dev/cgi-bin/wp.cgi/search"
+```
+* The table name is the name of the snippet. Names beginning with "!" are search query shortcuts used in the URL field.
+* "content" is the text of the snippet, with C-style backslash escapes for quotes and newlines.
+
 ### state.lgr
 A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
+
+### sync/
+Local state of user data syncing (see section 8). The files are managed by the app and are not meant to be edited.
+* "state.ini" has the times of the finished and attempted syncs, the server and identity the synced data belongs to, the last error, and when each type of user data was last modified locally.
+* "pristine.zip" is the user data as of the last successful sync. It is the common base for three-way merging of local and remote changes. The archive uses the normal user file formats plus a "sync.ini" metadata entry.
+* "recent.zip" and "recentlocal.zip" hold recent changes that are synced quickly between full syncs: read status of feed entries and reading positions of books.
 
 ### tools.ini
 Configuration of external tools, such as content filters. See section 3.
@@ -391,7 +443,7 @@ for entry in feed_entries:
 
 # 4. User data archives
 
-Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, text snippets, site-specific settings, and/or trusted server certificate fingerprints.
+Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, text snippets, book reading positions, site-specific settings, and/or trusted server certificate fingerprints.
 
 An export archive largely mirrors the contents of the runtime directory (section 1). However, the "lagrange-export.ini" metadata file must also be present:
 
