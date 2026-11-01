@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2026-11-01 06:08+0000\n"
+"PO-Revision-Date: 2026-11-01 07:32+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -3085,7 +3085,6 @@ msgstr[1] "Päivitetty %d päivää sitten"
 
 # strftime() format string. Date of the feed entry shown in the Reader tab banner.
 # %d is the day of month without zero padding.
-#, fuzzy
 msgid "banner.feedentry.date"
 msgstr "%A, %B %d, %Y"
 
@@ -3417,7 +3416,7 @@ msgid "prefs.scope.site.theme"
 msgstr "Käytä palvelinkohtaista teemaa:"
 
 # Short form of an auto-reload interval in minutes.
-#, c-format, fuzzy
+#, c-format
 msgid "reload.short.minutes"
 msgstr "%dm"
 
@@ -3446,11 +3445,9 @@ msgstr "ZIP-arkisto"
 msgid "dlg.newident.keytype"
 msgstr "Allekirjoitus:"
 
-#, fuzzy
 msgid "dlg.newident.keytype.ecdsa"
 msgstr "ECDSA (P-256)"
 
-#, fuzzy
 msgid "dlg.newident.keytype.ed25519"
 msgstr "Ed25519"
 
@@ -3523,7 +3520,305 @@ msgid "prefs.scope.site.style"
 msgstr "Käytä palvelinkohtaista tyyliä:"
 
 msgid "prefs.pageturn"
-msgstr "Sivun kääntö:"
+msgstr "Sivun vaihto:"
 
 msgid "prefs.pageturn.none"
 msgstr "Välitön"
+
+# Which protocols should the monospace body font by applied with.
+msgid "prefs.mono.doc"
+msgstr "Tasalevyinen leipäteksti:"
+
+# Web version: an empty proxy setting means the proxy built into the relay server is used.
+msgid "hint.proxy.relay"
+msgstr "sisäänrakennettu välityspalvelin"
+
+msgid "heading.storage.unavailable"
+msgstr "Tallennustilaa ei saatavilla"
+
+msgid "dlg.storage.unavailable"
+msgstr ""
+"Tämä selain ei salli Lagrangen käyttää pysyvää talletustilaa. Kaikki tiedot "
+"tuhoutuvat kun selainsivu suljetaan."
+
+msgid "heading.sync"
+msgstr "Synkronointi"
+
+msgid "dlg.sync.untrusted.changed"
+msgstr ""
+"Synkronointipalvelimen sertifikaatti ei vastaa aiemmin luotettua. Näin käy "
+"jos palvelimen sertifikaatti on vaihdettu, mutta se voi myös tarkoittaa, "
+"että jokin muu taho kaappaa yhteyden."
+
+msgid "dlg.sync.untrusted.check"
+msgstr ""
+"Luota palvelimen sertifikaattiin vain, jos sen sormenjälki vastaa palvelimen "
+"ylläpitäjän julkaisemaa sormenjälkeä."
+
+msgid "sync.busy.sitespec"
+msgstr ""
+"Palvelinkohtaisia asetuksia ei voi muokata kun synkronoiti on käynnissä. "
+"Yritä uudelleen hetken päästä."
+
+msgid "dlg.sync.newidentity.info"
+msgstr ""
+"Sinulla täytyy olla yksi jaettu synkronointi-identiteetti kaikilla "
+"synkronoiduilla laitteilla. Laitteilla, joilla on eri identiteetit, eivät "
+"synkronoi keskenään. Voit hallita synkronointi-identiteettejä Identiteetit-"
+"sivupalkissa. Käytä näitä vain synkronointiin eikä muihin palveluihin "
+"kirjautumiseen. Identiteetti käyttää Ed25519-avainta."
+
+msgid "sync.error.rollback"
+msgstr ""
+"Synkronointipalvelimen tiedot ovat vanhempia kuin paikalliset tiedot. Aloita "
+"uudelleen kytkemällä synkronointi pois ja takaisin päälle."
+
+msgid "sync.error.identity"
+msgstr "Synkronointi-identiteetti puuttuu tai ei käytä Ed25519-avainta."
+
+msgid "prefs.pageturn.scroll"
+msgstr "Vieritys"
+
+msgid "prefs.pageturn.curl"
+msgstr "Kääntö"
+
+msgid "prefs.pageview"
+msgstr "Sivutettu:"
+
+msgid "prefs.hideviewtools"
+msgstr "Piilota näkymätyökalut:"
+
+msgid "prefs.webvariant"
+msgstr "Käyttöliittymä:"
+
+msgid "prefs.webvariant.desktop"
+msgstr "Työpöytä"
+
+msgid "prefs.webvariant.tablet"
+msgstr "Tabletti"
+
+msgid "prefs.webvariant.phone"
+msgstr "Puhelin"
+
+msgid "heading.prefs.toolbars"
+msgstr "Työkalupalkit"
+
+msgid "prefs.releasenotes"
+msgstr "Ilmoita uudet versiot:"
+
+msgid "prefs.pagetheme.dark"
+msgstr "Tumma sivutettu:"
+
+msgid "prefs.pagetheme.light"
+msgstr "Vaalea sivutettu:"
+
+# Paginated mode uses the regular document theme.
+msgid "prefs.doctheme.name.none"
+msgstr "Ei mikään"
+
+msgid "prefs.doctheme.name.paper"
+msgstr "Paperi"
+
+msgid "prefs.doctheme.name.arboreal"
+msgstr "Metsä"
+
+msgid "prefs.doctheme.name.ember"
+msgstr "Hiillos"
+
+msgid "prefs.font.coloremoji"
+msgstr "Värilliset Emojit:"
+
+msgid "prefs.quotes"
+msgstr "Lainaukset"
+
+msgid "prefs.hyphenate"
+msgstr "Tavutus:"
+
+msgid "justify.never"
+msgstr "Ei koskaan"
+
+msgid "justify.pagesonly"
+msgstr "Vain sivut"
+
+msgid "justify.always"
+msgstr "Aina"
+
+msgid "prefs.tinylogsize"
+msgstr "Tinylog-välimuistin koko:"
+
+msgid "prefs.proxy.finger"
+msgstr "Finger-välityspalvelin:"
+
+msgid "prefs.proxy.spartan"
+msgstr "Spartan-välityspalvelin:"
+
+msgid "prefs.proxy.nex"
+msgstr "Nex-välityspalvelin:"
+
+msgid "prefs.relay.url"
+msgstr "Oma palvelin:"
+
+msgid "hint.relay.url"
+msgstr "wss://hostname/wisp/"
+
+msgid "prefs.relay.user"
+msgstr "Käyttäjätunnus:"
+
+msgid "prefs.relay.password"
+msgstr "Salasana:"
+
+# Public key that identifies this browser to a custom relay.
+msgid "prefs.relay.key"
+msgstr "Julkinen avain:"
+
+msgid "keys.group.navigation"
+msgstr "Navigointi"
+
+msgid "keys.group.scroll"
+msgstr "Vieritys"
+
+msgid "keys.group.links"
+msgstr "Linkit"
+
+msgid "keys.group.page"
+msgstr "Sivu"
+
+msgid "keys.group.view"
+msgstr "Näkymä"
+
+msgid "keys.group.tabs"
+msgstr "Välilehdet"
+
+msgid "keys.group.split"
+msgstr "Näkymän jakaus"
+
+msgid "keys.group.bookmarks"
+msgstr "Kirjanmerkit & syötteet"
+
+msgid "keys.group.ui"
+msgstr "Käyttöliittymä"
+
+msgid "keys.group.other"
+msgstr "Muut"
+
+msgid "error.certverify.fp"
+msgstr "Palvelimen sormenjälki:"
+
+msgid "gempub.cover.openshelf"
+msgstr "Avaa kirjahyllystä"
+
+# Heading on the contents page of a book made from a single page. Followed by a link to the page's original URL.
+msgid "gempub.page.source"
+msgstr "Lähde"
+
+msgid "gempub.page.contents"
+msgstr "Sisällysluettelo"
+
+msgid "sync.error.busy"
+msgstr "Tiedot palvelimella muuttuivat. Yritä uudelleen myöhemmin."
+
+msgid "heading.sync.failed"
+msgstr "Synkronointi epäonnistui"
+
+msgid "heading.sync.untrusted"
+msgstr "Epäluotettu synkronoitipalvelin"
+
+msgid "dlg.sync.untrusted.unknown"
+msgstr ""
+"Synkronointipalvelimen sertifikaatti ei ole voimassa palvelimen osoitteelle."
+
+msgid "dlg.sync.fp.trusted"
+msgstr "Luotettu sormenjälki:"
+
+msgid "dlg.sync.copyfp"
+msgstr "Kopioi palvelimen sormenjälki"
+
+msgid "dlg.sync.fp.server"
+msgstr "Palvelimen sormenjälki:"
+
+msgid "sync.status.off"
+msgstr "Pois päältä"
+
+msgid "sync.status.setup"
+msgstr "Palvelin ja Ed25519-identitetti tarvitaan (sama kaikilla laitteilla)."
+
+msgid "sync.status.running"
+msgstr "Synkronoidaan…"
+
+msgid "sync.status.last"
+msgstr "Synkronoitu"
+
+msgid "sync.status.generation"
+msgstr "sp."
+
+msgid "sync.status.never"
+msgstr "Ei synkronoitu vielä"
+
+msgid "sync.status.pending"
+msgstr "muutoksia odottamassa"
+
+msgid "sync.status.pending.types"
+msgstr "odottamassa:"
+
+msgid "sync.status.error"
+msgstr "Virhe:"
+
+msgid "sync.status.recent.running"
+msgstr "synkronoidaan…"
+
+msgid "sync.status.recent"
+msgstr "Viimeaikaiset:"
+
+msgid "sync.busy.bookmarks"
+msgstr ""
+"Kirjanmerkkejä ei voi muokata kun synkronoiti on käynnissä. Yritä uudelleen "
+"hetken päästä."
+
+msgid "sync.identity.name"
+msgstr "Synkronointi-identiteetti"
+
+msgid "heading.sync.newidentity"
+msgstr "Uusi synkronointi-identiteetti"
+
+msgid "dlg.sync.newidentity"
+msgstr "Anna nimi uudelle synkronointi-identiteetille."
+
+msgid "sync.identity.notes"
+msgstr "Käytetään tietojen synkronointiin laitteiden välillä"
+
+msgid "sync.error.untrusted"
+msgstr "Synkronointipalvelimen sertifikaatti ei ole luotettu."
+
+msgid "sync.error.expired"
+msgstr "Synkronointipalvelimen sertifikaatti on vanhentunut."
+
+msgid "sync.error.timeout"
+msgstr "Synkronointipalvelin ei vastannut ajoissa."
+
+msgid "sync.error.servercert"
+msgstr "Synkronointipalvelimen sertifikaatti ei käytä Ed25519-avainta."
+
+msgid "sync.error.response"
+msgstr "Synkronointipalvelimen vastaus oli virheellinen."
+
+msgid "sync.error.closed"
+msgstr "Synkronointipalvelin sulki yhteyden vastaamatta."
+
+msgid "sync.error.server"
+msgstr "Synkronointipalvelin vastasi:"
+
+msgid "sync.error.decrypt"
+msgstr ""
+"Tietojen salausta ei voitu purkaa. Varmista, että synkronointi-identiteetti "
+"on sama kaikilla laitteilla."
+
+msgid "sync.error.encrypt"
+msgstr "Tietojen salausta ei voitu purkaa."
+
+msgid "sync.error.editoropen"
+msgstr ""
+"Lopeta kirjanmerkkien ja palvelinkohtaista asetusten muokkaaminen ennen "
+"synkronointia."
+
+msgid "sync.error.newidentity"
+msgstr "Identiteettiä ei voitu luoda."
