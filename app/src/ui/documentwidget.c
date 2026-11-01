@@ -440,7 +440,8 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         else if (!isEmpty_Range(&parts.host)) {
             pushBackRange_StringArray(title, parts.host);
         }
-        else if (!isEmpty_Range(&parts.path) && !tinylogBookmark_Feeds(d->mod.url)) {
+        else if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data") &&
+                 !tinylogBookmark_Feeds(d->mod.url)) {
             iRangecc name = baseNameSep_Path(collectNewRange_String(parts.path), "/");
             if (!isEmpty_Range(&name)) {
                 pushBack_StringArray(
