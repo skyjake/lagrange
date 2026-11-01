@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2026-10-31 22:31+0000\n"
+"PO-Revision-Date: 2026-11-01 06:08+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -3394,3 +3394,136 @@ msgstr "Automaattinen"
 
 msgid "dlg.subscribeall.notfound"
 msgstr "Tällä sivulla ei ole uusia Gemini URL:eja, jotka voitaisiin tilata."
+
+msgid "dlg.newident.selfsign"
+msgstr "Luodaan itseallekirjoitettu sertifikaatti."
+
+msgid "dlg.newident.keytype.rsa"
+msgstr "RSA (2048 bittiä)"
+
+msgid "prefs.sync.info"
+msgstr ""
+"Kaikki käyttäjätiedot salataan ennen lähettämistä palvelimelle ja ne myös "
+"talletetaan salattuina. Palvelin ei pysty purkamaan salausta. Asetuksista "
+"vain palvelinkohtaiset asetukset synkroinoidaan, muita ei."
+
+msgid "prefs.scope.custom.theme"
+msgstr "Käytä %s-kohtaista teemaa:"
+
+msgid "prefs.scope.site.content"
+msgstr "Käytä palvelinkohtaisia sisältöasetuksia:"
+
+msgid "prefs.scope.site.theme"
+msgstr "Käytä palvelinkohtaista teemaa:"
+
+# Short form of an auto-reload interval in minutes.
+#, c-format, fuzzy
+msgid "reload.short.minutes"
+msgstr "%dm"
+
+# Short form of an auto-reload interval in hours.
+#, c-format
+msgid "reload.short.hours"
+msgstr "%dt"
+
+# Short form of a daily auto-reload interval.
+msgid "reload.short.day"
+msgstr "1p"
+
+msgid "menu.copyresponse"
+msgstr "Kopioi vastauslinkki"
+
+msgid "import.userdata.books"
+msgstr "Kirjojen lukukohdat:"
+
+msgid "dlg.userdata.newer"
+msgstr "Kaikki (pidä uusin)"
+
+# File type filter in the Import User Data file dialog.
+msgid "filter.zip"
+msgstr "ZIP-arkisto"
+
+msgid "dlg.newident.keytype"
+msgstr "Allekirjoitus:"
+
+#, fuzzy
+msgid "dlg.newident.keytype.ecdsa"
+msgstr "ECDSA (P-256)"
+
+#, fuzzy
+msgid "dlg.newident.keytype.ed25519"
+msgstr "Ed25519"
+
+msgid "dlg.feed.type.tinylog"
+msgstr "Tinylog"
+
+msgid "heading.prefs.sync"
+msgstr "Synkronointi"
+
+msgid "prefs.sync"
+msgstr "Synkronointi päällä:"
+
+msgid "prefs.sync.server"
+msgstr "Palvelin:"
+
+msgid "hint.sync.server"
+msgstr "gemini://sync.skyjake.fi:1966"
+
+msgid "prefs.sync.identity"
+msgstr "Identiteetti:"
+
+msgid "prefs.sync.identity.none"
+msgstr "Ei identiteettiä"
+
+msgid "prefs.sync.newidentity"
+msgstr "Uusi synkronointi-identiteetti"
+
+msgid "prefs.sync.interval"
+msgstr "Aikaväli:"
+
+msgid "prefs.sync.interval.manual"
+msgstr "Ei koskaan"
+
+msgid "prefs.sync.status"
+msgstr "Tila:"
+
+msgid "prefs.sync.now"
+msgstr "Synkronoi nyt"
+
+# Web version: server that relays network connections.
+msgid "heading.prefs.relay"
+msgstr "WebSocket-välityspalvelin"
+
+msgid "heading.prefs.typography"
+msgstr "Kirjasinlajit"
+
+msgid "prefs.scope"
+msgstr "Käyttökohde:"
+
+msgid "prefs.scope.all"
+msgstr "Kaikki protokollat"
+
+# The placeholder is the name of a protocol, for example "Gemini".
+msgid "prefs.scope.custom.typography"
+msgstr "Käytä %s-kohtaisia kirjasinlajeja:"
+
+msgid "prefs.scope.custom.layout"
+msgstr "Käytä %s-kohtaista asettelua:"
+
+msgid "prefs.scope.custom.style"
+msgstr "Käytä %s-kohtaista tyyliä:"
+
+msgid "prefs.scope.site.typography"
+msgstr "Käytä palvelinkohtaisia kirjasinlajeja:"
+
+msgid "prefs.scope.site.layout"
+msgstr "Käytä palvelinkohtaista asettelua:"
+
+msgid "prefs.scope.site.style"
+msgstr "Käytä palvelinkohtaista tyyliä:"
+
+msgid "prefs.pageturn"
+msgstr "Sivun kääntö:"
+
+msgid "prefs.pageturn.none"
+msgstr "Välitön"
