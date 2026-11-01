@@ -1347,7 +1347,8 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             }
             /* We can provide both tab and page related items in the menu. */
             const iMenuItem menuItems[] = {
-                { close_Icon " ${menu.closetab}", 0, 0, "opendocs.close" },
+                { close_Icon " ${menu.closetab}", SDLK_BACKSPACE, KMOD_DESKTOP, "opendocs.close" },
+                { close_Icon " ${menu.closetab}", 0, KMOD_MOBILE, "opendocs.close" },
                 { "---" },
                 { barLeftArrow_Icon " ${menu.closetab.above}", 0, 0, "opendocs.close toleft:1" },
                 { barRightArrow_Icon " ${menu.closetab.below}", 0, 0, "opendocs.close toright:1" },
@@ -2361,6 +2362,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 postCommandf_App("tabs.switch id:%s", cstr_String(&item->meta));
                 postCommand_App("tabs.new duplicate:1");
             }
+            return iTrue;
+        }
+        else if (d->mode == openDocuments_SidebarMode && isCommand_Widget(w, ev, "list.delete")) {
+            d->contextItem = item_ListWidget(d->list, arg_Command(cmd));
+            postCommand_Widget(w, "opendocs.close");
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "opendocs.close")) {

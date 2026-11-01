@@ -225,10 +225,17 @@ iWidget *makeMultiMenu_SidebarWidget_(iSidebarWidget *d) {
         case openDocuments_SidebarMode:
             pushBackN_Array(items,
                             (iMenuItem[]) {
-                                { close_Icon " ${menu.multi.closetabs}", 0, 0, "opendocs.close" },
+                                { close_Icon " ${menu.multi.closetabs}",
+                                  SDLK_BACKSPACE,
+                                  KMOD_DESKTOP,
+                                  "opendocs.close" },
+                                { close_Icon " ${menu.multi.closetabs}",
+                                  0,
+                                  KMOD_MOBILE,
+                                  "opendocs.close" },
                                 { "---" },
                                 { "${menu.multi.copyurls}", 0, 0, "sideitem.copy" } },
-                            3);
+                            4);
             break;
         default:
             return NULL;
