@@ -1,17 +1,17 @@
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2026-10-31 14:55+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2026-11-01 11:23+0000\n"
+"Last-Translator: Xavier <dxpublica@posteo.net>\n"
+"Language-Team: Catalan <http://weblate.skyjake.fi/projects/lagrange/ui/ca/>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
-"Content-Transfer-Encoding: ENCODING\n"
-"X-Generator: Translate Toolkit 3.3.3\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
 
 #, c-format
 msgid "doc.archive"
@@ -1128,3 +1128,42 @@ msgstr "Incidència de seguretat"
 #, c-format
 msgid "dlg.certwarn.expired"
 msgstr "El certificat rebut ha expirat el %s."
+
+msgid "heading.archive.userdata"
+msgstr "Arxiu de dades de l'usuari"
+
+msgid "menu.reopentab"
+msgstr "Reobre la darrera pipella tancada"
+
+msgid "userdata.help"
+msgstr ""
+"Els arxius de dades de l'usuari contenen l'historial de navegació, "
+"identitats, marcadors, fragments de text, configuracions específiques del "
+"lloc i empremtes dactilars dels certificats dels servidors confiables. Poden "
+"ser emmagatzemades com a còpies de seguretat o usats per transferir dades "
+"entre dispositius"
+
+msgid "menu.title.window"
+msgstr "Finestra"
+
+# Page footer in paginated view mode: current page and number of pages.
+#, c-format
+msgid "doc.page.number"
+msgstr "Pàgina %d de %d"
+
+# Page footer in a book: current page, number of pages, current chapter, number of chapters.
+#, c-format, fuzzy
+msgid "doc.page.chapter"
+msgstr "Pàgina %d de %d  •   Capítol %d de %d"
+
+# Page footer in a single-page chapter of a book: current chapter, number of chapters.
+#, c-format
+msgid "doc.chapter.number"
+msgstr "Capítol %d de %d"
+
+# Arguments: author, timestamp.
+msgid "feeds.tinylog.wrote"
+msgstr "%s escrit en %s:"
+
+msgid "menu.closetab.above"
+msgstr "Tanca les pipelles adalt"
