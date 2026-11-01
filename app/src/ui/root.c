@@ -1224,14 +1224,6 @@ static void updateNavBarSize_(iWidget *navBar) {
                 updateSize_LabelWidget(btn);
             }
         }
-        /* Tab button height depends on the orientation. */
-        iForEach(ObjectList, i,
-                 children_Widget(findChild_Widget(
-                     findChild_Widget(navBar->root->widget, "doctabs"), "tabs.buttons"))) {
-            if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                updateSize_LabelWidget(i.object);
-            }
-        }
         showOrHideNewTabButton_Root(navBar->root);
         arrange_Widget(navBar->root->widget);
     }
@@ -1811,6 +1803,25 @@ void updateMetrics_Root(iRoot *d) {
         setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
         setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
         rightEmbed->rect.pos.y = gap_UI;
+    }
+    if (d->bars.tabButtons) {
+        /* The tab bar has a fixed height regardless of the tab labels. */
+        int height = lineHeight_Text(fontWithStyle_Text(uiLabel_FontId, semiBold_FontStyle));
+        if (isMobile_Platform()) {
+            height += 2 * (3 * gap_UI / 2);
+        }
+        else if (!isTerminal_Platform()) {
+            height += 2 * (int) (gap_UI * aspect_UI);
+        }
+        if (deviceType_App() != phone_AppDeviceType) {
+            height += gap_UI / 4; /* see addTabCloseButton_Widget() */
+        }
+        if (isPortraitPhone_App()) {
+            height = height * 5 / 4; /* bigger tap targets */
+        }
+        setFlags_Widget(d->bars.tabButtons, arrangeHeight_WidgetFlag, iFalse);
+        setFlags_Widget(d->bars.tabButtons, resizeHeightOfChildren_WidgetFlag, iTrue);
+        setFixedSize_Widget(d->bars.tabButtons, init_I2(-1, height));
     }
     updatePadding_Root(d);
     arrange_Widget(d->widget);
