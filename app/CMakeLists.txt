@@ -247,8 +247,6 @@ set (SOURCES
     # Multimedia:
     src/media/media.c
     src/media/media.h
-    src/media/stb_image.h
-    src/media/stb_image_resize2.h
     # Graphics:
     src/render/attributedtext.c
     src/render/attributedtext.h
@@ -420,7 +418,11 @@ set (TUI_SOURCES
 )
 
 # Now specify the GUI-only sources:
-list (APPEND SOURCES ${AUDIO_SOURCES})
+list (APPEND SOURCES
+    ${AUDIO_SOURCES}
+    src/media/stb_image.h
+    src/media/stb_image_resize2.h
+)
 if (NOT ANDROID AND NOT IOS)
     list (APPEND SOURCES src/input/preedit.c)
 endif ()

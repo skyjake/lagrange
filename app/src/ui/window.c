@@ -70,10 +70,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_properties.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "media/stb_image.h"
-#include "media/stb_image_resize2.h"
+#if !defined (iPlatformTerminal)
+#   define STB_IMAGE_IMPLEMENTATION
+#   define STB_IMAGE_RESIZE_IMPLEMENTATION
+#   include "media/stb_image.h"
+#   include "media/stb_image_resize2.h"
+#endif
 
 static iWindow *    theWindow_;
 static iMainWindow *theMainWindow_;
@@ -759,6 +761,7 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 #endif
 }
 
+#if !defined (iPlatformTerminal)
 static SDL_Surface *loadImage_(const iBlock *data, int resized) {
     const int num = 4;
     int       w = 0, h = 0;
@@ -782,6 +785,7 @@ SDL_Texture *makeTextureFromImageData_Window(const iWindow *d, const iBlock *dat
     SDL_DestroySurface(surf);
     return texture;
 }
+#endif /* !iPlatformTerminal */
 
 static void updateMetrics_Window_(const iWindow *d) {
     setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
@@ -1007,6 +1011,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->maxDrawableHeight = d->base.size.y;
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
+#if !defined (iPlatformTerminal)
     /* Load the border shadow texture. */ {
         SDL_Surface *surf = loadImage_(&imageShadow_Resources, 0);
         d->base.borderShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
@@ -1037,12 +1042,11 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_Surface *surf = loadImage_(&imageLogo_Resources, 0);
         d->logo = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->logo, SDL_BLENDMODE_BLEND);
-#if !defined (iPlatformTerminal)
         SDL_SetTextureScaleMode(d->logo, SDL_SCALEMODE_LINEAR);
-#endif
         free(surf->pixels);
         SDL_DestroySurface(surf);
     }
+#endif /* !iPlatformTerminal */
     d->appIcon = NULL;
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */

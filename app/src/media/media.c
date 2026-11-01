@@ -28,8 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/paint.h" /* size_SDLTexture */
 #include "player.h"
 #include "../app.h"
-#include "stb_image.h"
-#include "stb_image_resize2.h"
+#if !defined (iPlatformTerminal)
+#   include "stb_image.h"
+#   include "stb_image_resize2.h"
+#endif
 #include "jpegxl.h" // LAGRANGE_ENABLE_JXL
 
 #if defined (LAGRANGE_ENABLE_WEBP)
@@ -168,6 +170,7 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
         imgData = decodeImage_Jpegxl(media->jxl, d->props.linkId, data, isPartial, &d->size);
 #endif
     }
+#if !defined (iPlatformTerminal)
     else if (!isPartial) {
         imgData = stbi_load_from_memory(
             constData_Block(data), (int) size_Block(data), &d->size.x, &d->size.y, NULL, 4);
@@ -176,6 +179,7 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
             fprintf(stderr, "[media] image load failed: %s\n", stbi_failure_reason());
         }
     }
+#endif
     if (!imgData) {
         d->size    = zero_I2();
         d->texture = NULL;
@@ -185,6 +189,7 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
         /* TODO: Save some memory by checking if the alpha channel is actually in use. */
         iWindow *window  = get_Window();
         iInt2    texSize = d->size;
+#if !defined (iPlatformTerminal)
         /* Resize down to min(maximum texture size, window size). */ {
             SDL_Rect dispRect;
             SDL_GetDisplayBounds(SDL_GetDisplayForWindow(window->win), &dispRect);
@@ -213,6 +218,7 @@ static iBool makeImageTexture_Media_(iMedia *media, iGmImage *d, iBool isPartial
                 /* We keep d->size for the UI. */
             }
         }
+#endif
         /* Create the texture. */
         SDL_Surface *surface = SDL_CreateSurfaceFrom(texSize.x, texSize.y, SDL_PIXELFORMAT_ABGR8888,
                                                      imgData, texSize.x * 4);
@@ -244,8 +250,12 @@ static iBool probeSize_GmImage_(iGmImage *d) {
     if (equalMediaType_String(&d->props.mime, "image/jxl")) {
         return iFalse;
     }
+#if defined (iPlatformTerminal)
+    return iFalse;
+#else
     return stbi_info_from_memory(
                constData_Block(data), (int) size_Block(data), &d->size.x, &d->size.y, NULL) != 0;
+#endif
 }
 
 iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
@@ -531,7 +541,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
         }
     }
     else if (!isDeleting) {
-        if (startsWith_String(mime, "image/")) {
+        if (startsWith_String(mime, "image/") && !isTerminal_Platform()) {
             /* Copy the image to a texture. */
             iGmImage *img = new_GmImage(data);
             img->media = d;

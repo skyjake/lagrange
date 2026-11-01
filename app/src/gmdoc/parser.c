@@ -59,6 +59,9 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
 
 static void loadEmbeddedImage_GmParser_(iGmDocument *d, iGmLinkId linkId, const iString *url) {
     /* Images inside the book are part of the page. Only the size is needed for layout. */
+    if (isTerminal_Platform()) {
+        return;
+    }
     const iString *entryPath = archiveEntryPath_GmDocument_(d, url);
     if (!entryPath || findLinkImage_Media(d->media, linkId).type) {
         return;
