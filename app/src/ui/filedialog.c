@@ -63,6 +63,9 @@ iDefineTypeConstructionArgs(FileDialogRequest, (const char *command), command)
 static void finished_FileDialogRequest_(void *userData, const char * const *fileList, int filter) {
     iFileDialogRequest *d = userData;
     iUnused(filter);
+#if defined (iPlatformAppleDesktop)
+    orderOutFilePanels_MacOS();
+#endif
     if (fileList) {
         for (const char * const *path = fileList; *path; path++) {
             postCommandf_App("%s path:%s", cstr_String(&d->command), *path);

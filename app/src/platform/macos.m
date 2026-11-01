@@ -1190,3 +1190,12 @@ void restoreKeyAfterSheet_MacOS(iWindow *window) {
                     }
                 }];
 }
+
+void orderOutFilePanels_MacOS(void) {
+    /* SDL reactivates the app before the panel is ordered out, which can leave it lingering. */
+    for (NSWindow *w in [NSApp windows]) {
+        if ([w isKindOfClass:[NSSavePanel class]] && [w isVisible]) {
+            [w orderOut:nil];
+        }
+    }
+}

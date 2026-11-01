@@ -52,3 +52,4 @@ void    localizeApplicationMenu_MacOS(void);
 void    showPopupMenu_MacOS         (iWidget *source, iInt2 windowCoord, const iMenuItem *items, size_t n);
 
 void    restoreKeyAfterSheet_MacOS  (iWindow *window);
+void    orderOutFilePanels_MacOS    (void);
