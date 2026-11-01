@@ -40,6 +40,9 @@ if (MSVC)
         /utf-8 /std:c11 /experimental:c11atomics
         /D_CRT_SECURE_NO_WARNINGS
     )
+else ()
+    # Common symbols are omitted from static library TOCs (older Apple toolchains).
+    target_compile_options (core PRIVATE -fno-common)
 endif ()
 
 target_include_directories (core PUBLIC
