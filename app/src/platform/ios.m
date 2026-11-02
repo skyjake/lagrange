@@ -962,8 +962,16 @@ void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
 
 static const char *cacheDir_ = "~/Library/Caches/Audio";
 
-static const char *fileExt_(const iString *mimeType) {
+static iBool isOggOpus_(const iBlock *data) {
+    /* The identification header is alone on the first Ogg page. */
+    return size_Block(data) >= 36 && !memcmp(constData_Block(data), "OggS", 4) &&
+           !memcmp(constData_Block(data) + 28, "OpusHead", 8);
+}
+
+static const char *fileExt_(const iString *mimeType, const iBlock *data) {
     /* Media types that AVFAudioPlayer will try to play. */
+    if (startsWithCase_String(mimeType, "audio/opus")) return ".opus";
+    if (startsWithCase_String(mimeType, "audio/ogg") && isOggOpus_(data)) return ".opus";
     if (startsWithCase_String(mimeType, "audio/aiff") ||
         startsWithCase_String(mimeType, "audio/x-aiff")) {
         return ".aiff";
@@ -988,9 +996,10 @@ iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const
         CFBridgingRelease(d->player);
         d->player = nil;
     }
-    if (mimeType && audioFileData && iCmpStr(fileExt_(mimeType), "")) {
+    const char *ext = mimeType && audioFileData ? fileExt_(mimeType, audioFileData) : "";
+    if (*ext) {
         makeDirs_Path(collectNewCStr_String(cacheDir_));
-        iFile *f = new_File(collectNewFormat_String("%s/%u%s", cacheDir_, SDL_GetTicks(), fileExt_(mimeType)));
+        iFile *f = new_File(collectNewFormat_String("%s/%u%s", cacheDir_, SDL_GetTicks(), ext));
         if (open_File(f, writeOnly_FileMode)) {
             write_File(f, audioFileData);
             set_String(&d->cacheFilePath, path_File(f));

@@ -205,7 +205,7 @@ static void addLink_GmDocument_(iGmDocument *d, iRangecc line) {
                 }
                 else if (endsWithCaseFast_String(path, ".mp3") || endsWithCaseFast_String(path, ".wav") ||
                          endsWithCaseFast_String(path, ".ogg") ||
-#if defined (LAGRANGE_ENABLE_OPUS)
+#if defined (LAGRANGE_ENABLE_OPUS) || defined (iPlatformAppleMobile)
                          endsWithCaseFast_String(path, ".opus") ||
 #endif
                          endsWithCaseFast_String(path, ".mid")) {

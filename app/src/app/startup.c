@@ -958,12 +958,12 @@ const iString *debugInfo_App(void) {
             appendFormat_String(msg, "%s HarfBuzz text shaping\n",
                                 enabled[buildFlag_Core("LAGRANGE_ENABLE_HARFBUZZ")]);
         }
-        /* Android has system decoders. */
+        /* Mobile platforms have system decoders. */
         appendFormat_String(msg, "%s MPEG audio\n",
-                            enabled[isAndroid_Platform() ||
+                            enabled[isAndroid_Platform() || isAppleMobile_Platform() ||
                                     buildFlag_Core("LAGRANGE_ENABLE_MPG123")]);
         appendFormat_String(msg, "%s Opus audio\n",
-                            enabled[isAndroid_Platform() ||
+                            enabled[isAndroid_Platform() || isAppleMobile_Platform() ||
                                     buildFlag_Core("LAGRANGE_ENABLE_OPUS")]);
         appendFormat_String(msg, "%s JPEG XL images\n",
                             enabled[buildFlag_Core("LAGRANGE_ENABLE_JXL")]);
