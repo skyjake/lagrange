@@ -410,3 +410,17 @@ const char *format_Lang(const char *formatTextWithIds, ...) {
     va_end(args);
     return cstr_Block(collect_Block(msg));
 }
+
+iString *timeFormat_Lang(const char *formatMsgId, iBool time24h) {
+    iString *str = newCStr_String(cstr_Lang(formatMsgId));
+    translate_Lang(str);
+    if (time24h) {
+        replace_String(str, "%I", "%H");
+        replace_String(str, " %p", "");
+        replace_String(str, "%p", "");
+    }
+    else {
+        replace_String(str, "%H:%M", "%I:%M %p");
+    }
+    return str;
+}

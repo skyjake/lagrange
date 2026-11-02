@@ -42,3 +42,4 @@ const char *    cstrCount_Lang      (const char *msgId, int count);
 const char *    formatCStr_Lang     (const char *formatMsgId, int count);
 const char *    formatCStrs_Lang    (const char *formatMsgId, size_t count);
 const char *    format_Lang         (const char *formatTextWithIds, ...);
+iString *       timeFormat_Lang     (const char *formatMsgId, iBool time24h); /* strftime() format */

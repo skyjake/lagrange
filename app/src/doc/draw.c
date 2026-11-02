@@ -80,20 +80,6 @@ static iMediaRequest *hostFindMediaRequest_DocumentView_(const iDocumentView *d,
     return d->host && d->host->findMediaRequest ? d->host->findMediaRequest(d->owner, linkId) : NULL;
 }
 
-static iString *timeFormatHourPreference_Lang(const char *formatMsgId) {
-    iString *str = newCStr_String(cstr_Lang(formatMsgId));
-    translate_Lang(str);
-    if (prefs_App()->time24h) {
-        replace_String(str, "%I", "%H");
-        replace_String(str, " %p", "");
-        replace_String(str, "%p", "");
-    }
-    else {
-        replace_String(str, "%H:%M", "%I:%M %p");
-    }
-    return str;
-}
-
 static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
     if (!isExposed_Window(get_Window())) {
         return;
@@ -104,7 +90,7 @@ static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
     }
     iTime sourceTime = hostSourceTime_DocumentView_(d);
     if (isValid_Time(&sourceTime)) {
-        iString *fmt = timeFormatHourPreference_Lang("page.timestamp");
+        iString *fmt = timeFormat_Lang("page.timestamp", prefs_App()->time24h);
         replace_String(fmt, "\n", " "); /* TODO: update original lang strings */
         d->drawBufs->timestampBuf = newRange_TextBuf(
             uiLabel_FontId,

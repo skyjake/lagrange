@@ -2081,7 +2081,8 @@ static void prependQuotedRef_TinylogThread_(iTinylogThread *d, const iTinylogRef
         iDate posted;
         init_Date(&posted, &ref->posted);
         /* Day of month without zero padding. */
-        iString *dateFormat = collectNewCStr_String(cstr_Lang("banner.tinylogentry.date"));
+        iString *dateFormat =
+            collect_String(timeFormat_Lang("banner.tinylogentry.date", prefs_App()->time24h));
         replace_String(dateFormat, "%d", format_CStr("%d", posted.day));
         iString *quote = new_String();
         appendFormat_String(quote, "=> %s ", cstr_String(&ref->url));

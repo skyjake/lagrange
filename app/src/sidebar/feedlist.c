@@ -202,9 +202,9 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         set_String(&item->url, &entry->url);
         if (isTinylog) {
             format_String(&item->label,
-                          uiTextAction_ColorEscape "\x1b[1m%02d:%02d\x1b[0m  ",
-                          posted.hour,
-                          posted.minute);
+                          uiTextAction_ColorEscape "\x1b[1m%s\x1b[0m  ",
+                          cstrCollect_String(format_Date(
+                              &posted, prefs_App()->time24h ? "%H:%M" : "%I:%M %p")));
             append_String(&item->label, &entry->title);
         }
         else {

@@ -78,7 +78,7 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [editorSyntaxHighlighting_PrefsBool] = { "prefs.editor.highlight" },
     [useGamepad_PrefsBool]              = { "prefs.gamepad" },
     [thickScrollBar_PrefsBool]          = { "prefs.thickscroll" },
-    [time24h_PrefsBool]                 = { "prefs.time.24h" },
+    [time24h_PrefsBool]                 = { "prefs.time.24h", NULL, "sidebar.update" },
     /* Behavior */
     [retainTabs_PrefsBool]              = { "prefs.retaintabs" },
     [hoverLink_PrefsBool]               = { "prefs.hoverlink", NULL, NULL, refresh_PrefsSpecFlag },

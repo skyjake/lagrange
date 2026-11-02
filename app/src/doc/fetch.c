@@ -1402,8 +1402,9 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                 iDate posted;
                 init_Date(&posted, &entry->posted);
                 /* Day of month without zero padding. */
-                iString *dateFormat = collectNewCStr_String(cstr_Lang(
-                    entry->isTinylog ? "banner.tinylogentry.date" : "banner.feedentry.date"));
+                iString *dateFormat = collect_String(timeFormat_Lang(
+                    entry->isTinylog ? "banner.tinylogentry.date" : "banner.feedentry.date",
+                    prefs_App()->time24h));
                 replace_String(dateFormat, "%d", format_CStr("%d", posted.day));
                 iString       *title   = new_String();
                 iString       *details = new_String();
