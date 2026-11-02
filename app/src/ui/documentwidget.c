@@ -1968,6 +1968,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (openAdjacentChapter_DocumentBook(d->book, arg_Command(cmd), iFalse)) {
             return iTrue;
         }
+        if (isHistoryTurn_DocumentBook(d->book, arg_Command(cmd))) {
+            postCommand_Root(w->root, "navigate.back");
+            return iTrue;
+        }
         /* There is nothing more to turn to, so offer the navigation controls. */
         showReadingBars_Root(w->root, iTrue);
         return iFalse;
@@ -2222,7 +2226,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (startsWith_Command(cmd, "edgeswipe.") && document_App() == d &&
              isPaged_DocumentView(d->view)) {
         /* Swipes turn pages, but past the first or last page they go to the adjacent chapter.
-           Without one, the pages bounce back. */
+           Pages outside the reading order go back in history. Otherwise the pages bounce back. */
         if (equal_Command(cmd, "edgeswipe.moved") &&
             ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging) {
             if (isBegun_DocumentSwipe(d->swipe)) {
@@ -2233,6 +2237,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             const int chapterDir = chapterSwipeDir_DocumentBook(d->book, cmd);
             if (chapterDir && openAdjacentChapter_DocumentBook(d->book, chapterDir, iTrue)) {
                 /* The rest of the gesture moves the views like in a history swipe. */
+                d->flags |= historySwipe_DocumentWidgetFlag;
+                return iTrue;
+            }
+            if (isHistorySwipe_DocumentBook(d->book, cmd) &&
+                handleEdgeSwipe_DocumentSwipe(d->swipe, cmd)) {
                 d->flags |= historySwipe_DocumentWidgetFlag;
                 return iTrue;
             }

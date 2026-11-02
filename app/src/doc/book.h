@@ -57,6 +57,8 @@ void    setOwner_DocumentBook           (iDocumentBook *, iDocumentWidget *owner
 
 iBool   isReadingOn_DocumentBook        (const iDocumentBook *); /* adjacent chapter opening */
 int     chapterSwipeDir_DocumentBook    (const iDocumentBook *, const char *cmd);
+iBool   isHistoryTurn_DocumentBook      (const iDocumentBook *, int dir); /* turning past the first page goes back */
+iBool   isHistorySwipe_DocumentBook     (const iDocumentBook *, const char *cmd);
 
 void    resume_DocumentBook             (iDocumentBook *, int chapter, float chapterPos);
 void    freezeForResume_DocumentBook    (iDocumentBook *, const iString *url); /* when opening a URL */

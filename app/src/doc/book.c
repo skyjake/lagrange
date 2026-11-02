@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gempub.h"
 #include "../gmdocument.h"
 #include "../gmutil.h"
+#include "../history.h"
 #include "documentview.h"
 #include "fetch.h"
 #include "pagedview.h"
@@ -226,17 +227,39 @@ iBool openAdjacentChapter_DocumentBook(iDocumentBook *d, int dir, iBool isGestur
     return iTrue;
 }
 
-int chapterSwipeDir_DocumentBook(const iDocumentBook *d, const char *cmd) {
-    /* A swipe past the first or last page goes to the adjacent chapter, if there is one. */
+static int swipeDir_DocumentBook_(const iDocumentBook *d, const char *cmd) {
+    /* Swiping past the first or last page. */
     const iDocumentView *view   = view_DocumentBook_(d);
     const int            side   = argLabel_Command(cmd, "side");
     const size_t         column = currentColumn_DocumentView(view);
-    const int dir = side == 1 && column == 0 ? -1
-                    : side == 2 && column + numColumns_DocumentView(view) >=
-                                       numColumns_GmDocument(view->doc)
-                        ? +1
-                        : 0;
+    return side == 1 && column == 0 ? -1
+           : side == 2 && column + numColumns_DocumentView(view) >= numColumns_GmDocument(view->doc)
+               ? +1
+               : 0;
+}
+
+int chapterSwipeDir_DocumentBook(const iDocumentBook *d, const char *cmd) {
+    /* A swipe past the first or last page goes to the adjacent chapter, if there is one. */
+    const int dir = swipeDir_DocumentBook_(d, cmd);
     return dir && adjacentChapterUrl_DocumentBook_(d, dir) ? dir : 0;
+}
+
+iBool isHistoryTurn_DocumentBook(const iDocumentBook *d, int dir) {
+    /* Pages outside the reading order turn back to the page they were opened from. */
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    if (dir >= 0 || !gempub || isRemote_Gempub(gempub) || adjacentChapterUrl_DocumentBook_(d, dir)) {
+        return iFalse;
+    }
+    iHistory *history = history_DocumentWidget(d->owner);
+    lock_History(history);
+    const iRecentUrl *preceding = precedingLocked_History(history);
+    const iBool       isInside  = preceding && isInside_Gempub(gempub, &preceding->url);
+    unlock_History(history);
+    return isInside;
+}
+
+iBool isHistorySwipe_DocumentBook(const iDocumentBook *d, const char *cmd) {
+    return isHistoryTurn_DocumentBook(d, swipeDir_DocumentBook_(d, cmd));
 }
 
 iBool isReadingOn_DocumentBook(const iDocumentBook *d) {
