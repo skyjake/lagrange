@@ -62,17 +62,17 @@ books.ini stores the bookshelf metadata and book reading positions (see section 
 [68ab99d7dca93279]
 title = "The Time Machine"
 author = "H. G. Wells"
+url = "gemini://example.com/books/time-machine.gpub"
 file = "The Time Machine.gpub"
 size = 182044
 fileEdition = "1895-05-07"
-url = "gemini://example.com/books/time-machine.gpub"
 edition = "1895-05-07"
 chapter = 3
 numChapters = 12
 pos = 0.250000
-shelved = 1761900000
 accessed = 1761986400
 posChanged = 1761986400
+shelved = 1761900000
 ```
 * The table name is the book ID: the first 8 bytes of the MD5 hash of the lowercase title and author (trimmed, joined with a newline) as hexadecimal.
 * "file" is the name of the .gpub file in the "books" directory, and "size" is its size in bytes. These are omitted if the book has not been downloaded.

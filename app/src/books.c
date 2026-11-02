@@ -213,6 +213,11 @@ void serialize_Books(iStream *outs) {
                       cstr_String(&book->id),
                       cstrCollect_String(quote_String(&book->title, iFalse)),
                       cstrCollect_String(quote_String(&book->author, iFalse)));
+        if (!isEmpty_String(&book->url)) {
+            appendFormat_String(str,
+                                "url = \"%s\"\n",
+                                cstrCollect_String(quote_String(&book->url, iFalse)));
+        }
         if (!isEmpty_String(&book->fileName)) {
             appendFormat_String(str,
                                 "file = \"%s\"\nsize = %llu\n",
@@ -224,16 +229,19 @@ void serialize_Books(iStream *outs) {
                                     cstrCollect_String(quote_String(&book->fileEdition, iFalse)));
             }
         }
-        if (!isEmpty_String(&book->url)) {
-            appendFormat_String(str,
-                                "url = \"%s\"\n",
-                                cstrCollect_String(quote_String(&book->url, iFalse)));
-        }
         if (!isEmpty_String(&book->edition)) {
             appendFormat_String(str,
                                 "edition = \"%s\"\n",
                                 cstrCollect_String(quote_String(&book->edition, iFalse)));
         }
+        appendFormat_String(str,
+                            "chapter = %d\nnumChapters = %d\npos = %f\naccessed = %lld\n"
+                            "posChanged = %lld\n",
+                            book->chapter,
+                            book->numChapters,
+                            book->chapterPos,
+                            (long long) integralSeconds_Time(&book->accessed),
+                            (long long) integralSeconds_Time(&book->posChanged));
         if (isValid_Time(&book->shelved)) {
             appendFormat_String(str, "shelved = %lld\n",
                                 (long long) integralSeconds_Time(&book->shelved));
@@ -242,14 +250,7 @@ void serialize_Books(iStream *outs) {
             appendFormat_String(str, "deleted = %lld\n",
                                 (long long) integralSeconds_Time(&book->deleted));
         }
-        appendFormat_String(str,
-                            "chapter = %d\nnumChapters = %d\npos = %f\naccessed = %lld\n"
-                            "posChanged = %lld\n\n",
-                            book->chapter,
-                            book->numChapters,
-                            book->chapterPos,
-                            (long long) integralSeconds_Time(&book->accessed),
-                            (long long) integralSeconds_Time(&book->posChanged));
+        appendCStr_String(str, "\n");
         write_Stream(outs, utf8_String(str));
     }
     delete_String(str);
