@@ -358,6 +358,12 @@ iBool handleCommand_InlineMedia(iInlineMedia *d, const char *cmd) {
                 refresh_Widget(d->owner);
                 setRedirectCount_DocumentWidget(d->owner, 0);
             }
+            else {
+                /* Not media after all, so show the response as a regular page. */
+                setRedirectCount_DocumentWidget(d->owner, 0);
+                takeRequest_DocumentWidget(d->owner, ref_Object(req->req));
+                remove_InlineMedia(d, req->linkId);
+            }
         }
         else if (category_GmStatusCode(code) == categoryRedirect_GmStatusCode) {
             const int redirectCount = d->owner->fetch->redirectCount;
