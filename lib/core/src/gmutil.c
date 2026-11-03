@@ -290,7 +290,10 @@ void cleanUrlPath_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
     iRangecc seg = iNullRange;
+    iBool isDirRef = endsWith_Rangecc(parts.path, "/");
     while (nextSplit_Rangecc(parts.path, "/", &seg)) {
+        /* A final dot-segment refers to a directory (RFC 3986, 5.2.4). */
+        isDirRef = equal_Rangecc(seg, "..") || equal_Rangecc(seg, ".");
         if (equal_Rangecc(seg, "..")) {
             /* Back up one segment. */
             iRangecc last = prevPathSeg_(constEnd_String(&clean), constBegin_String(&clean));
@@ -307,7 +310,7 @@ void cleanUrlPath_String(iString *d) {
             appendRange_String(&clean, seg);
         }
     }
-    if (endsWith_Rangecc(parts.path, "/")) {
+    if (isDirRef || endsWith_Rangecc(parts.path, "/")) {
         appendCStr_String(&clean, "/");
     }
     /* Replace with the new path. */
@@ -589,11 +592,6 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendCStr_String(absolute, "/");
         }
         appendRange_String(absolute, rel.path);
-        /* If this is known to be a directory reference, append a slash. */
-        if (!endsWith_String(absolute, "/") &&
-            (equal_Rangecc(rel.path, "..") || endsWith_Rangecc(rel.path, "/.."))) {
-            appendCStr_String(absolute, "/");
-        }
     }
     else if (isDef_(rel.query)) {
         /* Just a new query. */
