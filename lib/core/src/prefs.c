@@ -257,26 +257,7 @@ void init_Prefs(iPrefs *d) {
     d->toolbarActions[0] = back_ToolbarAction;
 #endif
     d->toolbarActions[1] = forward_ToolbarAction;
-    iZap(d->sidebarModeEnabled);
-    if (deviceType_App() == phone_AppDeviceType) {
-        /* Phone layout has only the one sidebar. */
-        iForIndices(i, d->sidebarModeEnabled[0]) {
-            d->sidebarModeEnabled[0][i] = (i != subscriptions_SidebarMode &&
-                                           i != identities_SidebarMode &&
-                                           i != siteStructure_SidebarMode);
-        }
-    }
-    else {
-        d->sidebarModeEnabled[0][bookmarks_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[0][feedEntries_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[1][subscriptions_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[0][identities_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[0][documentOutline_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[1][siteStructure_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[1][openDocuments_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[1][history_SidebarMode] = iTrue;
-        d->sidebarModeEnabled[0][gempub_SidebarMode] = iTrue;
-    }
+    setDefaultSidebarModes_Prefs(d);
     d->hideToolbarOnScroll = iTrue;
     d->hideTabBar          = iFalse;
     d->hideViewTools       = deviceType_App() == phone_AppDeviceType; /* cramped */
@@ -336,6 +317,29 @@ void init_Prefs(iPrefs *d) {
     }
     if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
         setCStr_String(&d->strings[caPath_PrefsString], "/etc/ssl/certs");
+    }
+}
+
+void setDefaultSidebarModes_Prefs(iPrefs *d) {
+    iZap(d->sidebarModeEnabled);
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* Phone layout has only the one sidebar. */
+        iForIndices(i, d->sidebarModeEnabled[0]) {
+            d->sidebarModeEnabled[0][i] = (i != subscriptions_SidebarMode &&
+                                           i != identities_SidebarMode &&
+                                           i != siteStructure_SidebarMode);
+        }
+    }
+    else {
+        d->sidebarModeEnabled[0][bookmarks_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[0][feedEntries_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[1][subscriptions_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[0][identities_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[0][documentOutline_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[1][siteStructure_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[1][openDocuments_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[1][history_SidebarMode] = iTrue;
+        d->sidebarModeEnabled[0][gempub_SidebarMode] = iTrue;
     }
 }
 

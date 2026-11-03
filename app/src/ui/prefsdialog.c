@@ -1235,6 +1235,10 @@ iWidget *makePreferences_Widget(void) {
                 (const char *[]) { "${prefs.sidebar.left}", "${prefs.sidebar.right}" },
                 2);
         }
+        addDialogPadding_Widget(headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("")));
+        addChild_Widget(values,
+                        iClob(new_LabelWidget("${prefs.sidebar.reset}", "sidebar.modes.reset")));
     }
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
@@ -1298,6 +1302,19 @@ static void updatePrefsThemeButtons_(iWidget *d) {
     }
     updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.accent"),
                                         format_CStr(" arg:%u", prefs_App()->accent));
+}
+
+static void updatePrefsSidebarToggles_(iWidget *d) {
+    const iPrefs *prefs = prefs_App();
+    for (int side = 0; side < 2; side++) {
+        for (int barMode = 0; barMode < maxSidebarModes_Prefs; barMode++) {
+            setToggle_Widget(findChild_Widget(d,
+                                              format_CStr("prefs.%s.enabled.%d",
+                                                          side == 0 ? "sidebar" : "sidebar2",
+                                                          barMode)),
+                             prefs->sidebarModeEnabled[side][barMode]);
+        }
+    }
 }
 
 static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
@@ -1474,6 +1491,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommand_Widget(findWidget_App("sidebar"), "idents.sort arg:%d", sortOrder);
         return iTrue;
     }
+    else if (equal_Command(cmd, "sidebar.modes.changed")) {
+        updatePrefsSidebarToggles_(d);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
         return iFalse;
@@ -1623,15 +1644,7 @@ void showPreferences_Widget(const char *cmd) {
         format_CStr("returnkey.set arg:%d", prefs->returnKey));
     updatePrefsToolBarActionButton_(dlg, 0, prefs->toolbarActions[0]);
     updatePrefsToolBarActionButton_(dlg, 1, prefs->toolbarActions[1]);
-    for (int side = 0; side < 2; side++) {
-        for (int barMode = 0; barMode < maxSidebarModes_Prefs; barMode++) {
-            setToggle_Widget(findChild_Widget(dlg,
-                                              format_CStr("prefs.%s.enabled.%d",
-                                                          side == 0 ? "sidebar" : "sidebar2",
-                                                          barMode)),
-                             prefs->sidebarModeEnabled[side][barMode]);
-        }
-    }
+    updatePrefsSidebarToggles_(dlg);
     setValue_SliderWidget(findChild_Widget(dlg, "prefs.uiscale"),
                           uiScale_Window(activeWindow_App()));
     updateFontButton_(findChild_Widget(dlg, "prefs.font.ui"), &prefs->strings[uiFont_PrefsString]);

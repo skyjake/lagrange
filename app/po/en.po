@@ -2346,6 +2346,9 @@ msgstr "Left"
 msgid "prefs.sidebar.right"
 msgstr "Right"
 
+msgid "prefs.sidebar.reset"
+msgstr "Reset to Defaults"
+
 # tab button
 msgid "heading.prefs.keys"
 msgstr "Keys"

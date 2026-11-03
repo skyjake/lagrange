@@ -285,6 +285,7 @@ struct Impl_Prefs {
 
 iDeclareTypeConstruction(Prefs);
 
+void            setDefaultSidebarModes_Prefs (iPrefs *);
 const iString * schemeProxy_Prefs            (const iPrefs *, iRangecc scheme);
 iBool           schemeProxyHostAndPort_Prefs (const iPrefs *, iRangecc scheme, const iString **host, uint16_t *port);
 

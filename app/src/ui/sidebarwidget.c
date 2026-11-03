@@ -2070,6 +2070,16 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "sidebar.modes.changed")) {
             updateModeButtonOrder_SidebarWidget_(d);
             checkModeButtonLayout_SidebarWidget_(d);
+            if (d->mode >= 0 && !isTab_SidebarMode_(d->side, d->mode)) {
+                /* Switch away from a disabled tab. */
+                for (int i = 0; i < max_SidebarMode; i++) {
+                    const enum iSidebarMode mode = orderedMode_SidebarMode(d->side, i);
+                    if (isTab_SidebarMode_(d->side, mode)) {
+                        postCommand_Widget(w, "%s.mode arg:%d", cstr_String(id_Widget(w)), mode);
+                        break;
+                    }
+                }
+            }
             arrange_Widget(parent_Widget(d->modeButtons[0]));
             refresh_Widget(parent_Widget(d->modeButtons[0]));
         }

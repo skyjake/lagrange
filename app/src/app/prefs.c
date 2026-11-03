@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/gamepad.h"
 #include "ui/keys.h"
 #include "ui/root.h"
+#include "ui/sidebarwidget.h"
 #include "ui/touch.h"
 #include "ui/util.h"
 #include "ui/window.h"
@@ -914,6 +915,12 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
                 postCommand_App("~sidebar.modes.changed");
             }
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "sidebar.modes.reset")) {
+        setDefaultSidebarModes_Prefs(&d->prefs);
+        setDefaultOrder_SidebarMode();
+        postCommand_App("~sidebar.modes.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.action.set")) {
