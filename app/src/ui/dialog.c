@@ -811,6 +811,14 @@ void makeTwoColumnItems_Widget(iWidget *headings, iWidget *values, const iMenuIt
                                                    resizeToParentWidth_WidgetFlag);
             as_Widget(head)->sizeRef = slider;
         }
+        else if (equal_Command(spec, "label")) {
+            iWidget      *head = addChild_Widget(headings, iClob(makeHeading_Widget("")));
+            iLabelWidget *lab  = new_LabelWidget(format_CStr(uiTextDim_ColorEscape "%s", label), NULL);
+            setId_Widget(as_Widget(lab), id);
+            setWrap_LabelWidget(lab, iTrue);
+            addChildFlags_Widget(values, iClob(lab), frameless_WidgetFlag);
+            head->sizeRef = as_Widget(lab);
+        }
         else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
             const iBool isRadio = equal_Command(spec, "radio");
             addChild_Widget(headings, iClob(makeHeading_Widget(label)));

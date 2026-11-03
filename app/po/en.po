@@ -2828,18 +2828,22 @@ msgid "prefs.gopher.gemstyle"
 msgstr "Autodetect Gopher styling:"
 
 msgid "prefs.boldlink"
-msgstr "Bold links:"
+msgstr "Links in bold font:"
 
+# Interpretation: Visited (links are shown as bold, in addition to unvisited links that are always bold).
 msgid "prefs.boldlink.visited"
 msgstr "Visited"
 
-# Interpretation: (Bold links) on dark (background).
+# Interpretation: (Bold links shown) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "On Dark"
 
-# Interpretation: (Bold links) on light (background).
+# Interpretation: (Bold links shown) on light (background).
 msgid "prefs.boldlink.light"
 msgstr "On Light"
+
+msgid "prefs.boldlink.help"
+msgstr "Unvisited links are bold on the selected page colors (dark or light)."
 
 msgid "prefs.gemtext.ansi"
 msgstr "Gemtext ANSI escapes:"

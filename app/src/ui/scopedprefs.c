@@ -207,9 +207,9 @@ static const iMenuItem lineWidthTicks_[] = {
     { NULL }
 };
 static const iMenuItem boldLinkItems_[] = {
-    { "button id:prefs.boldlink.visited" },
     { "button id:prefs.boldlink.dark" },
     { "button id:prefs.boldlink.light" },
+    { "button id:prefs.boldlink.visited" },
     { NULL }
 };
 static const iMenuItem ansiItems_[] = {
@@ -354,6 +354,10 @@ static const iMenuItem *makeItems_(enum iDocPrefsGroup group, iBool withProtocol
             add_("toggle id:prefs.quote.italic except:finger");
             add_("padding");
             add_("buttons id:prefs.boldlink except:finger", 0, 0, (const void *) boldLinkItems_);
+            if (withProtocols) {
+                /* Site Settings does not lay out wrapped labels. */
+                add_("label id:prefs.boldlink.help except:finger");
+            }
             add_("padding id:prefs.pad.sideicon except:finger");
             add_("toggle id:prefs.sideicon");
             break;
@@ -657,7 +661,7 @@ void update_ScopedPrefs(iWidget *dlg) {
         iScopeKey key;
         initScope_ScopeKey(&key, scope);
         const iBool      isEnabled = isBase || (rule && isGroupEnabled_ScopeRule(rule, group));
-        const iMenuItem *items     = makeItems_(group, iFalse, iFalse);
+        const iMenuItem *items     = makeItems_(group, iTrue, iFalse); /* all possible IDs */
         if (!isBase) {
             iDocPrefs inherited;
             init_DocPrefs(&inherited);
