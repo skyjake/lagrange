@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2026-11-03 16:31+0000\n"
+"PO-Revision-Date: 2026-11-03 23:06+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -575,7 +575,7 @@ msgid "link.side.newtab"
 msgstr "Bağlantıyı Yan Tarafa Doğru Yeni Sekmede Aç"
 
 msgid "link.browser"
-msgstr "Bağlantıyı Öntanımlı Tarayıcıda Aç"
+msgstr "Bağlantıyı Saptanmış Tarayıcıda Aç"
 
 msgid "link.copy"
 msgstr "Bağlantıyı Kopyala"
@@ -598,7 +598,7 @@ msgstr "Dosyayı Sil"
 #, c-format
 msgid "dlg.openlink.confirm"
 msgstr ""
-"Bağlantıyı öntanımlı tarayıcıda aç?\n"
+"Bu bağlantı, saptanmış tarayıcıda açılsın mı?\n"
 "%s%s"
 
 msgid "dlg.openlink"
@@ -703,7 +703,7 @@ msgid "dlg.upload.id.none"
 msgstr "Yok"
 
 msgid "dlg.upload.id.default"
-msgstr "Öntanımlı kimlik"
+msgstr "Saptanmış Kimlik"
 
 msgid "heading.upload.text"
 msgstr "Metin"
@@ -1432,7 +1432,7 @@ msgid "dlg.dismiss.warning"
 msgstr "Uyarıyı atla"
 
 msgid "doc.pre.nocaption"
-msgstr "Alt yazısız, önceden biçimlendirilmiş metin"
+msgstr "Bilgi yazı olmayan, önceden biçimlendirilmiş metin"
 
 #, c-format
 msgid "doc.archive"
@@ -1808,7 +1808,7 @@ msgid "dlg.bookmark.save"
 msgstr "Yer imini kaydet"
 
 msgid "dlg.addfolder.defaulttitle"
-msgstr "Yeni klasör"
+msgstr "Yeni Klasör"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -1869,7 +1869,7 @@ msgid "prefs.font.monodoc"
 msgstr "Eş aralıklı font:"
 
 msgid "prefs.boldlink"
-msgstr "Kalın bağlantılar:"
+msgstr "Kalın fontlu bağlantılar:"
 
 msgid "prefs.boldlink.visited"
 msgstr "Ziyaret edilen"
@@ -1903,7 +1903,7 @@ msgid "prefs.ca.path"
 msgstr "CA yolu:"
 
 msgid "menu.binding.reset"
-msgstr "Öntanımlılara Sıfırla"
+msgstr "Saptanmışa Sıfırla"
 
 msgid "menu.binding.clear"
 msgstr "Kaldır"
@@ -2654,7 +2654,7 @@ msgid "collapse.notbydefault"
 msgstr "Elle"
 
 msgid "collapse.bydefault"
-msgstr "Sayfa yüklenirken"
+msgstr "Sayfa Yüklenirken"
 
 msgid "collapse.always"
 msgstr "Her zaman"
@@ -3265,3 +3265,211 @@ msgstr "Elle"
 # Button at the bottom of the Reader tab for viewing the older feed entry (next by descending time order).
 msgid "reader.next"
 msgstr "Daha Eski Girdi"
+
+msgid "ident.expiry.years"
+msgid_plural "ident.expiry.years.n"
+msgstr[0] "%zu yıl içinde süresi dolacak"
+msgstr[1] "%zu yıl içinde süresi dolacak"
+
+# Submenu with the list of identities in the view toolbar's identity menu.
+msgid "viewtools.ident.pin"
+msgstr "Bu Sekmeye Sabitle"
+
+# Followed by a number: the position of the tab, counting from the left sidebar to the right one.
+msgid "keys.sidebar.tab"
+msgstr "Kenar çubuğu sekmesi"
+
+msgid "heading.book.exists"
+msgstr "Kitap Hâlihazırda Kaydedilmiş"
+
+msgid "dlg.book.exists"
+msgstr ""
+"“%s” kitabının farklı bir kopyası hâlihazırda kitaplıkta. Üzerine bununla "
+"yazmak istiyor musunuz?"
+
+#, c-format
+msgid "dlg.subscribeall.found"
+msgid_plural "dlg.subscribeall.found.n"
+msgstr[0] ""
+"Sayfada %d yeni besleme URL’si bulundu. Yeni bir yer imi klasörüne "
+"eklenecekler."
+msgstr[1] ""
+"Sayfada %d yeni besleme URL’si bulundu. Yeni bir yer imi klasörüne "
+"eklenecekler."
+
+msgid "dlg.subscribeall.notfound"
+msgstr "Bu sayfada abone olunabilecek yeni Gemini URL’leri yok."
+
+#, c-format
+msgid "dlg.confirm.unsub.multi"
+msgid_plural "dlg.confirm.unsub.multi.n"
+msgstr[0] "%u beslemeden abonelik gerçekten kaldırılsın mı?"
+msgstr[1] "%u beslemeden abonelik gerçekten kaldırılsın mı?"
+
+#, c-format
+msgid "dlg.subscribeall.add"
+msgid_plural "dlg.subscribeall.add.n"
+msgstr[0] "%sAbone Ol"
+msgstr[1] "%s%d Beslemeye Abone Ol"
+
+msgid "banner.tinylogentry.date"
+msgstr "%d %B %Y, %A, %H:%M"
+
+msgid "feeds.markallread.confirm"
+msgstr "Tüm girdiler gerçekten okundu olarak imlensinler mi?"
+
+msgid "menu.openfolder"
+msgstr "Klasör Aç…"
+
+msgid "menu.multi.opentab.background"
+msgstr "Arka Plan Sekmelerinde Aç"
+
+msgid "menu.multi.copyurls"
+msgstr "URL’leri Kopyala"
+
+msgid "menu.multi.forgeturls"
+msgstr "URL’leri Unut"
+
+msgid "menu.multi.closetabs"
+msgstr "Sekmeleri Kapat"
+
+msgid "menu.multi.bookmarks.delete"
+msgstr "Yer İmlerini Sil"
+
+msgid "prefs.sidebar.reset"
+msgstr "Saptanmışlara Sıfırla"
+
+msgid "feeds.tinylog.notfound"
+msgstr ""
+"Bu tinylog girdisi bilinmiyor. Tinylog’dan kaldırılmış veya abonelikten "
+"çıkılmış olabilir."
+
+# strftime() format string. Date of the feed entry shown in the Reader tab banner.
+# %d is the day of month without zero padding.
+msgid "banner.feedentry.date"
+msgstr "%d %B %Y, %A"
+
+msgid "dlg.confirm.bookmarks.multidelete"
+msgstr ""
+"Seçili klasörlerden bazıları yer imleri içeriyorlar. Tümünü silmek "
+"istediğinizden emin misiniz?"
+
+msgid "hint.filter.bindings"
+msgstr "süzgeç düğmeleri"
+
+msgid "ident.syncing"
+msgstr "Eşzamanlama için kullanılır"
+
+msgid "ident.misfin"
+msgstr "Misfin sertifikası"
+
+msgid "ident.expired"
+msgstr "Süresi doldu"
+
+msgid "sidebar.empty.bookmarks"
+msgstr "Yer İmi Yok"
+
+msgid "sidebar.empty.trash"
+msgstr "Çöp Kutusu Yok"
+
+msgid "sidebar.empty.feeds"
+msgstr "Besleme Yok"
+
+msgid "sidebar.empty.subs"
+msgstr "Abonelik Yok"
+
+msgid "sidebar.empty.links"
+msgstr "Bağlantı Yok"
+
+# Page Information for content received via a proxy server.
+msgid "pageinfo.proxy"
+msgstr "Vekil aracılığıyla alındı:"
+
+msgid "pageinfo.proxy.cert.status"
+msgstr "Vekil sertifikası durumu:"
+
+msgid "heading.sitespec.site"
+msgstr "Site"
+
+msgid "sitespec.titantoken"
+msgstr "Titan karşıya yükleme jetonu:"
+
+msgid "sitespec.reset"
+msgstr "Siteyi Saptanmışlara Sıfırla"
+
+msgid "heading.book.save"
+msgstr "Kitaplığa Kaydet"
+
+msgid "dlg.book.save.unsupported"
+msgstr ""
+"Bu kitaplığa yalnızca Gemtext sayfaları ve Gemtext kitapları kaydedilebilir."
+
+msgid "dlg.book.save.error"
+msgstr "Kitap, kitaplığa kaydedilemedi."
+
+msgid "heading.book.saved"
+msgstr "Kitaplığa Kaydedildi"
+
+msgid "dlg.book.saved"
+msgstr "“%s”, artık kitaplıkta."
+
+msgid "dlg.book.open"
+msgstr "Kitabı Aç"
+
+msgid "heading.book.synced"
+msgstr "Okuma Konumu Eşzamanlandı"
+
+# %d is a chapter number.
+msgid "dlg.book.synced"
+msgstr ""
+"Bu kitabın başka bir aygıtta daha yeni bir okuma konumu var, %d numaralı "
+"fasılda."
+
+msgid "dlg.book.synced.frontmatter"
+msgstr ""
+"Bu kitabın başka bir aygıtta daha yeni bir okuma konumu var, kitabın başında."
+
+msgid "dlg.book.synced.jump"
+msgstr "Eşzamanlı Konuma Git"
+
+msgid "heading.book.newedition"
+msgstr "Güncelleme Kullanılabilir"
+
+# %s is the book's title.
+msgid "dlg.book.newedition"
+msgstr "“%s” kitabının daha yeni bir edisyonu, başka bir aygıtta indirildi."
+
+msgid "dlg.book.newedition.update"
+msgstr "Güncelle"
+
+msgid "dlg.book.overwrite"
+msgstr "Üzerine Yaz"
+
+msgid "heading.subscribeall"
+msgstr "Tümüne Abone Ol"
+
+msgid "dlg.subscribeall.type"
+msgstr "Besleme türü:"
+
+msgid "dlg.subscribeall.type.auto"
+msgstr "Otomatik Algıla"
+
+# Short form of an auto-reload interval in minutes.
+#, c-format
+msgid "reload.short.minutes"
+msgstr "%d dk"
+
+# Short form of an auto-reload interval in hours.
+#, c-format
+msgid "reload.short.hours"
+msgstr "%d sa"
+
+# Short form of a daily auto-reload interval.
+msgid "reload.short.day"
+msgstr "1 g"
+
+msgid "menu.copyresponse"
+msgstr "Yanıt Bağlantısını Kopyala"
+
+msgid "import.userdata.books"
+msgstr "Okuma konumları:"
