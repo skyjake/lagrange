@@ -2,7 +2,7 @@
 
 Welcome to Lagrange 2!
 
-A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Gempub reading is greatly improved, now resembling a true e-reader. The UI appearance has been refreshed and fits better into modern OS design.
+A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from real e-readers. The UI appearance has been refreshed and fits better into modern OS design.
 
 => gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)
 
