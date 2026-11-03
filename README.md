@@ -146,7 +146,7 @@ In the TUI build, SDL is replaced with a library called [SEALCurses](https://git
 The source tree also contains two command line tools:
 
 * `lgrsyncd` is the sync server for Lagrange's user data sync. It only depends on the_Foundation. When the app is being built, `lgrsyncd` is excluded from the default build target; build it with `cmake --build build --target lgrsyncd`. Alternatively, configure the "sync" subdirectory as a separate project: `cmake -S sync -B build-sync && cmake --build build-sync`.
-* `gmget` is a simple curl-like tool for making Gemini requests on the command line using Lagrange's identities and user data. It is built from the "lib/core" directory and is not installed.
+* `gmget` is a simple curl-like tool for making Gemini requests on the command line using Lagrange's identities and user data. It is built from the "lib/core" directory and installed next to the app executable, unless the `INSTALL_GMGET` option is set to `NO`.
 
 See the Technical Reference (`about:reference` in the app) for usage instructions.
 

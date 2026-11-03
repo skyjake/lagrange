@@ -588,7 +588,7 @@ The following implementation details should be noted:
 
 The Core library comes with `gmget`, a simple curl-like utility for making network requests on the command line. It is a thin command line interface on top of the same code that Lagrange uses for requests, so it can be useful in scripts that need access to Lagrange's identities and other user data.
 
-`gmget` is built from the "lib/core" directory of the Lagrange source tree. It is not included in the app packages.
+`gmget` is built from the "lib/core" directory of the Lagrange source tree.
 
 ```gmget --help
 Usage: gmget [OPTIONS] URL...
@@ -598,6 +598,7 @@ Options:
   -I IDENT, --ident=IDENT Use the Lagrange identity matching IDENT
   -U DIR, --user=DIR      User data directory (default: platform-specific)
   -p, --print             Print response status and meta string to stderr
+  -X LIST, --proxy=LIST   Use Gemini proxies: SCHEME=HOST[:PORT],...
   -h, --help              Print this help and exit
 ```
 

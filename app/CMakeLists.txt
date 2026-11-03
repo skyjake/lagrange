@@ -1102,6 +1102,20 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
     endif ()
 endif ()
 
+# gmget is installed next to the app executable. In a macOS app bundle, it is copied
+# into the bundle during packaging instead.
+if (INSTALL_GMGET AND TARGET gmget)
+    if (MSYS OR WIN32 OR HAIKU)
+        install (TARGETS gmget DESTINATION .)
+    elseif (NOT APPLE OR NOT ENABLE_APP_BUNDLE OR TARGET tuiapp)
+        include (GNUInstallDirs)
+        set_target_properties (gmget PROPERTIES
+            INSTALL_RPATH_USE_LINK_PATH YES
+        )
+        install (TARGETS gmget DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT gmget)
+    endif ()
+endif ()
+
 print_summary (
     ENABLE_APP_BUNDLE
     ENABLE_CORETEXT
@@ -1137,4 +1151,5 @@ print_summary (
     ENABLE_WINSPARKLE
     ENABLE_X11_SWRENDER
     ENABLE_X11_XLIB
+    INSTALL_GMGET
 )
