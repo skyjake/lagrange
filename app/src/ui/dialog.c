@@ -470,7 +470,8 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         else if (!cmd) {
             setFlags_Widget(button, frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
         }
-        setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
+        updateFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
+        updateSize_LabelWidget(button); /* reserve room for the key */
     }
     return div;
 }
