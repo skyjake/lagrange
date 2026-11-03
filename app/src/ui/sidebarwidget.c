@@ -2212,10 +2212,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
-            itemClicked_SidebarWidget_(d,
-                                       pointerLabel_Command(cmd, "item"),
-                                       argU32Label_Command(cmd, "arg"),
-                                       argLabel_Command(cmd, "button"));
+            /* The items may have been recreated after the click was posted. */
+            const size_t  index = argU32Label_Command(cmd, "arg");
+            iSidebarItem *item  = item_ListWidget(d->list, index);
+            if (item && item == pointerLabel_Command(cmd, "item")) {
+                itemClicked_SidebarWidget_(d, item, index, argLabel_Command(cmd, "button"));
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {

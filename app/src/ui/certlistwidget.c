@@ -198,8 +198,12 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             invalidate_ListWidget(&d->list);
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
-            itemClicked_CertListWidget_(
-                d, pointerLabel_Command(cmd, "item"), argU32Label_Command(cmd, "arg"));
+            /* The items may have been recreated after the click was posted. */
+            const size_t index = argU32Label_Command(cmd, "arg");
+            iCertItem   *item  = item_ListWidget(&d->list, index);
+            if (item && item == pointerLabel_Command(cmd, "item")) {
+                itemClicked_CertListWidget_(d, item, index);
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {
