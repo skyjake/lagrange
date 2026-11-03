@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    the enumerated fonts. */
 
 static const uint32_t magic_FontCacheFile_   = 0x6C674643u; /* "lgFC" */
-static const uint32_t version_FontCacheFile_ = 4u;
+static const uint32_t version_FontCacheFile_ = 5u;
 
 static void fontDirModTime_(const iString *path, iDate *date_out) {
     iZap(*date_out);
@@ -97,13 +97,15 @@ iBool tryLoadCached_FontPack_(iFontPack *pack, const iString *cachePath) {
                 spec->priority = 1;
                 iFontFile *regularFile = NULL;
                 for (int s = 0; s < max_FontStyle; s++) {
-                    iFontFile *ff;
-                    if (s != regular_FontStyle && regularFile &&
-                        equal_String(&entry.styles[s].identifier,
-                                     &entry.styles[regular_FontStyle].identifier)) {
-                        ff = ref_Object(regularFile); /* no distinct variant; share regular */
+                    iFontFile *ff = NULL;
+                    for (int t = 0; t < s; t++) {
+                        if (equal_String(&entry.styles[s].identifier,
+                                         &entry.styles[t].identifier)) {
+                            ff = ref_Object(spec->styles[t]); /* no distinct variant; share */
+                            break;
+                        }
                     }
-                    else {
+                    if (!ff) {
                         ff = new_FontFile();
                         set_String(&ff->id, &entry.styles[s].identifier);
                         ff->ascent     = entry.styles[s].ascent;
@@ -236,10 +238,10 @@ static CTFontRef styleVariant_(CTFontRef base, CTFontSymbolicTraits traits) {
 }
 
 static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat targetWeight) {
-    /* Enumerate all upright non-bold members of the family and return the one whose
-       weight is closest to targetWeight, as long as it is distinct from base.
-       This avoids accidentally picking italic or bold-condensed variants that happen
-       to carry the requested weight. Caller must CFRelease result. */
+    /* Enumerate all upright members of the family and return the one whose weight is
+       closest to targetWeight, as long as it is distinct from base and on the same side
+       of the base weight. This avoids accidentally picking italic or condensed variants
+       that happen to carry the requested weight. Caller must CFRelease result. */
     CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
         kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetValue(attrs, kCTFontFamilyNameAttribute, familyName);
@@ -252,8 +254,17 @@ static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat 
         return NULL;
     }
     CFStringRef         basePSName = CTFontCopyName(base, kCTFontPostScriptNameKey);
+    CGFloat             baseWeight = 0.0;
     CTFontDescriptorRef bestDesc   = NULL;
     CGFloat             bestDiff   = 1000.0;
+    /* Base weight. */ {
+        CFDictionaryRef traits = CTFontCopyTraits(base);
+        if (traits) {
+            CFNumberRef wNum = (CFNumberRef) CFDictionaryGetValue(traits, kCTFontWeightTrait);
+            if (wNum) CFNumberGetValue(wNum, kCFNumberCGFloatType, &baseWeight);
+            CFRelease(traits);
+        }
+    }
     for (CFIndex i = 0; i < CFArrayGetCount(allDescs); i++) {
         CTFontDescriptorRef desc = (CTFontDescriptorRef) CFArrayGetValueAtIndex(allDescs, i);
         CFDictionaryRef     traits =
@@ -261,7 +272,7 @@ static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat 
         if (!traits) {
             continue;
         }
-        /* Skip italic and bold variants. We want a clean upright light face. */
+        /* Skip italic and condensed variants. Semibold faces have the bold trait, too. */
         CFNumberRef symNum = (CFNumberRef) CFDictionaryGetValue(traits, kCTFontSymbolicTrait);
         CTFontSymbolicTraits symTraits = 0;
         if (symNum) CFNumberGetValue(symNum, kCFNumberSInt32Type, &symTraits);
@@ -269,9 +280,17 @@ static CTFontRef weightVariant_(CFStringRef familyName, CTFontRef base, CGFloat 
         CFNumberRef wNum   = (CFNumberRef) CFDictionaryGetValue(traits, kCTFontWeightTrait);
         if (wNum) CFNumberGetValue(wNum, kCFNumberCGFloatType, &weight);
         CFRelease(traits);
-        if (symTraits & (kCTFontTraitItalic | kCTFontTraitBold | kCTFontTraitCondensed)) {
+        const CTFontSymbolicTraits skipped =
+            kCTFontTraitItalic | kCTFontTraitCondensed |
+            (targetWeight < baseWeight ? kCTFontTraitBold : 0);
+        if (symTraits & skipped) {
             continue;
-        }        /* Must be distinct from base. */
+        }
+        /* A semibold must be heavier than base, and a light lighter. */
+        if ((weight - baseWeight) * (targetWeight - baseWeight) <= 0.0) {
+            continue;
+        }
+        /* Must be distinct from base. */
         CFStringRef psName =
             (CFStringRef) CTFontDescriptorCopyAttribute(desc, kCTFontNameAttribute);
         const iBool isSame =
@@ -365,6 +384,9 @@ void enumerateSystemFonts_FontPack_(iFontPack *pack) {
         files[italic_FontStyle]   = namedFontFile_(italicFont);
         files[light_FontStyle]    = namedFontFile_(lightFont);
         files[semiBold_FontStyle] = namedFontFile_(semiboldFont);
+        if (!files[semiBold_FontStyle] && files[bold_FontStyle]) {
+            files[semiBold_FontStyle] = ref_Object(files[bold_FontStyle]);
+        }
         /* Fill any missing styles with a reference to the regular file. */
         for (int s = 0; s < max_FontStyle; s++) {
             if (!files[s]) {
