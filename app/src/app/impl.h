@@ -67,9 +67,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define defaultDataDir_App_ "~/.config/lagrange"
 #endif
 
-/* Elsewhere SDL's own handler posts the quit event. On macOS it does not wake up a blocking
-   event wait, and sealcurses does not handle SIGTERM. */
-#if defined (iPlatformAppleDesktop) || defined (iPlatformTerminal)
+/* sealcurses does not handle SIGTERM. Elsewhere SDL's own handler posts the quit event,
+   except on macOS (see setupApplication_MacOS). */
+#if defined (iPlatformTerminal)
 #   define LAGRANGE_HANDLE_SIGTERM
 #   include <signal.h>
 #endif

@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringset.h>
 
 #import <AppKit/AppKit.h>
+#include <signal.h>
 
 #if defined (LAGRANGE_ENABLE_SPARKLE)
 #   import <Sparkle/Sparkle.h>
@@ -608,7 +609,20 @@ void localizeApplicationMenu_MacOS(void) {
         setTitle:[NSString stringWithUTF8String:cstr_Lang("menu.quit")]];
 }
 
+static void handleSigTerm_(void) {
+    /* The source still receives the signal while the default action is ignored. */
+    static dispatch_source_t source_;
+    signal(SIGTERM, SIG_IGN);
+    source_ = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, SIGTERM, 0,
+                                     dispatch_get_main_queue());
+    dispatch_source_set_event_handler(source_, ^{
+        SDL_PushEvent(&(SDL_Event){ .type = SDL_EVENT_QUIT });
+    });
+    dispatch_resume(source_);
+}
+
 void setupApplication_MacOS(void) {
+    handleSigTerm_();
     SDL_SetEventEnabled(SDL_EVENT_QUIT, false); /* handle app quit manually */
     NSApplication *app = [NSApplication sharedApplication];
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
