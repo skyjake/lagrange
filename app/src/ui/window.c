@@ -968,9 +968,15 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->keyboardHeight         = 0;
     d->backBuf                = NULL;
     d->logo                   = NULL;
-    const iInt2 minSize =
+    iInt2 minSize =
         (isMobile_Platform() ? zero_I2() /* windows aren't independently resizable */
                              : init_I2(425, 325));
+#if !defined (iPlatformTerminal) && \
+    (defined (iPlatformMsys) || defined (iPlatformWindows) || defined (iPlatformLinux))
+    /* Window coordinates already include the pixel ratio (e.g., Wayland scale). */
+    minSize = mulf_I2(minSize, d->base.displayScale);
+#endif
+    /* This also resizes the window, so only set it once. */
     SDL_SetWindowMinimumSize(d->base.win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->base.win, "Lagrange");
     /* Some info. */ {
@@ -993,13 +999,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     }
 #if !defined (iPlatformTerminal)
 #   if defined (iPlatformMsys) || defined (iPlatformWindows)
-    SDL_SetWindowMinimumSize(
-        d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
     enableDarkMode_SDLWindow(d->base.win);
-#   endif
-#   if defined (iPlatformLinux)
-    SDL_SetWindowMinimumSize(
-        d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
 #   endif
 #   if defined (iPlatformAppleMobile)
     setupWindow_iOS(as_Window(d));
