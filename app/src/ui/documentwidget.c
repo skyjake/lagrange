@@ -2652,7 +2652,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     if (ev->type == SDL_EVENT_KEY_DOWN) {
-        const int key = ev->key.key;
+        const int key   = ev->key.key;
+        const int kmods = keyMods_Sym(ev->key.mod);
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
             const size_t ord = linkOrdinalFromKey_DocumentWidget_(d, key) + d->ordinalBase;
@@ -2681,13 +2682,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
             }
         }
-        if ((key == SDLK_LEFT || key == SDLK_RIGHT) && keyMods_Sym(modState_Keys()) == 0 &&
+        if ((key == SDLK_LEFT || key == SDLK_RIGHT) &&
+            (kmods & ~SDL_KMOD_SHIFT) == 0 /* Shift modifies page turning speed */  &&
             document_App() == d) {
-            /* Footer actions apply only when there is no page to turn to. */
             if (isPaged_DocumentView(view) && turnPage_DocumentView(view, key == SDLK_LEFT ? -1 : +1)) {
                 return iTrue;
             }
-            if (triggerFooterKey_DocumentWidget_(d, key) || isPaged_DocumentView(view)) {
+            /* Footer actions apply only when there is no page to turn to. */
+            if (!kmods && triggerFooterKey_DocumentWidget_(d, key) || isPaged_DocumentView(view)) {
                 return iTrue;
             }
         }

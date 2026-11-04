@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "banner.h"
 #include "gmutil.h"
 #include "render/text.h"
+#include "ui/keys.h"
 #include "ui/metrics.h"
 #include "ui/root.h"
 #include "ui/visbuf.h"
@@ -39,7 +40,8 @@ uint32_t pageTurnDuration_DocumentView(const iDocumentView *d) {
        is for a width of about 1000 points. */
     const float full  = prefs_App()->pageTurn == curl_PageTurnAnimation ? 300 : 250;
     const float width = width_Rect(pageViewport_DocumentView(d)) / (250.0f * gap_UI);
-    return full * iClamp(sqrtf(width), 0.5f, 1.0f);
+    const float modifier = (modState_Keys() & SDL_KMOD_SHIFT) ? 3.f : 1.f;
+    return full * iClamp(sqrtf(width), 0.5f, 1.0f) * modifier;
 }
 
 uint32_t beginPageTurn_DocumentView(iDocumentView *d, uint32_t duration) {
