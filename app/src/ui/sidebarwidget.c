@@ -58,8 +58,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const char *normalModeLabels_[max_SidebarMode] = {
     bookmarks_Icon " ${sidebar.bookmarks}",
-    star_Icon " ${sidebar.feeds}",
-    whiteStar_Icon " ${sidebar.subscriptions}",
+    whiteStar_Icon " ${sidebar.feeds}",
+    newspaper_Icon " ${sidebar.subscriptions}",
     person_Icon " ${sidebar.identities}",
     page_Icon " ${sidebar.outline}",
     hierarchy_Icon " ${sidebar.structure}",
@@ -70,8 +70,8 @@ static const char *normalModeLabels_[max_SidebarMode] = {
 
 static const char *tightModeLabels_[max_SidebarMode] = {
     bookmarks_Icon,
-    star_Icon,
     whiteStar_Icon,
+    newspaper_Icon,
     person_Icon,
     page_Icon,
     hierarchy_Icon,
@@ -309,7 +309,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
                 button,
                 collectNewFormat_String(
                     "%s " uiTextAction_ColorEscape "%zu%s%s",
-                    tightModeLabels_[i],
+                    star_Icon,
                     d->numUnreadEntries,
                     !isTight ? " " : "",
                     !isTight ? formatCStrs_Lang("sidebar.unread.n", d->numUnreadEntries) : ""));

@@ -1108,6 +1108,7 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x1f4e5,  "square.and.arrow.down.on.square"}, /* import_Icon */
         { 0x1f4e6,  "shippingbox"                    }, /* package_Icon */
         { 0x1f4e7,  "envelope"                       }, /* email_Icon */
+        { 0x1f4f0,  "newspaper"                      }, /* newspaper_Icon */
         { 0x1f4f1,  "iphone"                         }, /* User Interface settings */
         { 0x1f503,  "arrow.clockwise"                }, /* reload_Icon */
         { 0x1f50d,  "magnifyingglass"                }, /* magnifyingGlass_Icon */
@@ -1234,6 +1235,7 @@ iChar systemIconChar_Windows(iChar ch) {
         { 0x1f4e5, 0xe8b5 },    /* import_Icon */
         { 0x1f4e6, 0xe7b8 },    /* package_Icon */
         { 0x1f4e7, 0xe715 },    /* envelope_Icon */
+        { 0x1f4f0, 0xe8f3 },    /* newspaper_Icon */
         { 0x1f4f1, 0xe8ea },    /* User Interface settings */
         { 0x1f503, 0xe72c },    /* reload_Icon */
         { 0x1f50d, 0xe721 },    /* magnifyingGlass_Icon */

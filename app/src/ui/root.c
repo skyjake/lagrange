@@ -1615,7 +1615,8 @@ static void updateToolBarView_(iWidget *toolBar, int mode, size_t numUnread) {
     iLabelWidget *icon       = findChild_Widget(toolBar, "toolbar.view.icon");
     iLabelWidget *unread     = findChild_Widget(toolBar, "toolbar.unread");
     const iBool   showUnread = mode == feedEntries_SidebarMode && numUnread;
-    updateTextAndResizeWidthCStr_LabelWidget(icon, icon_SidebarMode(mode));
+    updateTextAndResizeWidthCStr_LabelWidget(icon,
+                                             showUnread ? star_Icon : icon_SidebarMode(mode));
     updateTextAndResizeWidthCStr_LabelWidget(unread,
                                              showUnread ? format_CStr("%zu", numUnread) : "");
     setFlags_Widget(as_Widget(unread), hidden_WidgetFlag, !showUnread);
@@ -2533,9 +2534,9 @@ void createUserInterface_Root(iRoot *d) {
         updateToolbarColors_Root(d);
         updateToolBarActions_(toolBar);
         const iMenuItem items[] = {
-            { book_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
-            { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
-            { whiteStar_Icon " ${sidebar.subscriptions}", 0, 0, "toolbar.showview arg:2" },
+            { bookmarks_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
+            { whiteStar_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
+            { newspaper_Icon " ${sidebar.subscriptions}", 0, 0, "toolbar.showview arg:2" },
             { page_Icon " ${toolbar.outline}", 0, 0, "toolbar.showview arg:4" },
             { hierarchy_Icon " ${sidebar.structure}", 0, 0, "toolbar.showview arg:5" },
             { openTabBg_Icon " ${sidebar.documents}", 0, 0, "toolbar.showview arg:6" },

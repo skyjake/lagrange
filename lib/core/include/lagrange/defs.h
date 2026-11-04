@@ -387,6 +387,7 @@ enum iAnsiFlag {
 #define menu_Icon           "\U0001d362"
 #define midEllipsis_Icon    "\u2022\u2022\u2022"
 #define network_Icon        "\U0001f5a7"
+#define newspaper_Icon      "\U0001f4f0"
 #define networkProxy_Icon   "\u27a0"
 #define nex_Icon            "\U0001f687"
 #define openExt_Icon        "\u27a0"
