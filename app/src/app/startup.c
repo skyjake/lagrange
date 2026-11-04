@@ -606,7 +606,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_Misfin(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
-    d->isRunning = iFalse;
+    d->isRunning = iTrue; /* a quit during init clears this */
     d->window    = NULL;
     d->tools     = new_Tools();
     d->certs     = new_GmCerts(dataDir_App_());

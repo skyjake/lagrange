@@ -883,7 +883,6 @@ int run_App_(iApp *d) {
             arrange_Widget(d->window->roots[i]->widget);
         }
     }
-    d->isRunning = iTrue;
     SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true); /* open files via drag'n'drop */
     SDL_AddEventWatch(lifecycleWatcher_App_, d); /* synchronous handling */
     if (isResizeDrawEnabled_()) {
