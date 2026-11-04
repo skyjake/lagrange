@@ -47,6 +47,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleDesktop)
 #   include "platform/macos.h"
 #endif
+#if defined (LAGRANGE_ENABLE_X11_XLIB)
+#   include "platform/x11.h"
+#endif
 #if defined (iPlatformAndroidMobile)
 #   include <fcntl.h>
 #   include <unistd.h>
@@ -415,7 +418,18 @@ static iBool loadStateFile_App_(iApp *d, const char *usedPath, iBool validateOnl
 #endif
 
     if (currentWin) {
-        SDL_RaiseWindow(currentWin->base.win);
+        iBool isOnOtherDesktop = iFalse;
+#if defined (LAGRANGE_ENABLE_X11_XLIB)
+        unsigned long curDesk;
+        if (currentWin->place.desktop >= 0 &&
+            getCurrentDesktop_SDLWindow(currentWin->base.win, &curDesk)) {
+            /* The window is about to be moved away, so activating it would be pointless. */
+            isOnOtherDesktop = (unsigned long) currentWin->place.desktop != curDesk;
+        }
+#endif
+        if (!isOnOtherDesktop) {
+            SDL_RaiseWindow(currentWin->base.win);
+        }
         setActiveWindow_App(currentWin);
     }
 
