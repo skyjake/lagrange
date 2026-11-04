@@ -146,6 +146,15 @@ struct Impl_DrawContext {
     iGmRunRange runsDrawn;
 };
 
+static iRect drawnBounds_(const iGmRun *run) {
+    /* Justified text extends past the natural width of the run. */
+    iRect rect = run->visBounds;
+    if (isJustified_GmRun(run)) {
+        rect.size.x = iMax(rect.size.x, width_Rect(run->bounds));
+    }
+    return rect;
+}
+
 static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
     iWrapText wt = { .text     = run->text,
                      .mode     = anyCharacter_WrapTextMode,
@@ -300,7 +309,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentView(d->view, run));
-    const iRect visRect = { visPos, run->visBounds.size };
+    const iRect visRect = { visPos, drawnBounds_(run).size };
     /* Fill the background. */ {
         iBool isMobileHover = deviceType_App() != desktop_AppDeviceType &&
                               (isPartOfHover || contains_PtrSet(d->view->invalidRuns, run)) &&
@@ -963,7 +972,7 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
                             beginTarget_Paint(p, buf->texture);
                             fillRect_Paint(p,
-                                           moved_Rect(run->visBounds, init_I2(0, -buf->origin)),/*
+                                           moved_Rect(drawnBounds_(run), init_I2(0, -buf->origin)),/*
                                            init_Rect(0,
                                                      run->visBounds.pos.y - buf->origin,
                                                      visBuf->texSize.x,
