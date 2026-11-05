@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2026-11-03 23:06+0000\n"
+"PO-Revision-Date: 2026-11-06 05:20+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1202,7 +1202,7 @@ msgid "error.unsupported.media.msg"
 msgstr "Alınan içerik bu uygulama ile görüntülenemiyor."
 
 msgid "error.badheader"
-msgstr "Geçersiz üstbilgi"
+msgstr "Geçersiz Üst Bilgi"
 
 msgid "error.unsupported.protocol"
 msgstr "Desteklenmeyen Protokol"
@@ -1212,7 +1212,7 @@ msgstr "Desteklenmeyen İçerik Türü"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Yanıt üstbilgisi Gemini protokol belirtimine uymuyor. Sunucu hata veriyor "
+"Yanıt üst bilgisi Gemini protokolü belirtimine uymuyor. Sunucu hata veriyor "
 "veya bu protokolü desteklemiyor olabilir."
 
 msgid "error.badredirect"
@@ -1432,7 +1432,7 @@ msgid "dlg.dismiss.warning"
 msgstr "Uyarıyı atla"
 
 msgid "doc.pre.nocaption"
-msgstr "Bilgi yazı olmayan, önceden biçimlendirilmiş metin"
+msgstr "Bilgi yazısı olmayan, önceden biçimlendirilmiş metin"
 
 #, c-format
 msgid "doc.archive"
@@ -2381,11 +2381,11 @@ msgid "prefs.markdown.viewsource"
 msgstr "Markdown kaynağını görüntüle:"
 
 msgid "error.incompleteheader"
-msgstr "Eksik üstbilgi"
+msgstr "Eksik Üst Bilgi"
 
 msgid "error.incompleteheader.msg"
 msgstr ""
-"Sunucunun yanıtı tam bir üstbilgi içermedi. Sunucu hata veriyor olabilir "
+"Sunucunun yanıtı tam bir üst bilgi içermedi. Sunucu hata veriyor olabilir "
 "veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "prefs.tui.simple"
@@ -3473,3 +3473,420 @@ msgstr "Yanıt Bağlantısını Kopyala"
 
 msgid "import.userdata.books"
 msgstr "Okuma konumları:"
+
+# Web version: server that relays network connections.
+msgid "heading.prefs.relay"
+msgstr "WebSocket Rölesi"
+
+# File type filter in the Import User Data file dialog.
+msgid "filter.zip"
+msgstr "ZIP Arşivi"
+
+msgid "prefs.sync.info"
+msgstr ""
+"Tüm veriler yüklenmeden önce şifrelenir ve sunucuda şifrelenmiş olarak "
+"saklanır. Sunucu, bu verilerin şifresini çözemez. Siteye özgü ayarlar "
+"eşzamanlanır; ancak diğer ayarlar eşzamanlanmaz."
+
+msgid "prefs.webvariant.tablet"
+msgstr "Tablet"
+
+msgid "prefs.pagetheme.light"
+msgstr "Sayfalanmış açık:"
+
+# Which protocols should the monospace body font by applied with.
+msgid "prefs.mono.doc"
+msgstr "Eşit aralıklı gövde:"
+
+msgid "prefs.proxy.spartan"
+msgstr "Spartan vekili:"
+
+# Web version: an empty proxy setting means the proxy built into the relay server is used.
+msgid "hint.proxy.relay"
+msgstr "Rölenin yerleşik vekili"
+
+msgid "dlg.storage.unavailable"
+msgstr ""
+"Bu tarayıcı, Lagrange’nin kalıcı depolamayı kullanmasına izin vermedi. Sayfa "
+"kapatıldıktan sonra her şey kaybolacaktır."
+
+msgid "gempub.cover.openshelf"
+msgstr "Kitaplıktan Aç"
+
+msgid "heading.sync.failed"
+msgstr "Eşzamanlama Başarısız"
+
+msgid "dlg.sync.untrusted.changed"
+msgstr ""
+"Sunucunun sertifikası, daha önce güvenilen sertifikayla eşleşmiyor. "
+"Sunucunun sertifikası yenilenmişse/değişmişse bu olağandır; ancak aynı "
+"zamanda başka birisinin bağlantıya eriştiğinin bir işareti de olabilir."
+
+msgid "sync.status.setup"
+msgstr ""
+"Bir sunucuya ve Ed25519 kimliğine gereksinim duyar (tüm aygıtlarda aynıdır)."
+
+msgid "sync.busy.sitespec"
+msgstr ""
+"Site ayarları, eşzamanlama sırasında düzenlenemez. Lütfen biraz sonra "
+"yeniden deneyin."
+
+msgid "dlg.sync.newidentity.info"
+msgstr ""
+"Eşzamanlanan aygıtlarınızda tek bir ortak eşzamanlama kimliğine sahip "
+"olmalısınız. Farklı eşzamanlama kimliklerine sahip aygıtlar birbirleriyle "
+"eşzamanlanmazlar. Eşzamanlama kimliklerini Kimlikler kenar çubuğundan "
+"yönetebilirsiniz. Bunları yalnızca eşzamanlama için kullanmanız, başka "
+"herhangi bir hizmete giriş yapmak için kullanmamanız önerilir. Kimlik, "
+"Ed25519 anahtarını kullanır."
+
+msgid "sync.error.untrusted"
+msgstr "Eşzamanlama sunucusunun sertifikasına güvenilmiyor."
+
+msgid "sync.error.response"
+msgstr "Eşzamanlama sunucusundan geçersiz yanıt alındı."
+
+msgid "sync.error.rollback"
+msgstr ""
+"Eşzamanlama sunucusundaki veri bu aygıttakinden daha eski. Eşzamanlamayı "
+"kapatıp açın ve yeniden başlayın."
+
+msgid "sync.error.identity"
+msgstr "Eşzamanlama kimliği eksik veya bir Ed25519 anahtarı kullanmıyor."
+
+msgid "heading.prefs.sync"
+msgstr "Eşzamanla"
+
+msgid "prefs.sync"
+msgstr "Eşzamanlama etkin:"
+
+msgid "prefs.sync.identity"
+msgstr "Kimlik:"
+
+msgid "prefs.sync.identity.none"
+msgstr "Yok"
+
+msgid "prefs.sync.newidentity"
+msgstr "Yeni Eşzamanlama Kimliği"
+
+msgid "prefs.sync.server"
+msgstr "Sunucu:"
+
+msgid "hint.sync.server"
+msgstr "gemini://sync.skyjake.fi:1966"
+
+msgid "prefs.sync.interval"
+msgstr "Aralık:"
+
+msgid "prefs.sync.interval.manual"
+msgstr "Asla"
+
+msgid "prefs.sync.status"
+msgstr "Durum:"
+
+msgid "prefs.sync.now"
+msgstr "Şimdi Eşzamanla"
+
+msgid "heading.prefs.typography"
+msgstr "Fontlar"
+
+msgid "prefs.scope"
+msgstr "Şuna uygulanır:"
+
+msgid "prefs.scope.all"
+msgstr "Tüm protokoller"
+
+# The placeholder is the name of a protocol, for example "Gemini".
+msgid "prefs.scope.custom.typography"
+msgstr "%s protokolüne özel fontlar kullan:"
+
+msgid "prefs.scope.custom.layout"
+msgstr "%s protokolüne özel yerleşim kullan:"
+
+msgid "prefs.scope.custom.style"
+msgstr "%s protokolüne özel stil kullan:"
+
+msgid "prefs.scope.custom.theme"
+msgstr "%s protokolüne özel tema kullan:"
+
+msgid "prefs.scope.site.typography"
+msgstr "Siteye özel fontlar kullan:"
+
+msgid "prefs.scope.site.layout"
+msgstr "Siteye özel yerleşim kullan:"
+
+msgid "prefs.scope.site.style"
+msgstr "Siteye özel stil kullan:"
+
+msgid "prefs.scope.site.theme"
+msgstr "Siteye özel tema kullan:"
+
+msgid "prefs.scope.site.content"
+msgstr "Siteye özel içerik ayarları kullan:"
+
+msgid "prefs.pageturn"
+msgstr "Sayfa çevirme:"
+
+msgid "prefs.pageturn.none"
+msgstr "Yok"
+
+msgid "prefs.pageturn.scroll"
+msgstr "Sar"
+
+msgid "prefs.pageturn.curl"
+msgstr "Kıvır"
+
+msgid "prefs.pageview"
+msgstr "Sayfalanmış:"
+
+msgid "prefs.hideviewtools"
+msgstr "Görünüm araçlarını gizle:"
+
+msgid "prefs.webvariant"
+msgstr "Web arayüzü:"
+
+msgid "prefs.webvariant.desktop"
+msgstr "Masaüstü"
+
+msgid "prefs.webvariant.phone"
+msgstr "Telefon"
+
+msgid "heading.prefs.toolbars"
+msgstr "Araç Çubukları"
+
+msgid "prefs.releasenotes"
+msgstr "Yayım notlarını göster:"
+
+msgid "prefs.pagetheme.dark"
+msgstr "Sayfalanmış koyu:"
+
+# Paginated mode uses the regular document theme.
+msgid "prefs.doctheme.name.none"
+msgstr "Yok"
+
+msgid "prefs.doctheme.name.paper"
+msgstr "Kâğıt"
+
+msgid "prefs.doctheme.name.arboreal"
+msgstr "Ağacımsı"
+
+msgid "prefs.doctheme.name.ember"
+msgstr "Köz"
+
+msgid "prefs.boldlink.help"
+msgstr ""
+"Seçili sayfa renklerinde (koyu veya açık), ziyaret edilmemiş bağlantılar "
+"kalın olarak gösterilir."
+
+msgid "prefs.font.coloremoji"
+msgstr "Renkli emoji:"
+
+msgid "prefs.quotes"
+msgstr "Tırnaklar"
+
+msgid "prefs.hyphenate"
+msgstr "Heceleme:"
+
+msgid "justify.never"
+msgstr "Asla"
+
+msgid "justify.pagesonly"
+msgstr "Yalnızca Sayfalar"
+
+msgid "justify.always"
+msgstr "Her Zaman"
+
+msgid "prefs.tinylogsize"
+msgstr "Tinylog önbellek boyutu:"
+
+msgid "prefs.proxy.finger"
+msgstr "Finger vekili:"
+
+msgid "prefs.proxy.nex"
+msgstr "Nex vekili:"
+
+msgid "prefs.relay.url"
+msgstr "Özel röle:"
+
+msgid "hint.relay.url"
+msgstr "wss://makine-adı/wisp/"
+
+msgid "prefs.relay.user"
+msgstr "Kullanıcı adı:"
+
+msgid "prefs.relay.password"
+msgstr "Parola:"
+
+# Public key that identifies this browser to a custom relay.
+msgid "prefs.relay.key"
+msgstr "Genel anahtar:"
+
+msgid "heading.storage.unavailable"
+msgstr "Depolama Kullanılabilir Değil"
+
+msgid "keys.group.navigation"
+msgstr "Dolaşım"
+
+msgid "keys.group.scroll"
+msgstr "Sarma"
+
+msgid "keys.group.links"
+msgstr "Bağlantılar"
+
+msgid "keys.group.page"
+msgstr "Sayfa"
+
+msgid "keys.group.view"
+msgstr "Görünüm"
+
+msgid "keys.group.tabs"
+msgstr "Sekmeler"
+
+msgid "keys.group.split"
+msgstr "Bölünmüş Görünüm"
+
+msgid "keys.group.bookmarks"
+msgstr "Yer İmleri ve Beslemeler"
+
+msgid "keys.group.ui"
+msgstr "Kullanıcı Arayüzü"
+
+msgid "keys.group.other"
+msgstr "Diğer"
+
+msgid "error.certverify.fp"
+msgstr "Sunucunun parmak izi:"
+
+# Heading on the contents page of a book made from a single page. Followed by a link to the page's original URL.
+msgid "gempub.page.source"
+msgstr "Kaynak"
+
+msgid "gempub.page.contents"
+msgstr "İçindekiler"
+
+msgid "heading.sync"
+msgstr "Eşzamanla"
+
+msgid "heading.sync.untrusted"
+msgstr "Güvenilmeyen Eşzamanlama Sunucusu"
+
+msgid "dlg.sync.untrusted.unknown"
+msgstr ""
+"Eşzamanlama sunucusunun sertifikası, sunucunun adresi için geçerli değil."
+
+msgid "dlg.sync.fp.trusted"
+msgstr "Güvenilen parmak izi:"
+
+msgid "dlg.sync.copyfp"
+msgstr "Sunucu Parmak İzini Kopyala"
+
+msgid "dlg.sync.fp.server"
+msgstr "Sunucu parmak izi:"
+
+msgid "dlg.sync.untrusted.check"
+msgstr ""
+"Sunucunun sertifikasına yalnızca onun parmak izi, sunucu yöneticisi "
+"tarafından verilen parmak iziyle eşleşiyorsa güvenin."
+
+msgid "sync.status.off"
+msgstr "Kapalı"
+
+msgid "sync.status.running"
+msgstr "Eşzamanlanıyor…"
+
+msgid "sync.status.last"
+msgstr "Eşzamanlandı"
+
+msgid "sync.status.generation"
+msgstr "üret."
+
+msgid "sync.status.never"
+msgstr "Henüz eşzamanlanmadı"
+
+msgid "sync.status.pending"
+msgstr "Değişiklikler beklemede"
+
+msgid "sync.status.pending.types"
+msgstr "Beklemede:"
+
+msgid "sync.status.error"
+msgstr "Hata:"
+
+msgid "sync.status.recent.running"
+msgstr "Eşzamanlanıyor…"
+
+msgid "sync.status.recent"
+msgstr "Son kullanılan:"
+
+msgid "sync.busy.bookmarks"
+msgstr ""
+"Yer imleri, eşzamanlama sırasında düzenlenemez. Lütfen biraz sonra yeniden "
+"deneyin."
+
+msgid "sync.identity.name"
+msgstr "Eşzamanlama Kimliği"
+
+msgid "heading.sync.newidentity"
+msgstr "Yeni Eşzamanlama Kimliği"
+
+msgid "dlg.sync.newidentity"
+msgstr "Yeni eşzamanlama kimliği için bir ad girin."
+
+msgid "sync.identity.notes"
+msgstr "Aygıtlar arasında kullanıcı verisini eşzamanlamak için kullanılır"
+
+msgid "sync.error.expired"
+msgstr "Eşzamanlama sunucusunun sertifikasının süresi dolmuş."
+
+msgid "sync.error.timeout"
+msgstr "Eşzamanlama sunucusu zamanında yanıt vermedi."
+
+msgid "sync.error.servercert"
+msgstr "Eşzamanlama sunucusunun sertifikası bir Ed25519 anahtarı kullanmıyor."
+
+msgid "sync.error.closed"
+msgstr "Eşzamanlama sunucusu, bağlantıyı yanıt vermeden kapattı."
+
+msgid "sync.error.server"
+msgstr "Eşzamanlama sunucusu yanıtı:"
+
+msgid "sync.error.decrypt"
+msgstr ""
+"Eşzamanlanan verinin şifresi çözülemedi. Tüm aygıtlarda aynı eşzamanlama "
+"kimliğinin kullanıldığından emin olun."
+
+msgid "sync.error.encrypt"
+msgstr "Veri şifrelenemedi."
+
+msgid "sync.error.busy"
+msgstr ""
+"Sunucu üzerindeki veri sürekli değişip duruyordu. Lütfen daha sonra yeniden "
+"deneyin."
+
+msgid "sync.error.editoropen"
+msgstr ""
+"Eşzamanlama öncesi yer imleri düzenleyicisini ve site ayarlarını kapatın."
+
+msgid "sync.error.newidentity"
+msgstr "Kimlik oluşturulamadı."
+
+msgid "dlg.userdata.newer"
+msgstr "Tümü (Yenileri Tut)"
+
+msgid "dlg.newident.selfsign"
+msgstr "Kendinden imzalı bir sertifika oluşturuluyor."
+
+msgid "dlg.newident.keytype"
+msgstr "İmza:"
+
+msgid "dlg.newident.keytype.ecdsa"
+msgstr "ECDSA (P-256)"
+
+msgid "dlg.newident.keytype.ed25519"
+msgstr "Ed25519"
+
+msgid "dlg.newident.keytype.rsa"
+msgstr "RSA (2048 bit)"
+
+msgid "dlg.feed.type.tinylog"
+msgstr "Tinylog"
