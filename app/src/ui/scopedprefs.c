@@ -54,10 +54,29 @@ static iBool isCamelCase_(const char *name) {
     return strchr(name, ' ') == NULL;
 }
 
+iLocalDef iBool isUpper_(char c) { return c >= 'A' && c <= 'Z'; }
+iLocalDef iBool isLower_(char c) { return c >= 'a' && c <= 'z'; }
+
 static iBool isCamelBoundary_(const char *name, size_t pos) {
-    return pos > 0 && name[pos - 1] >= 'a' && name[pos - 1] <= 'z' && name[pos] >= 'A' &&
-           name[pos] <= 'Z';
+    /* A word also starts after an acronym, e.g., "SEC|Roboto". */
+    if (pos == 0 || !isUpper_(name[pos])) {
+        return iFalse;
+    }
+    return isLower_(name[pos - 1]) || (isUpper_(name[pos - 1]) && isLower_(name[pos + 1]));
 }
+
+static iBool hasFamilyPrefix_(const char *name, const char *prefix, size_t prefixLen) {
+    /* `name` starts with `prefix` at a word boundary? */
+    if (iCmpStrN(name, prefix, prefixLen) != 0) return iFalse;
+    const char c = name[prefixLen];
+    return c == '\0' || c == ' ' || c == '_' || c == '-' ||
+           (isCamelCase_(name) && isCamelBoundary_(name, prefixLen));
+}
+
+/* Vendor prefixes that alone are enough to group fonts. */
+static const char *vendorPrefixes_[] = {
+    "SEC", /* Samsung */
+};
 
 static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, int numWords) {
     /* Copy up to the first `numWords` words of `name` into `out`. */
@@ -70,6 +89,11 @@ static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, in
         memcpy(out, name, len);
         out[len] = '\0';
         return;
+    }
+    iForIndices(i, vendorPrefixes_) {
+        if (isCamel && hasFamilyPrefix_(name, vendorPrefixes_[i], strlen(vendorPrefixes_[i]))) {
+            numWords = 1;
+        }
     }
     while (*p) {
         if (isCamel && *p == '-') {
@@ -84,14 +108,6 @@ static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, in
     size_t len = iMin((size_t)(p - name), outSize - 1);
     memcpy(out, name, len);
     out[len] = '\0';
-}
-
-static iBool hasFamilyPrefix_(const char *name, const char *prefix, size_t prefixLen) {
-    /* `name` starts with `prefix` at a word boundary? */
-    if (iCmpStrN(name, prefix, prefixLen) != 0) return iFalse;
-    const char c = name[prefixLen];
-    return c == '\0' || c == ' ' || c == '_' || c == '-' ||
-           (isCamelCase_(name) && isCamelBoundary_(name, prefixLen));
 }
 
 static iString *midTruncated_(iRangecc range, size_t maxLen) {

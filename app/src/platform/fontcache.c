@@ -58,7 +58,7 @@ void deserialize_FontCacheStyle(iFontCacheStyle *d, iStream *in) {
     d->winDescent = read32_Stream(in);
     d->emAdvance  = read32_Stream(in);
     d->unitsPerEm = read32_Stream(in);
-    d->numAxes    = iMin(readU8_Stream(in), maxAxes_FontFile);
+    d->numAxes    = iMini(readU8_Stream(in), maxAxes_FontFile);
     for (int i = 0; i < d->numAxes; i++) {
         d->axes[i].tag   = readU32_Stream(in);
         d->axes[i].value = readf_Stream(in);
