@@ -4,7 +4,7 @@
 # Usage: android-deps.sh [step...]
 #
 # ANDROID_NDK_HOME and ANDROID_NDK_TOOLCHAIN_BIN must be set. ARCHS selects the
-# ABIs (default: arm arm64 x86 x86_64). Meson cross files are read from
+# ABIs (default: arm arm64 x86_64). Meson cross files are read from
 # MESON_CROSS_DIR (default: ~/Scripts) as cross-android-<arch>.ini. The libraries
 # are installed in DEST/<name>-android/<abi>.
 
@@ -13,9 +13,10 @@ set -e
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/status-line.sh
 source $SCRIPT_DIR/jxl-dec.sh
+source $SCRIPT_DIR/openssl-opts.sh
 ALL_STEPS="webp fribidi harfbuzz libpng jxl freetype openssl iconv unistring pcre"
 STEPS=${*:-$ALL_STEPS}
-ARCHS=${ARCHS:-arm arm64 x86 x86_64}
+ARCHS=${ARCHS:-arm arm64 x86_64}
 
 if [ `uname -s` == Darwin ]; then
     export CFLAGS=""
@@ -75,12 +76,6 @@ function set_toolchain() {
         LIB_DIR=arm64-v8a
         API_LEVEL=21
 
-    elif [ $TOOLCHAIN == x86 ]; then
-        BINARY=i686
-        LD_BINARY=$BINARY
-        ABI=android${API_LEVEL}
-        LIB_DIR=x86
-
     else
         BINARY=x86_64
         LD_BINARY=$BINARY
@@ -102,6 +97,8 @@ function set_toolchain() {
     # The target-prefixed clang defines __ANDROID_API__. Redefining it causes a warning that
     # fails libtool's PIC check.
     export CFLAGS=
+    # 16 KB page support for shared libraries (default in NDK r28+).
+    export LDFLAGS="-Wl,-z,max-page-size=16384"
 }
 
 function fresh_build_dir() {
@@ -128,7 +125,7 @@ function autotools_build() {
         make_keep_going maintainer-clean
     fi
     status_phase configure
-    # Static libraries are linked into a shared library; 32-bit x86 requires PIC.
+    # Static libraries are linked into a shared library.
     ./configure --prefix=$DEST/${name}-android/${LIB_DIR} --host=${CFG_HOST} --with-pic "$@"
     status_phase build
     $make
@@ -248,6 +245,7 @@ function build_openssl() {
         --prefix=$DEST/openssl-android/${LIB_DIR} \
         android-${TOOLCHAIN} \
         no-shared \
+        "${OPENSSL_OPTS[@]}" \
         -D__ANDROID_API__=${API_LEVEL} \
         -fvisibility=hidden
     status_phase build

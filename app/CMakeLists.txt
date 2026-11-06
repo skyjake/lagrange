@@ -923,6 +923,8 @@ if [ -d \"\$dsym\" ]; then cp -r \"\$dsym\" \"\$BUILT_PRODUCTS_DIR/\"; fi
         if (CMAKE_SIZEOF_VOID_P EQUAL 4)
             target_compile_options (app PUBLIC -mfpu=neon-vfpv4) # 32-bit stb_image_resize2
         endif ()
+        # Don't export the symbols of the statically linked dependencies.
+        target_link_options (app PRIVATE -Wl,--exclude-libs,ALL)
         target_compile_definitions (app PUBLIC
             LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
             LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
