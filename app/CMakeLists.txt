@@ -127,6 +127,7 @@ elseif (ANDROID)
     list (APPEND RESOURCES
         res/about/mobile-help.gmi
         res/about/android-version.gmi
+        res/about/android-version-1.21.gmi
     )
 else ()
     list (APPEND RESOURCES

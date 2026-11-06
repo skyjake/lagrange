@@ -91,6 +91,7 @@ static struct {
 #elif defined (iPlatformAndroidMobile)
     { &blobHelp_Resources, "about/mobile-help.gmi" },
     { &blobVersion_Resources, "about/android-version.gmi" },
+    { &blobVersion_1_21_Resources, "about/android-version-1.21.gmi" },
 #else
     { &blobHelp_Resources, "about/help.gmi" },
     { &blobVersion_0_13_Resources, "about/version-0.13.gmi" },

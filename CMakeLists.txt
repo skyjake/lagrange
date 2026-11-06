@@ -14,7 +14,7 @@ endif ()
 if (ANDROID)
     set (PROJECT_VERSION 2.0)
     set (ANDROID_BUILD_VERSION 0)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2026-10-28")
+    set (ANDROID_BUILD_DATE "2026-11-06")
 endif ()
 set (LAGRANGE_APP_VERSION ${PROJECT_VERSION}) # subprojects have their own PROJECT_VERSION
 
