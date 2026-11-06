@@ -1352,7 +1352,7 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
         [appState_ setSystemTextLineSpacing:0.0f];
     }
     else {
-        font = [UIFont fontWithName:@"Roboto-Regular" size:height * 0.66f];
+        font = [UIFont systemFontOfSize:height * 0.66f];
         [appState_ setSystemTextLineSpacing:height * 0.66f];
     }
     if (d->field) {

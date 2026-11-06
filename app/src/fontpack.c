@@ -234,6 +234,11 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
     iFontPack *d = context;
     if (isStart) {
         iAssert(!d->loadSpec);
+#if defined (iPlatformAppleMobile)
+        if (!cmp_String(table, "default") && !cmp_String(&d->id, "default")) {
+            return; /* Roboto is not bundled; the system UI font is used instead */
+        }
+#endif
         /* An existing spec in this pack is updated in place. */
         iConstForEach(PtrArray, i, &d->fonts) {
             iFontSpec *s = i.ptr;

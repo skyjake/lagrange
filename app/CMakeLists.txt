@@ -116,8 +116,9 @@ endif ()
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 if (NOT ANDROID)
     list (FILTER FONTS EXCLUDE REGEX "MaterialSymbols") # UI icons on Android
-else ()
-    list (FILTER FONTS EXCLUDE REGEX "/Roboto-[A-Za-z]+\\.ttf$") # system font is used
+endif ()
+if (ANDROID OR IOS)
+    list (FILTER FONTS EXCLUDE REGEX "/(Roboto-[A-Za-z]+\\.ttf|LICENSE_Roboto\\.txt)$") # system font is used
 endif ()
 list (APPEND RESOURCES ${FONTS})
 if (IOS)
@@ -162,7 +163,6 @@ set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resou
 add_custom_target (resources DEPENDS ${EMB_BIN})
 if (IOS)
     set (EMB_FONTS
-        res/fonts/Roboto-Regular.ttf
         res/fonts/IosevkaFixed-Extended.ttf
     )
     set_source_files_properties (${EMB_FONTS}

@@ -79,7 +79,6 @@
 		<key>UIAppFonts</key>
 		<array>
 			<string>IosevkaFixed-Extended.ttf</string>
-			<string>Roboto-Regular.ttf</string>
 		</array>
 		<key>UIBackgroundModes</key>
 		<array>
