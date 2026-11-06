@@ -13,6 +13,7 @@ set -e
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/status-line.sh
 source $SCRIPT_DIR/jxl-dec.sh
+source $SCRIPT_DIR/openssl-opts.sh
 
 OPENSSL_VER=3.5.9
 ICONV_VER=1.19
@@ -130,6 +131,7 @@ function build_openssl() {
     status_phase configure
     ./Configure darwin64-$ARCH-cc \
         no-tests no-apps no-docs \
+        "${OPENSSL_OPTS[@]}" \
         -mmacosx-version-min=$OSMINVER \
         --prefix=$PREFIX \
         --openssldir=$PREFIX/ssl \

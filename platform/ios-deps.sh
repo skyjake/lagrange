@@ -12,6 +12,7 @@ set -e
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source $SCRIPT_DIR/status-line.sh
 source $SCRIPT_DIR/jxl-dec.sh
+source $SCRIPT_DIR/openssl-opts.sh
 OSMINVER=15.0
 OPENSSL_VER=3.5.9
 ALL_STEPS="openssl iconv unistring pcre foundation webp jxl sdl3"
@@ -125,6 +126,7 @@ function build_openssl() {
     # Configure only accepts single-token compiler flags.
     ./Configure $OPENSSL_TARGET \
         no-shared no-tests no-apps no-docs \
+        "${OPENSSL_OPTS[@]}" \
         --target=$TRIPLE \
         --prefix=$PREFIX \
         --libdir=lib
