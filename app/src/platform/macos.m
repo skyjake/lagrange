@@ -484,6 +484,7 @@ static iBool processKeyDownEvent_(NSEvent *event) {
 }
 
 static int swipeDir_ = 0;
+static double pendingScroll_[2]; /* movement while the axis is undecided, in points */
 static int preventTapGlitch_ = 0;
 
 static iBool processScrollWheelEvent_(NSEvent *event) {
@@ -561,8 +562,17 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         e.x = event.scrollingDeltaX * win->pixelRatio;
         e.y = event.scrollingDeltaY * win->pixelRatio;
         /* Only scroll on one axis at a time. */
-        if (swipeDir_ == 0) {
-            swipeDir_ = iAbs(e.x) > iAbs(e.y) ? 1 : 2;
+        if (swipeDir_ == 0) { /* undecided? */
+            pendingScroll_[0] += event.scrollingDeltaX;
+            pendingScroll_[1] += event.scrollingDeltaY;
+            /* Vertical movement is applied immediately, horizontal is discarded until then. */
+            if (fabs(pendingScroll_[0]) + fabs(pendingScroll_[1]) < 8.0) {
+                e.x = 0;
+            }
+            else {
+                swipeDir_ = fabs(pendingScroll_[0]) > 2 * fabs(pendingScroll_[1]) ? 1 : 2;
+                iZap(pendingScroll_);
+            }
         }
         if (swipeDir_ == 1) {
             e.y = 0;
@@ -572,6 +582,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         }
         if (isEnded) {
             swipeDir_ = 0;
+            iZap(pendingScroll_);
         }
     }
     else {
