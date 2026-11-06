@@ -178,9 +178,14 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         if (equal_Command(cmd, "cancel") && pointerLabel_Command(cmd, "menu") == menu) {
             return iFalse;
         }
-        if (equal_Command(cmd, "submenu.close") &&
-            (pointerLabel_Command(cmd, "menu") == menu || ~menu->flags & radio_WidgetFlag)) {
-            return iFalse;
+        if (equal_Command(cmd, "submenu.close")) {
+            if (pointerLabel_Command(cmd, "menu") == menu) {
+                closeMenu_Widget(menu);
+                return iTrue;
+            }
+            if (~menu->flags & radio_WidgetFlag) {
+                return iFalse;
+            }
         }
         if (equal_Command(cmd, "contextclick")) {
             return iFalse;
@@ -714,6 +719,13 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             releaseChildren_Widget(d);
             makeMenuItems_Widget(d, constData_Array(newItems), size_Array(newItems));
             addMenuCancelAction_Widget(d); /* must be present as well */
+        }
+    }
+    if (isSubmenu && deviceType_App() == phone_AppDeviceType) {
+        /* Cancel only closes the submenu. */
+        iLabelWidget *cancel = findMenuItem_Widget(d, "cancel");
+        if (cancel) {
+            setCommand_LabelWidget(cancel, collectNewFormat_String("submenu.close menu:%p", d));
         }
     }
     if (postCommands && !isSubmenu) {
