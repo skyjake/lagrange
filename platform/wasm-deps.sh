@@ -10,6 +10,7 @@
 set -e
 
 SRC_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+source "$SRC_ROOT/platform/openssl-opts.sh"
 PREFIX=${1:-$HOME/SDK/wasm}
 WORK=${WASM_WORK:-$HOME/src/libs/wasm-build}
 JOBS=${JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc)}
@@ -73,6 +74,7 @@ build_openssl() {
     ./Configure linux-generic32 \
         no-asm no-shared no-dso no-engine no-tests no-apps no-docs \
         no-afalgeng no-secure-memory no-ui-console \
+        "${OPENSSL_OPTS[@]}" \
         --prefix="$PREFIX" --libdir=lib \
         CC=emcc AR=emar RANLIB=emranlib
     emmake make -j$JOBS build_libs
