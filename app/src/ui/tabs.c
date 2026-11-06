@@ -67,9 +67,12 @@ static void reserveClosedTabSpace_Widget_(iWidget *tabs, const iWidget *button) 
         contains_Widget(buttons, mouseCoord_Window(window_Widget(tabs), 0))) {
         iWidget *spacer = findChild_Widget(buttons, "tabs.spacer");
         if (!spacer) {
-            spacer = addChildFlags_Widget(buttons,
-                                          iClob(new_Widget()),
-                                          unhittable_WidgetFlag | resizeToParentHeight_WidgetFlag);
+            spacer = new_Widget();
+            /* The current root may belong to another window, e.g., when moving a tab. */
+            setRoot_Widget(spacer, tabs->root);
+            addChildFlags_Widget(buttons,
+                                 iClob(spacer),
+                                 unhittable_WidgetFlag | resizeToParentHeight_WidgetFlag);
             setId_Widget(spacer, "tabs.spacer");
             /* Looks like an unselected tab. */
             setBackgroundColor_Widget(spacer, uiBackgroundFolder_ColorId);
