@@ -167,7 +167,12 @@ static void showPageInfo_DocumentWidget_(iDocumentWidget *d) {
         }
     }
     delete_Array(items);
+    const iBool atBottom = deviceType_App() == desktop_AppDeviceType && prefs_App()->bottomNavBar;
+    setFlags_Widget(dlg, moveToParentBottomEdge_WidgetFlag, atBottom);
     arrange_Widget(dlg);
+    if (atBottom) {
+        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | bottom_TransitionDir);
+    }
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
 }
