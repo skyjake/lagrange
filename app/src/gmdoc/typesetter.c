@@ -1389,7 +1389,8 @@ void publish_Typesetter_(iTypesetter *d, iBool isCaughtUp) {
     /* The document is updated to reflect the runs laid out so far. */
     iGmDocument *doc = d->doc;
     doc->flags.isLayoutCaughtUp = isCaughtUp;
-    doc->size.y = d->pos.y + verticalPad_Typesetter_(d);
+    doc->size.y = d->pos.y + verticalPad_Typesetter_(d) +
+                  gap_Text; /* the open link highlight extends below the last line */
     /* Indent is not included in run widths. */
     doc->contentWidth = d->maxRunWidth + d->style->indents[text_GmLineType] * gap_Text;
     doc->maxRunHeight = d->maxRunHeight;
