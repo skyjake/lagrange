@@ -566,7 +566,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         if (swipeDir_ == 0) { /* undecided? */
             pendingScroll_[0] += event.scrollingDeltaX;
             pendingScroll_[1] += event.scrollingDeltaY;
-            /* Vertical movement is applied immediately, horizontal is discarded until then. */
+            /* Vertical movement is applied immediately, horizontal is discarded. */
             if (fabs(pendingScroll_[0]) + fabs(pendingScroll_[1]) < 8.0) {
                 e.x = 0;
             }
