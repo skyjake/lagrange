@@ -129,6 +129,13 @@ static iRect boundsForDraw_Widget_(const iWidget *d) {
     return bounds;
 }
 
+static iBool fitsDrawBuffer_Widget_(const iWidget *d) {
+    /* Long menus may exceed the maximum texture size. */
+    const iInt2 maxSize = maxTextureSize_Window(get_Window());
+    const iInt2 size    = boundsForDraw_Widget_(d).size;
+    return isEqual_I2(maxSize, zero_I2()) || (size.x <= maxSize.x && size.y <= maxSize.y);
+}
+
 static iBool checkDrawBuffer_Widget_(const iWidget *d) {
     return d->drawBuf && d->drawBuf->isValid &&
            isEqual_I2(d->drawBuf->size, boundsForDraw_Widget_(d).size);
@@ -2451,14 +2458,22 @@ void drawClipped_Widget(const iWidget *d, iRect clipRect /* may be empty */) {
         return;
     }
     drawLayerEffects_Widget(d);
-    if (!d->drawBuf || !checkDrawBuffer_Widget_(d)) {
-        beginBufferDraw_Widget_(d);
+    const iBool isBuffered = d->drawBuf && fitsDrawBuffer_Widget_(d);
+    if (d->drawBuf && !isBuffered) {
+        release_WidgetDrawBuffer(d->drawBuf);
+    }
+    if (!isBuffered || !checkDrawBuffer_Widget_(d)) {
+        if (isBuffered) {
+            beginBufferDraw_Widget_(d);
+        }
         drawBackground_Widget(d);
         drawChildren_Widget(d);
-        endBufferDraw_Widget_(d);
+        if (isBuffered) {
+            endBufferDraw_Widget_(d);
+        }
     }
     const float opacity = visualOffsetOpacity_Widget_(d) * d->opacity;
-    if (d->drawBuf) {
+    if (isBuffered) {
         const iRect bounds = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
