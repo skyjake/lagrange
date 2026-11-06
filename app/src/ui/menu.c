@@ -845,6 +845,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             addPopup_App(win);
             SDL_ShowWindow(win->win);
             draw_Window(win);
+            win->focusGainedAt = SDL_GetTicks(); /* grace period starts when visible */
             setCurrent_Window(mainWindow_App());
             setCurrent_Root(oldRoot);
             return;
