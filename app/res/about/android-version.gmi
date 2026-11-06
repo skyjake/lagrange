@@ -8,7 +8,7 @@ A new major version means major changes: the app now supports user data syncing,
 
 (You can disable showing release notes in Settings.)
 
-## 2.0
+## 2.0 (0)
 
 New features:
 * Syncing user data across devices with end-to-end encryption. (Relies on a sync server.)

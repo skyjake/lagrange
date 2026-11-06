@@ -124,6 +124,7 @@ if (IOS)
     list (APPEND RESOURCES
         res/about/mobile-help.gmi
         res/about/ios-version.gmi
+        res/about/ios-version-1.21.gmi
     )
 elseif (ANDROID)
     list (APPEND RESOURCES
