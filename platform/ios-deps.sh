@@ -186,6 +186,7 @@ function build_jxl() {
 function build_sdl3() {
     fresh_build_dir SDL3
     cmake_ios $DIR_SDL3 -G Xcode \
+        -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
         -DSDL_SHARED=ON \
         -DSDL_STATIC=OFF \
         -DSDL_CAMERA=OFF \

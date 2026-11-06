@@ -83,6 +83,12 @@ if [ -d "${DSYM_SRC}" ]; then
     DWARF_OLD="${DSYM_DST}/Contents/Resources/DWARF/${SDL3_DYLIB_NAME}"
     DWARF_NEW="${DSYM_DST}/Contents/Resources/DWARF/SDL3"
     [ -f "${DWARF_OLD}" ] && mv "${DWARF_OLD}" "${DWARF_NEW}"
+    BIN_UUID=$(dwarfdump --uuid "${FW}/SDL3" | awk '{print $2}')
+    DSYM_UUID=$(dwarfdump --uuid "${DWARF_NEW}" | awk '{print $2}')
+    if [ "${BIN_UUID}" != "${DSYM_UUID}" ]; then
+        echo "error: dSYM UUID ${DSYM_UUID} does not match SDL3 binary ${BIN_UUID}" >&2
+        exit 1
+    fi
 else
     echo "warning: dSYM not found at ${DSYM_SRC}, skipping" >&2
 fi

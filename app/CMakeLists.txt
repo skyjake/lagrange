@@ -865,6 +865,8 @@ if (ENABLE_GUI)
                 XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
                 XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
                 XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)" # fix missing dSYM issue
+                XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES"
+                XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym"
                 MACOSX_BUNDLE_ICON_FILE "AppIcon"
             )
             # Embed (and sign) the dynamic SDL3 in the app bundle.
