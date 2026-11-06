@@ -63,6 +63,14 @@ static iScrollWidget *scrollBar_SimpleDocumentWidget_(const iSimpleDocumentWidge
     return d->scroll;
 }
 
+/* The end of the page can be scrolled out from under the bottom safe area. */
+static int footerHeight_SimpleDocumentWidget_(const iSimpleDocumentWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    return iMax(0,
+                bottom_Rect(boundsWithoutVisualOffset_Widget(w)) -
+                    bottom_Rect(safeRect_Root(w->root)));
+}
+
 static void refreshWhileScrolling_SimpleDocumentWidget_(iAny *ptr) {
     iSimpleDocumentWidget *d    = ptr;
     iDocumentView         *view = d->view;
@@ -108,6 +116,7 @@ static void aboutToScrollView_SimpleDocumentWidget_(iSimpleDocumentWidget *d, in
 }
 
 static const iDocumentViewHost viewHost_SimpleDocumentWidget_ = {
+    .footerHeight          = (iAny *) footerHeight_SimpleDocumentWidget_,
     .scrollBar             = (iAny *) scrollBar_SimpleDocumentWidget_,
     .isHoverAllowed        = (iAny *) isHoverAllowed_SimpleDocumentWidget_,
     .isPrerenderingAllowed = (iAny *) isVisible_Widget,
