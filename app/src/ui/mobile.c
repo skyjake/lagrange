@@ -1396,6 +1396,29 @@ void releasePopup_SystemMenu(iWidget *owner) {
 }
 #endif /* !iPlatformAppleMobile */
 
+static iBool isCoveredOnTop_SystemMenu_(const iWidget *button) {
+    /* Native buttons are above everything, so a custom popup drawn over the button blocks it. */
+    const iPtrArray *onTop = onTop_Root(button->root);
+    size_t           first = 0;
+    for (const iWidget *w = button; w; w = w->parent) {
+        if (w->flags & keepOnTop_WidgetFlag) {
+            const size_t pos = indexOf_PtrArray(onTop, w);
+            if (pos != iInvalidPos) {
+                first = pos + 1;
+                break;
+            }
+        }
+    }
+    const iRect bounds = bounds_Widget(button);
+    for (size_t i = first; i < size_PtrArray(onTop); i++) {
+        const iWidget *top = constAt_PtrArray(onTop, i);
+        if (isVisible_Widget(top) && isOverlapping_Rect(bounds, bounds_Widget(top))) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
     iAssert(isSupported_SystemMenu());
     //printf("updating bounds of sysmenu owner %p\n", owner);
@@ -1409,6 +1432,7 @@ void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
 //        printf("--- activeFocusRoot: ");
 //        identify_Widget(activeFocusRoot);
         if (!isVisible_Widget(parent) || isDisabled_Widget(parent) ||
+            isCoveredOnTop_SystemMenu_(parent) ||
             /* other focus root blocks the parent? */
             (menuFocusRoot != activeFocusRoot &&
              !(hasParent_Widget(menuFocusRoot, activeFocusRoot) ||

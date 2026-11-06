@@ -997,6 +997,9 @@ void closeMenu_Widget(iWidget *d) {
         }
         notify_Widget(d, "menu.closed");
         setupMenuTransition_Mobile(d, iFalse);
+        if (isAppleMobile_Platform()) {
+            d->root->didChangeArrangement = iTrue; /* native menu buttons may be uncovered */
+        }
         if (focus_Widget() && hasParent_Widget(focus_Widget(), d)) {
             setFocus_Widget(menubar ? NULL : as_Widget(button));
         }
