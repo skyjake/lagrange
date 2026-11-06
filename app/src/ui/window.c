@@ -1295,7 +1295,9 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             if (d->isMinimized) {
                 return iTrue;
             }
-            closePopups_App(iFalse);
+            if (d->type != popup_WindowType) {
+                closePopups_App(iFalse);
+            }
             checkPixelRatioChange_Window_(d);
             updateSize_Window_(d, iTrue);
             postRefresh_Window(d);
