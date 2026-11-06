@@ -453,6 +453,9 @@ Fixes:
 * Fixed a layout issue in the translation dialog.
 * Cleaned up a few UI labels.
 
+## 1.13 (4)
+* Fixed issues with text selection and range visualization.
+
 ## 1.13 (3)
 * Fixed reporting of errors related to a proxy server certificate.
 * An untrusted proxy server certificate can be trusted via Page Information.
