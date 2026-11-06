@@ -49,10 +49,21 @@ static iBool monospaceFonts_(const iFontSpec *spec) {
     return (spec->flags & monospace_FontSpecFlag) != 0 && ~spec->flags & auxiliary_FontSpecFlag;
 }
 
+static iBool isCamelCase_(const char *name) {
+    /* Names without spaces (e.g., "NotoSansThai-Regular") have CamelCase words. */
+    return strchr(name, ' ') == NULL;
+}
+
+static iBool isCamelBoundary_(const char *name, size_t pos) {
+    return pos > 0 && name[pos - 1] >= 'a' && name[pos - 1] <= 'z' && name[pos] >= 'A' &&
+           name[pos] <= 'Z';
+}
+
 static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, int numWords) {
-    /* Copy up to the first `numWords` space-delimited words of `name` into `out`. */
+    /* Copy up to the first `numWords` words of `name` into `out`. */
     const char *p         = name;
     int         words     = 0;
+    const iBool isCamel   = isCamelCase_(name);
     const char *underline = strchr(name, '_');
     if (underline) {
         size_t len = iMin(underline - name, outSize - 1);
@@ -61,7 +72,10 @@ static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, in
         return;
     }
     while (*p) {
-        if (*p == ' '|| *p == '_') {
+        if (isCamel && *p == '-') {
+            break; /* style suffix */
+        }
+        if (*p == ' ' || (isCamel && isCamelBoundary_(name, p - name))) {
             words++;
             if (words == numWords) break;
         }
@@ -73,10 +87,11 @@ static void extractFamilyPrefix_(const char *name, char *out, size_t outSize, in
 }
 
 static iBool hasFamilyPrefix_(const char *name, const char *prefix, size_t prefixLen) {
-    /* `name` starts with `prefix` at a word boundary? (space or end of string) */
+    /* `name` starts with `prefix` at a word boundary? */
     if (iCmpStrN(name, prefix, prefixLen) != 0) return iFalse;
     const char c = name[prefixLen];
-    return c == '\0' || c == ' ' || c == '_';
+    return c == '\0' || c == ' ' || c == '_' || c == '-' ||
+           (isCamelCase_(name) && isCamelBoundary_(name, prefixLen));
 }
 
 static iString *midTruncated_(iRangecc range, size_t maxLen) {
