@@ -274,6 +274,11 @@ static iBool processEvent_DocumentDialog_(iDocumentDialog *d, const SDL_Event *e
         dismiss_DocumentDialog_(d);
         return iTrue;
     }
+    else if (isCommand_UserEvent(ev, "panel.close") && ~w->flags & hidden_WidgetFlag) {
+        /* Android system Back. */
+        dismiss_DocumentDialog_(d);
+        return iTrue;
+    }
     else if (isCommand_Widget(w, ev, "docdlg.newtab")) {
         postCommandf_Root(w->root, "open newtab:1 url:%s", cstr_String(&d->url));
         return iTrue;
