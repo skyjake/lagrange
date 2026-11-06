@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include FT_FREETYPE_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_SFNT_NAMES_H
+#include FT_MULTIPLE_MASTERS_H
 
 #if defined (LAGRANGE_ENABLE_FONTCONFIG)
 #   include <fontconfig/fontconfig.h>
@@ -61,18 +62,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <combaseapi.h>
 #endif
 
+#include <ctype.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
 static const uint32_t magic_FtFontCache_   = 0x6C674643u; /* "lgFC" */
-static const uint32_t version_FtFontCache_ = 2u; /* v2 adds mtime header */
+static const uint32_t version_FtFontCache_ = 5u; /* bump to reset old cached data */
 
-static void extractMetrics_(const char *filePath, int colIndex, iFontCacheStyle *out) {
-    FT_Library lib = ftLibrary_FtText(); /* increments ref count */
+static void extractMetrics_(FT_Library lib, const char *filePath, int colIndex,
+                            iFontCacheStyle *out) {
     FT_Face face = NULL;
     if (FT_New_Face(lib, filePath, colIndex, &face) != 0 || !face) {
-        doneFtLibrary_FtText();
         return;
     }
     TT_OS2 *os2 = FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
@@ -95,7 +96,6 @@ static void extractMetrics_(const char *filePath, int colIndex, iFontCacheStyle 
         out->emAdvance = (int32_t) face->units_per_EM;
     }
     FT_Done_Face(face);
-    doneFtLibrary_FtText();
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -114,6 +114,8 @@ static iFontFile *makeFontFile_(const iFontCacheStyle *style, enum iFontStyle st
     f->winDescent = style->winDescent;
     f->emAdvance  = style->emAdvance;
     f->unitsPerEm = style->unitsPerEm;
+    f->numAxes    = style->numAxes;
+    memcpy(f->axes, style->axes, sizeof(f->axes));
     allocData_FontFile(f); /* sourceData is empty; loads via f->id file path */
     return f;
 }
@@ -314,35 +316,32 @@ static iBool isCacheStale_(const iString *path) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-#if defined (LAGRANGE_ENABLE_FONTCONFIG) || defined (LAGRANGE_ENABLE_DIRECTWRITE)
-
-/* Normalize a family name to a spec ID: "sys-<alphanumeric-hyphenated>" */
-static void makeSpecId_(const char *familyName, iString *id_out) {
-    setCStr_String(id_out, "sys-");
+/* Normalize a family name to a spec ID: "system-<alphanumeric-hyphenated>" */
+static void makeSpecId_(iRangecc familyName, iString *id_out) {
+    static const char *prefix = "system-";
+    setCStr_String(id_out, prefix);
     iBool needSep = iFalse;
-    for (const char *p = familyName; *p; p++) {
+    for (const char *p = familyName.start; p < familyName.end; p++) {
         const unsigned char c = (unsigned char) *p;
         if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
-            if (needSep && size_String(id_out) > 4) {
+            if (needSep && size_String(id_out) > strlen(prefix)) {
                 appendChar_String(id_out, '-');
                 needSep = iFalse;
             }
             appendChar_String(id_out, (iChar) c);
         }
         else if (c >= 'A' && c <= 'Z') {
-            if (needSep && size_String(id_out) > 4) {
+            if (needSep && size_String(id_out) > strlen(prefix)) {
                 appendChar_String(id_out, '-');
                 needSep = iFalse;
             }
             appendChar_String(id_out, (iChar) (c + 32));
         }
-        else if (size_String(id_out) > 4) {
+        else if (size_String(id_out) > strlen(prefix)) {
             needSep = iTrue;
         }
     }
 }
-
-#endif
 
 #if defined (LAGRANGE_ENABLE_FONTCONFIG)
 
@@ -367,7 +366,7 @@ static int fcStyleWeight_(enum iFontStyle style) {
     }
 }
 
-static void enumerateFontconfig_(iArray *entries_out) {
+static void enumerateFontconfig_(FT_Library lib, iArray *entries_out) {
     FcConfig *config = FcInitLoadConfigAndFonts();
     if (!config) return;
     FcPattern  *pat = FcPatternCreate();
@@ -425,7 +424,7 @@ static void enumerateFontconfig_(iArray *entries_out) {
         /* Find or create entry via linear scan (one-time init, so fast enough). */ {
             iString specId;
             init_String(&specId);
-            makeSpecId_((const char *) familyCStr, &specId);
+            makeSpecId_(range_CStr((const char *) familyCStr), &specId);
             iForEach(Array, j, entries_out) {
                 if (equal_String(&((iFontCacheEntry *) j.value)->id, &specId)) {
                     entry = j.value;
@@ -465,7 +464,7 @@ static void enumerateFontconfig_(iArray *entries_out) {
         for (int k = 0; k < max_FontStyle; k++) {
             iFontCacheStyle *sty = &entry->styles[k];
             if (!isEmpty_String(&sty->identifier)) {
-                extractMetrics_(cstr_String(&sty->identifier), sty->colIndex, sty);
+                extractMetrics_(lib, cstr_String(&sty->identifier), sty->colIndex, sty);
             }
         }
     }
@@ -482,7 +481,7 @@ static void enumerateFontconfig_(iArray *entries_out) {
 
 /* Windows: enumerate fonts via DirectWrite.
    We resolve each IDWriteFont to a file path and extract metrics. */
-static void enumerateDirectWrite_(iArray *entries_out) {
+static void enumerateDirectWrite_(FT_Library lib, iArray *entries_out) {
     IDWriteFactory *factory = NULL;
     if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
                                    &IID_IDWriteFactory,
@@ -524,7 +523,7 @@ static void enumerateDirectWrite_(iArray *entries_out) {
         init_String(&specId);
         init_String(&dispName);
         setCStr_String(&dispName, utf8name);
-        makeSpecId_(utf8name, &specId);
+        makeSpecId_(range_CStr(utf8name), &specId);
 
         iFontCacheEntry entry;
         init_FontCacheEntry(&entry);
@@ -590,7 +589,7 @@ static void enumerateDirectWrite_(iArray *entries_out) {
                     iFontCacheStyle *sty = &entry.styles[styleId];
                     setCStr_String(&sty->identifier, pathUtf8);
                     sty->colIndex = (int) faceIdx;
-                    extractMetrics_(pathUtf8, faceIdx, sty);
+                    extractMetrics_(lib, pathUtf8, faceIdx, sty);
                     IDWriteLocalFontFileLoader_Release(localLoader);
                 }
                 if (loader)  IDWriteFontFileLoader_Release(loader);
@@ -630,79 +629,25 @@ static void enumerateDirectWrite_(iArray *entries_out) {
 #endif /* LAGRANGE_ENABLE_DIRECTWRITE */
 
 /*----------------------------------------------------------------------------------------------*/
-/* Background worker: validates and refreshes the font cache. */
-
-iDeclareType(FtFontWorker)
-
-struct Impl_FtFontWorker {
-    iThread *thread;
-    iString  cachePath;
-    iBool    stopWorker;
-};
-
-static iFtFontWorker *worker_;
-
-iDeclareTypeConstructionArgs(FtFontWorker, const iString *cachePath)
-
-static iThreadResult refresh_FtFontWorker_(iThread *thread) {
-    iFtFontWorker *d = userData_Thread(thread);
-    if (!isCacheStale_(&d->cachePath) || d->stopWorker) {
-        goto done_;
-    }
-    /* Directories changed: re-enumerate and write a fresh cache. */
-    iArray entries;
-    init_Array(&entries, sizeof(iFontCacheEntry));
-#if defined (LAGRANGE_ENABLE_FONTCONFIG)
-    enumerateFontconfig_(&entries);
-#elif defined (LAGRANGE_ENABLE_DIRECTWRITE)
-    enumerateDirectWrite_(&entries);
-#endif
-    if (!d->stopWorker) {
-        writeCache_(&d->cachePath, &entries);
-    }
-    iForEach(Array, i, &entries) { deinit_FontCacheEntry(i.value); }
-    deinit_Array(&entries);
-    if (!d->stopWorker) {
-        postCommand_App("font.reload");
-    }
-done_:
-    worker_ = NULL;
-    iRelease(d->thread);
-    d->thread = NULL;
-    delete_FtFontWorker(d);
-    return 0;
-}
-
-void init_FtFontWorker(iFtFontWorker *d, const iString *cachePath) {
-    d->thread     = NULL;
-    d->stopWorker = iFalse;
-    initCopy_String(&d->cachePath, cachePath);
-    d->thread = new_Thread(refresh_FtFontWorker_);
-    setName_Thread(d->thread, "FtFontWorker");
-    setUserData_Thread(d->thread, d);
-    start_Thread(d->thread);
-}
-
-void deinit_FtFontWorker(iFtFontWorker *d) {
-    if (d->thread) {
-        d->stopWorker = iTrue;
-        join_Thread(d->thread);
-        iReleasePtr(&d->thread);
-    }
-    deinit_String(&d->cachePath);
-}
-
-iDefineTypeConstructionArgs(FtFontWorker, (const iString *cachePath), cachePath)
-
-static void startWorker_(const iString *cachePath) {
-    if (!worker_) {
-        worker_ = new_FtFontWorker(cachePath);
-    }
-}
-
-/*----------------------------------------------------------------------------------------------*/
 
 #if defined (__ANDROID__)
+
+static uint32_t tag_(const char *s) {
+    return ((uint32_t) (uint8_t) s[0] << 24) | ((uint32_t) (uint8_t) s[1] << 16) |
+           ((uint32_t) (uint8_t) s[2] << 8) | (uint32_t) (uint8_t) s[3];
+}
+
+static void setAxis_(iFontAxis *axes, int *numAxes, uint32_t tag, float value) {
+    for (int i = 0; i < *numAxes; i++) {
+        if (axes[i].tag == tag) {
+            axes[i].value = value;
+            return;
+        }
+    }
+    if (*numAxes < maxAxes_FontFile) {
+        axes[(*numAxes)++] = (iFontAxis){ tag, value };
+    }
+}
 
 static iFontCacheEntry *findEntry_(iArray *entries, const iString *id) {
     iForEach(Array, i, entries) {
@@ -714,7 +659,148 @@ static iFontCacheEntry *findEntry_(iArray *entries, const iString *id) {
     return NULL;
 }
 
-static void enumerateAndroid_(iArray *entries_out) {
+static const struct {
+    const char *word;
+    int         weight;
+} styleWords_[] = {
+    { "Thin", 100 },     { "ExtraLight", 200 }, { "UltraLight", 200 }, { "Light", 300 },
+    { "Regular", 400 },  { "Book", 400 },       { "VF", 400 },         { "Medium", 500 },
+    { "SemiBold", 600 }, { "DemiBold", 600 },   { "Bold", 700 },       { "ExtraBold", 800 },
+    { "UltraBold", 800 }, { "Black", 900 },     { "Heavy", 900 },
+};
+
+static const int slotWeights_[max_FontStyle] = {
+    [regular_FontStyle]  = 400,
+    [italic_FontStyle]   = 400,
+    [light_FontStyle]    = 300,
+    [semiBold_FontStyle] = 600,
+    [bold_FontStyle]     = 700,
+};
+
+static iRangecc fileStem_(const iString *path) {
+    iRangecc stem = baseName_Path(path);
+    for (const char *p = stem.end; p > stem.start; p--) {
+        if (p[-1] == '.') {
+            stem.end = p - 1;
+            break;
+        }
+    }
+    return stem;
+}
+
+/* Splits a file name like "NotoSerif-BoldItalic.ttf" to the family and style. */
+static iRangecc parseFileStyle_(const iString *path, int *weight_out, iBool *isItalic_out) {
+    const iRangecc stem = fileStem_(path);
+    *weight_out   = 400;
+    *isItalic_out = iFalse;
+    const char *dash = NULL;
+    for (const char *p = stem.start; p < stem.end; p++) {
+        if (*p == '-') dash = p;
+    }
+    if (!dash || dash == stem.start) {
+        return stem;
+    }
+    iRangecc suffix = { dash + 1, stem.end };
+    iBool isItalic = iFalse;
+    if (endsWith_Rangecc(suffix, "Italic")) {
+        isItalic = iTrue;
+        suffix.end -= 6;
+    }
+    int weight = isEmpty_Range(&suffix) && isItalic ? 400 : 0;
+    iForIndices(i, styleWords_) {
+        if (equal_Rangecc(suffix, styleWords_[i].word)) {
+            weight = styleWords_[i].weight;
+            break;
+        }
+    }
+    if (!weight) {
+        return stem; /* not a style suffix */
+    }
+    *weight_out   = weight;
+    *isItalic_out = isItalic;
+    return (iRangecc){ stem.start, dash };
+}
+
+static int styleSlot_(int weight, iBool isItalic) {
+    if (isItalic) {
+        return weight == 400 ? italic_FontStyle : -1; /* no slot for other italics */
+    }
+    return weight < 400 ? light_FontStyle : weight == 400 ? regular_FontStyle
+         : weight < 700 ? semiBold_FontStyle : bold_FontStyle;
+}
+
+static int slotDistance_(const iString *path, int slot) {
+    int   weight;
+    iBool isItalic;
+    parseFileStyle_(path, &weight, &isItalic);
+    return iAbs(weight - slotWeights_[slot]);
+}
+
+static iFontCacheEntry *findOrAddEntry_(iArray *entries, iRangecc name) {
+    iString id;
+    init_String(&id);
+    makeSpecId_(name, &id);
+    iFontCacheEntry *entry = findEntry_(entries, &id);
+    if (!entry) {
+        iFontCacheEntry newEntry;
+        init_FontCacheEntry(&newEntry);
+        set_String(&newEntry.id, &id);
+        setRange_String(&newEntry.name, name);
+        pushBack_Array(entries, &newEntry);
+        entry = back_Array(entries);
+    }
+    deinit_String(&id);
+    return entry;
+}
+
+static void copyStyle_(iFontCacheStyle *dst, const iFontCacheStyle *src) {
+    set_String(&dst->identifier, &src->identifier);
+    dst->colIndex   = src->colIndex;
+    dst->ascent     = src->ascent;
+    dst->descent    = src->descent;
+    dst->lineGap    = src->lineGap;
+    dst->winAscent  = src->winAscent;
+    dst->winDescent = src->winDescent;
+    dst->emAdvance  = src->emAdvance;
+    dst->unitsPerEm = src->unitsPerEm;
+    dst->numAxes    = src->numAxes;
+    memcpy(dst->axes, src->axes, sizeof(dst->axes));
+}
+
+static iBool hasAxis_(const FT_MM_Var *mm, const char *tag) {
+    for (FT_UInt i = 0; i < mm->num_axis; i++) {
+        if (mm->axis[i].tag == tag_(tag)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+/* Styles copied from a variable regular font are instanced to their weights. */
+static void instanceVariableStyles_(FT_Library lib, iFontCacheEntry *e, const iBool *isCopied) {
+    const iFontCacheStyle *regular = &e->styles[regular_FontStyle];
+    FT_Face    face = NULL;
+    FT_MM_Var *mm   = NULL;
+    if (FT_New_Face(lib, cstr_String(&regular->identifier), regular->colIndex, &face) == 0) {
+        if (FT_HAS_MULTIPLE_MASTERS(face) && FT_Get_MM_Var(face, &mm) == 0) {
+            const iBool hasWght = hasAxis_(mm, "wght");
+            const iBool hasItal = hasAxis_(mm, "ital");
+            for (int s = 0; s < max_FontStyle && hasWght; s++) {
+                if (s != regular_FontStyle && !isCopied[s]) continue;
+                iFontCacheStyle *sty = &e->styles[s];
+                setAxis_(sty->axes, &sty->numAxes, tag_("wght"), slotWeights_[s]);
+                if (hasItal) {
+                    setAxis_(sty->axes, &sty->numAxes, tag_("ital"),
+                             s == italic_FontStyle ? 1.0f : 0.0f);
+                }
+            }
+            FT_Done_MM_Var(lib, mm);
+        }
+        FT_Done_Face(face);
+    }
+}
+
+static void enumerateAndroid_(FT_Library lib, iArray *entries_out) {
     const char *androidFontDirs[] = { "/system/fonts", "/system/product/fonts", NULL };
     for (int di = 0; androidFontDirs[di]; di++) {
         iString *dir = newCStr_String(androidFontDirs[di]);
@@ -726,97 +812,52 @@ static void enumerateAndroid_(iArray *entries_out) {
             const iString   *path = path_FileInfo(info);
             if (!endsWith_String(path, ".ttf") && !endsWith_String(path, ".otf") &&
                 !endsWith_String(path, ".ttc")) continue;
-            /* Derive a family name from the filename stem. */
-            iRangecc baseName = baseName_Path(path);
-            iString *stem = collect_String(newRange_String(baseName));
-            /* Strip common suffix patterns like -Regular, -Bold, etc. */
-            static const char *suffixes[] = {
-                "-Regular", "-Bold", "-Italic", "-BoldItalic", "-Light",
-                "-Medium", "-Thin", "-Black", "-Condensed", NULL
-            };
-            for (int si = 0; suffixes[si]; si++) {
-                if (endsWith_String(stem, suffixes[si])) {
-                    truncate_String(stem, size_String(stem) - strlen(suffixes[si]));
+            int            weight;
+            iBool          isItalic;
+            const iRangecc family = parseFileStyle_(path, &weight, &isItalic);
+            const int      slot   = styleSlot_(weight, isItalic);
+            if (slot < 0) continue;
+            iFontCacheEntry *entry = findOrAddEntry_(entries_out, family);
+            iFontCacheStyle *sty   = &entry->styles[slot];
+            if (!isEmpty_String(&sty->identifier)) {
+                if (slot == regular_FontStyle) {
+                    /* Every regular file stays available, e.g., for glyph fallback. */
+                    entry = findOrAddEntry_(entries_out, fileStem_(path));
+                    sty   = &entry->styles[slot];
+                    if (!isEmpty_String(&sty->identifier)) continue;
+                }
+                else if (iAbs(weight - slotWeights_[slot]) >= slotDistance_(&sty->identifier, slot)) {
+                    continue;
                 }
             }
-            /* Remove extension. */
-            const size_t dot = lastIndexOfCStr_String(stem, ".");
-            if (dot != iInvalidPos) truncate_String(stem, dot);
-            /* Make spec ID. */
-            iString specId;
-            init_String(&specId);
-            setCStr_String(&specId, "and-");
-            iConstForEach(String, ch, stem) {
-                const iChar c = ch.value;
-                if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
-                    appendChar_String(&specId, c);
-                }
-                else if (c >= 'A' && c <= 'Z') {
-                    appendChar_String(&specId, c + 32);
-                }
-                else if (size_String(&specId) > 4) {
-                    appendChar_String(&specId, '-');
-                }
-            }
-            iFontCacheEntry *entry = findEntry_(entries_out, &specId);
-            if (!entry) {
-                iFontCacheEntry newEntry;
-                init_FontCacheEntry(&newEntry);
-                set_String(&newEntry.id, &specId);
-                set_String(&newEntry.name, stem);
-                pushBack_Array(entries_out, &newEntry);
-                entry = back_Array(entries_out);
-            }
-            deinit_String(&specId);
-            /* Determine style from filename and populate the style slot. */
-            iBool isBold   = indexOfCStr_String(path, "Bold") != iInvalidPos || indexOfCStr_String(path, "bold") != iInvalidPos;
-            iBool isItalic = indexOfCStr_String(path, "Italic")  != iInvalidPos ||
-                             indexOfCStr_String(path, "italic")  != iInvalidPos ||
-                             indexOfCStr_String(path, "Oblique") != iInvalidPos;
-            iBool isLight  = indexOfCStr_String(path, "Light")   != iInvalidPos ||
-                             indexOfCStr_String(path, "Thin")    != iInvalidPos;
-            iBool isSemi   = indexOfCStr_String(path, "Medium")  != iInvalidPos ||
-                             indexOfCStr_String(path, "SemiBold") != iInvalidPos;
-            enum iFontStyle styleId;
-            if (isBold && !isItalic)       styleId = bold_FontStyle;
-            else if (isItalic && !isBold)  styleId = italic_FontStyle;
-            else if (isLight)              styleId = light_FontStyle;
-            else if (isSemi)               styleId = semiBold_FontStyle;
-            else                           styleId = regular_FontStyle;
-            if (!isEmpty_String(&entry->styles[styleId].identifier)) {
-                /* Already have this style; try regular as fallback slot. */
-                if (styleId != regular_FontStyle &&
-                    isEmpty_String(&entry->styles[regular_FontStyle].identifier)) {
-                    styleId = regular_FontStyle;
-                }
-                else {
-                    continue; /* slot taken */
-                }
-            }
-            set_String(&entry->styles[styleId].identifier, path);
-            extractMetrics_(cstr_String(path), 0, &entry->styles[styleId]);
+            set_String(&sty->identifier, path);
+            sty->colIndex = 0;
+            extractMetrics_(lib, cstr_String(path), 0, sty);
         }
         iRelease(contents);
         iRelease(fi);
         delete_String(dir);
     }
-    /* Fill missing styles with regular. */
     iForEach(Array, i, entries_out) {
         iFontCacheEntry *e = i.value;
-        if (isEmpty_String(&e->styles[regular_FontStyle].identifier)) continue;
+        iFontCacheStyle *regular = &e->styles[regular_FontStyle];
+        /* A family without a regular style uses its closest one instead. */
+        static const int substitutes[] = {
+            semiBold_FontStyle, light_FontStyle, bold_FontStyle, italic_FontStyle
+        };
+        iForIndices(k, substitutes) {
+            if (!isEmpty_String(&regular->identifier)) break;
+            copyStyle_(regular, &e->styles[substitutes[k]]);
+        }
+        if (isEmpty_String(&regular->identifier)) continue;
+        iBool isCopied[max_FontStyle] = { iFalse };
         for (int s = 0; s < max_FontStyle; s++) {
             if (isEmpty_String(&e->styles[s].identifier)) {
-                set_String(&e->styles[s].identifier, &e->styles[regular_FontStyle].identifier);
-                e->styles[s].colIndex   = e->styles[regular_FontStyle].colIndex;
-                e->styles[s].ascent     = e->styles[regular_FontStyle].ascent;
-                e->styles[s].descent    = e->styles[regular_FontStyle].descent;
-                e->styles[s].lineGap    = e->styles[regular_FontStyle].lineGap;
-                e->styles[s].winAscent  = e->styles[regular_FontStyle].winAscent;
-                e->styles[s].winDescent = e->styles[regular_FontStyle].winDescent;
-                e->styles[s].emAdvance  = e->styles[regular_FontStyle].emAdvance;
-                e->styles[s].unitsPerEm = e->styles[regular_FontStyle].unitsPerEm;
+                copyStyle_(&e->styles[s], regular);
+                isCopied[s] = iTrue;
             }
         }
+        instanceVariableStyles_(lib, e, isCopied);
     }
 }
 
@@ -824,13 +865,26 @@ static iBool hasAttr_(iRangecc attrs, const char *attr) {
     return iStrStrN(attrs.start, attr, size_Range(&attrs)) != NULL;
 }
 
-/* Font files of the unnamed fallback families in fonts.xml, in the system's order of
-   preference. Emoji families are listed separately. */
-static void androidFallbackPaths_(iStringList *paths_out, iStringList *emojiPaths_out) {
+static iRangecc attrValue_(iRangecc attrs, const char *name) {
+    const size_t nameLen = strlen(name);
+    for (const char *pos = attrs.start; pos + nameLen + 2 <= attrs.end; pos++) {
+        if ((pos == attrs.start || isspace((unsigned char) pos[-1])) &&
+            !iCmpStrN(pos, name, nameLen) && pos[nameLen] == '=' && pos[nameLen + 1] == '"') {
+            const char *start = pos + nameLen + 2;
+            const char *end   = memchr(start, '"', attrs.end - start);
+            if (end) {
+                return (iRangecc){ start, end };
+            }
+        }
+    }
+    return iNullRange;
+}
+
+static iString *readFontsXml_(void) {
     iFile *f = newCStr_File("/system/etc/fonts.xml");
     if (!open_File(f, readOnly_FileMode)) {
         iRelease(f);
-        return;
+        return NULL;
     }
     iBlock *xml = readAll_File(f);
     iRelease(f);
@@ -844,6 +898,16 @@ static void androidFallbackPaths_(iStringList *paths_out, iStringList *emojiPath
     }
     appendCStr_String(src, pos);
     delete_Block(xml);
+    return src;
+}
+
+/* Font files of the unnamed fallback families in fonts.xml, in the system's order of
+   preference. Emoji families are listed separately. */
+static void androidFallbackPaths_(iStringList *paths_out, iStringList *emojiPaths_out) {
+    iString *src = readFontsXml_();
+    if (!src) {
+        return;
+    }
     iRegExp *familyPattern = new_RegExp("(?s)<family\\b([^>]*)>(.*?)</family>", 0);
     iRegExp *fontPattern   = new_RegExp("<font\\b([^>]*)>\\s*([^<\\s]+)", 0);
     iRegExpMatch m;
@@ -889,18 +953,219 @@ static void androidFallbackPaths_(iStringList *paths_out, iStringList *emojiPath
     delete_String(src);
 }
 
+iDeclareType(AndroidFont)
+
+struct Impl_AndroidFont {
+    int       weight;
+    iBool     isItalic;
+    char      file[128];
+    int       colIndex;
+    int       numAxes;
+    iFontAxis axes[maxAxes_FontFile];
+};
+
+/* Fonts of the "sans-serif" family in fonts.xml. */
+static size_t sansSerifFonts_(iAndroidFont *fonts, size_t maxFonts) {
+    iString *src = readFontsXml_();
+    if (!src) {
+        return 0;
+    }
+    size_t   n             = 0;
+    iRegExp *familyPattern = new_RegExp("(?s)<family\\b([^>]*)>(.*?)</family>", 0);
+    iRegExp *fontPattern   = new_RegExp("(?s)<font\\b([^>]*)>\\s*([^<\\s]+)(.*?)</font>", 0);
+    iRegExp *axisPattern   = new_RegExp("<axis\\b([^>]*)>", 0);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    while (n == 0 && matchString_RegExp(familyPattern, src, &m)) {
+        if (!equal_Rangecc(attrValue_(capturedRange_RegExpMatch(&m, 1), "name"), "sans-serif")) {
+            continue;
+        }
+        iRegExpMatch fm;
+        init_RegExpMatch(&fm);
+        while (n < maxFonts && matchRange_RegExp(fontPattern, capturedRange_RegExpMatch(&m, 2), &fm)) {
+            const iRangecc attrs  = capturedRange_RegExpMatch(&fm, 1);
+            const iRangecc file   = capturedRange_RegExpMatch(&fm, 2);
+            const iRangecc weight = attrValue_(attrs, "weight");
+            const iRangecc index  = attrValue_(attrs, "index");
+            if (size_Range(&file) >= sizeof(fonts[n].file)) {
+                continue;
+            }
+            iAndroidFont *font = &fonts[n++];
+            iZap(*font);
+            memcpy(font->file, file.start, size_Range(&file));
+            font->weight   = isEmpty_Range(&weight) ? 400 : atoi(weight.start);
+            font->isItalic = equal_Rangecc(attrValue_(attrs, "style"), "italic");
+            font->colIndex = isEmpty_Range(&index) ? 0 : atoi(index.start);
+            iRegExpMatch am;
+            init_RegExpMatch(&am);
+            while (matchRange_RegExp(axisPattern, capturedRange_RegExpMatch(&fm, 3), &am)) {
+                const iRangecc axisAttrs = capturedRange_RegExpMatch(&am, 1);
+                const iRangecc tag       = attrValue_(axisAttrs, "tag");
+                const iRangecc value     = attrValue_(axisAttrs, "stylevalue");
+                if (size_Range(&tag) == 4 && !isEmpty_Range(&value)) {
+                    setAxis_(font->axes, &font->numAxes, tag_(tag.start), strtof(value.start, NULL));
+                }
+            }
+        }
+    }
+    iRelease(axisPattern);
+    iRelease(fontPattern);
+    iRelease(familyPattern);
+    delete_String(src);
+    return n;
+}
+
+iFontSpec *newDefaultSpec_FtFontCache(void) {
+    /* Same weights as the bundled Roboto files. */
+    static const struct {
+        int   weight;
+        iBool isItalic;
+    } styles_[max_FontStyle] = {
+        [regular_FontStyle]  = { 400, iFalse },
+        [italic_FontStyle]   = { 400, iTrue },
+        [light_FontStyle]    = { 100, iFalse },
+        [semiBold_FontStyle] = { 700, iFalse },
+        [bold_FontStyle]     = { 900, iFalse },
+    };
+    iAndroidFont fonts[32];
+    size_t       numFonts = sansSerifFonts_(fonts, iElemCount(fonts));
+    if (numFonts == 0) {
+        iZap(fonts[0]);
+        fonts[0].weight = 400;
+        strcpy(fonts[0].file, "Roboto-Regular.ttf");
+        numFonts = 1;
+    }
+    iFontSpec *spec = new_FontSpec();
+    setCStr_String(&spec->id, "default");
+    setCStr_String(&spec->name, "Roboto");
+    for (int s = 0; s < max_FontStyle; s++) {
+        const iAndroidFont *best      = NULL;
+        int                 bestScore = INT_MAX;
+        for (size_t i = 0; i < numFonts; i++) {
+            const int score = (fonts[i].isItalic != styles_[s].isItalic ? 10000 : 0) +
+                              iAbs(fonts[i].weight - styles_[s].weight);
+            if (score < bestScore) {
+                best      = &fonts[i];
+                bestScore = score;
+            }
+        }
+        iFontFile *ff = new_FontFile();
+        format_String(&ff->id, "/system/fonts/%s", best->file);
+        ff->colIndex = best->colIndex;
+        ff->style    = s;
+        ff->numAxes  = best->numAxes;
+        memcpy(ff->axes, best->axes, sizeof(ff->axes));
+        /* Variable fonts are instanced to the style. Ignored by static fonts. */
+        setAxis_(ff->axes, &ff->numAxes, tag_("wght"), styles_[s].weight);
+        setAxis_(ff->axes, &ff->numAxes, tag_("ital"), styles_[s].isItalic ? 1.0f : 0.0f);
+        allocData_FontFile(ff);
+        if (!ff->data) {
+            iRelease(ff);
+            continue;
+        }
+        spec->styles[s] = ff;
+    }
+    if (!spec->styles[regular_FontStyle]) {
+        delete_FontSpec(spec);
+        return NULL;
+    }
+    for (int s = 0; s < max_FontStyle; s++) {
+        if (!spec->styles[s]) {
+            spec->styles[s] = ref_Object(spec->styles[regular_FontStyle]);
+        }
+    }
+    return spec;
+}
+
 #endif /* __ANDROID__ */
+
+/* Uses a private FreeType library because this may run in a background thread. */
+static void enumerate_(iArray *entries_out) {
+    FT_Library lib = NULL;
+    if (FT_Init_FreeType(&lib) != 0) {
+        return;
+    }
+#if defined (LAGRANGE_ENABLE_FONTCONFIG)
+    enumerateFontconfig_(lib, entries_out);
+#elif defined (LAGRANGE_ENABLE_DIRECTWRITE)
+    enumerateDirectWrite_(lib, entries_out);
+#elif defined (__ANDROID__)
+    enumerateAndroid_(lib, entries_out);
+#endif
+    FT_Done_FreeType(lib);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+/* Background worker: validates and refreshes the font cache. */
+
+iDeclareType(FtFontWorker)
+
+struct Impl_FtFontWorker {
+    iThread *thread;
+    iString  cachePath;
+    iBool    stopWorker;
+};
+
+static iFtFontWorker *worker_;
+
+iDeclareTypeConstructionArgs(FtFontWorker, const iString *cachePath)
+
+static iThreadResult refresh_FtFontWorker_(iThread *thread) {
+    iFtFontWorker *d = userData_Thread(thread);
+    if (!isCacheStale_(&d->cachePath) || d->stopWorker) {
+        goto done_;
+    }
+    /* Directories changed: re-enumerate and write a fresh cache. */
+    iArray entries;
+    init_Array(&entries, sizeof(iFontCacheEntry));
+    enumerate_(&entries);
+    if (!d->stopWorker) {
+        writeCache_(&d->cachePath, &entries);
+    }
+    iForEach(Array, i, &entries) { deinit_FontCacheEntry(i.value); }
+    deinit_Array(&entries);
+    if (!d->stopWorker) {
+        postCommand_App("font.reload");
+    }
+done_:
+    worker_ = NULL;
+    iRelease(d->thread);
+    d->thread = NULL;
+    delete_FtFontWorker(d);
+    return 0;
+}
+
+void init_FtFontWorker(iFtFontWorker *d, const iString *cachePath) {
+    d->thread     = NULL;
+    d->stopWorker = iFalse;
+    initCopy_String(&d->cachePath, cachePath);
+    d->thread = new_Thread(refresh_FtFontWorker_);
+    setName_Thread(d->thread, "FtFontWorker");
+    setUserData_Thread(d->thread, d);
+    start_Thread(d->thread);
+}
+
+void deinit_FtFontWorker(iFtFontWorker *d) {
+    if (d->thread) {
+        d->stopWorker = iTrue;
+        join_Thread(d->thread);
+        iReleasePtr(&d->thread);
+    }
+    deinit_String(&d->cachePath);
+}
+
+iDefineTypeConstructionArgs(FtFontWorker, (const iString *cachePath), cachePath)
+
+static void startWorker_(const iString *cachePath) {
+    if (!worker_) {
+        worker_ = new_FtFontWorker(cachePath);
+    }
+}
 
 void enumerateSystemFonts_FontPack_(iFontPack *pack) {
     iArray entries;
     init_Array(&entries, sizeof(iFontCacheEntry));
-#if defined (LAGRANGE_ENABLE_FONTCONFIG)
-    enumerateFontconfig_(&entries);
-#elif defined (LAGRANGE_ENABLE_DIRECTWRITE)
-    enumerateDirectWrite_(&entries);
-#elif defined (__ANDROID__)
-    enumerateAndroid_(&entries);
-#endif
+    enumerate_(&entries);
     writeCache_(collect_String(cacheFilePath_()), &entries);
     /* Populate the font pack and clean up. */
     iForEach(Array, i, &entries) {

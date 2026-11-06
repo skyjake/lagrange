@@ -79,6 +79,7 @@ void init_FontFile(iFontFile *d) {
     init_String(&d->id);
     d->colIndex  = 0;
     d->style     = regular_FontStyle;
+    d->numAxes   = 0;
     d->emAdvance = 0;
     d->ascent    = 0;
     d->descent   = 0;
@@ -233,17 +234,15 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
     iFontPack *d = context;
     if (isStart) {
         iAssert(!d->loadSpec);
-        if (d->tweaksOnly) {
-            /* Find an existing spec in this pack to apply tweaks to. */
-            iConstForEach(PtrArray, i, &d->fonts) {
-                iFontSpec *s = i.ptr;
-                if (!cmp_String(&s->id, cstr_String(table))) {
-                    d->loadSpec = s; /* not owned; just a reference for updating */
-                    break;
-                }
+        /* An existing spec in this pack is updated in place. */
+        iConstForEach(PtrArray, i, &d->fonts) {
+            iFontSpec *s = i.ptr;
+            if (!cmp_String(&s->id, cstr_String(table))) {
+                d->loadSpec = s; /* not owned; just a reference for updating */
+                break;
             }
         }
-        else {
+        if (!d->loadSpec && !d->tweaksOnly) {
             /* Each font ID must be unique in the non-standalone packs. */
             if (d->isStandalone || !findSpec_Fonts(cstr_String(table))) {
                 d->loadSpec = new_FontSpec();
@@ -255,7 +254,7 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
         }
     }
     else if (d->loadSpec) {
-        if (d->tweaksOnly) {
+        if (d->tweaksOnly || indexOf_PtrArray(&d->fonts, d->loadSpec) != iInvalidPos) {
             /* Tweaks applied in-place; just release the reference. */
             d->loadSpec = NULL;
         }
@@ -576,6 +575,31 @@ static void disambiguateSpecs_Fonts_(iFonts *d) {
     delete_PtrSet(ambiguous);
 }
 
+#if defined (iPlatformAndroidMobile) && defined (LAGRANGE_ENABLE_FREETYPE)
+static void removeDefaultDuplicates_FontPack_(iFontPack *d, const iFontPack *defaultPack) {
+    /* The default font is made of system font files. */
+    const iFontSpec *def = NULL;
+    iConstForEach(PtrArray, i, &defaultPack->fonts) {
+        const iFontSpec *spec = i.ptr;
+        if (!cmp_String(&spec->id, "default")) {
+            def = spec;
+            break;
+        }
+    }
+    if (!def) {
+        return;
+    }
+    iForEach(PtrArray, j, &d->fonts) {
+        iFontSpec *spec = j.ptr;
+        if (equal_String(&spec->styles[regular_FontStyle]->id,
+                         &def->styles[regular_FontStyle]->id)) {
+            remove_PtrArrayIterator(&j);
+            delete_FontSpec(spec);
+        }
+    }
+}
+#endif
+
 static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
     return collect_String(concatCStr_Path(&d->userDir, "fonts"));
 }
@@ -603,6 +627,14 @@ void init_Fonts(const char *userDir) {
         iFontPack *pack = new_FontPack();
         setCStr_String(&pack->id, "default");
         setReadOnly_FontPack(pack, iTrue);
+#if defined (iPlatformAndroidMobile) && defined (LAGRANGE_ENABLE_FREETYPE)
+        /* Roboto is not bundled. The [default] table in fontpack.ini applies to this. */ {
+            iFontSpec *sysDefault = newDefaultSpec_FtFontCache();
+            if (sysDefault) {
+                addSpec_FontPack(pack, sysDefault);
+            }
+        }
+#endif
         loadArchive_FontPack(pack, archive_Resources()); /* should never fail if we've made it this far */
         pushBack_PtrArray(&d->packs, pack);
 #if defined (iPlatformMsys) || defined (iPlatformWindows)
@@ -699,6 +731,9 @@ void init_Fonts(const char *userDir) {
         setReadOnly_FontPack(pack, iTrue);
         setCStr_String(&pack->id, "system-fonts");
         loadCachedSystemFonts_FontPack_(pack);
+#if defined (iPlatformAndroidMobile)
+        removeDefaultDuplicates_FontPack_(pack, front_PtrArray(&d->packs));
+#endif
         if (!isEmpty_PtrArray(&pack->fonts)) {
             pushBack_PtrArray(&d->packs, pack);
         }

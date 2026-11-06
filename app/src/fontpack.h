@@ -68,6 +68,15 @@ float   scale_FontSize  (enum iFontSize size);
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(FontAxis)
+
+#define maxAxes_FontFile 4
+
+struct Impl_FontAxis {
+    uint32_t tag; /* OpenType tag, e.g., 'wght' */
+    float    value;
+};
+
 iDeclareClass(FontFile)
 iDeclareObjectConstruction(FontFile)
 
@@ -76,6 +85,8 @@ struct Impl_FontFile {
     iString         id; /* for detecting when the same file is used in many places */
     int             colIndex;
     enum iFontStyle style;
+    int             numAxes; /* variable font instance (FreeType only) */
+    iFontAxis       axes[maxAxes_FontFile];
     iBlock          sourceData;
     void *          data; /* internal data managed by Text (backend-specific)*/
     iChar        (* charMap)(iChar); /* optional remapping of characters (e.g., icon fonts) */

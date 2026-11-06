@@ -57,3 +57,9 @@ void systemFallbackSpecs_FtFontCache(iPtrArray *specs_out);
 /** System Emoji fonts in the system's order of preference. Fonts after the first one
     are supplementary, like Android's separate flags font. */
 void systemEmojiSpecs_FtFontCache(iPtrArray *specs_out);
+
+#if defined (__ANDROID__)
+/** The "default" font made of the system sans-serif family (Roboto). Returns NULL if
+    the fonts are unavailable. */
+iFontSpec *newDefaultSpec_FtFontCache(void);
+#endif

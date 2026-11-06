@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    the enumerated fonts. */
 
 static const uint32_t magic_FontCacheFile_   = 0x6C674643u; /* "lgFC" */
-static const uint32_t version_FontCacheFile_ = 5u;
+static const uint32_t version_FontCacheFile_ = 6u;
 
 static void fontDirModTime_(const iString *path, iDate *date_out) {
     iZap(*date_out);

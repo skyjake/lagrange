@@ -49,6 +49,8 @@ struct Impl_FontCacheStyle {
     int32_t  winDescent;
     int32_t  emAdvance;
     int32_t  unitsPerEm;
+    int      numAxes;    /* variable font instance (FreeType only) */
+    iFontAxis axes[maxAxes_FontFile];
 };
 
 iDeclareType(FontCacheEntry)

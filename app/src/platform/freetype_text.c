@@ -48,6 +48,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 
+#include FT_MULTIPLE_MASTERS_H
+
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_hints.h>
@@ -81,11 +83,6 @@ static void initFtLibrary_(void) {
     ftLibraryRefs_++;
 }
 
-FT_Library ftLibrary_FtText(void) {
-    initFtLibrary_();
-    return ftLibrary_;
-}
-
 static void doneFtLibrary_(void) {
     if (ftLibrary_ && --ftLibraryRefs_ == 0) {
         FT_Done_FreeType(ftLibrary_);
@@ -97,10 +94,6 @@ static void doneFtLibrary_(void) {
         }
 #endif
     }
-}
-
-void doneFtLibrary_FtText(void) {
-    doneFtLibrary_();
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -161,6 +154,27 @@ static iBool hasRenderableColor_(FT_Face face, iBool *hasColrV1_out) {
     return iFalse;
 }
 
+static void setVariation_(FT_Face face, const iFontFile *d) {
+    FT_MM_Var *mm = NULL;
+    if (!d->numAxes || !FT_HAS_MULTIPLE_MASTERS(face) || FT_Get_MM_Var(face, &mm) != 0) {
+        return;
+    }
+    FT_Fixed      coords[16];
+    const FT_UInt n = iMin(mm->num_axis, iElemCount(coords));
+    for (FT_UInt i = 0; i < n; i++) {
+        const FT_Var_Axis *axis = &mm->axis[i];
+        coords[i] = axis->def;
+        for (int j = 0; j < d->numAxes; j++) {
+            if (d->axes[j].tag == axis->tag) {
+                coords[i] = iClamp((FT_Fixed) (d->axes[j].value * 65536.0f),
+                                   axis->minimum, axis->maximum);
+            }
+        }
+    }
+    FT_Set_Var_Design_Coordinates(face, n, coords);
+    FT_Done_MM_Var(ftLibrary_, mm);
+}
+
 void allocData_FontFile(iFontFile *d) {
     initFtLibrary_();
     iFtFontData *fd = calloc(1, sizeof(iFtFontData));
@@ -182,6 +196,7 @@ void allocData_FontFile(iFontFile *d) {
         return;
     }
     FT_Face face = fd->ftFace;
+    setVariation_(face, d);
     /* Extract metrics from OS/2 and HHea tables. */
     TT_OS2 *os2 = FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
     if (os2) {
@@ -238,6 +253,14 @@ void allocData_FontFile(iFontFile *d) {
     }
     hb_face_t *hbFace = hb_face_create(hbBlob, (unsigned int) d->colIndex);
     fd->hbFont = hb_font_create(hbFace);
+    if (d->numAxes) {
+        hb_variation_t vars[maxAxes_FontFile];
+        for (int i = 0; i < d->numAxes; i++) {
+            vars[i].tag   = d->axes[i].tag;
+            vars[i].value = d->axes[i].value;
+        }
+        hb_font_set_variations(fd->hbFont, vars, (unsigned int) d->numAxes);
+    }
     hb_face_destroy(hbFace);
     hb_blob_destroy(hbBlob);
 #endif
