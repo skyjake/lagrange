@@ -152,6 +152,7 @@ iBool   updateDocumentWidthRetainingScrollPosition_DocumentView (iDocumentView *
 int     updateScrollMax_DocumentView    (iDocumentView *);
 void    clampScroll_DocumentView        (iDocumentView *);
 void    immediateScroll_DocumentView    (iDocumentView *, int offset);
+void    wheelScroll_DocumentView        (iDocumentView *, const SDL_MouseWheelEvent *); /* per-pixel */
 void    smoothScroll_DocumentView       (iDocumentView *, int offset, int duration);
 void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool centered);
 void    smoothScrollTo_DocumentView     (iDocumentView *, int documentY, iBool centered, int duration);

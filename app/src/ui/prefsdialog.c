@@ -1016,6 +1016,7 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.animate}", "prefs.animate");
         if (!isTerminal_Platform()) {
+            addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pageturn}")));
             iWidget *turns = new_Widget();
             addRadioButton_Widget(turns, "prefs.pageturn.0", "${prefs.pageturn.none}", "pageturn.set arg:0");
@@ -1030,10 +1031,11 @@ iWidget *makePreferences_Widget(void) {
             (iMenuItem[]){
                 { "slider id:prefs.scrollspeed.keyboard cmd:scrollspeed.keyboard min:0 max:6" },
                 { "slider id:prefs.scrollspeed.mouse cmd:scrollspeed.mouse min:0 max:6" },
+#if defined (iPlatformAppleDesktop)
+                { "slider id:prefs.trackpadspeed cmd:trackpadspeed min:0.5 max:2 step:0.05 "
+                  "bigstep:0.25 prec:2 unit:x" },
+#endif
                 { NULL } });
-        if (!isTerminal_Platform()) {
-            addDialogToggle_Widget(headings, values, "${prefs.blink}", "prefs.blink");
-        }
     }
     /* Sync. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -1547,6 +1549,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                                                                  : keyboard_ScrollType);
         return iTrue;
     }
+    else if (equal_Command(cmd, "trackpadspeed")) {
+        postCommandf_App("trackpadspeed.set arg:%f", argf_Command(cmd));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "font.set")) {
         updateFontButton_(findChild_Widget(d, "prefs.font.ui"), string_Command(cmd, "ui"));
         return iFalse;
@@ -1656,6 +1662,9 @@ void showPreferences_Widget(const char *cmd) {
     setText_InputWidget(findChild_Widget(dlg, "prefs.tinylogsize"),
                         collectNewFormat_String("%d", prefs->maxTinylogSize));
     setValue_SliderWidget(findChild_Widget(dlg, "prefs.urlsize"), prefs->maxUrlSize / 1024.0f);
+#if defined (iPlatformAppleDesktop)
+    setValue_SliderWidget(findChild_Widget(dlg, "prefs.trackpadspeed"), prefs->trackpadSpeed);
+#endif
     iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
     if (tabs) {
         showTabPage_Widget(tabs, tabPage_Widget(tabs, prefs->dialogTab));

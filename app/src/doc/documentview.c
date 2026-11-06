@@ -822,6 +822,11 @@ void immediateScroll_DocumentView(iDocumentView *d, int offset) {
     d->userHasScrolled = iTrue;
 }
 
+void wheelScroll_DocumentView(iDocumentView *d, const SDL_MouseWheelEvent *ev) {
+    moveWheel_SmoothScroll(&d->scrollY, ev);
+    d->userHasScrolled = iTrue;
+}
+
 void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
     moveSpan_SmoothScroll(&d->scrollY, offset, duration);
     d->userHasScrolled = iTrue;

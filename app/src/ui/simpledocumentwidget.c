@@ -347,7 +347,7 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
         const iInt2 mouse = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->view->scrollY.pos);
-            immediateScroll_DocumentView(d->view, -ev->wheel.y);
+            wheelScroll_DocumentView(d->view, &ev->wheel);
             if (!scrollWideBlock_DocumentView(d->view, mouse, -ev->wheel.x, 0, NULL) &&
                 ev->wheel.x && ev->wheel.y == 0 && !isInertia_MouseWheelEvent(&ev->wheel)) {
                 /* Swiping sideways, like in a list (e.g., to close a sidebar). */

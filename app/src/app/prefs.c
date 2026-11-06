@@ -145,6 +145,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "syncinterval.set arg:%d\n", d->prefs.syncInterval);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
+    appendFormat_String(str, "trackpadspeed.set arg:%f\n", d->prefs.trackpadSpeed);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "tinylogsize.set arg:%d\n", d->prefs.maxTinylogSize);
@@ -998,6 +999,10 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         if (type == keyboard_ScrollType || type == mouse_ScrollType) {
             d->prefs.smoothScrollSpeed[type] = iClamp(arg_Command(cmd), 1, 40);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "trackpadspeed.set")) {
+        d->prefs.trackpadSpeed = iClamp(argf_Command(cmd), 0.5f, 2.0f);
         return iTrue;
     }
     else if (equal_Command(cmd, "returnkey.set")) {

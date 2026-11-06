@@ -2774,7 +2774,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view->scrollY.pos);
-            immediateScroll_DocumentView(view, -wheel.y);
+            wheelScroll_DocumentView(view, &ev->wheel);
             if (!scrollWideBlock_DocumentView(view, mouseCoord, -wheel.x, 0, NULL) &&
                 wheel.x) {
                 handleWheelSwipe_DocumentSwipe(d->swipe, &ev->wheel);

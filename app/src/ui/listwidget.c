@@ -1101,7 +1101,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         int amount = -ev->wheel.y;
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->scrollY.pos);
-            moveSpan_SmoothScroll(&d->scrollY, amount, 0);
+            moveWheel_SmoothScroll(&d->scrollY, &ev->wheel);
             if (isMobile_Platform() && !hasAffinity_Touch(w) &&
                 ev->wheel.which == SDL_TOUCH_MOUSEID && !isScrollDisabled_ListWidget_(d, ev)) {
                 transferAffinity_Touch(NULL, w);

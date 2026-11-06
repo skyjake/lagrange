@@ -2570,6 +2570,9 @@ msgstr "Keyboard speed:"
 msgid "prefs.scrollspeed.mouse"
 msgstr "Mouse speed:"
 
+msgid "prefs.trackpadspeed"
+msgstr "Trackpad speed:"
+
 msgid "prefs.imageloadscroll"
 msgstr "Load next image on scroll key:"
 
