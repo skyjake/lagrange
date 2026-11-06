@@ -286,6 +286,7 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrolling                        = iTrue;
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
+    d->trackpadSpeed                          = 1.0f;
     d->loadImageInsteadOfScrolling            = iFalse;
     d->openDataUrlImagesOnLoad                = iFalse;
     d->openArchiveIndexPages                  = iTrue;

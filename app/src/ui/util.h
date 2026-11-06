@@ -69,6 +69,7 @@ enum iMouseWheelFlag {
     perPixel_MouseWheelFlag       = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
     inertia_MouseWheelFlag        = iBit(10),
     scrollFinished_MouseWheelFlag = iBit(11),
+    trackpad_MouseWheelFlag       = iBit(12), /* scaled by the trackpad speed pref */
 };
 
 iLocalDef void setPerPixel_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
@@ -80,6 +81,9 @@ iLocalDef void setInertia_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
 iLocalDef void setScrollFinished_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
     iChangeFlags(ev->direction, scrollFinished_MouseWheelFlag, set);
 }
+iLocalDef void setTrackpad_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, trackpad_MouseWheelFlag, set);
+}
 
 iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return (ev->direction & perPixel_MouseWheelFlag) != 0;
@@ -89,6 +93,9 @@ iLocalDef iBool isInertia_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
 }
 iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return (ev->direction & scrollFinished_MouseWheelFlag) != 0;
+}
+iLocalDef iBool isTrackpad_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & trackpad_MouseWheelFlag) != 0;
 }
 
 iInt2   mouseCoord_SDLEvent     (const SDL_Event *);
@@ -253,6 +260,7 @@ struct Impl_SmoothScroll {
     int      flags;
     int      pullActionTriggered;
     int      pullActionDir; /* -1: top, +1: bottom */
+    float    wheelFraction; /* carried over between per-pixel wheel events */
     iSmoothScrollNotifyFunc notify;
 };
 
@@ -262,6 +270,7 @@ void    reset_SmoothScroll          (iSmoothScroll *);
 void    setMax_SmoothScroll         (iSmoothScroll *, int max);
 void    move_SmoothScroll           (iSmoothScroll *, int offset);
 void    moveSpan_SmoothScroll       (iSmoothScroll *, int offset, uint32_t span);
+void    moveWheel_SmoothScroll      (iSmoothScroll *, const SDL_MouseWheelEvent *); /* per-pixel */
 iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
 
 float   pos_SmoothScroll            (const iSmoothScroll *);

@@ -685,6 +685,7 @@ void reset_SmoothScroll(iSmoothScroll *d) {
     d->overscroll =
         (deviceType_App() != desktop_AppDeviceType && !isHandheld_Platform() ? 100 * gap_UI : 0);
     d->pullActionTriggered = 0;
+    d->wheelFraction = 0.0f;
 }
 
 static int overscrollLimit_SmoothScroll_(const iSmoothScroll *d) {
@@ -813,6 +814,14 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
 
 void move_SmoothScroll(iSmoothScroll *d, int offset) {
     moveSpan_SmoothScroll(d, offset, 0 /* instantly */);
+}
+
+void moveWheel_SmoothScroll(iSmoothScroll *d, const SDL_MouseWheelEvent *ev) {
+    d->wheelFraction -=
+        ev->y * (isTrackpad_MouseWheelEvent(ev) ? prefs_App()->trackpadSpeed : 1.0f);
+    const int offset = (int) d->wheelFraction;
+    d->wheelFraction -= offset;
+    move_SmoothScroll(d, offset);
 }
 
 iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
