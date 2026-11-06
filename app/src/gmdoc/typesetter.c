@@ -52,17 +52,11 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     const int   visWidth  = width_Rect(visBounds);
     int         xAdjust   = 0;
     if (!isCentered) {
-        /* Keep the icon aligned to the left edge. */
-        const int alignWidth = width_Rect(run->visBounds) * 4 / 5;
-        xAdjust -= left_Rect(visBounds);
-        if (visWidth > alignWidth) {
-            /* ...unless it's a wide icon, in which case move it to the left. */
-            xAdjust -= visWidth - alignWidth;
-        }
-        else if (visWidth < alignWidth) {
-            /* ...or a narrow icon, which needs to be centered but leave a gap. */
-            xAdjust += (alignWidth - visWidth) / 2;
-        }
+        /* The icon is centered at a fixed distance from the text, regardless of the indent.
+           Wide icons keep a minimum gap. */
+        const int width = width_Rect(run->visBounds);
+        const int right = iMin(width - 3 * gap_Text + visWidth / 2, width - gap_Text);
+        xAdjust = right - visWidth - left_Rect(visBounds);
     }
     else {
         /* Centered. */

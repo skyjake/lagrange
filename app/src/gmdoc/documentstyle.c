@@ -108,6 +108,7 @@ void init_DocumentStyle(iDocumentStyle *d, const iDocumentStyleParams *params) {
             d->indents[heading3_GmLineType] -= 1;
             d->indents[bullet_GmLineType] -= 1;
             d->indents[preformatted_GmLineType] -= 1;
+            d->indents[quote_GmLineType] -= 1;
             d->indents[link_GmLineType] -= 1;
         }
         /* Headings are aligned with paragraphs instead of extending into the margin. */
