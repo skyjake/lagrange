@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2024-10-03 14:43+0000\n"
-"PO-Revision-Date: 2025-03-29 10:22+0000\n"
+"PO-Revision-Date: 2026-11-06 21:52+0000\n"
 "Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
 "Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "sgs/>\n"
@@ -2537,3 +2537,233 @@ msgstr "Soskaldītė ėlgas grīna teksta eilotes:"
 
 msgid "keys.scroll.page.up"
 msgstr "Slinktė aukštīn puslapi"
+
+# Page footer in paginated view mode: current page and number of pages.
+#, c-format
+msgid "doc.page.number"
+msgstr "Poslapis %d ėš %d"
+
+msgid "feeds.tinylog.notfound"
+msgstr ""
+"Tas tinylog īrašos nie žėnuoms. Ons gal būtė pašalints ėš tinylog arba "
+"prenomerata bova pašalinta."
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.subscriptions"
+msgstr "Ruodītė prenomeratas"
+
+msgid "menu.sitespec"
+msgstr "Alkierė nustatīmā…"
+
+msgid "heading.tool.failed"
+msgstr "Rakonda kliauza"
+
+# %s is the name of a user-configured external tool.
+msgid "dlg.tool.failed"
+msgstr "„%s“ naimėigė apduoruotė poslapė."
+
+msgid "keys.findtext"
+msgstr "Ėiškuotė teksta poslapie"
+
+# Page footer in a book: current page, number of pages, current chapter, number of chapters.
+#, c-format
+msgid "doc.page.chapter"
+msgstr "Poslapis %d ėš %d • Skėrsnis %d ėš %d"
+
+# Page footer in a single-page chapter of a book: current chapter, number of chapters.
+#, c-format
+msgid "doc.chapter.number"
+msgstr "Skėrsnis %d ėš %d"
+
+msgid "feeds.tinylog.unavailable"
+msgstr "Šėta tinylog īraša torinīs ī napasėikams."
+
+# Arguments: author, timestamp.
+msgid "feeds.tinylog.wrote"
+msgstr "%s parašė %s:"
+
+# Opens a dialog for choosing where to save the file.
+msgid "menu.save.as"
+msgstr "Ėšsauguotė kāp…"
+
+# Saves the current page or Gempub book to the bookshelf in the Book sidebar.
+msgid "menu.save.books"
+msgstr "Ėšsauguotė lėntīnuo"
+
+msgid "menu.sidebar.configure"
+msgstr "Konfigūroutė…"
+
+msgid "menu.trash.restore"
+msgstr "Atstatītė"
+
+msgid "menu.trash.empty"
+msgstr "Ėšvalītė šiokšlėnė"
+
+msgid "menu.sync.now"
+msgstr "Sinkruonėzoutė"
+
+msgid "menu.sync.configure"
+msgstr "Sinkruonėzacėjės nustatīmā…"
+
+msgid "menu.reference"
+msgstr "Tekninis aprašīms"
+
+msgid "menu.protocols"
+msgstr "Protokuola santrauka"
+
+msgid "menu.licenses"
+msgstr "Atvėra kuoda licenzėjė"
+
+# Used in the View menu. Shows the sidebar with the bookshelf.
+msgid "menu.show.books"
+msgstr "Ruodītė kningas"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.opendocs"
+msgstr "Ruodītė tabus"
+
+msgid "menu.aboutweb"
+msgstr "Lagrange internetė"
+
+msgid "menu.page.subscribeall"
+msgstr "Prenomeroutė vėsus…"
+
+msgid "sidebar.structure"
+msgstr "Stroktūra"
+
+# Sidebar mode that shows bookshelf and the cover and index page of the current Gempub book.
+msgid "sidebar.gempub"
+msgstr "Kningas"
+
+msgid "sidebar.gempub.cover"
+msgstr "Vėršielis"
+
+msgid "sidebar.gempub.index"
+msgstr "Torinīs"
+
+# Sidebar tab listing the books saved locally.
+msgid "sidebar.gempub.shelf"
+msgstr "Lėntīna"
+
+msgid "sidebar.empty.books"
+msgstr "Kningu nie"
+
+msgid "book.delete"
+msgstr "Ėštrintė kninga"
+
+msgid "heading.book.delete"
+msgstr "Ėštrintė kninga"
+
+msgid "dlg.confirm.book.delete"
+msgstr "A nuorat ėštrintė „%s“ ėš lėntīnas? Dabartėnė vėita būs pasauguota."
+
+msgid "dlg.book.delete"
+msgstr "Ėštrintė"
+
+# Deletes the local copy of a book but keeps it on the shelf so it can be downloaded again.
+msgid "book.removedownload"
+msgstr "Ėštrintė parsiuntėmus"
+
+msgid "heading.book.removedownload"
+msgstr "Ėštrintė parsiuntėma"
+
+msgid "dlg.confirm.book.removedownload"
+msgstr ""
+"A nuorat ėštrintė vėitėnė kuopėjė „%s“? Kninga lėikt lėntīnuo ė gal būtė "
+"apėntās parsiunsta."
+
+msgid "dlg.book.removedownload"
+msgstr "Ėštrintė"
+
+# Copies the URL where the book was downloaded from.
+msgid "book.copysource"
+msgstr "Nukuopėjoutė adresa"
+
+# Downloads the book again from its source URL, replacing the local copy.
+msgid "book.redownload"
+msgstr "Atsiunstė ėš naujė"
+
+msgid "sidebar.action.bookmarks.showtrash"
+msgstr "Šiokšlėnė"
+
+# Label before the dropdown that selects the order of books, identities, or subscriptions.
+msgid "sidebar.action.sort"
+msgstr "Eilioutė palē:"
+
+msgid "sidebar.action.books.recent"
+msgstr "Naujausė"
+
+msgid "sidebar.action.books.title"
+msgstr "Ožvardėnėms"
+
+msgid "sidebar.action.books.author"
+msgstr "Autuorios"
+
+msgid "sidebar.action.subs.name"
+msgstr "Vards"
+
+msgid "sidebar.action.subs.recent"
+msgstr "Naujausė"
+
+msgid "sidebar.action.subs.leastrecent"
+msgstr "Seniausė"
+
+# Subscriptions with the most feed entries first.
+msgid "sidebar.action.subs.entries"
+msgstr "Bajaviausė"
+
+msgid "sidebar.action.ident.name"
+msgstr "Vards"
+
+# Identities are listed in the order chosen by the user, by dragging.
+msgid "sidebar.action.ident.manual"
+msgstr "Ronkuoms"
+
+msgid "keys.fullscreen"
+msgstr "Pārjungtė pėlna vaizda režėma"
+
+msgid "keys.split.item"
+msgstr "Longū skaidīma meniu:"
+
+msgid "keys.split.menu"
+msgstr "Ijungtė paskaidīta vaizda režėma"
+
+msgid "keys.split.next"
+msgstr "Pārjungtė veiziejėma ont sekontė paskaidīta longa"
+
+msgid "sync.error.newidentity"
+msgstr "Napavīka sokortė nauji identėteta."
+
+msgid "menu.fold"
+msgstr "Soskleistė"
+
+msgid "macos.menu.hide"
+msgstr "Pakavuotė Lagrange"
+
+msgid "macos.menu.hideothers"
+msgstr "Pakavuotė kėtus"
+
+msgid "macos.menu.showall"
+msgstr "Paruodītė vėsus"
+
+msgid "macos.menu.services"
+msgstr "Servėsā"
+
+msgid "menu.closetab.above"
+msgstr "Oždarītė tabus aukštiau"
+
+msgid "menu.closetab.below"
+msgstr "Oždarītė tabus žemiau"
+
+msgid "sidebar.documents"
+msgstr "Tabā"
+
+msgid "sidebar.subscriptions"
+msgstr "Prenomeratas"
+
+msgid "keys.subscribe"
+msgstr "Ožrenomeroutė poslapi"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.structure"
+msgstr "Ruodītė alkierė stroktūra"
