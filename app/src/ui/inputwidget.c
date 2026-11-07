@@ -143,7 +143,7 @@ iRect contentBounds_InputWidget_(const iInputWidget *d) {
         }
     }
     bounds.pos.y += d->extraHeight / 2;
-    if (isMobile_Platform() && !cmp_String(id_Widget(w), "url")) {
+    if (isMobile_Platform() && prefs_App()->bottomNavBar && !cmp_String(id_Widget(w), "url")) {
         /* Optical centering: the glyphs sit low in the line box. */
         bounds.pos.y -= lineHeight_Text(d->font) / 24;
     }
