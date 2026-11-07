@@ -1136,6 +1136,8 @@ struct Impl_SystemTextInput {
     void (*textChangedFunc)(iSystemTextInput *, void *);
     void *textChangedContext;
     iBool keepKeyboard;
+    iRect rect;     /* content bounds in pixels */
+    float baseline; /* points from the top of a line */
 };
 
 /* A removed input that still has the keyboard, so it doesn't hide while switching inputs. */
@@ -1184,22 +1186,26 @@ static CGRect pixelsToPoints_(const iRect *pixelRect) {
     return frame;
 }
 
-static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
-    const iWindow *win = get_Window();
-    CGRect frame;
-    /* TODO: Convert coordinates properly! */
-    frame.origin.x = rect->pos.x / win->pixelRatio;
-    frame.origin.y = (rect->pos.y - gap_UI * 0.875f) / win->pixelRatio;
-    frame.size.width = rect->size.x / win->pixelRatio;
-    frame.size.height = rect->size.y / win->pixelRatio;
-    /* Some padding to account for insets. If we just zero out the insets, the insertion point
-       may be clipped at the edges. */
+/* A multi-line view extends beyond the content bounds so the insertion point isn't clipped.
+   Its text container insets cancel this out. */
+static UIEdgeInsets multiLineMargins_(void) {
     const float inset = gap_UI / get_Window()->pixelRatio;
-    if (expanded) {
-        frame.origin.x -= 2 * inset;
-        frame.origin.y -= inset;
-        frame.size.width += 4 * inset;
-        frame.size.height += 2.5f * inset;
+    return (UIEdgeInsets){ inset, 2 * inset, 1.5f * inset, 2 * inset };
+}
+
+static CGRect frame_SystemTextInput_(const iSystemTextInput *d) {
+    CGRect frame = pixelsToPoints_(&d->rect);
+    if (d->flags & multiLine_SystemTextInputFlags) {
+        const UIEdgeInsets m = multiLineMargins_();
+        frame.origin.x -= m.left;
+        frame.origin.y -= m.top;
+        frame.size.width += m.left + m.right;
+        frame.size.height += m.top + m.bottom;
+    }
+    else if (d->field && d->baseline > 0.0f) {
+        /* The field centers its line vertically; align the baseline with our first line. */
+        UIFont *font = [REF_d_field font];
+        frame.origin.y += d->baseline - font.ascender - (frame.size.height - font.lineHeight) / 2;
     }
     return frame;
 }
@@ -1218,7 +1224,9 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->view  = NULL;
     d->pendingSelectAll = iFalse;
     d->keepKeyboard = iFalse;
-    CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
+    d->rect = rect;
+    d->baseline = 0.0f;
+    const CGRect frame = frame_SystemTextInput_(d);
     if (flags & multiLine_SystemTextInputFlags) {
         d->view = (void *) CFBridgingRetain([[SystemTextView alloc] initWithFrame:frame textContainer:nil]);
         [[viewController_(get_Window()) view] addSubview:REF_d_view];
@@ -1272,11 +1280,10 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
 //        [view setBackgroundColor:[UIColor colorWithRed:1.0f green:0.0f blue:0.0f alpha:0.5f]];
         [view setTextColor:textColor];
         [view setTintColor:tintColor];
+        [view setTextContainerInset:multiLineMargins_()];
+        [[view textContainer] setLineFragmentPadding:0.0f];
         if (flags & extraPadding_SystemTextInputFlag) {
-            [view setContentInset:(UIEdgeInsets){ -inset * 0.125f, inset * 0.875f, 3 * inset, 0}];
-        }
-        else {
-            [view setContentInset:(UIEdgeInsets){ inset / 2, inset * 0.875f, -inset / 2, inset / 2 }];
+            [view setContentInset:(UIEdgeInsets){ 0, 0, 3 * inset, 0 }];
         }
         [view setEditable:YES];
         [view setDelegate:appState_];
@@ -1393,8 +1400,9 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     if (ctFont) {
         font = CFBridgingRelease(
             CTFontCreateCopyWithAttributes(ctFont, CTFontGetSize(ctFont) / pixelRatio, NULL, NULL));
+        d->baseline = baseline / pixelRatio;
         [appState_ setSystemTextLineSpacing:0.0f];
-        [appState_ setSystemTextLineHeight:height baseline:baseline / pixelRatio];
+        [appState_ setSystemTextLineHeight:height baseline:d->baseline];
     }
 #endif
     if (!font) {
@@ -1407,9 +1415,11 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
             font = [UIFont systemFontOfSize:height * 0.66f];
             [appState_ setSystemTextLineSpacing:height * 0.66f];
         }
+        d->baseline = (height - font.lineHeight) / 2 + font.ascender;
     }
     if (d->field) {
         [REF_d_field setFont:font];
+        [REF_d_field setFrame:frame_SystemTextInput_(d)];
     }
     if (d->view) {
         [REF_d_view setFont:font];
@@ -1427,7 +1437,8 @@ const iString *text_SystemTextInput(const iSystemTextInput *d) {
 }
 
 void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
-    CGRect frame = convertToCGRect_(&rect, (d->flags & multiLine_SystemTextInputFlags) != 0);
+    d->rect = rect;
+    CGRect frame = frame_SystemTextInput_(d);
     UIView<UITextInput> *input = textInput_SystemTextInput_(d);
     if (CGRectEqualToRect([input frame], frame)) {
         return;

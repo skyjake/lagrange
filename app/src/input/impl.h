@@ -100,6 +100,7 @@ struct Impl_InputWidget {
     iString         hint;
     int             leftPadding; /* additional padding between frame and content */
     int             rightPadding;
+    int             extraHeight; /* added evenly above and below the content */
     int             minWrapLines, maxWrapLines; /* min/max number of visible lines allowed */
     iRangei         visWrapLines; /* which wrap lines are current visible */
     iClick          click;
