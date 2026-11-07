@@ -872,14 +872,25 @@ static iBool isFolder_SyncBookmark_(const iSyncRecord *d) {
     return isEmpty_String(field_SyncRecord(d, url_SyncBookmarkField));
 }
 
+static iBool isTrash_SyncBookmark_(const iSyncRecord *d) {
+    iRangecc tag = iNullRange;
+    while (nextSplit_Rangecc(range_String(field_SyncRecord(d, tags_SyncBookmarkField)), " ", &tag)) {
+        if (equal_Rangecc(tag, ".trash")) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static const iSyncRecord *findMatchingBookmark_(const iStringHash *base, const iStringHash *remote,
                                                 const iStringSet *matched,
                                                 const iSyncRecord *local, uint32_t localParent) {
     const iBool isFolder = isFolder_SyncBookmark_(local);
+    const iBool isTrash  = isTrash_SyncBookmark_(local);
     iConstForEach(StringHash, i, remote) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
         if (contains_StringHash(base, &rec->key) || contains_StringSet(matched, &rec->key) ||
-            isFolder_SyncBookmark_(rec) != isFolder) {
+            isFolder_SyncBookmark_(rec) != isFolder || isTrash_SyncBookmark_(rec) != isTrash) {
             continue;
         }
         if (isFolder) {
