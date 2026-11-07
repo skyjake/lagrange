@@ -1123,10 +1123,10 @@ static void updateNavBarSize_(iWidget *navBar) {
                 hPad = iMax(hPad, topPad) + gap_UI / 3;
             }
         }
-        /* On mobile, the bar is 20% taller: half inside the URL field, half as padding. */ {
+        /* On phone portrait, the bar is 20% taller: half inside the URL field, half as padding. */ {
             iInputWidget *url = findChild_Widget(navBar, "url");
             int extra = 0;
-            if (isMobile_Platform() && !(isPhone && isLandscape_App())) {
+            if (isPhone && !isLandscape_App()) {
                 const int urlHeight = height_Widget(url) - extraHeight_InputWidget(url);
                 if (urlHeight > 0) {
                     extra = (topPad + botPad + urlHeight) / 10;
