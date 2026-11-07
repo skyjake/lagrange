@@ -1083,6 +1083,27 @@ iBool isPaused_AVFAudioPlayer(const iAVFAudioPlayer *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+/* SDL's view drops key presses unless SDL text input is active, so hardware keyboard input
+   would never reach UIKit's text system. The inputs bypass it in the responder chain. */
+
+@interface SystemTextField : UITextField
+@end
+
+@implementation SystemTextField
+- (UIResponder *)nextResponder {
+    return self.superview ? self.superview.nextResponder : [super nextResponder];
+}
+@end
+
+@interface SystemTextView : UITextView
+@end
+
+@implementation SystemTextView
+- (UIResponder *)nextResponder {
+    return self.superview ? self.superview.nextResponder : [super nextResponder];
+}
+@end
+
 struct Impl_SystemTextInput {
     int flags;
     void *field; /* single-line text field */
@@ -1175,11 +1196,11 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->keepKeyboard = iFalse;
     CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
     if (flags & multiLine_SystemTextInputFlags) {
-        d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
+        d->view = (void *) CFBridgingRetain([[SystemTextView alloc] initWithFrame:frame textContainer:nil]);
         [[viewController_(get_Window()) view] addSubview:REF_d_view];
     }
     else {
-        d->field = (void *) CFBridgingRetain([[UITextField alloc] initWithFrame:frame]);
+        d->field = (void *) CFBridgingRetain([[SystemTextField alloc] initWithFrame:frame]);
         [[viewController_(get_Window()) view] addSubview:REF_d_field];
     }
     UIControl<UITextInputTraits> *traits = (UIControl<UITextInputTraits> *) (d->view ? REF_d_view : REF_d_field);
