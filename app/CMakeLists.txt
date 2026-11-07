@@ -161,6 +161,15 @@ endif ()
 make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 add_custom_target (resources DEPENDS ${EMB_BIN})
+find_package (Git QUIET)
+add_custom_target (gitcommit
+    COMMAND ${CMAKE_COMMAND}
+        -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+        -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/..
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/gitcommit.h
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/GitCommit.cmake
+    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/gitcommit.h
+)
 if (IOS)
     set (EMB_FONTS
         res/fonts/IosevkaFixed-Extended.ttf
@@ -585,6 +594,7 @@ macro (set_common_app_properties target)
     if (TARGET ext-deps)
         add_dependencies (${target} ext-deps)
     endif ()
+    add_dependencies (${target} gitcommit)
     target_include_directories (${target} PUBLIC
         src
         ${CMAKE_CURRENT_BINARY_DIR}
