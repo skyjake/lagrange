@@ -91,6 +91,7 @@ enum iSystemFontDesign {
 
 void        allocData_FontFile          (iFontFile *); /* backend-implemented */
 CTFontRef   newSystemUIFont_AppleText   (const iString *fontFileId); /* NULL if not a system font */
+CTFontRef   ctFont_Text                 (int fontId, int *baseline); /* pixels; NULL if unavailable */
 #if defined (iPlatformAppleMobile)
 CTFontDescriptorRef newSystemDesignFontDescriptor_iOS(CTFontDescriptorRef, enum iSystemFontDesign);
 #endif

@@ -244,6 +244,8 @@ API_AVAILABLE(ios(13.0))
     iString *pickFileCommand;
     iSystemTextInput *sysCtrl;
     float sysCtrlLineSpacing;
+    float sysCtrlLineHeight; /* points; zero for natural line height */
+    float sysCtrlBaseline;
     NSMutableArray<PopupData *> *popupMenus;
     uint64_t ignoreInputUntil; /* SDL ticks */
 }
@@ -263,6 +265,8 @@ static uint32_t lastAppTouchTime_;     /* finger down/up below the top safe area
     pickFileCommand = NULL;
     sysCtrl = NULL;
     sysCtrlLineSpacing = 0.0f;
+    sysCtrlLineHeight = 0.0f;
+    sysCtrlBaseline = 0.0f;
     popupMenus = [[NSMutableArray<PopupData *> alloc] init];
     ignoreInputUntil = 0;
     return self;
@@ -396,6 +400,11 @@ static void sendReturnKeyPress_(int kmods) {
     sysCtrlLineSpacing = height;
 }
 
+-(void)setSystemTextLineHeight:(float)height baseline:(float)baseline {
+    sysCtrlLineHeight = height;
+    sysCtrlBaseline   = baseline;
+}
+
 -(iSystemTextInput *)systemTextInput {
     return sysCtrl;
 }
@@ -404,6 +413,21 @@ static void sendReturnKeyPress_(int kmods) {
         lineSpacingAfterGlyphAtIndex:(NSUInteger)glyphIndex
         withProposedLineFragmentRect:(CGRect)rect {
     return sysCtrlLineSpacing / get_MainWindow()->base.pixelRatio;
+}
+
+- (BOOL)layoutManager:(NSLayoutManager *)layoutManager
+    shouldSetLineFragmentRect:(inout CGRect *)lineFragmentRect
+         lineFragmentUsedRect:(inout CGRect *)lineFragmentUsedRect
+               baselineOffset:(inout CGFloat *)baselineOffset
+              inTextContainer:(NSTextContainer *)textContainer
+                forGlyphRange:(NSRange)glyphRange {
+    if (sysCtrlLineHeight <= 0.0f) {
+        return NO;
+    }
+    lineFragmentRect->size.height     = sysCtrlLineHeight;
+    lineFragmentUsedRect->size.height = sysCtrlLineHeight;
+    *baselineOffset = sysCtrlBaseline;
+    return YES;
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
@@ -1359,22 +1383,30 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 }
 
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
-    float height = lineHeight_Text(fontId) / get_Window()->pixelRatio;
-    UIFont *font;
-//            for (NSString *name in [UIFont familyNames]) {
-//                printf("family: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
-//            }
-    if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
-//        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
-//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Fixed"]) {
-//            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
-//        }
-        font = [UIFont fontWithName:@"Iosevka-Fixed-Extended" size:height * 0.82f];
+    const float pixelRatio = get_Window()->pixelRatio;
+    float height = lineHeight_Text(fontId) / pixelRatio;
+    UIFont *font = nil;
+#if defined (LAGRANGE_ENABLE_CORETEXT)
+    /* Same font as our own text rendering, scaled from pixels to points. */
+    int baseline = 0;
+    CTFontRef ctFont = ctFont_Text(fontId, &baseline);
+    if (ctFont) {
+        font = CFBridgingRelease(
+            CTFontCreateCopyWithAttributes(ctFont, CTFontGetSize(ctFont) / pixelRatio, NULL, NULL));
         [appState_ setSystemTextLineSpacing:0.0f];
+        [appState_ setSystemTextLineHeight:height baseline:baseline / pixelRatio];
     }
-    else {
-        font = [UIFont systemFontOfSize:height * 0.66f];
-        [appState_ setSystemTextLineSpacing:height * 0.66f];
+#endif
+    if (!font) {
+        [appState_ setSystemTextLineHeight:0.0f baseline:0.0f];
+        if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
+            font = [UIFont fontWithName:@"Iosevka-Fixed-Extended" size:height * 0.82f];
+            [appState_ setSystemTextLineSpacing:0.0f];
+        }
+        else {
+            font = [UIFont systemFontOfSize:height * 0.66f];
+            [appState_ setSystemTextLineSpacing:height * 0.66f];
+        }
     }
     if (d->field) {
         [REF_d_field setFont:font];

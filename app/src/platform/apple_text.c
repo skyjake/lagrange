@@ -1159,6 +1159,16 @@ iBaseFont *font_Text(enum iFontId id) {
     return (iBaseFont *) appleFont_Text_(id);
 }
 
+CTFontRef ctFont_Text(int fontId, int *baseline) {
+    iAppleText *d  = current_AppleText_();
+    iAppleFont *af = appleFont_AppleText_(d, fontId);
+    ensureCtFont_AppleFont_(af, d->cascadeList);
+    if (baseline) {
+        *baseline = af->font.baseline + af->vertOffset; /* from the top of the line */
+    }
+    return af->ctFont;
+}
+
 enum iFontId fontId_Text(const void *font) {
     const iAppleFont *af = font;
     return (enum iFontId)(af - (const iAppleFont *) constData_Array(&current_AppleText_()->fonts));
