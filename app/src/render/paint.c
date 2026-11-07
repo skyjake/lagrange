@@ -205,9 +205,15 @@ void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int col
 }
 
 void fillRect_Paint(const iPaint *d, iRect rect, int color) {
-    addv_I2(&rect.pos, origin_Paint);
+    fillRectDiv_Paint(d, rect, 1, color);
+}
+
+void fillRectDiv_Paint(const iPaint *d, iRect rect, int divisor, int color) {
+    addv_I2(&rect.pos, muli_I2(origin_Paint, divisor));
     setColor_Paint_(d, color);
-    const SDL_FRect frect = { rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
+    const float     div   = divisor;
+    const SDL_FRect frect = { rect.pos.x / div, rect.pos.y / div,
+                              rect.size.x / div, rect.size.y / div };
     SDL_RenderFillRect(renderer_Paint_(d), &frect);
 }
 

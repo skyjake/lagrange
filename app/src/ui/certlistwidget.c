@@ -436,11 +436,11 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect, const 
     int bg         = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
-        fillRect_Paint(p, bgRect, bg);
+        fillHighlight_ListWidget(list, p, d, bgRect, bg);
     }
     else if (isHover) {
         bg = uiBackgroundFramelessHover_ColorId;
-        fillRect_Paint(p, bgRect, bg);
+        fillHighlight_ListWidget(list, p, d, bgRect, bg);
     }
 //    iInt2 pos = itemRect.pos;
     const int fg = isSel     ? uiTextSelected_ColorId
