@@ -1217,7 +1217,7 @@ void updateDocument_DocumentFetch(iDocumentFetch *d,
                         init_Url(&parts, url_DocumentFetch_(d));
                         if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data")) {
                             linkTitle =
-                                baseName_Path(collect_String(newRange_String(parts.path))).start;
+                                baseNameSep_Path(collect_String(newRange_String(parts.path)), "/").start;
                         }
                         format_String(&str, "=> %s %s\n",
                                       cstr_String(canonicalUrl_String(url_DocumentFetch_(d))),
