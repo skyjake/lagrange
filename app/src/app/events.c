@@ -799,20 +799,22 @@ static bool resizeWatcher_(void *user, SDL_Event *event) {
     iApp *d = user;
     if (event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
-#if defined (iPlatformMsys) || defined (iPlatformWindows)
-        /* TODO: Investigate if this is still necessary. */
-        setCurrent_Window(d->window);
-        resetFontCache_Text(text_Window(d->window)); {
-            SDL_Event u = { .type = SDL_EVENT_USER };
-            u.user.code = command_UserEventCode;
-            u.user.data1 = iDupStr("theme.changed auto:1");
-            dispatchEvent_Window(as_Window(d->window), &u);
-        }
-#endif
         /* Find the window that is being resized and redraw it immediately. */
         iForEach(PtrArray, i, &d->mainWindows) {
             iMainWindow *win = i.ptr;
             if (SDL_GetWindowID(win->base.win) == winev->windowID) {
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+                /* Direct3D 9 loses render targets when resizing. */
+                if (!iCmpStr(SDL_GetRendererName(win->base.render), "direct3d")) {
+                    setCurrent_Window(win);
+                    resetFontCache_Text(text_Window(win)); {
+                        SDL_Event u = { .type = SDL_EVENT_USER };
+                        u.user.code = command_UserEventCode;
+                        u.user.data1 = iDupStr("theme.changed auto:1");
+                        dispatchEvent_Window(as_Window(win), &u);
+                    }
+                }
+#endif
                 const double start   = isEnabled_FrameTiming() ? now_FrameTiming() : 0.0;
                 const double present = totalPresent_FrameTiming();
                 drawWhileResizing_MainWindow(win, winev->data1, winev->data2);
