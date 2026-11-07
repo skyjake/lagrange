@@ -514,9 +514,11 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     iAssert(!isEmpty_String(&d->baseUrl));
     iString *out = new_String();
     if (hasProperty_Gempub_(d, cover_GempubProperty) && !isTerminal_Platform()) {
+        const iString *coverUrl =
+            absoluteUrl_String(collectNewFormat_String("%s/", cstr_String(&d->baseUrl)),
+                               &d->props[cover_GempubProperty]);
         appendFormat_String(out, "=> %s  ${gempub.cover.image}\n\n",
-                            cstrCollect_String(concat_Path(withSpacesEncoded_String(&d->baseUrl),
-                                                           &d->props[cover_GempubProperty])));
+                            cstr_String(withSpacesEncoded_String(coverUrl)));
     }
     appendFormat_String(out, "# %s\n", cstr_String(&d->props[title_GempubProperty]));
     appendProperty_Gempub_(d, "\n## ", author_GempubProperty, out);

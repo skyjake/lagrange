@@ -1375,7 +1375,9 @@ static void fileRequest_GmRequest_(iGmRequest *d) {
                     resp->statusCode = redirectPermanent_GmStatusCode;
                     set_String(&resp->meta, withSpacesEncoded_String(collect_String(makeFileUrl_String(container))));
                     appendCStr_String(&resp->meta, "/");
-                    append_String(&resp->meta, entryPath);
+                    iString *entryUrlPath = collect_String(copy_String(entryPath));
+                    replace_Block(&entryUrlPath->chars, '\\', '/');
+                    append_String(&resp->meta, withSpacesEncoded_String(entryUrlPath));
                     appendCStr_String(&resp->meta, "/");
                     goto fileRequestFinished;
                 }
