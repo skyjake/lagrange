@@ -57,6 +57,7 @@ void    setTextUndoable_InputWidget     (iInputWidget *, const iString *text, iB
 void    setTextUndoableCStr_InputWidget (iInputWidget *, const char *cstr, iBool isUndoable);
 void    setFont_InputWidget             (iInputWidget *, int fontId);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
+void    setExtraHeight_InputWidget      (iInputWidget *, int height);
 void    setLineLimits_InputWidget       (iInputWidget *, int minLines, int maxLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
 void    setHighlighter_InputWidget      (iInputWidget *, iInputWidgetHighlighterFunc highlighter, void *context);
@@ -81,6 +82,7 @@ void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 
 int     minLines_InputWidget            (const iInputWidget *);
 int     maxLines_InputWidget            (const iInputWidget *);
+int     extraHeight_InputWidget         (const iInputWidget *);
 iInputWidgetContentPadding  contentPadding_InputWidget  (const iInputWidget *);
 const iString *             text_InputWidget            (const iInputWidget *);
 const iString *             rawText_InputWidget         (const iInputWidget *); /* what was actually typed */

@@ -127,7 +127,12 @@ iRect contentBounds_InputWidget_(const iInputWidget *d) {
     shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2) * aspect_UI, 0));
     bounds.pos.y += padding_InputWidget_().y / 2;
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
-        if (hasNativeControl_InputWidget_(d) && !cmp_String(id_Widget(w), "url")) {
+#if defined (iPlatformAppleMobile)
+        const iBool isNativeUrl = iFalse; /* native control is aligned exactly */
+#else
+        const iBool isNativeUrl = hasNativeControl_InputWidget_(d) && !cmp_String(id_Widget(w), "url");
+#endif
+        if (isNativeUrl) {
             /* TODO: This is super hacky: the native UI control would be offset incorrectly.
                These paddings/offsets are getting a bit ridiculous, should rethink the whole thing.
                Use the Widget paddings! */
@@ -136,6 +141,11 @@ iRect contentBounds_InputWidget_(const iInputWidget *d) {
         else {
             bounds.pos.y += extraPaddingHeight_InputWidget_(d) / 2;
         }
+    }
+    bounds.pos.y += d->extraHeight / 2;
+    if (isMobile_Platform() && !cmp_String(id_Widget(w), "url")) {
+        /* Optical centering: the glyphs sit low in the line box. */
+        bounds.pos.y -= lineHeight_Text(d->font) / 24;
     }
     return bounds;
 }
@@ -185,6 +195,7 @@ void updateMetrics_InputWidget_(iInputWidget *d) {
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         w->rect.size.y += extraPaddingHeight_InputWidget_(d);
     }
+    w->rect.size.y += d->extraHeight;
     invalidateBuffered_InputWidget_(d);
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     if (height_Rect(w->rect) != oldHeight) {
@@ -214,6 +225,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->font            = uiInput_FontId | alwaysVariableFlag_FontId;
     d->leftPadding     = 0;
     d->rightPadding    = 0;
+    d->extraHeight     = 0;
     d->lastUpdateWidth = 0;
     d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag |
                          lineBreaksEnabled_InputWidgetFlag | useReturnKeyBehavior_InputWidgetFlag |
@@ -360,6 +372,17 @@ void setHint_InputWidget(iInputWidget *d, const char *hintText) {
     setCStr_String(&d->srcHint, hintText);
     set_String(&d->hint, &d->srcHint);
     translate_Lang(&d->hint);
+}
+
+void setExtraHeight_InputWidget(iInputWidget *d, int height) {
+    if (d->extraHeight != height) {
+        d->extraHeight = height;
+        updateMetrics_InputWidget_(d);
+    }
+}
+
+int extraHeight_InputWidget(const iInputWidget *d) {
+    return d->extraHeight;
 }
 
 void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
@@ -572,6 +595,7 @@ static iRect bounds_InputWidget_(const iInputWidget *d) {
     if (w->flags & extraPadding_WidgetFlag) {
         bounds.size.y += extraPaddingHeight_InputWidget_(d);
     }
+    bounds.size.y += d->extraHeight;
     return bounds;
 }
 
