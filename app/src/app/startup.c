@@ -53,6 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 #include "ui/window.h"
 #include "updater.h"
+#include "gitcommit.h"
 
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/commandline.h>
@@ -923,6 +924,9 @@ const iString *debugInfo_App(void) {
                                 SDL_GetRendererName(renderer_Window(as_Window(get_MainWindow()))));
         }
 #endif
+        if (*LAGRANGE_GIT_COMMIT) {
+            appendFormat_String(msg, "Commit: %s\n", LAGRANGE_GIT_COMMIT);
+        }
         appendFormat_String(msg, "\n");
         if (isAppleDesktop_Platform() && buildFlag_Core("LAGRANGE_ENABLE_MAC_MENUS")) {
             appendFormat_String(msg, "%s Native macOS menus\n", enabled[1]);
