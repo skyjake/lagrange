@@ -8,6 +8,9 @@ A new major version means major changes: the app now supports user data syncing,
 
 (You can disable showing release notes in Preferences.)
 
+## 2.0.1
+*
+
 ## 2.0
 
 New features:
