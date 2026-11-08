@@ -555,6 +555,14 @@ static iBool parseBinding_Keys_(iRangecc line, int format, int *id, int *key, in
         if (sscanf(line.start, "%d %x %4s", id, key, modBits) < 2) {
             return iFalse;
         }
+#if !defined (iPlatformTerminal)
+        if (*key & SDLK_SCANCODE_MASK) {
+            /* v1 files were migrated from bindings.txt written by SDL2-based versions.
+               SDL3 has renumbered some of the scancode-based keycodes, so these are left
+               to their defaults. */
+            return iFalse;
+        }
+#endif
         *mods = 0;
         const char *m = modBits;
         for (int i = 0; i < 4 && *m; i++, m++) {
@@ -593,6 +601,12 @@ void deinit_Keys(void) {
 void load_Keys(const char *saveDir) {
     iKeys *d = &keys_;
     loadModMap_Keys_(saveDir);
+#if defined (iPlatformMobile)
+    /* The mobile UI has no way to edit key bindings, so always use the defaults. Saved
+       bindings may contain stale SDL2 keycodes (e.g., for the Android system Back key). */
+    updateLookup_Keys_(d);
+    return;
+#endif
     iFile *f = iClob(newCStr_File(migrate_ListFile(saveDir, filename_Keys_, oldFilename_Keys_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iBlock   *src    = collect_Block(readAll_File(f));
@@ -601,6 +615,11 @@ void load_Keys(const char *saveDir) {
         while (nextLine_ListFile(range_Block(src), &line)) {
             int id, key, mods;
             if (!parseBinding_Keys_(line, format, &id, &key, &mods)) {
+                continue;
+            }
+            if (id >= builtIn_BindingId) {
+                /* Not user-configurable, so always use the default. Versions 2.0.0 and 2.0.1
+                   may have saved these with stale SDL2 keycodes. */
                 continue;
             }
             iBinding *bind = findId_Keys_(d, id);
