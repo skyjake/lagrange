@@ -1535,7 +1535,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 if (arg_Command(cmd)) { /* switch tabs on button down */
                     showTabPage_Widget(tabs, page);
                 }
-                else { /* open context menu on button up */
+                else if (argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
+                    /* Context menu on button up (long press on touch). */
                     openMenu_Widget(menu, coord_Command(cmd));
                 }
             }
