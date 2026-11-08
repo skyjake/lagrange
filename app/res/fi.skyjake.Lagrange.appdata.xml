@@ -38,6 +38,22 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="2.0.1" date="2026-11-08">
+            <description>
+                <ul>
+                    <li>Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).</li>
+                    <li>Android's Material UI icons are used on Linux and Web builds as well.</li>
+                    <li>Fixed: Going to previous page on a book cover should just show nav/tab bars.</li>
+                    <li>Fixed: "Home" toolbar button did not open a homepage bookmark, only "about:lagrange".</li>
+                    <li>Fixed: Remote bookmarks were not shown in the Bookmarks list.</li>
+                    <li>Fixed: Button/finger release over the tab bar could inadvertently open the tab context menu.</li>
+                    <li>Fixed: Link icons were sometimes vertically misaligned.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v2.0.1</url>
+        </release>
         <release version="2.0" date="2026-11-07">
             <description>
                 <ul>
@@ -209,21 +225,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.5</url>
-        </release>
-        <release version="1.20.4" date="2026-04-16">
-            <description>
-                <ul>
-                    <li>Fixed potential hang when stopping a network connection when a SOCKS proxy is active.</li>
-                    <li>Possible fix for Heading subscription entries returning to an unread state after a long time.</li>
-                    <li>Quit the app cleanly when receiving a SIGTERM signal.</li>
-                    <li>Improved CJK IME presentation.</li>
-                    <li>Added a "Copy Link as Gemtext" context menu action and fixed missing items. (Courtesy of Sidney Cammeresi.)</li>
-                    <li>Updated UI translations.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.4</url>
         </release>
     </releases>
 </component>
