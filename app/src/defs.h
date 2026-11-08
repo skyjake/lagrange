@@ -45,10 +45,10 @@ iLocalDef iBool isTerminal_Platform(void) {
 #if defined (iPlatformTerminal)
 #   undef page_Icon
 #   undef upload_Icon
-#   undef midEllipsis_Icon
+#   undef ellipsis_Icon
 #   define page_Icon        "∷"
 #   define upload_Icon      upArrow_Icon
-#   define midEllipsis_Icon "..."
+#   define ellipsis_Icon    "..."
 #   define shift_Icon       "Sh"
 #   define shiftReturn_Icon "Sh-" return_Icon
 #elif defined (iPlatformApple)

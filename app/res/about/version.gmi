@@ -1,13 +1,11 @@
 # Release notes
 
 ## 2.0.1
+* Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).
 * Fixed: Remote bookmarks were not shown in the Bookmarks list.
 * Fixed: Button/finger release over the tab bar could inadvertently open the tab context menu.
 
 ## 2.0
-
-Welcome to Lagrange 2!
-
 A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
 
 => gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)

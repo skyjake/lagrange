@@ -204,7 +204,7 @@ static const iArray *updateMobileNavMenu_(iWidget *menu) {
 }
 
 static const char *reloadCStr_   = reload_Icon;
-static const char *pageMenuCStr_ = midEllipsis_Icon;
+static const char *pageMenuCStr_ = ellipsis_Icon;
 
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {

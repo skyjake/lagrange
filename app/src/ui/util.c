@@ -1138,6 +1138,7 @@ const char *systemImageName_Apple(iChar ch) {
         { 0x1f873,  "arrow.down"                     }, /* downArrow_Icon */
         { 0x2139,   "info.circle"                    }, /* info_Icon */
         { 0x2197,   "arrow.up.forward.square"        }, /* openInTab_Icon */
+        { 0x22ef,   "ellipsis"                       }, /* ellipsis_Icon */
         { 0x22f0,   "list.bullet.indent"             }, /* hierarchy_Icon */
         { 0x2398,   "doc.on.doc.fill"                }, /* clipCopy_Icon / copy_Icon */
         { 0x23f2,   "clock.arrow.2.circlepath"       }, /* timer_Icon */
@@ -1193,6 +1194,7 @@ iChar systemIconChar_Windows(iChar ch) {
         { 0x21a6,  0xede1 },    /* barRightArrow_Icon */
         { 0x21c5,  0xe8cb },    /* upDownArrow_Icon */
         { 0x21e8,  0xe72a },    /* rightArrowWhite_Icon */
+        { 0x22ef,  0xe712 },    /* ellipsis_Icon */
         { 0x2328,  0xe765 },    /* keyboard_Icon */
         { 0x232b,  0xe750 },    /* delete_Icon */
         { 0x2398,  0xe8c8 },    /* clipCopy_Icon / copy_Icon */
