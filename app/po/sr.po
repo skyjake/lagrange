@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2026-11-03 05:15+0000\n"
+"PO-Revision-Date: 2026-11-08 20:48+0000\n"
 "Last-Translator: Страхиња Радић <sr@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -178,11 +178,11 @@ msgstr "Ажурирање фидова"
 
 # megabytes, used as the unit after a number
 msgid "mb"
-msgstr "МБ"
+msgstr "MB"
 
 # kilobytes, used as the unit after a number
 msgid "kb"
-msgstr "КБ"
+msgstr "KB"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
@@ -1391,14 +1391,14 @@ msgid "feeds.list.refreshtime"
 msgstr "Последње освежавање је било %s."
 
 msgid "mb.per.sec"
-msgstr "МБ/с"
+msgstr "MB/s"
 
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "У тамној теми"
 
 msgid "prefs.boldlink"
-msgstr "Подебљавање веза:"
+msgstr "Везе подебљаним фонтом:"
 
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
@@ -3163,7 +3163,7 @@ msgstr "Синхронизација"
 
 #, c-format
 msgid "sidebar.feeds.updated.min"
-msgstr "Ажурирано пре %d мин."
+msgstr "Ажурирано пре %d min"
 
 msgid "menu.opencurrent"
 msgstr "Отвори у текућој картици"
@@ -3368,7 +3368,7 @@ msgstr "Управо ажурирано"
 
 #, c-format
 msgid "sidebar.feeds.updated.hours"
-msgstr "Ажурирано пре %d сати и %d мин."
+msgstr "Ажурирано пре %d h и %d min"
 
 #, c-format
 msgid "sidebar.feeds.updated.days"
@@ -3403,3 +3403,496 @@ msgstr[2] "Желите да заиста откажете претплату н
 # Followed by a number: the position of the tab, counting from the left sidebar to the right one.
 msgid "keys.sidebar.tab"
 msgstr "Картица панела"
+
+msgid "heading.prefs.sync"
+msgstr "Синхронизација"
+
+msgid "prefs.sync.info"
+msgstr ""
+"Сви подаци се шифрују пре слања, и на сервер се смештају шифровани. Сервер "
+"их не може дешифровати. Подешавања појединачних сајтова се синхронизују, али "
+"не и остала подешавања."
+
+msgid "prefs.sync.server"
+msgstr "Сервер:"
+
+msgid "prefs.sync.status"
+msgstr "Стање:"
+
+# Web version: server that relays network connections.
+msgid "heading.prefs.relay"
+msgstr "Релеј WebSocket-а"
+
+# The placeholder is the name of a protocol, for example "Gemini".
+msgid "prefs.scope.custom.typography"
+msgstr "Користити фонтове за %s:"
+
+msgid "prefs.scope.custom.layout"
+msgstr "Користити распоред за %s:"
+
+msgid "prefs.scope.site.typography"
+msgstr "Користити фонтове за сајт:"
+
+# Web version: an empty proxy setting means the proxy built into the relay server is used.
+msgid "hint.proxy.relay"
+msgstr "уграђени прокси релеја"
+
+msgid "prefs.scope.site.layout"
+msgstr "Користити распоред за сајт:"
+
+msgid "prefs.relay.password"
+msgstr "Лозинка:"
+
+# Public key that identifies this browser to a custom relay.
+msgid "prefs.relay.key"
+msgstr "Јавни кључ:"
+
+msgid "heading.storage.unavailable"
+msgstr "Складиште није доступно"
+
+msgid "prefs.pagetheme.dark"
+msgstr "По страницама тамно:"
+
+msgid "prefs.hyphenate"
+msgstr "Прелом текста:"
+
+msgid "justify.never"
+msgstr "Никад"
+
+msgid "dlg.storage.unavailable"
+msgstr ""
+"Овај читач није дозволио Lagrange-у да користи трајно складиште. Ништа неће "
+"бити сачувано по затварању стране."
+
+msgid "gempub.cover.openshelf"
+msgstr "Отвори из полице"
+
+# Heading on the contents page of a book made from a single page. Followed by a link to the page's original URL.
+msgid "gempub.page.source"
+msgstr "Извор"
+
+msgid "dlg.sync.untrusted.changed"
+msgstr ""
+"Сертификат сервера за синхронизацију не одговара оном коме је раније указано "
+"поверење. Ово је очекивано ако је сертификат сервера замењен, али може "
+"значити и да неко пресреће везу."
+
+msgid "dlg.sync.untrusted.check"
+msgstr ""
+"Указује поверење сертификату сервера само ако његов отисак одговара оном "
+"који је дао администратор сервера."
+
+msgid "sync.status.last"
+msgstr "Синхронизовано"
+
+msgid "sync.status.recent"
+msgstr "Недавно:"
+
+msgid "sync.busy.bookmarks"
+msgstr ""
+"Обележивачи се не могу уређивати током синхронизације. Покушајте поново "
+"нешто касније."
+
+msgid "sync.busy.sitespec"
+msgstr ""
+"Подешавања сајта се не могу уређивати током синхронизације. Покушајте поново "
+"нешто касније."
+
+msgid "keys.group.navigation"
+msgstr "Навигација"
+
+msgid "keys.group.ui"
+msgstr "Кориснички интерфејс"
+
+msgid "keys.group.other"
+msgstr "Остало"
+
+msgid "error.certverify.fp"
+msgstr "Отисак сервера:"
+
+msgid "heading.sync.untrusted"
+msgstr "Сервер за синх. без поверења"
+
+msgid "dlg.sync.fp.trusted"
+msgstr "Отисак са поверењем:"
+
+msgid "dlg.sync.copyfp"
+msgstr "Копирај отисак сервера"
+
+msgid "dlg.sync.fp.server"
+msgstr "Отисак сервера:"
+
+msgid "sync.status.off"
+msgstr "Искључена"
+
+msgid "sync.status.setup"
+msgstr "Неопходан је сервер и Ed25519 идентитет (исти за све уређаје)."
+
+msgid "sync.status.running"
+msgstr "Синхронизација…"
+
+msgid "sync.status.generation"
+msgstr "ген."
+
+msgid "sync.status.never"
+msgstr "Још није синх."
+
+msgid "sync.status.pending.types"
+msgstr "на чекању:"
+
+msgid "sync.status.error"
+msgstr "Грешка:"
+
+msgid "sync.status.recent.running"
+msgstr "синхронизација…"
+
+msgid "sync.identity.name"
+msgstr "Идентитет за синх."
+
+msgid "heading.sync.newidentity"
+msgstr "Нов идентитет за синх."
+
+msgid "dlg.sync.newidentity"
+msgstr "Унесите назив новог идентитета за синх."
+
+msgid "sync.error.timeout"
+msgstr "Сервер за синх. није одговорио на време."
+
+msgid "sync.error.servercert"
+msgstr "Сертификат сервера за синх. не користи Ed25519 кључ."
+
+msgid "sync.error.server"
+msgstr "Сервер за синх. је одговорио:"
+
+msgid "sync.error.encrypt"
+msgstr "Подаци се не могу дешифровати."
+
+msgid "sync.error.busy"
+msgstr "Подаци на серверу се стално мењају. Покушајте поново нешто касније."
+
+msgid "sync.error.identity"
+msgstr "Идентитет за синх. не постоји или не користи Ed25519 кључ."
+
+msgid "sync.error.editoropen"
+msgstr "Затворите уређивач обележивача и подешавања сајта пре синхронизације."
+
+msgid "sync.error.newidentity"
+msgstr "Идентитет се не може креирати."
+
+msgid "dlg.sync.newidentity.info"
+msgstr ""
+"Морате имати један заједнички идентитет за синхронизацију на синхронизованим "
+"уређајима. Уређаји са различитим идентитетима за синхронизацију неће бити "
+"међусобно синхронизовани. Можете управљати идентитетима за синхронизацију на "
+"траци Идентитети. Препоручује се да се они користе само за синхронизацију, а "
+"не и за пријављивање на било који други сервис. Идентитет користи Ed25519 "
+"кључ."
+
+msgid "sync.error.closed"
+msgstr "Сервер за синх. је затворио повезивање без одговора."
+
+msgid "sync.error.decrypt"
+msgstr ""
+"Синхронизовани подаци се не могу дешифровати. Постарајте се да се исти "
+"идентитет за синх. користи на свим уређајима."
+
+msgid "heading.book.exists"
+msgstr "Књига је већ сачувана"
+
+msgid "dlg.book.exists"
+msgstr ""
+"Другачији примерак „%s“ је већ на полици. Желите ли да га препишете овим?"
+
+msgid "heading.book.synced"
+msgstr "Место читања је синхронизовано"
+
+# %d is a chapter number.
+msgid "dlg.book.synced"
+msgstr ""
+"Ова књига већ има свежије место читања са другог уређаја, у поглављу %d."
+
+msgid "dlg.book.synced.frontmatter"
+msgstr ""
+"Ова књига већ има свежије место читања са другог уређаја, на почетку књиге."
+
+msgid "dlg.book.synced.jump"
+msgstr "Иди на синхронизовано место"
+
+msgid "heading.book.newedition"
+msgstr "Доступно је ажурирање"
+
+# %s is the book's title.
+msgid "dlg.book.newedition"
+msgstr "Свежија верзија „%s“ је преузета на другом уређају."
+
+msgid "dlg.book.newedition.update"
+msgstr "Ажурирај"
+
+msgid "dlg.book.overwrite"
+msgstr "Препиши"
+
+msgid "heading.subscribeall"
+msgstr "Претплата на све"
+
+#, c-format
+msgid "dlg.subscribeall.add"
+msgid_plural "dlg.subscribeall.add.n"
+msgstr[0] "%sПретплати се"
+msgstr[1] "%sПретплати се на %d фида"
+msgstr[2] "%sПретплати се на %d фидова"
+
+msgid "dlg.subscribeall.type"
+msgstr "Тип фида:"
+
+msgid "dlg.subscribeall.type.auto"
+msgstr "Аутоматска детекција"
+
+msgid "dlg.subscribeall.notfound"
+msgstr ""
+"На овој страници нема нових Џемини УРЛ-ова на које се можете претплатити."
+
+# Short form of an auto-reload interval in hours.
+#, c-format
+msgid "reload.short.hours"
+msgstr "%d h"
+
+# Short form of an auto-reload interval in minutes.
+#, c-format
+msgid "reload.short.minutes"
+msgstr "%d min"
+
+# Short form of a daily auto-reload interval.
+msgid "reload.short.day"
+msgstr "1 d"
+
+msgid "menu.copyresponse"
+msgstr "Копирај везу ка одговору"
+
+msgid "import.userdata.books"
+msgstr "Место читања:"
+
+msgid "dlg.userdata.newer"
+msgstr "Све (сачувати новије)"
+
+# File type filter in the Import User Data file dialog.
+msgid "filter.zip"
+msgstr "ZIP архива"
+
+msgid "dlg.newident.selfsign"
+msgstr "Креирање самопотписаног сертификата."
+
+msgid "dlg.newident.keytype"
+msgstr "Потпис:"
+
+msgid "dlg.newident.keytype.ecdsa"
+msgstr "ECDSA (P-256)"
+
+msgid "dlg.newident.keytype.ed25519"
+msgstr "Ed25519"
+
+msgid "dlg.newident.keytype.rsa"
+msgstr "RSA (2048-битни)"
+
+msgid "dlg.feed.type.tinylog"
+msgstr "Tinylog"
+
+msgid "hint.sync.server"
+msgstr "gemini://sync.skyjake.fi:1966"
+
+msgid "prefs.sync.identity"
+msgstr "Идентитет:"
+
+msgid "prefs.sync.identity.none"
+msgstr "Ниједан"
+
+msgid "prefs.sync.newidentity"
+msgstr "Нови идентитет за синх."
+
+msgid "heading.prefs.typography"
+msgstr "Фонтови"
+
+msgid "prefs.scope"
+msgstr "Односи се на:"
+
+msgid "prefs.scope.all"
+msgstr "Све протоколе"
+
+msgid "prefs.scope.custom.style"
+msgstr "Користити стил за %s:"
+
+msgid "prefs.scope.custom.theme"
+msgstr "Користити тему за %s:"
+
+msgid "prefs.scope.site.content"
+msgstr "Користити подешавања садржаја за сајт:"
+
+msgid "prefs.pageturn"
+msgstr "Окретање страна:"
+
+msgid "heading.prefs.toolbars"
+msgstr "Траке са алатима"
+
+msgid "prefs.tinylogsize"
+msgstr "Величина кеша за Tinylog:"
+
+msgid "prefs.proxy.finger"
+msgstr "Прокси за Finger:"
+
+msgid "prefs.proxy.spartan"
+msgstr "Прокси за Спартан:"
+
+msgid "prefs.proxy.nex"
+msgstr "Прокси за Nex:"
+
+msgid "prefs.relay.url"
+msgstr "Прилагођени релеј:"
+
+msgid "hint.relay.url"
+msgstr "wss://hostname/wisp/"
+
+msgid "prefs.relay.user"
+msgstr "Корисничко име:"
+
+msgid "keys.group.scroll"
+msgstr "Скроловање"
+
+msgid "keys.group.links"
+msgstr "Везе"
+
+msgid "keys.group.page"
+msgstr "Страна"
+
+msgid "keys.group.view"
+msgstr "Приказ"
+
+msgid "keys.group.tabs"
+msgstr "Картице"
+
+msgid "keys.group.split"
+msgstr "Раздвојени приказ"
+
+msgid "keys.group.bookmarks"
+msgstr "Обележивачи и фидови"
+
+msgid "heading.sync.failed"
+msgstr "Синх. није успела"
+
+msgid "heading.sync"
+msgstr "Синх."
+
+msgid "dlg.sync.untrusted.unknown"
+msgstr ""
+"Сертификат сервера за синхронизацију није исправан за дату адресу сервера."
+
+msgid "sync.status.pending"
+msgstr "измене на чекању"
+
+msgid "sync.identity.notes"
+msgstr "Користи се за синхронизацију корисничких података између уређаја"
+
+msgid "sync.error.untrusted"
+msgstr "Сертификату сервера за синх. није указано поверење."
+
+msgid "sync.error.response"
+msgstr "Неисправан одговор сервера за синх."
+
+msgid "sync.error.rollback"
+msgstr ""
+"Сервер за синх. има старије податке од овог уређаја. Искључите синх., па је "
+"поново укључите да бисте почели из почетка."
+
+msgid "prefs.trackpadspeed"
+msgstr "Брзина трекпеда:"
+
+msgid "prefs.webvariant"
+msgstr "Веб UI:"
+
+msgid "prefs.webvariant.desktop"
+msgstr "Десктоп"
+
+msgid "prefs.webvariant.tablet"
+msgstr "Таблет"
+
+msgid "prefs.webvariant.phone"
+msgstr "Телефон"
+
+msgid "prefs.sidebar.reset"
+msgstr "Врати на подразумевано"
+
+msgid "prefs.sync"
+msgstr "Синхронизација:"
+
+msgid "prefs.sync.interval"
+msgstr "Интервал:"
+
+msgid "prefs.sync.interval.manual"
+msgstr "Никад"
+
+msgid "prefs.sync.now"
+msgstr "Синхронизуј"
+
+msgid "prefs.scope.site.style"
+msgstr "Користити стил за сајт:"
+
+msgid "prefs.scope.site.theme"
+msgstr "Користити тему за сајт:"
+
+msgid "prefs.pageturn.none"
+msgstr "Без окретања"
+
+msgid "prefs.pageturn.scroll"
+msgstr "Скроловање"
+
+msgid "prefs.pageturn.curl"
+msgstr "Завијање"
+
+msgid "prefs.pageview"
+msgstr "По страницама:"
+
+msgid "prefs.hideviewtools"
+msgstr "Сакривање алата за преглед:"
+
+msgid "sync.error.expired"
+msgstr "Сертификат сервера за синх. је истекао."
+
+msgid "prefs.releasenotes"
+msgstr "Приказивање забележака о издању:"
+
+msgid "prefs.pagetheme.light"
+msgstr "По страницама светло:"
+
+# Paginated mode uses the regular document theme.
+msgid "prefs.doctheme.name.none"
+msgstr "Ниједна"
+
+msgid "prefs.doctheme.name.paper"
+msgstr "Папир"
+
+msgid "prefs.doctheme.name.arboreal"
+msgstr "Шумска"
+
+msgid "prefs.doctheme.name.ember"
+msgstr "Ћилибар"
+
+# Which protocols should the monospace body font by applied with.
+msgid "prefs.mono.doc"
+msgstr "Фонт једнаке ширине за:"
+
+msgid "prefs.boldlink.help"
+msgstr ""
+"Непосећене везе су подебљане у изабраним бојама стране (тамним или светлим)."
+
+msgid "prefs.font.coloremoji"
+msgstr "Обојени емоџији:"
+
+msgid "prefs.quotes"
+msgstr "Цитати"
+
+msgid "justify.pagesonly"
+msgstr "Само на страницама"
+
+msgid "justify.always"
+msgstr "Увек"
+
+msgid "gempub.page.contents"
+msgstr "Садржај"
