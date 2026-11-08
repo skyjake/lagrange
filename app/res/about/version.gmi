@@ -1,5 +1,8 @@
 # Release notes
 
+## 2.0.2
+* Adjusted the Material UI icon font (lighter weight).
+
 ## 2.0.1
 * Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).
 * Android's Material UI icons are used on Linux and Web builds as well.
