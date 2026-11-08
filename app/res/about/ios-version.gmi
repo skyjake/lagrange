@@ -1,12 +1,12 @@
 # Release notes (iOS)
 
-## 2.0.1 (1)
+## 2.0.1
 * Fixed: Going to previous page on a book cover should just show nav/tab bars.
 * Fixed: "Home" toolbar button did not open a homepage bookmark, only "about:lagrange".
 * Fixed: Remote bookmarks were not shown in the Bookmarks list.
 * Fixed: Touch released over the tab bar could inadvertently open the tab context menu.
 
-## 2.0 (5)
+## 2.0
 A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
 
 => gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)
