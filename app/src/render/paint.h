@@ -59,6 +59,7 @@ void    unsetClip_Paint     (iPaint *); /* must be paired with the `setClip` cal
 void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
 void    fillRect_Paint          (const iPaint *, iRect rect, int color);
+void    fillRectDiv_Paint       (const iPaint *, iRect rect, int divisor, int color); /* coordinates divided; TUI: half rows as half blocks */
 void    fillRectColor_Paint     (const iPaint *, iRect rect, iColor color);
 void    drawRoundFrameColor_Paint(const iPaint *, iRect rect, int radius, int corners,
                                   int frameThickness, iColor frame1, iColor frame2);

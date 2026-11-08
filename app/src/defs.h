@@ -45,10 +45,10 @@ iLocalDef iBool isTerminal_Platform(void) {
 #if defined (iPlatformTerminal)
 #   undef page_Icon
 #   undef upload_Icon
-#   undef midEllipsis_Icon
+#   undef ellipsis_Icon
 #   define page_Icon        "∷"
 #   define upload_Icon      upArrow_Icon
-#   define midEllipsis_Icon "..."
+#   define ellipsis_Icon    "..."
 #   define shift_Icon       "Sh"
 #   define shiftReturn_Icon "Sh-" return_Icon
 #elif defined (iPlatformApple)
@@ -102,6 +102,12 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
     (defined (iPlatformLinux) && !defined (iPlatformAndroid)) || \
     ((defined (iPlatformMsys) || defined (iPlatformWindows)) && !defined (iPlatformTerminal))
 #   define LAGRANGE_HAVE_FILE_REVEAL
+#endif
+
+/* UI icons from the bundled Material Symbols font (see platform/android-icons.py). */
+#if !defined (iPlatformApple) && !defined (iPlatformMsys) && !defined (iPlatformWindows) && \
+    !defined (iPlatformTerminal)
+#   define LAGRANGE_MATERIAL_ICONS
 #endif
 
 /* Sparkle and WinSparkle show the release notes themselves. */

@@ -233,26 +233,26 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     int bg = uiBackgroundSidebar_ColorId;
     if (isSel) {
         bg = uiBackgroundSelected_ColorId;
-        fillRect_Paint(p, bgRect, bg);
+        fillHighlight_ListWidget(list, p, d, bgRect, bg);
     }
     else if (isMarked) {
         bg = uiBackgroundUnfocusedSelection_ColorId;
-        fillRect_Paint(p, bgRect, bg);
+        fillHighlight_ListWidget(list, p, d, bgRect, bg);
     }
     else if (isHover) {
         bg = uiBackgroundFramelessHover_ColorId;
-        fillRect_Paint(p, bgRect, bg);
+        fillHighlight_ListWidget(list, p, d, bgRect, bg);
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         if (d->indent) /* remote icon */ {
             bg = uiBackgroundFolder_ColorId;
-            fillRect_Paint(p, bgRect, bg);
+            fillHighlight_ListWidget(list, p, d, bgRect, bg);
         }
     }
     else if (sidebar->mode == siteStructure_SidebarMode) {
         if (d->indent >= 2) {
             bg = uiBackgroundFolder_ColorId;
-            fillRect_Paint(p, bgRect, bg);
+            fillHighlight_ListWidget(list, p, d, bgRect, bg);
         }
     }
     /* Draw item contents. */

@@ -66,6 +66,14 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     run->visBounds.size.x -= xAdjust;
 }
 
+static int opticalCenter_Typesetter_(int fontId) {
+    /* Vertical optical center of mixed-case text, measured from the top of the line box:
+       halfway between the centers of the x-height and the cap height. */
+    const int capMid = mid_Rect(visualBounds_Text(fontId, range_CStr("H"))).y;
+    const int xMid   = mid_Rect(visualBounds_Text(fontId, range_CStr("x"))).y;
+    return (capMid + xMid) / 2;
+}
+
 iDeclareType(RunTypesetter)
 
 struct Impl_RunTypesetter {
@@ -590,15 +598,6 @@ static void addLinkIcon_Typesetter_(iTypesetter *d) {
     /* TODO: List bullets needs the same centering logic. */
     /* Special exception for the tiny bullet operator. */
     icon.font = equal_Rangecc(link->labelIcon, "∙") ? preformatted_FontId : icon.font;
-    /* Check actual height to align with the paragraph text. The icon glyph
-       may come from a different font. */ {
-        const int glyphHeight = measureRange_Text(icon.font, icon.text).bounds.size.y;
-        if (glyphHeight > icon.visBounds.size.y) {
-            const int delta = glyphHeight - icon.visBounds.size.y;
-            icon.visBounds.size.y += delta;
-            icon.visBounds.pos.y -= delta / 2;
-        }
-    }
     /* Custom link icon is shown on local Gemini links only. */
     if (!isEmpty_Range(&link->labelIcon)) {
         icon.text = link->labelIcon;
@@ -606,6 +605,11 @@ static void addLinkIcon_Typesetter_(iTypesetter *d) {
     icon.flags |= decoration_GmRunFlag | startOfLine_GmRunFlag;
     if (!doc->flags.isNex) {
         alignDecoration_GmRun_(&icon, iFalse);
+        if (!isTerminal_Platform()) {
+            /* The icon may come from a fallback font with its own scaling and vertical offset. */
+            icon.visBounds.pos.y += opticalCenter_Typesetter_(d->run.font) -
+                                    mid_Rect(visualBounds_Text(icon.font, icon.text)).y;
+        }
     }
     else {
         /* Nex directory link "icons" are actually the => arrows that appear in

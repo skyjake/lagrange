@@ -37,11 +37,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <lagrange/lang.h>
 
 static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBookmark *bm) {
-    while (bm->parentId) {
-        if (!contains_IntSet(d->openFolders, bm->parentId)) {
+    while (bm && bm->parentId) {
+        const uint32_t parentId = bm->parentId;
+        bm = get_Bookmarks(bookmarks_App(), parentId);
+        /* Remote bookmarks are children of their source, which is not a folder. */
+        if (bm && isFolder_Bookmark(bm) && !contains_IntSet(d->openFolders, parentId)) {
             return iTrue;
         }
-        bm = get_Bookmarks(bookmarks_App(), bm->parentId);
     }
     return iFalse;
 }

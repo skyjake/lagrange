@@ -232,7 +232,7 @@ static void setupDialog_Query_(iQuery *d, iWidget *dlg, const iString *url,
     }
     /* Menu for additional actions, past entries. */ {
         iLabelWidget *ellipsisButton =
-            makeMenuButton_LabelWidget(midEllipsis_Icon, NULL, 0);
+            makeMenuButton_LabelWidget(ellipsis_Icon, NULL, 0);
         iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
         /* When opening, update the items to reflect the site-specific settings. */
         setMenuUpdateItemsFunc_Widget(menu, updateInputPromptMenuItems_);

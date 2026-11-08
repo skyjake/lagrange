@@ -546,6 +546,20 @@ iRect highlightRect_ListWidget(const iListWidget *d, iRect itemRect) {
     return adjusted_Rect(itemRect, init_I2(0, -d->itemSpacing), zero_I2());
 }
 
+void fillHighlight_ListWidget(const iListWidget *d, iPaint *p, const iAnyObject *item,
+                              iRect bgRect, int color) {
+    /* The framed cursor is filled entirely so the frame is drawn on the highlight. */
+    if (isTerminal_Platform() && d->itemSpacing &&
+        !(isFocused_Widget(d) && constCursorItem_ListWidget(d) == item)) {
+        /* Half of the spacing above and below belongs to the item. */
+        iRect halved = { muli_I2(bgRect.pos, 2), muli_I2(bgRect.size, 2) };
+        adjustEdges_Rect(&halved, d->itemSpacing, 0, -d->itemSpacing, 0);
+        fillRectDiv_Paint(p, halved, 2, color);
+        return;
+    }
+    fillRect_Paint(p, bgRect, color);
+}
+
 void drawCursor_ListWidget(const iListWidget *d, iPaint *p, iRect itemRect, int color) {
     if (isTerminal_Platform()) {
         const int right = cursorRight_ListWidget_(d, itemRect);
@@ -1313,7 +1327,8 @@ static void draw_ListWidget_(const iListWidget *d) {
             const int blankWidth = scrollBarWidth_ListWidget(d);
 #endif
             /* The cursor frame goes on top of the neighbors' highlights. */
-            const size_t deferred   = d->itemSpacing ? d->cursorItem : iInvalidPos;
+            const size_t deferred   = d->itemSpacing && isFocused_Widget(d) ? d->cursorItem
+                                                                         : iInvalidPos;
             iBool        isDeferred = iFalse;
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;

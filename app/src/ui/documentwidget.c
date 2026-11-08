@@ -416,7 +416,7 @@ void updateWindowTitle_DocumentWidget(const iDocumentWidget *d) {
         setFlags_Widget(icon, hidden_WidgetFlag, iFalse);
     }
     if (d->fetch->flags & waitForIdle_DocumentFetchFlag) {
-        updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
+        updateTextCStr_LabelWidget(tabButton, ellipsis_Icon);
         return;
     }
     iStringArray *title = iClob(new_StringArray());

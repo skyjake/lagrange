@@ -105,26 +105,28 @@ static float sourcePosition_DocumentBook_(const iDocumentBook *d) {
     return isPaged_DocumentView(view) ? sourcePosition_DocumentView(view) : 0.0f;
 }
 
-static const iString *adjacentChapterUrl_DocumentBook_(const iDocumentBook *d, int dir) {
+static size_t readingOrderPos_DocumentBook_(const iDocumentBook *d) {
     /* The reading order of a book is the cover, the contents, and the chapters. */
     const iGempub *gempub = gempub_DocumentBook_(d);
     const iString *url    = url_DocumentWidget(d->owner);
-    if (!gempub || isRemote_Gempub(gempub) || !dir) {
-        return NULL;
+    if (!gempub || isRemote_Gempub(gempub)) {
+        return iInvalidPos;
     }
-    size_t pos;
     if (isCoverPageUrl_Gempub(gempub, url)) {
-        pos = 0;
+        return 0;
     }
-    else if (isIndexPageUrl_Gempub(gempub, url)) {
-        pos = 1;
+    if (isIndexPageUrl_Gempub(gempub, url)) {
+        return 1;
     }
-    else {
-        const size_t index = navIndex_Gempub(gempub, url);
-        if (index == iInvalidPos) {
-            return NULL;
-        }
-        pos = index + 2;
+    const size_t index = navIndex_Gempub(gempub, url);
+    return index == iInvalidPos ? iInvalidPos : index + 2;
+}
+
+static const iString *adjacentChapterUrl_DocumentBook_(const iDocumentBook *d, int dir) {
+    const iGempub *gempub = gempub_DocumentBook_(d);
+    size_t         pos    = readingOrderPos_DocumentBook_(d);
+    if (pos == iInvalidPos || !dir) {
+        return NULL;
     }
     if ((dir < 0 && pos == 0) || (dir > 0 && pos + 1 >= navSize_Gempub(gempub) + 2)) {
         return NULL;
@@ -247,7 +249,8 @@ int chapterSwipeDir_DocumentBook(const iDocumentBook *d, const char *cmd) {
 iBool isHistoryTurn_DocumentBook(const iDocumentBook *d, int dir) {
     /* Pages outside the reading order turn back to the page they were opened from. */
     const iGempub *gempub = gempub_DocumentBook_(d);
-    if (dir >= 0 || !gempub || isRemote_Gempub(gempub) || adjacentChapterUrl_DocumentBook_(d, dir)) {
+    if (dir >= 0 || !gempub || isRemote_Gempub(gempub) ||
+        readingOrderPos_DocumentBook_(d) != iInvalidPos) {
         return iFalse;
     }
     iHistory *history = history_DocumentWidget(d->owner);

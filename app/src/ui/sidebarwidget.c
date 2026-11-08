@@ -1733,7 +1733,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         // clang-format on
         addChildFlags_Widget(buttons,
                              iClob(makeMenuButton_LabelWidget(
-                                 midEllipsis_Icon, modeDropItems, iElemCount(modeDropItems))),
+                                 ellipsis_Icon, modeDropItems, iElemCount(modeDropItems))),
                              noBackground_WidgetFlag | frameless_WidgetFlag);
     }
     setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);

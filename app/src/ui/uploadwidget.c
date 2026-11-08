@@ -507,7 +507,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { NULL }
         };
         const iMenuItem textItems[] = {
-            { "navi.menubutton text:\u00a0\u00a0\u00a0" midEllipsis_Icon "\u00a0\u00a0\u00a0\u00a0", 0, 0, (const void *) ellipsisItems },
+            { "navi.menubutton text:\u00a0\u00a0\u00a0" ellipsis_Icon "\u00a0\u00a0\u00a0\u00a0", 0, 0, (const void *) ellipsisItems },
             { "title id:heading.upload.text" },
             { "input id:upload.text noheading:1" },
             { NULL }

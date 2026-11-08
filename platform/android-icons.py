@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Builds the Android UI icon font: a static subset of Material Symbols whose glyphs are
-# mapped to Lagrange's UI icon codepoints (lib/core/include/lagrange/defs.h).
+# Builds the UI icon font for Android, Linux/BSD, and web: a static subset of Material Symbols
+# whose glyphs are mapped to Lagrange's UI icon codepoints (lib/core/include/lagrange/defs.h).
 #
 # Source font and codepoints:
 # https://github.com/google/material-design-icons/tree/master/variablefont
@@ -46,6 +46,7 @@ ICONS = {
     0x1f4e5: 'file_open',                   # import_Icon
     0x1f4e6: 'package_2',                   # package_Icon
     0x1f4e7: 'mail',                        # envelope_Icon
+    0x1f4f0: 'newspaper',                   # newspaper_Icon
     0x1f4f1: 'smartphone',                  # User Interface settings
     0x1f503: 'refresh',                     # reload_Icon
     0x1f50d: 'search',                      # magnifyingGlass_Icon
@@ -77,9 +78,14 @@ ICONS = {
     0x21a4:  'keyboard_tab_rtl',            # barLeftArrow_Icon
     0x21a6:  'keyboard_tab',                # barRightArrow_Icon
     0x21c5:  'swap_vert',                   # upDownArrow_Icon
+    0x21e7:  'shift',                       # shift_Icon (Apple keyboard)
     0x21e8:  'arrow_right_alt',             # rightArrowWhite_Icon
+    0x22ef:  'more_horiz',                  # ellipsis_Icon
     0x22f0:  'format_indent_increase',      # hierarchy_Icon
+    0x2303:  'keyboard_control_key',        # Control key (Apple keyboard)
+    0x2318:  'keyboard_command_key',        # Command key (Apple keyboard)
     0x231b:  'hourglass',                   # hourglass_Icon
+    0x2325:  'keyboard_option_key',         # Option key (Apple keyboard)
     0x2328:  'keyboard',                    # keyboard_Icon
     0x232b:  'backspace',                   # delete_Icon
     0x2398:  'content_copy.fill',           # clipCopy_Icon / copy_Icon
@@ -116,7 +122,7 @@ ICONS = {
 
 # Icons in defs.h that are intentionally left to the regular fonts.
 UNMAPPED = {
-    0x2022,  # bullet_Icon, midEllipsis_Icon: also plain punctuation
+    0x2022,  # bullet_Icon: also plain punctuation
     0x25cb,  # circleWhite_Icon
     0x25cf,  # circle_Icon
     0x27a0,  # openExt_Icon, networkProxy_Icon
