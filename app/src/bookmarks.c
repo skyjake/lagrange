@@ -802,7 +802,7 @@ void reorder_Bookmarks(iBookmarks *d, uint32_t id, int newOrder) {
 
 iBool filterHomepage_Bookmark(void *d, const iBookmark *bm) {
     iUnused(d);
-    return (bm->flags & homepage_BookmarkFlag) != 0 && isTrash_Bookmark(bm);
+    return (bm->flags & homepage_BookmarkFlag) != 0 && !isTrash_Bookmark(bm);
 }
 
 uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {

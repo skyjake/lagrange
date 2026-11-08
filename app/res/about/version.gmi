@@ -4,6 +4,7 @@
 * Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).
 * Android's Material UI icons are used on Linux and Web builds as well.
 * Fixed: Going to previous page on a book cover should just show nav/tab bars.
+* Fixed: "Home" toolbar button did not open a homepage bookmark, only "about:lagrange".
 * Fixed: Remote bookmarks were not shown in the Bookmarks list.
 * Fixed: Button/finger release over the tab bar could inadvertently open the tab context menu.
 * Fixed: Link icons were sometimes vertically misaligned.
