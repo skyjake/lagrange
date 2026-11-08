@@ -114,8 +114,8 @@ if (EXISTS ${CACERT_PEM_PATH})
     list (APPEND RESOURCES ${CACERT_PEM_PATH})
 endif ()
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
-if (NOT ANDROID)
-    list (FILTER FONTS EXCLUDE REGEX "MaterialSymbols") # UI icons on Android
+if (APPLE OR WIN32 OR MSYS OR NOT UNIX)
+    list (FILTER FONTS EXCLUDE REGEX "MaterialSymbols") # UI icons on Android, Linux/BSD, and web
 endif ()
 if (ANDROID OR IOS)
     list (FILTER FONTS EXCLUDE REGEX "/(Roboto-[A-Za-z]+\\.ttf|LICENSE_Roboto\\.txt)$") # system font is used

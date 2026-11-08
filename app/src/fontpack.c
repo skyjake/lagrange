@@ -710,10 +710,10 @@ void init_Fonts(const char *userDir) {
         }
 #endif
 #endif
-#if defined (iPlatformAndroidMobile)
+#if defined (LAGRANGE_MATERIAL_ICONS)
         /* Material Symbols for UI icons, like SF Symbols on Apple platforms. */ {
             iFontPack *icons = new_FontPack();
-            setCStr_String(&icons->id, "android-icons");
+            setCStr_String(&icons->id, "material-icons");
             setReadOnly_FontPack(icons, iTrue);
             icons->archive = archive_Resources();
             const iBool ok = load_FontPack_(icons, collectNewCStr_String(

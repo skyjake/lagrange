@@ -104,6 +104,12 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define LAGRANGE_HAVE_FILE_REVEAL
 #endif
 
+/* UI icons from the bundled Material Symbols font (see platform/android-icons.py). */
+#if !defined (iPlatformApple) && !defined (iPlatformMsys) && !defined (iPlatformWindows) && \
+    !defined (iPlatformTerminal)
+#   define LAGRANGE_MATERIAL_ICONS
+#endif
+
 /* Sparkle and WinSparkle show the release notes themselves. */
 #if !defined (LAGRANGE_ENABLE_SPARKLE) && !defined (LAGRANGE_ENABLE_WINSPARKLE)
 #   define LAGRANGE_RELEASE_NOTES_POPUP

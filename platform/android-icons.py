@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Builds the Android UI icon font: a static subset of Material Symbols whose glyphs are
-# mapped to Lagrange's UI icon codepoints (lib/core/include/lagrange/defs.h).
+# Builds the UI icon font for Android, Linux/BSD, and web: a static subset of Material Symbols
+# whose glyphs are mapped to Lagrange's UI icon codepoints (lib/core/include/lagrange/defs.h).
 #
 # Source font and codepoints:
 # https://github.com/google/material-design-icons/tree/master/variablefont
@@ -78,10 +78,14 @@ ICONS = {
     0x21a4:  'keyboard_tab_rtl',            # barLeftArrow_Icon
     0x21a6:  'keyboard_tab',                # barRightArrow_Icon
     0x21c5:  'swap_vert',                   # upDownArrow_Icon
+    0x21e7:  'shift',                       # shift_Icon (Apple keyboard)
     0x21e8:  'arrow_right_alt',             # rightArrowWhite_Icon
     0x22ef:  'more_horiz',                  # ellipsis_Icon
     0x22f0:  'format_indent_increase',      # hierarchy_Icon
+    0x2303:  'keyboard_control_key',        # Control key (Apple keyboard)
+    0x2318:  'keyboard_command_key',        # Command key (Apple keyboard)
     0x231b:  'hourglass',                   # hourglass_Icon
+    0x2325:  'keyboard_option_key',         # Option key (Apple keyboard)
     0x2328:  'keyboard',                    # keyboard_Icon
     0x232b:  'backspace',                   # delete_Icon
     0x2398:  'content_copy.fill',           # clipCopy_Icon / copy_Icon
