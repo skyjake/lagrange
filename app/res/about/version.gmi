@@ -2,8 +2,11 @@
 
 ## 2.0.1
 * Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).
+* Android's Material UI icons are used on Linux and Web builds as well.
+* Fixed: Going to previous page on a book cover should just show nav/tab bars.
 * Fixed: Remote bookmarks were not shown in the Bookmarks list.
 * Fixed: Button/finger release over the tab bar could inadvertently open the tab context menu.
+* Fixed: Link icons were sometimes vertically misaligned.
 
 ## 2.0
 A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
