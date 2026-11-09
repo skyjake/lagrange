@@ -892,6 +892,10 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             wrap->isHyphenBreak_out = isHyphenBreak;
             keepGoing               = notify_WrapText(wrap, lineEnd, attrib, origin, lastLineW);
         }
+        /* Position at `lineEnd` belongs to the next line, if there is one. */
+        const iBool isLastLine =
+            !keepGoing || endIdx >= run->utf16Len ||
+            (wrap && wrap->maxLines > 0 && (size_t) lineCount + 1 >= wrap->maxLines);
         /* Draw the line (only when in draw mode). */
         if (isDraw) {
             drawLine_AppleText_(tx, activeLine, af, linePos, args->color, args->mode);
@@ -908,8 +912,16 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
                 /* Clamp to the line's range. */
                 if (idx < startIdx) idx = startIdx;
                 if (idx > endIdx) idx = endIdx;
+                if (idx == endIdx && !isLastLine && endIdx > startIdx) {
+                    /* Stay on this line, after the last word. */
+                    const char *hit = srcPtr_(endIdx - 1);
+                    while (hit > lineStart && isSpace_Char(hit[-1])) {
+                        hit--;
+                    }
+                    wrap->hitChar_out = hit;
+                }
                 /* Guard against out-of-bounds access. */
-                if (idx <= run->utf16Len) {
+                else if (idx <= run->utf16Len) {
                     wrap->hitChar_out = srcPtr_(idx);
                 }
                 else {
@@ -925,7 +937,8 @@ void run_Font(iBaseFont *d, const iRunArgs *args) {
             }
         }
         /* Hit testing: find the pixel advance to hitChar (source pointer -> screen offset). */
-        if (wrap && wrap->hitChar && wrap->hitChar >= lineStart && wrap->hitChar <= lineEnd) {
+        if (wrap && wrap->hitChar && wrap->hitChar >= lineStart &&
+            (wrap->hitChar < lineEnd || (isLastLine && wrap->hitChar == lineEnd))) {
             /* Scan for the UTF-16 index that corresponds to the source pointer. */
             CFIndex hitIdx = endIdx;
             for (CFIndex i = startIdx; i <= endIdx && i <= run->utf16Len; i++) {
