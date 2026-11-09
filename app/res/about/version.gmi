@@ -1,13 +1,8 @@
 # Release notes
 
-A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
-
-=> gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)
-
-(You can disable showing release notes in Preferences.)
-
 ## 2.0.3
 * macOS: Fixed the input field cursor being drawn in the wrong place when the insertion point is the start of a wrapped line.
+* Identities: Year 9999+ certificates are treated as never expiring.
 
 ## 2.0.2
 * Adjusted the weight of the Material UI icons font.
@@ -24,6 +19,11 @@ A new major version means major changes: the app now supports user data syncing,
 * Fixed: Link icons were sometimes vertically misaligned.
 
 ## 2.0
+A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
+
+=> gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)
+
+(You can disable showing release notes in Preferences.)
 
 New features:
 * Syncing user data across devices with end-to-end encryption. (Relies on a sync server.)
