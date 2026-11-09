@@ -314,7 +314,8 @@ static void postQuitOnSigTerm_(int sig) {
 }
 #endif
 
-void updateSystemTheme_App_(iApp *d) {
+void updateSystemTheme_App_(iApp *d, iBool isChangeEvent) {
+    iUnused(isChangeEvent);
     int isDark = -1;
     int isHighContrast = iTrue; /* contrast is unknown on most platforms */
 #if defined (iPlatformAppleDesktop)
@@ -336,6 +337,10 @@ void updateSystemTheme_App_(iApp *d) {
             isDark = iTrue;
             break;
         default:
+            /* The portal reports "no preference" (light) as unknown. */
+            if (isChangeEvent) {
+                isDark = iFalse;
+            }
             break;
     }
 #endif
@@ -686,7 +691,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformEmscripten)
     updateRelay_Web(&d->prefs); /* before any requests are made */
 #endif
-    updateSystemTheme_App_(d); /* before the first window is created */
+    updateSystemTheme_App_(d, iFalse); /* before the first window is created */
 #if defined (iPlatformAppleDesktop)
     localizeApplicationMenu_MacOS();
 #endif

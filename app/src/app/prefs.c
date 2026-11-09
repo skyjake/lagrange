@@ -1092,7 +1092,7 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
             d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
         }
         if (equal_Command(cmd, "prefs.ostheme.changed") && d->prefs.useSystemTheme) {
-            updateSystemTheme_App_(d);
+            updateSystemTheme_App_(d, iFalse);
         }
         return iTrue;
     }

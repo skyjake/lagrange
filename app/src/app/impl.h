@@ -193,7 +193,7 @@ void            migrateInternalUserDirToExternalStorage_App_(iApp *);
 
 /* startup.c */
 void            deinit_App_             (iApp *);
-void            updateSystemTheme_App_  (iApp *);
+void            updateSystemTheme_App_  (iApp *, iBool isChangeEvent);
 
 /* state.c */
 iBool           isPlacementUnused_App_  (const iApp *, size_t index);
