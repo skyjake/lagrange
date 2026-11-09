@@ -78,6 +78,9 @@ if (EMSCRIPTEN)
     set (ENABLE_POPUP_MENUS     OFF)
     set (ENABLE_RESIZE_DRAW     OFF)
 endif ()
+if (HAIKU)
+    set (ENABLE_POPUP_MENUS     OFF)    # no SDL popup window support
+endif ()
 
 #-------------------------------------------------------------------------------------------------
 

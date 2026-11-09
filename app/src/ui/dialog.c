@@ -1002,9 +1002,11 @@ iWindow *promoteDialogToWindow_Widget(iWidget *dlg) {
         arrange_Widget(dlg);
     }
     // setFlags_Widget(dlg, resizeChildren_WidgetFlag, iTrue);
+#if !defined (iPlatformHaiku) /* not resizable */
     const float pixelRatio = x->pixelRatio;
     SDL_SetWindowMinimumSize(
         x->win, width_Widget(dlg) / pixelRatio, height_Widget(dlg) / pixelRatio);
+#endif
     addExtraWindow_App(x);
     return x;
 }

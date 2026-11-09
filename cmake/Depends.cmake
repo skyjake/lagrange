@@ -353,7 +353,7 @@ if (PKG_CONFIG_FOUND)
     endif ()
     pkg_check_modules (JXL      IMPORTED_TARGET libjxl_dec libjxl_threads)
     if (NOT JXL_FOUND)
-        pkg_check_modules (JXL  IMPORTED_TARGET libjxl libjxl_threads)
+        pkg_check_modules (JXL  IMPORTED_TARGET libjxl>=0.7 libjxl_threads) # JxlDecoderCloseInput
     endif ()
     pkg_check_modules (OPUSFILE IMPORTED_TARGET opusfile)
 endif ()

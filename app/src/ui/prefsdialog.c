@@ -133,15 +133,20 @@ static void fitPreferencesWindow_(iWidget *prefs, iWidget *tabs) {
     const iWindow *win = window_Widget(prefs);
     const iInt2 natural = init_I2(width_Widget(tabs) + prefs->padding[0] + prefs->padding[2],
                                   height_Widget(tabs) + prefs->padding[1] + prefs->padding[3]);
+#if defined (iPlatformHaiku)
+    /* Not resizable, and SDL's window size limits are unreliable on Haiku. */
+    SDL_SetWindowSize(win->win, natural.x / win->pixelRatio, natural.y / win->pixelRatio);
+#else
     SDL_SetWindowMinimumSize(
         win->win, natural.x / win->pixelRatio, natural.y / win->pixelRatio);
-#if !defined (iPlatformTerminal)
+#   if !defined (iPlatformTerminal)
     SDL_SetWindowMaximumSize(win->win, natural.x / win->pixelRatio, 0);
-#endif
+#   endif
     const int extra = (int) (prefsWindowHeight_ * win->pixelRatio) - natural.y;
     if (extra > 0) {
         tabs->rect.size.y += extra;
     }
+#endif
 }
 
 void setPreferencesWindowHeight_Widget(iWidget *prefs, int height) {

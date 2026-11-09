@@ -358,6 +358,11 @@ int numRoots_Window(const iWindow *d) {
     return num;
 }
 
+iLocalDef iInt2 minSize_MainWindow_(void) {
+    /* Mobile windows aren't independently resizable. */
+    return isMobile_Platform() ? zero_I2() : init_I2(425, 325);
+}
+
 static void windowSizeChanged_Window_(iWindow *d) {
     setCurrent_Window(d);
     iRoot *root = d->roots[0];
@@ -374,7 +379,12 @@ static void windowSizeChanged_Window_(iWindow *d) {
 
 static void windowSizeChanged_MainWindow_(iMainWindow *d) {
     const int numRoots = numRoots_Window(as_Window(d));
+#if defined (iPlatformHaiku)
+    /* No window minimum size, so don't let the UI collapse. */
+    const iInt2 rootSize = max_I2(d->base.size, mulf_I2(minSize_MainWindow_(), d->base.pixelRatio));
+#else
     const iInt2 rootSize = d->base.size;
+#endif
     int weights[2] = {
         d->base.roots[0] ? (d->splitMode & twoToOne_WindowSplit ? 2 : 1) : 0,
         d->base.roots[1] ? (d->splitMode & oneToTwo_WindowSplit ? 2 : 1) : 0,
@@ -528,10 +538,18 @@ void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
 static float pixelRatio_Window_(const iWindow *d) {
 #if defined (iPlatformAppleMobile)
     return displayScale_iOS(d);
+#elif defined (iPlatformHaiku)
+    /* No high-density windows. Render output size may lag behind window size during resize. */
+    iUnused(d);
+    return 1.0f;
 #else
-    int dx, x;
+    int dx = 0, x = 0;
     SDL_GetCurrentRenderOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
+    if (dx <= 0 || x <= 0) {
+        /* Sizes may be momentarily invalid while the window is being resized. */
+        return d->pixelRatio > 0.0f ? d->pixelRatio : 1.0f;
+    }
     return (float) dx / (float) x;
 #endif
 }
@@ -587,7 +605,7 @@ static float displayScale_Window_(const iWindow *d) {
 #else
     if (isRunningUnderWindowSystem_App()) {
         const float factor =
-            SDL_GetDisplayContentScale(SDL_GetDisplayForWindow(d->win)) / pixelRatio_Window_(d);
+            SDL_GetDisplayContentScale(SDL_GetDisplayForWindow(d->win)) / d->pixelRatio;
         return iMax(1.0f, factor);
     }
     return 1.0f;
@@ -709,6 +727,11 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
     if (d->type == main_WindowType || d->type == extra_WindowType) {
         flags |= SDL_WINDOW_RESIZABLE;
+#if defined (iPlatformHaiku)
+        if (d->type == extra_WindowType) {
+            flags &= ~SDL_WINDOW_RESIZABLE; /* sized to fit contents */
+        }
+#endif
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         if (prefs_App()->customFrame) {
             /* We are drawing a custom frame so hide the default one. */
@@ -968,16 +991,17 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->keyboardHeight         = 0;
     d->backBuf                = NULL;
     d->logo                   = NULL;
-    iInt2 minSize =
-        (isMobile_Platform() ? zero_I2() /* windows aren't independently resizable */
-                             : init_I2(425, 325));
-#if !defined (iPlatformTerminal) && \
-    (defined (iPlatformMsys) || defined (iPlatformWindows) || defined (iPlatformLinux))
+    /* SDL's Haiku backend applies the current window size as the minimum. */
+#if !defined (iPlatformHaiku)
+    iInt2 minSize = minSize_MainWindow_();
+#   if !defined (iPlatformTerminal) && \
+       (defined (iPlatformMsys) || defined (iPlatformWindows) || defined (iPlatformLinux))
     /* Window coordinates already include the pixel ratio (e.g., Wayland scale). */
     minSize = mulf_I2(minSize, d->base.displayScale);
-#endif
+#   endif
     /* This also resizes the window, so only set it once. */
     SDL_SetWindowMinimumSize(d->base.win, minSize.x, minSize.y);
+#endif
     SDL_SetWindowTitle(d->base.win, "Lagrange");
     /* Some info. */ {
         SDL_PropertiesID rendProps = SDL_GetRendererProperties(d->base.render);
