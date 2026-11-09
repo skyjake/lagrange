@@ -1,7 +1,9 @@
 # Release notes
 
 ## 2.0.2
-* Adjusted the Material UI icon font (lighter weight).
+* Adjusted the weight of the Material UI icons font.
+* Fixed: Possible crash at launch when all sidebar buttons are disabled.
+* Added build option to disable revealing files via the system file manager.
 
 ## 2.0.1
 * Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).
