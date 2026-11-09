@@ -113,6 +113,7 @@ static const iBuildFlag buildFlags_[] = {
     iBuildFlag_(LAGRANGE_ENABLE_CUSTOM_FRAME),
     iBuildFlag_(LAGRANGE_ENABLE_DIRECTWRITE),
     iBuildFlag_(LAGRANGE_ENABLE_DOWNLOAD_EDIT),
+    iBuildFlag_(LAGRANGE_ENABLE_FILE_REVEAL),
     iBuildFlag_(LAGRANGE_ENABLE_FONTCONFIG),
     iBuildFlag_(LAGRANGE_ENABLE_FRAME_TIMING),
     iBuildFlag_(LAGRANGE_ENABLE_FREETYPE),
@@ -795,6 +796,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
         resize_MainWindow(as_MainWindow(d->window), -1, -1);
     }
 #if defined (iPlatformAndroid)
+    /* The Java side can now post commands, e.g., to open the URL that launched the app. */
+    javaCommand_Android("app.launched");
     /* See if there is something to import from backup. */
     javaCommand_Android("backup.load");
 #endif

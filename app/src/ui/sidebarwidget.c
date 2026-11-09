@@ -282,6 +282,16 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
     updateItemHeight_SidebarWidget_(d);
 }
 
+static const iWidget *firstVisibleModeButton_SidebarWidget_(const iSidebarWidget *d) {
+    for (int i = 0; i < max_SidebarMode; i++) {
+        const iWidget *button = constAs_Widget(d->modeButtons[i]);
+        if (button && ~flags_Widget(button) & hidden_WidgetFlag) {
+            return button;
+        }
+    }
+    return NULL; /* all modes disabled on this side */
+}
+
 static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     if (!d->modeButtons[0]) return;
     if (deviceType_App() == phone_AppDeviceType) {
@@ -295,8 +305,10 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
         }
         setButtonFont_SidebarWidget(d, isPortrait_App() ? uiLabelMedium_FontId : uiLabel_FontId);
     }
-    const iBool isTight = isPortraitPhone_App() ||
-        (width_Rect(bounds_Widget(as_Widget(d->firstVisibleModeButton))) < d->maxButtonLabelWidth);
+    const iWidget *firstButton = firstVisibleModeButton_SidebarWidget_(d);
+    const iBool    isTight     = isPortraitPhone_App() ||
+                          (firstButton &&
+                           width_Rect(bounds_Widget(firstButton)) < d->maxButtonLabelWidth);
     const size_t tabCount = tabCount_Widget(findWidget_App("doctabs"));
     for (int i = 0; i < max_SidebarMode; i++) {
         iLabelWidget *button = d->modeButtons[i];
@@ -1684,7 +1696,6 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *buttons = new_Widget();
     setId_Widget(buttons, "buttons");
     setDrawBufferEnabled_Widget(buttons, iTrue);
-    d->firstVisibleModeButton = NULL;
     for (int i = 0; i < max_SidebarMode; i++) {
         if (i == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
             /* On mobile, identities are managed via Settings. */
@@ -1698,9 +1709,6 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
             frameless_WidgetFlag | noBackground_WidgetFlag | expand_WidgetFlag |
                 collapse_WidgetFlag |
                 (isEnabled ? 0 : hidden_WidgetFlag));
-        if (!d->firstVisibleModeButton && isEnabled) {
-            d->firstVisibleModeButton = d->modeButtons[i];
-        }
         setFlags2_Widget(d->modeButtons[i], slidingSheetDraggable_WidgetFlag2, iTrue); /* phone */
         setFlags2_Widget(d->modeButtons[i], siblingOrderDraggable_WidgetFlag2, iTrue);
         setFlags_Widget(d->modeButtons[i],

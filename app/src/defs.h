@@ -102,6 +102,9 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
     (defined (iPlatformLinux) && !defined (iPlatformAndroid)) || \
     ((defined (iPlatformMsys) || defined (iPlatformWindows)) && !defined (iPlatformTerminal))
 #   define LAGRANGE_HAVE_FILE_REVEAL
+#   if !defined (LAGRANGE_ENABLE_FILE_REVEAL)
+#       define LAGRANGE_REVEAL_COPIES_PATH
+#   endif
 #endif
 
 /* UI icons from the bundled Material Symbols font (see platform/android-icons.py). */
@@ -123,8 +126,13 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define saveToDownloads_Label    "${menu.save.downloads}"
 #endif
 
-#if defined (iPlatformAppleDesktop)
+#if defined (LAGRANGE_REVEAL_COPIES_PATH)
+#   define revealFile_Icon          clipCopy_Icon
+#   define revealFile_Label         "${menu.copy.filepath}"
+#elif defined (iPlatformAppleDesktop)
+#   define revealFile_Icon          magnifyingGlass_Icon
 #   define revealFile_Label         "${menu.reveal.macos}"
 #else
+#   define revealFile_Icon          magnifyingGlass_Icon
 #   define revealFile_Label         "${menu.reveal.filemgr}"
 #endif

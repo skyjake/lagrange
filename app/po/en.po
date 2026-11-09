@@ -1523,6 +1523,9 @@ msgstr "Show in Finder"
 msgid "menu.reveal.filemgr"
 msgstr "Show in File Manager"
 
+msgid "menu.copy.filepath"
+msgstr "Copy File Path"
+
 msgid "menu.share"
 msgstr "Share"
 

@@ -22,7 +22,7 @@ DEFS_H = os.path.join(ROOT, 'lib', 'core', 'include', 'lagrange', 'defs.h')
 DEFAULT_OUTPUT = os.path.join(ROOT, 'app', 'res', 'fonts', 'MaterialSymbolsLagrange.ttf')
 
 FAMILY = 'Material Symbols Lagrange'
-INSTANCE = { 'FILL': 0, 'GRAD': 0, 'opsz': 24, 'wght': 400 }
+INSTANCE = { 'FILL': 0, 'GRAD': 0, 'opsz': 24, 'wght': 325 }
 
 # Lagrange icon codepoint: Material Symbols icon name (".fill" for the filled variant).
 # Follows the SF Symbols mapping in systemImageName_Apple() (app/src/ui/util.c).

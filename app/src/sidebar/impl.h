@@ -89,7 +89,6 @@ struct Impl_SidebarWidget {
     iBool             hasSpecialTabs; /* Reader or Gempub tabs are open */
     int               buttonFont;
     int               itemFonts[2];
-    iLabelWidget     *firstVisibleModeButton;
     int               modeScroll[max_SidebarMode];
     size_t            modeCursor[max_SidebarMode];
     iSidebarItem     *contextItem;   /* list item accessed in the context menu */

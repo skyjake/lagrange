@@ -287,7 +287,11 @@ iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             path = collect_String(localFilePathFromUrl_String(suffix_Command(cmd, "url")));
         }
         if (path) {
+#if defined (LAGRANGE_REVEAL_COPIES_PATH)
+            SDL_SetClipboardText(cstr_String(path));
+#else
             revealPath_App(path);
+#endif
         }
         return iTrue;
     }

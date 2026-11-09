@@ -1,5 +1,16 @@
 # Release notes
 
+A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
+
+=> gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)
+
+(You can disable showing release notes in Preferences.)
+
+## 2.0.2
+* Adjusted the weight of the Material UI icons font.
+* Fixed: Possible crash at launch when all sidebar buttons are disabled.
+* Added build option to disable revealing files via the system file manager.
+
 ## 2.0.1
 * Use the system Ellipsis UI icon where available (macOS, iOS, Android, Windows).
 * Android's Material UI icons are used on Linux and Web builds as well.
@@ -10,11 +21,6 @@
 * Fixed: Link icons were sometimes vertically misaligned.
 
 ## 2.0
-A new major version means major changes: the app now supports user data syncing, paginated view mode, and Tinylog feeds. Reading Gempub books is greatly improved, taking cues from e-readers. The UI appearance has been refreshed and fits better into modern OS design.
-
-=> gemini://skyjake.fi/lagrange/docs/lagrange-2.gpub  Read the full release notes: "Lagrange 2" (Gempub, 530 KB)
-
-(You can disable showing release notes in Preferences.)
 
 New features:
 * Syncing user data across devices with end-to-end encryption. (Relies on a sync server.)
