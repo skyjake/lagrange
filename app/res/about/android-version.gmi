@@ -1,6 +1,11 @@
 # Release notes (Android)
 
-## 2.0 (1)
+## 2.0.3
+* Prevent activation of accelerometer (for SDL's internal use). Screen orientation changes work via the operating system.
+* Identities: Year 9999+ certificates are treated as never expiring.
+* Adjusted the weight of the Material UI icons font.
+
+## 2.0.1
 * Fixed: Nonfunctional device Back key (old SDL2 bindings could interfere).
 * Fixed: Opening links from another app in Lagrange.
 * Fixed: Going to previous page on a book cover should just show nav/tab bars.

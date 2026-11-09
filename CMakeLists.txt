@@ -7,13 +7,12 @@ project (Lagrange
 )
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
-    set (PROJECT_VERSION 2.0.1)
-    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUNDLE_VERSION 1)      # keep at 1 unless multiple revisions needed
     set (IOS_BUILD_DATE "2026-11-08")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 2.0)
-    set (ANDROID_BUILD_VERSION 1)  # remember to update Gradle, AndroidManifest.xml
+    # Note: remember to update version in Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_VERSION 1)   # keep at 1 unless multiple revisions needed
     set (ANDROID_BUILD_DATE "2026-11-08")
 endif ()
 set (LAGRANGE_APP_VERSION ${PROJECT_VERSION}) # subprojects have their own PROJECT_VERSION
