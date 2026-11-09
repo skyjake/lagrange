@@ -6,6 +6,9 @@ A new major version means major changes: the app now supports user data syncing,
 
 (You can disable showing release notes in Preferences.)
 
+## 2.0.3
+* macOS: Fixed the input field cursor being drawn in the wrong place when the insertion point is the start of a wrapped line.
+
 ## 2.0.2
 * Adjusted the weight of the Material UI icons font.
 * Fixed: Possible crash at launch when all sidebar buttons are disabled.
