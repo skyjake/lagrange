@@ -526,13 +526,13 @@ static const char *expiry_CertListWidget_(const iGmIdentity *ident) {
     }
     iDate until, now;
     validUntil_TlsCertificate(ident->cert, &until);
-    initCurrent_Date(&now);
-    iTime untilTime, nowTime;
-    init_Time(&untilTime, &until);
-    init_Time(&nowTime, &now);
-    if (cmp_Time(&untilTime, &nowTime) <= 0) {
+    if (until.year >= 9999) {
+        return ""; /* RFC 5280: no well-defined expiration date */
+    }
+    if (isExpired_TlsCertificate(ident->cert)) {
         return format_CStr(warning_Icon " %s", cstr_Lang("ident.expired"));
     }
+    initCurrent_Date(&now);
     int years = until.year - now.year;
     if (until.month < now.month || (until.month == now.month && until.day < now.day)) {
         years--;
