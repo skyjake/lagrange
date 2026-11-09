@@ -33,6 +33,7 @@ set (DEFAULT_IDLE_SLEEP OFF)
 option (ENABLE_APP_BUNDLE       "Build an app bundle instead of a Unix-style install (macOS)" ON)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_FILE_REVEAL      "Allow showing files using the system file manager" ON)
 option (ENABLE_FRAME_TIMING     "Print statistics about frame timing" OFF)
 option (ENABLE_GAMEPAD          "Allow UI to be controlled with a gamepad" ON)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ${DEFAULT_IDLE_SLEEP})
@@ -661,6 +662,9 @@ macro (set_common_app_properties target)
     if (ENABLE_DOWNLOAD_EDIT)
         target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_DOWNLOAD_EDIT=1)
     endif ()
+    if (ENABLE_FILE_REVEAL)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_FILE_REVEAL=1)
+    endif ()
     if (ENABLE_IDLE_SLEEP)
         target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
     endif ()
@@ -1139,6 +1143,7 @@ print_summary (
     ENABLE_CORETEXT
     ENABLE_CUSTOM_FRAME
     ENABLE_DOWNLOAD_EDIT
+    ENABLE_FILE_REVEAL
     ENABLE_FRAME_TIMING
     ENABLE_FREETYPE
     ENABLE_FRIBIDI

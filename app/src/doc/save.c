@@ -74,7 +74,7 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, const i
 #else
             if (showDialog) {
                 const iMenuItem items[2] = {
-#if defined (LAGRANGE_HAVE_FILE_REVEAL)
+#if defined (LAGRANGE_HAVE_FILE_REVEAL) && !defined (LAGRANGE_REVEAL_COPIES_PATH)
                     { revealFile_Label, 0, 0,
                         format_CStr("!reveal path:%s", cstr_String(savePath)) },
 #else

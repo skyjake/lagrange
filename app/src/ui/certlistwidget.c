@@ -120,7 +120,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
         { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
 #if defined (LAGRANGE_HAVE_FILE_REVEAL)
-        { magnifyingGlass_Icon " " revealFile_Label, 0, 0, "ident.reveal" },
+        { revealFile_Icon " " revealFile_Label, 0, 0, "ident.reveal" },
 #endif
         { export_Icon " ${ident.export}", 0, 0, "ident.export" },
         { "---" },

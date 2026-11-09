@@ -98,6 +98,7 @@ On Linux/Unix, the `install` target also deploys an XDG .desktop file for launch
 | `ENABLE_CORETEXT` | ON | Use Core Text for loading fonts and for shaping and rendering text. This provides access to system fonts and color Emoji. Replaces HarfBuzz and GNU FriBidi. Cannot be used together with `ENABLE_FREETYPE`. (Only on macOS and iOS.) |
 | `ENABLE_CUSTOM_FRAME` | OFF | Draw a custom window frame. (Only on Microsoft Windows.) The custom frame is more in line with the visual style of the rest of the UI, but does not implement all of the native window behaviors (e.g., snapping, system menu). |
 | `ENABLE_DOWNLOAD_EDIT` | ON | Allow changing the Downloads directory via the Preferences dialog. This should be set to **OFF** in sandboxed environments where downloaded files must be saved into a specific place. |
+| `ENABLE_FILE_REVEAL` | ON | Enable showing files in the system file manager. This should be set to **OFF** in sandboxed environments where the file manager cannot be accessed. (Desktop only.) |
 | `ENABLE_FRAME_TIMING` | OFF | Print statistics about frame timing. Useful for debugging rendering performance. |
 | `ENABLE_FREETYPE` | ON (Apple: OFF) | Use the FreeType library for loading fonts and rendering glyphs. This provides access to system fonts and color Emoji. Requires the system-provided HarfBuzz. |
 | `ENABLE_FRIBIDI` | ON | Use the GNU FriBidi library for processing bidirectional text. FriBidi implements the Unicode Bidirectional Algorithm to determine text directions. |

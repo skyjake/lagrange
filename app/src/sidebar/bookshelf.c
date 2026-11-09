@@ -165,7 +165,7 @@ iBool updateShelf_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
         { download_Icon " ${menu.save.as}", 0, 0, "book.saveas" },
 #endif
 #if defined (LAGRANGE_HAVE_FILE_REVEAL)
-        { magnifyingGlass_Icon " " revealFile_Label, 0, 0, "book.reveal" },
+        { revealFile_Icon " " revealFile_Label, 0, 0, "book.reveal" },
 #endif
         { "---" },
         { "${book.redownload}", 0, 0, "book.redownload" },
