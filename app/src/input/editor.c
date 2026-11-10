@@ -933,6 +933,11 @@ enum iEventResult processInputEvent_InputWidget_(iInputWidget *d, const SDL_Even
         if (isLinux_Platform() && keyMods_Sym(modState_Keys()) == SDL_KMOD_CTRL) {
             return true_EventResult;
         }
+#if defined (iPlatformHaiku)
+        if (modState_Keys() & SDL_KMOD_LALT) {
+            return true_EventResult; /* Command key shortcuts also produce text */
+        }
+#endif
         if (!hasPreedit_InputWidget_(d)) {
             /* Not finishing an IME composition, so this needs its own undo entry.
                (Compositions already pushed undo when they started.) */

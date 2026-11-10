@@ -31,6 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define newIdentity_KeyShortcut         SDLK_N,             KMOD_SECONDARY
 #define identityMenu_KeyShortcut        SDLK_I,             KMOD_SECONDARY
 
+/* Holding linkNumbers shows link numbers. Haiku uses Left Alt as Command and the Windows key
+   as Option. */
+#if defined (iPlatformHaiku)
+#   define closeOtherTabs_KeyShortcut   SDLK_W,             KMOD_QUATERNARY
+#   define linkNumbers_KeyShortcut      SDLK_LGUI,          0
+#else
+#   define closeOtherTabs_KeyShortcut   SDLK_W,             KMOD_SECONDARY
+#   define linkNumbers_KeyShortcut      SDLK_LALT,          0
+#endif
+
 #if defined (iPlatformTerminal)
 #   define pageInfo_KeyShortcut         SDLK_I,             0
 #   define preferences_KeyShortcut      SDLK_COMMA,         0
@@ -151,6 +161,7 @@ void            deinit_Keys         (void);
 
 void            load_Keys           (const char *saveDir);
 void            save_Keys           (const char *saveDir);
+void            reset_Keys          (const char *saveDir); /* deletes saved bindings */
 
 void            bind_Keys           (int id, const char *command, int key, int mods);
 void            setLabel_Keys       (int id, const char *label);
@@ -174,3 +185,4 @@ iBool           isAppleKeyboard_Keys(void); /* Command is the primary modifier *
 void            setCapsLockDown_Keys(iBool isDown);
 
 iBool           isDown_Keys         (const iBinding *binding);
+iBool           isKeyDown_Keys      (int key);

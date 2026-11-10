@@ -2644,7 +2644,7 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, 'j', KMOD_PRIMARY, "splitmenu.open");
         addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
 #if !defined (iPlatformEmscripten)
-        addAction_Widget(root, 't', KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1");
+        addAction_Widget(root, 't', KMOD_QUATERNARY, "tabs.swap newwindow:1");
 #endif
     }
     updateMetrics_Root(d);

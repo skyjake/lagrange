@@ -782,6 +782,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         if (mods & (SDL_KMOD_GUI | SDL_KMOD_CTRL)) {
             return iFalse;
         }
+#if defined (iPlatformHaiku)
+        if (mods & SDL_KMOD_LALT) {
+            return iFalse; /* Command key */
+        }
+#endif
         return iTrue;
     }
     return processEvent_Widget(w, ev);

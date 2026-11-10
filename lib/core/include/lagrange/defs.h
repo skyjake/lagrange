@@ -112,6 +112,14 @@ iLocalDef iBool isWindows_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isHaiku_Platform(void) {
+#if defined (iPlatformHaiku)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iBool isPhone_Core(void); /* determined at runtime (iOS) */
 
 enum iGmRequestState {

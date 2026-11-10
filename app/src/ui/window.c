@@ -88,6 +88,9 @@ static float initialUiScale_ = 1.0f;
 static iBool isOpenGLRenderer_;
 static iBool isDrawing_;
 static iBool isResizing_;
+#if defined (iPlatformHaiku)
+static Uint64 commandWTime_; /* Command+W also triggers BWindow's built-in close shortcut */
+#endif
 
 iDefineTypeConstructionArgs(Window,
                             (enum iWindowType type, iRect rect, uint32_t flags),
@@ -1557,6 +1560,11 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             closePopups_App(iTrue);
             return iFalse;
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+#if defined (iPlatformHaiku)
+            if (ev->timestamp - commandWTime_ < SDL_MS_TO_NS(500)) {
+                return iTrue; /* the key closes a tab instead */
+            }
+#endif
 #if defined (iPlatformAppleDesktop)
             closeWindow_App(as_Window(d));
 #else
@@ -1811,6 +1819,12 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
+#if defined (iPlatformHaiku)
+            if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_W &&
+                (event.key.mod & SDL_KMOD_LALT)) {
+                commandWTime_ = event.key.timestamp;
+            }
+#endif
             if (event.type == SDL_EVENT_KEY_DOWN && SDL_GetTicks() - d->focusGainedAt < 100) {
                 /* Suspiciously close to when input focus was received. For example under openbox,
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.

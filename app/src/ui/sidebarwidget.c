@@ -180,7 +180,8 @@ static void updateShowingUrls_SidebarWidget_(iSidebarWidget *d) {
     if (deviceType_App() != desktop_AppDeviceType || isTerminal_Platform()) {
         return;
     }
-    const iBool showUrls = (modState_Keys() & SDL_KMOD_ALT) && isFocused_Widget(d->list);
+    const iBool showUrls = isKeyDown_Keys(((int[]) { linkNumbers_KeyShortcut })[0]) &&
+                           isFocused_Widget(d->list);
     if (showUrls != d->isShowingUrls) {
         d->isShowingUrls = showUrls;
         if (d->mode == bookmarks_SidebarMode && isVisible_Widget(d)) {

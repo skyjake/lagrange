@@ -578,6 +578,12 @@ void loadPrefs_App_(iApp *d) {
         /* LibreTranslate updated with new language models, now defaulting to Auto-Detect. */
         postCommand_App("~translation.languages from:0 to:8");
     }
+#if defined (iPlatformHaiku)
+    if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 2, 0, 3 }) < 0) {
+        /* The primary modifier changed from Ctrl to Alt (Command). */
+        reset_Keys(dataDir_App_());
+    }
+#endif
 #if defined (LAGRANGE_RELEASE_NOTES_POPUP)
     if (upgradedFromAppVersion.major) {
         iVersion appVersion;

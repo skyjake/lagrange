@@ -105,6 +105,7 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 #   define KMOD_PRIMARY     SDL_KMOD_CTRL
 #   define KMOD_SECONDARY   SDL_KMOD_ALT
 #   define KMOD_TERTIARY    SDL_KMOD_CTRL | SDL_KMOD_ALT  /* TODO: does this work? */
+#   define KMOD_QUATERNARY  SDL_KMOD_CTRL | SDL_KMOD_ALT
 #   define KMOD_ACCEPT      SDL_KMOD_ALT
 #   define KMOD_UNDO        SDL_KMOD_ALT
 #   define KMOD_ZOOM        0
@@ -112,6 +113,16 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 #   define KMOD_PRIMARY     SDL_KMOD_GUI
 #   define KMOD_SECONDARY   SDL_KMOD_GUI | SDL_KMOD_SHIFT
 #   define KMOD_TERTIARY    SDL_KMOD_GUI | SDL_KMOD_SHIFT | SDL_KMOD_ALT
+#   define KMOD_QUATERNARY  SDL_KMOD_GUI | SDL_KMOD_ALT
+#   define KMOD_ACCEPT      KMOD_PRIMARY
+#   define KMOD_UNDO        KMOD_PRIMARY
+#   define KMOD_ZOOM        KMOD_PRIMARY
+#elif defined (iPlatformHaiku)
+/* Alt is the Command key. */
+#   define KMOD_PRIMARY     SDL_KMOD_ALT
+#   define KMOD_SECONDARY   SDL_KMOD_ALT | SDL_KMOD_SHIFT
+#   define KMOD_TERTIARY    SDL_KMOD_ALT | SDL_KMOD_SHIFT | SDL_KMOD_CTRL
+#   define KMOD_QUATERNARY  SDL_KMOD_ALT | SDL_KMOD_CTRL
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY
@@ -119,6 +130,7 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 #   define KMOD_PRIMARY     SDL_KMOD_CTRL
 #   define KMOD_SECONDARY   SDL_KMOD_CTRL | SDL_KMOD_SHIFT
 #   define KMOD_TERTIARY    SDL_KMOD_CTRL | SDL_KMOD_SHIFT | SDL_KMOD_ALT
+#   define KMOD_QUATERNARY  SDL_KMOD_CTRL | SDL_KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY

@@ -351,7 +351,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #if !defined (iPlatformTerminal)
     { 38, { "${LC:menu.openfile}",          SDLK_O, KMOD_PRIMARY,           "file.open"                         }, 0 },
 #endif
-    { 41, { "${keys.link.modkey}",          SDLK_LALT, 0,                   "document.linkkeys arg:0"           }, argRelease_BindFlag },
+    { 41, { "${keys.link.modkey}",          linkNumbers_KeyShortcut,        "document.linkkeys arg:0"           }, argRelease_BindFlag },
     { 42, { "${keys.link.homerow}",         'f', 0,                         "document.linkkeys arg:1"           }, 0 },
     { 45, { "${keys.link.homerow.newtab}",  'f', SDL_KMOD_SHIFT,            "document.linkkeys arg:1 newtab:1"  }, 0 },
     { 46, { "${keys.link.homerow.hover}",   'h', 0,                         "document.linkkeys arg:1 hover:1"   }, 0 },
@@ -371,14 +371,14 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #endif
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new append:1"                 }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
-    { 78, { "${keys.tab.close.other}",      SDLK_W, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
+    { 78, { "${keys.tab.close.other}",      closeOtherTabs_KeyShortcut,     "tabs.close toleft:1 toright:1"     }, 0 },
     { 79, { "${LC:menu.reopentab}",         SDLK_T, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
     { 85, { "${LC:menu.movetab.right}",     moveTabRight_KeyShortcut,       "tabs.move arg:1"                   }, 0 },
 #if !defined (iPlatformEmscripten)
-    { 86, { "${LC:menu.movetab.newwindow}", SDLK_T, KMOD_PRIMARY | SDL_KMOD_ALT, "tabs.swap newwindow:1"        }, 0 },
+    { 86, { "${LC:menu.movetab.newwindow}", SDLK_T, KMOD_QUATERNARY, "tabs.swap newwindow:1"        }, 0 },
 #endif
     { 90, { "${keys.split.menu}",           SDLK_J, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
     { 91, { "${keys.split.next}",           SDLK_TAB, SDL_KMOD_CTRL,        "keyroot.next",                     }, 0 },
@@ -394,7 +394,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 110,{ "${menu.save.downloads}",       SDLK_S, KMOD_PRIMARY,           "document.save"                     }, 0 },
     { 111,{ "${menu.save.books}",           SDLK_S, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.savebook"          }, 0 },
     { 115,{ "${LC:menu.page.translate}",    SDLK_X, KMOD_PRIMARY | SDL_KMOD_SHIFT, "document.translate"         }, 0 },
-    { 116,{ "${LC:menu.tool.unwrap}",       SDLK_U, KMOD_PRIMARY | SDL_KMOD_ALT, "tool.run id:builtin.unwrap"   }, 0 },
+    { 116,{ "${LC:menu.tool.unwrap}",       SDLK_U, KMOD_QUATERNARY, "tool.run id:builtin.unwrap"   }, 0 },
     { 120,{ "${keys.upload}",               SDLK_U, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_E, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
@@ -650,6 +650,11 @@ void save_Keys(const char *saveDir) {
         concatPath_CStr(saveDir, filename_Keys_), v2_ListFileFormat, utf8_String(lines));
 }
 
+void reset_Keys(const char *saveDir) {
+    removePath_CStr(concatPath_CStr(saveDir, filename_Keys_));
+    removePath_CStr(concatPath_CStr(saveDir, oldFilename_Keys_));
+}
+
 void bind_Keys(int id, const char *command, int key, int mods) {
     iKeys *d = &keys_;
     iBinding *bind = findId_Keys_(d, id);
@@ -712,12 +717,17 @@ const iPtrArray *list_Keys(void) {
 }
 
 iBool isDown_Keys(const iBinding *binding) {
+    return isKeyDown_Keys(binding->key);
+}
+
+iBool isKeyDown_Keys(int key) {
 #if defined (iPlatformTerminal)
+    iUnused(key);
     return iFalse;
 #else
     int numKeys = 0;
     const bool *keys = SDL_GetKeyboardState(&numKeys);
-    const int scancode = SDL_GetScancodeFromKey(binding->key, NULL);
+    const int scancode = SDL_GetScancodeFromKey(key, NULL);
     const int scancode2 = (scancode == SDL_SCANCODE_RALT ? SDL_SCANCODE_LALT :
                            scancode == SDL_SCANCODE_LALT ? SDL_SCANCODE_RALT : scancode);
     return (scancode < numKeys && keys[scancode]) || (scancode2 < numKeys && keys[scancode2]);

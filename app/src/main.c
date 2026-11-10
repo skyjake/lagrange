@@ -92,6 +92,10 @@ int main(int argc, char **argv) {
     /* Use the real Wayland backend when available. */
     SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland,x11");
 #endif
+#if defined (iPlatformHaiku)
+    /* Close requests from Command+W may be ignored (see window.c). */
+    SDL_SetHint(SDL_HINT_QUIT_ON_LAST_WINDOW_CLOSE, "0");
+#endif
 #if 0
     SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1"); /* debugging! */
 #endif

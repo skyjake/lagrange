@@ -263,6 +263,11 @@ int keyMods_Sym(int kmods) {
     if (!isTextInputActive_App()) {
         if (kmods & SDL_KMOD_ALT) kmods |= SDL_KMOD_ALT;
     }
+#if defined (iPlatformHaiku)
+    else if (kmods & SDL_KMOD_LALT) {
+        kmods |= SDL_KMOD_ALT; /* Command key; Right Alt is Option */
+    }
+#endif
     return kmods;
 }
 
