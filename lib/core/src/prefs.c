@@ -231,12 +231,12 @@ void init_Prefs(iPrefs *d) {
     d->langTo                       = 8; /* en */
     d->translationIgnorePre         = iTrue;
     d->recentMenuBarIndex           = 0;
-    d->useSystemTheme               = iTrue;
+    d->useSystemTheme               = !isHaiku_Platform();
     d->systemPreferredColorTheme[0] = (isApple_Platform() || isLinux_Platform()) &&
                                        !isMobile_Platform() ? dark_ColorTheme
                                                             : pureBlack_ColorTheme;
     d->systemPreferredColorTheme[1] = pureWhite_ColorTheme;
-    d->theme                        = dark_ColorTheme;
+    d->theme                        = isHaiku_Platform() ? light_ColorTheme : dark_ColorTheme;
     d->accent                   = isAppleDesktop_Platform() ? system_ColorAccent : cyan_ColorAccent;
     d->customFrame              = iFalse; /* needs some more work to be default */
     d->retainWindowSize         = iTrue;

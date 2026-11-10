@@ -942,7 +942,7 @@ iWidget *makePreferences_Widget(void) {
             /* Display character set. */
             addDialogToggle_Widget(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
         }
-#if !defined (iPlatformTerminal)
+#if !defined (iPlatformTerminal) && !defined (iPlatformHaiku) /* no system theme */
         addDialogToggle_Widget(headings, values, "${prefs.ostheme}", "prefs.ostheme");
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));

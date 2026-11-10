@@ -758,6 +758,14 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
             exit(-3);
         }
     }
+#if defined (iPlatformHaiku)
+    /* Workaround for an SDL glitch: windows get shown prematurely, but we want them
+       to remain hidden during setup. */
+    for (int i = 0; i < 100 && (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN); i++) {
+        SDL_Delay(1);
+    }
+    SDL_HideWindow(d->win);
+#endif
     if (d->type != popup_WindowType) {
         SDL_SetWindowPosition(d->win,
                               setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
