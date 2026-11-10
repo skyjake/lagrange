@@ -8,17 +8,18 @@
     <summary>A Beautiful Gemini Client</summary>
     <description>
         <p>
-            Lagrange is a desktop GUI client for browsing Geminispace.
+            Lagrange is a versatile client for browsing Geminispace.
             It offers modern conveniences familiar from web browsers,
             such as smooth scrolling, inline image viewing, multiple
             tabs, visual themes, Unicode fonts, bookmarks, history, and
             page outlines.
         </p>
         <p>
-            Like the Gemini protocol, Lagrange has been designed with
-            minimalism in mind. It depends on a small number of essential
-            libraries. It is written in C and uses SDL for
-            hardware-accelerated graphics. OpenSSL is used for secure
+            Lagrange is designed to be platform-independent. It relies
+            on a small number of essential libraries for complex features
+            like text rendering and cryptography, but otherwise it is
+            written in straightforward C11. It uses SDL for
+            hardware-accelerated graphics and OpenSSL for secure
             communications.
         </p>
     </description>
@@ -29,7 +30,7 @@
             <image>https://gmi.skyjake.fi/lagrange/flathub_screenshot.jpg</image>
         </screenshot>
     </screenshots>
-    <url type="homepage">https://gmi.skyjake.fi/lagrange</url>
+    <url type="homepage">https://gmi.skyjake.fi/lagrange/</url>
     <url type="bugtracker">https://github.com/skyjake/lagrange/issues</url>
     <url type="contact">https://skyjake.fi/@jk</url>
     <developer_name>Jaakko Keränen</developer_name>
