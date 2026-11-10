@@ -886,6 +886,13 @@ int run_App_(iApp *d) {
         }
     }
     SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true); /* open files via drag'n'drop */
+#if defined (iPlatformAndroidMobile)
+    /* SDL 3.4 on Android: SDL_WaitEvent() pumps events in a loop, and each pump pushes a
+       poll sentinel. Pushing an event sends a lifecycle WAKE to the waiting thread itself,
+       so the wait returns immediately and the loop never sleeps (100% CPU while idle).
+       Without sentinels, the wait blocks as intended. */
+    SDL_SetEventEnabled(SDL_EVENT_POLL_SENTINEL, false);
+#endif
     SDL_AddEventWatch(lifecycleWatcher_App_, d); /* synchronous handling */
     if (isResizeDrawEnabled_()) {
         SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
