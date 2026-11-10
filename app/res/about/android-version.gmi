@@ -1,6 +1,7 @@
 # Release notes (Android)
 
-## 2.0.3
+## 2.0.2
+* Fixed: Inadvertent 100% CPU use when idling. (Problem with SDL's event polling behavior on Android.)
 * Prevent activation of accelerometer (for SDL's internal use). Screen orientation changes work via the operating system.
 * Identities: Year 9999+ certificates are treated as never expiring.
 * Adjusted the weight of the Material UI icons font.
