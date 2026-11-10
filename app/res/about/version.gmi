@@ -1,8 +1,12 @@
 # Release notes
 
 ## 2.0.3
-* macOS: Fixed the input field cursor being drawn in the wrong place when the insertion point is the start of a wrapped line.
 * Identities: Year 9999+ certificates are treated as never expiring.
+* macOS: Fixed the input field cursor being drawn in the wrong place when the insertion point is the start of a wrapped line.
+* Haiku: Keybindings will be reset when upgrading. The Alt key is now the primary modifier.
+* Haiku: Alt+W closes a tab, not the window. Alt+Q quits the app.
+* Haiku: Default UI appearance is "Light".
+* Haiku: Attempt to keep the window hidden during startup, as on other platforms.
 
 ## 2.0.2
 * Adjusted the weight of the Material UI icons font.
