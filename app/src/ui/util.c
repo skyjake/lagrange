@@ -175,6 +175,7 @@ void toString_Sym(int key, int kmods, iString *str) {
         }
     }
     else {
+        kmods = physicalMods_Keys(kmods);
         if (kmods & SDL_KMOD_CTRL) {
             appendCStr_String(str, "Ctrl+");
         }

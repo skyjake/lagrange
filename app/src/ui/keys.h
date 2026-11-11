@@ -179,7 +179,8 @@ const iPtrArray *list_Keys          (void);
 void            shortcutToString_Keys   (int key, int mods, iString *str); /* e.g., "ctrl+k" */
 iBool           shortcutFromString_Keys (iRangecc str, int *key, int *mods);
 
-int             mapMods_Keys        (int modFlags);
+void            mapEvent_Keys       (SDL_Event *); /* keyboard modifier mapping */
+int             physicalMods_Keys   (int kmods); /* keys that have the modifiers' roles */
 int             modState_Keys       (void); /* current modifier key state */
 iBool           isAppleKeyboard_Keys(void); /* Command is the primary modifier */
 void            setCapsLockDown_Keys(iBool isDown);

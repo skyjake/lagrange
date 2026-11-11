@@ -523,6 +523,12 @@ elseif (APPLE)
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif ()
+if (HAIKU)
+    list (APPEND SOURCES
+        src/platform/haiku.c
+        src/platform/haiku.h
+    )
+endif ()
 if (MSYS OR MINGW OR WIN32)
     set (WINRC_VERSION_PATCH ${PROJECT_VERSION_PATCH})
     if (NOT WINRC_VERSION_PATCH)

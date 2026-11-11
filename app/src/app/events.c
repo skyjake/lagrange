@@ -396,21 +396,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     continue;
                 }
 #endif
-                /* Keyboard modifier mapping. */
-                if (ev.type == SDL_EVENT_KEY_DOWN || ev.type == SDL_EVENT_KEY_UP) {
-                    if (d->prefs.capsLockKeyModifier) {
-                        /* Track Caps Lock state as a modifier. */
-                        if (ev.key.key == SDLK_CAPSLOCK) {
-                            setCapsLockDown_Keys(ev.key.down);
-                        }
-                    }
-                    else {
-                        ev.key.mod &= ~SDL_KMOD_CAPS;
-                    }
-                    if (!isTextInputActive_App()) {
-                        ev.key.mod = mapMods_Keys(ev.key.mod & ~SDL_KMOD_CAPS);
-                    }
-                }
+                mapEvent_Keys(&ev);
 #if defined (iPlatformAndroidMobile)
                 /* Use the system Back button to close panels, if they're open. */
                 if (ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == SDLK_AC_BACK) {

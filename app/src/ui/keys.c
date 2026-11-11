@@ -28,6 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformEmscripten)
 #   include "platform/web.h"
 #endif
+#if defined (iPlatformHaiku) && !defined (iPlatformTerminal)
+#   define LAGRANGE_HAIKU_KEYMAP 1 /* modifier roles from the system keymap */
+#   include "platform/haiku.h"
+#endif
 
 #include <lagrange/listfile.h>
 #include <the_Foundation/file.h>
@@ -81,7 +85,7 @@ static void init_ModMap_(void) {
     }
 }
 
-int mapMods_Keys(int modFlags) {
+static int mapMods_Keys_(int modFlags) {
     static const int bits[max_ModMap] = {
         0,
         SDL_KMOD_LSHIFT,
@@ -110,15 +114,53 @@ int mapMods_Keys(int modFlags) {
     return mapped;
 }
 
+void mapEvent_Keys(SDL_Event *ev) {
+#if defined (LAGRANGE_HAIKU_KEYMAP)
+    if (ev->type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
+        loadKeymap_Haiku(); /* may have been changed in Keymap preferences */
+        return;
+    }
+#endif
+    if (ev->type != SDL_EVENT_KEY_DOWN && ev->type != SDL_EVENT_KEY_UP) {
+        return;
+    }
+    if (prefs_App()->capsLockKeyModifier) {
+        /* Track Caps Lock state as a modifier. */
+        if (ev->key.key == SDLK_CAPSLOCK) {
+            setCapsLockDown_Keys(ev->key.down);
+        }
+    }
+    else {
+        ev->key.mod &= ~SDL_KMOD_CAPS;
+    }
+#if defined (LAGRANGE_HAIKU_KEYMAP)
+    ev->key.key = mapModKey_Haiku(ev->key.key);
+    ev->key.mod = mapMods_Haiku(ev->key.mod);
+#endif
+    if (!isTextInputActive_App()) {
+        ev->key.mod = mapMods_Keys_(ev->key.mod & ~SDL_KMOD_CAPS);
+    }
+}
+
+int physicalMods_Keys(int kmods) {
+#if defined (LAGRANGE_HAIKU_KEYMAP)
+    return physicalMods_Haiku(kmods);
+#else
+    return kmods;
+#endif
+}
+
 int modState_Keys(void) {
     int state = SDL_GetModState() & ~(SDL_KMOD_NUM | SDL_KMOD_MODE | SDL_KMOD_CAPS);
 #if defined (iPlatformEmscripten)
     state = swapAppleMods_Web(state);
+#elif defined (LAGRANGE_HAIKU_KEYMAP)
+    state = mapMods_Haiku(state);
 #endif
     state |= modState_Gamepad(gamepad_App());
     /* Treat capslock as a modifier key. */
     if (capsLockDown_) state |= SDL_KMOD_CAPS;
-    return mapMods_Keys(state);
+    return mapMods_Keys_(state);
 }
 
 iBool isAppleKeyboard_Keys(void) {
@@ -601,6 +643,9 @@ void deinit_Keys(void) {
 void load_Keys(const char *saveDir) {
     iKeys *d = &keys_;
     loadModMap_Keys_(saveDir);
+#if defined (LAGRANGE_HAIKU_KEYMAP)
+    loadKeymap_Haiku();
+#endif
 #if defined (iPlatformMobile)
     /* The mobile UI has no way to edit key bindings, so always use the defaults. Saved
        bindings may contain stale SDL2 keycodes (e.g., for the Android system Back key). */
@@ -725,6 +770,11 @@ iBool isKeyDown_Keys(int key) {
     iUnused(key);
     return iFalse;
 #else
+#   if defined (LAGRANGE_HAIKU_KEYMAP)
+    if (isMod_Sym(key) && key != SDLK_CAPSLOCK) {
+        return isModKeyDown_Haiku(key);
+    }
+#   endif
     int numKeys = 0;
     const bool *keys = SDL_GetKeyboardState(&numKeys);
     const int scancode = SDL_GetScancodeFromKey(key, NULL);
