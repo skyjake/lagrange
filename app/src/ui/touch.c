@@ -31,6 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleMobile)
 #   include "platform/ios.h"
 #endif
+#if defined (iPlatformAndroidMobile)
+#   include "platform/android.h"
+#endif
 
 #if !defined (iPlatformTerminal)
 
@@ -42,15 +45,13 @@ iDeclareType(TouchState)
 #define numHistory_Touch_   5
 #define lastIndex_Touch_    (numHistory_Touch_ - 1)
 
-static const uint32_t longPressSpanMs_  = 500;
 static const uint32_t shortPressSpanMs_ = 250;
 #if defined (iPlatformAppleMobile)
 static const uint32_t flickCarrySpanMs_ = 300;
 static const float    maxFlickSpeedPt_  = 20000.0f;
 #endif
-#if defined (iPlatformAndroidMobile)
-static const int      tapRadiusPt_      = 30; /* inaccurate sensors? */
-#else
+#if !defined (iPlatformAndroidMobile)
+static const uint32_t longPressSpanMs_  = 500;
 static const int      tapRadiusPt_      = 10;
 #endif
 
@@ -169,12 +170,29 @@ iLocalDef float distance_Touch_(const iTouch *d) {
     return length_F3(delta_Touch_(d));
 }
 
-static iBool isStationaryDistance_Touch_(const iTouch *d, int distance) {
-    return !d->hasMoved && distance_Touch_(d) < distance * get_Window()->pixelRatio;
+static uint32_t longPressSpan_Touch_(void) {
+#if defined (iPlatformAndroidMobile)
+    return longPressTimeout_Android();
+#else
+    return longPressSpanMs_;
+#endif
+}
+
+/* In pixels. */
+static float tapRadius_Touch_(void) {
+#if defined (iPlatformAndroidMobile)
+    return touchSlop_Android();
+#else
+    return tapRadiusPt_ * get_Window()->pixelRatio;
+#endif
+}
+
+static iBool isStationaryDistance_Touch_(const iTouch *d, float distance) {
+    return !d->hasMoved && distance_Touch_(d) < distance;
 }
 
 static iBool isStationary_Touch_(const iTouch *d) {
-    return isStationaryDistance_Touch_(d, tapRadiusPt_);
+    return isStationaryDistance_Touch_(d, tapRadius_Touch_());
 }
 
 static iBool clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
@@ -384,7 +402,7 @@ static void update_TouchState_(void *ptr) {
                 refresh_Widget(touch->affinity);
                 touch->isTapBegun = iTrue;
             }
-            if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
+            if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpan_Touch_() &&
                 touch->affinity) {
                 touchState_()->latestLongPressStartPos = initF3_I2(touch->pos[0]);
                 dispatchClick_Touch_(touch, SDL_BUTTON_RIGHT);
@@ -751,7 +769,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
             if (touch->isTapAndHold) {
                 pushPos_Touch_(touch, pos, fingTime);
-                if (!touch->hasMoved && !isStationaryDistance_Touch_(touch, tapRadiusPt_ * 3)) {
+                if (!touch->hasMoved &&
+                    !isStationaryDistance_Touch_(touch, 3 * tapRadius_Touch_())) {
                     touch->hasMoved = iTrue;
                 }
                 if (touch->hasMoved) {
@@ -821,7 +840,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 }
             }
             else if (!touch->axis &&
-                     distance_Touch_(touch) > tapRadiusPt_ * 3 * window->pixelRatio) {
+                     distance_Touch_(touch) > 3 * tapRadius_Touch_()) {
                 /* Lock swipe direction to an axis. */
                 const float xRatio =
                     touch->affinity->flags2 & horizontalSwipes_WidgetFlag2 ? 0.5f : 1.5f;
@@ -976,7 +995,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 //printf("elap:%ums vel:%f\n", elapsed, length_F3(velocity));
                 pushPos_Touch_(touch, pos, nowTime);
                 /* If short and didn't move far, do a tap (left click). */
-                if (duration < longPressSpanMs_ && isStationary_Touch_(touch)) {
+                if (duration < longPressSpan_Touch_() && isStationary_Touch_(touch)) {
                     dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                     dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
                     dispatchMotion_Touch_(init_F3(-100, -100, 0), 0); /* out of screen */

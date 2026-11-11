@@ -30,6 +30,8 @@ void        pickFile_Android            (const char *cmd);
 void        exportDownloadedFile_Android(const iString *localPath, const iString *mime);
 
 float       displayDensity_Android          (void);
+int         touchSlop_Android               (void);
+uint32_t    longPressTimeout_Android        (void);
 iRangei     lastInputSelectionRange_Android (void);
 
 void        javaCommand_Android     (const char *format, ...);

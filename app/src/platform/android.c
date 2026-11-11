@@ -195,6 +195,33 @@ float displayDensity_Android(void) {
     return toFloat_String(at_CommandLine(commandLine_App(), 1));
 }
 
+static int intArgument_Android_(size_t pos, int defaultValue) {
+    const iCommandLine *cmdLine = commandLine_App();
+    if (pos < size_StringList(&cmdLine->args)) {
+        const int value = toInt_String(at_CommandLine(cmdLine, pos));
+        if (value > 0) {
+            return value;
+        }
+    }
+    return defaultValue;
+}
+
+int touchSlop_Android(void) {
+    static int slop_ = 0;
+    if (!slop_) {
+        slop_ = intArgument_Android_(2, 8 * displayDensity_Android() + 0.5f);
+    }
+    return slop_;
+}
+
+uint32_t longPressTimeout_Android(void) {
+    static int timeout_ = 0;
+    if (!timeout_) {
+        timeout_ = intArgument_Android_(3, 500);
+    }
+    return timeout_;
+}
+
 /**
  * Get a JNI environment for the current thread, attaching it to the JVM if needed.
  * Sets *needDetach to iTrue if DetachCurrentThread must be called afterwards.
