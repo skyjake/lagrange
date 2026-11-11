@@ -1089,13 +1089,31 @@ static int navBarAvailableSpace_(iWidget *navBar) {
     int avail = width_Rect(innerBounds_Widget(navBar));
     iConstForEach(ObjectList, i, children_Widget(navBar)) {
         const iWidget *child = i.object;
-        if (~flags_Widget(child) & expand_WidgetFlag &&
-            isVisible_Widget(child) &&
-            cmp_String(id_Widget(child), "url")) {
-            avail -= width_Widget(child);
+        if (!isVisible_Widget(child) || !cmp_String(id_Widget(child), "url")) {
+            continue;
         }
+        avail -= flags_Widget(child) & expand_WidgetFlag ? child->minSize.x : width_Widget(child);
     }
     return avail;
+}
+
+/* The URL field is kept apart from the buttons next to it. */
+static void updateUrlGaps_(iWidget *navBar) {
+    const iWidget *url       = findChild_Widget(navBar, "url");
+    iBool          hasButton = iFalse;
+    iConstForEach(ObjectList, i, children_Widget(navBar)) {
+        const iWidget *child = i.object;
+        if (child == url) {
+            break;
+        }
+        if (isInstance_Object(child, &Class_LabelWidget) && !isSelfHidden_Widget(child)) {
+            hasButton = iTrue;
+        }
+    }
+    setMinSize_Widget(findChild_Widget(navBar, "url.pad"), init_I2(hasButton ? gap_UI : 0, 0));
+    setFixedSize_Widget(
+        findChild_Widget(navBar, "url.gap"),
+        init_I2(isSelfHidden_Widget(findChild_Widget(navBar, "navbar.ident")) ? 0 : gap_UI, 0));
 }
 
 iBool isNarrow_Root(const iRoot *d) {
@@ -1242,6 +1260,7 @@ static void updateNavBarSize_(iWidget *navBar) {
     }
     /* Resize the URL input field. */ {
         iWidget *urlBar = findChild_Widget(navBar, "url");
+        updateUrlGaps_(navBar);
         urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
         arrange_Widget(navBar);
     }
@@ -2179,7 +2198,8 @@ void createUserInterface_Root(iRoot *d) {
                                "navbar.action3",
                                collapse_WidgetFlag);
         addChildIdFlags_Widget(navBar, iClob(new_Widget()), "sbpad1", fixedSize_WidgetFlag);
-        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
+        addChildIdFlags_Widget(
+            navBar, iClob(new_Widget()), "url.pad", expand_WidgetFlag | fixedHeight_WidgetFlag);
         iInputWidget *url;
         /* URL input field. */ {
             url = new_InputWidget(0);
@@ -2333,6 +2353,7 @@ void createUserInterface_Root(iRoot *d) {
             arrange_Widget(urlButtons);
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
+        addChildIdFlags_Widget(navBar, iClob(new_Widget()), "url.gap", fixedSize_WidgetFlag);
         /* The active identity menu. */ {
             iLabelWidget *idButton = new_LabelWidget(person_Icon, "identmenu.open");
             setAlignVisually_LabelWidget(idButton, iTrue);
