@@ -134,6 +134,10 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
 #endif /* LAGRANGE_ENABLE_AUDIO */
 }
 
+static int frameRadius_MediaUI_(void) {
+    return isMobile_Platform() ? radius_UI : 2 * radius_UI;
+}
+
 static void drawBox_MediaUI_(iPaint *p, iRect rect, int radius, int fill, int frame) {
     if (isTerminal_Platform()) {
         if (fill >= 0) {
@@ -184,7 +188,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const int   playerBackground_ColorId = uiBackground_ColorId;
     const int   playerFrame_ColorId      = uiSeparator_ColorId;
     const iBool isAdjusting = (flags_Player(d->player) & adjustingVolume_PlayerFlag) != 0;
-    drawBox_MediaUI_(p, d->bounds, 2 * radius_UI, playerBackground_ColorId, playerFrame_ColorId);
+    drawBox_MediaUI_(p, d->bounds, frameRadius_MediaUI_(), playerBackground_ColorId, playerFrame_ColorId);
     drawInlineButton_(p,
                       d->playPauseRect,
                       isPaused_Player(d->player) ? "\U0001f782" : "\u23f8",
@@ -350,7 +354,7 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
     downloadInfo_Media(d->media, d->mediaId, &info);
     downloadStats_Media(d->media, (iMediaId){ download_MediaType, d->mediaId },
                         &path, &bytesPerSecond, &isFinished);
-    drawBox_MediaUI_(p, d->bounds, 2 * radius_UI, uiBackground_ColorId, uiSeparator_ColorId);
+    drawBox_MediaUI_(p, d->bounds, frameRadius_MediaUI_(), uiBackground_ColorId, uiSeparator_ColorId);
     iRect rect = d->bounds;
     shrink_Rect(&rect, init_I2(3 * gap_UI, 0));
     const int fonts[2] = { uiContentBold_FontId, uiLabel_FontId };
