@@ -171,6 +171,20 @@ static void startFeedsAgeTimer_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static void updateMobileReadAllButton_SidebarWidget_(iSidebarWidget *d) {
+    /* With nothing to mark as read, the button refreshes feeds instead. */
+    iLabelWidget *btn = child_Widget(d->actions, 0);
+    if (!btn) {
+        return;
+    }
+    const iBool hasUnread = d->numUnreadEntries > 0;
+    updateTextCStr_LabelWidget(btn, hasUnread ? check_Icon : reload_Icon);
+    checkIcon_LabelWidget(btn);
+    setCommand_LabelWidget(
+        btn, collectNewCStr_String(hasUnread ? "feeds.markallread confirm:1" : "feeds.refresh"));
+    setTextColor_LabelWidget(btn, hasUnread ? uiTextCaution_ColorId : uiTextAction_ColorId);
+}
+
 iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool    isMobile   = (deviceType_App() != desktop_AppDeviceType);
     const iBool    unreadOnly = (d->feedsMode == unread_FeedsMode);
@@ -283,9 +297,7 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     }
     else {
         if (!keepActions) {
-            iLabelWidget *readAll = addActionButton_SidebarWidget_(
-                d, check_Icon, "feeds.markallread confirm:1", 0);
-            setTextColor_LabelWidget(readAll, uiTextCaution_ColorId);
+            addActionButton_SidebarWidget_(d, check_Icon, "feeds.markallread confirm:1", 0);
             const char *modeIcons[2] = { page_Icon, circle_Icon };
             for (int i = 0; i < 2; i++) {
                 iLabelWidget *btn = addActionButton_SidebarWidget_(
@@ -294,6 +306,7 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 setBackgroundInset_LabelWidget(btn, gap_UI / 2);
             }
         }
+        updateMobileReadAllButton_SidebarWidget_(d);
         for (int i = 0; i < 2; i++) {
             iLabelWidget *btn   = child_Widget(d->actions, i + 1);
             const iBool   isSel = (d->feedsMode == (i == 0 ? all_FeedsMode : unread_FeedsMode));
@@ -346,6 +359,9 @@ iBool refreshFeedEntries_SidebarWidget_(iSidebarWidget *d) {
     /* Updates the read and open states if the visible entries still match the items. */
     if (flags_Widget(as_Widget(d)) & hidden_WidgetFlag) {
         return iFalse;
+    }
+    if (deviceType_App() != desktop_AppDeviceType) {
+        updateMobileReadAllButton_SidebarWidget_(d);
     }
     const iBool    unreadOnly = (d->feedsMode == unread_FeedsMode);
     const iString *docUrl     = feedEntryUrl_DocumentWidget(document_App());
