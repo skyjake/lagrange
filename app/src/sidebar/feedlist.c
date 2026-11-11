@@ -286,10 +286,13 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             iLabelWidget *readAll = addActionButton_SidebarWidget_(
                 d, check_Icon, "feeds.markallread confirm:1", 0);
             setTextColor_LabelWidget(readAll, uiTextCaution_ColorId);
-            setFlags2_Widget(addActionButton_SidebarWidget_(d, page_Icon, "feeds.mode arg:0", 0),
-                             alwaysRound_WidgetFlag2, iTrue);
-            setFlags2_Widget(addActionButton_SidebarWidget_(d, circle_Icon, "feeds.mode arg:1", 0),
-                             alwaysRound_WidgetFlag2, iTrue);
+            const char *modeIcons[2] = { page_Icon, circle_Icon };
+            for (int i = 0; i < 2; i++) {
+                iLabelWidget *btn = addActionButton_SidebarWidget_(
+                    d, modeIcons[i], format_CStr("feeds.mode arg:%d", i), 0);
+                setFlags2_Widget(as_Widget(btn), alwaysRound_WidgetFlag2, iTrue);
+                setBackgroundInset_LabelWidget(btn, gap_UI / 2);
+            }
         }
         for (int i = 0; i < 2; i++) {
             iLabelWidget *btn   = child_Widget(d->actions, i + 1);

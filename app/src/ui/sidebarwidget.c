@@ -1116,6 +1116,16 @@ iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *labe
     return btn;
 }
 
+static iLabelWidget *addBlankButton_SidebarWidget_(const iSidebarWidget *d, iWidget *div,
+                                                   const char *label, const char *command) {
+    iLabelWidget *btn = addChild_Widget(div, iClob(new_LabelWidget(label, command)));
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFont_LabelWidget(btn, actionButtonFont_SidebarWidget_(d));
+    }
+    checkIcon_LabelWidget(btn);
+    return btn;
+}
+
 iLabelWidget *addSortDropdown_SidebarWidget_(iSidebarWidget *d, iWidget *parent, const char *id,
                                              const iMenuItem *items, size_t numItems,
                                              int sortOrder, int64_t dropFlags) {
@@ -1432,8 +1442,12 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                     addBlankMessage_SidebarWidget_(div, "${sidebar.empty.feeds}");
                     addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
                 }
-                addChild_Widget(div,
-                                iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
+                addBlankButton_SidebarWidget_(d,
+                                              div,
+                                              deviceType_App() != desktop_AppDeviceType
+                                                  ? reload_Icon " ${menu.feeds.refresh}"
+                                                  : "${menu.feeds.refresh}",
+                                              "feeds.refresh");
             }
             else {
                 addBlankMessage_SidebarWidget_(div, "${sidebar.empty.unread}");
@@ -1474,9 +1488,9 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             iWidget *div = makeBlankDiv_SidebarWidget_(d);
             addBlankMessage_SidebarWidget_(div, "${sidebar.empty.idents}");
             addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
-            addChild_Widget(div, iClob(new_LabelWidget("${menu.identity.new}", "ident.new")));
+            addBlankButton_SidebarWidget_(d, div, "${menu.identity.new}", "ident.new");
             addChild_Widget(div, iClob(makePadding_Widget(gap_UI)));
-            addChild_Widget(div, iClob(new_LabelWidget("${menu.identity.import}", "ident.import")));
+            addBlankButton_SidebarWidget_(d, div, "${menu.identity.import}", "ident.import");
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             iLabelWidget *linkLabel;
             setBackgroundColor_Widget(
