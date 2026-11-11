@@ -832,6 +832,11 @@ void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
     d->userHasScrolled = iTrue;
 }
 
+void wheelStepScroll_DocumentView(iDocumentView *d, int offset, int duration) {
+    moveWheelSpan_SmoothScroll(&d->scrollY, offset, duration);
+    d->userHasScrolled = iTrue;
+}
+
 static int scrollPos_DocumentView_(iDocumentView *d, int documentY, iBool centered) {
     if (!isEmpty_Banner(d->banner)) {
         documentY += height_Banner(d->banner) + documentTopPad_DocumentView(d);

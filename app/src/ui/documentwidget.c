@@ -2798,9 +2798,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                              167, NULL);
             }
             if (amount.y) {
-                smoothScroll_DocumentView(view,
-                                          -3 * amount.y * lineHeight_Text(paragraph_FontId),
-                                          smoothDuration_DocumentWidget_(mouse_ScrollType));
+                wheelStepScroll_DocumentView(view,
+                                             -3 * amount.y * lineHeight_Text(paragraph_FontId),
+                                             smoothDuration_DocumentWidget_(mouse_ScrollType));
             }
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);

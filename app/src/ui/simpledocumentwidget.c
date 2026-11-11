@@ -370,9 +370,9 @@ static iBool processEvent_SimpleDocumentWidget_(iSimpleDocumentWidget *d, const 
                 scrollWideBlock_DocumentView(d->view, mouse, -3 * ev->wheel.x * lineHeight, 167, NULL);
             }
             if (ev->wheel.y) {
-                smoothScroll_DocumentView(d->view,
-                                          -3 * ev->wheel.y * lineHeight,
-                                          prefs_App()->smoothScrolling ? 200 : 0);
+                wheelStepScroll_DocumentView(d->view,
+                                             -3 * ev->wheel.y * lineHeight,
+                                             prefs_App()->smoothScrolling ? 200 : 0);
             }
         }
         return iTrue;

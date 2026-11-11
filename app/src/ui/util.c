@@ -472,7 +472,7 @@ void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
     }
 }
 
-void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
+static void setEased_Anim_(iAnim *d, float to, uint32_t span, int restingEaseFlags) {
     if (fabsf(to - d->to) <= 0.00001f) {
         d->to = to; /* Pretty much unchanged. */
         return;
@@ -480,7 +480,7 @@ void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
     const uint32_t now = SDL_GetTicks();
     if (isFinished_Anim(d)) {
         d->from  = d->to;
-        d->flags = easeBoth_AnimFlag;
+        d->flags = restingEaseFlags;
     }
     else {
         d->from  = valueAt_Anim_(d, now);
@@ -490,6 +490,10 @@ void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
     d->when   = now;
     d->due    = now + span;
     d->bounce = 0;
+}
+
+void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
+    setEased_Anim_(d, to, span, easeBoth_AnimFlag);
 }
 
 void setFlags_Anim(iAnim *d, int flags, iBool set) {
@@ -759,7 +763,8 @@ static uint32_t settleOverscroll_SmoothScroll_(iSmoothScroll *d, int osDelta) {
 }
 #endif
 
-void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
+static void moveSpanEased_SmoothScroll_(iSmoothScroll *d, int offset, uint32_t span,
+                                        int restingEaseFlags) {
     if (!isMobile_Platform() && !prefs_App()->smoothScrolling) {
         span = 0; /* always instant */
     }
@@ -790,7 +795,7 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
         destY = d->max + limit;
     }
     if (span) {
-        setValueEased_Anim(&d->pos, destY, span);
+        setEased_Anim_(&d->pos, destY, span, restingEaseFlags);
     }
     else {
         setValue_Anim(&d->pos, destY, 0);
@@ -815,6 +820,15 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
     if (d->notify) {
         d->notify(d->widget, offset, span);
     }
+}
+
+void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
+    moveSpanEased_SmoothScroll_(d, offset, span, easeBoth_AnimFlag);
+}
+
+void moveWheelSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
+    /* Movement must begin right away so each wheel step is visible. */
+    moveSpanEased_SmoothScroll_(d, offset, span, easeOut_AnimFlag);
 }
 
 void move_SmoothScroll(iSmoothScroll *d, int offset) {

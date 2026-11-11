@@ -151,12 +151,13 @@ iBool   updateWidth_DocumentView        (iDocumentView *);
 iBool   updateDocumentWidthRetainingScrollPosition_DocumentView (iDocumentView *, iBool keepCenter);
 int     updateScrollMax_DocumentView    (iDocumentView *);
 void    clampScroll_DocumentView        (iDocumentView *);
+void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool centered);
+void    scrollToHeading_DocumentView    (iDocumentView *, const char *heading);
 void    immediateScroll_DocumentView    (iDocumentView *, int offset);
 void    wheelScroll_DocumentView        (iDocumentView *, const SDL_MouseWheelEvent *); /* per-pixel */
+void    wheelStepScroll_DocumentView    (iDocumentView *, int offset, int duration);
 void    smoothScroll_DocumentView       (iDocumentView *, int offset, int duration);
-void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool centered);
 void    smoothScrollTo_DocumentView     (iDocumentView *, int documentY, iBool centered, int duration);
-void    scrollToHeading_DocumentView    (iDocumentView *, const char *heading);
 void    resetScroll_DocumentView        (iDocumentView *);
 void    resetScrollPosition_DocumentView(iDocumentView *, float normScrollY,
                                          const iGmScrollAnchor *anchor); /* anchor may be NULL */

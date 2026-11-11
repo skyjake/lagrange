@@ -282,6 +282,7 @@ void    reset_SmoothScroll          (iSmoothScroll *);
 void    setMax_SmoothScroll         (iSmoothScroll *, int max);
 void    move_SmoothScroll           (iSmoothScroll *, int offset);
 void    moveSpan_SmoothScroll       (iSmoothScroll *, int offset, uint32_t span);
+void    moveWheelSpan_SmoothScroll  (iSmoothScroll *, int offset, uint32_t span);
 void    moveWheel_SmoothScroll      (iSmoothScroll *, const SDL_MouseWheelEvent *); /* per-pixel */
 iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
 
