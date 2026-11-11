@@ -42,6 +42,7 @@ struct Impl_LabelColors {
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
+void    setBackgroundInset_LabelWidget(iLabelWidget *, int inset); /* only the background shrinks */
 void    setCheckMark_LabelWidget    (iLabelWidget *, iBool checkMark);
 void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
 void    setColors_LabelWidget       (iLabelWidget *, const iLabelColors *colors); /* NULL: automatic */

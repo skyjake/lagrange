@@ -44,6 +44,7 @@ struct Impl_LabelWidget {
     iChar   icon;
     int     forceFg;
     int     iconColor;
+    int     bgInset;
     iLabelColors *colors;  /* explicit; NULL if automatic */
     iString command;
     iClick  click;
@@ -787,7 +788,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     /* Group items are highlighted edge to edge, up to the separators. */
     const iBool isGroupItem = isButton && flags & frameless_WidgetFlag &&
                               (w->flags2 & groupItem_WidgetFlag2) != 0;
-    const iRect bgRect      = isGroupItem ? bounds : rect;
+    iRect       bgRect      = isGroupItem ? bounds : rect;
+    shrink_Rect(&bgRect, init1_I2(d->bgInset));
     if (!corners && isButton && (corners = groupCorners_Widget(w, &radius)) != 0) {
         if (!isGroupItem) {
             radius -= gap_UI / 4; /* concentric with the inset `rect` */
@@ -1113,6 +1115,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
     d->iconColor = none_ColorId;
+    d->bgInset = 0;
     d->colors = NULL;
     d->icon = 0;
     d->labelOffset = zero_I2();
@@ -1232,6 +1235,10 @@ void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
     d->flags.wrap = wrap;
+}
+
+void setBackgroundInset_LabelWidget(iLabelWidget *d, int inset) {
+    d->bgInset = inset;
 }
 
 void setCenterWrapped_LabelWidget(iLabelWidget *d, iBool centerWrapped) {
