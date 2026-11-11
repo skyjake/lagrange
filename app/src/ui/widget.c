@@ -764,11 +764,13 @@ static void arrange_Widget_(iWidget *d) {
         d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
         TRACE(d, "move to parent right edge: %d", d->rect.pos.x);
     }
-    else if (d->flags & moveToParentBottomEdge_WidgetFlag) {
-        moveToParentBottomEdge_Widget_(d);
-    }
-    else if (d->flags & centerHorizontal_WidgetFlag) {
-        centerHorizontal_Widget_(d);
+    else {
+        if (d->flags & moveToParentBottomEdge_WidgetFlag) {
+            moveToParentBottomEdge_Widget_(d);
+        }
+        if (d->flags & centerHorizontal_WidgetFlag) {
+            centerHorizontal_Widget_(d);
+        }
     }
     if (d->flags & resizeToParentWidth_WidgetFlag && d->parent) {
         iRect childBounds = zero_Rect();

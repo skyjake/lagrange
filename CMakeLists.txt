@@ -8,7 +8,7 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
     set (IOS_BUNDLE_VERSION 1)      # keep at 1 unless multiple revisions needed
-    set (IOS_BUILD_DATE "2026-11-08")
+    set (IOS_BUILD_DATE "2026-11-11")
 endif ()
 if (ANDROID)
     # Note: remember to update version in Gradle, AndroidManifest.xml

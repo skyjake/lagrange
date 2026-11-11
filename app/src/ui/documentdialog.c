@@ -77,6 +77,11 @@ static int transitionDir_DocumentDialog_(const iDocumentDialog *d) {
     return isFullScreen_DocumentDialog_(d) ? right_TransitionDir : bottom_TransitionDir;
 }
 
+/* Inset that keeps the page from covering the sheet frame. */
+static int frameWidth_DocumentDialog_(void) {
+    return iMax((int) (frame_UI / aspect_UI), gap_UI / 4);
+}
+
 static void requestFinished_DocumentDialog_(iAnyObject *obj, iGmRequest *req) {
     iUnused(req);
     postCommand_Widget(obj, "docdlg.loaded");
@@ -180,7 +185,7 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
             height = iMin(height, 25);
         }
         /* The page stays inside the frame. */
-        const int frame = iMax((int) (frame_UI / aspect_UI), gap_UI / 4);
+        const int frame = frameWidth_DocumentDialog_();
         setPadding_Widget(w, frame, frame, frame, 0);
         setFixedSize_Widget(w, init_I2(width, height));
         width -= w->padding[0] + w->padding[2];
@@ -192,8 +197,11 @@ static void updateLayout_DocumentDialog_(iDocumentDialog *d) {
                                                         : iMin(width_Rect(safe), 140 * gap_UI);
         /* Extends under the bottom safe area. */
         const int height = bottom_Rect(rect_Root(w->root)) - top_Rect(safe) - 2 * gap_UI;
+        const int frame  = frameWidth_DocumentDialog_();
+        setPadding_Widget(w, frame, frame, frame, 0);
         setFixedSize_Widget(w, init_I2(width, height));
-        docHeight = height - headerHgt;
+        width -= w->padding[0] + w->padding[2];
+        docHeight = height - w->padding[1] - headerHgt;
     }
     else {
         /* Covers the entire root so nothing underneath needs to be drawn. */
