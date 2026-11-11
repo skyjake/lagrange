@@ -32,12 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "render/paint.h"
 #include "ui/command.h"
 #include "ui/touch.h"
+#include "ui/wheelgesture.h"
 #include "ui/widget.h"
 #include "ui/window.h"
-
-#if defined (iPlatformEmscripten)
-#   include "platform/web.h"
-#endif
 
 #include <SDL3/SDL_timer.h>
 
@@ -383,6 +380,10 @@ void finishWheelSwipe_DocumentSwipe(iDocumentSwipe *d, iBool aborted) {
 }
 
 iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEvent *ev) {
+#if defined (LAGRANGE_HAVE_WHEEL_GESTURE) && !defined (LAGRANGE_WHEEL_GESTURE_SWIPE)
+    iUnused(d, ev);
+    return iFalse; /* trackpad gestures only scroll */
+#endif
     iWidget *w = as_Widget(d->owner);
     if (!isPaged_DocumentView(ownerView_(d)) &&
         (~d->flags & navigable_DocumentSwipeFlag || !prefs_App()->pageSwipe)) {
@@ -443,11 +444,11 @@ iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEven
                 //printf("swipe moved to %d, side %d\n", d->wheelDistance, side);
                 postCommand_Widget(d->owner, "edgeswipe.moved arg:%d side:%d", d->wheelDistance,
                                    wheelSide_DocumentSwipe_(d));
-#if defined (iPlatformEmscripten)
-                /* The end of the gesture is only known after the momentum stops. */
+#if defined (LAGRANGE_WHEEL_GESTURE_SWIPE)
+                /* The end of the gesture is only known after a pause. */
                 if (iAbs(d->wheelDistance) >= width_Widget(d->owner)) {
                     finishWheelSwipe_DocumentSwipe(d, iFalse);
-                    endWheelGesture_Web();
+                    end_WheelGesture();
                 }
 #endif
             }

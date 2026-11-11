@@ -1036,7 +1036,7 @@ iWidget *makePreferences_Widget(void) {
             (iMenuItem[]){
                 { "slider id:prefs.scrollspeed.keyboard cmd:scrollspeed.keyboard min:0 max:6" },
                 { "slider id:prefs.scrollspeed.mouse cmd:scrollspeed.mouse min:0 max:6" },
-#if defined (iPlatformAppleDesktop)
+#if defined (LAGRANGE_TRACKPAD_SPEED)
                 { "slider id:prefs.trackpadspeed cmd:trackpadspeed min:0.5 max:2 step:0.05 "
                   "bigstep:0.25 prec:2 unit:x" },
 #endif
@@ -1667,7 +1667,7 @@ void showPreferences_Widget(const char *cmd) {
     setText_InputWidget(findChild_Widget(dlg, "prefs.tinylogsize"),
                         collectNewFormat_String("%d", prefs->maxTinylogSize));
     setValue_SliderWidget(findChild_Widget(dlg, "prefs.urlsize"), prefs->maxUrlSize / 1024.0f);
-#if defined (iPlatformAppleDesktop)
+#if defined (LAGRANGE_TRACKPAD_SPEED)
     setValue_SliderWidget(findChild_Widget(dlg, "prefs.trackpadspeed"), prefs->trackpadSpeed);
 #endif
     iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");

@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/util.h"
+#include "ui/wheelgesture.h"
 #include "ui/window.h"
 
 #include <lagrange/gmutil.h>
@@ -496,115 +497,14 @@ static iBool isWheelStep_Web_(const SDL_MouseWheelEvent *ev) {
     return isWheelStepValue_Web_(ev->x) && isWheelStepValue_Web_(ev->y);
 }
 
-enum { wheelGesturePause_Ms = 200 };
-
-/* Browsers do not report when a trackpad gesture ends, which is needed for finishing
-   swipe navigation. A pause ends it instead. */
-static struct {
-    int                 axis;    /* 0: undecided, 1: horizontal, 2: vertical */
-    iBool               isEnded; /* the rest of the gesture only scrolls vertically */
-    uint64_t            lastTime;
-    float               pending[2]; /* movement while the axis is undecided */
-    SDL_MouseWheelEvent last;    /* last horizontal event */
-    int                 seq;     /* identifies the pending end timer */
-} wheelGesture_Web_;
-
-static int lockScrollAxis_Web_(SDL_MouseWheelEvent *ev) {
-    /* Only scroll on one axis at a time. */
-    if (ev->timestamp - wheelGesture_Web_.lastTime > SDL_MS_TO_NS(wheelGesturePause_Ms)) {
-        wheelGesture_Web_.axis = 0;
-        wheelGesture_Web_.isEnded = iFalse;
-        iZap(wheelGesture_Web_.pending);
-    }
-    wheelGesture_Web_.lastTime = ev->timestamp;
-    if (wheelGesture_Web_.isEnded) {
-        ev->x = 0.0f; /* remaining momentum */
-    }
-    if (wheelGesture_Web_.axis == 0) {
-        /* Decide after some movement (in units of 100 px). Horizontal must clearly dominate.
-           Vertical movement is applied immediately, horizontal is held back until then. */
-        float *pending = wheelGesture_Web_.pending;
-        pending[0] += ev->x;
-        pending[1] += ev->y;
-        if (fabsf(pending[0]) + fabsf(pending[1]) < 0.08f) {
-            ev->x = 0.0f;
-            return 0;
-        }
-        wheelGesture_Web_.axis = fabsf(pending[0]) > 2 * fabsf(pending[1]) ? 1 : 2;
-        ev->x = pending[0];
-        iZap(wheelGesture_Web_.pending);
-    }
-    if (wheelGesture_Web_.axis == 1) {
-        ev->y = 0.0f;
-    }
-    else if (wheelGesture_Web_.axis == 2) {
-        ev->x = 0.0f;
-    }
-    return wheelGesture_Web_.axis;
-}
-
-static Uint32 postWheelGestureEnd_Web_(void *seq, SDL_TimerID id, Uint32 interval) {
-    iUnused(id, interval);
-    SDL_Event ev = { .user = { .type  = SDL_EVENT_USER,
-                               .code  = wheelGestureEnds_UserEventCode,
-                               .data1 = seq } };
-    SDL_PushEvent(&ev);
-    return 0;
-}
-
-static void continueWheelGesture_Web_(const SDL_MouseWheelEvent *ev) {
-    wheelGesture_Web_.last = *ev;
-    SDL_AddTimer(wheelGesturePause_Ms, postWheelGestureEnd_Web_,
-                 (void *) (intptr_t) ++wheelGesture_Web_.seq);
-}
-
-static iBool endWheelGesture_Web_(SDL_Event *ev) {
-    if ((intptr_t) ev->user.data1 != wheelGesture_Web_.seq) {
-        return iFalse; /* the gesture has continued, or was ended already */
-    }
-    ev->wheel           = wheelGesture_Web_.last;
-    ev->wheel.timestamp = SDL_GetTicksNS();
-    ev->wheel.x         = 0.0f;
-    ev->wheel.y         = 0.0f;
-    setInertia_MouseWheelEvent(&ev->wheel, iFalse);
-    setScrollFinished_MouseWheelEvent(&ev->wheel, iTrue);
-    return iTrue;
-}
-
-void endWheelGesture_Web(void) {
-    wheelGesture_Web_.axis    = 0;
-    wheelGesture_Web_.isEnded = iTrue;
-    iZap(wheelGesture_Web_.pending);
-    wheelGesture_Web_.seq++;
-}
-
-static void convertToPerPixel_Web_(SDL_MouseWheelEvent *ev, float pixelRatio) {
-    static float accum[2]; /* fractional pixels carried over */
-    accum[0] += ev->x * 100.0f * pixelRatio;
-    accum[1] += ev->y * 100.0f * pixelRatio;
-    ev->x = (int) accum[0];
-    ev->y = (int) accum[1];
-    accum[0] -= ev->x;
-    accum[1] -= ev->y;
-    setPerPixel_MouseWheelEvent(ev, iTrue);
-}
-
 /* Returns true if the event was consumed. */
 static iBool processWheelEvent_Web_(SDL_Event *ev) {
-    if (ev->type == SDL_EVENT_USER && ev->user.code == wheelGestureEnds_UserEventCode) {
-        return !endWheelGesture_Web_(ev);
-    }
     if (ev->type != SDL_EVENT_MOUSE_WHEEL) {
-        return iFalse;
+        return processEnd_WheelGesture(ev);
     }
     ev->wheel.x = -ev->wheel.x;
     if (!isWheelStep_Web_(&ev->wheel)) {
-        const int axis = lockScrollAxis_Web_(&ev->wheel);
-        convertToPerPixel_Web_(&ev->wheel, get_MainWindow()->base.pixelRatio);
-        if (axis == 1) {
-            continueWheelGesture_Web_(&ev->wheel);
-        }
-        return ev->wheel.x == 0 && ev->wheel.y == 0;
+        return toPerPixel_WheelGesture(&ev->wheel, 100.0f, get_MainWindow()->base.pixelRatio);
     }
     return iFalse;
 }

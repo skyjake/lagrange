@@ -355,6 +355,8 @@ set (SOURCES
     src/ui/util.h
     src/ui/visbuf.c
     src/ui/visbuf.h
+    src/ui/wheelgesture.c
+    src/ui/wheelgesture.h
     src/ui/window.c
     src/ui/window.h
     # Widgets:

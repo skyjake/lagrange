@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/root.h"
 #include "ui/touch.h"
 #include "ui/util.h"
+#include "ui/wheelgesture.h"
 #include "ui/window.h"
 
 #if defined (iPlatformAppleDesktop)
@@ -64,6 +65,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (LAGRANGE_ENABLE_X11_XLIB)
 #   include "platform/x11.h"
 #endif
+
+#include <math.h>
 
 static const int idleThreshold_App_ = 1000; /* ms */
 
@@ -134,6 +137,52 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
 #endif
     return !isRefreshPending_App();
 }
+
+#if defined (LAGRANGE_HAVE_WHEEL_GESTURE) && !defined (iPlatformEmscripten)
+static iBool isWheelStepValue_App_(float value) {
+    /* Mouse wheels report multiples of 1/120 steps. */
+    const float v120 = value * 120.0f;
+    return fabsf(v120 - roundf(v120)) < 0.01f;
+}
+
+static int accumulateWheelSteps_App_(int *accum120, float value) {
+    const int v120 = (int) lroundf(value * 120.0f);
+    if ((*accum120 < 0 && v120 > 0) || (*accum120 > 0 && v120 < 0)) {
+        *accum120 = 0; /* direction changed */
+    }
+    *accum120 += v120;
+    const int steps = *accum120 / 120;
+    *accum120 -= steps * 120;
+    return steps;
+}
+
+/* Returns true if the event was consumed. */
+static iBool processWheelEvent_App_(iApp *d, SDL_Event *ev) {
+    static int stepAccum_[2]; /* 1/120 steps */
+    if (ev->type != SDL_EVENT_MOUSE_WHEEL) {
+        return iFalse;
+    }
+    SDL_MouseWheelEvent *wheel = &ev->wheel;
+    if (isPerPixel_MouseWheelEvent(wheel)) {
+        return iFalse; /* already converted */
+    }
+    if (!isOngoing_WheelGesture(wheel->timestamp) && isWheelStepValue_App_(wheel->x) &&
+        isWheelStepValue_App_(wheel->y)) {
+        /* High-resolution wheels and scroll speed factors produce fractional steps. */
+        wheel->x = accumulateWheelSteps_App_(&stepAccum_[0], wheel->x);
+        wheel->y = accumulateWheelSteps_App_(&stepAccum_[1], wheel->y);
+        return wheel->x == 0 && wheel->y == 0;
+    }
+    iZap(stepAccum_);
+    /* SDL divides the trackpad scroll distance by the backend's unit (Wayland: 10 points,
+       XInput2: 15 points with the libinput driver). */
+    wheel->x = -wheel->x;
+    setTrackpad_MouseWheelEvent(wheel, iTrue);
+    return toPerPixel_WheelGesture(wheel,
+                                   isRunningUnderWayland_App() ? 10.0f : 15.0f,
+                                   d->window ? d->window->pixelRatio : 1.0f);
+}
+#endif
 
 static uint32_t             eventProcessingStartTime_;
 static uint32_t             numPendingMotionEvents_;
@@ -340,6 +389,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
 #if defined (iPlatformEmscripten)
                 if (processEvent_Web(&ev)) {
+                    continue;
+                }
+#elif defined (LAGRANGE_HAVE_WHEEL_GESTURE)
+                if (processWheelEvent_App_(d, &ev)) {
                     continue;
                 }
 #endif

@@ -271,7 +271,7 @@ struct Impl_Prefs {
     enum iFeedInterval         feedInterval;
     int                returnKey;
     int                smoothScrollSpeed[max_ScrollType];
-    float              trackpadSpeed; /* macOS only */
+    float              trackpadSpeed; /* desktop macOS and Linux */
 
     /* Network */
     int maxCacheSize;  /* MB */

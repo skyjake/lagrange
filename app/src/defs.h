@@ -107,6 +107,12 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   endif
 #endif
 
+/* Trackpad scrolling speed can be adjusted in Preferences. */
+#if defined (iPlatformAppleDesktop) || \
+    (defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal))
+#   define LAGRANGE_TRACKPAD_SPEED
+#endif
+
 /* UI icons from the bundled Material Symbols font (see platform/android-icons.py). */
 #if !defined (iPlatformApple) && !defined (iPlatformMsys) && !defined (iPlatformWindows) && \
     !defined (iPlatformTerminal)

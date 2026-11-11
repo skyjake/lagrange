@@ -40,7 +40,6 @@ iBool   isFullscreen_Web            (void);
 void    setFullscreen_Web           (iBool fullscreen);
 void    setTextInputActive_Web      (iBool active); /* shows the on-screen keyboard */
 iBool   processEvent_Web            (SDL_Event *); /* returns true if the event was consumed */
-void    endWheelGesture_Web         (void); /* ignore the rest of a trackpad swipe */
 int     swapAppleMods_Web           (int mods);
 void    appleDefaultKey_Web         (int bindingId, int *key, int *mods); /* if Apple device */
 void    pickFile_Web                (const char *cmd);
