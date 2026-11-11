@@ -273,6 +273,30 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
 #endif
 }
 
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
+static iBool discardSpuriousKeyRepeat_App_(const SDL_Event *ev) {
+    if (ev->type != SDL_EVENT_KEY_DOWN || !ev->key.repeat) {
+        return iFalse;
+    }
+    /* A bad Wayland compositor timestamp may produce a burst of key repeats. The extra ones
+       need to be discarded. (TODO: SDL 3.4+ may have already fixed this, but it needs testing.) */
+    SDL_Event ups[16];
+    const int numUps =
+        SDL_PeepEvents(ups, iElemCount(ups), SDL_PEEKEVENT, SDL_EVENT_KEY_UP, SDL_EVENT_KEY_UP);
+    for (int i = 0; i < numUps; i++) {
+        if (ups[i].key.which == ev->key.which && ups[i].key.scancode == ev->key.scancode) {
+            SDL_Event next;
+            if (SDL_PeepEvents(&next, 1, SDL_PEEKEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST) == 1 &&
+                next.type == SDL_EVENT_TEXT_INPUT) {
+                SDL_PeepEvents(&next, 1, SDL_GETEVENT, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_INPUT);
+            }
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+#endif
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
@@ -393,6 +417,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
 #elif defined (LAGRANGE_HAVE_WHEEL_GESTURE)
                 if (processWheelEvent_App_(d, &ev)) {
+                    continue;
+                }
+#endif
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
+                if (d->isRunningUnderWayland && discardSpuriousKeyRepeat_App_(&ev)) {
                     continue;
                 }
 #endif
