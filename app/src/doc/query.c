@@ -115,6 +115,7 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     const iWidget  *buttons       = pointerLabel_Command(context, "buttons");
     const iLabelWidget *prompt    = findChild_Widget(parent_Widget(buttons), "valueinput.prompt");
     const iString  *url           = string_Command(context, "url");
+    const iBool     isSensitive   = argLabel_Command(context, "sensitive") != 0;
     const char     *precedingLine = suffixPtr_Command(context, "preceding");
     /* Compose new menu items. */
     iArray *items = collectNew_Array(sizeof(iMenuItem));
@@ -153,7 +154,8 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
               0,
               format_CStr("!prompturl.toggle url:%s", cstr_String(url)) } },
         2);
-    /* Recently submitted input texts can be restored. */ {
+    /* Recently submitted input texts can be restored. */
+    if (!isSensitive) {
         const iStringArray *recentInput = recentlySubmittedInput_App();
         if (!isEmpty_StringArray(recentInput)) {
             pushBack_Array(items, &(iMenuItem){ "---" });
@@ -237,8 +239,9 @@ static void setupDialog_Query_(iQuery *d, iWidget *dlg, const iString *url,
         /* When opening, update the items to reflect the site-specific settings. */
         setMenuUpdateItemsFunc_Widget(menu, updateInputPromptMenuItems_);
         set_String(&menu->data,
-                   collectNewFormat_String("context buttons:%p url:%s preceding:%s",
+                   collectNewFormat_String("context buttons:%p sensitive:%d url:%s preceding:%s",
                                            buttons,
+                                           isSensitive,
                                            cstr_String(canonicalUrl_String(url)),
                                            cstr_String(&d->owner->linePrecedingLink)));
         if (deviceType_App() == desktop_AppDeviceType) {
@@ -253,9 +256,9 @@ static void setupDialog_Query_(iQuery *d, iWidget *dlg, const iString *url,
     }
     iInputWidget *input = findChild_Widget(dlg, "input");
     setValidator_InputWidget(input, inputQueryValidator_, d->owner);
+    setSensitiveContent_InputWidget(input, isSensitive);
     setBackupFileName_InputWidget(input, "inputbackup");
     setSelectAllOnFocus_InputWidget(input, iTrue);
-    setSensitiveContent_InputWidget(input, isSensitive);
     setArrowFocusNavigable_InputWidget(input, iFalse);
 }
 
@@ -600,7 +603,7 @@ iWidget *makeModal_Query(iQuery *d, const iString *url, iBool isSensitive,
         promptLabel ? promptLabel
                     : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
         uiTextAction_ColorEscape "${dlg.input.send}",
-        acceptCommand);
+        isSensitive ? format_CStr("%s sensitive:1", acceptCommand) : acceptCommand);
     setupDialog_Query_(d, dlg, url, isSensitive);
     return dlg;
 }
@@ -608,10 +611,10 @@ iWidget *makeModal_Query(iQuery *d, const iString *url, iBool isSensitive,
 iBool handleCommand_Query(iQuery *d, const char *cmd) {
     if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d->owner) {
         const iString *url = d->owner->mod.url;
+        iBool isSensitive = argLabel_Command(cmd, "sensitive") != 0;
         if (hasLabel_Command(cmd, "link")) {
             /* Use the stored base URL (document URL may change). */
             const iGmLinkId linkId = argU32Label_Command(cmd, "link");
-            iBool isSensitive;
             const iString *label, *baseUrl;
             int heightPx;
             inputPromptInfo_Media(media_GmDocument(ownerDoc_(d)),
@@ -625,7 +628,9 @@ iBool handleCommand_Query(iQuery *d, const char *cmd) {
             url = string_Command(cmd, "prompturl");
         }
         const iString *userEnteredText = collect_String(suffix_Command(cmd, "value"));
-        saveSubmittedInput_App(userEnteredText);
+        if (!isSensitive) {
+            saveSubmittedInput_App(userEnteredText);
+        }
         const char *queryUrl = cstrCollect_String(makeQueryUrl_(url, userEnteredText));
         if (hasLabel_Command(cmd, "link")) {
             postCommandf_Root(ownerWidget_(d)->root, "open url:%s", queryUrl);

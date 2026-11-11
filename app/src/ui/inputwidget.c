@@ -97,18 +97,24 @@ void restartBackupTimer_InputWidget_(iInputWidget *d) {
     }
 }
 
+static void stopBackup_InputWidget_(iInputWidget *d) {
+    if (d->backupTimer) {
+        SDL_RemoveTimer(d->backupTimer);
+        d->backupTimer = 0;
+    }
+    d->inFlags &= ~needBackup_InputWidgetFlag;
+    delete_String(d->backupPath);
+    d->backupPath = NULL;
+}
+
 void setBackupFileName_InputWidget(iInputWidget *d, const char *fileName) {
     if (fileName == NULL) {
-        if (d->backupTimer) {
-            SDL_RemoveTimer(d->backupTimer);
-            d->backupTimer = 0;
-        }
         eraseBackup_InputWidget_(d);
-        if (d->backupPath) {
-            delete_String(d->backupPath);
-            d->backupPath = NULL;
-        }
+        stopBackup_InputWidget_(d);
         return;
+    }
+    if (d->inFlags & isSensitive_InputWidgetFlag) {
+        return; /* sensitive content is never written to disk */
     }
     if (!d->backupPath) {
         d->backupPath = copy_String(backupDir_App());
@@ -557,6 +563,9 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
 
 void setSensitiveContent_InputWidget(iInputWidget *d, iBool isSensitive) {
     iChangeFlags(d->inFlags, isSensitive_InputWidgetFlag, isSensitive);
+    if (isSensitive) {
+        stopBackup_InputWidget_(d);
+    }
 }
 
 void setUrlContent_InputWidget(iInputWidget *d, iBool isUrl) {
