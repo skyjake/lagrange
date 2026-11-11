@@ -145,7 +145,7 @@ static iTouchState *touchState_(void) {
         d->stepDurationMs     = 1000.0 / (double) rate;
         d->momFrictionPerStep = pow(0.985, 120.0 / (double) rate);
 #if defined (iPlatformAndroidMobile)
-        d->momFrictionPerStep = 9 * gap_UI;
+        d->momFrictionPerStep = 9 * gap_UI * 60.0 / (double) rate;
 #endif
     }
     return d;
@@ -429,10 +429,12 @@ static void update_TouchState_(void *ptr) {
             d->lastMomTime = accurateTicks_();
         }
         const double momAvailMs = accurateTicks_() - d->lastMomTime;
-        /* Display refresh is vsynced and we'll be here at most once per frame.
-           However, we may come here TOO early, which would cause a hiccup in the scrolling,
-           so always do at least one step. */
-        int numSteps = iMax(1, momAvailMs / d->stepDurationMs);
+        /* Display refresh is vsynced and we'll be here at most once per frame. If we arrive
+           early, do at least one step but don't get ahead of real time. */
+        int numSteps = 0;
+        if (momAvailMs > -0.25 * d->stepDurationMs) {
+            numSteps = iMax(1, (int) (momAvailMs / d->stepDurationMs));
+        }
         d->lastMomTime += numSteps * d->stepDurationMs;
         numSteps = iMin(numSteps, 10); /* don't spend too much time here */
 //        printf("mom steps:%d\n", numSteps);
