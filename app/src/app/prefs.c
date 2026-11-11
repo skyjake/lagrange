@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/documentwidget.h"
 #include "ui/gamepad.h"
 #include "ui/keys.h"
+#include "ui/metrics.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
 #include "ui/touch.h"
@@ -763,6 +764,13 @@ void prefsBoolValueChanged_App_(iApp *d, enum iPrefsBool id, iBool isFrozen) {
             }
             else if (!isFinishedLaunching_App()) {
                 postCommand_App("~scrollbar.metrics");
+            }
+            break;
+        case squareCorners_PrefsBool:
+            updateRadius_Metrics();
+            if (!isFrozen) {
+                postCommand_App("metrics.changed");
+                postRefreshAllWindows_App();
             }
             break;
         case preferIPv6_PrefsBool:

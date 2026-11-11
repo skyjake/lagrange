@@ -2612,6 +2612,9 @@ msgstr "Menu Bar"
 msgid "prefs.thickscroll"
 msgstr "Thick scroll bars:"
 
+msgid "prefs.squarecorners"
+msgstr "Square corners:"
+
 msgid "prefs.evensplit"
 msgstr "Split tabs evenly:"
 

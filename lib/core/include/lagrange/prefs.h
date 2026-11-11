@@ -93,6 +93,7 @@ enum iPrefsBool {
 
     useGamepad_PrefsBool,
     thickScrollBar_PrefsBool,
+    squareCorners_PrefsBool,
     time24h_PrefsBool,
 
 
@@ -209,6 +210,7 @@ struct Impl_Prefs {
 
             iBool useGamepad;
             iBool thickScrollBar;
+            iBool squareCorners;
             iBool time24h;
 
 

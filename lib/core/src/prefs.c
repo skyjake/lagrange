@@ -78,6 +78,7 @@ static const iPrefsSpec boolSpecs_[max_PrefsBool] = {
     [editorSyntaxHighlighting_PrefsBool] = { "prefs.editor.highlight" },
     [useGamepad_PrefsBool]              = { "prefs.gamepad" },
     [thickScrollBar_PrefsBool]          = { "prefs.thickscroll" },
+    [squareCorners_PrefsBool]           = { "prefs.squarecorners" },
     [time24h_PrefsBool]                 = { "prefs.time.24h", NULL, "sidebar.update" },
     /* Behavior */
     [retainTabs_PrefsBool]              = { "prefs.retaintabs" },
@@ -246,6 +247,7 @@ void init_Prefs(iPrefs *d) {
     d->editorSyntaxHighlighting = iTrue;
     d->useGamepad               = isDesktop_Platform(); /* enabled by default on desktop */
     d->thickScrollBar           = iFalse;
+    d->squareCorners            = iFalse;
     d->navbarActions[0]         = back_ToolbarAction;
     d->navbarActions[1]         = forward_ToolbarAction;
     d->navbarActions[2]         = leftSidebar_ToolbarAction;

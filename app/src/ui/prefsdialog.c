@@ -993,6 +993,9 @@ iWidget *makePreferences_Widget(void) {
         }
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.thickscroll}", "prefs.thickscroll");
+        if (!isTerminal_Platform()) {
+            addDialogToggle_Widget(headings, values, "${prefs.squarecorners}", "prefs.squarecorners");
+        }
     }
     /* UI/app behavior. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", red_ColorId, '3', &headings, &values),

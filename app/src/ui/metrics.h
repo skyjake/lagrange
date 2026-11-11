@@ -33,3 +33,4 @@ extern iInt2 gap2_UI;
 extern const float aspect_UI; /* ratio of W/H; multiply height with this factor */ 
 
 void    setScale_Metrics       (float scale);
+void    updateRadius_Metrics   (void);

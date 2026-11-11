@@ -49,8 +49,12 @@ void setScale_Metrics(float scale) {
         }
         gap_UI      = iRound(defaultGap_Metrics * scale);
         gap2_UI     = init1_I2(gap_UI);
-        radius_UI   = isMobile_Platform() ? 2 * gap_UI : gap_UI;
         frame_UI    = isMobile_Platform() ? 2 : 1;
         fontSize_UI = iRound(defaultFontSize_Metrics * scale);
+        updateRadius_Metrics();
     }
+}
+
+void updateRadius_Metrics(void) {
+    radius_UI = prefs_App()->squareCorners ? 0 : isMobile_Platform() ? 2 * gap_UI : gap_UI;
 }
