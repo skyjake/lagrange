@@ -324,7 +324,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             int       corners = all_RoundCorner;
             iRect     wideRect;
             /* Open links get a highlighted background. */
-            if (isMobileHover && !isPartOfHover) {
+            if (isMobileHover && !isPartOfHover && ~linkFlags & isOpen_GmLinkFlag) {
                 bg = tmBackground_ColorId; /* hover ended and was invalidated */
             }
             if (linkFlags & inline_GmLinkFlag) {
