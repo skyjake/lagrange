@@ -171,18 +171,30 @@ static void startFeedsAgeTimer_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
-static void updateMobileReadAllButton_SidebarWidget_(iSidebarWidget *d) {
+static void updateReadAllButton_SidebarWidget_(iSidebarWidget *d) {
     /* With nothing to mark as read, the button refreshes feeds instead. */
-    iLabelWidget *btn = child_Widget(d->actions, 0);
+    const iBool   isMobile = (deviceType_App() != desktop_AppDeviceType);
+    iLabelWidget *btn      = isMobile ? child_Widget(d->actions, 0)
+                                      : findChild_Widget(d->actions, "feeds.markallread");
     if (!btn) {
         return;
     }
     const iBool hasUnread = d->numUnreadEntries > 0;
-    updateTextCStr_LabelWidget(btn, hasUnread ? check_Icon : reload_Icon);
+    if (isMobile) {
+        updateTextCStr_LabelWidget(btn, hasUnread ? check_Icon : reload_Icon);
+        setCommand_LabelWidget(
+            btn,
+            collectNewCStr_String(hasUnread ? "feeds.markallread confirm:1" : "feeds.refresh"));
+        setTextColor_LabelWidget(btn, hasUnread ? uiTextCaution_ColorId : uiTextAction_ColorId);
+    }
+    else {
+        updateTextCStr_LabelWidget(btn,
+                                   hasUnread ? check_Icon " ${sidebar.action.feeds.markallread}"
+                                             : reload_Icon " ${sidebar.action.feeds.refresh}");
+        setCommand_LabelWidget(
+            btn, collectNewCStr_String(hasUnread ? "feeds.markallread" : "feeds.refresh"));
+    }
     checkIcon_LabelWidget(btn);
-    setCommand_LabelWidget(
-        btn, collectNewCStr_String(hasUnread ? "feeds.markallread confirm:1" : "feeds.refresh"));
-    setTextColor_LabelWidget(btn, hasUnread ? uiTextCaution_ColorId : uiTextAction_ColorId);
 }
 
 iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
@@ -294,6 +306,7 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 findChild_Widget(d->actions, "feeds.modebutton"),
                 format_CStr(" arg:%d", d->feedsMode));
         }
+        updateReadAllButton_SidebarWidget_(d);
     }
     else {
         if (!keepActions) {
@@ -306,7 +319,7 @@ iBool updateFeedEntries_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 setBackgroundInset_LabelWidget(btn, gap_UI / 2);
             }
         }
-        updateMobileReadAllButton_SidebarWidget_(d);
+        updateReadAllButton_SidebarWidget_(d);
         for (int i = 0; i < 2; i++) {
             iLabelWidget *btn   = child_Widget(d->actions, i + 1);
             const iBool   isSel = (d->feedsMode == (i == 0 ? all_FeedsMode : unread_FeedsMode));
@@ -360,9 +373,7 @@ iBool refreshFeedEntries_SidebarWidget_(iSidebarWidget *d) {
     if (flags_Widget(as_Widget(d)) & hidden_WidgetFlag) {
         return iFalse;
     }
-    if (deviceType_App() != desktop_AppDeviceType) {
-        updateMobileReadAllButton_SidebarWidget_(d);
-    }
+    updateReadAllButton_SidebarWidget_(d);
     const iBool    unreadOnly = (d->feedsMode == unread_FeedsMode);
     const iString *docUrl     = feedEntryUrl_DocumentWidget(document_App());
     const size_t   numItems   = numItems_ListWidget(d->list);

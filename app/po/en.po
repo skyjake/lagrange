@@ -717,6 +717,10 @@ msgstr "Edit"
 msgid "sidebar.action.feeds.markallread"
 msgstr "Read All"
 
+# Replaces "Read All" when there are no unread entries. Should be fairly short.
+msgid "sidebar.action.feeds.refresh"
+msgstr "Refresh"
+
 msgid "sidebar.action.show"
 msgstr "Show:"
 

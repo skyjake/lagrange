@@ -2129,6 +2129,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 (d->mode == feedEntries_SidebarMode && !refreshFeedEntries_SidebarWidget_(d))) {
                 updateItems_SidebarWidget_(d);
             }
+            else if (d->mode == feedEntries_SidebarMode) {
+                checkFeedsActionsLayout_SidebarWidget_(d); /* Read All/Refresh label changed */
+            }
         }
         else if (equal_Command(cmd, "bookmarks.changed")) {
             /* Unsubscribing removes feed entries. */
