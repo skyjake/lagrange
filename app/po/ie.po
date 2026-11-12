@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2026-06-22 11:40+0000\n"
+"PO-Revision-Date: 2026-11-13 03:52+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -2984,3 +2984,256 @@ msgstr "Preferer IPv6:"
 
 msgid "prefs.gamepad.mainmenu"
 msgstr "Menú principal"
+
+# Identities are listed in the order chosen by the user, by dragging.
+msgid "sidebar.action.ident.manual"
+msgstr "Manualmen"
+
+msgid "heading.prefs.toolbartabs"
+msgstr "Cartes de instrumentarium"
+
+# Paginated mode uses the regular document theme.
+msgid "prefs.doctheme.name.none"
+msgstr "Null"
+
+msgid "prefs.doctheme.name.paper"
+msgstr "Papere"
+
+msgid "prefs.doctheme.name.arboreal"
+msgstr "Arboral"
+
+msgid "prefs.doctheme.name.ember"
+msgstr "Brase"
+
+msgid "prefs.quotes"
+msgstr "Citates"
+
+msgid "prefs.hyphenate"
+msgstr "Hifenisar:"
+
+msgid "justify.never"
+msgstr "Nequande"
+
+msgid "keys.group.navigation"
+msgstr "Navigation"
+
+msgid "keys.group.scroll"
+msgstr "Rulament"
+
+msgid "keys.group.links"
+msgstr "Ligamentes"
+
+msgid "keys.group.page"
+msgstr "Págine"
+
+msgid "keys.group.view"
+msgstr "Vise"
+
+msgid "keys.group.tabs"
+msgstr "Cartes"
+
+msgid "keys.group.other"
+msgstr "Altri"
+
+msgid "heading.sync"
+msgstr "Sincronisation"
+
+msgid "sync.status.running"
+msgstr "Sincronisation…"
+
+msgid "sync.status.last"
+msgstr "Sincronisat"
+
+msgid "sync.status.generation"
+msgstr "gen."
+
+msgid "sync.status.pending.types"
+msgstr "pendent:"
+
+msgid "sync.status.error"
+msgstr "Errore:"
+
+msgid "sync.status.recent.running"
+msgstr "sincronisation…"
+
+# Opens a dialog for choosing where to save the file.
+msgid "menu.save.as"
+msgstr "Gardar quam…"
+
+msgid "menu.trash.restore"
+msgstr "Restituer"
+
+msgid "menu.trash.empty"
+msgstr "Vacuar li Paper-corb"
+
+msgid "menu.sync.now"
+msgstr "Sincronisar"
+
+msgid "menu.sync.configure"
+msgstr "Configurar li sincronisation…"
+
+# Used in the View menu. Shows the sidebar with the bookshelf.
+msgid "menu.show.books"
+msgstr "Monstrar libres"
+
+msgid "menu.sitespec"
+msgstr "Parametres del site…"
+
+# Sidebar mode that shows bookshelf and the cover and index page of the current Gempub book.
+msgid "sidebar.gempub"
+msgstr "Libres"
+
+msgid "sidebar.gempub.cover"
+msgstr "Covritura"
+
+msgid "sidebar.gempub.index"
+msgstr "Contenete"
+
+# Sidebar tab listing the books saved locally.
+msgid "sidebar.gempub.shelf"
+msgstr "Libre-tabul"
+
+msgid "dlg.book.delete"
+msgstr "Remover"
+
+msgid "sidebar.empty.books"
+msgstr "Null libres"
+
+msgid "book.delete"
+msgstr "Remover li libre"
+
+msgid "dlg.book.removedownload"
+msgstr "Remover li file"
+
+# Downloads the book again from its source URL, replacing the local copy.
+msgid "book.redownload"
+msgstr "Re-descargar"
+
+msgid "sidebar.action.bookmarks.showtrash"
+msgstr "Paper-corb"
+
+# Label before the dropdown that selects the order of books, identities, or subscriptions.
+msgid "sidebar.action.sort"
+msgstr "Ordinar:"
+
+msgid "sidebar.action.books.title"
+msgstr "Titul"
+
+msgid "sidebar.action.books.author"
+msgstr "Autor"
+
+msgid "sidebar.action.subs.name"
+msgstr "Nómine"
+
+msgid "sidebar.action.ident.name"
+msgstr "Nómine"
+
+msgid "status.sync"
+msgstr "Sicronisation"
+
+msgid "ident.expired"
+msgstr "Expirat"
+
+msgid "heading.sitespec.site"
+msgstr "Site"
+
+msgid "dlg.book.newedition.update"
+msgstr "Actualisar"
+
+msgid "dlg.book.overwrite"
+msgstr "Superscrir"
+
+#, c-format
+msgid "dlg.subscribeall.add"
+msgid_plural "dlg.subscribeall.add.n"
+msgstr[0] "%sAbonnar"
+msgstr[1] "%sAbonnar %d feedes"
+
+# Short form of an auto-reload interval in minutes.
+#, c-format
+msgid "reload.short.minutes"
+msgstr "%dm"
+
+# Short form of an auto-reload interval in hours.
+#, c-format
+msgid "reload.short.hours"
+msgstr "%dh"
+
+# Short form of a daily auto-reload interval.
+msgid "reload.short.day"
+msgstr "1d"
+
+msgid "dlg.newident.keytype"
+msgstr "Signature:"
+
+msgid "dlg.newident.keytype.ed25519"
+msgstr "Ed25519"
+
+msgid "heading.prefs.typography"
+msgstr "Fondes"
+
+msgid "heading.prefs.toolbars"
+msgstr "Instrumentarium"
+
+msgid "justify.always"
+msgstr "Sempre"
+
+msgid "hint.relay.url"
+msgstr "wss://hostnomine/wisp/"
+
+msgid "prefs.relay.user"
+msgstr "Usator:"
+
+msgid "prefs.relay.password"
+msgstr "Contrasigne:"
+
+msgid "sync.status.off"
+msgstr "Ínactiv"
+
+msgid "dlg.feed.type.tinylog"
+msgstr "Tinylog"
+
+msgid "prefs.sync.server"
+msgstr "Servitor:"
+
+msgid "hint.sync.server"
+msgstr "gemini://sinc.skyjake.fi:1966"
+
+msgid "prefs.sync.identity.none"
+msgstr "Null"
+
+msgid "prefs.pageturn.none"
+msgstr "Null"
+
+msgid "prefs.pageturn.scroll"
+msgstr "Volute"
+
+msgid "prefs.pageturn.curl"
+msgstr "Flexer"
+
+msgid "prefs.pageview"
+msgstr "Paginat:"
+
+msgid "prefs.webvariant.desktop"
+msgstr "Computator"
+
+msgid "prefs.webvariant.tablet"
+msgstr "Tabulette"
+
+msgid "prefs.webvariant.phone"
+msgstr "Telefon"
+
+msgid "heading.prefs.sync"
+msgstr "Sincronisation"
+
+msgid "prefs.sync.identity"
+msgstr "Identité:"
+
+msgid "prefs.sync.interval"
+msgstr "Intervalle:"
+
+msgid "prefs.sync.interval.manual"
+msgstr "Nequande"
+
+msgid "prefs.sync.status"
+msgstr "Statu:"
