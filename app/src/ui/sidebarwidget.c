@@ -838,6 +838,40 @@ static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static size_t selectedItem_SidebarWidget_(const iSidebarWidget *d) {
+    for (size_t i = 0; i < numItems_ListWidget(d->list); i++) {
+        const iListItem *item = constItem_ListWidget(d->list, i);
+        if (item->flags.isSelected) {
+            return i;
+        }
+    }
+    return iInvalidPos;
+}
+
+static void showItem_SidebarWidget_(iSidebarWidget *d, size_t index) {
+    if (index == iInvalidPos) {
+        return;
+    }
+    if (isSlidingSheet_SidebarWidget_(d)) {
+        /* The sheet may still be sliding in, so scroll according to its final height. */
+        iWidget  *w      = as_Widget(d);
+        const int height = bottom_Rect(safeRect_Root(w->root)) -
+                           top_Rect(boundsWithoutVisualOffset_Widget(w));
+        if (height != w->rect.size.y) {
+            w->rect.size.y = height;
+            arrange_Widget(w);
+        }
+    }
+    scrollToItem_ListWidget(d->list, index, prefs_App()->uiAnimations ? 400 : 0);
+}
+
+static void showReaderFeedEntry_SidebarWidget_(iSidebarWidget *d) {
+    if (d->mode == feedEntries_SidebarMode && isVisible_Widget(d) &&
+        isReader_DocumentWidget(document_App())) {
+        showItem_SidebarWidget_(d, selectedItem_SidebarWidget_(d));
+    }
+}
+
 static iBool isListShown_SidebarWidget_(iSidebarWidget *d) {
     /* A book page is shown instead of the list. */
     return (flags_Widget(list_SidebarWidget_(d)) & hidden_WidgetFlag) == 0;
@@ -931,6 +965,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         const iBool wasChanged = setMode_SidebarWidget(d, mode);
         updateItems_SidebarWidget_(d);
+        showReaderFeedEntry_SidebarWidget_(d);
         if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
             (argLabel_Command(cmd, "toggle") &&
              (!isVisible_Widget(w) || (!wasChanged && !isShelfChanged)))) {
@@ -944,23 +979,11 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         scrollOffset_ListWidget(d->list, 0);
         if (argLabel_Command(cmd, "current")) {
-            /* Scrolled after the sidebar has been shown. */
-            for (size_t i = 0; i < numItems_ListWidget(d->list); i++) {
-                const iListItem *item = constItem_ListWidget(d->list, i);
-                if (item->flags.isSelected) {
-                    postCommand_Widget(d->list, "sideitem.show arg:%zu", i);
-                    break;
-                }
-            }
+            /* Scrolled after the sidebar has been shown and its items updated. */
+            postCommand_Widget(d->list, "sideitem.show current:1");
         }
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
-            if (isTerminal_Platform()) {
-                // if (wasShown) {
-                    // setFocus_Widget(as_Widget(list_SidebarWidget(d)));
-                // }
-                setCursorItem_ListWidget(list_SidebarWidget(d), 0);
-            }
         }
         refresh_Widget(findChild_Widget(w, "buttons"));
         return iTrue;
@@ -1057,6 +1080,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (isVisible_Widget(w)) {
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
+            showReaderFeedEntry_SidebarWidget_(d);
         }
         if (isDesktop_Platform() && prefs_App()->evenSplit) {
             resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
@@ -1422,6 +1446,8 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             setFlags_Widget(d->gempubTabs[i], selected_WidgetFlag, i == d->gempubPage);
         }
     }
+    /* The scroll range must match the new items before the position is clamped. */
+    updateVisible_ListWidget(list_SidebarWidget_(d));
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
     if (d->mode == documentOutline_SidebarMode) {
         scrollToOutlineChapter_SidebarWidget_(d);
@@ -1656,8 +1682,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->hasSpecialTabs   = iFalse;
     d->wasLandscape     = isLandscape_App();
     d->numUnreadEntries = 0;
-    d->feedsAgeTimer    = 0;
-    d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
+    d->feedsAgeTimer    = 0;    d->buttonFont       = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0]     = uiContent_FontId;
     d->itemFonts[1]     = uiContentBold_FontId;
     iZap(d->itemCharWidths);
@@ -1867,8 +1892,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
     removeTicker_App(applyPendingWidth_SidebarWidget_, d);
-    stopFeedsAgeTimer_SidebarWidget_(d);
-    iRelease(d->shelfOrder);
+    stopFeedsAgeTimer_SidebarWidget_(d);    iRelease(d->shelfOrder);
     deinit_String(&d->outlineChapter);
     deinit_String(&d->gempubCentered);
     deinit_String(&d->gempubUrl);
@@ -2068,6 +2092,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode != siteStructure_SidebarMode) {
                 scrollOffset_ListWidget(d->list, 0);
             }
+            showReaderFeedEntry_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "document.outline.changed")) {
             if (d->mode == documentOutline_SidebarMode && ~flags_Widget(w) & hidden_WidgetFlag &&
@@ -2305,12 +2330,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
             if (isCommand_Widget(w, ev, "sideitem.show")) {
-                const size_t pos = arg_Command(cmd);
-                /* Sliding sheet and the list both animating at the same time is confusing. */
-                scrollToItem_ListWidget(
-                    d->list,
-                    pos,
-                    !prefs_App()->uiAnimations || isSlidingSheet_SidebarWidget_(d) ? 0 : 400);
+                showItem_SidebarWidget_(d,
+                                        argLabel_Command(cmd, "current")
+                                            ? selectedItem_SidebarWidget_(d)
+                                            : (size_t) arg_Command(cmd));
                 return iTrue;
             }
         }
