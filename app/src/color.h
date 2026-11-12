@@ -116,6 +116,7 @@ enum iColorId {
     tmBannerTitle_ColorId,
     tmBannerIcon_ColorId,
     tmBannerSideTitle_ColorId,       /* derived from other theme colors */
+    tmBannerTitleDim_ColorId,        /* derived from other theme colors */
     tmInlineContentMetadata_ColorId,
     tmBackgroundAltText_ColorId,     /* derived from other theme colors */
     tmFrameAltText_ColorId,          /* derived from other theme colors */

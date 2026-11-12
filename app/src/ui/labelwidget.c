@@ -441,7 +441,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             if (isMenuItem) {
                 *bg = uiBackgroundUnfocusedSelection_ColorId;
             }
-            else if (isDocTab && isKeyRoot) {
+            else if (isDocTab) {
                 /* Looks like a part of the document. */
                 *bg = isBottomTabs ? tmBackground_ColorId : tmBannerBackground_ColorId;
                 isThemeBackground = iTrue;
@@ -449,7 +449,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             else {
                 *bg = uiBackgroundSelected_ColorId;
             }
-            if (!isKeyRoot) {
+            if (!isKeyRoot && !isThemeBackground) {
                 *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
                                                           : uiMarked_ColorId;
             }
@@ -461,7 +461,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
         if (isThemeBackground) {
-            *fg     = isParagraphColoredTab_() ? tmParagraph_ColorId : tmBannerTitle_ColorId;
+            *fg     = !isKeyRoot                ? tmBannerTitleDim_ColorId
+                      : isParagraphColoredTab_() ? tmParagraph_ColorId
+                                                 : tmBannerTitle_ColorId;
             *frame1 = *frame2 = tmBannerItemFrame_ColorId;
         }
         else if (isButton) {

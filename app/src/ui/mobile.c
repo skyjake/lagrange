@@ -220,7 +220,9 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         const size_t  numPanels    = childCount_Widget(detailStack);
         const iBool   isSideBySide = isSideBySideLayout_() && numPanels > 0;
         if (isFullSize) {
-            setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
+            setPos_Widget(mainDetailSplit,
+                          sub_I2(topLeft_Rect(safeRoot),
+                                 topLeft_Rect(rect_Root(mainDetailSplit->root))));
             setFixedSize_Widget(mainDetailSplit, safeRoot.size);
         }
         setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, isSideBySide);

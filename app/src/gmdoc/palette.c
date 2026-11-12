@@ -104,6 +104,8 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
               mix_Color(get_Color(tmBannerTitle_ColorId),
                         get_Color(tmBackground_ColorId),
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    set_Color(tmBannerTitleDim_ColorId,
+              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBannerBackground_ColorId), 0.5f));
     /* Banner colors. */
     if (theme == highContrast_GmDocumentTheme) {
         set_Color(tmBannerItemBackground_ColorId, get_Color(tmBannerBackground_ColorId));
