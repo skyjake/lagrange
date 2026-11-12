@@ -2380,7 +2380,7 @@ msgid "prefs.sync"
 msgstr "Sync enabled:"
 
 msgid "prefs.sync.info"
-msgstr "All data is encrypted before uploading and stored encrypted on the server. The server cannot decrypt it. Site-specific settings are synced but other settings are not."
+msgstr "All data is encrypted before uploading and stored encrypted on the server. The server cannot decrypt the data. Site-specific settings are synced but other settings are not."
 
 msgid "prefs.sync.server"
 msgstr "Server:"
