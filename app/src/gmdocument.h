@@ -379,6 +379,7 @@ const iGmRun *  findRun_GmDocument              (const iGmDocument *, iInt2 pos)
 iRangecc        findLoc_GmDocument              (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument         (const iGmDocument *, const char *loc);
 const iGmRun *  precedingRun_GmDocument         (const iGmDocument *, const iGmRun *run);
+const iGmRun *  followingRun_GmDocument         (const iGmDocument *, const iGmRun *run);
 const iGmRun *  findInputPromptRun_GmDocument   (const iGmDocument *, iGmLinkId linkId);
 iGmRunRange     findPreformattedRange_GmDocument(const iGmDocument *, const iGmRun *run);
 const char *    sourceLoc_GmDocument            (const iGmDocument *, const iGmRun *run); /* on the run's line */

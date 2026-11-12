@@ -331,9 +331,19 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 wideRect = visRect;
             }
             else {
+                iRangei lineSpan = { top_Rect(run->visBounds), bottom_Rect(run->visBounds) };
+                if (run->flags & decoration_GmRunFlag) {
+                    /* The icon may be shifted for optical centering. */
+                    const iGmRun *textRun = followingRun_GmDocument(doc, run);
+                    if (textRun && textRun->linkId == run->linkId &&
+                        ~textRun->flags & decoration_GmRunFlag) {
+                        lineSpan = (iRangei){ top_Rect(textRun->visBounds),
+                                              bottom_Rect(textRun->visBounds) };
+                    }
+                }
                 wideRect =
-                    (iRect){ init_I2(origin.x - pad, visPos.y),
-                             init_I2(d->docBounds.size.x + 2 * pad, height_Rect(run->visBounds)) };
+                    (iRect){ init_I2(origin.x - pad, origin.y + lineSpan.start),
+                             init_I2(d->docBounds.size.x + 2 * pad, size_Range(&lineSpan)) };
                 adjustEdges_Rect(&wideRect,
                                  run->flags & startOfLine_GmRunFlag ? -pad * 3 / 4 : 0, 0,
                                  run->flags & endOfLine_GmRunFlag ? pad * 3 / 4 : 0, 0);

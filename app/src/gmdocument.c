@@ -1428,6 +1428,14 @@ const iGmRun *precedingRun_GmDocument(const iGmDocument *d, const iGmRun *run) {
     return run;
 }
 
+const iGmRun *followingRun_GmDocument(const iGmDocument *d, const iGmRun *run) {
+    run++;
+    if (indexOf_Array(&d->layout, run) == iInvalidPos) {
+        return NULL;
+    }
+    return run;
+}
+
 const iGmRun *findInputPromptRun_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iGmRunRange range = runRange_GmDocument(d);
     for (const iGmRun *run = range.start; run != range.end; run++) {
