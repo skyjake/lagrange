@@ -542,7 +542,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     if (atBottom || isUnhiding || d->followsScroll || isMoved) {
         d->top = top;
     }
-    if (isFinished_Anim(&view->scrollY.pos)) {
+    if (isFinished_SmoothScroll(&view->scrollY)) { /* replaced content may still be settling */
         d->followsScroll = iFalse;
     }
     d->ownerWidth = width_Rect(bounds);
