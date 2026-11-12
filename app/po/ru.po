@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2026-11-06 05:20+0000\n"
+"PO-Revision-Date: 2026-11-13 00:13+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -3827,3 +3827,35 @@ msgstr "Позиции в книге:"
 
 msgid "dlg.userdata.newer"
 msgstr "Все (сохранять новые)"
+
+msgid "prefs.squarecorners"
+msgstr "Квадратные углы:"
+
+msgid "dlg.sync.untrusted.changed"
+msgstr ""
+"Сертификат сервера синхронизации не совпадает с принятым ранее. Такое "
+"бывает, когда сертификат сервера заменили, но это может также означать, что "
+"кто-то перехватывает соединение."
+
+msgid "dlg.sync.untrusted.check"
+msgstr ""
+"Доверяйте сертификату сервера только если его отпечаток совпадает с "
+"опубликованным администратором сервера."
+
+msgid "sync.status.recent"
+msgstr "Недавние:"
+
+msgid "sync.status.recent.running"
+msgstr "идет синхронизация…"
+
+msgid "sync.status.pending"
+msgstr "ожидают изменения"
+
+msgid "sync.status.pending.types"
+msgstr "ожидается:"
+
+msgid "prefs.trackpadspeed"
+msgstr "Скорость трекпада:"
+
+msgid "menu.copy.filepath"
+msgstr "Копировать путь файла"
