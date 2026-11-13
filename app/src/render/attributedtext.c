@@ -298,17 +298,14 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         if (ch == '\v') {
             finishRun_AttributedText_(d, &run, pos);
             /* An internal color escape. */
-            if (pos + 1 >= length) {
-                run.logical.start = length;
+            const int escLen = pos + 1 < length && logicalText[pos + 1] == '\v' ? 2 : 1;
+            if (pos + escLen >= length) {
+                run.logical.start = length; /* truncated */
                 break;
             }
             iChar esc = logicalText[++pos];
             int colorNum = none_ColorId; /* default color */
             if (esc == '\v') { /* Extended range. */
-                if (pos + 1 >= length) {
-                    run.logical.start = length;
-                    break;
-                }
                 esc = logicalText[++pos] + asciiExtended_ColorEscape;
                 colorNum = esc - asciiBase_ColorEscape;
             }
