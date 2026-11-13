@@ -427,7 +427,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *meta   = uiTextShortcut_ColorId;
     if (isDocTab && !isSel) {
         *bg = uiBackgroundFolder_ColorId;
-        *fg = *icon = uiTextExtraDim_ColorId;
+        *fg = *icon = uiTextInactiveTab_ColorId;
     }
     if (flags & disabled_WidgetFlag && isButton) {
         *icon = uiTextDisabled_ColorId;

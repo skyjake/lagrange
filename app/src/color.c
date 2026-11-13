@@ -360,6 +360,13 @@ void setThemePalette_Color(enum iColorTheme theme) {
                                     : theme == dark_ColorTheme      ? -0.04
                                     : theme == pureWhite_ColorTheme ? -0.04
                                                                     : -0.055));
+    if (isDark_ColorTheme(theme)) {
+        set_Color(uiTextInactiveTab_ColorId,
+                  mix_Color(get_Color(uiTextDim_ColorId), get_Color(uiBackgroundFolder_ColorId), 0.3f));
+    }
+    else {
+        copy_(uiTextInactiveTab_ColorId, uiTextDim_ColorId);
+    }
     set_Color(uiTextShortcut_ColorId, mix_Color(get_Color(uiTextShortcut_ColorId),
                                                 get_Color(uiBackground_ColorId),
                                                 0.4f));
