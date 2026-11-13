@@ -1,9 +1,15 @@
 # Release notes
 
 ## 2.0.3
+* Added Preferences > Appearance > Square corners.
+* Contents of sensitive input prompts are not backed up or remembered for restoring later.
 * Identities: Year 9999+ certificates are treated as never expiring.
+* Minor fine-tuning of document theme colors.
+* Fixed an occasional animation glitch when scrolling with a regular stepped mouse wheel.
 * macOS: Fixed the input field cursor being drawn in the wrong place when the insertion point is the start of a wrapped line.
-* Haiku: Keybindings will be reset when upgrading. The Alt key is now the primary modifier.
+* Linux: Enable per-pixel scroll events (already handled on macOS), e.g., for trackpads.
+* Linux: Potential workaround for a rare Wayland glitch where keys get repeated unexpectedly.
+* Haiku: Keybindings will be reset when upgrading. The Alt key is now the default primary modifier. The user's system-level modifier settings can override this.
 * Haiku: Alt+W closes a tab, not the window. Alt+Q quits the app.
 * Haiku: Default UI appearance is "Light".
 * Haiku: Attempt to keep the window hidden during startup, as on other platforms.
