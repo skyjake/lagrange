@@ -245,6 +245,21 @@ iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
 iDefineAudienceGetter(GmRequest, finished)
 
+static void sanitizeMeta_(iString *meta) {
+    /* Control characters like \v (color escape) have special meaning in UI text. */
+    char *dst = data_Block(&meta->chars);
+    for (const char *src = dst, *end = dst + size_Block(&meta->chars); src != end; src++) {
+        const unsigned char c = *src;
+        if (c == '\t') {
+            *dst++ = ' ';
+        }
+        else if (c >= 0x20 && c != 0x7f) {
+            *dst++ = c;
+        }
+    }
+    truncate_Block(&meta->chars, dst - (const char *) constData_Block(&meta->chars));
+}
+
 static uint16_t port_GmRequest_(iGmRequest *d) {
     return urlPort_String(&d->url);
 }
@@ -309,6 +324,7 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
                 code = atoi(capturedRange_RegExpMatch(&m, 1).start);
                 /* Leave just the <META>. */
                 set_String(&resp->meta, collect_String(captured_RegExpMatch(&m, 4)));
+                sanitizeMeta_(&resp->meta);
             }
             if (code == 0) {
                 clear_String(&resp->meta);
@@ -664,6 +680,7 @@ static int processSpartanData_GmRequest_(iGmRequest *d, const iBlock *data) {
                 d->state            = finished_GmRequestState;
                 notifyDone          = iTrue;
             }
+            sanitizeMeta_(&d->resp->meta);
             iRelease(metaPattern);
         }
     }
@@ -833,6 +850,7 @@ static void guppyRead_GmRequest_(iGmRequest *d, iDatagram *datagram) {
     iBool notifyDone   = iTrue;
     lock_Mutex(d->mtx);
     processResponse_Guppy(d->guppy, &d->state, &d->resp->statusCode, &notifyUpdate, &notifyDone);
+    sanitizeMeta_(&d->resp->meta);
     unlock_Mutex(d->mtx);
     if (notifyUpdate) {
         iNotifyAudience(d, updated, GmRequestUpdated);
