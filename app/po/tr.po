@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2026-11-10 05:05+0000\n"
+"PO-Revision-Date: 2026-11-13 16:23+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -3896,3 +3896,10 @@ msgstr "İzleme dörtgeni hızı:"
 
 msgid "menu.copy.filepath"
 msgstr "Dosya Yolunu Kopyala"
+
+# Replaces "Read All" when there are no unread entries. Should be fairly short.
+msgid "sidebar.action.feeds.refresh"
+msgstr "Yenile"
+
+msgid "prefs.squarecorners"
+msgstr "Kare köşeler:"
