@@ -244,6 +244,10 @@ iBool handleShelfCommand_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev, 
             updateItems_SidebarWidget_(d);
         }
     }
+    else if (equal_Command(cmd, "books.replaced")) {
+        /* The file URL stays the same, so the cover/index page must be reloaded. */
+        clear_String(&d->gempubUrl);
+    }
     else if (equalWidget_Command(cmd, w, "books.sort")) {
         d->shelfSort = iClamp(arg_Command(cmd), 0, author_BooksSortOrder);
         d->isShelfOrderValid = iFalse;

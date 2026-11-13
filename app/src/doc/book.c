@@ -784,6 +784,9 @@ void saveToShelf_DocumentBook(iDocumentBook *d, iBool overwrite) {
     if (isNewEdition) {
         resetPosition_Books(id);
     }
+    if (existingPath) {
+        notify_App("books.replaced");
+    }
     postCommand_App("books.changed");
     if (gempub || isDownload) {
         openFromShelf_DocumentBook(d, savedPath, existingPath != NULL);
