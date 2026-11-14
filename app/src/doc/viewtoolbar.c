@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 static const int      maxNameLength_ViewToolbar_ = 10;
 static const float    dimmedOpacity_ViewToolbar_ = 0.0f; /* fully hidden */
 static const uint32_t fadeSpan_ViewToolbar_      = 250;
+static const int      barsGap_ViewToolbar_       = 2; /* gap_UI units above the bottom bars */
 
 static const iLabelColors buttonColors_ViewToolbar_ = {
     .bg         = none_ColorId,
@@ -455,7 +456,7 @@ int bottomSpace_ViewToolbar(const iViewToolbar *d) {
     if (!d->widget || !isPortraitPhone_App() || !isAvailable_ViewToolbar_(d)) {
         return 0;
     }
-    return height_Widget(d->widget) + 3 * gap_UI;
+    return height_Widget(d->widget) + barsGap_ViewToolbar_ * gap_UI;
 }
 
 void arrange_ViewToolbar(iViewToolbar *d) {
@@ -493,7 +494,7 @@ void arrange_ViewToolbar(iViewToolbar *d) {
     int       titleY = 0; /* unscrolled, in scrolling mode */
     d->headerArea = zero_Rect();
     if (atBottom) {
-        top = bottomBarsEdge_ViewToolbar_(d, root) - 3 * gap_UI - height;
+        top = bottomBarsEdge_ViewToolbar_(d, root) - barsGap_ViewToolbar_ * gap_UI - height;
     }
     else if (paged) {
         /* Centered on the page header, below the bars and the safe area inset. The bars' resting
