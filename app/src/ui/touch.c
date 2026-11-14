@@ -725,9 +725,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             clear_Array(d->moms);
             pushPos_Touch_(touch, pos, nowTime);
             if (shouldPostEdgeMove_Touch_(touch)) {
-                const char *cmd = format_CStr("edgeswipe.moved arg:%d y:%d side:%d edge:%d id:%llu",
+                const char *cmd = format_CStr("edgeswipe.moved arg:%d starty:%d side:%d edge:%d id:%llu",
                                               (int) (x_F3(pos) - x_F3(touch->startPos)),
-                                              (int) y_F3(pos),
+                                              (int) y_F3(touch->startPos),
                                               touch->edge,
                                               touch->edge,
                                               touch->id);

@@ -212,7 +212,7 @@ iBool handleSidebarSwipe_DocumentSwipe(iDocumentSwipe *d, const char *cmd) {
     const int edge = argLabel_Command(cmd, "edge");
     if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
         edge &&
-        checkTabletVerticalPosition_DocumentSwipe_(d, argLabel_Command(cmd, "y"), edge)) {
+        checkTabletVerticalPosition_DocumentSwipe_(d, argLabel_Command(cmd, "starty"), edge)) {
         /* This is an actual swipe from the edge of the device, we should let the sidebars
            handle it. */
         if (edge == 1) {

@@ -2449,8 +2449,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isEdgeSwipable_SidebarWidget_(d) && hasAffinity_Touch(w) &&
-                 equal_Command(cmd, "edgeswipe.moved") && argLabel_Command(cmd, "edge") &&
-                 !isVisible_Widget(w)) {
+                 equal_Command(cmd, "edgeswipe.moved") && argLabel_Command(cmd, "edge")) {
+            /* The rest of the gesture belongs to the sidebar. */
+            if (isVisible_Widget(w)) {
+                return iTrue;
+            }
             const int side  = argLabel_Command(cmd, "side");
             const int delta = arg_Command(cmd);
             if (d->side == left_SidebarSide && side == 1 && delta > 0) {
