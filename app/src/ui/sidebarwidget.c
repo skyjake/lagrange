@@ -1489,14 +1489,7 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
             if (d->feedsMode == all_FeedsMode) {
                 if (numSubscribed_Feeds() == 0) {
                     addBlankMessage_SidebarWidget_(div, "${sidebar.empty.feeds}");
-                    addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
                 }
-                addBlankButton_SidebarWidget_(d,
-                                              div,
-                                              deviceType_App() != desktop_AppDeviceType
-                                                  ? reload_Icon " ${menu.feeds.refresh}"
-                                                  : "${menu.feeds.refresh}",
-                                              "feeds.refresh");
             }
             else {
                 addBlankMessage_SidebarWidget_(div, "${sidebar.empty.unread}");
