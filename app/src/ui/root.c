@@ -1845,7 +1845,7 @@ void updateMetrics_Root(iRoot *d) {
             height += gap_UI / 4; /* see addTabCloseButton_Widget() */
         }
         if (isPortraitPhone_App()) {
-            height = height * 5 / 4; /* bigger tap targets */
+            height = height * 6 / 5; /* bigger tap targets */
         }
         setFlags_Widget(d->bars.tabButtons, arrangeHeight_WidgetFlag, iFalse);
         setFlags_Widget(d->bars.tabButtons, resizeHeightOfChildren_WidgetFlag, iTrue);
