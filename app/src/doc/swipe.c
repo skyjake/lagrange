@@ -60,6 +60,11 @@ static iBool checkTabletVerticalPosition_DocumentSwipe_(const iDocumentSwipe *d,
     return prefs_App()->bottomNavBar ? swipeY > span.start : swipeY < span.end;
 }
 
+/* Sensitivity of trackpad/wheel swipes on desktop. */
+static const float wheelSwipeGain_DocumentSwipe_           = 1.5f;  /* view movement per wheel pixel */
+static const float wheelSwipeMinRatio_DocumentSwipe_       = 2.0f;  /* horizontal vs. vertical to begin */
+static const float wheelSwipeCommitFraction_DocumentSwipe_ = 0.25f; /* of view width to navigate */
+
 iLocalDef int wheelSide_DocumentSwipe_(const iDocumentSwipe *d) {
     return (d->flags & rightWheel_DocumentSwipeFlag  ? 2
             : d->flags & leftWheel_DocumentSwipeFlag ? 1
@@ -369,7 +374,12 @@ void finishWheelSwipe_DocumentSwipe(iDocumentSwipe *d, iBool aborted) {
     if (d->wheelState == direct_WheelSwipeState) {
         const int side = wheelSide_DocumentSwipe_(d);
         int abort = aborted || ((side == 1 && d->speed < 0) || (side == 2 && d->speed > 0));
-        if (iAbs(d->wheelDistance) < 4 * gap_UI) {
+        const int minDistance =
+            isMobile_Platform()
+                ? 4 * gap_UI
+                : iMax(4 * gap_UI,
+                       width_Widget(d->owner) * wheelSwipeCommitFraction_DocumentSwipe_);
+        if (iAbs(d->wheelDistance) < minDistance) {
             //printf("ABORTING: dist:%d speed:%f\n", d->wheelDistance, d->speed);
             abort = 1;
         }
@@ -397,8 +407,12 @@ iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEven
         case none_WheelSwipeState:
             /* A new swipe starts. */
             if (!isInertia_MouseWheelEvent(ev) && !isScrollFinished_MouseWheelEvent(ev)) {
+                if (!isMobile_Platform() &&
+                    iAbs(ev->x) < iAbs(ev->y) * wheelSwipeMinRatio_DocumentSwipe_) {
+                    break; /* mostly vertical scrolling */
+                }
                 int side = ev->x > 0 ? 1 : 2;
-                d->wheelDistance = ev->x * 2;
+                d->wheelDistance = ev->x * (isMobile_Platform() ? 2 : wheelSwipeGain_DocumentSwipe_);
                 d->flags &= ~eitherWheel_DocumentSwipeFlag;
                 d->flags |= (side == 1 ? leftWheel_DocumentSwipeFlag
                                        : rightWheel_DocumentSwipeFlag);
@@ -414,7 +428,7 @@ iBool handleWheelSwipe_DocumentSwipe(iDocumentSwipe *d, const SDL_MouseWheelEven
                 finishWheelSwipe_DocumentSwipe(d, iFalse);
             }
             else {
-                int step = ev->x * (isMobile_Platform() ? 1 : 2);
+                int step = ev->x * (isMobile_Platform() ? 1 : wheelSwipeGain_DocumentSwipe_);
                 d->wheelDistance += step;
                 /* Remember the maximum speed. */
                 if (d->speed < 0 && step < 0) {
