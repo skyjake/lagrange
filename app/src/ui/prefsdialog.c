@@ -798,8 +798,9 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { format_CStr("panel iconcolor:%d text:" info_Icon " ${heading.prefs.support}",
                           blue_ColorId), 0, 0, (const void *) supportPanelItems },
+            { "padding" },
             { NULL }
-        }, 7);
+        }, 8);
 #if defined (LAGRANGE_USE_GAMEPAD)
         iBool haveGamepad = iFalse;
         if (isAvailable_Gamepad()) {
