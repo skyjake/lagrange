@@ -6,6 +6,7 @@
 * Feeds: "Read All" buttons switches to "Refresh" when there are no unread entries.
 * Mobile-friendly appearance for sidebar action buttons.
 * Inline audio player frame was too round.
+* Fixed: Phone sidebar mid-height was inconsistent (varied by device).
 * Fixed: Centering the Release Notes popup.
 * Fixed: Feeds list scrolls to the current entry.
 * Fixed: Books sidebar shows stale content after updating a book.

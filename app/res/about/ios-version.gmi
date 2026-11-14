@@ -9,6 +9,7 @@
 * Mobile-friendly appearance for sidebar action buttons.
 * Inline audio player frame was too round.
 * Tuning flick gesture momentum.
+* Fixed: Phone sidebar mid-height was inconsistent (varied by device).
 * Fixed: Centering the Release Notes popup.
 * Fixed: Settings panel appears empty in split view.
 * Fixed: Settings buttons have a clipped background.
