@@ -993,7 +993,7 @@ iWidget *makePreferences_Widget(void) {
         }
         addDialogPadding_Widget(headings, values);
         addDialogToggle_Widget(headings, values, "${prefs.thickscroll}", "prefs.thickscroll");
-        if (!isTerminal_Platform()) {
+        if (isDesktop_Platform() && !isTerminal_Platform()) {
             addDialogToggle_Widget(headings, values, "${prefs.squarecorners}", "prefs.squarecorners");
         }
     }

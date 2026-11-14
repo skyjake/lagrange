@@ -56,5 +56,5 @@ void setScale_Metrics(float scale) {
 }
 
 void updateRadius_Metrics(void) {
-    radius_UI = prefs_App()->squareCorners ? 0 : isMobile_Platform() ? 2 * gap_UI : gap_UI;
+    radius_UI = isMobile_Platform() ? 2 * gap_UI : prefs_App()->squareCorners ? 0 : gap_UI;
 }
