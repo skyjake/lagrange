@@ -3,10 +3,19 @@
 ## 2.0.3
 * Added Preferences > Appearance > Square corners.
 * Contents of sensitive input prompts are not backed up or remembered for restoring later.
-* Identities: Year 9999+ certificates are treated as never expiring.
+* Identity files (certificates) are forced to owner-only file permissions (`600`).
+* Identities: Certificates expiring in year 9999+ are treated as never expiring.
+* Improved text contrast of inactive tab bar buttons.
+* Feeds: "Read All" buttons switches to "Refresh" when there are no unread entries.
 * Minor fine-tuning of document theme colors.
-* Fixed an occasional animation glitch when scrolling with a regular stepped mouse wheel.
+* Fixed: Feeds list scrolls to the current entry.
+* Fixed: Books sidebar shows stale content after updating a book.
+* Fixed: Occasional glitch when scrolling with a regular stepped mouse wheel.
+* Fixed: Active tab button in the inactive split has the wrong color.
+* Fixed: Link background misaligned behind the link icon.
+* Fixed: Potential crash in text renderer due to unexpected C0 control characters.
 * macOS: Fixed the input field cursor being drawn in the wrong place when the insertion point is the start of a wrapped line.
+* Linux: Improved system dark mode detection.
 * Linux: Enable per-pixel scroll events (already handled on macOS), e.g., for trackpads.
 * Linux: Potential workaround for a rare Wayland glitch where keys get repeated unexpectedly.
 * Haiku: Keybindings will be reset when upgrading. The Alt key is now the default primary modifier. The user's system-level modifier settings can override this.

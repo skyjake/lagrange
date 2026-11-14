@@ -1,7 +1,23 @@
 # Release notes (iOS)
 
 ## 2.0.3
-* Identities: Year 9999+ certificates are treated as never expiring.
+* Contents of sensitive input prompts are not backed up or remembered for restoring later.
+* Identities: Certificates expiring in year 9999+ are treated as never expiring.
+* Improved text contrast of inactive tab bar buttons.
+* Feeds: "Read All" buttons switches to "Refresh" when there are no unread entries.
+* Minor fine-tuning of document theme colors.
+* Mobile-friendly appearance for sidebar action buttons.
+* Inline audio player frame was too round.
+* Tuning flick gesture momentum.
+* Fixed: Centering the Release Notes popup.
+* Fixed: Settings panel appears empty in split view.
+* Fixed: Settings buttons have a clipped background.
+* Fixed: Active tab button in the inactive split has the wrong color.
+* Fixed: Swipe from the edge triggering both navigation and the sidebar simultanously.
+* Fixed: Feeds list scrolls to the current entry.
+* Fixed: Books sidebar shows stale content after updating a book.
+* Fixed: Link background misaligned behind the link icon.
+* Fixed: Potential crash in text renderer due to unexpected C0 control characters.
 
 ## 2.0.1
 * Fixed: Going to previous page on a book cover should just show nav/tab bars.
