@@ -138,6 +138,7 @@ static const iString *readFile_(const iString *path) {
 static iBool writeTextFile_(const iString *path, const iString *content) {
     iFile *f = iClob(new_File(path));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        setOwnerOnlyAccess_Core(cstr_String(path));
         write_File(f, &content->chars);
         close_File(f);
         return iTrue;
@@ -438,10 +439,15 @@ static void loadIdentityCertsAndDiscardInvalid_GmCerts_(iGmCerts *d) {
     if (!fileExists_FileInfo(idDir)) {
         makeDirs_Path(idDir);
     }
+    setOwnerOnlyAccess_Core(cstr_String(idDir));
     iForEach(DirFileInfo, i, iClob(directoryContents_FileInfo(iClob(new_FileInfo(idDir))))) {
         const iFileInfo *entry = i.value;
-        if (endsWithCase_String(path_FileInfo(entry), ".crt")) {
-            loadIdentityFromCertificate_GmCerts_(d, path_FileInfo(entry));
+        const iString   *path  = path_FileInfo(entry);
+        if (endsWithCase_String(path, ".crt") || endsWithCase_String(path, ".key")) {
+            setOwnerOnlyAccess_Core(cstr_String(path));
+        }
+        if (endsWithCase_String(path, ".crt")) {
+            loadIdentityFromCertificate_GmCerts_(d, path);
         }
     }
     /* Remove certificates whose crt/key files were missing. */

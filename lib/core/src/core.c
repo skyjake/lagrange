@@ -39,6 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <fcntl.h>
 #   include <unistd.h>
 #endif
+#if !defined (iPlatformMsys) && !defined (iPlatformWindows)
+#   include <sys/stat.h>
+#endif
 
 iDeclareType(Core)
 
@@ -174,5 +177,18 @@ void commitFile_Core(const char *path, const char *tempPathWithNewContents) {
         }
     }
     free(target);
+#endif
+}
+
+void setOwnerOnlyAccess_Core(const char *path) {
+#if defined (iPlatformMsys) || defined (iPlatformWindows)
+    iUnused(path);
+#else
+    struct stat st;
+    if (stat(path, &st) == 0 && (st.st_mode & (S_IRWXG | S_IRWXO))) {
+        if (chmod(path, st.st_mode & ~(S_IRWXG | S_IRWXO)) != 0) {
+            fprintf(stderr, "[Core] failed to chmod \"%s\": %s\n", path, strerror(errno));
+        }
+    }
 #endif
 }

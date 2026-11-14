@@ -34,6 +34,7 @@ void            setDataDir_Core (const char *path); /* base directory of "local:
 const iString * dataDir_Core    (void); /* absolute; empty if not set */
 
 void    commitFile_Core (const char *path, const char *tempPathWithNewContents); /* latter will be removed */
+void    setOwnerOnlyAccess_Core (const char *path); /* no access for group/others */
 
 /* Build configuration of the application, e.g., LAGRANGE_ENABLE_* defines. */
 iDeclareType(BuildFlag)
