@@ -792,6 +792,26 @@ static void updateSlidingSheetHeight_SidebarWidget_(iSidebarWidget *sidebar, iRo
     //           newSize);
 }
 
+static void updateMidSheetTop_SidebarWidget_(iSidebarWidget *d) {
+    /* In the middle position, the top of the list is at the vertical middle of the screen.
+       The header above the list (title and mode buttons) is measured from the actual
+       arrangement, so the result follows the fonts and paddings currently in use. */
+    iWidget    *w        = as_Widget(d);
+    const iRect rootRect = rect_Root(w->root);
+    const iRect safeRect = safeRect_Root(w->root);
+    int         top;
+    if (isHandheld_Platform()) {
+        top = top_Rect(rootRect) + height_Rect(rootRect) / 4;
+    }
+    else {
+        arrange_Widget(w);
+        const int header =
+            top_Rect(innerBounds_Widget(as_Widget(d->list))) - top_Rect(bounds_Widget(w));
+        top = mid_Rect(rootRect).y - header;
+    }
+    d->midSheetTop = iClamp(top, top_Rect(safeRect), bottom_Rect(safeRect) - 1);
+}
+
 static void setSlidingSheetPos_SidebarWidget_(iSidebarWidget *d, enum iSlidingSheetPos slide) {
     iWidget    *w        = as_Widget(d);
     const int   pos      = w->rect.pos.y;
@@ -807,8 +827,8 @@ static void setSlidingSheetPos_SidebarWidget_(iSidebarWidget *d, enum iSlidingSh
         postCommand_Widget(w, "sidebar.toggle");
     }
     else {
-        w->rect.size.y = d->midHeight;
-        w->rect.pos.y  = height_Rect(safeRect) - w->rect.size.y;
+        w->rect.pos.y  = d->midSheetTop;
+        w->rect.size.y = bottom_Rect(safeRect) - w->rect.pos.y;
         setVisualOffset_Widget(w, pos - w->rect.pos.y, 0, 0);
         setVisualOffset_Widget(w, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
         setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
@@ -821,7 +841,7 @@ static void setSlidingSheetPos_SidebarWidget_(iSidebarWidget *d, enum iSlidingSh
 static iRangei SlidingSheetMiddleRegion_SidebarWidget_(const iSidebarWidget *d) {
     const iWidget *w          = constAs_Widget(d);
     const iRect    safeRect   = safeRect_Root(w->root);
-    const int      midY       = bottom_Rect(safeRect) - d->midHeight;
+    const int      midY       = d->midSheetTop;
     const int      topHalf    = (top_Rect(safeRect) + midY) / 2;
     const int      bottomHalf = (bottom_Rect(safeRect) + midY * 2) / 3;
     return (iRangei) { topHalf, bottomHalf };
@@ -1051,7 +1071,10 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             setFlags_Widget(w, horizontalOffset_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
             if (!isHiding) {
                 invalidate_ListWidget(d->list);
-                w->rect.pos.y = height_Rect(safeRect_Root(w->root)) - d->midHeight;
+                /* Insets and fonts may have changed since the last time. */
+                updateMidSheetTop_SidebarWidget_(d);
+                w->rect.pos.y  = d->midSheetTop;
+                w->rect.size.y = bottom_Rect(safeRect_Root(w->root)) - w->rect.pos.y;
                 setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 0, 0);
                 setVisualOffset_Widget(w, 0, 300, animFlags);
                 // animateSlidingSheetHeight_SidebarWidget_(d);
@@ -1676,7 +1699,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->subSort          = name_SubscriptionsSortOrder;
     d->shelfOrder       = new_StringArray();
     d->isShelfOrderValid = iFalse;
-    d->midHeight        = 0;
+    d->midSheetTop      = 0;
     d->isEditing        = iFalse;
     d->isShowingUrls    = iFalse;
     d->hasSpecialTabs   = iFalse;
@@ -1994,8 +2017,11 @@ void setOpenFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *openFolders)
     }
 }
 
-void setMidHeight_SidebarWidget(iSidebarWidget *d, int midHeight) {
-    d->midHeight = midHeight;
+void arrangeSlidingSheet_SidebarWidget(iSidebarWidget *d) {
+    iWidget *w = as_Widget(d);
+    updateMidSheetTop_SidebarWidget_(d);
+    setFixedSize_Widget(w, init_I2(-1, bottom_Rect(safeRect_Root(w->root)) - d->midSheetTop));
+    setPos_Widget(w, init_I2(0, d->midSheetTop));
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {

@@ -63,7 +63,7 @@ iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebar
 void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
 iBool               setButtonFont_SidebarWidget (iSidebarWidget *, int font);
 void                setOpenFolders_SidebarWidget    (iSidebarWidget *, const iIntSet *openFolders);
-void                setMidHeight_SidebarWidget  (iSidebarWidget *, int midHeight); /* phone layout */
+void                arrangeSlidingSheet_SidebarWidget (iSidebarWidget *); /* portrait phone layout */
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);

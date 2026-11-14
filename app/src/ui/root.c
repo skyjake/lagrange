@@ -804,13 +804,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             }
             else {
                 setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
-                int midHeight = height_Widget(root) * (isHandheld_Platform() ? 0.75f : 0.5f);
-                if (isAndroid_Platform()) {
-                    midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
-                }
-                setMidHeight_SidebarWidget(sidebar, midHeight);
-                setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
-                setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
+                arrangeSlidingSheet_SidebarWidget(sidebar);
             }
             postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
             return iFalse;

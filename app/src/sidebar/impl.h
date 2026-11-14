@@ -95,7 +95,7 @@ struct Impl_SidebarWidget {
     size_t            contextIndex;  /* index of list item accessed in the context menu */
 
     /* Metrics. */
-    int               midHeight;         /* on portrait phone, the height for the middle state */
+    int               midSheetTop;       /* on portrait phone, top edge of the sheet in the middle state */
     iBool             wasLandscape;      /* orientation at the time of the previous resize */
     float             widthAsGaps;
     float             pendingWidth;      /* applied once per frame while resizing; <0 if none */
