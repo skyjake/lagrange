@@ -723,7 +723,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iTouch *touch = find_TouchState_(d, fing->fingerID);
         if (touch && touch->edge) {
             clear_Array(d->moms);
-            pushPos_Touch_(touch, pos, nowTime);
+            pushPos_Touch_(touch, pos, fingTime);
             if (shouldPostEdgeMove_Touch_(touch)) {
                 const char *cmd = format_CStr("edgeswipe.moved arg:%d starty:%d side:%d edge:%d id:%llu",
                                               (int) (x_F3(pos) - x_F3(touch->startPos)),
@@ -779,7 +779,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 return iTrue;
             }
             /* Update touch position. */
-            pushPos_Touch_(touch, pos, nowTime);
+            pushPos_Touch_(touch, pos, fingTime);
             if (touch->pinchId) {
                 pinchMotion_TouchState_(d, touch->pinchId);
                 return iTrue;
@@ -993,7 +993,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 }
 #endif
                 //printf("elap:%ums vel:%f\n", elapsed, length_F3(velocity));
-                pushPos_Touch_(touch, pos, nowTime);
+                pushPos_Touch_(touch, pos, fingTime);
                 /* If short and didn't move far, do a tap (left click). */
                 if (duration < longPressSpan_Touch_() && isStationary_Touch_(touch)) {
                     dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
