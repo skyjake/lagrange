@@ -1974,7 +1974,7 @@ static const iArray *makeMobilePageMenuItems_(iWidget *menu) {
         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
         { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
         { "___" },
-        { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+        { bookmarks_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
         { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
         { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" } },
     17);
@@ -2630,7 +2630,7 @@ void createUserInterface_Root(iRoot *d) {
            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
            { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
            { "---" },
-           { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+           { bookmarks_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
            { star_Icon " ${menu.page.subscribeall}", 0, 0, "feeds.subscribeall confirm:1" },
            { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
         }, 9);
