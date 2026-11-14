@@ -697,7 +697,6 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
 }
 
 void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpenFlags) {
-    iInt2 windowCoord         = topRight_Rect(windowAnchorRect);
     const iBool postCommands  = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
     /* On touch devices, the menu is focused only for navigating with a gamepad. */
     const iBool isMenuFocused = ((menuOpenFlags & setFocus_MenuOpenFlags) ||
@@ -707,6 +706,8 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     const iBool isPopupForced = (menuOpenFlags & forcePopup_MenuOpenFlags) != 0;
     const iBool isSubmenu     = (menuOpenFlags & submenu_MenuOpenFlags) != 0;
     const iBool isFromMenuBar = (menuOpenFlags & fromMenuBar_MenuOpenFlags) != 0;
+    iInt2 windowCoord = isSubmenu ? topRight_Rect(windowAnchorRect)
+                                  : topLeft_Rect(windowAnchorRect);
     /* Some menus may require updating the items dynamically. */
     if (d->updateMenuItems) {
         const iArray *newItems = d->updateMenuItems(d);
@@ -876,6 +877,20 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     if (!isSlidePanel) {
         /* LAYOUT BUG: Height of wrapped menu items is incorrect with a single arrange! */
         arrange_Widget(d);
+    }
+    if (focusedItem && !isPhone) {
+        /* Prefer placing the menu below or above the anchor over overflowing the window. */
+        const int height = height_Widget(d);
+        if (windowCoord.y < top_Rect(rootRect) || windowCoord.y + height > bottom_Rect(rootRect)) {
+            if (bottom_Rect(windowAnchorRect) + height <= bottom_Rect(rootRect)) {
+                windowCoord.y = bottom_Rect(windowAnchorRect);
+                allowOverflow = iFalse;
+            }
+            else if (top_Rect(windowAnchorRect) - height >= top_Rect(rootRect)) {
+                windowCoord.y = top_Rect(windowAnchorRect) - height;
+                allowOverflow = iFalse;
+            }
+        }
     }
     if (isFromMenuBar && windowCoord.y + height_Widget(d) > bottom_Rect(rootRect)) {
         /* Don't overlap the menu bar. */

@@ -577,11 +577,13 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             if (isMenuBar) {
                 setFlags_Widget(button, selected_WidgetFlag, iTrue);
             }
-            openMenuFlags_Widget(
+            const iInt2 coord = coord_Command(cmd);
+            openMenuAnchorFlags_Widget(
                 menu,
-                hasLabel_Command(cmd, "coord") ? coord_Command(cmd)
-                : isPlacedUnder                ? bottomLeft_Rect(bounds_Widget(button))
-                                               : topLeft_Rect(bounds_Widget(button)),
+                hasLabel_Command(cmd, "coord") ? initCorners_Rect(coord, coord)
+                : isPlacedUnder ? initCorners_Rect(bottomLeft_Rect(bounds_Widget(button)),
+                                                   bottomLeft_Rect(bounds_Widget(button)))
+                                : bounds_Widget(button),
                 postCommands_MenuOpenFlags |
                     (isPointerHidden_Gamepad(gamepad_App()) ? setFocus_MenuOpenFlags : 0) |
                     (isMenuBar ? fromMenuBar_MenuOpenFlags : 0) |
