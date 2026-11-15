@@ -1490,6 +1490,10 @@ void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
                 if (numSubscribed_Feeds() == 0) {
                     addBlankMessage_SidebarWidget_(div, "${sidebar.empty.feeds}");
                 }
+                else if (childCount_Widget(d->actions) == 0) {
+                    addBlankButton_SidebarWidget_(
+                        d, div, reload_Icon " ${menu.feeds.refresh}", "feeds.refresh");
+                }
             }
             else {
                 addBlankMessage_SidebarWidget_(div, "${sidebar.empty.unread}");
