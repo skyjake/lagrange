@@ -9,6 +9,8 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/lgrsyncd --dir %h/.local/share/lgrsyncd --port 1966 --host sync.example.com
+# Limits glibc's per-thread memory pools, which otherwise keep a lot of memory reserved.
+Environment=MALLOC_ARENA_MAX=2
 Restart=always
 SyslogIdentifier=lgrsyncd
 
