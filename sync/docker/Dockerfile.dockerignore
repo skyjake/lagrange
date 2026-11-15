@@ -1,0 +1,7 @@
+*
+!sync/CMakeLists.txt
+!sync/src/
+!sync/docker/docker-entrypoint.sh
+!lib/the_Foundation/
+lib/the_Foundation/.git
+lib/the_Foundation/tests/

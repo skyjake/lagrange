@@ -654,3 +654,59 @@ lgrsyncd \
 ```
 
 On Linux, the server can be run as a systemd user service. See "sync/lgrsyncd.service.example" for a template.
+
+## 8.2 Running in Docker
+
+A Docker image is available at "ghcr.io/skyjake/lgrsyncd" for x86_64 and arm64. The tag "latest" points to the newest release, and version tags like "1", "1.0", and "1.0.1" are also available.
+
+```Running the Docker image
+docker run -d --name lgrsyncd --restart unless-stopped \
+    -v lgrsyncd:/data -p 1966:1966 ghcr.io/skyjake/lgrsyncd \
+    --host sync.example.com
+```
+
+The `LGRSYNC_ALLOW` environment variable can be set to one or more client certificate fingerprints (separated by spaces or commas), to only allow those clients. Alternatively, mount an allow list file into the container and append an `--allow` option.
+
+The container stores everything in the "/data" volume, including the generated server certificate. Keep the volume when upgrading the image so that clients continue to trust the server. The server runs as UID 1965; when using a host directory instead of a named volume for "/data", make sure it is writable by that user.
+
+The `--dir` and `--port` options are set automatically by the container. Custom options can be given after `--host`.
+
+### 8.2.1 Using an existing certificate
+
+To use an existing certificate instead of a generated one, mount it into the container and give its location with `--cert` and `--key` (like below). The key must be readable by UID 1965.
+
+```Using an existing certificate
+docker run -d --name lgrsyncd --restart unless-stopped \
+    -v lgrsyncd:/data -v /etc/lgrsyncd:/certs:ro -p 1966:1966 \
+    ghcr.io/skyjake/lgrsyncd \
+    --cert /certs/server.crt --key /certs/server.key
+```
+
+### 8.2.2 Using Docker Compose
+
+Use the following "compose.yml" (remember to change the name in the `--host` option) and run `docker compose up -d`:
+
+```compose.yml
+services:
+  lgrsyncd:
+    image: ghcr.io/skyjake/lgrsyncd:1
+    command: --host sync.example.com
+    # Using an existing certificate:
+    # command: --cert /certs/server.crt --key /certs/server.key
+    environment:
+      LGRSYNC_ALLOW: ""
+    ports:
+      - "1966:1966"
+    volumes:
+      - lgrsyncd:/data
+      # - /etc/lgrsyncd:/certs:ro
+    restart: unless-stopped
+
+volumes:
+  lgrsyncd:
+```
+
+Upgrading:
+```
+docker compose pull && docker compose up -d
+```
