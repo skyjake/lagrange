@@ -39,6 +39,35 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="2.0.3" date="2026-11-15">
+            <description>
+                <ul>
+                    <li>Added Preferences &gt; Appearance &gt; Square corners.</li>
+                    <li>Contents of sensitive input prompts are not backed up or remembered for restoring later.</li>
+                    <li>Identity files (certificates) are forced to owner-only file permissions (`600`).</li>
+                    <li>Identities: Certificates expiring in year 9999+ are treated as never expiring.</li>
+                    <li>Improved text contrast of inactive tab bar buttons.</li>
+                    <li>Feeds: "Read All" buttons switches to "Refresh" when there are no unread entries.</li>
+                    <li>Minor fine-tuning of document theme colors.</li>
+                    <li>Fixed: Feeds list scrolls to the current entry.</li>
+                    <li>Fixed: Books sidebar shows stale content after updating a book.</li>
+                    <li>Fixed: Occasional glitch when scrolling with a regular stepped mouse wheel.</li>
+                    <li>Fixed: Active tab button in the inactive split has the wrong color.</li>
+                    <li>Fixed: Link background misaligned behind the link icon.</li>
+                    <li>Fixed: Potential crash in text renderer due to unexpected C0 control characters.</li>
+                    <li>Improved system dark mode detection.</li>
+                    <li>Enable per-pixel scroll events (already handled on macOS), e.g., for trackpads.</li>
+                    <li>Potential workaround for a rare Wayland glitch where keys get repeated unexpectedly.</li>
+                    <li>Haiku: Keybindings will be reset when upgrading. The Alt key is now the default primary modifier. The user's system-level modifier settings can override this.</li>
+                    <li>Haiku: Alt+W closes a tab, not the window. Alt+Q quits the app.</li>
+                    <li>Haiku: Default UI appearance is "Light".</li>
+                    <li>Haiku: Attempt to keep the window hidden during startup, as on other platforms.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v2.0.3</url>
+        </release>
         <release version="2.0.2" date="2026-11-09">
             <description>
                 <ul>
@@ -207,23 +236,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.7</url>
-        </release>
-        <release version="1.20.6" date="2026-06-06">
-            <description>
-                <ul>
-                    <li>Improve legibility of text after a wrapped paragraph by adding a small first-line indent if the next text line follows immediately.</li>
-                    <li>Use a smaller font for plain text documents to fit more content in the window, matching the font used in preformatted blocks.</li>
-                    <li>Fixed: Prevent overlapping identity activations by removing any existing ones before activating a new identity on a given URL. (To conveniently switch between previously used identities, use the menu that appears when clicking the navbar Identity button. That preserves the current activation scope.)</li>
-                    <li>Gopher: Detect an unexpected binary response to a type `0` selector.</li>
-                    <li>Gopher: Detect when the response is a gophermap even if we requested type `0`.</li>
-                    <li>Gopher: Plain text now respects the "expand to long lines" option, avoiding wrapping when there is room in the window.</li>
-                    <li>Gopher: Fixed handling the `.\r\n` terminator in text responses.</li>
-                    <li>Updated UI translations.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.6</url>
         </release>
     </releases>
 </component>
