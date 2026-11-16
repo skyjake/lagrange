@@ -34,4 +34,3 @@ USER lgrsync
 VOLUME /data
 EXPOSE 1966
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["--host", "localhost"]
