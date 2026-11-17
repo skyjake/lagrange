@@ -247,7 +247,7 @@ static void hidePointer_Gamepad_(iGamepad *d, iBool completely) {
 
 static iBool sdlInit_(void) {
     if (!wasInited_) {
-        if (SDL_Init(SDL_INIT_GAMEPAD)) {
+        if (!SDL_Init(SDL_INIT_GAMEPAD)) {
             fprintf(stderr, "[Gamepad] failed to initialize: %s\n", SDL_GetError());
             return iFalse;
         }
@@ -691,7 +691,7 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
 }
 
 void draw_Gamepad(const iGamepad *d) {
-    if (!isConnected_Gamepad(d)) {
+    if (!isConnected_Gamepad(d) || !d->pointerTexture) {
         return;
     }
     /* Draw the pointer. */
