@@ -652,7 +652,8 @@ static iBool shouldPostEdgeMove_Touch_(const iTouch *d) {
 
 iBool processEvent_Touch(const SDL_Event *ev) {
     /* We only handle finger events here. */
-    if (ev->type != SDL_EVENT_FINGER_DOWN && ev->type != SDL_EVENT_FINGER_MOTION && ev->type != SDL_EVENT_FINGER_UP) {
+    if (ev->type != SDL_EVENT_FINGER_DOWN && ev->type != SDL_EVENT_FINGER_MOTION &&
+        ev->type != SDL_EVENT_FINGER_UP && ev->type != SDL_EVENT_FINGER_CANCELED) {
         return iFalse;
     }
     iTouchState *d = touchState_();
@@ -1029,6 +1030,31 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     setHover_Widget(NULL);
                 }
             }
+            remove_ArrayIterator(&i);
+        }
+    }
+    else if (ev->type == SDL_EVENT_FINGER_CANCELED) {
+        /* System took over the touch (e.g., the Android Back gesture).
+           We must undo all the corresponding state. */
+        iForEach(Array, i, d->touches) {
+            iTouch *touch = i.value;
+            if (touch->id != fing->fingerID) {
+                continue;
+            }
+            if (touch->pinchId) {
+                endPinch_TouchState_(d, touch->pinchId);
+                break;
+            }
+            if (touch->didPostEdgeMove) {
+                notifyf_App("edgeswipe.ended abort:1 side:%d edge:%d id:%llu",
+                            touch->edge, touch->edge, touch->id);
+            }
+            if (touch->isLeftDown) {
+                dispatchButtonUp_Touch_(touch->pos[0]);
+            }
+            dispatchNotification_Touch_(touch, widgetTouchEnds_UserEventCode);
+            setHover_Widget(NULL);
+            dispatchMotion_Touch_(init_F3(-100, -100, 0), 0); /* out of screen */
             remove_ArrayIterator(&i);
         }
     }
