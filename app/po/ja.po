@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
-"PO-Revision-Date: 2026-05-12 06:33+0000\n"
-"Last-Translator: BALLOON | FU-SEN <balloonakafusen+lagrange@gmail.com>\n"
+"PO-Revision-Date: 2026-11-18 14:32+0000\n"
+"Last-Translator: jan Talun <maow6004@gmail.com>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -49,7 +49,7 @@ msgstr "フィード一覧を表示"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "アスキーアート: 大きいフォントを用いた \"Lagrange\" の言葉"
+msgstr "アスキーアート: 大きいフォントによる \"Lagrange\""
 
 msgid "cancel"
 msgstr "キャンセル"
@@ -89,7 +89,7 @@ msgid "menu.show.history"
 msgstr "履歴を表示"
 
 msgid "menu.reload"
-msgstr "ページを更新"
+msgstr "ページを再読み込み"
 
 msgid "menu.autoreload"
 msgstr "自動更新を設定…"
@@ -427,7 +427,7 @@ msgid "menu.movetab.split"
 msgstr "タブをもう片方へ移動"
 
 msgid "menu.split.horizontal"
-msgstr "横に並べて表示"
+msgstr "水平方向"
 
 msgid "error.cgi"
 msgstr "CGI エラー"
@@ -460,7 +460,7 @@ msgid "dlg.openlink"
 msgstr "リンクを開く"
 
 msgid "hint.findtext"
-msgstr "ページのテキストを検索"
+msgstr "ページ内で検索"
 
 # Interpret as "Other results..."
 msgid "heading.lookup.other"
@@ -501,7 +501,7 @@ msgid "spartan.input"
 msgstr "送信テキストを入力:"
 
 msgid "heading.prefs.content"
-msgstr "内容:"
+msgstr "内容"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -523,7 +523,7 @@ msgid "keys.tab.close.other"
 msgstr "他のタブを閉じる"
 
 msgid "menu.split.merge"
-msgstr "分割表示の解除"
+msgstr "タブを結合"
 
 msgid "fontpack.open.aboutfonts"
 msgstr "インストール済フォントを表示"
@@ -575,7 +575,7 @@ msgid_plural "feeds.list.counts.n"
 msgstr[0] "%u フィードに %%s を含めて購読します。\n"
 
 msgid "feeds.list.refreshtime.now"
-msgstr "最新の更新はほんの少し前に発生しました。"
+msgstr "最近の更新はたった今行われました。"
 
 msgid "fontpack.meta.disabled"
 msgstr ", 無効"
@@ -709,7 +709,7 @@ msgstr "フィード一覧"
 
 #, c-format
 msgid "feeds.list.refreshtime"
-msgstr "最新の更新は %s 発生しました。"
+msgstr "最新の更新は %s 行われました。"
 
 msgid "prefs.theme.black"
 msgstr "黒"
@@ -781,7 +781,7 @@ msgid "dlg.feed.save"
 msgstr "設定の保存"
 
 msgid "menu.split.vertical"
-msgstr "縦に並べて表示"
+msgstr "垂直方向"
 
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "新しいフォルダ"
@@ -1047,7 +1047,7 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "フォントスタイル:"
 
 msgid "prefs.quoteicon.line"
-msgstr "線"
+msgstr "縦線"
 
 msgid "prefs.urlsize"
 msgstr "最大 URL サイズ:"
@@ -1176,7 +1176,7 @@ msgid "menu.window.full"
 msgstr "全画面表示の切り替え"
 
 msgid "menu.reopentab"
-msgstr "最後に閉じたタブを開く"
+msgstr "閉じたタブを開き直す"
 
 msgid "menu.update"
 msgstr "更新を確認…"
@@ -1273,10 +1273,10 @@ msgid "menu.paste.go"
 msgstr "貼り付けて移動"
 
 msgid "menu.foldall"
-msgstr "すべてのフォルダ"
+msgstr "すべて折りたたむ"
 
 msgid "menu.unfoldall"
-msgstr "すべてのフォルダを解除"
+msgstr "折りたたみを解除する"
 
 msgid "menu.userdata"
 msgstr "ユーザーデータ"
@@ -1286,8 +1286,8 @@ msgstr "検索"
 
 msgid "userdata.help"
 msgstr ""
-"ユーザーデータアーカイブには、エクスポートされた閲覧履歴、アイデンティティ、ブックマーク、テキストスニペット、サイト固有の設定、信頼できるサーバー証明書の"
-"指紋が含まれています。バックアップとして保存し、デバイス間でデータを転送するために使用できます。"
+"ユーザーデータアーカイブには、書き出しされた閲覧履歴、身分証明、ブックマーク、テキストスニペット、サイト固有の設定、信頼できるサーバー証明書の識別情報が含"
+"まれています。バックアップとして保存し、デバイス間でデータを転送するために使用できます。"
 
 msgid "menu.aboutpages"
 msgstr "ページについて"
@@ -1535,7 +1535,7 @@ msgid "prefs.tui.simple"
 msgstr "ASCII キャラクターセットの強制:"
 
 msgid "prefs.font.mono"
-msgstr "フォーマット済み:"
+msgstr "書式設定済み文章:"
 
 msgid "prefs.boldlink.visited"
 msgstr "訪問"
@@ -1658,7 +1658,7 @@ msgid "bookmark.tag.remote"
 msgstr "ブックマークソースとして使用"
 
 msgid "dlg.unsub"
-msgstr "登録解除"
+msgstr "購読解除"
 
 msgid "pageinfo.cert.ca.unverified"
 msgstr "CA 未検証"
@@ -1751,14 +1751,13 @@ msgid "prefs.swipe.edge"
 msgstr "エッジからスワイプ:"
 
 msgid "prefs.imagestyle.preformat"
-msgstr "フォーマット済カラー"
+msgstr "書式設定済みテキストのカラー"
 
 msgid "prefs.linewidth.normal"
 msgstr "通常"
 
-#, fuzzy
 msgid "prefs.linewidth.fill"
-msgstr "埋める"
+msgstr "全幅"
 
 msgid "error.openfile.msg"
 msgstr "要求されたファイルは存在しないかアクセスできません。ファイルパスを確認してください。"
@@ -1814,9 +1813,8 @@ msgid "keys.link.homerow.hover"
 msgstr "ホーム・矢印キーでリンクをホバーする"
 
 # Used on the mobile Settings page.
-#, fuzzy
 msgid "menu.about"
-msgstr "About"
+msgstr "概要"
 
 msgid "dlg.newident.scope"
 msgstr "使用:"
@@ -1916,9 +1914,8 @@ msgstr "%S は有効な Lagrange でエクスポートしたアーカイブで�
 msgid "prefs.quoteicon"
 msgstr "引用符:"
 
-#, fuzzy
 msgid "prefs.justify"
-msgstr "要素の配置:"
+msgstr "両端揃え:"
 
 msgid "prefs.plaintext.wrap"
 msgstr "長いプレーンテキスト行の折り返し:"
@@ -1927,7 +1924,7 @@ msgid "error.badredirect"
 msgstr "リダイレクトが無効です"
 
 msgid "ident.use"
-msgstr "このページを使用"
+msgstr "このページで使用"
 
 msgid "ident.notused"
 msgstr "使用なし"
@@ -1949,7 +1946,7 @@ msgstr "不明なステータスコード"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.identities"
-msgstr "身分証明の表示"
+msgstr "身分証明を表示"
 
 msgid "dlg.certimport.nokey"
 msgstr "秘密鍵なし"
@@ -1986,7 +1983,7 @@ msgid "menu.identity.new"
 msgstr "新たな身分証明…"
 
 msgid "ident.using"
-msgstr "このページを使用"
+msgstr "このページで使用"
 
 # strftime() formatted
 msgid "ident.expiry"
@@ -2020,7 +2017,7 @@ msgid "ident.stopuse"
 msgstr "このページの使用を停止"
 
 msgid "ident.fingerprint"
-msgstr "SHA-256 Fingerprint のコピー"
+msgstr "SHA-256 Fingerprint をコピー"
 
 msgid "sidebar.empty.unread"
 msgstr "未読エントリなし"
@@ -2105,11 +2102,10 @@ msgstr "入力プロンプト: 前行の貼り付け"
 msgid "dlg.save.incomplete"
 msgstr "ページの内容はまだダウンロード中です。"
 
-#, fuzzy
 msgid "error.gone"
-msgstr "閉鎖"
+msgstr "削除済み"
 
-#, c-format, fuzzy
+#, c-format
 msgid "dlg.import.add"
 msgid_plural "dlg.import.add.n"
 msgstr[0] "ブックマーク %s へ %d ヶ所追加"
@@ -2161,7 +2157,6 @@ msgstr ""
 msgid "heading.subscribe"
 msgstr "ページを購読"
 
-#, fuzzy
 msgid "dlg.feed.type.gemini"
 msgstr "YYYY-MM-DD リンク"
 
@@ -2207,7 +2202,7 @@ msgid "prefs.retaintabs"
 msgstr "起動時にタブを復元:"
 
 msgid "prefs.uiscale"
-msgstr "UI スケールファクター:"
+msgstr "UI 倍率:"
 
 msgid "prefs.returnkey.accept"
 msgstr "承認"
@@ -2451,7 +2446,7 @@ msgid "dlg.uploadport.msg"
 msgstr "この URL に使用するように Titan サーバーポートを設定します。ポートはサイト固有の構成に保存されます。"
 
 msgid "dlg.translate.pre"
-msgstr "フォーマット済みをスキップ:"
+msgstr "書式設定済みテキストをスキップ:"
 
 msgid "dlg.glyphfinder.help.empty"
 msgstr "ページを更新して、不足している文字種をもう一度確認してください。"
@@ -2466,7 +2461,7 @@ msgid "dlg.newindent.missing.commonname"
 msgstr "\"コモンネーム\" を指定する必要があります。"
 
 msgid "prefs.collapsepre"
-msgstr "フォーマット済の崩れ:"
+msgstr "書式設定済みテキストの折りたたみ:"
 
 msgid "collapse.bydefault"
 msgstr "ページ読込時"
@@ -2614,7 +2609,8 @@ msgid "lang.auto"
 msgstr "自動検出"
 
 msgid "error.incompleteheader.msg"
-msgstr "サーバーの応答には完全な見出しが含まれていませんでした。おそらくサーバーが誤動作しているかGeminiではなくサーバーに連絡しようとしました。"
+msgstr ""
+"サーバーの応答には完全な見出しが含まれていませんでした。おそらくサーバーが誤動作しているか Gemini ではなくサーバーに連絡しようとしました。"
 
 msgid "error.badredirect.msg"
 msgstr "サーバーはリダイレクトで応答しましたが有効な宛先URLを提供しませんでした。おそらくサーバーは誤動作しています。"
@@ -2640,7 +2636,7 @@ msgid "dlg.newident.until"
 msgstr "有効期限:"
 
 msgid "error.manyredirects.msg"
-msgstr "リダイレクトループの可能性があります。次のリダイレクトされたURLは手動で続行する事ができます。"
+msgstr "リダイレクトループの可能性があります。次のリダイレクトされた URL は手動で続行する事ができます。"
 
 msgid "error.tls"
 msgstr "ネットワーク・SSL 障害"
@@ -2816,7 +2812,7 @@ msgid "heading.prefs.gamepad"
 msgstr "ゲームパッド"
 
 msgid "prefs.quote.italic"
-msgstr "引用テキストの斜体:"
+msgstr "引用文のの斜体:"
 
 msgid "prefs.gamepad"
 msgstr "ゲームパッドの有効:"
@@ -2921,7 +2917,6 @@ msgid "menu.sidebar.configure"
 msgstr "設定…"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
-#, fuzzy
 msgid "menu.show.subscriptions"
 msgstr "購読を表示"
 
@@ -2929,7 +2924,6 @@ msgstr "購読を表示"
 msgid "menu.show.opendocs"
 msgstr "タブを表示"
 
-#, fuzzy
 msgid "sidebar.subscriptions"
 msgstr "購読"
 
@@ -2955,3 +2949,822 @@ msgstr "既知エントリーをリセット"
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.structure"
 msgstr "サイト構造を表示"
+
+msgid "prefs.sidebar.reset"
+msgstr "デフォルトに戻す"
+
+msgid "prefs.sync.server"
+msgstr "サーバー:"
+
+msgid "hint.sync.server"
+msgstr "gemini://sync.skyjake.fi:1966"
+
+msgid "prefs.sync.interval.manual"
+msgstr "同期しない"
+
+msgid "prefs.promptposition.inline"
+msgstr "インライン"
+
+msgid "prefs.pageview"
+msgstr "ページ分け:"
+
+msgid "prefs.boldlink.help"
+msgstr "選択したページの色 (ダークまたはライト) において、未訪問のリンクは太文字になります。"
+
+msgid "prefs.relay.user"
+msgstr "ユーザー名:"
+
+msgid "sync.status.off"
+msgstr "オフ"
+
+msgid "sync.status.running"
+msgstr "同期中…"
+
+msgid "sync.status.last"
+msgstr "同期されました"
+
+msgid "sync.status.recent.running"
+msgstr "同期中…"
+
+msgid "sync.status.recent"
+msgstr "最近:"
+
+msgid "sync.busy.bookmarks"
+msgstr "同期中はブックマークを編集できません。しばらくしてからもう一度お試しください。"
+
+msgid "sync.busy.sitespec"
+msgstr "同期中はサイトの設定を編集できません。しばらくしてからもう一度お試しください。"
+
+msgid "sync.identity.notes"
+msgstr "デバイス間でユーザーデータを同期するために使用されます"
+
+msgid "sync.error.decrypt"
+msgstr "同期されたデータを復号できませんでした。すべてのデバイスで同じ同期IDが使われているか確認してください。"
+
+msgid "gempub.page.contents"
+msgstr "目次"
+
+msgid "ident.use.domain"
+msgstr "このドメインで使う"
+
+msgid "dlg.userdata.newer"
+msgstr "全て (新しい方を残す)"
+
+# File type filter in the Import User Data file dialog.
+msgid "filter.zip"
+msgstr "ZIP アーカイブ"
+
+msgid "dlg.newident.keytype"
+msgstr "署名:"
+
+msgid "dlg.newident.keytype.ecdsa"
+msgstr "ECDSA (P-256)"
+
+msgid "dlg.newident.keytype.ed25519"
+msgstr "Ed25519"
+
+msgid "dlg.feed.type.tinylog"
+msgstr "Tinylog"
+
+msgid "heading.prefs.sync"
+msgstr "同期"
+
+msgid "prefs.sync"
+msgstr "同期が有効:"
+
+msgid "prefs.sync.identity"
+msgstr "身分証明:"
+
+msgid "prefs.sync.identity.none"
+msgstr "なし"
+
+msgid "prefs.sync.interval"
+msgstr "間隔:"
+
+msgid "prefs.sync.newidentity"
+msgstr "新しい同期ID"
+
+msgid "prefs.sync.now"
+msgstr "今すぐ同期"
+
+msgid "sync.error.server"
+msgstr "同期サーバーが応答しました:"
+
+msgid "heading.prefs.typography"
+msgstr "フォント"
+
+msgid "prefs.scope.custom.layout"
+msgstr "%s 固有のレイアウトを使用する:"
+
+msgid "prefs.scope.custom.style"
+msgstr "%s 固有のスタイルを使用する:"
+
+msgid "prefs.pageturn.scroll"
+msgstr "スクロール"
+
+msgid "prefs.pageturn.curl"
+msgstr "めくり"
+
+msgid "prefs.hideviewtools"
+msgstr "表示ツールを隠す:"
+
+msgid "prefs.webvariant"
+msgstr "Web UI:"
+
+msgid "prefs.webvariant.desktop"
+msgstr "デスクトップ"
+
+msgid "prefs.webvariant.tablet"
+msgstr "タブレット"
+
+msgid "prefs.webvariant.phone"
+msgstr "スマートフォン"
+
+msgid "heading.prefs.toolbars"
+msgstr "ツールバー"
+
+msgid "prefs.releasenotes"
+msgstr "リリースノートを表示:"
+
+# Web version: an empty proxy setting means the proxy built into the relay server is used.
+msgid "hint.proxy.relay"
+msgstr "リレー組み込みプロキシ"
+
+msgid "prefs.relay.password"
+msgstr "パスワード:"
+
+msgid "keys.group.view"
+msgstr "表示"
+
+msgid "keys.group.ui"
+msgstr "ユーザーインターフェース"
+
+msgid "keys.group.other"
+msgstr "その他"
+
+# Used in the View menu. Shows the sidebar with the bookshelf.
+msgid "menu.show.books"
+msgstr "本を見る"
+
+msgid "menu.sitespec"
+msgstr "サイト設定…"
+
+msgid "menu.aboutweb"
+msgstr "Lagrange on the Web"
+
+msgid "heading.tool.failed"
+msgstr "ツールに失敗しました"
+
+msgid "menu.page.subscribeall"
+msgstr "全てに登録…"
+
+msgid "menu.tool.unwrap"
+msgstr "段落を展開する"
+
+# %s is the name of a user-configured external tool.
+msgid "dlg.tool.failed"
+msgstr "\"%s\" はこのページに有効な出力を生成できませんでした。"
+
+msgid "sidebar.gempub.cover"
+msgstr "カバー"
+
+msgid "sidebar.gempub.index"
+msgstr "内容"
+
+# Sidebar tab listing the books saved locally.
+msgid "sidebar.gempub.shelf"
+msgstr "棚"
+
+msgid "sidebar.empty.books"
+msgstr "本がありません"
+
+msgid "book.delete"
+msgstr "本を削除"
+
+msgid "dlg.book.delete"
+msgstr "削除"
+
+# Deletes the local copy of a book but keeps it on the shelf so it can be downloaded again.
+msgid "book.removedownload"
+msgstr "ダウンロードを削除"
+
+msgid "dlg.book.removedownload"
+msgstr "削除"
+
+# Copies the URL where the book was downloaded from.
+msgid "book.copysource"
+msgstr "ソースURLをコピー"
+
+msgid "sidebar.action.bookmarks.showtrash"
+msgstr "ゴミ箱"
+
+msgid "sidebar.action.books.title"
+msgstr "タイトル"
+
+msgid "sidebar.action.subs.name"
+msgstr "題名"
+
+msgid "sidebar.action.subs.recent"
+msgstr "最新"
+
+msgid "sidebar.action.subs.leastrecent"
+msgstr "最古"
+
+msgid "sidebar.action.books.author"
+msgstr "著者"
+
+# Subscriptions with the most feed entries first.
+msgid "sidebar.action.subs.entries"
+msgstr "多くのエントリー"
+
+msgid "status.sync"
+msgstr "同期中"
+
+msgid "sidebar.action.ident.name"
+msgstr "名前"
+
+# Identities are listed in the order chosen by the user, by dragging.
+msgid "sidebar.action.ident.manual"
+msgstr "手動"
+
+#, c-format
+msgid "sidebar.feeds.updated.min"
+msgstr "%d 分前に更新されました"
+
+#, c-format
+msgid "sidebar.feeds.updated.hours"
+msgstr "%d 時間 %d 分前に更新されました"
+
+#, c-format
+msgid "sidebar.feeds.updated.days"
+msgid_plural "sidebar.feeds.updated.days.n"
+msgstr[0] "%d 日前に更新されました"
+
+msgid "menu.opencurrent"
+msgstr "現在のタブで開く"
+
+# Button at the bottom of the Reader tab for viewing the older feed entry (next by descending time order).
+msgid "reader.next"
+msgstr "古いエントリ"
+
+# Button at the bottom of the Reader tab for viewing the newer feed entry (previous by descending time order).
+msgid "reader.prev"
+msgstr "新しいエントリ"
+
+# Button at the bottom of the Reader tab. Shows the Feeds sidebar.
+msgid "reader.showfeeds"
+msgstr "フィードを表示"
+
+# strftime() format string. Date of the feed entry shown in the Reader tab banner.
+# %d is the day of month without zero padding.
+msgid "banner.feedentry.date"
+msgstr "%Y 年 %m 月 %d 日 (%a)"
+
+msgid "banner.tinylogentry.date"
+msgstr "%Y 年 %m 月 d 日 (%a) %H 時 %M 分"
+
+msgid "feeds.markallread.confirm"
+msgstr "本当に全ての項目を既読にしますか？"
+
+msgid "menu.openfolder"
+msgstr "フォルダーを開く…"
+
+msgid "menu.multi.opentab.background"
+msgstr "バックグラウンドタブで開く"
+
+msgid "menu.multi.copyurls"
+msgstr "URLをコピー"
+
+msgid "menu.multi.forgeturls"
+msgstr "URLを忘れる"
+
+msgid "menu.multi.closetabs"
+msgstr "タブを閉じる"
+
+msgid "menu.multi.bookmarks.delete"
+msgstr "ブックマークを削除"
+
+msgid "ident.syncing"
+msgstr "同期のために使用されます"
+
+msgid "ident.misfin"
+msgstr "Misfin 証明書"
+
+msgid "hint.filter.bindings"
+msgstr "フィルターキー"
+
+msgid "ident.expiry.years"
+msgid_plural "ident.expiry.years.n"
+msgstr[0] "有効期限まであと %zu 年"
+
+msgid "ident.expired"
+msgstr "期限切れ"
+
+# Submenu with the list of identities in the view toolbar's identity menu.
+msgid "viewtools.ident.pin"
+msgstr "このタブをピン留めする"
+
+msgid "sidebar.empty.trash"
+msgstr "ごみ箱は空です"
+
+msgid "sidebar.empty.feeds"
+msgstr "フィードがありません"
+
+msgid "sidebar.empty.subs"
+msgstr "購読がありません"
+
+msgid "sidebar.empty.links"
+msgstr "リンクがありません"
+
+# Page Information for content received via a proxy server.
+msgid "pageinfo.proxy"
+msgstr "プロキシ経由で受信:"
+
+msgid "pageinfo.proxy.cert.status"
+msgstr "プロキシ証明書のステータス:"
+
+msgid "heading.sitespec.site"
+msgstr "サイト"
+
+msgid "sitespec.titantoken"
+msgstr "Titanアップロードトークン:"
+
+msgid "sitespec.reset"
+msgstr "サイトを初期設定にリセット"
+
+msgid "heading.book.save"
+msgstr "本棚に保存"
+
+msgid "dlg.book.save.error"
+msgstr "その本を本棚に保存できませんでした。"
+
+msgid "heading.book.saved"
+msgstr "本棚に保存"
+
+msgid "dlg.book.save.unsupported"
+msgstr "本棚に保存できるのは Gemtxet ページまたは Gempub ブックのみです。"
+
+msgid "dlg.book.saved"
+msgstr "\"%s\" は現在本棚にあります。"
+
+msgid "dlg.book.open"
+msgstr "本を開く"
+
+msgid "heading.book.exists"
+msgstr "本は既に保存されています"
+
+msgid "dlg.book.exists"
+msgstr "\"%s\" のコピーはすでに本棚に存在します。今回のもので上書きしますか？"
+
+msgid "dlg.book.synced.frontmatter"
+msgstr "この本には他のデバイスによる新しい読書位置（本の冒頭）があります。"
+
+msgid "dlg.book.synced.jump"
+msgstr "同期された位置に移動"
+
+msgid "heading.book.newedition"
+msgstr "アップデートが利用可能です"
+
+# %s is the book's title.
+msgid "dlg.book.newedition"
+msgstr "別のデバイスで \"%s\" の新しい版が保存されています。"
+
+msgid "dlg.book.newedition.update"
+msgstr "更新"
+
+msgid "dlg.book.overwrite"
+msgstr "上書き"
+
+#, c-format
+msgid "dlg.subscribeall.found"
+msgid_plural "dlg.subscribeall.found.n"
+msgstr[0] "ページで %d 件の新しいフィードURLが見つかりました。これらは新しいブックマークフォルダに追加されます。"
+
+msgid "dlg.subscribeall.type"
+msgstr "フィードの種類:"
+
+#, c-format
+msgid "dlg.subscribeall.add"
+msgid_plural "dlg.subscribeall.add.n"
+msgstr[0] "%s %d 件のフィードを購読"
+
+msgid "dlg.subscribeall.notfound"
+msgstr "このページには購読可能な新しい Gemini URL が存在しません。"
+
+msgid "menu.copyresponse"
+msgstr "レスポンスリンクをコピー"
+
+msgid "import.userdata.books"
+msgstr "読書位置:"
+
+msgid "prefs.gamepad.triggermod"
+msgstr "右トリガー + "
+
+msgid "prefs.squarecorners"
+msgstr "四角い角:"
+
+# Sidebar mode that shows bookshelf and the cover and index page of the current Gempub book.
+msgid "sidebar.gempub"
+msgstr "本"
+
+msgid "prefs.proxy.finger"
+msgstr "Finger プロキシ:"
+
+msgid "heading.book.delete"
+msgstr "本を削除"
+
+msgid "heading.book.removedownload"
+msgstr "ダウンロードを削除"
+
+# Downloads the book again from its source URL, replacing the local copy.
+msgid "book.redownload"
+msgstr "再ダウンロード"
+
+# Label before the dropdown that selects the order of books, identities, or subscriptions.
+msgid "sidebar.action.sort"
+msgstr "並び替え:"
+
+msgid "sidebar.action.books.recent"
+msgstr "最新"
+
+# Time since the latest feed refresh, shown at the top of the Feeds sidebar.
+msgid "sidebar.feeds.updated.now"
+msgstr "たった今更新されました"
+
+msgid "keys.group.navigation"
+msgstr "ナビゲーション"
+
+msgid "keys.group.scroll"
+msgstr "スクロール"
+
+msgid "keys.group.page"
+msgstr "ページ"
+
+msgid "keys.group.tabs"
+msgstr "タブ"
+
+msgid "dlg.confirm.bookmarks.multidelete"
+msgstr "選択されたフォルダーに、ブックマークが含まれています。本当にすべて削除しますか？"
+
+msgid "keys.group.split"
+msgstr "分割表示"
+
+msgid "sidebar.empty.bookmarks"
+msgstr "ブックマークがありません"
+
+#, c-format
+msgid "dlg.confirm.unsub.multi"
+msgid_plural "dlg.confirm.unsub.multi.n"
+msgstr[0] "本当に %u フィードの購読を解除しますか？"
+
+msgid "heading.book.synced"
+msgstr "読書位置が同期されました"
+
+# %d is a chapter number.
+msgid "dlg.book.synced"
+msgstr "この本には他のデバイスによる新しい読書位置（第 %d 章）があります。"
+
+msgid "heading.subscribeall"
+msgstr "全て購読する"
+
+msgid "dlg.newident.selfsign"
+msgstr "自己署名証明書を作成しています。"
+
+msgid "prefs.sync.info"
+msgstr ""
+"全てのデータはアップロード前に暗号化され、暗号化された状態でサーバーに保存されます。サーバー側でデータを元に戻すことはできません。サイトごとの設定は同期さ"
+"れますが、その他の設定は同期されません。"
+
+msgid "prefs.sync.status"
+msgstr "ステータス:"
+
+# Web version: server that relays network connections.
+msgid "heading.prefs.relay"
+msgstr "WebSocket リレー"
+
+msgid "prefs.scope.all"
+msgstr "すべてのプロトコル"
+
+# The placeholder is the name of a protocol, for example "Gemini".
+msgid "prefs.scope.custom.typography"
+msgstr "%s 固有のフォントを使用する:"
+
+msgid "prefs.doctheme.name.ember"
+msgstr "残り火"
+
+# Which protocols should the monospace body font by applied with.
+msgid "prefs.mono.doc"
+msgstr "等幅の本文:"
+
+msgid "prefs.hyphenate"
+msgstr "ハイフネーション (単語の途中改行):"
+
+msgid "dlg.storage.unavailable"
+msgstr "このブラウザは、Lagrange によるストレージへのアクセスを許可していません。ページを閉じたあと、データは何も保存されません。"
+
+msgid "keys.group.links"
+msgstr "リンク"
+
+# Heading on the contents page of a book made from a single page. Followed by a link to the page's original URL.
+msgid "gempub.page.source"
+msgstr "ソース"
+
+msgid "heading.sync.failed"
+msgstr "同期に失敗しました"
+
+msgid "sync.status.setup"
+msgstr "サーバーと Ed25519 ID (すべてのデバイスで同じもの) が必要です。"
+
+msgid "sync.error.untrusted"
+msgstr "同期サーバーの証明書が信頼されていません。"
+
+msgid "sync.error.rollback"
+msgstr "同期サーバーのデータが、このデバイスのデータより古くなっています。一度同期をオフにしたあとオンにし、初めからやり直してください。"
+
+msgid "dlg.confirm.book.delete"
+msgstr "本棚から \"%s\" を削除しますか？読書位置は保持されます。"
+
+msgid "dlg.confirm.book.removedownload"
+msgstr "\"%s\" のローカルコピーを削除しますか？本棚に残るため、再ダウンロード可能です。"
+
+msgid "prefs.thickscroll"
+msgstr "太いスクロールバー:"
+
+msgid "prefs.pagetheme.dark"
+msgstr "ページ分けされたダーク:"
+
+msgid "heading.sync.newidentity"
+msgstr "新しい同期ID"
+
+msgid "sync.error.servercert"
+msgstr "同期サーバーの証明書に Ed25519 鍵が使用されていません。"
+
+msgid "sync.error.response"
+msgstr "同期サーバーからの不正な応答です。"
+
+msgid "sync.error.busy"
+msgstr "サーバー上のデータが更新し続けられているため、時間をおいてからもう一度お試しください。"
+
+msgid "sync.error.editoropen"
+msgstr "同期の前に、ブックマークエディタとサイト設定を閉じてください。"
+
+msgid "sync.error.identity"
+msgstr "同期IDが見つからないか、指定された形式 (Ed25519 鍵) になっていません。"
+
+msgid "sync.error.newidentity"
+msgstr "IDを作成できませんでした。"
+
+msgid "dlg.newident.keytype.rsa"
+msgstr "RSA (2048ビット)"
+
+msgid "prefs.scope"
+msgstr "対象:"
+
+msgid "prefs.scope.custom.theme"
+msgstr "%s 固有のテーマを使用する:"
+
+msgid "prefs.scope.site.typography"
+msgstr "サイト固有のフォントを使用する:"
+
+msgid "prefs.scope.site.layout"
+msgstr "サイト固有のレイアウトを使用する:"
+
+msgid "prefs.scope.site.style"
+msgstr "サイト固有のスタイルを使用する:"
+
+msgid "prefs.scope.site.theme"
+msgstr "サイト固有のテーマを使用する:"
+
+msgid "prefs.scope.site.content"
+msgstr "サイト固有のコンテンツ設定を使用する:"
+
+msgid "prefs.doctheme.name.paper"
+msgstr "紙"
+
+msgid "prefs.doctheme.name.arboreal"
+msgstr "樹木"
+
+msgid "justify.always"
+msgstr "常に"
+
+msgid "prefs.tinylogsize"
+msgstr "Tinylog のキャッシュサイズ:"
+
+msgid "hint.relay.url"
+msgstr "wss://hostname/wisp/"
+
+msgid "prefs.relay.url"
+msgstr "カスタムリレー:"
+
+msgid "keys.group.bookmarks"
+msgstr "ブックマークとフィード"
+
+msgid "menu.fold"
+msgstr "隠す"
+
+msgid "dlg.sync.untrusted.changed"
+msgstr ""
+"同期サーバーの電子証明書が、以前信頼したものと一致しません。サーバーの電子証明書が更新された場合は正常ですが、誰かが通信を傍受している可能性もあります。"
+
+msgid "dlg.sync.untrusted.unknown"
+msgstr "同期サーバーの証明書は、サーバーのアドレスに対して有効ではありません。"
+
+msgid "dlg.sync.fp.trusted"
+msgstr "信頼済みの識別情報:"
+
+msgid "dlg.sync.copyfp"
+msgstr "サーバーの識別情報をコピー"
+
+msgid "dlg.sync.fp.server"
+msgstr "サーバーの識別情報:"
+
+msgid "dlg.sync.untrusted.check"
+msgstr "サーバー管理者からの識別情報と一致する場合のみ、そのサーバーの証明書を信頼してください。"
+
+msgid "sync.status.generation"
+msgstr "世代"
+
+msgid "dlg.sync.newidentity.info"
+msgstr ""
+"同期するデバイス間では、同じ同期IDを共有する必要があります。異なる同期IDのデバイス同士は同期されません。同期IDは \"身分証明\" "
+"サイドバーで管理できます。同期IDは他の用途には使用しないことが推奨されます。このIDには Ed25519 鍵が使用されています。"
+
+msgid "sync.error.timeout"
+msgstr "同期サーバーが時間内に応答しませんでした。"
+
+# Arguments: author, timestamp.
+msgid "feeds.tinylog.wrote"
+msgstr "%s が %s に書き込みました。"
+
+# Opens a dialog for choosing where to save the file.
+msgid "menu.save.as"
+msgstr "名前をつけて保存…"
+
+# Saves the current page or Gempub book to the bookshelf in the Book sidebar.
+msgid "menu.save.books"
+msgstr "本棚に保存"
+
+msgid "menu.trash.restore"
+msgstr "戻す"
+
+msgid "menu.trash.empty"
+msgstr "ゴミ箱を空にする"
+
+msgid "menu.licenses"
+msgstr "オープンソースライセンス"
+
+msgid "menu.sync.now"
+msgstr "今すぐ同期"
+
+msgid "menu.sync.configure"
+msgstr "同期を設定…"
+
+msgid "menu.reference"
+msgstr "技術仕様"
+
+# Page footer in paginated view mode: current page and number of pages.
+#, c-format
+msgid "doc.page.number"
+msgstr "%d / %d ページ"
+
+# Page footer in a book: current page, number of pages, current chapter, number of chapters.
+#, c-format
+msgid "doc.page.chapter"
+msgstr "%d / %d ページ   •   %d / %d 章"
+
+# Page footer in a single-page chapter of a book: current chapter, number of chapters.
+#, c-format
+msgid "doc.chapter.number"
+msgstr "%d / %d 章"
+
+msgid "menu.protocols"
+msgstr "プロトコル早見表"
+
+msgid "feeds.tinylog.notfound"
+msgstr "この tinylog エントリが見つかりません。tinylog から削除されたか、購読が解除されている可能性があります。"
+
+msgid "feeds.tinylog.unavailable"
+msgstr "この tinylog エントリは利用できません。"
+
+msgid "sync.error.closed"
+msgstr "同期サーバーが応答せずに接続を閉じました。"
+
+# Followed by a number: the position of the tab, counting from the left sidebar to the right one.
+msgid "keys.sidebar.tab"
+msgstr "サイドバータブ"
+
+# Replaces "Read All" when there are no unread entries. Should be fairly short.
+msgid "sidebar.action.feeds.refresh"
+msgstr "更新"
+
+msgid "dlg.subscribeall.type.auto"
+msgstr "自動検出"
+
+# Short form of an auto-reload interval in minutes.
+#, c-format
+msgid "reload.short.minutes"
+msgstr "%d分"
+
+# Short form of an auto-reload interval in hours.
+#, c-format
+msgid "reload.short.hours"
+msgstr "%d時間"
+
+# Short form of a daily auto-reload interval.
+msgid "reload.short.day"
+msgstr "1日"
+
+msgid "menu.copy.filepath"
+msgstr "ファイルパスをコピー"
+
+msgid "prefs.font.coloremoji"
+msgstr "カラー絵文字:"
+
+msgid "prefs.proxy.spartan"
+msgstr "Spartan プロキシ:"
+
+msgid "prefs.proxy.nex"
+msgstr "Nex プロキシ:"
+
+# Public key that identifies this browser to a custom relay.
+msgid "prefs.relay.key"
+msgstr "公開鍵:"
+
+msgid "heading.storage.unavailable"
+msgstr "ストレージが利用不可"
+
+msgid "prefs.gamepad.primary"
+msgstr "プライマリクリック"
+
+msgid "prefs.gamepad.secondary"
+msgstr "セカンダリクリック"
+
+msgid "prefs.quotes"
+msgstr "引用文"
+
+msgid "justify.never"
+msgstr "しない"
+
+msgid "justify.pagesonly"
+msgstr "ページのみ"
+
+msgid "prefs.trackpadspeed"
+msgstr "トラックパッドの速度:"
+
+msgid "gempub.cover.openshelf"
+msgstr "本棚から開く"
+
+msgid "heading.sync"
+msgstr "同期"
+
+msgid "sync.status.pending.types"
+msgstr "保留中:"
+
+msgid "prefs.promptposition.top"
+msgstr "上部"
+
+msgid "prefs.promptposition.bottom"
+msgstr "下部"
+
+msgid "prefs.pageturn"
+msgstr "ページ切り替え:"
+
+msgid "prefs.pageturn.none"
+msgstr "なし"
+
+# Paginated mode uses the regular document theme.
+msgid "prefs.doctheme.name.none"
+msgstr "なし"
+
+msgid "prefs.promptposition"
+msgstr "入力プロンプトの位置:"
+
+msgid "prefs.pagetheme.light"
+msgstr "ページ分けされたライト:"
+
+msgid "error.certverify.fp"
+msgstr "サーバーの識別情報:"
+
+msgid "heading.sync.untrusted"
+msgstr "信頼できない同期サーバー"
+
+msgid "sync.status.never"
+msgstr "まだ同期されていません"
+
+msgid "sync.status.pending"
+msgstr "変更がまだ確定されていません"
+
+msgid "sync.status.error"
+msgstr "エラー:"
+
+msgid "sync.identity.name"
+msgstr "IDを同期"
+
+msgid "dlg.sync.newidentity"
+msgstr "新しい同期IDの名前を入力してください。"
+
+msgid "sync.error.expired"
+msgstr "同期サーバーの証明書の有効期限が切れています。"
+
+msgid "sync.error.encrypt"
+msgstr "データを暗号化できませんでした。"
