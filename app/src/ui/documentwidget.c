@@ -2229,6 +2229,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
            Pages outside the reading order go back in history. Otherwise the pages bounce back. */
         if (equal_Command(cmd, "edgeswipe.moved") &&
             ~d->flags & historySwipe_DocumentWidgetFlag && !d->view->paged.isDragging) {
+            if (handleSidebarSwipe_DocumentSwipe(d->swipe, cmd)) {
+                /* The sidebar takes the gesture, so no "edgeswipe.ended" will follow. */
+                return iTrue;
+            }
             if (isBegun_DocumentSwipe(d->swipe)) {
                 /* The swipe began on another page, which was replaced by this one. */
                 d->flags |= historySwipe_DocumentWidgetFlag;
