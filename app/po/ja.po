@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
-"PO-Revision-Date: 2026-11-18 14:32+0000\n"
-"Last-Translator: BALLOON | FU-SEN <balloonakafusen+lagrange@gmail.com>\n"
+"PO-Revision-Date: 2026-11-18 20:16+0000\n"
+"Last-Translator: jan Talun <maow6004@gmail.com>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -214,7 +214,7 @@ msgid "menu.show.feeds"
 msgstr "フィードを表示"
 
 msgid "menu.import.links"
-msgstr "全てのリンクをインポート…"
+msgstr "すべてのリンクをインポート…"
 
 msgid "menu.newtab"
 msgstr "新しいタブ"
@@ -1469,7 +1469,7 @@ msgid "dlg.newident.email"
 msgstr "メール:"
 
 msgid "dlg.newident.userid"
-msgstr "ユーザー ID:"
+msgstr "ユーザー 身分証明:"
 
 msgid "heading.bookmark.add"
 msgstr "ブックマークを追加"
@@ -1742,7 +1742,7 @@ msgid "bookmark.export.format.tags"
 msgstr "タグはレベル2の見出しで定義されます。"
 
 msgid "dlg.bookmark.identity"
-msgstr "ピン留めする身分証明:"
+msgstr "ピン留めされた身分証明:"
 
 msgid "heading.prefs.appearance"
 msgstr "外観"
@@ -2999,7 +2999,7 @@ msgid "sync.identity.notes"
 msgstr "デバイス間でユーザーデータを同期するために使用されます"
 
 msgid "sync.error.decrypt"
-msgstr "同期されたデータを復号できませんでした。すべてのデバイスで同じ同期IDが使われているか確認してください。"
+msgstr "同期されたデータを復号できませんでした。すべてのデバイスで同じ同期身分証明が使われているか確認してください。"
 
 msgid "gempub.page.contents"
 msgstr "目次"
@@ -3008,7 +3008,7 @@ msgid "ident.use.domain"
 msgstr "このドメインで使う"
 
 msgid "dlg.userdata.newer"
-msgstr "全て (新しい方を残す)"
+msgstr "すべて (新しい方を残す)"
 
 # File type filter in the Import User Data file dialog.
 msgid "filter.zip"
@@ -3042,7 +3042,7 @@ msgid "prefs.sync.interval"
 msgstr "間隔:"
 
 msgid "prefs.sync.newidentity"
-msgstr "新しい同期ID"
+msgstr "新しい同期身分証明"
 
 msgid "prefs.sync.now"
 msgstr "今すぐ同期"
@@ -3116,7 +3116,7 @@ msgid "heading.tool.failed"
 msgstr "ツールに失敗しました"
 
 msgid "menu.page.subscribeall"
-msgstr "全てに登録…"
+msgstr "すべてに登録…"
 
 msgid "menu.tool.unwrap"
 msgstr "段落を展開する"
@@ -3224,7 +3224,7 @@ msgid "banner.tinylogentry.date"
 msgstr "%Y 年 %m 月 d 日 (%a) %H 時 %M 分"
 
 msgid "feeds.markallread.confirm"
-msgstr "本当に全ての項目を既読にしますか？"
+msgstr "本当にすべての項目を既読にしますか？"
 
 msgid "menu.openfolder"
 msgstr "フォルダーを開く…"
@@ -3425,15 +3425,15 @@ msgid "dlg.book.synced"
 msgstr "この本には他のデバイスによる新しい読書位置（第 %d 章）があります。"
 
 msgid "heading.subscribeall"
-msgstr "全て購読する"
+msgstr "すべて購読する"
 
 msgid "dlg.newident.selfsign"
 msgstr "自己署名証明書を作成しています。"
 
 msgid "prefs.sync.info"
 msgstr ""
-"全てのデータはアップロード前に暗号化され、暗号化された状態でサーバーに保存されます。サーバー側でデータを元に戻すことはできません。サイトごとの設定は同期さ"
-"れますが、その他の設定は同期されません。"
+"すべてのデータはアップロード前に暗号化され、暗号化された状態でサーバーに保存されます。サーバー側でデータを元に戻すことはできません。サイトごとの設定は同期"
+"されますが、その他の設定は同期されません。"
 
 msgid "prefs.sync.status"
 msgstr "ステータス:"
@@ -3473,7 +3473,7 @@ msgid "heading.sync.failed"
 msgstr "同期に失敗しました"
 
 msgid "sync.status.setup"
-msgstr "サーバーと Ed25519 ID (すべてのデバイスで同じもの) が必要です。"
+msgstr "サーバーと Ed25519 身分証明 (すべてのデバイスで同じもの) が必要です。"
 
 msgid "sync.error.untrusted"
 msgstr "同期サーバーの証明書が信頼されていません。"
@@ -3494,7 +3494,7 @@ msgid "prefs.pagetheme.dark"
 msgstr "ページ分けされたダーク:"
 
 msgid "heading.sync.newidentity"
-msgstr "新しい同期ID"
+msgstr "新しい同期身分証明"
 
 msgid "sync.error.servercert"
 msgstr "同期サーバーの証明書に Ed25519 鍵が使用されていません。"
@@ -3509,10 +3509,10 @@ msgid "sync.error.editoropen"
 msgstr "同期の前に、ブックマークエディタとサイト設定を閉じてください。"
 
 msgid "sync.error.identity"
-msgstr "同期IDが見つからないか、指定された形式 (Ed25519 鍵) になっていません。"
+msgstr "同期身分証明が見つからないか、指定された形式 (Ed25519 鍵) になっていません。"
 
 msgid "sync.error.newidentity"
-msgstr "IDを作成できませんでした。"
+msgstr "身分証明を作成できませんでした。"
 
 msgid "dlg.newident.keytype.rsa"
 msgstr "RSA (2048ビット)"
@@ -3586,8 +3586,8 @@ msgstr "世代"
 
 msgid "dlg.sync.newidentity.info"
 msgstr ""
-"同期するデバイス間では、同じ同期IDを共有する必要があります。異なる同期IDのデバイス同士は同期されません。同期IDは \"身分証明\" "
-"サイドバーで管理できます。同期IDは他の用途には使用しないことが推奨されます。このIDには Ed25519 鍵が使用されています。"
+"同期するデバイス間では、同じ同期身分証明を共有する必要があります。異なる同期身分証明のデバイス同士は同期されません。同期身分証明は \"身分証明\" "
+"サイドバーで管理できます。同期身分証明は他の用途には使用しないことが推奨されます。この身分証明には Ed25519 鍵が使用されています。"
 
 msgid "sync.error.timeout"
 msgstr "同期サーバーが時間内に応答しませんでした。"
@@ -3758,10 +3758,10 @@ msgid "sync.status.error"
 msgstr "エラー:"
 
 msgid "sync.identity.name"
-msgstr "IDを同期"
+msgstr "身分証明を同期"
 
 msgid "dlg.sync.newidentity"
-msgstr "新しい同期IDの名前を入力してください。"
+msgstr "新しい同期身分証明の名前を入力してください。"
 
 msgid "sync.error.expired"
 msgstr "同期サーバーの証明書の有効期限が切れています。"
