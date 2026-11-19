@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
-"PO-Revision-Date: 2026-11-18 20:16+0000\n"
+"PO-Revision-Date: 2026-11-19 05:47+0000\n"
 "Last-Translator: jan Talun <maow6004@gmail.com>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
@@ -133,7 +133,7 @@ msgid "numbertype.integer"
 msgstr "整数"
 
 msgid "numbertype.float"
-msgstr "浮動小数点"
+msgstr "浮動小数点数"
 
 # Hertz, unit for frequency values
 msgid "hz"
@@ -2553,7 +2553,7 @@ msgid "gempub.cover.image"
 msgstr "カバー画像"
 
 msgid "gempub.meta.pub"
-msgstr "公開日"
+msgstr "公開済み"
 
 #, c-format
 msgid "fontpack.enable"
@@ -3287,7 +3287,7 @@ msgid "heading.sitespec.site"
 msgstr "サイト"
 
 msgid "sitespec.titantoken"
-msgstr "Titanアップロードトークン:"
+msgstr "Titan アップロードトークン:"
 
 msgid "sitespec.reset"
 msgstr "サイトを初期設定にリセット"
@@ -3560,7 +3560,7 @@ msgid "keys.group.bookmarks"
 msgstr "ブックマークとフィード"
 
 msgid "menu.fold"
-msgstr "隠す"
+msgstr "折りたたむ"
 
 msgid "dlg.sync.untrusted.changed"
 msgstr ""
