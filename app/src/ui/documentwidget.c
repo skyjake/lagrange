@@ -1528,7 +1528,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* The terminal sidebar would take keyboard focus. */
             if (d->mod.isReader && deviceType_App() != phone_AppDeviceType &&
                 !isTerminal_Platform() && isFinishedLaunching_App()) {
-                showSidebar_DocumentWidget(d);
+                postCommandf_Root(w->root,
+                                  "sidebar.mode arg:%d show:1 current:1 auto:1",
+                                  feedEntries_SidebarMode);
             }
             checkEdition_DocumentBook(d->book);
         }
