@@ -118,7 +118,10 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     const uint8_t numChannels     = d->output.numChannels;
     const size_t  inputSampleSize = numChannels * SDL_AUDIO_BITSIZE(d->inputFormat) / 8;
     const size_t  vacancy         = vacancy_SampleBuf(&d->output);
-    const size_t  inputBytePos    = inputSampleSize * d->inputPos;
+    const size_t  inputBytePos    = d->inputPos;
+    if (inputBytePos >= inputRange.end) {
+        return needMoreInput_DecoderStatus;
+    }
     const size_t  avail           = (inputRange.end - inputBytePos) / inputSampleSize;
     if (avail == 0) {
         return needMoreInput_DecoderStatus;
@@ -130,12 +133,12 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     void *samples = malloc(inputSampleSize * n);
     /* Get a copy of the input for further processing. */ {
         lock_Mutex(&d->input->mtx);
-        iAssert(inputSampleSize * d->inputPos < size_Block(&d->input->data));
+        iAssert(inputBytePos + inputSampleSize * n <= size_Block(&d->input->data));
         const char* dataPtr = constData_Block(&d->input->data);
         memcpy(samples,
-               dataPtr + inputSampleSize * d->inputPos,
+               dataPtr + inputBytePos,
                inputSampleSize * n);
-        d->inputPos += n;
+        d->inputPos += inputSampleSize * n;
         unlock_Mutex(&d->input->mtx);
     }
     /* Gain. */ {
