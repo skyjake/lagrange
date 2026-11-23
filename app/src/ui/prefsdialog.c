@@ -1041,7 +1041,7 @@ iWidget *makePreferences_Widget(void) {
                 { "slider id:prefs.scrollspeed.keyboard cmd:scrollspeed.keyboard min:0 max:6" },
                 { "slider id:prefs.scrollspeed.mouse cmd:scrollspeed.mouse min:0 max:6" },
 #if defined (LAGRANGE_TRACKPAD_SPEED)
-                { "slider id:prefs.trackpadspeed cmd:trackpadspeed min:0.5 max:2 step:0.05 "
+                { "slider id:prefs.trackpadspeed cmd:trackpadspeed min:0.5 max:4 step:0.05 "
                   "bigstep:0.25 prec:2 unit:x" },
 #endif
                 { NULL } });

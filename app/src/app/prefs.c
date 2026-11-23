@@ -1016,7 +1016,7 @@ iBool handlePrefsCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "trackpadspeed.set")) {
-        d->prefs.trackpadSpeed = iClamp(argf_Command(cmd), 0.5f, 2.0f);
+        d->prefs.trackpadSpeed = iClamp(argf_Command(cmd), 0.5f, 4.0f);
         return iTrue;
     }
     else if (equal_Command(cmd, "returnkey.set")) {
