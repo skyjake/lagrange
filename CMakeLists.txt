@@ -1,20 +1,20 @@
 cmake_minimum_required (VERSION 3.15)
 
 project (Lagrange
-    VERSION 2.0.3
+    VERSION 2.0.4
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2026)
 if (IOS)
-    set (IOS_BUNDLE_VERSION 2)      # keep at 1 unless multiple revisions needed
-    set (IOS_BUILD_DATE "2026-11-14")
+    set (IOS_BUNDLE_VERSION 1)      # keep at 1 unless multiple revisions needed
+    set (IOS_BUILD_DATE "2026-11-23")
 endif ()
 if (ANDROID)
     # Note: remember to update version in Gradle, AndroidManifest.xml
     #set (PROJECT_VERSION 2.0.x)
     set (ANDROID_BUILD_VERSION 1)   # keep at 1 unless multiple revisions needed
-    set (ANDROID_BUILD_DATE "2026-11-14")
+    set (ANDROID_BUILD_DATE "2026-11-23")
 endif ()
 set (LAGRANGE_APP_VERSION ${PROJECT_VERSION}) # subprojects have their own PROJECT_VERSION
 
