@@ -39,6 +39,24 @@
     </provides>
     <update_contact>jaakko.keranen@iki.fi</update_contact>
     <releases>
+        <release version="2.0.4" date="2026-11-23">
+            <description>
+                <ul>
+                    <li>Switching away from the reader tab restores the previous sidebar mode, if the reader tab switched it to Feeds.</li>
+                    <li>Trackpad sensitivity setting extended to 4x.</li>
+                    <li>Fixed: Crash when launching with a gamepad connected.</li>
+                    <li>Fixed: Mouse hover misbehaves when a gamepad is connected.</li>
+                    <li>Fixed: Potential crash when playing WAV audio. (Contributed by Martin Chang.)</li>
+                    <li>Fixed: Potential issues related to trashed bookmarks during sync/import.</li>
+                    <li>Fixed: Disambiguating Tinylog subscriptions with the same author. (Subscribed to multiple feeds with the same "@author@domain".)</li>
+                    <li>Improved system dark/light mode detection at launch.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v2.0.4</url>
+        </release>
         <release version="2.0.3" date="2026-11-15">
             <description>
                 <ul>
@@ -222,20 +240,6 @@
                     the "about:version" page.</p>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.8</url>
-        </release>
-        <release version="1.20.7" date="2026-06-09">
-            <description>
-                <ul>
-                    <li>Fixed: Text layout overflow when monospace body appearance is enabled with Gemini. (It was getting confused with normal plain text.)</li>
-                    <li>Fixed: Link icons not matching the body font size.</li>
-                    <li>Fixed: Link numbers/letters not matching the body font size.</li>
-                    <li>Fixed: Content width expansion in Gopher menus. (Line width measured incorrectly.)</li>
-                    <li>Adjusted first-line indentation to only occur when both previous and current paragraphs are getting wrapped.</li>
-                </ul>
-                <p>The full release notes can be viewed inside the app by opening
-                    the "about:version" page.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.20.7</url>
         </release>
     </releases>
 </component>
