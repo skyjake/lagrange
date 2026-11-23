@@ -94,6 +94,7 @@ struct Impl_Handler {
     enum iStorageBlob    blob;
     size_t               uploadSize;
     uint64_t             uploadGen;
+    iTime                uploadStart;
     iBool                isUpload;
     iBool                isDone;
 };
@@ -370,7 +371,18 @@ static void handleRequest_Handler_(iHandler *d, iTlsConnection *conn) {
     }
     d->isUpload  = iTrue;
     d->uploadGen = gen;
-    setDeadline_TlsConnection(conn, uploadTimeout_ + d->uploadSize / minUploadRate_);
+    initCurrent_Time(&d->uploadStart);
+}
+
+static void updateUploadDeadline_Handler_(iHandler *d, iTlsConnection *conn) {
+    /* Falling behind the minimum rate ends the upload, even if no more data arrives. */
+    const double remaining = uploadTimeout_ + size_Block(&d->received) / minUploadRate_ -
+                             elapsedSeconds_Time(&d->uploadStart);
+    if (remaining <= 0) {
+        respond_Handler_(d, conn, 59, "Upload too slow", NULL);
+        return;
+    }
+    setDeadline_TlsConnection(conn, remaining);
 }
 
 static void readyRead_Handler_(iHandler *d, iTlsConnection *conn) {
@@ -396,8 +408,13 @@ static void readyRead_Handler_(iHandler *d, iTlsConnection *conn) {
         remove_Block(&d->received, 0, crlf + 2 - start);
         handleRequest_Handler_(d, conn);
     }
-    if (d->isUpload && !d->isDone && size_Block(&d->received) >= d->uploadSize) {
-        finishUpload_Handler_(d, conn);
+    if (d->isUpload && !d->isDone) {
+        if (size_Block(&d->received) >= d->uploadSize) {
+            finishUpload_Handler_(d, conn);
+        }
+        else {
+            updateUploadDeadline_Handler_(d, conn);
+        }
     }
 }
 
@@ -445,6 +462,7 @@ static void init_Handler(iHandler *d, const iServer *server, iTlsConnection *con
     d->blob       = data_StorageBlob;
     d->uploadSize = 0;
     d->uploadGen  = 0;
+    iZap(d->uploadStart);
     d->isUpload   = iFalse;
     d->isDone     = iFalse;
     setDeadline_TlsConnection(conn, requestTimeout_);

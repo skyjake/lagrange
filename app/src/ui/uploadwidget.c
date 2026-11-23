@@ -150,14 +150,19 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     setLineLimits_InputWidget(d->input, isUsingPanelLayout_Mobile() ? maxLines : minLines, maxLines);
 }
 
-static const iGmIdentity *titanIdentityForUrl_(const iString *url) {
-    const iGmIdentity *ident = findIdentity_GmCerts(
-        certs_App(),
-        collect_Block(hexDecode_Rangecc(range_String(valueString_SiteSpec(
-            collectNewRange_String(urlRoot_String(url)), titanIdentity_SiteSpecKey)))));
+static const iGmIdentity *defaultTitanIdentity_(const iString *url) {
+    const iGmIdentity *ident = identityForUrl_GmCerts(certs_App(), url);
     if (!ident) {
-        /* Fall back to the global choice, perhaps switching to equivalent Gemini URL. */
-        ident = identityForUrl_GmCerts(certs_App(), url);
+        /* The Titan port may differ from the Gemini one. */
+        iUrl parts;
+        init_Url(&parts, url);
+        if (!isEmpty_Range(&parts.port)) {
+            iString *portless = copy_String(url);
+            remove_Block(&portless->chars,
+                         parts.port.start - 1 - constBegin_String(url),
+                         size_Range(&parts.port) + 1);
+            ident = identityForUrl_GmCerts(certs_App(), collect_String(portless));
+        }
     }
     return ident;
 }
@@ -191,7 +196,7 @@ static iBool onlyMisfinIdentities_(void *context, const iGmIdentity *ident) {
 static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     iArray *items = collectNew_Array(sizeof(iMenuItem));
     if (d->protocol == titan_UploadProtocol) {
-        const iGmIdentity *urlId = titanIdentityForUrl_(&d->url);
+        const iGmIdentity *urlId = defaultTitanIdentity_(&d->url);
         pushBack_Array(items,
                        &(iMenuItem){ format_CStr("${dlg.upload.id.default} (%s)",
                                                  urlId ? cstr_String(name_GmIdentity(urlId))
@@ -973,30 +978,24 @@ static void setupRequest_UploadWidget_(const iUploadWidget *d, const iString *ur
     else {
         url = url_GmRequest(req);
     }
-    const iString *site = collectNewRange_String(urlRoot_String(url));
+    const iGmIdentity *ident = NULL;
     switch (d->idMode) {
         case none_UploadIdentity:
-            /* Ensure no identity will be used for this specific URL. */
             signOut_GmCerts(certs_App(), url);
-            setValueString_SiteSpec(site, titanIdentity_SiteSpecKey, collectNew_String());
             break;
-        case dropdown_UploadIdentity: {
-            /* Update the site-specific preference to the chosen identity. */
-            iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
-            if (ident) {
-                setValueString_SiteSpec(site,
-                                        titanIdentity_SiteSpecKey,
-                                        collect_String(hexEncode_Block(&ident->fingerprint)));
-            }
+        case dropdown_UploadIdentity:
+            ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
             break;
-        }
-        default:
+        case defaultForSite_UploadIdentity:
+            ident = defaultTitanIdentity_(url);
             break;
     }
-    if (d->idMode != none_UploadIdentity) {
-        const iGmIdentity *ident = titanIdentityForUrl_(url); /* site-specific preference */
-        setIdentity_GmRequest(req, ident);
-    }
+    setValueString_SiteSpec(collectNewRange_String(urlRoot_String(url)),
+                            titanIdentity_SiteSpecKey,
+                            d->idMode == dropdown_UploadIdentity && ident
+                                ? collect_String(hexEncode_Block(&ident->fingerprint))
+                                : collectNew_String());
+    setIdentity_GmRequest(req, ident);
 }
 
 static void fetchEditableResource_UploadWidget_(iUploadWidget *d, const iString *url) {
@@ -1150,6 +1149,16 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
                 valueString_SiteSpec(collectNewRange_String(siteRoot), titanToken_SiteSpecKey);
             if (token && !isEmpty_String(token)) {
                 setText_InputWidget(d->token, token);
+            }
+        }
+        /* Preselect the identity previously chosen for the site. */ {
+            const iGmIdentity *ident = findIdentity_GmCerts(
+                certs_App(),
+                collect_Block(hexDecode_Rangecc(range_String(valueString_SiteSpec(
+                    collectNewRange_String(siteRoot), titanIdentity_SiteSpecKey)))));
+            if (ident) {
+                set_Block(&d->idFingerprint, &ident->fingerprint);
+                d->idMode = dropdown_UploadIdentity;
             }
         }
         iUrl parts;
@@ -1404,6 +1413,8 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             setValue_SiteSpec(collectNewRange_String(urlRoot_String(&d->originalUrl)),
                               titanPort_SiteSpecKey, arg_Command(cmd));
             setUrlPort_UploadWidget_(d, &d->originalUrl, arg_Command(cmd));
+            remakeIdentityItems_UploadWidget_(d);
+            updateIdentityDropdown_UploadWidget_(d);
         }
         else {
             makeValueInput_Widget(root_Widget(w),

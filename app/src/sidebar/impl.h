@@ -93,6 +93,9 @@ struct Impl_SidebarWidget {
     size_t            modeCursor[max_SidebarMode];
     iSidebarItem     *contextItem;   /* list item accessed in the context menu */
     size_t            contextIndex;  /* index of list item accessed in the context menu */
+    iBool             isAutoSwitched; /* to Feeds by the Reader tab; cleared by manual changes */
+    enum iSidebarMode autoPrevMode;   /* restored when leaving the Reader tab */
+    iBool             wasAutoHidden;
 
     /* Metrics. */
     int               midSheetTop;       /* on portrait phone, top edge of the sheet in the middle state */

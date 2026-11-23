@@ -247,7 +247,7 @@ static void hidePointer_Gamepad_(iGamepad *d, iBool completely) {
 
 static iBool sdlInit_(void) {
     if (!wasInited_) {
-        if (SDL_Init(SDL_INIT_GAMEPAD)) {
+        if (!SDL_Init(SDL_INIT_GAMEPAD)) {
             fprintf(stderr, "[Gamepad] failed to initialize: %s\n", SDL_GetError());
             return iFalse;
         }
@@ -469,9 +469,12 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
                 if (axis->axis == SDL_GAMEPAD_AXIS_RIGHTY &&
                     !(d->buttons & ((1 << SDL_GAMEPAD_BUTTON_DPAD_UP) |
                                     (1 << SDL_GAMEPAD_BUTTON_DPAD_DOWN)))) {
+                    /* A resting stick sends a stream of small changes. */
+                    if (d->scrollSpeed != 0) {
+                        updateHover_Gamepad_(d);
+                    }
                     d->scrollSpeed = 0;
                     d->isScrollCancelled = iFalse;
-                    updateHover_Gamepad_(d);
                 }
                 else if (axis->axis == SDL_GAMEPAD_AXIS_LEFTX ||
                          axis->axis == SDL_GAMEPAD_AXIS_LEFTY) {
@@ -691,7 +694,7 @@ iBool processEvent_Gamepad(iGamepad *d, const void *sdlEvent) {
 }
 
 void draw_Gamepad(const iGamepad *d) {
-    if (!isConnected_Gamepad(d)) {
+    if (!isConnected_Gamepad(d) || !d->pointerTexture) {
         return;
     }
     /* Draw the pointer. */

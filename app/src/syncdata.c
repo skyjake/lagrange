@@ -910,20 +910,50 @@ static const iSyncRecord *findMatchingBookmark_(const iStringHash *base, const i
     return NULL;
 }
 
+static iBool isSameBookmark_(const iSyncRecord *a, const iSyncRecord *b) {
+    /* Later edits like trashing do not change the creation time. */
+    return equal_String(field_SyncRecord(a, created_SyncBookmarkField),
+                        field_SyncRecord(b, created_SyncBookmarkField)) &&
+           equal_String(field_SyncRecord(a, url_SyncBookmarkField),
+                        field_SyncRecord(b, url_SyncBookmarkField));
+}
+
+static void addMatch_(iArray *map, iStringSet *kept, iStringSet *matched,
+                      const iSyncRecord *local, const iSyncRecord *remote) {
+    if (equal_String(&local->key, &remote->key)) {
+        insert_StringSet(kept, &local->key);
+    }
+    else {
+        pushBack_Array(map, &(iSyncIdMapping){ toInt_String(&local->key),
+                                               toInt_String(&remote->key) });
+    }
+    insert_StringSet(matched, &remote->key);
+}
+
 static void normalizeBookmarkIds_SyncData_(const iSyncData *base, iSyncData *local,
                                            const iSyncData *remote, iArray *map_out) {
-    const iStringHash *B = base->records[bookmarks_UserDataType];
-    const iStringHash *L = local->records[bookmarks_UserDataType];
-    const iStringHash *R = remote->records[bookmarks_UserDataType];
+    const iStringHash *baseRecs   = base->records[bookmarks_UserDataType];
+    const iStringHash *localRecs  = local->records[bookmarks_UserDataType];
+    const iStringHash *remoteRecs = remote->records[bookmarks_UserDataType];
     uint32_t maxId = iMax(iMax(maxBookmarkId_SyncData(base), maxBookmarkId_SyncData(local)),
                           maxBookmarkId_SyncData(remote));
     iArray     *map     = new_Array(sizeof(iSyncIdMapping));
-    iStringSet *matched = new_StringSet();
+    iStringSet *matched = new_StringSet(); /* remote keys */
+    iStringSet *kept    = new_StringSet(); /* local keys matched to the same remote key */
     iPtrArray  *pending = new_PtrArray();
+    /* New local items may already be in the remote, if an earlier result was not applied. */
+    iConstForEach(StringHash, s, localRecs) {
+        const iSyncRecord *rec  = value_StringHashNode(s.value);
+        const iSyncRecord *same = constValue_StringHash(remoteRecs, &rec->key);
+        if (same && !contains_StringHash(baseRecs, &rec->key) && isSameBookmark_(rec, same)) {
+            addMatch_(map, kept, matched, rec, same);
+        }
+    }
     /* New local folders are matched with new remote folders, parents first. */
-    iConstForEach(StringHash, i, L) {
+    iConstForEach(StringHash, i, localRecs) {
         const iSyncRecord *rec = value_StringHashNode(i.value);
-        if (!contains_StringHash(B, &rec->key) && isFolder_SyncBookmark_(rec)) {
+        if (!contains_StringHash(baseRecs, &rec->key) && !contains_StringSet(kept, &rec->key) &&
+            isFolder_SyncBookmark_(rec)) {
             pushBack_PtrArray(pending, rec);
         }
     }
@@ -943,36 +973,34 @@ static void normalizeBookmarkIds_SyncData_(const iSyncData *base, iSyncData *loc
                 continue;
             }
             const iSyncRecord *match = findMatchingBookmark_(
-                B, R, matched, rec, mappedId_SyncIdMapping(map, parent));
+                baseRecs, remoteRecs, matched, rec, mappedId_SyncIdMapping(map, parent));
             if (match) {
-                pushBack_Array(map, &(iSyncIdMapping){ toInt_String(&rec->key),
-                                                       toInt_String(&match->key) });
-                insert_StringSet(matched, &match->key);
+                addMatch_(map, kept, matched, rec, match);
             }
             remove_PtrArrayIterator(&i);
             progress = iTrue;
         }
     }
     /* New local bookmarks are matched by URL and identity. */
-    iConstForEach(StringHash, j, L) {
+    iConstForEach(StringHash, j, localRecs) {
         const iSyncRecord *rec = value_StringHashNode(j.value);
-        if (!contains_StringHash(B, &rec->key) && !isFolder_SyncBookmark_(rec)) {
-            const iSyncRecord *match = findMatchingBookmark_(B, R, matched, rec, 0);
+        if (!contains_StringHash(baseRecs, &rec->key) && !contains_StringSet(kept, &rec->key) &&
+            !isFolder_SyncBookmark_(rec)) {
+            const iSyncRecord *match = findMatchingBookmark_(baseRecs, remoteRecs, matched, rec, 0);
             if (match) {
-                pushBack_Array(map, &(iSyncIdMapping){ toInt_String(&rec->key),
-                                                       toInt_String(&match->key) });
-                insert_StringSet(matched, &match->key);
+                addMatch_(map, kept, matched, rec, match);
             }
         }
     }
     /* Unmatched new local items get unused IDs if theirs may have been used elsewhere. */
-    iConstForEach(StringHash, k, L) {
+    iConstForEach(StringHash, k, localRecs) {
         const iSyncRecord *rec = value_StringHashNode(k.value);
         const uint32_t     id  = toInt_String(&rec->key);
-        if (contains_StringHash(B, &rec->key) || mappedId_SyncIdMapping(map, id) != id) {
+        if (contains_StringHash(baseRecs, &rec->key) || contains_StringSet(kept, &rec->key) ||
+            mappedId_SyncIdMapping(map, id) != id) {
             continue;
         }
-        if (contains_StringHash(R, &rec->key) || id <= maxBookmarkId_SyncData(remote)) {
+        if (contains_StringHash(remoteRecs, &rec->key) || id <= maxBookmarkId_SyncData(remote)) {
             pushBack_Array(map, &(iSyncIdMapping){ id, ++maxId });
         }
     }
@@ -982,8 +1010,29 @@ static void normalizeBookmarkIds_SyncData_(const iSyncData *base, iSyncData *loc
         pushBackN_Array(map_out, constData_Array(map), size_Array(map));
     }
     delete_PtrArray(pending);
+    iRelease(kept);
     iRelease(matched);
     delete_Array(map);
+}
+
+static void dropUnmatchedTrash_SyncData_(const iSyncData *base, iSyncData *local,
+                                         const iSyncData *remote) {
+    /* Without a common base, the local trash may already have been emptied elsewhere. */
+    const iStringHash *remoteRecs = remote->records[bookmarks_UserDataType];
+    if (size_SyncData(base, bookmarks_UserDataType) || isEmpty_StringHash(remoteRecs)) {
+        return;
+    }
+    iStringArray *dropped = new_StringArray();
+    iConstForEach(StringHash, i, local->records[bookmarks_UserDataType]) {
+        const iSyncRecord *rec = value_StringHashNode(i.value);
+        if (isTrash_SyncBookmark_(rec) && !contains_StringHash(remoteRecs, &rec->key)) {
+            pushBack_StringArray(dropped, &rec->key);
+        }
+    }
+    iConstForEach(StringArray, j, dropped) {
+        remove_SyncData(local, bookmarks_UserDataType, j.value);
+    }
+    iRelease(dropped);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -1136,28 +1185,30 @@ iSyncData *merge_SyncData(const iSyncData *base, const iSyncData *local, const i
     iSyncData *out = new_SyncData();
     iSyncData *normLocal = copy_SyncData(local);
     normalizeBookmarkIds_SyncData_(base, normLocal, remote, bookmarkIdMap_out);
+    dropUnmatchedTrash_SyncData_(base, normLocal, remote);
     for (int type = 0; type < max_UserDataType; type++) {
         const iSyncMerge merge = {
             .type              = type,
             .preferLocal       = cmp_Time(&local->modified[type], &remote->modified[type]) > 0,
             .protectedIdentity = protectedIdentity,
         };
-        const iStringHash *B = base->records[type];
-        const iStringHash *L = normLocal->records[type];
-        const iStringHash *R = remote->records[type];
-        iConstForEach(StringHash, i, L) {
-            mergeKey_SyncMerge_(&merge, B, L, R, key_StringHashConstIterator(&i), out);
+        const iStringHash *baseRecs   = base->records[type];
+        const iStringHash *localRecs  = normLocal->records[type];
+        const iStringHash *remoteRecs = remote->records[type];
+        iConstForEach(StringHash, i, localRecs) {
+            mergeKey_SyncMerge_(&merge, baseRecs, localRecs, remoteRecs,
+                                key_StringHashConstIterator(&i), out);
         }
-        iConstForEach(StringHash, j, R) {
+        iConstForEach(StringHash, j, remoteRecs) {
             const iString *key = key_StringHashConstIterator(&j);
-            if (!contains_StringHash(L, key)) {
-                mergeKey_SyncMerge_(&merge, B, L, R, key, out);
+            if (!contains_StringHash(localRecs, key)) {
+                mergeKey_SyncMerge_(&merge, baseRecs, localRecs, remoteRecs, key, out);
             }
         }
-        iConstForEach(StringHash, k, B) {
+        iConstForEach(StringHash, k, baseRecs) {
             const iString *key = key_StringHashConstIterator(&k);
-            if (!contains_StringHash(L, key) && !contains_StringHash(R, key)) {
-                mergeKey_SyncMerge_(&merge, B, L, R, key, out);
+            if (!contains_StringHash(localRecs, key) && !contains_StringHash(remoteRecs, key)) {
+                mergeKey_SyncMerge_(&merge, baseRecs, localRecs, remoteRecs, key, out);
             }
         }
         out->modified[type] = local->modified[type];

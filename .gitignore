@@ -4,6 +4,7 @@
 .DS_Store
 
 /.*/
+!/.github/
 /build/
 /build2/
 build-*/

@@ -1,5 +1,13 @@
 # Release notes (Android)
 
+## 2.0.4
+* Switching away from the reader tab restores the previous sidebar mode, if the reader tab switched it to Feeds.
+* Fixed: Touch gestures taken over by the operating system confuse the app UI.
+* Fixed: Potential crash when playing WAV audio. (Contributed by Martin Chang.)
+* Fixed: Potential issues related to trashed bookmarks during sync/import.
+* Fixed: Disambiguating Tinylog subscriptions with the same author. (Subscribed to multiple feeds with the same "@author@domain".)
+* Updated UI translations.
+
 ## 2.0.3
 * Use system values for tap radius and long-press timeout. This should make inadvertent long-presses less likely on devices that didn't match the previously hardcoded values.
 * Tuning flick gesture momentum (independent of refresh rate).

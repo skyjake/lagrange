@@ -1,5 +1,16 @@
 # Release notes
 
+## 2.0.4
+* Switching away from the reader tab restores the previous sidebar mode, if the reader tab switched it to Feeds.
+* Trackpad sensitivity setting extended to 4x.
+* Fixed: Crash when launching with a gamepad connected.
+* Fixed: Mouse hover misbehaves when a gamepad is connected.
+* Fixed: Potential crash when playing WAV audio. (Contributed by Martin Chang.)
+* Fixed: Potential issues related to trashed bookmarks during sync/import.
+* Fixed: Disambiguating Tinylog subscriptions with the same author. (Subscribed to multiple feeds with the same "@author@domain".)
+* Linux: Improved system dark/light mode detection at launch.
+* Updated UI translations.
+
 ## 2.0.3
 * Added Preferences > Appearance > Square corners.
 * Contents of sensitive input prompts are not backed up or remembered for restoring later.

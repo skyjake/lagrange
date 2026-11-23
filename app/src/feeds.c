@@ -433,6 +433,16 @@ static void setTinylogFeed_Feeds_(iFeeds *d, const iString *feedUrl, const iTiny
     set_String(&tf->avatar, &info->avatar);
 }
 
+static int cmpCreated_TinylogBookmark_(const iBookmark *a, const iBookmark *b) {
+    /* Must be the same on all devices: synced times are rounded to seconds. */
+    const int64_t ta = (int64_t) (seconds_Time(&a->when) + 0.5);
+    const int64_t tb = (int64_t) (seconds_Time(&b->when) + 0.5);
+    if (ta != tb) {
+        return iCmp(ta, tb);
+    }
+    return cmpString_String(canonicalUrl_String(&a->url), canonicalUrl_String(&b->url));
+}
+
 static iString *tinylogPrefix_Feeds_(const iFeeds *d, const iString *feedUrl,
                                      const iString *base) {
     /* The earliest created subscription gets the base as-is, others are disambiguated. */
@@ -444,7 +454,7 @@ static iString *tinylogPrefix_Feeds_(const iFeeds *d, const iString *feedUrl,
         }
         const iString *bmBase = tinylogBase_Feeds_(d, &bm->url);
         if (bmBase && equal_String(bmBase, base) &&
-            (!first || cmp_Time(&bm->when, &first->when) < 0)) {
+            (!first || cmpCreated_TinylogBookmark_(bm, first) < 0)) {
             first = bm;
         }
     }

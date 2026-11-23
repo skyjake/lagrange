@@ -340,7 +340,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if !defined (iPlatformApple) && !defined (iPlatformMsys) && !defined (iPlatformWindows) && \
     !defined (iPlatformTerminal)
             case SDL_EVENT_SYSTEM_THEME_CHANGED:
-                updateSystemTheme_App_(d, iTrue);
+                updateSystemTheme_App_(d);
                 break;
 #endif
             case SDL_EVENT_DROP_FILE: {

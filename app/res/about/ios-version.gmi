@@ -1,5 +1,14 @@
 # Release notes (iOS)
 
+## 2.0.4
+* Switching away from the reader tab restores the previous sidebar mode, if the reader tab switched it to Feeds.
+* Fixed: Touch gestures taken over by the operating system confuse the app UI.
+* Fixed: Edge swipe that opens a sidebar was sometimes confused with a navigation/page turning swipe, leaving the page in an unresponsive state.
+* Fixed: Potential crash when playing WAV audio. (Contributed by Martin Chang.)
+* Fixed: Potential issues related to trashed bookmarks during sync/import.
+* Fixed: Disambiguating Tinylog subscriptions with the same author. (Subscribed to multiple feeds with the same "@author@domain".)
+* Updated UI translations.
+
 ## 2.0.3
 * Contents of sensitive input prompts are not backed up or remembered for restoring later.
 * Identities: Certificates expiring in year 9999+ are treated as never expiring.

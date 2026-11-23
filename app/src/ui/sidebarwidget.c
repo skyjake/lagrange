@@ -892,6 +892,25 @@ static void showReaderFeedEntry_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static iBool restoreAutoSwitchedMode_SidebarWidget_(iSidebarWidget *d) {
+    iWidget *w = as_Widget(d);
+    if (!d->isAutoSwitched || isReader_DocumentWidget(document_Root(w->root))) {
+        return iFalse;
+    }
+    d->isAutoSwitched = iFalse;
+    if (d->wasAutoHidden && isVisible_Widget(w)) {
+        postCommandf_Root(w->root, "%s.toggle hide:1", cstr_String(id_Widget(w)));
+    }
+    if (d->autoPrevMode < 0 || d->autoPrevMode >= max_SidebarMode ||
+        !isModeEnabled_SidebarWidget_(d, d->side, d->autoPrevMode) ||
+        !setMode_SidebarWidget(d, d->autoPrevMode)) {
+        return iFalse;
+    }
+    postCommandf_Root(w->root, "%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
+    refresh_Widget(findChild_Widget(w, "buttons"));
+    return iTrue;
+}
+
 static iBool isListShown_SidebarWidget_(iSidebarWidget *d) {
     /* A book page is shown instead of the list. */
     return (flags_Widget(list_SidebarWidget_(d)) & hidden_WidgetFlag) == 0;
@@ -956,7 +975,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             !isModeEnabled_SidebarWidget_(d, d->side, mode) &&
             isModeEnabled_SidebarWidget_(d, d->side ^ 1, mode)) {
             /* Make it affect the other side instead. */
-            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d contents:%d keydown:%d",
+            postCommand_Widget(w, "%s.mode arg:%d show:%d toggle:%d shelf:%d current:%d contents:%d keydown:%d auto:%d",
                                d->side == 0 ? "sidebar2" : "sidebar",
                                mode,
                                argLabel_Command(cmd, "show"),
@@ -964,9 +983,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                                argLabel_Command(cmd, "shelf"),
                                argLabel_Command(cmd, "current"),
                                argLabel_Command(cmd, "contents"),
-                               argLabel_Command(cmd, "keydown"));
+                               argLabel_Command(cmd, "keydown"),
+                               argLabel_Command(cmd, "auto"));
             return iTrue;
         }
+        const iBool             isAuto     = argLabel_Command(cmd, "auto") != 0;
+        const enum iSidebarMode prevMode   = d->mode;
+        const iBool             wasVisible = isVisible_Widget(w);
         if (mode == gempub_SidebarMode && argLabel_Command(cmd, "contents")) {
             if (isVisible_Widget(w) && d->mode == gempub_SidebarMode && d->gempubPage == 1) {
                 postCommandf_App("%s.toggle keydown:%d",
@@ -984,14 +1007,25 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             d->isShelfOrderValid = iFalse;
         }
         const iBool wasChanged = setMode_SidebarWidget(d, mode);
+        if (!isAuto) {
+            if (wasChanged) {
+                d->isAutoSwitched = iFalse;
+            }
+        }
+        else if (!d->isAutoSwitched && (wasChanged || !wasVisible)) {
+            d->isAutoSwitched = iTrue;
+            d->autoPrevMode   = prevMode;
+            d->wasAutoHidden  = !wasVisible;
+        }
         updateItems_SidebarWidget_(d);
         showReaderFeedEntry_SidebarWidget_(d);
         if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
             (argLabel_Command(cmd, "toggle") &&
              (!isVisible_Widget(w) || (!wasChanged && !isShelfChanged)))) {
-            postCommandf_App("%s.toggle keydown:%d",
+            postCommandf_App("%s.toggle keydown:%d auto:%d",
                              cstr_String(id_Widget(w)),
-                             argLabel_Command(cmd, "keydown"));
+                             argLabel_Command(cmd, "keydown"),
+                             isAuto);
         }
         else if (isVisible_Widget(w) && isListShown_SidebarWidget_(d) && !isMobile_Platform() &&
                  argLabel_Command(cmd, "keydown")) {
@@ -1014,6 +1048,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         if (argLabel_Command(cmd, "hide") && !isVisible_Widget(w)) {
             return iTrue;
+        }
+        if (!argLabel_Command(cmd, "auto")) {
+            d->isAutoSwitched = iFalse;
         }
         /* The sidebar will appear/disappear and UI elements will change position. Stop any
            ongoing touch interactions based on the old arrangement. */
@@ -1689,6 +1726,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     d->side             = side;
     d->mode             = -1;
+    d->isAutoSwitched   = iFalse;
+    d->autoPrevMode     = 0;
+    d->wasAutoHidden    = iFalse;
     d->pendingWidth     = -1.0f;
     d->feedsMode        = all_FeedsMode;
     d->shelfSort        = recent_BooksSortOrder;
@@ -2108,8 +2148,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             /* The Book mode is only available for books. */
             checkModeButtonLayout_SidebarWidget_(d);
             arrange_Widget(parent_Widget(d->modeButtons[0]));
-            if (d->mode != bookmarks_SidebarMode &&
-                (d->mode != feedEntries_SidebarMode || !refreshFeedEntries_SidebarWidget_(d))) {
+            const iBool isRestored = restoreAutoSwitchedMode_SidebarWidget_(d);
+            if (isRestored ||
+                (d->mode != bookmarks_SidebarMode &&
+                 (d->mode != feedEntries_SidebarMode || !refreshFeedEntries_SidebarWidget_(d)))) {
                 updateItems_SidebarWidget_(d);
             }
             if (d->mode != siteStructure_SidebarMode) {

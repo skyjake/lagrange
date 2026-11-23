@@ -1,0 +1,27 @@
+# Set the host name below (`--host`) and run:
+#
+#   docker compose up -d
+#
+# To upgrade:
+#
+#   docker compose pull && docker compose up -d
+#
+
+services:
+  lgrsyncd:
+    image: ghcr.io/skyjake/lgrsyncd:1
+    command: --host sync.example.com
+    # Using an existing certificate (the key must be readable by UID 1965):
+    # command: --cert /certs/server.crt --key /certs/server.key
+    environment:
+      # Optional client certificate fingerprints, separated by spaces or commas.
+      LGRSYNC_ALLOW: ""
+    ports:
+      - "1966:1966"
+    volumes:
+      - lgrsyncd:/data
+      # - /etc/lgrsyncd:/certs:ro
+    restart: unless-stopped
+
+volumes:
+  lgrsyncd:

@@ -314,8 +314,7 @@ static void postQuitOnSigTerm_(int sig) {
 }
 #endif
 
-void updateSystemTheme_App_(iApp *d, iBool isChangeEvent) {
-    iUnused(isChangeEvent);
+void updateSystemTheme_App_(iApp *d) {
     int isDark = -1;
     int isHighContrast = iTrue; /* contrast is unknown on most platforms */
 #if defined (iPlatformAppleDesktop)
@@ -329,20 +328,8 @@ void updateSystemTheme_App_(iApp *d, iBool isChangeEvent) {
     isDark = isDarkSystemTheme_Web(&contrast);
     isHighContrast = contrast;
 #elif !defined (iPlatformTerminal)
-    switch (SDL_GetSystemTheme()) {
-        case SDL_SYSTEM_THEME_LIGHT:
-            isDark = iFalse;
-            break;
-        case SDL_SYSTEM_THEME_DARK:
-            isDark = iTrue;
-            break;
-        default:
-            /* The portal reports "no preference" (light) as unknown. */
-            if (isChangeEvent) {
-                isDark = iFalse;
-            }
-            break;
-    }
+    /* The portal reports "no preference" (light) as unknown. */
+    isDark = (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK);
 #endif
     if (isDark >= 0) {
         handleNonWindowRelatedCommand_App_(
@@ -691,7 +678,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformEmscripten)
     updateRelay_Web(&d->prefs); /* before any requests are made */
 #endif
-    updateSystemTheme_App_(d, iFalse); /* before the first window is created */
+    updateSystemTheme_App_(d); /* before the first window is created */
 #if defined (iPlatformAppleDesktop)
     localizeApplicationMenu_MacOS();
 #endif
